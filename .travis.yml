@@ -1,0 +1,30 @@
+language: rust
+os: linux
+dist: trusty
+cache: cargo
+rust:
+  - stable
+  - beta
+  - nightly
+jobs:
+  allow_failures:
+    - rust: nightly
+before_cache: |
+  if [[ "$TRAVIS_RUST_VERSION" == stable ]]; then
+    cargo install cargo-tarpaulin
+  fi
+script:
+  - cargo clean
+  - cargo build --verbose --all
+  - cargo test --lib --verbose -- --test-threads 1
+after_success: |
+  if [[ "$TRAVIS_RUST_VERSION" == stable ]]; then
+    cargo tarpaulin --out Xml --ignore-tests -- --test-threads 1
+    bash <(curl -s https://codecov.io/bash)
+  fi
+deploy:
+  provider: cargo
+  token:
+    secure: kbZJ1CW2+QAk2u4UWOJehF0gliR/l5JeVmewf/eXKnGttdcJrkIQ70D0F+Rhu4/ZJOlvNpTFLpt3MIKyL3LnjbwO9Q4pDsCjSCRnswz/UkRfzoaY1sL07sesAdEnGCDTwdSEueL1dpmlC46wPbe/7ErnPOxFiMgtR+nX6X6O8u8shSs2T2B5ltnatHo9+pnY28u+EDg4kzdGkP63kt66x5npkNVD3IXuRXIh02YAYzuUnZbMm7vmbg5DdefyYfYvCaHW3udL344iBtxDybYlw+C+TSlEUQ8o/lIC9dXg7RFgsHrXgiwo5S9qyUr+Vuq0VdYQe5qW885hOqxVLBWyGImka/gRFcRRfgoD2WUIF1WWvivqV2iDXF6KzYG4iikPlbbF2+zssfVkxCAQUILn7nFxxKtQzeVfogP2tW1U+UfmIyRdnpxRuV7SpfvUkNhYBQWG9Qv1hJ0gT4EH5HxKsyo3iRYF3Yfw6yRtzsjk0BAmqKz5sKNjubyd7y/s4uc61KR2xZnaw7ipIZ/NABLHqbahTPdreEW9SnysQOuWCgciTyMyiTMm08vPxIEDi770VXcvgrr662xTYJvb0+7yPcuL0uv2i9nfdl22/P9IpaGCSLl3HnUp0G8xxdcSD6vZ/6eMDZmye6Nlorg4RKvwVcpHzp8HaQ5lDpfKKmDo2GU=
+  on:
+    tags: true
