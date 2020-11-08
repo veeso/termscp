@@ -45,7 +45,14 @@ pub enum FileTransferProtocol {
 
 #[derive(PartialEq, Clone)]
 pub enum FileTransferError {
-
+    ConnectionError,
+    BadAddress,
+    AuthenticationFailed,
+    NoSuchFileOrDirectory,
+    DirStatFailed,
+    FileReadonly,
+    DownloadError,
+    UnknownError,
 }
 
 /// ## FileTransfer

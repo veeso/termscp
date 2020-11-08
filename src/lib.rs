@@ -22,3 +22,5 @@
 pub mod filetransfer;
 pub mod fs;
 pub mod host;
+
+// TODO: struct holder of filetransfer, host and gfx client
