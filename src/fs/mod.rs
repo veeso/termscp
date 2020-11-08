@@ -26,6 +26,15 @@
 use std::path::PathBuf;
 use std::time::Instant;
 
+/// ## FsEntry
+/// 
+/// FsEntry represents a generic entry in a directory
+
+pub enum FsEntry {
+    Directory(FsDirectory),
+    File(FsFile)
+}
+
 /// ## FsDirectory
 ///
 /// Directory provides an interface to file system directories

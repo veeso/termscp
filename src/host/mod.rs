@@ -1,3 +1,7 @@
+//! ## Host
+//!
+//! `host` is the module which provides functionalities to host file system
+
 /*
 *
 *   Copyright (C) 2020 Christian Visintin - christian.visintin1997@gmail.com
@@ -19,6 +23,3 @@
 *
 */
 
-pub mod filetransfer;
-pub mod fs;
-pub mod host;
