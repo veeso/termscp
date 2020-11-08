@@ -20,6 +20,9 @@ getopts = "0.2.21"
 tui = { version = "0.12.0", features = ["crossterm"], default-features = false }
 users = "0.11.0"
 
+[dev-dependencies]
+tempfile = "3"
+
 [[bin]]
 name = "termscp"
 path = "src/main.rs"

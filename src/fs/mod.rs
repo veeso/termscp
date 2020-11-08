@@ -42,7 +42,7 @@ pub enum FsEntry {
 
 #[derive(Clone)]
 pub struct FsDirectory {
-    pub name: PathBuf,
+    pub name: String,
     pub last_change_time: SystemTime,
     pub last_access_time: SystemTime,
     pub creation_time: SystemTime,
@@ -59,7 +59,7 @@ pub struct FsDirectory {
 
 #[derive(Clone)]
 pub struct FsFile {
-    pub name: PathBuf,
+    pub name: String,
     pub last_change_time: SystemTime,
     pub last_access_time: SystemTime,
     pub creation_time: SystemTime,

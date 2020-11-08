@@ -23,14 +23,14 @@
 *
 */
 
-use std::fs::{self, Metadata};
+use std::fs::{self, File, Metadata, OpenOptions};
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 // Metadata ext
 #[cfg(any(unix, macos, linux))]
 extern crate users;
 #[cfg(any(unix, macos, linux))]
-use std::os::unix::fs::{MetadataExt, PermissionsExt};
+use std::os::unix::fs::MetadataExt;
 #[cfg(any(unix, macos, linux))]
 use users::{get_group_by_gid, get_user_by_uid};
 
@@ -44,6 +44,7 @@ pub enum HostError {
     NoSuchFileOrDirectory,
     ReadonlyFile,
     DirNotAccessible,
+    FileNotAccessible,
 }
 
 /// ## Localhost
@@ -113,6 +114,42 @@ impl Localhost {
         Ok(self.wrkdir.clone())
     }
 
+    /// ### open_file_read
+    ///
+    /// Open file for read
+    pub fn open_file_read(&self, file: &Path) -> Result<File, HostError> {
+        if !self.file_exists(file) {
+            return Err(HostError::NoSuchFileOrDirectory);
+        }
+        match OpenOptions::new()
+            .create(false)
+            .read(true)
+            .write(false)
+            .open(file)
+        {
+            Ok(f) => Ok(f),
+            Err(_) => Err(HostError::FileNotAccessible),
+        }
+    }
+
+    /// ### open_file_write
+    ///
+    /// Open file for write
+    pub fn open_file_write(&self, file: &Path) -> Result<File, HostError> {
+        match OpenOptions::new()
+            .create(true)
+            .write(true)
+            .truncate(true)
+            .open(file)
+        {
+            Ok(f) => Ok(f),
+            Err(_) => match self.file_exists(file) {
+                true => Err(HostError::ReadonlyFile),
+                false => Err(HostError::FileNotAccessible),
+            },
+        }
+    }
+
     /// ### file_exists
     ///
     /// Returns whether provided file path exists
@@ -137,19 +174,21 @@ impl Localhost {
                 let is_symlink: bool = attr.file_type().is_symlink();
                 // Get user stuff
                 let user: Option<String> = match get_user_by_uid(attr.uid()) {
-                    Some(user) => String::from(user.name().to_str().unwrap_or("")),
+                    Some(user) => Some(String::from(user.name().to_str().unwrap_or(""))),
                     None => None,
                 };
                 let group: Option<String> = match get_group_by_gid(attr.gid()) {
-                    Some(gruop) => String::from(group.name().to_str().unwrap_or("")),
+                    Some(group) => Some(String::from(group.name().to_str().unwrap_or(""))),
                     None => None,
                 };
+                let file_name: String =
+                    String::from(path.file_name().unwrap().to_str().unwrap_or(""));
                 // Match dir / file
                 fs_entries.push(match path.is_dir() {
                     true => {
                         // Is dir
                         FsEntry::Directory(FsDirectory {
-                            name: path.file_name(),
+                            name: file_name,
                             last_change_time: attr.modified().unwrap_or(SystemTime::UNIX_EPOCH),
                             last_access_time: attr.accessed().unwrap_or(SystemTime::UNIX_EPOCH),
                             creation_time: attr.created().unwrap_or(SystemTime::UNIX_EPOCH),
@@ -176,7 +215,7 @@ impl Localhost {
                             None => None,
                         };
                         FsEntry::File(FsFile {
-                            name: path.file_name(),
+                            name: file_name,
                             last_change_time: attr.modified().unwrap_or(SystemTime::UNIX_EPOCH),
                             last_access_time: attr.accessed().unwrap_or(SystemTime::UNIX_EPOCH),
                             creation_time: attr.created().unwrap_or(SystemTime::UNIX_EPOCH),
@@ -219,11 +258,13 @@ impl Localhost {
             if let Ok(entry) = entry {
                 let path: PathBuf = entry.path();
                 let attr: Metadata = fs::metadata(path.clone()).unwrap();
+                let file_name: String =
+                    String::from(path.file_name().unwrap().to_str().unwrap_or(""));
                 fs_entries.push(match path.is_dir() {
                     true => {
                         // Is dir
                         FsEntry::Directory(FsDirectory {
-                            name: path,
+                            name: file_name,
                             last_change_time: attr.modified().unwrap_or(SystemTime::UNIX_EPOCH),
                             last_access_time: attr.accessed().unwrap_or(SystemTime::UNIX_EPOCH),
                             creation_time: attr.created().unwrap_or(SystemTime::UNIX_EPOCH),
@@ -241,7 +282,7 @@ impl Localhost {
                             None => None,
                         };
                         FsEntry::File(FsFile {
-                            name: path,
+                            name: file_name,
                             last_change_time: attr.modified().unwrap_or(SystemTime::UNIX_EPOCH),
                             last_access_time: attr.accessed().unwrap_or(SystemTime::UNIX_EPOCH),
                             creation_time: attr.created().unwrap_or(SystemTime::UNIX_EPOCH),
@@ -269,5 +310,161 @@ impl Localhost {
         let group: u8 = ((mode >> 3) & 0x7) as u8;
         let others: u8 = (mode & 0x7) as u8;
         (user, group, others)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+    use std::io::Write;
+
+    #[cfg(any(unix, macos, linux))]
+    use std::os::unix::fs::PermissionsExt;
+
+    #[test]
+    #[cfg(any(unix, macos, linux))]
+    fn test_host_localhost_new() {
+        let host: Localhost = Localhost::new(PathBuf::from("/bin")).ok().unwrap();
+        assert_eq!(host.wrkdir, PathBuf::from("/bin"));
+        // Scan dir
+        let entries = std::fs::read_dir(PathBuf::from("/bin").as_path()).unwrap();
+        let mut counter: usize = 0;
+        for _ in entries {
+            counter = counter + 1;
+        }
+        assert_eq!(host.files.len(), counter);
+    }
+
+    #[test]
+    #[cfg(target_os = "windows")]
+    fn test_host_localhost_new() {
+        let host: Localhost = Localhost::new(PathBuf::from("C:\\")).ok().unwrap();
+        assert_eq!(host.wrkdir, PathBuf::from("C:\\"));
+        // Scan dir
+        let entries = std::fs::read_dir(PathBuf::from("C:\\").as_path()).unwrap();
+        let mut counter: usize = 0;
+        for _ in entries {
+            counter = counter + 1;
+        }
+        assert_eq!(host.files.len(), counter);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_host_localhost_new_bad() {
+        Localhost::new(PathBuf::from("/omargabber/123/345"))
+            .ok()
+            .unwrap();
+    }
+
+    #[test]
+    #[cfg(any(unix, macos, linux))]
+    fn test_host_localhost_pwd() {
+        let host: Localhost = Localhost::new(PathBuf::from("/bin")).ok().unwrap();
+        assert_eq!(host.pwd(), PathBuf::from("/bin"));
+    }
+
+    #[test]
+    #[cfg(any(unix, macos, linux))]
+    fn test_host_localhost_list_files() {
+        let host: Localhost = Localhost::new(PathBuf::from("/bin")).ok().unwrap();
+        // Scan dir
+        let entries = std::fs::read_dir(PathBuf::from("/bin").as_path()).unwrap();
+        let mut counter: usize = 0;
+        for _ in entries {
+            counter = counter + 1;
+        }
+        assert_eq!(host.list_dir().len(), counter);
+    }
+
+    #[test]
+    #[cfg(any(unix, macos, linux))]
+    fn test_host_localhost_change_dir() {
+        let mut host: Localhost = Localhost::new(PathBuf::from("/usr")).ok().unwrap();
+        let new_dir: PathBuf = PathBuf::from("/usr");
+        assert!(host.change_wrkdir(new_dir.clone()).is_ok());
+        // Verify new files
+        // Scan dir
+        let entries = std::fs::read_dir(PathBuf::from(new_dir).as_path()).unwrap();
+        let mut counter: usize = 0;
+        for _ in entries {
+            counter = counter + 1;
+        }
+        assert_eq!(host.files.len(), counter);
+    }
+
+    #[test]
+    #[cfg(any(unix, macos, linux))]
+    #[should_panic]
+    fn test_host_localhost_change_dir_failed() {
+        let mut host: Localhost = Localhost::new(PathBuf::from("/bin")).ok().unwrap();
+        let new_dir: PathBuf = PathBuf::from("/omar/gabber/123/456");
+        assert!(host.change_wrkdir(new_dir.clone()).is_ok());
+    }
+
+    #[test]
+    #[cfg(any(unix, macos, linux))]
+    fn test_host_localhost_open_read() {
+        let host: Localhost = Localhost::new(PathBuf::from("/bin")).ok().unwrap();
+        // Create temp file
+        let file: tempfile::NamedTempFile = create_sample_file();
+        assert!(host.open_file_read(file.path()).is_ok());
+    }
+
+    #[test]
+    #[cfg(any(unix, macos, linux))]
+    #[should_panic]
+    fn test_host_localhost_open_read_err_no_such_file() {
+        let host: Localhost = Localhost::new(PathBuf::from("/bin")).ok().unwrap();
+        assert!(host
+            .open_file_read(PathBuf::from("/bin/foo-bar-test-omar-123-456-789.txt").as_path())
+            .is_ok());
+    }
+
+    #[test]
+    #[cfg(any(unix, macos, linux))]
+    fn test_host_localhost_open_read_err_not_accessible() {
+        let host: Localhost = Localhost::new(PathBuf::from("/bin")).ok().unwrap();
+        let file: tempfile::NamedTempFile = create_sample_file();
+        //let mut perms = fs::metadata(file.path())?.permissions();
+        fs::set_permissions(file.path(), PermissionsExt::from_mode(0o222)).unwrap();
+        //fs::set_permissions(file.path(), perms)?;
+        assert!(host.open_file_read(file.path()).is_err());
+    }
+
+    #[test]
+    #[cfg(any(unix, macos, linux))]
+    fn test_host_localhost_open_write() {
+        let host: Localhost = Localhost::new(PathBuf::from("/bin")).ok().unwrap();
+        // Create temp file
+        let file: tempfile::NamedTempFile = create_sample_file();
+        assert!(host.open_file_write(file.path()).is_ok());
+    }
+
+    #[test]
+    #[cfg(any(unix, macos, linux))]
+    fn test_host_localhost_open_write_err() {
+        let host: Localhost = Localhost::new(PathBuf::from("/bin")).ok().unwrap();
+        let file: tempfile::NamedTempFile = create_sample_file();
+        //let mut perms = fs::metadata(file.path())?.permissions();
+        fs::set_permissions(file.path(), PermissionsExt::from_mode(0o444)).unwrap();
+        //fs::set_permissions(file.path(), perms)?;
+        assert!(host.open_file_write(file.path()).is_err());
+    }
+
+    /// ### create_sample_file
+    ///
+    /// Create a sample file
+    #[cfg(any(unix, macos, linux))]
+    fn create_sample_file() -> tempfile::NamedTempFile {
+        // Write
+        let mut tmpfile: tempfile::NamedTempFile = tempfile::NamedTempFile::new().unwrap();
+        write!(
+            tmpfile,
+            "Lorem ipsum dolor sit amet, consectetur adipiscing elit.\nMauris ultricies consequat eros,\nnec scelerisque magna imperdiet metus.\n"
+        )
+        .unwrap();
+        tmpfile
     }
 }
