@@ -37,14 +37,41 @@ use users::{get_group_by_gid, get_user_by_uid};
 // Locals
 use crate::fs::{FsDirectory, FsEntry, FsFile};
 
-/// ## HostError
+/// ## HostErrorType
 ///
-/// HostError provides errors related to local host file system
-pub enum HostError {
+/// HostErrorType provides an overview of the specific host error
+#[derive(PartialEq, std::fmt::Debug)]
+pub enum HostErrorType {
     NoSuchFileOrDirectory,
     ReadonlyFile,
     DirNotAccessible,
     FileNotAccessible,
+    FileAlreadyExists,
+    CouldNotCreateFile,
+    DeleteFailed,
+}
+
+/// ### HostError
+/// 
+/// HostError is a wrapper for the error type and the exact io error
+
+pub struct HostError {
+    pub error: HostErrorType,
+    pub ioerr: Option<std::io::Error>
+}
+
+impl HostError {
+
+    /// ### new
+    /// 
+    /// Instantiates a new HostError
+    pub(crate) fn new(error: HostErrorType, errno: Option<std::io::Error>) -> HostError {
+        HostError {
+            error: error,
+            ioerr: errno
+        }
+    }
+
 }
 
 /// ## Localhost
@@ -67,7 +94,7 @@ impl Localhost {
         };
         // Check if dir exists
         if !host.file_exists(host.wrkdir.as_path()) {
-            return Err(HostError::NoSuchFileOrDirectory);
+            return Err(HostError::new(HostErrorType::NoSuchFileOrDirectory, None));
         }
         // Retrieve files for provided path
         host.files = match host.scan_dir() {
@@ -97,7 +124,7 @@ impl Localhost {
     pub fn change_wrkdir(&mut self, new_dir: PathBuf) -> Result<PathBuf, HostError> {
         // Check whether directory exists
         if !self.file_exists(new_dir.as_path()) {
-            return Err(HostError::NoSuchFileOrDirectory);
+            return Err(HostError::new(HostErrorType::NoSuchFileOrDirectory, None));
         }
         let prev_dir: PathBuf = self.wrkdir.clone(); // Backup location
                                                      // Update working directory
@@ -114,16 +141,86 @@ impl Localhost {
         Ok(self.wrkdir.clone())
     }
 
+    /// ### mkdir
+    /// 
+    /// Make a directory in the current path and update the file list
+    pub fn mkdir(&mut self, dir_name: String) -> Result<(), HostError> {
+        let mut dir_path: PathBuf = self.wrkdir.clone();
+        dir_path.push(dir_name);
+        // If dir already exists, return Error
+        if dir_path.exists() {
+            return Err(HostError::new(HostErrorType::FileAlreadyExists, None));
+        }
+        match std::fs::create_dir(dir_path) {
+            Ok(_) => {
+                // Update dir
+                self.files = match self.scan_dir() {
+                    Ok(f) => f,
+                    Err(err) => return Err(err)
+                };
+                Ok(())
+            },
+            Err(err) => Err(HostError::new(HostErrorType::CouldNotCreateFile, Some(err)))
+        }
+    }
+
+    /// ### remove
+    /// 
+    /// Remove file entry from current directory
+    pub fn remove(&mut self, entry: &FsEntry) -> Result<(), HostError> {
+        let mut f_path: PathBuf = self.wrkdir.clone();
+        match entry {
+            FsEntry::Directory(dir) => {
+                f_path.push(dir.name.clone());
+                // If file doesn't exist; return error
+                if ! f_path.exists() {
+                    return Err(HostError::new(HostErrorType::NoSuchFileOrDirectory, None))
+                }
+                // Remove
+                match std::fs::remove_dir_all(f_path) {
+                    Ok(_) => {
+                        // Update dir
+                        self.files = match self.scan_dir() {
+                            Ok(f) => f,
+                            Err(err) => return Err(err)
+                        };
+                        Ok(())
+                    },
+                    Err(err) => Err(HostError::new(HostErrorType::DeleteFailed, Some(err)))
+                }
+            },
+            FsEntry::File(file) => {
+                f_path.push(file.name.clone());
+                // If file doesn't exist; return error
+                if ! f_path.exists() {
+                    return Err(HostError::new(HostErrorType::NoSuchFileOrDirectory, None))
+                }
+                // Remove
+                match std::fs::remove_file(f_path) {
+                    Ok(_) => {
+                        // Update dir
+                        self.files = match self.scan_dir() {
+                            Ok(f) => f,
+                            Err(err) => return Err(err)
+                        };
+                        Ok(())
+                    },
+                    Err(err) => Err(HostError::new(HostErrorType::DeleteFailed, Some(err)))
+                }
+            }
+        }
+    }
+
     /// ### open_file_read
     ///
     /// Open file for read
     pub fn open_file_read(&self, file: &Path) -> Result<File, HostError> {
         if !self.file_exists(file) {
-            return Err(HostError::NoSuchFileOrDirectory);
+            return Err(HostError::new(HostErrorType::NoSuchFileOrDirectory, None))
         }
         match OpenOptions::new().create(false).read(true).write(false).open(file) {
             Ok(f) => Ok(f),
-            Err(_) => Err(HostError::FileNotAccessible),
+            Err(err) => Err(HostError::new(HostErrorType::FileNotAccessible, Some(err))),
         }
     }
 
@@ -133,9 +230,9 @@ impl Localhost {
     pub fn open_file_write(&self, file: &Path) -> Result<File, HostError> {
         match OpenOptions::new().create(true).write(true).truncate(true).open(file) {
             Ok(f) => Ok(f),
-            Err(_) => match self.file_exists(file) {
-                true => Err(HostError::ReadonlyFile),
-                false => Err(HostError::FileNotAccessible),
+            Err(err) => match self.file_exists(file) {
+                true => Err(HostError::new(HostErrorType::ReadonlyFile, Some(err))),
+                false => Err(HostError::new(HostErrorType::FileNotAccessible, Some(err))),
             },
         }
     }
@@ -154,7 +251,7 @@ impl Localhost {
     fn scan_dir(&self) -> Result<Vec<FsEntry>, HostError> {
         let entries = match std::fs::read_dir(self.wrkdir.as_path()) {
             Ok(e) => e,
-            Err(_) => return Err(HostError::DirNotAccessible),
+            Err(err) => return Err(HostError::new(HostErrorType::DirNotAccessible, Some(err))),
         };
         let mut fs_entries: Vec<FsEntry> = Vec::new();
         for entry in entries {
@@ -301,6 +398,13 @@ mod tests {
     use std::os::unix::fs::{PermissionsExt, symlink};
 
     #[test]
+    fn test_host_error_new() {
+        let error: HostError = HostError::new(HostErrorType::CouldNotCreateFile, None);
+        assert_eq!(error.error, HostErrorType::CouldNotCreateFile);
+        assert!(error.ioerr.is_none());
+    }
+
+    #[test]
     #[cfg(any(unix, macos, linux))]
     fn test_host_localhost_new() {
         let host: Localhost = Localhost::new(PathBuf::from("/bin")).ok().unwrap();
@@ -444,23 +548,65 @@ mod tests {
         let files: Vec<FsEntry> = host.list_dir();
         println!("Entries {:?}", files);
         // Verify files
-        let foo_file: &FsEntry = files.get(0).unwrap();
-        match foo_file {
-            FsEntry::File(foo_file) => {
-                assert_eq!(foo_file.name, String::from("foo.txt"));
-                assert!(foo_file.symlink.is_none());
+        let file_0: &FsEntry = files.get(0).unwrap();
+        match file_0 {
+            FsEntry::File(file_0) => {
+                if file_0.name == String::from("foo.txt") {
+                    assert!(file_0.symlink.is_none());
+                } else {
+                    assert_eq!(*file_0.symlink.as_ref().unwrap(), PathBuf::from(format!("{}/foo.txt", tmpdir.path().display())));
+                }
             },
-            _ => panic!("expected entry 0 to be file: {:?}", foo_file)
+            _ => panic!("expected entry 0 to be file: {:?}", file_0)
         };
         // Verify simlink
-        let bar_file: &FsEntry = files.get(1).unwrap();
-        match bar_file {
-            FsEntry::File(bar_file) => {
-                assert_eq!(bar_file.name, String::from("bar.txt"));
-                assert_eq!(*bar_file.symlink.as_ref().unwrap(), PathBuf::from(format!("{}/foo.txt", tmpdir.path().display())));
+        let file_1: &FsEntry = files.get(1).unwrap();
+        match file_1 {
+            FsEntry::File(file_1) => {
+                if file_1.name == String::from("bar.txt") {
+                    assert_eq!(*file_1.symlink.as_ref().unwrap(), PathBuf::from(format!("{}/foo.txt", tmpdir.path().display())));
+                } else {
+                    assert!(file_1.symlink.is_none());
+                }
             },
-            _ => panic!("expected entry 1 to be file: {:?}", bar_file)
+            _ => panic!("expected entry 0 to be file: {:?}", file_1)
         };
+    }
+
+    #[test]
+    #[cfg(any(unix, macos, linux))]
+    fn test_host_localhost_mkdir() {
+        let tmpdir: tempfile::TempDir = tempfile::TempDir::new().unwrap();
+        let mut host: Localhost = Localhost::new(PathBuf::from(tmpdir.path())).ok().unwrap();
+        let files: Vec<FsEntry> = host.list_dir();
+        assert_eq!(files.len(), 0); // There should be 0 files now
+        assert!(host.mkdir(String::from("test_dir")).is_ok());
+        let files: Vec<FsEntry> = host.list_dir();
+        assert_eq!(files.len(), 1); // There should be 1 file now
+        // Try to re-create directory
+        assert!(host.mkdir(String::from("test_dir")).is_err())
+    }
+
+    #[test]
+    #[cfg(any(unix, macos, linux))]
+    fn test_host_localhost_remove() {
+        let tmpdir: tempfile::TempDir = tempfile::TempDir::new().unwrap();
+        // Create sample file
+        assert!(File::create(format!("{}/foo.txt", tmpdir.path().display()).as_str()).is_ok());
+        let mut host: Localhost = Localhost::new(PathBuf::from(tmpdir.path())).ok().unwrap();
+        let files: Vec<FsEntry> = host.list_dir();
+        assert_eq!(files.len(), 1); // There should be 1 file now
+        // Remove file
+        assert!(host.remove(files.get(0).unwrap()).is_ok());
+        // There should be 0 files now
+        let files: Vec<FsEntry> = host.list_dir();
+        assert_eq!(files.len(), 0); // There should be 0 files now
+        // Create directory
+        assert!(host.mkdir(String::from("test_dir")).is_ok());
+        // Delete directory
+        let files: Vec<FsEntry> = host.list_dir();
+        assert_eq!(files.len(), 1); // There should be 1 file now
+        assert!(host.remove(files.get(0).unwrap()).is_ok());
     }
 
     /// ### create_sample_file

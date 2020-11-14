@@ -29,6 +29,11 @@ extern crate getopts;
 use getopts::Options;
 use std::env;
 
+// Include
+mod filetransfer;
+mod fs;
+mod host;
+
 /// ### print_usage
 ///
 /// Print usage
