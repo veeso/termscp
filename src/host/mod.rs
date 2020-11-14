@@ -121,12 +121,7 @@ impl Localhost {
         if !self.file_exists(file) {
             return Err(HostError::NoSuchFileOrDirectory);
         }
-        match OpenOptions::new()
-            .create(false)
-            .read(true)
-            .write(false)
-            .open(file)
-        {
+        match OpenOptions::new().create(false).read(true).write(false).open(file) {
             Ok(f) => Ok(f),
             Err(_) => Err(HostError::FileNotAccessible),
         }
@@ -136,12 +131,7 @@ impl Localhost {
     ///
     /// Open file for write
     pub fn open_file_write(&self, file: &Path) -> Result<File, HostError> {
-        match OpenOptions::new()
-            .create(true)
-            .write(true)
-            .truncate(true)
-            .open(file)
-        {
+        match OpenOptions::new().create(true).write(true).truncate(true).open(file) {
             Ok(f) => Ok(f),
             Err(_) => match self.file_exists(file) {
                 true => Err(HostError::ReadonlyFile),
@@ -171,7 +161,6 @@ impl Localhost {
             if let Ok(entry) = entry {
                 let path: PathBuf = entry.path();
                 let attr: Metadata = fs::metadata(path.clone()).unwrap();
-                let is_symlink: bool = attr.file_type().is_symlink();
                 // Get user stuff
                 let user: Option<String> = match get_user_by_uid(attr.uid()) {
                     Some(user) => Some(String::from(user.name().to_str().unwrap_or(""))),
@@ -193,15 +182,9 @@ impl Localhost {
                             last_access_time: attr.accessed().unwrap_or(SystemTime::UNIX_EPOCH),
                             creation_time: attr.created().unwrap_or(SystemTime::UNIX_EPOCH),
                             readonly: attr.permissions().readonly(),
-                            symlink: match is_symlink {
-                                true => {
-                                    // Read link
-                                    match fs::read_link(path) {
-                                        Ok(p) => Some(p),
-                                        Err(_) => None,
-                                    }
-                                }
-                                false => None,
+                            symlink: match fs::read_link(path) {
+                                Ok(p) => Some(p),
+                                Err(_) => None,
                             },
                             user: user,
                             group: group,
@@ -222,15 +205,9 @@ impl Localhost {
                             readonly: attr.permissions().readonly(),
                             size: attr.len() as usize,
                             ftype: extension,
-                            symlink: match is_symlink {
-                                true => {
-                                    // Read link
-                                    match fs::read_link(path) {
-                                        Ok(p) => Some(p),
-                                        Err(_) => None,
-                                    }
-                                }
-                                false => None,
+                            symlink: match fs::read_link(path) {
+                                Ok(p) => Some(p),
+                                Err(_) => None,
                             },
                             user: user,
                             group: group,
@@ -318,9 +295,10 @@ mod tests {
 
     use super::*;
     use std::io::Write;
+    use std::fs::File;
 
     #[cfg(any(unix, macos, linux))]
-    use std::os::unix::fs::PermissionsExt;
+    use std::os::unix::fs::{PermissionsExt, symlink};
 
     #[test]
     #[cfg(any(unix, macos, linux))]
@@ -381,8 +359,8 @@ mod tests {
     #[test]
     #[cfg(any(unix, macos, linux))]
     fn test_host_localhost_change_dir() {
-        let mut host: Localhost = Localhost::new(PathBuf::from("/usr")).ok().unwrap();
-        let new_dir: PathBuf = PathBuf::from("/usr");
+        let mut host: Localhost = Localhost::new(PathBuf::from("/dev")).ok().unwrap();
+        let new_dir: PathBuf = PathBuf::from("/dev");
         assert!(host.change_wrkdir(new_dir.clone()).is_ok());
         // Verify new files
         // Scan dir
@@ -451,6 +429,38 @@ mod tests {
         fs::set_permissions(file.path(), PermissionsExt::from_mode(0o444)).unwrap();
         //fs::set_permissions(file.path(), perms)?;
         assert!(host.open_file_write(file.path()).is_err());
+    }
+    
+    #[cfg(any(unix, macos, linux))]
+    #[test]
+    fn test_host_localhost_symlinks() {
+        let tmpdir: tempfile::TempDir = tempfile::TempDir::new().unwrap();
+        // Create sample file
+        assert!(File::create(format!("{}/foo.txt", tmpdir.path().display()).as_str()).is_ok());
+        // Create symlink
+        assert!(symlink(format!("{}/foo.txt", tmpdir.path().display()), format!("{}/bar.txt", tmpdir.path().display())).is_ok());
+        // Get dir
+        let host: Localhost = Localhost::new(PathBuf::from(tmpdir.path())).ok().unwrap();
+        let files: Vec<FsEntry> = host.list_dir();
+        println!("Entries {:?}", files);
+        // Verify files
+        let foo_file: &FsEntry = files.get(0).unwrap();
+        match foo_file {
+            FsEntry::File(foo_file) => {
+                assert_eq!(foo_file.name, String::from("foo.txt"));
+                assert!(foo_file.symlink.is_none());
+            },
+            _ => panic!("expected entry 0 to be file: {:?}", foo_file)
+        };
+        // Verify simlink
+        let bar_file: &FsEntry = files.get(1).unwrap();
+        match bar_file {
+            FsEntry::File(bar_file) => {
+                assert_eq!(bar_file.name, String::from("bar.txt"));
+                assert_eq!(*bar_file.symlink.as_ref().unwrap(), PathBuf::from(format!("{}/foo.txt", tmpdir.path().display())));
+            },
+            _ => panic!("expected entry 1 to be file: {:?}", bar_file)
+        };
     }
 
     /// ### create_sample_file

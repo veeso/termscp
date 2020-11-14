@@ -30,7 +30,7 @@ use std::time::SystemTime;
 /// 
 /// FsEntry represents a generic entry in a directory
 
-#[derive(Clone)]
+#[derive(Clone, std::fmt::Debug)]
 pub enum FsEntry {
     Directory(FsDirectory),
     File(FsFile)
@@ -40,7 +40,7 @@ pub enum FsEntry {
 ///
 /// Directory provides an interface to file system directories
 
-#[derive(Clone)]
+#[derive(Clone, std::fmt::Debug)]
 pub struct FsDirectory {
     pub name: String,
     pub last_change_time: SystemTime,
@@ -57,7 +57,7 @@ pub struct FsDirectory {
 ///
 /// FsFile provides an interface to file system files
 
-#[derive(Clone)]
+#[derive(Clone, std::fmt::Debug)]
 pub struct FsFile {
     pub name: String,
     pub last_change_time: SystemTime,
