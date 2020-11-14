@@ -3,20 +3,20 @@ os: linux
 dist: trusty
 cache: cargo
 rust:
-  - stable
-  - beta
-  - nightly
+- stable
+- beta
+- nightly
 jobs:
   allow_failures:
-    - rust: nightly
+  - rust: nightly
 before_cache: |
   if [[ "$TRAVIS_RUST_VERSION" == stable ]]; then
     cargo install cargo-tarpaulin
   fi
 script:
-  - cargo clean
-  - cargo build --verbose --all
-  - cargo test --lib --verbose -- --test-threads 1
+- cargo clean
+- cargo build --verbose --all
+- cargo test --lib --verbose -- --test-threads 1
 after_success: |
   if [[ "$TRAVIS_RUST_VERSION" == stable ]]; then
     cargo tarpaulin --out Xml --ignore-tests -- --test-threads 1
@@ -25,7 +25,7 @@ after_success: |
 deploy:
   provider: cargo
   token:
-    secure: kbZJ1CW2+QAk2u4UWOJehF0gliR/l5JeVmewf/eXKnGttdcJrkIQ70D0F+Rhu4/ZJOlvNpTFLpt3MIKyL3LnjbwO9Q4pDsCjSCRnswz/UkRfzoaY1sL07sesAdEnGCDTwdSEueL1dpmlC46wPbe/7ErnPOxFiMgtR+nX6X6O8u8shSs2T2B5ltnatHo9+pnY28u+EDg4kzdGkP63kt66x5npkNVD3IXuRXIh02YAYzuUnZbMm7vmbg5DdefyYfYvCaHW3udL344iBtxDybYlw+C+TSlEUQ8o/lIC9dXg7RFgsHrXgiwo5S9qyUr+Vuq0VdYQe5qW885hOqxVLBWyGImka/gRFcRRfgoD2WUIF1WWvivqV2iDXF6KzYG4iikPlbbF2+zssfVkxCAQUILn7nFxxKtQzeVfogP2tW1U+UfmIyRdnpxRuV7SpfvUkNhYBQWG9Qv1hJ0gT4EH5HxKsyo3iRYF3Yfw6yRtzsjk0BAmqKz5sKNjubyd7y/s4uc61KR2xZnaw7ipIZ/NABLHqbahTPdreEW9SnysQOuWCgciTyMyiTMm08vPxIEDi770VXcvgrr662xTYJvb0+7yPcuL0uv2i9nfdl22/P9IpaGCSLl3HnUp0G8xxdcSD6vZ/6eMDZmye6Nlorg4RKvwVcpHzp8HaQ5lDpfKKmDo2GU=
+    secure: acAoN1qkR2ncFKu05ANviZLL2zgH9pburT1w8NeZHgWURDZYE4Ru8ye3LUdQCdwtzCIT04NZRbZwafRGI5/KbrquVzsxIRFVblRuNlRO2BHDP20V17sfAmdjZDm3jbU3DJ74mGuSlrOXCkkWSUR2Lye3Od0LbQ6F84G0UUFWpPJKjKlriRBYtzD/9RrvoNhbxd/4HpHeTNtO2+4djzupfsPj+VPWWvKrRpRxDcIYo1tYysm547Kvq5lUryF38s72nc0Zf/QCUV8gHxjN7TY1CK537l/FZ8FaRMV8jm4zaASOX0heDuBzt7DWyPHtLpOsLZx4Us26jZ4f3i3ZEVwFxJRcHena63NjiwGzp9JfIKQnL+k9fgtmGiqkBMBTB47ykVQa7Eiu0G4s9dF6rY/haY2JkRpNDc1Ge0uIxsF33a0bghHjnGfRtR1S+ZY+7YsGyNJJPX50azR/ZZcb3BeAEpmeADI+haNt66Seowj0fSBjsn8MdsEY/FBZuCQk0Bjd1HYw0C0hTyIqhOpAMnl2QluB7lD5PHBC6aKnHwwL7vd7B9ZjB2MIpu9UzY/YN9awi8Cr9DvuJaqRacxPusRm8lNzpQRVzBaTkUo4a3yu8bHs6eY/M5aK/0RGkuEQ8Zv/MnwbZskBX6VzUHDS3v9oly4Z2ArTHdVK/QpLh6s18aQ=
   on:
     tags: true
 notifications:
