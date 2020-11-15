@@ -46,7 +46,7 @@ It happens very often to me when using SCP at work to forget the path of a file 
 
 ## Installation
 
-If you're considering to install TermSCP I want to thank you 💛! I hope this project can be useful for you!  
+If you're considering to install TermSCP I want to thank you 💛 ! I hope this project can be useful for you!  
 If you want to contribute to this project, don't forget to check out our contribute guide. [Read More](CONTRIBUTING.md)
 
 ### Cargo
