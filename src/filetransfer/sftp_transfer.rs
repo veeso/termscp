@@ -470,6 +470,7 @@ impl FileTransfer for SftpFileTransfer {
 mod tests {
 
     use super::*;
+    use std::fs::OpenOptions;
 
     #[test]
     fn test_filetransfer_sftp_new() {
@@ -524,6 +525,60 @@ mod tests {
     }
 
     #[test]
+    fn test_filetransfer_sftp_cwd() {
+        let mut client: SftpFileTransfer = SftpFileTransfer::new();
+        assert!(client.connect(String::from("test.rebex.net"), 22, Some(String::from("demo")), Some(String::from("password"))).is_ok());
+        // Check session and sftp
+        assert!(client.session.is_some());
+        assert!(client.sftp.is_some());
+        assert_eq!(client.wrkdir, PathBuf::from("/"));
+        // Pwd
+        assert_eq!(client.wrkdir, client.pwd().ok().unwrap());
+        // Cwd
+        assert!(client.change_dir(PathBuf::from("pub/").as_path()).is_ok());
+        assert_eq!(client.wrkdir, PathBuf::from("/pub"));
+        // Disconnect
+        assert!(client.disconnect().is_ok());
+    }
+
+    #[test]
+    fn test_filetransfer_sftp_ls() {
+        let mut client: SftpFileTransfer = SftpFileTransfer::new();
+        assert!(client.connect(String::from("test.rebex.net"), 22, Some(String::from("demo")), Some(String::from("password"))).is_ok());
+        // Check session and sftp
+        assert!(client.session.is_some());
+        assert!(client.sftp.is_some());
+        assert_eq!(client.wrkdir, PathBuf::from("/"));
+        // List dir
+        let files: Vec<FsEntry> = client.list_dir(client.pwd().ok().unwrap().as_path()).ok().unwrap();
+        assert_eq!(files.len(), 3); // There are 3 files
+        // Disconnect
+        assert!(client.disconnect().is_ok());
+    }
+
+    #[test]
+    fn test_filetransfer_sftp_recv() {
+        let mut client: SftpFileTransfer = SftpFileTransfer::new();
+        assert!(client.connect(String::from("test.rebex.net"), 22, Some(String::from("demo")), Some(String::from("password"))).is_ok());
+        // Check session and sftp
+        assert!(client.session.is_some());
+        assert!(client.sftp.is_some());
+        assert_eq!(client.wrkdir, PathBuf::from("/"));
+        // Open dest file
+        let dst_file: tempfile::NamedTempFile = tempfile::NamedTempFile::new().unwrap();
+        let mut dst_file_hnd: File = OpenOptions::new().create(true).write(true).truncate(true).open(dst_file.path()).unwrap();
+        // Receive file
+        assert!(client.recv_file(PathBuf::from("readme.txt").as_path(), &mut dst_file_hnd, Some(progress_callback)).is_ok());
+        // Disconnect
+        assert!(client.disconnect().is_ok());
+    }
+    
+    // TODO: add errors tests
+
+    // NOTE: other functions doesn't work with this test SFTP server
+
+    /* NOTE: the server doesn't allow you to create directories
+    #[test]
     fn test_filetransfer_sftp_mkdir() {
         let mut client: SftpFileTransfer = SftpFileTransfer::new();
         assert!(client.connect(String::from("test.rebex.net"), 22, Some(String::from("demo")), Some(String::from("password"))).is_ok());
@@ -535,6 +590,11 @@ mod tests {
         assert_eq!(client.wrkdir, PathBuf::from("/foo"));
         // Disconnect
         assert!(client.disconnect().is_ok());
+    }
+    */
+
+    fn progress_callback(it: usize, max: usize) {
+        assert!(it <= max);
     }
 
 }
