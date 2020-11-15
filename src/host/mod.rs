@@ -654,6 +654,9 @@ mod tests {
         let files: Vec<FsEntry> = host.list_dir();
         assert_eq!(files.len(), 1); // There should be 0 files now
         assert_eq!(get_filename(files.get(0).unwrap()), String::from("bar.txt"));
+        // Fail
+        let bad_path: PathBuf = PathBuf::from("/asdailsjoidoewojdijow/ashdiuahu");
+        assert!(host.rename(files.get(0).unwrap(), bad_path.as_path()).is_err());
     }
 
     /// ### create_sample_file
