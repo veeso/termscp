@@ -465,3 +465,17 @@ impl FileTransfer for SftpFileTransfer {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+
+    // TODO: use test.rebex.net with user 'demo' and password 'password'
+
+    #[test]
+    fn test_filetransfer_sftp_new() {
+
+    }
+
+}
