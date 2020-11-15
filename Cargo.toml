@@ -17,6 +17,7 @@ readme = "README.md"
 [dependencies]
 crossterm = "0.18.2"
 getopts = "0.2.21"
+ssh2 = "0.8.2"
 tui = { version = "0.12.0", features = ["crossterm"], default-features = false }
 users = "0.11.0"
 

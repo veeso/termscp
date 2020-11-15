@@ -23,10 +23,16 @@
 *
 */
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::fs::File;
 
 use crate::fs::FsEntry;
+
+// Transfers
+pub mod sftp_transfer;
+
+// Types
+type ProgressCallback = fn(bytes_written: usize, size: usize);
 
 /// ## FileTransferProtocol
 ///
@@ -34,7 +40,6 @@ use crate::fs::FsEntry;
 
 #[derive(PartialEq, Clone)]
 pub enum FileTransferProtocol {
-    Scp,
     Sftp,
     Ftps,
 }
@@ -43,15 +48,17 @@ pub enum FileTransferProtocol {
 ///
 /// FileTransferError defines the possible errors available for a file transfer
 
-#[derive(PartialEq, Clone)]
 pub enum FileTransferError {
-    ConnectionError,
-    BadAddress,
     AuthenticationFailed,
-    NoSuchFileOrDirectory,
+    BadAddress,
+    ConnectionError,
     DirStatFailed,
+    FileCreateDenied,
     FileReadonly,
-    DownloadError,
+    IoErr(std::io::Error),
+    NoSuchFileOrDirectory,
+    ProtocolError,
+    UninitializedSession,
     UnknownError,
 }
 
@@ -83,13 +90,13 @@ pub trait FileTransfer {
     /// 
     /// Change working directory
 
-    fn change_dir(&mut self, dir: PathBuf) -> Result<PathBuf, FileTransferError>;
+    fn change_dir(&mut self, dir: &Path) -> Result<PathBuf, FileTransferError>;
 
     /// ### list_dir
     /// 
     /// List directory entries
 
-    fn list_dir(&self) -> Result<Vec<FsEntry>, FileTransferError>;
+    fn list_dir(&self, path: &Path) -> Result<Vec<FsEntry>, FileTransferError>;
 
     /// ### mkdir
     /// 
@@ -106,11 +113,11 @@ pub trait FileTransfer {
     /// Send file to remote
     /// File name is referred to the name of the file as it will be saved
     /// Data contains the file data
-    fn send_file(&self, file_name: PathBuf, file: File) -> Result<(), FileTransferError>;
+    fn send_file(&self, file_name: &Path, file: &mut File, prog_cb: Option<ProgressCallback>) -> Result<(), FileTransferError>;
 
     /// ### recv_file
     /// 
     /// Receive file from remote with provided name
-    fn recv_file(&self, file_name: PathBuf) -> Result<Vec<u8>, FileTransferError>;
+    fn recv_file(&self, file_name: &Path, dest_file: &mut File, prog_cb: Option<ProgressCallback>) -> Result<(), FileTransferError>;
 
 }
