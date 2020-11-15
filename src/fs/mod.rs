@@ -43,6 +43,7 @@ pub enum FsEntry {
 #[derive(Clone, std::fmt::Debug)]
 pub struct FsDirectory {
     pub name: String,
+    pub abs_path: PathBuf,
     pub last_change_time: SystemTime,
     pub last_access_time: SystemTime,
     pub creation_time: SystemTime,
@@ -60,6 +61,7 @@ pub struct FsDirectory {
 #[derive(Clone, std::fmt::Debug)]
 pub struct FsFile {
     pub name: String,
+    pub abs_path: PathBuf,
     pub last_change_time: SystemTime,
     pub last_access_time: SystemTime,
     pub creation_time: SystemTime,
