@@ -31,8 +31,6 @@ use std::time::SystemTime;
 extern crate users;
 #[cfg(any(unix, macos, linux))]
 use std::os::unix::fs::MetadataExt;
-#[cfg(any(unix, macos, linux))]
-// use users::{get_group_by_gid, get_user_by_uid};
 
 // Locals
 use crate::fs::{FsDirectory, FsEntry, FsFile};
@@ -350,7 +348,7 @@ impl Localhost {
     fn scan_dir(&self) -> Result<Vec<FsEntry>, HostError> {
         let entries = match std::fs::read_dir(self.wrkdir.as_path()) {
             Ok(e) => e,
-            Err(_) => return Err(HostError::DirNotAccessible),
+            Err(err) => return Err(HostError::new(HostErrorType::DirNotAccessible, Some(err))),
         };
         let mut fs_entries: Vec<FsEntry> = Vec::new();
         for entry in entries {
