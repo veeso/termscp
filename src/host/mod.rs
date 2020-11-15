@@ -211,6 +211,27 @@ impl Localhost {
         }
     }
 
+    /// ### rename
+    /// 
+    /// Rename file or directory to new name
+    pub fn rename(&mut self, entry: &FsEntry, dst_path: &Path) -> Result<(), HostError> {
+        let abs_path: PathBuf = match entry {
+            FsEntry::Directory(dir) => dir.abs_path.clone(),
+            FsEntry::File(f) => f.abs_path.clone()
+        };
+        match std::fs::rename(abs_path.as_path(), dst_path) {
+            Ok(_) => {
+                // Scan dir
+                self.files = match self.scan_dir() {
+                    Ok(f) => f,
+                    Err(err) => return Err(err)
+                };
+                Ok(())
+            },
+            Err(err) => Err(HostError::new(HostErrorType::CouldNotCreateFile, Some(err)))
+        }
+    }
+
     /// ### open_file_read
     ///
     /// Open file for read
@@ -277,7 +298,7 @@ impl Localhost {
                         // Is dir
                         FsEntry::Directory(FsDirectory {
                             name: file_name,
-                            abs_path: path,
+                            abs_path: path.clone(),
                             last_change_time: attr.modified().unwrap_or(SystemTime::UNIX_EPOCH),
                             last_access_time: attr.accessed().unwrap_or(SystemTime::UNIX_EPOCH),
                             creation_time: attr.created().unwrap_or(SystemTime::UNIX_EPOCH),
@@ -299,7 +320,7 @@ impl Localhost {
                         };
                         FsEntry::File(FsFile {
                             name: file_name,
-                            abs_path: path,
+                            abs_path: path.clone(),
                             last_change_time: attr.modified().unwrap_or(SystemTime::UNIX_EPOCH),
                             last_access_time: attr.accessed().unwrap_or(SystemTime::UNIX_EPOCH),
                             creation_time: attr.created().unwrap_or(SystemTime::UNIX_EPOCH),
@@ -343,7 +364,7 @@ impl Localhost {
                         // Is dir
                         FsEntry::Directory(FsDirectory {
                             name: file_name,
-                            abs_path: path,
+                            abs_path: path.clone(),
                             last_change_time: attr.modified().unwrap_or(SystemTime::UNIX_EPOCH),
                             last_access_time: attr.accessed().unwrap_or(SystemTime::UNIX_EPOCH),
                             creation_time: attr.created().unwrap_or(SystemTime::UNIX_EPOCH),
@@ -362,7 +383,7 @@ impl Localhost {
                         };
                         FsEntry::File(FsFile {
                             name: file_name,
-                            abs_path: path,
+                            abs_path: path.clone(),
                             last_change_time: attr.modified().unwrap_or(SystemTime::UNIX_EPOCH),
                             last_access_time: attr.accessed().unwrap_or(SystemTime::UNIX_EPOCH),
                             creation_time: attr.created().unwrap_or(SystemTime::UNIX_EPOCH),
@@ -615,6 +636,26 @@ mod tests {
         assert!(host.remove(files.get(0).unwrap()).is_ok());
     }
 
+    #[test]
+    #[cfg(any(unix, macos, linux))]
+    fn test_host_localhost_rename() {
+        let tmpdir: tempfile::TempDir = tempfile::TempDir::new().unwrap();
+        // Create sample file
+        let src_path: PathBuf = PathBuf::from(format!("{}/foo.txt", tmpdir.path().display()).as_str());
+        assert!(File::create(src_path.as_path()).is_ok());
+        let mut host: Localhost = Localhost::new(PathBuf::from(tmpdir.path())).ok().unwrap();
+        let files: Vec<FsEntry> = host.list_dir();
+        assert_eq!(files.len(), 1); // There should be 1 file now
+        assert_eq!(get_filename(files.get(0).unwrap()), String::from("foo.txt"));
+        // Rename file
+        let dst_path: PathBuf = PathBuf::from(format!("{}/bar.txt", tmpdir.path().display()).as_str());
+        assert!(host.rename(files.get(0).unwrap(), dst_path.as_path()).is_ok());
+        // There should be still 1 file now, but named bar.txt
+        let files: Vec<FsEntry> = host.list_dir();
+        assert_eq!(files.len(), 1); // There should be 0 files now
+        assert_eq!(get_filename(files.get(0).unwrap()), String::from("bar.txt"));
+    }
+
     /// ### create_sample_file
     ///
     /// Create a sample file
@@ -628,5 +669,12 @@ mod tests {
         )
         .unwrap();
         tmpfile
+    }
+
+    fn get_filename(entry: &FsEntry) -> String {
+        match entry {
+            FsEntry::Directory(d) => d.name.clone(),
+            FsEntry::File(f) => f.name.clone()
+        }
     }
 }
