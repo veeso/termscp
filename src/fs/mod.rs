@@ -49,8 +49,8 @@ pub struct FsDirectory {
     pub creation_time: SystemTime,
     pub readonly: bool,
     pub symlink: Option<PathBuf>,       // UNIX only
-    pub user: Option<String>,           // UNIX only
-    pub group: Option<String>,          // UNIX only
+    pub user: Option<u32>,           // UNIX only
+    pub group: Option<u32>,          // UNIX only
     pub unix_pex: Option<(u8, u8, u8)>, // UNIX only
 }
 
@@ -69,7 +69,7 @@ pub struct FsFile {
     pub ftype: Option<String>, // File type
     pub readonly: bool,
     pub symlink: Option<PathBuf>,       // UNIX only
-    pub user: Option<String>,           // UNIX only
-    pub group: Option<String>,          // UNIX only
+    pub user: Option<u32>,           // UNIX only
+    pub group: Option<u32>,          // UNIX only
     pub unix_pex: Option<(u8, u8, u8)>, // UNIX only
 }
