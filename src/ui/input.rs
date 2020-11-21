@@ -42,10 +42,10 @@ impl InputHandler {
         InputHandler {}
     }
 
-    /// ### fetch_messages
+    /// ### fetch_events
     ///
     /// Check if new events have been received from handler
-    pub(crate) fn fetch_messages(&self) -> Result<Vec<Event>, ()> {
+    pub(crate) fn fetch_events(&self) -> Result<Vec<Event>, ()> {
         let mut inbox: Vec<Event> = Vec::new();
         loop {
             if let Ok(available) = poll(Duration::from_millis(10)) {

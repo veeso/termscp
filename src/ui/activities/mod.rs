@@ -24,9 +24,11 @@
 *
 */
 
+// Locals
 use super::context::Context;
 
 // Activities
+pub mod auth_activity;
 
 // Activity trait
 
