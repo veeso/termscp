@@ -25,60 +25,21 @@
 
 extern crate crossterm;
 
-// Deps
-use crossterm::event::{read, Event};
-use std::sync::{mpsc, Arc, Mutex};
-use std::thread;
+use crossterm::event::{poll, read, Event};
 use std::time::Duration;
 
 /// ## InputHandler
 ///
 /// InputHandler is the struct which runs a thread which waits for
 /// input events from the user and reports them through a receiver
-pub(crate) struct InputHandler {
-    running: Arc<Mutex<bool>>,
-    join_hnd: Option<thread::JoinHandle<()>>,
-    receiver: mpsc::Receiver<Event>,
-}
+pub(crate) struct InputHandler {}
 
 impl InputHandler {
     /// ### InputHandler
     ///
     ///
     pub(crate) fn new() -> InputHandler {
-        let (thread_sender, client_receiver) = mpsc::channel();
-        let client_running = Arc::new(Mutex::new(false));
-        let thread_running = Arc::clone(&client_running);
-        let join_hnd = thread::spawn(move || {
-            InputHandler::thread_run(thread_sender, thread_running);
-        });
-        InputHandler {
-            running: client_running,
-            join_hnd: Some(join_hnd),
-            receiver: client_receiver,
-        }
-    }
-
-    /// ### stop
-    ///
-    /// Stop InputHandler
-    pub(crate) fn stop(&mut self) {
-        if self.join_hnd.is_some() {
-            //Set join to true
-            {
-                // Set running to false
-                {
-                    let mut running = self.running.lock().unwrap();
-                    *running = false;
-                }
-                // Join
-                self.join_hnd
-                    .take()
-                    .map(thread::JoinHandle::join)
-                    .unwrap()
-                    .unwrap();
-            }
-        }
+        InputHandler {}
     }
 
     /// ### fetch_messages
@@ -87,43 +48,40 @@ impl InputHandler {
     pub(crate) fn fetch_messages(&self) -> Result<Vec<Event>, ()> {
         let mut inbox: Vec<Event> = Vec::new();
         loop {
-            match self.receiver.try_recv() {
-                Ok(message) => inbox.push(message),
-                Err(err) => match err {
-                    mpsc::TryRecvError::Empty => break,
-                    _ => return Err(()),
-                },
+            if let Ok(available) = poll(Duration::from_millis(10)) {
+                match available {
+                    true => {
+                        // Read event
+                        if let Ok(ev) = read() {
+                            inbox.push(ev);
+                        } else {
+                            return Err(());
+                        }
+                    }
+                    false => break,
+                }
+            } else {
+                return Err(());
             }
         }
         Ok(inbox)
     }
+}
 
-    // ### run
-    ///
-    /// Run method for thread
-    fn thread_run(sender: mpsc::Sender<Event>, running: Arc<Mutex<bool>>) {
-        {
-            let mut running = running.lock().unwrap();
-            *running = true;
-        }
-        loop {
-            // Check if running is false
-            {
-                let running = running.lock().unwrap();
-                if *running == false {
-                    break;
-                }
-            }
-            // Fetch events
-            if let Ok(ev) = read() {
-                // Send event
-                if let Err(_) = sender.send(ev) {
-                    // The counterpart has died
-                    break;
-                }
-            }
-            // Sleep
-            thread::sleep(Duration::from_millis(50));
-        }
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+
+    #[test]
+    fn test_ui_input_new() {
+        let input_hnd: InputHandler = InputHandler::new();
+    }
+
+    #[test]
+    fn test_ui_input_fetch() {
+        let input_hnd: InputHandler = InputHandler::new();
+        // Try recv
+        assert_eq!(input_hnd.fetch_messages().ok().unwrap().len(), 0);
     }
 }
