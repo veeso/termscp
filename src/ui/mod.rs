@@ -24,5 +24,6 @@
 */
 
 // Modules
+pub mod activities;
 pub mod context;
 pub(crate) mod input;
