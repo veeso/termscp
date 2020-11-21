@@ -80,6 +80,11 @@ pub trait FileTransfer {
 
     fn disconnect(&mut self) -> Result<(), FileTransferError>;
 
+    /// ### is_connected
+    /// 
+    /// Indicates whether the client is connected to remote
+    fn is_connected(&self) -> bool;
+
     /// ### pwd
     /// 
     /// Print working directory

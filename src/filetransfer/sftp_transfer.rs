@@ -177,6 +177,13 @@ impl FileTransfer for SftpFileTransfer {
         }
     }
 
+    /// ### is_connected
+    /// 
+    /// Indicates whether the client is connected to remote
+    fn is_connected(&self) -> bool {
+        self.session.is_some()
+    }
+
     /// ### pwd
     ///
     /// Print working directory
@@ -487,11 +494,13 @@ mod tests {
         assert!(client.session.is_none());
         assert!(client.sftp.is_none());
         assert_eq!(client.wrkdir, PathBuf::from("~"));
+        assert_eq!(client.is_connected(), false);
     }
 
     #[test]
     fn test_filetransfer_sftp_connect() {
         let mut client: SftpFileTransfer = SftpFileTransfer::new();
+        assert_eq!(client.is_connected(), false);
         assert!(client
             .connect(
                 String::from("test.rebex.net"),
@@ -504,8 +513,10 @@ mod tests {
         assert!(client.session.is_some());
         assert!(client.sftp.is_some());
         assert_eq!(client.wrkdir, PathBuf::from("/"));
+        assert_eq!(client.is_connected(), true);
         // Disconnect
         assert!(client.disconnect().is_ok());
+        assert_eq!(client.is_connected(), false);
     }
 
     #[test]
