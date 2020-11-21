@@ -24,9 +24,21 @@
 */
 
 // Dependencies
+extern crate crossterm;
+extern crate tui;
+
+// Locals
 use super::input::InputHandler;
 use crate::filetransfer::FileTransfer;
 use crate::host::Localhost;
+
+// Includes
+use crossterm::execute;
+use crossterm::event::EnableMouseCapture;
+use crossterm::terminal::{EnterAlternateScreen};
+use std::io::{stdout, Stdout, Write};
+use tui::backend::CrosstermBackend;
+use tui::Terminal;
 
 /// ## Context
 ///
@@ -35,6 +47,7 @@ pub struct Context {
     pub scp_client: Box<dyn FileTransfer>,
     pub local: Localhost,
     pub(crate) input_hnd: InputHandler,
+    pub(crate) terminal: Terminal<CrosstermBackend<Stdout>>,
 }
 
 impl Context {
@@ -42,10 +55,14 @@ impl Context {
     ///
     /// Instantiates a new Context
     pub fn new(scp_client: Box<dyn FileTransfer>, local: Localhost) -> Context {
+        // Create terminal
+        let mut stdout = stdout();
+        assert!(execute!(stdout, EnterAlternateScreen, EnableMouseCapture).is_ok());
         Context {
             scp_client: scp_client,
             local: local,
             input_hnd: InputHandler::new(),
+            terminal: Terminal::new(CrosstermBackend::new(stdout)).unwrap()
         }
     }
 }
