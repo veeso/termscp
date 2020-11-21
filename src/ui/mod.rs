@@ -1,3 +1,7 @@
+//! ## Ui
+//!
+//! `ui` is the module which provides all the functionalities related to the UI
+
 /*
 *
 *   Copyright (C) 2020 Christian Visintin - christian.visintin1997@gmail.com
@@ -19,7 +23,4 @@
 *
 */
 
-pub mod filetransfer;
-pub mod fs;
-pub mod host;
-pub mod ui;
+pub(crate) mod input;
