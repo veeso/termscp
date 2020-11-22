@@ -23,3 +23,4 @@ pub mod filetransfer;
 pub mod fs;
 pub mod host;
 pub mod ui;
+pub mod utils;
