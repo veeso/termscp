@@ -67,7 +67,7 @@ pub struct AuthActivity {
     pub username: String,
     pub password: String,
     pub form_submit: bool, // becomes true after user has submitted fields
-    pub esc_called: bool, // Becomes true if user has pressed esc
+    pub esc_called: bool,  // Becomes true if user has pressed esc
     selected_field: InputField,
 }
 
@@ -113,29 +113,59 @@ impl Activity for AuthActivity {
                         match key.code {
                             KeyCode::Esc => {
                                 self.esc_called = true;
-                                break
-                            },
+                                break;
+                            }
                             KeyCode::Enter => {
-                                // TODO: handle submit (check form)
-                            },
+                                // Handle submit
+                                // Check form
+                                // Check address
+                                if self.address.len() == 0 {
+                                    popup = Some(String::from("Invalid address"));
+                                    break;
+                                }
+                                // Check port
+                                // Convert port to number
+                                match self.port.parse::<usize>() {
+                                    Ok(val) => {
+                                        if val > 65535 {
+                                            popup = Some(String::from(
+                                                "Specified port must be in range 0-65535",
+                                            ));
+                                            break;
+                                        }
+                                    }
+                                    Err(_) => {
+                                        popup =
+                                            Some(String::from("Specified port is not a number"));
+                                        break;
+                                    }
+                                }
+                                // Check username
+                                if self.username.len() == 0 {
+                                    popup = Some(String::from("Invalid username"));
+                                    break;
+                                }
+                                // Everything OK, set enter
+                                self.form_submit = true;
+                            }
                             KeyCode::Backspace => {
                                 // Pop last char
                                 match self.selected_field {
                                     InputField::Address => {
                                         let _ = self.address.pop();
-                                    },
+                                    }
                                     InputField::Password => {
                                         let _ = self.password.pop();
-                                    },
+                                    }
                                     InputField::Username => {
                                         let _ = self.username.pop();
-                                    },
+                                    }
                                     InputField::Port => {
                                         let _ = self.port.pop();
-                                    },
+                                    }
                                     _ => { /* Nothing to do */ }
                                 };
-                            },
+                            }
                             KeyCode::Up => {
                                 // Move item up
                                 self.selected_field = match self.selected_field {
@@ -145,7 +175,7 @@ impl Activity for AuthActivity {
                                     InputField::Username => InputField::Protocol,
                                     InputField::Password => InputField::Username,
                                 }
-                            },
+                            }
                             KeyCode::Down => {
                                 // Move item down
                                 self.selected_field = match self.selected_field {
@@ -155,7 +185,7 @@ impl Activity for AuthActivity {
                                     InputField::Username => InputField::Password,
                                     InputField::Password => InputField::Password, // End of list
                                 }
-                            },
+                            }
                             KeyCode::Char(ch) => {
                                 match self.selected_field {
                                     InputField::Address => self.address.push(ch),
@@ -166,10 +196,10 @@ impl Activity for AuthActivity {
                                         if ch.is_numeric() {
                                             self.port.push(ch);
                                         }
-                                    },
+                                    }
                                     _ => { /* Nothing to do */ }
                                 }
-                            },
+                            }
                             KeyCode::Left => {
                                 // If current field is Protocol handle event... (move element left)
                                 if self.selected_field == InputField::Protocol {
@@ -178,7 +208,7 @@ impl Activity for AuthActivity {
                                         ScpProtocol::Ftp => ScpProtocol::Sftp, // End of list
                                     }
                                 }
-                            },
+                            }
                             KeyCode::Right => {
                                 // If current field is Protocol handle event... ( move element right )
                                 if self.selected_field == InputField::Protocol {
@@ -187,7 +217,7 @@ impl Activity for AuthActivity {
                                         ScpProtocol::Ftp => ScpProtocol::Ftp, // End of list
                                     }
                                 }
-                            },
+                            }
                             _ => { /* Nothing to do */ }
                         }
                     }
