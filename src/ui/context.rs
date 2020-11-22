@@ -74,6 +74,7 @@ impl Drop for Context {
     }
 }
 
+/*
 #[cfg(test)]
 mod tests {
 
@@ -104,3 +105,4 @@ mod tests {
         Box::new(sftp_client)
     }
 }
+*/
