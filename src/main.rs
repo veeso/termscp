@@ -24,6 +24,7 @@ const TERMSCP_AUTHORS: &'static str = env!("CARGO_PKG_AUTHORS");
 
 // Crates
 extern crate getopts;
+extern crate rpassword;
 
 // External libs
 use getopts::Options;
@@ -41,7 +42,7 @@ mod utils;
 
 // namespaces
 use activity_manager::{ActivityManager, NextActivity};
-use filetransfer::{FileTransfer, sftp_transfer::SftpFileTransfer};
+use filetransfer::{sftp_transfer::SftpFileTransfer, FileTransfer};
 use ui::activities::auth_activity::ScpProtocol;
 
 /// ### print_usage
@@ -132,7 +133,7 @@ fn main() {
                 port = portn;
                 protocol = proto;
                 username = user;
-            },
+            }
             Err(err) => {
                 eprintln!("Bad address option: {}", err);
                 print_usage(opts);
@@ -152,7 +153,7 @@ fn main() {
     // Get working directory
     let wrkdir: PathBuf = match env::current_dir() {
         Ok(dir) => dir,
-        Err(_) => PathBuf::from("/")
+        Err(_) => PathBuf::from("/"),
     };
     // Create activity manager
     let mut manager: ActivityManager = match ActivityManager::new(file_transfer, &wrkdir) {
@@ -165,6 +166,20 @@ fn main() {
     // Initialize client if necessary
     let mut start_activity: NextActivity = NextActivity::Authentication;
     if let Some(address) = address {
+        // Ask password
+        password = match rpassword::read_password_from_tty(Some("Password: ")) {
+            Ok(p) => {
+                if p.len() > 0 {
+                    Some(p)
+                } else {
+                    None
+                }
+            }
+            Err(_) => {
+                eprintln!("Could not read password from prompt");
+                std::process::exit(255);
+            }
+        };
         // In this case the first activity will be FileTransfer
         start_activity = NextActivity::FileTransfer;
         manager.set_filetransfer_params(address, port, protocol, username, password);
