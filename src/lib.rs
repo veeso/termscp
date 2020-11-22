@@ -19,6 +19,7 @@
 *
 */
 
+pub mod activity_manager;
 pub mod filetransfer;
 pub mod fs;
 pub mod host;

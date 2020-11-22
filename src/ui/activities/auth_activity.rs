@@ -33,9 +33,14 @@ use super::{Activity, Context};
 // Includes
 use crossterm::event::Event as InputEvent;
 use crossterm::event::{KeyCode, KeyEvent};
-use tui::layout;
-use tui::style;
-use tui::widgets;
+use tui::{
+    backend::CrosstermBackend,
+    layout::{Constraint, Direction, Layout},
+    style::{Color, Modifier, Style},
+    text::{Span, Spans, Text},
+    widgets::{Block, Borders, List, ListItem, Paragraph},
+    Terminal,
+};
 
 /// ### InputField
 ///
@@ -52,6 +57,7 @@ enum InputField {
 /// ### ScpProtocol
 ///
 /// ScpProtocol describes the communication protocol selected by the user to communicate with the remote
+#[derive(std::cmp::PartialEq, std::fmt::Debug)]
 pub enum ScpProtocol {
     Sftp,
     Ftp,
@@ -147,6 +153,7 @@ impl Activity for AuthActivity {
                                 }
                                 // Everything OK, set enter
                                 self.form_submit = true;
+                                popup = Some(format!("Connecting to {}:{}...", self.address, self.port));
                             }
                             KeyCode::Backspace => {
                                 // Pop last char
@@ -225,7 +232,40 @@ impl Activity for AuthActivity {
                 }
             }
         }
-        // TODO: draw interface
+        // draw interface
+        context.terminal.draw(|f| {
+            let chunks = Layout::default()
+                .direction(Direction::Vertical)
+                .margin(2)
+                .constraints(
+                    [
+                        Constraint::Length(1),
+                        Constraint::Length(3),
+                        Constraint::Min(1),
+                    ]
+                    .as_ref(),
+                )
+                .split(f.size());
+            // Write header
+            let (header, h_style) = (
+                vec![
+                    Span::raw("Press "),
+                    Span::styled("<ESC>", Style::default().add_modifier(Modifier::BOLD)),
+                    Span::raw(" to exit, "),
+                    Span::styled("<UP,DOWN>", Style::default().add_modifier(Modifier::BOLD)),
+                    Span::raw(" to change input field,"),
+                    Span::styled("<ENTER>", Style::default().add_modifier(Modifier::BOLD)),
+                    Span::raw(" to submit form"),
+                ],
+                Style::default().add_modifier(Modifier::RAPID_BLINK),
+            );
+            let mut header_text = Text::from(Spans::from(header));
+            header_text.patch_style(h_style);
+            let header_message = Paragraph::new(header_text);
+            f.render_widget(header_message, chunks[0]);
+            // Create input fields
+            // TODO:
+        });
     }
 
     /// ### on_destroy
