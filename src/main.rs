@@ -89,28 +89,6 @@ fn main() {
         );
         std::process::exit(255);
     }
-    // Match protocol first
-    if let Some(val) = matches.opt_str("P") {
-        match val.as_str() {
-            "sftp" => {
-                protocol = ScpProtocol::Sftp;
-                // Set port to 22 as default
-                port = 22;
-                // Set default username to current
-                username = Some(whoami::username());
-            }
-            "ftp" => {
-                protocol = ScpProtocol::Ftp;
-                // Set port to 21
-                port = 21;
-            }
-            _ => {
-                eprintln!("Unknown protocol '{}'", val);
-                print_usage(opts);
-                std::process::exit(255);
-            }
-        }
-    }
     // Match ticks
     if let Some(val) = matches.opt_str("T") {
         match val.parse::<usize>() {
@@ -156,7 +134,7 @@ fn main() {
         Err(_) => PathBuf::from("/"),
     };
     // Create activity manager
-    let mut manager: ActivityManager = match ActivityManager::new(file_transfer, &wrkdir) {
+    let mut manager: ActivityManager = match ActivityManager::new(file_transfer, &wrkdir, ticks) {
         Ok(m) => m,
         Err(_) => {
             eprintln!("Invalid directory '{}'", wrkdir.display());
@@ -185,7 +163,7 @@ fn main() {
         manager.set_filetransfer_params(address, port, protocol, username, password);
     }
     // Run
-    let rc: i32 = manager.run(start_activity);
+    manager.run(start_activity);
     // Then return
-    std::process::exit(rc);
+    std::process::exit(0);
 }

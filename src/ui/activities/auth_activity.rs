@@ -33,6 +33,7 @@ use super::{Activity, Context};
 // Includes
 use crossterm::event::Event as InputEvent;
 use crossterm::event::{KeyCode, KeyEvent};
+use crossterm::terminal::{enable_raw_mode, disable_raw_mode};
 use tui::{
     backend::CrosstermBackend,
     layout::{Constraint, Direction, Layout},
@@ -72,8 +73,8 @@ pub struct AuthActivity {
     pub protocol: ScpProtocol,
     pub username: String,
     pub password: String,
-    pub form_submit: bool, // becomes true after user has submitted fields
-    pub esc_called: bool,  // Becomes true if user has pressed esc
+    pub submit: bool, // becomes true after user has submitted fields
+    pub quit: bool,  // Becomes true if user has pressed esc
     selected_field: InputField,
 }
 
@@ -88,8 +89,8 @@ impl AuthActivity {
             protocol: ScpProtocol::Sftp,
             username: String::new(),
             password: String::new(),
-            form_submit: false,
-            esc_called: false,
+            submit: false,
+            quit: false,
             selected_field: InputField::Address,
         }
     }
@@ -101,7 +102,8 @@ impl Activity for AuthActivity {
     /// `on_create` is the function which must be called to initialize the activity.
     /// `on_create` must initialize all the data structures used by the activity
     fn on_create(&mut self, context: &mut Context) {
-        // Mhm, nothing to do here I guess...
+        // Put raw mode on enabled
+        let _ = enable_raw_mode();
     }
 
     /// ### on_draw
@@ -118,7 +120,7 @@ impl Activity for AuthActivity {
                     InputEvent::Key(key) => {
                         match key.code {
                             KeyCode::Esc => {
-                                self.esc_called = true;
+                                self.quit = true;
                                 break;
                             }
                             KeyCode::Enter => {
@@ -152,7 +154,7 @@ impl Activity for AuthActivity {
                                     break;
                                 }
                                 // Everything OK, set enter
-                                self.form_submit = true;
+                                self.submit = true;
                                 popup = Some(format!("Connecting to {}:{}...", self.address, self.port));
                             }
                             KeyCode::Backspace => {
@@ -233,7 +235,7 @@ impl Activity for AuthActivity {
             }
         }
         // draw interface
-        context.terminal.draw(|f| {
+        let _ = context.terminal.draw(|f| {
             let chunks = Layout::default()
                 .direction(Direction::Vertical)
                 .margin(2)
@@ -273,6 +275,7 @@ impl Activity for AuthActivity {
     /// `on_destroy` is the function which cleans up runtime variables and data before terminating the activity.
     /// This function must be called once before terminating the activity.
     fn on_destroy(&mut self, context: &mut Context) {
-        // Mhm, nothing to do here I guess...
+        // Disable raw mode
+        let _ = disable_raw_mode();
     }
 }
