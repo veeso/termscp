@@ -176,6 +176,14 @@ impl AuthActivity {
             .block(Block::default().borders(Borders::ALL).title("Password"))
     }
 
+    /// ### draw_header
+    /// 
+    /// Draw header
+    fn draw_header(&self) -> Paragraph {
+        Paragraph::new(" _____                   ____   ____ ____  \n|_   _|__ _ __ _ __ ___ / ___| / ___|  _ \\ \n  | |/ _ \\ '__| '_ ` _ \\\\___ \\| |   | |_) |\n  | |  __/ |  | | | | | |___) | |___|  __/ \n  |_|\\___|_|  |_| |_| |_|____/ \\____|_|    \n")
+            .style(Style::default().fg(Color::LightYellow).add_modifier(Modifier::BOLD))
+    }
+
     /// ### draw_footer
     ///
     /// Draw authentication page footer
@@ -348,6 +356,7 @@ impl Activity for AuthActivity {
                 .margin(5)
                 .constraints(
                     [
+                        Constraint::Length(5),
                         Constraint::Length(3),
                         Constraint::Length(3),
                         Constraint::Length(3),
@@ -358,31 +367,34 @@ impl Activity for AuthActivity {
                     .as_ref(),
                 )
                 .split(f.size());
+            // Draw header
+            f.render_widget(self.draw_header(), chunks[0]);
             // Draw input fields
-            f.render_widget(self.draw_remote_address(), chunks[0]);
-            f.render_widget(self.draw_remote_port(), chunks[1]);
-            f.render_widget(self.draw_protocol_select(), chunks[2]);
-            f.render_widget(self.draw_protocol_username(), chunks[3]);
-            f.render_widget(self.draw_protocol_password(), chunks[4]);
+            f.render_widget(self.draw_remote_address(), chunks[1]);
+            f.render_widget(self.draw_remote_port(), chunks[2]);
+            f.render_widget(self.draw_protocol_select(), chunks[3]);
+            f.render_widget(self.draw_protocol_username(), chunks[4]);
+            f.render_widget(self.draw_protocol_password(), chunks[5]);
             // Draw footer
-            f.render_widget(self.draw_footer(), chunks[5]);
+            f.render_widget(self.draw_footer(), chunks[6]);
             // TODO: popup
             // Set cursor
             match self.selected_field {
                 InputField::Address => f.set_cursor(
-                    chunks[0].x + self.address.width() as u16 + 1,
-                    chunks[0].y + 1,
+                    chunks[1].x + self.address.width() as u16 + 1,
+                    chunks[1].y + 1,
                 ),
-                InputField::Port => {
-                    f.set_cursor(chunks[1].x + self.port.width() as u16 + 1, chunks[1].y + 1)
-                }
+                InputField::Port => f.set_cursor(
+                    chunks[2].x + self.port.width() as u16 + 1,
+                    chunks[2].y + 1
+                ),
                 InputField::Username => f.set_cursor(
-                    chunks[3].x + self.username.width() as u16 + 1,
-                    chunks[3].y + 1,
+                    chunks[4].x + self.username.width() as u16 + 1,
+                    chunks[4].y + 1,
                 ),
                 InputField::Password => f.set_cursor(
-                    chunks[4].x + self.password_placeholder.width() as u16 + 1,
-                    chunks[4].y + 1,
+                    chunks[5].x + self.password_placeholder.width() as u16 + 1,
+                    chunks[5].y + 1,
                 ),
                 _ => {}
             }
