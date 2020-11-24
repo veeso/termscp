@@ -29,7 +29,7 @@ extern crate tui;
 extern crate unicode_width;
 
 // locals
-use super::auth_activity::ScpProtocol;
+use crate::filetransfer::FileTransferProtocol;
 use super::{Activity, Context};
 
 // File transfer
@@ -60,9 +60,18 @@ type DialogCallback = fn();
 pub struct FileTransferParams {
     pub address: String,
     pub port: u16,
-    pub protocol: ScpProtocol,
+    pub protocol: FileTransferProtocol,
     pub username: Option<String>,
     pub password: Option<String>,
+}
+
+/// ### InputField
+/// 
+/// Input field selected
+#[derive(std::cmp::PartialEq)]
+enum InputField {
+    Explorer,
+    Logs,
 }
 
 /// ## PopupType
@@ -71,6 +80,8 @@ pub struct FileTransferParams {
 #[derive(std::cmp::PartialEq)]
 enum PopupType {
     Alert(Color, String),
+    Wait(String),
+    Fatal(String), // Must quit after being hidden
     Progress(String),
     YesNo(String, DialogCallback, DialogCallback), // Yes, no callback
 }
@@ -148,9 +159,11 @@ pub struct FileTransferActivity {
     local: FileExplorer,
     remote: FileExplorer,
     tab: FileExplorerTab,
+    log_index: usize,
     log_records: Vec<LogRecord>,
     progress: usize,
     input_mode: InputMode,
+    input_field: InputField,
     client: Box<dyn FileTransfer>,
 }
 
@@ -159,7 +172,7 @@ impl FileTransferActivity {
     ///
     /// Instantiates a new FileTransferActivity
     pub fn new(params: FileTransferParams) -> FileTransferActivity {
-        let protocol: ScpProtocol = params.protocol.clone();
+        let protocol: FileTransferProtocol = params.protocol.clone();
         FileTransferActivity {
             disconnected: false,
             quit: false,
@@ -167,13 +180,32 @@ impl FileTransferActivity {
             local: FileExplorer::new(),
             remote: FileExplorer::new(),
             tab: FileExplorerTab::Local,
+            log_index: 0,
             log_records: Vec::new(),
             progress: 0,
             input_mode: InputMode::Explorer,
+            input_field: InputField::Explorer,
             client: match protocol {
-                ScpProtocol::Sftp => Box::new(SftpFileTransfer::new()),
-                ScpProtocol::Ftp => Box::new(SftpFileTransfer::new()), // FIXME: FTP
+                FileTransferProtocol::Sftp => Box::new(SftpFileTransfer::new()),
+                FileTransferProtocol::Ftp => Box::new(SftpFileTransfer::new()), // FIXME: FTP
             },
+        }
+    }
+
+    /// ### connect
+    /// 
+    /// Connect to remote
+    fn connect(&mut self) {
+        // Connect to remote
+        match self.client.connect(self.params.address.clone(), self.params.port, self.params.username.clone(), self.params.password.clone()) {
+            Ok(_) => {
+                // Set state to explorer
+                self.input_mode = InputMode::Explorer;
+            },
+            Err(err) => {
+                // Set popup fatal error
+                self.input_mode = InputMode::Popup(PopupType::Fatal(err.msg()));
+            }
         }
     }
 
@@ -261,6 +293,8 @@ impl Activity for FileTransferActivity {
         let _ = enable_raw_mode();
         // Clear terminal
         let _ = context.terminal.clear();
+        // Set init state to connecting popup
+        self.input_mode = InputMode::Popup(PopupType::Wait(format!("Connecting to {}:{}...", self.params.address, self.params.port)));
     }
 
     /// ### on_draw
@@ -268,11 +302,17 @@ impl Activity for FileTransferActivity {
     /// `on_draw` is the function which draws the graphical interface.
     /// This function must be called at each tick to refresh the interface
     fn on_draw(&mut self, context: &mut Context) {
-        // TODO: logic
         // draw interface
         let _ = context.terminal.draw(|f| {
             self.draw(f);
         });
+        // Check if connected
+        if ! self.client.is_connected() {
+            // Connect to remote
+            self.connect();
+        }
+        // TODO: logic
+        // TODO: handle input events
     }
 
     /// ### on_destroy
