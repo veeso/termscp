@@ -26,9 +26,10 @@
 use std::path::PathBuf;
 
 // Deps
+use crate::filetransfer::FileTransferProtocol;
 use crate::host::Localhost;
 use crate::ui::activities::{
-    auth_activity::AuthActivity, auth_activity::ScpProtocol,
+    auth_activity::AuthActivity,
     filetransfer_activity::FileTransferActivity, filetransfer_activity::FileTransferParams,
     Activity,
 };
@@ -83,7 +84,7 @@ impl ActivityManager {
         &mut self,
         address: String,
         port: u16,
-        protocol: ScpProtocol,
+        protocol: FileTransferProtocol,
         username: Option<String>,
         password: Option<String>,
     ) {

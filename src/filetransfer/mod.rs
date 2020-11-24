@@ -38,10 +38,10 @@ type ProgressCallback = fn(bytes_written: usize, size: usize);
 ///
 /// This enum defines the different transfer protocol available in TermSCP
 
-#[derive(PartialEq, Clone)]
+#[derive(std::cmp::PartialEq, std::fmt::Debug, std::clone::Clone)]
 pub enum FileTransferProtocol {
     Sftp,
-    Ftps,
+    Ftp,
 }
 
 /// ## FileTransferError
@@ -60,6 +60,29 @@ pub enum FileTransferError {
     ProtocolError,
     UninitializedSession,
     UnknownError,
+}
+
+impl FileTransferError {
+
+    /// ### msg
+    /// 
+    /// Get error message
+    pub fn msg(&self) -> String {
+        match self {
+            FileTransferError::AuthenticationFailed => String::from("Authentication failed: bad credentials"),
+            FileTransferError::BadAddress => String::from("Bad address syntax"),
+            FileTransferError::ConnectionError => String::from("Connection error"),
+            FileTransferError::DirStatFailed => String::from("Could not stat directory"),
+            FileTransferError::FileCreateDenied => String::from("Failed to create file"),
+            FileTransferError::FileReadonly => String::from("File is readonly"),
+            FileTransferError::IoErr(err) => format!("IO Error: {}", err),
+            FileTransferError::NoSuchFileOrDirectory => String::from("No such file or directory"),
+            FileTransferError::ProtocolError => String::from("Protocol error"),
+            FileTransferError::UninitializedSession => String::from("Uninitialized session"),
+            FileTransferError::UnknownError => String::from("Unknown error"),
+        }
+    }
+
 }
 
 /// ## FileTransfer

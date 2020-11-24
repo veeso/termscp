@@ -30,6 +30,7 @@ extern crate unicode_width;
 
 // locals
 use super::{Activity, Context};
+use crate::filetransfer::FileTransferProtocol;
 
 // Includes
 use crossterm::event::Event as InputEvent;
@@ -65,22 +66,13 @@ enum InputMode {
     Popup,
 }
 
-/// ### ScpProtocol
-///
-/// ScpProtocol describes the communication protocol selected by the user to communicate with the remote
-#[derive(std::cmp::PartialEq, std::fmt::Debug, std::clone::Clone)]
-pub enum ScpProtocol {
-    Sftp,
-    Ftp,
-}
-
 /// ### AuthActivity
 ///
 /// AuthActivity is the data holder for the authentication activity
 pub struct AuthActivity {
     pub address: String,
     pub port: String,
-    pub protocol: ScpProtocol,
+    pub protocol: FileTransferProtocol,
     pub username: String,
     pub password: String,
     pub submit: bool, // becomes true after user has submitted fields
@@ -99,7 +91,7 @@ impl AuthActivity {
         AuthActivity {
             address: String::new(),
             port: String::from("22"),
-            protocol: ScpProtocol::Sftp,
+            protocol: FileTransferProtocol::Sftp,
             username: String::new(),
             password: String::new(),
             submit: false,
@@ -233,8 +225,8 @@ impl AuthActivity {
                         // If current field is Protocol handle event... (move element left)
                         if self.selected_field == InputField::Protocol {
                             self.protocol = match self.protocol {
-                                ScpProtocol::Sftp => ScpProtocol::Sftp,
-                                ScpProtocol::Ftp => ScpProtocol::Sftp, // End of list
+                                FileTransferProtocol::Sftp => FileTransferProtocol::Sftp,
+                                FileTransferProtocol::Ftp => FileTransferProtocol::Sftp, // End of list
                             }
                         }
                     }
@@ -242,8 +234,8 @@ impl AuthActivity {
                         // If current field is Protocol handle event... ( move element right )
                         if self.selected_field == InputField::Protocol {
                             self.protocol = match self.protocol {
-                                ScpProtocol::Sftp => ScpProtocol::Ftp,
-                                ScpProtocol::Ftp => ScpProtocol::Ftp, // End of list
+                                FileTransferProtocol::Sftp => FileTransferProtocol::Ftp,
+                                FileTransferProtocol::Ftp => FileTransferProtocol::Ftp, // End of list
                             }
                         }
                     }
@@ -306,8 +298,8 @@ impl AuthActivity {
     fn draw_protocol_select(&self) -> Tabs {
         let protocols: Vec<Spans> = vec![Spans::from("SFTP"), Spans::from("FTP")];
         let index: usize = match self.protocol {
-            ScpProtocol::Sftp => 0,
-            ScpProtocol::Ftp => 1,
+            FileTransferProtocol::Sftp => 0,
+            FileTransferProtocol::Ftp => 1,
         };
         Tabs::new(protocols)
             .block(Block::default().borders(Borders::ALL).title("Protocol"))
