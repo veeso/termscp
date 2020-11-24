@@ -26,22 +26,22 @@
 // Dependencies
 extern crate crossterm;
 extern crate tui;
+extern crate unicode_width;
 
 // locals
 use super::{Activity, Context};
 
 // Includes
 use crossterm::event::Event as InputEvent;
-use crossterm::event::{KeyCode, KeyEvent};
-use crossterm::terminal::{enable_raw_mode, disable_raw_mode};
+use crossterm::event::KeyCode;
+use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use tui::{
-    backend::CrosstermBackend,
     layout::{Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
     text::{Span, Spans, Text},
-    widgets::{Block, Borders, List, ListItem, Paragraph},
-    Terminal,
+    widgets::{Block, Borders, List, ListItem, Paragraph, Tabs},
 };
+use unicode_width::UnicodeWidthStr;
 
 /// ### InputField
 ///
@@ -74,8 +74,10 @@ pub struct AuthActivity {
     pub username: String,
     pub password: String,
     pub submit: bool, // becomes true after user has submitted fields
-    pub quit: bool,  // Becomes true if user has pressed esc
+    pub quit: bool,   // Becomes true if user has pressed esc
     selected_field: InputField,
+    popup_message: Option<String>,
+    password_placeholder: String,
 }
 
 impl AuthActivity {
@@ -92,7 +94,108 @@ impl AuthActivity {
             submit: false,
             quit: false,
             selected_field: InputField::Address,
+            popup_message: None,
+            password_placeholder: String::new(),
         }
+    }
+
+    /// ### draw_remote_address
+    ///
+    /// Draw remote address block
+    fn draw_remote_address(&self) -> Paragraph {
+        Paragraph::new(self.address.as_ref())
+            .style(match self.selected_field {
+                InputField::Address => Style::default().fg(Color::Yellow),
+                _ => Style::default(),
+            })
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .title("Remote address"),
+            )
+    }
+
+    /// ### draw_remote_port
+    ///
+    /// Draw remote port block
+    fn draw_remote_port(&self) -> Paragraph {
+        Paragraph::new(self.port.as_ref())
+            .style(match self.selected_field {
+                InputField::Port => Style::default().fg(Color::Cyan),
+                _ => Style::default(),
+            })
+            .block(Block::default().borders(Borders::ALL).title("Remote port"))
+    }
+
+    /// ### draw_protocol_select
+    ///
+    /// Draw protocol select
+    fn draw_protocol_select(&self) -> Tabs {
+        let protocols: Vec<Spans> = vec![Spans::from("SFTP"), Spans::from("FTP")];
+        let index: usize = match self.protocol {
+            ScpProtocol::Sftp => 0,
+            ScpProtocol::Ftp => 1,
+        };
+        Tabs::new(protocols)
+            .block(Block::default().borders(Borders::ALL).title("Protocol"))
+            .select(index)
+            .style(match self.selected_field {
+                InputField::Protocol => Style::default().fg(Color::Green),
+                _ => Style::default(),
+            })
+            .highlight_style(
+                Style::default()
+                    .add_modifier(Modifier::BOLD)
+                    .fg(Color::Green),
+            )
+    }
+
+    /// ### draw_protocol_username
+    ///
+    /// Draw username block
+    fn draw_protocol_username(&self) -> Paragraph {
+        Paragraph::new(self.username.as_ref())
+            .style(match self.selected_field {
+                InputField::Username => Style::default().fg(Color::Magenta),
+                _ => Style::default(),
+            })
+            .block(Block::default().borders(Borders::ALL).title("Username"))
+    }
+
+    /// ### draw_protocol_password
+    ///
+    /// Draw password block
+    fn draw_protocol_password(&mut self) -> Paragraph {
+        // Create password secret
+        self.password_placeholder = (0..self.password.width()).map(|_| "*").collect::<String>();
+        Paragraph::new(self.password_placeholder.as_ref())
+            .style(match self.selected_field {
+                InputField::Password => Style::default().fg(Color::LightBlue),
+                _ => Style::default(),
+            })
+            .block(Block::default().borders(Borders::ALL).title("Password"))
+    }
+
+    /// ### draw_footer
+    ///
+    /// Draw authentication page footer
+    fn draw_footer(&self) -> Paragraph {
+        // Write header
+        let (footer, h_style) = (
+            vec![
+                Span::raw("Press "),
+                Span::styled("<ESC>", Style::default().add_modifier(Modifier::BOLD)),
+                Span::raw(" to exit, "),
+                Span::styled("<UP,DOWN>", Style::default().add_modifier(Modifier::BOLD)),
+                Span::raw(" to change input field,"),
+                Span::styled("<ENTER>", Style::default().add_modifier(Modifier::BOLD)),
+                Span::raw(" to submit form"),
+            ],
+            Style::default().add_modifier(Modifier::RAPID_BLINK),
+        );
+        let mut footer_text = Text::from(Spans::from(footer));
+        footer_text.patch_style(h_style);
+        Paragraph::new(footer_text)
     }
 }
 
@@ -104,6 +207,8 @@ impl Activity for AuthActivity {
     fn on_create(&mut self, context: &mut Context) {
         // Put raw mode on enabled
         let _ = enable_raw_mode();
+        // Clear terminal
+        let _ = context.terminal.clear();
     }
 
     /// ### on_draw
@@ -112,7 +217,6 @@ impl Activity for AuthActivity {
     /// This function must be called at each tick to refresh the interface
     fn on_draw(&mut self, context: &mut Context) {
         // Start catching Input Events
-        let mut popup: Option<String> = None;
         if let Ok(input_events) = context.input_hnd.fetch_events() {
             // Iterate over input events
             for event in input_events.iter() {
@@ -128,7 +232,7 @@ impl Activity for AuthActivity {
                                 // Check form
                                 // Check address
                                 if self.address.len() == 0 {
-                                    popup = Some(String::from("Invalid address"));
+                                    self.popup_message = Some(String::from("Invalid address"));
                                     break;
                                 }
                                 // Check port
@@ -136,26 +240,29 @@ impl Activity for AuthActivity {
                                 match self.port.parse::<usize>() {
                                     Ok(val) => {
                                         if val > 65535 {
-                                            popup = Some(String::from(
+                                            self.popup_message = Some(String::from(
                                                 "Specified port must be in range 0-65535",
                                             ));
                                             break;
                                         }
                                     }
                                     Err(_) => {
-                                        popup =
+                                        self.popup_message =
                                             Some(String::from("Specified port is not a number"));
                                         break;
                                     }
                                 }
                                 // Check username
                                 if self.username.len() == 0 {
-                                    popup = Some(String::from("Invalid username"));
+                                    self.popup_message = Some(String::from("Invalid username"));
                                     break;
                                 }
                                 // Everything OK, set enter
                                 self.submit = true;
-                                popup = Some(format!("Connecting to {}:{}...", self.address, self.port));
+                                self.popup_message = Some(format!(
+                                    "Connecting to {}:{}...",
+                                    self.address, self.port
+                                ));
                             }
                             KeyCode::Backspace => {
                                 // Pop last char
@@ -238,35 +345,47 @@ impl Activity for AuthActivity {
         let _ = context.terminal.draw(|f| {
             let chunks = Layout::default()
                 .direction(Direction::Vertical)
-                .margin(2)
+                .margin(5)
                 .constraints(
                     [
-                        Constraint::Length(1),
                         Constraint::Length(3),
-                        Constraint::Min(1),
+                        Constraint::Length(3),
+                        Constraint::Length(3),
+                        Constraint::Length(3),
+                        Constraint::Length(3),
+                        Constraint::Length(3),
                     ]
                     .as_ref(),
                 )
                 .split(f.size());
-            // Write header
-            let (header, h_style) = (
-                vec![
-                    Span::raw("Press "),
-                    Span::styled("<ESC>", Style::default().add_modifier(Modifier::BOLD)),
-                    Span::raw(" to exit, "),
-                    Span::styled("<UP,DOWN>", Style::default().add_modifier(Modifier::BOLD)),
-                    Span::raw(" to change input field,"),
-                    Span::styled("<ENTER>", Style::default().add_modifier(Modifier::BOLD)),
-                    Span::raw(" to submit form"),
-                ],
-                Style::default().add_modifier(Modifier::RAPID_BLINK),
-            );
-            let mut header_text = Text::from(Spans::from(header));
-            header_text.patch_style(h_style);
-            let header_message = Paragraph::new(header_text);
-            f.render_widget(header_message, chunks[0]);
-            // Create input fields
-            // TODO:
+            // Draw input fields
+            f.render_widget(self.draw_remote_address(), chunks[0]);
+            f.render_widget(self.draw_remote_port(), chunks[1]);
+            f.render_widget(self.draw_protocol_select(), chunks[2]);
+            f.render_widget(self.draw_protocol_username(), chunks[3]);
+            f.render_widget(self.draw_protocol_password(), chunks[4]);
+            // Draw footer
+            f.render_widget(self.draw_footer(), chunks[5]);
+            // TODO: popup
+            // Set cursor
+            match self.selected_field {
+                InputField::Address => f.set_cursor(
+                    chunks[0].x + self.address.width() as u16 + 1,
+                    chunks[0].y + 1,
+                ),
+                InputField::Port => {
+                    f.set_cursor(chunks[1].x + self.port.width() as u16 + 1, chunks[1].y + 1)
+                }
+                InputField::Username => f.set_cursor(
+                    chunks[3].x + self.username.width() as u16 + 1,
+                    chunks[3].y + 1,
+                ),
+                InputField::Password => f.set_cursor(
+                    chunks[4].x + self.password_placeholder.width() as u16 + 1,
+                    chunks[4].y + 1,
+                ),
+                _ => {}
+            }
         });
     }
 
@@ -277,5 +396,7 @@ impl Activity for AuthActivity {
     fn on_destroy(&mut self, context: &mut Context) {
         // Disable raw mode
         let _ = disable_raw_mode();
+        // Clear terminal
+        let _ = context.terminal.clear();
     }
 }

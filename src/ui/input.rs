@@ -75,7 +75,7 @@ mod tests {
 
     #[test]
     fn test_ui_input_new() {
-        let input_hnd: InputHandler = InputHandler::new();
+        let _: InputHandler = InputHandler::new();
     }
 
     /* ERRORS ON GITHUB ACTIONS

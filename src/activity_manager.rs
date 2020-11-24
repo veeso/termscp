@@ -134,7 +134,7 @@ impl ActivityManager {
         // Prepare activity
         let mut activity: AuthActivity = AuthActivity::new();
         // Prepare result
-        let mut result: Option<NextActivity> = None;
+        let result: Option<NextActivity>;
         // Create activity
         activity.on_create(&mut self.context);
         loop {
@@ -152,7 +152,7 @@ impl ActivityManager {
                 break;
             }
             // Sleep for ticks
-            //sleep(self.interval);
+            sleep(self.interval);
         }
         // Destroy activity
         activity.on_destroy(&mut self.context);

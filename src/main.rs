@@ -60,7 +60,7 @@ fn main() {
     let mut address: Option<String> = None; // None
     let mut port: u16 = 22; // Default port
     let mut username: Option<String> = None; // Default username
-    let mut password: Option<String> = None; // Default password
+    let password: Option<String>; // Default password
     let mut protocol: ScpProtocol = ScpProtocol::Sftp; // Default protocol
     let mut ticks: Duration = Duration::from_micros(50);
     //Process options
