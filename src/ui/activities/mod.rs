@@ -29,6 +29,7 @@ use super::context::Context;
 
 // Activities
 pub mod auth_activity;
+pub mod filetransfer_activity;
 
 // Activity trait
 

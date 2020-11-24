@@ -26,9 +26,12 @@
 use std::path::PathBuf;
 
 // Deps
-use crate::filetransfer::FileTransfer;
 use crate::host::Localhost;
-use crate::ui::activities::{auth_activity::AuthActivity, auth_activity::ScpProtocol, Activity};
+use crate::ui::activities::{
+    auth_activity::AuthActivity, auth_activity::ScpProtocol,
+    filetransfer_activity::FileTransferActivity, filetransfer_activity::FileTransferParams,
+    Activity,
+};
 use crate::ui::context::Context;
 
 // Namespaces
@@ -41,17 +44,6 @@ use std::time::Duration;
 pub enum NextActivity {
     Authentication,
     FileTransfer,
-}
-
-/// ### FileTransferParams
-///
-/// Holds connection parameters for file transfers
-struct FileTransferParams {
-    address: String,
-    port: u16,
-    protocol: ScpProtocol,
-    username: Option<String>,
-    password: Option<String>,
 }
 
 /// ### ActivityManager
@@ -68,7 +60,6 @@ impl ActivityManager {
     ///
     /// Initializes a new Activity Manager
     pub fn new(
-        client: Box<dyn FileTransfer>,
         local_dir: &PathBuf,
         interval: Duration,
     ) -> Result<ActivityManager, ()> {
@@ -77,7 +68,7 @@ impl ActivityManager {
             Ok(h) => h,
             Err(_) => return Err(()),
         };
-        let ctx: Context = Context::new(client, host);
+        let ctx: Context = Context::new(host);
         Ok(ActivityManager {
             context: ctx,
             ftparams: None,
@@ -116,7 +107,7 @@ impl ActivityManager {
             current_activity = match current_activity {
                 Some(activity) => match activity {
                     NextActivity::Authentication => self.run_authentication(),
-                    NextActivity::FileTransfer => self.run_authentication(), // FIXME: change
+                    NextActivity::FileTransfer => self.run_filetransfer(),
                 },
                 None => break, // Exit
             }
@@ -149,6 +140,58 @@ impl ActivityManager {
             if activity.submit {
                 // User submitted, set next activity
                 result = Some(NextActivity::FileTransfer);
+                // Get params
+                self.ftparams = Some(FileTransferParams {
+                    address: activity.address.clone(),
+                    port: activity.port.parse::<u16>().ok().unwrap(),
+                    username: match activity.username.len() {
+                        0 => None,
+                        _ => Some(activity.username.clone()),
+                    },
+                    password: match activity.password.len() {
+                        0 => None,
+                        _ => Some(activity.password.clone()),
+                    },
+                    protocol: activity.protocol.clone(),
+                });
+                break;
+            }
+            // Sleep for ticks
+            sleep(self.interval);
+        }
+        // Destroy activity
+        activity.on_destroy(&mut self.context);
+        result
+    }
+
+    /// ### run_filetransfer
+    ///
+    /// Loop for FileTransfer activity.
+    /// Returns when activity terminates.
+    /// Returns the next activity to run
+    fn run_filetransfer(&mut self) -> Option<NextActivity> {
+        if self.ftparams.is_none() {
+            return Some(NextActivity::Authentication);
+        }
+        // Prepare activity
+        let mut activity: FileTransferActivity =
+            FileTransferActivity::new(self.ftparams.take().unwrap());
+        // Prepare result
+        let result: Option<NextActivity>;
+        // Create activity
+        activity.on_create(&mut self.context);
+        loop {
+            // Draw activity
+            activity.on_draw(&mut self.context);
+            // Check if has to be terminated
+            if activity.quit {
+                // Quit activities
+                result = None;
+                break;
+            }
+            if activity.disconnected {
+                // User disconnected, set next activity to authentication
+                result = Some(NextActivity::Authentication);
                 break;
             }
             // Sleep for ticks

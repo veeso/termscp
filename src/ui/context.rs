@@ -29,7 +29,6 @@ extern crate tui;
 
 // Locals
 use super::input::InputHandler;
-use crate::filetransfer::FileTransfer;
 use crate::host::Localhost;
 
 // Includes
@@ -44,7 +43,6 @@ use tui::Terminal;
 ///
 /// Context holds data structures used by the ui
 pub struct Context {
-    pub scp_client: Box<dyn FileTransfer>,
     pub local: Localhost,
     pub(crate) input_hnd: InputHandler,
     pub(crate) terminal: Terminal<CrosstermBackend<Stdout>>,
@@ -54,23 +52,15 @@ impl Context {
     /// ### new
     ///
     /// Instantiates a new Context
-    pub fn new(scp_client: Box<dyn FileTransfer>, local: Localhost) -> Context {
+    pub fn new(local: Localhost) -> Context {
         // Create terminal
         let mut stdout = stdout();
         assert!(execute!(stdout, EnterAlternateScreen, EnableMouseCapture).is_ok());
         Context {
-            scp_client: scp_client,
             local: local,
             input_hnd: InputHandler::new(),
             terminal: Terminal::new(CrosstermBackend::new(stdout)).unwrap()
         }
-    }
-}
-
-impl Drop for Context {
-    fn drop(&mut self) {
-        // Disconnect client
-        let _ = self.scp_client.disconnect();
     }
 }
 

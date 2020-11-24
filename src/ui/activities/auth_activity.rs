@@ -68,7 +68,7 @@ enum InputMode {
 /// ### ScpProtocol
 ///
 /// ScpProtocol describes the communication protocol selected by the user to communicate with the remote
-#[derive(std::cmp::PartialEq, std::fmt::Debug)]
+#[derive(std::cmp::PartialEq, std::fmt::Debug, std::clone::Clone)]
 pub enum ScpProtocol {
     Sftp,
     Ftp,

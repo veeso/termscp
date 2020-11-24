@@ -42,7 +42,6 @@ mod utils;
 
 // namespaces
 use activity_manager::{ActivityManager, NextActivity};
-use filetransfer::{sftp_transfer::SftpFileTransfer, FileTransfer};
 use ui::activities::auth_activity::ScpProtocol;
 
 /// ### print_usage
@@ -119,22 +118,13 @@ fn main() {
             }
         }
     }
-    // Prepare file transfer
-    let file_transfer: Box<dyn FileTransfer> = match protocol {
-        ScpProtocol::Sftp => Box::new(SftpFileTransfer::new()),
-        _ => {
-            // FIXME: complete with ftp client
-            eprintln!("Unsupported protocol!");
-            std::process::exit(255);
-        }
-    };
     // Get working directory
     let wrkdir: PathBuf = match env::current_dir() {
         Ok(dir) => dir,
         Err(_) => PathBuf::from("/"),
     };
     // Create activity manager
-    let mut manager: ActivityManager = match ActivityManager::new(file_transfer, &wrkdir, ticks) {
+    let mut manager: ActivityManager = match ActivityManager::new(&wrkdir, ticks) {
         Ok(m) => m,
         Err(_) => {
             eprintln!("Invalid directory '{}'", wrkdir.display());
