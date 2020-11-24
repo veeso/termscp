@@ -39,7 +39,7 @@ use tui::{
     layout::{Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
     text::{Span, Spans, Text},
-    widgets::{Block, Borders, List, ListItem, Paragraph, Tabs},
+    widgets::{Block, Borders, Paragraph, Tabs},
 };
 use unicode_width::UnicodeWidthStr;
 
@@ -53,6 +53,16 @@ enum InputField {
     Protocol,
     Username,
     Password,
+}
+
+/// ### InputMode
+///
+/// InputMode describes the current input mode
+/// Each input mode handle the input events in a different way
+#[derive(std::cmp::PartialEq)]
+enum InputMode {
+    Text,
+    Popup,
 }
 
 /// ### ScpProtocol
@@ -76,6 +86,7 @@ pub struct AuthActivity {
     pub submit: bool, // becomes true after user has submitted fields
     pub quit: bool,   // Becomes true if user has pressed esc
     selected_field: InputField,
+    input_mode: InputMode,
     popup_message: Option<String>,
     password_placeholder: String,
 }
@@ -94,8 +105,169 @@ impl AuthActivity {
             submit: false,
             quit: false,
             selected_field: InputField::Address,
+            input_mode: InputMode::Text,
             popup_message: None,
             password_placeholder: String::new(),
+        }
+    }
+
+    /// ### set_input_mode
+    ///
+    /// Update input mode based on current parameters
+    fn select_input_mode(&mut self) -> InputMode {
+        if self.popup_message.is_some() {
+            return InputMode::Popup;
+        }
+        // Default to text
+        InputMode::Text
+    }
+
+    /// ### handle_input_event
+    ///
+    /// Handle input event, based on current input mode
+    fn handle_input_event(&mut self, ev: &InputEvent) {
+        match self.input_mode {
+            InputMode::Text => self.handle_input_event_mode_text(ev),
+            InputMode::Popup => self.handle_input_event_mode_popup(ev),
+        }
+    }
+
+    /// ### handle_input_event_mode_text
+    ///
+    /// Handler for input event when in textmode
+    fn handle_input_event_mode_text(&mut self, ev: &InputEvent) {
+        match ev {
+            InputEvent::Key(key) => {
+                match key.code {
+                    KeyCode::Esc => {
+                        self.quit = true;
+                    }
+                    KeyCode::Enter => {
+                        // Handle submit
+                        // Check form
+                        // Check address
+                        if self.address.len() == 0 {
+                            self.popup_message = Some(String::from("Invalid address"));
+                        }
+                        // Check port
+                        // Convert port to number
+                        match self.port.parse::<usize>() {
+                            Ok(val) => {
+                                if val > 65535 {
+                                    self.popup_message = Some(String::from(
+                                        "Specified port must be in range 0-65535",
+                                    ));
+                                }
+                            }
+                            Err(_) => {
+                                self.popup_message =
+                                    Some(String::from("Specified port is not a number"));
+                            }
+                        }
+                        // Check username
+                        if self.username.len() == 0 {
+                            self.popup_message = Some(String::from("Invalid username"));
+                        }
+                        // Everything OK, set enter
+                        self.submit = true;
+                        self.popup_message =
+                            Some(format!("Connecting to {}:{}...", self.address, self.port));
+                    }
+                    KeyCode::Backspace => {
+                        // Pop last char
+                        match self.selected_field {
+                            InputField::Address => {
+                                let _ = self.address.pop();
+                            }
+                            InputField::Password => {
+                                let _ = self.password.pop();
+                            }
+                            InputField::Username => {
+                                let _ = self.username.pop();
+                            }
+                            InputField::Port => {
+                                let _ = self.port.pop();
+                            }
+                            _ => { /* Nothing to do */ }
+                        };
+                    }
+                    KeyCode::Up => {
+                        // Move item up
+                        self.selected_field = match self.selected_field {
+                            InputField::Address => InputField::Address, // End of list
+                            InputField::Port => InputField::Address,
+                            InputField::Protocol => InputField::Port,
+                            InputField::Username => InputField::Protocol,
+                            InputField::Password => InputField::Username,
+                        }
+                    }
+                    KeyCode::Down => {
+                        // Move item down
+                        self.selected_field = match self.selected_field {
+                            InputField::Address => InputField::Port,
+                            InputField::Port => InputField::Protocol,
+                            InputField::Protocol => InputField::Username,
+                            InputField::Username => InputField::Password,
+                            InputField::Password => InputField::Password, // End of list
+                        }
+                    }
+                    KeyCode::Char(ch) => {
+                        match self.selected_field {
+                            InputField::Address => self.address.push(ch),
+                            InputField::Password => self.password.push(ch),
+                            InputField::Username => self.username.push(ch),
+                            InputField::Port => {
+                                // Value must be numeric
+                                if ch.is_numeric() {
+                                    self.port.push(ch);
+                                }
+                            }
+                            _ => { /* Nothing to do */ }
+                        }
+                    }
+                    KeyCode::Left => {
+                        // If current field is Protocol handle event... (move element left)
+                        if self.selected_field == InputField::Protocol {
+                            self.protocol = match self.protocol {
+                                ScpProtocol::Sftp => ScpProtocol::Sftp,
+                                ScpProtocol::Ftp => ScpProtocol::Sftp, // End of list
+                            }
+                        }
+                    }
+                    KeyCode::Right => {
+                        // If current field is Protocol handle event... ( move element right )
+                        if self.selected_field == InputField::Protocol {
+                            self.protocol = match self.protocol {
+                                ScpProtocol::Sftp => ScpProtocol::Ftp,
+                                ScpProtocol::Ftp => ScpProtocol::Ftp, // End of list
+                            }
+                        }
+                    }
+                    _ => { /* Nothing to do */ }
+                }
+            }
+            _ => { /* Nothing to do */ }
+        }
+    }
+
+    /// ### handle_input_event_mode_text
+    ///
+    /// Handler for input event when in popup mode
+    fn handle_input_event_mode_popup(&mut self, ev: &InputEvent) {
+        // Only enter (+ ESC) should be allowed here
+        match ev {
+            InputEvent::Key(key) => {
+                match key.code {
+                    KeyCode::Esc => {
+                        self.quit = true;
+                    }
+                    KeyCode::Enter => {
+                        self.popup_message = None; // Hide popup
+                    }
+                    _ => { /* Nothing to do */ }
+                }
+            }
+            _ => { /* Nothing to do */ }
         }
     }
 
@@ -177,7 +349,7 @@ impl AuthActivity {
     }
 
     /// ### draw_header
-    /// 
+    ///
     /// Draw header
     fn draw_header(&self) -> Paragraph {
         Paragraph::new(" _____                   ____   ____ ____  \n|_   _|__ _ __ _ __ ___ / ___| / ___|  _ \\ \n  | |/ _ \\ '__| '_ ` _ \\\\___ \\| |   | |_) |\n  | |  __/ |  | | | | | |___) | |___|  __/ \n  |_|\\___|_|  |_| |_| |_|____/ \\____|_|    \n")
@@ -228,132 +400,16 @@ impl Activity for AuthActivity {
         if let Ok(input_events) = context.input_hnd.fetch_events() {
             // Iterate over input events
             for event in input_events.iter() {
-                match event {
-                    InputEvent::Key(key) => {
-                        match key.code {
-                            KeyCode::Esc => {
-                                self.quit = true;
-                                break;
-                            }
-                            KeyCode::Enter => {
-                                // Handle submit
-                                // Check form
-                                // Check address
-                                if self.address.len() == 0 {
-                                    self.popup_message = Some(String::from("Invalid address"));
-                                    break;
-                                }
-                                // Check port
-                                // Convert port to number
-                                match self.port.parse::<usize>() {
-                                    Ok(val) => {
-                                        if val > 65535 {
-                                            self.popup_message = Some(String::from(
-                                                "Specified port must be in range 0-65535",
-                                            ));
-                                            break;
-                                        }
-                                    }
-                                    Err(_) => {
-                                        self.popup_message =
-                                            Some(String::from("Specified port is not a number"));
-                                        break;
-                                    }
-                                }
-                                // Check username
-                                if self.username.len() == 0 {
-                                    self.popup_message = Some(String::from("Invalid username"));
-                                    break;
-                                }
-                                // Everything OK, set enter
-                                self.submit = true;
-                                self.popup_message = Some(format!(
-                                    "Connecting to {}:{}...",
-                                    self.address, self.port
-                                ));
-                            }
-                            KeyCode::Backspace => {
-                                // Pop last char
-                                match self.selected_field {
-                                    InputField::Address => {
-                                        let _ = self.address.pop();
-                                    }
-                                    InputField::Password => {
-                                        let _ = self.password.pop();
-                                    }
-                                    InputField::Username => {
-                                        let _ = self.username.pop();
-                                    }
-                                    InputField::Port => {
-                                        let _ = self.port.pop();
-                                    }
-                                    _ => { /* Nothing to do */ }
-                                };
-                            }
-                            KeyCode::Up => {
-                                // Move item up
-                                self.selected_field = match self.selected_field {
-                                    InputField::Address => InputField::Address, // End of list
-                                    InputField::Port => InputField::Address,
-                                    InputField::Protocol => InputField::Port,
-                                    InputField::Username => InputField::Protocol,
-                                    InputField::Password => InputField::Username,
-                                }
-                            }
-                            KeyCode::Down => {
-                                // Move item down
-                                self.selected_field = match self.selected_field {
-                                    InputField::Address => InputField::Port,
-                                    InputField::Port => InputField::Protocol,
-                                    InputField::Protocol => InputField::Username,
-                                    InputField::Username => InputField::Password,
-                                    InputField::Password => InputField::Password, // End of list
-                                }
-                            }
-                            KeyCode::Char(ch) => {
-                                match self.selected_field {
-                                    InputField::Address => self.address.push(ch),
-                                    InputField::Password => self.password.push(ch),
-                                    InputField::Username => self.username.push(ch),
-                                    InputField::Port => {
-                                        // Value must be numeric
-                                        if ch.is_numeric() {
-                                            self.port.push(ch);
-                                        }
-                                    }
-                                    _ => { /* Nothing to do */ }
-                                }
-                            }
-                            KeyCode::Left => {
-                                // If current field is Protocol handle event... (move element left)
-                                if self.selected_field == InputField::Protocol {
-                                    self.protocol = match self.protocol {
-                                        ScpProtocol::Sftp => ScpProtocol::Sftp,
-                                        ScpProtocol::Ftp => ScpProtocol::Sftp, // End of list
-                                    }
-                                }
-                            }
-                            KeyCode::Right => {
-                                // If current field is Protocol handle event... ( move element right )
-                                if self.selected_field == InputField::Protocol {
-                                    self.protocol = match self.protocol {
-                                        ScpProtocol::Sftp => ScpProtocol::Ftp,
-                                        ScpProtocol::Ftp => ScpProtocol::Ftp, // End of list
-                                    }
-                                }
-                            }
-                            _ => { /* Nothing to do */ }
-                        }
-                    }
-                    _ => { /* Nothing to do */ }
-                }
+                self.handle_input_event(event);
             }
         }
+        // Determine input mode
+        self.input_mode = self.select_input_mode();
         // draw interface
         let _ = context.terminal.draw(|f| {
             let chunks = Layout::default()
                 .direction(Direction::Vertical)
-                .margin(5)
+                .margin(2)
                 .constraints(
                     [
                         Constraint::Length(5),
@@ -384,10 +440,9 @@ impl Activity for AuthActivity {
                     chunks[1].x + self.address.width() as u16 + 1,
                     chunks[1].y + 1,
                 ),
-                InputField::Port => f.set_cursor(
-                    chunks[2].x + self.port.width() as u16 + 1,
-                    chunks[2].y + 1
-                ),
+                InputField::Port => {
+                    f.set_cursor(chunks[2].x + self.port.width() as u16 + 1, chunks[2].y + 1)
+                }
                 InputField::Username => f.set_cursor(
                     chunks[4].x + self.username.width() as u16 + 1,
                     chunks[4].y + 1,
