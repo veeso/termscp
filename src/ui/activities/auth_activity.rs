@@ -36,10 +36,10 @@ use crossterm::event::Event as InputEvent;
 use crossterm::event::KeyCode;
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use tui::{
-    layout::{Constraint, Direction, Layout},
+    layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Span, Spans, Text},
-    widgets::{Block, Borders, Paragraph, Tabs},
+    widgets::{Block, Borders, Clear, Paragraph, Tabs},
 };
 use unicode_width::UnicodeWidthStr;
 
@@ -148,6 +148,7 @@ impl AuthActivity {
                         // Check address
                         if self.address.len() == 0 {
                             self.popup_message = Some(String::from("Invalid address"));
+                            return;
                         }
                         // Check port
                         // Convert port to number
@@ -157,16 +158,19 @@ impl AuthActivity {
                                     self.popup_message = Some(String::from(
                                         "Specified port must be in range 0-65535",
                                     ));
+                                    return;
                                 }
                             }
                             Err(_) => {
                                 self.popup_message =
                                     Some(String::from("Specified port is not a number"));
+                                return;
                             }
                         }
                         // Check username
                         if self.username.len() == 0 {
                             self.popup_message = Some(String::from("Invalid username"));
+                            return;
                         }
                         // Everything OK, set enter
                         self.submit = true;
@@ -254,13 +258,10 @@ impl AuthActivity {
     ///
     /// Handler for input event when in popup mode
     fn handle_input_event_mode_popup(&mut self, ev: &InputEvent) {
-        // Only enter (+ ESC) should be allowed here
+        // Only enter should be allowed here
         match ev {
             InputEvent::Key(key) => {
                 match key.code {
-                    KeyCode::Esc => {
-                        self.quit = true;
-                    }
                     KeyCode::Enter => {
                         self.popup_message = None; // Hide popup
                     }
@@ -367,7 +368,7 @@ impl AuthActivity {
                 Span::styled("<ESC>", Style::default().add_modifier(Modifier::BOLD)),
                 Span::raw(" to exit, "),
                 Span::styled("<UP,DOWN>", Style::default().add_modifier(Modifier::BOLD)),
-                Span::raw(" to change input field,"),
+                Span::raw(" to change input field, "),
                 Span::styled("<ENTER>", Style::default().add_modifier(Modifier::BOLD)),
                 Span::raw(" to submit form"),
             ],
@@ -376,6 +377,38 @@ impl AuthActivity {
         let mut footer_text = Text::from(Spans::from(footer));
         footer_text.patch_style(h_style);
         Paragraph::new(footer_text)
+    }
+
+    /// ### draw_popup
+    /// 
+    /// Draw popup block
+    fn draw_popup(&self, r: Rect) -> (Paragraph, Rect) {
+        let popup_layout = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints(
+                [
+                    Constraint::Percentage((80) / 2),
+                    Constraint::Percentage(20),
+                    Constraint::Percentage((80) / 2),
+                ]
+                .as_ref(),
+            )
+            .split(r);
+        let area: Rect = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints(
+                [
+                    Constraint::Percentage((80) / 2),
+                    Constraint::Percentage(20),
+                    Constraint::Percentage((80) / 2),
+                ]
+                .as_ref(),
+            )
+            .split(popup_layout[1])[1];
+        let popup: Paragraph = Paragraph::new(self.popup_message.as_ref().unwrap().as_ref())
+            .style(Style::default().fg(Color::Red))
+            .block(Block::default().borders(Borders::ALL).title("Alert"));
+        (popup, area)
     }
 }
 
@@ -433,7 +466,11 @@ impl Activity for AuthActivity {
             f.render_widget(self.draw_protocol_password(), chunks[5]);
             // Draw footer
             f.render_widget(self.draw_footer(), chunks[6]);
-            // TODO: popup
+            if self.popup_message.is_some() {
+                let (popup, popup_area): (Paragraph, Rect) = self.draw_popup(f.size());
+                f.render_widget(Clear, popup_area); //this clears out the background
+                f.render_widget(popup, popup_area);
+            }
             // Set cursor
             match self.selected_field {
                 InputField::Address => f.set_cursor(
