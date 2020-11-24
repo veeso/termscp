@@ -110,7 +110,7 @@ impl FileTransfer for SftpFileTransfer {
     fn connect(
         &mut self,
         address: String,
-        port: usize,
+        port: u16,
         username: Option<String>,
         password: Option<String>,
     ) -> Result<(), FileTransferError> {
