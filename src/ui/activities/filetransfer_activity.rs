@@ -29,8 +29,8 @@ extern crate tui;
 extern crate unicode_width;
 
 // locals
-use crate::filetransfer::FileTransferProtocol;
 use super::{Activity, Context};
+use crate::filetransfer::FileTransferProtocol;
 
 // File transfer
 use crate::filetransfer::sftp_transfer::SftpFileTransfer;
@@ -69,7 +69,7 @@ pub struct FileTransferParams {
 }
 
 /// ### InputField
-/// 
+///
 /// Input field selected
 #[derive(std::cmp::PartialEq)]
 enum InputField {
@@ -78,7 +78,7 @@ enum InputField {
 }
 
 /// ### DialogYesNoOption
-/// 
+///
 /// Current yes/no dialog option
 #[derive(std::cmp::PartialEq, Clone)]
 enum DialogYesNoOption {
@@ -91,12 +91,12 @@ enum DialogYesNoOption {
 /// PopupType describes the type of popup
 #[derive(std::cmp::PartialEq, Clone)]
 enum PopupType {
-    Alert(Color, String),                                               // Block color; Block text
-    Fatal(String),                                                      // Must quit after being hidden
-    Input(String, OnInputSubmitCallback),                               // Input description; Callback for submit
-    Progress(String),                                                   // Progress block text
-    Wait(String),                                                       // Wait block text
-    YesNo(String, DialogYesNoOption, DialogCallback, DialogCallback),   // Yes, no callback
+    Alert(Color, String),                 // Block color; Block text
+    Fatal(String),                        // Must quit after being hidden
+    Input(String, OnInputSubmitCallback), // Input description; Callback for submit
+    Progress(String),                     // Progress block text
+    Wait(String),                         // Wait block text
+    YesNo(String, DialogYesNoOption, DialogCallback, DialogCallback), // Yes, no callback
 }
 
 /// ## InputMode
@@ -168,20 +168,20 @@ impl LogRecord {
 ///
 /// FileTransferActivity is the data holder for the file transfer activity
 pub struct FileTransferActivity {
-    pub disconnected: bool,             // Has disconnected from remote?
-    pub quit: bool,                     // Has quit term scp?
-    params: FileTransferParams,         // FT connection params
-    client: Box<dyn FileTransfer>,      // File transfer client
-    local: FileExplorer,                // Local File explorer state
-    remote: FileExplorer,               // Remote File explorer state
-    tab: FileExplorerTab,               // Current selected tab
-    log_index: usize,                   // Current log index entry selected
-    log_records: VecDeque<LogRecord>,   // Log records
-    log_size: usize,                    // Log records size (max)
-    progress: usize,                    // Current progress percentage
-    input_mode: InputMode,              // Current input mode
-    input_field: InputField,            // Current selected input mode
-    input_txt: String,                  // Input text
+    pub disconnected: bool,           // Has disconnected from remote?
+    pub quit: bool,                   // Has quit term scp?
+    params: FileTransferParams,       // FT connection params
+    client: Box<dyn FileTransfer>,    // File transfer client
+    local: FileExplorer,              // Local File explorer state
+    remote: FileExplorer,             // Remote File explorer state
+    tab: FileExplorerTab,             // Current selected tab
+    log_index: usize,                 // Current log index entry selected
+    log_records: VecDeque<LogRecord>, // Log records
+    log_size: usize,                  // Log records size (max)
+    progress: usize,                  // Current progress percentage
+    input_mode: InputMode,            // Current input mode
+    input_field: InputField,          // Current selected input mode
+    input_txt: String,                // Input text
 }
 
 impl FileTransferActivity {
@@ -199,7 +199,7 @@ impl FileTransferActivity {
             tab: FileExplorerTab::Local,
             log_index: 0,
             log_records: VecDeque::with_capacity(256), // 256 events is enough I guess
-            log_size: 256, // Must match with capacity
+            log_size: 256,                             // Must match with capacity
             progress: 0,
             input_mode: InputMode::Explorer,
             input_field: InputField::Explorer,
@@ -212,15 +212,20 @@ impl FileTransferActivity {
     }
 
     /// ### connect
-    /// 
+    ///
     /// Connect to remote
     fn connect(&mut self) {
         // Connect to remote
-        match self.client.connect(self.params.address.clone(), self.params.port, self.params.username.clone(), self.params.password.clone()) {
+        match self.client.connect(
+            self.params.address.clone(),
+            self.params.port,
+            self.params.username.clone(),
+            self.params.password.clone(),
+        ) {
             Ok(_) => {
                 // Set state to explorer
                 self.input_mode = InputMode::Explorer;
-            },
+            }
             Err(err) => {
                 // Set popup fatal error
                 self.input_mode = InputMode::Popup(PopupType::Fatal(err.msg()));
@@ -229,7 +234,7 @@ impl FileTransferActivity {
     }
 
     /// ### log
-    /// 
+    ///
     /// Add message to log events
     fn log(&mut self, level: LogLevel, msg: &str) {
         // Create log record
@@ -245,7 +250,7 @@ impl FileTransferActivity {
     }
 
     /// ### switch_input_field
-    /// 
+    ///
     /// Switch input field based on current input field
     fn switch_input_field(&mut self) {
         self.input_field = match self.input_field {
@@ -255,7 +260,7 @@ impl FileTransferActivity {
     }
 
     /// ### handle_input_event
-    /// 
+    ///
     /// Handle input event based on current input mode
     fn handle_input_event(&mut self, context: &mut Context, ev: &InputEvent) {
         match &self.input_mode {
@@ -265,35 +270,48 @@ impl FileTransferActivity {
     }
 
     /// ### handle_input_event_mode_explorer
-    /// 
+    ///
     /// Input event handler for explorer mode
     fn handle_input_event_mode_explorer(&mut self, context: &mut Context, ev: &InputEvent) {
         // Match input field
         match self.input_field {
-            InputField::Explorer => match self.tab { // Match current selected tab
-                FileExplorerTab::Local => self.handle_input_event_mode_explorer_tab_local(context, ev),
-                FileExplorerTab::Remote => self.handle_input_event_mode_explorer_tab_remote(context, ev)
+            InputField::Explorer => match self.tab {
+                // Match current selected tab
+                FileExplorerTab::Local => {
+                    self.handle_input_event_mode_explorer_tab_local(context, ev)
+                }
+                FileExplorerTab::Remote => {
+                    self.handle_input_event_mode_explorer_tab_remote(context, ev)
+                }
             },
-            InputField::Logs => self.handle_input_event_mode_explorer_log(ev)
+            InputField::Logs => self.handle_input_event_mode_explorer_log(ev),
         }
     }
 
     /// ### handle_input_event_mode_explorer_tab_local
-    /// 
+    ///
     /// Input event handler for explorer mode when localhost tab is selected
-    fn handle_input_event_mode_explorer_tab_local(&mut self, context: &mut Context, ev: &InputEvent) {
+    fn handle_input_event_mode_explorer_tab_local(
+        &mut self,
+        context: &mut Context,
+        ev: &InputEvent,
+    ) {
         // TODO: implement
     }
 
     /// ### handle_input_event_mode_explorer_tab_local
-    /// 
+    ///
     /// Input event handler for explorer mode when remote tab is selected
-    fn handle_input_event_mode_explorer_tab_remote(&mut self, context: &mut Context, ev: &InputEvent) {
+    fn handle_input_event_mode_explorer_tab_remote(
+        &mut self,
+        context: &mut Context,
+        ev: &InputEvent,
+    ) {
         // TODO: implement
     }
 
     /// ### handle_input_event_mode_explorer_log
-    /// 
+    ///
     /// Input even handler for explorer mode when log tab is selected
     fn handle_input_event_mode_explorer_log(&mut self, ev: &InputEvent) {
         // Match event
@@ -307,13 +325,13 @@ impl FileTransferActivity {
                         if self.log_index > 0 {
                             self.log_index = self.log_index - 1;
                         }
-                    },
+                    }
                     KeyCode::Down => {
                         // Increase log index
                         if self.log_index + 1 >= self.log_size {
                             self.log_index = self.log_index + 1;
                         }
-                    },
+                    }
                     KeyCode::PageUp => {
                         // Fast decreasing of log index
                         if self.log_index >= records_block {
@@ -321,10 +339,11 @@ impl FileTransferActivity {
                         } else {
                             self.log_index = 0; // Set to 0 otherwise
                         }
-                    },
+                    }
                     KeyCode::PageDown => {
                         // Fast increasing of log index
-                        if self.log_index + records_block >= self.log_size { // If overflows, set to size
+                        if self.log_index + records_block >= self.log_size {
+                            // If overflows, set to size
                             self.log_index = self.log_size - 1;
                         } else {
                             self.log_index = self.log_index + records_block; // Increase by `records_block`
@@ -338,7 +357,7 @@ impl FileTransferActivity {
     }
 
     /// ### handle_input_event_mode_explorer
-    /// 
+    ///
     /// Input event handler for popup mode. Handler is then based on Popup type
     fn handle_input_event_mode_popup(&mut self, ev: &InputEvent, popup: PopupType) {
         match popup {
@@ -347,12 +366,14 @@ impl FileTransferActivity {
             PopupType::Input(_, cb) => self.handle_input_event_mode_popup_input(ev, cb),
             PopupType::Progress(_) => self.handle_input_event_mode_popup_progress(ev),
             PopupType::Wait(_) => self.handle_input_event_mode_popup_wait(ev),
-            PopupType::YesNo(_, opt, yes_cb, no_cb) => self.handle_input_event_mode_popup_yesno(ev, opt, yes_cb, no_cb),
+            PopupType::YesNo(_, opt, yes_cb, no_cb) => {
+                self.handle_input_event_mode_popup_yesno(ev, opt, yes_cb, no_cb)
+            }
         }
     }
 
     /// ### handle_input_event_mode_explorer_alert
-    /// 
+    ///
     /// Input event handler for popup alert
     fn handle_input_event_mode_popup_alert(&mut self, ev: &InputEvent) {
         // If enter, close popup
@@ -371,7 +392,7 @@ impl FileTransferActivity {
     }
 
     /// ### handle_input_event_mode_explorer_alert
-    /// 
+    ///
     /// Input event handler for popup alert
     fn handle_input_event_mode_popup_fatal(&mut self, ev: &InputEvent) {
         // If enter, close popup
@@ -390,7 +411,7 @@ impl FileTransferActivity {
     }
 
     /// ### handle_input_event_mode_popup_input
-    /// 
+    ///
     /// Input event handler for input popup
     fn handle_input_event_mode_popup_input(&mut self, ev: &InputEvent, cb: OnInputSubmitCallback) {
         // If enter, close popup, otherwise push chars to input
@@ -416,7 +437,7 @@ impl FileTransferActivity {
     }
 
     /// ### handle_input_event_mode_explorer_alert
-    /// 
+    ///
     /// Input event handler for popup alert
     fn handle_input_event_mode_popup_progress(&mut self, ev: &InputEvent) {
         // There's nothing you can do here I guess... maybe ctrl+c in the future idk
@@ -426,7 +447,7 @@ impl FileTransferActivity {
     }
 
     /// ### handle_input_event_mode_explorer_alert
-    /// 
+    ///
     /// Input event handler for popup alert
     fn handle_input_event_mode_popup_wait(&mut self, ev: &InputEvent) {
         // There's nothing you can do here I guess... maybe ctrl+c in the future idk
@@ -436,9 +457,15 @@ impl FileTransferActivity {
     }
 
     /// ### handle_input_event_mode_explorer_alert
-    /// 
+    ///
     /// Input event handler for popup alert
-    fn handle_input_event_mode_popup_yesno(&mut self, ev: &InputEvent, opt: DialogYesNoOption, yes_cb: DialogCallback, no_cb: DialogCallback) {
+    fn handle_input_event_mode_popup_yesno(
+        &mut self,
+        ev: &InputEvent,
+        opt: DialogYesNoOption,
+        yes_cb: DialogCallback,
+        no_cb: DialogCallback,
+    ) {
         // If enter, close popup
         match ev {
             InputEvent::Key(key) => {
@@ -449,7 +476,7 @@ impl FileTransferActivity {
                         // Check if user selected yes or not
                         match opt {
                             DialogYesNoOption::No => no_cb(),
-                            DialogYesNoOption::Yes => yes_cb()
+                            DialogYesNoOption::Yes => yes_cb(),
                         }
                     }
                     _ => { /* Nothing to do */ }
@@ -557,9 +584,12 @@ impl Activity for FileTransferActivity {
     /// This function must be called at each tick to refresh the interface
     fn on_draw(&mut self, context: &mut Context) {
         // Check if connected
-        if ! self.client.is_connected() {
+        if !self.client.is_connected() {
             // Set init state to connecting popup
-            self.input_mode = InputMode::Popup(PopupType::Wait(format!("Connecting to {}:{}...", self.params.address, self.params.port)));
+            self.input_mode = InputMode::Popup(PopupType::Wait(format!(
+                "Connecting to {}:{}...",
+                self.params.address, self.params.port
+            )));
             // Force ui draw
             let _ = context.terminal.draw(|f| {
                 self.draw(f);
