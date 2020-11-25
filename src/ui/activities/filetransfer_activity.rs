@@ -54,8 +54,8 @@ use tui::{
 use unicode_width::UnicodeWidthStr;
 
 // Types
-type DialogCallback = fn();
-type OnInputSubmitCallback = fn(String);
+type DialogCallback = fn(&mut FileTransferActivity);
+type OnInputSubmitCallback = fn(String, &mut Context);
 
 /// ### FileTransferParams
 ///
@@ -89,7 +89,7 @@ enum DialogYesNoOption {
 /// ## PopupType
 ///
 /// PopupType describes the type of popup
-#[derive(std::cmp::PartialEq, Clone)]
+#[derive(Clone)]
 enum PopupType {
     Alert(Color, String),                          // Block color; Block text
     Fatal(String),                                 // Must quit after being hidden
@@ -103,7 +103,7 @@ enum PopupType {
 ///
 /// InputMode describes the current input mode
 /// Each input mode handle the input events in a different way
-#[derive(std::cmp::PartialEq, Clone)]
+#[derive(Clone)]
 enum InputMode {
     Explorer,
     Popup(PopupType),
@@ -235,6 +235,15 @@ impl FileTransferActivity {
         }
     }
 
+    fn disconnect(&mut self) {
+        // Show popup disconnecting
+        self.input_mode = InputMode::Popup(PopupType::Alert(Color::Red, String::from("Disconnecting from remote...")));
+        // Disconnect
+        let _ = self.client.disconnect();
+        // Quit
+        self.disconnected = true;
+    }
+
     /// ### log
     ///
     /// Add message to log events
@@ -249,6 +258,17 @@ impl FileTransferActivity {
         self.log_records.push_front(record);
         // Set log index
         self.log_index = self.log_records.len();
+    }
+
+    fn set_input_mode_to_explorer(&mut self) {
+        self.input_mode = InputMode::Explorer;
+    }
+
+    /// ### create_quit_popup
+    /// 
+    /// Create quit popup input mode (since must be shared between different input handlers)
+    fn create_quit_popup(&mut self) -> InputMode {
+        InputMode::Popup(PopupType::YesNo(String::from("Are you sure you want to quit?"), FileTransferActivity::disconnect, FileTransferActivity::set_input_mode_to_explorer))
     }
 
     /// ### switch_input_field
@@ -267,7 +287,7 @@ impl FileTransferActivity {
     fn handle_input_event(&mut self, context: &mut Context, ev: &InputEvent) {
         match &self.input_mode {
             InputMode::Explorer => self.handle_input_event_mode_explorer(context, ev),
-            InputMode::Popup(ptype) => self.handle_input_event_mode_popup(ev, ptype.clone()),
+            InputMode::Popup(ptype) => self.handle_input_event_mode_popup(ev, ptype.clone(), context),
         }
     }
 
@@ -321,6 +341,11 @@ impl FileTransferActivity {
         match ev {
             InputEvent::Key(key) => {
                 match key.code {
+                    KeyCode::Esc => {
+                        // Handle quit event
+                        // Create quit prompt dialog
+                        self.input_mode = self.create_quit_popup();
+                    }
                     KeyCode::Tab => self.switch_input_field(), // <TAB> switch tab
                     KeyCode::Up => {
                         // Decrease log index
@@ -361,11 +386,11 @@ impl FileTransferActivity {
     /// ### handle_input_event_mode_explorer
     ///
     /// Input event handler for popup mode. Handler is then based on Popup type
-    fn handle_input_event_mode_popup(&mut self, ev: &InputEvent, popup: PopupType) {
+    fn handle_input_event_mode_popup(&mut self, ev: &InputEvent, popup: PopupType, ctx: &mut Context) {
         match popup {
             PopupType::Alert(_, _) => self.handle_input_event_mode_popup_alert(ev),
             PopupType::Fatal(_) => self.handle_input_event_mode_popup_fatal(ev),
-            PopupType::Input(_, cb) => self.handle_input_event_mode_popup_input(ev, cb),
+            PopupType::Input(_, cb) => self.handle_input_event_mode_popup_input(ev, ctx, cb),
             PopupType::Progress(_) => self.handle_input_event_mode_popup_progress(ev),
             PopupType::Wait(_) => self.handle_input_event_mode_popup_wait(ev),
             PopupType::YesNo(_, yes_cb, no_cb) => {
@@ -415,7 +440,7 @@ impl FileTransferActivity {
     /// ### handle_input_event_mode_popup_input
     ///
     /// Input event handler for input popup
-    fn handle_input_event_mode_popup_input(&mut self, ev: &InputEvent, cb: OnInputSubmitCallback) {
+    fn handle_input_event_mode_popup_input(&mut self, ev: &InputEvent, ctx: &mut Context, cb: OnInputSubmitCallback) {
         // If enter, close popup, otherwise push chars to input
         match ev {
             InputEvent::Key(key) => {
@@ -428,7 +453,7 @@ impl FileTransferActivity {
                         // Set mode back to explorer BEFORE CALLBACKS!!! Callback can then overwrite this, clever uh?
                         self.input_mode = InputMode::Explorer;
                         // Call cb
-                        cb(input_text);
+                        cb(input_text, ctx);
                     }
                     KeyCode::Char(ch) => self.input_txt.push(ch),
                     _ => { /* Nothing to do */ }
@@ -476,8 +501,8 @@ impl FileTransferActivity {
                         self.input_mode = InputMode::Explorer;
                         // Check if user selected yes or not
                         match self.choice_opt {
-                            DialogYesNoOption::No => no_cb(),
-                            DialogYesNoOption::Yes => yes_cb(),
+                            DialogYesNoOption::No => no_cb(self),
+                            DialogYesNoOption::Yes => yes_cb(self),
                         }
                     }
                     KeyCode::Right => self.choice_opt = DialogYesNoOption::No, // Set to NO
