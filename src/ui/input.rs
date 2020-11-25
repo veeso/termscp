@@ -48,23 +48,36 @@ impl InputHandler {
     pub(crate) fn fetch_events(&self) -> Result<Vec<Event>, ()> {
         let mut inbox: Vec<Event> = Vec::new();
         loop {
-            if let Ok(available) = poll(Duration::from_millis(10)) {
-                match available {
-                    true => {
-                        // Read event
-                        if let Ok(ev) = read() {
-                            inbox.push(ev);
-                        } else {
-                            return Err(());
-                        }
-                    }
-                    false => break,
-                }
-            } else {
-                return Err(());
+            match self.read_event() {
+                Ok(ev_opt) => match ev_opt {
+                    Some(ev) => inbox.push(ev),
+                    None => break
+                },
+                Err(_) => return Err(())
             }
         }
         Ok(inbox)
+    }
+
+    /// ### read_event
+    /// 
+    /// Read event from input listener
+    pub(crate) fn read_event(&self) -> Result<Option<Event>, ()> {
+        if let Ok(available) = poll(Duration::from_millis(10)) {
+            match available {
+                true => {
+                    // Read event
+                    if let Ok(ev) = read() {
+                        Ok(Some(ev))
+                    } else {
+                        Err(())
+                    }
+                }
+                false => Ok(None)
+            }
+        } else {
+            Err(())
+        }
     }
 }
 
