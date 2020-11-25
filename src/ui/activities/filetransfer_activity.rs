@@ -91,11 +91,11 @@ enum DialogYesNoOption {
 /// PopupType describes the type of popup
 #[derive(std::cmp::PartialEq, Clone)]
 enum PopupType {
-    Alert(Color, String),                 // Block color; Block text
-    Fatal(String),                        // Must quit after being hidden
-    Input(String, OnInputSubmitCallback), // Input description; Callback for submit
-    Progress(String),                     // Progress block text
-    Wait(String),                         // Wait block text
+    Alert(Color, String),                          // Block color; Block text
+    Fatal(String),                                 // Must quit after being hidden
+    Input(String, OnInputSubmitCallback),          // Input description; Callback for submit
+    Progress(String),                              // Progress block text
+    Wait(String),                                  // Wait block text
     YesNo(String, DialogCallback, DialogCallback), // Yes, no callback
 }
 
