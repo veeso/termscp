@@ -35,10 +35,11 @@ use crate::filetransfer::FileTransferProtocol;
 // File transfer
 use crate::filetransfer::sftp_transfer::SftpFileTransfer;
 use crate::filetransfer::FileTransfer;
+use crate::fs::{FsDirectory, FsEntry, FsFile};
 
 // Includes
 use crossterm::event::Event as InputEvent;
-use crossterm::event::KeyCode;
+use crossterm::event::{KeyCode, KeyModifiers};
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use std::collections::VecDeque;
 use std::io::Stdout;
@@ -114,6 +115,7 @@ enum InputMode {
 /// File explorer states
 struct FileExplorer {
     pub index: usize,
+    pub files: Vec<FsEntry>,
 }
 
 impl FileExplorer {
@@ -121,7 +123,10 @@ impl FileExplorer {
     ///
     /// Instantiates a new FileExplorer
     pub fn new() -> FileExplorer {
-        FileExplorer { index: 0 }
+        FileExplorer {
+            index: 0,
+            files: Vec::new(),
+        }
     }
 }
 
@@ -227,6 +232,13 @@ impl FileTransferActivity {
             Ok(_) => {
                 // Set state to explorer
                 self.input_mode = InputMode::Explorer;
+                // Get current entries
+                if let Ok(pwd) = self.client.pwd() {
+                    match self.client.list_dir(pwd.as_path()) {
+                        Ok(entries) => self.remote.files = entries,
+                        Err(err) => self.log(LogLevel::Error, format!("Unable to get files from remote at '{}': {}", pwd.display(), err.msg()).as_ref())
+                    }
+                }
             }
             Err(err) => {
                 // Set popup fatal error
@@ -235,9 +247,15 @@ impl FileTransferActivity {
         }
     }
 
+    /// ### disconnect
+    ///
+    /// disconnect from remote
     fn disconnect(&mut self) {
         // Show popup disconnecting
-        self.input_mode = InputMode::Popup(PopupType::Alert(Color::Red, String::from("Disconnecting from remote...")));
+        self.input_mode = InputMode::Popup(PopupType::Alert(
+            Color::Red,
+            String::from("Disconnecting from remote..."),
+        ));
         // Disconnect
         let _ = self.client.disconnect();
         // Quit
@@ -260,15 +278,22 @@ impl FileTransferActivity {
         self.log_index = self.log_records.len();
     }
 
-    fn set_input_mode_to_explorer(&mut self) {
+    /// ### force_input_mode_to_explorer
+    ///
+    /// force input mode to explorer
+    fn force_input_mode_to_explorer(&mut self) {
         self.input_mode = InputMode::Explorer;
     }
 
     /// ### create_quit_popup
-    /// 
+    ///
     /// Create quit popup input mode (since must be shared between different input handlers)
     fn create_quit_popup(&mut self) -> InputMode {
-        InputMode::Popup(PopupType::YesNo(String::from("Are you sure you want to quit?"), FileTransferActivity::disconnect, FileTransferActivity::set_input_mode_to_explorer))
+        InputMode::Popup(PopupType::YesNo(
+            String::from("Are you sure you want to quit?"),
+            FileTransferActivity::disconnect,
+            FileTransferActivity::force_input_mode_to_explorer,
+        ))
     }
 
     /// ### switch_input_field
@@ -287,7 +312,9 @@ impl FileTransferActivity {
     fn handle_input_event(&mut self, context: &mut Context, ev: &InputEvent) {
         match &self.input_mode {
             InputMode::Explorer => self.handle_input_event_mode_explorer(context, ev),
-            InputMode::Popup(ptype) => self.handle_input_event_mode_popup(ev, ptype.clone(), context),
+            InputMode::Popup(ptype) => {
+                self.handle_input_event_mode_popup(ev, ptype.clone(), context)
+            }
         }
     }
 
@@ -318,7 +345,55 @@ impl FileTransferActivity {
         context: &mut Context,
         ev: &InputEvent,
     ) {
-        // TODO: implement
+        // Match events
+        match ev {
+            InputEvent::Key(key) => {
+                match key.code {
+                    KeyCode::Esc => {
+                        // Handle quit event
+                        // Create quit prompt dialog
+                        self.input_mode = self.create_quit_popup();
+                    }
+                    KeyCode::Tab => self.switch_input_field(), // <TAB> switch tab
+                    KeyCode::Right => self.tab = FileExplorerTab::Remote, // <RIGHT> switch to right tab
+                    KeyCode::Up => {
+                        // Move index up
+                        if self.local.index > 0 {
+                            self.local.index -= 1;
+                        }
+                    }
+                    KeyCode::Down => {
+                        // Move index down
+                        if self.local.index + 1 < self.local.files.len() {
+                            self.local.index += 1;
+                        }
+                    }
+                    KeyCode::Enter => {
+                        // TODO:
+                    }
+                    KeyCode::Delete => {
+                        // TODO:
+                    }
+                    KeyCode::Char(ch) => match ch {
+                        'g' | 'G' => { // Goto
+                            // If ctrl is enabled...
+                            if key.modifiers.intersects(KeyModifiers::CONTROL) {
+                                // TODO:
+                            }
+                        }
+                        'r' | 'R' => { // Rename
+                            // If ctrl is enabled...
+                            if key.modifiers.intersects(KeyModifiers::CONTROL) {
+                                // TODO:
+                            }
+                        }
+                        _ => { /* Nothing to do */ }
+                    }
+                    _ => { /* Nothing to do */ }
+                }
+            }
+            _ => { /* Nothing to do */ }
+        }
     }
 
     /// ### handle_input_event_mode_explorer_tab_local
@@ -330,6 +405,22 @@ impl FileTransferActivity {
         ev: &InputEvent,
     ) {
         // TODO: implement
+        // Match events
+        match ev {
+            InputEvent::Key(key) => {
+                match key.code {
+                    KeyCode::Esc => {
+                        // Handle quit event
+                        // Create quit prompt dialog
+                        self.input_mode = self.create_quit_popup();
+                    }
+                    KeyCode::Tab => self.switch_input_field(), // <TAB> switch tab
+                    KeyCode::Left => self.tab = FileExplorerTab::Local, // <LEFT> switch to local tab
+                    _ => { /* Nothing to do */ }
+                }
+            }
+            _ => { /* Nothing to do */ }
+        }
     }
 
     /// ### handle_input_event_mode_explorer_log
@@ -386,7 +477,12 @@ impl FileTransferActivity {
     /// ### handle_input_event_mode_explorer
     ///
     /// Input event handler for popup mode. Handler is then based on Popup type
-    fn handle_input_event_mode_popup(&mut self, ev: &InputEvent, popup: PopupType, ctx: &mut Context) {
+    fn handle_input_event_mode_popup(
+        &mut self,
+        ev: &InputEvent,
+        popup: PopupType,
+        ctx: &mut Context,
+    ) {
         match popup {
             PopupType::Alert(_, _) => self.handle_input_event_mode_popup_alert(ev),
             PopupType::Fatal(_) => self.handle_input_event_mode_popup_fatal(ev),
@@ -440,7 +536,12 @@ impl FileTransferActivity {
     /// ### handle_input_event_mode_popup_input
     ///
     /// Input event handler for input popup
-    fn handle_input_event_mode_popup_input(&mut self, ev: &InputEvent, ctx: &mut Context, cb: OnInputSubmitCallback) {
+    fn handle_input_event_mode_popup_input(
+        &mut self,
+        ev: &InputEvent,
+        ctx: &mut Context,
+        cb: OnInputSubmitCallback,
+    ) {
         // If enter, close popup, otherwise push chars to input
         match ev {
             InputEvent::Key(key) => {
@@ -456,6 +557,9 @@ impl FileTransferActivity {
                         cb(input_text, ctx);
                     }
                     KeyCode::Char(ch) => self.input_txt.push(ch),
+                    KeyCode::Backspace => {
+                        let _ = self.input_txt.pop();
+                    },
                     _ => { /* Nothing to do */ }
                 }
             }
@@ -566,7 +670,15 @@ impl FileTransferActivity {
                     .fg(Color::White)
                     .add_modifier(Modifier::BOLD),
             ),
-            Span::raw("to upload/download file\t"),
+            Span::raw("to change directory\t"),
+            Span::styled(
+                "<CTRL+G>",
+                Style::default()
+                    .bg(Color::Cyan)
+                    .fg(Color::White)
+                    .add_modifier(Modifier::BOLD),
+            ),
+            Span::raw("goto path\t"),
             Span::styled(
                 "<CTRL+R>",
                 Style::default()
@@ -604,6 +716,8 @@ impl Activity for FileTransferActivity {
         let _ = enable_raw_mode();
         // Clear terminal
         let _ = context.terminal.clear();
+        // Get files at current wd
+        self.local.files = context.local.list_dir();
     }
 
     /// ### on_draw
