@@ -96,7 +96,7 @@ enum PopupType {
     Input(String, OnInputSubmitCallback), // Input description; Callback for submit
     Progress(String),                     // Progress block text
     Wait(String),                         // Wait block text
-    YesNo(String, DialogYesNoOption, DialogCallback, DialogCallback), // Yes, no callback
+    YesNo(String, DialogCallback, DialogCallback), // Yes, no callback
 }
 
 /// ## InputMode
@@ -182,6 +182,7 @@ pub struct FileTransferActivity {
     input_mode: InputMode,            // Current input mode
     input_field: InputField,          // Current selected input mode
     input_txt: String,                // Input text
+    choice_opt: DialogYesNoOption,    // Dialog popup selected option
 }
 
 impl FileTransferActivity {
@@ -194,6 +195,10 @@ impl FileTransferActivity {
             disconnected: false,
             quit: false,
             params: params,
+            client: match protocol {
+                FileTransferProtocol::Sftp => Box::new(SftpFileTransfer::new()),
+                FileTransferProtocol::Ftp => Box::new(SftpFileTransfer::new()), // FIXME: FTP
+            },
             local: FileExplorer::new(),
             remote: FileExplorer::new(),
             tab: FileExplorerTab::Local,
@@ -204,10 +209,7 @@ impl FileTransferActivity {
             input_mode: InputMode::Explorer,
             input_field: InputField::Explorer,
             input_txt: String::new(),
-            client: match protocol {
-                FileTransferProtocol::Sftp => Box::new(SftpFileTransfer::new()),
-                FileTransferProtocol::Ftp => Box::new(SftpFileTransfer::new()), // FIXME: FTP
-            },
+            choice_opt: DialogYesNoOption::Yes,
         }
     }
 
@@ -366,8 +368,8 @@ impl FileTransferActivity {
             PopupType::Input(_, cb) => self.handle_input_event_mode_popup_input(ev, cb),
             PopupType::Progress(_) => self.handle_input_event_mode_popup_progress(ev),
             PopupType::Wait(_) => self.handle_input_event_mode_popup_wait(ev),
-            PopupType::YesNo(_, opt, yes_cb, no_cb) => {
-                self.handle_input_event_mode_popup_yesno(ev, opt, yes_cb, no_cb)
+            PopupType::YesNo(_, yes_cb, no_cb) => {
+                self.handle_input_event_mode_popup_yesno(ev, yes_cb, no_cb)
             }
         }
     }
@@ -462,11 +464,10 @@ impl FileTransferActivity {
     fn handle_input_event_mode_popup_yesno(
         &mut self,
         ev: &InputEvent,
-        opt: DialogYesNoOption,
         yes_cb: DialogCallback,
         no_cb: DialogCallback,
     ) {
-        // If enter, close popup
+        // If enter, close popup, otherwise move dialog option
         match ev {
             InputEvent::Key(key) => {
                 match key.code {
@@ -474,11 +475,13 @@ impl FileTransferActivity {
                         // @! Set input mode to Explorer BEFORE CALLBACKS!!! Callback can then overwrite this, clever uh?
                         self.input_mode = InputMode::Explorer;
                         // Check if user selected yes or not
-                        match opt {
+                        match self.choice_opt {
                             DialogYesNoOption::No => no_cb(),
                             DialogYesNoOption::Yes => yes_cb(),
                         }
                     }
+                    KeyCode::Right => self.choice_opt = DialogYesNoOption::No, // Set to NO
+                    KeyCode::Left => self.choice_opt = DialogYesNoOption::Yes, // Set to YES
                     _ => { /* Nothing to do */ }
                 }
             }
