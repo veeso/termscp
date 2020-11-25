@@ -40,7 +40,9 @@ use crate::filetransfer::FileTransfer;
 use crossterm::event::Event as InputEvent;
 use crossterm::event::KeyCode;
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
+use std::collections::VecDeque;
 use std::io::Stdout;
+use std::time::Instant;
 use tui::{
     backend::CrosstermBackend,
     layout::{Constraint, Direction, Layout, Rect},
@@ -53,6 +55,7 @@ use unicode_width::UnicodeWidthStr;
 
 // Types
 type DialogCallback = fn();
+type OnInputSubmitCallback = fn(String);
 
 /// ### FileTransferParams
 ///
@@ -74,23 +77,33 @@ enum InputField {
     Logs,
 }
 
+/// ### DialogYesNoOption
+/// 
+/// Current yes/no dialog option
+#[derive(std::cmp::PartialEq, Clone)]
+enum DialogYesNoOption {
+    Yes,
+    No,
+}
+
 /// ## PopupType
 ///
 /// PopupType describes the type of popup
-#[derive(std::cmp::PartialEq)]
+#[derive(std::cmp::PartialEq, Clone)]
 enum PopupType {
-    Alert(Color, String),
-    Wait(String),
-    Fatal(String), // Must quit after being hidden
-    Progress(String),
-    YesNo(String, DialogCallback, DialogCallback), // Yes, no callback
+    Alert(Color, String),                                               // Block color; Block text
+    Fatal(String),                                                      // Must quit after being hidden
+    Input(String, OnInputSubmitCallback),                               // Input description; Callback for submit
+    Progress(String),                                                   // Progress block text
+    Wait(String),                                                       // Wait block text
+    YesNo(String, DialogYesNoOption, DialogCallback, DialogCallback),   // Yes, no callback
 }
 
 /// ## InputMode
 ///
 /// InputMode describes the current input mode
 /// Each input mode handle the input events in a different way
-#[derive(std::cmp::PartialEq)]
+#[derive(std::cmp::PartialEq, Clone)]
 enum InputMode {
     Explorer,
     Popup(PopupType),
@@ -133,6 +146,7 @@ enum LogLevel {
 ///
 /// Log record entry
 struct LogRecord {
+    pub time: Instant,
     pub level: LogLevel,
     pub msg: String,
 }
@@ -143,6 +157,7 @@ impl LogRecord {
     /// Instantiates a new LogRecord
     pub fn new(level: LogLevel, msg: &str) -> LogRecord {
         LogRecord {
+            time: Instant::now(),
             level: level,
             msg: String::from(msg),
         }
@@ -153,18 +168,20 @@ impl LogRecord {
 ///
 /// FileTransferActivity is the data holder for the file transfer activity
 pub struct FileTransferActivity {
-    pub disconnected: bool,
-    pub quit: bool,
-    params: FileTransferParams,
-    local: FileExplorer,
-    remote: FileExplorer,
-    tab: FileExplorerTab,
-    log_index: usize,
-    log_records: Vec<LogRecord>,
-    progress: usize,
-    input_mode: InputMode,
-    input_field: InputField,
-    client: Box<dyn FileTransfer>,
+    pub disconnected: bool,             // Has disconnected from remote?
+    pub quit: bool,                     // Has quit term scp?
+    params: FileTransferParams,         // FT connection params
+    client: Box<dyn FileTransfer>,      // File transfer client
+    local: FileExplorer,                // Local File explorer state
+    remote: FileExplorer,               // Remote File explorer state
+    tab: FileExplorerTab,               // Current selected tab
+    log_index: usize,                   // Current log index entry selected
+    log_records: VecDeque<LogRecord>,   // Log records
+    log_size: usize,                    // Log records size (max)
+    progress: usize,                    // Current progress percentage
+    input_mode: InputMode,              // Current input mode
+    input_field: InputField,            // Current selected input mode
+    input_txt: String,                  // Input text
 }
 
 impl FileTransferActivity {
@@ -181,10 +198,12 @@ impl FileTransferActivity {
             remote: FileExplorer::new(),
             tab: FileExplorerTab::Local,
             log_index: 0,
-            log_records: Vec::new(),
+            log_records: VecDeque::with_capacity(256), // 256 events is enough I guess
+            log_size: 256, // Must match with capacity
             progress: 0,
             input_mode: InputMode::Explorer,
             input_field: InputField::Explorer,
+            input_txt: String::new(),
             client: match protocol {
                 FileTransferProtocol::Sftp => Box::new(SftpFileTransfer::new()),
                 FileTransferProtocol::Ftp => Box::new(SftpFileTransfer::new()), // FIXME: FTP
@@ -206,6 +225,237 @@ impl FileTransferActivity {
                 // Set popup fatal error
                 self.input_mode = InputMode::Popup(PopupType::Fatal(err.msg()));
             }
+        }
+    }
+
+    /// ### log
+    /// 
+    /// Add message to log events
+    fn log(&mut self, level: LogLevel, msg: &str) {
+        // Create log record
+        let record: LogRecord = LogRecord::new(level, msg);
+        //Check if history overflows the size
+        if self.log_records.len() + 1 > self.log_size {
+            self.log_records.pop_back(); // Start cleaning events from back
+        }
+        // Eventually push front the new record
+        self.log_records.push_front(record);
+        // Set log index
+        self.log_index = self.log_records.len();
+    }
+
+    /// ### switch_input_field
+    /// 
+    /// Switch input field based on current input field
+    fn switch_input_field(&mut self) {
+        self.input_field = match self.input_field {
+            InputField::Explorer => InputField::Logs,
+            InputField::Logs => InputField::Explorer,
+        }
+    }
+
+    /// ### handle_input_event
+    /// 
+    /// Handle input event based on current input mode
+    fn handle_input_event(&mut self, context: &mut Context, ev: &InputEvent) {
+        match &self.input_mode {
+            InputMode::Explorer => self.handle_input_event_mode_explorer(context, ev),
+            InputMode::Popup(ptype) => self.handle_input_event_mode_popup(ev, ptype.clone()),
+        }
+    }
+
+    /// ### handle_input_event_mode_explorer
+    /// 
+    /// Input event handler for explorer mode
+    fn handle_input_event_mode_explorer(&mut self, context: &mut Context, ev: &InputEvent) {
+        // Match input field
+        match self.input_field {
+            InputField::Explorer => match self.tab { // Match current selected tab
+                FileExplorerTab::Local => self.handle_input_event_mode_explorer_tab_local(context, ev),
+                FileExplorerTab::Remote => self.handle_input_event_mode_explorer_tab_remote(context, ev)
+            },
+            InputField::Logs => self.handle_input_event_mode_explorer_log(ev)
+        }
+    }
+
+    /// ### handle_input_event_mode_explorer_tab_local
+    /// 
+    /// Input event handler for explorer mode when localhost tab is selected
+    fn handle_input_event_mode_explorer_tab_local(&mut self, context: &mut Context, ev: &InputEvent) {
+        // TODO: implement
+    }
+
+    /// ### handle_input_event_mode_explorer_tab_local
+    /// 
+    /// Input event handler for explorer mode when remote tab is selected
+    fn handle_input_event_mode_explorer_tab_remote(&mut self, context: &mut Context, ev: &InputEvent) {
+        // TODO: implement
+    }
+
+    /// ### handle_input_event_mode_explorer_log
+    /// 
+    /// Input even handler for explorer mode when log tab is selected
+    fn handle_input_event_mode_explorer_log(&mut self, ev: &InputEvent) {
+        // Match event
+        let records_block: usize = 16;
+        match ev {
+            InputEvent::Key(key) => {
+                match key.code {
+                    KeyCode::Tab => self.switch_input_field(), // <TAB> switch tab
+                    KeyCode::Up => {
+                        // Decrease log index
+                        if self.log_index > 0 {
+                            self.log_index = self.log_index - 1;
+                        }
+                    },
+                    KeyCode::Down => {
+                        // Increase log index
+                        if self.log_index + 1 >= self.log_size {
+                            self.log_index = self.log_index + 1;
+                        }
+                    },
+                    KeyCode::PageUp => {
+                        // Fast decreasing of log index
+                        if self.log_index >= records_block {
+                            self.log_index = self.log_index - records_block; // Decrease by `records_block` if possible
+                        } else {
+                            self.log_index = 0; // Set to 0 otherwise
+                        }
+                    },
+                    KeyCode::PageDown => {
+                        // Fast increasing of log index
+                        if self.log_index + records_block >= self.log_size { // If overflows, set to size
+                            self.log_index = self.log_size - 1;
+                        } else {
+                            self.log_index = self.log_index + records_block; // Increase by `records_block`
+                        }
+                    }
+                    _ => { /* Nothing to do */ }
+                }
+            }
+            _ => { /* Nothing to do */ }
+        }
+    }
+
+    /// ### handle_input_event_mode_explorer
+    /// 
+    /// Input event handler for popup mode. Handler is then based on Popup type
+    fn handle_input_event_mode_popup(&mut self, ev: &InputEvent, popup: PopupType) {
+        match popup {
+            PopupType::Alert(_, _) => self.handle_input_event_mode_popup_alert(ev),
+            PopupType::Fatal(_) => self.handle_input_event_mode_popup_fatal(ev),
+            PopupType::Input(_, cb) => self.handle_input_event_mode_popup_input(ev, cb),
+            PopupType::Progress(_) => self.handle_input_event_mode_popup_progress(ev),
+            PopupType::Wait(_) => self.handle_input_event_mode_popup_wait(ev),
+            PopupType::YesNo(_, opt, yes_cb, no_cb) => self.handle_input_event_mode_popup_yesno(ev, opt, yes_cb, no_cb),
+        }
+    }
+
+    /// ### handle_input_event_mode_explorer_alert
+    /// 
+    /// Input event handler for popup alert
+    fn handle_input_event_mode_popup_alert(&mut self, ev: &InputEvent) {
+        // If enter, close popup
+        match ev {
+            InputEvent::Key(key) => {
+                match key.code {
+                    KeyCode::Enter => {
+                        // Set input mode back to explorer
+                        self.input_mode = InputMode::Explorer;
+                    }
+                    _ => { /* Nothing to do */ }
+                }
+            }
+            _ => { /* Nothing to do */ }
+        }
+    }
+
+    /// ### handle_input_event_mode_explorer_alert
+    /// 
+    /// Input event handler for popup alert
+    fn handle_input_event_mode_popup_fatal(&mut self, ev: &InputEvent) {
+        // If enter, close popup
+        match ev {
+            InputEvent::Key(key) => {
+                match key.code {
+                    KeyCode::Enter => {
+                        // Set quit to true; since a fatal error happened
+                        self.quit = true;
+                    }
+                    _ => { /* Nothing to do */ }
+                }
+            }
+            _ => { /* Nothing to do */ }
+        }
+    }
+
+    /// ### handle_input_event_mode_popup_input
+    /// 
+    /// Input event handler for input popup
+    fn handle_input_event_mode_popup_input(&mut self, ev: &InputEvent, cb: OnInputSubmitCallback) {
+        // If enter, close popup, otherwise push chars to input
+        match ev {
+            InputEvent::Key(key) => {
+                match key.code {
+                    KeyCode::Enter => {
+                        // Submit
+                        let input_text: String = self.input_txt.clone();
+                        // Clear current input text
+                        self.input_txt.clear();
+                        // Set mode back to explorer BEFORE CALLBACKS!!! Callback can then overwrite this, clever uh?
+                        self.input_mode = InputMode::Explorer;
+                        // Call cb
+                        cb(input_text);
+                    }
+                    KeyCode::Char(ch) => self.input_txt.push(ch),
+                    _ => { /* Nothing to do */ }
+                }
+            }
+            _ => { /* Nothing to do */ }
+        }
+    }
+
+    /// ### handle_input_event_mode_explorer_alert
+    /// 
+    /// Input event handler for popup alert
+    fn handle_input_event_mode_popup_progress(&mut self, ev: &InputEvent) {
+        // There's nothing you can do here I guess... maybe ctrl+c in the future idk
+        match ev {
+            _ => { /* Nothing to do */ }
+        }
+    }
+
+    /// ### handle_input_event_mode_explorer_alert
+    /// 
+    /// Input event handler for popup alert
+    fn handle_input_event_mode_popup_wait(&mut self, ev: &InputEvent) {
+        // There's nothing you can do here I guess... maybe ctrl+c in the future idk
+        match ev {
+            _ => { /* Nothing to do */ }
+        }
+    }
+
+    /// ### handle_input_event_mode_explorer_alert
+    /// 
+    /// Input event handler for popup alert
+    fn handle_input_event_mode_popup_yesno(&mut self, ev: &InputEvent, opt: DialogYesNoOption, yes_cb: DialogCallback, no_cb: DialogCallback) {
+        // If enter, close popup
+        match ev {
+            InputEvent::Key(key) => {
+                match key.code {
+                    KeyCode::Enter => {
+                        // @! Set input mode to Explorer BEFORE CALLBACKS!!! Callback can then overwrite this, clever uh?
+                        self.input_mode = InputMode::Explorer;
+                        // Check if user selected yes or not
+                        match opt {
+                            DialogYesNoOption::No => no_cb(),
+                            DialogYesNoOption::Yes => yes_cb()
+                        }
+                    }
+                    _ => { /* Nothing to do */ }
+                }
+            }
+            _ => { /* Nothing to do */ }
         }
     }
 
@@ -239,7 +489,7 @@ impl FileTransferActivity {
             ),
             Span::raw("quit\t"),
             Span::styled(
-                "<UP,DOWN>",
+                "<TAB>",
                 Style::default()
                     .bg(Color::Cyan)
                     .fg(Color::White)
@@ -283,6 +533,12 @@ impl FileTransferActivity {
     }
 }
 
+/**
+ * Activity Trait
+ * Keep it clean :)
+ * Use methods instead!
+ */
+
 impl Activity for FileTransferActivity {
     /// ### on_create
     ///
@@ -293,8 +549,6 @@ impl Activity for FileTransferActivity {
         let _ = enable_raw_mode();
         // Clear terminal
         let _ = context.terminal.clear();
-        // Set init state to connecting popup
-        self.input_mode = InputMode::Popup(PopupType::Wait(format!("Connecting to {}:{}...", self.params.address, self.params.port)));
     }
 
     /// ### on_draw
@@ -302,17 +556,28 @@ impl Activity for FileTransferActivity {
     /// `on_draw` is the function which draws the graphical interface.
     /// This function must be called at each tick to refresh the interface
     fn on_draw(&mut self, context: &mut Context) {
-        // draw interface
-        let _ = context.terminal.draw(|f| {
-            self.draw(f);
-        });
         // Check if connected
         if ! self.client.is_connected() {
+            // Set init state to connecting popup
+            self.input_mode = InputMode::Popup(PopupType::Wait(format!("Connecting to {}:{}...", self.params.address, self.params.port)));
+            // Force ui draw
+            let _ = context.terminal.draw(|f| {
+                self.draw(f);
+            });
             // Connect to remote
             self.connect();
         }
-        // TODO: logic
-        // TODO: handle input events
+        // Handle input events FIXME: read one or multiple?
+        if let Ok(event) = context.input_hnd.read_event() {
+            // Iterate over input events
+            if let Some(event) = event {
+                self.handle_input_event(context, &event);
+            }
+        }
+        // @! draw interface
+        let _ = context.terminal.draw(|f| {
+            self.draw(f);
+        });
     }
 
     /// ### on_destroy
