@@ -190,21 +190,21 @@ impl AuthActivity {
                     KeyCode::Up => {
                         // Move item up
                         self.selected_field = match self.selected_field {
-                            InputField::Address => InputField::Address, // End of list
+                            InputField::Address => InputField::Password, // End of list (wrap)
                             InputField::Port => InputField::Address,
                             InputField::Protocol => InputField::Port,
                             InputField::Username => InputField::Protocol,
                             InputField::Password => InputField::Username,
                         }
                     }
-                    KeyCode::Down => {
+                    KeyCode::Down | KeyCode::Tab => {
                         // Move item down
                         self.selected_field = match self.selected_field {
                             InputField::Address => InputField::Port,
                             InputField::Port => InputField::Protocol,
                             InputField::Protocol => InputField::Username,
                             InputField::Username => InputField::Password,
-                            InputField::Password => InputField::Password, // End of list
+                            InputField::Password => InputField::Address, // End of list (wrap)
                         }
                     }
                     KeyCode::Char(ch) => {
