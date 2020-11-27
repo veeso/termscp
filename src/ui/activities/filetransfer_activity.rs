@@ -381,25 +381,35 @@ impl FileTransferActivity {
                     KeyCode::Enter => {
                         // Match selected file
                         if let Some(entry) = self.local.files.get(self.local.index) {
-                            match entry {
-                                FsEntry::Directory(dir) => {
-                                    // Change directory
-                                    if let Err(err) =
-                                        context.local.change_wrkdir(dir.abs_path.clone())
-                                    {
-                                        // Report err
-                                        self.input_mode = InputMode::Popup(PopupType::Alert(
-                                            Color::Red,
-                                            format!("Could not change working directory: {}", err),
-                                        ));
-                                    }
-                                    // Update files
-                                    self.local.files = context.local.list_dir();
+                            if let FsEntry::Directory(dir) = entry {
+                                // Change directory
+                                if let Err(err) = context.local.change_wrkdir(dir.abs_path.clone())
+                                {
+                                    // Report err
+                                    self.input_mode = InputMode::Popup(PopupType::Alert(
+                                        Color::Red,
+                                        format!("Could not change working directory: {}", err),
+                                    ));
                                 }
-                                FsEntry::File(file) => {
-                                    // TODO: upload file
-                                }
+                                // Update files
+                                self.local.files = context.local.list_dir();
                             }
+                        }
+                    }
+                    KeyCode::Backspace => {
+                        // Go previous directory
+                        let wrkdir: PathBuf = context.local.pwd();
+                        if let Some(parent) = wrkdir.as_path().parent() {
+                            // Change directory
+                            if let Err(err) = context.local.change_wrkdir(PathBuf::from(parent)) {
+                                // Report err
+                                self.input_mode = InputMode::Popup(PopupType::Alert(
+                                    Color::Red,
+                                    format!("Could not change working directory: {}", err),
+                                ));
+                            }
+                            // Update files
+                            self.local.files = context.local.list_dir();
                         }
                     }
                     KeyCode::Delete => {
@@ -432,6 +442,9 @@ impl FileTransferActivity {
                             if key.modifiers.intersects(KeyModifiers::CONTROL) {
                                 // TODO:
                             }
+                        }
+                        ' ' => {
+                            // TODO: Upload file
                         }
                         _ => { /* Nothing to do */ }
                     },
