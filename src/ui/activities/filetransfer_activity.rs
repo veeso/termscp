@@ -55,8 +55,8 @@ use tui::{
 use unicode_width::UnicodeWidthStr;
 
 // Types
-type DialogCallback = fn(&mut FileTransferActivity);
-type OnInputSubmitCallback = fn(String, &mut Context);
+type DialogCallback = fn(&mut FileTransferActivity, &mut Context);
+type OnInputSubmitCallback = fn(&mut FileTransferActivity, String, &mut Context);
 
 /// ### FileTransferParams
 ///
@@ -218,6 +218,8 @@ impl FileTransferActivity {
         }
     }
 
+    // @! Session
+
     /// ### connect
     ///
     /// Connect to remote
@@ -250,7 +252,7 @@ impl FileTransferActivity {
     /// ### disconnect
     ///
     /// disconnect from remote
-    fn disconnect(&mut self) {
+    fn disconnect(&mut self, context: &mut Context) {
         // Show popup disconnecting
         self.input_mode = InputMode::Popup(PopupType::Alert(
             Color::Red,
@@ -278,13 +280,6 @@ impl FileTransferActivity {
         self.log_index = self.log_records.len();
     }
 
-    /// ### force_input_mode_to_explorer
-    ///
-    /// force input mode to explorer
-    fn force_input_mode_to_explorer(&mut self) {
-        self.input_mode = InputMode::Explorer;
-    }
-
     /// ### create_quit_popup
     ///
     /// Create quit popup input mode (since must be shared between different input handlers)
@@ -292,7 +287,7 @@ impl FileTransferActivity {
         InputMode::Popup(PopupType::YesNo(
             String::from("Are you sure you want to quit?"),
             FileTransferActivity::disconnect,
-            FileTransferActivity::force_input_mode_to_explorer,
+            FileTransferActivity::callback_nothing_to_do,
         ))
     }
 
@@ -305,6 +300,8 @@ impl FileTransferActivity {
             InputField::Logs => InputField::Explorer,
         }
     }
+
+    // @! input listeners
 
     /// ### handle_input_event
     ///
@@ -490,7 +487,7 @@ impl FileTransferActivity {
             PopupType::Progress(_) => self.handle_input_event_mode_popup_progress(ev),
             PopupType::Wait(_) => self.handle_input_event_mode_popup_wait(ev),
             PopupType::YesNo(_, yes_cb, no_cb) => {
-                self.handle_input_event_mode_popup_yesno(ev, yes_cb, no_cb)
+                self.handle_input_event_mode_popup_yesno(ev, ctx, yes_cb, no_cb)
             }
         }
     }
@@ -554,12 +551,12 @@ impl FileTransferActivity {
                         // Set mode back to explorer BEFORE CALLBACKS!!! Callback can then overwrite this, clever uh?
                         self.input_mode = InputMode::Explorer;
                         // Call cb
-                        cb(input_text, ctx);
+                        cb(self, input_text, ctx);
                     }
                     KeyCode::Char(ch) => self.input_txt.push(ch),
                     KeyCode::Backspace => {
                         let _ = self.input_txt.pop();
-                    },
+                    }
                     _ => { /* Nothing to do */ }
                 }
             }
@@ -593,6 +590,7 @@ impl FileTransferActivity {
     fn handle_input_event_mode_popup_yesno(
         &mut self,
         ev: &InputEvent,
+        ctx: &mut Context,
         yes_cb: DialogCallback,
         no_cb: DialogCallback,
     ) {
@@ -605,8 +603,8 @@ impl FileTransferActivity {
                         self.input_mode = InputMode::Explorer;
                         // Check if user selected yes or not
                         match self.choice_opt {
-                            DialogYesNoOption::No => no_cb(self),
-                            DialogYesNoOption::Yes => yes_cb(self),
+                            DialogYesNoOption::No => no_cb(self, ctx),
+                            DialogYesNoOption::Yes => yes_cb(self, ctx),
                         }
                     }
                     KeyCode::Right => self.choice_opt = DialogYesNoOption::No, // Set to NO
@@ -617,6 +615,101 @@ impl FileTransferActivity {
             _ => { /* Nothing to do */ }
         }
     }
+
+    // @! Callbacks
+
+    /// ### callback_nothing_to_do
+    ///
+    /// Self titled
+    fn callback_nothing_to_do(&mut self, _context: &mut Context) {}
+
+    /// ### callback_force_input_mode_to_explorer
+    ///
+    /// force input mode to explorer
+    fn callback_force_input_mode_to_explorer(&mut self, _context: &mut Context) {
+        self.input_mode = InputMode::Explorer;
+    }
+
+    /// ### callback_delete_fsentry
+    ///
+    /// Delete current selected fsentry in the currently selected TAB
+    fn callback_delete_fsentry(&mut self, context: &mut Context) {
+        // Match current selected tab
+        match self.tab {
+            FileExplorerTab::Local => {
+                // Check if file entry exists
+                if let Some(entry) = self.local.files.get(self.local.index) {
+                    let full_path: PathBuf = match entry {
+                        FsEntry::Directory(dir) => dir.abs_path.clone(),
+                        FsEntry::File(file) => file.abs_path.clone(),
+                    };
+                    // Delete file or directory and report status as popup
+                    match context.local.remove(entry) {
+                        Ok(_) => {
+                            // Reload files
+                            self.local.files = context.local.list_dir();
+                            // Log
+                            self.log(
+                                LogLevel::Info,
+                                format!("Removed file \"{}\"", full_path.display()).as_ref(),
+                            );
+                        }
+                        Err(err) => {
+                            self.log(
+                                LogLevel::Info,
+                                format!(
+                                    "Could not delete file \"{}\": {}",
+                                    full_path.display(),
+                                    err
+                                )
+                                .as_ref(),
+                            );
+                            self.input_mode = InputMode::Popup(PopupType::Alert(
+                                Color::Red,
+                                format!("Could not delete file: {}", err),
+                            ))
+                        }
+                    }
+                }
+            }
+            FileExplorerTab::Remote => {
+                // Check if file entry exists
+                if let Some(entry) = self.remote.files.get(self.remote.index) {
+                    let full_path: PathBuf = match entry {
+                        FsEntry::Directory(dir) => dir.abs_path.clone(),
+                        FsEntry::File(file) => file.abs_path.clone(),
+                    };
+                    // Delete file
+                    match self.client.remove(entry) {
+                        Ok(_) => {
+                            self.reload_remote_dir();
+                            self.log(
+                                LogLevel::Info,
+                                format!("Removed file \"{}\"", full_path.display()).as_ref(),
+                            );
+                        }
+                        Err(err) => {
+                            self.log(
+                                LogLevel::Info,
+                                format!(
+                                    "Could not delete file \"{}\": {}",
+                                    full_path.display(),
+                                    err
+                                )
+                                .as_ref(),
+                            );
+                            self.input_mode = InputMode::Popup(PopupType::Alert(
+                                Color::Red,
+                                format!("Could not delete file: {}", err),
+                            ))
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // @! Gfx
 
     /// ### draw
     ///
