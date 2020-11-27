@@ -57,7 +57,7 @@ use unicode_width::UnicodeWidthStr;
 
 // Types
 type DialogCallback = fn(&mut FileTransferActivity, &mut Context);
-type OnInputSubmitCallback = fn(&mut FileTransferActivity, String, &mut Context);
+type OnInputSubmitCallback = fn(&mut FileTransferActivity, &mut Context, String);
 
 /// ### FileTransferParams
 ///
@@ -607,7 +607,7 @@ impl FileTransferActivity {
                         // Set mode back to explorer BEFORE CALLBACKS!!! Callback can then overwrite this, clever uh?
                         self.input_mode = InputMode::Explorer;
                         // Call cb
-                        cb(self, input_text, ctx);
+                        cb(self, ctx, input_text);
                     }
                     KeyCode::Char(ch) => self.input_txt.push(ch),
                     KeyCode::Backspace => {
