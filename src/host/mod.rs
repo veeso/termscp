@@ -83,7 +83,7 @@ impl std::fmt::Display for HostError {
             HostErrorType::CouldNotCreateFile => "Could not create file",
             HostErrorType::DeleteFailed => "Could not delete file",
         };
-        match self.ioerr {
+        match &self.ioerr {
             Some(err) => write!(f, "{}: {}", code_str, err),
             None => write!(f, "{}", code_str)
         }
