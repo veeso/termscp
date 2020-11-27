@@ -379,26 +379,62 @@ impl FileTransferActivity {
                         }
                     }
                     KeyCode::Enter => {
-                        // TODO:
+                        // Match selected file
+                        if let Some(entry) = self.local.files.get(self.local.index) {
+                            match entry {
+                                FsEntry::Directory(dir) => {
+                                    // Change directory
+                                    if let Err(err) =
+                                        context.local.change_wrkdir(dir.abs_path.clone())
+                                    {
+                                        // Report err
+                                        self.input_mode = InputMode::Popup(PopupType::Alert(
+                                            Color::Red,
+                                            format!("Could not change working directory: {}", err),
+                                        ));
+                                    }
+                                    // Update files
+                                    self.local.files = context.local.list_dir();
+                                }
+                                FsEntry::File(file) => {
+                                    // TODO: upload file
+                                }
+                            }
+                        }
                     }
                     KeyCode::Delete => {
-                        // TODO:
+                        // Get file at index
+                        if let Some(entry) = self.local.files.get(self.local.index) {
+                            // Get file name
+                            let file_name: String = match entry {
+                                FsEntry::Directory(dir) => dir.name.clone(),
+                                FsEntry::File(file) => file.name.clone(),
+                            };
+                            // Show delete prompt
+                            self.input_mode = InputMode::Popup(PopupType::YesNo(
+                                format!("Delete file \"{}\"", file_name),
+                                FileTransferActivity::callback_delete_fsentry,
+                                FileTransferActivity::callback_nothing_to_do,
+                            ))
+                        }
                     }
                     KeyCode::Char(ch) => match ch {
-                        'g' | 'G' => { // Goto
+                        'g' | 'G' => {
+                            // Goto
                             // If ctrl is enabled...
                             if key.modifiers.intersects(KeyModifiers::CONTROL) {
                                 // TODO:
                             }
                         }
-                        'r' | 'R' => { // Rename
+                        'r' | 'R' => {
+                            // Rename
                             // If ctrl is enabled...
                             if key.modifiers.intersects(KeyModifiers::CONTROL) {
                                 // TODO:
                             }
                         }
                         _ => { /* Nothing to do */ }
-                    }
+                    },
                     _ => { /* Nothing to do */ }
                 }
             }
