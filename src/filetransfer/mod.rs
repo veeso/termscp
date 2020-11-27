@@ -62,13 +62,9 @@ pub enum FileTransferError {
     //UnknownError,
 }
 
-impl FileTransferError {
-
-    /// ### msg
-    /// 
-    /// Get error message
-    pub fn msg(&self) -> String {
-        match self {
+impl std::fmt::Display for FileTransferError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        let err: String = match self {
             FileTransferError::AuthenticationFailed => String::from("Authentication failed: bad credentials"),
             FileTransferError::BadAddress => String::from("Bad address syntax"),
             FileTransferError::ConnectionError => String::from("Connection error"),
@@ -80,9 +76,9 @@ impl FileTransferError {
             FileTransferError::ProtocolError => String::from("Protocol error"),
             FileTransferError::UninitializedSession => String::from("Uninitialized session"),
             //FileTransferError::UnknownError => String::from("Unknown error"),
-        }
+        };
+        write!(f, "{}", err)
     }
-
 }
 
 /// ## FileTransfer
