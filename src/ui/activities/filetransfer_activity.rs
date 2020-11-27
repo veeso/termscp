@@ -898,7 +898,15 @@ impl FileTransferActivity {
                     .fg(Color::White)
                     .add_modifier(Modifier::BOLD),
             ),
-            Span::raw("to change directory\t"),
+            Span::raw("change directory\t"),
+            Span::styled(
+                "<SPACE>",
+                Style::default()
+                    .bg(Color::Cyan)
+                    .fg(Color::White)
+                    .add_modifier(Modifier::BOLD),
+            ),
+            Span::raw("upload/download file\t"),
             Span::styled(
                 "<CTRL+G>",
                 Style::default()
@@ -908,13 +916,21 @@ impl FileTransferActivity {
             ),
             Span::raw("goto path\t"),
             Span::styled(
+                "<CTRL+M>",
+                Style::default()
+                    .bg(Color::Cyan)
+                    .fg(Color::White)
+                    .add_modifier(Modifier::BOLD),
+            ),
+            Span::raw("make dir\t"),
+            Span::styled(
                 "<CTRL+R>",
                 Style::default()
                     .bg(Color::Cyan)
                     .fg(Color::White)
                     .add_modifier(Modifier::BOLD),
             ),
-            Span::raw("to rename file\t"),
+            Span::raw("rename file\t"),
             Span::styled(
                 "<CANC>",
                 Style::default()
@@ -922,7 +938,7 @@ impl FileTransferActivity {
                     .fg(Color::White)
                     .add_modifier(Modifier::BOLD),
             ),
-            Span::raw("to delete file\t"),
+            Span::raw("delete file\t"),
         ];
         Paragraph::new(Text::from(Spans::from(footer)))
     }
