@@ -592,6 +592,13 @@ impl FileTransferActivity {
         match ev {
             InputEvent::Key(key) => {
                 match key.code {
+                    KeyCode::Esc => {
+                        // Abort input
+                        // Clear current input text
+                        self.input_txt.clear();
+                        // Set mode back to explorer
+                        self.input_mode = InputMode::Explorer;
+                    }
                     KeyCode::Enter => {
                         // Submit
                         let input_text: String = self.input_txt.clone();
