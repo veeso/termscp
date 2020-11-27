@@ -455,7 +455,7 @@ impl FileTransferActivity {
                             // If ctrl is enabled...
                             if key.modifiers.intersects(KeyModifiers::CONTROL) {
                                 self.input_mode = InputMode::Popup(PopupType::Input(
-                                    String::from("Insert news name"),
+                                    String::from("Insert new name"),
                                     FileTransferActivity::callback_rename,
                                 ));
                             }
