@@ -43,6 +43,7 @@ use crossterm::event::{KeyCode, KeyModifiers};
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use std::collections::VecDeque;
 use std::io::Stdout;
+use std::path::PathBuf;
 use std::time::Instant;
 use tui::{
     backend::CrosstermBackend,
@@ -234,17 +235,11 @@ impl FileTransferActivity {
             Ok(_) => {
                 // Set state to explorer
                 self.input_mode = InputMode::Explorer;
-                // Get current entries
-                if let Ok(pwd) = self.client.pwd() {
-                    match self.client.list_dir(pwd.as_path()) {
-                        Ok(entries) => self.remote.files = entries,
-                        Err(err) => self.log(LogLevel::Error, format!("Unable to get files from remote at '{}': {}", pwd.display(), err.msg()).as_ref())
-                    }
-                }
+                self.reload_remote_dir();
             }
             Err(err) => {
                 // Set popup fatal error
-                self.input_mode = InputMode::Popup(PopupType::Fatal(err.msg()));
+                self.input_mode = InputMode::Popup(PopupType::Fatal(format!("{}", err)));
             }
         }
     }
@@ -262,6 +257,24 @@ impl FileTransferActivity {
         let _ = self.client.disconnect();
         // Quit
         self.disconnected = true;
+    }
+
+    fn reload_remote_dir(&mut self) {
+        // Get current entries
+        if let Ok(pwd) = self.client.pwd() {
+            match self.client.list_dir(pwd.as_path()) {
+                Ok(entries) => self.remote.files = entries,
+                Err(err) => self.log(
+                    LogLevel::Error,
+                    format!(
+                        "Unable to get files from remote at '{}': {}",
+                        pwd.display(),
+                        err
+                    )
+                    .as_ref(),
+                ),
+            }
+        }
     }
 
     /// ### log
