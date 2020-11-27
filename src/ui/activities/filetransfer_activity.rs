@@ -434,21 +434,30 @@ impl FileTransferActivity {
                             // If ctrl is enabled...
                             if key.modifiers.intersects(KeyModifiers::CONTROL) {
                                 // Show input popup
-                                self.input_mode = InputMode::Popup(PopupType::Input(String::from("Change working directory"), FileTransferActivity::callback_change_directory));
+                                self.input_mode = InputMode::Popup(PopupType::Input(
+                                    String::from("Change working directory"),
+                                    FileTransferActivity::callback_change_directory,
+                                ));
                             }
                         }
                         'm' | 'M' => {
                             // Make directory
                             // If ctrl is enabled...
                             if key.modifiers.intersects(KeyModifiers::CONTROL) {
-                                self.input_mode = InputMode::Popup(PopupType::Input(String::from("Insert directory name"), FileTransferActivity::callback_mkdir));
+                                self.input_mode = InputMode::Popup(PopupType::Input(
+                                    String::from("Insert directory name"),
+                                    FileTransferActivity::callback_mkdir,
+                                ));
                             }
                         }
                         'r' | 'R' => {
                             // Rename
                             // If ctrl is enabled...
                             if key.modifiers.intersects(KeyModifiers::CONTROL) {
-                                // TODO:
+                                self.input_mode = InputMode::Popup(PopupType::Input(
+                                    String::from("Insert news name"),
+                                    FileTransferActivity::callback_rename,
+                                ));
                             }
                         }
                         ' ' => {
@@ -719,13 +728,13 @@ impl FileTransferActivity {
                     format!("Could not change working directory: {}", err),
                 ));
             }
-            Ok(_) => self.local.files = context.local.list_dir() // Update files
+            Ok(_) => self.local.files = context.local.list_dir(), // Update files
         }
     }
 
     /// ### callback_mkdir
-    /// 
-    /// Callback for MKDIR command (supports both locale and remote)
+    ///
+    /// Callback for MKDIR command (supports both local and remote)
     fn callback_mkdir(&mut self, context: &mut Context, input: String) {
         match self.tab {
             FileExplorerTab::Local => {
@@ -734,10 +743,13 @@ impl FileTransferActivity {
                         // Reload files
                         self.log(LogLevel::Info, format!("Created directory \"{}\"", input));
                         self.local.files = context.local.list_dir();
-                    },
+                    }
                     Err(err) => {
                         // Report err
-                        self.log(LogLevel::Error, format!("Could not create directory \"{}\": {}", input, err));
+                        self.log(
+                            LogLevel::Error,
+                            format!("Could not create directory \"{}\": {}", input, err),
+                        );
                         self.input_mode = InputMode::Popup(PopupType::Alert(
                             Color::Red,
                             format!("Could not create directory \"{}\": {}", input, err),
@@ -751,14 +763,115 @@ impl FileTransferActivity {
                         // Reload files
                         self.log(LogLevel::Info, format!("Created directory \"{}\"", input));
                         self.reload_remote_dir();
-                    },
+                    }
                     Err(err) => {
                         // Report err
-                        self.log(LogLevel::Error, format!("Could not create directory \"{}\": {}", input, err));
+                        self.log(
+                            LogLevel::Error,
+                            format!("Could not create directory \"{}\": {}", input, err),
+                        );
                         self.input_mode = InputMode::Popup(PopupType::Alert(
                             Color::Red,
                             format!("Could not create directory \"{}\": {}", input, err),
                         ));
+                    }
+                }
+            }
+        }
+    }
+
+    /// ### callback_rename
+    ///
+    /// Callback for RENAME command (supports borth local and remote)
+    fn callback_rename(&mut self, context: &mut Context, input: String) {
+        match self.tab {
+            FileExplorerTab::Local => {
+                let mut dst_path: PathBuf = PathBuf::from(input);
+                // Check if path is relative
+                if dst_path.as_path().is_relative() {
+                    let wrkdir: PathBuf = context.local.pwd();
+                    wrkdir.push(dst_path);
+                    dst_path = wrkdir;
+                }
+                // Check if file entry exists
+                if let Some(entry) = self.local.files.get(self.local.index) {
+                    let full_path: PathBuf = match entry {
+                        FsEntry::Directory(dir) => dir.abs_path.clone(),
+                        FsEntry::File(file) => file.abs_path.clone(),
+                    };
+                    // Rename file or directory and report status as popup
+                    match context.local.rename(entry, dst_path.as_path()) {
+                        Ok(_) => {
+                            // Reload files
+                            self.local.files = context.local.list_dir();
+                            // Log
+                            self.log(
+                                LogLevel::Info,
+                                format!(
+                                    "Renamed file \"{}\" to \"{}\"",
+                                    full_path.display(),
+                                    dst_path.display()
+                                )
+                                .as_ref(),
+                            );
+                        }
+                        Err(err) => {
+                            self.log(
+                                LogLevel::Error,
+                                format!(
+                                    "Could not rename file \"{}\": {}",
+                                    full_path.display(),
+                                    err
+                                )
+                                .as_ref(),
+                            );
+                            self.input_mode = InputMode::Popup(PopupType::Alert(
+                                Color::Red,
+                                format!("Could not rename file: {}", err),
+                            ))
+                        }
+                    }
+                }
+            }
+            FileExplorerTab::Remote => {
+                // Check if file entry exists
+                if let Some(entry) = self.remote.files.get(self.remote.index) {
+                    let full_path: PathBuf = match entry {
+                        FsEntry::Directory(dir) => dir.abs_path.clone(),
+                        FsEntry::File(file) => file.abs_path.clone(),
+                    };
+                    // Rename file or directory and report status as popup
+                    let dst_path: PathBuf = PathBuf::from(input);
+                    match self.client.rename(entry, dst_path.as_path()) {
+                        Ok(_) => {
+                            // Reload files
+                            self.local.files = context.local.list_dir();
+                            // Log
+                            self.log(
+                                LogLevel::Info,
+                                format!(
+                                    "Renamed file \"{}\" to \"{}\"",
+                                    full_path.display(),
+                                    dst_path.display()
+                                )
+                                .as_ref(),
+                            );
+                        }
+                        Err(err) => {
+                            self.log(
+                                LogLevel::Error,
+                                format!(
+                                    "Could not rename file \"{}\": {}",
+                                    full_path.display(),
+                                    err
+                                )
+                                .as_ref(),
+                            );
+                            self.input_mode = InputMode::Popup(PopupType::Alert(
+                                Color::Red,
+                                format!("Could not rename file: {}", err),
+                            ))
+                        }
                     }
                 }
             }
