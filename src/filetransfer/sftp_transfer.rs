@@ -330,7 +330,7 @@ impl FileTransfer for SftpFileTransfer {
     /// ### remove
     ///
     /// Remove a file or a directory
-    fn remove(&self, file: FsEntry) -> Result<(), FileTransferError> {
+    fn remove(&self, file: &FsEntry) -> Result<(), FileTransferError> {
         match self.sftp.as_ref() {
             None => Err(FileTransferError::UninitializedSession),
             Some(sftp) => {
@@ -350,7 +350,7 @@ impl FileTransfer for SftpFileTransfer {
                             Ok(entries) => {
                                 // Remove each entry
                                 for entry in entries {
-                                    if let Err(err) = self.remove(entry) {
+                                    if let Err(err) = self.remove(&entry) {
                                         return Err(err);
                                     }
                                 }

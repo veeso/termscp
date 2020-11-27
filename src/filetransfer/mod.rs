@@ -59,7 +59,7 @@ pub enum FileTransferError {
     NoSuchFileOrDirectory,
     ProtocolError,
     UninitializedSession,
-    UnknownError,
+    //UnknownError,
 }
 
 impl FileTransferError {
@@ -79,7 +79,7 @@ impl FileTransferError {
             FileTransferError::NoSuchFileOrDirectory => String::from("No such file or directory"),
             FileTransferError::ProtocolError => String::from("Protocol error"),
             FileTransferError::UninitializedSession => String::from("Uninitialized session"),
-            FileTransferError::UnknownError => String::from("Unknown error"),
+            //FileTransferError::UnknownError => String::from("Unknown error"),
         }
     }
 
@@ -134,7 +134,7 @@ pub trait FileTransfer {
     /// ### remove
     /// 
     /// Remove a file or a directory
-    fn remove(&self, file: FsEntry) -> Result<(), FileTransferError>;
+    fn remove(&self, file: &FsEntry) -> Result<(), FileTransferError>;
 
     /// ### send_file
     /// 
