@@ -368,6 +368,28 @@ impl FileTransfer for SftpFileTransfer {
         }
     }
 
+    /// ### rename
+    /// 
+    /// Rename file or a directory
+    fn rename(&self, file: &FsEntry, dst: &Path) -> Result<(), FileTransferError> {
+        match self.sftp.as_ref() {
+            None => Err(FileTransferError::UninitializedSession),
+            Some(sftp) => {
+                // Resolve destination path
+                let abs_dst: PathBuf = self.get_abs_path(dst);
+                // Get abs path of entry
+                let abs_src: PathBuf = match file {
+                    FsEntry::Directory(dir) => dir.abs_path.clone(),
+                    FsEntry::File(file) => file.abs_path.clone()
+                };
+                match sftp.rename(abs_src.as_path(), abs_dst.as_path(), None) {
+                    Ok(_) => Ok(()),
+                    Err(_) => Err(FileTransferError::FileCreateDenied)
+                }
+            }
+        }
+    }
+
     /// ### send_file
     ///
     /// Send file to remote

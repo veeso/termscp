@@ -132,6 +132,11 @@ pub trait FileTransfer {
     /// Remove a file or a directory
     fn remove(&self, file: &FsEntry) -> Result<(), FileTransferError>;
 
+    /// ### rename
+    /// 
+    /// Rename file or a directory
+    fn rename(&self, file: &FsEntry, dst: &Path) -> Result<(), FileTransferError>;
+
     /// ### send_file
     /// 
     /// Send file to remote
