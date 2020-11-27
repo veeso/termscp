@@ -72,6 +72,24 @@ impl HostError {
 
 }
 
+impl std::fmt::Display for HostError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        let code_str: &str = match self.error {
+            HostErrorType::NoSuchFileOrDirectory => "No such file or directory",
+            HostErrorType::ReadonlyFile => "File is readonly",
+            HostErrorType::DirNotAccessible => "Could not access directory",
+            HostErrorType::FileNotAccessible => "Could not access directory",
+            HostErrorType::FileAlreadyExists => "File already exists",
+            HostErrorType::CouldNotCreateFile => "Could not create file",
+            HostErrorType::DeleteFailed => "Could not delete file",
+        };
+        match self.ioerr {
+            Some(err) => write!(f, "{}: {}", code_str, err),
+            None => write!(f, "{}", code_str)
+        }
+    }
+}
+
 /// ## Localhost
 ///
 /// Localhost is the entity which holds the information about the current directory and host.
