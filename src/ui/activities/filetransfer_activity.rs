@@ -433,7 +433,16 @@ impl FileTransferActivity {
                             // Goto
                             // If ctrl is enabled...
                             if key.modifiers.intersects(KeyModifiers::CONTROL) {
+                                // Show input popup
+                                self.input_mode = InputMode::Popup(PopupType::Input(String::from("Change working directory"), FileTransferActivity::callback_change_directory));
+                            }
+                        }
+                        'm' | 'M' => {
+                            // Make directory
+                            // If ctrl is enabled...
+                            if key.modifiers.intersects(KeyModifiers::CONTROL) {
                                 // TODO:
+                                //self.input_mode = InputMode::Popup(PopupType::Input(String::from("Insert directory name")))
                             }
                         }
                         'r' | 'R' => {
@@ -697,6 +706,22 @@ impl FileTransferActivity {
     /// force input mode to explorer
     fn callback_force_input_mode_to_explorer(&mut self, _context: &mut Context) {
         self.input_mode = InputMode::Explorer;
+    }
+
+    /// ### callback_change_directory
+    ///
+    /// Callback for GOTO command
+    fn callback_change_directory(&mut self, context: &mut Context, input: String) {
+        match context.local.change_wrkdir(PathBuf::from(input.as_str())) {
+            Err(err) => {
+                // Report err
+                self.input_mode = InputMode::Popup(PopupType::Alert(
+                    Color::Red,
+                    format!("Could not change working directory: {}", err),
+                ));
+            }
+            Ok(_) => self.local.files = context.local.list_dir() // Update files
+        }
     }
 
     /// ### callback_delete_fsentry
