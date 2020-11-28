@@ -131,12 +131,12 @@ impl FileExplorer {
         FileExplorer {
             index: 0,
             files: Vec::new(),
-            dirstack: VecDeque::with_capacity(16)
+            dirstack: VecDeque::with_capacity(16),
         }
     }
 
     /// ### pushd
-    /// 
+    ///
     /// push directory to stack
     pub fn pushd(&mut self, dir: &Path) {
         // Check if stack overflows the size
@@ -148,12 +148,11 @@ impl FileExplorer {
     }
 
     /// ### popd
-    /// 
+    ///
     /// Pop directory from the stack and return the directory
     pub fn popd(&mut self) -> Option<PathBuf> {
         self.dirstack.pop_front()
     }
-
 }
 
 /// ## FileExplorerTab
@@ -658,14 +657,18 @@ impl FileTransferActivity {
                         // Match selected file
                         if let Some(entry) = self.local.files.get(self.local.index) {
                             if let FsEntry::Directory(dir) = entry {
+                                // Get current directory
+                                let prev_dir: PathBuf = context.local.pwd();
                                 // Change directory
-                                if let Err(err) = context.local.change_wrkdir(dir.abs_path.clone())
-                                {
-                                    // Report err
-                                    self.input_mode = InputMode::Popup(PopupType::Alert(
-                                        Color::Red,
-                                        format!("Could not change working directory: {}", err),
-                                    ));
+                                match context.local.change_wrkdir(dir.abs_path.clone()) {
+                                    Ok(_) => self.local.pushd(prev_dir.as_path()), // Push prev_dir to stack
+                                    Err(err) => {
+                                        // Report err
+                                        self.input_mode = InputMode::Popup(PopupType::Alert(
+                                            Color::Red,
+                                            format!("Could not change working directory: {}", err),
+                                        ));
+                                    }
                                 }
                                 // Update files
                                 self.local.files = context.local.list_dir();
@@ -673,20 +676,32 @@ impl FileTransferActivity {
                         }
                     }
                     KeyCode::Backspace => {
-                        // TODO: directory stack
-                        // Go previous directory
-                        let wrkdir: PathBuf = context.local.pwd();
-                        if let Some(parent) = wrkdir.as_path().parent() {
-                            // Change directory
-                            if let Err(err) = context.local.change_wrkdir(PathBuf::from(parent)) {
-                                // Report err
-                                self.input_mode = InputMode::Popup(PopupType::Alert(
-                                    Color::Red,
-                                    format!("Could not change working directory: {}", err),
-                                ));
+                        // Go to previous directory
+                        loop {
+                            // Till a valid directory is found
+                            match self.local.popd() {
+                                Some(d) => {
+                                    match context.local.change_wrkdir(d) {
+                                        Ok(_) => {
+                                            // Update files
+                                            self.local.files = context.local.list_dir();
+                                            // Break, directory has changed
+                                            break;
+                                        }
+                                        Err(err) => {
+                                            // Report error
+                                            self.input_mode = InputMode::Popup(PopupType::Alert(
+                                                Color::Red,
+                                                format!(
+                                                    "Could not change working directory: {}",
+                                                    err
+                                                ),
+                                            ));
+                                        }
+                                    }
+                                }
+                                None => break, // Break if stack is empty
                             }
-                            // Update files
-                            self.local.files = context.local.list_dir();
                         }
                     }
                     KeyCode::Delete => {
