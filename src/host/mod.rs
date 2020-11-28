@@ -201,18 +201,16 @@ impl Localhost {
 
     /// ### remove
     /// 
-    /// Remove file entry from current directory
+    /// Remove file entry
     pub fn remove(&mut self, entry: &FsEntry) -> Result<(), HostError> {
-        let mut f_path: PathBuf = self.wrkdir.clone();
         match entry {
             FsEntry::Directory(dir) => {
-                f_path.push(dir.name.clone());
                 // If file doesn't exist; return error
-                if ! f_path.exists() {
+                if ! dir.abs_path.as_path().exists() {
                     return Err(HostError::new(HostErrorType::NoSuchFileOrDirectory, None))
                 }
                 // Remove
-                match std::fs::remove_dir_all(f_path) {
+                match std::fs::remove_dir_all(dir.abs_path.as_path()) {
                     Ok(_) => {
                         // Update dir
                         self.files = match self.scan_dir(self.wrkdir.as_path()) {
@@ -225,13 +223,12 @@ impl Localhost {
                 }
             },
             FsEntry::File(file) => {
-                f_path.push(file.name.clone());
                 // If file doesn't exist; return error
-                if ! f_path.exists() {
+                if ! file.abs_path.as_path().exists() {
                     return Err(HostError::new(HostErrorType::NoSuchFileOrDirectory, None))
                 }
                 // Remove
-                match std::fs::remove_file(f_path) {
+                match std::fs::remove_file(file.abs_path.as_path()) {
                     Ok(_) => {
                         // Update dir
                         self.files = match self.scan_dir(self.wrkdir.as_path()) {
