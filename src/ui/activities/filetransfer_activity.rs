@@ -789,7 +789,6 @@ impl FileTransferActivity {
         context: &mut Context,
         ev: &InputEvent,
     ) {
-        // TODO: implement
         // Match events
         match ev {
             InputEvent::Key(key) => {
@@ -801,6 +800,176 @@ impl FileTransferActivity {
                     }
                     KeyCode::Tab => self.switch_input_field(), // <TAB> switch tab
                     KeyCode::Left => self.tab = FileExplorerTab::Local, // <LEFT> switch to local tab
+                    KeyCode::Up => {
+                        // Move index up
+                        if self.remote.index > 0 {
+                            self.remote.index -= 1;
+                        }
+                    }
+                    KeyCode::Down => {
+                        // Move index down
+                        if self.remote.index + 1 < self.remote.files.len() {
+                            self.remote.index += 1;
+                        }
+                    }
+                    KeyCode::Enter => {
+                        // Match selected file
+                        let files: Vec<FsEntry> = self.remote.files.clone();
+                        if let Some(entry) = files.get(self.remote.index) {
+                            if let FsEntry::Directory(dir) = entry {
+                                // Get current directory
+                                match self.client.pwd() {
+                                    Ok(prev_dir) => {
+                                        // Change directory
+                                        match self.client.change_dir(dir.abs_path.clone().as_path())
+                                        {
+                                            Ok(_) => self.remote.pushd(prev_dir.as_path()), // Push prev_dir to stack
+                                            Err(err) => {
+                                                // Report err
+                                                self.input_mode = InputMode::Popup(PopupType::Alert(
+                                                    Color::Red,
+                                                    format!("Could not change working directory: {}", err),
+                                                ));
+                                            }
+                                        }
+                                        // Update files
+                                        match self.client.list_dir(dir.abs_path.as_path()) {
+                                            Ok(files) => self.remote.files = files,
+                                            Err(err) => {
+                                                self.input_mode =
+                                                    InputMode::Popup(PopupType::Alert(
+                                                        Color::Red,
+                                                        format!(
+                                                            "Could not scan remote directory: {}",
+                                                            err
+                                                        ),
+                                                    ));
+                                            }
+                                        }
+                                    }
+                                    Err(err) => {
+                                        // Report err
+                                        self.input_mode = InputMode::Popup(PopupType::Alert(
+                                            Color::Red,
+                                            format!("Could not change working directory: {}", err),
+                                        ));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    KeyCode::Backspace => {
+                        // Go to previous directory
+                        loop {
+                            // Till a valid directory is found
+                            match self.remote.popd() {
+                                Some(d) => {
+                                    match self.client.change_dir(d.as_path()) {
+                                        Ok(_) => {
+                                            // Update files
+                                            match self.client.list_dir(d.as_path()) {
+                                                Ok(files) => self.remote.files = files,
+                                                Err(err) => {
+                                                    self.input_mode = InputMode::Popup(PopupType::Alert(
+                                                        Color::Red,
+                                                        format!("Could not scan remote directory: {}", err),
+                                                    ));
+                                                }
+                                            }
+                                            // Break, directory has changed
+                                            break;
+                                        }
+                                        Err(err) => {
+                                            // Report error
+                                            self.input_mode = InputMode::Popup(PopupType::Alert(
+                                                Color::Red,
+                                                format!(
+                                                    "Could not change working directory: {}",
+                                                    err
+                                                ),
+                                            ));
+                                        }
+                                    }
+                                }
+                                None => break, // Break if stack is empty
+                            }
+                        }
+                    }
+                    KeyCode::Delete => {
+                        // Get file at index
+                        if let Some(entry) = self.remote.files.get(self.remote.index) {
+                            // Get file name
+                            let file_name: String = match entry {
+                                FsEntry::Directory(dir) => dir.name.clone(),
+                                FsEntry::File(file) => file.name.clone(),
+                            };
+                            // Show delete prompt
+                            self.input_mode = InputMode::Popup(PopupType::YesNo(
+                                format!("Delete file \"{}\"", file_name),
+                                FileTransferActivity::callback_delete_fsentry,
+                                FileTransferActivity::callback_nothing_to_do,
+                            ))
+                        }
+                    }
+                    KeyCode::Char(ch) => match ch {
+                        'g' | 'G' => {
+                            // Goto
+                            // If ctrl is enabled...
+                            if key.modifiers.intersects(KeyModifiers::CONTROL) {
+                                // Show input popup
+                                self.input_mode = InputMode::Popup(PopupType::Input(
+                                    String::from("Change working directory"),
+                                    FileTransferActivity::callback_change_directory,
+                                ));
+                            }
+                        }
+                        'm' | 'M' => {
+                            // Make directory
+                            // If ctrl is enabled...
+                            if key.modifiers.intersects(KeyModifiers::CONTROL) {
+                                self.input_mode = InputMode::Popup(PopupType::Input(
+                                    String::from("Insert directory name"),
+                                    FileTransferActivity::callback_mkdir,
+                                ));
+                            }
+                        }
+                        'r' | 'R' => {
+                            // Rename
+                            // If ctrl is enabled...
+                            if key.modifiers.intersects(KeyModifiers::CONTROL) {
+                                self.input_mode = InputMode::Popup(PopupType::Input(
+                                    String::from("Insert new name"),
+                                    FileTransferActivity::callback_rename,
+                                ));
+                            }
+                        }
+                        's' | 'S' => {
+                            // Save as...
+                            // If ctrl is enabled...
+                            if key.modifiers.intersects(KeyModifiers::CONTROL) {
+                                // Ask for input
+                                self.input_mode = InputMode::Popup(PopupType::Input(
+                                    String::from("Save as..."),
+                                    FileTransferActivity::callback_save_as,
+                                ));
+                            }
+                        }
+                        ' ' => {
+                            // Get files
+                            let files: Vec<FsEntry> = self.remote.files.clone(); // Otherwise self is borrowed both as mutable and immutable...
+                                                                                 // Get file at index
+                            if let Some(entry) = files.get(self.remote.index) {
+                                // Call upload
+                                self.filetransfer_recv(
+                                    context,
+                                    entry,
+                                    context.local.pwd().as_path(),
+                                    None,
+                                );
+                            }
+                        }
+                        _ => { /* Nothing to do */ }
+                    },
                     _ => { /* Nothing to do */ }
                 }
             }
