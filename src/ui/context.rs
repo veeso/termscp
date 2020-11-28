@@ -33,8 +33,8 @@ use crate::host::Localhost;
 
 // Includes
 use crossterm::execute;
-use crossterm::event::EnableMouseCapture;
-use crossterm::terminal::{EnterAlternateScreen};
+use crossterm::event::{EnableMouseCapture, DisableMouseCapture};
+use crossterm::terminal::{EnterAlternateScreen, LeaveAlternateScreen};
 use std::io::{stdout, Stdout, Write};
 use tui::backend::CrosstermBackend;
 use tui::Terminal;
@@ -61,6 +61,18 @@ impl Context {
             input_hnd: InputHandler::new(),
             terminal: Terminal::new(CrosstermBackend::new(stdout)).unwrap()
         }
+    }
+}
+
+impl Drop for Context {
+    fn drop(&mut self) {
+        // Re-enable terminal stuff
+        let _ = execute!(
+            self.terminal.backend_mut(),
+            LeaveAlternateScreen,
+            DisableMouseCapture
+        );
+        drop(self);
     }
 }
 
