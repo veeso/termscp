@@ -55,6 +55,9 @@ use tui::{
 };
 use unicode_width::UnicodeWidthStr;
 
+// Holder for current upload progress
+static mut UPLOAD_PROGRESS: f64 = 0.0; // VERY VERY BAD CODING
+
 // Types
 type DialogCallback = fn(&mut FileTransferActivity, &mut Context);
 type OnInputSubmitCallback = fn(&mut FileTransferActivity, &mut Context, String);
@@ -184,7 +187,6 @@ pub struct FileTransferActivity {
     log_index: usize,                 // Current log index entry selected
     log_records: VecDeque<LogRecord>, // Log records
     log_size: usize,                  // Log records size (max)
-    progress: usize,                  // Current progress percentage
     input_mode: InputMode,            // Current input mode
     input_field: InputField,          // Current selected input mode
     input_txt: String,                // Input text
@@ -211,7 +213,6 @@ impl FileTransferActivity {
             log_index: 0,
             log_records: VecDeque::with_capacity(256), // 256 events is enough I guess
             log_size: 256,                             // Must match with capacity
-            progress: 0,
             input_mode: InputMode::Explorer,
             input_field: InputField::Explorer,
             input_txt: String::new(),
@@ -296,9 +297,14 @@ impl FileTransferActivity {
             Some(s) => PathBuf::from(s.as_str()),
             None => PathBuf::from(file_name.as_str())
         };
-        let prog_cb: Option<Box<ProgressCallback>> = Some(Box::new(|c, sz| {
-            // TODO: prog callback
-        }));
+        let prog_cb: Box<ProgressCallback> = Box::new(|c, sz| {
+            // Progress callback
+            let percentage: f64 = ((c as f64) * 100.0) / (sz as f64);
+            unsafe {
+                UPLOAD_PROGRESS = percentage;
+            }
+            // FIXME: can't draw here...
+        });
         // Match entry
         match entry {
             FsEntry::File(file) => {
@@ -306,7 +312,7 @@ impl FileTransferActivity {
                 // Try to open local file
                 match ctx.local.open_file_read(file.abs_path.as_path()) {
                     Ok(mut f) => {
-                        match self.client.send_file(remote_path.as_path(), &mut f, prog_cb) {
+                        match self.client.send_file(remote_path.as_path(), &mut f, Some(prog_cb)) {
                             Ok(_) => self.log(LogLevel::Info, format!("Saved file \"{}\" to \"{}\"", file.abs_path.display(), remote_path.display()).as_ref()),
                             Err(err) => self.log(LogLevel::Error, format!("Failed to upload file \"{}\": {}", file.abs_path.display(), err).as_ref())
                         }
