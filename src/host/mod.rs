@@ -159,21 +159,40 @@ impl Localhost {
 
     /// ### mkdir
     /// 
-    /// Make a directory in the current path and update the file list
-    pub fn mkdir(&mut self, dir_name: String) -> Result<(), HostError> {
-        let mut dir_path: PathBuf = self.wrkdir.clone();
-        dir_path.push(dir_name);
+    /// Make a directory at path and update the file list (only if relative)
+    pub fn mkdir(&mut self, dir_name: &Path) -> Result<(), HostError> {
+        self.mkdir_ex(dir_name, false)
+    }
+
+    /// ### mkdir_ex
+    /// 
+    /// Extended option version of makedir.
+    /// ignex: don't report error if directory already exists
+    pub fn mkdir_ex(&mut self, dir_name: &Path, ignex: bool) -> Result<(), HostError> {
+        let mut dir_path: PathBuf = match dir_name.is_absolute() {
+            true => PathBuf::from(dir_name),
+            false => {
+                let mut dir_path: PathBuf = self.wrkdir.clone();
+                dir_path.push(dir_name);
+                dir_path
+            }
+        };
         // If dir already exists, return Error
         if dir_path.exists() {
-            return Err(HostError::new(HostErrorType::FileAlreadyExists, None));
+            match ignex {
+                true => return Ok(()),
+                false => return Err(HostError::new(HostErrorType::FileAlreadyExists, None))
+            }
         }
         match std::fs::create_dir(dir_path) {
             Ok(_) => {
                 // Update dir
-                self.files = match self.scan_dir(self.wrkdir.as_path()) {
-                    Ok(f) => f,
-                    Err(err) => return Err(err)
-                };
+                if dir_name.is_relative() {
+                    self.files = match self.scan_dir(self.wrkdir.as_path()) {
+                        Ok(f) => f,
+                        Err(err) => return Err(err)
+                    };
+                }
                 Ok(())
             },
             Err(err) => Err(HostError::new(HostErrorType::CouldNotCreateFile, Some(err)))
