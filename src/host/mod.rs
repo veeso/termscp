@@ -363,7 +363,7 @@ impl Localhost {
     /// Get content of the current directory as a list of fs entry (Windows)
     #[cfg(target_os = "windows")]
     #[cfg(not(tarpaulin_include))]
-    fn scan_dir(&self, dir: &Path) -> Result<Vec<FsEntry>, HostError> {
+    pub fn scan_dir(&self, dir: &Path) -> Result<Vec<FsEntry>, HostError> {
         let entries = match std::fs::read_dir(dir) {
             Ok(e) => e,
             Err(err) => return Err(HostError::new(HostErrorType::DirNotAccessible, Some(err))),
