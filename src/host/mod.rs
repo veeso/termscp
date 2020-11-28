@@ -169,7 +169,7 @@ impl Localhost {
     /// Extended option version of makedir.
     /// ignex: don't report error if directory already exists
     pub fn mkdir_ex(&mut self, dir_name: &Path, ignex: bool) -> Result<(), HostError> {
-        let mut dir_path: PathBuf = match dir_name.is_absolute() {
+        let dir_path: PathBuf = match dir_name.is_absolute() {
             true => PathBuf::from(dir_name),
             false => {
                 let mut dir_path: PathBuf = self.wrkdir.clone();
