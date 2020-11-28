@@ -641,11 +641,11 @@ mod tests {
         let mut host: Localhost = Localhost::new(PathBuf::from(tmpdir.path())).ok().unwrap();
         let files: Vec<FsEntry> = host.list_dir();
         assert_eq!(files.len(), 0); // There should be 0 files now
-        assert!(host.mkdir(String::from("test_dir")).is_ok());
+        assert!(host.mkdir(PathBuf::from("test_dir").as_path()).is_ok());
         let files: Vec<FsEntry> = host.list_dir();
         assert_eq!(files.len(), 1); // There should be 1 file now
         // Try to re-create directory
-        assert!(host.mkdir(String::from("test_dir")).is_err())
+        assert!(host.mkdir(PathBuf::from("test_dir").as_path()).is_err())
     }
 
     #[test]
@@ -663,7 +663,7 @@ mod tests {
         let files: Vec<FsEntry> = host.list_dir();
         assert_eq!(files.len(), 0); // There should be 0 files now
         // Create directory
-        assert!(host.mkdir(String::from("test_dir")).is_ok());
+        assert!(host.mkdir(PathBuf::from("test_dir").as_path()).is_ok());
         // Delete directory
         let files: Vec<FsEntry> = host.list_dir();
         assert_eq!(files.len(), 1); // There should be 1 file now
