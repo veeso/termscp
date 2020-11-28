@@ -32,7 +32,7 @@ use crate::fs::FsEntry;
 pub mod sftp_transfer;
 
 // Types
-type ProgressCallback = fn(bytes_written: usize, size: usize);
+pub type ProgressCallback = dyn Fn(usize, usize);
 
 /// ## FileTransferProtocol
 ///
@@ -125,7 +125,7 @@ pub trait FileTransfer {
     /// ### mkdir
     /// 
     /// Make directory
-    fn mkdir(&self, dir: String) -> Result<(), FileTransferError>;
+    fn mkdir(&self, dir: &Path) -> Result<(), FileTransferError>;
 
     /// ### remove
     /// 
@@ -142,11 +142,11 @@ pub trait FileTransfer {
     /// Send file to remote
     /// File name is referred to the name of the file as it will be saved
     /// Data contains the file data
-    fn send_file(&self, file_name: &Path, file: &mut File, prog_cb: Option<ProgressCallback>) -> Result<(), FileTransferError>;
+    fn send_file(&self, file_name: &Path, file: &mut File, prog_cb: Option<Box<ProgressCallback>>) -> Result<(), FileTransferError>;
 
     /// ### recv_file
     /// 
     /// Receive file from remote with provided name
-    fn recv_file(&self, file_name: &Path, dest_file: &mut File, prog_cb: Option<ProgressCallback>) -> Result<(), FileTransferError>;
+    fn recv_file(&self, file_name: &Path, dest_file: &mut File, prog_cb: Option<Box<ProgressCallback>>) -> Result<(), FileTransferError>;
 
 }

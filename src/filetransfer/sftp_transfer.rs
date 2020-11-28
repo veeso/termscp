@@ -313,7 +313,7 @@ impl FileTransfer for SftpFileTransfer {
     /// ### mkdir
     ///
     /// Make directory
-    fn mkdir(&self, dir: String) -> Result<(), FileTransferError> {
+    fn mkdir(&self, dir: &Path) -> Result<(), FileTransferError> {
         match self.sftp.as_ref() {
             Some(sftp) => {
                 // Make directory
@@ -399,7 +399,7 @@ impl FileTransfer for SftpFileTransfer {
         &self,
         file_name: &Path,
         file: &mut File,
-        prog_cb: Option<ProgressCallback>,
+        prog_cb: Option<Box<ProgressCallback>>,
     ) -> Result<(), FileTransferError> {
         match self.sftp.as_ref() {
             None => Err(FileTransferError::UninitializedSession),
@@ -429,7 +429,7 @@ impl FileTransfer for SftpFileTransfer {
                                             return Err(FileTransferError::IoErr(err));
                                         }
                                         // Call callback
-                                        if let Some(cb) = prog_cb {
+                                        if let Some(ref cb) = prog_cb {
                                             cb(total_bytes_written, file_size);
                                         }
                                     }
@@ -452,7 +452,7 @@ impl FileTransfer for SftpFileTransfer {
         &self,
         file_name: &Path,
         dest_file: &mut File,
-        prog_cb: Option<ProgressCallback>,
+        prog_cb: Option<Box<ProgressCallback>>,
     ) -> Result<(), FileTransferError> {
         match self.sftp.as_ref() {
             None => Err(FileTransferError::UninitializedSession),
@@ -487,7 +487,7 @@ impl FileTransfer for SftpFileTransfer {
                                             return Err(FileTransferError::IoErr(err));
                                         }
                                         // Call callback
-                                        if let Some(cb) = prog_cb {
+                                        if let Some(ref cb) = prog_cb {
                                             cb(total_bytes_written, file_size);
                                         }
                                     }
@@ -699,7 +699,7 @@ mod tests {
             .recv_file(
                 PathBuf::from("readme.txt").as_path(),
                 &mut dst_file_hnd,
-                Some(progress_callback)
+                Some(Box::new(progress_callback))
             )
             .is_ok());
         // Disconnect
@@ -733,7 +733,7 @@ mod tests {
             .recv_file(
                 PathBuf::from("omar.txt").as_path(),
                 &mut dst_file_hnd,
-                Some(progress_callback)
+                Some(Box::new(progress_callback))
             )
             .is_err());
         // Disconnect
@@ -770,7 +770,7 @@ mod tests {
             .recv_file(
                 PathBuf::from("readme.txt").as_path(),
                 &mut dst_file_hnd,
-                Some(progress_callback)
+                Some(Box::new(progress_callback))
             )
             .is_err());
         // Disconnect
