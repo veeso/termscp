@@ -120,6 +120,7 @@ enum InputMode {
 struct FileExplorer {
     pub index: usize,
     pub files: Vec<FsEntry>,
+    dirstack: VecDeque<PathBuf>,
 }
 
 impl FileExplorer {
@@ -130,8 +131,29 @@ impl FileExplorer {
         FileExplorer {
             index: 0,
             files: Vec::new(),
+            dirstack: VecDeque::with_capacity(16)
         }
     }
+
+    /// ### pushd
+    /// 
+    /// push directory to stack
+    pub fn pushd(&mut self, dir: &Path) {
+        // Check if stack overflows the size
+        if self.dirstack.len() + 1 > 16 {
+            self.dirstack.pop_back(); // Start cleaning events from back
+        }
+        // Eventually push front the new record
+        self.dirstack.push_front(PathBuf::from(dir));
+    }
+
+    /// ### popd
+    /// 
+    /// Pop directory from the stack and return the directory
+    pub fn popd(&mut self) -> Option<PathBuf> {
+        self.dirstack.pop_front()
+    }
+
 }
 
 /// ## FileExplorerTab
