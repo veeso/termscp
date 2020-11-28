@@ -43,7 +43,7 @@ use crossterm::event::{KeyCode, KeyModifiers};
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use std::collections::VecDeque;
 use std::io::Stdout;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::time::Instant;
 use tui::{
     backend::CrosstermBackend,
@@ -261,7 +261,7 @@ impl FileTransferActivity {
     }
 
     /// ### reload_remote_dir
-    /// 
+    ///
     /// Reload remote directory entries
     fn reload_remote_dir(&mut self) {
         // Get current entries
@@ -282,7 +282,7 @@ impl FileTransferActivity {
     }
 
     /// ### filetransfer_send
-    /// 
+    ///
     /// Send fs entry to remote.
     /// If dst_name is Some, entry will be saved with a different name.
     /// If entry is a directory, this applies to directory only
@@ -292,10 +292,13 @@ impl FileTransferActivity {
             FsEntry::Directory(dir) => dir.name.clone(),
             FsEntry::File(file) => file.name.clone(),
         };
-        self.input_mode = InputMode::Popup(PopupType::Progress(format!("Uploading \"{}\"...", file_name)));
+        self.input_mode = InputMode::Popup(PopupType::Progress(format!(
+            "Uploading \"{}\"...",
+            file_name
+        )));
         let remote_path: PathBuf = match dst_name {
             Some(s) => PathBuf::from(s.as_str()),
-            None => PathBuf::from(file_name.as_str())
+            None => PathBuf::from(file_name.as_str()),
         };
         let prog_cb: Box<ProgressCallback> = Box::new(|c, sz| {
             // Progress callback
@@ -312,22 +315,52 @@ impl FileTransferActivity {
                 // Try to open local file
                 match ctx.local.open_file_read(file.abs_path.as_path()) {
                     Ok(mut f) => {
-                        match self.client.send_file(remote_path.as_path(), &mut f, Some(prog_cb)) {
-                            Ok(_) => self.log(LogLevel::Info, format!("Saved file \"{}\" to \"{}\"", file.abs_path.display(), remote_path.display()).as_ref()),
-                            Err(err) => self.log(LogLevel::Error, format!("Failed to upload file \"{}\": {}", file.abs_path.display(), err).as_ref())
+                        match self
+                            .client
+                            .send_file(remote_path.as_path(), &mut f, Some(prog_cb))
+                        {
+                            Ok(_) => self.log(
+                                LogLevel::Info,
+                                format!(
+                                    "Saved file \"{}\" to \"{}\"",
+                                    file.abs_path.display(),
+                                    remote_path.display()
+                                )
+                                .as_ref(),
+                            ),
+                            Err(err) => self.log(
+                                LogLevel::Error,
+                                format!(
+                                    "Failed to upload file \"{}\": {}",
+                                    file.abs_path.display(),
+                                    err
+                                )
+                                .as_ref(),
+                            ),
                         }
-                    },
+                    }
                     Err(err) => {
                         // Report error
-                        self.log(LogLevel::Error, format!("Failed to open file \"{}\": {}", file.abs_path.display(), err).as_ref());
+                        self.log(
+                            LogLevel::Error,
+                            format!(
+                                "Failed to open file \"{}\": {}",
+                                file.abs_path.display(),
+                                err
+                            )
+                            .as_ref(),
+                        );
                     }
                 }
-            },
+            }
             FsEntry::Directory(dir) => {
                 // Create directory on remote
                 match self.client.mkdir(dir.abs_path.as_path()) {
                     Ok(_) => {
-                        self.log(LogLevel::Info, format!("Created directory \"{}\"", dir.abs_path.display()).as_ref());
+                        self.log(
+                            LogLevel::Info,
+                            format!("Created directory \"{}\"", dir.abs_path.display()).as_ref(),
+                        );
                         // Get files in dir
                         match ctx.local.scan_dir(dir.abs_path.as_path()) {
                             Ok(entries) => {
@@ -336,11 +369,163 @@ impl FileTransferActivity {
                                     // Send entry; name is always None after first call
                                     self.filetransfer_send(ctx, &entry, None);
                                 }
-                            },
-                            Err(err) => self.log(LogLevel::Error, format!("Could not scan directory \"{}\": {}", dir.abs_path.display(), err).as_ref())
+                            }
+                            Err(err) => self.log(
+                                LogLevel::Error,
+                                format!(
+                                    "Could not scan directory \"{}\": {}",
+                                    dir.abs_path.display(),
+                                    err
+                                )
+                                .as_ref(),
+                            ),
                         }
-                    },
-                    Err(err) => self.log(LogLevel::Error, format!("Failed to create directory \"{}\": {}", dir.abs_path.display(), err).as_ref())
+                    }
+                    Err(err) => self.log(
+                        LogLevel::Error,
+                        format!(
+                            "Failed to create directory \"{}\": {}",
+                            dir.abs_path.display(),
+                            err
+                        )
+                        .as_ref(),
+                    ),
+                }
+            }
+        }
+    }
+
+    /// ### filetransfer_recv
+    ///
+    /// Recv fs entry from remote.
+    /// If dst_name is Some, entry will be saved with a different name.
+    /// If entry is a directory, this applies to directory only
+    fn filetransfer_recv(
+        &mut self,
+        ctx: &mut Context,
+        entry: &FsEntry,
+        local_path: &Path,
+        dst_name: Option<String>,
+    ) {
+        // Write popup
+        let file_name: String = match entry {
+            FsEntry::Directory(dir) => dir.name.clone(),
+            FsEntry::File(file) => file.name.clone(),
+        };
+        self.input_mode = InputMode::Popup(PopupType::Progress(format!(
+            "Downloading \"{}\"...",
+            file_name
+        )));
+        let prog_cb: Box<ProgressCallback> = Box::new(|c, sz| {
+            // Progress callback
+            let percentage: f64 = ((c as f64) * 100.0) / (sz as f64);
+            unsafe {
+                UPLOAD_PROGRESS = percentage;
+            }
+            // FIXME: can't draw here...
+        });
+        // Match entry
+        match entry {
+            FsEntry::File(file) => {
+                // Get local file
+                let mut local_file_path: PathBuf = PathBuf::from(local_path);
+                let local_file_name: String = match dst_name {
+                    Some(n) => n.clone(),
+                    None => file.name.clone(),
+                };
+                local_file_path.push(local_file_name.as_str());
+                // Try to open local file
+                match ctx.local.open_file_write(local_file_path.as_path()) {
+                    Ok(mut local_file) => {
+                        // Download file from remote
+                        match self.client.recv_file(
+                            file.abs_path.as_path(),
+                            &mut local_file,
+                            Some(prog_cb),
+                        ) {
+                            Ok(_) => self.log(
+                                LogLevel::Info,
+                                format!(
+                                    "Saved file \"{}\" to \"{}\"",
+                                    file.abs_path.display(),
+                                    local_file_path.display()
+                                )
+                                .as_ref(),
+                            ),
+                            Err(err) => self.log(
+                                LogLevel::Error,
+                                format!(
+                                    "Failed to download file \"{}\": {}",
+                                    file.abs_path.display(),
+                                    err
+                                )
+                                .as_ref(),
+                            ),
+                        }
+                    }
+                    Err(err) => {
+                        // Report error
+                        self.log(
+                            LogLevel::Error,
+                            format!(
+                                "Failed to open local file for write \"{}\": {}",
+                                local_file_path.display(),
+                                err
+                            )
+                            .as_ref(),
+                        );
+                    }
+                }
+            }
+            FsEntry::Directory(dir) => {
+                // Get dir name
+                let mut local_dir_path: PathBuf = PathBuf::from(local_path);
+                match dst_name {
+                    Some(name) => local_dir_path.push(name),
+                    None => local_dir_path.push(dir.name.as_str()),
+                }
+                // Create directory on local
+                match ctx.local.mkdir_ex(local_dir_path.as_path(), true) {
+                    Ok(_) => {
+                        self.log(
+                            LogLevel::Info,
+                            format!("Created directory \"{}\"", local_dir_path.display()).as_ref(),
+                        );
+                        // Get files in dir
+                        match self.client.list_dir(dir.abs_path.as_path()) {
+                            Ok(entries) => {
+                                // Iterate over files
+                                for entry in entries.iter() {
+                                    // Receive entry; name is always None after first call
+                                    // Local path becomes local_dir_path
+                                    self.filetransfer_recv(
+                                        ctx,
+                                        &entry,
+                                        local_dir_path.as_path(),
+                                        None,
+                                    );
+                                }
+                            }
+                            Err(err) => self.log(
+                                LogLevel::Error,
+                                format!(
+                                    "Could not scan directory \"{}\": {}",
+                                    dir.abs_path.display(),
+                                    err
+                                )
+                                .as_ref(),
+                            ),
+                        }
+                    }
+                    Err(err) => self.log(
+                        LogLevel::Error,
+                        format!(
+                            "Failed to create directory \"{}\": {}",
+                            local_dir_path.display(),
+                            err
+                        )
+                        .as_ref(),
+                    ),
                 }
             }
         }
@@ -465,7 +650,8 @@ impl FileTransferActivity {
                             }
                         }
                     }
-                    KeyCode::Backspace => { // TODO: directory stack
+                    KeyCode::Backspace => {
+                        // TODO: directory stack
                         // Go previous directory
                         let wrkdir: PathBuf = context.local.pwd();
                         if let Some(parent) = wrkdir.as_path().parent() {
@@ -542,8 +728,8 @@ impl FileTransferActivity {
                         }
                         ' ' => {
                             // Get files
-                            let files: Vec<FsEntry> = context.local.list_dir(); // Otherwise self is borrowed both as mutable and immutable...
-                            // Get file at index
+                            let files: Vec<FsEntry> = self.local.files.clone(); // Otherwise self is borrowed both as mutable and immutable...
+                                                                                // Get file at index
                             if let Some(entry) = files.get(self.local.index) {
                                 // Call upload
                                 self.filetransfer_send(context, entry, None);
@@ -824,10 +1010,13 @@ impl FileTransferActivity {
     fn callback_mkdir(&mut self, context: &mut Context, input: String) {
         match self.tab {
             FileExplorerTab::Local => {
-                match context.local.mkdir(input.clone()) {
+                match context.local.mkdir(PathBuf::from(input.as_str()).as_path()) {
                     Ok(_) => {
                         // Reload files
-                        self.log(LogLevel::Info, format!("Created directory \"{}\"", input).as_ref());
+                        self.log(
+                            LogLevel::Info,
+                            format!("Created directory \"{}\"", input).as_ref(),
+                        );
                         self.local.files = context.local.list_dir();
                     }
                     Err(err) => {
@@ -847,7 +1036,10 @@ impl FileTransferActivity {
                 match self.client.mkdir(PathBuf::from(input.as_str()).as_path()) {
                     Ok(_) => {
                         // Reload files
-                        self.log(LogLevel::Info, format!("Created directory \"{}\"", input).as_ref());
+                        self.log(
+                            LogLevel::Info,
+                            format!("Created directory \"{}\"", input).as_ref(),
+                        );
                         self.reload_remote_dir();
                     }
                     Err(err) => {
@@ -1044,21 +1236,26 @@ impl FileTransferActivity {
     }
 
     /// ### callback_save_as
-    /// 
+    ///
     /// Call file upload, but save with input as name
     /// Handled both local and remote tab
     fn callback_save_as(&mut self, ctx: &mut Context, input: String) {
         match self.tab {
             FileExplorerTab::Local => {
-                let files: Vec<FsEntry> = ctx.local.list_dir(); // Otherwise self is borrowed both as mutable and immutable...
+                let files: Vec<FsEntry> = self.local.files.clone();
                 // Get file at index
                 if let Some(entry) = files.get(self.local.index) {
-                    // Call upload
+                    // Call send (upload)
                     self.filetransfer_send(ctx, entry, Some(input));
                 }
-            },
+            }
             FileExplorerTab::Remote => {
-                // TODO: recv
+                let files: Vec<FsEntry> = self.remote.files.clone();
+                // Get file at index
+                if let Some(entry) = files.get(self.remote.index) {
+                    // Call receive (download)
+                    self.filetransfer_recv(ctx, entry, ctx.local.pwd().as_path(), Some(input));
+                }
             }
         }
     }
