@@ -645,7 +645,9 @@ mod tests {
         let files: Vec<FsEntry> = host.list_dir();
         assert_eq!(files.len(), 1); // There should be 1 file now
         // Try to re-create directory
-        assert!(host.mkdir(PathBuf::from("test_dir").as_path()).is_err())
+        assert!(host.mkdir(PathBuf::from("test_dir").as_path()).is_err());
+        // Try abs path
+        assert!(host.mkdir_ex(PathBuf::from("/tmp/test_dir_123456789").as_path(), true).is_ok());
     }
 
     #[test]
