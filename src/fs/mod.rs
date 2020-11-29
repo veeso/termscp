@@ -23,17 +23,26 @@
 *
 */
 
+extern crate bytesize;
+#[cfg(any(unix, macos, linux))]
+extern crate users;
+
+use crate::utils::time_to_str;
+
+use bytesize::ByteSize;
 use std::path::PathBuf;
 use std::time::SystemTime;
+#[cfg(any(unix, macos, linux))]
+use users::{get_group_by_gid, get_user_by_uid};
 
 /// ## FsEntry
-/// 
+///
 /// FsEntry represents a generic entry in a directory
 
 #[derive(Clone, std::fmt::Debug)]
 pub enum FsEntry {
     Directory(FsDirectory),
-    File(FsFile)
+    File(FsFile),
 }
 
 /// ## FsDirectory
@@ -49,8 +58,8 @@ pub struct FsDirectory {
     pub creation_time: SystemTime,
     pub readonly: bool,
     pub symlink: Option<PathBuf>,       // UNIX only
-    pub user: Option<u32>,           // UNIX only
-    pub group: Option<u32>,          // UNIX only
+    pub user: Option<u32>,              // UNIX only
+    pub group: Option<u32>,             // UNIX only
     pub unix_pex: Option<(u8, u8, u8)>, // UNIX only
 }
 
@@ -69,7 +78,364 @@ pub struct FsFile {
     pub ftype: Option<String>, // File type
     pub readonly: bool,
     pub symlink: Option<PathBuf>,       // UNIX only
-    pub user: Option<u32>,           // UNIX only
-    pub group: Option<u32>,          // UNIX only
+    pub user: Option<u32>,              // UNIX only
+    pub group: Option<u32>,             // UNIX only
     pub unix_pex: Option<(u8, u8, u8)>, // UNIX only
+}
+
+impl FsEntry {
+    /// ### fmt_ls
+    ///
+    /// Format File Entry as `ls` does
+    #[cfg(any(unix, macos, linux))]
+    pub fn fmt_ls(&self) -> String {
+        match self {
+            FsEntry::Directory(dir) => {
+                // Create mode string
+                let mut mode: String = String::with_capacity(10);
+                let file_type: char = match dir.symlink {
+                    Some(_) => 'l',
+                    None => 'd',
+                };
+                match dir.unix_pex {
+                    None => mode.push_str("?????????"),
+                    Some((owner, group, others)) => {
+                        let read: u8 = (owner >> 2) & 0x1;
+                        let write: u8 = (owner >> 1) & 0x1;
+                        let exec: u8 = owner & 0x1;
+                        mode.push_str(match read {
+                            1 => "r",
+                            _ => "-",
+                        });
+                        mode.push_str(match write {
+                            1 => "w",
+                            _ => "-",
+                        });
+                        mode.push_str(match exec {
+                            1 => "x",
+                            _ => "-",
+                        });
+                        let read: u8 = (group >> 2) & 0x1;
+                        let write: u8 = (group >> 1) & 0x1;
+                        let exec: u8 = group & 0x1;
+                        mode.push_str(match read {
+                            1 => "r",
+                            _ => "-",
+                        });
+                        mode.push_str(match write {
+                            1 => "w",
+                            _ => "-",
+                        });
+                        mode.push_str(match exec {
+                            1 => "x",
+                            _ => "-",
+                        });
+                        let read: u8 = (others >> 2) & 0x1;
+                        let write: u8 = (others >> 1) & 0x1;
+                        let exec: u8 = others & 0x1;
+                        mode.push_str(match read {
+                            1 => "r",
+                            _ => "-",
+                        });
+                        mode.push_str(match write {
+                            1 => "w",
+                            _ => "-",
+                        });
+                        mode.push_str(match exec {
+                            1 => "x",
+                            _ => "-",
+                        });
+                    }
+                }
+                // Get username
+                let username: String = match dir.user {
+                    Some(uid) => match get_user_by_uid(uid) {
+                        Some(user) => user.name(),
+                        None => uid.to_string(),
+                    },
+                    None => String::from("0"),
+                };
+                // Get group
+                let group: String = match dir.group {
+                    Some(gid) => match get_group_by_gid(gid) {
+                        Some(group) => group.name(),
+                        None => gid.to_string(),
+                    },
+                    None => String::from("0"),
+                };
+                // Get byte size
+                let size: String = String::from("4096");
+                // Get date
+                let datetime: String = time_to_str(dir.last_change_time, "%b %d %Y %M:%H");
+                format!(
+                    "{:32}\t{:10}\t{:16}\t{:16}\t{:8}\t{:17}",
+                    dir.name.as_str(),
+                    mode,
+                    username,
+                    group,
+                    size,
+                    datetime
+                )
+            }
+            FsEntry::File(file) => {
+                // Create mode string
+                let mut mode: String = String::with_capacity(10);
+                let file_type: char = match file.symlink {
+                    Some(_) => 'l',
+                    None => '-',
+                };
+                match file.unix_pex {
+                    None => mode.push_str("?????????"),
+                    Some((owner, group, others)) => {
+                        let read: u8 = (owner >> 2) & 0x1;
+                        let write: u8 = (owner >> 1) & 0x1;
+                        let exec: u8 = owner & 0x1;
+                        mode.push_str(match read {
+                            1 => "r",
+                            _ => "-",
+                        });
+                        mode.push_str(match write {
+                            1 => "w",
+                            _ => "-",
+                        });
+                        mode.push_str(match exec {
+                            1 => "x",
+                            _ => "-",
+                        });
+                        let read: u8 = (group >> 2) & 0x1;
+                        let write: u8 = (group >> 1) & 0x1;
+                        let exec: u8 = group & 0x1;
+                        mode.push_str(match read {
+                            1 => "r",
+                            _ => "-",
+                        });
+                        mode.push_str(match write {
+                            1 => "w",
+                            _ => "-",
+                        });
+                        mode.push_str(match exec {
+                            1 => "x",
+                            _ => "-",
+                        });
+                        let read: u8 = (others >> 2) & 0x1;
+                        let write: u8 = (others >> 1) & 0x1;
+                        let exec: u8 = others & 0x1;
+                        mode.push_str(match read {
+                            1 => "r",
+                            _ => "-",
+                        });
+                        mode.push_str(match write {
+                            1 => "w",
+                            _ => "-",
+                        });
+                        mode.push_str(match exec {
+                            1 => "x",
+                            _ => "-",
+                        });
+                    }
+                }
+                // Get username
+                let username: String = match file.user {
+                    Some(uid) => match get_user_by_uid(uid) {
+                        Some(user) => user.name(),
+                        None => uid.to_string(),
+                    },
+                    None => String::from("0"),
+                };
+                // Get group
+                let group: String = match file.group {
+                    Some(gid) => match get_group_by_gid(gid) {
+                        Some(group) => group.name(),
+                        None => gid.to_string(),
+                    },
+                    None => String::from("0"),
+                };
+                // Get byte size
+                let size: ByteSize = ByteSize(file.size as u64);
+                // Get date
+                let datetime: String = time_to_str(file.last_change_time, "%b %d %Y %M:%H");
+                format!(
+                    "{:32}\t{:10}\t{:16}\t{:16}\t{:8}\t{:17}",
+                    file.name.as_str(),
+                    mode,
+                    username,
+                    group,
+                    size,
+                    datetime
+                )
+            }
+        }
+    }
+
+    /// ### fmt_ls
+    ///
+    /// Format File Entry as `ls` does
+    #[cfg(target_os = "windows")]
+    #[cfg(not(tarpaulin_include))]
+    pub fn fmt_ls(&self) -> String {
+        match self {
+            FsEntry::Directory(dir) => {
+                // Create mode string
+                let mut mode: String = String::with_capacity(10);
+                let file_type: char = match dir.symlink {
+                    Some(_) => 'l',
+                    None => 'd',
+                };
+                match dir.unix_pex {
+                    None => mode.push_str("?????????"),
+                    Some((owner, group, others)) => {
+                        let read: u8 = (owner >> 2) & 0x1;
+                        let write: u8 = (owner >> 1) & 0x1;
+                        let exec: u8 = owner & 0x1;
+                        mode.push_str(match read {
+                            1 => "r",
+                            _ => "-",
+                        });
+                        mode.push_str(match write {
+                            1 => "w",
+                            _ => "-",
+                        });
+                        mode.push_str(match exec {
+                            1 => "x",
+                            _ => "-",
+                        });
+                        let read: u8 = (group >> 2) & 0x1;
+                        let write: u8 = (group >> 1) & 0x1;
+                        let exec: u8 = group & 0x1;
+                        mode.push_str(match read {
+                            1 => "r",
+                            _ => "-",
+                        });
+                        mode.push_str(match write {
+                            1 => "w",
+                            _ => "-",
+                        });
+                        mode.push_str(match exec {
+                            1 => "x",
+                            _ => "-",
+                        });
+                        let read: u8 = (others >> 2) & 0x1;
+                        let write: u8 = (others >> 1) & 0x1;
+                        let exec: u8 = others & 0x1;
+                        mode.push_str(match read {
+                            1 => "r",
+                            _ => "-",
+                        });
+                        mode.push_str(match write {
+                            1 => "w",
+                            _ => "-",
+                        });
+                        mode.push_str(match exec {
+                            1 => "x",
+                            _ => "-",
+                        });
+                    }
+                }
+                // Get username
+                let username: String = match dir.user {
+                    Some(uid) => uid.to_string(),
+                    None => String::from("0"),
+                };
+                // Get group
+                let group: String = match dir.group {
+                    Some(gid) => gid.to_string(),
+                    None => String::from("0"),
+                };
+                // Get byte size
+                let size: String = String::from("4096");
+                // Get date
+                let datetime: String = time_to_str(dir.last_change_time, "%b %d %Y %M:%H");
+                format!(
+                    "{:32}\t{:10}\t{:16}\t{:16}\t{:8}\t{:17}",
+                    dir.name.as_str(),
+                    mode,
+                    username,
+                    group,
+                    size,
+                    datetime
+                )
+            }
+            FsEntry::File(file) => {
+                // Create mode string
+                let mut mode: String = String::with_capacity(10);
+                let file_type: char = match file.symlink {
+                    Some(_) => 'l',
+                    None => '-',
+                };
+                match file.unix_pex {
+                    None => mode.push_str("?????????"),
+                    Some((owner, group, others)) => {
+                        let read: u8 = (owner >> 2) & 0x1;
+                        let write: u8 = (owner >> 1) & 0x1;
+                        let exec: u8 = owner & 0x1;
+                        mode.push_str(match read {
+                            1 => "r",
+                            _ => "-",
+                        });
+                        mode.push_str(match write {
+                            1 => "w",
+                            _ => "-",
+                        });
+                        mode.push_str(match exec {
+                            1 => "x",
+                            _ => "-",
+                        });
+                        let read: u8 = (group >> 2) & 0x1;
+                        let write: u8 = (group >> 1) & 0x1;
+                        let exec: u8 = group & 0x1;
+                        mode.push_str(match read {
+                            1 => "r",
+                            _ => "-",
+                        });
+                        mode.push_str(match write {
+                            1 => "w",
+                            _ => "-",
+                        });
+                        mode.push_str(match exec {
+                            1 => "x",
+                            _ => "-",
+                        });
+                        let read: u8 = (others >> 2) & 0x1;
+                        let write: u8 = (others >> 1) & 0x1;
+                        let exec: u8 = others & 0x1;
+                        mode.push_str(match read {
+                            1 => "r",
+                            _ => "-",
+                        });
+                        mode.push_str(match write {
+                            1 => "w",
+                            _ => "-",
+                        });
+                        mode.push_str(match exec {
+                            1 => "x",
+                            _ => "-",
+                        });
+                    }
+                }
+                // Get username
+                let username: String = match file.user {
+                    Some(uid) => uid.to_string(),
+                    None => String::from("0"),
+                };
+                // Get group
+                let group: String = match file.group {
+                    Some(gid) => gid.to_string(),
+                    None => String::from("0"),
+                };
+                // Get byte size
+                let size: ByteSize = ByteSize(file.size as u64);
+                // Get date
+                let datetime: String = time_to_str(file.last_change_time, "%b %d %Y %M:%H");
+                format!(
+                    "{:32}\t{:10}\t{:16}\t{:16}\t{:8}\t{:17}",
+                    file.name.as_str(),
+                    mode,
+                    username,
+                    group,
+                    size,
+                    datetime
+                )
+            }
+        }
+    }
 }
