@@ -210,6 +210,7 @@ pub struct FileTransferActivity {
     input_field: InputField,          // Current selected input mode
     input_txt: String,                // Input text
     choice_opt: DialogYesNoOption,    // Dialog popup selected option
+    transfer_prog: f64,               // Current write/read progress (percentage)
 }
 
 impl FileTransferActivity {
@@ -237,6 +238,7 @@ impl FileTransferActivity {
             input_field: InputField::Explorer,
             input_txt: String::new(),
             choice_opt: DialogYesNoOption::Yes,
+            transfer_prog: 0.0,
         }
     }
 
