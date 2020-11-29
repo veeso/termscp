@@ -602,6 +602,7 @@ impl FileTransferActivity {
             .change_wrkdir(PathBuf::from(path))
         {
             Ok(_) => {
+                self.log(LogLevel::Info, format!("Changed directory on local: {}", path.display()).as_str());
                 // Reload files
                 self.local_scan(path);
                 // Push prev_dir to stack
@@ -623,7 +624,13 @@ impl FileTransferActivity {
             Ok(prev_dir) => {
                 // Change directory
                 match self.client.change_dir(path) {
-                    Ok(_) => self.remote.pushd(prev_dir.as_path()), // Push prev_dir to stack
+                    Ok(_) => {
+                        self.log(LogLevel::Info, format!("Changed directory on remote: {}", path.display()).as_str());
+                        // Update files
+                        self.remote_scan(path);
+                         // Push prev_dir to stack
+                        self.remote.pushd(prev_dir.as_path())
+                    }
                     Err(err) => {
                         // Report err
                         self.input_mode = InputMode::Popup(PopupType::Alert(
@@ -631,9 +638,7 @@ impl FileTransferActivity {
                             format!("Could not change working directory: {}", err),
                         ));
                     }
-                }
-                // Update files
-                self.remote_scan(path);
+                } 
             }
             Err(err) => {
                 // Report err
@@ -861,19 +866,7 @@ impl FileTransferActivity {
                         if let Some(entry) = files.get(self.remote.index) {
                             if let FsEntry::Directory(dir) = entry {
                                 // Get current directory
-                                match self.client.pwd() {
-                                    Ok(prev_dir) => {
-                                        // Change directory
-                                        self.remote_changedir(dir.abs_path.as_path());
-                                    }
-                                    Err(err) => {
-                                        // Report err
-                                        self.input_mode = InputMode::Popup(PopupType::Alert(
-                                            Color::Red,
-                                            format!("Could not change working directory: {}", err),
-                                        ));
-                                    }
-                                }
+                                self.remote_changedir(dir.abs_path.as_path());
                             }
                         }
                     }
@@ -1152,6 +1145,8 @@ impl FileTransferActivity {
                             DialogYesNoOption::No => no_cb(self),
                             DialogYesNoOption::Yes => yes_cb(self),
                         }
+                        // Reset choice option to yes
+                        self.choice_opt = DialogYesNoOption::Yes;
                     }
                     KeyCode::Right => self.choice_opt = DialogYesNoOption::No, // Set to NO
                     KeyCode::Left => self.choice_opt = DialogYesNoOption::Yes, // Set to YES
@@ -1178,7 +1173,7 @@ impl FileTransferActivity {
                 self.local_changedir(PathBuf::from(input.as_str()).as_path());
             }
             FileExplorerTab::Remote => {
-                //TODO: here
+                self.remote_changedir(PathBuf::from(input.as_str()).as_path());
             }
         }
     }
@@ -1507,6 +1502,7 @@ impl FileTransferActivity {
             // Draw log
             f.render_stateful_widget(self.draw_log_list(), chunks[2], &mut log_state);
             // Draw footer
+            // FIXME: doesn't work for some reason...
             f.render_widget(self.draw_footer(), chunks[3]);
             // Draw popup
             if let InputMode::Popup(popup) = &self.input_mode {
@@ -1740,7 +1736,7 @@ impl FileTransferActivity {
             .block(
                 Block::default()
                     .borders(Borders::ALL)
-                    .title("Please wait..."),
+                    .title("Please wait"),
             )
     }
 
