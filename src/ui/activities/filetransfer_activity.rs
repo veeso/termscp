@@ -1587,9 +1587,9 @@ impl FileTransferActivity {
             .direction(Direction::Horizontal)
             .constraints(
                 [
-                    Constraint::Percentage((80) / 2),
-                    Constraint::Percentage(20),
-                    Constraint::Percentage((80) / 2),
+                    Constraint::Percentage((50) / 2),
+                    Constraint::Percentage(50),
+                    Constraint::Percentage((50) / 2),
                 ]
                 .as_ref(),
             )
