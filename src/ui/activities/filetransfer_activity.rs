@@ -1489,8 +1489,12 @@ impl FileTransferActivity {
     /// ### draw
     ///
     /// Draw UI
-    fn draw(&mut self, frame: &mut Frame<CrosstermBackend<Stdout>>) {
-        // TODO: implement
+    fn draw(&mut self) {
+        let mut ctx: Context = self.context.take().unwrap();
+        let _ = ctx.terminal.draw(|f| {
+            // TODO: implement
+        });
+        self.context = Some(ctx);
     }
 
     /// ### draw_header
@@ -1660,11 +1664,7 @@ impl Activity for FileTransferActivity {
                 self.params.address, self.params.port
             )));
             // Force ui draw
-            let mut ctx: Context = self.context.take().unwrap();
-            let _ = ctx.terminal.draw(|f| {
-                self.draw(f);
-            });
-            self.context = Some(ctx);
+            self.draw();
             // Connect to remote
             self.connect();
         }
@@ -1676,11 +1676,7 @@ impl Activity for FileTransferActivity {
             }
         }
         // @! draw interface
-        let mut ctx: Context = self.context.take().unwrap();
-        let _ = ctx.terminal.draw(|f| {
-            self.draw(f);
-        });
-        self.context = Some(ctx);
+        self.draw();
     }
 
     /// ### on_destroy
