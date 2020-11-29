@@ -272,7 +272,7 @@ impl AuthActivity {
     fn draw_remote_address(&self) -> Paragraph {
         Paragraph::new(self.address.as_ref())
             .style(match self.selected_field {
-                InputField::Address => Style::default().fg(Color::Yellow),
+                InputField::Address => Style::default().fg(Color::Cyan),
                 _ => Style::default(),
             })
             .block(
@@ -288,7 +288,7 @@ impl AuthActivity {
     fn draw_remote_port(&self) -> Paragraph {
         Paragraph::new(self.port.as_ref())
             .style(match self.selected_field {
-                InputField::Port => Style::default().fg(Color::Cyan),
+                InputField::Port => Style::default().fg(Color::Yellow),
                 _ => Style::default(),
             })
             .block(Block::default().borders(Borders::ALL).title("Remote port"))
