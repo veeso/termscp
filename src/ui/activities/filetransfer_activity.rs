@@ -34,7 +34,7 @@ use crate::filetransfer::FileTransferProtocol;
 
 // File transfer
 use crate::filetransfer::sftp_transfer::SftpFileTransfer;
-use crate::filetransfer::{FileTransfer, ProgressCallback};
+use crate::filetransfer::FileTransfer;
 use crate::fs::FsEntry;
 
 // Includes
@@ -54,9 +54,6 @@ use tui::{
     widgets::{Block, Borders, List, ListItem, Paragraph, Tabs},
 };
 use unicode_width::UnicodeWidthStr;
-
-// Holder for current upload progress
-static mut UPLOAD_PROGRESS: f64 = 0.0; // VERY VERY BAD CODING
 
 // Types
 type DialogCallback = fn(&mut FileTransferActivity);
@@ -315,22 +312,15 @@ impl FileTransferActivity {
             FsEntry::Directory(dir) => dir.name.clone(),
             FsEntry::File(file) => file.name.clone(),
         };
-        self.input_mode = InputMode::Popup(PopupType::Progress(format!(
-            "Uploading \"{}\"...",
-            file_name
-        )));
+        self.input_mode =
+            InputMode::Popup(PopupType::Wait(format!("Uploading \"{}\"...", file_name)));
+        // Draw
+        self.draw();
+        // Get remote path
         let remote_path: PathBuf = match dst_name {
             Some(s) => PathBuf::from(s.as_str()),
             None => PathBuf::from(file_name.as_str()),
         };
-        let prog_cb: Box<ProgressCallback> = Box::new(|c, sz| {
-            // Progress callback
-            let percentage: f64 = ((c as f64) * 100.0) / (sz as f64);
-            unsafe {
-                UPLOAD_PROGRESS = percentage;
-            }
-            // FIXME: can't draw here...
-        });
         // Match entry
         match entry {
             FsEntry::File(file) => {
@@ -343,31 +333,26 @@ impl FileTransferActivity {
                     .local
                     .open_file_read(file.abs_path.as_path())
                 {
-                    Ok(mut f) => {
-                        match self
-                            .client
-                            .send_file(remote_path.as_path(), &mut f, Some(prog_cb))
-                        {
-                            Ok(_) => self.log(
-                                LogLevel::Info,
-                                format!(
-                                    "Saved file \"{}\" to \"{}\"",
-                                    file.abs_path.display(),
-                                    remote_path.display()
-                                )
-                                .as_ref(),
-                            ),
-                            Err(err) => self.log(
-                                LogLevel::Error,
-                                format!(
-                                    "Failed to upload file \"{}\": {}",
-                                    file.abs_path.display(),
-                                    err
-                                )
-                                .as_ref(),
-                            ),
-                        }
-                    }
+                    Ok(mut f) => match self.client.send_file(remote_path.as_path(), &mut f) {
+                        Ok(_) => self.log(
+                            LogLevel::Info,
+                            format!(
+                                "Saved file \"{}\" to \"{}\"",
+                                file.abs_path.display(),
+                                remote_path.display()
+                            )
+                            .as_ref(),
+                        ),
+                        Err(err) => self.log(
+                            LogLevel::Error,
+                            format!(
+                                "Failed to upload file \"{}\": {}",
+                                file.abs_path.display(),
+                                err
+                            )
+                            .as_ref(),
+                        ),
+                    },
                     Err(err) => {
                         // Report error
                         self.log(
@@ -441,18 +426,10 @@ impl FileTransferActivity {
             FsEntry::Directory(dir) => dir.name.clone(),
             FsEntry::File(file) => file.name.clone(),
         };
-        self.input_mode = InputMode::Popup(PopupType::Progress(format!(
-            "Downloading \"{}\"...",
-            file_name
-        )));
-        let prog_cb: Box<ProgressCallback> = Box::new(|c, sz| {
-            // Progress callback
-            let percentage: f64 = ((c as f64) * 100.0) / (sz as f64);
-            unsafe {
-                UPLOAD_PROGRESS = percentage;
-            }
-            // FIXME: can't draw here...
-        });
+        self.input_mode =
+            InputMode::Popup(PopupType::Wait(format!("Downloading \"{}\"...", file_name)));
+        // Draw
+        self.draw();
         // Match entry
         match entry {
             FsEntry::File(file) => {
@@ -473,11 +450,10 @@ impl FileTransferActivity {
                 {
                     Ok(mut local_file) => {
                         // Download file from remote
-                        match self.client.recv_file(
-                            file.abs_path.as_path(),
-                            &mut local_file,
-                            Some(prog_cb),
-                        ) {
+                        match self
+                            .client
+                            .recv_file(file.abs_path.as_path(), &mut local_file)
+                        {
                             Ok(_) => self.log(
                                 LogLevel::Info,
                                 format!(

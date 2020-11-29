@@ -23,16 +23,13 @@
 *
 */
 
-use std::path::{Path, PathBuf};
 use std::fs::File;
+use std::path::{Path, PathBuf};
 
 use crate::fs::FsEntry;
 
 // Transfers
 pub mod sftp_transfer;
-
-// Types
-pub type ProgressCallback = dyn Fn(usize, usize);
 
 /// ## FileTransferProtocol
 ///
@@ -65,7 +62,9 @@ pub enum FileTransferError {
 impl std::fmt::Display for FileTransferError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         let err: String = match self {
-            FileTransferError::AuthenticationFailed => String::from("Authentication failed: bad credentials"),
+            FileTransferError::AuthenticationFailed => {
+                String::from("Authentication failed: bad credentials")
+            }
             FileTransferError::BadAddress => String::from("Bad address syntax"),
             FileTransferError::ConnectionError => String::from("Connection error"),
             FileTransferError::DirStatFailed => String::from("Could not stat directory"),
@@ -82,71 +81,75 @@ impl std::fmt::Display for FileTransferError {
 }
 
 /// ## FileTransfer
-/// 
+///
 /// File transfer trait must be implemented by all the file transfers and defines the method used by a generic file transfer
 
 pub trait FileTransfer {
-
     /// ### connect
-    /// 
+    ///
     /// Connect to the remote server
 
-    fn connect(&mut self, address: String, port: u16, username: Option<String>, password: Option<String>) -> Result<(), FileTransferError>;
+    fn connect(
+        &mut self,
+        address: String,
+        port: u16,
+        username: Option<String>,
+        password: Option<String>,
+    ) -> Result<(), FileTransferError>;
 
     /// ### disconnect
-    /// 
+    ///
     /// Disconnect from the remote server
 
     fn disconnect(&mut self) -> Result<(), FileTransferError>;
 
     /// ### is_connected
-    /// 
+    ///
     /// Indicates whether the client is connected to remote
     fn is_connected(&self) -> bool;
 
     /// ### pwd
-    /// 
+    ///
     /// Print working directory
 
     fn pwd(&self) -> Result<PathBuf, FileTransferError>;
 
     /// ### change_dir
-    /// 
+    ///
     /// Change working directory
 
     fn change_dir(&mut self, dir: &Path) -> Result<PathBuf, FileTransferError>;
 
     /// ### list_dir
-    /// 
+    ///
     /// List directory entries
 
     fn list_dir(&self, path: &Path) -> Result<Vec<FsEntry>, FileTransferError>;
 
     /// ### mkdir
-    /// 
+    ///
     /// Make directory
     fn mkdir(&self, dir: &Path) -> Result<(), FileTransferError>;
 
     /// ### remove
-    /// 
+    ///
     /// Remove a file or a directory
     fn remove(&self, file: &FsEntry) -> Result<(), FileTransferError>;
 
     /// ### rename
-    /// 
+    ///
     /// Rename file or a directory
     fn rename(&self, file: &FsEntry, dst: &Path) -> Result<(), FileTransferError>;
 
     /// ### send_file
-    /// 
+    ///
     /// Send file to remote
     /// File name is referred to the name of the file as it will be saved
     /// Data contains the file data
-    fn send_file(&self, file_name: &Path, file: &mut File, prog_cb: Option<Box<ProgressCallback>>) -> Result<(), FileTransferError>;
+    fn send_file(&self, file_name: &Path, file: &mut File) -> Result<(), FileTransferError>;
 
     /// ### recv_file
-    /// 
+    ///
     /// Receive file from remote with provided name
-    fn recv_file(&self, file_name: &Path, dest_file: &mut File, prog_cb: Option<Box<ProgressCallback>>) -> Result<(), FileTransferError>;
-
+    fn recv_file(&self, file_name: &Path, dest_file: &mut File) -> Result<(), FileTransferError>;
 }
