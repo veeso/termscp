@@ -170,7 +170,7 @@ impl std::fmt::Display for FsEntry {
                 let datetime: String = time_to_str(dir.last_change_time, "%b %d %Y %M:%H");
                 write!(
                     f,
-                    "{:24}\t{:12}\t{:16}\t{:16}\t{:8}\t{:17}",
+                    "{:24}\t{:12}\t{:12}\t{:12}\t{:9}\t{:17}",
                     dir.name.as_str(),
                     mode,
                     username,
@@ -259,7 +259,7 @@ impl std::fmt::Display for FsEntry {
                 let datetime: String = time_to_str(file.last_change_time, "%b %d %Y %M:%H");
                 write!(
                     f,
-                    "{:24}\t{:12}\t{:16}\t{:16}\t{:8}\t{:17}",
+                    "{:24}\t{:12}\t{:12}\t{:12}\t{:9}\t{:17}",
                     file.name.as_str(),
                     mode,
                     username,
@@ -352,7 +352,7 @@ impl std::fmt::Display for FsEntry {
                 let datetime: String = time_to_str(dir.last_change_time, "%b %d %Y %M:%H");
                 write!(
                     f,
-                    "{:24}\t{:12}\t{:16}\t{:16}\t{:8}\t{:17}",
+                    "{:24}\t{:12}\t{:12}\t{:12}\t{:9}\t{:17}",
                     dir.name.as_str(),
                     mode,
                     username,
@@ -435,7 +435,7 @@ impl std::fmt::Display for FsEntry {
                 let datetime: String = time_to_str(file.last_change_time, "%b %d %Y %M:%H");
                 write!(
                     f,
-                    "{:24}\t{:12}\t{:16}\t{:16}\t{:8}\t{:17}",
+                    "{:24}\t{:12}\t{:12}\t{:12}\t{:9}\t{:17}",
                     file.name.as_str(),
                     mode,
                     username,

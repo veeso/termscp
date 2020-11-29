@@ -48,7 +48,7 @@ use std::path::{Path, PathBuf};
 use tui::{
     layout::{Constraint, Corner, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
-    text::{Span, Spans, Text},
+    text::{Span, Spans},
     widgets::{Block, Borders, Clear, Gauge, List, ListItem, ListState, Paragraph, Tabs},
 };
 use unicode_width::UnicodeWidthStr;
@@ -93,6 +93,7 @@ enum DialogYesNoOption {
 enum PopupType {
     Alert(Color, String),                          // Block color; Block text
     Fatal(String),                                 // Must quit after being hidden
+    Help,                                          // Show Help
     Input(String, OnInputSubmitCallback),          // Input description; Callback for submit
     Progress(String),                              // Progress block text
     Wait(String),                                  // Wait block text
@@ -583,7 +584,7 @@ impl FileTransferActivity {
     /// ### local_changedir
     ///
     /// Change directory for local
-    fn local_changedir(&mut self, path: &Path) {
+    fn local_changedir(&mut self, path: &Path, push: bool) {
         // Get current directory
         let prev_dir: PathBuf = self.context.as_ref().unwrap().local.pwd();
         // Change directory
@@ -599,7 +600,9 @@ impl FileTransferActivity {
                 // Reload files
                 self.local_scan(path);
                 // Push prev_dir to stack
-                self.local.pushd(prev_dir.as_path())
+                if push {
+                    self.local.pushd(prev_dir.as_path())
+                }
             }
             Err(err) => {
                 // Report err
@@ -611,7 +614,7 @@ impl FileTransferActivity {
         }
     }
 
-    fn remote_changedir(&mut self, path: &Path) {
+    fn remote_changedir(&mut self, path: &Path, push: bool) {
         // Get current directory
         match self.client.pwd() {
             Ok(prev_dir) => {
@@ -621,8 +624,10 @@ impl FileTransferActivity {
                         self.log(LogLevel::Info, format!("Changed directory on remote: {}", path.display()).as_str());
                         // Update files
                         self.remote_scan(path);
-                         // Push prev_dir to stack
-                        self.remote.pushd(prev_dir.as_path())
+                        // Push prev_dir to stack
+                        if push {
+                            self.remote.pushd(prev_dir.as_path())
+                        }
                     }
                     Err(err) => {
                         // Report err
@@ -739,14 +744,14 @@ impl FileTransferActivity {
                         let local_files: Vec<FsEntry> = self.local.files.clone();
                         if let Some(entry) = local_files.get(self.local.index) {
                             if let FsEntry::Directory(dir) = entry {
-                                self.local_changedir(dir.abs_path.as_path());
+                                self.local_changedir(dir.abs_path.as_path(), true);
                             }
                         }
                     }
                     KeyCode::Backspace => {
                         // Go to previous directory
                         if let Some(d) = self.local.popd() {
-                            self.local_changedir(d.as_path());
+                            self.local_changedir(d.as_path(), false);
                         }
                     }
                     KeyCode::Delete => {
@@ -787,6 +792,13 @@ impl FileTransferActivity {
                                 ));
                             }
                         }
+                        'h' | 'H' => {
+                            // Show help
+                            // If ctrl is enabled...
+                            if key.modifiers.intersects(KeyModifiers::CONTROL) {
+                                self.input_mode = InputMode::Popup(PopupType::Help);
+                            }
+                        }
                         'r' | 'R' => {
                             // Rename
                             // If ctrl is enabled...
@@ -806,6 +818,17 @@ impl FileTransferActivity {
                                     String::from("Save as..."),
                                     FileTransferActivity::callback_save_as,
                                 ));
+                            }
+                        }
+                        'u' | 'U' => {
+                            // Go to parent directory
+                            // If ctrl is enabled...
+                            if key.modifiers.intersects(KeyModifiers::CONTROL) {
+                                // Get pwd
+                                let path: PathBuf = self.context.as_ref().unwrap().local.pwd();
+                                if let Some(parent) = path.as_path().parent() {
+                                    self.local_changedir(parent, true);
+                                }
                             }
                         }
                         ' ' => {
@@ -859,14 +882,14 @@ impl FileTransferActivity {
                         if let Some(entry) = files.get(self.remote.index) {
                             if let FsEntry::Directory(dir) = entry {
                                 // Get current directory
-                                self.remote_changedir(dir.abs_path.as_path());
+                                self.remote_changedir(dir.abs_path.as_path(), true);
                             }
                         }
                     }
                     KeyCode::Backspace => {
                         // Go to previous directory
                         if let Some(d) = self.remote.popd() {
-                            self.remote_changedir(d.as_path());
+                            self.remote_changedir(d.as_path(), false);
                         }
                     }
                     KeyCode::Delete => {
@@ -907,6 +930,13 @@ impl FileTransferActivity {
                                 ));
                             }
                         }
+                        'h' | 'H' => {
+                            // Show help
+                            // If ctrl is enabled...
+                            if key.modifiers.intersects(KeyModifiers::CONTROL) {
+                                self.input_mode = InputMode::Popup(PopupType::Help);
+                            }
+                        }
                         'r' | 'R' => {
                             // Rename
                             // If ctrl is enabled...
@@ -926,6 +956,25 @@ impl FileTransferActivity {
                                     String::from("Save as..."),
                                     FileTransferActivity::callback_save_as,
                                 ));
+                            }
+                        }
+                        'u' | 'U' => {
+                            // Go to parent directory
+                            // If ctrl is enabled...
+                            if key.modifiers.intersects(KeyModifiers::CONTROL) {
+                                // Get pwd
+                                match self.client.pwd() {
+                                    Ok(path) => {
+                                        if let Some(parent) = path.as_path().parent() {
+                                            self.remote_changedir(parent, true);
+                                        }
+                                    }
+                                    Err(err) => self.input_mode = InputMode::Popup(PopupType::Alert(
+                                        Color::Red,
+                                        format!("Could not change working directory: {}", err),
+                                    ))
+                                }
+                                
                             }
                         }
                         ' ' => {
@@ -1007,6 +1056,7 @@ impl FileTransferActivity {
     fn handle_input_event_mode_popup(&mut self, ev: &InputEvent, popup: PopupType) {
         match popup {
             PopupType::Alert(_, _) => self.handle_input_event_mode_popup_alert(ev),
+            PopupType::Help => self.handle_input_event_mode_popup_help(ev),
             PopupType::Fatal(_) => self.handle_input_event_mode_popup_fatal(ev),
             PopupType::Input(_, cb) => self.handle_input_event_mode_popup_input(ev, cb),
             PopupType::Progress(_) => self.handle_input_event_mode_popup_progress(ev),
@@ -1017,7 +1067,7 @@ impl FileTransferActivity {
         }
     }
 
-    /// ### handle_input_event_mode_explorer_alert
+    /// ### handle_input_event_mode_popup_alert
     ///
     /// Input event handler for popup alert
     fn handle_input_event_mode_popup_alert(&mut self, ev: &InputEvent) {
@@ -1036,7 +1086,26 @@ impl FileTransferActivity {
         }
     }
 
-    /// ### handle_input_event_mode_explorer_alert
+    /// ### handle_input_event_mode_popup_help
+    ///
+    /// Input event handler for popup help
+    fn handle_input_event_mode_popup_help(&mut self, ev: &InputEvent) {
+        // If enter, close popup
+        match ev {
+            InputEvent::Key(key) => {
+                match key.code {
+                    KeyCode::Enter | KeyCode::Esc => {
+                        // Set input mode back to explorer
+                        self.input_mode = InputMode::Explorer;
+                    }
+                    _ => { /* Nothing to do */ }
+                }
+            }
+            _ => { /* Nothing to do */ }
+        }
+    }
+
+    /// ### handle_input_event_mode_popup_fatal
     ///
     /// Input event handler for popup alert
     fn handle_input_event_mode_popup_fatal(&mut self, ev: &InputEvent) {
@@ -1157,10 +1226,10 @@ impl FileTransferActivity {
     fn callback_change_directory(&mut self, input: String) {
         match self.tab {
             FileExplorerTab::Local => {
-                self.local_changedir(PathBuf::from(input.as_str()).as_path());
+                self.local_changedir(PathBuf::from(input.as_str()).as_path(), true);
             }
             FileExplorerTab::Remote => {
-                self.remote_changedir(PathBuf::from(input.as_str()).as_path());
+                self.remote_changedir(PathBuf::from(input.as_str()).as_path(), true);
             }
         }
     }
@@ -1254,7 +1323,7 @@ impl FileTransferActivity {
                     {
                         Ok(_) => {
                             // Reload files
-                            self.local.files = self.context.as_ref().unwrap().local.list_dir();
+                            self.local_scan(self.context.as_ref().unwrap().local.pwd().as_path());
                             // Log
                             self.log(
                                 LogLevel::Info,
@@ -1296,7 +1365,9 @@ impl FileTransferActivity {
                     match self.client.rename(entry, dst_path.as_path()) {
                         Ok(_) => {
                             // Reload files
-                            self.local.files = self.context.as_ref().unwrap().local.list_dir();
+                            if let Ok(path) = self.client.pwd() {
+                                self.remote_scan(path.as_path());
+                            }
                             // Log
                             self.log(
                                 LogLevel::Info,
@@ -1346,7 +1417,7 @@ impl FileTransferActivity {
                     match self.context.as_mut().unwrap().local.remove(entry) {
                         Ok(_) => {
                             // Reload files
-                            self.local.files = self.context.as_ref().unwrap().local.list_dir();
+                            self.local_scan(self.context.as_ref().unwrap().local.pwd().as_path());
                             // Log
                             self.log(
                                 LogLevel::Info,
@@ -1453,8 +1524,7 @@ impl FileTransferActivity {
                     [
                         Constraint::Length(5),  // Header
                         Constraint::Length(20), // Explorer
-                        Constraint::Length(20), // Log
-                        Constraint::Length(6),  // Footer
+                        Constraint::Length(16), // Log
                     ]
                     .as_ref(),
                 )
@@ -1488,12 +1558,19 @@ impl FileTransferActivity {
             log_state.select(Some(self.log_index));
             // Draw log
             f.render_stateful_widget(self.draw_log_list(), chunks[2], &mut log_state);
-            // Draw footer
-            // FIXME: doesn't work for some reason...
-            f.render_widget(self.draw_footer(), chunks[3]);
             // Draw popup
             if let InputMode::Popup(popup) = &self.input_mode {
-                let popup_area: Rect = self.draw_popup_area(f.size());
+                // Calculate popup size
+                let (width, height): (u16, u16) = match popup {
+                    PopupType::Alert(_, _) => (30, 10),
+                    PopupType::Fatal(_) => (30, 10),
+                    PopupType::Help => (50, 70),
+                    PopupType::Input(_, _) => (30, 10),
+                    PopupType::Progress(_) => (40, 10),
+                    PopupType::Wait(_) => (30, 10),
+                    PopupType::YesNo(_, _, _) => (10, 10),
+                };
+                let popup_area: Rect = self.draw_popup_area(f.size(), width, height);
                 f.render_widget(Clear, popup_area); //this clears out the background
                 match popup {
                     PopupType::Alert(color, txt) => f.render_widget(
@@ -1502,6 +1579,9 @@ impl FileTransferActivity {
                     ),
                     PopupType::Fatal(txt) => {
                         f.render_widget(self.draw_popup_fatal(txt.clone()), popup_area)
+                    }
+                    PopupType::Help => {
+                        f.render_widget(self.draw_popup_help(), popup_area)
                     }
                     PopupType::Input(txt, _) => {
                         f.render_widget(self.draw_popup_input(txt.clone()), popup_area);
@@ -1646,14 +1726,14 @@ impl FileTransferActivity {
     /// ### draw_popup_area
     ///
     /// Draw popup area
-    fn draw_popup_area(&self, area: Rect) -> Rect {
+    fn draw_popup_area(&self, area: Rect, width: u16, height: u16) -> Rect {
         let popup_layout = Layout::default()
             .direction(Direction::Vertical)
             .constraints(
                 [
-                    Constraint::Percentage((80) / 2),
-                    Constraint::Percentage(20),
-                    Constraint::Percentage((80) / 2),
+                    Constraint::Percentage((100 - height) / 2),
+                    Constraint::Percentage(height),
+                    Constraint::Percentage((100 - height) / 2),
                 ]
                 .as_ref(),
             )
@@ -1662,9 +1742,9 @@ impl FileTransferActivity {
             .direction(Direction::Horizontal)
             .constraints(
                 [
-                    Constraint::Percentage((50) / 2),
-                    Constraint::Percentage(50),
-                    Constraint::Percentage((50) / 2),
+                    Constraint::Percentage((100 - width) / 2),
+                    Constraint::Percentage(width),
+                    Constraint::Percentage((100 - width) / 2),
                 ]
                 .as_ref(),
             )
@@ -1750,83 +1830,138 @@ impl FileTransferActivity {
     /// ### draw_footer
     ///
     /// Draw authentication page footer
-    fn draw_footer(&self) -> Paragraph {
+    fn draw_popup_help(&self) -> List {
         // Write header
-        let footer = vec![
-            Span::styled(
-                "<ESC>",
-                Style::default()
-                    .bg(Color::Cyan)
-                    .fg(Color::White)
-                    .add_modifier(Modifier::BOLD),
+        let cmds: Vec<ListItem> = vec![
+            ListItem::new(
+                Spans::from(vec![
+                    Span::styled(
+                        "<ESC>         ",
+                        Style::default()
+                            .bg(Color::Cyan)
+                            .fg(Color::White)
+                            .add_modifier(Modifier::BOLD),
+                    ),
+                    Span::raw("quit")
+                ])
             ),
-            Span::raw("quit\t"),
-            Span::styled(
-                "<TAB>",
-                Style::default()
-                    .bg(Color::Cyan)
-                    .fg(Color::White)
-                    .add_modifier(Modifier::BOLD),
+            ListItem::new(
+                Spans::from(vec![
+                    Span::styled(
+                        "<TAB>         ",
+                        Style::default()
+                            .bg(Color::Cyan)
+                            .fg(Color::White)
+                            .add_modifier(Modifier::BOLD),
+                    ),
+                    Span::raw("change input field")
+                ])
             ),
-            Span::raw("change input field\t"),
-            Span::styled(
-                "<RIGHT,LEFT>",
-                Style::default()
-                    .bg(Color::Cyan)
-                    .fg(Color::White)
-                    .add_modifier(Modifier::BOLD),
+            ListItem::new(
+                Spans::from(vec![
+                    Span::styled(
+                        "<RIGHT/LEFT>  ",
+                        Style::default()
+                            .bg(Color::Cyan)
+                            .fg(Color::White)
+                            .add_modifier(Modifier::BOLD),
+                    ),
+                    Span::raw("change explorer tab")
+                ])
             ),
-            Span::raw("change explorer tab\t"),
-            Span::styled(
-                "<ENTER>",
-                Style::default()
-                    .bg(Color::Cyan)
-                    .fg(Color::White)
-                    .add_modifier(Modifier::BOLD),
+            ListItem::new(
+                Spans::from(vec![
+                    Span::styled(
+                        "<ENTER>       ",
+                        Style::default()
+                            .bg(Color::Cyan)
+                            .fg(Color::White)
+                            .add_modifier(Modifier::BOLD),
+                    ),
+                    Span::raw("enter directory")
+                ])
             ),
-            Span::raw("change directory\t"),
-            Span::styled(
-                "<SPACE>",
-                Style::default()
-                    .bg(Color::Cyan)
-                    .fg(Color::White)
-                    .add_modifier(Modifier::BOLD),
+            ListItem::new(
+                Spans::from(vec![
+                    Span::styled(
+                        "<SPACE>       ",
+                        Style::default()
+                            .bg(Color::Cyan)
+                            .fg(Color::White)
+                            .add_modifier(Modifier::BOLD),
+                    ),
+                    Span::raw("upload/download file")
+                ])
             ),
-            Span::raw("upload/download file\t"),
-            Span::styled(
-                "<CTRL+G>",
-                Style::default()
-                    .bg(Color::Cyan)
-                    .fg(Color::White)
-                    .add_modifier(Modifier::BOLD),
+            ListItem::new(
+                Spans::from(vec![
+                    Span::styled(
+                        "<CTRL+D>      ",
+                        Style::default()
+                            .bg(Color::Cyan)
+                            .fg(Color::White)
+                            .add_modifier(Modifier::BOLD),
+                    ),
+                    Span::raw("make directory")
+                ])
             ),
-            Span::raw("goto path\t"),
-            Span::styled(
-                "<CTRL+M>",
-                Style::default()
-                    .bg(Color::Cyan)
-                    .fg(Color::White)
-                    .add_modifier(Modifier::BOLD),
+            ListItem::new(
+                Spans::from(vec![
+                    Span::styled(
+                        "<CTRL+G>      ",
+                        Style::default()
+                            .bg(Color::Cyan)
+                            .fg(Color::White)
+                            .add_modifier(Modifier::BOLD),
+                    ),
+                    Span::raw("goto path")
+                ])
             ),
-            Span::raw("make dir\t"),
-            Span::styled(
-                "<CTRL+R>",
-                Style::default()
-                    .bg(Color::Cyan)
-                    .fg(Color::White)
-                    .add_modifier(Modifier::BOLD),
+            ListItem::new(
+                Spans::from(vec![
+                    Span::styled(
+                        "<CTRL+R>      ",
+                        Style::default()
+                            .bg(Color::Cyan)
+                            .fg(Color::White)
+                            .add_modifier(Modifier::BOLD),
+                    ),
+                    Span::raw("rename file")
+                ])
             ),
-            Span::raw("rename file\t"),
-            Span::styled(
-                "<CANC>",
-                Style::default()
-                    .bg(Color::Cyan)
-                    .fg(Color::White)
-                    .add_modifier(Modifier::BOLD),
+            ListItem::new(
+                Spans::from(vec![
+                    Span::styled(
+                        "<CTRL+U>      ",
+                        Style::default()
+                            .bg(Color::Cyan)
+                            .fg(Color::White)
+                            .add_modifier(Modifier::BOLD),
+                    ),
+                    Span::raw("go to parent directory")
+                ])
             ),
-            Span::raw("delete file\t"),
+            ListItem::new(
+                Spans::from(vec![
+                    Span::styled(
+                        "<CANC>        ",
+                        Style::default()
+                            .bg(Color::Cyan)
+                            .fg(Color::White)
+                            .add_modifier(Modifier::BOLD),
+                    ),
+                    Span::raw("delete file")
+                ])
+            )
         ];
-        Paragraph::new(Text::from(Spans::from(footer)))
+        List::new(cmds)
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .border_style(Style::default())
+                    .title("Help"),
+            )
+            .start_corner(Corner::TopLeft)
     }
 }
 
@@ -1849,7 +1984,7 @@ impl Activity for FileTransferActivity {
         // Put raw mode on enabled
         let _ = enable_raw_mode();
         // Get files at current wd
-        self.local.files = self.context.as_ref().unwrap().local.list_dir();
+        self.local_scan(self.context.as_ref().unwrap().local.pwd().as_path());
     }
 
     /// ### on_draw
