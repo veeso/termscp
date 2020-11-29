@@ -44,6 +44,7 @@ use crossterm::event::Event as InputEvent;
 use crossterm::event::{KeyCode, KeyModifiers};
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use std::collections::VecDeque;
+use std::io::{Read, Seek, Write};
 use std::path::{Path, PathBuf};
 use tui::{
     layout::{Constraint, Corner, Direction, Layout, Rect},
@@ -209,7 +210,7 @@ pub struct FileTransferActivity {
     input_field: InputField,          // Current selected input mode
     input_txt: String,                // Input text
     choice_opt: DialogYesNoOption,    // Dialog popup selected option
-    transfer_prog: f64,               // Current write/read progress (percentage)
+    transfer_progress: f64,           // Current write/read progress (percentage)
 }
 
 impl FileTransferActivity {
@@ -237,7 +238,7 @@ impl FileTransferActivity {
             input_field: InputField::Explorer,
             input_txt: String::new(),
             choice_opt: DialogYesNoOption::Yes,
-            transfer_prog: 0.0,
+            transfer_progress: 0.0,
         }
     }
 
@@ -302,8 +303,7 @@ impl FileTransferActivity {
             FsEntry::Directory(dir) => dir.name.clone(),
             FsEntry::File(file) => file.name.clone(),
         };
-        self.input_mode =
-            InputMode::Popup(PopupType::Wait(format!("Uploading \"{}\"...", file_name)));
+        self.input_mode = InputMode::Popup(PopupType::Wait(format!("Uploading \"{}\"", file_name)));
         // Draw
         self.draw();
         // Get remote path
@@ -323,16 +323,66 @@ impl FileTransferActivity {
                     .local
                     .open_file_read(file.abs_path.as_path())
                 {
-                    Ok(mut f) => match self.client.send_file(remote_path.as_path(), &mut f) {
-                        Ok(_) => self.log(
-                            LogLevel::Info,
-                            format!(
-                                "Saved file \"{}\" to \"{}\"",
-                                file.abs_path.display(),
-                                remote_path.display()
-                            )
-                            .as_ref(),
-                        ),
+                    Ok(mut fhnd) => match self.client.send_file(remote_path.as_path()) {
+                        Ok(mut rhnd) => {
+                            // Write file
+                            let file_size: usize =
+                                fhnd.seek(std::io::SeekFrom::End(0)).unwrap_or(0) as usize;
+                            // rewind
+                            if let Err(err) = fhnd.seek(std::io::SeekFrom::Start(0)) {
+                                self.log(
+                                    LogLevel::Error,
+                                    format!("Could not rewind local file: {}", err).as_ref(),
+                                );
+                            }
+                            // Write remote file
+                            let mut total_bytes_written: usize = 0;
+                            // Set input state to popup progress
+                            self.input_mode = InputMode::Popup(PopupType::Progress(format!(
+                                "Uploading \"{}\"",
+                                file_name
+                            )));
+                            loop {
+                                // Read till you can
+                                let mut buffer: [u8; 8192] = [0; 8192];
+                                match fhnd.read(&mut buffer) {
+                                    Ok(bytes_read) => {
+                                        total_bytes_written += bytes_read;
+                                        if bytes_read == 0 {
+                                            break;
+                                        } else {
+                                            // Write bytes
+                                            if let Err(err) = rhnd.write(&buffer[0..bytes_read]) {
+                                                self.log(
+                                                    LogLevel::Error,
+                                                    format!("Could not write remote file: {}", err)
+                                                        .as_ref(),
+                                                );
+                                            }
+                                        }
+                                    }
+                                    Err(err) => {
+                                        self.log(
+                                            LogLevel::Error,
+                                            format!("Could not read local file: {}", err).as_ref(),
+                                        );
+                                    }
+                                }
+                                // Increase progress
+                                self.set_progress(total_bytes_written, file_size);
+                                // Draw
+                                self.draw();
+                            }
+                            self.log(
+                                LogLevel::Info,
+                                format!(
+                                    "Saved file \"{}\" to \"{}\"",
+                                    file.abs_path.display(),
+                                    remote_path.display()
+                                )
+                                .as_ref(),
+                            );
+                        }
                         Err(err) => self.log(
                             LogLevel::Error,
                             format!(
@@ -446,19 +496,60 @@ impl FileTransferActivity {
                 {
                     Ok(mut local_file) => {
                         // Download file from remote
-                        match self
-                            .client
-                            .recv_file(file.abs_path.as_path(), &mut local_file)
-                        {
-                            Ok(_) => self.log(
-                                LogLevel::Info,
-                                format!(
-                                    "Saved file \"{}\" to \"{}\"",
-                                    file.abs_path.display(),
-                                    local_file_path.display()
-                                )
-                                .as_ref(),
-                            ),
+                        match self.client.recv_file(file.abs_path.as_path()) {
+                            Ok((mut rhnd, file_size)) => {
+                                // Set popup progress
+                                self.input_mode = InputMode::Popup(PopupType::Progress(format!(
+                                    "Downloading \"{}\"...",
+                                    file_name
+                                )));
+                                let mut total_bytes_written: usize = 0;
+                                // Write local file
+                                loop {
+                                    // Read till you can
+                                    let mut buffer: [u8; 8192] = [0; 8192];
+                                    match rhnd.read(&mut buffer) {
+                                        Ok(bytes_read) => {
+                                            total_bytes_written += bytes_read;
+                                            if bytes_read == 0 {
+                                                break;
+                                            } else {
+                                                // Write bytes
+                                                if let Err(err) =
+                                                    local_file.write(&buffer[0..bytes_read])
+                                                {
+                                                    self.log(
+                                                        LogLevel::Error,
+                                                        format!(
+                                                            "Could not write local file: {}",
+                                                            err
+                                                        )
+                                                        .as_ref(),
+                                                    );
+                                                }
+                                            }
+                                        }
+                                        Err(err) => self.log(
+                                            LogLevel::Error,
+                                            format!("Could not read remote file: {}", err).as_ref(),
+                                        ),
+                                    }
+                                    // Set progress
+                                    self.set_progress(total_bytes_written, file_size);
+                                    // Draw
+                                    self.draw();
+                                }
+                                // Log
+                                self.log(
+                                    LogLevel::Info,
+                                    format!(
+                                        "Saved file \"{}\" to \"{}\"",
+                                        file.abs_path.display(),
+                                        local_file_path.display()
+                                    )
+                                    .as_ref(),
+                                );
+                            }
                             Err(err) => self.log(
                                 LogLevel::Error,
                                 format!(
@@ -596,7 +687,10 @@ impl FileTransferActivity {
             .change_wrkdir(PathBuf::from(path))
         {
             Ok(_) => {
-                self.log(LogLevel::Info, format!("Changed directory on local: {}", path.display()).as_str());
+                self.log(
+                    LogLevel::Info,
+                    format!("Changed directory on local: {}", path.display()).as_str(),
+                );
                 // Reload files
                 self.local_scan(path);
                 // Push prev_dir to stack
@@ -621,7 +715,10 @@ impl FileTransferActivity {
                 // Change directory
                 match self.client.change_dir(path) {
                     Ok(_) => {
-                        self.log(LogLevel::Info, format!("Changed directory on remote: {}", path.display()).as_str());
+                        self.log(
+                            LogLevel::Info,
+                            format!("Changed directory on remote: {}", path.display()).as_str(),
+                        );
                         // Update files
                         self.remote_scan(path);
                         // Push prev_dir to stack
@@ -636,7 +733,7 @@ impl FileTransferActivity {
                             format!("Could not change working directory: {}", err),
                         ));
                     }
-                } 
+                }
             }
             Err(err) => {
                 // Report err
@@ -683,6 +780,13 @@ impl FileTransferActivity {
             InputField::Explorer => InputField::Logs,
             InputField::Logs => InputField::Explorer,
         }
+    }
+
+    /// ### set_progress
+    ///
+    /// Calculate progress percentage based on current progress
+    fn set_progress(&mut self, it: usize, sz: usize) {
+        self.transfer_progress = ((it as f64) * 100.0) / (sz as f64);
     }
 
     // @! input listeners
@@ -969,12 +1073,13 @@ impl FileTransferActivity {
                                             self.remote_changedir(parent, true);
                                         }
                                     }
-                                    Err(err) => self.input_mode = InputMode::Popup(PopupType::Alert(
-                                        Color::Red,
-                                        format!("Could not change working directory: {}", err),
-                                    ))
+                                    Err(err) => {
+                                        self.input_mode = InputMode::Popup(PopupType::Alert(
+                                            Color::Red,
+                                            format!("Could not change working directory: {}", err),
+                                        ))
+                                    }
                                 }
-                                
                             }
                         }
                         ' ' => {
@@ -1567,7 +1672,7 @@ impl FileTransferActivity {
                     PopupType::Help => (50, 70),
                     PopupType::Input(_, _) => (30, 10),
                     PopupType::Progress(_) => (40, 10),
-                    PopupType::Wait(_) => (30, 10),
+                    PopupType::Wait(_) => (50, 10),
                     PopupType::YesNo(_, _, _) => (10, 10),
                 };
                 let popup_area: Rect = self.draw_popup_area(f.size(), width, height);
@@ -1580,9 +1685,7 @@ impl FileTransferActivity {
                     PopupType::Fatal(txt) => {
                         f.render_widget(self.draw_popup_fatal(txt.clone()), popup_area)
                     }
-                    PopupType::Help => {
-                        f.render_widget(self.draw_popup_help(), popup_area)
-                    }
+                    PopupType::Help => f.render_widget(self.draw_popup_help(), popup_area),
                     PopupType::Input(txt, _) => {
                         f.render_widget(self.draw_popup_input(txt.clone()), popup_area);
                         // Set cursor
@@ -1781,9 +1884,9 @@ impl FileTransferActivity {
     ///
     /// Draw progress popup
     fn draw_popup_progress(&self, text: String) -> Gauge {
-        let label = format!("{:.2}%", self.transfer_prog);
+        let label = format!("{:.2}%", self.transfer_progress);
         Gauge::default()
-            .block(Block::default().title(text))
+            .block(Block::default().borders(Borders::ALL).title(text))
             .gauge_style(
                 Style::default()
                     .fg(Color::Magenta)
@@ -1791,7 +1894,7 @@ impl FileTransferActivity {
                     .add_modifier(Modifier::BOLD),
             )
             .label(label)
-            .ratio(self.transfer_prog / 100.0)
+            .ratio(self.transfer_progress / 100.0)
     }
 
     /// ### draw_popup_wait
@@ -1800,11 +1903,7 @@ impl FileTransferActivity {
     fn draw_popup_wait(&self, text: String) -> Paragraph {
         Paragraph::new(text)
             .style(Style::default().add_modifier(Modifier::BOLD))
-            .block(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .title("Please wait"),
-            )
+            .block(Block::default().borders(Borders::ALL).title("Please wait"))
     }
 
     /// ### draw_popup_yesno
@@ -1833,126 +1932,106 @@ impl FileTransferActivity {
     fn draw_popup_help(&self) -> List {
         // Write header
         let cmds: Vec<ListItem> = vec![
-            ListItem::new(
-                Spans::from(vec![
-                    Span::styled(
-                        "<ESC>         ",
-                        Style::default()
-                            .bg(Color::Cyan)
-                            .fg(Color::White)
-                            .add_modifier(Modifier::BOLD),
-                    ),
-                    Span::raw("quit")
-                ])
-            ),
-            ListItem::new(
-                Spans::from(vec![
-                    Span::styled(
-                        "<TAB>         ",
-                        Style::default()
-                            .bg(Color::Cyan)
-                            .fg(Color::White)
-                            .add_modifier(Modifier::BOLD),
-                    ),
-                    Span::raw("change input field")
-                ])
-            ),
-            ListItem::new(
-                Spans::from(vec![
-                    Span::styled(
-                        "<RIGHT/LEFT>  ",
-                        Style::default()
-                            .bg(Color::Cyan)
-                            .fg(Color::White)
-                            .add_modifier(Modifier::BOLD),
-                    ),
-                    Span::raw("change explorer tab")
-                ])
-            ),
-            ListItem::new(
-                Spans::from(vec![
-                    Span::styled(
-                        "<ENTER>       ",
-                        Style::default()
-                            .bg(Color::Cyan)
-                            .fg(Color::White)
-                            .add_modifier(Modifier::BOLD),
-                    ),
-                    Span::raw("enter directory")
-                ])
-            ),
-            ListItem::new(
-                Spans::from(vec![
-                    Span::styled(
-                        "<SPACE>       ",
-                        Style::default()
-                            .bg(Color::Cyan)
-                            .fg(Color::White)
-                            .add_modifier(Modifier::BOLD),
-                    ),
-                    Span::raw("upload/download file")
-                ])
-            ),
-            ListItem::new(
-                Spans::from(vec![
-                    Span::styled(
-                        "<CTRL+D>      ",
-                        Style::default()
-                            .bg(Color::Cyan)
-                            .fg(Color::White)
-                            .add_modifier(Modifier::BOLD),
-                    ),
-                    Span::raw("make directory")
-                ])
-            ),
-            ListItem::new(
-                Spans::from(vec![
-                    Span::styled(
-                        "<CTRL+G>      ",
-                        Style::default()
-                            .bg(Color::Cyan)
-                            .fg(Color::White)
-                            .add_modifier(Modifier::BOLD),
-                    ),
-                    Span::raw("goto path")
-                ])
-            ),
-            ListItem::new(
-                Spans::from(vec![
-                    Span::styled(
-                        "<CTRL+R>      ",
-                        Style::default()
-                            .bg(Color::Cyan)
-                            .fg(Color::White)
-                            .add_modifier(Modifier::BOLD),
-                    ),
-                    Span::raw("rename file")
-                ])
-            ),
-            ListItem::new(
-                Spans::from(vec![
-                    Span::styled(
-                        "<CTRL+U>      ",
-                        Style::default()
-                            .bg(Color::Cyan)
-                            .fg(Color::White)
-                            .add_modifier(Modifier::BOLD),
-                    ),
-                    Span::raw("go to parent directory")
-                ])
-            ),
-            ListItem::new(
-                Spans::from(vec![
-                    Span::styled(
-                        "<CANC>        ",
-                        Style::default()
-                            .bg(Color::Cyan)
-                            .fg(Color::White)
-                            .add_modifier(Modifier::BOLD),
-                    ),
-                    Span::raw("delete file")
-                ])
-            )
+            ListItem::new(Spans::from(vec![
+                Span::styled(
+                    "<ESC>         ",
+                    Style::default()
+                        .bg(Color::Cyan)
+                        .fg(Color::White)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::raw("quit"),
+            ])),
+            ListItem::new(Spans::from(vec![
+                Span::styled(
+                    "<TAB>         ",
+                    Style::default()
+                        .bg(Color::Cyan)
+                        .fg(Color::White)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::raw("change input field"),
+            ])),
+            ListItem::new(Spans::from(vec![
+                Span::styled(
+                    "<RIGHT/LEFT>  ",
+                    Style::default()
+                        .bg(Color::Cyan)
+                        .fg(Color::White)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::raw("change explorer tab"),
+            ])),
+            ListItem::new(Spans::from(vec![
+                Span::styled(
+                    "<ENTER>       ",
+                    Style::default()
+                        .bg(Color::Cyan)
+                        .fg(Color::White)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::raw("enter directory"),
+            ])),
+            ListItem::new(Spans::from(vec![
+                Span::styled(
+                    "<SPACE>       ",
+                    Style::default()
+                        .bg(Color::Cyan)
+                        .fg(Color::White)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::raw("upload/download file"),
+            ])),
+            ListItem::new(Spans::from(vec![
+                Span::styled(
+                    "<CTRL+D>      ",
+                    Style::default()
+                        .bg(Color::Cyan)
+                        .fg(Color::White)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::raw("make directory"),
+            ])),
+            ListItem::new(Spans::from(vec![
+                Span::styled(
+                    "<CTRL+G>      ",
+                    Style::default()
+                        .bg(Color::Cyan)
+                        .fg(Color::White)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::raw("goto path"),
+            ])),
+            ListItem::new(Spans::from(vec![
+                Span::styled(
+                    "<CTRL+R>      ",
+                    Style::default()
+                        .bg(Color::Cyan)
+                        .fg(Color::White)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::raw("rename file"),
+            ])),
+            ListItem::new(Spans::from(vec![
+                Span::styled(
+                    "<CTRL+U>      ",
+                    Style::default()
+                        .bg(Color::Cyan)
+                        .fg(Color::White)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::raw("go to parent directory"),
+            ])),
+            ListItem::new(Spans::from(vec![
+                Span::styled(
+                    "<CANC>        ",
+                    Style::default()
+                        .bg(Color::Cyan)
+                        .fg(Color::White)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::raw("delete file"),
+            ])),
         ];
         List::new(cmds)
             .block(
