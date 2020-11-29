@@ -225,7 +225,7 @@ impl FileTransferActivity {
             params: params,
             client: match protocol {
                 FileTransferProtocol::Sftp => Box::new(SftpFileTransfer::new()),
-                FileTransferProtocol::Ftp => Box::new(SftpFileTransfer::new()), // FIXME: FTP
+                FileTransferProtocol::Ftp => panic!("FTP is not supported YET!"), // FIXME: FTP
             },
             local: FileExplorer::new(),
             remote: FileExplorer::new(),
