@@ -648,29 +648,6 @@ mod tests {
         assert!(client.disconnect().is_ok());
     }
 
-    #[test]
-    fn test_filetransfer_sftp_recv_failed_io() {
-        let mut client: SftpFileTransfer = SftpFileTransfer::new();
-        assert!(client
-            .connect(
-                String::from("test.rebex.net"),
-                22,
-                Some(String::from("demo")),
-                Some(String::from("password"))
-            )
-            .is_ok());
-        // Check session and sftp
-        assert!(client.session.is_some());
-        assert!(client.sftp.is_some());
-        assert_eq!(client.wrkdir, PathBuf::from("/"));
-        // Receive file
-        assert!(client
-            .recv_file(PathBuf::from("readme.txt").as_path())
-            .is_err());
-        // Disconnect
-        assert!(client.disconnect().is_ok());
-    }
-
     // NOTE: other functions doesn't work with this test SFTP server
 
     /* NOTE: the server doesn't allow you to create directories
