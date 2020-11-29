@@ -415,6 +415,8 @@ impl FileTransferActivity {
                 }
             }
         }
+        // Eventually, Reset input mode to explorer
+        self.input_mode = InputMode::Explorer;
     }
 
     /// ### filetransfer_recv
@@ -543,6 +545,8 @@ impl FileTransferActivity {
                 }
             }
         }
+        // Eventually, Reset input mode to explorer
+        self.input_mode = InputMode::Explorer;
     }
 
     /// ### log
@@ -1160,13 +1164,6 @@ impl FileTransferActivity {
     ///
     /// Self titled
     fn callback_nothing_to_do(&mut self) {}
-
-    /// ### callback_force_input_mode_to_explorer
-    ///
-    /// force input mode to explorer
-    fn callback_force_input_mode_to_explorer(&mut self) {
-        self.input_mode = InputMode::Explorer;
-    }
 
     /// ### callback_change_directory
     ///
