@@ -2012,7 +2012,7 @@ impl Activity for FileTransferActivity {
             // Connect to remote
             self.connect();
         }
-        // Handle input events FIXME: read one or multiple?
+        // Handle input events
         if let Ok(event) = self.context.as_ref().unwrap().input_hnd.read_event() {
             // Iterate over input events
             if let Some(event) = event {
