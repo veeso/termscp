@@ -51,7 +51,7 @@ pub enum NextActivity {
 ///
 /// The activity manager takes care of running activities and handling them until the application has ended
 pub struct ActivityManager {
-    context: Context,
+    context: Option<Context>,
     ftparams: Option<FileTransferParams>,
     interval: Duration,
 }
@@ -71,7 +71,7 @@ impl ActivityManager {
         };
         let ctx: Context = Context::new(host);
         Ok(ActivityManager {
-            context: ctx,
+            context: Some(ctx),
             ftparams: None,
             interval: interval,
         })
@@ -127,11 +127,16 @@ impl ActivityManager {
         let mut activity: AuthActivity = AuthActivity::new();
         // Prepare result
         let result: Option<NextActivity>;
+        // Get context
+        let ctx: Context = match self.context.take() {
+            Some(ctx) => ctx,
+            None => return None
+        };
         // Create activity
-        activity.on_create(&mut self.context);
+        activity.on_create(ctx);
         loop {
             // Draw activity
-            activity.on_draw(&mut self.context);
+            activity.on_draw();
             // Check if has to be terminated
             if activity.quit {
                 // Quit activities
@@ -161,7 +166,7 @@ impl ActivityManager {
             sleep(self.interval);
         }
         // Destroy activity
-        activity.on_destroy(&mut self.context);
+        self.context = activity.on_destroy();
         result
     }
 
@@ -179,11 +184,16 @@ impl ActivityManager {
             FileTransferActivity::new(self.ftparams.take().unwrap());
         // Prepare result
         let result: Option<NextActivity>;
+        // Get context
+        let ctx: Context = match self.context.take() {
+            Some(ctx) => ctx,
+            None => return None
+        };
         // Create activity
-        activity.on_create(&mut self.context);
+        activity.on_create(ctx);
         loop {
             // Draw activity
-            activity.on_draw(&mut self.context);
+            activity.on_draw();
             // Check if has to be terminated
             if activity.quit {
                 // Quit activities
@@ -199,7 +209,7 @@ impl ActivityManager {
             sleep(self.interval);
         }
         // Destroy activity
-        activity.on_destroy(&mut self.context);
+        self.context = activity.on_destroy();
         result
     }
 }

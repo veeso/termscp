@@ -77,6 +77,7 @@ pub struct AuthActivity {
     pub password: String,
     pub submit: bool, // becomes true after user has submitted fields
     pub quit: bool,   // Becomes true if user has pressed esc
+    context: Option<Context>,
     selected_field: InputField,
     input_mode: InputMode,
     popup_message: Option<String>,
@@ -96,6 +97,7 @@ impl AuthActivity {
             password: String::new(),
             submit: false,
             quit: false,
+            context: None,
             selected_field: InputField::Address,
             input_mode: InputMode::Text,
             popup_message: None,
@@ -409,20 +411,27 @@ impl Activity for AuthActivity {
     ///
     /// `on_create` is the function which must be called to initialize the activity.
     /// `on_create` must initialize all the data structures used by the activity
-    fn on_create(&mut self, context: &mut Context) {
+    /// Context is taken from activity manager and will be released only when activity is destroyed
+    fn on_create(&mut self, context: Context) {
+        // Set context
+        self.context = Some(context);
+        // Clear terminal
+        let _ = self.context.as_mut().unwrap().terminal.clear();
         // Put raw mode on enabled
         let _ = enable_raw_mode();
-        // Clear terminal
-        let _ = context.terminal.clear();
     }
 
     /// ### on_draw
     ///
     /// `on_draw` is the function which draws the graphical interface.
     /// This function must be called at each tick to refresh the interface
-    fn on_draw(&mut self, context: &mut Context) {
+    fn on_draw(&mut self) {
+        // Context must be something
+        if self.context.is_none() {
+            return;
+        }
         // Start catching Input Events
-        if let Ok(input_events) = context.input_hnd.fetch_events() {
+        if let Ok(input_events) = self.context.as_ref().unwrap().input_hnd.fetch_events() {
             // Iterate over input events
             for event in input_events.iter() {
                 self.handle_input_event(event);
@@ -431,7 +440,8 @@ impl Activity for AuthActivity {
         // Determine input mode
         self.input_mode = self.select_input_mode();
         // draw interface
-        let _ = context.terminal.draw(|f| {
+        let mut ctx: Context = self.context.take().unwrap();
+        let _ = ctx.terminal.draw(|f| {
             let chunks = Layout::default()
                 .direction(Direction::Vertical)
                 .margin(2)
@@ -483,16 +493,28 @@ impl Activity for AuthActivity {
                 _ => {}
             }
         });
+        // Reset ctx
+        self.context = Some(ctx);
     }
 
     /// ### on_destroy
     ///
     /// `on_destroy` is the function which cleans up runtime variables and data before terminating the activity.
     /// This function must be called once before terminating the activity.
-    fn on_destroy(&mut self, context: &mut Context) {
+    /// This function finally releases the context
+    fn on_destroy(&mut self) -> Option<Context> {
         // Disable raw mode
         let _ = disable_raw_mode();
-        // Clear terminal
-        let _ = context.terminal.clear();
+        if self.context.is_none() {
+            return None;
+        }
+        // Clear terminal and return
+        match self.context.take() {
+            Some(mut ctx) => {
+                let _ = ctx.terminal.clear();
+                Some(ctx)
+            },
+            None => None
+        }
     }
 }
