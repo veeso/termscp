@@ -32,7 +32,6 @@ extern crate unicode_width;
 // locals
 use super::{Activity, Context};
 use crate::filetransfer::FileTransferProtocol;
-use crate::utils::time_to_str;
 
 // File transfer
 use crate::filetransfer::sftp_transfer::SftpFileTransfer;
@@ -46,14 +45,13 @@ use crossterm::event::{KeyCode, KeyModifiers};
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use std::collections::VecDeque;
 use std::path::{Path, PathBuf};
-use std::time::Instant;
 use tui::{
     backend::CrosstermBackend,
     layout::{Constraint, Corner, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     terminal::Frame,
     text::{Span, Spans, Text},
-    widgets::{Block, Borders, List, ListItem, ListState, Paragraph, Tabs},
+    widgets::{Block, Borders, Clear, Gauge, List, ListItem, ListState, Paragraph, Tabs},
 };
 use unicode_width::UnicodeWidthStr;
 
@@ -1596,6 +1594,82 @@ impl FileTransferActivity {
                 .as_ref(),
             )
             .split(popup_layout[1])[1]
+    }
+
+    /// ### draw_popup_alert
+    ///
+    /// Draw alert popup
+    fn draw_popup_alert(&self, color: Color, text: String) -> Paragraph {
+        Paragraph::new(text)
+            .style(Style::default().fg(color))
+            .block(Block::default().borders(Borders::ALL).title("Alert"))
+    }
+
+    /// ### draw_popup_fatal
+    ///
+    /// Draw fatal error popup
+    fn draw_popup_fatal(&self, text: String) -> Paragraph {
+        Paragraph::new(text)
+            .style(Style::default().fg(Color::Red).add_modifier(Modifier::BOLD))
+            .block(Block::default().borders(Borders::ALL).title("Fatal error"))
+    }
+    /// ### draw_popup_input
+    ///
+    /// Draw input popup
+    fn draw_popup_input(&self, text: String) -> Paragraph {
+        Paragraph::new(self.input_txt.as_ref())
+            .style(Style::default().fg(Color::Yellow))
+            .block(Block::default().borders(Borders::ALL).title(text))
+    }
+
+    /// ### draw_popup_progress
+    ///
+    /// Draw progress popup
+    fn draw_popup_progress(&self, text: String) -> Gauge {
+        let label = format!("{:.2}%", self.transfer_prog);
+        Gauge::default()
+            .block(Block::default().title(text))
+            .gauge_style(
+                Style::default()
+                    .fg(Color::Magenta)
+                    .bg(Color::Black)
+                    .add_modifier(Modifier::BOLD),
+            )
+            .label(label)
+            .ratio(self.transfer_prog / 100.0)
+    }
+
+    /// ### draw_popup_wait
+    ///
+    /// Draw wait popup
+    fn draw_popup_wait(&self, text: String) -> Paragraph {
+        Paragraph::new(text)
+            .style(Style::default().add_modifier(Modifier::BOLD))
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .title("Please wait..."),
+            )
+    }
+
+    /// ### draw_popup_yesno
+    ///
+    /// Draw yes/no select popup
+    fn draw_popup_yesno(&self, text: String) -> Tabs {
+        let choices: Vec<Spans> = vec![Spans::from("Yes"), Spans::from("No")];
+        let index: usize = match self.choice_opt {
+            DialogYesNoOption::Yes => 0,
+            DialogYesNoOption::No => 1,
+        };
+        Tabs::new(choices)
+            .block(Block::default().borders(Borders::ALL).title(text))
+            .select(index)
+            .style(Style::default())
+            .highlight_style(
+                Style::default()
+                    .add_modifier(Modifier::BOLD)
+                    .fg(Color::Yellow),
+            )
     }
 
     /// ### draw_footer
