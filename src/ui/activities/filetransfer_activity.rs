@@ -1060,7 +1060,7 @@ impl FileTransferActivity {
                 match key.code {
                     KeyCode::Enter => {
                         // Set quit to true; since a fatal error happened
-                        self.quit = true;
+                        self.disconnect();
                     }
                     _ => { /* Nothing to do */ }
                 }
