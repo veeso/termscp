@@ -97,6 +97,7 @@ impl std::fmt::Display for FsEntry {
                     Some(_) => 'l',
                     None => 'd',
                 };
+                mode.push(file_type);
                 match dir.unix_pex {
                     None => mode.push_str("?????????"),
                     Some((owner, group, others)) => {
@@ -185,6 +186,7 @@ impl std::fmt::Display for FsEntry {
                     Some(_) => 'l',
                     None => '-',
                 };
+                mode.push(file_type);
                 match file.unix_pex {
                     None => mode.push_str("?????????"),
                     Some((owner, group, others)) => {
@@ -283,6 +285,7 @@ impl std::fmt::Display for FsEntry {
                     Some(_) => 'l',
                     None => 'd',
                 };
+                mode.push(file_type);
                 match dir.unix_pex {
                     None => mode.push_str("?????????"),
                     Some((owner, group, others)) => {
@@ -365,6 +368,7 @@ impl std::fmt::Display for FsEntry {
                     Some(_) => 'l',
                     None => '-',
                 };
+                mode.push(file_type);
                 match file.unix_pex {
                     None => mode.push_str("?????????"),
                     Some((owner, group, others)) => {
