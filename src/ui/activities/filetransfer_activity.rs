@@ -1167,21 +1167,73 @@ impl FileTransferActivity {
     ///
     /// Callback for GOTO command
     fn callback_change_directory(&mut self, input: String) {
-        match self
-            .context
-            .as_mut()
-            .unwrap()
-            .local
-            .change_wrkdir(PathBuf::from(input.as_str()))
-        {
-            Err(err) => {
-                // Report err
-                self.input_mode = InputMode::Popup(PopupType::Alert(
-                    Color::Red,
-                    format!("Could not change working directory: {}", err),
-                ));
+        match self.tab {
+            FileExplorerTab::Local => {
+                // Get current directory
+                let prev_dir: PathBuf = self.context.as_ref().unwrap().local.pwd();
+                match self
+                    .context
+                    .as_mut()
+                    .unwrap()
+                    .local
+                    .change_wrkdir(PathBuf::from(input.as_str()))
+                {
+                    Err(err) => {
+                        // Report err
+                        self.input_mode = InputMode::Popup(PopupType::Alert(
+                            Color::Red,
+                            format!("Could not change working directory: {}", err),
+                        ));
+                    }
+                    Ok(_) => {
+                        // Push previous directory to stack
+                        self.local.pushd(prev_dir.as_path());
+                        // Update files
+                        self.local.files = self.context.as_ref().unwrap().local.list_dir()
+                    }
+                }
             }
-            Ok(_) => self.local.files = self.context.as_ref().unwrap().local.list_dir(), // Update files
+            FileExplorerTab::Remote => {
+                // Get current directory
+                match self.client.pwd() {
+                    Ok(prev_dir) => {
+                        // Change directory
+                        match self
+                            .client
+                            .change_dir(PathBuf::from(input.as_str()).as_path())
+                        {
+                            Ok(_) => self.remote.pushd(prev_dir.as_path()), // Push prev_dir to stack
+                            Err(err) => {
+                                // Report err
+                                self.input_mode = InputMode::Popup(PopupType::Alert(
+                                    Color::Red,
+                                    format!("Could not change working directory: {}", err),
+                                ));
+                            }
+                        }
+                        // Update files
+                        match self
+                            .client
+                            .list_dir(PathBuf::from(input.as_str()).as_path())
+                        {
+                            Ok(files) => self.remote.files = files,
+                            Err(err) => {
+                                self.input_mode = InputMode::Popup(PopupType::Alert(
+                                    Color::Red,
+                                    format!("Could not scan remote directory: {}", err),
+                                ));
+                            }
+                        }
+                    }
+                    Err(err) => {
+                        // Report err
+                        self.input_mode = InputMode::Popup(PopupType::Alert(
+                            Color::Red,
+                            format!("Could not change working directory: {}", err),
+                        ));
+                    }
+                }
+            }
         }
     }
 
