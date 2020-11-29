@@ -53,7 +53,7 @@ use tui::{
     style::{Color, Modifier, Style},
     terminal::Frame,
     text::{Span, Spans, Text},
-    widgets::{Block, Borders, List, ListItem, Paragraph, Tabs},
+    widgets::{Block, Borders, List, ListItem, ListState, Paragraph, Tabs},
 };
 use unicode_width::UnicodeWidthStr;
 
@@ -1470,6 +1470,11 @@ impl FileTransferActivity {
         let mut ctx: Context = self.context.take().unwrap();
         let _ = ctx.terminal.draw(|f| {
             // TODO: implement
+
+            // Set log state
+            let mut log_state: ListState = ListState::default();
+            log_state.select(Some(self.log_index));
+            // f.render_stateful_widget(LOG_LIST, CHUNK, &mut log_state);
         });
         self.context = Some(ctx);
     }
@@ -1480,6 +1485,50 @@ impl FileTransferActivity {
     fn draw_header(&self) -> Paragraph {
         Paragraph::new(" _____                   ____   ____ ____  \n|_   _|__ _ __ _ __ ___ / ___| / ___|  _ \\ \n  | |/ _ \\ '__| '_ ` _ \\\\___ \\| |   | |_) |\n  | |  __/ |  | | | | | |___) | |___|  __/ \n  |_|\\___|_|  |_| |_| |_|____/ \\____|_|    \n")
             .style(Style::default().fg(Color::LightYellow).add_modifier(Modifier::BOLD))
+    }
+
+    /// ### draw_local_explorer
+    ///
+    /// Draw local explorer list
+    fn draw_local_explorer(&self) -> List {
+        let files: Vec<ListItem> = self
+            .local
+            .files
+            .iter()
+            .map(|entry: &FsEntry| ListItem::new(Span::from(format!("{}", entry))))
+            .collect();
+        List::new(files)
+            .block(Block::default().borders(Borders::ALL).title("Localhost"))
+            .start_corner(Corner::BottomLeft)
+            .highlight_style(
+                Style::default()
+                    .fg(Color::LightYellow)
+                    .add_modifier(Modifier::BOLD),
+            )
+    }
+
+    /// ### draw_remote_explorer
+    ///
+    /// Draw remote explorer list
+    fn draw_remote_explorer(&self) -> List {
+        let files: Vec<ListItem> = self
+            .remote
+            .files
+            .iter()
+            .map(|entry: &FsEntry| ListItem::new(Span::from(format!("{}", entry))))
+            .collect();
+        List::new(files)
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .title(self.params.address.clone()),
+            )
+            .start_corner(Corner::BottomLeft)
+            .highlight_style(
+                Style::default()
+                    .fg(Color::LightYellow)
+                    .add_modifier(Modifier::BOLD),
+            )
     }
 
     /// ### draw_log_list
@@ -1495,7 +1544,8 @@ impl FileTransferActivity {
                     LogLevel::Warn => Style::default().fg(Color::Yellow),
                     LogLevel::Info => Style::default().fg(Color::Green),
                 };
-                let header = Spans::from(vec![
+                let log = Spans::from(vec![
+                    Span::from(format!("{}", record.time.format("%Y-%m-%dT%H:%M:%S%Z"))),
                     Span::raw("["),
                     Span::styled(
                         format!(
@@ -1508,16 +1558,16 @@ impl FileTransferActivity {
                         ),
                         s,
                     ),
-                    Span::raw("] "),
-                    Span::from(format!("{}", record.time.format("%Y-%m-%dT%H:%M:%S%Z"))),
+                    Span::raw("]: "),
+                    Span::from(record.msg.clone()),
                 ]);
-                let log = Spans::from(vec![Span::from(record.msg.clone())]);
-                ListItem::new(vec![header, log])
+                ListItem::new(log)
             })
             .collect();
         List::new(events)
             .block(Block::default().borders(Borders::ALL).title("Log"))
             .start_corner(Corner::BottomLeft)
+            .highlight_style(Style::default().add_modifier(Modifier::BOLD))
     }
 
     /// ### draw_footer

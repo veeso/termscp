@@ -28,8 +28,6 @@ use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 // Metadata ext
 #[cfg(any(unix, macos, linux))]
-extern crate users;
-#[cfg(any(unix, macos, linux))]
 use std::os::unix::fs::MetadataExt;
 
 // Locals
