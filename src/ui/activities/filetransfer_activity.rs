@@ -297,7 +297,7 @@ impl FileTransferActivity {
     /// Send fs entry to remote.
     /// If dst_name is Some, entry will be saved with a different name.
     /// If entry is a directory, this applies to directory only
-    fn filetransfer_send(&mut self, entry: &FsEntry, dst_name: Option<String>) {
+    fn filetransfer_send(&mut self, entry: &FsEntry, curr_remote_path: &Path, dst_name: Option<String>) {
         // Write popup
         let file_name: String = match entry {
             FsEntry::Directory(dir) => dir.name.clone(),
@@ -307,10 +307,12 @@ impl FileTransferActivity {
         // Draw
         self.draw();
         // Get remote path
-        let remote_path: PathBuf = match dst_name {
+        let mut remote_path: PathBuf = PathBuf::from(curr_remote_path);
+        let remote_file_name: PathBuf = match dst_name {
             Some(s) => PathBuf::from(s.as_str()),
             None => PathBuf::from(file_name.as_str()),
         };
+        remote_path.push(remote_file_name);
         // Match entry
         match entry {
             FsEntry::File(file) => {
@@ -409,11 +411,11 @@ impl FileTransferActivity {
             }
             FsEntry::Directory(dir) => {
                 // Create directory on remote
-                match self.client.mkdir(dir.abs_path.as_path()) {
+                match self.client.mkdir(remote_path.as_path()) {
                     Ok(_) => {
                         self.log(
                             LogLevel::Info,
-                            format!("Created directory \"{}\"", dir.abs_path.display()).as_ref(),
+                            format!("Created directory \"{}\"", remote_path.display()).as_ref(),
                         );
                         // Get files in dir
                         match self
@@ -427,7 +429,7 @@ impl FileTransferActivity {
                                 // Iterate over files
                                 for entry in entries.iter() {
                                     // Send entry; name is always None after first call
-                                    self.filetransfer_send(&entry, None);
+                                    self.filetransfer_send(&entry, remote_path.as_path(), None);
                                 }
                             }
                             Err(err) => self.log(
@@ -445,7 +447,7 @@ impl FileTransferActivity {
                         LogLevel::Error,
                         format!(
                             "Failed to create directory \"{}\": {}",
-                            dir.abs_path.display(),
+                            remote_path.display(),
                             err
                         )
                         .as_ref(),
@@ -936,12 +938,20 @@ impl FileTransferActivity {
                             }
                         }
                         ' ' => {
+                            // Get pwd
+                            let wrkdir: PathBuf = match self.client.pwd() {
+                                Ok(p) => p,
+                                Err(err) => {
+                                    self.log(LogLevel::Error, format!("Could not get current remote path: {}", err).as_ref());
+                                    return
+                                }
+                            };
                             // Get files
                             let files: Vec<FsEntry> = self.local.files.clone(); // Otherwise self is borrowed both as mutable and immutable...
                                                                                 // Get file at index
                             if let Some(entry) = files.get(self.local.index) {
                                 // Call upload
-                                self.filetransfer_send(entry, None);
+                                self.filetransfer_send(entry, wrkdir.as_path(), None);
                             }
                         }
                         _ => { /* Nothing to do */ }
@@ -1591,11 +1601,19 @@ impl FileTransferActivity {
     fn callback_save_as(&mut self, input: String) {
         match self.tab {
             FileExplorerTab::Local => {
+                // Get pwd
+                let wrkdir: PathBuf = match self.client.pwd() {
+                    Ok(p) => p,
+                    Err(err) => {
+                        self.log(LogLevel::Error, format!("Could not get current remote path: {}", err).as_ref());
+                        return
+                    }
+                };
                 let files: Vec<FsEntry> = self.local.files.clone();
                 // Get file at index
                 if let Some(entry) = files.get(self.local.index) {
                     // Call send (upload)
-                    self.filetransfer_send(entry, Some(input));
+                    self.filetransfer_send(entry, wrkdir.as_path(), Some(input));
                 }
             }
             FileExplorerTab::Remote => {
