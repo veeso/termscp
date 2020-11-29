@@ -83,12 +83,12 @@ pub struct FsFile {
     pub unix_pex: Option<(u8, u8, u8)>, // UNIX only
 }
 
-impl FsEntry {
+impl std::fmt::Display for FsEntry {
     /// ### fmt_ls
     ///
     /// Format File Entry as `ls` does
     #[cfg(any(unix, macos, linux))]
-    pub fn fmt_ls(&self) -> String {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             FsEntry::Directory(dir) => {
                 // Create mode string
@@ -167,7 +167,8 @@ impl FsEntry {
                 let size: String = String::from("4096");
                 // Get date
                 let datetime: String = time_to_str(dir.last_change_time, "%b %d %Y %M:%H");
-                format!(
+                write!(
+                    f,
                     "{:32}\t{:10}\t{:16}\t{:16}\t{:8}\t{:17}",
                     dir.name.as_str(),
                     mode,
@@ -254,7 +255,8 @@ impl FsEntry {
                 let size: ByteSize = ByteSize(file.size as u64);
                 // Get date
                 let datetime: String = time_to_str(file.last_change_time, "%b %d %Y %M:%H");
-                format!(
+                write!(
+                    f,
                     "{:32}\t{:10}\t{:16}\t{:16}\t{:8}\t{:17}",
                     file.name.as_str(),
                     mode,
@@ -272,7 +274,7 @@ impl FsEntry {
     /// Format File Entry as `ls` does
     #[cfg(target_os = "windows")]
     #[cfg(not(tarpaulin_include))]
-    pub fn fmt_ls(&self) -> String {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             FsEntry::Directory(dir) => {
                 // Create mode string
@@ -345,7 +347,8 @@ impl FsEntry {
                 let size: String = String::from("4096");
                 // Get date
                 let datetime: String = time_to_str(dir.last_change_time, "%b %d %Y %M:%H");
-                format!(
+                write!(
+                    f,
                     "{:32}\t{:10}\t{:16}\t{:16}\t{:8}\t{:17}",
                     dir.name.as_str(),
                     mode,
@@ -426,7 +429,8 @@ impl FsEntry {
                 let size: ByteSize = ByteSize(file.size as u64);
                 // Get date
                 let datetime: String = time_to_str(file.last_change_time, "%b %d %Y %M:%H");
-                format!(
+                write!(
+                    f,
                     "{:32}\t{:10}\t{:16}\t{:16}\t{:8}\t{:17}",
                     file.name.as_str(),
                     mode,
