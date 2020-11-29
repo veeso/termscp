@@ -23,7 +23,7 @@
 *
 */
 
-use std::fs::File;
+use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 
 use crate::fs::FsEntry;
@@ -146,10 +146,12 @@ pub trait FileTransfer {
     /// Send file to remote
     /// File name is referred to the name of the file as it will be saved
     /// Data contains the file data
-    fn send_file(&self, file_name: &Path, file: &mut File) -> Result<(), FileTransferError>;
+    /// Returns file and its size
+    fn send_file(&self, file_name: &Path) -> Result<Box<dyn Write>, FileTransferError>;
 
     /// ### recv_file
     ///
     /// Receive file from remote with provided name
-    fn recv_file(&self, file_name: &Path, dest_file: &mut File) -> Result<(), FileTransferError>;
+    /// Returns file and its size
+    fn recv_file(&self, file_name: &Path) -> Result<(Box<dyn Read>, usize), FileTransferError>;
 }

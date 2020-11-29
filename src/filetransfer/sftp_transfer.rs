@@ -32,7 +32,6 @@ use crate::fs::{FsDirectory, FsEntry, FsFile};
 
 // Includes
 use ssh2::{Session, Sftp};
-use std::fs::File;
 use std::io::{Read, Seek, Write};
 use std::net::TcpStream;
 use std::path::{Path, PathBuf};
@@ -395,42 +394,14 @@ impl FileTransfer for SftpFileTransfer {
     /// Send file to remote
     /// File name is referred to the name of the file as it will be saved
     /// Data contains the file data
-    fn send_file(&self, file_name: &Path, file: &mut File) -> Result<(), FileTransferError> {
+    fn send_file(&self, file_name: &Path) -> Result<Box<dyn Write>, FileTransferError> {
         match self.sftp.as_ref() {
             None => Err(FileTransferError::UninitializedSession),
             Some(sftp) => {
                 let remote_path: PathBuf = self.get_abs_path(file_name);
-                // Get file size
-                //let file_size: usize = file.seek(std::io::SeekFrom::End(0)).unwrap_or(0) as usize;
-                // rewind
-                if let Err(err) = file.seek(std::io::SeekFrom::Start(0)) {
-                    return Err(FileTransferError::IoErr(err));
-                };
-                // Open remote file
                 match sftp.create(remote_path.as_path()) {
-                    Ok(mut rhnd) => {
-                        //let mut total_bytes_written: usize = 0;
-                        loop {
-                            // Read till you can
-                            let mut buffer: [u8; 8192] = [0; 8192];
-                            match file.read(&mut buffer) {
-                                Ok(bytes_read) => {
-                                    //total_bytes_written += bytes_read;
-                                    if bytes_read == 0 {
-                                        break;
-                                    } else {
-                                        // Write bytes
-                                        if let Err(err) = rhnd.write(&buffer) {
-                                            return Err(FileTransferError::IoErr(err));
-                                        }
-                                    }
-                                }
-                                Err(err) => return Err(FileTransferError::IoErr(err)),
-                            }
-                        }
-                        Ok(())
-                    }
-                    Err(_) => return Err(FileTransferError::FileCreateDenied),
+                    Ok(file) => Ok(Box::new(file)),
+                    Err(_) => Err(FileTransferError::FileCreateDenied),
                 }
             }
         }
@@ -439,7 +410,7 @@ impl FileTransfer for SftpFileTransfer {
     /// ### recv_file
     ///
     /// Receive file from remote with provided name
-    fn recv_file(&self, file_name: &Path, dest_file: &mut File) -> Result<(), FileTransferError> {
+    fn recv_file(&self, file_name: &Path) -> Result<(Box<dyn Read>, usize), FileTransferError> {
         match self.sftp.as_ref() {
             None => Err(FileTransferError::UninitializedSession),
             Some(sftp) => {
@@ -450,35 +421,16 @@ impl FileTransfer for SftpFileTransfer {
                 };
                 // Open remote file
                 match sftp.open(remote_path.as_path()) {
-                    Ok(mut rhnd) => {
-                        // let file_size: usize = rhnd.seek(std::io::SeekFrom::End(0)).unwrap_or(0) as usize;
+                    Ok(mut file) => {
+                        let file_size: usize =
+                            file.seek(std::io::SeekFrom::End(0)).unwrap_or(0) as usize;
                         // rewind
-                        if let Err(err) = rhnd.seek(std::io::SeekFrom::Start(0)) {
+                        if let Err(err) = file.seek(std::io::SeekFrom::Start(0)) {
                             return Err(FileTransferError::IoErr(err));
-                        };
-                        // Write local file
-                        // let mut total_bytes_written: usize = 0;
-                        loop {
-                            // Read till you can
-                            let mut buffer: [u8; 8192] = [0; 8192];
-                            match rhnd.read(&mut buffer) {
-                                Ok(bytes_read) => {
-                                    // total_bytes_written += bytes_read;
-                                    if bytes_read == 0 {
-                                        break;
-                                    } else {
-                                        // Write bytes
-                                        if let Err(err) = dest_file.write(&buffer) {
-                                            return Err(FileTransferError::IoErr(err));
-                                        }
-                                    }
-                                }
-                                Err(err) => return Err(FileTransferError::IoErr(err)),
-                            }
                         }
-                        Ok(())
+                        Ok((Box::new(file), file_size))
                     }
-                    Err(_) => return Err(FileTransferError::NoSuchFileOrDirectory),
+                    Err(_) => Err(FileTransferError::NoSuchFileOrDirectory),
                 }
             }
         }
@@ -489,7 +441,6 @@ impl FileTransfer for SftpFileTransfer {
 mod tests {
 
     use super::*;
-    use std::fs::OpenOptions;
 
     #[test]
     fn test_filetransfer_sftp_new() {
@@ -667,17 +618,9 @@ mod tests {
         assert!(client.session.is_some());
         assert!(client.sftp.is_some());
         assert_eq!(client.wrkdir, PathBuf::from("/"));
-        // Open dest file
-        let dst_file: tempfile::NamedTempFile = tempfile::NamedTempFile::new().unwrap();
-        let mut dst_file_hnd: File = OpenOptions::new()
-            .create(true)
-            .write(true)
-            .truncate(true)
-            .open(dst_file.path())
-            .unwrap();
         // Receive file
         assert!(client
-            .recv_file(PathBuf::from("readme.txt").as_path(), &mut dst_file_hnd)
+            .recv_file(PathBuf::from("readme.txt").as_path())
             .is_ok());
         // Disconnect
         assert!(client.disconnect().is_ok());
@@ -697,17 +640,9 @@ mod tests {
         assert!(client.session.is_some());
         assert!(client.sftp.is_some());
         assert_eq!(client.wrkdir, PathBuf::from("/"));
-        // Open dest file
-        let dst_file: tempfile::NamedTempFile = tempfile::NamedTempFile::new().unwrap();
-        let mut dst_file_hnd: File = OpenOptions::new()
-            .create(true)
-            .write(true)
-            .truncate(true)
-            .open(dst_file.path())
-            .unwrap();
         // Receive file
         assert!(client
-            .recv_file(PathBuf::from("omar.txt").as_path(), &mut dst_file_hnd)
+            .recv_file(PathBuf::from("omar.txt").as_path())
             .is_err());
         // Disconnect
         assert!(client.disconnect().is_ok());
@@ -728,19 +663,9 @@ mod tests {
         assert!(client.session.is_some());
         assert!(client.sftp.is_some());
         assert_eq!(client.wrkdir, PathBuf::from("/"));
-        // Open dest file
-        let dst_file: tempfile::NamedTempFile = tempfile::NamedTempFile::new().unwrap();
-        let mut dst_file_hnd: File = OpenOptions::new()
-            .create(true)
-            .write(true)
-            .truncate(true)
-            .open(dst_file.path())
-            .unwrap();
-        assert!(writeln!(dst_file_hnd, "Test test test").is_ok());
-        let mut dst_file_hnd: File = OpenOptions::new().read(true).open(dst_file.path()).unwrap();
         // Receive file
         assert!(client
-            .recv_file(PathBuf::from("readme.txt").as_path(), &mut dst_file_hnd)
+            .recv_file(PathBuf::from("readme.txt").as_path())
             .is_err());
         // Disconnect
         assert!(client.disconnect().is_ok());
