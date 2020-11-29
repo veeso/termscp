@@ -24,9 +24,13 @@
 */
 
 // Dependencies
+extern crate chrono;
 extern crate whoami;
 
 use crate::filetransfer::FileTransferProtocol;
+
+use chrono::prelude::*;
+use std::time::SystemTime;
 
 /// ### parse_remote_opt
 ///
@@ -119,6 +123,16 @@ pub fn parse_remote_opt(
     Ok((address, port, protocol, username))
 }
 
+/// ### instant_to_str
+/// 
+/// Format a `Instant` into a time string
+pub fn time_to_str(time: SystemTime, fmt: &str) -> String {
+    let datetime: DateTime<Local> = time.into();
+    // Format the datetime how you want
+    let newdate = datetime.to_rfc3339_opts(SecondsFormat::Secs, true);
+    format!("{}", datetime.format(fmt))
+}
+
 #[cfg(test)]
 mod tests {
 
@@ -173,6 +187,12 @@ mod tests {
         assert!(parse_remote_opt(&String::from("://172.26.104.1")).is_err()); // Missing protocol
         assert!(parse_remote_opt(&String::from("omar://172.26.104.1")).is_err()); // Bad protocol
         assert!(parse_remote_opt(&String::from("172.26.104.1:abc")).is_err()); // Bad port
+    }
+
+    #[test]
+    fn test_utils_time_to_str() {
+        let system_time: SystemTime = SystemTime::from(SystemTime::UNIX_EPOCH);
+        assert_eq!(time_to_str(system_time, "%Y-%m-%d"), String::from("1970-01-01"));
     }
 
 }

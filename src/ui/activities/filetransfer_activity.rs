@@ -24,6 +24,7 @@
 */
 
 // Dependencies
+extern crate chrono;
 extern crate crossterm;
 extern crate tui;
 extern crate unicode_width;
@@ -31,6 +32,7 @@ extern crate unicode_width;
 // locals
 use super::{Activity, Context};
 use crate::filetransfer::FileTransferProtocol;
+use crate::utils::time_to_str;
 
 // File transfer
 use crate::filetransfer::sftp_transfer::SftpFileTransfer;
@@ -38,16 +40,16 @@ use crate::filetransfer::FileTransfer;
 use crate::fs::FsEntry;
 
 // Includes
+use chrono::{DateTime, Local};
 use crossterm::event::Event as InputEvent;
 use crossterm::event::{KeyCode, KeyModifiers};
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use std::collections::VecDeque;
-use std::io::Stdout;
 use std::path::{Path, PathBuf};
 use std::time::Instant;
 use tui::{
     backend::CrosstermBackend,
-    layout::{Constraint, Direction, Layout, Rect},
+    layout::{Constraint, Corner, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     terminal::Frame,
     text::{Span, Spans, Text},
@@ -173,7 +175,7 @@ enum LogLevel {
 ///
 /// Log record entry
 struct LogRecord {
-    pub time: Instant,
+    pub time: DateTime<Local>,
     pub level: LogLevel,
     pub msg: String,
 }
@@ -184,7 +186,7 @@ impl LogRecord {
     /// Instantiates a new LogRecord
     pub fn new(level: LogLevel, msg: &str) -> LogRecord {
         LogRecord {
-            time: Instant::now(),
+            time: Local::now(),
             level: level,
             msg: String::from(msg),
         }
@@ -1480,42 +1482,43 @@ impl FileTransferActivity {
             .style(Style::default().fg(Color::LightYellow).add_modifier(Modifier::BOLD))
     }
 
-    /*
     /// ### draw_log_list
     ///
     /// Draw log list
     fn draw_log_list(&self) -> List {
-        let events: Vec<ListItem> = self.log_records
+        let events: Vec<ListItem> = self
+            .log_records
             .iter()
-            .map(|&(evt, level)| {
-                    let s = match level {
-                        "CRITICAL" => Style::default().fg(Color::Red),
-                        "ERROR" => Style::default().fg(Color::Magenta),
-                        "WARNING" => Style::default().fg(Color::Yellow),
-                        "INFO" => Style::default().fg(Color::Blue),
-                        _ => Style::default(),
-                    };
-                    let header = Spans::from(vec![
-                        Span::styled(format!("{:<9}", level), s),
-                        Span::raw(" "),
-                        Span::styled(
-                            "2020-01-01 10:00:00",
-                            Style::default().add_modifier(Modifier::ITALIC),
+            .map(|record: &LogRecord| {
+                let s = match record.level {
+                    LogLevel::Error => Style::default().fg(Color::Red),
+                    LogLevel::Warn => Style::default().fg(Color::Yellow),
+                    LogLevel::Info => Style::default().fg(Color::Green),
+                };
+                let header = Spans::from(vec![
+                    Span::raw("["),
+                    Span::styled(
+                        format!(
+                            "{:<6}",
+                            match record.level {
+                                LogLevel::Error => "ERROR",
+                                LogLevel::Warn => "WARN",
+                                LogLevel::Info => "INFO",
+                            }
                         ),
-                    ]);
-                    let log = Spans::from(vec![Span::raw(evt)]);
-                    ListItem::new(vec![
-                        Spans::from("-".repeat(chunks[1].width as usize)),
-                        header,
-                        Spans::from(""),
-                        log,
-                    ])
-                })
-                .collect();
-            let events_list = List::new(events)
-                .block(Block::default().borders(Borders::ALL).title("List"))
-                .start_corner(Corner::BottomLeft);
-    }*/
+                        s,
+                    ),
+                    Span::raw("] "),
+                    Span::from(format!("{}", record.time.format("%Y-%m-%dT%H:%M:%S%Z"))),
+                ]);
+                let log = Spans::from(vec![Span::from(record.msg.clone())]);
+                ListItem::new(vec![header, log])
+            })
+            .collect();
+        List::new(events)
+            .block(Block::default().borders(Borders::ALL).title("Log"))
+            .start_corner(Corner::BottomLeft)
+    }
 
     /// ### draw_footer
     ///
