@@ -151,7 +151,7 @@ impl std::fmt::Display for FsEntry {
                 // Get username
                 let username: String = match dir.user {
                     Some(uid) => match get_user_by_uid(uid) {
-                        Some(user) => user.name(),
+                        Some(user) => user.name().to_string_lossy().to_string(),
                         None => uid.to_string(),
                     },
                     None => String::from("0"),
@@ -159,7 +159,7 @@ impl std::fmt::Display for FsEntry {
                 // Get group
                 let group: String = match dir.group {
                     Some(gid) => match get_group_by_gid(gid) {
-                        Some(group) => group.name(),
+                        Some(group) => group.name().to_string_lossy().to_string(),
                         None => gid.to_string(),
                     },
                     None => String::from("0"),
@@ -240,7 +240,7 @@ impl std::fmt::Display for FsEntry {
                 // Get username
                 let username: String = match file.user {
                     Some(uid) => match get_user_by_uid(uid) {
-                        Some(user) => user.name(),
+                        Some(user) => user.name().to_string_lossy().to_string(),
                         None => uid.to_string(),
                     },
                     None => String::from("0"),
@@ -248,7 +248,7 @@ impl std::fmt::Display for FsEntry {
                 // Get group
                 let group: String = match file.group {
                     Some(gid) => match get_group_by_gid(gid) {
-                        Some(group) => group.name(),
+                        Some(group) => group.name().to_string_lossy().to_string(),
                         None => gid.to_string(),
                     },
                     None => String::from("0"),
