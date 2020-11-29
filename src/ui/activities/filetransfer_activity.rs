@@ -1619,13 +1619,16 @@ impl FileTransferActivity {
             .block(
                 Block::default()
                     .borders(Borders::ALL)
-                    .style(match self.tab {
-                        FileExplorerTab::Remote => Style::default().fg(Color::Yellow),
+                    .border_style(match self.input_field {
+                        InputField::Explorer => match self.tab {
+                            FileExplorerTab::Local => Style::default().fg(Color::Yellow),
+                            _ => Style::default(),
+                        },
                         _ => Style::default(),
                     })
                     .title("Localhost"),
             )
-            .start_corner(Corner::BottomLeft)
+            .start_corner(Corner::TopLeft)
             .highlight_style(
                 Style::default()
                     .fg(Color::LightYellow)
@@ -1647,7 +1650,7 @@ impl FileTransferActivity {
             .block(
                 Block::default()
                     .borders(Borders::ALL)
-                    .style(match self.input_field {
+                    .border_style(match self.input_field {
                         InputField::Explorer => match self.tab {
                             FileExplorerTab::Remote => Style::default().fg(Color::Yellow),
                             _ => Style::default(),
@@ -1656,7 +1659,7 @@ impl FileTransferActivity {
                     })
                     .title(self.params.address.clone()),
             )
-            .start_corner(Corner::BottomLeft)
+            .start_corner(Corner::TopLeft)
             .highlight_style(
                 Style::default()
                     .fg(Color::LightYellow)
@@ -1701,7 +1704,7 @@ impl FileTransferActivity {
             .block(
                 Block::default()
                     .borders(Borders::ALL)
-                    .style(match self.input_field {
+                    .border_style(match self.input_field {
                         InputField::Logs => Style::default().fg(Color::Yellow),
                         _ => Style::default(),
                     })
@@ -1929,8 +1932,12 @@ impl Activity for FileTransferActivity {
         if self.context.is_none() {
             return;
         }
+        let is_explorer_mode: bool = match self.input_mode {
+            InputMode::Explorer => true,
+            _ => false,
+        };
         // Check if connected
-        if !self.client.is_connected() {
+        if !self.client.is_connected() && is_explorer_mode {
             // Set init state to connecting popup
             self.input_mode = InputMode::Popup(PopupType::Wait(format!(
                 "Connecting to {}:{}...",
