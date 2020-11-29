@@ -413,6 +413,10 @@ impl FileTransferActivity {
                 }
             }
         }
+        // Scan dir on remote
+        if let Ok(path) = self.client.pwd() {
+            self.remote_scan(path.as_path());
+        }
         // Eventually, Reset input mode to explorer
         self.input_mode = InputMode::Explorer;
     }
@@ -543,6 +547,8 @@ impl FileTransferActivity {
                 }
             }
         }
+        // Reload directory on local
+        self.local_scan(local_path);
         // Eventually, Reset input mode to explorer
         self.input_mode = InputMode::Explorer;
     }
