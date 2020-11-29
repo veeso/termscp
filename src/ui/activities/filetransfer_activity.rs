@@ -286,18 +286,7 @@ impl FileTransferActivity {
     fn reload_remote_dir(&mut self) {
         // Get current entries
         if let Ok(pwd) = self.client.pwd() {
-            match self.client.list_dir(pwd.as_path()) {
-                Ok(entries) => self.remote.files = entries,
-                Err(err) => self.log(
-                    LogLevel::Error,
-                    format!(
-                        "Unable to get files from remote at '{}': {}",
-                        pwd.display(),
-                        err
-                    )
-                    .as_ref(),
-                ),
-            }
+            self.remote_scan(pwd.as_path());
         }
     }
 
@@ -577,7 +566,11 @@ impl FileTransferActivity {
     /// Scan current remote directory
     fn remote_scan(&mut self, path: &Path) {
         match self.client.list_dir(path) {
-            Ok(files) => self.remote.files = files,
+            Ok(files) => {
+                // Reset index
+                self.remote.index = 0;
+                self.remote.files = files
+            }
             Err(err) => {
                 self.log(
                     LogLevel::Error,
@@ -784,7 +777,7 @@ impl FileTransferActivity {
                                 ));
                             }
                         }
-                        'm' | 'M' => {
+                        'd' | 'D' => {
                             // Make directory
                             // If ctrl is enabled...
                             if key.modifiers.intersects(KeyModifiers::CONTROL) {
@@ -872,14 +865,8 @@ impl FileTransferActivity {
                     }
                     KeyCode::Backspace => {
                         // Go to previous directory
-                        loop {
-                            // Till a valid directory is found
-                            match self.remote.popd() {
-                                Some(d) => {
-                                    self.remote_changedir(d.as_path());
-                                }
-                                None => break, // Break if stack is empty
-                            }
+                        if let Some(d) = self.remote.popd() {
+                            self.remote_changedir(d.as_path());
                         }
                     }
                     KeyCode::Delete => {
@@ -910,7 +897,7 @@ impl FileTransferActivity {
                                 ));
                             }
                         }
-                        'm' | 'M' => {
+                        'd' | 'D' => {
                             // Make directory
                             // If ctrl is enabled...
                             if key.modifiers.intersects(KeyModifiers::CONTROL) {
@@ -1544,7 +1531,7 @@ impl FileTransferActivity {
     /// Draw header
     fn draw_header(&self) -> Paragraph {
         Paragraph::new(" _____                   ____   ____ ____  \n|_   _|__ _ __ _ __ ___ / ___| / ___|  _ \\ \n  | |/ _ \\ '__| '_ ` _ \\\\___ \\| |   | |_) |\n  | |  __/ |  | | | | | |___) | |___|  __/ \n  |_|\\___|_|  |_| |_| |_|____/ \\____|_|    \n")
-            .style(Style::default().fg(Color::LightYellow).add_modifier(Modifier::BOLD))
+            .style(Style::default().fg(Color::White).add_modifier(Modifier::BOLD))
     }
 
     /// ### draw_local_explorer
@@ -1563,7 +1550,7 @@ impl FileTransferActivity {
                     .borders(Borders::ALL)
                     .border_style(match self.input_field {
                         InputField::Explorer => match self.tab {
-                            FileExplorerTab::Local => Style::default().fg(Color::Yellow),
+                            FileExplorerTab::Local => Style::default().fg(Color::LightYellow),
                             _ => Style::default(),
                         },
                         _ => Style::default(),
@@ -1594,7 +1581,7 @@ impl FileTransferActivity {
                     .borders(Borders::ALL)
                     .border_style(match self.input_field {
                         InputField::Explorer => match self.tab {
-                            FileExplorerTab::Remote => Style::default().fg(Color::Yellow),
+                            FileExplorerTab::Remote => Style::default().fg(Color::LightBlue),
                             _ => Style::default(),
                         },
                         _ => Style::default(),
@@ -1604,7 +1591,7 @@ impl FileTransferActivity {
             .start_corner(Corner::TopLeft)
             .highlight_style(
                 Style::default()
-                    .fg(Color::LightYellow)
+                    .fg(Color::LightBlue)
                     .add_modifier(Modifier::BOLD),
             )
     }
@@ -1647,7 +1634,7 @@ impl FileTransferActivity {
                 Block::default()
                     .borders(Borders::ALL)
                     .border_style(match self.input_field {
-                        InputField::Logs => Style::default().fg(Color::Yellow),
+                        InputField::Logs => Style::default().fg(Color::LightGreen),
                         _ => Style::default(),
                     })
                     .title("Log"),
