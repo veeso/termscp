@@ -128,8 +128,6 @@ pub fn parse_remote_opt(
 /// Format a `Instant` into a time string
 pub fn time_to_str(time: SystemTime, fmt: &str) -> String {
     let datetime: DateTime<Local> = time.into();
-    // Format the datetime how you want
-    let newdate = datetime.to_rfc3339_opts(SecondsFormat::Secs, true);
     format!("{}", datetime.format(fmt))
 }
 

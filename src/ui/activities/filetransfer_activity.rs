@@ -46,10 +46,8 @@ use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use std::collections::VecDeque;
 use std::path::{Path, PathBuf};
 use tui::{
-    backend::CrosstermBackend,
     layout::{Constraint, Corner, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
-    terminal::Frame,
     text::{Span, Spans, Text},
     widgets::{Block, Borders, Clear, Gauge, List, ListItem, ListState, Paragraph, Tabs},
 };
@@ -1467,12 +1465,63 @@ impl FileTransferActivity {
     fn draw(&mut self) {
         let mut ctx: Context = self.context.take().unwrap();
         let _ = ctx.terminal.draw(|f| {
-            // TODO: implement
-
+            // Prepare chunks
+            let chunks = Layout::default()
+                .direction(Direction::Vertical)
+                .margin(2)
+                .constraints(
+                    [
+                        Constraint::Length(5),  // Header
+                        Constraint::Length(20), // Explorer
+                        Constraint::Length(20), // Log
+                        Constraint::Length(3),  // Footer
+                    ]
+                    .as_ref(),
+                )
+                .split(f.size());
+            // Create explorer chunks
+            let tabs_chunks = Layout::default()
+                .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
+                .direction(Direction::Horizontal)
+                .split(chunks[1]);
+            // Draw header
+            f.render_widget(self.draw_header(), chunks[0]);
+            // Set localhost state
+            let mut localhost_state: ListState = ListState::default();
+            localhost_state.select(Some(self.local.index));
+            // Set remote state
+            let mut remote_state: ListState = ListState::default();
+            remote_state.select(Some(self.remote.index));
+            // Draw tabs
+            f.render_stateful_widget(self.draw_local_explorer(), tabs_chunks[0], &mut localhost_state);
+            f.render_stateful_widget(self.draw_remote_explorer(), tabs_chunks[1], &mut remote_state);
             // Set log state
             let mut log_state: ListState = ListState::default();
             log_state.select(Some(self.log_index));
-            // f.render_stateful_widget(LOG_LIST, CHUNK, &mut log_state);
+            // Draw log
+            f.render_stateful_widget(self.draw_log_list(), chunks[2], &mut log_state);
+            // Draw footer
+            f.render_widget(self.draw_footer(), chunks[3]);
+            // Draw popup
+            if let InputMode::Popup(popup) = &self.input_mode {
+                let popup_area: Rect = self.draw_popup_area(f.size());
+                f.render_widget(Clear, popup_area); //this clears out the background
+                match popup {
+                    PopupType::Alert(color, txt) => f.render_widget(self.draw_popup_alert(color.clone(), txt.clone()), popup_area),
+                    PopupType::Fatal(txt) => f.render_widget(self.draw_popup_fatal(txt.clone()), popup_area),
+                    PopupType::Input(txt, _) => {
+                        f.render_widget(self.draw_popup_input(txt.clone()), popup_area);
+                        // Set cursor
+                        f.set_cursor(
+                            popup_area.x + self.input_txt.width() as u16 + 1,
+                            popup_area.y + 1,
+                        )
+                    },
+                    PopupType::Progress(txt) => f.render_widget(self.draw_popup_progress(txt.clone()), popup_area),
+                    PopupType::Wait(txt) => f.render_widget(self.draw_popup_wait(txt.clone()), popup_area),
+                    PopupType::YesNo(txt, _, _) => f.render_widget(self.draw_popup_yesno(txt.clone()), popup_area),
+                }
+            }
         });
         self.context = Some(ctx);
     }
@@ -1496,7 +1545,15 @@ impl FileTransferActivity {
             .map(|entry: &FsEntry| ListItem::new(Span::from(format!("{}", entry))))
             .collect();
         List::new(files)
-            .block(Block::default().borders(Borders::ALL).title("Localhost"))
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .style(match self.tab {
+                        FileExplorerTab::Remote => Style::default().fg(Color::Yellow),
+                        _ => Style::default(),
+                    })
+                    .title("Localhost"),
+            )
             .start_corner(Corner::BottomLeft)
             .highlight_style(
                 Style::default()
@@ -1519,6 +1576,13 @@ impl FileTransferActivity {
             .block(
                 Block::default()
                     .borders(Borders::ALL)
+                    .style(match self.input_field {
+                        InputField::Explorer => match self.tab {
+                            FileExplorerTab::Remote => Style::default().fg(Color::Yellow),
+                            _ => Style::default(),
+                        },
+                        _ => Style::default(),
+                    })
                     .title(self.params.address.clone()),
             )
             .start_corner(Corner::BottomLeft)
@@ -1563,7 +1627,15 @@ impl FileTransferActivity {
             })
             .collect();
         List::new(events)
-            .block(Block::default().borders(Borders::ALL).title("Log"))
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .style(match self.input_field {
+                        InputField::Logs => Style::default().fg(Color::Yellow),
+                        _ => Style::default(),
+                    })
+                    .title("Log"),
+            )
             .start_corner(Corner::BottomLeft)
             .highlight_style(Style::default().add_modifier(Modifier::BOLD))
     }
