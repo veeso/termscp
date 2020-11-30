@@ -1873,7 +1873,7 @@ impl FileTransferActivity {
                     .borders(Borders::ALL)
                     .border_style(match self.input_field {
                         InputField::Explorer => match self.tab {
-                            FileExplorerTab::Local => Style::default().fg(Color::LightYellow),
+                            FileExplorerTab::Local => Style::default().fg(Color::Yellow),
                             _ => Style::default(),
                         },
                         _ => Style::default(),
@@ -1883,7 +1883,7 @@ impl FileTransferActivity {
             .start_corner(Corner::TopLeft)
             .highlight_style(
                 Style::default()
-                    .fg(Color::LightYellow)
+                    .fg(Color::Yellow)
                     .add_modifier(Modifier::BOLD),
             )
     }
