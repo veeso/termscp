@@ -344,6 +344,7 @@ impl FileTransferActivity {
                                 "Uploading \"{}\"",
                                 file_name
                             )));
+                            let mut last_progress_val: f64 = 0.0;
                             loop {
                                 // Read till you can
                                 let mut buffer: [u8; 8192] = [0; 8192];
@@ -372,8 +373,12 @@ impl FileTransferActivity {
                                 }
                                 // Increase progress
                                 self.set_progress(total_bytes_written, file_size);
-                                // Draw
-                                self.draw();
+                                // Draw only if a significant progress has been made (performance improvement)
+                                if last_progress_val + 0.5 >= self.transfer_progress {
+                                    // Draw
+                                    self.draw();
+                                    last_progress_val = self.transfer_progress;
+                                }
                             }
                             self.log(
                                 LogLevel::Info,
@@ -507,6 +512,7 @@ impl FileTransferActivity {
                                 )));
                                 let mut total_bytes_written: usize = 0;
                                 // Write local file
+                                let mut last_progress_val: f64 = 0.0;
                                 loop {
                                     // Read till you can
                                     let mut buffer: [u8; 8192] = [0; 8192];
@@ -538,8 +544,12 @@ impl FileTransferActivity {
                                     }
                                     // Set progress
                                     self.set_progress(total_bytes_written, file_size);
-                                    // Draw
-                                    self.draw();
+                                    // Draw only if a significant progress has been made (performance improvement)
+                                    if last_progress_val + 0.5 >= self.transfer_progress {
+                                        // Draw
+                                        self.draw();
+                                        last_progress_val = self.transfer_progress;
+                                    }
                                 }
                                 // Log
                                 self.log(
