@@ -300,7 +300,12 @@ impl FileTransferActivity {
     /// Send fs entry to remote.
     /// If dst_name is Some, entry will be saved with a different name.
     /// If entry is a directory, this applies to directory only
-    fn filetransfer_send(&mut self, entry: &FsEntry, curr_remote_path: &Path, dst_name: Option<String>) {
+    fn filetransfer_send(
+        &mut self,
+        entry: &FsEntry,
+        curr_remote_path: &Path,
+        dst_name: Option<String>,
+    ) {
         // Write popup
         let file_name: String = match entry {
             FsEntry::Directory(dir) => dir.name.clone(),
@@ -818,12 +823,14 @@ impl FileTransferActivity {
         // NOTE: Do you want my opinion about that issue? It's a bs and doesn't make any sense.
         let popup: Option<PopupType> = match &self.input_mode {
             InputMode::Popup(ptype) => Some(ptype.clone()),
-            _ => None
+            _ => None,
         };
         match &self.input_mode {
             InputMode::Explorer => self.handle_input_event_mode_explorer(ev),
-            InputMode::Popup(_) => if let Some(popup) = popup {
-                self.handle_input_event_mode_popup(ev, popup);
+            InputMode::Popup(_) => {
+                if let Some(popup) = popup {
+                    self.handle_input_event_mode_popup(ev, popup);
+                }
             }
         }
     }
@@ -967,8 +974,12 @@ impl FileTransferActivity {
                             let wrkdir: PathBuf = match self.client.pwd() {
                                 Ok(p) => p,
                                 Err(err) => {
-                                    self.log(LogLevel::Error, format!("Could not get current remote path: {}", err).as_ref());
-                                    return
+                                    self.log(
+                                        LogLevel::Error,
+                                        format!("Could not get current remote path: {}", err)
+                                            .as_ref(),
+                                    );
+                                    return;
                                 }
                             };
                             // Get files
@@ -1154,19 +1165,22 @@ impl FileTransferActivity {
                         self.input_mode = self.create_quit_popup();
                     }
                     KeyCode::Tab => self.switch_input_field(), // <TAB> switch tab
-                    KeyCode::Down => { // NOTE: Twisted logic
+                    KeyCode::Down => {
+                        // NOTE: Twisted logic
                         // Decrease log index
                         if self.log_index > 0 {
                             self.log_index = self.log_index - 1;
                         }
                     }
-                    KeyCode::Up => { // NOTE: Twisted logic
+                    KeyCode::Up => {
+                        // NOTE: Twisted logic
                         // Increase log index
                         if self.log_index + 1 < self.log_records.len() {
                             self.log_index = self.log_index + 1;
                         }
                     }
-                    KeyCode::PageDown => { // NOTE: Twisted logic
+                    KeyCode::PageDown => {
+                        // NOTE: Twisted logic
                         // Fast decreasing of log index
                         if self.log_index >= records_block {
                             self.log_index = self.log_index - records_block; // Decrease by `records_block` if possible
@@ -1174,7 +1188,8 @@ impl FileTransferActivity {
                             self.log_index = 0; // Set to 0 otherwise
                         }
                     }
-                    KeyCode::PageUp => { // NOTE: Twisted logic
+                    KeyCode::PageUp => {
+                        // NOTE: Twisted logic
                         // Fast increasing of log index
                         if self.log_index + records_block >= self.log_records.len() {
                             // If overflows, set to size
@@ -1373,27 +1388,28 @@ impl FileTransferActivity {
                         let mut d: PathBuf = self.context.as_ref().unwrap().local.pwd();
                         d.push(dir_path);
                         d
-                    },
-                    false => dir_path
+                    }
+                    false => dir_path,
                 };
                 self.local_changedir(abs_dir_path.as_path(), true);
             }
             FileExplorerTab::Remote => {
                 // If path is relative, concat pwd
                 let abs_dir_path: PathBuf = match dir_path.is_relative() {
-                    true => {
-                        match self.client.pwd() {
-                            Ok(mut wkrdir) => {
-                                wkrdir.push(dir_path);
-                                wkrdir
-                            }
-                            Err(err) => {
-                                self.input_mode = InputMode::Popup(PopupType::Alert(Color::Red, format!("Could not retrieve current directory: {}", err)));
-                                return;
-                            }
+                    true => match self.client.pwd() {
+                        Ok(mut wkrdir) => {
+                            wkrdir.push(dir_path);
+                            wkrdir
+                        }
+                        Err(err) => {
+                            self.input_mode = InputMode::Popup(PopupType::Alert(
+                                Color::Red,
+                                format!("Could not retrieve current directory: {}", err),
+                            ));
+                            return;
                         }
                     },
-                    false => dir_path
+                    false => dir_path,
                 };
                 self.remote_changedir(abs_dir_path.as_path(), true);
             }
@@ -1656,8 +1672,11 @@ impl FileTransferActivity {
                 let wrkdir: PathBuf = match self.client.pwd() {
                     Ok(p) => p,
                     Err(err) => {
-                        self.log(LogLevel::Error, format!("Could not get current remote path: {}", err).as_ref());
-                        return
+                        self.log(
+                            LogLevel::Error,
+                            format!("Could not get current remote path: {}", err).as_ref(),
+                        );
+                        return;
                     }
                 };
                 let files: Vec<FsEntry> = self.local.files.clone();
@@ -1958,7 +1977,8 @@ impl FileTransferActivity {
             0 => String::from("--:--"), // NOTE: would divide by 0 :D
             _ => {
                 let elapsed_secs: u64 = self.transfer_started.elapsed().as_secs();
-                let eta: u64 = ((elapsed_secs * 100) / (self.transfer_progress as u64)) - elapsed_secs;
+                let eta: u64 =
+                    ((elapsed_secs * 100) / (self.transfer_progress as u64)) - elapsed_secs;
                 format!("{:0width$}:{:0width$}", (eta / 60), (eta % 60), width = 2)
             }
         };
