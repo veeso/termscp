@@ -797,9 +797,17 @@ impl FileTransferActivity {
     ///
     /// Handle input event based on current input mode
     fn handle_input_event(&mut self, ev: &InputEvent) {
+        // NOTE: this is necessary due to this <https://github.com/rust-lang/rust/issues/59159>
+        // NOTE: Do you want my opinion about that issue? It's a bs and doesn't make any sense.
+        let popup: Option<PopupType> = match &self.input_mode {
+            InputMode::Popup(ptype) => Some(ptype.clone()),
+            _ => None
+        };
         match &self.input_mode {
             InputMode::Explorer => self.handle_input_event_mode_explorer(ev),
-            InputMode::Popup(ptype) => self.handle_input_event_mode_popup(ev, ptype.clone()),
+            InputMode::Popup(_) => if let Some(popup) = popup {
+                self.handle_input_event_mode_popup(ev, popup);
+            }
         }
     }
 
