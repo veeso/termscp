@@ -2072,7 +2072,7 @@ impl FileTransferActivity {
                         .fg(Color::White)
                         .add_modifier(Modifier::BOLD),
                 ),
-                Span::raw("         "),
+                Span::raw("           "),
                 Span::raw("quit"),
             ])),
             ListItem::new(Spans::from(vec![
@@ -2083,7 +2083,7 @@ impl FileTransferActivity {
                         .fg(Color::White)
                         .add_modifier(Modifier::BOLD),
                 ),
-                Span::raw("         "),
+                Span::raw("           "),
                 Span::raw("change input field"),
             ])),
             ListItem::new(Spans::from(vec![
@@ -2094,7 +2094,7 @@ impl FileTransferActivity {
                         .fg(Color::White)
                         .add_modifier(Modifier::BOLD),
                 ),
-                Span::raw("  "),
+                Span::raw("    "),
                 Span::raw("change explorer tab"),
             ])),
             ListItem::new(Spans::from(vec![
@@ -2105,18 +2105,18 @@ impl FileTransferActivity {
                         .fg(Color::White)
                         .add_modifier(Modifier::BOLD),
                 ),
-                Span::raw("  "),
+                Span::raw("       "),
                 Span::raw("move up/down in list"),
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(
-                    "<PAGEUP/PAGEDOWN>",
+                    "<PGUP/PGDOWN>",
                     Style::default()
                         .bg(Color::Cyan)
                         .fg(Color::White)
                         .add_modifier(Modifier::BOLD),
                 ),
-                Span::raw("  "),
+                Span::raw("   "),
                 Span::raw("scroll up/down in list quickly"),
             ])),
             ListItem::new(Spans::from(vec![
@@ -2127,7 +2127,7 @@ impl FileTransferActivity {
                         .fg(Color::White)
                         .add_modifier(Modifier::BOLD),
                 ),
-                Span::raw("       "),
+                Span::raw("         "),
                 Span::raw("enter directory"),
             ])),
             ListItem::new(Spans::from(vec![
@@ -2138,7 +2138,7 @@ impl FileTransferActivity {
                         .fg(Color::White)
                         .add_modifier(Modifier::BOLD),
                 ),
-                Span::raw("       "),
+                Span::raw("         "),
                 Span::raw("upload/download file"),
             ])),
             ListItem::new(Spans::from(vec![
@@ -2149,7 +2149,7 @@ impl FileTransferActivity {
                         .fg(Color::White)
                         .add_modifier(Modifier::BOLD),
                 ),
-                Span::raw("      "),
+                Span::raw("        "),
                 Span::raw("make directory"),
             ])),
             ListItem::new(Spans::from(vec![
@@ -2160,7 +2160,7 @@ impl FileTransferActivity {
                         .fg(Color::White)
                         .add_modifier(Modifier::BOLD),
                 ),
-                Span::raw("      "),
+                Span::raw("        "),
                 Span::raw("goto path"),
             ])),
             ListItem::new(Spans::from(vec![
@@ -2171,7 +2171,7 @@ impl FileTransferActivity {
                         .fg(Color::White)
                         .add_modifier(Modifier::BOLD),
                 ),
-                Span::raw("      "),
+                Span::raw("        "),
                 Span::raw("rename file"),
             ])),
             ListItem::new(Spans::from(vec![
@@ -2182,7 +2182,7 @@ impl FileTransferActivity {
                         .fg(Color::White)
                         .add_modifier(Modifier::BOLD),
                 ),
-                Span::raw("      "),
+                Span::raw("        "),
                 Span::raw("go to parent directory"),
             ])),
             ListItem::new(Spans::from(vec![
@@ -2193,7 +2193,7 @@ impl FileTransferActivity {
                         .fg(Color::White)
                         .add_modifier(Modifier::BOLD),
                 ),
-                Span::raw("        "),
+                Span::raw("          "),
                 Span::raw("delete file"),
             ])),
         ];
