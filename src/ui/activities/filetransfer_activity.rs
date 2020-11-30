@@ -1347,12 +1347,38 @@ impl FileTransferActivity {
     ///
     /// Callback for GOTO command
     fn callback_change_directory(&mut self, input: String) {
+        let dir_path: PathBuf = PathBuf::from(input);
         match self.tab {
             FileExplorerTab::Local => {
-                self.local_changedir(PathBuf::from(input.as_str()).as_path(), true);
+                // If path is relative, concat pwd
+                let abs_dir_path: PathBuf = match dir_path.is_relative() {
+                    true => {
+                        let mut d: PathBuf = self.context.as_ref().unwrap().local.pwd();
+                        d.push(dir_path);
+                        d
+                    },
+                    false => dir_path
+                };
+                self.local_changedir(abs_dir_path.as_path(), true);
             }
             FileExplorerTab::Remote => {
-                self.remote_changedir(PathBuf::from(input.as_str()).as_path(), true);
+                // If path is relative, concat pwd
+                let abs_dir_path: PathBuf = match dir_path.is_relative() {
+                    true => {
+                        match self.client.pwd() {
+                            Ok(mut wkrdir) => {
+                                wkrdir.push(dir_path);
+                                wkrdir
+                            }
+                            Err(err) => {
+                                self.input_mode = InputMode::Popup(PopupType::Alert(Color::Red, format!("Could not retrieve current directory: {}", err)));
+                                return;
+                            }
+                        }
+                    },
+                    false => dir_path
+                };
+                self.remote_changedir(abs_dir_path.as_path(), true);
             }
         }
     }
