@@ -2235,6 +2235,7 @@ impl Activity for FileTransferActivity {
     /// `on_draw` is the function which draws the graphical interface.
     /// This function must be called at each tick to refresh the interface
     fn on_draw(&mut self) {
+        let mut redraw: bool = false; // Should ui actually be redrawned?
         // Context must be something
         if self.context.is_none() {
             return;
@@ -2254,16 +2255,23 @@ impl Activity for FileTransferActivity {
             self.draw();
             // Connect to remote
             self.connect();
+            // Redraw
+            redraw = true;
         }
         // Handle input events
         if let Ok(event) = self.context.as_ref().unwrap().input_hnd.read_event() {
             // Iterate over input events
             if let Some(event) = event {
+                // Handle event
                 self.handle_input_event(&event);
+                // Set redraw to true
+                redraw = true;
             }
         }
         // @! draw interface
-        self.draw();
+        if redraw {
+            self.draw();
+        }
     }
 
     /// ### on_destroy

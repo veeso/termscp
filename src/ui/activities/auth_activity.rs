@@ -82,6 +82,7 @@ pub struct AuthActivity {
     input_mode: InputMode,
     popup_message: Option<String>,
     password_placeholder: String,
+    redraw: bool, // Should ui actually be redrawned?
 }
 
 impl AuthActivity {
@@ -102,6 +103,7 @@ impl AuthActivity {
             input_mode: InputMode::Text,
             popup_message: None,
             password_placeholder: String::new(),
+            redraw: true, // True at startup
         }
     }
 
@@ -432,69 +434,77 @@ impl Activity for AuthActivity {
         }
         // Start catching Input Events
         if let Ok(input_events) = self.context.as_ref().unwrap().input_hnd.fetch_events() {
+            if input_events.len() > 0 {
+                self.redraw = true; // Set redraw to true if there is at least one event
+            }
             // Iterate over input events
             for event in input_events.iter() {
                 self.handle_input_event(event);
             }
         }
-        // Determine input mode
-        self.input_mode = self.select_input_mode();
-        // draw interface
-        let mut ctx: Context = self.context.take().unwrap();
-        let _ = ctx.terminal.draw(|f| {
-            let chunks = Layout::default()
-                .direction(Direction::Vertical)
-                .margin(2)
-                .constraints(
-                    [
-                        Constraint::Length(5),
-                        Constraint::Length(3),
-                        Constraint::Length(3),
-                        Constraint::Length(3),
-                        Constraint::Length(3),
-                        Constraint::Length(3),
-                        Constraint::Length(3),
-                    ]
-                    .as_ref(),
-                )
-                .split(f.size());
-            // Draw header
-            f.render_widget(self.draw_header(), chunks[0]);
-            // Draw input fields
-            f.render_widget(self.draw_remote_address(), chunks[1]);
-            f.render_widget(self.draw_remote_port(), chunks[2]);
-            f.render_widget(self.draw_protocol_select(), chunks[3]);
-            f.render_widget(self.draw_protocol_username(), chunks[4]);
-            f.render_widget(self.draw_protocol_password(), chunks[5]);
-            // Draw footer
-            f.render_widget(self.draw_footer(), chunks[6]);
-            if self.popup_message.is_some() {
-                let (popup, popup_area): (Paragraph, Rect) = self.draw_popup(f.size());
-                f.render_widget(Clear, popup_area); //this clears out the background
-                f.render_widget(popup, popup_area);
-            }
-            // Set cursor
-            match self.selected_field {
-                InputField::Address => f.set_cursor(
-                    chunks[1].x + self.address.width() as u16 + 1,
-                    chunks[1].y + 1,
-                ),
-                InputField::Port => {
-                    f.set_cursor(chunks[2].x + self.port.width() as u16 + 1, chunks[2].y + 1)
+        // Redraw if necessary
+        if self.redraw {
+            // Determine input mode
+            self.input_mode = self.select_input_mode();
+            // draw interface
+            let mut ctx: Context = self.context.take().unwrap();
+            let _ = ctx.terminal.draw(|f| {
+                let chunks = Layout::default()
+                    .direction(Direction::Vertical)
+                    .margin(2)
+                    .constraints(
+                        [
+                            Constraint::Length(5),
+                            Constraint::Length(3),
+                            Constraint::Length(3),
+                            Constraint::Length(3),
+                            Constraint::Length(3),
+                            Constraint::Length(3),
+                            Constraint::Length(3),
+                        ]
+                        .as_ref(),
+                    )
+                    .split(f.size());
+                // Draw header
+                f.render_widget(self.draw_header(), chunks[0]);
+                // Draw input fields
+                f.render_widget(self.draw_remote_address(), chunks[1]);
+                f.render_widget(self.draw_remote_port(), chunks[2]);
+                f.render_widget(self.draw_protocol_select(), chunks[3]);
+                f.render_widget(self.draw_protocol_username(), chunks[4]);
+                f.render_widget(self.draw_protocol_password(), chunks[5]);
+                // Draw footer
+                f.render_widget(self.draw_footer(), chunks[6]);
+                if self.popup_message.is_some() {
+                    let (popup, popup_area): (Paragraph, Rect) = self.draw_popup(f.size());
+                    f.render_widget(Clear, popup_area); //this clears out the background
+                    f.render_widget(popup, popup_area);
                 }
-                InputField::Username => f.set_cursor(
-                    chunks[4].x + self.username.width() as u16 + 1,
-                    chunks[4].y + 1,
-                ),
-                InputField::Password => f.set_cursor(
-                    chunks[5].x + self.password_placeholder.width() as u16 + 1,
-                    chunks[5].y + 1,
-                ),
-                _ => {}
-            }
-        });
-        // Reset ctx
-        self.context = Some(ctx);
+                // Set cursor
+                match self.selected_field {
+                    InputField::Address => f.set_cursor(
+                        chunks[1].x + self.address.width() as u16 + 1,
+                        chunks[1].y + 1,
+                    ),
+                    InputField::Port => {
+                        f.set_cursor(chunks[2].x + self.port.width() as u16 + 1, chunks[2].y + 1)
+                    }
+                    InputField::Username => f.set_cursor(
+                        chunks[4].x + self.username.width() as u16 + 1,
+                        chunks[4].y + 1,
+                    ),
+                    InputField::Password => f.set_cursor(
+                        chunks[5].x + self.password_placeholder.width() as u16 + 1,
+                        chunks[5].y + 1,
+                    ),
+                    _ => {}
+                }
+            });
+            // Reset ctx
+            self.context = Some(ctx);
+            // Set redraw to false
+            self.redraw = false;
+        }
     }
 
     /// ### on_destroy
