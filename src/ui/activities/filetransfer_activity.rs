@@ -151,6 +151,19 @@ impl FileExplorer {
     pub fn popd(&mut self) -> Option<PathBuf> {
         self.dirstack.pop_front()
     }
+
+    /// ### sort_files_by_name
+    /// 
+    /// Sort explorer files by their name
+    pub fn sort_files_by_name(&mut self) {
+        self.files.sort_by_key(|x: &FsEntry| {
+            match x {
+                FsEntry::Directory(dir) => dir.name.clone(),
+                FsEntry::File(file) => file.name.clone()
+            }
+        });
+    }
+
 }
 
 /// ## FileExplorerTab
@@ -667,6 +680,8 @@ impl FileTransferActivity {
                 // Reset index
                 self.local.index = 0;
                 self.local.files = files;
+                // Sort files
+                self.local.sort_files_by_name();
             }
             Err(err) => {
                 self.log(
@@ -685,7 +700,9 @@ impl FileTransferActivity {
             Ok(files) => {
                 // Reset index
                 self.remote.index = 0;
-                self.remote.files = files
+                self.remote.files = files;
+                // Sort files
+                self.remote.sort_files_by_name();
             }
             Err(err) => {
                 self.log(
@@ -1469,7 +1486,8 @@ impl FileTransferActivity {
                             LogLevel::Info,
                             format!("Created directory \"{}\"", input).as_ref(),
                         );
-                        self.local.files = self.context.as_ref().unwrap().local.list_dir();
+                        let wrkdir: PathBuf = self.context.as_ref().unwrap().local.pwd();
+                        self.local_scan(wrkdir.as_path());
                     }
                     Err(err) => {
                         // Report err

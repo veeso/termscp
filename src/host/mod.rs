@@ -128,6 +128,7 @@ impl Localhost {
     /// ### list_dir
     ///
     /// List files in current directory
+    #[allow(dead_code)]
     pub fn list_dir(&self) -> Vec<FsEntry> {
         self.files.clone()
     }
