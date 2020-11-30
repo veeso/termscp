@@ -46,6 +46,7 @@ use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use std::collections::VecDeque;
 use std::io::{Read, Seek, Write};
 use std::path::{Path, PathBuf};
+use std::time::Instant;
 use tui::{
     layout::{Constraint, Corner, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
@@ -211,6 +212,7 @@ pub struct FileTransferActivity {
     input_txt: String,                // Input text
     choice_opt: DialogYesNoOption,    // Dialog popup selected option
     transfer_progress: f64,           // Current write/read progress (percentage)
+    transfer_started: Instant,        // Instant when progress has started
 }
 
 impl FileTransferActivity {
@@ -239,6 +241,7 @@ impl FileTransferActivity {
             input_txt: String::new(),
             choice_opt: DialogYesNoOption::Yes,
             transfer_progress: 0.0,
+            transfer_started: Instant::now(),
         }
     }
 
@@ -344,6 +347,8 @@ impl FileTransferActivity {
                                 "Uploading \"{}\"",
                                 file_name
                             )));
+                            // Set started time
+                            self.transfer_started = Instant::now();
                             let mut last_progress_val: f64 = 0.0;
                             loop {
                                 // Read till you can
@@ -511,6 +516,8 @@ impl FileTransferActivity {
                                     file_name
                                 )));
                                 let mut total_bytes_written: usize = 0;
+                                // Set started time
+                                self.transfer_started = Instant::now();
                                 // Write local file
                                 let mut last_progress_val: f64 = 0.0;
                                 loop {
@@ -1946,7 +1953,16 @@ impl FileTransferActivity {
     ///
     /// Draw progress popup
     fn draw_popup_progress(&self, text: String) -> Gauge {
-        let label = format!("{:.2}%", self.transfer_progress);
+        // Calculate ETA
+        let eta: String = match self.transfer_progress as u64 {
+            0 => String::from("--:--"), // NOTE: would divide by 0 :D
+            _ => {
+                let elapsed_secs: u64 = self.transfer_started.elapsed().as_secs();
+                let eta: u64 = ((elapsed_secs * 100) / (self.transfer_progress as u64)) - elapsed_secs;
+                format!("{:0width$}:{:0width$}", (eta / 60), (eta % 60), width = 2)
+            }
+        };
+        let label = format!("{:.2}% - ETA {}", self.transfer_progress, eta);
         Gauge::default()
             .block(Block::default().borders(Borders::ALL).title(text))
             .gauge_style(
