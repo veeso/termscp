@@ -877,6 +877,23 @@ impl FileTransferActivity {
                             self.local.index += 1;
                         }
                     }
+                    KeyCode::PageUp => {
+                        // Move index up (fast)
+                        if self.local.index > 8 {
+                            self.local.index = self.local.index - 8; // Decrease by `8` if possible
+                        } else {
+                            self.local.index = 0; // Set to 0 otherwise
+                        }
+                    }
+                    KeyCode::PageDown => {
+                        // Move index down (fast)
+                        if self.local.index + 8 >= self.local.files.len() {
+                            // If overflows, set to size
+                            self.local.index = self.local.files.len() - 1;
+                        } else {
+                            self.local.index = self.local.index + 8; // Increase by `8`
+                        }
+                    }
                     KeyCode::Enter => {
                         // Match selected file
                         let local_files: Vec<FsEntry> = self.local.files.clone();
@@ -1024,6 +1041,23 @@ impl FileTransferActivity {
                         // Move index down
                         if self.remote.index + 1 < self.remote.files.len() {
                             self.remote.index += 1;
+                        }
+                    }
+                    KeyCode::PageUp => {
+                        // Move index up (fast)
+                        if self.remote.index > 8 {
+                            self.remote.index = self.remote.index - 8; // Decrease by `8` if possible
+                        } else {
+                            self.remote.index = 0; // Set to 0 otherwise
+                        }
+                    }
+                    KeyCode::PageDown => {
+                        // Move index down (fast)
+                        if self.remote.index + 8 >= self.remote.files.len() {
+                            // If overflows, set to size
+                            self.remote.index = self.remote.files.len() - 1;
+                        } else {
+                            self.remote.index = self.remote.index + 8; // Increase by `8`
                         }
                     }
                     KeyCode::Enter => {
@@ -2032,102 +2066,134 @@ impl FileTransferActivity {
         let cmds: Vec<ListItem> = vec![
             ListItem::new(Spans::from(vec![
                 Span::styled(
-                    "<ESC>         ",
+                    "<ESC>",
                     Style::default()
                         .bg(Color::Cyan)
                         .fg(Color::White)
                         .add_modifier(Modifier::BOLD),
                 ),
+                Span::raw("         "),
                 Span::raw("quit"),
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(
-                    "<TAB>         ",
+                    "<TAB>",
                     Style::default()
                         .bg(Color::Cyan)
                         .fg(Color::White)
                         .add_modifier(Modifier::BOLD),
                 ),
+                Span::raw("         "),
                 Span::raw("change input field"),
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(
-                    "<RIGHT/LEFT>  ",
+                    "<RIGHT/LEFT>",
                     Style::default()
                         .bg(Color::Cyan)
                         .fg(Color::White)
                         .add_modifier(Modifier::BOLD),
                 ),
+                Span::raw("  "),
                 Span::raw("change explorer tab"),
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(
-                    "<ENTER>       ",
+                    "<UP/DOWN>",
                     Style::default()
                         .bg(Color::Cyan)
                         .fg(Color::White)
                         .add_modifier(Modifier::BOLD),
                 ),
+                Span::raw("  "),
+                Span::raw("move up/down in list"),
+            ])),
+            ListItem::new(Spans::from(vec![
+                Span::styled(
+                    "<PAGEUP/PAGEDOWN>",
+                    Style::default()
+                        .bg(Color::Cyan)
+                        .fg(Color::White)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::raw("  "),
+                Span::raw("scroll up/down in list quickly"),
+            ])),
+            ListItem::new(Spans::from(vec![
+                Span::styled(
+                    "<ENTER>",
+                    Style::default()
+                        .bg(Color::Cyan)
+                        .fg(Color::White)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::raw("       "),
                 Span::raw("enter directory"),
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(
-                    "<SPACE>       ",
+                    "<SPACE>",
                     Style::default()
                         .bg(Color::Cyan)
                         .fg(Color::White)
                         .add_modifier(Modifier::BOLD),
                 ),
+                Span::raw("       "),
                 Span::raw("upload/download file"),
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(
-                    "<CTRL+D>      ",
+                    "<CTRL+D>",
                     Style::default()
                         .bg(Color::Cyan)
                         .fg(Color::White)
                         .add_modifier(Modifier::BOLD),
                 ),
+                Span::raw("      "),
                 Span::raw("make directory"),
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(
-                    "<CTRL+G>      ",
+                    "<CTRL+G>",
                     Style::default()
                         .bg(Color::Cyan)
                         .fg(Color::White)
                         .add_modifier(Modifier::BOLD),
                 ),
+                Span::raw("      "),
                 Span::raw("goto path"),
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(
-                    "<CTRL+R>      ",
+                    "<CTRL+R>",
                     Style::default()
                         .bg(Color::Cyan)
                         .fg(Color::White)
                         .add_modifier(Modifier::BOLD),
                 ),
+                Span::raw("      "),
                 Span::raw("rename file"),
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(
-                    "<CTRL+U>      ",
+                    "<CTRL+U>",
                     Style::default()
                         .bg(Color::Cyan)
                         .fg(Color::White)
                         .add_modifier(Modifier::BOLD),
                 ),
+                Span::raw("      "),
                 Span::raw("go to parent directory"),
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(
-                    "<CANC>        ",
+                    "<CANC>",
                     Style::default()
                         .bg(Color::Cyan)
                         .fg(Color::White)
                         .add_modifier(Modifier::BOLD),
                 ),
+                Span::raw("        "),
                 Span::raw("delete file"),
             ])),
         ];
