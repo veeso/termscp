@@ -62,11 +62,11 @@ fn main() {
     let mut username: Option<String> = None; // Default username
     let password: Option<String>; // Default password
     let mut protocol: FileTransferProtocol = FileTransferProtocol::Sftp; // Default protocol
-    let mut ticks: Duration = Duration::from_micros(50);
+    let mut ticks: Duration = Duration::from_millis(10);
     //Process options
     // FIXME: there is no way to provide password from CLI atm
     let mut opts = Options::new();
-    opts.optopt("T", "ticks", "Set UI ticks; default 50µs", "<µs>");
+    opts.optopt("T", "ticks", "Set UI ticks; default 10000µs", "<µs>");
     opts.optflag("v", "version", "");
     opts.optflag("h", "help", "Print this menu");
     let matches = match opts.parse(&args[1..]) {
