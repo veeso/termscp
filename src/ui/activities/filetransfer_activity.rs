@@ -1998,7 +1998,7 @@ impl FileTransferActivity {
     /// Draw input popup
     fn draw_popup_input(&self, text: String) -> Paragraph {
         Paragraph::new(self.input_txt.as_ref())
-            .style(Style::default().fg(Color::Yellow))
+            .style(Style::default().fg(Color::White))
             .block(Block::default().borders(Borders::ALL).title(text))
     }
 
@@ -2021,7 +2021,7 @@ impl FileTransferActivity {
             .block(Block::default().borders(Borders::ALL).title(text))
             .gauge_style(
                 Style::default()
-                    .fg(Color::Magenta)
+                    .fg(Color::Green)
                     .bg(Color::Black)
                     .add_modifier(Modifier::BOLD),
             )
