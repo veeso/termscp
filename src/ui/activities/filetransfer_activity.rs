@@ -760,7 +760,7 @@ impl FileTransferActivity {
         // Eventually push front the new record
         self.log_records.push_front(record);
         // Set log index
-        self.log_index = self.log_records.len();
+        self.log_index = 0;
     }
 
     /// ### create_quit_popup
@@ -1137,19 +1137,19 @@ impl FileTransferActivity {
                         self.input_mode = self.create_quit_popup();
                     }
                     KeyCode::Tab => self.switch_input_field(), // <TAB> switch tab
-                    KeyCode::Up => {
+                    KeyCode::Down => { // NOTE: Twisted logic
                         // Decrease log index
                         if self.log_index > 0 {
                             self.log_index = self.log_index - 1;
                         }
                     }
-                    KeyCode::Down => {
+                    KeyCode::Up => { // NOTE: Twisted logic
                         // Increase log index
-                        if self.log_index + 1 >= self.log_size {
+                        if self.log_index + 1 < self.log_records.len() {
                             self.log_index = self.log_index + 1;
                         }
                     }
-                    KeyCode::PageUp => {
+                    KeyCode::PageDown => { // NOTE: Twisted logic
                         // Fast decreasing of log index
                         if self.log_index >= records_block {
                             self.log_index = self.log_index - records_block; // Decrease by `records_block` if possible
@@ -1157,11 +1157,11 @@ impl FileTransferActivity {
                             self.log_index = 0; // Set to 0 otherwise
                         }
                     }
-                    KeyCode::PageDown => {
+                    KeyCode::PageUp => { // NOTE: Twisted logic
                         // Fast increasing of log index
-                        if self.log_index + records_block >= self.log_size {
+                        if self.log_index + records_block >= self.log_records.len() {
                             // If overflows, set to size
-                            self.log_index = self.log_size - 1;
+                            self.log_index = self.log_records.len() - 1;
                         } else {
                             self.log_index = self.log_index + records_block; // Increase by `records_block`
                         }
