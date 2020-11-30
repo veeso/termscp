@@ -66,7 +66,7 @@ fn main() {
     //Process options
     // FIXME: there is no way to provide password from CLI atm
     let mut opts = Options::new();
-    opts.optopt("T", "ticks", "Set UI ticks; default 10000µs", "<µs>");
+    opts.optopt("T", "ticks", "Set UI ticks; default 10ms", "<ms>");
     opts.optflag("v", "version", "");
     opts.optflag("h", "help", "Print this menu");
     let matches = match opts.parse(&args[1..]) {
@@ -92,7 +92,7 @@ fn main() {
     // Match ticks
     if let Some(val) = matches.opt_str("T") {
         match val.parse::<usize>() {
-            Ok(val) => ticks = Duration::from_micros(val as u64),
+            Ok(val) => ticks = Duration::from_millis(val as u64),
             Err(_) => {
                 eprintln!("Ticks is not a number '{}'", val);
                 print_usage(opts);
