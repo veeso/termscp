@@ -42,6 +42,7 @@ use super::{Activity, Context};
 use crate::filetransfer::FileTransferProtocol;
 
 // File transfer
+use crate::filetransfer::ftp_transfer::FtpFileTransfer;
 use crate::filetransfer::sftp_transfer::SftpFileTransfer;
 use crate::filetransfer::FileTransfer;
 use crate::fs::FsEntry;
@@ -237,11 +238,13 @@ impl FileTransferActivity {
             disconnected: false,
             quit: false,
             context: None,
-            params: params,
             client: match protocol {
                 FileTransferProtocol::Sftp => Box::new(SftpFileTransfer::new()),
-                FileTransferProtocol::Ftp => panic!("FTP is not supported YET!"), // FIXME: FTP
+                FileTransferProtocol::Ftp => {
+                    Box::new(FtpFileTransfer::new(params.extra_flag_secure))
+                }
             },
+            params: params,
             local: FileExplorer::new(),
             remote: FileExplorer::new(),
             tab: FileExplorerTab::Local,
@@ -256,7 +259,6 @@ impl FileTransferActivity {
             transfer_started: Instant::now(),
         }
     }
-
 }
 
 /**
