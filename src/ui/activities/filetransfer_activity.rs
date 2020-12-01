@@ -26,6 +26,7 @@
 // Dependencies
 extern crate chrono;
 extern crate crossterm;
+extern crate textwrap;
 extern crate tui;
 extern crate unicode_width;
 
@@ -1863,7 +1864,11 @@ impl FileTransferActivity {
             let mut log_state: ListState = ListState::default();
             log_state.select(Some(self.log_index));
             // Draw log
-            f.render_stateful_widget(self.draw_log_list(), chunks[2], &mut log_state);
+            f.render_stateful_widget(
+                self.draw_log_list(chunks[2].width),
+                chunks[2],
+                &mut log_state,
+            );
             // Draw popup
             if let InputMode::Popup(popup) = &self.input_mode {
                 // Calculate popup size
@@ -1983,34 +1988,47 @@ impl FileTransferActivity {
     /// ### draw_log_list
     ///
     /// Draw log list
-    fn draw_log_list(&self) -> List {
+    /// Chunk width must be provided to wrap text
+    fn draw_log_list(&self, width: u16) -> List {
         let events: Vec<ListItem> = self
             .log_records
             .iter()
             .map(|record: &LogRecord| {
+                let record_rows = textwrap::wrap(record.msg.as_str(), (width as usize) - 35); // -35 'cause log prefix
                 let s = match record.level {
                     LogLevel::Error => Style::default().fg(Color::Red),
                     LogLevel::Warn => Style::default().fg(Color::Yellow),
                     LogLevel::Info => Style::default().fg(Color::Green),
                 };
-                let log = Spans::from(vec![
-                    Span::from(format!("{}", record.time.format("%Y-%m-%dT%H:%M:%S%Z"))),
-                    Span::raw(" ["),
-                    Span::styled(
-                        format!(
-                            "{}",
-                            match record.level {
-                                LogLevel::Error => "ERROR",
-                                LogLevel::Warn => "WARN",
-                                LogLevel::Info => "INFO",
-                            }
-                        ),
-                        s,
-                    ),
-                    Span::raw("]: "),
-                    Span::from(record.msg.clone()),
-                ]);
-                ListItem::new(log)
+                let mut rows: Vec<Spans> = Vec::with_capacity(record_rows.len());
+                // Iterate over remaining rows
+                for (idx, row) in record_rows.iter().enumerate() {
+                    let row: Spans = match idx {
+                        0 => Spans::from(vec![
+                            Span::from(format!("{}", record.time.format("%Y-%m-%dT%H:%M:%S%Z"))),
+                            Span::raw(" ["),
+                            Span::styled(
+                                format!(
+                                    "{:5}",
+                                    match record.level {
+                                        LogLevel::Error => "ERROR",
+                                        LogLevel::Warn => "WARN",
+                                        LogLevel::Info => "INFO",
+                                    }
+                                ),
+                                s,
+                            ),
+                            Span::raw("]: "),
+                            Span::from(String::from(row.as_ref())),
+                        ]),
+                        _ => Spans::from(vec![Span::from(textwrap::indent(
+                            row.as_ref(),
+                            "                                   ",
+                        ))]),
+                    };
+                    rows.push(row);
+                }
+                ListItem::new(rows)
             })
             .collect();
         List::new(events)
