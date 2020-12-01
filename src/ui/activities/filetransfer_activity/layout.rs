@@ -88,8 +88,8 @@ impl FileTransferActivity {
             if let InputMode::Popup(popup) = &self.input_mode {
                 // Calculate popup size
                 let (width, height): (u16, u16) = match popup {
-                    PopupType::Alert(_, _) => (30, 10),
-                    PopupType::Fatal(_) => (30, 10),
+                    PopupType::Alert(_, _) => (50, 10),
+                    PopupType::Fatal(_) => (50, 10),
                     PopupType::Help => (50, 70),
                     PopupType::Input(_, _) => (30, 10),
                     PopupType::Progress(_) => (40, 10),
