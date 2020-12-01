@@ -31,7 +31,7 @@ use super::{FileTransfer, FileTransferError};
 use crate::fs::{FsDirectory, FsEntry, FsFile};
 
 // Includes
-use ssh2::{Session, Sftp};
+use ssh2::{FileStat, Session, Sftp};
 use std::io::{Read, Seek, Write};
 use std::net::TcpStream;
 use std::path::{Path, PathBuf};
@@ -98,6 +98,78 @@ impl SftpFileTransfer {
                 }
             }
             false => PathBuf::from(p),
+        }
+    }
+
+    /// ### make_fsentry
+    ///
+    /// Make fsentry from path and metadata
+    fn make_fsentry(&self, path: &Path, metadata: &FileStat) -> FsEntry {
+        // Get common parameters
+        let file_name: String = String::from(path.file_name().unwrap().to_str().unwrap_or(""));
+        let file_type: Option<String> = match path.extension() {
+            Some(ext) => Some(String::from(ext.to_str().unwrap_or(""))),
+            None => None,
+        };
+        let uid: Option<u32> = metadata.uid;
+        let gid: Option<u32> = metadata.gid;
+        let pex: Option<(u8, u8, u8)> = match metadata.perm {
+            Some(perms) => Some((
+                ((perms >> 6) & 0x7) as u8,
+                ((perms >> 3) & 0x7) as u8,
+                (perms & 0x7) as u8,
+            )),
+            None => None,
+        };
+        let size: u64 = metadata.size.unwrap_or(0);
+        let mut atime: SystemTime = SystemTime::UNIX_EPOCH;
+        atime = atime
+            .checked_add(Duration::from_secs(metadata.atime.unwrap_or(0)))
+            .unwrap_or(SystemTime::UNIX_EPOCH);
+        let mut mtime: SystemTime = SystemTime::UNIX_EPOCH;
+        mtime = mtime
+            .checked_add(Duration::from_secs(metadata.mtime.unwrap_or(0)))
+            .unwrap_or(SystemTime::UNIX_EPOCH);
+        // Check if symlink
+        let is_symlink: bool = metadata.file_type().is_symlink();
+        let symlink: Option<PathBuf> = match is_symlink {
+            true => {
+                // Read symlink
+                match self.sftp.as_ref().unwrap().readlink(path) {
+                    Ok(p) => Some(p),
+                    Err(_) => None,
+                }
+            }
+            false => None,
+        };
+        // Is a directory?
+        match metadata.is_dir() {
+            true => FsEntry::Directory(FsDirectory {
+                name: file_name,
+                abs_path: PathBuf::from(path),
+                last_change_time: mtime,
+                last_access_time: atime,
+                creation_time: SystemTime::UNIX_EPOCH,
+                readonly: false,
+                symlink: symlink,
+                user: uid,
+                group: gid,
+                unix_pex: pex,
+            }),
+            false => FsEntry::File(FsFile {
+                name: file_name,
+                abs_path: PathBuf::from(path),
+                size: size as usize,
+                ftype: file_type,
+                last_change_time: mtime,
+                last_access_time: atime,
+                creation_time: SystemTime::UNIX_EPOCH,
+                readonly: false,
+                symlink: symlink,
+                user: uid,
+                group: gid,
+                unix_pex: pex,
+            }),
         }
     }
 }
@@ -229,77 +301,7 @@ impl FileTransfer for SftpFileTransfer {
                         let mut entries: Vec<FsEntry> = Vec::with_capacity(files.len());
                         // Iterate over files
                         for (path, metadata) in files {
-                            // Get common parameters
-                            let file_name: String =
-                                String::from(path.file_name().unwrap().to_str().unwrap_or(""));
-                            let file_type: Option<String> = match path.extension() {
-                                Some(ext) => Some(String::from(ext.to_str().unwrap_or(""))),
-                                None => None,
-                            };
-                            let uid: Option<u32> = metadata.uid;
-                            let gid: Option<u32> = metadata.gid;
-                            let pex: Option<(u8, u8, u8)> = match metadata.perm {
-                                Some(perms) => Some((
-                                    ((perms >> 6) & 0x7) as u8,
-                                    ((perms >> 3) & 0x7) as u8,
-                                    (perms & 0x7) as u8,
-                                )),
-                                None => None,
-                            };
-                            let size: u64 = metadata.size.unwrap_or(0);
-                            let mut atime: SystemTime = SystemTime::UNIX_EPOCH;
-                            atime = atime
-                                .checked_add(Duration::from_secs(metadata.atime.unwrap_or(0)))
-                                .unwrap_or(SystemTime::UNIX_EPOCH);
-                            let mut mtime: SystemTime = SystemTime::UNIX_EPOCH;
-                            mtime = mtime
-                                .checked_add(Duration::from_secs(metadata.mtime.unwrap_or(0)))
-                                .unwrap_or(SystemTime::UNIX_EPOCH);
-                            // Check if symlink
-                            let is_symlink: bool = metadata.file_type().is_symlink();
-                            let symlink: Option<PathBuf> = match is_symlink {
-                                true => {
-                                    // Read symlink
-                                    match sftp.readlink(path.as_path()) {
-                                        Ok(p) => Some(p),
-                                        Err(_) => None,
-                                    }
-                                }
-                                false => None,
-                            };
-                            // Is a directory?
-                            match metadata.is_dir() {
-                                true => {
-                                    entries.push(FsEntry::Directory(FsDirectory {
-                                        name: file_name,
-                                        abs_path: path.clone(),
-                                        last_change_time: mtime,
-                                        last_access_time: atime,
-                                        creation_time: SystemTime::UNIX_EPOCH,
-                                        readonly: false,
-                                        symlink: symlink,
-                                        user: uid,
-                                        group: gid,
-                                        unix_pex: pex,
-                                    }));
-                                }
-                                false => {
-                                    entries.push(FsEntry::File(FsFile {
-                                        name: file_name,
-                                        abs_path: path.clone(),
-                                        size: size as usize,
-                                        ftype: file_type,
-                                        last_change_time: mtime,
-                                        last_access_time: atime,
-                                        creation_time: SystemTime::UNIX_EPOCH,
-                                        readonly: false,
-                                        symlink: symlink,
-                                        user: uid,
-                                        group: gid,
-                                        unix_pex: pex,
-                                    }));
-                                }
-                            }
+                            entries.push(self.make_fsentry(path.as_path(), &metadata));
                         }
                         Ok(entries)
                     }
@@ -386,6 +388,27 @@ impl FileTransfer for SftpFileTransfer {
                     Err(_) => Err(FileTransferError::FileCreateDenied),
                 }
             }
+        }
+    }
+
+    /// ### stat
+    ///
+    /// Stat file and return FsEntry
+    fn stat(&self, path: &Path) -> Result<FsEntry, FileTransferError> {
+        match self.sftp.as_ref() {
+            Some(sftp) => {
+                // Get path
+                let dir: PathBuf = match self.get_remote_path(path) {
+                    Ok(p) => p,
+                    Err(err) => return Err(err),
+                };
+                // Get file
+                match sftp.stat(dir.as_path()) {
+                    Ok(metadata) => Ok(self.make_fsentry(dir.as_path(), &metadata)),
+                    Err(_) => Err(FileTransferError::NoSuchFileOrDirectory),
+                }
+            }
+            None => Err(FileTransferError::UninitializedSession),
         }
     }
 
@@ -601,6 +624,29 @@ mod tests {
         assert_eq!(files.len(), 3); // There are 3 files
                                     // Disconnect
         assert!(client.disconnect().is_ok());
+    }
+
+    #[test]
+    fn test_filetransfer_sftp_stat() {
+        let mut client: SftpFileTransfer = SftpFileTransfer::new();
+        assert!(client
+            .connect(
+                String::from("test.rebex.net"),
+                22,
+                Some(String::from("demo")),
+                Some(String::from("password"))
+            )
+            .is_ok());
+        // Check session and sftp
+        assert!(client.session.is_some());
+        assert!(client.sftp.is_some());
+        assert_eq!(client.wrkdir, PathBuf::from("/"));
+        let file: FsEntry = client.stat(PathBuf::from("readme.txt").as_path()).ok().unwrap();
+        if let FsEntry::File(file) = file {
+            assert_eq!(file.abs_path, PathBuf::from("/readme.txt"));
+        } else {
+            panic!("Expected readme.txt to be a file");
+        }
     }
 
     #[test]

@@ -141,6 +141,11 @@ pub trait FileTransfer {
     /// Rename file or a directory
     fn rename(&self, file: &FsEntry, dst: &Path) -> Result<(), FileTransferError>;
 
+    /// ### stat
+    /// 
+    /// Stat file and return FsEntry
+    fn stat(&self, path: &Path) -> Result<FsEntry, FileTransferError>;
+
     /// ### send_file
     ///
     /// Send file to remote
