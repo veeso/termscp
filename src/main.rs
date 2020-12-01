@@ -63,6 +63,7 @@ fn main() {
     let mut password: Option<String> = None; // Default password
     let mut protocol: FileTransferProtocol = FileTransferProtocol::Sftp; // Default protocol
     let mut ticks: Duration = Duration::from_millis(10);
+    let mut secure: bool = false;
     //Process options
     let mut opts = Options::new();
     opts.optopt(
@@ -114,12 +115,13 @@ fn main() {
     if let Some(remote) = extra_args.get(0) {
         // Parse address
         match utils::parse_remote_opt(remote) {
-            Ok((addr, portn, proto, user)) => {
+            Ok((addr, portn, proto, user, secure)) => {
                 // Set params
                 address = Some(addr);
                 port = portn;
                 protocol = proto;
                 username = user;
+                secure = secure;
             }
             Err(err) => {
                 eprintln!("Bad address option: {}", err);
@@ -162,7 +164,7 @@ fn main() {
         }
         // In this case the first activity will be FileTransfer
         start_activity = NextActivity::FileTransfer;
-        manager.set_filetransfer_params(address, port, protocol, username, password);
+        manager.set_filetransfer_params(address, port, protocol, username, password, secure);
     }
     // Run
     manager.run(start_activity);
