@@ -916,8 +916,24 @@ impl FileTransferActivity {
                         // Match selected file
                         let local_files: Vec<FsEntry> = self.local.files.clone();
                         if let Some(entry) = local_files.get(self.local.index) {
-                            if let FsEntry::Directory(dir) = entry {
-                                self.local_changedir(dir.abs_path.as_path(), true);
+                            // If directory, enter directory, otherwise check if symlink
+                            match entry {
+                                FsEntry::Directory(dir) => self.local_changedir(dir.abs_path.as_path(), true),
+                                FsEntry::File(file) => {
+                                    // Check if symlink
+                                    if let Some(realpath) = &file.symlink {
+                                        // Stat realpath
+                                        match self.context.as_ref().unwrap().local.stat(realpath.as_path()) {
+                                            Ok(real_file) => {
+                                                // If real file is a directory, enter directory
+                                                if let FsEntry::Directory(real_dir) = real_file {
+                                                    self.local_changedir(real_dir.abs_path.as_path(), true)
+                                                }
+                                            },
+                                            Err(err) => self.log(LogLevel::Error, format!("Failed to stat file \"{}\": {}", realpath.display(), err).as_ref())
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -1082,9 +1098,24 @@ impl FileTransferActivity {
                         // Match selected file
                         let files: Vec<FsEntry> = self.remote.files.clone();
                         if let Some(entry) = files.get(self.remote.index) {
-                            if let FsEntry::Directory(dir) = entry {
-                                // Get current directory
-                                self.remote_changedir(dir.abs_path.as_path(), true);
+                            // If directory, enter directory; if file, check if is symlink
+                            match entry {
+                                FsEntry::Directory(dir) => self.remote_changedir(dir.abs_path.as_path(), true),
+                                FsEntry::File(file) => {
+                                    // Check if symlink
+                                    if let Some(realpath) = &file.symlink {
+                                        // Stat realpath
+                                        match self.client.stat(realpath.as_path()) {
+                                            Ok(real_file) => {
+                                                // If real file is a directory, enter directory
+                                                if let FsEntry::Directory(real_dir) = real_file {
+                                                    self.remote_changedir(real_dir.abs_path.as_path(), true)
+                                                }
+                                            },
+                                            Err(err) => self.log(LogLevel::Error, format!("Failed to stat file \"{}\": {}", realpath.display(), err).as_ref())
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
