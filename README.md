@@ -1,6 +1,6 @@
 # TermSCP
 
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![Downloads](https://img.shields.io/crates/d/termscp.svg)](https://crates.io/crates/termscp) [![Stars](https://img.shields.io/github/stars/ChristianVisintin/TermSCP.svg)](https://github.com/ChristianVisintin/TermSCP) [![Issues](https://img.shields.io/github/issues/ChristianVisintin/TermSCP.svg)](https://github.com/ChristianVisintin/TermSCP/issues) [![Crates.io](https://img.shields.io/badge/crates.io-v0.1.0-orange.svg)](https://crates.io/crates/termscp) [![Build](https://github.com/ChristianVisintin/TermSCP/workflows/Build/badge.svg)](https://github.com/ChristianVisintin/TermSCP/actions)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![Stars](https://img.shields.io/github/stars/ChristianVisintin/TermSCP.svg)](https://github.com/ChristianVisintin/TermSCP) [![Issues](https://img.shields.io/github/issues/ChristianVisintin/TermSCP.svg)](https://github.com/ChristianVisintin/TermSCP/issues) [![Downloads](https://img.shields.io/crates/d/termscp.svg)](https://crates.io/crates/termscp) [![Crates.io](https://img.shields.io/badge/crates.io-v0.1.0-orange.svg)](https://crates.io/crates/termscp) [![Build](https://github.com/ChristianVisintin/TermSCP/workflows/Build/badge.svg)](https://github.com/ChristianVisintin/TermSCP/actions)
 
 ~ Basically, WinSCP on a terminal ~  
 Developed by Christian Visintin  
@@ -15,6 +15,10 @@ Current version: 0.1.0 (??/??/2020)
     - [Why TermSCP](#why-termscp)
   - [Features](#features)
   - [Installation](#installation)
+    - [Requirements](#requirements)
+      - [Install OpenSSL on Windows](#install-openssl-on-windows)
+        - [Precompiled Binaries](#precompiled-binaries)
+        - [Vcpkg](#vcpkg)
     - [Cargo](#cargo)
     - [Deb / Rpm](#deb--rpm)
     - [Usage](#usage)
@@ -29,7 +33,7 @@ Current version: 0.1.0 (??/??/2020)
 
 ## About TermSCP
 
-TermSCP is basically a porting of WinSCP to terminal. So basically is a terminal tool with an UI to connect to a remote server to retrieve and upload files. It works both on Linux, MacOS and Windows (TODO: double check) and supports SFTP and FTPS.
+TermSCP is basically a porting of WinSCP to terminal. So basically is a terminal tool with an UI to connect to a remote server to retrieve and upload files. It works both on **Linux**, **MacOS**, **UNIX** and **Windows** too and supports SFTP, FTP and FTPS.
 
 ### Why TermSCP
 
@@ -39,7 +43,7 @@ It happens very often to me when using SCP at work to forget the path of a file 
 
 - Different communication protocols
   - SFTP
-  - FTPS
+  - FTP and FTPS
 - Practical user interface to explore the remote machine file system and to select the files to upload and download
 - Written in Rust
 - Easy to extend with new protocols
@@ -48,6 +52,27 @@ It happens very often to me when using SCP at work to forget the path of a file 
 
 If you're considering to install TermSCP I want to thank you 💛 ! I hope this project can be useful for you!  
 If you want to contribute to this project, don't forget to check out our contribute guide. [Read More](CONTRIBUTING.md)
+
+### Requirements
+
+- OpenSSL: only if you want **FTPS** support
+
+#### Install OpenSSL on Windows
+
+To install OpenSSL on Windows you have basically two options:
+
+##### Precompiled Binaries
+
+Download the precompiled binaries from <http://slproweb.com/products/Win32OpenSSL.html> (Non light installation); install to system path and then add to your environmental variables `OPENSSL_DIR=path\to\the\installation\dir`
+
+##### Vcpkg
+
+You can use [vcpkg](https://github.com/Microsoft/vcpkg) to install OpenSSL and then run
+
+```dos
+vcpkg install openssl:x64-windows
+set VCPKG_ROOT=PATH_TO_VCPKG_INSTALLATION
+```
 
 ### Cargo
 
@@ -81,7 +106,8 @@ TODO:
 
 ## Upcoming Features
 
-TODO:
+- **File viewer**: possibility to show in a popup the file content from the explorer.
+- **Replacement of OpenSSL**: OpenSSL is kinda an annoying stuff, especially for Windows. Unfortunately rust-ftp requires OpenSSL to build. I'm working on replacing it on [rust-fpt](https://github.com/ChristianVisintin/rust-ftp/tree/rust-tls). If you want to give me a hand, feel free to contribute.
 
 ---
 
