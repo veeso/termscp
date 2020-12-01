@@ -60,12 +60,17 @@ fn main() {
     let mut address: Option<String> = None; // None
     let mut port: u16 = 22; // Default port
     let mut username: Option<String> = None; // Default username
-    let password: Option<String>; // Default password
+    let mut password: Option<String> = None; // Default password
     let mut protocol: FileTransferProtocol = FileTransferProtocol::Sftp; // Default protocol
     let mut ticks: Duration = Duration::from_millis(10);
     //Process options
-    // FIXME: there is no way to provide password from CLI atm
     let mut opts = Options::new();
+    opts.optopt(
+        "P",
+        "password",
+        "Provide password from CLI (use at your own risk)",
+        "<password>",
+    );
     opts.optopt("T", "ticks", "Set UI ticks; default 10ms", "<ms>");
     opts.optflag("v", "version", "");
     opts.optflag("h", "help", "Print this menu");
@@ -88,6 +93,10 @@ fn main() {
             TERMSCP_VERSION, TERMSCP_AUTHORS,
         );
         std::process::exit(255);
+    }
+    // Match password
+    if let Some(passwd) = matches.opt_str("P") {
+        password = Some(String::from(passwd));
     }
     // Match ticks
     if let Some(val) = matches.opt_str("T") {
@@ -135,20 +144,22 @@ fn main() {
     // Initialize client if necessary
     let mut start_activity: NextActivity = NextActivity::Authentication;
     if let Some(address) = address {
-        // Ask password
-        password = match rpassword::read_password_from_tty(Some("Password: ")) {
-            Ok(p) => {
-                if p.len() > 0 {
-                    Some(p)
-                } else {
-                    None
+        if password.is_none() {
+            // Ask password if unspecified
+            password = match rpassword::read_password_from_tty(Some("Password: ")) {
+                Ok(p) => {
+                    if p.len() > 0 {
+                        Some(p)
+                    } else {
+                        None
+                    }
                 }
-            }
-            Err(_) => {
-                eprintln!("Could not read password from prompt");
-                std::process::exit(255);
-            }
-        };
+                Err(_) => {
+                    eprintln!("Could not read password from prompt");
+                    std::process::exit(255);
+                }
+            };
+        }
         // In this case the first activity will be FileTransfer
         start_activity = NextActivity::FileTransfer;
         manager.set_filetransfer_params(address, port, protocol, username, password);
