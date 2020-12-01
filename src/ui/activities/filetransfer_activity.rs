@@ -153,17 +153,14 @@ impl FileExplorer {
     }
 
     /// ### sort_files_by_name
-    /// 
+    ///
     /// Sort explorer files by their name
     pub fn sort_files_by_name(&mut self) {
-        self.files.sort_by_key(|x: &FsEntry| {
-            match x {
-                FsEntry::Directory(dir) => dir.name.clone(),
-                FsEntry::File(file) => file.name.clone()
-            }
+        self.files.sort_by_key(|x: &FsEntry| match x {
+            FsEntry::Directory(dir) => dir.name.clone(),
+            FsEntry::File(file) => file.name.clone(),
         });
     }
-
 }
 
 /// ## FileExplorerTab
@@ -918,19 +915,38 @@ impl FileTransferActivity {
                         if let Some(entry) = local_files.get(self.local.index) {
                             // If directory, enter directory, otherwise check if symlink
                             match entry {
-                                FsEntry::Directory(dir) => self.local_changedir(dir.abs_path.as_path(), true),
+                                FsEntry::Directory(dir) => {
+                                    self.local_changedir(dir.abs_path.as_path(), true)
+                                }
                                 FsEntry::File(file) => {
                                     // Check if symlink
                                     if let Some(realpath) = &file.symlink {
                                         // Stat realpath
-                                        match self.context.as_ref().unwrap().local.stat(realpath.as_path()) {
+                                        match self
+                                            .context
+                                            .as_ref()
+                                            .unwrap()
+                                            .local
+                                            .stat(realpath.as_path())
+                                        {
                                             Ok(real_file) => {
                                                 // If real file is a directory, enter directory
                                                 if let FsEntry::Directory(real_dir) = real_file {
-                                                    self.local_changedir(real_dir.abs_path.as_path(), true)
+                                                    self.local_changedir(
+                                                        real_dir.abs_path.as_path(),
+                                                        true,
+                                                    )
                                                 }
-                                            },
-                                            Err(err) => self.log(LogLevel::Error, format!("Failed to stat file \"{}\": {}", realpath.display(), err).as_ref())
+                                            }
+                                            Err(err) => self.log(
+                                                LogLevel::Error,
+                                                format!(
+                                                    "Failed to stat file \"{}\": {}",
+                                                    realpath.display(),
+                                                    err
+                                                )
+                                                .as_ref(),
+                                            ),
                                         }
                                     }
                                 }
@@ -1100,7 +1116,9 @@ impl FileTransferActivity {
                         if let Some(entry) = files.get(self.remote.index) {
                             // If directory, enter directory; if file, check if is symlink
                             match entry {
-                                FsEntry::Directory(dir) => self.remote_changedir(dir.abs_path.as_path(), true),
+                                FsEntry::Directory(dir) => {
+                                    self.remote_changedir(dir.abs_path.as_path(), true)
+                                }
                                 FsEntry::File(file) => {
                                     // Check if symlink
                                     if let Some(realpath) = &file.symlink {
@@ -1109,10 +1127,21 @@ impl FileTransferActivity {
                                             Ok(real_file) => {
                                                 // If real file is a directory, enter directory
                                                 if let FsEntry::Directory(real_dir) = real_file {
-                                                    self.remote_changedir(real_dir.abs_path.as_path(), true)
+                                                    self.remote_changedir(
+                                                        real_dir.abs_path.as_path(),
+                                                        true,
+                                                    )
                                                 }
-                                            },
-                                            Err(err) => self.log(LogLevel::Error, format!("Failed to stat file \"{}\": {}", realpath.display(), err).as_ref())
+                                            }
+                                            Err(err) => self.log(
+                                                LogLevel::Error,
+                                                format!(
+                                                    "Failed to stat file \"{}\": {}",
+                                                    realpath.display(),
+                                                    err
+                                                )
+                                                .as_ref(),
+                                            ),
                                         }
                                     }
                                 }
@@ -2286,7 +2315,7 @@ impl Activity for FileTransferActivity {
     /// This function must be called at each tick to refresh the interface
     fn on_draw(&mut self) {
         let mut redraw: bool = false; // Should ui actually be redrawned?
-        // Context must be something
+                                      // Context must be something
         if self.context.is_none() {
             return;
         }
