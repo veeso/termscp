@@ -29,6 +29,7 @@ use std::path::{Path, PathBuf};
 use crate::fs::FsEntry;
 
 // Transfers
+//pub mod ftp_transfer;
 pub mod sftp_transfer;
 
 /// ## FileTransferProtocol
@@ -45,7 +46,16 @@ pub enum FileTransferProtocol {
 ///
 /// FileTransferError defines the possible errors available for a file transfer
 
-pub enum FileTransferError {
+pub struct FileTransferError {
+    code: FileTransferErrorType,
+    msg: Option<String>,
+}
+
+/// ## FileTransferErrorType
+///
+/// FileTransferErrorType defines the possible errors available for a file transfer
+
+pub enum FileTransferErrorType {
     AuthenticationFailed,
     BadAddress,
     ConnectionError,
@@ -56,27 +66,51 @@ pub enum FileTransferError {
     NoSuchFileOrDirectory,
     ProtocolError,
     UninitializedSession,
-    //UnknownError,
+}
+
+impl FileTransferError {
+    /// ### new
+    ///
+    /// Instantiates a new FileTransferError
+    pub fn new(code: FileTransferErrorType) -> FileTransferError {
+        FileTransferError {
+            code: code,
+            msg: None,
+        }
+    }
+
+    /// ### new_ex
+    ///
+    /// Instantiates a new FileTransferError with message
+    pub fn new_ex(code: FileTransferErrorType, msg: String) -> FileTransferError {
+        let mut err: FileTransferError = FileTransferError::new(code);
+        err.msg = Some(msg);
+        err
+    }
 }
 
 impl std::fmt::Display for FileTransferError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        let err: String = match self {
-            FileTransferError::AuthenticationFailed => {
-                String::from("Authentication failed: bad credentials")
+        let err: String = match &self.code {
+            FileTransferErrorType::AuthenticationFailed => {
+                String::from("Authentication failed")
             }
-            FileTransferError::BadAddress => String::from("Bad address syntax"),
-            FileTransferError::ConnectionError => String::from("Connection error"),
-            FileTransferError::DirStatFailed => String::from("Could not stat directory"),
-            FileTransferError::FileCreateDenied => String::from("Failed to create file"),
-            FileTransferError::FileReadonly => String::from("File is readonly"),
-            FileTransferError::IoErr(err) => format!("IO Error: {}", err),
-            FileTransferError::NoSuchFileOrDirectory => String::from("No such file or directory"),
-            FileTransferError::ProtocolError => String::from("Protocol error"),
-            FileTransferError::UninitializedSession => String::from("Uninitialized session"),
-            //FileTransferError::UnknownError => String::from("Unknown error"),
+            FileTransferErrorType::BadAddress => String::from("Bad address syntax"),
+            FileTransferErrorType::ConnectionError => String::from("Connection error"),
+            FileTransferErrorType::DirStatFailed => String::from("Could not stat directory"),
+            FileTransferErrorType::FileCreateDenied => String::from("Failed to create file"),
+            FileTransferErrorType::FileReadonly => String::from("File is readonly"),
+            FileTransferErrorType::IoErr(err) => format!("IO Error: {}", err),
+            FileTransferErrorType::NoSuchFileOrDirectory => {
+                String::from("No such file or directory")
+            }
+            FileTransferErrorType::ProtocolError => String::from("Protocol error"),
+            FileTransferErrorType::UninitializedSession => String::from("Uninitialized session"),
         };
-        write!(f, "{}", err)
+        match &self.msg {
+            Some(msg) => write!(f, "{} ({})", err, msg),
+            None => write!(f, "{}", err),
+        }
     }
 }
 
@@ -142,7 +176,7 @@ pub trait FileTransfer {
     fn rename(&self, file: &FsEntry, dst: &Path) -> Result<(), FileTransferError>;
 
     /// ### stat
-    /// 
+    ///
     /// Stat file and return FsEntry
     fn stat(&self, path: &Path) -> Result<FsEntry, FileTransferError>;
 
