@@ -29,7 +29,7 @@ use std::path::{Path, PathBuf};
 use crate::fs::FsEntry;
 
 // Transfers
-//pub mod ftp_transfer;
+pub mod ftp_transfer;
 pub mod sftp_transfer;
 
 /// ## FileTransferProtocol
@@ -59,6 +59,7 @@ pub enum FileTransferErrorType {
     AuthenticationFailed,
     BadAddress,
     ConnectionError,
+    SslError,
     DirStatFailed,
     FileCreateDenied,
     FileReadonly,
@@ -66,6 +67,7 @@ pub enum FileTransferErrorType {
     NoSuchFileOrDirectory,
     ProtocolError,
     UninitializedSession,
+    UnsupportedFeature,
 }
 
 impl FileTransferError {
@@ -105,7 +107,9 @@ impl std::fmt::Display for FileTransferError {
                 String::from("No such file or directory")
             }
             FileTransferErrorType::ProtocolError => String::from("Protocol error"),
+            FileTransferErrorType::SslError => String::from("SSL error"),
             FileTransferErrorType::UninitializedSession => String::from("Uninitialized session"),
+            FileTransferErrorType::UnsupportedFeature => String::from("Unsupported feature"),
         };
         match &self.msg {
             Some(msg) => write!(f, "{} ({})", err, msg),
