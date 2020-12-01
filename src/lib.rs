@@ -19,6 +19,8 @@
 *
 */
 
+#[macro_use] extern crate lazy_static;
+
 pub mod activity_manager;
 pub mod filetransfer;
 pub mod fs;

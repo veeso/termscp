@@ -580,6 +580,8 @@ dependencies = [
  "crossterm",
  "ftp",
  "getopts",
+ "lazy_static",
+ "regex",
  "rpassword",
  "ssh2",
  "tempfile",
