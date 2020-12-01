@@ -263,6 +263,115 @@ impl Localhost {
         }
     }
 
+    /// ### stat
+    /// 
+    /// Stat file and create a FsEntry
+    #[cfg(any(unix, macos, linux))]
+    pub fn stat(&self, path: &Path) -> Result<FsEntry, HostError> {
+        let attr: Metadata = match fs::metadata(path.clone()) {
+            Ok(metadata) => metadata,
+            Err(err) => return Err(HostError::new(HostErrorType::FileNotAccessible, Some(err)))
+        };
+        let file_name: String = String::from(path.file_name().unwrap().to_str().unwrap_or(""));
+        // Match dir / file
+        Ok(match path.is_dir() {
+            true => FsEntry::Directory(FsDirectory {
+                name: file_name,
+                abs_path: PathBuf::from(path),
+                last_change_time: attr.modified().unwrap_or(SystemTime::UNIX_EPOCH),
+                last_access_time: attr.accessed().unwrap_or(SystemTime::UNIX_EPOCH),
+                creation_time: attr.created().unwrap_or(SystemTime::UNIX_EPOCH),
+                readonly: attr.permissions().readonly(),
+                symlink: match fs::read_link(path) {
+                    Ok(p) => Some(p),
+                    Err(_) => None,
+                },
+                user: Some(attr.uid()),
+                group: Some(attr.gid()),
+                unix_pex: Some(self.u32_to_mode(attr.mode())),
+            }),
+            false => {
+                // Is File
+                let extension: Option<String> = match path.extension() {
+                    Some(s) => Some(String::from(s.to_str().unwrap_or(""))),
+                    None => None,
+                };
+                FsEntry::File(FsFile {
+                    name: file_name,
+                    abs_path: PathBuf::from(path),
+                    last_change_time: attr.modified().unwrap_or(SystemTime::UNIX_EPOCH),
+                    last_access_time: attr.accessed().unwrap_or(SystemTime::UNIX_EPOCH),
+                    creation_time: attr.created().unwrap_or(SystemTime::UNIX_EPOCH),
+                    readonly: attr.permissions().readonly(),
+                    size: attr.len() as usize,
+                    ftype: extension,
+                    symlink: match fs::read_link(path) {
+                        Ok(p) => Some(p),
+                        Err(_) => None,
+                    },
+                    user: Some(attr.uid()),
+                    group: Some(attr.gid()),
+                    unix_pex: Some(self.u32_to_mode(attr.mode())),
+                })
+            }
+        })
+    }
+
+    /// ### stat
+    /// 
+    /// Stat file and create a FsEntry
+    #[cfg(target_os = "windows")]
+    #[cfg(not(tarpaulin_include))]
+    pub fn stat(&self, path: &Path) -> Result<FsEntry, HostError> {
+        let attr: Metadata = match fs::metadata(path.clone()) {
+            Ok(metadata) => metadata,
+            Err(err) => return Err(HostError::new(HostErrorType::FileNotAccessible, Some(err)))
+        };
+        let file_name: String = String::from(path.file_name().unwrap().to_str().unwrap_or(""));
+        // Match dir / file
+        Ok(match path.is_dir() {
+            true => FsEntry::Directory(FsDirectory {
+                name: file_name,
+                abs_path: PathBuf::from(path),
+                last_change_time: attr.modified().unwrap_or(SystemTime::UNIX_EPOCH),
+                last_access_time: attr.accessed().unwrap_or(SystemTime::UNIX_EPOCH),
+                creation_time: attr.created().unwrap_or(SystemTime::UNIX_EPOCH),
+                readonly: attr.permissions().readonly(),
+                symlink: match fs::read_link(path) {
+                    Ok(p) => Some(p),
+                    Err(_) => None,
+                },
+                user: None,
+                group: None,
+                unix_pex: None,
+            }),
+            false => {
+                // Is File
+                let extension: Option<String> = match path.extension() {
+                    Some(s) => Some(String::from(s.to_str().unwrap_or(""))),
+                    None => None,
+                };
+                FsEntry::File(FsFile {
+                    name: file_name,
+                    abs_path: PathBuf::from(path),
+                    last_change_time: attr.modified().unwrap_or(SystemTime::UNIX_EPOCH),
+                    last_access_time: attr.accessed().unwrap_or(SystemTime::UNIX_EPOCH),
+                    creation_time: attr.created().unwrap_or(SystemTime::UNIX_EPOCH),
+                    readonly: attr.permissions().readonly(),
+                    size: attr.len() as usize,
+                    ftype: extension,
+                    symlink: match fs::read_link(path) {
+                        Ok(p) => Some(p),
+                        Err(_) => None,
+                    },
+                    user: None,
+                    group: None,
+                    unix_pex: None,
+                })
+            }
+        })
+    }
+
     /// ### open_file_read
     ///
     /// Open file for read
@@ -299,7 +408,6 @@ impl Localhost {
     /// ### scan_dir
     ///
     /// Get content of the current directory as a list of fs entry (Windows)
-    #[cfg(any(unix, macos, linux))]
     pub fn scan_dir(&self, dir: &Path) -> Result<Vec<FsEntry>, HostError> {
         let entries = match std::fs::read_dir(dir) {
             Ok(e) => e,
@@ -308,125 +416,9 @@ impl Localhost {
         let mut fs_entries: Vec<FsEntry> = Vec::new();
         for entry in entries {
             if let Ok(entry) = entry {
-                let path: PathBuf = entry.path();
-                let attr: Metadata = fs::metadata(path.clone()).unwrap();
-                // Get user stuff
-                /*
-                let user: Option<String> = match get_user_by_uid(attr.uid()) {
-                    Some(user) => Some(String::from(user.name().to_str().unwrap_or(""))),
-                    None => None,
-                };
-                let group: Option<String> = match get_group_by_gid(attr.gid()) {
-                    Some(group) => Some(String::from(group.name().to_str().unwrap_or(""))),
-                    None => None,
-                };
-                */
-                let file_name: String =
-                    String::from(path.file_name().unwrap().to_str().unwrap_or(""));
-                // Match dir / file
-                fs_entries.push(match path.is_dir() {
-                    true => {
-                        // Is dir
-                        FsEntry::Directory(FsDirectory {
-                            name: file_name,
-                            abs_path: path.clone(),
-                            last_change_time: attr.modified().unwrap_or(SystemTime::UNIX_EPOCH),
-                            last_access_time: attr.accessed().unwrap_or(SystemTime::UNIX_EPOCH),
-                            creation_time: attr.created().unwrap_or(SystemTime::UNIX_EPOCH),
-                            readonly: attr.permissions().readonly(),
-                            symlink: match fs::read_link(path) {
-                                Ok(p) => Some(p),
-                                Err(_) => None,
-                            },
-                            user: Some(attr.uid()),
-                            group: Some(attr.gid()),
-                            unix_pex: Some(self.u32_to_mode(attr.mode())),
-                        })
-                    }
-                    false => {
-                        // Is File
-                        let extension: Option<String> = match path.extension() {
-                            Some(s) => Some(String::from(s.to_str().unwrap_or(""))),
-                            None => None,
-                        };
-                        FsEntry::File(FsFile {
-                            name: file_name,
-                            abs_path: path.clone(),
-                            last_change_time: attr.modified().unwrap_or(SystemTime::UNIX_EPOCH),
-                            last_access_time: attr.accessed().unwrap_or(SystemTime::UNIX_EPOCH),
-                            creation_time: attr.created().unwrap_or(SystemTime::UNIX_EPOCH),
-                            readonly: attr.permissions().readonly(),
-                            size: attr.len() as usize,
-                            ftype: extension,
-                            symlink: match fs::read_link(path) {
-                                Ok(p) => Some(p),
-                                Err(_) => None,
-                            },
-                            user: Some(attr.uid()),
-                            group: Some(attr.gid()),
-                            unix_pex: Some(self.u32_to_mode(attr.mode())),
-                        })
-                    }
-                });
-            }
-        }
-        Ok(fs_entries)
-    }
-
-    /// ### scan_dir
-    ///
-    /// Get content of the current directory as a list of fs entry (Windows)
-    #[cfg(target_os = "windows")]
-    #[cfg(not(tarpaulin_include))]
-    pub fn scan_dir(&self, dir: &Path) -> Result<Vec<FsEntry>, HostError> {
-        let entries = match std::fs::read_dir(dir) {
-            Ok(e) => e,
-            Err(err) => return Err(HostError::new(HostErrorType::DirNotAccessible, Some(err))),
-        };
-        let mut fs_entries: Vec<FsEntry> = Vec::new();
-        for entry in entries {
-            if let Ok(entry) = entry {
-                let path: PathBuf = entry.path();
-                let attr: Metadata = fs::metadata(path.clone()).unwrap();
-                let file_name: String =
-                    String::from(path.file_name().unwrap().to_str().unwrap_or(""));
-                fs_entries.push(match path.is_dir() {
-                    true => {
-                        // Is dir
-                        FsEntry::Directory(FsDirectory {
-                            name: file_name,
-                            abs_path: path.clone(),
-                            last_change_time: attr.modified().unwrap_or(SystemTime::UNIX_EPOCH),
-                            last_access_time: attr.accessed().unwrap_or(SystemTime::UNIX_EPOCH),
-                            creation_time: attr.created().unwrap_or(SystemTime::UNIX_EPOCH),
-                            readonly: attr.permissions().readonly(),
-                            symlink: None,
-                            user: None,
-                            group: None,
-                            unix_pex: None,
-                        })
-                    }
-                    false => {
-                        // Is File
-                        let extension: Option<String> = match path.extension() {
-                            Some(s) => Some(String::from(s.to_str().unwrap_or(""))),
-                            None => None,
-                        };
-                        FsEntry::File(FsFile {
-                            name: file_name,
-                            abs_path: path.clone(),
-                            last_change_time: attr.modified().unwrap_or(SystemTime::UNIX_EPOCH),
-                            last_access_time: attr.accessed().unwrap_or(SystemTime::UNIX_EPOCH),
-                            creation_time: attr.created().unwrap_or(SystemTime::UNIX_EPOCH),
-                            readonly: attr.permissions().readonly(),
-                            size: attr.len() as usize,
-                            ftype: extension,
-                            symlink: None,
-                            user: None,
-                            group: None,
-                            unix_pex: None,
-                        })
-                    }
+                fs_entries.push(match self.stat(entry.path().as_path()) {
+                    Ok(entry) => entry,
+                    Err(err) => return Err(err),
                 });
             }
         }
