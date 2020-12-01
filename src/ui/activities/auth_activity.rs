@@ -44,6 +44,12 @@ use tui::{
 };
 use unicode_width::UnicodeWidthStr;
 
+enum InputProtocol {
+    Sftp,
+    Ftp,
+    Ftps,
+}
+
 /// ### InputField
 ///
 /// InputField describes the current input field to edit
@@ -75,11 +81,13 @@ pub struct AuthActivity {
     pub protocol: FileTransferProtocol,
     pub username: String,
     pub password: String,
+    pub secure: bool, // Special option used by some protocols (such as FTP)
     pub submit: bool, // becomes true after user has submitted fields
     pub quit: bool,   // Becomes true if user has pressed esc
     context: Option<Context>,
     selected_field: InputField,
     input_mode: InputMode,
+    input_protocol: InputProtocol,
     popup_message: Option<String>,
     password_placeholder: String,
     redraw: bool, // Should ui actually be redrawned?
@@ -96,6 +104,8 @@ impl AuthActivity {
             protocol: FileTransferProtocol::Sftp,
             username: String::new(),
             password: String::new(),
+            input_protocol: InputProtocol::Sftp,
+            secure: false,
             submit: false,
             quit: false,
             context: None,
@@ -104,6 +114,27 @@ impl AuthActivity {
             popup_message: None,
             password_placeholder: String::new(),
             redraw: true, // True at startup
+        }
+    }
+
+    /// ### change_opt_based_on_protocol
+    /// 
+    /// Change current options based on the selected protocol
+    fn change_opt_based_on_protocol(&mut self) {
+        // Change options based on current protocol
+        match self.input_protocol {
+            InputProtocol::Sftp => {
+                self.secure = false;
+                self.protocol = FileTransferProtocol::Sftp;
+            },
+            InputProtocol::Ftp => {
+                self.secure = false;
+                self.protocol = FileTransferProtocol::Ftp;
+            },
+            InputProtocol::Ftps => {
+                self.secure = true;
+                self.protocol = FileTransferProtocol::Ftp;
+            }
         }
     }
 
@@ -228,19 +259,23 @@ impl AuthActivity {
                     KeyCode::Left => {
                         // If current field is Protocol handle event... (move element left)
                         if self.selected_field == InputField::Protocol {
-                            self.protocol = match self.protocol {
-                                FileTransferProtocol::Sftp => FileTransferProtocol::Sftp,
-                                FileTransferProtocol::Ftp => FileTransferProtocol::Sftp, // End of list
-                            }
+                            self.input_protocol = match self.input_protocol {
+                                InputProtocol::Sftp => InputProtocol::Ftps, // End of list (wrap)
+                                InputProtocol::Ftp => InputProtocol::Sftp,
+                                InputProtocol::Ftps => InputProtocol::Ftp,
+                            };
+                            self.change_opt_based_on_protocol();
                         }
                     }
                     KeyCode::Right => {
                         // If current field is Protocol handle event... ( move element right )
                         if self.selected_field == InputField::Protocol {
-                            self.protocol = match self.protocol {
-                                FileTransferProtocol::Sftp => FileTransferProtocol::Ftp,
-                                FileTransferProtocol::Ftp => FileTransferProtocol::Ftp, // End of list
-                            }
+                            self.input_protocol = match self.input_protocol {
+                                InputProtocol::Sftp => InputProtocol::Ftp,
+                                InputProtocol::Ftp => InputProtocol::Ftps,
+                                InputProtocol::Ftps => InputProtocol::Sftp, // End of list (wrap)
+                            };
+                            self.change_opt_based_on_protocol();
                         }
                     }
                     _ => { /* Nothing to do */ }
@@ -274,7 +309,7 @@ impl AuthActivity {
     fn draw_remote_address(&self) -> Paragraph {
         Paragraph::new(self.address.as_ref())
             .style(match self.selected_field {
-                InputField::Address => Style::default().fg(Color::Cyan),
+                InputField::Address => Style::default().fg(Color::Yellow),
                 _ => Style::default(),
             })
             .block(
@@ -290,7 +325,7 @@ impl AuthActivity {
     fn draw_remote_port(&self) -> Paragraph {
         Paragraph::new(self.port.as_ref())
             .style(match self.selected_field {
-                InputField::Port => Style::default().fg(Color::Yellow),
+                InputField::Port => Style::default().fg(Color::Cyan),
                 _ => Style::default(),
             })
             .block(Block::default().borders(Borders::ALL).title("Remote port"))
@@ -300,10 +335,11 @@ impl AuthActivity {
     ///
     /// Draw protocol select
     fn draw_protocol_select(&self) -> Tabs {
-        let protocols: Vec<Spans> = vec![Spans::from("SFTP"), Spans::from("FTP")];
-        let index: usize = match self.protocol {
-            FileTransferProtocol::Sftp => 0,
-            FileTransferProtocol::Ftp => 1,
+        let protocols: Vec<Spans> = vec![Spans::from("SFTP"), Spans::from("FTP"), Spans::from("FTPS")];
+        let index: usize = match self.input_protocol {
+            InputProtocol::Sftp => 0,
+            InputProtocol::Ftp => 1,
+            InputProtocol::Ftps => 2,
         };
         Tabs::new(protocols)
             .block(Block::default().borders(Borders::ALL).title("Protocol"))
@@ -315,7 +351,8 @@ impl AuthActivity {
             .highlight_style(
                 Style::default()
                     .add_modifier(Modifier::BOLD)
-                    .fg(Color::Green),
+                    .bg(Color::Green)
+                    .fg(Color::Black)
             )
     }
 
