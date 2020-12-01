@@ -118,7 +118,7 @@ impl AuthActivity {
     }
 
     /// ### change_opt_based_on_protocol
-    /// 
+    ///
     /// Change current options based on the selected protocol
     fn change_opt_based_on_protocol(&mut self) {
         // Change options based on current protocol
@@ -126,11 +126,11 @@ impl AuthActivity {
             InputProtocol::Sftp => {
                 self.secure = false;
                 self.protocol = FileTransferProtocol::Sftp;
-            },
+            }
             InputProtocol::Ftp => {
                 self.secure = false;
                 self.protocol = FileTransferProtocol::Ftp;
-            },
+            }
             InputProtocol::Ftps => {
                 self.secure = true;
                 self.protocol = FileTransferProtocol::Ftp;
@@ -335,7 +335,8 @@ impl AuthActivity {
     ///
     /// Draw protocol select
     fn draw_protocol_select(&self) -> Tabs {
-        let protocols: Vec<Spans> = vec![Spans::from("SFTP"), Spans::from("FTP"), Spans::from("FTPS")];
+        let protocols: Vec<Spans> =
+            vec![Spans::from("SFTP"), Spans::from("FTP"), Spans::from("FTPS")];
         let index: usize = match self.input_protocol {
             InputProtocol::Sftp => 0,
             InputProtocol::Ftp => 1,
@@ -352,7 +353,7 @@ impl AuthActivity {
                 Style::default()
                     .add_modifier(Modifier::BOLD)
                     .bg(Color::Green)
-                    .fg(Color::Black)
+                    .fg(Color::Black),
             )
     }
 
@@ -413,7 +414,7 @@ impl AuthActivity {
     }
 
     /// ### draw_popup
-    /// 
+    ///
     /// Draw popup block
     fn draw_popup(&self, r: Rect) -> (Paragraph, Rect) {
         let popup_layout = Layout::default()
@@ -560,8 +561,8 @@ impl Activity for AuthActivity {
             Some(mut ctx) => {
                 let _ = ctx.terminal.clear();
                 Some(ctx)
-            },
-            None => None
+            }
+            None => None,
         }
     }
 }
