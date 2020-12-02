@@ -30,6 +30,7 @@ extern crate regex;
 
 use super::{FileTransfer, FileTransferError, FileTransferErrorType};
 use crate::fs::{FsDirectory, FsEntry, FsFile};
+use crate::utils::lstime_to_systime;
 
 // Includes
 use ftp::{FtpStream, FtpError};
@@ -240,9 +241,62 @@ impl FileTransfer for FtpFileTransfer {
                                 (owner_pex, group_pex, others_pex)
                             };
                             // Parse mtime and convert to SystemTime
-                            // NOTE: two possible time syntax: if %Y is this.year => %b %d %H:%M, otherwise %b %d %Y
-                            
+                            let mtime: SystemTime = match lstime_to_systime(metadata.get(7).unwrap().as_str(), "%b %d %Y", "%b %d %H:%M") {
+                                Ok(t) => t,
+                                Err(_) => continue
+                            };
+                            // Get uid
+                            let uid: Option<u32> = match metadata.get(4).unwrap().as_str().parse::<u32>() {
+                                Ok(uid) => Some(uid),
+                                Err(_) => None
+                            };
+                            // Get gid
+                            let gid: Option<u32> = match metadata.get(5).unwrap().as_str().parse::<u32>() {
+                                Ok(gid) => Some(gid),
+                                Err(_) => None
+                            };
+                            // Get filesize
+                            let filesize: usize = match metadata.get(6).unwrap().as_str().parse::<usize>() {
+                                Ok(sz) => sz,
+                                Err(_) => continue
+                            };
+                            let file_name: String = String::from(metadata.get(8).unwrap().as_str());
+                            let mut abs_path: PathBuf = PathBuf::from(path);
+                            let extension: Option<String> = match abs_path.as_path().extension() {
+                                None => None,
+                                Some(s) => Some(String::from(s.to_string_lossy()))
+                            };
+                            abs_path.push(file_name.as_str());
                             // Return
+                            // Push to entries
+                            result.push(match is_dir {
+                                true => FsEntry::Directory(FsDirectory {
+                                    name: file_name,
+                                    abs_path: abs_path,
+                                    last_change_time: mtime,
+                                    last_access_time: mtime,
+                                    creation_time: mtime,
+                                    readonly: false,
+                                    symlink: None,
+                                    user: uid,
+                                    group: gid,
+                                    unix_pex: Some(unix_pex),
+                                }),
+                                false => FsEntry::File(FsFile {
+                                    name: file_name,
+                                    abs_path: abs_path,
+                                    last_change_time: mtime,
+                                    last_access_time: mtime,
+                                    creation_time: mtime,
+                                    size: filesize,
+                                    ftype: extension,
+                                    readonly: false,
+                                    symlink: None,
+                                    user: uid,
+                                    group: gid,
+                                    unix_pex: Some(unix_pex),
+                                })
+                            })
                         }
                     }
                     Ok(result)
