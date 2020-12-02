@@ -24,6 +24,7 @@
 */
 
 // Dependencies
+extern crate chrono;
 extern crate ftp;
 extern crate regex;
 
@@ -239,6 +240,8 @@ impl FileTransfer for FtpFileTransfer {
                                 (owner_pex, group_pex, others_pex)
                             };
                             // Parse mtime and convert to SystemTime
+                            // NOTE: two possible time syntax: if %Y is this.year => %b %d %H:%M, otherwise %b %d %Y
+                            
                             // Return
                         }
                     }

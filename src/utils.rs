@@ -29,8 +29,9 @@ extern crate whoami;
 
 use crate::filetransfer::FileTransferProtocol;
 
+use chrono::format::ParseError;
 use chrono::prelude::*;
-use std::time::SystemTime;
+use std::time::{Duration, SystemTime};
 
 /// ### parse_remote_opt
 ///
@@ -138,6 +139,33 @@ pub fn parse_remote_opt(
 pub fn time_to_str(time: SystemTime, fmt: &str) -> String {
     let datetime: DateTime<Local> = time.into();
     format!("{}", datetime.format(fmt))
+}
+
+/// ### lstime_to_systime
+/// 
+/// Convert ls syntax time to System Time
+/// ls time has two possible syntax:
+/// 1. if year is current: %b %d %H:%M (e.g. Nov 5 13:46)
+/// 2. else: %b %d %Y (e.g. Nov 5 2019)
+pub fn lstime_to_systime(tm: &str) -> Result<SystemTime, ParseError> {
+    let datetime: NaiveDateTime = match NaiveDate::parse_from_str(tm, "%b %d %Y") {
+        Ok(date) => { // Case 2.
+            // Return NaiveDateTime from NaiveDate with time 00:00:00
+            date.and_hms(0, 0, 0)
+        }
+        Err(_) => { // Might be case 1.
+            // Check if syntax is case 1
+            match NaiveDateTime::parse_from_str(tm, "%b %d %H:%M").err().unwrap() { // This will never succeed
+                ParseError::NotEnough => { // Format is correct
+                    // We need to add Current Year at the end of the string
+                }
+                _ => return Err()
+            }
+        }
+    };
+    // Convert datetime to system time
+    let mut sys_time: SystemTime = SystemTime::UNIX_EPOCH;
+    Ok(sys_time.checked_add(Duration::from_secs(datetime.timestamp() as u64)).unwrap_or(SystemTime::UNIX_EPOCH)
 }
 
 #[cfg(test)]
