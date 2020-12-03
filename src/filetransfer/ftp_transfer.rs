@@ -34,11 +34,11 @@ use crate::utils::lstime_to_systime;
 
 // Includes
 use ftp::openssl::ssl::{SslContext, SslMethod};
-use ftp::{FtpError, FtpStream};
+use ftp::FtpStream;
 use regex::Regex;
-use std::io::{Read, Seek, Write};
+use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
-use std::time::{Duration, SystemTime};
+use std::time::SystemTime;
 
 /// ## FtpFileTransfer
 ///
@@ -79,7 +79,7 @@ impl FtpFileTransfer {
                 }
                 // Collect metadata
                 // Get if is directory and if is symlink
-                let (is_dir, is_symlink): (bool, bool) = match metadata.get(1).unwrap().as_str() {
+                let (is_dir, _is_symlink): (bool, bool) = match metadata.get(1).unwrap().as_str() {
                     "-" => (false, false),
                     "l" => (false, true),
                     "d" => (true, false),
@@ -238,24 +238,25 @@ impl FileTransfer for FtpFileTransfer {
         };
         // If SSL, open secure session
         if self.ftps {
-            let mut ctx = SslContext::builder(SslMethod::tls()).unwrap();
+            let ctx = SslContext::builder(SslMethod::tls()).unwrap();
             let ctx = ctx.build();
-            if let Err(err) = stream.into_secure(ctx) {
-                return Err(FileTransferError::new_ex(
-                    FileTransferErrorType::SslError,
-                    format!("{}", err),
-                ));
-            }
+            stream = match stream.into_secure(ctx) {
+                Ok(s) => s,
+                Err(err) => {
+                    return Err(FileTransferError::new_ex(
+                        FileTransferErrorType::SslError,
+                        format!("{}", err),
+                    ))
+                }
+            };
         }
         // If username / password...
         if let Some(username) = username {
-            if let Err(err) = stream.login(
-                username.as_str(),
-                match password {
-                    Some(pwd) => pwd.as_ref(),
-                    None => "",
-                },
-            ) {
+            let password: String = match password {
+                Some(pwd) => String::from(pwd),
+                None => String::new(),
+            };
+            if let Err(err) = stream.login(username.as_str(), password.as_str()) {
                 return Err(FileTransferError::new_ex(
                     FileTransferErrorType::AuthenticationFailed,
                     format!("{}", err),
@@ -273,7 +274,7 @@ impl FileTransfer for FtpFileTransfer {
     /// Disconnect from the remote server
 
     fn disconnect(&mut self) -> Result<(), FileTransferError> {
-        match self.stream {
+        match &mut self.stream {
             Some(stream) => match stream.quit() {
                 Ok(_) => Ok(()),
                 Err(err) => Err(FileTransferError::new_ex(
@@ -301,8 +302,8 @@ impl FileTransfer for FtpFileTransfer {
     ///
     /// Print working directory
 
-    fn pwd(&self) -> Result<PathBuf, FileTransferError> {
-        match self.stream {
+    fn pwd(&mut self) -> Result<PathBuf, FileTransferError> {
+        match &mut self.stream {
             Some(stream) => match stream.pwd() {
                 Ok(path) => Ok(PathBuf::from(path.as_str())),
                 Err(err) => Err(FileTransferError::new_ex(
@@ -321,7 +322,7 @@ impl FileTransfer for FtpFileTransfer {
     /// Change working directory
 
     fn change_dir(&mut self, dir: &Path) -> Result<PathBuf, FileTransferError> {
-        match self.stream {
+        match &mut self.stream {
             Some(stream) => match stream.cwd(&dir.to_string_lossy()) {
                 Ok(_) => Ok(PathBuf::from(dir)),
                 Err(err) => Err(FileTransferError::new_ex(
@@ -339,8 +340,8 @@ impl FileTransfer for FtpFileTransfer {
     ///
     /// List directory entries
 
-    fn list_dir(&self, path: &Path) -> Result<Vec<FsEntry>, FileTransferError> {
-        match self.stream {
+    fn list_dir(&mut self, path: &Path) -> Result<Vec<FsEntry>, FileTransferError> {
+        match &mut self.stream {
             Some(stream) => match stream.list(Some(&path.to_string_lossy())) {
                 Ok(entries) => {
                     // Prepare result
@@ -367,12 +368,12 @@ impl FileTransfer for FtpFileTransfer {
     /// ### mkdir
     ///
     /// Make directory
-    fn mkdir(&self, dir: &Path) -> Result<(), FileTransferError> {
-        match self.stream {
+    fn mkdir(&mut self, dir: &Path) -> Result<(), FileTransferError> {
+        match &mut self.stream {
             Some(stream) => match stream.mkdir(&dir.to_string_lossy()) {
                 Ok(_) => Ok(()),
                 Err(err) => Err(FileTransferError::new_ex(
-                    FileTransferErrorType::DirStatFailed,
+                    FileTransferErrorType::FileCreateDenied,
                     format!("{}", err),
                 )),
             },
@@ -385,60 +386,60 @@ impl FileTransfer for FtpFileTransfer {
     /// ### remove
     ///
     /// Remove a file or a directory
-    fn remove(&self, fsentry: &FsEntry) -> Result<(), FileTransferError> {
-        match self.stream {
-            Some(stream) => match fsentry {
-                // Match fs entry...
-                FsEntry::File(file) => {
-                    // Remove file directly
-                    match stream.rm(file.name.as_ref()) {
-                        Ok(_) => Ok(()),
-                        Err(err) => Err(FileTransferError::new_ex(
-                            FileTransferErrorType::DirStatFailed,
-                            format!("{}", err),
-                        )),
-                    }
+    fn remove(&mut self, fsentry: &FsEntry) -> Result<(), FileTransferError> {
+        if self.stream.is_none() {
+            return Err(FileTransferError::new(
+                FileTransferErrorType::UninitializedSession,
+            ));
+        }
+        match fsentry {
+            // Match fs entry...
+            FsEntry::File(file) => {
+                // Remove file directly
+                match self.stream.as_mut().unwrap().rm(file.name.as_ref()) {
+                    Ok(_) => Ok(()),
+                    Err(err) => Err(FileTransferError::new_ex(
+                        FileTransferErrorType::PexError,
+                        format!("{}", err),
+                    )),
                 }
-                FsEntry::Directory(dir) => {
-                    // Get directory files
-                    match self.list_dir(dir.abs_path.as_path()) {
-                        Ok(files) => {
-                            // Remove recursively files
-                            for file in files.iter() {
-                                if let Err(err) = self.remove(&file) {
-                                    return Err(FileTransferError::new_ex(
-                                        FileTransferErrorType::DirStatFailed,
-                                        format!("{}", err),
-                                    ));
-                                }
-                            }
-                            // Once all files in directory have been deleted, remove directory
-                            match stream.rmdir(dir.name.as_str()) {
-                                Ok(_) => Ok(()),
-                                Err(err) => Err(FileTransferError::new_ex(
-                                    FileTransferErrorType::DirStatFailed,
+            }
+            FsEntry::Directory(dir) => {
+                // Get directory files
+                match self.list_dir(dir.abs_path.as_path()) {
+                    Ok(files) => {
+                        // Remove recursively files
+                        for file in files.iter() {
+                            if let Err(err) = self.remove(&file) {
+                                return Err(FileTransferError::new_ex(
+                                    FileTransferErrorType::PexError,
                                     format!("{}", err),
-                                )),
+                                ));
                             }
                         }
-                        Err(err) => Err(FileTransferError::new_ex(
-                            FileTransferErrorType::DirStatFailed,
-                            format!("{}", err),
-                        )),
+                        // Once all files in directory have been deleted, remove directory
+                        match self.stream.as_mut().unwrap().rmdir(dir.name.as_str()) {
+                            Ok(_) => Ok(()),
+                            Err(err) => Err(FileTransferError::new_ex(
+                                FileTransferErrorType::PexError,
+                                format!("{}", err),
+                            )),
+                        }
                     }
+                    Err(err) => Err(FileTransferError::new_ex(
+                        FileTransferErrorType::DirStatFailed,
+                        format!("{}", err),
+                    )),
                 }
-            },
-            None => Err(FileTransferError::new(
-                FileTransferErrorType::UninitializedSession,
-            )),
+            }
         }
     }
 
     /// ### rename
     ///
     /// Rename file or a directory
-    fn rename(&self, file: &FsEntry, dst: &Path) -> Result<(), FileTransferError> {
-        match self.stream {
+    fn rename(&mut self, file: &FsEntry, dst: &Path) -> Result<(), FileTransferError> {
+        match &mut self.stream {
             Some(stream) => {
                 // Get name
                 let src_name: String = match file {
@@ -458,7 +459,7 @@ impl FileTransfer for FtpFileTransfer {
                 match stream.rename(src_name.as_str(), &dst_name.as_path().to_string_lossy()) {
                     Ok(_) => Ok(()),
                     Err(err) => Err(FileTransferError::new_ex(
-                        FileTransferErrorType::DirStatFailed,
+                        FileTransferErrorType::FileCreateDenied,
                         format!("{}", err),
                     )),
                 }
@@ -472,9 +473,9 @@ impl FileTransfer for FtpFileTransfer {
     /// ### stat
     ///
     /// Stat file and return FsEntry
-    fn stat(&self, path: &Path) -> Result<FsEntry, FileTransferError> {
-        match self.stream {
-            Some(stream) => Err(FileTransferError::new(
+    fn stat(&mut self, _path: &Path) -> Result<FsEntry, FileTransferError> {
+        match &mut self.stream {
+            Some(_) => Err(FileTransferError::new(
                 FileTransferErrorType::UnsupportedFeature,
             )),
             None => Err(FileTransferError::new(
@@ -489,9 +490,15 @@ impl FileTransfer for FtpFileTransfer {
     /// File name is referred to the name of the file as it will be saved
     /// Data contains the file data
     /// Returns file and its size
-    fn send_file(&self, file_name: &Path) -> Result<Box<dyn Write>, FileTransferError> {
-        match self.stream {
-            Some(stream) => {}
+    fn send_file(&mut self, file_name: &Path) -> Result<Box<dyn Write>, FileTransferError> {
+        match &mut self.stream {
+            Some(stream) => match stream.put_with_stream(&file_name.to_string_lossy()) {
+                Ok(writer) => Ok(Box::new(writer)),
+                Err(err) => Err(FileTransferError::new_ex(
+                    FileTransferErrorType::FileCreateDenied,
+                    format!("{}", err),
+                )),
+            },
             None => Err(FileTransferError::new(
                 FileTransferErrorType::UninitializedSession,
             )),
@@ -502,9 +509,15 @@ impl FileTransfer for FtpFileTransfer {
     ///
     /// Receive file from remote with provided name
     /// Returns file and its size
-    fn recv_file(&self, file_name: &Path) -> Result<(Box<dyn Read>, usize), FileTransferError> {
-        match self.stream {
-            Some(stream) => {}
+    fn recv_file(&mut self, file_name: &Path) -> Result<Box<dyn Read>, FileTransferError> {
+        match &mut self.stream {
+            Some(stream) => match stream.get(&file_name.to_string_lossy()) {
+                Ok(reader) => Ok(Box::new(reader)),
+                Err(err) => Err(FileTransferError::new_ex(
+                    FileTransferErrorType::NoSuchFileOrDirectory,
+                    format!("{}", err),
+                )),
+            },
             None => Err(FileTransferError::new(
                 FileTransferErrorType::UninitializedSession,
             )),
