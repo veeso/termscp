@@ -620,7 +620,7 @@ mod tests {
         assert!(client.sftp.is_some());
         assert_eq!(client.wrkdir, PathBuf::from("/"));
         // Pwd
-        assert_eq!(client.wrkdir, client.pwd().ok().unwrap());
+        assert_eq!(client.wrkdir.clone(), client.pwd().ok().unwrap());
         // Disconnect
         assert!(client.disconnect().is_ok());
     }
@@ -641,7 +641,7 @@ mod tests {
         assert!(client.sftp.is_some());
         assert_eq!(client.wrkdir, PathBuf::from("/"));
         // Pwd
-        assert_eq!(client.wrkdir, client.pwd().ok().unwrap());
+        assert_eq!(client.wrkdir.clone(), client.pwd().ok().unwrap());
         // Cwd (relative)
         assert!(client.change_dir(PathBuf::from("pub/").as_path()).is_ok());
         assert_eq!(client.wrkdir, PathBuf::from("/pub"));
@@ -691,8 +691,9 @@ mod tests {
         assert!(client.sftp.is_some());
         assert_eq!(client.wrkdir, PathBuf::from("/"));
         // List dir
+        let pwd: PathBuf = client.pwd().ok().unwrap();
         let files: Vec<FsEntry> = client
-            .list_dir(client.pwd().ok().unwrap().as_path())
+            .list_dir(pwd.as_path())
             .ok()
             .unwrap();
         assert_eq!(files.len(), 3); // There are 3 files
