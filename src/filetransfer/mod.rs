@@ -196,5 +196,5 @@ pub trait FileTransfer {
     ///
     /// Receive file from remote with provided name
     /// Returns file and its size
-    fn recv_file(&self, file_name: &Path) -> Result<(Box<dyn Read>, usize), FileTransferError>;
+    fn recv_file(&self, file_name: &Path) -> Result<Box<dyn Read>, FileTransferError>;
 }

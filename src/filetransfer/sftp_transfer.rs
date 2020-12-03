@@ -32,7 +32,7 @@ use crate::fs::{FsDirectory, FsEntry, FsFile};
 
 // Includes
 use ssh2::{FileStat, Session, Sftp};
-use std::io::{Read, Seek, Write};
+use std::io::{Read, Write};
 use std::net::TcpStream;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime};
@@ -433,7 +433,7 @@ impl FileTransfer for SftpFileTransfer {
     /// ### recv_file
     ///
     /// Receive file from remote with provided name
-    fn recv_file(&self, file_name: &Path) -> Result<(Box<dyn Read>, usize), FileTransferError> {
+    fn recv_file(&self, file_name: &Path) -> Result<Box<dyn Read>, FileTransferError> {
         match self.sftp.as_ref() {
             None => Err(FileTransferError::new(FileTransferErrorType::UninitializedSession)),
             Some(sftp) => {
@@ -444,15 +444,7 @@ impl FileTransfer for SftpFileTransfer {
                 };
                 // Open remote file
                 match sftp.open(remote_path.as_path()) {
-                    Ok(mut file) => {
-                        let file_size: usize =
-                            file.seek(std::io::SeekFrom::End(0)).unwrap_or(0) as usize;
-                        // rewind
-                        if let Err(err) = file.seek(std::io::SeekFrom::Start(0)) {
-                            return Err(FileTransferError::new(FileTransferErrorType::IoErr(err)));
-                        }
-                        Ok((Box::new(file), file_size))
-                    }
+                    Ok(file) => Ok(Box::new(file)),
                     Err(err) => Err(FileTransferError::new_ex(FileTransferErrorType::NoSuchFileOrDirectory, format!("{}", err))),
                 }
             }

@@ -299,7 +299,7 @@ impl FileTransferActivity {
                     Ok(mut local_file) => {
                         // Download file from remote
                         match self.client.recv_file(file.abs_path.as_path()) {
-                            Ok((mut rhnd, file_size)) => {
+                            Ok(mut rhnd) => {
                                 // Set popup progress
                                 self.input_mode = InputMode::Popup(PopupType::Progress(format!(
                                     "Downloading \"{}\"...",
@@ -340,7 +340,7 @@ impl FileTransferActivity {
                                         ),
                                     }
                                     // Set progress
-                                    self.set_progress(total_bytes_written, file_size);
+                                    self.set_progress(total_bytes_written, file.size);
                                     // Draw only if a significant progress has been made (performance improvement)
                                     if last_progress_val + 0.5 >= self.transfer_progress {
                                         // Draw
