@@ -39,7 +39,7 @@ pub mod sftp_transfer;
 #[derive(std::cmp::PartialEq, std::fmt::Debug, std::clone::Clone)]
 pub enum FileTransferProtocol {
     Sftp,
-    Ftp,
+    Ftp(bool), // Bool is for secure (true => ftps)
 }
 
 /// ## FileTransferError

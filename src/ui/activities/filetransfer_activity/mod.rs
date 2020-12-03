@@ -69,7 +69,6 @@ pub struct FileTransferParams {
     pub protocol: FileTransferProtocol,
     pub username: Option<String>,
     pub password: Option<String>,
-    pub extra_flag_secure: bool,
 }
 
 /// ### InputField
@@ -240,8 +239,8 @@ impl FileTransferActivity {
             context: None,
             client: match protocol {
                 FileTransferProtocol::Sftp => Box::new(SftpFileTransfer::new()),
-                FileTransferProtocol::Ftp => {
-                    Box::new(FtpFileTransfer::new(params.extra_flag_secure))
+                FileTransferProtocol::Ftp(ftps) => {
+                    Box::new(FtpFileTransfer::new(ftps))
                 }
             },
             params: params,

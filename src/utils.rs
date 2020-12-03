@@ -35,7 +35,7 @@ use std::time::{Duration, SystemTime};
 
 /// ### parse_remote_opt
 ///
-/// Parse remote option string. Returns in case of success a tuple made of (address, port, protocol, username, secure)
+/// Parse remote option string. Returns in case of success a tuple made of (address, port, protocol, username)
 /// For ssh if username is not provided, current user will be used.
 /// In case of error, message is returned
 /// If port is missing default port will be used for each protocol
@@ -54,7 +54,7 @@ use std::time::{Duration, SystemTime};
 ///
 pub fn parse_remote_opt(
     remote: &String,
-) -> Result<(String, u16, FileTransferProtocol, Option<String>, bool), String> {
+) -> Result<(String, u16, FileTransferProtocol, Option<String>), String> {
     let mut wrkstr: String = remote.clone();
     let address: String;
     let mut port: u16 = 22;
@@ -77,17 +77,15 @@ pub fn parse_remote_opt(
                 }
                 "ftp" => {
                     // Set protocol to fpt
-                    protocol = FileTransferProtocol::Ftp;
+                    protocol = FileTransferProtocol::Ftp(false);
                     // Set port to default (21)
                     port = 21;
                 }
                 "ftps" => {
                     // Set protocol to fpt
-                    protocol = FileTransferProtocol::Ftp;
+                    protocol = FileTransferProtocol::Ftp(true);
                     // Set port to default (21)
                     port = 21;
-                    // Set secure to true
-                    secure = true;
                 }
                 _ => return Err(format!("Unknown protocol '{}'", tokens[0])),
             }
@@ -135,7 +133,7 @@ pub fn parse_remote_opt(
         }
         _ => return Err(String::from("Bad syntax")), // Too many tokens...
     }
-    Ok((address, port, protocol, username, secure))
+    Ok((address, port, protocol, username))
 }
 
 /// ### instant_to_str
@@ -193,7 +191,7 @@ mod tests {
     #[test]
     fn test_utils_parse_remote_opt() {
         // Base case
-        let result: (String, u16, FileTransferProtocol, Option<String>, bool) =
+        let result: (String, u16, FileTransferProtocol, Option<String>) =
             parse_remote_opt(&String::from("172.26.104.1"))
                 .ok()
                 .unwrap();
@@ -201,9 +199,8 @@ mod tests {
         assert_eq!(result.1, 22);
         assert_eq!(result.2, FileTransferProtocol::Sftp);
         assert!(result.3.is_some());
-        assert_eq!(result.4, false);
         // User case
-        let result: (String, u16, FileTransferProtocol, Option<String>, bool) =
+        let result: (String, u16, FileTransferProtocol, Option<String>) =
             parse_remote_opt(&String::from("root@172.26.104.1"))
                 .ok()
                 .unwrap();
@@ -211,9 +208,8 @@ mod tests {
         assert_eq!(result.1, 22);
         assert_eq!(result.2, FileTransferProtocol::Sftp);
         assert_eq!(result.3.unwrap(), String::from("root"));
-        assert_eq!(result.4, false);
         // User + port
-        let result: (String, u16, FileTransferProtocol, Option<String>, bool) =
+        let result: (String, u16, FileTransferProtocol, Option<String>) =
             parse_remote_opt(&String::from("root@172.26.104.1:8022"))
                 .ok()
                 .unwrap();
@@ -221,9 +217,8 @@ mod tests {
         assert_eq!(result.1, 8022);
         assert_eq!(result.2, FileTransferProtocol::Sftp);
         assert_eq!(result.3.unwrap(), String::from("root"));
-        assert_eq!(result.4, false);
         // Port only
-        let result: (String, u16, FileTransferProtocol, Option<String>, bool) =
+        let result: (String, u16, FileTransferProtocol, Option<String>) =
             parse_remote_opt(&String::from("172.26.104.1:4022"))
                 .ok()
                 .unwrap();
@@ -231,37 +226,33 @@ mod tests {
         assert_eq!(result.1, 4022);
         assert_eq!(result.2, FileTransferProtocol::Sftp);
         assert!(result.3.is_some());
-        assert_eq!(result.4, false);
         // Protocol
-        let result: (String, u16, FileTransferProtocol, Option<String>, bool) =
+        let result: (String, u16, FileTransferProtocol, Option<String>) =
             parse_remote_opt(&String::from("ftp://172.26.104.1"))
                 .ok()
                 .unwrap();
         assert_eq!(result.0, String::from("172.26.104.1"));
         assert_eq!(result.1, 21); // Fallback to ftp default
-        assert_eq!(result.2, FileTransferProtocol::Ftp);
+        assert_eq!(result.2, FileTransferProtocol::Ftp(false));
         assert!(result.3.is_none()); // Doesn't fall back
-        assert_eq!(result.4, false);
         // Protocol + user
-        let result: (String, u16, FileTransferProtocol, Option<String>, bool) =
+        let result: (String, u16, FileTransferProtocol, Option<String>) =
             parse_remote_opt(&String::from("ftps://anon@172.26.104.1"))
                 .ok()
                 .unwrap();
         assert_eq!(result.0, String::from("172.26.104.1"));
         assert_eq!(result.1, 21); // Fallback to ftp default
-        assert_eq!(result.2, FileTransferProtocol::Ftp);
+        assert_eq!(result.2, FileTransferProtocol::Ftp(true));
         assert_eq!(result.3.unwrap(), String::from("anon"));
-        assert_eq!(result.4, true);
         // All together now
-        let result: (String, u16, FileTransferProtocol, Option<String>, bool) =
+        let result: (String, u16, FileTransferProtocol, Option<String>) =
             parse_remote_opt(&String::from("ftp://anon@172.26.104.1:8021"))
                 .ok()
                 .unwrap();
         assert_eq!(result.0, String::from("172.26.104.1"));
         assert_eq!(result.1, 8021); // Fallback to ftp default
-        assert_eq!(result.2, FileTransferProtocol::Ftp);
+        assert_eq!(result.2, FileTransferProtocol::Ftp(false));
         assert_eq!(result.3.unwrap(), String::from("anon"));
-        assert_eq!(result.4, false);
 
         // bad syntax
         assert!(parse_remote_opt(&String::from("://172.26.104.1")).is_err()); // Missing protocol
