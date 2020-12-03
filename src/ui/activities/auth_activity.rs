@@ -164,10 +164,10 @@ impl AuthActivity {
                             }
                         }
                         // Check username
-                        if self.username.len() == 0 {
-                            self.popup_message = Some(String::from("Invalid username"));
-                            return;
-                        }
+                        //if self.username.len() == 0 {
+                        //    self.popup_message = Some(String::from("Invalid username"));
+                        //    return;
+                        //}
                         // Everything OK, set enter
                         self.submit = true;
                         self.popup_message =
@@ -231,8 +231,8 @@ impl AuthActivity {
                             self.protocol = match self.protocol {
                                 FileTransferProtocol::Sftp => FileTransferProtocol::Ftp(true), // End of list (wrap)
                                 FileTransferProtocol::Ftp(ftps) => match ftps {
-                                    true => FileTransferProtocol::Sftp,
-                                    false => FileTransferProtocol::Ftp(true),
+                                    true => FileTransferProtocol::Ftp(false),
+                                    false => FileTransferProtocol::Sftp,
                                 }
                             };
                         }
