@@ -131,7 +131,7 @@ checksum = "00b0228411908ca8685dba7fc2cdd70ec9990a6e753e89b6ac91a84c40fbaf4b"
 [[package]]
 name = "ftp"
 version = "3.0.1"
-source = "git+https://github.com/ChristianVisintin/rust-ftp#e8aa6a580c20a5a42e38fcd8dc4ba925da417791"
+source = "git+https://github.com/ChristianVisintin/rust-ftp#daf6274f196ad264f2bf17c561f7954593130438"
 dependencies = [
  "chrono",
  "lazy_static",
