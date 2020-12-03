@@ -322,7 +322,7 @@ impl FileTransfer for FtpFileTransfer {
 
     fn change_dir(&mut self, dir: &Path) -> Result<PathBuf, FileTransferError> {
         match self.stream {
-            Some(stream) => match stream.cwd(&dir.as_os_str().to_string_lossy()) {
+            Some(stream) => match stream.cwd(&dir.to_string_lossy()) {
                 Ok(_) => Ok(PathBuf::from(dir)),
                 Err(err) => Err(FileTransferError::new_ex(
                     FileTransferErrorType::ConnectionError,
@@ -341,7 +341,7 @@ impl FileTransfer for FtpFileTransfer {
 
     fn list_dir(&self, path: &Path) -> Result<Vec<FsEntry>, FileTransferError> {
         match self.stream {
-            Some(stream) => match stream.list(Some(&path.as_os_str().to_string_lossy())) {
+            Some(stream) => match stream.list(Some(&path.to_string_lossy())) {
                 Ok(entries) => {
                     // Prepare result
                     let mut result: Vec<FsEntry> = Vec::with_capacity(entries.len());
@@ -369,7 +369,13 @@ impl FileTransfer for FtpFileTransfer {
     /// Make directory
     fn mkdir(&self, dir: &Path) -> Result<(), FileTransferError> {
         match self.stream {
-            Some(stream) => {}
+            Some(stream) => match stream.mkdir(&dir.to_string_lossy()) {
+                Ok(_) => Ok(()),
+                Err(err) => Err(FileTransferError::new_ex(
+                    FileTransferErrorType::DirStatFailed,
+                    format!("{}", err),
+                )),
+            },
             None => Err(FileTransferError::new(
                 FileTransferErrorType::UninitializedSession,
             )),
@@ -379,9 +385,49 @@ impl FileTransfer for FtpFileTransfer {
     /// ### remove
     ///
     /// Remove a file or a directory
-    fn remove(&self, file: &FsEntry) -> Result<(), FileTransferError> {
+    fn remove(&self, fsentry: &FsEntry) -> Result<(), FileTransferError> {
         match self.stream {
-            Some(stream) => {}
+            Some(stream) => match fsentry {
+                // Match fs entry...
+                FsEntry::File(file) => {
+                    // Remove file directly
+                    match stream.rm(file.name.as_ref()) {
+                        Ok(_) => Ok(()),
+                        Err(err) => Err(FileTransferError::new_ex(
+                            FileTransferErrorType::DirStatFailed,
+                            format!("{}", err),
+                        )),
+                    }
+                }
+                FsEntry::Directory(dir) => {
+                    // Get directory files
+                    match self.list_dir(dir.abs_path.as_path()) {
+                        Ok(files) => {
+                            // Remove recursively files
+                            for file in files.iter() {
+                                if let Err(err) = self.remove(&file) {
+                                    return Err(FileTransferError::new_ex(
+                                        FileTransferErrorType::DirStatFailed,
+                                        format!("{}", err),
+                                    ));
+                                }
+                            }
+                            // Once all files in directory have been deleted, remove directory
+                            match stream.rmdir(dir.name.as_str()) {
+                                Ok(_) => Ok(()),
+                                Err(err) => Err(FileTransferError::new_ex(
+                                    FileTransferErrorType::DirStatFailed,
+                                    format!("{}", err),
+                                )),
+                            }
+                        }
+                        Err(err) => Err(FileTransferError::new_ex(
+                            FileTransferErrorType::DirStatFailed,
+                            format!("{}", err),
+                        )),
+                    }
+                }
+            },
             None => Err(FileTransferError::new(
                 FileTransferErrorType::UninitializedSession,
             )),
@@ -393,7 +439,30 @@ impl FileTransfer for FtpFileTransfer {
     /// Rename file or a directory
     fn rename(&self, file: &FsEntry, dst: &Path) -> Result<(), FileTransferError> {
         match self.stream {
-            Some(stream) => {}
+            Some(stream) => {
+                // Get name
+                let src_name: String = match file {
+                    FsEntry::Directory(dir) => dir.name.clone(),
+                    FsEntry::File(file) => file.name.clone(),
+                };
+                let dst_name: PathBuf = match dst.file_name() {
+                    Some(p) => PathBuf::from(p),
+                    None => {
+                        return Err(FileTransferError::new_ex(
+                            FileTransferErrorType::FileCreateDenied,
+                            String::from("Invalid destination name"),
+                        ))
+                    }
+                };
+                // Only names are supported
+                match stream.rename(src_name.as_str(), &dst_name.as_path().to_string_lossy()) {
+                    Ok(_) => Ok(()),
+                    Err(err) => Err(FileTransferError::new_ex(
+                        FileTransferErrorType::DirStatFailed,
+                        format!("{}", err),
+                    )),
+                }
+            }
             None => Err(FileTransferError::new(
                 FileTransferErrorType::UninitializedSession,
             )),
@@ -463,7 +532,13 @@ mod tests {
     fn test_filetransfer_ftp_parse_list_line() {
         let ftp: FtpFileTransfer = FtpFileTransfer::new(false);
         // Simple file
-        let fs_entry: FsEntry = ftp.parse_list_line(PathBuf::from("/tmp").as_path(), "-rw-rw-r-- 1 root  dialout  8192 Nov 5 2018 omar.txt").ok().unwrap();
+        let fs_entry: FsEntry = ftp
+            .parse_list_line(
+                PathBuf::from("/tmp").as_path(),
+                "-rw-rw-r-- 1 root  dialout  8192 Nov 5 2018 omar.txt",
+            )
+            .ok()
+            .unwrap();
         if let FsEntry::File(file) = fs_entry {
             assert_eq!(file.abs_path, PathBuf::from("/tmp/omar.txt"));
             assert_eq!(file.name, String::from("omar.txt"));
@@ -479,7 +554,13 @@ mod tests {
             panic!("Expected file, got directory");
         }
         // Simple file with number as gid, uid
-        let fs_entry: FsEntry = ftp.parse_list_line(PathBuf::from("/tmp").as_path(), "-rwxr-xr-x 1 0  9  4096 Nov 5 16:32 omar.txt").ok().unwrap();
+        let fs_entry: FsEntry = ftp
+            .parse_list_line(
+                PathBuf::from("/tmp").as_path(),
+                "-rwxr-xr-x 1 0  9  4096 Nov 5 16:32 omar.txt",
+            )
+            .ok()
+            .unwrap();
         if let FsEntry::File(file) = fs_entry {
             assert_eq!(file.abs_path, PathBuf::from("/tmp/omar.txt"));
             assert_eq!(file.name, String::from("omar.txt"));
@@ -495,7 +576,13 @@ mod tests {
             panic!("Expected file, got directory");
         }
         // Directory
-        let fs_entry: FsEntry = ftp.parse_list_line(PathBuf::from("/tmp").as_path(), "drwxrwxr-x 1 0  9  4096 Nov 5 2018 docs").ok().unwrap();
+        let fs_entry: FsEntry = ftp
+            .parse_list_line(
+                PathBuf::from("/tmp").as_path(),
+                "drwxrwxr-x 1 0  9  4096 Nov 5 2018 docs",
+            )
+            .ok()
+            .unwrap();
         if let FsEntry::Directory(dir) = fs_entry {
             assert_eq!(dir.abs_path, PathBuf::from("/tmp/docs"));
             assert_eq!(dir.name, String::from("docs"));
@@ -511,7 +598,11 @@ mod tests {
             panic!("Expected directory, got directory");
         }
         // Error
-        assert!(ftp.parse_list_line(PathBuf::from("/").as_path(), "drwxrwxr-x 1 0  9  Nov 5 2018 docs").is_err());
+        assert!(ftp
+            .parse_list_line(
+                PathBuf::from("/").as_path(),
+                "drwxrwxr-x 1 0  9  Nov 5 2018 docs"
+            )
+            .is_err());
     }
-
 }
