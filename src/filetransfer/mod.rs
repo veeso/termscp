@@ -54,7 +54,7 @@ pub struct FileTransferError {
 /// ## FileTransferErrorType
 ///
 /// FileTransferErrorType defines the possible errors available for a file transfer
-
+#[allow(dead_code)]
 pub enum FileTransferErrorType {
     AuthenticationFailed,
     BadAddress,
@@ -150,7 +150,7 @@ pub trait FileTransfer {
     ///
     /// Print working directory
 
-    fn pwd(&self) -> Result<PathBuf, FileTransferError>;
+    fn pwd(&mut self) -> Result<PathBuf, FileTransferError>;
 
     /// ### change_dir
     ///
@@ -162,27 +162,27 @@ pub trait FileTransfer {
     ///
     /// List directory entries
 
-    fn list_dir(&self, path: &Path) -> Result<Vec<FsEntry>, FileTransferError>;
+    fn list_dir(&mut self, path: &Path) -> Result<Vec<FsEntry>, FileTransferError>;
 
     /// ### mkdir
     ///
     /// Make directory
-    fn mkdir(&self, dir: &Path) -> Result<(), FileTransferError>;
+    fn mkdir(&mut self, dir: &Path) -> Result<(), FileTransferError>;
 
     /// ### remove
     ///
     /// Remove a file or a directory
-    fn remove(&self, file: &FsEntry) -> Result<(), FileTransferError>;
+    fn remove(&mut self, file: &FsEntry) -> Result<(), FileTransferError>;
 
     /// ### rename
     ///
     /// Rename file or a directory
-    fn rename(&self, file: &FsEntry, dst: &Path) -> Result<(), FileTransferError>;
+    fn rename(&mut self, file: &FsEntry, dst: &Path) -> Result<(), FileTransferError>;
 
     /// ### stat
     ///
     /// Stat file and return FsEntry
-    fn stat(&self, path: &Path) -> Result<FsEntry, FileTransferError>;
+    fn stat(&mut self, path: &Path) -> Result<FsEntry, FileTransferError>;
 
     /// ### send_file
     ///
@@ -190,11 +190,11 @@ pub trait FileTransfer {
     /// File name is referred to the name of the file as it will be saved
     /// Data contains the file data
     /// Returns file and its size
-    fn send_file(&self, file_name: &Path) -> Result<Box<dyn Write>, FileTransferError>;
+    fn send_file(&mut self, file_name: &Path) -> Result<Box<dyn Write>, FileTransferError>;
 
     /// ### recv_file
     ///
     /// Receive file from remote with provided name
     /// Returns file and its size
-    fn recv_file(&self, file_name: &Path) -> Result<Box<dyn Read>, FileTransferError>;
+    fn recv_file(&mut self, file_name: &Path) -> Result<Box<dyn Read>, FileTransferError>;
 }

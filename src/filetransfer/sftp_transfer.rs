@@ -69,17 +69,28 @@ impl SftpFileTransfer {
                 match self.sftp.as_ref().unwrap().realpath(root.as_path()) {
                     Ok(p) => match self.sftp.as_ref().unwrap().stat(p.as_path()) {
                         Ok(_) => Ok(PathBuf::from(p)),
-                        Err(err) => Err(FileTransferError::new_ex(FileTransferErrorType::NoSuchFileOrDirectory, format!("{}", err))),
+                        Err(err) => Err(FileTransferError::new_ex(
+                            FileTransferErrorType::NoSuchFileOrDirectory,
+                            format!("{}", err),
+                        )),
                     },
-                    Err(err) => Err(FileTransferError::new_ex(FileTransferErrorType::NoSuchFileOrDirectory, format!("{}", err))),
+                    Err(err) => Err(FileTransferError::new_ex(
+                        FileTransferErrorType::NoSuchFileOrDirectory,
+                        format!("{}", err),
+                    )),
                 }
             }
             false => match self.sftp.as_ref().unwrap().realpath(p) {
                 Ok(p) => match self.sftp.as_ref().unwrap().stat(p.as_path()) {
                     Ok(_) => Ok(PathBuf::from(p)),
-                    Err(err) => Err(FileTransferError::new_ex(FileTransferErrorType::NoSuchFileOrDirectory, format!("{}", err))),
+                    Err(err) => Err(FileTransferError::new_ex(
+                        FileTransferErrorType::NoSuchFileOrDirectory,
+                        format!("{}", err),
+                    )),
                 },
-                Err(_) => Err(FileTransferError::new(FileTransferErrorType::NoSuchFileOrDirectory)),
+                Err(_) => Err(FileTransferError::new(
+                    FileTransferErrorType::NoSuchFileOrDirectory,
+                )),
             },
         }
     }
@@ -188,37 +199,63 @@ impl FileTransfer for SftpFileTransfer {
         // Setup tcp stream
         let tcp: TcpStream = match TcpStream::connect(format!("{}:{}", address, port)) {
             Ok(stream) => stream,
-            Err(err) => return Err(FileTransferError::new_ex(FileTransferErrorType::BadAddress, format!("{}", err))),
+            Err(err) => {
+                return Err(FileTransferError::new_ex(
+                    FileTransferErrorType::BadAddress,
+                    format!("{}", err),
+                ))
+            }
         };
         // Create session
         let mut session: Session = match Session::new() {
             Ok(s) => s,
-            Err(err) => return Err(FileTransferError::new_ex(FileTransferErrorType::ConnectionError, format!("{}", err))),
+            Err(err) => {
+                return Err(FileTransferError::new_ex(
+                    FileTransferErrorType::ConnectionError,
+                    format!("{}", err),
+                ))
+            }
         };
         // Set TCP stream
         session.set_tcp_stream(tcp);
         // Open connection
         if let Err(err) = session.handshake() {
-            return Err(FileTransferError::new_ex(FileTransferErrorType::ConnectionError, format!("{}", err)));
+            return Err(FileTransferError::new_ex(
+                FileTransferErrorType::ConnectionError,
+                format!("{}", err),
+            ));
         }
         // Try authentication
         if let Err(err) = session.userauth_password(
             username.unwrap_or(String::from("")).as_str(),
             password.unwrap_or(String::from("")).as_str(),
         ) {
-            return Err(FileTransferError::new_ex(FileTransferErrorType::AuthenticationFailed, format!("{}", err)));
+            return Err(FileTransferError::new_ex(
+                FileTransferErrorType::AuthenticationFailed,
+                format!("{}", err),
+            ));
         }
         // Set blocking to true
         session.set_blocking(true);
         // Get Sftp client
         let sftp: Sftp = match session.sftp() {
             Ok(s) => s,
-            Err(err) => return Err(FileTransferError::new_ex(FileTransferErrorType::ProtocolError, format!("{}", err))),
+            Err(err) => {
+                return Err(FileTransferError::new_ex(
+                    FileTransferErrorType::ProtocolError,
+                    format!("{}", err),
+                ))
+            }
         };
         // Get working directory
         self.wrkdir = match sftp.realpath(PathBuf::from(".").as_path()) {
             Ok(p) => p,
-            Err(err) => return Err(FileTransferError::new_ex(FileTransferErrorType::ProtocolError, format!("{}", err))),
+            Err(err) => {
+                return Err(FileTransferError::new_ex(
+                    FileTransferErrorType::ProtocolError,
+                    format!("{}", err),
+                ))
+            }
         };
         // Set session
         self.session = Some(session);
@@ -241,10 +278,15 @@ impl FileTransfer for SftpFileTransfer {
                         self.sftp = None;
                         Ok(())
                     }
-                    Err(err) => Err(FileTransferError::new_ex(FileTransferErrorType::ConnectionError, format!("{}", err))),
+                    Err(err) => Err(FileTransferError::new_ex(
+                        FileTransferErrorType::ConnectionError,
+                        format!("{}", err),
+                    )),
                 }
             }
-            None => Err(FileTransferError::new(FileTransferErrorType::UninitializedSession)),
+            None => Err(FileTransferError::new(
+                FileTransferErrorType::UninitializedSession,
+            )),
         }
     }
 
@@ -258,10 +300,12 @@ impl FileTransfer for SftpFileTransfer {
     /// ### pwd
     ///
     /// Print working directory
-    fn pwd(&self) -> Result<PathBuf, FileTransferError> {
+    fn pwd(&mut self) -> Result<PathBuf, FileTransferError> {
         match self.sftp {
             Some(_) => Ok(self.wrkdir.clone()),
-            None => Err(FileTransferError::new(FileTransferErrorType::UninitializedSession)),
+            None => Err(FileTransferError::new(
+                FileTransferErrorType::UninitializedSession,
+            )),
         }
     }
 
@@ -278,14 +322,16 @@ impl FileTransfer for SftpFileTransfer {
                 };
                 Ok(self.wrkdir.clone())
             }
-            None => Err(FileTransferError::new(FileTransferErrorType::UninitializedSession)),
+            None => Err(FileTransferError::new(
+                FileTransferErrorType::UninitializedSession,
+            )),
         }
     }
 
     /// ### list_dir
     ///
     /// List directory entries
-    fn list_dir(&self, path: &Path) -> Result<Vec<FsEntry>, FileTransferError> {
+    fn list_dir(&mut self, path: &Path) -> Result<Vec<FsEntry>, FileTransferError> {
         match self.sftp.as_ref() {
             Some(sftp) => {
                 // Get path
@@ -295,7 +341,12 @@ impl FileTransfer for SftpFileTransfer {
                 };
                 // Get files
                 match sftp.readdir(dir.as_path()) {
-                    Err(err) => return Err(FileTransferError::new_ex(FileTransferErrorType::DirStatFailed, format!("{}", err))),
+                    Err(err) => {
+                        return Err(FileTransferError::new_ex(
+                            FileTransferErrorType::DirStatFailed,
+                            format!("{}", err),
+                        ))
+                    }
                     Ok(files) => {
                         // Allocate vector
                         let mut entries: Vec<FsEntry> = Vec::with_capacity(files.len());
@@ -307,63 +358,74 @@ impl FileTransfer for SftpFileTransfer {
                     }
                 }
             }
-            None => Err(FileTransferError::new(FileTransferErrorType::UninitializedSession)),
+            None => Err(FileTransferError::new(
+                FileTransferErrorType::UninitializedSession,
+            )),
         }
     }
 
     /// ### mkdir
     ///
     /// Make directory
-    fn mkdir(&self, dir: &Path) -> Result<(), FileTransferError> {
+    fn mkdir(&mut self, dir: &Path) -> Result<(), FileTransferError> {
         match self.sftp.as_ref() {
             Some(sftp) => {
                 // Make directory
                 let path: PathBuf = self.get_abs_path(PathBuf::from(dir).as_path());
                 match sftp.mkdir(path.as_path(), 0o775) {
                     Ok(_) => Ok(()),
-                    Err(err) => Err(FileTransferError::new_ex(FileTransferErrorType::FileCreateDenied, format!("{}", err))),
+                    Err(err) => Err(FileTransferError::new_ex(
+                        FileTransferErrorType::FileCreateDenied,
+                        format!("{}", err),
+                    )),
                 }
             }
-            None => Err(FileTransferError::new(FileTransferErrorType::UninitializedSession)),
+            None => Err(FileTransferError::new(
+                FileTransferErrorType::UninitializedSession,
+            )),
         }
     }
 
     /// ### remove
     ///
     /// Remove a file or a directory
-    fn remove(&self, file: &FsEntry) -> Result<(), FileTransferError> {
-        match self.sftp.as_ref() {
-            None => Err(FileTransferError::new(FileTransferErrorType::UninitializedSession)),
-            Some(sftp) => {
-                // Match if file is a file or a directory
-                match file {
-                    FsEntry::File(f) => {
-                        // Remove file
-                        match sftp.unlink(f.abs_path.as_path()) {
-                            Ok(_) => Ok(()),
-                            Err(err) => Err(FileTransferError::new_ex(FileTransferErrorType::PexError, format!("{}", err))),
-                        }
+    fn remove(&mut self, file: &FsEntry) -> Result<(), FileTransferError> {
+        if self.sftp.is_none() {
+            return Err(FileTransferError::new(
+                FileTransferErrorType::UninitializedSession,
+            ));
+        }
+        // Match if file is a file or a directory
+        match file {
+            FsEntry::File(f) => {
+                // Remove file
+                match self.sftp.as_ref().unwrap().unlink(f.abs_path.as_path()) {
+                    Ok(_) => Ok(()),
+                    Err(err) => Err(FileTransferError::new_ex(
+                        FileTransferErrorType::PexError,
+                        format!("{}", err),
+                    )),
+                }
+            }
+            FsEntry::Directory(d) => {
+                // Remove recursively
+                // Get directory files
+                let directory_content: Vec<FsEntry> = match self.list_dir(d.abs_path.as_path()) {
+                    Ok(entries) => entries,
+                    Err(err) => return Err(err),
+                };
+                for entry in directory_content.iter() {
+                    if let Err(err) = self.remove(&entry) {
+                        return Err(err);
                     }
-                    FsEntry::Directory(d) => {
-                        // Remove recursively
-                        // Get directory files
-                        match self.list_dir(d.abs_path.as_path()) {
-                            Ok(entries) => {
-                                // Remove each entry
-                                for entry in entries {
-                                    if let Err(err) = self.remove(&entry) {
-                                        return Err(err);
-                                    }
-                                }
-                                // Finally remove directory
-                                match sftp.rmdir(d.abs_path.as_path()) {
-                                    Ok(_) => Ok(()),
-                                    Err(err) => Err(FileTransferError::new_ex(FileTransferErrorType::PexError, format!("{}", err))),
-                                }
-                            }
-                            Err(err) => return Err(err),
-                        }
-                    }
+                }
+                // Finally remove directory
+                match self.sftp.as_ref().unwrap().rmdir(d.abs_path.as_path()) {
+                    Ok(_) => Ok(()),
+                    Err(err) => Err(FileTransferError::new_ex(
+                        FileTransferErrorType::PexError,
+                        format!("{}", err),
+                    )),
                 }
             }
         }
@@ -372,9 +434,11 @@ impl FileTransfer for SftpFileTransfer {
     /// ### rename
     ///
     /// Rename file or a directory
-    fn rename(&self, file: &FsEntry, dst: &Path) -> Result<(), FileTransferError> {
+    fn rename(&mut self, file: &FsEntry, dst: &Path) -> Result<(), FileTransferError> {
         match self.sftp.as_ref() {
-            None => Err(FileTransferError::new(FileTransferErrorType::UninitializedSession)),
+            None => Err(FileTransferError::new(
+                FileTransferErrorType::UninitializedSession,
+            )),
             Some(sftp) => {
                 // Resolve destination path
                 let abs_dst: PathBuf = self.get_abs_path(dst);
@@ -385,7 +449,10 @@ impl FileTransfer for SftpFileTransfer {
                 };
                 match sftp.rename(abs_src.as_path(), abs_dst.as_path(), None) {
                     Ok(_) => Ok(()),
-                    Err(err) => Err(FileTransferError::new_ex(FileTransferErrorType::FileCreateDenied, format!("{}", err))),
+                    Err(err) => Err(FileTransferError::new_ex(
+                        FileTransferErrorType::FileCreateDenied,
+                        format!("{}", err),
+                    )),
                 }
             }
         }
@@ -394,7 +461,7 @@ impl FileTransfer for SftpFileTransfer {
     /// ### stat
     ///
     /// Stat file and return FsEntry
-    fn stat(&self, path: &Path) -> Result<FsEntry, FileTransferError> {
+    fn stat(&mut self, path: &Path) -> Result<FsEntry, FileTransferError> {
         match self.sftp.as_ref() {
             Some(sftp) => {
                 // Get path
@@ -405,10 +472,15 @@ impl FileTransfer for SftpFileTransfer {
                 // Get file
                 match sftp.stat(dir.as_path()) {
                     Ok(metadata) => Ok(self.make_fsentry(dir.as_path(), &metadata)),
-                    Err(err) => Err(FileTransferError::new_ex(FileTransferErrorType::NoSuchFileOrDirectory, format!("{}", err))),
+                    Err(err) => Err(FileTransferError::new_ex(
+                        FileTransferErrorType::NoSuchFileOrDirectory,
+                        format!("{}", err),
+                    )),
                 }
             }
-            None => Err(FileTransferError::new(FileTransferErrorType::UninitializedSession)),
+            None => Err(FileTransferError::new(
+                FileTransferErrorType::UninitializedSession,
+            )),
         }
     }
 
@@ -417,14 +489,19 @@ impl FileTransfer for SftpFileTransfer {
     /// Send file to remote
     /// File name is referred to the name of the file as it will be saved
     /// Data contains the file data
-    fn send_file(&self, file_name: &Path) -> Result<Box<dyn Write>, FileTransferError> {
+    fn send_file(&mut self, file_name: &Path) -> Result<Box<dyn Write>, FileTransferError> {
         match self.sftp.as_ref() {
-            None => Err(FileTransferError::new(FileTransferErrorType::UninitializedSession)),
+            None => Err(FileTransferError::new(
+                FileTransferErrorType::UninitializedSession,
+            )),
             Some(sftp) => {
                 let remote_path: PathBuf = self.get_abs_path(file_name);
                 match sftp.create(remote_path.as_path()) {
                     Ok(file) => Ok(Box::new(file)),
-                    Err(err) => Err(FileTransferError::new_ex(FileTransferErrorType::FileCreateDenied, format!("{}", err))),
+                    Err(err) => Err(FileTransferError::new_ex(
+                        FileTransferErrorType::FileCreateDenied,
+                        format!("{}", err),
+                    )),
                 }
             }
         }
@@ -433,9 +510,11 @@ impl FileTransfer for SftpFileTransfer {
     /// ### recv_file
     ///
     /// Receive file from remote with provided name
-    fn recv_file(&self, file_name: &Path) -> Result<Box<dyn Read>, FileTransferError> {
+    fn recv_file(&mut self, file_name: &Path) -> Result<Box<dyn Read>, FileTransferError> {
         match self.sftp.as_ref() {
-            None => Err(FileTransferError::new(FileTransferErrorType::UninitializedSession)),
+            None => Err(FileTransferError::new(
+                FileTransferErrorType::UninitializedSession,
+            )),
             Some(sftp) => {
                 // Get remote file name
                 let remote_path: PathBuf = match self.get_remote_path(file_name) {
@@ -445,7 +524,10 @@ impl FileTransfer for SftpFileTransfer {
                 // Open remote file
                 match sftp.open(remote_path.as_path()) {
                     Ok(file) => Ok(Box::new(file)),
-                    Err(err) => Err(FileTransferError::new_ex(FileTransferErrorType::NoSuchFileOrDirectory, format!("{}", err))),
+                    Err(err) => Err(FileTransferError::new_ex(
+                        FileTransferErrorType::NoSuchFileOrDirectory,
+                        format!("{}", err),
+                    )),
                 }
             }
         }
@@ -633,7 +715,10 @@ mod tests {
         assert!(client.session.is_some());
         assert!(client.sftp.is_some());
         assert_eq!(client.wrkdir, PathBuf::from("/"));
-        let file: FsEntry = client.stat(PathBuf::from("readme.txt").as_path()).ok().unwrap();
+        let file: FsEntry = client
+            .stat(PathBuf::from("readme.txt").as_path())
+            .ok()
+            .unwrap();
         if let FsEntry::File(file) = file {
             assert_eq!(file.abs_path, PathBuf::from("/readme.txt"));
         } else {
