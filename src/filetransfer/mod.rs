@@ -45,7 +45,7 @@ pub enum FileTransferProtocol {
 /// ## FileTransferError
 ///
 /// FileTransferError defines the possible errors available for a file transfer
-
+#[derive(std::fmt::Debug)]
 pub struct FileTransferError {
     code: FileTransferErrorType,
     msg: Option<String>,
@@ -55,6 +55,7 @@ pub struct FileTransferError {
 ///
 /// FileTransferErrorType defines the possible errors available for a file transfer
 #[allow(dead_code)]
+#[derive(std::fmt::Debug)]
 pub enum FileTransferErrorType {
     AuthenticationFailed,
     BadAddress,

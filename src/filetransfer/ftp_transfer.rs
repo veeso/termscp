@@ -250,18 +250,20 @@ impl FileTransfer for FtpFileTransfer {
                 }
             };
         }
-        // If username / password...
-        if let Some(username) = username {
-            let password: String = match password {
-                Some(pwd) => String::from(pwd),
-                None => String::new(),
-            };
-            if let Err(err) = stream.login(username.as_str(), password.as_str()) {
-                return Err(FileTransferError::new_ex(
-                    FileTransferErrorType::AuthenticationFailed,
-                    format!("{}", err),
-                ));
-            }
+        // Login (use anonymous if credentials are unspecified)
+        let username: String = match username {
+            Some(u) => u.clone(),
+            None => String::from("anonymous"),
+        };
+        let password: String = match password {
+            Some(pwd) => String::from(pwd),
+            None => String::new(),
+        };
+        if let Err(err) = stream.login(username.as_str(), password.as_str()) {
+            return Err(FileTransferError::new_ex(
+                FileTransferErrorType::AuthenticationFailed,
+                format!("{}", err),
+            ));
         }
         // Set stream
         self.stream = Some(stream);
@@ -529,6 +531,7 @@ impl FileTransfer for FtpFileTransfer {
 mod tests {
 
     use super::*;
+    use std::time::Duration;
 
     #[test]
     fn test_filetransfer_ftp_new() {
@@ -560,9 +563,27 @@ mod tests {
             assert_eq!(file.user, None);
             assert_eq!(file.group, None);
             assert_eq!(file.unix_pex.unwrap(), (6, 6, 4));
-            assert_eq!(file.last_access_time, 1541376000);
-            assert_eq!(file.last_change_time, 1541376000);
-            assert_eq!(file.creation_time, 1541376000);
+            assert_eq!(
+                file.last_access_time
+                    .duration_since(SystemTime::UNIX_EPOCH)
+                    .ok()
+                    .unwrap(),
+                Duration::from_secs(1541376000)
+            );
+            assert_eq!(
+                file.last_change_time
+                    .duration_since(SystemTime::UNIX_EPOCH)
+                    .ok()
+                    .unwrap(),
+                Duration::from_secs(1541376000)
+            );
+            assert_eq!(
+                file.creation_time
+                    .duration_since(SystemTime::UNIX_EPOCH)
+                    .ok()
+                    .unwrap(),
+                Duration::from_secs(1541376000)
+            );
         } else {
             panic!("Expected file, got directory");
         }
@@ -577,14 +598,32 @@ mod tests {
         if let FsEntry::File(file) = fs_entry {
             assert_eq!(file.abs_path, PathBuf::from("/tmp/omar.txt"));
             assert_eq!(file.name, String::from("omar.txt"));
-            assert_eq!(file.size, 8192);
+            assert_eq!(file.size, 4096);
             assert_eq!(file.symlink, None);
             assert_eq!(file.user, Some(0));
             assert_eq!(file.group, Some(9));
             assert_eq!(file.unix_pex.unwrap(), (7, 5, 5));
-            assert_eq!(file.last_access_time, 1604593920);
-            assert_eq!(file.last_change_time, 1604593920);
-            assert_eq!(file.creation_time, 1604593920);
+            assert_eq!(
+                file.last_access_time
+                    .duration_since(SystemTime::UNIX_EPOCH)
+                    .ok()
+                    .unwrap(),
+                Duration::from_secs(1604593920)
+            );
+            assert_eq!(
+                file.last_change_time
+                    .duration_since(SystemTime::UNIX_EPOCH)
+                    .ok()
+                    .unwrap(),
+                Duration::from_secs(1604593920)
+            );
+            assert_eq!(
+                file.creation_time
+                    .duration_since(SystemTime::UNIX_EPOCH)
+                    .ok()
+                    .unwrap(),
+                Duration::from_secs(1604593920)
+            );
         } else {
             panic!("Expected file, got directory");
         }
@@ -603,9 +642,27 @@ mod tests {
             assert_eq!(dir.user, Some(0));
             assert_eq!(dir.group, Some(9));
             assert_eq!(dir.unix_pex.unwrap(), (7, 7, 5));
-            assert_eq!(dir.last_access_time, 1541376000);
-            assert_eq!(dir.last_change_time, 1541376000);
-            assert_eq!(dir.creation_time, 1541376000);
+            assert_eq!(
+                dir.last_access_time
+                    .duration_since(SystemTime::UNIX_EPOCH)
+                    .ok()
+                    .unwrap(),
+                Duration::from_secs(1541376000)
+            );
+            assert_eq!(
+                dir.last_change_time
+                    .duration_since(SystemTime::UNIX_EPOCH)
+                    .ok()
+                    .unwrap(),
+                Duration::from_secs(1541376000)
+            );
+            assert_eq!(
+                dir.creation_time
+                    .duration_since(SystemTime::UNIX_EPOCH)
+                    .ok()
+                    .unwrap(),
+                Duration::from_secs(1541376000)
+            );
             assert_eq!(dir.readonly, false);
         } else {
             panic!("Expected directory, got directory");
@@ -618,4 +675,141 @@ mod tests {
             )
             .is_err());
     }
+
+    #[test]
+    fn test_filetransfer_ftp_connect_unsecure_anonymous() {
+        let mut ftp: FtpFileTransfer = FtpFileTransfer::new(false);
+        // Connect
+        assert!(ftp
+            .connect(String::from("speedtest.tele2.net"), 21, None, None)
+            .is_ok());
+        // Pwd
+        assert_eq!(ftp.pwd().ok().unwrap(), PathBuf::from("/"));
+        // Disconnect
+        assert!(ftp.disconnect().is_ok());
+    }
+
+    #[test]
+    fn test_filetransfer_ftp_connect_unsecure_username() {
+        let mut ftp: FtpFileTransfer = FtpFileTransfer::new(false);
+        // Connect
+        assert!(ftp
+            .connect(
+                String::from("test.rebex.net"),
+                21,
+                Some(String::from("demo")),
+                Some(String::from("password"))
+            )
+            .is_ok());
+        // Pwd
+        assert_eq!(ftp.pwd().ok().unwrap(), PathBuf::from("/"));
+        // Disconnect
+        assert!(ftp.disconnect().is_ok());
+    }
+
+    #[test]
+    fn test_filetransfer_ftp_connect_secure() {
+        let mut ftp: FtpFileTransfer = FtpFileTransfer::new(true);
+        // Connect
+        assert!(ftp
+            .connect(
+                String::from("test.rebex.net"),
+                21,
+                Some(String::from("demo")),
+                Some(String::from("password"))
+            )
+            .is_ok());
+        // Pwd
+        assert_eq!(ftp.pwd().ok().unwrap(), PathBuf::from("/"));
+        // Disconnect
+        assert!(ftp.disconnect().is_ok());
+    }
+
+    #[test]
+    fn test_filetransfer_ftp_change_dir() {
+        let mut ftp: FtpFileTransfer = FtpFileTransfer::new(false);
+        // Connect
+        assert!(ftp
+            .connect(String::from("speedtest.tele2.net"), 21, None, None)
+            .is_ok());
+        // Pwd
+        assert_eq!(ftp.pwd().ok().unwrap(), PathBuf::from("/"));
+        // Cwd
+        assert!(ftp.change_dir(PathBuf::from("upload/").as_path()).is_ok());
+        // Pwd
+        assert_eq!(ftp.pwd().ok().unwrap(), PathBuf::from("/upload"));
+        // Disconnect
+        assert!(ftp.disconnect().is_ok());
+    }
+
+    /* NOTE: they don't work
+    #[test]
+    fn test_filetransfer_ftp_list_dir() {
+        let mut ftp: FtpFileTransfer = FtpFileTransfer::new(false);
+        // Connect
+        assert!(ftp.connect(String::from("speedtest.tele2.net"), 21, None, None).is_ok());
+        // Pwd
+        assert_eq!(ftp.pwd().ok().unwrap(), PathBuf::from("/"));
+        // List dir
+        println!("{:?}", ftp.list_dir(PathBuf::from("/").as_path()));
+        let files: Vec<FsEntry> = ftp.list_dir(PathBuf::from("/").as_path()).ok().unwrap();
+        // There should be 19 files
+        assert_eq!(files.len(), 19);
+        // Verify first entry (1000GB.zip)
+        let first: &FsEntry = files.get(0).unwrap();
+        if let FsEntry::File(f) = first {
+            assert_eq!(f.name, String::from("1000GB.zip"));
+            assert_eq!(f.abs_path, PathBuf::from("/1000GB.zip"));
+            assert_eq!(f.size, 1073741824000);
+            assert_eq!(*f.ftype.as_ref().unwrap(), String::from("zip"));
+            assert_eq!(f.unix_pex.unwrap(), (6, 4, 4));
+            assert_eq!(f.creation_time.duration_since(SystemTime::UNIX_EPOCH).unwrap(), Duration::from_secs(1455840000));
+            assert_eq!(f.last_access_time.duration_since(SystemTime::UNIX_EPOCH).unwrap(), Duration::from_secs(1455840000));
+            assert_eq!(f.last_change_time.duration_since(SystemTime::UNIX_EPOCH).unwrap(), Duration::from_secs(1455840000));
+        } else {
+            panic!("First should be a file, but it a directory");
+        }
+        // Verify last entry (directory upload)
+        let last: &FsEntry = files.get(18).unwrap();
+        if let FsEntry::Directory(d) = last {
+            assert_eq!(d.name, String::from("upload"));
+            assert_eq!(d.abs_path, PathBuf::from("/upload"));
+            assert_eq!(d.readonly, false);
+            assert_eq!(d.unix_pex.unwrap(), (7, 5, 5));
+        } else {
+            panic!("Last should be a directory, but is a file");
+        }
+        // Disconnect
+        assert!(ftp.disconnect().is_ok());
+    }
+
+    #[test]
+    fn test_filetransfer_ftp_recv() {
+        let mut ftp: FtpFileTransfer = FtpFileTransfer::new(false);
+        // Connect
+        assert!(ftp.connect(String::from("test.rebex.net"), 21, Some(String::from("demo")), Some(String::from("password"))).is_ok());
+        // Pwd
+        assert_eq!(ftp.pwd().ok().unwrap(), PathBuf::from("/"));
+        // Recv 100KB
+        assert!(ftp.recv_file(PathBuf::from("readme.txt").as_path()).is_ok());
+        // Disconnect
+        assert!(ftp.disconnect().is_ok());
+    }
+
+    #[test]
+    fn test_filetransfer_ftp_send() {
+        let mut ftp: FtpFileTransfer = FtpFileTransfer::new(false);
+        // Connect
+        assert!(ftp.connect(String::from("speedtest.tele2.net"), 21, None, None).is_ok());
+        // Pwd
+        assert_eq!(ftp.pwd().ok().unwrap(), PathBuf::from("/"));
+        // Cwd
+        assert!(ftp.change_dir(PathBuf::from("upload/").as_path()).is_ok());
+        // Pwd
+        assert_eq!(ftp.pwd().ok().unwrap(), PathBuf::from("/upload"));
+        // Send a sample file 100KB
+        assert!(ftp.send_file(PathBuf::from("test.txt").as_path()).is_ok());
+        // Disconnect
+        assert!(ftp.disconnect().is_ok());
+    }*/
 }
