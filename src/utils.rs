@@ -60,7 +60,6 @@ pub fn parse_remote_opt(
     let mut port: u16 = 22;
     let mut protocol: FileTransferProtocol = FileTransferProtocol::Sftp;
     let mut username: Option<String> = None;
-    let mut secure: bool = false;
     // Split string by '://'
     let tokens: Vec<&str> = wrkstr.split("://").collect();
     // If length is > 1, then token[0] is protocol
@@ -177,7 +176,7 @@ pub fn lstime_to_systime(
         }
     };
     // Convert datetime to system time
-    let mut sys_time: SystemTime = SystemTime::UNIX_EPOCH;
+    let sys_time: SystemTime = SystemTime::UNIX_EPOCH;
     Ok(sys_time
         .checked_add(Duration::from_secs(datetime.timestamp() as u64))
         .unwrap_or(SystemTime::UNIX_EPOCH))
@@ -276,28 +275,28 @@ mod tests {
             lstime_to_systime("Nov 5 16:32", "%b %d %Y", "%b %d %H:%M")
                 .ok()
                 .unwrap()
-                .duration_since(SystemTime::UNIX_EPOCH),
+                .duration_since(SystemTime::UNIX_EPOCH).ok().unwrap(),
             Duration::from_secs(1604593920)
         );
         assert_eq!(
             lstime_to_systime("Dec 2 21:32", "%b %d %Y", "%b %d %H:%M")
                 .ok()
                 .unwrap()
-                .duration_since(SystemTime::UNIX_EPOCH),
-            Duration::from_secs(1606948320)
+                .duration_since(SystemTime::UNIX_EPOCH).ok().unwrap(),
+            Duration::from_secs(1606944720)
         );
         assert_eq!(
             lstime_to_systime("Nov 5 2018", "%b %d %Y", "%b %d %H:%M")
                 .ok()
                 .unwrap()
-                .duration_since(SystemTime::UNIX_EPOCH),
+                .duration_since(SystemTime::UNIX_EPOCH).ok().unwrap(),
             Duration::from_secs(1541376000)
         );
         assert_eq!(
             lstime_to_systime("Mar 18 2018", "%b %d %Y", "%b %d %H:%M")
                 .ok()
                 .unwrap()
-                .duration_since(SystemTime::UNIX_EPOCH),
+                .duration_since(SystemTime::UNIX_EPOCH).ok().unwrap(),
             Duration::from_secs(1521331200)
         );
         // bad cases
