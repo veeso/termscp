@@ -442,3 +442,76 @@ impl FileTransfer for FtpFileTransfer {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+
+    #[test]
+    fn test_filetransfer_ftp_new() {
+        let ftp: FtpFileTransfer = FtpFileTransfer::new(false);
+        assert_eq!(ftp.ftps, false);
+        assert!(ftp.stream.is_none());
+        // FTPS
+        let ftp: FtpFileTransfer = FtpFileTransfer::new(true);
+        assert_eq!(ftp.ftps, true);
+        assert!(ftp.stream.is_none());
+    }
+
+    #[test]
+    fn test_filetransfer_ftp_parse_list_line() {
+        let ftp: FtpFileTransfer = FtpFileTransfer::new(false);
+        // Simple file
+        let fs_entry: FsEntry = ftp.parse_list_line(PathBuf::from("/tmp").as_path(), "-rw-rw-r-- 1 root  dialout  8192 Nov 5 2018 omar.txt").ok().unwrap();
+        if let FsEntry::File(file) = fs_entry {
+            assert_eq!(file.abs_path, PathBuf::from("/tmp/omar.txt"));
+            assert_eq!(file.name, String::from("omar.txt"));
+            assert_eq!(file.size, 8192);
+            assert_eq!(file.symlink, None);
+            assert_eq!(file.user, None);
+            assert_eq!(file.group, None);
+            assert_eq!(file.unix_pex.unwrap(), (6, 6, 4));
+            assert_eq!(file.last_access_time, 1541376000);
+            assert_eq!(file.last_change_time, 1541376000);
+            assert_eq!(file.creation_time, 1541376000);
+        } else {
+            panic!("Expected file, got directory");
+        }
+        // Simple file with number as gid, uid
+        let fs_entry: FsEntry = ftp.parse_list_line(PathBuf::from("/tmp").as_path(), "-rwxr-xr-x 1 0  9  4096 Nov 5 16:32 omar.txt").ok().unwrap();
+        if let FsEntry::File(file) = fs_entry {
+            assert_eq!(file.abs_path, PathBuf::from("/tmp/omar.txt"));
+            assert_eq!(file.name, String::from("omar.txt"));
+            assert_eq!(file.size, 8192);
+            assert_eq!(file.symlink, None);
+            assert_eq!(file.user, Some(0));
+            assert_eq!(file.group, Some(9));
+            assert_eq!(file.unix_pex.unwrap(), (7, 5, 5));
+            assert_eq!(file.last_access_time, 1604593920);
+            assert_eq!(file.last_change_time, 1604593920);
+            assert_eq!(file.creation_time, 1604593920);
+        } else {
+            panic!("Expected file, got directory");
+        }
+        // Directory
+        let fs_entry: FsEntry = ftp.parse_list_line(PathBuf::from("/tmp").as_path(), "drwxrwxr-x 1 0  9  4096 Nov 5 2018 docs").ok().unwrap();
+        if let FsEntry::Directory(dir) = fs_entry {
+            assert_eq!(dir.abs_path, PathBuf::from("/tmp/docs"));
+            assert_eq!(dir.name, String::from("docs"));
+            assert_eq!(dir.symlink, None);
+            assert_eq!(dir.user, Some(0));
+            assert_eq!(dir.group, Some(9));
+            assert_eq!(dir.unix_pex.unwrap(), (7, 7, 5));
+            assert_eq!(dir.last_access_time, 1541376000);
+            assert_eq!(dir.last_change_time, 1541376000);
+            assert_eq!(dir.creation_time, 1541376000);
+            assert_eq!(dir.readonly, false);
+        } else {
+            panic!("Expected directory, got directory");
+        }
+        // Error
+        assert!(ftp.parse_list_line(PathBuf::from("/").as_path(), "drwxrwxr-x 1 0  9  Nov 5 2018 docs").is_err());
+    }
+
+}
