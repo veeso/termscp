@@ -62,9 +62,9 @@ pub enum FileTransferErrorType {
     SslError,
     DirStatFailed,
     FileCreateDenied,
-    FileReadonly,
     IoErr(std::io::Error),
     NoSuchFileOrDirectory,
+    PexError,
     ProtocolError,
     UninitializedSession,
     UnsupportedFeature,
@@ -101,11 +101,11 @@ impl std::fmt::Display for FileTransferError {
             FileTransferErrorType::ConnectionError => String::from("Connection error"),
             FileTransferErrorType::DirStatFailed => String::from("Could not stat directory"),
             FileTransferErrorType::FileCreateDenied => String::from("Failed to create file"),
-            FileTransferErrorType::FileReadonly => String::from("File is readonly"),
             FileTransferErrorType::IoErr(err) => format!("IO Error: {}", err),
             FileTransferErrorType::NoSuchFileOrDirectory => {
                 String::from("No such file or directory")
             }
+            FileTransferErrorType::PexError => String::from("Not enough permissions"),
             FileTransferErrorType::ProtocolError => String::from("Protocol error"),
             FileTransferErrorType::SslError => String::from("SSL error"),
             FileTransferErrorType::UninitializedSession => String::from("Uninitialized session"),

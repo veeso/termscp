@@ -341,7 +341,7 @@ impl FileTransfer for SftpFileTransfer {
                         // Remove file
                         match sftp.unlink(f.abs_path.as_path()) {
                             Ok(_) => Ok(()),
-                            Err(err) => Err(FileTransferError::new_ex(FileTransferErrorType::FileReadonly, format!("{}", err))),
+                            Err(err) => Err(FileTransferError::new_ex(FileTransferErrorType::PexError, format!("{}", err))),
                         }
                     }
                     FsEntry::Directory(d) => {
@@ -358,7 +358,7 @@ impl FileTransfer for SftpFileTransfer {
                                 // Finally remove directory
                                 match sftp.rmdir(d.abs_path.as_path()) {
                                     Ok(_) => Ok(()),
-                                    Err(err) => Err(FileTransferError::new_ex(FileTransferErrorType::FileReadonly, format!("{}", err))),
+                                    Err(err) => Err(FileTransferError::new_ex(FileTransferErrorType::PexError, format!("{}", err))),
                                 }
                             }
                             Err(err) => return Err(err),
