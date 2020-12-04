@@ -38,7 +38,11 @@ impl FileTransferActivity {
             self.params.username.clone(),
             self.params.password.clone(),
         ) {
-            Ok(_) => {
+            Ok(welcome) => {
+                if let Some(banner) = welcome {
+                    // Log welcome
+                    self.log(LogLevel::Info, format!("Established connection with '{}': \"{}\"", self.params.address, banner).as_ref());
+                }
                 // Set state to explorer
                 self.input_mode = InputMode::Explorer;
                 self.reload_remote_dir();

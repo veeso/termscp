@@ -127,6 +127,7 @@ pub trait FileTransfer {
     /// ### connect
     ///
     /// Connect to the remote server
+    /// Can return banner / welcome message on success
 
     fn connect(
         &mut self,
@@ -134,7 +135,7 @@ pub trait FileTransfer {
         port: u16,
         username: Option<String>,
         password: Option<String>,
-    ) -> Result<(), FileTransferError>;
+    ) -> Result<Option<String>, FileTransferError>;
 
     /// ### disconnect
     ///

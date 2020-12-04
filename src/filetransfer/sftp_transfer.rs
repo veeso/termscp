@@ -195,7 +195,7 @@ impl FileTransfer for SftpFileTransfer {
         port: u16,
         username: Option<String>,
         password: Option<String>,
-    ) -> Result<(), FileTransferError> {
+    ) -> Result<Option<String>, FileTransferError> {
         // Setup tcp stream
         let tcp: TcpStream = match TcpStream::connect(format!("{}:{}", address, port)) {
             Ok(stream) => stream,
@@ -258,10 +258,14 @@ impl FileTransfer for SftpFileTransfer {
             }
         };
         // Set session
+        let banner: Option<String> = match session.banner() {
+            Some(s) => Some(String::from(s)),
+            None => None,
+        };
         self.session = Some(session);
         // Set sftp
         self.sftp = Some(sftp);
-        Ok(())
+        Ok(banner)
     }
 
     /// ### disconnect
