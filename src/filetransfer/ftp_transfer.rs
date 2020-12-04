@@ -34,7 +34,6 @@ use crate::utils::lstime_to_systime;
 
 // Includes
 use ftp::native_tls::TlsConnector;
-use ftp::status::{CLOSING_DATA_CONNECTION, REQUESTED_FILE_ACTION_OK};
 use ftp::FtpStream;
 use regex::Regex;
 use std::io::{Read, Write};
@@ -47,7 +46,6 @@ use std::time::SystemTime;
 pub struct FtpFileTransfer {
     stream: Option<FtpStream>,
     ftps: bool,
-    pending_write_response: bool,
 }
 
 impl FtpFileTransfer {
@@ -58,27 +56,7 @@ impl FtpFileTransfer {
         FtpFileTransfer {
             stream: None,
             ftps: ftps,
-            pending_write_response: false,
         }
-    }
-
-    /// ### handle_pending_operations
-    /// 
-    /// Handle pending operations, such as closing write command after writing a file
-    fn handle_pending_operations(&mut self) -> Result<(), FileTransferError> {
-        if self.pending_write_response {
-            // Send write response ok
-            if let Some(stream) = &mut self.stream {
-                match stream.read_response_in(&[
-                    CLOSING_DATA_CONNECTION,
-                    REQUESTED_FILE_ACTION_OK,
-                ]) {
-                    Ok(_) => self.pending_write_response = false,
-                    Err(err) => return Err(FileTransferError::new_ex(FileTransferErrorType::ProtocolError, format!("Could not close write: {}", err)))
-                }
-            }
-        }
-        Ok(())
     }
 
     /// ### parse_list_line
@@ -260,12 +238,18 @@ impl FileTransfer for FtpFileTransfer {
         };
         // If SSL, open secure session
         if self.ftps {
-            let ctx = match TlsConnector::builder().danger_accept_invalid_certs(true).danger_accept_invalid_hostnames(true).build() {
+            let ctx = match TlsConnector::builder()
+                .danger_accept_invalid_certs(true)
+                .danger_accept_invalid_hostnames(true)
+                .build()
+            {
                 Ok(tls) => tls,
-                Err(err) => return Err(FileTransferError::new_ex(
-                    FileTransferErrorType::SslError,
-                    format!("{}", err),
-                ))
+                Err(err) => {
+                    return Err(FileTransferError::new_ex(
+                        FileTransferErrorType::SslError,
+                        format!("{}", err),
+                    ))
+                }
             };
             stream = match stream.into_secure(ctx, address.as_str()) {
                 Ok(s) => s,
@@ -332,10 +316,6 @@ impl FileTransfer for FtpFileTransfer {
     /// Print working directory
 
     fn pwd(&mut self) -> Result<PathBuf, FileTransferError> {
-        // Close pending operations
-        if let Err(err) = self.handle_pending_operations() {
-            return Err(err);
-        }
         match &mut self.stream {
             Some(stream) => match stream.pwd() {
                 Ok(path) => Ok(PathBuf::from(path.as_str())),
@@ -355,10 +335,6 @@ impl FileTransfer for FtpFileTransfer {
     /// Change working directory
 
     fn change_dir(&mut self, dir: &Path) -> Result<PathBuf, FileTransferError> {
-        // Close pending operations
-        if let Err(err) = self.handle_pending_operations() {
-            return Err(err);
-        }
         match &mut self.stream {
             Some(stream) => match stream.cwd(&dir.to_string_lossy()) {
                 Ok(_) => Ok(PathBuf::from(dir)),
@@ -378,10 +354,6 @@ impl FileTransfer for FtpFileTransfer {
     /// List directory entries
 
     fn list_dir(&mut self, path: &Path) -> Result<Vec<FsEntry>, FileTransferError> {
-        // Close pending operations
-        if let Err(err) = self.handle_pending_operations() {
-            return Err(err);
-        }
         match &mut self.stream {
             Some(stream) => match stream.list(Some(&path.to_string_lossy())) {
                 Ok(entries) => {
@@ -410,10 +382,6 @@ impl FileTransfer for FtpFileTransfer {
     ///
     /// Make directory
     fn mkdir(&mut self, dir: &Path) -> Result<(), FileTransferError> {
-        // Close pending operations
-        if let Err(err) = self.handle_pending_operations() {
-            return Err(err);
-        }
         match &mut self.stream {
             Some(stream) => match stream.mkdir(&dir.to_string_lossy()) {
                 Ok(_) => Ok(()),
@@ -432,10 +400,6 @@ impl FileTransfer for FtpFileTransfer {
     ///
     /// Remove a file or a directory
     fn remove(&mut self, fsentry: &FsEntry) -> Result<(), FileTransferError> {
-        // Close pending operations
-        if let Err(err) = self.handle_pending_operations() {
-            return Err(err);
-        }
         if self.stream.is_none() {
             return Err(FileTransferError::new(
                 FileTransferErrorType::UninitializedSession,
@@ -488,10 +452,6 @@ impl FileTransfer for FtpFileTransfer {
     ///
     /// Rename file or a directory
     fn rename(&mut self, file: &FsEntry, dst: &Path) -> Result<(), FileTransferError> {
-        // Close pending operations
-        if let Err(err) = self.handle_pending_operations() {
-            return Err(err);
-        }
         match &mut self.stream {
             Some(stream) => {
                 // Get name
@@ -544,17 +504,9 @@ impl FileTransfer for FtpFileTransfer {
     /// Data contains the file data
     /// Returns file and its size
     fn send_file(&mut self, file_name: &Path) -> Result<Box<dyn Write>, FileTransferError> {
-        // Close pending operations
-        if let Err(err) = self.handle_pending_operations() {
-            return Err(err);
-        }
         match &mut self.stream {
             Some(stream) => match stream.put_with_stream(&file_name.to_string_lossy()) {
-                Ok(writer) => {
-                    // Set pending write response
-                    self.pending_write_response = true;
-                    Ok(Box::new(writer))
-                }    
+                Ok(writer) => Ok(Box::new(writer)),
                 Err(err) => Err(FileTransferError::new_ex(
                     FileTransferErrorType::FileCreateDenied,
                     format!("{}", err),
@@ -571,10 +523,6 @@ impl FileTransfer for FtpFileTransfer {
     /// Receive file from remote with provided name
     /// Returns file and its size
     fn recv_file(&mut self, file_name: &Path) -> Result<Box<dyn Read>, FileTransferError> {
-        // Close pending operations
-        if let Err(err) = self.handle_pending_operations() {
-            return Err(err);
-        }
         match &mut self.stream {
             Some(stream) => match stream.get(&file_name.to_string_lossy()) {
                 Ok(reader) => Ok(Box::new(reader)),
@@ -587,6 +535,39 @@ impl FileTransfer for FtpFileTransfer {
                 FileTransferErrorType::UninitializedSession,
             )),
         }
+    }
+
+    /// ### on_sent
+    ///
+    /// Finalize send method.
+    /// This method must be implemented only if necessary; in case you don't need it, just return `Ok(())`
+    /// The purpose of this method is to finalize the connection with the peer when writing data.
+    /// This is necessary for some protocols such as FTP.
+    /// You must call this method each time you want to finalize the write of the remote file.
+    fn on_sent(&mut self, writable: Box<dyn Write>) -> Result<(), FileTransferError> {
+        match &mut self.stream {
+            Some(stream) => match stream.finalize_put_stream(writable) {
+                Ok(_) => Ok(()),
+                Err(err) => Err(FileTransferError::new_ex(
+                    FileTransferErrorType::NoSuchFileOrDirectory,
+                    format!("{}", err),
+                )),
+            },
+            None => Err(FileTransferError::new(
+                FileTransferErrorType::UninitializedSession,
+            )),
+        }
+    }
+
+    /// ### on_recv
+    ///
+    /// Finalize recv method.
+    /// This method must be implemented only if necessary; in case you don't need it, just return `Ok(())`
+    /// The purpose of this method is to finalize the connection with the peer when reading data.
+    /// This mighe be necessary for some protocols.
+    /// You must call this method each time you want to finalize the read of the remote file.
+    fn on_recv(&mut self, _readable: Box<dyn Read>) -> Result<(), FileTransferError> {
+        Ok(())
     }
 }
 

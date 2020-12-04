@@ -536,6 +536,26 @@ impl FileTransfer for SftpFileTransfer {
             }
         }
     }
+
+    /// ### on_sent
+    ///
+    /// Finalize send method. This method must be implemented only if necessary.
+    /// The purpose of this method is to finalize the connection with the peer when writing data.
+    /// This is necessary for some protocols such as FTP.
+    /// You must call this method each time you want to finalize the write of the remote file.
+    fn on_sent(&mut self, _writable: Box<dyn Write>) -> Result<(), FileTransferError> {
+        Ok(())
+    }
+
+    /// ### on_recv
+    ///
+    /// Finalize recv method. This method must be implemented only if necessary.
+    /// The purpose of this method is to finalize the connection with the peer when reading data.
+    /// This mighe be necessary for some protocols.
+    /// You must call this method each time you want to finalize the read of the remote file.
+    fn on_recv(&mut self, _readable: Box<dyn Read>) -> Result<(), FileTransferError> {
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -696,10 +716,7 @@ mod tests {
         assert_eq!(client.wrkdir, PathBuf::from("/"));
         // List dir
         let pwd: PathBuf = client.pwd().ok().unwrap();
-        let files: Vec<FsEntry> = client
-            .list_dir(pwd.as_path())
-            .ok()
-            .unwrap();
+        let files: Vec<FsEntry> = client.list_dir(pwd.as_path()).ok().unwrap();
         assert_eq!(files.len(), 3); // There are 3 files
                                     // Disconnect
         assert!(client.disconnect().is_ok());

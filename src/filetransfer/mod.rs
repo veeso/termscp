@@ -95,9 +95,7 @@ impl FileTransferError {
 impl std::fmt::Display for FileTransferError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         let err: String = match &self.code {
-            FileTransferErrorType::AuthenticationFailed => {
-                String::from("Authentication failed")
-            }
+            FileTransferErrorType::AuthenticationFailed => String::from("Authentication failed"),
             FileTransferErrorType::BadAddress => String::from("Bad address syntax"),
             FileTransferErrorType::ConnectionError => String::from("Connection error"),
             FileTransferErrorType::DirStatFailed => String::from("Could not stat directory"),
@@ -199,4 +197,22 @@ pub trait FileTransfer {
     /// Receive file from remote with provided name
     /// Returns file and its size
     fn recv_file(&mut self, file_name: &Path) -> Result<Box<dyn Read>, FileTransferError>;
+
+    /// ### on_sent
+    ///
+    /// Finalize send method.
+    /// This method must be implemented only if necessary; in case you don't need it, just return `Ok(())`
+    /// The purpose of this method is to finalize the connection with the peer when writing data.
+    /// This is necessary for some protocols such as FTP.
+    /// You must call this method each time you want to finalize the write of the remote file.
+    fn on_sent(&mut self, writable: Box<dyn Write>) -> Result<(), FileTransferError>;
+
+    /// ### on_recv
+    ///
+    /// Finalize recv method.
+    /// This method must be implemented only if necessary; in case you don't need it, just return `Ok(())`
+    /// The purpose of this method is to finalize the connection with the peer when reading data.
+    /// This mighe be necessary for some protocols.
+    /// You must call this method each time you want to finalize the read of the remote file.
+    fn on_recv(&mut self, readable: Box<dyn Read>) -> Result<(), FileTransferError>;
 }

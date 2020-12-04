@@ -41,7 +41,14 @@ impl FileTransferActivity {
             Ok(welcome) => {
                 if let Some(banner) = welcome {
                     // Log welcome
-                    self.log(LogLevel::Info, format!("Established connection with '{}': \"{}\"", self.params.address, banner).as_ref());
+                    self.log(
+                        LogLevel::Info,
+                        format!(
+                            "Established connection with '{}': \"{}\"",
+                            self.params.address, banner
+                        )
+                        .as_ref(),
+                    );
                 }
                 // Set state to explorer
                 self.input_mode = InputMode::Explorer;
@@ -173,6 +180,14 @@ impl FileTransferActivity {
                                     self.draw();
                                     last_progress_val = self.transfer_progress;
                                 }
+                            }
+                            // Finalize stream
+                            if let Err(err) = self.client.on_sent(rhnd) {
+                                self.log(
+                                    LogLevel::Warn,
+                                    format!("Could not finalize remote stream: \"{}\"", err)
+                                        .as_str(),
+                                );
                             }
                             self.log(
                                 LogLevel::Info,
@@ -351,6 +366,14 @@ impl FileTransferActivity {
                                         self.draw();
                                         last_progress_val = self.transfer_progress;
                                     }
+                                }
+                                // Finalize stream
+                                if let Err(err) = self.client.on_recv(rhnd) {
+                                    self.log(
+                                        LogLevel::Warn,
+                                        format!("Could not finalize remote stream: \"{}\"", err)
+                                            .as_str(),
+                                    );
                                 }
                                 // Log
                                 self.log(

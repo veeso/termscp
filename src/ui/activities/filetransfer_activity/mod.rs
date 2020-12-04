@@ -175,7 +175,6 @@ enum FileExplorerTab {
 /// ## LogLevel
 ///
 /// Log level type
-#[allow(dead_code)]
 enum LogLevel {
     Error,
     Warn,
