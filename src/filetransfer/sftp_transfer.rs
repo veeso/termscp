@@ -31,7 +31,7 @@ use super::{FileTransfer, FileTransferError, FileTransferErrorType};
 use crate::fs::{FsDirectory, FsEntry, FsFile};
 
 // Includes
-use ssh2::{FileStat, Session, Sftp};
+use ssh2::{FileStat, OpenFlags, OpenType, Session, Sftp};
 use std::io::{Read, Write};
 use std::net::TcpStream;
 use std::path::{Path, PathBuf};
@@ -493,14 +493,28 @@ impl FileTransfer for SftpFileTransfer {
     /// Send file to remote
     /// File name is referred to the name of the file as it will be saved
     /// Data contains the file data
-    fn send_file(&mut self, file_name: &Path) -> Result<Box<dyn Write>, FileTransferError> {
+    fn send_file(
+        &mut self,
+        local: &FsFile,
+        file_name: &Path,
+    ) -> Result<Box<dyn Write>, FileTransferError> {
         match self.sftp.as_ref() {
             None => Err(FileTransferError::new(
                 FileTransferErrorType::UninitializedSession,
             )),
             Some(sftp) => {
                 let remote_path: PathBuf = self.get_abs_path(file_name);
-                match sftp.create(remote_path.as_path()) {
+                // Calculate file mode
+                let mode: i32 = match local.unix_pex {
+                    None => 0o644,
+                    Some((u, g, o)) => ((u as i32) << 6) + ((g as i32) << 3) + (o as i32),
+                };
+                match sftp.open_mode(
+                    remote_path.as_path(),
+                    OpenFlags::WRITE | OpenFlags::CREATE | OpenFlags::APPEND | OpenFlags::TRUNCATE,
+                    mode,
+                    OpenType::File,
+                ) {
                     Ok(file) => Ok(Box::new(file)),
                     Err(err) => Err(FileTransferError::new_ex(
                         FileTransferErrorType::FileCreateDenied,
@@ -514,14 +528,14 @@ impl FileTransfer for SftpFileTransfer {
     /// ### recv_file
     ///
     /// Receive file from remote with provided name
-    fn recv_file(&mut self, file_name: &Path) -> Result<Box<dyn Read>, FileTransferError> {
+    fn recv_file(&mut self, file: &FsFile) -> Result<Box<dyn Read>, FileTransferError> {
         match self.sftp.as_ref() {
             None => Err(FileTransferError::new(
                 FileTransferErrorType::UninitializedSession,
             )),
             Some(sftp) => {
                 // Get remote file name
-                let remote_path: PathBuf = match self.get_remote_path(file_name) {
+                let remote_path: PathBuf = match self.get_remote_path(file.abs_path.as_path()) {
                     Ok(p) => p,
                     Err(err) => return Err(err),
                 };
@@ -763,10 +777,22 @@ mod tests {
         assert!(client.session.is_some());
         assert!(client.sftp.is_some());
         assert_eq!(client.wrkdir, PathBuf::from("/"));
+        let file: FsFile = FsFile {
+            name: String::from("readme.txt"),
+            abs_path: PathBuf::from("/readme.txt"),
+            last_change_time: SystemTime::UNIX_EPOCH,
+            last_access_time: SystemTime::UNIX_EPOCH,
+            creation_time: SystemTime::UNIX_EPOCH,
+            size: 0,
+            ftype: Some(String::from("txt")), // File type
+            readonly: true,
+            symlink: None,             // UNIX only
+            user: Some(0),             // UNIX only
+            group: Some(0),            // UNIX only
+            unix_pex: Some((6, 4, 4)), // UNIX only
+        };
         // Receive file
-        assert!(client
-            .recv_file(PathBuf::from("readme.txt").as_path())
-            .is_ok());
+        assert!(client.recv_file(&file).is_ok());
         // Disconnect
         assert!(client.disconnect().is_ok());
     }
@@ -786,9 +812,21 @@ mod tests {
         assert!(client.sftp.is_some());
         assert_eq!(client.wrkdir, PathBuf::from("/"));
         // Receive file
-        assert!(client
-            .recv_file(PathBuf::from("omar.txt").as_path())
-            .is_err());
+        let file: FsFile = FsFile {
+            name: String::from("omar.txt"),
+            abs_path: PathBuf::from("/omar.txt"),
+            last_change_time: SystemTime::UNIX_EPOCH,
+            last_access_time: SystemTime::UNIX_EPOCH,
+            creation_time: SystemTime::UNIX_EPOCH,
+            size: 0,
+            ftype: Some(String::from("txt")), // File type
+            readonly: true,
+            symlink: None,             // UNIX only
+            user: Some(0),             // UNIX only
+            group: Some(0),            // UNIX only
+            unix_pex: Some((6, 4, 4)), // UNIX only
+        };
+        assert!(client.recv_file(&file).is_err());
         // Disconnect
         assert!(client.disconnect().is_ok());
     }

@@ -503,7 +503,11 @@ impl FileTransfer for FtpFileTransfer {
     /// File name is referred to the name of the file as it will be saved
     /// Data contains the file data
     /// Returns file and its size
-    fn send_file(&mut self, file_name: &Path) -> Result<Box<dyn Write>, FileTransferError> {
+    fn send_file(
+        &mut self,
+        _local: &FsFile,
+        file_name: &Path,
+    ) -> Result<Box<dyn Write>, FileTransferError> {
         match &mut self.stream {
             Some(stream) => match stream.put_with_stream(&file_name.to_string_lossy()) {
                 Ok(writer) => Ok(Box::new(writer)),
@@ -522,9 +526,9 @@ impl FileTransfer for FtpFileTransfer {
     ///
     /// Receive file from remote with provided name
     /// Returns file and its size
-    fn recv_file(&mut self, file_name: &Path) -> Result<Box<dyn Read>, FileTransferError> {
+    fn recv_file(&mut self, file: &FsFile) -> Result<Box<dyn Read>, FileTransferError> {
         match &mut self.stream {
-            Some(stream) => match stream.get(&file_name.to_string_lossy()) {
+            Some(stream) => match stream.get(&file.abs_path.as_path().to_string_lossy()) {
                 Ok(reader) => Ok(Box::new(reader)),
                 Err(err) => Err(FileTransferError::new_ex(
                     FileTransferErrorType::NoSuchFileOrDirectory,

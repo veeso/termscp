@@ -124,7 +124,7 @@ impl FileTransferActivity {
                     .local
                     .open_file_read(file.abs_path.as_path())
                 {
-                    Ok(mut fhnd) => match self.client.send_file(remote_path.as_path()) {
+                    Ok(mut fhnd) => match self.client.send_file(file, remote_path.as_path()) {
                         Ok(mut rhnd) => {
                             // Write file
                             let file_size: usize =
@@ -317,7 +317,7 @@ impl FileTransferActivity {
                 {
                     Ok(mut local_file) => {
                         // Download file from remote
-                        match self.client.recv_file(file.abs_path.as_path()) {
+                        match self.client.recv_file(file) {
                             Ok(mut rhnd) => {
                                 // Set popup progress
                                 self.input_mode = InputMode::Popup(PopupType::Progress(format!(
