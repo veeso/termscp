@@ -199,7 +199,7 @@ impl FileTransferActivity {
                                 // Increase progress
                                 self.set_progress(total_bytes_written, file_size);
                                 // Draw only if a significant progress has been made (performance improvement)
-                                if last_progress_val + 0.5 >= self.transfer_progress {
+                                if last_progress_val < self.transfer_progress - 1.0 {
                                     // Draw
                                     self.draw();
                                     last_progress_val = self.transfer_progress;
@@ -443,7 +443,7 @@ impl FileTransferActivity {
                                     // Set progress
                                     self.set_progress(total_bytes_written, file.size);
                                     // Draw only if a significant progress has been made (performance improvement)
-                                    if last_progress_val + 0.5 >= self.transfer_progress {
+                                    if last_progress_val < self.transfer_progress - 1.0 {
                                         // Draw
                                         self.draw();
                                         last_progress_val = self.transfer_progress;
