@@ -332,6 +332,10 @@ impl FileTransferActivity {
                             LogLevel::Error,
                             format!("Could not get current remote path: {}", err).as_ref(),
                         );
+                        self.input_mode = InputMode::Popup(PopupType::Alert(
+                            Color::Red,
+                            format!("Could not get current remote path: {}", err),
+                        ));
                         return;
                     }
                 };

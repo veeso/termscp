@@ -137,15 +137,26 @@ impl FileTransferActivity {
                                                     )
                                                 }
                                             }
-                                            Err(err) => self.log(
-                                                LogLevel::Error,
-                                                format!(
-                                                    "Failed to stat file \"{}\": {}",
-                                                    realpath.display(),
-                                                    err
-                                                )
-                                                .as_ref(),
-                                            ),
+                                            Err(err) => {
+                                                self.log(
+                                                    LogLevel::Error,
+                                                    format!(
+                                                        "Failed to stat file \"{}\": {}",
+                                                        realpath.display(),
+                                                        err
+                                                    )
+                                                    .as_ref(),
+                                                );
+                                                self.input_mode =
+                                                    InputMode::Popup(PopupType::Alert(
+                                                        Color::Red,
+                                                        format!(
+                                                            "Failed to stat file \"{}\": {}",
+                                                            realpath.display(),
+                                                            err
+                                                        ),
+                                                    ));
+                                            }
                                         }
                                     }
                                 }
@@ -251,6 +262,10 @@ impl FileTransferActivity {
                                         format!("Could not get current remote path: {}", err)
                                             .as_ref(),
                                     );
+                                    self.input_mode = InputMode::Popup(PopupType::Alert(
+                                        Color::Red,
+                                        format!("Could not get current remote path: {}", err),
+                                    ));
                                     return;
                                 }
                             };
@@ -338,15 +353,26 @@ impl FileTransferActivity {
                                                     )
                                                 }
                                             }
-                                            Err(err) => self.log(
-                                                LogLevel::Error,
-                                                format!(
-                                                    "Failed to stat file \"{}\": {}",
-                                                    realpath.display(),
-                                                    err
-                                                )
-                                                .as_ref(),
-                                            ),
+                                            Err(err) => {
+                                                self.log(
+                                                    LogLevel::Error,
+                                                    format!(
+                                                        "Failed to stat file \"{}\": {}",
+                                                        realpath.display(),
+                                                        err
+                                                    )
+                                                    .as_ref(),
+                                                );
+                                                self.input_mode =
+                                                    InputMode::Popup(PopupType::Alert(
+                                                        Color::Red,
+                                                        format!(
+                                                            "Failed to stat file \"{}\": {}",
+                                                            realpath.display(),
+                                                            err
+                                                        ),
+                                                    ));
+                                            }
                                         }
                                     }
                                 }

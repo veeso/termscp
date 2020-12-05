@@ -143,6 +143,10 @@ impl FileTransferActivity {
                                     LogLevel::Error,
                                     format!("Could not rewind local file: {}", err).as_ref(),
                                 );
+                                self.input_mode = InputMode::Popup(PopupType::Alert(
+                                    Color::Red,
+                                    format!("Could not rewind local file: {}", err),
+                                ));
                             }
                             // Write remote file
                             let mut total_bytes_written: usize = 0;
@@ -170,6 +174,14 @@ impl FileTransferActivity {
                                                     format!("Could not write remote file: {}", err)
                                                         .as_ref(),
                                                 );
+                                                self.input_mode =
+                                                    InputMode::Popup(PopupType::Alert(
+                                                        Color::Red,
+                                                        format!(
+                                                            "Could not write remote file: {}",
+                                                            err
+                                                        ),
+                                                    ));
                                             }
                                         }
                                     }
@@ -178,6 +190,10 @@ impl FileTransferActivity {
                                             LogLevel::Error,
                                             format!("Could not read local file: {}", err).as_ref(),
                                         );
+                                        self.input_mode = InputMode::Popup(PopupType::Alert(
+                                            Color::Red,
+                                            format!("Could not read local file: {}", err),
+                                        ));
                                     }
                                 }
                                 // Increase progress
@@ -207,15 +223,25 @@ impl FileTransferActivity {
                                 .as_ref(),
                             );
                         }
-                        Err(err) => self.log(
-                            LogLevel::Error,
-                            format!(
-                                "Failed to upload file \"{}\": {}",
-                                file.abs_path.display(),
-                                err
-                            )
-                            .as_ref(),
-                        ),
+                        Err(err) => {
+                            self.log(
+                                LogLevel::Error,
+                                format!(
+                                    "Failed to upload file \"{}\": {}",
+                                    file.abs_path.display(),
+                                    err
+                                )
+                                .as_ref(),
+                            );
+                            self.input_mode = InputMode::Popup(PopupType::Alert(
+                                Color::Red,
+                                format!(
+                                    "Failed to upload file \"{}\": {}",
+                                    file.abs_path.display(),
+                                    err
+                                ),
+                            ));
+                        }
                     },
                     Err(err) => {
                         // Report error
@@ -228,6 +254,14 @@ impl FileTransferActivity {
                             )
                             .as_ref(),
                         );
+                        self.input_mode = InputMode::Popup(PopupType::Alert(
+                            Color::Red,
+                            format!(
+                                "Failed to open file \"{}\": {}",
+                                file.abs_path.display(),
+                                err
+                            ),
+                        ));
                     }
                 }
             }
@@ -254,26 +288,46 @@ impl FileTransferActivity {
                                     self.filetransfer_send(&entry, remote_path.as_path(), None);
                                 }
                             }
-                            Err(err) => self.log(
-                                LogLevel::Error,
-                                format!(
-                                    "Could not scan directory \"{}\": {}",
-                                    dir.abs_path.display(),
-                                    err
-                                )
-                                .as_ref(),
-                            ),
+                            Err(err) => {
+                                self.log(
+                                    LogLevel::Error,
+                                    format!(
+                                        "Could not scan directory \"{}\": {}",
+                                        dir.abs_path.display(),
+                                        err
+                                    )
+                                    .as_ref(),
+                                );
+                                self.input_mode = InputMode::Popup(PopupType::Alert(
+                                    Color::Red,
+                                    format!(
+                                        "Could not scan directory \"{}\": {}",
+                                        dir.abs_path.display(),
+                                        err
+                                    ),
+                                ));
+                            }
                         }
                     }
-                    Err(err) => self.log(
-                        LogLevel::Error,
-                        format!(
-                            "Failed to create directory \"{}\": {}",
-                            remote_path.display(),
-                            err
-                        )
-                        .as_ref(),
-                    ),
+                    Err(err) => {
+                        self.log(
+                            LogLevel::Error,
+                            format!(
+                                "Failed to create directory \"{}\": {}",
+                                remote_path.display(),
+                                err
+                            )
+                            .as_ref(),
+                        );
+                        self.input_mode = InputMode::Popup(PopupType::Alert(
+                            Color::Red,
+                            format!(
+                                "Failed to create directory \"{}\": {}",
+                                remote_path.display(),
+                                err
+                            ),
+                        ));
+                    }
                 }
             }
         }
@@ -281,8 +335,13 @@ impl FileTransferActivity {
         if let Ok(path) = self.client.pwd() {
             self.remote_scan(path.as_path());
         }
-        // Eventually, Reset input mode to explorer
-        self.input_mode = InputMode::Explorer;
+        // Eventually, Reset input mode to explorer (if input mode is wait or progress)
+        if let InputMode::Popup(ptype) = &self.input_mode {
+            match ptype {
+                PopupType::Wait(_) | PopupType::Progress(_) => self.input_mode = InputMode::Explorer,
+                _ => { /* Nothing to do */ }
+            }
+        }
     }
 
     /// ### filetransfer_recv
@@ -358,13 +417,28 @@ impl FileTransferActivity {
                                                         )
                                                         .as_ref(),
                                                     );
+                                                    self.input_mode =
+                                                        InputMode::Popup(PopupType::Alert(
+                                                            Color::Red,
+                                                            format!(
+                                                                "Could not write local file: {}",
+                                                                err
+                                                            ),
+                                                        ));
                                                 }
                                             }
                                         }
-                                        Err(err) => self.log(
-                                            LogLevel::Error,
-                                            format!("Could not read remote file: {}", err).as_ref(),
-                                        ),
+                                        Err(err) => {
+                                            self.log(
+                                                LogLevel::Error,
+                                                format!("Could not read remote file: {}", err)
+                                                    .as_ref(),
+                                            );
+                                            self.input_mode = InputMode::Popup(PopupType::Alert(
+                                                Color::Red,
+                                                format!("Could not read remote file: {}", err),
+                                            ));
+                                        }
                                     }
                                     // Set progress
                                     self.set_progress(total_bytes_written, file.size);
@@ -394,15 +468,25 @@ impl FileTransferActivity {
                                     .as_ref(),
                                 );
                             }
-                            Err(err) => self.log(
-                                LogLevel::Error,
-                                format!(
-                                    "Failed to download file \"{}\": {}",
-                                    file.abs_path.display(),
-                                    err
-                                )
-                                .as_ref(),
-                            ),
+                            Err(err) => {
+                                self.log(
+                                    LogLevel::Error,
+                                    format!(
+                                        "Failed to download file \"{}\": {}",
+                                        file.abs_path.display(),
+                                        err
+                                    )
+                                    .as_ref(),
+                                );
+                                self.input_mode = InputMode::Popup(PopupType::Alert(
+                                    Color::Red,
+                                    format!(
+                                        "Failed to download file \"{}\": {}",
+                                        file.abs_path.display(),
+                                        err
+                                    ),
+                                ));
+                            }
                         }
                     }
                     Err(err) => {
@@ -416,6 +500,14 @@ impl FileTransferActivity {
                             )
                             .as_ref(),
                         );
+                        self.input_mode = InputMode::Popup(PopupType::Alert(
+                            Color::Red,
+                            format!(
+                                "Failed to open local file for write \"{}\": {}",
+                                local_file_path.display(),
+                                err
+                            ),
+                        ));
                     }
                 }
             }
@@ -449,26 +541,38 @@ impl FileTransferActivity {
                                     self.filetransfer_recv(&entry, local_dir_path.as_path(), None);
                                 }
                             }
-                            Err(err) => self.log(
-                                LogLevel::Error,
-                                format!(
-                                    "Could not scan directory \"{}\": {}",
-                                    dir.abs_path.display(),
-                                    err
-                                )
-                                .as_ref(),
-                            ),
+                            Err(err) => {
+                                self.log(
+                                    LogLevel::Error,
+                                    format!(
+                                        "Could not scan directory \"{}\": {}",
+                                        dir.abs_path.display(),
+                                        err
+                                    )
+                                    .as_ref(),
+                                );
+                                self.input_mode = InputMode::Popup(PopupType::Alert(
+                                    Color::Red,
+                                    format!(
+                                        "Could not scan directory \"{}\": {}",
+                                        dir.abs_path.display(),
+                                        err
+                                    ),
+                                ));
+                            }
                         }
                     }
-                    Err(err) => self.log(
-                        LogLevel::Error,
-                        format!(
-                            "Failed to create directory \"{}\": {}",
-                            local_dir_path.display(),
-                            err
-                        )
-                        .as_ref(),
-                    ),
+                    Err(err) => {
+                        self.log(
+                            LogLevel::Error,
+                            format!(
+                                "Failed to create directory \"{}\": {}",
+                                local_dir_path.display(),
+                                err
+                            )
+                            .as_ref(),
+                        );
+                    }
                 }
             }
         }
@@ -488,7 +592,7 @@ impl FileTransferActivity {
                 // Set index; keep if possible, otherwise set to last item
                 self.local.index = match self.local.files.get(self.local.index) {
                     Some(_) => self.local.index,
-                    None => self.local.files.len() - 1
+                    None => self.local.files.len() - 1,
                 };
                 // Sort files
                 self.local.sort_files_by_name();
@@ -498,6 +602,10 @@ impl FileTransferActivity {
                     LogLevel::Error,
                     format!("Could not scan current directory: {}", err).as_str(),
                 );
+                self.input_mode = InputMode::Popup(PopupType::Alert(
+                    Color::Red,
+                    format!("Could not scan current directory: {}", err),
+                ));
             }
         }
     }
@@ -512,7 +620,7 @@ impl FileTransferActivity {
                 // Set index; keep if possible, otherwise set to last item
                 self.remote.index = match self.remote.files.get(self.remote.index) {
                     Some(_) => self.remote.index,
-                    None => self.remote.files.len() - 1
+                    None => self.remote.files.len() - 1,
                 };
                 // Sort files
                 self.remote.sort_files_by_name();
@@ -522,6 +630,10 @@ impl FileTransferActivity {
                     LogLevel::Error,
                     format!("Could not scan current directory: {}", err).as_str(),
                 );
+                self.input_mode = InputMode::Popup(PopupType::Alert(
+                    Color::Red,
+                    format!("Could not scan current directory: {}", err),
+                ));
             }
         }
     }
@@ -556,6 +668,10 @@ impl FileTransferActivity {
             }
             Err(err) => {
                 // Report err
+                self.log(
+                    LogLevel::Error,
+                    format!("Could not change working directory: {}", err).as_str(),
+                );
                 self.input_mode = InputMode::Popup(PopupType::Alert(
                     Color::Red,
                     format!("Could not change working directory: {}", err),
@@ -586,6 +702,10 @@ impl FileTransferActivity {
                     }
                     Err(err) => {
                         // Report err
+                        self.log(
+                            LogLevel::Error,
+                            format!("Could not change working directory: {}", err).as_str(),
+                        );
                         self.input_mode = InputMode::Popup(PopupType::Alert(
                             Color::Red,
                             format!("Could not change working directory: {}", err),
@@ -595,6 +715,10 @@ impl FileTransferActivity {
             }
             Err(err) => {
                 // Report err
+                self.log(
+                    LogLevel::Error,
+                    format!("Could not change working directory: {}", err).as_str(),
+                );
                 self.input_mode = InputMode::Popup(PopupType::Alert(
                     Color::Red,
                     format!("Could not change working directory: {}", err),
