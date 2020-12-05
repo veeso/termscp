@@ -467,7 +467,7 @@ impl FileTransfer for ScpFileTransfer {
                 let p: PathBuf = self.wrkdir.clone();
                 match self.perform_shell_cmd_with_path(
                     p.as_path(),
-                    format!("ls -l \"{}\"", path.display()).as_str(),
+                    format!("unset LANG; ls -l \"{}\"", path.display()).as_str(),
                 ) {
                     Ok(output) => {
                         // Split output by (\r)\n
