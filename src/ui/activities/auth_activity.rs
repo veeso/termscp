@@ -230,10 +230,11 @@ impl AuthActivity {
                         if self.selected_field == InputField::Protocol {
                             self.protocol = match self.protocol {
                                 FileTransferProtocol::Sftp => FileTransferProtocol::Ftp(true), // End of list (wrap)
+                                FileTransferProtocol::Scp => FileTransferProtocol::Sftp,
                                 FileTransferProtocol::Ftp(ftps) => match ftps {
+                                    false => FileTransferProtocol::Scp,
                                     true => FileTransferProtocol::Ftp(false),
-                                    false => FileTransferProtocol::Sftp,
-                                }
+                                },
                             };
                         }
                     }
@@ -241,11 +242,12 @@ impl AuthActivity {
                         // If current field is Protocol handle event... ( move element right )
                         if self.selected_field == InputField::Protocol {
                             self.protocol = match self.protocol {
-                                FileTransferProtocol::Sftp => FileTransferProtocol::Ftp(false),
+                                FileTransferProtocol::Sftp => FileTransferProtocol::Scp,
+                                FileTransferProtocol::Scp => FileTransferProtocol::Ftp(false),
                                 FileTransferProtocol::Ftp(ftps) => match ftps {
                                     false => FileTransferProtocol::Ftp(true),
                                     true => FileTransferProtocol::Sftp, // End of list (wrap)
-                                }
+                                },
                             };
                         }
                     }
@@ -306,14 +308,19 @@ impl AuthActivity {
     ///
     /// Draw protocol select
     fn draw_protocol_select(&self) -> Tabs {
-        let protocols: Vec<Spans> =
-            vec![Spans::from("SFTP"), Spans::from("FTP"), Spans::from("FTPS")];
+        let protocols: Vec<Spans> = vec![
+            Spans::from("SFTP"),
+            Spans::from("SCP"),
+            Spans::from("FTP"),
+            Spans::from("FTPS"),
+        ];
         let index: usize = match self.protocol {
             FileTransferProtocol::Sftp => 0,
+            FileTransferProtocol::Scp => 1,
             FileTransferProtocol::Ftp(ftps) => match ftps {
-                false => 1,
-                true => 2,
-            }
+                false => 2,
+                true => 3,
+            },
         };
         Tabs::new(protocols)
             .block(Block::default().borders(Borders::ALL).title("Protocol"))

@@ -43,6 +43,7 @@ use crate::filetransfer::FileTransferProtocol;
 
 // File transfer
 use crate::filetransfer::ftp_transfer::FtpFileTransfer;
+use crate::filetransfer::scp_transfer::ScpFileTransfer;
 use crate::filetransfer::sftp_transfer::SftpFileTransfer;
 use crate::filetransfer::FileTransfer;
 use crate::fs::FsEntry;
@@ -238,9 +239,8 @@ impl FileTransferActivity {
             context: None,
             client: match protocol {
                 FileTransferProtocol::Sftp => Box::new(SftpFileTransfer::new()),
-                FileTransferProtocol::Ftp(ftps) => {
-                    Box::new(FtpFileTransfer::new(ftps))
-                }
+                FileTransferProtocol::Ftp(ftps) => Box::new(FtpFileTransfer::new(ftps)),
+                FileTransferProtocol::Scp => Box::new(ScpFileTransfer::new()),
             },
             params: params,
             local: FileExplorer::new(),

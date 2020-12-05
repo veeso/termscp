@@ -26,10 +26,11 @@
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 
-use crate::fs::{FsFile, FsEntry};
+use crate::fs::{FsEntry, FsFile};
 
 // Transfers
 pub mod ftp_transfer;
+pub mod scp_transfer;
 pub mod sftp_transfer;
 
 /// ## FileTransferProtocol
@@ -39,6 +40,7 @@ pub mod sftp_transfer;
 #[derive(std::cmp::PartialEq, std::fmt::Debug, std::clone::Clone)]
 pub enum FileTransferProtocol {
     Sftp,
+    Scp,
     Ftp(bool), // Bool is for secure (true => ftps)
 }
 
