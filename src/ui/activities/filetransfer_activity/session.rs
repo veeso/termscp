@@ -76,6 +76,14 @@ impl FileTransferActivity {
         self.disconnected = true;
     }
 
+    /// ### disconnect_and_quit
+    ///
+    /// disconnect from remote and then quit
+    pub(super) fn disconnect_and_quit(&mut self) {
+        self.disconnect();
+        self.quit = true;
+    }
+
     /// ### reload_remote_dir
     ///
     /// Reload remote directory entries

@@ -387,7 +387,7 @@ impl FileTransferActivity {
                         .add_modifier(Modifier::BOLD),
                 ),
                 Span::raw("           "),
-                Span::raw("quit"),
+                Span::raw("disconnect"),
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(
@@ -476,6 +476,17 @@ impl FileTransferActivity {
                 ),
                 Span::raw("        "),
                 Span::raw("goto path"),
+            ])),
+            ListItem::new(Spans::from(vec![
+                Span::styled(
+                    "<CTRL+Q>",
+                    Style::default()
+                        .bg(Color::Cyan)
+                        .fg(Color::White)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::raw("        "),
+                Span::raw("Quit TermSCP"),
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(

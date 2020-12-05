@@ -19,7 +19,10 @@
 *
 */
 
-use super::{DialogCallback, DialogYesNoOption, FileExplorerTab, FileTransferActivity, FsEntry, InputEvent, InputField, InputMode, LogLevel, OnInputSubmitCallback, PopupType};
+use super::{
+    DialogCallback, DialogYesNoOption, FileExplorerTab, FileTransferActivity, FsEntry, InputEvent,
+    InputField, InputMode, LogLevel, OnInputSubmitCallback, PopupType,
+};
 
 use crossterm::event::{KeyCode, KeyModifiers};
 use std::path::PathBuf;
@@ -72,7 +75,7 @@ impl FileTransferActivity {
                     KeyCode::Esc => {
                         // Handle quit event
                         // Create quit prompt dialog
-                        self.input_mode = self.create_quit_popup();
+                        self.input_mode = self.create_disconnect_popup();
                     }
                     KeyCode::Tab => self.switch_input_field(), // <TAB> switch tab
                     KeyCode::Right => self.tab = FileExplorerTab::Remote, // <RIGHT> switch to right tab
@@ -172,6 +175,12 @@ impl FileTransferActivity {
                         }
                     }
                     KeyCode::Char(ch) => match ch {
+                        'q' | 'Q' => {
+                            if key.modifiers.intersects(KeyModifiers::CONTROL) {
+                                // Create quit prompt dialog
+                                self.input_mode = self.create_quit_popup();
+                            }
+                        }
                         'g' | 'G' => {
                             // Goto
                             // If ctrl is enabled...
@@ -273,7 +282,7 @@ impl FileTransferActivity {
                     KeyCode::Esc => {
                         // Handle quit event
                         // Create quit prompt dialog
-                        self.input_mode = self.create_quit_popup();
+                        self.input_mode = self.create_disconnect_popup();
                     }
                     KeyCode::Tab => self.switch_input_field(), // <TAB> switch tab
                     KeyCode::Left => self.tab = FileExplorerTab::Local, // <LEFT> switch to local tab
@@ -367,6 +376,12 @@ impl FileTransferActivity {
                         }
                     }
                     KeyCode::Char(ch) => match ch {
+                        'q' | 'Q' => {
+                            if key.modifiers.intersects(KeyModifiers::CONTROL) {
+                                // Create quit prompt dialog
+                                self.input_mode = self.create_quit_popup();
+                            }
+                        }
                         'g' | 'G' => {
                             // Goto
                             // If ctrl is enabled...
@@ -470,7 +485,7 @@ impl FileTransferActivity {
                     KeyCode::Esc => {
                         // Handle quit event
                         // Create quit prompt dialog
-                        self.input_mode = self.create_quit_popup();
+                        self.input_mode = self.create_disconnect_popup();
                     }
                     KeyCode::Tab => self.switch_input_field(), // <TAB> switch tab
                     KeyCode::Down => {
@@ -506,6 +521,15 @@ impl FileTransferActivity {
                             self.log_index = self.log_index + records_block; // Increase by `records_block`
                         }
                     }
+                    KeyCode::Char(ch) => match ch {
+                        'q' | 'Q' => {
+                            if key.modifiers.intersects(KeyModifiers::CONTROL) {
+                                // Create quit prompt dialog
+                                self.input_mode = self.create_quit_popup();
+                            }
+                        }
+                        _ => { /* Nothing to do */ }
+                    },
                     _ => { /* Nothing to do */ }
                 }
             }
