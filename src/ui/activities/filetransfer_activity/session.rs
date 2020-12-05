@@ -592,7 +592,10 @@ impl FileTransferActivity {
                 // Set index; keep if possible, otherwise set to last item
                 self.local.index = match self.local.files.get(self.local.index) {
                     Some(_) => self.local.index,
-                    None => self.local.files.len() - 1,
+                    None => match self.local.files.len() {
+                        0 => 0,
+                        _ => self.local.files.len() - 1,
+                    }
                 };
                 // Sort files
                 self.local.sort_files_by_name();
@@ -620,7 +623,10 @@ impl FileTransferActivity {
                 // Set index; keep if possible, otherwise set to last item
                 self.remote.index = match self.remote.files.get(self.remote.index) {
                     Some(_) => self.remote.index,
-                    None => self.remote.files.len() - 1,
+                    None => match self.remote.files.len() {
+                        0 => 0,
+                        _ => self.remote.files.len() - 1,
+                    }
                 };
                 // Sort files
                 self.remote.sort_files_by_name();
