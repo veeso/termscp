@@ -106,11 +106,11 @@ impl FileTransferActivity {
                 f.render_widget(Clear, popup_area); //this clears out the background
                 match popup {
                     PopupType::Alert(color, txt) => f.render_widget(
-                        self.draw_popup_alert(color.clone(), txt.clone()),
+                        self.draw_popup_alert(color.clone(), txt.clone(), popup_area.width),
                         popup_area,
                     ),
                     PopupType::Fatal(txt) => {
-                        f.render_widget(self.draw_popup_fatal(txt.clone()), popup_area)
+                        f.render_widget(self.draw_popup_fatal(txt.clone(), popup_area.width), popup_area)
                     }
                     PopupType::Help => f.render_widget(self.draw_popup_help(), popup_area),
                     PopupType::Input(txt, _) => {
@@ -125,10 +125,10 @@ impl FileTransferActivity {
                         f.render_widget(self.draw_popup_progress(txt.clone()), popup_area)
                     }
                     PopupType::Wait(txt) => {
-                        f.render_widget(self.draw_popup_wait(txt.clone()), popup_area)
+                        f.render_widget(self.draw_popup_wait(txt.clone(), popup_area.width), popup_area)
                     }
                     PopupType::YesNo(txt, _, _) => {
-                        f.render_widget(self.draw_popup_yesno(txt.clone()), popup_area)
+                        f.render_widget(self.draw_popup_yesno(txt.clone(), popup_area.width), popup_area)
                     }
                 }
             }
@@ -293,8 +293,9 @@ impl FileTransferActivity {
     /// ### draw_popup_alert
     ///
     /// Draw alert popup
-    pub(super) fn draw_popup_alert(&self, color: Color, text: String) -> Paragraph {
-        Paragraph::new(text)
+    pub(super) fn draw_popup_alert(&self, color: Color, text: String, width: u16) -> Paragraph {
+        // Align text to center
+        Paragraph::new(self.align_text_center(text.as_str(), width))
             .style(Style::default().fg(color))
             .block(Block::default().borders(Borders::ALL).title("Alert"))
     }
@@ -302,8 +303,8 @@ impl FileTransferActivity {
     /// ### draw_popup_fatal
     ///
     /// Draw fatal error popup
-    pub(super) fn draw_popup_fatal(&self, text: String) -> Paragraph {
-        Paragraph::new(text)
+    pub(super) fn draw_popup_fatal(&self, text: String, width: u16) -> Paragraph {
+        Paragraph::new(self.align_text_center(text.as_str(), width))
             .style(Style::default().fg(Color::Red).add_modifier(Modifier::BOLD))
             .block(Block::default().borders(Borders::ALL).title("Fatal error"))
     }
@@ -346,8 +347,8 @@ impl FileTransferActivity {
     /// ### draw_popup_wait
     ///
     /// Draw wait popup
-    pub(super) fn draw_popup_wait(&self, text: String) -> Paragraph {
-        Paragraph::new(text)
+    pub(super) fn draw_popup_wait(&self, text: String, width: u16) -> Paragraph {
+        Paragraph::new(self.align_text_center(text.as_str(), width))
             .style(Style::default().add_modifier(Modifier::BOLD))
             .block(Block::default().borders(Borders::ALL).title("Please wait"))
     }
@@ -355,14 +356,14 @@ impl FileTransferActivity {
     /// ### draw_popup_yesno
     ///
     /// Draw yes/no select popup
-    pub(super) fn draw_popup_yesno(&self, text: String) -> Tabs {
+    pub(super) fn draw_popup_yesno(&self, text: String, width: u16) -> Tabs {
         let choices: Vec<Spans> = vec![Spans::from("Yes"), Spans::from("No")];
         let index: usize = match self.choice_opt {
             DialogYesNoOption::Yes => 0,
             DialogYesNoOption::No => 1,
         };
         Tabs::new(choices)
-            .block(Block::default().borders(Borders::ALL).title(text))
+            .block(Block::default().borders(Borders::ALL).title(self.align_text_center(text.as_str(), width)))
             .select(index)
             .style(Style::default())
             .highlight_style(
@@ -531,4 +532,16 @@ impl FileTransferActivity {
             )
             .start_corner(Corner::TopLeft)
     }
+
+    /// align_text_center
+    /// 
+    /// Align text to center for a given width
+    fn align_text_center(&self, text: &str, width: u16) -> String {
+        let indent_size: usize = match (width as usize) >= text.len() { // NOTE: The check prevents underflow
+            true => (width as usize - text.len()) / 2,
+            false => 0
+        };
+        textwrap::indent(text, (0..indent_size).map(|_| " ").collect::<String>().as_str())
+    }
+
 }
