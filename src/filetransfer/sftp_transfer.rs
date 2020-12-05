@@ -225,15 +225,22 @@ impl FileTransfer for SftpFileTransfer {
                 format!("{}", err),
             ));
         }
-        // Try authentication
-        if let Err(err) = session.userauth_password(
-            username.unwrap_or(String::from("")).as_str(),
-            password.unwrap_or(String::from("")).as_str(),
-        ) {
-            return Err(FileTransferError::new_ex(
-                FileTransferErrorType::AuthenticationFailed,
-                format!("{}", err),
-            ));
+        let username: String = match username {
+            Some(u) => u.clone(),
+            None => String::from(""),
+        };
+        // Try authenticating with user agent
+        if let Err(_) = session.userauth_agent(username.as_str()) {
+            // Try authentication with password then
+            if let Err(err) = session.userauth_password(
+                username.as_str(),
+                password.unwrap_or(String::from("")).as_str(),
+            ) {
+                return Err(FileTransferError::new_ex(
+                    FileTransferErrorType::AuthenticationFailed,
+                    format!("{}", err),
+                ));
+            }
         }
         // Set blocking to true
         session.set_blocking(true);
