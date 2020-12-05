@@ -32,7 +32,7 @@ use crate::fs::{FsDirectory, FsEntry, FsFile};
 
 // Includes
 use ssh2::{FileStat, OpenFlags, OpenType, Session, Sftp};
-use std::io::{Read, Write};
+use std::io::{BufReader, BufWriter, Read, Write};
 use std::net::TcpStream;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime};
@@ -522,7 +522,7 @@ impl FileTransfer for SftpFileTransfer {
                     mode,
                     OpenType::File,
                 ) {
-                    Ok(file) => Ok(Box::new(file)),
+                    Ok(file) => Ok(Box::new(BufWriter::with_capacity(8192, file))),
                     Err(err) => Err(FileTransferError::new_ex(
                         FileTransferErrorType::FileCreateDenied,
                         format!("{}", err),
@@ -548,7 +548,7 @@ impl FileTransfer for SftpFileTransfer {
                 };
                 // Open remote file
                 match sftp.open(remote_path.as_path()) {
-                    Ok(file) => Ok(Box::new(file)),
+                    Ok(file) => Ok(Box::new(BufReader::with_capacity(8192, file))),
                     Err(err) => Err(FileTransferError::new_ex(
                         FileTransferErrorType::NoSuchFileOrDirectory,
                         format!("{}", err),
