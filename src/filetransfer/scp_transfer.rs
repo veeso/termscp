@@ -154,7 +154,7 @@ impl ScpFileTransfer {
                     "%b %d %H:%M",
                 ) {
                     Ok(t) => t,
-                    Err(_) => return Err(()),
+                    Err(_) => SystemTime::UNIX_EPOCH,
                 };
                 // Get uid
                 let uid: Option<u32> = match metadata.get(4).unwrap().as_str().parse::<u32>() {
@@ -169,7 +169,7 @@ impl ScpFileTransfer {
                 // Get filesize
                 let filesize: usize = match metadata.get(6).unwrap().as_str().parse::<usize>() {
                     Ok(sz) => sz,
-                    Err(_) => return Err(()),
+                    Err(_) => 0,
                 };
                 // Get link and name
                 let (file_name, symlink_path): (String, Option<PathBuf>) = match is_symlink {
@@ -584,7 +584,7 @@ impl FileTransfer for ScpFileTransfer {
                 let p: PathBuf = self.wrkdir.clone();
                 match self.perform_shell_cmd_with_path(
                     p.as_path(),
-                    format!("mv -f \"{}\" {}\"; echo $?", path.display(), dst.display()).as_str(),
+                    format!("mv -f \"{}\" \"{}\"; echo $?", path.display(), dst.display()).as_str(),
                 ) {
                     Ok(output) => {
                         // Check if output is 0

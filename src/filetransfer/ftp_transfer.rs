@@ -154,7 +154,7 @@ impl FtpFileTransfer {
                     "%b %d %H:%M",
                 ) {
                     Ok(t) => t,
-                    Err(_) => return Err(()),
+                    Err(_) => SystemTime::UNIX_EPOCH,
                 };
                 // Get uid
                 let uid: Option<u32> = match metadata.get(4).unwrap().as_str().parse::<u32>() {
@@ -169,7 +169,7 @@ impl FtpFileTransfer {
                 // Get filesize
                 let filesize: usize = match metadata.get(6).unwrap().as_str().parse::<usize>() {
                     Ok(sz) => sz,
-                    Err(_) => return Err(()),
+                    Err(_) => 0,
                 };
                 let file_name: String = String::from(metadata.get(8).unwrap().as_str());
                 let mut abs_path: PathBuf = PathBuf::from(path);
