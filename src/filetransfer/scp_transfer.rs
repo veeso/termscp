@@ -619,6 +619,14 @@ impl FileTransfer for ScpFileTransfer {
                 String::from("stat is not supported for directories"),
             ));
         }
+        let path: PathBuf = match path.is_absolute() {
+            true => PathBuf::from(path),
+            false => {
+                let mut p: PathBuf = self.wrkdir.clone();
+                p.push(path);
+                p
+            }
+        };
         match self.is_connected() {
             true => {
                 let p: PathBuf = self.wrkdir.clone();
@@ -628,7 +636,7 @@ impl FileTransfer for ScpFileTransfer {
                 ) {
                     Ok(line) => {
                         // Parse ls line
-                        let parent: PathBuf = match path.parent() {
+                        let parent: PathBuf = match path.as_path().parent() {
                             Some(p) => PathBuf::from(p),
                             None => {
                                 return Err(FileTransferError::new_ex(
@@ -637,7 +645,7 @@ impl FileTransfer for ScpFileTransfer {
                                 ))
                             }
                         };
-                        match self.parse_ls_output(parent.as_path(), line.as_str()) {
+                        match self.parse_ls_output(parent.as_path(), line.as_str().trim()) {
                             Ok(entry) => Ok(entry),
                             Err(_) => Err(FileTransferError::new(
                                 FileTransferErrorType::NoSuchFileOrDirectory,
@@ -739,10 +747,7 @@ impl FileTransfer for ScpFileTransfer {
     /// This is necessary for some protocols such as FTP.
     /// You must call this method each time you want to finalize the write of the remote file.
     fn on_sent(&mut self, _writable: Box<dyn Write>) -> Result<(), FileTransferError> {
-        if let Some(session) = self.session.as_ref() {
-            // Set blocking to false
-            session.set_blocking(false);
-        }
+        // Nothing to do
         Ok(())
     }
 
@@ -754,10 +759,7 @@ impl FileTransfer for ScpFileTransfer {
     /// This mighe be necessary for some protocols.
     /// You must call this method each time you want to finalize the read of the remote file.
     fn on_recv(&mut self, _readable: Box<dyn Read>) -> Result<(), FileTransferError> {
-        if let Some(session) = self.session.as_ref() {
-            // Set blocking to false
-            session.set_blocking(false);
-        }
+        // Nothing to do
         Ok(())
     }
 }
