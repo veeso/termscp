@@ -74,7 +74,7 @@ impl FileTransferActivity {
             // Get pwd
             let remote_wrkdir: PathBuf = match self.client.pwd() {
                 Ok(p) => p,
-                Err(_) => PathBuf::from("/")
+                Err(_) => PathBuf::from("/"),
             };
             f.render_stateful_widget(
                 self.draw_remote_explorer(remote_wrkdir),
@@ -109,9 +109,10 @@ impl FileTransferActivity {
                         self.draw_popup_alert(color.clone(), txt.clone(), popup_area.width),
                         popup_area,
                     ),
-                    PopupType::Fatal(txt) => {
-                        f.render_widget(self.draw_popup_fatal(txt.clone(), popup_area.width), popup_area)
-                    }
+                    PopupType::Fatal(txt) => f.render_widget(
+                        self.draw_popup_fatal(txt.clone(), popup_area.width),
+                        popup_area,
+                    ),
                     PopupType::Help => f.render_widget(self.draw_popup_help(), popup_area),
                     PopupType::Input(txt, _) => {
                         f.render_widget(self.draw_popup_input(txt.clone()), popup_area);
@@ -124,12 +125,14 @@ impl FileTransferActivity {
                     PopupType::Progress(txt) => {
                         f.render_widget(self.draw_popup_progress(txt.clone()), popup_area)
                     }
-                    PopupType::Wait(txt) => {
-                        f.render_widget(self.draw_popup_wait(txt.clone(), popup_area.width), popup_area)
-                    }
-                    PopupType::YesNo(txt, _, _) => {
-                        f.render_widget(self.draw_popup_yesno(txt.clone(), popup_area.width), popup_area)
-                    }
+                    PopupType::Wait(txt) => f.render_widget(
+                        self.draw_popup_wait(txt.clone(), popup_area.width),
+                        popup_area,
+                    ),
+                    PopupType::YesNo(txt, _, _) => f.render_widget(
+                        self.draw_popup_yesno(txt.clone(), popup_area.width),
+                        popup_area,
+                    ),
                 }
             }
         });
@@ -192,7 +195,11 @@ impl FileTransferActivity {
                         },
                         _ => Style::default(),
                     })
-                    .title(format!("{}:{} ", self.params.address, remote_wrkdir.display())),
+                    .title(format!(
+                        "{}:{} ",
+                        self.params.address,
+                        remote_wrkdir.display()
+                    )),
             )
             .start_corner(Corner::TopLeft)
             .highlight_style(
@@ -293,20 +300,47 @@ impl FileTransferActivity {
     /// ### draw_popup_alert
     ///
     /// Draw alert popup
-    pub(super) fn draw_popup_alert(&self, color: Color, text: String, width: u16) -> Paragraph {
-        // Align text to center
-        Paragraph::new(self.align_text_center(text.as_str(), width))
+    pub(super) fn draw_popup_alert(&self, color: Color, text: String, width: u16) -> List {
+        // Wraps texts
+        let message_rows = textwrap::wrap(text.as_str(), width as usize);
+        let mut lines: Vec<ListItem> = Vec::new();
+        for msg in message_rows.iter() {
+            lines.push(ListItem::new(Spans::from(
+                self.align_text_center(msg, width),
+            )));
+        }
+        List::new(lines)
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .border_style(Style::default().fg(color))
+                    .title("Alert"),
+            )
+            .start_corner(Corner::TopLeft)
             .style(Style::default().fg(color))
-            .block(Block::default().borders(Borders::ALL).title("Alert"))
     }
 
     /// ### draw_popup_fatal
     ///
     /// Draw fatal error popup
-    pub(super) fn draw_popup_fatal(&self, text: String, width: u16) -> Paragraph {
-        Paragraph::new(self.align_text_center(text.as_str(), width))
-            .style(Style::default().fg(Color::Red).add_modifier(Modifier::BOLD))
-            .block(Block::default().borders(Borders::ALL).title("Fatal error"))
+    pub(super) fn draw_popup_fatal(&self, text: String, width: u16) -> List {
+        // Wraps texts
+        let message_rows = textwrap::wrap(text.as_str(), width as usize);
+        let mut lines: Vec<ListItem> = Vec::new();
+        for msg in message_rows.iter() {
+            lines.push(ListItem::new(Spans::from(
+                self.align_text_center(msg, width),
+            )));
+        }
+        List::new(lines)
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .border_style(Style::default().fg(Color::Red))
+                    .title("Fatal error"),
+            )
+            .start_corner(Corner::TopLeft)
+            .style(Style::default().fg(Color::Red))
     }
     /// ### draw_popup_input
     ///
@@ -347,10 +381,24 @@ impl FileTransferActivity {
     /// ### draw_popup_wait
     ///
     /// Draw wait popup
-    pub(super) fn draw_popup_wait(&self, text: String, width: u16) -> Paragraph {
-        Paragraph::new(self.align_text_center(text.as_str(), width))
+    pub(super) fn draw_popup_wait(&self, text: String, width: u16) -> List {
+        // Wraps texts
+        let message_rows = textwrap::wrap(text.as_str(), width as usize);
+        let mut lines: Vec<ListItem> = Vec::new();
+        for msg in message_rows.iter() {
+            lines.push(ListItem::new(Spans::from(
+                self.align_text_center(msg, width),
+            )));
+        }
+        List::new(lines)
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .border_style(Style::default().fg(Color::White))
+                    .title("Please wait"),
+            )
+            .start_corner(Corner::TopLeft)
             .style(Style::default().add_modifier(Modifier::BOLD))
-            .block(Block::default().borders(Borders::ALL).title("Please wait"))
     }
 
     /// ### draw_popup_yesno
@@ -363,7 +411,11 @@ impl FileTransferActivity {
             DialogYesNoOption::No => 1,
         };
         Tabs::new(choices)
-            .block(Block::default().borders(Borders::ALL).title(self.align_text_center(text.as_str(), width)))
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .title(self.align_text_center(text.as_str(), width)),
+            )
             .select(index)
             .style(Style::default())
             .highlight_style(
@@ -534,14 +586,17 @@ impl FileTransferActivity {
     }
 
     /// align_text_center
-    /// 
+    ///
     /// Align text to center for a given width
     fn align_text_center(&self, text: &str, width: u16) -> String {
-        let indent_size: usize = match (width as usize) >= text.len() { // NOTE: The check prevents underflow
+        let indent_size: usize = match (width as usize) >= text.len() {
+            // NOTE: The check prevents underflow
             true => (width as usize - text.len()) / 2,
-            false => 0
+            false => 0,
         };
-        textwrap::indent(text, (0..indent_size).map(|_| " ").collect::<String>().as_str())
+        textwrap::indent(
+            text,
+            (0..indent_size).map(|_| " ").collect::<String>().as_str(),
+        )
     }
-
 }
