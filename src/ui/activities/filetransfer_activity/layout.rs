@@ -19,10 +19,13 @@
 *
 */
 
+extern crate hostname;
+
 use super::{
     Context, DialogYesNoOption, FileExplorerTab, FileTransferActivity, FsEntry, InputField,
     InputMode, LogLevel, LogRecord, PopupType,
 };
+use std::path::PathBuf;
 use tui::{
     layout::{Constraint, Corner, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
@@ -37,6 +40,7 @@ impl FileTransferActivity {
     /// Draw UI
     pub(super) fn draw(&mut self) {
         let mut ctx: Context = self.context.take().unwrap();
+        let local_wrkdir: PathBuf = ctx.local.pwd();
         let _ = ctx.terminal.draw(|f| {
             // Prepare chunks
             let chunks = Layout::default()
@@ -66,12 +70,17 @@ impl FileTransferActivity {
             remote_state.select(Some(self.remote.index));
             // Draw tabs
             f.render_stateful_widget(
-                self.draw_local_explorer(),
+                self.draw_local_explorer(local_wrkdir),
                 tabs_chunks[0],
                 &mut localhost_state,
             );
+            // Get pwd
+            let remote_wrkdir: PathBuf = match self.client.pwd() {
+                Ok(p) => p,
+                Err(_) => PathBuf::from("/")
+            };
             f.render_stateful_widget(
-                self.draw_remote_explorer(),
+                self.draw_remote_explorer(remote_wrkdir),
                 tabs_chunks[1],
                 &mut remote_state,
             );
@@ -141,7 +150,11 @@ impl FileTransferActivity {
     /// ### draw_local_explorer
     ///
     /// Draw local explorer list
-    pub(super) fn draw_local_explorer(&self) -> List {
+    pub(super) fn draw_local_explorer(&self, local_wrkdir: PathBuf) -> List {
+        let hostname: String = match hostname::get() {
+            Ok(h) => String::from(h.as_os_str().to_string_lossy()),
+            Err(_) => String::from("localhost"),
+        };
         let files: Vec<ListItem> = self
             .local
             .files
@@ -159,7 +172,7 @@ impl FileTransferActivity {
                         },
                         _ => Style::default(),
                     })
-                    .title("Localhost"),
+                    .title(format!("{}:{} ", hostname, local_wrkdir.display())),
             )
             .start_corner(Corner::TopLeft)
             .highlight_style(
@@ -172,7 +185,7 @@ impl FileTransferActivity {
     /// ### draw_remote_explorer
     ///
     /// Draw remote explorer list
-    pub(super) fn draw_remote_explorer(&self) -> List {
+    pub(super) fn draw_remote_explorer(&self, remote_wrkdir: PathBuf) -> List {
         let files: Vec<ListItem> = self
             .remote
             .files
@@ -190,7 +203,7 @@ impl FileTransferActivity {
                         },
                         _ => Style::default(),
                     })
-                    .title(self.params.address.clone()),
+                    .title(format!("{}:{} ", self.params.address, remote_wrkdir.display())),
             )
             .start_corner(Corner::TopLeft)
             .highlight_style(

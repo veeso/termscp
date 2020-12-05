@@ -28,6 +28,7 @@ bytesize = "1.0.1"
 textwrap = "0.12.1"
 regex = "1.4.2"
 lazy_static = "1.4.0"
+hostname = "0.3.1"
 
 [target.'cfg(any(unix, macos, linux))'.dependencies]
 users = "0.11.0"
