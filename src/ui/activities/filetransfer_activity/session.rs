@@ -484,9 +484,12 @@ impl FileTransferActivity {
     pub(super) fn local_scan(&mut self, path: &Path) {
         match self.context.as_ref().unwrap().local.scan_dir(path) {
             Ok(files) => {
-                // Reset index
-                self.local.index = 0;
                 self.local.files = files;
+                // Set index; keep if possible, otherwise set to last item
+                self.local.index = match self.local.files.get(self.local.index) {
+                    Some(_) => self.local.index,
+                    None => self.local.files.len() - 1
+                };
                 // Sort files
                 self.local.sort_files_by_name();
             }
@@ -505,9 +508,12 @@ impl FileTransferActivity {
     pub(super) fn remote_scan(&mut self, path: &Path) {
         match self.client.list_dir(path) {
             Ok(files) => {
-                // Reset index
-                self.remote.index = 0;
                 self.remote.files = files;
+                // Set index; keep if possible, otherwise set to last item
+                self.remote.index = match self.remote.files.get(self.remote.index) {
+                    Some(_) => self.remote.index,
+                    None => self.remote.files.len() - 1
+                };
                 // Sort files
                 self.remote.sort_files_by_name();
             }
@@ -541,6 +547,8 @@ impl FileTransferActivity {
                 );
                 // Reload files
                 self.local_scan(path);
+                // Reset index
+                self.local.index = 0;
                 // Push prev_dir to stack
                 if push {
                     self.local.pushd(prev_dir.as_path())
@@ -569,6 +577,8 @@ impl FileTransferActivity {
                         );
                         // Update files
                         self.remote_scan(path);
+                        // Reset index
+                        self.remote.index = 0;
                         // Push prev_dir to stack
                         if push {
                             self.remote.pushd(prev_dir.as_path())
