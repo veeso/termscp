@@ -172,6 +172,10 @@ impl FtpFileTransfer {
                     Err(_) => 0,
                 };
                 let file_name: String = String::from(metadata.get(8).unwrap().as_str());
+                // Check if file_name is '.' or '..'
+                if file_name.as_str() == "." || file_name.as_str() == ".." {
+                    return Err(())
+                }
                 let mut abs_path: PathBuf = PathBuf::from(path);
                 let extension: Option<String> = match abs_path.as_path().extension() {
                     None => None,
@@ -510,7 +514,7 @@ impl FileTransfer for FtpFileTransfer {
     ) -> Result<Box<dyn Write>, FileTransferError> {
         match &mut self.stream {
             Some(stream) => match stream.put_with_stream(&file_name.to_string_lossy()) {
-                Ok(writer) => Ok(Box::new(writer)),
+                Ok(writer) => Ok(Box::new(writer)), // NOTE: don't use BufWriter here, since already returned by the library
                 Err(err) => Err(FileTransferError::new_ex(
                     FileTransferErrorType::FileCreateDenied,
                     format!("{}", err),
@@ -529,7 +533,7 @@ impl FileTransfer for FtpFileTransfer {
     fn recv_file(&mut self, file: &FsFile) -> Result<Box<dyn Read>, FileTransferError> {
         match &mut self.stream {
             Some(stream) => match stream.get(&file.abs_path.as_path().to_string_lossy()) {
-                Ok(reader) => Ok(Box::new(reader)),
+                Ok(reader) => Ok(Box::new(reader)), // NOTE: don't use BufReader here, since already returned by the library
                 Err(err) => Err(FileTransferError::new_ex(
                     FileTransferErrorType::NoSuchFileOrDirectory,
                     format!("{}", err),

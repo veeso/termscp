@@ -35,7 +35,7 @@ use crate::utils::lstime_to_systime;
 // Includes
 use regex::Regex;
 use ssh2::{Channel, Session};
-use std::io::{Read, Write};
+use std::io::{BufReader, BufWriter, Read, Write};
 use std::net::TcpStream;
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
@@ -176,6 +176,10 @@ impl ScpFileTransfer {
                     true => self.get_name_and_link(metadata.get(8).unwrap().as_str()),
                     false => (String::from(metadata.get(8).unwrap().as_str()), None),
                 };
+                // Check if file_name is '.' or '..'
+                if file_name.as_str() == "." || file_name.as_str() == ".." {
+                    return Err(())
+                }
                 let mut abs_path: PathBuf = PathBuf::from(path);
                 let extension: Option<String> = match abs_path.as_path().extension() {
                     None => None,
@@ -467,7 +471,7 @@ impl FileTransfer for ScpFileTransfer {
                 let p: PathBuf = self.wrkdir.clone();
                 match self.perform_shell_cmd_with_path(
                     p.as_path(),
-                    format!("unset LANG; ls -l \"{}\"", path.display()).as_str(),
+                    format!("unset LANG; ls -la \"{}\"", path.display()).as_str(),
                 ) {
                     Ok(output) => {
                         // Split output by (\r)\n
@@ -584,7 +588,12 @@ impl FileTransfer for ScpFileTransfer {
                 let p: PathBuf = self.wrkdir.clone();
                 match self.perform_shell_cmd_with_path(
                     p.as_path(),
-                    format!("mv -f \"{}\" \"{}\"; echo $?", path.display(), dst.display()).as_str(),
+                    format!(
+                        "mv -f \"{}\" \"{}\"; echo $?",
+                        path.display(),
+                        dst.display()
+                    )
+                    .as_str(),
                 ) {
                     Ok(output) => {
                         // Check if output is 0
@@ -703,7 +712,7 @@ impl FileTransfer for ScpFileTransfer {
                     (mtime, atime)
                 };
                 match session.scp_send(file_name, mode, local.size as u64, Some(times)) {
-                    Ok(channel) => Ok(Box::new(channel)),
+                    Ok(channel) => Ok(Box::new(BufWriter::with_capacity(8192, channel))),
                     Err(err) => Err(FileTransferError::new_ex(
                         FileTransferErrorType::ProtocolError,
                         format!("{}", err),
@@ -726,7 +735,7 @@ impl FileTransfer for ScpFileTransfer {
                 // Set blocking to true
                 session.set_blocking(true);
                 match session.scp_recv(file.abs_path.as_path()) {
-                    Ok(reader) => Ok(Box::new(reader.0)),
+                    Ok(reader) => Ok(Box::new(BufReader::with_capacity(8192, reader.0))),
                     Err(err) => Err(FileTransferError::new_ex(
                         FileTransferErrorType::ProtocolError,
                         format!("{}", err),
