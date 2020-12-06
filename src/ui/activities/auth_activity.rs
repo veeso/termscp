@@ -386,7 +386,7 @@ impl AuthActivity {
                 Span::styled("<ENTER>", Style::default().add_modifier(Modifier::BOLD)),
                 Span::raw(" to submit form"),
             ],
-            Style::default().add_modifier(Modifier::RAPID_BLINK),
+            Style::default().add_modifier(Modifier::BOLD),
         );
         let mut footer_text = Text::from(Spans::from(footer));
         footer_text.patch_style(h_style);
