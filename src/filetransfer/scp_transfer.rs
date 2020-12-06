@@ -857,6 +857,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(any(unix, macos, linux))]
     fn test_filetransfer_scp_cwd() {
         let mut client: ScpFileTransfer = ScpFileTransfer::new();
         assert!(client
