@@ -39,7 +39,7 @@ Current version: 0.1.0 (06/12/2020)
 
 TermSCP is basically a porting of WinSCP to terminal. So basically is a terminal utility with an TUI to connect to a remote server to retrieve and upload files and to interact with the local file system. It works both on **Linux**, **MacOS**, **UNIX** and **Windows** and supports SFTP, SCP, FTP and FTPS.
 
-![Explorer](assets/images/explorer.gif)]
+![Explorer](assets/images/explorer.gif)
 
 ---
 
@@ -253,7 +253,7 @@ TermSCP is powered by these aweseome projects:
 
 ## Gallery 🎬
 
-![Auth](assets/images/auth.gif)]
+![Auth](assets/images/auth.gif)
 
 ---
 
