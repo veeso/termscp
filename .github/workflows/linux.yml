@@ -1,4 +1,4 @@
-name: Build
+name: Linux
 
 on:
   push:
@@ -11,7 +11,7 @@ env:
 
 jobs:
   build:
-
+    
     runs-on: ubuntu-latest
 
     steps:
