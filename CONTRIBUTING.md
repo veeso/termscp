@@ -8,6 +8,7 @@ Please note we have a [code of conduct](./CODE_OF_CONDUCT.md), please follow it 
   - [Pull Request Process](#pull-request-process)
   - [Developer contributions guide](#developer-contributions-guide)
     - [How TermSCP works](#how-termscp-works)
+      - [Activities](#activities)
     - [Implementing File Transfers](#implementing-file-transfers)
 
 ---
@@ -27,7 +28,7 @@ For any other kind of contribution, especially for new features, please submit a
 
 Let's make it simple and clear:
 
-1. Open an issue with an **appropriate label** (e.g. bug, new-feature, refactoring...).
+1. Open an issue with an **appropriate label** (e.g. bug, enhancement, ...).
 2. Write a **properly documentation** compliant with **rustdoc** standard.
 3. Write tests for your code. This doesn't apply necessarily for implementation regarding the user-interface module (`ui`).
 4. Report changes to the issue you opened, writing a report of what you changed and what you have introduced.
@@ -41,7 +42,29 @@ This chapter describes how TermSCP works and the guide lines to implement stuff 
 
 ### How TermSCP works
 
-TODO:
+TermSCP is basically made up of 4 components:
+
+- the **filetransfer**: the filetransfer takes care of managing the remote file system; it provides function to establish a connection with the remote, operating on the remote server file system (e.g. remove files, make directories, rename files, ...), read files and write files. The FileTransfer, as we'll see later, is actually a trait, and for each protocol a FileTransfer must be implement the trait.
+- the **host**: the host module provides functions to interact with the local host file system.
+- the **ui**: this module contains the implementation of the user interface, as we'll see in the next chapter, this is achieved through **activities**.
+- the **activity_manager**: the activity manager takes care of managing activities, basically it runs the activities of the user interface, and chooses, based on their state, when is the moment to terminate the current activity and which activity to run after the current one.
+
+#### Activities
+
+Just a little paragraph about activities. Really, read the code and the documentation to have a clear idea of how the ui works.
+I think there are many ways to implement a user interface; for termscp, I decided to go for a **Android-like** approach.
+Android works with Activity, each activity represents a view and there is a context shared between them, and so it works here.
+
+Just a little note about activities, activities work with a `Context`, the context is a data holder for different data, which are shared and common between the activities.
+
+I've implemented a Trait called `Activity`, which, is a very very reduced version of the Android activity of course.
+This trait provides only 3 methods:
+
+- `on_create`: this method must initialize the activity; the context is passed to the activity, which will be the only owner of the Context, until the activity terminates.
+- `on_draw`: this method must be called each time you want to perform an update of the user interface. This is basically the run method of the activity. This method also cares about handling input events. The developer shouldn't draw the interface on each call of this method (consider that this method might be called hundreds of times per second), but only when actually something has changed (for example after an input event has been raised).
+- `on_destroy`: this method finalizes the activity and drops it; this method returns the Context to the caller (the activity manager).
+
+---
 
 ### Implementing File Transfers
 
