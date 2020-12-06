@@ -169,7 +169,7 @@ impl std::fmt::Display for FsEntry {
                 // Get byte size
                 let size: String = String::from("4096");
                 // Get date
-                let datetime: String = time_to_str(dir.last_change_time, "%b %d %Y %M:%H");
+                let datetime: String = time_to_str(dir.last_change_time, "%b %d %Y %H:%M");
                 write!(
                     f,
                     "{:24}\t{:12}\t{:12}\t{:9}\t{:17}",
@@ -259,7 +259,7 @@ impl std::fmt::Display for FsEntry {
                 // Get byte size
                 let size: ByteSize = ByteSize(file.size as u64);
                 // Get date
-                let datetime: String = time_to_str(file.last_change_time, "%b %d %Y %M:%H");
+                let datetime: String = time_to_str(file.last_change_time, "%b %d %Y %H:%M");
                 write!(
                     f,
                     "{:24}\t{:12}\t{:12}\t{:9}\t{:17}",
@@ -353,7 +353,7 @@ impl std::fmt::Display for FsEntry {
                 // Get byte size
                 let size: String = String::from("4096");
                 // Get date
-                let datetime: String = time_to_str(dir.last_change_time, "%b %d %Y %M:%H");
+                let datetime: String = time_to_str(dir.last_change_time, "%b %d %Y %H:%M");
                 write!(
                     f,
                     "{:24}\t{:12}\t{:12}\t{:9}\t{:17}",
@@ -437,7 +437,7 @@ impl std::fmt::Display for FsEntry {
                 // Get byte size
                 let size: ByteSize = ByteSize(file.size as u64);
                 // Get date
-                let datetime: String = time_to_str(file.last_change_time, "%b %d %Y %M:%H");
+                let datetime: String = time_to_str(file.last_change_time, "%b %d %Y %H:%M");
                 write!(
                     f,
                     "{:24}\t{:12}\t{:12}\t{:9}\t{:17}",
