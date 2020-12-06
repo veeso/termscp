@@ -484,7 +484,7 @@ mod tests {
         let host: Localhost = Localhost::new(PathBuf::from("C:\\users")).ok().unwrap();
         assert_eq!(host.wrkdir, PathBuf::from("C:\\users"));
         // Scan dir
-        let entries = std::fs::read_dir(PathBuf::from("C:\\").as_path()).unwrap();
+        let entries = std::fs::read_dir(PathBuf::from("C:\\users").as_path()).unwrap();
         let mut counter: usize = 0;
         for _ in entries {
             counter = counter + 1;
