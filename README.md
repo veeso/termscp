@@ -6,9 +6,7 @@
 
 ~ Basically, WinSCP on a terminal ~  
 Developed by Christian Visintin  
-Current version: 0.1.0 (??/??/2020)
-
-⚠ This project is **still under development**; installation instructions won't work until release ⚠
+Current version: 0.1.0 (06/12/2020)
 
 ---
 
@@ -97,6 +95,22 @@ rpm -U termscp_*.rpm
 ```
 
 ### Chocolatey 🍫
+
+You can install TermSCP on Windows using [chocolatey](https://chocolatey.org/)
+
+Start PowerShell as administrator and run
+
+```ps
+choco install termscp
+```
+
+Alternatively you can download the ZIP file from [HERE](https://github.com/ChristianVisintin/TermSCP/releases/download/v0.1.0/termscp.0.1.0.nupkg)
+
+and then with PowerShell started with administrator previleges, run:
+
+```ps
+choco install termscp -s .
+```
 
 ### Brew 🍻
 
