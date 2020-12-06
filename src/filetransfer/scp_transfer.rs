@@ -916,7 +916,7 @@ mod tests {
         // List dir
         let pwd: PathBuf = client.pwd().ok().unwrap();
         let files: Vec<FsEntry> = client.list_dir(pwd.as_path()).ok().unwrap();
-        assert_eq!(files.len(), 5); // There are 5 files
+        assert_eq!(files.len(), 3); // There are 3 files
                                     // Disconnect
         assert!(client.disconnect().is_ok());
     }
