@@ -100,7 +100,7 @@ impl FileTransferActivity {
                     PopupType::Input(_, _) => (30, 10),
                     PopupType::Progress(_) => (40, 10),
                     PopupType::Wait(_) => (50, 10),
-                    PopupType::YesNo(_, _, _) => (20, 10),
+                    PopupType::YesNo(_, _, _) => (30, 10),
                 };
                 let popup_area: Rect = self.draw_popup_area(f.size(), width, height);
                 f.render_widget(Clear, popup_area); //this clears out the background
