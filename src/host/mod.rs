@@ -481,8 +481,8 @@ mod tests {
     #[test]
     #[cfg(target_os = "windows")]
     fn test_host_localhost_new() {
-        let host: Localhost = Localhost::new(PathBuf::from("C:\\")).ok().unwrap();
-        assert_eq!(host.wrkdir, PathBuf::from("C:\\"));
+        let host: Localhost = Localhost::new(PathBuf::from("C:\\users")).ok().unwrap();
+        assert_eq!(host.wrkdir, PathBuf::from("C:\\users"));
         // Scan dir
         let entries = std::fs::read_dir(PathBuf::from("C:\\").as_path()).unwrap();
         let mut counter: usize = 0;
