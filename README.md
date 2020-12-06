@@ -13,11 +13,11 @@ Current version: 0.1.0 (??/??/2020)
 ---
 
 - [TermSCP](#termscp)
-  - [About TermSCP](#about-termscp)
-    - [Why TermSCP](#why-termscp)
-  - [Features](#features)
-  - [Usage](#usage)
-  - [Installation](#installation)
+  - [About TermSCP 🖥](#about-termscp-)
+    - [Why TermSCP 🤔](#why-termscp-)
+  - [Features 🎁](#features-)
+  - [Usage ❓](#usage-)
+  - [Installation ▶](#installation-)
     - [Cargo 🦀](#cargo-)
     - [Deb package 📦](#deb-package-)
     - [RPM Package 📦](#rpm-package-)
@@ -32,15 +32,15 @@ Current version: 0.1.0 (??/??/2020)
 
 ---
 
-## About TermSCP
+## About TermSCP 🖥
 
 TermSCP is basically a porting of WinSCP to terminal. So basically is a terminal utility with an TUI to connect to a remote server to retrieve and upload files and to interact with the local file system. It works both on **Linux**, **MacOS**, **UNIX** and **Windows** and supports SFTP, SCP, FTP and FTPS.
 
-### Why TermSCP
+### Why TermSCP 🤔
 
 It happens very often to me, when using SCP at work to forget the path of a file on a remote machine, which forces me then to connect through SSH, gather the file path and finally download it through SCP. I could use WinSCP, but I use Linux and I pratically use the terminal for everything, so I wanted something like WinSCP on my terminal. Yeah, I know there midnight commander too, but actually I don't like it very much tbh (and doesn't support scp).
 
-## Features
+## Features 🎁
 
 - Different communication protocols
   - SFTP
@@ -51,7 +51,7 @@ It happens very often to me, when using SCP at work to forget the path of a file
 - Written in Rust
 - Easy to extend with new file transfers protocols
 
-## Usage
+## Usage ❓
 
 TermSCP can be started with the following options:
 
@@ -60,7 +60,7 @@ TermSCP can be started with the following options:
 
 ---
 
-## Installation
+## Installation ▶
 
 If you're considering to install TermSCP I want to thank you 💛 ! I hope you will enjoy TermSCP!  
 If you want to contribute to this project, don't forget to check out our contribute guide. [Read More](CONTRIBUTING.md)
