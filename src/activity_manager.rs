@@ -113,6 +113,8 @@ impl ActivityManager {
                 None => break, // Exit
             }
         }
+        // Drop context
+        drop(self.context.take());
     }
 
     // Loops

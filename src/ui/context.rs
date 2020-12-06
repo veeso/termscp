@@ -33,7 +33,7 @@ use crate::host::Localhost;
 
 // Includes
 use crossterm::execute;
-use crossterm::event::{EnableMouseCapture, DisableMouseCapture};
+use crossterm::event::DisableMouseCapture;
 use crossterm::terminal::{EnterAlternateScreen, LeaveAlternateScreen};
 use std::io::{stdout, Stdout, Write};
 use tui::backend::CrosstermBackend;
@@ -55,7 +55,7 @@ impl Context {
     pub fn new(local: Localhost) -> Context {
         // Create terminal
         let mut stdout = stdout();
-        assert!(execute!(stdout, EnterAlternateScreen, EnableMouseCapture).is_ok());
+        assert!(execute!(stdout, EnterAlternateScreen).is_ok());
         Context {
             local: local,
             input_hnd: InputHandler::new(),
