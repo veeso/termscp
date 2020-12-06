@@ -145,9 +145,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "00b0228411908ca8685dba7fc2cdd70ec9990a6e753e89b6ac91a84c40fbaf4b"
 
 [[package]]
-name = "ftp"
-version = "3.0.1"
-source = "git+https://github.com/ChristianVisintin/rust-ftp#63b06ef1b21cd7bd0a44682e514144e67c071d0e"
+name = "ftp4"
+version = "4.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "412a5da44e30489a1790749f34044d53bbc4ff0cf8d789ee37be4b6befeb7c23"
 dependencies = [
  "chrono",
  "lazy_static",
@@ -668,7 +669,7 @@ dependencies = [
  "bytesize",
  "chrono",
  "crossterm",
- "ftp",
+ "ftp4",
  "getopts",
  "hostname",
  "lazy_static",

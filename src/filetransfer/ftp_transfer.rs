@@ -25,7 +25,7 @@
 
 // Dependencies
 extern crate chrono;
-extern crate ftp;
+extern crate ftp4;
 extern crate regex;
 
 use super::{FileTransfer, FileTransferError, FileTransferErrorType};
@@ -33,8 +33,8 @@ use crate::fs::{FsDirectory, FsEntry, FsFile};
 use crate::utils::lstime_to_systime;
 
 // Includes
-use ftp::native_tls::TlsConnector;
-use ftp::FtpStream;
+use ftp4::native_tls::TlsConnector;
+use ftp4::FtpStream;
 use regex::Regex;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
