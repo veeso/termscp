@@ -42,3 +42,12 @@ tempfile = "3"
 [[bin]]
 name = "termscp"
 path = "src/main.rs"
+
+[package.metadata.rpm]
+package = "termscp"
+
+[package.metadata.rpm.cargo]
+buildflags = ["--release"]
+
+[package.metadata.rpm.targets]
+termscp = { path = "/usr/bin/termscp" }
