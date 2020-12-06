@@ -33,7 +33,7 @@ use bytesize::ByteSize;
 use std::path::PathBuf;
 use std::time::SystemTime;
 #[cfg(any(unix, macos, linux))]
-use users::{get_group_by_gid, get_user_by_uid};
+use users::get_user_by_uid;
 
 /// ## FsEntry
 ///
@@ -157,6 +157,7 @@ impl std::fmt::Display for FsEntry {
                     None => String::from("0"),
                 };
                 // Get group
+                /*
                 let group: String = match dir.group {
                     Some(gid) => match get_group_by_gid(gid) {
                         Some(group) => group.name().to_string_lossy().to_string(),
@@ -164,17 +165,17 @@ impl std::fmt::Display for FsEntry {
                     },
                     None => String::from("0"),
                 };
+                */
                 // Get byte size
                 let size: String = String::from("4096");
                 // Get date
                 let datetime: String = time_to_str(dir.last_change_time, "%b %d %Y %M:%H");
                 write!(
                     f,
-                    "{:24}\t{:12}\t{:12}\t{:12}\t{:9}\t{:17}",
+                    "{:24}\t{:12}\t{:12}\t{:9}\t{:17}",
                     dir.name.as_str(),
                     mode,
                     username,
-                    group,
                     size,
                     datetime
                 )
@@ -246,6 +247,7 @@ impl std::fmt::Display for FsEntry {
                     None => String::from("0"),
                 };
                 // Get group
+                /*
                 let group: String = match file.group {
                     Some(gid) => match get_group_by_gid(gid) {
                         Some(group) => group.name().to_string_lossy().to_string(),
@@ -253,17 +255,17 @@ impl std::fmt::Display for FsEntry {
                     },
                     None => String::from("0"),
                 };
+                */
                 // Get byte size
                 let size: ByteSize = ByteSize(file.size as u64);
                 // Get date
                 let datetime: String = time_to_str(file.last_change_time, "%b %d %Y %M:%H");
                 write!(
                     f,
-                    "{:24}\t{:12}\t{:12}\t{:12}\t{:9}\t{:17}",
+                    "{:24}\t{:12}\t{:12}\t{:9}\t{:17}",
                     file.name.as_str(),
                     mode,
                     username,
-                    group,
                     size,
                     datetime
                 )
@@ -342,21 +344,22 @@ impl std::fmt::Display for FsEntry {
                     None => String::from("0"),
                 };
                 // Get group
+                /*
                 let group: String = match dir.group {
                     Some(gid) => gid.to_string(),
                     None => String::from("0"),
                 };
+                */
                 // Get byte size
                 let size: String = String::from("4096");
                 // Get date
                 let datetime: String = time_to_str(dir.last_change_time, "%b %d %Y %M:%H");
                 write!(
                     f,
-                    "{:24}\t{:12}\t{:12}\t{:12}\t{:9}\t{:17}",
+                    "{:24}\t{:12}\t{:12}\t{:9}\t{:17}",
                     dir.name.as_str(),
                     mode,
                     username,
-                    group,
                     size,
                     datetime
                 )
@@ -425,21 +428,22 @@ impl std::fmt::Display for FsEntry {
                     None => String::from("0"),
                 };
                 // Get group
+                /*
                 let group: String = match file.group {
                     Some(gid) => gid.to_string(),
                     None => String::from("0"),
                 };
+                */
                 // Get byte size
                 let size: ByteSize = ByteSize(file.size as u64);
                 // Get date
                 let datetime: String = time_to_str(file.last_change_time, "%b %d %Y %M:%H");
                 write!(
                     f,
-                    "{:24}\t{:12}\t{:12}\t{:12}\t{:9}\t{:17}",
+                    "{:24}\t{:12}\t{:12}\t{:9}\t{:17}",
                     file.name.as_str(),
                     mode,
                     username,
-                    group,
                     size,
                     datetime
                 )
