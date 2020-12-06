@@ -158,30 +158,40 @@ impl FileTransferActivity {
                             // Set started time
                             self.transfer_started = Instant::now();
                             let mut last_progress_val: f64 = 0.0;
-                            loop {
+                            while total_bytes_written < file_size {
                                 // Read till you can
-                                let mut buffer: [u8; 8192] = [0; 8192];
+                                let mut buffer: [u8; 65536] = [0; 65536];
                                 match fhnd.read(&mut buffer) {
                                     Ok(bytes_read) => {
                                         total_bytes_written += bytes_read;
                                         if bytes_read == 0 {
-                                            break;
+                                            continue;
                                         } else {
-                                            // Write bytes
-                                            if let Err(err) = rhnd.write(&buffer[0..bytes_read]) {
-                                                self.log(
-                                                    LogLevel::Error,
-                                                    format!("Could not write remote file: {}", err)
-                                                        .as_ref(),
-                                                );
-                                                self.input_mode =
-                                                    InputMode::Popup(PopupType::Alert(
-                                                        Color::Red,
-                                                        format!(
-                                                            "Could not write remote file: {}",
-                                                            err
-                                                        ),
-                                                    ));
+                                            let mut buf_start: usize = 0;
+                                            while buf_start < bytes_read {
+                                                // Write bytes
+                                                match rhnd.write(&buffer[buf_start..bytes_read]) {
+                                                    Ok(bytes) => buf_start += bytes,
+                                                    Err(err) => {
+                                                        self.log(
+                                                            LogLevel::Error,
+                                                            format!(
+                                                                "Could not write remote file: {}",
+                                                                err
+                                                            )
+                                                            .as_ref(),
+                                                        );
+                                                        self.input_mode =
+                                                            InputMode::Popup(PopupType::Alert(
+                                                                Color::Red,
+                                                                format!(
+                                                                    "Could not write remote file: {}",
+                                                                    err
+                                                                ),
+                                                            ));
+                                                        break;
+                                                    }
+                                                }
                                             }
                                         }
                                     }
@@ -338,7 +348,9 @@ impl FileTransferActivity {
         // Eventually, Reset input mode to explorer (if input mode is wait or progress)
         if let InputMode::Popup(ptype) = &self.input_mode {
             match ptype {
-                PopupType::Wait(_) | PopupType::Progress(_) => self.input_mode = InputMode::Explorer,
+                PopupType::Wait(_) | PopupType::Progress(_) => {
+                    self.input_mode = InputMode::Explorer
+                }
                 _ => { /* Nothing to do */ }
             }
         }
@@ -396,35 +408,41 @@ impl FileTransferActivity {
                                 self.transfer_started = Instant::now();
                                 // Write local file
                                 let mut last_progress_val: f64 = 0.0;
-                                loop {
+                                while total_bytes_written < file.size {
                                     // Read till you can
                                     let mut buffer: [u8; 8192] = [0; 8192];
                                     match rhnd.read(&mut buffer) {
                                         Ok(bytes_read) => {
                                             total_bytes_written += bytes_read;
                                             if bytes_read == 0 {
-                                                break;
+                                                continue;
                                             } else {
-                                                // Write bytes
-                                                if let Err(err) =
-                                                    local_file.write(&buffer[0..bytes_read])
-                                                {
-                                                    self.log(
-                                                        LogLevel::Error,
-                                                        format!(
-                                                            "Could not write local file: {}",
-                                                            err
-                                                        )
-                                                        .as_ref(),
-                                                    );
-                                                    self.input_mode =
-                                                        InputMode::Popup(PopupType::Alert(
-                                                            Color::Red,
-                                                            format!(
+                                                let mut buf_start: usize = 0;
+                                                while buf_start < bytes_read {
+                                                    // Write bytes
+                                                    match local_file
+                                                        .write(&buffer[buf_start..bytes_read])
+                                                    {
+                                                        Ok(bytes) => buf_start += bytes,
+                                                        Err(err) => {
+                                                            self.log(
+                                                                LogLevel::Error,
+                                                                format!(
                                                                 "Could not write local file: {}",
                                                                 err
-                                                            ),
-                                                        ));
+                                                            )
+                                                                .as_ref(),
+                                                            );
+                                                            self.input_mode =
+                                                            InputMode::Popup(PopupType::Alert(
+                                                                Color::Red,
+                                                                format!(
+                                                                    "Could not write local file: {}",
+                                                                    err
+                                                                ),
+                                                            ));
+                                                        }
+                                                    }
                                                 }
                                             }
                                         }
@@ -595,7 +613,7 @@ impl FileTransferActivity {
                     None => match self.local.files.len() {
                         0 => 0,
                         _ => self.local.files.len() - 1,
-                    }
+                    },
                 };
                 // Sort files
                 self.local.sort_files_by_name();
@@ -626,7 +644,7 @@ impl FileTransferActivity {
                     None => match self.remote.files.len() {
                         0 => 0,
                         _ => self.remote.files.len() - 1,
-                    }
+                    },
                 };
                 // Sort files
                 self.remote.sort_files_by_name();

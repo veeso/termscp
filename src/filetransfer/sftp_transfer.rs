@@ -522,7 +522,7 @@ impl FileTransfer for SftpFileTransfer {
                     mode,
                     OpenType::File,
                 ) {
-                    Ok(file) => Ok(Box::new(BufWriter::with_capacity(8192, file))),
+                    Ok(file) => Ok(Box::new(BufWriter::with_capacity(65536, file))),
                     Err(err) => Err(FileTransferError::new_ex(
                         FileTransferErrorType::FileCreateDenied,
                         format!("{}", err),
