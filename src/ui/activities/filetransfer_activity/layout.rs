@@ -130,7 +130,7 @@ impl FileTransferActivity {
                         popup_area,
                     ),
                     PopupType::YesNo(txt, _, _) => f.render_widget(
-                        self.draw_popup_yesno(txt.clone(), popup_area.width),
+                        self.draw_popup_yesno(txt.clone()),
                         popup_area,
                     ),
                 }
@@ -404,7 +404,7 @@ impl FileTransferActivity {
     /// ### draw_popup_yesno
     ///
     /// Draw yes/no select popup
-    pub(super) fn draw_popup_yesno(&self, text: String, width: u16) -> Tabs {
+    pub(super) fn draw_popup_yesno(&self, text: String) -> Tabs {
         let choices: Vec<Spans> = vec![Spans::from("Yes"), Spans::from("No")];
         let index: usize = match self.choice_opt {
             DialogYesNoOption::Yes => 0,
@@ -414,7 +414,7 @@ impl FileTransferActivity {
             .block(
                 Block::default()
                     .borders(Borders::ALL)
-                    .title(self.align_text_center(text.as_str(), width)),
+                    .title(text),
             )
             .select(index)
             .style(Style::default())
