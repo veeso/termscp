@@ -216,6 +216,7 @@ The developer documentation can be found on Rust Docs at <https://docs.rs/termsc
   - Some servers don't work: yes, some kind of ftp server don't work correctly, sometimes it won't display any files in the directories, some other times uploading files will fail. Up to date, `vsftpd` is the only one server which I saw working correctly with TermSCP. Am I going to solve this? I'd like to, but it's not my fault at all. Unfortunately [rust-ftp](https://github.com/mattnenterprise/rust-ftp) is an abandoned project (up to 2020), indeed I had to patch many stuff by myself. I'll try to solve these issues, but it will take a long time.
 - Sftp:
   - sftp is much slower than scp: Okay this is an annoying issue, and again: not my fault. It seems there is an issue with [ssh2-rs](https://github.com/alexcrichton/ssh2-rs) library. If you want to stay up to date with the status of this issue, subscribe to [this issue](https://github.com/alexcrichton/ssh2-rs/issues/206)
+- `NoSuchFileOrDirectory` on connect: let me guess, you're running on WSL and you've installed termscp through cargo. I know about this issue and it's a glitch of WSL I guess. Don't worry about it, just move the termscp executable into another PATH location, such as `/usr/bin`.
 
 ---
 
