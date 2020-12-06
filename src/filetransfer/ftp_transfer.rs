@@ -557,7 +557,7 @@ impl FileTransfer for FtpFileTransfer {
             Some(stream) => match stream.finalize_put_stream(writable) {
                 Ok(_) => Ok(()),
                 Err(err) => Err(FileTransferError::new_ex(
-                    FileTransferErrorType::NoSuchFileOrDirectory,
+                    FileTransferErrorType::ProtocolError,
                     format!("{}", err),
                 )),
             },
