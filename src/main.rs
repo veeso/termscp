@@ -134,17 +134,9 @@ fn main() {
         Ok(dir) => dir,
         Err(_) => PathBuf::from("/"),
     };
-    // Create activity manager
-    let mut manager: ActivityManager = match ActivityManager::new(&wrkdir, ticks) {
-        Ok(m) => m,
-        Err(_) => {
-            eprintln!("Invalid directory '{}'", wrkdir.display());
-            std::process::exit(255);
-        }
-    };
     // Initialize client if necessary
     let mut start_activity: NextActivity = NextActivity::Authentication;
-    if let Some(address) = address {
+    if address.is_some() {
         if password.is_none() {
             // Ask password if unspecified
             password = match rpassword::read_password_from_tty(Some("Password: ")) {
@@ -163,6 +155,17 @@ fn main() {
         }
         // In this case the first activity will be FileTransfer
         start_activity = NextActivity::FileTransfer;
+    }
+    // Create activity manager (and context too)
+    let mut manager: ActivityManager = match ActivityManager::new(&wrkdir, ticks) {
+        Ok(m) => m,
+        Err(_) => {
+            eprintln!("Invalid directory '{}'", wrkdir.display());
+            std::process::exit(255);
+        }
+    };
+    // Set file transfer params if set
+    if let Some(address) = address {
         manager.set_filetransfer_params(address, port, protocol, username, password);
     }
     // Run
