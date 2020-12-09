@@ -74,6 +74,13 @@ impl FileTransferActivity {
     ///
     /// Calculate progress percentage based on current progress
     pub(super) fn set_progress(&mut self, it: usize, sz: usize) {
-        self.transfer_progress = ((it as f64) * 100.0) / (sz as f64);
+        let mut prog: f64 = ((it as f64) * 100.0) / (sz as f64);
+        // Check value
+        if prog > 100.0 {
+            prog = 100.0;
+        } else if prog < 0.0 {
+            prog = 0.0;
+        }
+        self.transfer_progress = prog;
     }
 }
