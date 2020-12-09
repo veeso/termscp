@@ -37,7 +37,7 @@ Current version: 0.1.0 (06/12/2020)
 
 ## About TermSCP 🖥
 
-TermSCP is basically a porting of WinSCP to terminal. So basically is a terminal utility with an TUI to connect to a remote server to retrieve and upload files and to interact with the local file system. It works both on **Linux**, **MacOS**, **UNIX** and **Windows** and supports SFTP, SCP, FTP and FTPS.
+TermSCP is basically a porting of WinSCP to terminal. So basically is a terminal utility with an TUI to connect to a remote server to retrieve and upload files and to interact with the local file system. It works both on **Linux**, **MacOS**, **BSD** and **Windows** and supports SFTP, SCP, FTP and FTPS.
 
 ![Explorer](assets/images/explorer.gif)
 
@@ -45,7 +45,7 @@ TermSCP is basically a porting of WinSCP to terminal. So basically is a terminal
 
 ### Why TermSCP 🤔
 
-It happens very often to me, when using SCP at work to forget the path of a file on a remote machine, which forces me then to connect through SSH, gather the file path and finally download it through SCP. I could use WinSCP, but I use Linux and I pratically use the terminal for everything, so I wanted something like WinSCP on my terminal. Yeah, I know there midnight commander too, but actually I don't like it very much tbh (and doesn't support scp).
+It happens quite often to me, when using SCP at work to forget the path of a file on a remote machine, which forces me then to connect through SSH, gather the file path and finally download it through SCP. I could use WinSCP, but I use Linux and I pratically use the terminal for everything, so I wanted something like WinSCP on my terminal. Yeah, I know there midnight commander too, but actually I don't like it very much tbh (and hasn't a decent support for scp).
 
 ## Features 🎁
 
@@ -54,7 +54,7 @@ It happens very often to me, when using SCP at work to forget the path of a file
   - SCP
   - FTP and FTPS
 - Practical user interface to explore and operate on the remote and on the local machine file system
-- Compatible with Windows, Linux, UNIX and MacOS
+- Compatible with Windows, Linux, BSD and MacOS
 - Written in Rust
 - Easy to extend with new file transfers protocols
 
