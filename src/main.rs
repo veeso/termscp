@@ -50,7 +50,7 @@ use filetransfer::FileTransferProtocol;
 /// Print usage
 
 fn print_usage(opts: Options) {
-    let brief = format!("Usage: termscp [Options]... [protocol:user@address:port]");
+    let brief = format!("Usage: termscp [options]... [protocol://user@address:port]");
     print!("{}", opts.usage(&brief));
     println!("\nPlease, report issues to <https://github.com/ChristianVisintin/TermSCP>");
 }
