@@ -10,7 +10,11 @@
 
 Work in progress
 
-- password prompt: ask before performing terminal clear
+- enhancements:
+  - password prompt: ask before performing terminal clear
+  - file explorer: file names are now sorted ignoring capital letters
+- bugfix:
+  - prevent panic in set_progress, for progress values `> 100.0 or < 0.0`
 
 ## 0.1.0
 

@@ -159,8 +159,8 @@ impl FileExplorer {
     /// Sort explorer files by their name
     pub fn sort_files_by_name(&mut self) {
         self.files.sort_by_key(|x: &FsEntry| match x {
-            FsEntry::Directory(dir) => dir.name.clone(),
-            FsEntry::File(file) => file.name.clone(),
+            FsEntry::Directory(dir) => dir.name.as_str().to_lowercase(),
+            FsEntry::File(file) => file.name.as_str().to_lowercase(),
         });
     }
 }
