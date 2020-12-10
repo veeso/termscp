@@ -8,7 +8,7 @@
 
 ## 0.1.1
 
-Work in progress
+Released on 10/12/2020
 
 - enhancements:
   - password prompt: ask before performing terminal clear
