@@ -206,7 +206,7 @@ impl FileTransferActivity {
                                             Color::Red,
                                             format!("Could not read local file: {}", err),
                                         ));
-                                        break
+                                        break;
                                     }
                                 }
                                 // Increase progress
@@ -444,7 +444,7 @@ impl FileTransferActivity {
                                                                     err
                                                                 ),
                                                             ));
-                                                            break
+                                                            break;
                                                         }
                                                     }
                                                 }
@@ -460,7 +460,7 @@ impl FileTransferActivity {
                                                 Color::Red,
                                                 format!("Could not read remote file: {}", err),
                                             ));
-                                            break
+                                            break;
                                         }
                                     }
                                     // Set progress
