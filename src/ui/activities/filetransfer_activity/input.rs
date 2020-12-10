@@ -187,10 +187,8 @@ impl FileTransferActivity {
                     }
                     KeyCode::Char(ch) => match ch {
                         'q' | 'Q' => {
-                            if key.modifiers.intersects(KeyModifiers::CONTROL) {
-                                // Create quit prompt dialog
-                                self.input_mode = self.create_quit_popup();
-                            }
+                            // Create quit prompt dialog
+                            self.input_mode = self.create_quit_popup();
                         }
                         'g' | 'G' => {
                             // Goto
@@ -389,10 +387,8 @@ impl FileTransferActivity {
                     }
                     KeyCode::Char(ch) => match ch {
                         'q' | 'Q' => {
-                            if key.modifiers.intersects(KeyModifiers::CONTROL) {
-                                // Create quit prompt dialog
-                                self.input_mode = self.create_quit_popup();
-                            }
+                            // Create quit prompt dialog
+                            self.input_mode = self.create_quit_popup();
                         }
                         'g' | 'G' => {
                             // Goto
@@ -521,10 +517,8 @@ impl FileTransferActivity {
                     }
                     KeyCode::Char(ch) => match ch {
                         'q' | 'Q' => {
-                            if key.modifiers.intersects(KeyModifiers::CONTROL) {
-                                // Create quit prompt dialog
-                                self.input_mode = self.create_quit_popup();
-                            }
+                            // Create quit prompt dialog
+                            self.input_mode = self.create_quit_popup();
                         }
                         _ => { /* Nothing to do */ }
                     },
