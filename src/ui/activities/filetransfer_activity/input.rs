@@ -24,7 +24,7 @@ use super::{
     InputField, InputMode, LogLevel, OnInputSubmitCallback, PopupType,
 };
 
-use crossterm::event::{KeyCode, KeyModifiers};
+use crossterm::event::KeyCode;
 use std::path::PathBuf;
 use tui::style::Color;
 
