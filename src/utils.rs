@@ -141,6 +141,59 @@ pub fn parse_remote_opt(
     Ok((address, port, protocol, username))
 }
 
+/// ### fmt_pex
+///
+/// Convert 3 bytes of permissions value into ls notation (e.g. rwx-wx--x)
+pub fn fmt_pex(owner: u8, group: u8, others: u8) -> String {
+    let mut mode: String = String::with_capacity(9);
+    let read: u8 = (owner >> 2) & 0x1;
+    let write: u8 = (owner >> 1) & 0x1;
+    let exec: u8 = owner & 0x1;
+    mode.push_str(match read {
+        1 => "r",
+        _ => "-",
+    });
+    mode.push_str(match write {
+        1 => "w",
+        _ => "-",
+    });
+    mode.push_str(match exec {
+        1 => "x",
+        _ => "-",
+    });
+    let read: u8 = (group >> 2) & 0x1;
+    let write: u8 = (group >> 1) & 0x1;
+    let exec: u8 = group & 0x1;
+    mode.push_str(match read {
+        1 => "r",
+        _ => "-",
+    });
+    mode.push_str(match write {
+        1 => "w",
+        _ => "-",
+    });
+    mode.push_str(match exec {
+        1 => "x",
+        _ => "-",
+    });
+    let read: u8 = (others >> 2) & 0x1;
+    let write: u8 = (others >> 1) & 0x1;
+    let exec: u8 = others & 0x1;
+    mode.push_str(match read {
+        1 => "r",
+        _ => "-",
+    });
+    mode.push_str(match write {
+        1 => "w",
+        _ => "-",
+    });
+    mode.push_str(match exec {
+        1 => "x",
+        _ => "-",
+    });
+    mode
+}
+
 /// ### instant_to_str
 ///
 /// Format a `Instant` into a time string
@@ -240,7 +293,7 @@ mod tests {
         assert_eq!(result.1, 21); // Fallback to ftp default
         assert_eq!(result.2, FileTransferProtocol::Ftp(false));
         assert!(result.3.is_none()); // Doesn't fall back
-        // Protocol
+                                     // Protocol
         let result: (String, u16, FileTransferProtocol, Option<String>) =
             parse_remote_opt(&String::from("scp://172.26.104.1"))
                 .ok()
@@ -249,7 +302,7 @@ mod tests {
         assert_eq!(result.1, 22); // Fallback to scp default
         assert_eq!(result.2, FileTransferProtocol::Scp);
         assert!(result.3.is_none()); // Doesn't fall back
-        // Protocol + user
+                                     // Protocol + user
         let result: (String, u16, FileTransferProtocol, Option<String>) =
             parse_remote_opt(&String::from("ftps://anon@172.26.104.1"))
                 .ok()
@@ -275,6 +328,18 @@ mod tests {
     }
 
     #[test]
+    fn test_utils_fmt_pex() {
+        assert_eq!(fmt_pex(7, 7, 7), String::from("rwxrwxrwx"));
+        assert_eq!(fmt_pex(7, 5, 5), String::from("rwxr-xr-x"));
+        assert_eq!(fmt_pex(6, 6, 6), String::from("rw-rw-rw-"));
+        assert_eq!(fmt_pex(6, 4, 4), String::from("rw-r--r--"));
+        assert_eq!(fmt_pex(6, 0, 0), String::from("rw-------"));
+        assert_eq!(fmt_pex(0, 0, 0), String::from("---------"));
+        assert_eq!(fmt_pex(4, 4, 4), String::from("r--r--r--"));
+        assert_eq!(fmt_pex(1, 2, 1), String::from("--x-w---x"));
+    }
+
+    #[test]
     fn test_utils_time_to_str() {
         let system_time: SystemTime = SystemTime::from(SystemTime::UNIX_EPOCH);
         assert_eq!(
@@ -290,28 +355,36 @@ mod tests {
             lstime_to_systime("Nov 5 16:32", "%b %d %Y", "%b %d %H:%M")
                 .ok()
                 .unwrap()
-                .duration_since(SystemTime::UNIX_EPOCH).ok().unwrap(),
+                .duration_since(SystemTime::UNIX_EPOCH)
+                .ok()
+                .unwrap(),
             Duration::from_secs(1604593920)
         );
         assert_eq!(
             lstime_to_systime("Dec 2 21:32", "%b %d %Y", "%b %d %H:%M")
                 .ok()
                 .unwrap()
-                .duration_since(SystemTime::UNIX_EPOCH).ok().unwrap(),
+                .duration_since(SystemTime::UNIX_EPOCH)
+                .ok()
+                .unwrap(),
             Duration::from_secs(1606944720)
         );
         assert_eq!(
             lstime_to_systime("Nov 5 2018", "%b %d %Y", "%b %d %H:%M")
                 .ok()
                 .unwrap()
-                .duration_since(SystemTime::UNIX_EPOCH).ok().unwrap(),
+                .duration_since(SystemTime::UNIX_EPOCH)
+                .ok()
+                .unwrap(),
             Duration::from_secs(1541376000)
         );
         assert_eq!(
             lstime_to_systime("Mar 18 2018", "%b %d %Y", "%b %d %H:%M")
                 .ok()
                 .unwrap()
-                .duration_since(SystemTime::UNIX_EPOCH).ok().unwrap(),
+                .duration_since(SystemTime::UNIX_EPOCH)
+                .ok()
+                .unwrap(),
             Duration::from_secs(1521331200)
         );
         // bad cases
