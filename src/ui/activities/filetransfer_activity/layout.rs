@@ -520,7 +520,7 @@ impl FileTransferActivity {
                         None => String::from("0"),
                     };
                     #[cfg(target_os = "windows")]
-                    let username: format!("{}", dir.user.unwrap_or(0));
+                    let username: String = format!("{}", dir.user.unwrap_or(0));
                     info.push(ListItem::new(Spans::from(vec![
                         Span::styled("User: ", Style::default()),
                         Span::styled(
@@ -617,7 +617,7 @@ impl FileTransferActivity {
                         None => String::from("0"),
                     };
                     #[cfg(target_os = "windows")]
-                    let username: format!("{}", file.user.unwrap_or(0));
+                    let username: String = format!("{}", file.user.unwrap_or(0));
                     info.push(ListItem::new(Spans::from(vec![
                         Span::styled("User: ", Style::default()),
                         Span::styled(
