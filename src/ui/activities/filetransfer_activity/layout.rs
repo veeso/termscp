@@ -761,62 +761,72 @@ impl FileTransferActivity {
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(
-                    "<CTRL+D>",
+                    "<D>",
                     Style::default()
                         .fg(Color::Cyan)
                         .add_modifier(Modifier::BOLD),
                 ),
-                Span::raw("        "),
+                Span::raw("             "),
                 Span::raw("make directory"),
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(
-                    "<CTRL+G>",
+                    "<G>",
                     Style::default()
                         .fg(Color::Cyan)
                         .add_modifier(Modifier::BOLD),
                 ),
-                Span::raw("        "),
+                Span::raw("             "),
                 Span::raw("goto path"),
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(
-                    "<CTRL+H>",
+                    "<H>",
                     Style::default()
                         .fg(Color::Cyan)
                         .add_modifier(Modifier::BOLD),
                 ),
-                Span::raw("        "),
+                Span::raw("             "),
                 Span::raw("show help"),
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(
-                    "<CTRL+Q>",
+                    "<I>",
                     Style::default()
                         .fg(Color::Cyan)
                         .add_modifier(Modifier::BOLD),
                 ),
-                Span::raw("        "),
+                Span::raw("             "),
+                Span::raw("show info about the selected file or directory"),
+            ])),
+            ListItem::new(Spans::from(vec![
+                Span::styled(
+                    "<Q>",
+                    Style::default()
+                        .fg(Color::Cyan)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::raw("             "),
                 Span::raw("Quit TermSCP"),
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(
-                    "<CTRL+R>",
+                    "<R>",
                     Style::default()
                         .fg(Color::Cyan)
                         .add_modifier(Modifier::BOLD),
                 ),
-                Span::raw("        "),
+                Span::raw("             "),
                 Span::raw("rename file"),
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(
-                    "<CTRL+U>",
+                    "<U>",
                     Style::default()
                         .fg(Color::Cyan)
                         .add_modifier(Modifier::BOLD),
                 ),
-                Span::raw("        "),
+                Span::raw("             "),
                 Span::raw("go to parent directory"),
             ])),
         ];

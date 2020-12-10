@@ -194,24 +194,18 @@ impl FileTransferActivity {
                         }
                         'g' | 'G' => {
                             // Goto
-                            // If ctrl is enabled...
-                            if key.modifiers.intersects(KeyModifiers::CONTROL) {
-                                // Show input popup
-                                self.input_mode = InputMode::Popup(PopupType::Input(
-                                    String::from("Change working directory"),
-                                    FileTransferActivity::callback_change_directory,
-                                ));
-                            }
+                            // Show input popup
+                            self.input_mode = InputMode::Popup(PopupType::Input(
+                                String::from("Change working directory"),
+                                FileTransferActivity::callback_change_directory,
+                            ));
                         }
                         'd' | 'D' => {
                             // Make directory
-                            // If ctrl is enabled...
-                            if key.modifiers.intersects(KeyModifiers::CONTROL) {
-                                self.input_mode = InputMode::Popup(PopupType::Input(
-                                    String::from("Insert directory name"),
-                                    FileTransferActivity::callback_mkdir,
-                                ));
-                            }
+                            self.input_mode = InputMode::Popup(PopupType::Input(
+                                String::from("Insert directory name"),
+                                FileTransferActivity::callback_mkdir,
+                            ));
                         }
                         'h' | 'H' => {
                             // Show help
@@ -223,34 +217,25 @@ impl FileTransferActivity {
                         }
                         'r' | 'R' => {
                             // Rename
-                            // If ctrl is enabled...
-                            if key.modifiers.intersects(KeyModifiers::CONTROL) {
-                                self.input_mode = InputMode::Popup(PopupType::Input(
-                                    String::from("Insert new name"),
-                                    FileTransferActivity::callback_rename,
-                                ));
-                            }
+                            self.input_mode = InputMode::Popup(PopupType::Input(
+                                String::from("Insert new name"),
+                                FileTransferActivity::callback_rename,
+                            ));
                         }
                         's' | 'S' => {
                             // Save as...
-                            // If ctrl is enabled...
-                            if key.modifiers.intersects(KeyModifiers::CONTROL) {
-                                // Ask for input
-                                self.input_mode = InputMode::Popup(PopupType::Input(
-                                    String::from("Save as..."),
-                                    FileTransferActivity::callback_save_as,
-                                ));
-                            }
+                            // Ask for input
+                            self.input_mode = InputMode::Popup(PopupType::Input(
+                                String::from("Save as..."),
+                                FileTransferActivity::callback_save_as,
+                            ));
                         }
                         'u' | 'U' => {
                             // Go to parent directory
-                            // If ctrl is enabled...
-                            if key.modifiers.intersects(KeyModifiers::CONTROL) {
-                                // Get pwd
-                                let path: PathBuf = self.context.as_ref().unwrap().local.pwd();
-                                if let Some(parent) = path.as_path().parent() {
-                                    self.local_changedir(parent, true);
-                                }
+                            // Get pwd
+                            let path: PathBuf = self.context.as_ref().unwrap().local.pwd();
+                            if let Some(parent) = path.as_path().parent() {
+                                self.local_changedir(parent, true);
                             }
                         }
                         ' ' => {
@@ -411,24 +396,18 @@ impl FileTransferActivity {
                         }
                         'g' | 'G' => {
                             // Goto
-                            // If ctrl is enabled...
-                            if key.modifiers.intersects(KeyModifiers::CONTROL) {
-                                // Show input popup
-                                self.input_mode = InputMode::Popup(PopupType::Input(
-                                    String::from("Change working directory"),
-                                    FileTransferActivity::callback_change_directory,
-                                ));
-                            }
+                            // Show input popup
+                            self.input_mode = InputMode::Popup(PopupType::Input(
+                                String::from("Change working directory"),
+                                FileTransferActivity::callback_change_directory,
+                            ));
                         }
                         'd' | 'D' => {
                             // Make directory
-                            // If ctrl is enabled...
-                            if key.modifiers.intersects(KeyModifiers::CONTROL) {
-                                self.input_mode = InputMode::Popup(PopupType::Input(
-                                    String::from("Insert directory name"),
-                                    FileTransferActivity::callback_mkdir,
-                                ));
-                            }
+                            self.input_mode = InputMode::Popup(PopupType::Input(
+                                String::from("Insert directory name"),
+                                FileTransferActivity::callback_mkdir,
+                            ));
                         }
                         'h' | 'H' => {
                             // Show help
@@ -440,42 +419,33 @@ impl FileTransferActivity {
                         }
                         'r' | 'R' => {
                             // Rename
-                            // If ctrl is enabled...
-                            if key.modifiers.intersects(KeyModifiers::CONTROL) {
-                                self.input_mode = InputMode::Popup(PopupType::Input(
-                                    String::from("Insert new name"),
-                                    FileTransferActivity::callback_rename,
-                                ));
-                            }
+                            self.input_mode = InputMode::Popup(PopupType::Input(
+                                String::from("Insert new name"),
+                                FileTransferActivity::callback_rename,
+                            ));
                         }
                         's' | 'S' => {
                             // Save as...
-                            // If ctrl is enabled...
-                            if key.modifiers.intersects(KeyModifiers::CONTROL) {
-                                // Ask for input
-                                self.input_mode = InputMode::Popup(PopupType::Input(
-                                    String::from("Save as..."),
-                                    FileTransferActivity::callback_save_as,
-                                ));
-                            }
+                            // Ask for input
+                            self.input_mode = InputMode::Popup(PopupType::Input(
+                                String::from("Save as..."),
+                                FileTransferActivity::callback_save_as,
+                            ));
                         }
                         'u' | 'U' => {
                             // Go to parent directory
-                            // If ctrl is enabled...
-                            if key.modifiers.intersects(KeyModifiers::CONTROL) {
-                                // Get pwd
-                                match self.client.pwd() {
-                                    Ok(path) => {
-                                        if let Some(parent) = path.as_path().parent() {
-                                            self.remote_changedir(parent, true);
-                                        }
+                            // Get pwd
+                            match self.client.pwd() {
+                                Ok(path) => {
+                                    if let Some(parent) = path.as_path().parent() {
+                                        self.remote_changedir(parent, true);
                                     }
-                                    Err(err) => {
-                                        self.input_mode = InputMode::Popup(PopupType::Alert(
-                                            Color::Red,
-                                            format!("Could not change working directory: {}", err),
-                                        ))
-                                    }
+                                }
+                                Err(err) => {
+                                    self.input_mode = InputMode::Popup(PopupType::Alert(
+                                        Color::Red,
+                                        format!("Could not change working directory: {}", err),
+                                    ))
                                 }
                             }
                         }

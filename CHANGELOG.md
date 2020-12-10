@@ -16,6 +16,9 @@ Work in progress
     - file names are now sorted ignoring capital letters
     - file names longer than 23, are now cut to 20 and followed by `...`
     - paths which exceed tab size in explorer are elided with the following formato `ANCESTOR[1]/.../PARENT/DIRNAME`
+- keybindings:
+  - `I`: show info about selected file or directory
+  - Removed `CTRL`; just use keys now.
 - bugfix:
   - prevent panic in set_progress, for progress values `> 100.0 or < 0.0`
 

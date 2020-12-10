@@ -193,12 +193,13 @@ Password can be basically provided through 3 ways when address argument is provi
 | `<PGDOWN>`    | Move down in selected list by 8 rows                  |
 | `<ENTER>`     | Enter directory                                       |
 | `<SPACE>`     | Upload / download selected file                       |
-| `<CTRL+D>`    | Make directory                                        |
-| `<CTRL+G>`    | Go to supplied path                                   |
-| `<CTRL+H>`    | Show help                                             |
-| `<CTRL+Q>`    | Quit TermSCP                                          |
-| `<CTRL+R>`    | Rename file                                           |
-| `<CTRL+U>`    | Go to parent directory                                |
+| `<D>`         | Make directory                                        |
+| `<G>`         | Go to supplied path                                   |
+| `<H>`         | Show help                                             |
+| `<H>`         | Show info about selected file or directory            |
+| `<Q>`         | Quit TermSCP                                          |
+| `<R>`         | Rename file                                           |
+| `<U>`         | Go to parent directory                                |
 | `<CANC>`      | Delete file                                           |
 
 ---
