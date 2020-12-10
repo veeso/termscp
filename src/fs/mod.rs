@@ -178,11 +178,7 @@ impl std::fmt::Display for FsEntry {
                 write!(
                     f,
                     "{:24}\t{:12}\t{:12}\t{:9}\t{:17}",
-                    dir_name,
-                    mode,
-                    username,
-                    size,
-                    datetime
+                    dir_name, mode, username, size, datetime
                 )
             }
             FsEntry::File(file) => {
@@ -273,11 +269,7 @@ impl std::fmt::Display for FsEntry {
                 write!(
                     f,
                     "{:24}\t{:12}\t{:12}\t{:9}\t{:17}",
-                    file_name,
-                    mode,
-                    username,
-                    size,
-                    datetime
+                    file_name, mode, username, size, datetime
                 )
             }
         }
@@ -372,11 +364,7 @@ impl std::fmt::Display for FsEntry {
                 write!(
                     f,
                     "{:24}\t{:12}\t{:12}\t{:9}\t{:17}",
-                    dir_name,
-                    mode,
-                    username,
-                    size,
-                    datetime
+                    dir_name, mode, username, size, datetime
                 )
             }
             FsEntry::File(file) => {
@@ -461,11 +449,7 @@ impl std::fmt::Display for FsEntry {
                 write!(
                     f,
                     "{:24}\t{:12}\t{:12}\t{:9}\t{:17}",
-                    file_name,
-                    mode,
-                    username,
-                    size,
-                    datetime
+                    file_name, mode, username, size, datetime
                 )
             }
         }

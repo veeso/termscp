@@ -25,7 +25,7 @@ use super::{
     Context, DialogYesNoOption, FileExplorerTab, FileTransferActivity, FsEntry, InputField,
     InputMode, LogLevel, LogRecord, PopupType,
 };
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use tui::{
     layout::{Constraint, Corner, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
@@ -67,7 +67,7 @@ impl FileTransferActivity {
             remote_state.select(Some(self.remote.index));
             // Draw tabs
             f.render_stateful_widget(
-                self.draw_local_explorer(local_wrkdir),
+                self.draw_local_explorer(local_wrkdir, tabs_chunks[0].width),
                 tabs_chunks[0],
                 &mut localhost_state,
             );
@@ -77,7 +77,7 @@ impl FileTransferActivity {
                 Err(_) => PathBuf::from("/"),
             };
             f.render_stateful_widget(
-                self.draw_remote_explorer(remote_wrkdir),
+                self.draw_remote_explorer(remote_wrkdir, tabs_chunks[1].width),
                 tabs_chunks[1],
                 &mut remote_state,
             );
@@ -141,7 +141,7 @@ impl FileTransferActivity {
     /// ### draw_local_explorer
     ///
     /// Draw local explorer list
-    pub(super) fn draw_local_explorer(&self, local_wrkdir: PathBuf) -> List {
+    pub(super) fn draw_local_explorer(&self, local_wrkdir: PathBuf, width: u16) -> List {
         let hostname: String = match hostname::get() {
             Ok(h) => String::from(h.as_os_str().to_string_lossy()),
             Err(_) => String::from("localhost"),
@@ -163,7 +163,16 @@ impl FileTransferActivity {
                         },
                         _ => Style::default(),
                     })
-                    .title(format!("{}:{} ", hostname, local_wrkdir.display())),
+                    .title(format!(
+                        "{}:{} ",
+                        hostname,
+                        FileTransferActivity::elide_wrkdir_path(
+                            local_wrkdir.as_path(),
+                            hostname.as_str(),
+                            width
+                        )
+                        .display()
+                    )),
             )
             .start_corner(Corner::TopLeft)
             .highlight_style(
@@ -176,7 +185,7 @@ impl FileTransferActivity {
     /// ### draw_remote_explorer
     ///
     /// Draw remote explorer list
-    pub(super) fn draw_remote_explorer(&self, remote_wrkdir: PathBuf) -> List {
+    pub(super) fn draw_remote_explorer(&self, remote_wrkdir: PathBuf, width: u16) -> List {
         let files: Vec<ListItem> = self
             .remote
             .files
@@ -197,7 +206,12 @@ impl FileTransferActivity {
                     .title(format!(
                         "{}:{} ",
                         self.params.address,
-                        remote_wrkdir.display()
+                        FileTransferActivity::elide_wrkdir_path(
+                            remote_wrkdir.as_path(),
+                            self.params.address.as_str(),
+                            width
+                        )
+                        .display()
                     )),
             )
             .start_corner(Corner::TopLeft)
@@ -305,7 +319,7 @@ impl FileTransferActivity {
         let mut lines: Vec<ListItem> = Vec::new();
         for msg in message_rows.iter() {
             lines.push(ListItem::new(Spans::from(
-                self.align_text_center(msg, width),
+                FileTransferActivity::align_text_center(msg, width),
             )));
         }
         List::new(lines)
@@ -328,7 +342,7 @@ impl FileTransferActivity {
         let mut lines: Vec<ListItem> = Vec::new();
         for msg in message_rows.iter() {
             lines.push(ListItem::new(Spans::from(
-                self.align_text_center(msg, width),
+                FileTransferActivity::align_text_center(msg, width),
             )));
         }
         List::new(lines)
@@ -386,7 +400,7 @@ impl FileTransferActivity {
         let mut lines: Vec<ListItem> = Vec::new();
         for msg in message_rows.iter() {
             lines.push(ListItem::new(Spans::from(
-                self.align_text_center(msg, width),
+                FileTransferActivity::align_text_center(msg, width),
             )));
         }
         List::new(lines)
@@ -590,7 +604,7 @@ impl FileTransferActivity {
     /// align_text_center
     ///
     /// Align text to center for a given width
-    fn align_text_center(&self, text: &str, width: u16) -> String {
+    fn align_text_center(text: &str, width: u16) -> String {
         let indent_size: usize = match (width as usize) >= text.len() {
             // NOTE: The check prevents underflow
             true => (width as usize - text.len()) / 2,
@@ -600,5 +614,39 @@ impl FileTransferActivity {
             text,
             (0..indent_size).map(|_| " ").collect::<String>().as_str(),
         )
+    }
+
+    /// ### elide_wrkdir_path
+    ///
+    /// Elide working directory path if longer than width + host.len
+    /// In this case, the path is formatted to {ANCESTOR[0]}/.../{PARENT[0]}/{BASENAME}
+    fn elide_wrkdir_path(wrkdir: &Path, host: &str, width: u16) -> PathBuf {
+        let fmt_path: String = format!("{}", wrkdir.display());
+        // NOTE: +5 is const
+        match fmt_path.len() + host.len() + 5 > width as usize {
+            false => PathBuf::from(wrkdir),
+            true => {
+                // Elide
+                let ancestors_len: usize = wrkdir.ancestors().count();
+                let mut ancestors = wrkdir.ancestors();
+                let mut elided_path: PathBuf = PathBuf::new();
+                // If ancestors_len's size is bigger than 2, push count - 2
+                if ancestors_len > 2 {
+                    elided_path.push(ancestors.nth(ancestors_len - 2).unwrap());
+                }
+                // If ancestors_len is bigger than 3, push '...' and parent too
+                if ancestors_len > 3 {
+                    elided_path.push("...");
+                    if let Some(parent) = wrkdir.ancestors().nth(1) {
+                        elided_path.push(parent.file_name().unwrap());
+                    }
+                }
+                // Push file_name
+                if let Some(name) = wrkdir.file_name() {
+                    elided_path.push(name);
+                }
+                elided_path
+            }
+        }
     }
 }
