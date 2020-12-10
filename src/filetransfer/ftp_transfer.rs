@@ -574,8 +574,19 @@ impl FileTransfer for FtpFileTransfer {
     /// The purpose of this method is to finalize the connection with the peer when reading data.
     /// This mighe be necessary for some protocols.
     /// You must call this method each time you want to finalize the read of the remote file.
-    fn on_recv(&mut self, _readable: Box<dyn Read>) -> Result<(), FileTransferError> {
-        Ok(())
+    fn on_recv(&mut self, readable: Box<dyn Read>) -> Result<(), FileTransferError> {
+        match &mut self.stream {
+            Some(stream) => match stream.finalize_get(readable) {
+                Ok(_) => Ok(()),
+                Err(err) => Err(FileTransferError::new_ex(
+                    FileTransferErrorType::ProtocolError,
+                    format!("{}", err),
+                )),
+            },
+            None => Err(FileTransferError::new(
+                FileTransferErrorType::UninitializedSession,
+            )),
+        }
     }
 }
 
