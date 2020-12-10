@@ -19,12 +19,18 @@
 *
 */
 
+extern crate bytesize;
 extern crate hostname;
+#[cfg(any(unix, macos, linux))]
+extern crate users;
 
 use super::{
     Context, DialogYesNoOption, FileExplorerTab, FileTransferActivity, FsEntry, InputField,
     InputMode, LogLevel, LogRecord, PopupType,
 };
+use crate::utils::time_to_str;
+
+use bytesize::ByteSize;
 use std::path::{Path, PathBuf};
 use tui::{
     layout::{Constraint, Corner, Direction, Layout, Rect},
@@ -33,6 +39,8 @@ use tui::{
     widgets::{Block, Borders, Clear, Gauge, List, ListItem, ListState, Paragraph, Tabs},
 };
 use unicode_width::UnicodeWidthStr;
+#[cfg(any(unix, macos, linux))]
+use users::{get_group_by_gid, get_user_by_uid};
 
 impl FileTransferActivity {
     /// ### draw
@@ -96,8 +104,9 @@ impl FileTransferActivity {
                 let (width, height): (u16, u16) = match popup {
                     PopupType::Alert(_, _) => (50, 10),
                     PopupType::Fatal(_) => (50, 10),
+                    PopupType::FileInfo => (50, 50),
                     PopupType::Help => (50, 70),
-                    PopupType::Input(_, _) => (30, 10),
+                    PopupType::Input(_, _) => (40, 10),
                     PopupType::Progress(_) => (40, 10),
                     PopupType::Wait(_) => (50, 10),
                     PopupType::YesNo(_, _, _) => (30, 10),
@@ -113,6 +122,7 @@ impl FileTransferActivity {
                         self.draw_popup_fatal(txt.clone(), popup_area.width),
                         popup_area,
                     ),
+                    PopupType::FileInfo => f.render_widget(self.draw_popup_fileinfo(), popup_area),
                     PopupType::Help => f.render_widget(self.draw_popup_help(), popup_area),
                     PopupType::Input(txt, _) => {
                         f.render_widget(self.draw_popup_input(txt.clone()), popup_area);
@@ -432,6 +442,225 @@ impl FileTransferActivity {
                     .add_modifier(Modifier::BOLD)
                     .fg(Color::Yellow),
             )
+    }
+
+    /// ### draw_popup_fileinfo
+    ///
+    /// Draw popup containing info about selected fsentry
+    pub(super) fn draw_popup_fileinfo(&self) -> List {
+        let mut info: Vec<ListItem> = Vec::new();
+        // Get current fsentry
+        let fsentry: Option<&FsEntry> = match self.tab {
+            FileExplorerTab::Local => {
+                // Get selected file
+                match self.local.files.get(self.local.index) {
+                    Some(entry) => Some(entry),
+                    None => None,
+                }
+            }
+            FileExplorerTab::Remote => match self.remote.files.get(self.remote.index) {
+                Some(entry) => Some(entry),
+                None => None,
+            },
+        };
+        // Get file_name and fill info list
+        let file_name: String = match fsentry {
+            Some(fsentry) => match fsentry {
+                FsEntry::Directory(dir) => {
+                    // Push path
+                    info.push(ListItem::new(Spans::from(vec![
+                        Span::styled("Path: ", Style::default()),
+                        Span::styled(
+                            match &dir.symlink {
+                                Some(symlink) => {
+                                    format!("{} => {}", dir.abs_path.display(), symlink.display())
+                                }
+                                None => dir.abs_path.to_string_lossy().to_string(),
+                            },
+                            Style::default()
+                                .fg(Color::LightYellow)
+                                .add_modifier(Modifier::BOLD),
+                        ),
+                    ])));
+                    // Push creation time
+                    info.push(ListItem::new(Spans::from(vec![
+                        Span::styled("Creation time: ", Style::default()),
+                        Span::styled(
+                            time_to_str(dir.creation_time, "%b %d %Y %H:%M:%S"),
+                            Style::default()
+                                .fg(Color::LightGreen)
+                                .add_modifier(Modifier::BOLD),
+                        ),
+                    ])));
+                    // Push Last change
+                    info.push(ListItem::new(Spans::from(vec![
+                        Span::styled("Last change time: ", Style::default()),
+                        Span::styled(
+                            time_to_str(dir.last_change_time, "%b %d %Y %H:%M:%S"),
+                            Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
+                        ),
+                    ])));
+                    // Push Last access
+                    info.push(ListItem::new(Spans::from(vec![
+                        Span::styled("Last access time: ", Style::default()),
+                        Span::styled(
+                            time_to_str(dir.last_access_time, "%b %d %Y %H:%M:%S"),
+                            Style::default()
+                                .fg(Color::LightMagenta)
+                                .add_modifier(Modifier::BOLD),
+                        ),
+                    ])));
+                    // User
+                    #[cfg(any(unix, macos, linux))]
+                    let username: String = match dir.user {
+                        Some(uid) => match get_user_by_uid(uid) {
+                            Some(user) => user.name().to_string_lossy().to_string(),
+                            None => uid.to_string(),
+                        },
+                        None => String::from("0"),
+                    };
+                    #[cfg(target_os = "windows")]
+                    let username: format!("{}", dir.user.unwrap_or(0));
+                    info.push(ListItem::new(Spans::from(vec![
+                        Span::styled("User: ", Style::default()),
+                        Span::styled(
+                            username,
+                            Style::default()
+                                .fg(Color::LightRed)
+                                .add_modifier(Modifier::BOLD),
+                        ),
+                    ])));
+                    // Group
+                    #[cfg(any(unix, macos, linux))]
+                    let group: String = match dir.group {
+                        Some(gid) => match get_group_by_gid(gid) {
+                            Some(group) => group.name().to_string_lossy().to_string(),
+                            None => gid.to_string(),
+                        },
+                        None => String::from("0"),
+                    };
+                    #[cfg(target_os = "windows")]
+                    let group: String = format!("{}", dir.group.unwrap_or(0));
+                    info.push(ListItem::new(Spans::from(vec![
+                        Span::styled("Group: ", Style::default()),
+                        Span::styled(
+                            group,
+                            Style::default()
+                                .fg(Color::LightBlue)
+                                .add_modifier(Modifier::BOLD),
+                        ),
+                    ])));
+                    // Finally return file name
+                    dir.name.clone()
+                }
+                FsEntry::File(file) => {
+                    // Push path
+                    info.push(ListItem::new(Spans::from(vec![
+                        Span::styled("Path: ", Style::default()),
+                        Span::styled(
+                            match &file.symlink {
+                                Some(symlink) => {
+                                    format!("{} => {}", file.abs_path.display(), symlink.display())
+                                }
+                                None => file.abs_path.to_string_lossy().to_string(),
+                            },
+                            Style::default()
+                                .fg(Color::LightYellow)
+                                .add_modifier(Modifier::BOLD),
+                        ),
+                    ])));
+                    // Push size
+                    info.push(ListItem::new(Spans::from(vec![
+                        Span::styled("Size: ", Style::default()),
+                        Span::styled(
+                            format!("{} ({})", ByteSize(file.size as u64), file.size),
+                            Style::default()
+                                .fg(Color::LightBlue)
+                                .add_modifier(Modifier::BOLD),
+                        ),
+                    ])));
+                    // Push creation time
+                    info.push(ListItem::new(Spans::from(vec![
+                        Span::styled("Creation time: ", Style::default()),
+                        Span::styled(
+                            time_to_str(file.creation_time, "%b %d %Y %H:%M:%S"),
+                            Style::default()
+                                .fg(Color::LightGreen)
+                                .add_modifier(Modifier::BOLD),
+                        ),
+                    ])));
+                    // Push Last change
+                    info.push(ListItem::new(Spans::from(vec![
+                        Span::styled("Last change time: ", Style::default()),
+                        Span::styled(
+                            time_to_str(file.last_change_time, "%b %d %Y %H:%M:%S"),
+                            Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
+                        ),
+                    ])));
+                    // Push Last access
+                    info.push(ListItem::new(Spans::from(vec![
+                        Span::styled("Last access time: ", Style::default()),
+                        Span::styled(
+                            time_to_str(file.last_access_time, "%b %d %Y %H:%M:%S"),
+                            Style::default()
+                                .fg(Color::LightMagenta)
+                                .add_modifier(Modifier::BOLD),
+                        ),
+                    ])));
+                    // User
+                    #[cfg(any(unix, macos, linux))]
+                    let username: String = match file.user {
+                        Some(uid) => match get_user_by_uid(uid) {
+                            Some(user) => user.name().to_string_lossy().to_string(),
+                            None => uid.to_string(),
+                        },
+                        None => String::from("0"),
+                    };
+                    #[cfg(target_os = "windows")]
+                    let username: format!("{}", file.user.unwrap_or(0));
+                    info.push(ListItem::new(Spans::from(vec![
+                        Span::styled("User: ", Style::default()),
+                        Span::styled(
+                            username,
+                            Style::default()
+                                .fg(Color::LightRed)
+                                .add_modifier(Modifier::BOLD),
+                        ),
+                    ])));
+                    // Group
+                    #[cfg(any(unix, macos, linux))]
+                    let group: String = match file.group {
+                        Some(gid) => match get_group_by_gid(gid) {
+                            Some(group) => group.name().to_string_lossy().to_string(),
+                            None => gid.to_string(),
+                        },
+                        None => String::from("0"),
+                    };
+                    #[cfg(target_os = "windows")]
+                    let group: String = format!("{}", file.group.unwrap_or(0));
+                    info.push(ListItem::new(Spans::from(vec![
+                        Span::styled("Group: ", Style::default()),
+                        Span::styled(
+                            group,
+                            Style::default()
+                                .fg(Color::LightBlue)
+                                .add_modifier(Modifier::BOLD),
+                        ),
+                    ])));
+                    // Finally return file name
+                    file.name.clone()
+                }
+            },
+            None => String::from(""),
+        };
+        List::new(info)
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .border_style(Style::default())
+                    .title(file_name),
+            )
+            .start_corner(Corner::TopLeft)
     }
 
     /// ### draw_footer

@@ -215,10 +215,11 @@ impl FileTransferActivity {
                         }
                         'h' | 'H' => {
                             // Show help
-                            // If ctrl is enabled...
-                            if key.modifiers.intersects(KeyModifiers::CONTROL) {
-                                self.input_mode = InputMode::Popup(PopupType::Help);
-                            }
+                            self.input_mode = InputMode::Popup(PopupType::Help);
+                        }
+                        'i' | 'I' => {
+                            // Show file info
+                            self.input_mode = InputMode::Popup(PopupType::FileInfo);
                         }
                         'r' | 'R' => {
                             // Rename
@@ -431,10 +432,11 @@ impl FileTransferActivity {
                         }
                         'h' | 'H' => {
                             // Show help
-                            // If ctrl is enabled...
-                            if key.modifiers.intersects(KeyModifiers::CONTROL) {
-                                self.input_mode = InputMode::Popup(PopupType::Help);
-                            }
+                            self.input_mode = InputMode::Popup(PopupType::Help);
+                        }
+                        'i' | 'I' => {
+                            // Show file info
+                            self.input_mode = InputMode::Popup(PopupType::FileInfo);
                         }
                         'r' | 'R' => {
                             // Rename
@@ -569,6 +571,7 @@ impl FileTransferActivity {
     pub(super) fn handle_input_event_mode_popup(&mut self, ev: &InputEvent, popup: PopupType) {
         match popup {
             PopupType::Alert(_, _) => self.handle_input_event_mode_popup_alert(ev),
+            PopupType::FileInfo => self.handle_input_event_mode_popup_fileinfo(ev),
             PopupType::Help => self.handle_input_event_mode_popup_help(ev),
             PopupType::Fatal(_) => self.handle_input_event_mode_popup_fatal(ev),
             PopupType::Input(_, cb) => self.handle_input_event_mode_popup_input(ev, cb),
@@ -589,6 +592,25 @@ impl FileTransferActivity {
             InputEvent::Key(key) => {
                 match key.code {
                     KeyCode::Enter => {
+                        // Set input mode back to explorer
+                        self.input_mode = InputMode::Explorer;
+                    }
+                    _ => { /* Nothing to do */ }
+                }
+            }
+            _ => { /* Nothing to do */ }
+        }
+    }
+
+    /// ### handle_input_event_mode_popup_fileinfo
+    ///
+    /// Input event handler for popup fileinfo
+    pub(super) fn handle_input_event_mode_popup_fileinfo(&mut self, ev: &InputEvent) {
+        // If enter, close popup
+        match ev {
+            InputEvent::Key(key) => {
+                match key.code {
+                    KeyCode::Enter | KeyCode::Esc => {
                         // Set input mode back to explorer
                         self.input_mode = InputMode::Explorer;
                     }
