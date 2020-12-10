@@ -27,7 +27,7 @@ Current version: 0.1.1 (10/12/2020)
   - [Documentation 📚](#documentation-)
   - [Known issues 🧻](#known-issues-)
   - [Upcoming Features 🧪](#upcoming-features-)
-  - [Contributions 🤙🏻](#contributions-)
+  - [Contributions �🏻](#contributions-)
   - [Changelog ⏳](#changelog-)
   - [Powered by 🚀](#powered-by-)
   - [Gallery 🎬](#gallery-)
@@ -227,7 +227,7 @@ The developer documentation can be found on Rust Docs at <https://docs.rs/termsc
 
 ---
 
-## Contributions 🤙🏻
+## Contributions 🤝🏻
 
 Contributions are welcome! 😉
 
