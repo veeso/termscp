@@ -170,10 +170,15 @@ impl std::fmt::Display for FsEntry {
                 let size: String = String::from("4096");
                 // Get date
                 let datetime: String = time_to_str(dir.last_change_time, "%b %d %Y %H:%M");
+                // Set file name (or elide if too long)
+                let dir_name: String = match dir.name.len() >= 24 {
+                    false => dir.name.clone(),
+                    true => format!("{}...", &dir.name.as_str()[0..20]),
+                };
                 write!(
                     f,
                     "{:24}\t{:12}\t{:12}\t{:9}\t{:17}",
-                    dir.name.as_str(),
+                    dir_name,
                     mode,
                     username,
                     size,
@@ -260,10 +265,15 @@ impl std::fmt::Display for FsEntry {
                 let size: ByteSize = ByteSize(file.size as u64);
                 // Get date
                 let datetime: String = time_to_str(file.last_change_time, "%b %d %Y %H:%M");
+                // Set file name (or elide if too long)
+                let file_name: String = match file.name.len() >= 24 {
+                    false => file.name.clone(),
+                    true => format!("{}...", &file.name.as_str()[0..20]),
+                };
                 write!(
                     f,
                     "{:24}\t{:12}\t{:12}\t{:9}\t{:17}",
-                    file.name.as_str(),
+                    file_name,
                     mode,
                     username,
                     size,
@@ -354,10 +364,15 @@ impl std::fmt::Display for FsEntry {
                 let size: String = String::from("4096");
                 // Get date
                 let datetime: String = time_to_str(dir.last_change_time, "%b %d %Y %H:%M");
+                // Set file name (or elide if too long)
+                let dir_name: String = match dir.name.len() >= 24 {
+                    false => dir.name.clone(),
+                    true => format!("{}...", &dir.name.as_str()[0..20]),
+                };
                 write!(
                     f,
                     "{:24}\t{:12}\t{:12}\t{:9}\t{:17}",
-                    dir.name.as_str(),
+                    dir_name,
                     mode,
                     username,
                     size,
@@ -438,10 +453,15 @@ impl std::fmt::Display for FsEntry {
                 let size: ByteSize = ByteSize(file.size as u64);
                 // Get date
                 let datetime: String = time_to_str(file.last_change_time, "%b %d %Y %H:%M");
+                // Set file name (or elide if too long)
+                let file_name: String = match file.name.len() >= 24 {
+                    false => file.name.clone(),
+                    true => format!("{}...", &file.name.as_str()[0..20]),
+                };
                 write!(
                     f,
                     "{:24}\t{:12}\t{:12}\t{:9}\t{:17}",
-                    file.name.as_str(),
+                    file_name,
                     mode,
                     username,
                     size,
