@@ -171,7 +171,9 @@ impl FileTransferActivity {
                                             while buf_start < bytes_read {
                                                 // Write bytes
                                                 match rhnd.write(&buffer[buf_start..bytes_read]) {
-                                                    Ok(bytes) => buf_start += bytes,
+                                                    Ok(bytes) => {
+                                                        buf_start += bytes;
+                                                    }
                                                     Err(err) => {
                                                         self.log(
                                                             LogLevel::Error,
@@ -204,6 +206,7 @@ impl FileTransferActivity {
                                             Color::Red,
                                             format!("Could not read local file: {}", err),
                                         ));
+                                        break
                                     }
                                 }
                                 // Increase progress
@@ -441,6 +444,7 @@ impl FileTransferActivity {
                                                                     err
                                                                 ),
                                                             ));
+                                                            break
                                                         }
                                                     }
                                                 }
@@ -456,6 +460,7 @@ impl FileTransferActivity {
                                                 Color::Red,
                                                 format!("Could not read remote file: {}", err),
                                             ));
+                                            break
                                         }
                                     }
                                     // Set progress

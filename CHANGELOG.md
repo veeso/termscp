@@ -21,8 +21,10 @@ Work in progress
   - Removed `CTRL`; just use keys now.
 - bugfix:
   - prevent panic in set_progress, for progress values `> 100.0 or < 0.0`
+  - Fixed FTP get, which didn't finalize the reader
 - dependencies:
   - updated `textwrap` to `0.13.0`
+  - updated `ftp4` to `4.0.1`
 
 ## 0.1.0
 
