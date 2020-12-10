@@ -16,7 +16,7 @@ readme = "README.md"
 
 [dependencies]
 crossterm = "0.18.2"
-ftp4 = { version = "^4.0.0", features = ["secure"] }
+ftp4 = { version = "^4.0.1", features = ["secure"] }
 getopts = "0.2.21"
 ssh2 = "0.9.0"
 tui = { version = "0.13.0", features = ["crossterm"], default-features = false }
