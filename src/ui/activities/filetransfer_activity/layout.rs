@@ -692,12 +692,12 @@ impl FileTransferActivity {
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(
-                    "<CANC>",
+                    "<DEL>",
                     Style::default()
                         .fg(Color::Cyan)
                         .add_modifier(Modifier::BOLD),
                 ),
-                Span::raw("          "),
+                Span::raw("           "),
                 Span::raw("delete file"),
             ])),
             ListItem::new(Spans::from(vec![

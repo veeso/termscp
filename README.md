@@ -27,7 +27,7 @@ Current version: 0.1.1 (10/12/2020)
   - [Documentation 📚](#documentation-)
   - [Known issues 🧻](#known-issues-)
   - [Upcoming Features 🧪](#upcoming-features-)
-  - [Contributions �🏻](#contributions-)
+  - [Contributions 🤝🏻](#contributions-)
   - [Changelog ⏳](#changelog-)
   - [Powered by 🚀](#powered-by-)
   - [Gallery 🎬](#gallery-)
@@ -194,13 +194,14 @@ Password can be basically provided through 3 ways when address argument is provi
 | `<ENTER>`     | Enter directory                                       |
 | `<SPACE>`     | Upload / download selected file                       |
 | `<D>`         | Make directory                                        |
+| `<E>`         | Delete file (Same as `CANC`)                          |
 | `<G>`         | Go to supplied path                                   |
 | `<H>`         | Show help                                             |
 | `<I>`         | Show info about selected file or directory            |
 | `<Q>`         | Quit TermSCP                                          |
 | `<R>`         | Rename file                                           |
 | `<U>`         | Go to parent directory                                |
-| `<CANC>`      | Delete file                                           |
+| `<DEL>`       | Delete file                                           |
 
 ---
 

@@ -13,6 +13,8 @@ Released on ??
 
 - General performance and code improvements
 - Improved symlinks management
+- Keybindings:
+  - `E`: Delete file (Same as `DEL`); added because some keyboards don't have `DEL` (hey, that's my MacBook Air's keyboard!)
 
 ## 0.1.1
 

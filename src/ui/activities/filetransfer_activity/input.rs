@@ -155,6 +155,22 @@ impl FileTransferActivity {
                         // Create quit prompt dialog
                         self.input_mode = self.create_quit_popup();
                     }
+                    'e' | 'E' => {
+                        // Get file at index
+                        if let Some(entry) = self.local.files.get(self.local.index) {
+                            // Get file name
+                            let file_name: String = match entry {
+                                FsEntry::Directory(dir) => dir.name.clone(),
+                                FsEntry::File(file) => file.name.clone(),
+                            };
+                            // Show delete prompt
+                            self.input_mode = InputMode::Popup(PopupType::YesNo(
+                                format!("Delete file \"{}\"", file_name),
+                                FileTransferActivity::callback_delete_fsentry,
+                                FileTransferActivity::callback_nothing_to_do,
+                            ))
+                        }
+                    }
                     'g' | 'G' => {
                         // Goto
                         // Show input popup
@@ -223,7 +239,11 @@ impl FileTransferActivity {
                         if let Some(entry) = files.get(self.local.index) {
                             let name: String = entry.get_name();
                             // Call upload; pass realfile, keep link name
-                            self.filetransfer_send(&entry.get_realfile(), wrkdir.as_path(), Some(name));
+                            self.filetransfer_send(
+                                &entry.get_realfile(),
+                                wrkdir.as_path(),
+                                Some(name),
+                            );
                         }
                     }
                     _ => { /* Nothing to do */ }
@@ -323,6 +343,22 @@ impl FileTransferActivity {
                     'q' | 'Q' => {
                         // Create quit prompt dialog
                         self.input_mode = self.create_quit_popup();
+                    }
+                    'e' | 'E' => {
+                        // Get file at index
+                        if let Some(entry) = self.remote.files.get(self.remote.index) {
+                            // Get file name
+                            let file_name: String = match entry {
+                                FsEntry::Directory(dir) => dir.name.clone(),
+                                FsEntry::File(file) => file.name.clone(),
+                            };
+                            // Show delete prompt
+                            self.input_mode = InputMode::Popup(PopupType::YesNo(
+                                format!("Delete file \"{}\"", file_name),
+                                FileTransferActivity::callback_delete_fsentry,
+                                FileTransferActivity::callback_nothing_to_do,
+                            ))
+                        }
                     }
                     'g' | 'G' => {
                         // Goto
