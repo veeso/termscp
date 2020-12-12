@@ -473,7 +473,16 @@ impl FileTransferActivity {
                         Span::styled(
                             match &dir.symlink {
                                 Some(symlink) => {
-                                    format!("{} => {}", dir.abs_path.display(), symlink.display())
+                                    // Get symlink path
+                                    let symlink_path: &Path = match &**symlink {
+                                        FsEntry::Directory(s_dir) => s_dir.abs_path.as_path(),
+                                        FsEntry::File(s_file) => s_file.abs_path.as_path(),
+                                    };
+                                    format!(
+                                        "{} => {}",
+                                        dir.abs_path.display(),
+                                        symlink_path.display()
+                                    )
                                 }
                                 None => dir.abs_path.to_string_lossy().to_string(),
                             },
@@ -560,7 +569,16 @@ impl FileTransferActivity {
                         Span::styled(
                             match &file.symlink {
                                 Some(symlink) => {
-                                    format!("{} => {}", file.abs_path.display(), symlink.display())
+                                    // Get symlink path
+                                    let symlink_path: &Path = match &**symlink {
+                                        FsEntry::Directory(s_dir) => s_dir.abs_path.as_path(),
+                                        FsEntry::File(s_file) => s_file.abs_path.as_path(),
+                                    };
+                                    format!(
+                                        "{} => {}",
+                                        file.abs_path.display(),
+                                        symlink_path.display()
+                                    )
                                 }
                                 None => file.abs_path.to_string_lossy().to_string(),
                             },

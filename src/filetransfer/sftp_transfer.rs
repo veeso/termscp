@@ -121,7 +121,7 @@ impl SftpFileTransfer {
     /// ### make_fsentry
     ///
     /// Make fsentry from path and metadata
-    fn make_fsentry(&self, path: &Path, metadata: &FileStat) -> FsEntry {
+    fn make_fsentry(&mut self, path: &Path, metadata: &FileStat) -> FsEntry {
         // Get common parameters
         let file_name: String = String::from(path.file_name().unwrap().to_str().unwrap_or(""));
         let file_type: Option<String> = match path.extension() {
@@ -149,11 +149,14 @@ impl SftpFileTransfer {
             .unwrap_or(SystemTime::UNIX_EPOCH);
         // Check if symlink
         let is_symlink: bool = metadata.file_type().is_symlink();
-        let symlink: Option<PathBuf> = match is_symlink {
+        let symlink: Option<Box<FsEntry>> = match is_symlink {
             true => {
                 // Read symlink
                 match self.sftp.as_ref().unwrap().readlink(path) {
-                    Ok(p) => Some(p),
+                    Ok(p) => match self.stat(p.as_path()) {
+                        Ok(entry) => Some(Box::new(entry)),
+                        Err(_) => None, // Ignore errors
+                    },
                     Err(_) => None,
                 }
             }

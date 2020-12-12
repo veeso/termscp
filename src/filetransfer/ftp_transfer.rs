@@ -613,7 +613,7 @@ mod tests {
             assert_eq!(file.abs_path, PathBuf::from("/tmp/omar.txt"));
             assert_eq!(file.name, String::from("omar.txt"));
             assert_eq!(file.size, 8192);
-            assert_eq!(file.symlink, None);
+            assert!(file.symlink.is_none());
             assert_eq!(file.user, None);
             assert_eq!(file.group, None);
             assert_eq!(file.unix_pex.unwrap(), (6, 6, 4));
@@ -653,7 +653,7 @@ mod tests {
             assert_eq!(file.abs_path, PathBuf::from("/tmp/omar.txt"));
             assert_eq!(file.name, String::from("omar.txt"));
             assert_eq!(file.size, 4096);
-            assert_eq!(file.symlink, None);
+            assert!(file.symlink.is_none());
             assert_eq!(file.user, Some(0));
             assert_eq!(file.group, Some(9));
             assert_eq!(file.unix_pex.unwrap(), (7, 5, 5));
@@ -692,7 +692,7 @@ mod tests {
         if let FsEntry::Directory(dir) = fs_entry {
             assert_eq!(dir.abs_path, PathBuf::from("/tmp/docs"));
             assert_eq!(dir.name, String::from("docs"));
-            assert_eq!(dir.symlink, None);
+            assert!(dir.symlink.is_none());
             assert_eq!(dir.user, Some(0));
             assert_eq!(dir.group, Some(9));
             assert_eq!(dir.unix_pex.unwrap(), (7, 7, 5));

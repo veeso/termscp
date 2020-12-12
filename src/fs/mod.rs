@@ -57,7 +57,7 @@ pub struct FsDirectory {
     pub last_access_time: SystemTime,
     pub creation_time: SystemTime,
     pub readonly: bool,
-    pub symlink: Option<PathBuf>,       // UNIX only
+    pub symlink: Option<Box<FsEntry>>,  // UNIX only
     pub user: Option<u32>,              // UNIX only
     pub group: Option<u32>,             // UNIX only
     pub unix_pex: Option<(u8, u8, u8)>, // UNIX only
@@ -77,10 +77,46 @@ pub struct FsFile {
     pub size: usize,
     pub ftype: Option<String>, // File type
     pub readonly: bool,
-    pub symlink: Option<PathBuf>,       // UNIX only
+    pub symlink: Option<Box<FsEntry>>,  // UNIX only
     pub user: Option<u32>,              // UNIX only
     pub group: Option<u32>,             // UNIX only
     pub unix_pex: Option<(u8, u8, u8)>, // UNIX only
+}
+
+impl FsEntry {
+    /// ### get_abs_path
+    ///
+    /// Get absolute path from `FsEntry`
+    pub fn get_abs_path(&self) -> PathBuf {
+        match self {
+            FsEntry::Directory(dir) => dir.abs_path.clone(),
+            FsEntry::File(file) => file.abs_path.clone(),
+        }
+    }
+
+    /// ### get_realfile
+    ///
+    /// Return the real file pointed by a `FsEntry`
+    pub fn get_realfile(&self) -> Option<FsEntry> {
+        match self {
+            FsEntry::Directory(dir) => match &dir.symlink {
+                Some(symlink) => match symlink.get_realfile() {
+                    // Recursive call
+                    Some(e) => e.get_realfile(), // Recursive call
+                    None => Some(*symlink.clone()),
+                },
+                None => None,
+            },
+            FsEntry::File(file) => match &file.symlink {
+                Some(symlink) => match symlink.get_realfile() {
+                    // Recursive call
+                    Some(e) => e.get_realfile(), // Recursive call
+                    None => Some(*symlink.clone()),
+                },
+                None => None,
+            },
+        }
+    }
 }
 
 impl std::fmt::Display for FsEntry {
@@ -279,3 +315,5 @@ impl std::fmt::Display for FsEntry {
         }
     }
 }
+
+// TODO: tests

@@ -281,7 +281,10 @@ impl Localhost {
                 creation_time: attr.created().unwrap_or(SystemTime::UNIX_EPOCH),
                 readonly: attr.permissions().readonly(),
                 symlink: match fs::read_link(path) {
-                    Ok(p) => Some(p),
+                    Ok(p) => match self.stat(p.as_path()) {
+                        Ok(entry) => Some(Box::new(entry)),
+                        Err(_) => None,
+                    },
                     Err(_) => None,
                 },
                 user: Some(attr.uid()),
@@ -304,8 +307,11 @@ impl Localhost {
                     size: attr.len() as usize,
                     ftype: extension,
                     symlink: match fs::read_link(path) {
-                        Ok(p) => Some(p),
-                        Err(_) => None,
+                        Ok(p) => match self.stat(p.as_path()) {
+                            Ok(entry) => Some(Box::new(entry)),
+                            Err(_) => None,
+                        },
+                        Err(_) => None, // Ignore errors
                     },
                     user: Some(attr.uid()),
                     group: Some(attr.gid()),
@@ -336,7 +342,10 @@ impl Localhost {
                 creation_time: attr.created().unwrap_or(SystemTime::UNIX_EPOCH),
                 readonly: attr.permissions().readonly(),
                 symlink: match fs::read_link(path) {
-                    Ok(p) => Some(p),
+                    Ok(p) => match self.stat(p.as_path()) {
+                        Ok(entry) => Some(Box::new(entry)),
+                        Err(_) => None, // Ignore errors
+                    },
                     Err(_) => None,
                 },
                 user: None,
@@ -359,7 +368,10 @@ impl Localhost {
                     size: attr.len() as usize,
                     ftype: extension,
                     symlink: match fs::read_link(path) {
-                        Ok(p) => Some(p),
+                        Ok(p) => match self.stat(p.as_path()) {
+                            Ok(entry) => Some(Box::new(entry)),
+                            Err(_) => None,
+                        },
                         Err(_) => None,
                     },
                     user: None,
@@ -618,7 +630,7 @@ mod tests {
                     assert!(file_0.symlink.is_none());
                 } else {
                     assert_eq!(
-                        *file_0.symlink.as_ref().unwrap(),
+                        *file_0.symlink.as_ref().unwrap().get_abs_path(),
                         PathBuf::from(format!("{}/foo.txt", tmpdir.path().display()))
                     );
                 }
@@ -631,7 +643,7 @@ mod tests {
             FsEntry::File(file_1) => {
                 if file_1.name == String::from("bar.txt") {
                     assert_eq!(
-                        *file_1.symlink.as_ref().unwrap(),
+                        *file_1.symlink.as_ref().unwrap().get_abs_path(),
                         PathBuf::from(format!("{}/foo.txt", tmpdir.path().display()))
                     );
                 } else {

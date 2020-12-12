@@ -12,6 +12,7 @@
 Released on ??
 
 - General performance and code improvements
+- Improved symlinks management
 
 ## 0.1.1
 

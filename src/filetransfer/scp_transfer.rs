@@ -68,7 +68,7 @@ impl ScpFileTransfer {
     /// ### parse_ls_output
     ///
     /// Parse a line of `ls -l` output and tokenize the output into a `FsEntry`
-    fn parse_ls_output(&self, path: &Path, line: &str) -> Result<FsEntry, ()> {
+    fn parse_ls_output(&mut self, path: &Path, line: &str) -> Result<FsEntry, ()> {
         // Prepare list regex
         // NOTE: about this damn regex <https://stackoverflow.com/questions/32480890/is-there-a-regex-to-parse-the-values-from-an-ftp-directory-listing>
         lazy_static! {
@@ -179,6 +179,14 @@ impl ScpFileTransfer {
                     true => self.get_name_and_link(metadata.get(8).unwrap().as_str()),
                     false => (String::from(metadata.get(8).unwrap().as_str()), None),
                 };
+                // Get symlink
+                let symlink: Option<Box<FsEntry>> = match symlink_path {
+                    None => None,
+                    Some(p) => match self.stat(p.as_path()) {
+                        Ok(e) => Some(Box::new(e)),
+                        Err(_) => None, // Ignore errors
+                    }
+                };
                 // Check if file_name is '.' or '..'
                 if file_name.as_str() == "." || file_name.as_str() == ".." {
                     return Err(());
@@ -199,7 +207,7 @@ impl ScpFileTransfer {
                         last_access_time: mtime,
                         creation_time: mtime,
                         readonly: false,
-                        symlink: symlink_path,
+                        symlink,
                         user: uid,
                         group: gid,
                         unix_pex: Some(unix_pex),
@@ -213,7 +221,7 @@ impl ScpFileTransfer {
                         size: filesize,
                         ftype: extension,
                         readonly: false,
-                        symlink: symlink_path,
+                        symlink,
                         user: uid,
                         group: gid,
                         unix_pex: Some(unix_pex),
