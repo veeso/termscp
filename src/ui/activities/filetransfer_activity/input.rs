@@ -221,8 +221,9 @@ impl FileTransferActivity {
                         let files: Vec<FsEntry> = self.local.files.clone(); // Otherwise self is borrowed both as mutable and immutable...
                                                                             // Get file at index
                         if let Some(entry) = files.get(self.local.index) {
-                            // Call upload
-                            self.filetransfer_send(entry, wrkdir.as_path(), None);
+                            let name: String = entry.get_name();
+                            // Call upload; pass realfile, keep link name
+                            self.filetransfer_send(&entry.get_realfile(), wrkdir.as_path(), Some(name));
                         }
                     }
                     _ => { /* Nothing to do */ }
@@ -383,11 +384,13 @@ impl FileTransferActivity {
                         let files: Vec<FsEntry> = self.remote.files.clone(); // Otherwise self is borrowed both as mutable and immutable...
                                                                              // Get file at index
                         if let Some(entry) = files.get(self.remote.index) {
-                            // Call upload
+                            // Preserve name
+                            let name: String = entry.get_name();
+                            // Call upload (use entry realfile; pass previous name)
                             self.filetransfer_recv(
-                                entry,
+                                &entry.get_realfile(),
                                 self.context.as_ref().unwrap().local.pwd().as_path(),
-                                None,
+                                Some(name),
                             );
                         }
                     }
