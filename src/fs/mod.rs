@@ -194,6 +194,13 @@ impl FsEntry {
         }
     }
 
+    /// ### is_dir
+    ///
+    /// Returns whether a FsEntry is a directory
+    pub fn is_dir(&self) -> bool {
+        matches!(self, FsEntry::Directory(_))
+    }
+
     /// ### get_realfile
     ///
     /// Return the real file pointed by a `FsEntry`
@@ -220,7 +227,10 @@ impl std::fmt::Display for FsEntry {
         let mut mode: String = String::with_capacity(10);
         let file_type: char = match self.is_symlink() {
             true => 'l',
-            false => 'd',
+            false => match self.is_dir() {
+                true => 'd',
+                false => '-',
+            },
         };
         mode.push(file_type);
         match self.get_unix_pex() {
@@ -299,6 +309,7 @@ mod tests {
         assert_eq!(entry.get_user(), Some(0));
         assert_eq!(entry.get_group(), Some(0));
         assert_eq!(entry.is_symlink(), false);
+        assert_eq!(entry.is_dir(), true);
         assert_eq!(entry.get_unix_pex(), Some((7, 5, 5)));
     }
 
@@ -330,6 +341,7 @@ mod tests {
         assert_eq!(entry.get_group(), Some(0));
         assert_eq!(entry.get_unix_pex(), Some((6, 4, 4)));
         assert_eq!(entry.is_symlink(), false);
+        assert_eq!(entry.is_dir(), false);
     }
 
     #[test]
@@ -368,7 +380,6 @@ mod tests {
             group: Some(0),            // UNIX only
             unix_pex: Some((7, 5, 5)), // UNIX only
         });
-        assert_eq!(entry.is_symlink(), true);
         assert_eq!(entry.get_realfile().get_abs_path(), PathBuf::from("/foo"));
     }
 
@@ -415,6 +426,7 @@ mod tests {
             group: Some(0),
             unix_pex: Some((7, 7, 7)),
         });
+        assert_eq!(entry_root.is_symlink(), true);
         // get real file
         let real_file: FsEntry = entry_root.get_realfile();
         // real file must be projects in /home/cvisintin
