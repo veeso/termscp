@@ -331,7 +331,7 @@ impl FileTransferActivity {
                 // Get file at index
                 if let Some(entry) = files.get(self.local.index) {
                     // Call send (upload)
-                    self.filetransfer_send(entry, wrkdir.as_path(), Some(input));
+                    self.filetransfer_send(&entry.get_realfile(), wrkdir.as_path(), Some(input));
                 }
             }
             FileExplorerTab::Remote => {
@@ -340,7 +340,7 @@ impl FileTransferActivity {
                 if let Some(entry) = files.get(self.remote.index) {
                     // Call receive (download)
                     self.filetransfer_recv(
-                        entry,
+                        &entry.get_realfile(),
                         self.context.as_ref().unwrap().local.pwd().as_path(),
                         Some(input),
                     );
