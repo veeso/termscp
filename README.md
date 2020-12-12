@@ -224,7 +224,7 @@ The developer documentation can be found on Rust Docs at <https://docs.rs/termsc
 
 ## Upcoming Features 🧪
 
-- **File viewer**: possibility to show in a popup the file content from the explorer.
+- **Text viewer**: possibility to open and read file both on remote and on local host; this will also support syntax highlighting.
 
 ---
 
