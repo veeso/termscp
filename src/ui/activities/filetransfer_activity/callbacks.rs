@@ -147,10 +147,7 @@ impl FileTransferActivity {
                 }
                 // Check if file entry exists
                 if let Some(entry) = self.local.files.get(self.local.index) {
-                    let full_path: PathBuf = match entry {
-                        FsEntry::Directory(dir) => dir.abs_path.clone(),
-                        FsEntry::File(file) => file.abs_path.clone(),
-                    };
+                    let full_path: PathBuf = entry.get_abs_path();
                     // Rename file or directory and report status as popup
                     match self
                         .context
@@ -194,10 +191,7 @@ impl FileTransferActivity {
             FileExplorerTab::Remote => {
                 // Check if file entry exists
                 if let Some(entry) = self.remote.files.get(self.remote.index) {
-                    let full_path: PathBuf = match entry {
-                        FsEntry::Directory(dir) => dir.abs_path.clone(),
-                        FsEntry::File(file) => file.abs_path.clone(),
-                    };
+                    let full_path: PathBuf = entry.get_abs_path();
                     // Rename file or directory and report status as popup
                     let dst_path: PathBuf = PathBuf::from(input);
                     match self.client.rename(entry, dst_path.as_path()) {
@@ -247,10 +241,7 @@ impl FileTransferActivity {
             FileExplorerTab::Local => {
                 // Check if file entry exists
                 if let Some(entry) = self.local.files.get(self.local.index) {
-                    let full_path: PathBuf = match entry {
-                        FsEntry::Directory(dir) => dir.abs_path.clone(),
-                        FsEntry::File(file) => file.abs_path.clone(),
-                    };
+                    let full_path: PathBuf = entry.get_abs_path();
                     // Delete file or directory and report status as popup
                     match self.context.as_mut().unwrap().local.remove(entry) {
                         Ok(_) => {
@@ -283,10 +274,7 @@ impl FileTransferActivity {
             FileExplorerTab::Remote => {
                 // Check if file entry exists
                 if let Some(entry) = self.remote.files.get(self.remote.index) {
-                    let full_path: PathBuf = match entry {
-                        FsEntry::Directory(dir) => dir.abs_path.clone(),
-                        FsEntry::File(file) => file.abs_path.clone(),
-                    };
+                    let full_path: PathBuf = entry.get_abs_path();
                     // Delete file
                     match self.client.remove(entry) {
                         Ok(_) => {

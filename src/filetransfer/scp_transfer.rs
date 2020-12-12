@@ -550,10 +550,7 @@ impl FileTransfer for ScpFileTransfer {
         match self.is_connected() {
             true => {
                 // Get path
-                let path: PathBuf = match file {
-                    FsEntry::Directory(dir) => dir.abs_path.clone(),
-                    FsEntry::File(file) => file.abs_path.clone(),
-                };
+                let path: PathBuf = file.get_abs_path();
                 let p: PathBuf = self.wrkdir.clone();
                 match self.perform_shell_cmd_with_path(
                     p.as_path(),
@@ -589,10 +586,7 @@ impl FileTransfer for ScpFileTransfer {
         match self.is_connected() {
             true => {
                 // Get path
-                let path: PathBuf = match file {
-                    FsEntry::Directory(dir) => dir.abs_path.clone(),
-                    FsEntry::File(file) => file.abs_path.clone(),
-                };
+                let path: PathBuf = file.get_abs_path();
                 let p: PathBuf = self.wrkdir.clone();
                 match self.perform_shell_cmd_with_path(
                     p.as_path(),

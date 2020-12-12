@@ -244,10 +244,7 @@ impl Localhost {
     ///
     /// Rename file or directory to new name
     pub fn rename(&mut self, entry: &FsEntry, dst_path: &Path) -> Result<(), HostError> {
-        let abs_path: PathBuf = match entry {
-            FsEntry::Directory(dir) => dir.abs_path.clone(),
-            FsEntry::File(f) => f.abs_path.clone(),
-        };
+        let abs_path: PathBuf = entry.get_abs_path();
         match std::fs::rename(abs_path.as_path(), dst_path) {
             Ok(_) => {
                 // Scan dir

@@ -474,10 +474,7 @@ impl FileTransferActivity {
                             match &dir.symlink {
                                 Some(symlink) => {
                                     // Get symlink path
-                                    let symlink_path: &Path = match &**symlink {
-                                        FsEntry::Directory(s_dir) => s_dir.abs_path.as_path(),
-                                        FsEntry::File(s_file) => s_file.abs_path.as_path(),
-                                    };
+                                    let symlink_path: PathBuf = symlink.get_abs_path();
                                     format!(
                                         "{} => {}",
                                         dir.abs_path.display(),
@@ -570,10 +567,7 @@ impl FileTransferActivity {
                             match &file.symlink {
                                 Some(symlink) => {
                                     // Get symlink path
-                                    let symlink_path: &Path = match &**symlink {
-                                        FsEntry::Directory(s_dir) => s_dir.abs_path.as_path(),
-                                        FsEntry::File(s_file) => s_file.abs_path.as_path(),
-                                    };
+                                    let symlink_path: PathBuf = symlink.get_abs_path();
                                     format!(
                                         "{} => {}",
                                         file.abs_path.display(),

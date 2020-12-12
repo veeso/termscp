@@ -461,10 +461,7 @@ impl FileTransfer for SftpFileTransfer {
                 // Resolve destination path
                 let abs_dst: PathBuf = self.get_abs_path(dst);
                 // Get abs path of entry
-                let abs_src: PathBuf = match file {
-                    FsEntry::Directory(dir) => dir.abs_path.clone(),
-                    FsEntry::File(file) => file.abs_path.clone(),
-                };
+                let abs_src: PathBuf = file.get_abs_path();
                 match sftp.rename(abs_src.as_path(), abs_dst.as_path(), None) {
                     Ok(_) => Ok(()),
                     Err(err) => Err(FileTransferError::new_ex(
