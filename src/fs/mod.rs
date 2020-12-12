@@ -248,7 +248,7 @@ impl std::fmt::Display for FsEntry {
         };
         #[cfg(target_os = "windows")]
         let username: usize = match self.get_user() {
-            Some(uid) => uid,
+            Some(uid) => uid as usize,
             None => 0,
         };
         // Get group
