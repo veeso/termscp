@@ -342,16 +342,8 @@ impl Activity for FileTransferActivity {
             // Redraw
             redraw = true;
         }
-        // Handle input events
-        if let Ok(event) = self.context.as_ref().unwrap().input_hnd.read_event() {
-            // Iterate over input events
-            if let Some(event) = event {
-                // Handle event
-                self.handle_input_event(&event);
-                // Set redraw to true
-                redraw = true;
-            }
-        }
+        // Handle input events (if false, becomes true; otherwise remains true)
+        redraw |= self.read_input_event();
         // @! draw interface
         if redraw {
             self.draw();

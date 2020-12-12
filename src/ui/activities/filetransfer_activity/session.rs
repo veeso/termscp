@@ -23,6 +23,7 @@ use super::{FileTransferActivity, FsEntry, InputMode, LogLevel, PopupType};
 
 use std::io::{Read, Seek, Write};
 use std::path::{Path, PathBuf};
+use std::time::Instant;
 use tui::style::Color;
 
 impl FileTransferActivity {
@@ -157,7 +158,17 @@ impl FileTransferActivity {
                             // Reset transfer states
                             self.transfer.reset();
                             let mut last_progress_val: f64 = 0.0;
-                            while total_bytes_written < file_size {
+                            let mut last_input_event_fetch: Instant = Instant::now();
+                            // While the entire file hasn't been completely written,
+                            // Or filetransfer has been aborted
+                            while total_bytes_written < file_size && !self.transfer.aborted {
+                                // Handle input events (each 500ms)
+                                if last_input_event_fetch.elapsed().as_millis() >= 500 {
+                                    // Read events
+                                    self.read_input_event();
+                                    // Reset instant
+                                    last_input_event_fetch = Instant::now();
+                                }
                                 // Read till you can
                                 let mut buffer: [u8; 65536] = [0; 65536];
                                 match fhnd.read(&mut buffer) {
@@ -296,6 +307,10 @@ impl FileTransferActivity {
                             Ok(entries) => {
                                 // Iterate over files
                                 for entry in entries.iter() {
+                                    // If aborted; break
+                                    if self.transfer.aborted {
+                                        break;
+                                    }
                                     // Send entry; name is always None after first call
                                     self.filetransfer_send(&entry, remote_path.as_path(), None);
                                 }
@@ -347,13 +362,22 @@ impl FileTransferActivity {
         if let Ok(path) = self.client.pwd() {
             self.remote_scan(path.as_path());
         }
-        // Eventually, Reset input mode to explorer (if input mode is wait or progress)
-        if let InputMode::Popup(ptype) = &self.input_mode {
-            match ptype {
-                PopupType::Wait(_) | PopupType::Progress(_) => {
+        // If aborted; show popup
+        if self.transfer.aborted {
+            // Show alert
+            self.input_mode = InputMode::Popup(PopupType::Alert(
+                Color::Red,
+                String::from("Upload aborted!"),
+            ));
+            // Set aborted to false
+            self.transfer.aborted = false;
+        } else {
+            // @! Successful
+            // Eventually, Reset input mode to explorer (if input mode is wait or progress)
+            if let InputMode::Popup(ptype) = &self.input_mode {
+                if matches!(ptype, PopupType::Wait(_) | PopupType::Progress(_)) {
                     self.input_mode = InputMode::Explorer
                 }
-                _ => { /* Nothing to do */ }
             }
         }
     }
@@ -410,7 +434,17 @@ impl FileTransferActivity {
                                 self.transfer.reset();
                                 // Write local file
                                 let mut last_progress_val: f64 = 0.0;
-                                while total_bytes_written < file.size {
+                                let mut last_input_event_fetch: Instant = Instant::now();
+                                // While the entire file hasn't been completely read,
+                                // Or filetransfer has been aborted
+                                while total_bytes_written < file.size && !self.transfer.aborted {
+                                    // Handle input events (each 500 ms)
+                                    if last_input_event_fetch.elapsed().as_millis() >= 500 {
+                                        // Read events
+                                        self.read_input_event();
+                                        // Reset instant
+                                        last_input_event_fetch = Instant::now();
+                                    }
                                     // Read till you can
                                     let mut buffer: [u8; 8192] = [0; 8192];
                                     match rhnd.read(&mut buffer) {
@@ -558,6 +592,10 @@ impl FileTransferActivity {
                             Ok(entries) => {
                                 // Iterate over files
                                 for entry in entries.iter() {
+                                    // If transfer has been aborted; break
+                                    if self.transfer.aborted {
+                                        break;
+                                    }
                                     // Receive entry; name is always None after first call
                                     // Local path becomes local_dir_path
                                     self.filetransfer_recv(&entry, local_dir_path.as_path(), None);
@@ -600,8 +638,19 @@ impl FileTransferActivity {
         }
         // Reload directory on local
         self.local_scan(local_path);
-        // Eventually, Reset input mode to explorer
-        self.input_mode = InputMode::Explorer;
+        // if aborted; show alert
+        if self.transfer.aborted {
+            // Show alert
+            self.input_mode = InputMode::Popup(PopupType::Alert(
+                Color::Red,
+                String::from("Download aborted!"),
+            ));
+            // Reset aborted to false
+            self.transfer.aborted = false;
+        } else {
+            // Eventually, Reset input mode to explorer
+            self.input_mode = InputMode::Explorer;
+        }
     }
 
     /// ### local_scan

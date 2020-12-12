@@ -24,11 +24,32 @@ use super::{
     InputField, InputMode, LogLevel, OnInputSubmitCallback, PopupType,
 };
 
-use crossterm::event::KeyCode;
+use crossterm::event::{KeyCode, KeyModifiers};
 use std::path::PathBuf;
 use tui::style::Color;
 
 impl FileTransferActivity {
+
+    /// ### read_input_event
+    /// 
+    /// Read one event.
+    /// Returns whether at least one event has been handled
+    pub(super) fn read_input_event(&mut self) -> bool {
+        if let Ok(event) = self.context.as_ref().unwrap().input_hnd.read_event() {
+            // Iterate over input events
+            if let Some(event) = event {
+                // Handle event
+                self.handle_input_event(&event);
+                // Return true
+                true
+            } else { // No event
+                false
+            }
+        } else { // Error
+            false
+        }
+    }
+
     /// ### handle_input_event
     ///
     /// Handle input event based on current input mode
@@ -612,8 +633,16 @@ impl FileTransferActivity {
     /// ### handle_input_event_mode_explorer_alert
     ///
     /// Input event handler for popup alert
-    pub(super) fn handle_input_event_mode_popup_progress(&mut self, _ev: &InputEvent) {
-        // There's nothing you can do here I guess... maybe ctrl+c in the future idk
+    pub(super) fn handle_input_event_mode_popup_progress(&mut self, ev: &InputEvent) {
+        if let InputEvent::Key(key) = ev {
+            if let KeyCode::Char(ch) = key.code {
+                // If is 'C' and CTRL
+                if matches!(ch, 'c' | 'C') && key.modifiers.intersects(KeyModifiers::CONTROL) {
+                    // Abort transfer
+                    self.transfer.aborted = true;
+                }
+            }
+        }
     }
 
     /// ### handle_input_event_mode_explorer_alert
