@@ -46,6 +46,12 @@ pub struct SftpFileTransfer {
     wrkdir: PathBuf,
 }
 
+impl Default for SftpFileTransfer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SftpFileTransfer {
     /// ### new
     ///
@@ -68,7 +74,7 @@ impl SftpFileTransfer {
                 root.push(p);
                 match self.sftp.as_ref().unwrap().realpath(root.as_path()) {
                     Ok(p) => match self.sftp.as_ref().unwrap().stat(p.as_path()) {
-                        Ok(_) => Ok(PathBuf::from(p)),
+                        Ok(_) => Ok(p),
                         Err(err) => Err(FileTransferError::new_ex(
                             FileTransferErrorType::NoSuchFileOrDirectory,
                             format!("{}", err),
@@ -82,7 +88,7 @@ impl SftpFileTransfer {
             }
             false => match self.sftp.as_ref().unwrap().realpath(p) {
                 Ok(p) => match self.sftp.as_ref().unwrap().stat(p.as_path()) {
-                    Ok(_) => Ok(PathBuf::from(p)),
+                    Ok(_) => Ok(p),
                     Err(err) => Err(FileTransferError::new_ex(
                         FileTransferErrorType::NoSuchFileOrDirectory,
                         format!("{}", err),
@@ -162,7 +168,7 @@ impl SftpFileTransfer {
                 last_access_time: atime,
                 creation_time: SystemTime::UNIX_EPOCH,
                 readonly: false,
-                symlink: symlink,
+                symlink,
                 user: uid,
                 group: gid,
                 unix_pex: pex,
@@ -176,7 +182,7 @@ impl SftpFileTransfer {
                 last_access_time: atime,
                 creation_time: SystemTime::UNIX_EPOCH,
                 readonly: false,
-                symlink: symlink,
+                symlink,
                 user: uid,
                 group: gid,
                 unix_pex: pex,
@@ -226,15 +232,15 @@ impl FileTransfer for SftpFileTransfer {
             ));
         }
         let username: String = match username {
-            Some(u) => u.clone(),
+            Some(u) => u,
             None => String::from(""),
         };
         // Try authenticating with user agent
-        if let Err(_) = session.userauth_agent(username.as_str()) {
+        if session.userauth_agent(username.as_str()).is_err() {
             // Try authentication with password then
             if let Err(err) = session.userauth_password(
                 username.as_str(),
-                password.unwrap_or(String::from("")).as_str(),
+                password.unwrap_or_else(|| String::from("")).as_str(),
             ) {
                 return Err(FileTransferError::new_ex(
                     FileTransferErrorType::AuthenticationFailed,
@@ -352,12 +358,10 @@ impl FileTransfer for SftpFileTransfer {
                 };
                 // Get files
                 match sftp.readdir(dir.as_path()) {
-                    Err(err) => {
-                        return Err(FileTransferError::new_ex(
-                            FileTransferErrorType::DirStatFailed,
-                            format!("{}", err),
-                        ))
-                    }
+                    Err(err) => Err(FileTransferError::new_ex(
+                        FileTransferErrorType::DirStatFailed,
+                        format!("{}", err),
+                    )),
                     Ok(files) => {
                         // Allocate vector
                         let mut entries: Vec<FsEntry> = Vec::with_capacity(files.len());

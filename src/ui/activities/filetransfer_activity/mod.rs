@@ -199,7 +199,7 @@ impl LogRecord {
     pub fn new(level: LogLevel, msg: &str) -> LogRecord {
         LogRecord {
             time: Local::now(),
-            level: level,
+            level,
             msg: String::from(msg),
         }
     }
@@ -243,7 +243,7 @@ impl FileTransferActivity {
                 FileTransferProtocol::Ftp(ftps) => Box::new(FtpFileTransfer::new(ftps)),
                 FileTransferProtocol::Scp => Box::new(ScpFileTransfer::new()),
             },
-            params: params,
+            params,
             local: FileExplorer::new(),
             remote: FileExplorer::new(),
             tab: FileExplorerTab::Local,
@@ -292,10 +292,7 @@ impl Activity for FileTransferActivity {
         if self.context.is_none() {
             return;
         }
-        let is_explorer_mode: bool = match self.input_mode {
-            InputMode::Explorer => true,
-            _ => false,
-        };
+        let is_explorer_mode: bool = matches!(self.input_mode, InputMode::Explorer);
         // Check if connected
         if !self.client.is_connected() && is_explorer_mode {
             // Set init state to connecting popup

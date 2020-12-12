@@ -53,9 +53,9 @@ use std::time::{Duration, SystemTime};
 /// - ...
 ///
 pub fn parse_remote_opt(
-    remote: &String,
+    remote: &str,
 ) -> Result<(String, u16, FileTransferProtocol, Option<String>), String> {
-    let mut wrkstr: String = remote.clone();
+    let mut wrkstr: String = remote.to_string();
     let address: String;
     let mut port: u16 = 22;
     let mut protocol: FileTransferProtocol = FileTransferProtocol::Sftp;
@@ -104,7 +104,7 @@ pub fn parse_remote_opt(
         username = Some(whoami::username());
     }
     // Split wrkstring by '@'
-    let tokens: Vec<&str> = wrkstr.split("@").collect();
+    let tokens: Vec<&str> = wrkstr.split('@').collect();
     match tokens.len() {
         1 => {}
         2 => {
@@ -116,7 +116,7 @@ pub fn parse_remote_opt(
         _ => return Err(String::from("Bad syntax")), // Too many tokens...
     }
     // Split wrkstring by ':'
-    let tokens: Vec<&str> = wrkstr.split(":").collect();
+    let tokens: Vec<&str> = wrkstr.split(':').collect();
     match tokens.len() {
         1 => {
             // Address is wrkstr

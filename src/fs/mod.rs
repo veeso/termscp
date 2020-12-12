@@ -24,7 +24,7 @@
 */
 
 extern crate bytesize;
-#[cfg(any(unix, macos, linux))]
+#[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
 extern crate users;
 
 use crate::utils::{fmt_pex, time_to_str};
@@ -32,7 +32,7 @@ use crate::utils::{fmt_pex, time_to_str};
 use bytesize::ByteSize;
 use std::path::PathBuf;
 use std::time::SystemTime;
-#[cfg(any(unix, macos, linux))]
+#[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
 use users::get_user_by_uid;
 
 /// ## FsEntry
@@ -87,7 +87,7 @@ impl std::fmt::Display for FsEntry {
     /// ### fmt_ls
     ///
     /// Format File Entry as `ls` does
-    #[cfg(any(unix, macos, linux))]
+    #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             FsEntry::Directory(dir) => {

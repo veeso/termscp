@@ -19,12 +19,13 @@
 *
 */
 
-const TERMSCP_VERSION: &'static str = env!("CARGO_PKG_VERSION");
-const TERMSCP_AUTHORS: &'static str = env!("CARGO_PKG_AUTHORS");
+const TERMSCP_VERSION: &str = env!("CARGO_PKG_VERSION");
+const TERMSCP_AUTHORS: &str = env!("CARGO_PKG_AUTHORS");
 
 // Crates
 extern crate getopts;
-#[macro_use] extern crate lazy_static;
+#[macro_use]
+extern crate lazy_static;
 extern crate rpassword;
 
 // External libs
@@ -50,7 +51,7 @@ use filetransfer::FileTransferProtocol;
 /// Print usage
 
 fn print_usage(opts: Options) {
-    let brief = format!("Usage: termscp [options]... [protocol://user@address:port]");
+    let brief = String::from("Usage: termscp [options]... [protocol://user@address:port]");
     print!("{}", opts.usage(&brief));
     println!("\nPlease, report issues to <https://github.com/ChristianVisintin/TermSCP>");
 }
@@ -97,7 +98,7 @@ fn main() {
     }
     // Match password
     if let Some(passwd) = matches.opt_str("P") {
-        password = Some(String::from(passwd));
+        password = Some(passwd);
     }
     // Match ticks
     if let Some(val) = matches.opt_str("T") {
@@ -111,7 +112,7 @@ fn main() {
         }
     }
     // Check free args
-    let extra_args: Vec<String> = matches.free.clone();
+    let extra_args: Vec<String> = matches.free;
     if let Some(remote) = extra_args.get(0) {
         // Parse address
         match utils::parse_remote_opt(remote) {
@@ -141,10 +142,10 @@ fn main() {
             // Ask password if unspecified
             password = match rpassword::read_password_from_tty(Some("Password: ")) {
                 Ok(p) => {
-                    if p.len() > 0 {
-                        Some(p)
-                    } else {
+                    if p.is_empty() {
                         None
+                    } else {
+                        Some(p)
                     }
                 }
                 Err(_) => {

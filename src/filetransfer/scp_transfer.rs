@@ -48,6 +48,12 @@ pub struct ScpFileTransfer {
     wrkdir: PathBuf,
 }
 
+impl Default for ScpFileTransfer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ScpFileTransfer {
     /// ### new
     ///
@@ -97,13 +103,12 @@ impl ScpFileTransfer {
                             match c {
                                 '-' => {}
                                 _ => {
-                                    count = count
-                                        + match i {
-                                            0 => 4,
-                                            1 => 2,
-                                            2 => 1,
-                                            _ => 0,
-                                        }
+                                    count += match i {
+                                        0 => 4,
+                                        1 => 2,
+                                        2 => 1,
+                                        _ => 0,
+                                    }
                                 }
                             }
                         }
@@ -115,13 +120,12 @@ impl ScpFileTransfer {
                             match c {
                                 '-' => {}
                                 _ => {
-                                    count = count
-                                        + match i {
-                                            0 => 4,
-                                            1 => 2,
-                                            2 => 1,
-                                            _ => 0,
-                                        }
+                                    count += match i {
+                                        0 => 4,
+                                        1 => 2,
+                                        2 => 1,
+                                        _ => 0,
+                                    }
                                 }
                             }
                         }
@@ -133,13 +137,12 @@ impl ScpFileTransfer {
                             match c {
                                 '-' => {}
                                 _ => {
-                                    count = count
-                                        + match i {
-                                            0 => 4,
-                                            1 => 2,
-                                            2 => 1,
-                                            _ => 0,
-                                        }
+                                    count += match i {
+                                        0 => 4,
+                                        1 => 2,
+                                        2 => 1,
+                                        _ => 0,
+                                    }
                                 }
                             }
                         }
@@ -178,7 +181,7 @@ impl ScpFileTransfer {
                 };
                 // Check if file_name is '.' or '..'
                 if file_name.as_str() == "." || file_name.as_str() == ".." {
-                    return Err(())
+                    return Err(());
                 }
                 let mut abs_path: PathBuf = PathBuf::from(path);
                 let extension: Option<String> = match abs_path.as_path().extension() {
@@ -191,7 +194,7 @@ impl ScpFileTransfer {
                 Ok(match is_dir {
                     true => FsEntry::Directory(FsDirectory {
                         name: file_name,
-                        abs_path: abs_path,
+                        abs_path,
                         last_change_time: mtime,
                         last_access_time: mtime,
                         creation_time: mtime,
@@ -203,7 +206,7 @@ impl ScpFileTransfer {
                     }),
                     false => FsEntry::File(FsFile {
                         name: file_name,
-                        abs_path: abs_path,
+                        abs_path,
                         last_change_time: mtime,
                         last_access_time: mtime,
                         creation_time: mtime,
@@ -331,15 +334,15 @@ impl FileTransfer for ScpFileTransfer {
             ));
         }
         let username: String = match username {
-            Some(u) => u.clone(),
+            Some(u) => u,
             None => String::from(""),
         };
         // Try authenticating with user agent
-        if let Err(_) = session.userauth_agent(username.as_str()) {
+        if session.userauth_agent(username.as_str()).is_err() {
             // Try authentication with password then
             if let Err(err) = session.userauth_password(
                 username.as_str(),
-                password.unwrap_or(String::from("")).as_str(),
+                password.unwrap_or_else(|| String::from("")).as_str(),
             ) {
                 return Err(FileTransferError::new_ex(
                     FileTransferErrorType::AuthenticationFailed,
@@ -391,10 +394,7 @@ impl FileTransfer for ScpFileTransfer {
     ///
     /// Indicates whether the client is connected to remote
     fn is_connected(&self) -> bool {
-        match self.session.as_ref() {
-            Some(_) => true,
-            None => false,
-        }
+        self.session.as_ref().is_some()
     }
 
     /// ### pwd
@@ -435,7 +435,7 @@ impl FileTransfer for ScpFileTransfer {
                         // Trim
                         let output: String = String::from(output.as_str().trim());
                         // Check if output starts with 0; should be 0{PWD}
-                        match output.as_str().starts_with("0") {
+                        match output.as_str().starts_with('0') {
                             true => {
                                 // Set working directory
                                 self.wrkdir = PathBuf::from(&output.as_str()[1..].trim());
@@ -857,7 +857,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(any(unix, macos, linux))]
+    #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
     fn test_filetransfer_scp_cwd() {
         let mut client: ScpFileTransfer = ScpFileTransfer::new();
         assert!(client

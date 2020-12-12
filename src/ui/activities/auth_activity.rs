@@ -85,6 +85,12 @@ pub struct AuthActivity {
     redraw: bool, // Should ui actually be redrawned?
 }
 
+impl Default for AuthActivity {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl AuthActivity {
     /// ### new
     ///
@@ -132,129 +138,125 @@ impl AuthActivity {
     ///
     /// Handler for input event when in textmode
     fn handle_input_event_mode_text(&mut self, ev: &InputEvent) {
-        match ev {
-            InputEvent::Key(key) => {
-                match key.code {
-                    KeyCode::Esc => {
-                        self.quit = true;
+        if let InputEvent::Key(key) = ev {
+            match key.code {
+                KeyCode::Esc => {
+                    self.quit = true;
+                }
+                KeyCode::Enter => {
+                    // Handle submit
+                    // Check form
+                    // Check address
+                    if self.address.is_empty() {
+                        self.popup_message = Some(String::from("Invalid address"));
+                        return;
                     }
-                    KeyCode::Enter => {
-                        // Handle submit
-                        // Check form
-                        // Check address
-                        if self.address.len() == 0 {
-                            self.popup_message = Some(String::from("Invalid address"));
-                            return;
-                        }
-                        // Check port
-                        // Convert port to number
-                        match self.port.parse::<usize>() {
-                            Ok(val) => {
-                                if val > 65535 {
-                                    self.popup_message = Some(String::from(
-                                        "Specified port must be in range 0-65535",
-                                    ));
-                                    return;
-                                }
-                            }
-                            Err(_) => {
+                    // Check port
+                    // Convert port to number
+                    match self.port.parse::<usize>() {
+                        Ok(val) => {
+                            if val > 65535 {
                                 self.popup_message =
-                                    Some(String::from("Specified port is not a number"));
+                                    Some(String::from("Specified port must be in range 0-65535"));
                                 return;
                             }
                         }
-                        // Check username
-                        //if self.username.len() == 0 {
-                        //    self.popup_message = Some(String::from("Invalid username"));
-                        //    return;
-                        //}
-                        // Everything OK, set enter
-                        self.submit = true;
-                        self.popup_message =
-                            Some(format!("Connecting to {}:{}...", self.address, self.port));
+                        Err(_) => {
+                            self.popup_message =
+                                Some(String::from("Specified port is not a number"));
+                            return;
+                        }
                     }
-                    KeyCode::Backspace => {
-                        // Pop last char
-                        match self.selected_field {
-                            InputField::Address => {
-                                let _ = self.address.pop();
+                    // Check username
+                    //if self.username.len() == 0 {
+                    //    self.popup_message = Some(String::from("Invalid username"));
+                    //    return;
+                    //}
+                    // Everything OK, set enter
+                    self.submit = true;
+                    self.popup_message =
+                        Some(format!("Connecting to {}:{}...", self.address, self.port));
+                }
+                KeyCode::Backspace => {
+                    // Pop last char
+                    match self.selected_field {
+                        InputField::Address => {
+                            let _ = self.address.pop();
+                        }
+                        InputField::Password => {
+                            let _ = self.password.pop();
+                        }
+                        InputField::Username => {
+                            let _ = self.username.pop();
+                        }
+                        InputField::Port => {
+                            let _ = self.port.pop();
+                        }
+                        _ => { /* Nothing to do */ }
+                    };
+                }
+                KeyCode::Up => {
+                    // Move item up
+                    self.selected_field = match self.selected_field {
+                        InputField::Address => InputField::Password, // End of list (wrap)
+                        InputField::Port => InputField::Address,
+                        InputField::Protocol => InputField::Port,
+                        InputField::Username => InputField::Protocol,
+                        InputField::Password => InputField::Username,
+                    }
+                }
+                KeyCode::Down | KeyCode::Tab => {
+                    // Move item down
+                    self.selected_field = match self.selected_field {
+                        InputField::Address => InputField::Port,
+                        InputField::Port => InputField::Protocol,
+                        InputField::Protocol => InputField::Username,
+                        InputField::Username => InputField::Password,
+                        InputField::Password => InputField::Address, // End of list (wrap)
+                    }
+                }
+                KeyCode::Char(ch) => {
+                    match self.selected_field {
+                        InputField::Address => self.address.push(ch),
+                        InputField::Password => self.password.push(ch),
+                        InputField::Username => self.username.push(ch),
+                        InputField::Port => {
+                            // Value must be numeric
+                            if ch.is_numeric() {
+                                self.port.push(ch);
                             }
-                            InputField::Password => {
-                                let _ = self.password.pop();
-                            }
-                            InputField::Username => {
-                                let _ = self.username.pop();
-                            }
-                            InputField::Port => {
-                                let _ = self.port.pop();
-                            }
-                            _ => { /* Nothing to do */ }
+                        }
+                        _ => { /* Nothing to do */ }
+                    }
+                }
+                KeyCode::Left => {
+                    // If current field is Protocol handle event... (move element left)
+                    if self.selected_field == InputField::Protocol {
+                        self.protocol = match self.protocol {
+                            FileTransferProtocol::Sftp => FileTransferProtocol::Ftp(true), // End of list (wrap)
+                            FileTransferProtocol::Scp => FileTransferProtocol::Sftp,
+                            FileTransferProtocol::Ftp(ftps) => match ftps {
+                                false => FileTransferProtocol::Scp,
+                                true => FileTransferProtocol::Ftp(false),
+                            },
                         };
                     }
-                    KeyCode::Up => {
-                        // Move item up
-                        self.selected_field = match self.selected_field {
-                            InputField::Address => InputField::Password, // End of list (wrap)
-                            InputField::Port => InputField::Address,
-                            InputField::Protocol => InputField::Port,
-                            InputField::Username => InputField::Protocol,
-                            InputField::Password => InputField::Username,
-                        }
-                    }
-                    KeyCode::Down | KeyCode::Tab => {
-                        // Move item down
-                        self.selected_field = match self.selected_field {
-                            InputField::Address => InputField::Port,
-                            InputField::Port => InputField::Protocol,
-                            InputField::Protocol => InputField::Username,
-                            InputField::Username => InputField::Password,
-                            InputField::Password => InputField::Address, // End of list (wrap)
-                        }
-                    }
-                    KeyCode::Char(ch) => {
-                        match self.selected_field {
-                            InputField::Address => self.address.push(ch),
-                            InputField::Password => self.password.push(ch),
-                            InputField::Username => self.username.push(ch),
-                            InputField::Port => {
-                                // Value must be numeric
-                                if ch.is_numeric() {
-                                    self.port.push(ch);
-                                }
-                            }
-                            _ => { /* Nothing to do */ }
-                        }
-                    }
-                    KeyCode::Left => {
-                        // If current field is Protocol handle event... (move element left)
-                        if self.selected_field == InputField::Protocol {
-                            self.protocol = match self.protocol {
-                                FileTransferProtocol::Sftp => FileTransferProtocol::Ftp(true), // End of list (wrap)
-                                FileTransferProtocol::Scp => FileTransferProtocol::Sftp,
-                                FileTransferProtocol::Ftp(ftps) => match ftps {
-                                    false => FileTransferProtocol::Scp,
-                                    true => FileTransferProtocol::Ftp(false),
-                                },
-                            };
-                        }
-                    }
-                    KeyCode::Right => {
-                        // If current field is Protocol handle event... ( move element right )
-                        if self.selected_field == InputField::Protocol {
-                            self.protocol = match self.protocol {
-                                FileTransferProtocol::Sftp => FileTransferProtocol::Scp,
-                                FileTransferProtocol::Scp => FileTransferProtocol::Ftp(false),
-                                FileTransferProtocol::Ftp(ftps) => match ftps {
-                                    false => FileTransferProtocol::Ftp(true),
-                                    true => FileTransferProtocol::Sftp, // End of list (wrap)
-                                },
-                            };
-                        }
-                    }
-                    _ => { /* Nothing to do */ }
                 }
+                KeyCode::Right => {
+                    // If current field is Protocol handle event... ( move element right )
+                    if self.selected_field == InputField::Protocol {
+                        self.protocol = match self.protocol {
+                            FileTransferProtocol::Sftp => FileTransferProtocol::Scp,
+                            FileTransferProtocol::Scp => FileTransferProtocol::Ftp(false),
+                            FileTransferProtocol::Ftp(ftps) => match ftps {
+                                false => FileTransferProtocol::Ftp(true),
+                                true => FileTransferProtocol::Sftp, // End of list (wrap)
+                            },
+                        };
+                    }
+                }
+                _ => { /* Nothing to do */ }
             }
-            _ => { /* Nothing to do */ }
         }
     }
 
@@ -263,16 +265,10 @@ impl AuthActivity {
     /// Handler for input event when in popup mode
     fn handle_input_event_mode_popup(&mut self, ev: &InputEvent) {
         // Only enter should be allowed here
-        match ev {
-            InputEvent::Key(key) => {
-                match key.code {
-                    KeyCode::Enter => {
-                        self.popup_message = None; // Hide popup
-                    }
-                    _ => { /* Nothing to do */ }
-                }
+        if let InputEvent::Key(key) = ev {
+            if let KeyCode::Enter = key.code {
+                self.popup_message = None; // Hide popup
             }
-            _ => { /* Nothing to do */ }
         }
     }
 
@@ -452,7 +448,7 @@ impl Activity for AuthActivity {
         }
         // Start catching Input Events
         if let Ok(input_events) = self.context.as_ref().unwrap().input_hnd.fetch_events() {
-            if input_events.len() > 0 {
+            if !input_events.is_empty() {
                 self.redraw = true; // Set redraw to true if there is at least one event
             }
             // Iterate over input events
@@ -533,9 +529,7 @@ impl Activity for AuthActivity {
     fn on_destroy(&mut self) -> Option<Context> {
         // Disable raw mode
         let _ = disable_raw_mode();
-        if self.context.is_none() {
-            return None;
-        }
+        self.context.as_ref()?;
         // Clear terminal and return
         match self.context.take() {
             Some(mut ctx) => {

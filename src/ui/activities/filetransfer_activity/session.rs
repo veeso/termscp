@@ -385,7 +385,7 @@ impl FileTransferActivity {
                 // Get local file
                 let mut local_file_path: PathBuf = PathBuf::from(local_path);
                 let local_file_name: String = match dst_name {
-                    Some(n) => n.clone(),
+                    Some(n) => n,
                     None => file.name.clone(),
                 };
                 local_file_path.push(local_file_name.as_str());

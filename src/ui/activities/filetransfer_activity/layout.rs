@@ -21,7 +21,7 @@
 
 extern crate bytesize;
 extern crate hostname;
-#[cfg(any(unix, macos, linux))]
+#[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
 extern crate users;
 
 use super::{
@@ -39,7 +39,7 @@ use tui::{
     widgets::{Block, Borders, Clear, Gauge, List, ListItem, ListState, Paragraph, Tabs},
 };
 use unicode_width::UnicodeWidthStr;
-#[cfg(any(unix, macos, linux))]
+#[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
 use users::{get_group_by_gid, get_user_by_uid};
 
 impl FileTransferActivity {
@@ -115,7 +115,7 @@ impl FileTransferActivity {
                 f.render_widget(Clear, popup_area); //this clears out the background
                 match popup {
                     PopupType::Alert(color, txt) => f.render_widget(
-                        self.draw_popup_alert(color.clone(), txt.clone(), popup_area.width),
+                        self.draw_popup_alert(*color, txt.clone(), popup_area.width),
                         popup_area,
                     ),
                     PopupType::Fatal(txt) => f.render_widget(
@@ -511,7 +511,7 @@ impl FileTransferActivity {
                         ),
                     ])));
                     // User
-                    #[cfg(any(unix, macos, linux))]
+                    #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
                     let username: String = match dir.user {
                         Some(uid) => match get_user_by_uid(uid) {
                             Some(user) => user.name().to_string_lossy().to_string(),
@@ -531,7 +531,7 @@ impl FileTransferActivity {
                         ),
                     ])));
                     // Group
-                    #[cfg(any(unix, macos, linux))]
+                    #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
                     let group: String = match dir.group {
                         Some(gid) => match get_group_by_gid(gid) {
                             Some(group) => group.name().to_string_lossy().to_string(),
@@ -608,7 +608,7 @@ impl FileTransferActivity {
                         ),
                     ])));
                     // User
-                    #[cfg(any(unix, macos, linux))]
+                    #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
                     let username: String = match file.user {
                         Some(uid) => match get_user_by_uid(uid) {
                             Some(user) => user.name().to_string_lossy().to_string(),
@@ -628,7 +628,7 @@ impl FileTransferActivity {
                         ),
                     ])));
                     // Group
-                    #[cfg(any(unix, macos, linux))]
+                    #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
                     let group: String = match file.group {
                         Some(gid) => match get_group_by_gid(gid) {
                             Some(group) => group.name().to_string_lossy().to_string(),

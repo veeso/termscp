@@ -73,7 +73,7 @@ impl ActivityManager {
         Ok(ActivityManager {
             context: Some(ctx),
             ftparams: None,
-            interval: interval,
+            interval,
         })
     }
 
@@ -89,11 +89,11 @@ impl ActivityManager {
         password: Option<String>,
     ) {
         self.ftparams = Some(FileTransferParams {
-            address: address,
-            port: port,
-            protocol: protocol,
-            username: username,
-            password: password,
+            address,
+            port,
+            protocol,
+            username,
+            password,
         });
     }
 

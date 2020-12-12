@@ -57,7 +57,7 @@ impl Context {
         let mut stdout = stdout();
         assert!(execute!(stdout, EnterAlternateScreen).is_ok());
         Context {
-            local: local,
+            local,
             input_hnd: InputHandler::new(),
             terminal: Terminal::new(CrosstermBackend::new(stdout)).unwrap()
         }
@@ -72,7 +72,6 @@ impl Drop for Context {
             LeaveAlternateScreen,
             DisableMouseCapture
         );
-        drop(self);
     }
 }
 

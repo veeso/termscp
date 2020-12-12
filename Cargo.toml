@@ -30,7 +30,7 @@ regex = "1.4.2"
 lazy_static = "1.4.0"
 hostname = "0.3.1"
 
-[target.'cfg(any(unix, macos, linux))'.dependencies]
+[target.'cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))'.dependencies]
 users = "0.11.0"
 
 [dev-dependencies]

@@ -53,10 +53,7 @@ impl FtpFileTransfer {
     ///
     /// Instantiates a new `FtpFileTransfer`
     pub fn new(ftps: bool) -> FtpFileTransfer {
-        FtpFileTransfer {
-            stream: None,
-            ftps: ftps,
-        }
+        FtpFileTransfer { stream: None, ftps }
     }
 
     /// ### parse_list_line
@@ -97,13 +94,12 @@ impl FtpFileTransfer {
                             match c {
                                 '-' => {}
                                 _ => {
-                                    count = count
-                                        + match i {
-                                            0 => 4,
-                                            1 => 2,
-                                            2 => 1,
-                                            _ => 0,
-                                        }
+                                    count += match i {
+                                        0 => 4,
+                                        1 => 2,
+                                        2 => 1,
+                                        _ => 0,
+                                    }
                                 }
                             }
                         }
@@ -115,13 +111,12 @@ impl FtpFileTransfer {
                             match c {
                                 '-' => {}
                                 _ => {
-                                    count = count
-                                        + match i {
-                                            0 => 4,
-                                            1 => 2,
-                                            2 => 1,
-                                            _ => 0,
-                                        }
+                                    count += match i {
+                                        0 => 4,
+                                        1 => 2,
+                                        2 => 1,
+                                        _ => 0,
+                                    }
                                 }
                             }
                         }
@@ -133,13 +128,12 @@ impl FtpFileTransfer {
                             match c {
                                 '-' => {}
                                 _ => {
-                                    count = count
-                                        + match i {
-                                            0 => 4,
-                                            1 => 2,
-                                            2 => 1,
-                                            _ => 0,
-                                        }
+                                    count += match i {
+                                        0 => 4,
+                                        1 => 2,
+                                        2 => 1,
+                                        _ => 0,
+                                    }
                                 }
                             }
                         }
@@ -174,7 +168,7 @@ impl FtpFileTransfer {
                 let file_name: String = String::from(metadata.get(8).unwrap().as_str());
                 // Check if file_name is '.' or '..'
                 if file_name.as_str() == "." || file_name.as_str() == ".." {
-                    return Err(())
+                    return Err(());
                 }
                 let mut abs_path: PathBuf = PathBuf::from(path);
                 let extension: Option<String> = match abs_path.as_path().extension() {
@@ -187,7 +181,7 @@ impl FtpFileTransfer {
                 Ok(match is_dir {
                     true => FsEntry::Directory(FsDirectory {
                         name: file_name,
-                        abs_path: abs_path,
+                        abs_path,
                         last_change_time: mtime,
                         last_access_time: mtime,
                         creation_time: mtime,
@@ -199,7 +193,7 @@ impl FtpFileTransfer {
                     }),
                     false => FsEntry::File(FsFile {
                         name: file_name,
-                        abs_path: abs_path,
+                        abs_path,
                         last_change_time: mtime,
                         last_access_time: mtime,
                         creation_time: mtime,
@@ -267,11 +261,11 @@ impl FileTransfer for FtpFileTransfer {
         }
         // Login (use anonymous if credentials are unspecified)
         let username: String = match username {
-            Some(u) => u.clone(),
+            Some(u) => u,
             None => String::from("anonymous"),
         };
         let password: String = match password {
-            Some(pwd) => String::from(pwd),
+            Some(pwd) => pwd,
             None => String::new(),
         };
         if let Err(err) = stream.login(username.as_str(), password.as_str()) {
@@ -309,10 +303,7 @@ impl FileTransfer for FtpFileTransfer {
     ///
     /// Indicates whether the client is connected to remote
     fn is_connected(&self) -> bool {
-        match self.stream {
-            Some(_) => true,
-            None => false,
-        }
+        self.stream.is_some()
     }
 
     /// ### pwd

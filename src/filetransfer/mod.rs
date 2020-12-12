@@ -79,7 +79,7 @@ impl FileTransferError {
     /// Instantiates a new FileTransferError
     pub fn new(code: FileTransferErrorType) -> FileTransferError {
         FileTransferError {
-            code: code,
+            code,
             msg: None,
         }
     }
