@@ -215,7 +215,6 @@ impl std::fmt::Display for FsEntry {
     /// ### fmt_ls
     ///
     /// Format File Entry as `ls` does
-    #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         // Create mode string
         let mut mode: String = String::with_capacity(10);
@@ -229,6 +228,7 @@ impl std::fmt::Display for FsEntry {
             Some((owner, group, others)) => mode.push_str(fmt_pex(owner, group, others).as_str()),
         }
         // Get username
+        #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
         let username: String = match self.get_user() {
             Some(uid) => match get_user_by_uid(uid) {
                 Some(user) => user.name().to_string_lossy().to_string(),
@@ -236,51 +236,7 @@ impl std::fmt::Display for FsEntry {
             },
             None => String::from("0"),
         };
-        // Get group
-        /*
-        let group: String = match self.get_group() {
-            Some(gid) => match get_group_by_gid(gid) {
-                Some(group) => group.name().to_string_lossy().to_string(),
-                None => gid.to_string(),
-            },
-            None => String::from("0"),
-        };
-        */
-        // Get byte size
-        let size: ByteSize = ByteSize(self.get_size() as u64);
-        // Get date
-        let datetime: String = time_to_str(self.get_last_change_time(), "%b %d %Y %H:%M");
-        // Set file name (or elide if too long)
-        let name: String = self.get_name();
-        let name: String = match name.len() >= 24 {
-            false => name,
-            true => format!("{}...", &name.as_str()[0..20]),
-        };
-        write!(
-            f,
-            "{:24}\t{:12}\t{:12}\t{:9}\t{:17}",
-            name, mode, username, size, datetime
-        )
-    }
-
-    /// ### fmt_ls
-    ///
-    /// Format File Entry as `ls` does
-    #[cfg(target_os = "windows")]
-    #[cfg(not(tarpaulin_include))]
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        // Create mode string
-        let mut mode: String = String::with_capacity(10);
-        let file_type: char = match self.is_symlink() {
-            true => 'l',
-            false => 'd',
-        };
-        mode.push(file_type);
-        match self.get_unix_pex() {
-            None => mode.push_str("?????????"),
-            Some((owner, group, others)) => mode.push_str(fmt_pex(owner, group, others).as_str()),
-        }
-        // Get username
+        #[cfg(target_os = "windows")]
         let username: usize = match self.get_user() {
             Some(uid) => uid,
             None => 0,
