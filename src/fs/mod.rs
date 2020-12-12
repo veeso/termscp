@@ -159,8 +159,8 @@ impl FsEntry {
     /// Get uid from `FsEntry`
     pub fn get_user(&self) -> Option<u32> {
         match self {
-            FsEntry::Directory(dir) => dir.user.clone(),
-            FsEntry::File(file) => file.user.clone(),
+            FsEntry::Directory(dir) => dir.user,
+            FsEntry::File(file) => file.user,
         }
     }
 
@@ -169,8 +169,8 @@ impl FsEntry {
     /// Get gid from `FsEntry`
     pub fn get_group(&self) -> Option<u32> {
         match self {
-            FsEntry::Directory(dir) => dir.group.clone(),
-            FsEntry::File(file) => file.group.clone(),
+            FsEntry::Directory(dir) => dir.group,
+            FsEntry::File(file) => file.group,
         }
     }
 
@@ -179,8 +179,8 @@ impl FsEntry {
     /// Get unix pex from `FsEntry`
     pub fn get_unix_pex(&self) -> Option<(u8, u8, u8)> {
         match self {
-            FsEntry::Directory(dir) => dir.unix_pex.clone(),
-            FsEntry::File(file) => file.unix_pex.clone(),
+            FsEntry::Directory(dir) => dir.unix_pex,
+            FsEntry::File(file) => file.unix_pex,
         }
     }
 
