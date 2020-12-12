@@ -153,7 +153,11 @@ impl FileTransferActivity {
     /// Draw local explorer list
     pub(super) fn draw_local_explorer(&self, local_wrkdir: PathBuf, width: u16) -> List {
         let hostname: String = match hostname::get() {
-            Ok(h) => String::from(h.as_os_str().to_string_lossy()),
+            Ok(h) => {
+                let hostname: String = h.as_os_str().to_string_lossy().to_string();
+                let tokens: Vec<&str> = hostname.split('.').collect();
+                String::from(*tokens.get(0).unwrap_or(&"localhost"))
+            }
             Err(_) => String::from("localhost"),
         };
         let files: Vec<ListItem> = self
