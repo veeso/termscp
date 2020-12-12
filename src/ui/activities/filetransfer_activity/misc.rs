@@ -81,6 +81,6 @@ impl FileTransferActivity {
         } else if prog < 0.0 {
             prog = 0.0;
         }
-        self.transfer_progress = prog;
+        self.transfer.progress = prog;
     }
 }

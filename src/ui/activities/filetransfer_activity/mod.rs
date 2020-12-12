@@ -205,6 +205,43 @@ impl LogRecord {
     }
 }
 
+/// ### TransferStates
+///
+/// TransferStates contains the states related to the transfer process
+struct TransferStates {
+    pub progress: f64,    // Current read/write progress (percentage)
+    pub started: Instant, // Instant the transfer process started
+    pub aborted: bool,    // Describes whether the transfer process has been aborted
+}
+
+impl TransferStates {
+    /// ### new
+    ///
+    /// Instantiates a new transfer states
+    pub fn new() -> TransferStates {
+        TransferStates {
+            progress: 0.0,
+            started: Instant::now(),
+            aborted: false,
+        }
+    }
+
+    /// ### reset
+    ///
+    /// Re-intiialize transfer states
+    pub fn reset(&mut self) {
+        self.progress = 0.0;
+        self.started = Instant::now();
+        self.aborted = false;
+    }
+}
+
+impl Default for TransferStates {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// ## FileTransferActivity
 ///
 /// FileTransferActivity is the data holder for the file transfer activity
@@ -224,8 +261,7 @@ pub struct FileTransferActivity {
     input_field: InputField,          // Current selected input mode
     input_txt: String,                // Input text
     choice_opt: DialogYesNoOption,    // Dialog popup selected option
-    transfer_progress: f64,           // Current write/read progress (percentage)
-    transfer_started: Instant,        // Instant when progress has started
+    transfer: TransferStates,         // Transfer states
 }
 
 impl FileTransferActivity {
@@ -254,8 +290,7 @@ impl FileTransferActivity {
             input_field: InputField::Explorer,
             input_txt: String::new(),
             choice_opt: DialogYesNoOption::Yes,
-            transfer_progress: 0.0,
-            transfer_started: Instant::now(),
+            transfer: TransferStates::default(),
         }
     }
 }

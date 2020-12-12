@@ -383,16 +383,16 @@ impl FileTransferActivity {
     /// Draw progress popup
     pub(super) fn draw_popup_progress(&self, text: String) -> Gauge {
         // Calculate ETA
-        let eta: String = match self.transfer_progress as u64 {
+        let eta: String = match self.transfer.progress as u64 {
             0 => String::from("--:--"), // NOTE: would divide by 0 :D
             _ => {
-                let elapsed_secs: u64 = self.transfer_started.elapsed().as_secs();
+                let elapsed_secs: u64 = self.transfer.started.elapsed().as_secs();
                 let eta: u64 =
-                    ((elapsed_secs * 100) / (self.transfer_progress as u64)) - elapsed_secs;
+                    ((elapsed_secs * 100) / (self.transfer.progress as u64)) - elapsed_secs;
                 format!("{:0width$}:{:0width$}", (eta / 60), (eta % 60), width = 2)
             }
         };
-        let label = format!("{:.2}% - ETA {}", self.transfer_progress, eta);
+        let label = format!("{:.2}% - ETA {}", self.transfer.progress, eta);
         Gauge::default()
             .block(Block::default().borders(Borders::ALL).title(text))
             .gauge_style(
@@ -402,7 +402,7 @@ impl FileTransferActivity {
                     .add_modifier(Modifier::BOLD),
             )
             .label(label)
-            .ratio(self.transfer_progress / 100.0)
+            .ratio(self.transfer.progress / 100.0)
     }
 
     /// ### draw_popup_wait

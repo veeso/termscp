@@ -23,7 +23,6 @@ use super::{FileTransferActivity, FsEntry, InputMode, LogLevel, PopupType};
 
 use std::io::{Read, Seek, Write};
 use std::path::{Path, PathBuf};
-use std::time::Instant;
 use tui::style::Color;
 
 impl FileTransferActivity {
@@ -155,8 +154,8 @@ impl FileTransferActivity {
                                 "Uploading \"{}\"",
                                 file_name
                             )));
-                            // Set started time
-                            self.transfer_started = Instant::now();
+                            // Reset transfer states
+                            self.transfer.reset();
                             let mut last_progress_val: f64 = 0.0;
                             while total_bytes_written < file_size {
                                 // Read till you can
@@ -212,10 +211,10 @@ impl FileTransferActivity {
                                 // Increase progress
                                 self.set_progress(total_bytes_written, file_size);
                                 // Draw only if a significant progress has been made (performance improvement)
-                                if last_progress_val < self.transfer_progress - 1.0 {
+                                if last_progress_val < self.transfer.progress - 1.0 {
                                     // Draw
                                     self.draw();
-                                    last_progress_val = self.transfer_progress;
+                                    last_progress_val = self.transfer.progress;
                                 }
                             }
                             // Finalize stream
@@ -407,8 +406,8 @@ impl FileTransferActivity {
                                     file_name
                                 )));
                                 let mut total_bytes_written: usize = 0;
-                                // Set started time
-                                self.transfer_started = Instant::now();
+                                // Reset transfer states
+                                self.transfer.reset();
                                 // Write local file
                                 let mut last_progress_val: f64 = 0.0;
                                 while total_bytes_written < file.size {
@@ -466,10 +465,10 @@ impl FileTransferActivity {
                                     // Set progress
                                     self.set_progress(total_bytes_written, file.size);
                                     // Draw only if a significant progress has been made (performance improvement)
-                                    if last_progress_val < self.transfer_progress - 1.0 {
+                                    if last_progress_val < self.transfer.progress - 1.0 {
                                         // Draw
                                         self.draw();
-                                        last_progress_val = self.transfer_progress;
+                                        last_progress_val = self.transfer.progress;
                                     }
                                 }
                                 // Finalize stream
