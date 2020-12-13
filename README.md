@@ -14,10 +14,10 @@ Current version: 0.1.2 (13/12/2020)
   - [About TermSCP 🖥](#about-termscp-)
     - [Why TermSCP 🤔](#why-termscp-)
   - [Features 🎁](#features-)
-  - [Installation ▶](#installation-)
+  - [Installation 🛠](#installation-)
     - [Cargo 🦀](#cargo-)
     - [Deb package 📦](#deb-package-)
-    - [RPM Package 📦](#rpm-package-)
+    - [RPM package 📦](#rpm-package-)
     - [Chocolatey 🍫](#chocolatey-)
     - [Brew 🍻](#brew-)
   - [Usage ❓](#usage-)
@@ -60,7 +60,7 @@ It happens quite often to me, when using SCP at work to forget the path of a fil
 
 ---
 
-## Installation ▶
+## Installation 🛠
 
 If you're considering to install TermSCP I want to thank you 💛 ! I hope you will enjoy TermSCP!  
 If you want to contribute to this project, don't forget to check out our contribute guide. [Read More](CONTRIBUTING.md)
@@ -85,7 +85,7 @@ dpkg -i termscp_*.deb
 gdebi termscp_*.deb
 ```
 
-### RPM Package 📦
+### RPM package 📦
 
 Get `rpm` package from [HERE](https://github.com/ChristianVisintin/TermSCP/releases/download/latest/termscp-0.1.2-1.x86_64.rpm)
 or run `wget https://github.com/ChristianVisintin/TermSCP/releases/download/latest/termscp-0.1.2-1.x86_64.rpm`
