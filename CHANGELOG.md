@@ -14,6 +14,9 @@ Released on 13/12/2020
 - General performance and code improvements
 - Improved symlinks management
 - Possibility to abort file transfers
+- Enhancements:
+  - File explorer:
+    - when file index is at the end of the list, moving down will set the current index to the first element and viceversa.
 - Keybindings:
   - `E`: Delete file (Same as `DEL`); added because some keyboards don't have `DEL` (hey, that's my MacBook Air's keyboard!)
   - `Ctrl+C`: Abort transfer process

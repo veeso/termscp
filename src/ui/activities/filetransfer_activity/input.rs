@@ -29,9 +29,8 @@ use std::path::PathBuf;
 use tui::style::Color;
 
 impl FileTransferActivity {
-
     /// ### read_input_event
-    /// 
+    ///
     /// Read one event.
     /// Returns whether at least one event has been handled
     pub(super) fn read_input_event(&mut self) -> bool {
@@ -42,10 +41,12 @@ impl FileTransferActivity {
                 self.handle_input_event(&event);
                 // Return true
                 true
-            } else { // No event
+            } else {
+                // No event
                 false
             }
-        } else { // Error
+        } else {
+            // Error
             false
         }
     }
@@ -100,15 +101,18 @@ impl FileTransferActivity {
                 KeyCode::Tab => self.switch_input_field(), // <TAB> switch tab
                 KeyCode::Right => self.tab = FileExplorerTab::Remote, // <RIGHT> switch to right tab
                 KeyCode::Up => {
-                    // Move index up
-                    if self.local.index > 0 {
-                        self.local.index -= 1;
-                    }
+                    // Move index up; or move to the last element if 0
+                    self.local.index = match self.local.index {
+                        0 => self.local.files.len() - 1,
+                        _ => self.local.index - 1,
+                    };
                 }
                 KeyCode::Down => {
                     // Move index down
                     if self.local.index + 1 < self.local.files.len() {
                         self.local.index += 1;
+                    } else {
+                        self.local.index = 0; // Move at the beginning of the list
                     }
                 }
                 KeyCode::PageUp => {
@@ -289,15 +293,18 @@ impl FileTransferActivity {
                 KeyCode::Tab => self.switch_input_field(), // <TAB> switch tab
                 KeyCode::Left => self.tab = FileExplorerTab::Local, // <LEFT> switch to local tab
                 KeyCode::Up => {
-                    // Move index up
-                    if self.remote.index > 0 {
-                        self.remote.index -= 1;
-                    }
+                    // Move index up; or move to the last element if 0
+                    self.remote.index = match self.remote.index {
+                        0 => self.remote.files.len() - 1,
+                        _ => self.remote.index - 1,
+                    };
                 }
                 KeyCode::Down => {
                     // Move index down
                     if self.remote.index + 1 < self.remote.files.len() {
                         self.remote.index += 1;
+                    } else {
+                        self.remote.index = 0; // Move at the beginning of the list
                     }
                 }
                 KeyCode::PageUp => {
