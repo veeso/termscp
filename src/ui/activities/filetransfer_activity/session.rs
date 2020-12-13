@@ -369,6 +369,11 @@ impl FileTransferActivity {
                 Color::Red,
                 String::from("Upload aborted!"),
             ));
+            // Log abort
+            self.log(
+                LogLevel::Warn,
+                format!("Upload aborted for \"{}\"!", entry.get_abs_path().display()).as_str(),
+            );
             // Set aborted to false
             self.transfer.aborted = false;
         } else {
@@ -645,6 +650,15 @@ impl FileTransferActivity {
                 Color::Red,
                 String::from("Download aborted!"),
             ));
+            // Log abort
+            self.log(
+                LogLevel::Warn,
+                format!(
+                    "Download aborted for \"{}\"!",
+                    entry.get_abs_path().display()
+                )
+                .as_str(),
+            );
             // Reset aborted to false
             self.transfer.aborted = false;
         } else {
