@@ -258,14 +258,14 @@ impl FileTransferActivity {
                                 return;
                             }
                         };
-                        // Get files
-                        let files: Vec<FsEntry> = self.local.files.clone(); // Otherwise self is borrowed both as mutable and immutable...
-                                                                            // Get file at index
-                        if let Some(entry) = files.get(self.local.index) {
-                            let name: String = entry.get_name();
+                        // Get file and clone (due to mutable / immutable stuff...)
+                        if self.local.files.get(self.local.index).is_some() {
+                            let file: FsEntry =
+                                self.local.files.get(self.local.index).unwrap().clone();
+                            let name: String = file.get_name();
                             // Call upload; pass realfile, keep link name
                             self.filetransfer_send(
-                                &entry.get_realfile(),
+                                &file.get_realfile(),
                                 wrkdir.as_path(),
                                 Some(name),
                             );
@@ -444,15 +444,14 @@ impl FileTransferActivity {
                         }
                     }
                     ' ' => {
-                        // Get files
-                        let files: Vec<FsEntry> = self.remote.files.clone(); // Otherwise self is borrowed both as mutable and immutable...
-                                                                             // Get file at index
-                        if let Some(entry) = files.get(self.remote.index) {
-                            // Preserve name
-                            let name: String = entry.get_name();
-                            // Call upload (use entry realfile; pass previous name)
+                        // Get file and clone (due to mutable / immutable stuff...)
+                        if self.remote.files.get(self.remote.index).is_some() {
+                            let file: FsEntry =
+                                self.remote.files.get(self.remote.index).unwrap().clone();
+                            let name: String = file.get_name();
+                            // Call upload; pass realfile, keep link name
                             self.filetransfer_recv(
-                                &entry.get_realfile(),
+                                &file.get_realfile(),
                                 self.context.as_ref().unwrap().local.pwd().as_path(),
                                 Some(name),
                             );
