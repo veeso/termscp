@@ -53,7 +53,7 @@ impl FileTransferActivity {
             // Prepare chunks
             let chunks = Layout::default()
                 .direction(Direction::Vertical)
-                .margin(2)
+                .margin(1)
                 .constraints(
                     [
                         Constraint::Length(20), // Explorer
