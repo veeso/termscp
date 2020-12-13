@@ -191,7 +191,8 @@ impl FileTransferActivity {
             .start_corner(Corner::TopLeft)
             .highlight_style(
                 Style::default()
-                    .fg(Color::Yellow)
+                    .fg(Color::Black)
+                    .bg(Color::LightYellow)
                     .add_modifier(Modifier::BOLD),
             )
     }
@@ -231,7 +232,8 @@ impl FileTransferActivity {
             .start_corner(Corner::TopLeft)
             .highlight_style(
                 Style::default()
-                    .fg(Color::LightBlue)
+                    .bg(Color::LightBlue)
+                    .fg(Color::Black)
                     .add_modifier(Modifier::BOLD),
             )
     }
