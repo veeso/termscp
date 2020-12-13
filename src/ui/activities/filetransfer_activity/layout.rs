@@ -774,6 +774,16 @@ impl FileTransferActivity {
                 Span::raw("             "),
                 Span::raw("go to parent directory"),
             ])),
+            ListItem::new(Spans::from(vec![
+                Span::styled(
+                    "<CTRL+C>",
+                    Style::default()
+                        .fg(Color::Cyan)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::raw("        "),
+                Span::raw("abort current file transfer"),
+            ])),
         ];
         List::new(cmds)
             .block(
