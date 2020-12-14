@@ -15,6 +15,8 @@ Released on 14/12/2020
 - Enhancements:
   - File explorer:
     - Fixed color mismatch in local explorer
+- Bugfix:
+  - Fixed memory vulnerability in Windows version
 
 ## 0.1.2
 
