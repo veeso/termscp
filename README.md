@@ -1,12 +1,12 @@
 # TermSCP
 
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![Stars](https://img.shields.io/github/stars/ChristianVisintin/TermSCP.svg)](https://github.com/ChristianVisintin/TermSCP) [![Issues](https://img.shields.io/github/issues/ChristianVisintin/TermSCP.svg)](https://github.com/ChristianVisintin/TermSCP/issues) [![Downloads](https://img.shields.io/crates/d/termscp.svg)](https://crates.io/crates/termscp) [![Crates.io](https://img.shields.io/badge/crates.io-v0.1.2-orange.svg)](https://crates.io/crates/termscp) [![Docs](https://docs.rs/termscp/badge.svg)](https://docs.rs/termscp)  
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![Stars](https://img.shields.io/github/stars/ChristianVisintin/TermSCP.svg)](https://github.com/ChristianVisintin/TermSCP) [![Issues](https://img.shields.io/github/issues/ChristianVisintin/TermSCP.svg)](https://github.com/ChristianVisintin/TermSCP/issues) [![Downloads](https://img.shields.io/crates/d/termscp.svg)](https://crates.io/crates/termscp) [![Crates.io](https://img.shields.io/badge/crates.io-v0.1.3-orange.svg)](https://crates.io/crates/termscp) [![Docs](https://docs.rs/termscp/badge.svg)](https://docs.rs/termscp)  
 
 [![Build](https://github.com/ChristianVisintin/TermSCP/workflows/Linux/badge.svg)](https://github.com/ChristianVisintin/TermSCP/actions) [![Build](https://github.com/ChristianVisintin/TermSCP/workflows/MacOS/badge.svg)](https://github.com/ChristianVisintin/TermSCP/actions) [![Build](https://github.com/ChristianVisintin/TermSCP/workflows/Windows/badge.svg)](https://github.com/ChristianVisintin/TermSCP/actions)
 
 ~ Basically, WinSCP on a terminal ~  
 Developed by Christian Visintin  
-Current version: 0.1.2 (13/12/2020)
+Current version: 0.1.3 (13/12/2020)
 
 ---
 
@@ -74,8 +74,8 @@ cargo install termscp
 
 ### Deb package 📦
 
-Get `deb` package from [HERE](https://github.com/ChristianVisintin/TermSCP/releases/download/latest/termscp_0.1.2_amd64.deb)
-or run `wget https://github.com/ChristianVisintin/TermSCP/releases/download/latest/termscp_0.1.2_amd64.deb`
+Get `deb` package from [HERE](https://github.com/ChristianVisintin/TermSCP/releases/download/latest/termscp_0.1.3_amd64.deb)
+or run `wget https://github.com/ChristianVisintin/TermSCP/releases/download/latest/termscp_0.1.3_amd64.deb`
 
 then install through dpkg:
 
@@ -87,8 +87,8 @@ gdebi termscp_*.deb
 
 ### RPM package 📦
 
-Get `rpm` package from [HERE](https://github.com/ChristianVisintin/TermSCP/releases/download/latest/termscp-0.1.2-1.x86_64.rpm)
-or run `wget https://github.com/ChristianVisintin/TermSCP/releases/download/latest/termscp-0.1.2-1.x86_64.rpm`
+Get `rpm` package from [HERE](https://github.com/ChristianVisintin/TermSCP/releases/download/latest/termscp-0.1.3-1.x86_64.rpm)
+or run `wget https://github.com/ChristianVisintin/TermSCP/releases/download/latest/termscp-0.1.3-1.x86_64.rpm`
 
 then install through rpm:
 
@@ -106,7 +106,7 @@ Start PowerShell as administrator and run
 choco install termscp
 ```
 
-Alternatively you can download the ZIP file from [HERE](https://github.com/ChristianVisintin/TermSCP/releases/download/latest/termscp.0.1.2.nupkg)
+Alternatively you can download the ZIP file from [HERE](https://github.com/ChristianVisintin/TermSCP/releases/download/latest/termscp.0.1.3.nupkg)
 
 and then with PowerShell started with administrator previleges, run:
 
