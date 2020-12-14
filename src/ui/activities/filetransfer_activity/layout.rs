@@ -28,7 +28,7 @@ use super::{
     Context, DialogYesNoOption, FileExplorerTab, FileTransferActivity, FsEntry, InputField,
     InputMode, LogLevel, LogRecord, PopupType,
 };
-use crate::utils::time_to_str;
+use crate::utils::{align_text_center, time_to_str};
 
 use bytesize::ByteSize;
 use std::path::{Path, PathBuf};
@@ -335,7 +335,7 @@ impl FileTransferActivity {
         let mut lines: Vec<ListItem> = Vec::new();
         for msg in message_rows.iter() {
             lines.push(ListItem::new(Spans::from(
-                FileTransferActivity::align_text_center(msg, width),
+                align_text_center(msg, width),
             )));
         }
         List::new(lines)
@@ -358,7 +358,7 @@ impl FileTransferActivity {
         let mut lines: Vec<ListItem> = Vec::new();
         for msg in message_rows.iter() {
             lines.push(ListItem::new(Spans::from(
-                FileTransferActivity::align_text_center(msg, width),
+                align_text_center(msg, width),
             )));
         }
         List::new(lines)
@@ -416,7 +416,7 @@ impl FileTransferActivity {
         let mut lines: Vec<ListItem> = Vec::new();
         for msg in message_rows.iter() {
             lines.push(ListItem::new(Spans::from(
-                FileTransferActivity::align_text_center(msg, width),
+                align_text_center(msg, width),
             )));
         }
         List::new(lines)
@@ -795,21 +795,6 @@ impl FileTransferActivity {
                     .title("Help"),
             )
             .start_corner(Corner::TopLeft)
-    }
-
-    /// align_text_center
-    ///
-    /// Align text to center for a given width
-    fn align_text_center(text: &str, width: u16) -> String {
-        let indent_size: usize = match (width as usize) >= text.len() {
-            // NOTE: The check prevents underflow
-            true => (width as usize - text.len()) / 2,
-            false => 0,
-        };
-        textwrap::indent(
-            text,
-            (0..indent_size).map(|_| " ").collect::<String>().as_str(),
-        )
     }
 
     /// ### elide_wrkdir_path
