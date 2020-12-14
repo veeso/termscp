@@ -56,8 +56,8 @@ impl FileTransferActivity {
                 .margin(1)
                 .constraints(
                     [
-                        Constraint::Length(20), // Explorer
-                        Constraint::Length(16), // Log
+                        Constraint::Percentage(70), // Explorer
+                        Constraint::Percentage(30), // Log
                     ]
                     .as_ref(),
                 )
