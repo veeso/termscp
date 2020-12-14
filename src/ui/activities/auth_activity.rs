@@ -31,6 +31,7 @@ extern crate unicode_width;
 // locals
 use super::{Activity, Context};
 use crate::filetransfer::FileTransferProtocol;
+use crate::utils::align_text_center;
 
 // Includes
 use crossterm::event::Event as InputEvent;
@@ -397,9 +398,9 @@ impl AuthActivity {
             .direction(Direction::Vertical)
             .constraints(
                 [
-                    Constraint::Percentage((80) / 2),
-                    Constraint::Percentage(20),
-                    Constraint::Percentage((80) / 2),
+                    Constraint::Percentage(30), // Offset top
+                    Constraint::Percentage(10), // Actual height
+                    Constraint::Percentage(60), // Offset bottom
                 ]
                 .as_ref(),
             )
@@ -415,9 +416,12 @@ impl AuthActivity {
                 .as_ref(),
             )
             .split(popup_layout[1])[1];
-        let popup: Paragraph = Paragraph::new(self.popup_message.as_ref().unwrap().as_ref())
-            .style(Style::default().fg(Color::Red))
-            .block(Block::default().borders(Borders::ALL).title("Alert"));
+        let popup: Paragraph = Paragraph::new(align_text_center(
+            self.popup_message.as_ref().unwrap().as_ref(),
+            area.width,
+        ))
+        .style(Style::default().fg(Color::Red))
+        .block(Block::default().borders(Borders::ALL).title("Alert"));
         (popup, area)
     }
 }
