@@ -226,6 +226,7 @@ The developer documentation can be found on Rust Docs at <https://docs.rs/termsc
 
 ## Upcoming Features 🧪
 
+- **Bookmarks and recents**: possibility to save favourites and recent connections to user data, to connect quickly from main menu
 - **Text viewer**: possibility to open and read file both on remote and on local host; this will also support syntax highlighting.
 
 ---
