@@ -219,6 +219,11 @@ impl FileTransferActivity {
                         // Show file info
                         self.input_mode = InputMode::Popup(PopupType::FileInfo);
                     }
+                    'l' | 'L' => {
+                        // Reload file entries
+                        let pwd: PathBuf = self.context.as_ref().unwrap().local.pwd();
+                        self.local_scan(pwd.as_path());
+                    }
                     'r' | 'R' => {
                         // Rename
                         self.input_mode = InputMode::Popup(PopupType::Input(
@@ -368,10 +373,6 @@ impl FileTransferActivity {
                     }
                 }
                 KeyCode::Char(ch) => match ch {
-                    'q' | 'Q' => {
-                        // Create quit prompt dialog
-                        self.input_mode = self.create_quit_popup();
-                    }
                     'e' | 'E' => {
                         // Get file at index
                         if let Some(entry) = self.remote.files.get(self.remote.index) {
@@ -388,19 +389,19 @@ impl FileTransferActivity {
                             ))
                         }
                     }
+                    'd' | 'D' => {
+                        // Make directory
+                        self.input_mode = InputMode::Popup(PopupType::Input(
+                            String::from("Insert directory name"),
+                            FileTransferActivity::callback_mkdir,
+                        ));
+                    }
                     'g' | 'G' => {
                         // Goto
                         // Show input popup
                         self.input_mode = InputMode::Popup(PopupType::Input(
                             String::from("Change working directory"),
                             FileTransferActivity::callback_change_directory,
-                        ));
-                    }
-                    'd' | 'D' => {
-                        // Make directory
-                        self.input_mode = InputMode::Popup(PopupType::Input(
-                            String::from("Insert directory name"),
-                            FileTransferActivity::callback_mkdir,
                         ));
                     }
                     'h' | 'H' => {
@@ -410,6 +411,14 @@ impl FileTransferActivity {
                     'i' | 'I' => {
                         // Show file info
                         self.input_mode = InputMode::Popup(PopupType::FileInfo);
+                    }
+                    'l' | 'L' => {
+                        // Reload file entries
+                        self.reload_remote_dir();
+                    }
+                    'q' | 'Q' => {
+                        // Create quit prompt dialog
+                        self.input_mode = self.create_quit_popup();
                     }
                     'r' | 'R' => {
                         // Rename

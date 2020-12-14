@@ -334,9 +334,7 @@ impl FileTransferActivity {
         let message_rows = textwrap::wrap(text.as_str(), width as usize);
         let mut lines: Vec<ListItem> = Vec::new();
         for msg in message_rows.iter() {
-            lines.push(ListItem::new(Spans::from(
-                align_text_center(msg, width),
-            )));
+            lines.push(ListItem::new(Spans::from(align_text_center(msg, width))));
         }
         List::new(lines)
             .block(
@@ -357,9 +355,7 @@ impl FileTransferActivity {
         let message_rows = textwrap::wrap(text.as_str(), width as usize);
         let mut lines: Vec<ListItem> = Vec::new();
         for msg in message_rows.iter() {
-            lines.push(ListItem::new(Spans::from(
-                align_text_center(msg, width),
-            )));
+            lines.push(ListItem::new(Spans::from(align_text_center(msg, width))));
         }
         List::new(lines)
             .block(
@@ -415,9 +411,7 @@ impl FileTransferActivity {
         let message_rows = textwrap::wrap(text.as_str(), width as usize);
         let mut lines: Vec<ListItem> = Vec::new();
         for msg in message_rows.iter() {
-            lines.push(ListItem::new(Spans::from(
-                align_text_center(msg, width),
-            )));
+            lines.push(ListItem::new(Spans::from(align_text_center(msg, width))));
         }
         List::new(lines)
             .block(
@@ -624,7 +618,7 @@ impl FileTransferActivity {
                         .add_modifier(Modifier::BOLD),
                 ),
                 Span::raw("           "),
-                Span::raw("disconnect"),
+                Span::raw("Disconnect"),
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(
@@ -654,7 +648,7 @@ impl FileTransferActivity {
                         .add_modifier(Modifier::BOLD),
                 ),
                 Span::raw("    "),
-                Span::raw("change explorer tab"),
+                Span::raw("Change explorer tab"),
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(
@@ -664,7 +658,7 @@ impl FileTransferActivity {
                         .add_modifier(Modifier::BOLD),
                 ),
                 Span::raw("       "),
-                Span::raw("move up/down in list"),
+                Span::raw("Move up/down in list"),
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(
@@ -674,7 +668,7 @@ impl FileTransferActivity {
                         .add_modifier(Modifier::BOLD),
                 ),
                 Span::raw("   "),
-                Span::raw("scroll up/down in list quickly"),
+                Span::raw("Scroll up/down in list quickly"),
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(
@@ -684,7 +678,7 @@ impl FileTransferActivity {
                         .add_modifier(Modifier::BOLD),
                 ),
                 Span::raw("         "),
-                Span::raw("enter directory"),
+                Span::raw("Enter directory"),
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(
@@ -694,7 +688,7 @@ impl FileTransferActivity {
                         .add_modifier(Modifier::BOLD),
                 ),
                 Span::raw("         "),
-                Span::raw("upload/download file"),
+                Span::raw("Upload/download file"),
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(
@@ -704,7 +698,7 @@ impl FileTransferActivity {
                         .add_modifier(Modifier::BOLD),
                 ),
                 Span::raw("           "),
-                Span::raw("delete file"),
+                Span::raw("Delete file"),
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(
@@ -714,7 +708,7 @@ impl FileTransferActivity {
                         .add_modifier(Modifier::BOLD),
                 ),
                 Span::raw("             "),
-                Span::raw("make directory"),
+                Span::raw("Make directory"),
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(
@@ -724,7 +718,7 @@ impl FileTransferActivity {
                         .add_modifier(Modifier::BOLD),
                 ),
                 Span::raw("             "),
-                Span::raw("goto path"),
+                Span::raw("Goto path"),
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(
@@ -734,7 +728,7 @@ impl FileTransferActivity {
                         .add_modifier(Modifier::BOLD),
                 ),
                 Span::raw("             "),
-                Span::raw("show help"),
+                Span::raw("Show help"),
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(
@@ -744,7 +738,17 @@ impl FileTransferActivity {
                         .add_modifier(Modifier::BOLD),
                 ),
                 Span::raw("             "),
-                Span::raw("show info about the selected file or directory"),
+                Span::raw("Show info about the selected file or directory"),
+            ])),
+            ListItem::new(Spans::from(vec![
+                Span::styled(
+                    "<L>",
+                    Style::default()
+                        .fg(Color::Cyan)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::raw("             "),
+                Span::raw("Reload directory content"),
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(
@@ -764,7 +768,7 @@ impl FileTransferActivity {
                         .add_modifier(Modifier::BOLD),
                 ),
                 Span::raw("             "),
-                Span::raw("rename file"),
+                Span::raw("Rename file"),
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(
@@ -774,7 +778,7 @@ impl FileTransferActivity {
                         .add_modifier(Modifier::BOLD),
                 ),
                 Span::raw("             "),
-                Span::raw("go to parent directory"),
+                Span::raw("Go to parent directory"),
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(
@@ -784,7 +788,7 @@ impl FileTransferActivity {
                         .add_modifier(Modifier::BOLD),
                 ),
                 Span::raw("        "),
-                Span::raw("abort current file transfer"),
+                Span::raw("Abort current file transfer"),
             ])),
         ];
         List::new(cmds)

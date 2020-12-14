@@ -198,6 +198,7 @@ Password can be basically provided through 3 ways when address argument is provi
 | `<G>`         | Go to supplied path                                   |
 | `<H>`         | Show help                                             |
 | `<I>`         | Show info about selected file or directory            |
+| `<L>`         | Reload current directory's content                    |
 | `<Q>`         | Quit TermSCP                                          |
 | `<R>`         | Rename file                                           |
 | `<U>`         | Go to parent directory                                |
