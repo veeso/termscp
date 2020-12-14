@@ -166,6 +166,11 @@ impl FileTransferActivity {
             .iter()
             .map(|entry: &FsEntry| ListItem::new(Span::from(format!("{}", entry))))
             .collect();
+        // Get colors to use; highlight element inverting fg/bg only when tab is active
+        let (fg, bg): (Color, Color) = match self.tab {
+            FileExplorerTab::Local => (Color::Black, Color::LightYellow),
+            _ => (Color::LightYellow, Color::Reset),
+        };
         List::new(files)
             .block(
                 Block::default()
@@ -189,12 +194,7 @@ impl FileTransferActivity {
                     )),
             )
             .start_corner(Corner::TopLeft)
-            .highlight_style(
-                Style::default()
-                    .fg(Color::Black)
-                    .bg(Color::LightYellow)
-                    .add_modifier(Modifier::BOLD),
-            )
+            .highlight_style(Style::default().fg(fg).bg(bg).add_modifier(Modifier::BOLD))
     }
 
     /// ### draw_remote_explorer
@@ -207,6 +207,11 @@ impl FileTransferActivity {
             .iter()
             .map(|entry: &FsEntry| ListItem::new(Span::from(format!("{}", entry))))
             .collect();
+        // Get colors to use; highlight element inverting fg/bg only when tab is active
+        let (fg, bg): (Color, Color) = match self.tab {
+            FileExplorerTab::Remote => (Color::Black, Color::LightBlue),
+            _ => (Color::LightBlue, Color::Reset),
+        };
         List::new(files)
             .block(
                 Block::default()
@@ -230,12 +235,7 @@ impl FileTransferActivity {
                     )),
             )
             .start_corner(Corner::TopLeft)
-            .highlight_style(
-                Style::default()
-                    .bg(Color::LightBlue)
-                    .fg(Color::Black)
-                    .add_modifier(Modifier::BOLD),
-            )
+            .highlight_style(Style::default().bg(bg).fg(fg).add_modifier(Modifier::BOLD))
     }
 
     /// ### draw_log_list

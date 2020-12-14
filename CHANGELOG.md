@@ -18,6 +18,7 @@ Released on 14/12/2020
   - File explorer:
     - Fixed color mismatch in local explorer
     - Explorer tabs have now 70% of layout height, while logging area is 30%
+    - Highlight selected entry in tabs, only when the tab is active
   - Auth page:
     - align popup text to center
 - Keybindings:
