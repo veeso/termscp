@@ -267,6 +267,8 @@ impl AuthActivity {
                     self.load_bookmark(self.bookmarks_idx);
                     // Set input form to Auth
                     self.input_form = InputForm::AuthCredentials;
+                    // Set input field to password (very comfy)
+                    self.selected_field = InputField::Password;
                 }
                 KeyCode::Char(ch) => match ch {
                     'E' | 'e' => {
@@ -348,6 +350,8 @@ impl AuthActivity {
                     self.load_recent(self.recents_idx);
                     // Set input form to Auth
                     self.input_form = InputForm::AuthCredentials;
+                    // Set input field to password (very comfy)
+                    self.selected_field = InputField::Password;
                 }
                 KeyCode::Char(ch) => match ch {
                     'E' | 'e' => {
