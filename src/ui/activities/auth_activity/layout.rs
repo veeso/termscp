@@ -28,13 +28,14 @@ use super::{
     InputMode, PopupType,
 };
 
+use crate::bookmarks::Bookmark;
 use crate::utils::align_text_center;
 
 use tui::{
     layout::{Constraint, Corner, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Span, Spans, Text},
-    widgets::{Block, Borders, Clear, List, ListItem, Paragraph, Tabs},
+    widgets::{Block, Borders, Clear, List, ListItem, ListState, Paragraph, Tabs},
 };
 use unicode_width::UnicodeWidthStr;
 
@@ -51,8 +52,8 @@ impl AuthActivity {
                 .margin(1)
                 .constraints(
                     [
-                        Constraint::Percentage(60), // Auth Form
-                        Constraint::Percentage(40), // Bookmarks
+                        Constraint::Percentage(70), // Auth Form
+                        Constraint::Percentage(30), // Bookmarks
                     ]
                     .as_ref(),
                 )
@@ -73,6 +74,11 @@ impl AuthActivity {
                 )
                 .direction(Direction::Vertical)
                 .split(chunks[0]);
+            // Create bookmark chunks
+            let bookmark_chunks = Layout::default()
+                .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
+                .direction(Direction::Horizontal)
+                .split(chunks[1]);
             // Draw header
             f.render_widget(self.draw_header(), auth_chunks[0]);
             // Draw input fields
@@ -104,6 +110,17 @@ impl AuthActivity {
                     ),
                     _ => {}
                 }
+            }
+            // Draw bookmarks
+            if let Some(tab) = self.draw_bookmarks_tab() {
+                let mut bookmarks_state: ListState = ListState::default();
+                bookmarks_state.select(Some(self.bookmarks_idx));
+                f.render_stateful_widget(tab, bookmark_chunks[0], &mut bookmarks_state);
+            }
+            if let Some(tab) = self.draw_recents_tab() {
+                let mut recents_state: ListState = ListState::default();
+                recents_state.select(Some(self.recents_idx));
+                f.render_stateful_widget(tab, bookmark_chunks[1], &mut recents_state);
             }
             // Draw popup
             if let InputMode::Popup(popup) = &self.input_mode {
@@ -244,6 +261,8 @@ impl AuthActivity {
                 Span::raw(" to exit, "),
                 Span::styled("<UP,DOWN>", Style::default().add_modifier(Modifier::BOLD)),
                 Span::raw(" to change input field, "),
+                Span::styled("<TAB>", Style::default().add_modifier(Modifier::BOLD)),
+                Span::raw(" to change input form, "),
                 Span::styled("<ENTER>", Style::default().add_modifier(Modifier::BOLD)),
                 Span::raw(" to submit form"),
             ],
@@ -252,6 +271,95 @@ impl AuthActivity {
         let mut footer_text = Text::from(Spans::from(footer));
         footer_text.patch_style(h_style);
         Paragraph::new(footer_text)
+    }
+
+    /// ### draw_local_explorer
+    ///
+    /// Draw local explorer list
+    pub(super) fn draw_bookmarks_tab(&self) -> Option<List> {
+        if self.bookmarks.is_none() {
+            return None;
+        }
+        let hosts: Vec<ListItem> = self
+            .bookmarks
+            .as_ref()
+            .unwrap()
+            .bookmarks
+            .iter()
+            .map(|(key, entry): (&String, &Bookmark)| {
+                ListItem::new(Span::from(format!(
+                    "{} ({}://{}@{}:{})",
+                    key,
+                    entry.protocol.to_lowercase(),
+                    entry.username,
+                    entry.address,
+                    entry.port
+                )))
+            })
+            .collect();
+        // Get colors to use; highlight element inverting fg/bg only when tab is active
+        let (fg, bg): (Color, Color) = match self.input_form {
+            InputForm::Bookmarks => (Color::Black, Color::LightGreen),
+            _ => (Color::Reset, Color::Reset),
+        };
+        Some(
+            List::new(hosts)
+                .block(
+                    Block::default()
+                        .borders(Borders::ALL)
+                        .border_style(match self.input_form {
+                            InputForm::Bookmarks => Style::default().fg(Color::LightGreen),
+                            _ => Style::default(),
+                        })
+                        .title("Bookmarks"),
+                )
+                .start_corner(Corner::TopLeft)
+                .highlight_style(Style::default().fg(fg).bg(bg).add_modifier(Modifier::BOLD)),
+        )
+    }
+
+    /// ### draw_local_explorer
+    ///
+    /// Draw local explorer list
+    pub(super) fn draw_recents_tab(&self) -> Option<List> {
+        if self.bookmarks.is_none() {
+            return None;
+        }
+        let hosts: Vec<ListItem> = self
+            .bookmarks
+            .as_ref()
+            .unwrap()
+            .recents
+            .values()
+            .map(|entry: &Bookmark| {
+                ListItem::new(Span::from(format!(
+                    "{}://{}@{}:{}",
+                    entry.protocol.to_lowercase(),
+                    entry.username,
+                    entry.address,
+                    entry.port
+                )))
+            })
+            .collect();
+        // Get colors to use; highlight element inverting fg/bg only when tab is active
+        let (fg, bg): (Color, Color) = match self.input_form {
+            InputForm::Recents => (Color::Black, Color::LightBlue),
+            _ => (Color::Reset, Color::Reset),
+        };
+        Some(
+            List::new(hosts)
+                .block(
+                    Block::default()
+                        .borders(Borders::ALL)
+                        .border_style(match self.input_form {
+                            InputForm::Recents => Style::default().fg(Color::LightBlue),
+                            _ => Style::default(),
+                        })
+                        .title("Recent connections"),
+                )
+                .start_corner(Corner::TopLeft)
+                .highlight_style(Style::default().fg(fg).bg(bg).add_modifier(Modifier::BOLD)),
+        )
     }
 
     /// ### draw_popup_area
