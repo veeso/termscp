@@ -418,7 +418,7 @@ impl Localhost {
     /// ### file_exists
     ///
     /// Returns whether provided file path exists
-    fn file_exists(&self, path: &Path) -> bool {
+    pub fn file_exists(&self, path: &Path) -> bool {
         path.exists()
     }
 
