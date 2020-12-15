@@ -38,7 +38,7 @@ pub struct UserHosts {
     pub recents: HashMap<String, Bookmark>,
 }
 
-#[derive(Deserialize, Serialize, std::fmt::Debug)]
+#[derive(Deserialize, Serialize, std::fmt::Debug, PartialEq)]
 /// ## Bookmark
 ///
 /// Bookmark describes a single bookmark entry in the user hosts storage
