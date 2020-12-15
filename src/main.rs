@@ -40,6 +40,7 @@ mod bookmarks;
 mod filetransfer;
 mod fs;
 mod host;
+mod system;
 mod ui;
 mod utils;
 

@@ -1,3 +1,7 @@
+//! ## System
+//!
+//! `system` is the module which contains functions and data types related to current system
+
 /*
 *
 *   Copyright (C) 2020 Christian Visintin - christian.visintin1997@gmail.com
@@ -19,13 +23,6 @@
 *
 */
 
-#[macro_use] extern crate lazy_static;
-
-pub mod activity_manager;
-pub mod bookmarks;
-pub mod filetransfer;
-pub mod fs;
-pub mod host;
-pub mod system;
-pub mod ui;
-pub mod utils;
+// modules
+pub mod bookmarks_client;
+pub mod environment;
