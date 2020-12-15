@@ -25,6 +25,7 @@
 
 // Sub modules
 mod bookmarks;
+mod callbacks;
 mod input;
 mod layout;
 
@@ -117,6 +118,8 @@ pub struct AuthActivity {
     redraw: bool,                  // Should ui actually be redrawned?
     input_txt: String,             // Input text
     choice_opt: DialogYesNoOption, // Dialog popup selected option
+    bookmarks_idx: usize,          // Index of selected bookmark
+    recents_idx: usize,            // Index of selected recent
 }
 
 impl Default for AuthActivity {
@@ -147,6 +150,8 @@ impl AuthActivity {
             redraw: true, // True at startup
             input_txt: String::new(),
             choice_opt: DialogYesNoOption::Yes,
+            bookmarks_idx: 0,
+            recents_idx: 0,
         }
     }
 }
@@ -180,14 +185,13 @@ impl Activity for AuthActivity {
         if self.context.is_none() {
             return;
         }
-        // Start catching Input Events
-        if let Ok(input_events) = self.context.as_ref().unwrap().input_hnd.fetch_events() {
-            if !input_events.is_empty() {
-                self.redraw = true; // Set redraw to true if there is at least one event
-            }
-            // Iterate over input events
-            for event in input_events.iter() {
-                self.handle_input_event(event);
+        // Read one event
+        if let Ok(event) = self.context.as_ref().unwrap().input_hnd.read_event() {
+            if let Some(event) = event {
+                // Set redraw to true
+                self.redraw = true;
+                // Handle event
+                self.handle_input_event(&event);
             }
         }
         // Redraw if necessary
