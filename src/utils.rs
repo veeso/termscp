@@ -25,6 +25,7 @@
 
 // Dependencies
 extern crate chrono;
+extern crate textwrap;
 extern crate whoami;
 
 use crate::filetransfer::FileTransferProtocol;
@@ -241,6 +242,23 @@ pub fn lstime_to_systime(
         .unwrap_or(SystemTime::UNIX_EPOCH))
 }
 
+/// align_text_center
+///
+/// Align text to center for a given width
+pub fn align_text_center(text: &str, width: u16) -> String {
+    let indent_size: usize = match (width as usize) >= text.len() {
+        // NOTE: The check prevents underflow
+        true => (width as usize - text.len()) / 2,
+        false => 0,
+    };
+    textwrap::indent(
+        text,
+        (0..indent_size).map(|_| " ").collect::<String>().as_str(),
+    )
+    .trim_end()
+    .to_string()
+}
+
 #[cfg(test)]
 mod tests {
 
@@ -391,5 +409,13 @@ mod tests {
         assert!(lstime_to_systime("Oma 31 2018", "%b %d %Y", "%b %d %H:%M").is_err());
         assert!(lstime_to_systime("Feb 31 2018", "%b %d %Y", "%b %d %H:%M").is_err());
         assert!(lstime_to_systime("Feb 15 25:32", "%b %d %Y", "%b %d %H:%M").is_err());
+    }
+
+    #[test]
+    fn test_utils_align_text_center() {
+        assert_eq!(
+            align_text_center("hello world!", 24),
+            String::from("      hello world!")
+        );
     }
 }

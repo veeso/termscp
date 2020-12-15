@@ -324,7 +324,7 @@ impl Localhost {
     #[cfg(target_os = "windows")]
     #[cfg(not(tarpaulin_include))]
     pub fn stat(&self, path: &Path) -> Result<FsEntry, HostError> {
-        let attr: Metadata = match fs::metadata(path.clone()) {
+        let attr: Metadata = match fs::metadata(path) {
             Ok(metadata) => metadata,
             Err(err) => return Err(HostError::new(HostErrorType::FileNotAccessible, Some(err))),
         };
@@ -418,7 +418,7 @@ impl Localhost {
     /// ### file_exists
     ///
     /// Returns whether provided file path exists
-    fn file_exists(&self, path: &Path) -> bool {
+    pub fn file_exists(&self, path: &Path) -> bool {
         path.exists()
     }
 

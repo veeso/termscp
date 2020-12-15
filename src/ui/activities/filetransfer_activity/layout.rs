@@ -28,7 +28,7 @@ use super::{
     Context, DialogYesNoOption, FileExplorerTab, FileTransferActivity, FsEntry, InputField,
     InputMode, LogLevel, LogRecord, PopupType,
 };
-use crate::utils::time_to_str;
+use crate::utils::{align_text_center, time_to_str};
 
 use bytesize::ByteSize;
 use std::path::{Path, PathBuf};
@@ -56,8 +56,8 @@ impl FileTransferActivity {
                 .margin(1)
                 .constraints(
                     [
-                        Constraint::Length(20), // Explorer
-                        Constraint::Length(16), // Log
+                        Constraint::Percentage(70), // Explorer
+                        Constraint::Percentage(30), // Log
                     ]
                     .as_ref(),
                 )
@@ -166,13 +166,18 @@ impl FileTransferActivity {
             .iter()
             .map(|entry: &FsEntry| ListItem::new(Span::from(format!("{}", entry))))
             .collect();
+        // Get colors to use; highlight element inverting fg/bg only when tab is active
+        let (fg, bg): (Color, Color) = match self.tab {
+            FileExplorerTab::Local => (Color::Black, Color::LightYellow),
+            _ => (Color::LightYellow, Color::Reset),
+        };
         List::new(files)
             .block(
                 Block::default()
                     .borders(Borders::ALL)
                     .border_style(match self.input_field {
                         InputField::Explorer => match self.tab {
-                            FileExplorerTab::Local => Style::default().fg(Color::Yellow),
+                            FileExplorerTab::Local => Style::default().fg(Color::LightYellow),
                             _ => Style::default(),
                         },
                         _ => Style::default(),
@@ -189,12 +194,7 @@ impl FileTransferActivity {
                     )),
             )
             .start_corner(Corner::TopLeft)
-            .highlight_style(
-                Style::default()
-                    .fg(Color::Black)
-                    .bg(Color::LightYellow)
-                    .add_modifier(Modifier::BOLD),
-            )
+            .highlight_style(Style::default().fg(fg).bg(bg).add_modifier(Modifier::BOLD))
     }
 
     /// ### draw_remote_explorer
@@ -207,6 +207,11 @@ impl FileTransferActivity {
             .iter()
             .map(|entry: &FsEntry| ListItem::new(Span::from(format!("{}", entry))))
             .collect();
+        // Get colors to use; highlight element inverting fg/bg only when tab is active
+        let (fg, bg): (Color, Color) = match self.tab {
+            FileExplorerTab::Remote => (Color::Black, Color::LightBlue),
+            _ => (Color::LightBlue, Color::Reset),
+        };
         List::new(files)
             .block(
                 Block::default()
@@ -230,12 +235,7 @@ impl FileTransferActivity {
                     )),
             )
             .start_corner(Corner::TopLeft)
-            .highlight_style(
-                Style::default()
-                    .bg(Color::LightBlue)
-                    .fg(Color::Black)
-                    .add_modifier(Modifier::BOLD),
-            )
+            .highlight_style(Style::default().bg(bg).fg(fg).add_modifier(Modifier::BOLD))
     }
 
     /// ### draw_log_list
@@ -334,9 +334,7 @@ impl FileTransferActivity {
         let message_rows = textwrap::wrap(text.as_str(), width as usize);
         let mut lines: Vec<ListItem> = Vec::new();
         for msg in message_rows.iter() {
-            lines.push(ListItem::new(Spans::from(
-                FileTransferActivity::align_text_center(msg, width),
-            )));
+            lines.push(ListItem::new(Spans::from(align_text_center(msg, width))));
         }
         List::new(lines)
             .block(
@@ -357,9 +355,7 @@ impl FileTransferActivity {
         let message_rows = textwrap::wrap(text.as_str(), width as usize);
         let mut lines: Vec<ListItem> = Vec::new();
         for msg in message_rows.iter() {
-            lines.push(ListItem::new(Spans::from(
-                FileTransferActivity::align_text_center(msg, width),
-            )));
+            lines.push(ListItem::new(Spans::from(align_text_center(msg, width))));
         }
         List::new(lines)
             .block(
@@ -415,9 +411,7 @@ impl FileTransferActivity {
         let message_rows = textwrap::wrap(text.as_str(), width as usize);
         let mut lines: Vec<ListItem> = Vec::new();
         for msg in message_rows.iter() {
-            lines.push(ListItem::new(Spans::from(
-                FileTransferActivity::align_text_center(msg, width),
-            )));
+            lines.push(ListItem::new(Spans::from(align_text_center(msg, width))));
         }
         List::new(lines)
             .block(
@@ -624,7 +618,7 @@ impl FileTransferActivity {
                         .add_modifier(Modifier::BOLD),
                 ),
                 Span::raw("           "),
-                Span::raw("disconnect"),
+                Span::raw("Disconnect"),
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(
@@ -654,7 +648,7 @@ impl FileTransferActivity {
                         .add_modifier(Modifier::BOLD),
                 ),
                 Span::raw("    "),
-                Span::raw("change explorer tab"),
+                Span::raw("Change explorer tab"),
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(
@@ -664,7 +658,7 @@ impl FileTransferActivity {
                         .add_modifier(Modifier::BOLD),
                 ),
                 Span::raw("       "),
-                Span::raw("move up/down in list"),
+                Span::raw("Move up/down in list"),
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(
@@ -674,7 +668,7 @@ impl FileTransferActivity {
                         .add_modifier(Modifier::BOLD),
                 ),
                 Span::raw("   "),
-                Span::raw("scroll up/down in list quickly"),
+                Span::raw("Scroll up/down in list quickly"),
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(
@@ -684,7 +678,7 @@ impl FileTransferActivity {
                         .add_modifier(Modifier::BOLD),
                 ),
                 Span::raw("         "),
-                Span::raw("enter directory"),
+                Span::raw("Enter directory"),
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(
@@ -694,7 +688,7 @@ impl FileTransferActivity {
                         .add_modifier(Modifier::BOLD),
                 ),
                 Span::raw("         "),
-                Span::raw("upload/download file"),
+                Span::raw("Upload/download file"),
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(
@@ -704,7 +698,7 @@ impl FileTransferActivity {
                         .add_modifier(Modifier::BOLD),
                 ),
                 Span::raw("           "),
-                Span::raw("delete file"),
+                Span::raw("Delete file"),
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(
@@ -714,7 +708,17 @@ impl FileTransferActivity {
                         .add_modifier(Modifier::BOLD),
                 ),
                 Span::raw("             "),
-                Span::raw("make directory"),
+                Span::raw("Make directory"),
+            ])),
+            ListItem::new(Spans::from(vec![
+                Span::styled(
+                    "<E>",
+                    Style::default()
+                        .fg(Color::Cyan)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::raw("             "),
+                Span::raw("Same as <DEL>"),
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(
@@ -724,7 +728,7 @@ impl FileTransferActivity {
                         .add_modifier(Modifier::BOLD),
                 ),
                 Span::raw("             "),
-                Span::raw("goto path"),
+                Span::raw("Goto path"),
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(
@@ -734,7 +738,7 @@ impl FileTransferActivity {
                         .add_modifier(Modifier::BOLD),
                 ),
                 Span::raw("             "),
-                Span::raw("show help"),
+                Span::raw("Show help"),
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(
@@ -744,7 +748,17 @@ impl FileTransferActivity {
                         .add_modifier(Modifier::BOLD),
                 ),
                 Span::raw("             "),
-                Span::raw("show info about the selected file or directory"),
+                Span::raw("Show info about the selected file or directory"),
+            ])),
+            ListItem::new(Spans::from(vec![
+                Span::styled(
+                    "<L>",
+                    Style::default()
+                        .fg(Color::Cyan)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::raw("             "),
+                Span::raw("Reload directory content"),
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(
@@ -764,7 +778,7 @@ impl FileTransferActivity {
                         .add_modifier(Modifier::BOLD),
                 ),
                 Span::raw("             "),
-                Span::raw("rename file"),
+                Span::raw("Rename file"),
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(
@@ -774,7 +788,7 @@ impl FileTransferActivity {
                         .add_modifier(Modifier::BOLD),
                 ),
                 Span::raw("             "),
-                Span::raw("go to parent directory"),
+                Span::raw("Go to parent directory"),
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(
@@ -784,7 +798,7 @@ impl FileTransferActivity {
                         .add_modifier(Modifier::BOLD),
                 ),
                 Span::raw("        "),
-                Span::raw("abort current file transfer"),
+                Span::raw("Abort current file transfer"),
             ])),
         ];
         List::new(cmds)
@@ -795,21 +809,6 @@ impl FileTransferActivity {
                     .title("Help"),
             )
             .start_corner(Corner::TopLeft)
-    }
-
-    /// align_text_center
-    ///
-    /// Align text to center for a given width
-    fn align_text_center(text: &str, width: u16) -> String {
-        let indent_size: usize = match (width as usize) >= text.len() {
-            // NOTE: The check prevents underflow
-            true => (width as usize - text.len()) / 2,
-            false => 0,
-        };
-        textwrap::indent(
-            text,
-            (0..indent_size).map(|_| " ").collect::<String>().as_str(),
-        )
     }
 
     /// ### elide_wrkdir_path

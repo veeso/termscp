@@ -451,7 +451,7 @@ impl FileTransferActivity {
                                         last_input_event_fetch = Instant::now();
                                     }
                                     // Read till you can
-                                    let mut buffer: [u8; 8192] = [0; 8192];
+                                    let mut buffer: [u8; 65536] = [0; 65536];
                                     match rhnd.read(&mut buffer) {
                                         Ok(bytes_read) => {
                                             total_bytes_written += bytes_read;

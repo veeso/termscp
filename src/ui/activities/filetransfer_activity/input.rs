@@ -219,6 +219,11 @@ impl FileTransferActivity {
                         // Show file info
                         self.input_mode = InputMode::Popup(PopupType::FileInfo);
                     }
+                    'l' | 'L' => {
+                        // Reload file entries
+                        let pwd: PathBuf = self.context.as_ref().unwrap().local.pwd();
+                        self.local_scan(pwd.as_path());
+                    }
                     'r' | 'R' => {
                         // Rename
                         self.input_mode = InputMode::Popup(PopupType::Input(
@@ -258,14 +263,14 @@ impl FileTransferActivity {
                                 return;
                             }
                         };
-                        // Get files
-                        let files: Vec<FsEntry> = self.local.files.clone(); // Otherwise self is borrowed both as mutable and immutable...
-                                                                            // Get file at index
-                        if let Some(entry) = files.get(self.local.index) {
-                            let name: String = entry.get_name();
+                        // Get file and clone (due to mutable / immutable stuff...)
+                        if self.local.files.get(self.local.index).is_some() {
+                            let file: FsEntry =
+                                self.local.files.get(self.local.index).unwrap().clone();
+                            let name: String = file.get_name();
                             // Call upload; pass realfile, keep link name
                             self.filetransfer_send(
-                                &entry.get_realfile(),
+                                &file.get_realfile(),
                                 wrkdir.as_path(),
                                 Some(name),
                             );
@@ -368,10 +373,6 @@ impl FileTransferActivity {
                     }
                 }
                 KeyCode::Char(ch) => match ch {
-                    'q' | 'Q' => {
-                        // Create quit prompt dialog
-                        self.input_mode = self.create_quit_popup();
-                    }
                     'e' | 'E' => {
                         // Get file at index
                         if let Some(entry) = self.remote.files.get(self.remote.index) {
@@ -388,19 +389,19 @@ impl FileTransferActivity {
                             ))
                         }
                     }
+                    'd' | 'D' => {
+                        // Make directory
+                        self.input_mode = InputMode::Popup(PopupType::Input(
+                            String::from("Insert directory name"),
+                            FileTransferActivity::callback_mkdir,
+                        ));
+                    }
                     'g' | 'G' => {
                         // Goto
                         // Show input popup
                         self.input_mode = InputMode::Popup(PopupType::Input(
                             String::from("Change working directory"),
                             FileTransferActivity::callback_change_directory,
-                        ));
-                    }
-                    'd' | 'D' => {
-                        // Make directory
-                        self.input_mode = InputMode::Popup(PopupType::Input(
-                            String::from("Insert directory name"),
-                            FileTransferActivity::callback_mkdir,
                         ));
                     }
                     'h' | 'H' => {
@@ -410,6 +411,14 @@ impl FileTransferActivity {
                     'i' | 'I' => {
                         // Show file info
                         self.input_mode = InputMode::Popup(PopupType::FileInfo);
+                    }
+                    'l' | 'L' => {
+                        // Reload file entries
+                        self.reload_remote_dir();
+                    }
+                    'q' | 'Q' => {
+                        // Create quit prompt dialog
+                        self.input_mode = self.create_quit_popup();
                     }
                     'r' | 'R' => {
                         // Rename
@@ -444,15 +453,14 @@ impl FileTransferActivity {
                         }
                     }
                     ' ' => {
-                        // Get files
-                        let files: Vec<FsEntry> = self.remote.files.clone(); // Otherwise self is borrowed both as mutable and immutable...
-                                                                             // Get file at index
-                        if let Some(entry) = files.get(self.remote.index) {
-                            // Preserve name
-                            let name: String = entry.get_name();
-                            // Call upload (use entry realfile; pass previous name)
+                        // Get file and clone (due to mutable / immutable stuff...)
+                        if self.remote.files.get(self.remote.index).is_some() {
+                            let file: FsEntry =
+                                self.remote.files.get(self.remote.index).unwrap().clone();
+                            let name: String = file.get_name();
+                            // Call upload; pass realfile, keep link name
                             self.filetransfer_recv(
-                                &entry.get_realfile(),
+                                &file.get_realfile(),
                                 self.context.as_ref().unwrap().local.pwd().as_path(),
                                 Some(name),
                             );
@@ -637,7 +645,7 @@ impl FileTransferActivity {
         }
     }
 
-    /// ### handle_input_event_mode_explorer_alert
+    /// ### handle_input_event_mode_popup_progress
     ///
     /// Input event handler for popup alert
     pub(super) fn handle_input_event_mode_popup_progress(&mut self, ev: &InputEvent) {
@@ -652,14 +660,14 @@ impl FileTransferActivity {
         }
     }
 
-    /// ### handle_input_event_mode_explorer_alert
+    /// ### handle_input_event_mode_popup_wait
     ///
     /// Input event handler for popup alert
     pub(super) fn handle_input_event_mode_popup_wait(&mut self, _ev: &InputEvent) {
         // There's nothing you can do here I guess... maybe ctrl+c in the future idk
     }
 
-    /// ### handle_input_event_mode_explorer_alert
+    /// ### handle_input_event_mode_popup_yesno
     ///
     /// Input event handler for popup alert
     pub(super) fn handle_input_event_mode_popup_yesno(

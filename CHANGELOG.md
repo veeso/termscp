@@ -2,6 +2,7 @@
 
 - [Changelog](#changelog)
   - [0.2.0](#020)
+  - [0.1.3](#013)
   - [0.1.2](#012)
   - [0.1.1](#011)
   - [0.1.0](#010)
@@ -11,6 +12,31 @@
 ## 0.2.0
 
 Released on ??
+
+- **Bookmarks**
+  - Bookmarks and recent connections are now displayed in the home page
+  - Bookmarks are saved at
+    - Linux: `/home/alice/.config/termscp/bookmarks.toml`
+    - Windows: `C:\Users\Alice\AppData\Roaming\termscp\bookmarks.toml`
+    - MacOS: `/Users/Alice/Library/Application Support/termscp/bookmarks.toml`
+
+## 0.1.3
+
+Released on 14/12/2020
+
+- Enhancements:
+  - File transfer:
+    - Read buffer is now 65536 bytes long
+  - File explorer:
+    - Fixed color mismatch in local explorer
+    - Explorer tabs have now 70% of layout height, while logging area is 30%
+    - Highlight selected entry in tabs, only when the tab is active
+  - Auth page:
+    - align popup text to center
+- Keybindings:
+  - `L`: Refresh directory content
+- Bugfix:
+  - Fixed memory vulnerability in Windows version
 
 ## 0.1.2
 

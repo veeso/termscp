@@ -327,20 +327,20 @@ impl FileTransferActivity {
                         return;
                     }
                 };
-                let files: Vec<FsEntry> = self.local.files.clone();
-                // Get file at index
-                if let Some(entry) = files.get(self.local.index) {
-                    // Call send (upload)
-                    self.filetransfer_send(&entry.get_realfile(), wrkdir.as_path(), Some(input));
+                // Get file and clone (due to mutable / immutable stuff...)
+                if self.local.files.get(self.local.index).is_some() {
+                    let file: FsEntry = self.local.files.get(self.local.index).unwrap().clone();
+                    // Call upload; pass realfile, keep link name
+                    self.filetransfer_send(&file.get_realfile(), wrkdir.as_path(), Some(input));
                 }
             }
             FileExplorerTab::Remote => {
-                let files: Vec<FsEntry> = self.remote.files.clone();
-                // Get file at index
-                if let Some(entry) = files.get(self.remote.index) {
-                    // Call receive (download)
+                // Get file and clone (due to mutable / immutable stuff...)
+                if self.remote.files.get(self.remote.index).is_some() {
+                    let file: FsEntry = self.remote.files.get(self.remote.index).unwrap().clone();
+                    // Call upload; pass realfile, keep link name
                     self.filetransfer_recv(
-                        &entry.get_realfile(),
+                        &file.get_realfile(),
                         self.context.as_ref().unwrap().local.pwd().as_path(),
                         Some(input),
                     );

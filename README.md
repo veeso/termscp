@@ -1,12 +1,12 @@
 # TermSCP
 
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![Stars](https://img.shields.io/github/stars/ChristianVisintin/TermSCP.svg)](https://github.com/ChristianVisintin/TermSCP) [![Issues](https://img.shields.io/github/issues/ChristianVisintin/TermSCP.svg)](https://github.com/ChristianVisintin/TermSCP/issues) [![Downloads](https://img.shields.io/crates/d/termscp.svg)](https://crates.io/crates/termscp) [![Crates.io](https://img.shields.io/badge/crates.io-v0.1.2-orange.svg)](https://crates.io/crates/termscp) [![Docs](https://docs.rs/termscp/badge.svg)](https://docs.rs/termscp)  
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![Stars](https://img.shields.io/github/stars/ChristianVisintin/TermSCP.svg)](https://github.com/ChristianVisintin/TermSCP) [![Issues](https://img.shields.io/github/issues/ChristianVisintin/TermSCP.svg)](https://github.com/ChristianVisintin/TermSCP/issues) [![Downloads](https://img.shields.io/crates/d/termscp.svg)](https://crates.io/crates/termscp) [![Crates.io](https://img.shields.io/badge/crates.io-v0.1.3-orange.svg)](https://crates.io/crates/termscp) [![Docs](https://docs.rs/termscp/badge.svg)](https://docs.rs/termscp)  
 
 [![Build](https://github.com/ChristianVisintin/TermSCP/workflows/Linux/badge.svg)](https://github.com/ChristianVisintin/TermSCP/actions) [![Build](https://github.com/ChristianVisintin/TermSCP/workflows/MacOS/badge.svg)](https://github.com/ChristianVisintin/TermSCP/actions) [![Build](https://github.com/ChristianVisintin/TermSCP/workflows/Windows/badge.svg)](https://github.com/ChristianVisintin/TermSCP/actions)
 
 ~ Basically, WinSCP on a terminal ~  
 Developed by Christian Visintin  
-Current version: 0.1.2 (13/12/2020)
+Current version: 0.1.3 (13/12/2020)
 
 ---
 
@@ -21,8 +21,9 @@ Current version: 0.1.2 (13/12/2020)
     - [Chocolatey 🍫](#chocolatey-)
     - [Brew 🍻](#brew-)
   - [Usage ❓](#usage-)
-    - [Address argument](#address-argument)
-      - [How Password can be provided](#how-password-can-be-provided)
+    - [Address argument 🌎](#address-argument-)
+      - [How Password can be provided 🔐](#how-password-can-be-provided-)
+  - [Bookmarks ⭐](#bookmarks-)
   - [Keybindings ⌨](#keybindings-)
   - [Documentation 📚](#documentation-)
   - [Known issues 🧻](#known-issues-)
@@ -74,8 +75,8 @@ cargo install termscp
 
 ### Deb package 📦
 
-Get `deb` package from [HERE](https://github.com/ChristianVisintin/TermSCP/releases/download/latest/termscp_0.1.2_amd64.deb)
-or run `wget https://github.com/ChristianVisintin/TermSCP/releases/download/latest/termscp_0.1.2_amd64.deb`
+Get `deb` package from [HERE](https://github.com/ChristianVisintin/TermSCP/releases/download/latest/termscp_0.1.3_amd64.deb)
+or run `wget https://github.com/ChristianVisintin/TermSCP/releases/download/latest/termscp_0.1.3_amd64.deb`
 
 then install through dpkg:
 
@@ -87,8 +88,8 @@ gdebi termscp_*.deb
 
 ### RPM package 📦
 
-Get `rpm` package from [HERE](https://github.com/ChristianVisintin/TermSCP/releases/download/latest/termscp-0.1.2-1.x86_64.rpm)
-or run `wget https://github.com/ChristianVisintin/TermSCP/releases/download/latest/termscp-0.1.2-1.x86_64.rpm`
+Get `rpm` package from [HERE](https://github.com/ChristianVisintin/TermSCP/releases/download/latest/termscp-0.1.3-1.x86_64.rpm)
+or run `wget https://github.com/ChristianVisintin/TermSCP/releases/download/latest/termscp-0.1.3-1.x86_64.rpm`
 
 then install through rpm:
 
@@ -106,7 +107,7 @@ Start PowerShell as administrator and run
 choco install termscp
 ```
 
-Alternatively you can download the ZIP file from [HERE](https://github.com/ChristianVisintin/TermSCP/releases/download/latest/termscp.0.1.2.nupkg)
+Alternatively you can download the ZIP file from [HERE](https://github.com/ChristianVisintin/TermSCP/releases/download/latest/termscp.0.1.3.nupkg)
 
 and then with PowerShell started with administrator previleges, run:
 
@@ -139,7 +140,7 @@ TermSCP can be started in two different mode, if no extra arguments is provided,
 
 Alternatively, the user can provide an address as argument to skip the authentication form and starting directly the connection to the remote server.
 
-### Address argument
+### Address argument 🌎
 
 The address argument has the following syntax:
 
@@ -167,7 +168,7 @@ Let's see some example of this particular syntax, since it's very comfortable an
     termscp scp://omar@192.168.1.31:4022
     ```
 
-#### How Password can be provided
+#### How Password can be provided 🔐
 
 You have probably noticed, that, when providing the address as argument, there's no way to provide the password.
 Password can be basically provided through 3 ways when address argument is provided:
@@ -175,6 +176,18 @@ Password can be basically provided through 3 ways when address argument is provi
 - `-P, --password` option: just use this CLI option providing the password. I strongly unrecommend this method, since it's very unsecure (since you might keep the password in the shell history)
 - Via `sshpass`: you can provide password via `sshpass`, e.g. `sshpass -f ~/.ssh/topsecret.key termscp cvisintin@192.168.1.31`
 - You will be prompted for it: if you don't use any of the previous methods, you will be prompted for the password, as happens with the more classics tools such as `scp`, `ssh`, etc.
+
+---
+
+## Bookmarks ⭐
+
+Since TermSCP 0.2.0, it is possible to save favourites hosts, which can be then loaded quickly from the main layout of termscp.
+TermSCP will also save the last 16 hosts you connected to.
+This feature allows you to load all the parameters required to connect to a certain remote, simply selecting the bookmark in the tab under the authentication form.
+For safety reason, termscp **WILL NEVER** save your passwords; you'll need to provide it everytime (Don't worry, every time you select a bookmark, the cursor will be placed in the password form to speed up this process 😉).
+
+To create a bookmark, just fulfill the authentication form and then input `CTRL+S`; you'll then be asked to give a name to your bookmark, and tadah, the bookmark has been created.
+If you go to [galler](#gallery-), there is a GIF showing how bookmarks work 💪.
 
 ---
 
@@ -198,11 +211,12 @@ Password can be basically provided through 3 ways when address argument is provi
 | `<G>`         | Go to supplied path                                   |
 | `<H>`         | Show help                                             |
 | `<I>`         | Show info about selected file or directory            |
+| `<L>`         | Reload current directory's content                    |
 | `<Q>`         | Quit TermSCP                                          |
 | `<R>`         | Rename file                                           |
 | `<U>`         | Go to parent directory                                |
 | `<DEL>`       | Delete file                                           |
-| `CTRL+C`      | Abort file transfer process                           |
+| `<CTRL+C>`    | Abort file transfer process                           |
 
 ---
 
