@@ -70,6 +70,15 @@ pub enum SerializerErrorKind {
     SyntaxError,
 }
 
+impl Default for UserHosts {
+    fn default() -> Self {
+        UserHosts {
+            bookmarks: HashMap::new(),
+            recents: HashMap::new(),
+        }
+    }
+}
+
 impl SerializerError {
     /// ### new
     ///
