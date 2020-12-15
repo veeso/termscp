@@ -38,10 +38,10 @@ use crossterm::event::Event as InputEvent;
 use crossterm::event::KeyCode;
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use tui::{
-    layout::{Constraint, Direction, Layout, Rect},
+    layout::{Constraint, Corner, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Span, Spans, Text},
-    widgets::{Block, Borders, Clear, Paragraph, Tabs},
+    widgets::{Block, Borders, Clear, List, ListItem, Paragraph, Tabs},
 };
 use unicode_width::UnicodeWidthStr;
 
@@ -57,14 +57,30 @@ enum InputField {
     Password,
 }
 
+/// ### PopupType
+///
+/// PopupType describes the type of the popup displayed
+#[derive(std::cmp::PartialEq, Clone)]
+enum PopupType {
+    Alert(Color, String), // Show a message displaying text with the provided color
+}
+
 /// ### InputMode
 ///
 /// InputMode describes the current input mode
 /// Each input mode handle the input events in a different way
 #[derive(std::cmp::PartialEq)]
 enum InputMode {
-    Text,
-    Popup,
+    Form,
+    Popup(PopupType),
+}
+
+#[derive(std::cmp::PartialEq)]
+/// ### InputForm
+///
+/// InputForm describes the selected input form
+enum InputForm {
+    AuthCredentials,
 }
 
 /// ### AuthActivity
@@ -79,9 +95,9 @@ pub struct AuthActivity {
     pub submit: bool, // becomes true after user has submitted fields
     pub quit: bool,   // Becomes true if user has pressed esc
     context: Option<Context>,
-    selected_field: InputField,
+    selected_field: InputField, // Selected field in AuthCredentials Form
     input_mode: InputMode,
-    popup_message: Option<String>,
+    input_form: InputForm,
     password_placeholder: String,
     redraw: bool, // Should ui actually be redrawned?
 }
@@ -107,38 +123,44 @@ impl AuthActivity {
             quit: false,
             context: None,
             selected_field: InputField::Address,
-            input_mode: InputMode::Text,
-            popup_message: None,
+            input_mode: InputMode::Form,
+            input_form: InputForm::AuthCredentials,
             password_placeholder: String::new(),
             redraw: true, // True at startup
         }
-    }
-
-    /// ### set_input_mode
-    ///
-    /// Update input mode based on current parameters
-    fn select_input_mode(&mut self) -> InputMode {
-        if self.popup_message.is_some() {
-            return InputMode::Popup;
-        }
-        // Default to text
-        InputMode::Text
     }
 
     /// ### handle_input_event
     ///
     /// Handle input event, based on current input mode
     fn handle_input_event(&mut self, ev: &InputEvent) {
+        let popup: Option<PopupType> = match &self.input_mode {
+            InputMode::Popup(ptype) => Some(ptype.clone()),
+            _ => None,
+        };
         match self.input_mode {
-            InputMode::Text => self.handle_input_event_mode_text(ev),
-            InputMode::Popup => self.handle_input_event_mode_popup(ev),
+            InputMode::Form => self.handle_input_event_mode_form(ev),
+            InputMode::Popup(_) => {
+                if let Some(ptype) = popup {
+                    self.handle_input_event_mode_popup(ev, ptype)
+                }
+            }
         }
     }
 
-    /// ### handle_input_event_mode_text
+    /// ### handle_input_event_mode_form
     ///
-    /// Handler for input event when in textmode
-    fn handle_input_event_mode_text(&mut self, ev: &InputEvent) {
+    /// Handler for input event when in form mode
+    fn handle_input_event_mode_form(&mut self, ev: &InputEvent) {
+        match self.input_form {
+            InputForm::AuthCredentials => self.handle_input_event_mode_form_auth(ev),
+        }
+    }
+
+    /// ### handle_input_event_mode_form_auth
+    ///
+    /// Handle input event when input mode is Form and Tab is Auth
+    fn handle_input_event_mode_form_auth(&mut self, ev: &InputEvent) {
         if let InputEvent::Key(key) = ev {
             match key.code {
                 KeyCode::Esc => {
@@ -149,7 +171,10 @@ impl AuthActivity {
                     // Check form
                     // Check address
                     if self.address.is_empty() {
-                        self.popup_message = Some(String::from("Invalid address"));
+                        self.input_mode = InputMode::Popup(PopupType::Alert(
+                            Color::Red,
+                            String::from("Invalid address"),
+                        ));
                         return;
                     }
                     // Check port
@@ -157,26 +182,23 @@ impl AuthActivity {
                     match self.port.parse::<usize>() {
                         Ok(val) => {
                             if val > 65535 {
-                                self.popup_message =
-                                    Some(String::from("Specified port must be in range 0-65535"));
+                                self.input_mode = InputMode::Popup(PopupType::Alert(
+                                    Color::Red,
+                                    String::from("Specified port must be in range 0-65535"),
+                                ));
                                 return;
                             }
                         }
                         Err(_) => {
-                            self.popup_message =
-                                Some(String::from("Specified port is not a number"));
+                            self.input_mode = InputMode::Popup(PopupType::Alert(
+                                Color::Red,
+                                String::from("Specified port is not a number"),
+                            ));
                             return;
                         }
                     }
-                    // Check username
-                    //if self.username.len() == 0 {
-                    //    self.popup_message = Some(String::from("Invalid username"));
-                    //    return;
-                    //}
                     // Everything OK, set enter
                     self.submit = true;
-                    self.popup_message =
-                        Some(format!("Connecting to {}:{}...", self.address, self.port));
                 }
                 KeyCode::Backspace => {
                     // Pop last char
@@ -264,13 +286,107 @@ impl AuthActivity {
     /// ### handle_input_event_mode_text
     ///
     /// Handler for input event when in popup mode
-    fn handle_input_event_mode_popup(&mut self, ev: &InputEvent) {
+    fn handle_input_event_mode_popup(&mut self, ev: &InputEvent, ptype: PopupType) {
+        match ptype {
+            PopupType::Alert(_, _) => self.handle_input_event_mode_popup_alert(ev),
+        }
+    }
+
+    /// ### handle_input_event_mode_popup_alert
+    ///
+    /// Handle input event when the input mode is popup, and popup type is alert
+    fn handle_input_event_mode_popup_alert(&mut self, ev: &InputEvent) {
         // Only enter should be allowed here
         if let InputEvent::Key(key) = ev {
             if let KeyCode::Enter = key.code {
-                self.popup_message = None; // Hide popup
+                self.input_mode = InputMode::Form; // Hide popup
             }
         }
+    }
+
+    /// ### draw
+    ///
+    /// Draw UI
+    fn draw(&mut self) {
+        let mut ctx: Context = self.context.take().unwrap();
+        let _ = ctx.terminal.draw(|f| {
+            // Prepare chunks
+            let chunks = Layout::default()
+                .direction(Direction::Vertical)
+                .margin(1)
+                .constraints(
+                    [
+                        Constraint::Percentage(60), // Auth Form
+                        Constraint::Percentage(40), // Bookmarks
+                    ]
+                    .as_ref(),
+                )
+                .split(f.size());
+            // Create explorer chunks
+            let auth_chunks = Layout::default()
+                .constraints(
+                    [
+                        Constraint::Length(5),
+                        Constraint::Length(3),
+                        Constraint::Length(3),
+                        Constraint::Length(3),
+                        Constraint::Length(3),
+                        Constraint::Length(3),
+                        Constraint::Length(3),
+                    ]
+                    .as_ref(),
+                )
+                .direction(Direction::Vertical)
+                .split(chunks[0]);
+            // Draw header
+            f.render_widget(self.draw_header(), auth_chunks[0]);
+            // Draw input fields
+            f.render_widget(self.draw_remote_address(), auth_chunks[1]);
+            f.render_widget(self.draw_remote_port(), auth_chunks[2]);
+            f.render_widget(self.draw_protocol_select(), auth_chunks[3]);
+            f.render_widget(self.draw_protocol_username(), auth_chunks[4]);
+            f.render_widget(self.draw_protocol_password(), auth_chunks[5]);
+            // Draw footer
+            f.render_widget(self.draw_footer(), auth_chunks[6]);
+            // Set cursor
+            if let InputForm::AuthCredentials = self.input_form {
+                match self.selected_field {
+                    InputField::Address => f.set_cursor(
+                        auth_chunks[1].x + self.address.width() as u16 + 1,
+                        auth_chunks[1].y + 1,
+                    ),
+                    InputField::Port => f.set_cursor(
+                        auth_chunks[2].x + self.port.width() as u16 + 1,
+                        auth_chunks[2].y + 1,
+                    ),
+                    InputField::Username => f.set_cursor(
+                        auth_chunks[4].x + self.username.width() as u16 + 1,
+                        auth_chunks[4].y + 1,
+                    ),
+                    InputField::Password => f.set_cursor(
+                        auth_chunks[5].x + self.password_placeholder.width() as u16 + 1,
+                        auth_chunks[5].y + 1,
+                    ),
+                    _ => {}
+                }
+            }
+            // Draw popup
+            if let InputMode::Popup(popup) = &self.input_mode {
+                // Calculate popup size
+                let (width, height): (u16, u16) = match popup {
+                    PopupType::Alert(_, _) => (50, 10),
+                };
+                let popup_area: Rect = self.draw_popup_area(f.size(), width, height);
+                f.render_widget(Clear, popup_area); //this clears out the background
+                match popup {
+                    PopupType::Alert(color, txt) => f.render_widget(
+                        self.draw_popup_alert(*color, txt.clone(), popup_area.width),
+                        popup_area,
+                    ),
+                }
+            }
+        });
+        self.context = Some(ctx);
     }
 
     /// ### draw_remote_address
@@ -390,39 +506,53 @@ impl AuthActivity {
         Paragraph::new(footer_text)
     }
 
-    /// ### draw_popup
+    /// ### draw_popup_area
     ///
-    /// Draw popup block
-    fn draw_popup(&self, r: Rect) -> (Paragraph, Rect) {
+    /// Draw popup area
+    fn draw_popup_area(&self, area: Rect, width: u16, height: u16) -> Rect {
         let popup_layout = Layout::default()
             .direction(Direction::Vertical)
             .constraints(
                 [
-                    Constraint::Percentage(30), // Offset top
-                    Constraint::Percentage(10), // Actual height
-                    Constraint::Percentage(60), // Offset bottom
+                    Constraint::Percentage((100 - height) / 2),
+                    Constraint::Percentage(height),
+                    Constraint::Percentage((100 - height) / 2),
                 ]
                 .as_ref(),
             )
-            .split(r);
-        let area: Rect = Layout::default()
+            .split(area);
+        Layout::default()
             .direction(Direction::Horizontal)
             .constraints(
                 [
-                    Constraint::Percentage((80) / 2),
-                    Constraint::Percentage(20),
-                    Constraint::Percentage((80) / 2),
+                    Constraint::Percentage((100 - width) / 2),
+                    Constraint::Percentage(width),
+                    Constraint::Percentage((100 - width) / 2),
                 ]
                 .as_ref(),
             )
-            .split(popup_layout[1])[1];
-        let popup: Paragraph = Paragraph::new(align_text_center(
-            self.popup_message.as_ref().unwrap().as_ref(),
-            area.width,
-        ))
-        .style(Style::default().fg(Color::Red))
-        .block(Block::default().borders(Borders::ALL).title("Alert"));
-        (popup, area)
+            .split(popup_layout[1])[1]
+    }
+
+    /// ### draw_popup_alert
+    ///
+    /// Draw alert popup
+    fn draw_popup_alert(&self, color: Color, text: String, width: u16) -> List {
+        // Wraps texts
+        let message_rows = textwrap::wrap(text.as_str(), width as usize);
+        let mut lines: Vec<ListItem> = Vec::new();
+        for msg in message_rows.iter() {
+            lines.push(ListItem::new(Spans::from(align_text_center(msg, width))));
+        }
+        List::new(lines)
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .border_style(Style::default().fg(color))
+                    .title("Alert"),
+            )
+            .start_corner(Corner::TopLeft)
+            .style(Style::default().fg(color))
     }
 }
 
@@ -439,6 +569,7 @@ impl Activity for AuthActivity {
         let _ = self.context.as_mut().unwrap().terminal.clear();
         // Put raw mode on enabled
         let _ = enable_raw_mode();
+        self.input_mode = InputMode::Form;
     }
 
     /// ### on_draw
@@ -462,64 +593,8 @@ impl Activity for AuthActivity {
         }
         // Redraw if necessary
         if self.redraw {
-            // Determine input mode
-            self.input_mode = self.select_input_mode();
-            // draw interface
-            let mut ctx: Context = self.context.take().unwrap();
-            let _ = ctx.terminal.draw(|f| {
-                let chunks = Layout::default()
-                    .direction(Direction::Vertical)
-                    .margin(2)
-                    .constraints(
-                        [
-                            Constraint::Length(5),
-                            Constraint::Length(3),
-                            Constraint::Length(3),
-                            Constraint::Length(3),
-                            Constraint::Length(3),
-                            Constraint::Length(3),
-                            Constraint::Length(3),
-                        ]
-                        .as_ref(),
-                    )
-                    .split(f.size());
-                // Draw header
-                f.render_widget(self.draw_header(), chunks[0]);
-                // Draw input fields
-                f.render_widget(self.draw_remote_address(), chunks[1]);
-                f.render_widget(self.draw_remote_port(), chunks[2]);
-                f.render_widget(self.draw_protocol_select(), chunks[3]);
-                f.render_widget(self.draw_protocol_username(), chunks[4]);
-                f.render_widget(self.draw_protocol_password(), chunks[5]);
-                // Draw footer
-                f.render_widget(self.draw_footer(), chunks[6]);
-                if self.popup_message.is_some() {
-                    let (popup, popup_area): (Paragraph, Rect) = self.draw_popup(f.size());
-                    f.render_widget(Clear, popup_area); //this clears out the background
-                    f.render_widget(popup, popup_area);
-                }
-                // Set cursor
-                match self.selected_field {
-                    InputField::Address => f.set_cursor(
-                        chunks[1].x + self.address.width() as u16 + 1,
-                        chunks[1].y + 1,
-                    ),
-                    InputField::Port => {
-                        f.set_cursor(chunks[2].x + self.port.width() as u16 + 1, chunks[2].y + 1)
-                    }
-                    InputField::Username => f.set_cursor(
-                        chunks[4].x + self.username.width() as u16 + 1,
-                        chunks[4].y + 1,
-                    ),
-                    InputField::Password => f.set_cursor(
-                        chunks[5].x + self.password_placeholder.width() as u16 + 1,
-                        chunks[5].y + 1,
-                    ),
-                    _ => {}
-                }
-            });
-            // Reset ctx
-            self.context = Some(ctx);
+            // Draw
+            self.draw();
             // Set redraw to false
             self.redraw = false;
         }
