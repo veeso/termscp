@@ -95,6 +95,31 @@ impl AuthActivity {
         }
     }
 
+    /// ### load_bookmark
+    ///
+    /// Load selected bookmark (at index) to input fields
+    pub(super) fn load_bookmark(&mut self, idx: usize) {
+        if let Some(hosts) = self.bookmarks.as_mut() {
+            // Iterate over bookmarks
+            for (i, bookmark) in hosts.bookmarks.values().enumerate() {
+                if i == idx {
+                    // Load parameters
+                    self.address = bookmark.address.clone();
+                    self.port = bookmark.port.to_string();
+                    self.protocol = match bookmark.protocol.as_str().to_uppercase().as_str() {
+                        "FTP" => FileTransferProtocol::Ftp(false),
+                        "FTPS" => FileTransferProtocol::Ftp(true),
+                        "SCP" => FileTransferProtocol::Scp,
+                        _ => FileTransferProtocol::Sftp, // Default to SFTP
+                    };
+                    self.username = bookmark.username.clone();
+                    // Break
+                    break;
+                }
+            }
+        }
+    }
+
     /// ### save_bookmark
     ///
     /// Save current input fields as a bookmark
@@ -104,6 +129,31 @@ impl AuthActivity {
                 hosts.bookmarks.insert(name, host);
                 // Write bookmarks
                 self.write_bookmarks();
+            }
+        }
+    }
+
+    /// ### load_recent
+    ///
+    /// Load selected recent (at index) to input fields
+    pub(super) fn load_recent(&mut self, idx: usize) {
+        if let Some(hosts) = self.bookmarks.as_mut() {
+            // Iterate over bookmarks
+            for (i, bookmark) in hosts.recents.values().enumerate() {
+                if i == idx {
+                    // Load parameters
+                    self.address = bookmark.address.clone();
+                    self.port = bookmark.port.to_string();
+                    self.protocol = match bookmark.protocol.as_str().to_uppercase().as_str() {
+                        "FTP" => FileTransferProtocol::Ftp(false),
+                        "FTPS" => FileTransferProtocol::Ftp(true),
+                        "SCP" => FileTransferProtocol::Scp,
+                        _ => FileTransferProtocol::Sftp, // Default to SFTP
+                    };
+                    self.username = bookmark.username.clone();
+                    // Break
+                    break;
+                }
             }
         }
     }
