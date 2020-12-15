@@ -645,7 +645,7 @@ impl FileTransferActivity {
         }
     }
 
-    /// ### handle_input_event_mode_explorer_alert
+    /// ### handle_input_event_mode_popup_progress
     ///
     /// Input event handler for popup alert
     pub(super) fn handle_input_event_mode_popup_progress(&mut self, ev: &InputEvent) {
@@ -660,14 +660,14 @@ impl FileTransferActivity {
         }
     }
 
-    /// ### handle_input_event_mode_explorer_alert
+    /// ### handle_input_event_mode_popup_wait
     ///
     /// Input event handler for popup alert
     pub(super) fn handle_input_event_mode_popup_wait(&mut self, _ev: &InputEvent) {
         // There's nothing you can do here I guess... maybe ctrl+c in the future idk
     }
 
-    /// ### handle_input_event_mode_explorer_alert
+    /// ### handle_input_event_mode_popup_yesno
     ///
     /// Input event handler for popup alert
     pub(super) fn handle_input_event_mode_popup_yesno(

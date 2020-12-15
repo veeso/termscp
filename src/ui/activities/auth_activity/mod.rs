@@ -43,6 +43,10 @@ use crossterm::event::Event as InputEvent;
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use tui::style::Color;
 
+// Types
+type DialogCallback = fn(&mut AuthActivity);
+type OnInputSubmitCallback = fn(&mut AuthActivity, String);
+
 /// ### InputField
 ///
 /// InputField describes the current input field to edit
@@ -55,19 +59,29 @@ enum InputField {
     Password,
 }
 
+/// ### DialogYesNoOption
+///
+/// Current yes/no dialog option
+#[derive(std::cmp::PartialEq, Clone)]
+enum DialogYesNoOption {
+    Yes,
+    No,
+}
+
 /// ### PopupType
 ///
 /// PopupType describes the type of the popup displayed
-#[derive(std::cmp::PartialEq, Clone)]
+#[derive(Clone)]
 enum PopupType {
     Alert(Color, String), // Show a message displaying text with the provided color
+    Input(String, OnInputSubmitCallback), // Input description; Callback for submit
+    YesNo(String, DialogCallback, DialogCallback), // Yes, no callback
 }
 
 /// ### InputMode
 ///
 /// InputMode describes the current input mode
 /// Each input mode handle the input events in a different way
-#[derive(std::cmp::PartialEq)]
 enum InputMode {
     Form,
     Popup(PopupType),
@@ -79,6 +93,8 @@ enum InputMode {
 /// InputForm describes the selected input form
 enum InputForm {
     AuthCredentials,
+    Bookmarks,
+    Recents,
 }
 
 /// ### AuthActivity
@@ -98,7 +114,9 @@ pub struct AuthActivity {
     input_mode: InputMode,
     input_form: InputForm,
     password_placeholder: String,
-    redraw: bool, // Should ui actually be redrawned?
+    redraw: bool,                  // Should ui actually be redrawned?
+    input_txt: String,             // Input text
+    choice_opt: DialogYesNoOption, // Dialog popup selected option
 }
 
 impl Default for AuthActivity {
@@ -127,6 +145,8 @@ impl AuthActivity {
             input_form: InputForm::AuthCredentials,
             password_placeholder: String::new(),
             redraw: true, // True at startup
+            input_txt: String::new(),
+            choice_opt: DialogYesNoOption::Yes,
         }
     }
 }

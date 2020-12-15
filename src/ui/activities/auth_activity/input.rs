@@ -24,7 +24,7 @@
 */
 
 use super::{
-    AuthActivity, FileTransferProtocol, InputEvent, InputField, InputForm, InputMode, PopupType,
+    AuthActivity, DialogCallback, DialogYesNoOption, FileTransferProtocol, InputEvent, InputField, InputForm, InputMode, OnInputSubmitCallback, PopupType,
 };
 
 use crossterm::event::KeyCode;
@@ -192,6 +192,10 @@ impl AuthActivity {
     pub(super) fn handle_input_event_mode_popup(&mut self, ev: &InputEvent, ptype: PopupType) {
         match ptype {
             PopupType::Alert(_, _) => self.handle_input_event_mode_popup_alert(ev),
+            PopupType::Input(_, cb) => self.handle_input_event_mode_popup_input(ev, cb),
+            PopupType::YesNo(_, yes_cb, no_cb) => {
+                self.handle_input_event_mode_popup_yesno(ev, yes_cb, no_cb)
+            }
         }
     }
 
@@ -203,6 +207,73 @@ impl AuthActivity {
         if let InputEvent::Key(key) = ev {
             if let KeyCode::Enter = key.code {
                 self.input_mode = InputMode::Form; // Hide popup
+            }
+        }
+    }
+
+    /// ### handle_input_event_mode_popup_input
+    ///
+    /// Input event handler for input popup
+    pub(super) fn handle_input_event_mode_popup_input(
+        &mut self,
+        ev: &InputEvent,
+        cb: OnInputSubmitCallback,
+    ) {
+        // If enter, close popup, otherwise push chars to input
+        if let InputEvent::Key(key) = ev {
+            match key.code {
+                KeyCode::Esc => {
+                    // Abort input
+                    // Clear current input text
+                    self.input_txt.clear();
+                    // Set mode back to form
+                    self.input_mode = InputMode::Form;
+                }
+                KeyCode::Enter => {
+                    // Submit
+                    let input_text: String = self.input_txt.clone();
+                    // Clear current input text
+                    self.input_txt.clear();
+                    // Set mode back to form BEFORE CALLBACKS!!! Callback can then overwrite this, clever uh?
+                    self.input_mode = InputMode::Form;
+                    // Call cb
+                    cb(self, input_text);
+                }
+                KeyCode::Char(ch) => self.input_txt.push(ch),
+                KeyCode::Backspace => {
+                    let _ = self.input_txt.pop();
+                }
+                _ => { /* Nothing to do */ }
+            }
+        }
+    }
+
+    /// ### handle_input_event_mode_popup_yesno
+    ///
+    /// Input event handler for popup alert
+    pub(super) fn handle_input_event_mode_popup_yesno(
+        &mut self,
+        ev: &InputEvent,
+        yes_cb: DialogCallback,
+        no_cb: DialogCallback,
+    ) {
+        // If enter, close popup, otherwise move dialog option
+        if let InputEvent::Key(key) = ev {
+            match key.code {
+                KeyCode::Enter => {
+                    // @! Set input mode to Form BEFORE CALLBACKS!!! Callback can then overwrite this, clever uh?
+                    self.input_mode = InputMode::Form;
+                    // Check if user selected yes or not
+                    match self.choice_opt {
+                        DialogYesNoOption::No => no_cb(self),
+                        DialogYesNoOption::Yes => yes_cb(self),
+                    }
+                    // Reset choice option to yes
+                    self.choice_opt = DialogYesNoOption::Yes;
+                }
+                KeyCode::Right => self.choice_opt = DialogYesNoOption::No, // Set to NO
+                KeyCode::Left => self.choice_opt = DialogYesNoOption::Yes, // Set to YES
+                _ => { /* Nothing to do */ }
             }
         }
     }
