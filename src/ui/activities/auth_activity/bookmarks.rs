@@ -87,9 +87,17 @@ impl AuthActivity {
     /// ### del_bookmark
     ///
     /// Delete bookmark
-    pub(super) fn del_bookmark(&mut self, name: String) {
+    pub(super) fn del_bookmark(&mut self, idx: usize) {
         if let Some(hosts) = self.bookmarks.as_mut() {
-            if hosts.bookmarks.contains_key(name.as_str()) {
+            // Iterate over kyes
+            let mut name: Option<String> = None;
+            for (i, key) in hosts.bookmarks.keys().enumerate() {
+                if i == idx {
+                    name = Some(key.clone());
+                    break;
+                }
+            }
+            if let Some(name) = name {
                 hosts.bookmarks.remove(name.as_str());
             }
         }
@@ -129,6 +137,24 @@ impl AuthActivity {
                 hosts.bookmarks.insert(name, host);
                 // Write bookmarks
                 self.write_bookmarks();
+            }
+        }
+    }
+    /// ### del_recent
+    ///
+    /// Delete recent
+    pub(super) fn del_recent(&mut self, idx: usize) {
+        if let Some(hosts) = self.bookmarks.as_mut() {
+            // Iterate over kyes
+            let mut name: Option<String> = None;
+            for (i, key) in hosts.recents.keys().enumerate() {
+                if i == idx {
+                    name = Some(key.clone());
+                    break;
+                }
+            }
+            if let Some(name) = name {
+                hosts.recents.remove(name.as_str());
             }
         }
     }
