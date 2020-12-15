@@ -75,6 +75,7 @@ enum DialogYesNoOption {
 #[derive(Clone)]
 enum PopupType {
     Alert(Color, String), // Show a message displaying text with the provided color
+    Help,                 // Help page
     Input(String, OnInputSubmitCallback), // Input description; Callback for submit
     YesNo(String, DialogCallback, DialogCallback), // Yes, no callback
 }

@@ -127,6 +127,7 @@ impl AuthActivity {
                 // Calculate popup size
                 let (width, height): (u16, u16) = match popup {
                     PopupType::Alert(_, _) => (50, 10),
+                    PopupType::Help => (50, 70),
                     PopupType::Input(_, _) => (40, 10),
                     PopupType::YesNo(_, _, _) => (30, 10),
                 };
@@ -137,6 +138,7 @@ impl AuthActivity {
                         self.draw_popup_alert(*color, txt.clone(), popup_area.width),
                         popup_area,
                     ),
+                    PopupType::Help => f.render_widget(self.draw_popup_help(), popup_area),
                     PopupType::Input(txt, _) => {
                         f.render_widget(self.draw_popup_input(txt.clone()), popup_area);
                         // Set cursor
@@ -257,14 +259,8 @@ impl AuthActivity {
         let (footer, h_style) = (
             vec![
                 Span::raw("Press "),
-                Span::styled("<ESC>", Style::default().add_modifier(Modifier::BOLD)),
-                Span::raw(" to exit, "),
-                Span::styled("<UP,DOWN>", Style::default().add_modifier(Modifier::BOLD)),
-                Span::raw(" to change input field, "),
-                Span::styled("<TAB>", Style::default().add_modifier(Modifier::BOLD)),
-                Span::raw(" to change input form, "),
-                Span::styled("<ENTER>", Style::default().add_modifier(Modifier::BOLD)),
-                Span::raw(" to submit form"),
+                Span::styled("<CTRL+H>", Style::default().add_modifier(Modifier::BOLD)),
+                Span::raw(" to show keybindings"),
             ],
             Style::default().add_modifier(Modifier::BOLD),
         );
@@ -438,5 +434,112 @@ impl AuthActivity {
                     .add_modifier(Modifier::BOLD)
                     .fg(Color::Yellow),
             )
+    }
+
+    /// ### draw_footer
+    ///
+    /// Draw authentication page footer
+    pub(super) fn draw_popup_help(&self) -> List {
+        // Write header
+        let cmds: Vec<ListItem> = vec![
+            ListItem::new(Spans::from(vec![
+                Span::styled(
+                    "<ESC>",
+                    Style::default()
+                        .fg(Color::Cyan)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::raw("           "),
+                Span::raw("Quit TermSCP"),
+            ])),
+            ListItem::new(Spans::from(vec![
+                Span::styled(
+                    "<TAB>",
+                    Style::default()
+                        .fg(Color::Cyan)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::raw("           "),
+                Span::raw("Switch input form and bookmarks"),
+            ])),
+            ListItem::new(Spans::from(vec![
+                Span::styled(
+                    "<RIGHT/LEFT>",
+                    Style::default()
+                        .fg(Color::Cyan)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::raw("    "),
+                Span::raw("Change bookmark tab"),
+            ])),
+            ListItem::new(Spans::from(vec![
+                Span::styled(
+                    "<UP/DOWN>",
+                    Style::default()
+                        .fg(Color::Cyan)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::raw("       "),
+                Span::raw("Move up/down in current tab"),
+            ])),
+            ListItem::new(Spans::from(vec![
+                Span::styled(
+                    "<ENTER>",
+                    Style::default()
+                        .fg(Color::Cyan)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::raw("         "),
+                Span::raw("Submit"),
+            ])),
+            ListItem::new(Spans::from(vec![
+                Span::styled(
+                    "<DEL>",
+                    Style::default()
+                        .fg(Color::Cyan)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::raw("           "),
+                Span::raw("Delete bookmark"),
+            ])),
+            ListItem::new(Spans::from(vec![
+                Span::styled(
+                    "<E>",
+                    Style::default()
+                        .fg(Color::Cyan)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::raw("             "),
+                Span::raw("Delete selected bookmark"),
+            ])),
+            ListItem::new(Spans::from(vec![
+                Span::styled(
+                    "<CTRL+H>",
+                    Style::default()
+                        .fg(Color::Cyan)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::raw("        "),
+                Span::raw("Show help"),
+            ])),
+            ListItem::new(Spans::from(vec![
+                Span::styled(
+                    "<CTRL+S>",
+                    Style::default()
+                        .fg(Color::Cyan)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::raw("        "),
+                Span::raw("Save bookmark"),
+            ])),
+        ];
+        List::new(cmds)
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .border_style(Style::default())
+                    .title("Help"),
+            )
+            .start_corner(Corner::TopLeft)
     }
 }

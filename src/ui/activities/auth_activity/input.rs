@@ -154,12 +154,19 @@ impl AuthActivity {
                     // Check if Ctrl is enabled
                     if key.modifiers.intersects(KeyModifiers::CONTROL) {
                         // If 'S', save bookmark as...
-                        if matches!(ch, 'S' | 's') {
-                            // Save bookmark as...
-                            self.input_mode = InputMode::Popup(PopupType::Input(
-                                String::from("Save bookmark as..."),
-                                AuthActivity::callback_save_bookmark,
-                            ));
+                        match ch {
+                            'H' | 'h' => {
+                                // Show help
+                                self.input_mode = InputMode::Popup(PopupType::Help);
+                            }
+                            'S' | 's' => {
+                                // Save bookmark as...
+                                self.input_mode = InputMode::Popup(PopupType::Input(
+                                    String::from("Save bookmark as..."),
+                                    AuthActivity::callback_save_bookmark,
+                                ));
+                            }
+                            _ => { /* Nothing to do */ }
                         }
                     } else {
                         match self.selected_field {
@@ -270,6 +277,10 @@ impl AuthActivity {
                             AuthActivity::callback_nothing_to_do,
                         ));
                     }
+                    'H' | 'h' => {
+                        // Show help
+                        self.input_mode = InputMode::Popup(PopupType::Help);
+                    }
                     'S' | 's' => {
                         // Save bookmark as...
                         self.input_mode = InputMode::Popup(PopupType::Input(
@@ -347,6 +358,10 @@ impl AuthActivity {
                             AuthActivity::callback_nothing_to_do,
                         ));
                     }
+                    'H' | 'h' => {
+                        // Show help
+                        self.input_mode = InputMode::Popup(PopupType::Help);
+                    }
                     'S' | 's' => {
                         // Save bookmark as...
                         self.input_mode = InputMode::Popup(PopupType::Input(
@@ -367,6 +382,7 @@ impl AuthActivity {
     pub(super) fn handle_input_event_mode_popup(&mut self, ev: &InputEvent, ptype: PopupType) {
         match ptype {
             PopupType::Alert(_, _) => self.handle_input_event_mode_popup_alert(ev),
+            PopupType::Help => self.handle_input_event_mode_popup_help(ev),
             PopupType::Input(_, cb) => self.handle_input_event_mode_popup_input(ev, cb),
             PopupType::YesNo(_, yes_cb, no_cb) => {
                 self.handle_input_event_mode_popup_yesno(ev, yes_cb, no_cb)
@@ -382,6 +398,22 @@ impl AuthActivity {
         if let InputEvent::Key(key) = ev {
             if let KeyCode::Enter = key.code {
                 self.input_mode = InputMode::Form; // Hide popup
+            }
+        }
+    }
+
+    /// ### handle_input_event_mode_popup_help
+    ///
+    /// Input event handler for popup help
+    pub(super) fn handle_input_event_mode_popup_help(&mut self, ev: &InputEvent) {
+        // If enter, close popup
+        if let InputEvent::Key(key) = ev {
+            match key.code {
+                KeyCode::Enter | KeyCode::Esc => {
+                    // Set input mode back to form
+                    self.input_mode = InputMode::Form;
+                }
+                _ => { /* Nothing to do */ }
             }
         }
     }
