@@ -24,10 +24,11 @@
 */
 
 use super::{
-    AuthActivity, DialogCallback, DialogYesNoOption, FileTransferProtocol, InputEvent, InputField, InputForm, InputMode, OnInputSubmitCallback, PopupType,
+    AuthActivity, DialogCallback, DialogYesNoOption, FileTransferProtocol, InputEvent, InputField,
+    InputForm, InputMode, OnInputSubmitCallback, PopupType,
 };
 
-use crossterm::event::KeyCode;
+use crossterm::event::{KeyCode, KeyModifiers};
 use tui::style::Color;
 
 impl AuthActivity {
@@ -55,6 +56,8 @@ impl AuthActivity {
     pub(super) fn handle_input_event_mode_form(&mut self, ev: &InputEvent) {
         match self.input_form {
             InputForm::AuthCredentials => self.handle_input_event_mode_form_auth(ev),
+            InputForm::Bookmarks => self.handle_input_event_mode_form_bookmarks(ev),
+            InputForm::Recents => self.handle_input_event_mode_form_recents(ev),
         }
     }
 
@@ -65,8 +68,14 @@ impl AuthActivity {
         if let InputEvent::Key(key) = ev {
             match key.code {
                 KeyCode::Esc => {
-                    self.quit = true;
+                    // Show quit dialog
+                    self.input_mode = InputMode::Popup(PopupType::YesNo(
+                        String::from("Are you sure you want to quit termscp?"),
+                        AuthActivity::callback_quit,
+                        AuthActivity::callback_nothing_to_do,
+                    ));
                 }
+                KeyCode::Tab => self.input_form = InputForm::Bookmarks, // Move to bookmarks
                 KeyCode::Enter => {
                     // Handle submit
                     // Check form
@@ -131,7 +140,7 @@ impl AuthActivity {
                         InputField::Password => InputField::Username,
                     }
                 }
-                KeyCode::Down | KeyCode::Tab => {
+                KeyCode::Down => {
                     // Move item down
                     self.selected_field = match self.selected_field {
                         InputField::Address => InputField::Port,
@@ -142,17 +151,29 @@ impl AuthActivity {
                     }
                 }
                 KeyCode::Char(ch) => {
-                    match self.selected_field {
-                        InputField::Address => self.address.push(ch),
-                        InputField::Password => self.password.push(ch),
-                        InputField::Username => self.username.push(ch),
-                        InputField::Port => {
-                            // Value must be numeric
-                            if ch.is_numeric() {
-                                self.port.push(ch);
-                            }
+                    // Check if Ctrl is enabled
+                    if key.modifiers.intersects(KeyModifiers::CONTROL) {
+                        // If 'S', save bookmark as...
+                        if matches!(ch, 'S' | 's') {
+                            // Save bookmark as...
+                            self.input_mode = InputMode::Popup(PopupType::Input(
+                                String::from("Save bookmark as..."),
+                                AuthActivity::callback_save_bookmark,
+                            ));
                         }
-                        _ => { /* Nothing to do */ }
+                    } else {
+                        match self.selected_field {
+                            InputField::Address => self.address.push(ch),
+                            InputField::Password => self.password.push(ch),
+                            InputField::Username => self.username.push(ch),
+                            InputField::Port => {
+                                // Value must be numeric
+                                if ch.is_numeric() {
+                                    self.port.push(ch);
+                                }
+                            }
+                            _ => { /* Nothing to do */ }
+                        }
                     }
                 }
                 KeyCode::Left => {
@@ -181,6 +202,160 @@ impl AuthActivity {
                         };
                     }
                 }
+                _ => { /* Nothing to do */ }
+            }
+        }
+    }
+
+    /// ### handle_input_event_mode_form_bookmarks
+    ///
+    /// Handle input event when input mode is Form and Tab is Bookmarks
+    pub(super) fn handle_input_event_mode_form_bookmarks(&mut self, ev: &InputEvent) {
+        if let InputEvent::Key(key) = ev {
+            match key.code {
+                KeyCode::Esc => {
+                    // Show quit dialog
+                    self.input_mode = InputMode::Popup(PopupType::YesNo(
+                        String::from("Are you sure you want to quit termscp?"),
+                        AuthActivity::callback_quit,
+                        AuthActivity::callback_nothing_to_do,
+                    ));
+                }
+                KeyCode::Tab => self.input_form = InputForm::AuthCredentials, // Move to Auth credentials
+                KeyCode::Right => self.input_form = InputForm::Recents,       // Move to recents
+                KeyCode::Up => {
+                    // Move bookmarks index up
+                    if self.bookmarks_idx > 0 {
+                        self.bookmarks_idx -= 1;
+                    } else {
+                        if let Some(hosts) = &self.bookmarks {
+                            // Put to last index (wrap)
+                            self.bookmarks_idx = hosts.bookmarks.len() - 1;
+                        }
+                    }
+                }
+                KeyCode::Down => {
+                    if let Some(hosts) = &self.bookmarks {
+                        let size: usize = hosts.bookmarks.len();
+                        // Check if can move down
+                        if self.bookmarks_idx + 1 >= size {
+                            // Move bookmarks index down
+                            self.bookmarks_idx = 0;
+                        } else {
+                            // Set index to first element (wrap)
+                            self.bookmarks_idx += 1;
+                        }
+                    }
+                }
+                KeyCode::Delete => {
+                    // Ask if user wants to delete bookmark
+                    self.input_mode = InputMode::Popup(PopupType::YesNo(
+                        String::from("Are you sure you want to delete the selected bookmark?"),
+                        AuthActivity::callback_del_bookmark,
+                        AuthActivity::callback_nothing_to_do,
+                    ));
+                }
+                KeyCode::Enter => {
+                    // Load bookmark
+                    self.load_bookmark(self.bookmarks_idx);
+                    // Set input form to Auth
+                    self.input_form = InputForm::AuthCredentials;
+                }
+                KeyCode::Char(ch) => match ch {
+                    'E' | 'e' => {
+                        // Ask if user wants to delete bookmark; NOTE: same as <DEL>
+                        self.input_mode = InputMode::Popup(PopupType::YesNo(
+                            String::from("Are you sure you want to delete the selected bookmark?"),
+                            AuthActivity::callback_del_bookmark,
+                            AuthActivity::callback_nothing_to_do,
+                        ));
+                    }
+                    'S' | 's' => {
+                        // Save bookmark as...
+                        self.input_mode = InputMode::Popup(PopupType::Input(
+                            String::from("Save bookmark as..."),
+                            AuthActivity::callback_save_bookmark,
+                        ));
+                    }
+                    _ => { /* Nothing to do */ }
+                },
+                _ => { /* Nothing to do */ }
+            }
+        }
+    }
+
+    /// ### handle_input_event_mode_form_recents
+    ///
+    /// Handle input event when input mode is Form and Tab is Recents
+    pub(super) fn handle_input_event_mode_form_recents(&mut self, ev: &InputEvent) {
+        if let InputEvent::Key(key) = ev {
+            match key.code {
+                KeyCode::Esc => {
+                    // Show quit dialog
+                    self.input_mode = InputMode::Popup(PopupType::YesNo(
+                        String::from("Are you sure you want to quit termscp?"),
+                        AuthActivity::callback_quit,
+                        AuthActivity::callback_nothing_to_do,
+                    ));
+                }
+                KeyCode::Tab => self.input_form = InputForm::AuthCredentials, // Move to Auth credentials
+                KeyCode::Left => self.input_form = InputForm::Bookmarks,      // Move to bookmarks
+                KeyCode::Up => {
+                    // Move bookmarks index up
+                    if self.recents_idx > 0 {
+                        self.recents_idx -= 1;
+                    } else {
+                        if let Some(hosts) = &self.bookmarks {
+                            // Put to last index (wrap)
+                            self.recents_idx = hosts.recents.len() - 1;
+                        }
+                    }
+                }
+                KeyCode::Down => {
+                    if let Some(hosts) = &self.bookmarks {
+                        let size: usize = hosts.recents.len();
+                        // Check if can move down
+                        if self.recents_idx + 1 >= size {
+                            // Move bookmarks index down
+                            self.recents_idx = 0;
+                        } else {
+                            // Set index to first element (wrap)
+                            self.recents_idx += 1;
+                        }
+                    }
+                }
+                KeyCode::Delete => {
+                    // Ask if user wants to delete bookmark
+                    self.input_mode = InputMode::Popup(PopupType::YesNo(
+                        String::from("Are you sure you want to delete the selected host?"),
+                        AuthActivity::callback_del_bookmark,
+                        AuthActivity::callback_nothing_to_do,
+                    ));
+                }
+                KeyCode::Enter => {
+                    // Load bookmark
+                    self.load_recent(self.recents_idx);
+                    // Set input form to Auth
+                    self.input_form = InputForm::AuthCredentials;
+                }
+                KeyCode::Char(ch) => match ch {
+                    'E' | 'e' => {
+                        // Ask if user wants to delete bookmark; NOTE: same as <DEL>
+                        self.input_mode = InputMode::Popup(PopupType::YesNo(
+                            String::from("Are you sure you want to delete the selected host?"),
+                            AuthActivity::callback_del_bookmark,
+                            AuthActivity::callback_nothing_to_do,
+                        ));
+                    }
+                    'S' | 's' => {
+                        // Save bookmark as...
+                        self.input_mode = InputMode::Popup(PopupType::Input(
+                            String::from("Save bookmark as..."),
+                            AuthActivity::callback_save_bookmark,
+                        ));
+                    }
+                    _ => { /* Nothing to do */ }
+                },
                 _ => { /* Nothing to do */ }
             }
         }
