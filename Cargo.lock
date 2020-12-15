@@ -779,6 +779,7 @@ dependencies = [
  "getopts",
  "hostname",
  "lazy_static",
+ "rand",
  "regex",
  "rpassword",
  "serde",

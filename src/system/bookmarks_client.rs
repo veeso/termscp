@@ -23,12 +23,17 @@
 *
 */
 
+// Deps
+extern crate rand;
+
 // Local
 use crate::bookmarks::serializer::BookmarkSerializer;
 use crate::bookmarks::{Bookmark, SerializerError, SerializerErrorKind, UserHosts};
 use crate::filetransfer::FileTransferProtocol;
 // Ext
-use std::fs::OpenOptions;
+use rand::{distributions::Alphanumeric, Rng};
+use std::fs::{OpenOptions, Permissions};
+use std::io::Write;
 use std::path::{Path, PathBuf};
 
 /// ## BookmarksClient
@@ -57,23 +62,89 @@ impl BookmarksClient {
         // If bookmark file doesn't exist, initialize it
         if !bookmarks_file.exists() {
             if let Err(err) = client.write_bookmarks() {
-                return Err(err)
+                return Err(err);
             }
         }
         // If key file doesn't exist, create key
         if !key_file.exists() {
             if let Err(err) = client.generate_key() {
-                return Err(err)
+                return Err(err);
             }
         }
         Ok(client)
     }
 
+    /// ### get_bookmark
+    ///
+    /// Get bookmark associated to key
+    pub fn get_bookmark(
+        &self,
+        key: &String,
+    ) -> Option<(String, u16, FileTransferProtocol, String, Option<String>)> {
+        let entry: &Bookmark = self.hosts.bookmarks.get(key)?;
+        // TODO: decrypt password
+        Some((
+            entry.address.clone(),
+            entry.port,
+            match entry.protocol.to_ascii_uppercase().as_str() {
+                "FTP" => FileTransferProtocol::Ftp(false),
+                "FTPS" => FileTransferProtocol::Ftp(true),
+                "SCP" => FileTransferProtocol::Scp,
+                _ => FileTransferProtocol::Sftp,
+            },
+            entry.username.clone(),
+            None,
+        ))
+    }
+
+    /// ### get_recent
+    ///
+    /// Get recent associated to key
+    pub fn get_recent(
+        &self,
+        key: &String,
+    ) -> Option<(String, u16, FileTransferProtocol, String, Option<String>)> {
+        let entry: &Bookmark = self.hosts.recents.get(key)?;
+        // TODO: decrypt password
+        Some((
+            entry.address.clone(),
+            entry.port,
+            match entry.protocol.to_ascii_uppercase().as_str() {
+                "FTP" => FileTransferProtocol::Ftp(false),
+                "FTPS" => FileTransferProtocol::Ftp(true),
+                "SCP" => FileTransferProtocol::Scp,
+                _ => FileTransferProtocol::Sftp,
+            },
+            entry.username.clone(),
+            None,
+        ))
+    }
+
     /// ### make_bookmark
-    /// 
+    ///
     /// Make bookmark from credentials
-    pub fn make_bookmark(&self, addr: String, port: u16, protocol: FileTransferProtocol, username: String, password: Option<String>) -> Bookmark {
+    pub fn make_bookmark(
+        &self,
+        addr: String,
+        port: u16,
+        protocol: FileTransferProtocol,
+        username: String,
+        password: Option<String>,
+    ) -> Bookmark {
         // TODO: crypt password
+        Bookmark {
+            address: addr,
+            port,
+            username,
+            protocol: match protocol {
+                FileTransferProtocol::Ftp(secure) => match secure {
+                    true => String::from("FTPS"),
+                    false => String::from("FTP"),
+                },
+                FileTransferProtocol::Scp => String::from("SCP"),
+                FileTransferProtocol::Sftp => String::from("SFTP"),
+            },
+        }
     }
 
     /// ### write_bookmarks
@@ -99,9 +170,39 @@ impl BookmarksClient {
     }
 
     /// ### generate_key
-    /// 
+    ///
     /// Generate a new AES key and write it to key file
     fn generate_key(&self) -> Result<(), SerializerError> {
-        // TODO: write
+        // Generate 256 bytes (2048 bits) key
+        let key: String = rand::thread_rng()
+            .sample_iter(Alphanumeric)
+            .take(256)
+            .collect::<String>();
+        // Write file
+        match OpenOptions::new()
+            .create(true)
+            .write(true)
+            .truncate(true)
+            .open(self.key_file.as_path())
+        {
+            Ok(mut file) => {
+                // Write key to file
+                if let Err(err) = file.write_all(key.as_bytes()) {
+                    return Err(SerializerError::new_ex(
+                        SerializerErrorKind::IoError,
+                        err.to_string(),
+                    ));
+                }
+                // Set file to readonly
+                let mut permissions: Permissions = file.metadata().unwrap().permissions();
+                permissions.set_readonly(true);
+                let _ = file.set_permissions(permissions);
+                Ok(())
+            }
+            Err(err) => Err(SerializerError::new_ex(
+                SerializerErrorKind::IoError,
+                err.to_string(),
+            )),
+        }
     }
 }

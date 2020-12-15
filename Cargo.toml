@@ -32,6 +32,7 @@ toml = "0.5.7"
 tui = { version = "0.13.0", features = ["crossterm"], default-features = false }
 unicode-width = "0.1.7"
 whoami = "1.0.0"
+rand = "0.7.3"
 
 [target.'cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))'.dependencies]
 users = "0.11.0"
