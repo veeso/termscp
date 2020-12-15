@@ -273,9 +273,7 @@ impl AuthActivity {
     ///
     /// Draw local explorer list
     pub(super) fn draw_bookmarks_tab(&self) -> Option<List> {
-        if self.bookmarks.is_none() {
-            return None;
-        }
+        self.bookmarks.as_ref()?;
         let hosts: Vec<ListItem> = self
             .bookmarks
             .as_ref()
@@ -318,9 +316,7 @@ impl AuthActivity {
     ///
     /// Draw local explorer list
     pub(super) fn draw_recents_tab(&self) -> Option<List> {
-        if self.bookmarks.is_none() {
-            return None;
-        }
+        self.bookmarks.as_ref()?;
         let hosts: Vec<ListItem> = self
             .bookmarks
             .as_ref()

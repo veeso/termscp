@@ -234,11 +234,9 @@ impl AuthActivity {
                     // Move bookmarks index up
                     if self.bookmarks_idx > 0 {
                         self.bookmarks_idx -= 1;
-                    } else {
-                        if let Some(hosts) = &self.bookmarks {
-                            // Put to last index (wrap)
-                            self.bookmarks_idx = hosts.bookmarks.len() - 1;
-                        }
+                    } else if let Some(hosts) = &self.bookmarks {
+                        // Put to last index (wrap)
+                        self.bookmarks_idx = hosts.bookmarks.len() - 1;
                     }
                 }
                 KeyCode::Down => {
@@ -317,11 +315,9 @@ impl AuthActivity {
                     // Move bookmarks index up
                     if self.recents_idx > 0 {
                         self.recents_idx -= 1;
-                    } else {
-                        if let Some(hosts) = &self.bookmarks {
-                            // Put to last index (wrap)
-                            self.recents_idx = hosts.recents.len() - 1;
-                        }
+                    } else if let Some(hosts) = &self.bookmarks {
+                        // Put to last index (wrap)
+                        self.recents_idx = hosts.recents.len() - 1;
                     }
                 }
                 KeyCode::Down => {

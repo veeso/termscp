@@ -250,7 +250,7 @@ impl AuthActivity {
         };
         Ok(Bookmark {
             address: self.address.clone(),
-            port: port,
+            port,
             protocol: match self.protocol {
                 FileTransferProtocol::Ftp(secure) => match secure {
                     true => String::from("FTPS"),
@@ -267,33 +267,21 @@ impl AuthActivity {
     ///
     /// Write bookmarks to file
     fn write_bookmarks(&mut self) {
-        if self.bookmarks.is_some() {
-            if self.context.is_some() {
-                // Open file for write
-                if let Some(bookmarks_file) = self.init_bookmarks() {
-                    match self
-                        .context
-                        .as_ref()
-                        .unwrap()
-                        .local
-                        .open_file_write(bookmarks_file.as_path())
-                    {
-                        Ok(writer) => {
-                            let serializer: BookmarkSerializer = BookmarkSerializer {};
-                            if let Err(err) = serializer
-                                .serialize(Box::new(writer), &self.bookmarks.as_ref().unwrap())
-                            {
-                                self.input_mode = InputMode::Popup(PopupType::Alert(
-                                    Color::Yellow,
-                                    format!(
-                                        "Could not write default bookmarks at \"{}\": {}",
-                                        bookmarks_file.display(),
-                                        err
-                                    ),
-                                ));
-                            }
-                        }
-                        Err(err) => {
+        if self.bookmarks.is_some() && self.context.is_some() {
+            // Open file for write
+            if let Some(bookmarks_file) = self.init_bookmarks() {
+                match self
+                    .context
+                    .as_ref()
+                    .unwrap()
+                    .local
+                    .open_file_write(bookmarks_file.as_path())
+                {
+                    Ok(writer) => {
+                        let serializer: BookmarkSerializer = BookmarkSerializer {};
+                        if let Err(err) = serializer
+                            .serialize(Box::new(writer), &self.bookmarks.as_ref().unwrap())
+                        {
                             self.input_mode = InputMode::Popup(PopupType::Alert(
                                 Color::Yellow,
                                 format!(
@@ -301,8 +289,18 @@ impl AuthActivity {
                                     bookmarks_file.display(),
                                     err
                                 ),
-                            ))
+                            ));
                         }
+                    }
+                    Err(err) => {
+                        self.input_mode = InputMode::Popup(PopupType::Alert(
+                            Color::Yellow,
+                            format!(
+                                "Could not write default bookmarks at \"{}\": {}",
+                                bookmarks_file.display(),
+                                err
+                            ),
+                        ))
                     }
                 }
             }
@@ -348,40 +346,27 @@ impl AuthActivity {
             // Append bookmarks.toml
             p.push("bookmarks.toml");
             // If bookmarks.toml doesn't exist, initializae it
-            if self.context.is_some() {
-                if !self
+            if self.context.is_some()
+                && !self
                     .context
                     .as_ref()
                     .unwrap()
                     .local
                     .file_exists(p.as_path())
+            {
+                // Write file
+                let default_hosts: UserHosts = Default::default();
+                match self
+                    .context
+                    .as_ref()
+                    .unwrap()
+                    .local
+                    .open_file_write(p.as_path())
                 {
-                    // Write file
-                    let default_hosts: UserHosts = Default::default();
-                    match self
-                        .context
-                        .as_ref()
-                        .unwrap()
-                        .local
-                        .open_file_write(p.as_path())
-                    {
-                        Ok(writer) => {
-                            let serializer: BookmarkSerializer = BookmarkSerializer {};
-                            // Serialize and write
-                            if let Err(err) = serializer.serialize(Box::new(writer), &default_hosts)
-                            {
-                                self.input_mode = InputMode::Popup(PopupType::Alert(
-                                    Color::Yellow,
-                                    format!(
-                                        "Could not write default bookmarks at \"{}\": {}",
-                                        p.display(),
-                                        err
-                                    ),
-                                ));
-                                return None;
-                            }
-                        }
-                        Err(err) => {
+                    Ok(writer) => {
+                        let serializer: BookmarkSerializer = BookmarkSerializer {};
+                        // Serialize and write
+                        if let Err(err) = serializer.serialize(Box::new(writer), &default_hosts) {
                             self.input_mode = InputMode::Popup(PopupType::Alert(
                                 Color::Yellow,
                                 format!(
@@ -392,6 +377,17 @@ impl AuthActivity {
                             ));
                             return None;
                         }
+                    }
+                    Err(err) => {
+                        self.input_mode = InputMode::Popup(PopupType::Alert(
+                            Color::Yellow,
+                            format!(
+                                "Could not write default bookmarks at \"{}\": {}",
+                                p.display(),
+                                err
+                            ),
+                        ));
+                        return None;
                     }
                 }
             }
