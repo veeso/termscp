@@ -98,6 +98,8 @@ impl AuthActivity {
                             return;
                         }
                     }
+                    // Save recent
+                    self.save_recent();
                     // Everything OK, set enter
                     self.submit = true;
                 }
