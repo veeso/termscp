@@ -24,7 +24,8 @@
 */
 
 use super::{
-    AuthActivity, Context, FileTransferProtocol, InputField, InputForm, InputMode, PopupType,
+    AuthActivity, Context, DialogYesNoOption, FileTransferProtocol, InputField, InputForm,
+    InputMode, PopupType,
 };
 
 use crate::utils::align_text_center;
@@ -109,6 +110,8 @@ impl AuthActivity {
                 // Calculate popup size
                 let (width, height): (u16, u16) = match popup {
                     PopupType::Alert(_, _) => (50, 10),
+                    PopupType::Input(_, _) => (40, 10),
+                    PopupType::YesNo(_, _, _) => (30, 10),
                 };
                 let popup_area: Rect = self.draw_popup_area(f.size(), width, height);
                 f.render_widget(Clear, popup_area); //this clears out the background
@@ -117,6 +120,17 @@ impl AuthActivity {
                         self.draw_popup_alert(*color, txt.clone(), popup_area.width),
                         popup_area,
                     ),
+                    PopupType::Input(txt, _) => {
+                        f.render_widget(self.draw_popup_input(txt.clone()), popup_area);
+                        // Set cursor
+                        f.set_cursor(
+                            popup_area.x + self.input_txt.width() as u16 + 1,
+                            popup_area.y + 1,
+                        )
+                    }
+                    PopupType::YesNo(txt, _, _) => {
+                        f.render_widget(self.draw_popup_yesno(txt.clone()), popup_area)
+                    }
                 }
             }
         });
@@ -287,5 +301,34 @@ impl AuthActivity {
             )
             .start_corner(Corner::TopLeft)
             .style(Style::default().fg(color))
+    }
+
+    /// ### draw_popup_input
+    ///
+    /// Draw input popup
+    pub(super) fn draw_popup_input(&self, text: String) -> Paragraph {
+        Paragraph::new(self.input_txt.as_ref())
+            .style(Style::default().fg(Color::White))
+            .block(Block::default().borders(Borders::ALL).title(text))
+    }
+
+    /// ### draw_popup_yesno
+    ///
+    /// Draw yes/no select popup
+    pub(super) fn draw_popup_yesno(&self, text: String) -> Tabs {
+        let choices: Vec<Spans> = vec![Spans::from("Yes"), Spans::from("No")];
+        let index: usize = match self.choice_opt {
+            DialogYesNoOption::Yes => 0,
+            DialogYesNoOption::No => 1,
+        };
+        Tabs::new(choices)
+            .block(Block::default().borders(Borders::ALL).title(text))
+            .select(index)
+            .style(Style::default())
+            .highlight_style(
+                Style::default()
+                    .add_modifier(Modifier::BOLD)
+                    .fg(Color::Yellow),
+            )
     }
 }

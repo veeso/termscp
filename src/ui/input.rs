@@ -45,6 +45,7 @@ impl InputHandler {
     /// ### fetch_events
     ///
     /// Check if new events have been received from handler
+    #[allow(dead_code)]
     pub(crate) fn fetch_events(&self) -> Result<Vec<Event>, ()> {
         let mut inbox: Vec<Event> = Vec::new();
         loop {
