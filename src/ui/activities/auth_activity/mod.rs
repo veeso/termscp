@@ -46,7 +46,6 @@ use tui::style::Color;
 
 // Types
 type DialogCallback = fn(&mut AuthActivity);
-type OnInputSubmitCallback = fn(&mut AuthActivity, String);
 
 /// ### InputField
 ///
@@ -76,7 +75,7 @@ enum DialogYesNoOption {
 enum PopupType {
     Alert(Color, String), // Show a message displaying text with the provided color
     Help,                 // Help page
-    SaveBookmark(String, OnInputSubmitCallback), // Input description; Callback for submit
+    SaveBookmark,
     YesNo(String, DialogCallback, DialogCallback), // Yes, no callback
 }
 

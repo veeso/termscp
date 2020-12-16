@@ -126,7 +126,7 @@ impl AuthActivity {
                 let (width, height): (u16, u16) = match popup {
                     PopupType::Alert(_, _) => (50, 10),
                     PopupType::Help => (50, 70),
-                    PopupType::SaveBookmark(_, _) => (40, 20),
+                    PopupType::SaveBookmark => (40, 20),
                     PopupType::YesNo(_, _, _) => (30, 10),
                 };
                 let popup_area: Rect = self.draw_popup_area(f.size(), width, height);
@@ -137,7 +137,7 @@ impl AuthActivity {
                         popup_area,
                     ),
                     PopupType::Help => f.render_widget(self.draw_popup_help(), popup_area),
-                    PopupType::SaveBookmark(txt, _) => {
+                    PopupType::SaveBookmark => {
                         let popup_chunks = Layout::default()
                             .direction(Direction::Vertical)
                             .margin(1)
@@ -149,8 +149,7 @@ impl AuthActivity {
                                 .as_ref(),
                             )
                             .split(popup_area);
-                        let (input, yes_no): (Paragraph, Tabs) =
-                            self.draw_popup_save_bookmark(txt.clone());
+                        let (input, yes_no): (Paragraph, Tabs) = self.draw_popup_save_bookmark();
                         // Render parts
                         f.render_widget(input, popup_chunks[0]);
                         f.render_widget(yes_no, popup_chunks[1]);
@@ -429,10 +428,14 @@ impl AuthActivity {
     /// ### draw_popup_input
     ///
     /// Draw input popup
-    pub(super) fn draw_popup_save_bookmark(&self, text: String) -> (Paragraph, Tabs) {
+    pub(super) fn draw_popup_save_bookmark(&self) -> (Paragraph, Tabs) {
         let input: Paragraph = Paragraph::new(self.input_txt.as_ref())
-            .style(Style::default().fg(Color::LightYellow))
-            .block(Block::default().borders(Borders::ALL).title(text));
+            .style(Style::default().fg(Color::White))
+            .block(
+                Block::default()
+                    .borders(Borders::TOP | Borders::RIGHT | Borders::LEFT)
+                    .title("Save bookmark as..."),
+            );
         let choices: Vec<Spans> = vec![Spans::from("Yes"), Spans::from("No")];
         let index: usize = match self.choice_opt {
             DialogYesNoOption::Yes => 0,
@@ -441,7 +444,7 @@ impl AuthActivity {
         let tabs: Tabs = Tabs::new(choices)
             .block(
                 Block::default()
-                    .borders(Borders::ALL)
+                    .borders(Borders::BOTTOM | Borders::RIGHT | Borders::LEFT)
                     .title("Save password?"),
             )
             .select(index)
