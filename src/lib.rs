@@ -19,7 +19,10 @@
 *
 */
 
-#[macro_use] extern crate lazy_static;
+#[macro_use]
+extern crate lazy_static;
+#[macro_use]
+extern crate magic_crypt;
 
 pub mod activity_manager;
 pub mod bookmarks;
