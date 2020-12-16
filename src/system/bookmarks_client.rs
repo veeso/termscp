@@ -137,6 +137,9 @@ impl BookmarksClient {
         username: String,
         password: Option<String>,
     ) {
+        if name.is_empty() {
+            panic!("Bookmark name can't be empty");
+        }
         // Make bookmark
         let host: Bookmark = self.make_bookmark(addr, port, protocol, username, password);
         self.hosts.bookmarks.insert(name, host);
@@ -518,6 +521,25 @@ mod tests {
         assert!(client.get_bookmark(&key).is_none());
         // Write bookmarks
         assert!(client.write_bookmarks().is_ok());
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_system_bookmarks_add_bookmark_empty() {
+        let tmp_dir: tempfile::TempDir = create_tmp_dir();
+        let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
+        // Initialize a new bookmarks client
+        let mut client: BookmarksClient =
+            BookmarksClient::new(cfg_path.as_path(), key_path.as_path()).unwrap();
+        // Add bookmark
+        client.add_bookmark(
+            String::from(""),
+            String::from("192.168.1.31"),
+            22,
+            FileTransferProtocol::Sftp,
+            String::from("pi"),
+            Some(String::from("mypassword")),
+        );
     }
 
     /// ### get_paths
