@@ -126,7 +126,7 @@ impl AuthActivity {
                 let (width, height): (u16, u16) = match popup {
                     PopupType::Alert(_, _) => (50, 10),
                     PopupType::Help => (50, 70),
-                    PopupType::SaveBookmark => (40, 20),
+                    PopupType::SaveBookmark => (20, 20),
                     PopupType::YesNo(_, _, _) => (30, 10),
                 };
                 let popup_area: Rect = self.draw_popup_area(f.size(), width, height);
@@ -140,7 +140,6 @@ impl AuthActivity {
                     PopupType::SaveBookmark => {
                         let popup_chunks = Layout::default()
                             .direction(Direction::Vertical)
-                            .margin(1)
                             .constraints(
                                 [
                                     Constraint::Length(3), // Input form
