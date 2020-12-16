@@ -44,7 +44,7 @@ use std::time::SystemTime;
 ///
 /// BookmarksClient provides a layer between the host system and the bookmarks module
 pub struct BookmarksClient {
-    pub hosts: UserHosts,
+    hosts: UserHosts,
     bookmarks_file: PathBuf,
     key: String,
 }
@@ -69,7 +69,7 @@ impl BookmarksClient {
                 Err(err) => return Err(err),
             },
         };
-        let client: BookmarksClient = BookmarksClient {
+        let mut client: BookmarksClient = BookmarksClient {
             hosts: default_hosts,
             bookmarks_file: PathBuf::from(bookmarks_file),
             key,
@@ -79,9 +79,21 @@ impl BookmarksClient {
             if let Err(err) = client.write_bookmarks() {
                 return Err(err);
             }
+        } else {
+            // Load bookmarks from file
+            if let Err(err) = client.read_bookmarks() {
+                return Err(err);
+            }
         }
         // Load key
         Ok(client)
+    }
+
+    /// ### iter_bookmarks
+    ///
+    /// Iterate over bookmarks keys
+    pub fn iter_bookmarks(&self) -> Box<dyn Iterator<Item = &String> + '_> {
+        Box::new(self.hosts.bookmarks.keys())
     }
 
     /// ### get_bookmark
@@ -102,7 +114,7 @@ impl BookmarksClient {
                 _ => FileTransferProtocol::Sftp,
             },
             entry.username.clone(),
-            match entry.password {
+            match &entry.password {
                 // Decrypted password if Some; if decryption fails return None
                 Some(pwd) => match self.decrypt_str(pwd.as_str()) {
                     Ok(decrypted_pwd) => Some(decrypted_pwd),
@@ -128,6 +140,19 @@ impl BookmarksClient {
         // Make bookmark
         let host: Bookmark = self.make_bookmark(addr, port, protocol, username, password);
         self.hosts.bookmarks.insert(name, host);
+    }
+
+    /// ### del_bookmark
+    ///
+    /// Delete entry from bookmarks
+    pub fn del_bookmark(&mut self, name: &String) {
+        let _ = self.hosts.bookmarks.remove(name);
+    }
+    /// ### iter_recents
+    ///
+    /// Iterate over recents keys
+    pub fn iter_recents(&self) -> Box<dyn Iterator<Item = &String> + '_> {
+        Box::new(self.hosts.recents.keys())
     }
 
     /// ### get_recent
@@ -189,6 +214,13 @@ impl BookmarksClient {
         self.hosts.recents.insert(name, host);
     }
 
+    /// ### del_recent
+    ///
+    /// Delete entry from recents
+    pub fn del_recent(&mut self, name: &String) {
+        let _ = self.hosts.recents.remove(name);
+    }
+
     /// ### write_bookmarks
     ///
     /// Write bookmarks to file
@@ -203,6 +235,33 @@ impl BookmarksClient {
             Ok(writer) => {
                 let serializer: BookmarkSerializer = BookmarkSerializer {};
                 serializer.serialize(Box::new(writer), &self.hosts)
+            }
+            Err(err) => Err(SerializerError::new_ex(
+                SerializerErrorKind::IoError,
+                err.to_string(),
+            )),
+        }
+    }
+
+    /// ### read_bookmarks
+    ///
+    /// Read bookmarks from file
+    fn read_bookmarks(&mut self) -> Result<(), SerializerError> {
+        // Open bookmarks file for read
+        match OpenOptions::new()
+            .read(true)
+            .open(self.bookmarks_file.as_path())
+        {
+            Ok(reader) => {
+                // Deserialize
+                let deserializer: BookmarkSerializer = BookmarkSerializer {};
+                match deserializer.deserialize(Box::new(reader)) {
+                    Ok(hosts) => {
+                        self.hosts = hosts;
+                        Ok(())
+                    }
+                    Err(err) => Err(err),
+                }
             }
             Err(err) => Err(SerializerError::new_ex(
                 SerializerErrorKind::IoError,
@@ -285,8 +344,13 @@ impl BookmarksClient {
         match OpenOptions::new().read(true).open(key_file) {
             Ok(mut file) => {
                 let mut key: String = String::with_capacity(256);
-                file.read_to_string(&mut key);
-                Ok(key)
+                match file.read_to_string(&mut key) {
+                    Ok(_) => Ok(key),
+                    Err(err) => Err(SerializerError::new_ex(
+                        SerializerErrorKind::IoError,
+                        err.to_string(),
+                    )),
+                }
             }
             Err(err) => Err(SerializerError::new_ex(
                 SerializerErrorKind::IoError,
@@ -316,4 +380,126 @@ impl BookmarksClient {
             )),
         }
     }
+}
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+
+    #[test]
+    fn test_system_bookmarks_new() {
+        let tmp_dir: tempfile::TempDir = create_tmp_dir();
+        let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
+        // Initialize a new bookmarks client
+        let client: BookmarksClient = BookmarksClient::new(cfg_path.as_path(), key_path.as_path()).unwrap();
+        // Verify client
+        assert_eq!(client.hosts.bookmarks.len(), 0);
+        assert_eq!(client.hosts.recents.len(), 0);
+        assert!(client.key.len() > 0);
+        assert_eq!(client.bookmarks_file, cfg_path);
+    }
+
+    #[test]
+    fn test_system_bookmarks_new_err() {
+        assert!(BookmarksClient::new(Path::new("/tmp/oifoif/omar"), Path::new("/tmp/efnnu/omar")).is_err());
+    }
+
+    #[test]
+    fn test_system_bookmarks_new_from_existing() {
+        let tmp_dir: tempfile::TempDir = create_tmp_dir();
+        let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
+        // Initialize a new bookmarks client
+        let mut client: BookmarksClient = BookmarksClient::new(cfg_path.as_path(), key_path.as_path()).unwrap();
+        // Add some bookmarks
+        client.add_bookmark(String::from("raspberry"), String::from("192.168.1.31"), 22, FileTransferProtocol::Sftp, String::from("pi"), Some(String::from("mypassword")));
+        client.add_recent(String::from("192.168.1.31"), 22, FileTransferProtocol::Sftp, String::from("pi"));
+        let recent_key: String = String::from(client.iter_recents().next().unwrap());
+        assert!(client.write_bookmarks().is_ok());
+        let key: String = client.key.clone();
+        // Re-initialize a client
+        let client: BookmarksClient = BookmarksClient::new(cfg_path.as_path(), key_path.as_path()).unwrap();
+        // Verify it loaded parameters correctly
+        assert_eq!(client.key, key);
+        let bookmark: (String, u16, FileTransferProtocol, String, Option<String>) = client.get_bookmark(&String::from("raspberry")).unwrap();
+        assert_eq!(bookmark.0, String::from("192.168.1.31"));
+        assert_eq!(bookmark.1, 22);
+        assert_eq!(bookmark.2, FileTransferProtocol::Sftp);
+        assert_eq!(bookmark.3, String::from("pi"));
+        assert_eq!(*bookmark.4.as_ref().unwrap(), String::from("mypassword"));
+        let bookmark: (String, u16, FileTransferProtocol, String) = client.get_recent(&recent_key).unwrap();
+        assert_eq!(bookmark.0, String::from("192.168.1.31"));
+        assert_eq!(bookmark.1, 22);
+        assert_eq!(bookmark.2, FileTransferProtocol::Sftp);
+        assert_eq!(bookmark.3, String::from("pi"));
+    }
+
+    #[test]
+    fn test_system_bookmarks_manipulate_bookmarks() {
+        let tmp_dir: tempfile::TempDir = create_tmp_dir();
+        let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
+        // Initialize a new bookmarks client
+        let mut client: BookmarksClient = BookmarksClient::new(cfg_path.as_path(), key_path.as_path()).unwrap();
+        // Add bookmark
+        client.add_bookmark(String::from("raspberry"), String::from("192.168.1.31"), 22, FileTransferProtocol::Sftp, String::from("pi"), Some(String::from("mypassword")));
+        // Get bookmark
+        let bookmark: (String, u16, FileTransferProtocol, String, Option<String>) = client.get_bookmark(&String::from("raspberry")).unwrap();
+        assert_eq!(bookmark.0, String::from("192.168.1.31"));
+        assert_eq!(bookmark.1, 22);
+        assert_eq!(bookmark.2, FileTransferProtocol::Sftp);
+        assert_eq!(bookmark.3, String::from("pi"));
+        assert_eq!(*bookmark.4.as_ref().unwrap(), String::from("mypassword"));
+        // Write bookmarks
+        assert!(client.write_bookmarks().is_ok());
+        // Delete bookmark
+        client.del_bookmark(&String::from("raspberry"));
+        // Get unexisting bookmark
+        assert!(client.get_bookmark(&String::from("raspberry")).is_none());
+        // Write bookmarks
+        assert!(client.write_bookmarks().is_ok());
+    }
+
+    #[test]
+    fn test_system_bookmarks_manipulate_recents() {
+        let tmp_dir: tempfile::TempDir = create_tmp_dir();
+        let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
+        // Initialize a new bookmarks client
+        let mut client: BookmarksClient = BookmarksClient::new(cfg_path.as_path(), key_path.as_path()).unwrap();
+        // Add bookmark
+        client.add_recent(String::from("192.168.1.31"), 22, FileTransferProtocol::Sftp, String::from("pi"));
+        let key: String = String::from(client.iter_recents().next().unwrap());
+        // Get bookmark
+        let bookmark: (String, u16, FileTransferProtocol, String) = client.get_recent(&key).unwrap();
+        assert_eq!(bookmark.0, String::from("192.168.1.31"));
+        assert_eq!(bookmark.1, 22);
+        assert_eq!(bookmark.2, FileTransferProtocol::Sftp);
+        assert_eq!(bookmark.3, String::from("pi"));
+        // Write bookmarks
+        assert!(client.write_bookmarks().is_ok());
+        // Delete bookmark
+        client.del_recent(&key);
+        // Get unexisting bookmark
+        assert!(client.get_bookmark(&key).is_none());
+        // Write bookmarks
+        assert!(client.write_bookmarks().is_ok());
+    }
+
+    /// ### get_paths
+    /// 
+    /// Get paths for configuration and key for bookmarks
+    fn get_paths(dir: &Path) -> (PathBuf, PathBuf) {
+        let mut k: PathBuf = PathBuf::from(dir);
+        let mut c: PathBuf = k.clone();
+        k.push("bookmarks.key");
+        c.push("bookmarks.toml");
+        (c, k)
+    }
+
+    /// ### create_tmp_dir
+    /// 
+    /// Create temporary directory
+    fn create_tmp_dir() -> tempfile::TempDir {
+        tempfile::TempDir::new().ok().unwrap()
+    }
+
 }
