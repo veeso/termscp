@@ -326,11 +326,11 @@ impl AuthActivity {
             .unwrap()
             .iter_recents()
             .map(|key: &String| {
-                let entry: (String, u16, FileTransferProtocol, String, _) = self
+                let entry: (String, u16, FileTransferProtocol, String) = self
                     .bookmarks_client
                     .as_ref()
                     .unwrap()
-                    .get_bookmark(key)
+                    .get_recent(key)
                     .unwrap();
                 ListItem::new(Span::from(format!(
                     "{}://{}@{}:{}",
