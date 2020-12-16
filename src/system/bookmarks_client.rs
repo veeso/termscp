@@ -101,7 +101,7 @@ impl BookmarksClient {
     /// Get bookmark associated to key
     pub fn get_bookmark(
         &self,
-        key: &String,
+        key: &str,
     ) -> Option<(String, u16, FileTransferProtocol, String, Option<String>)> {
         let entry: &Bookmark = self.hosts.bookmarks.get(key)?;
         Some((
@@ -145,7 +145,7 @@ impl BookmarksClient {
     /// ### del_bookmark
     ///
     /// Delete entry from bookmarks
-    pub fn del_bookmark(&mut self, name: &String) {
+    pub fn del_bookmark(&mut self, name: &str) {
         let _ = self.hosts.bookmarks.remove(name);
     }
     /// ### iter_recents
@@ -158,7 +158,7 @@ impl BookmarksClient {
     /// ### get_recent
     ///
     /// Get recent associated to key
-    pub fn get_recent(&self, key: &String) -> Option<(String, u16, FileTransferProtocol, String)> {
+    pub fn get_recent(&self, key: &str) -> Option<(String, u16, FileTransferProtocol, String)> {
         // NOTE: password is not decrypted; recents will never have password
         let entry: &Bookmark = self.hosts.recents.get(key)?;
         Some((
@@ -217,7 +217,7 @@ impl BookmarksClient {
     /// ### del_recent
     ///
     /// Delete entry from recents
-    pub fn del_recent(&mut self, name: &String) {
+    pub fn del_recent(&mut self, name: &str) {
         let _ = self.hosts.recents.remove(name);
     }
 
@@ -392,7 +392,8 @@ mod tests {
         let tmp_dir: tempfile::TempDir = create_tmp_dir();
         let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
         // Initialize a new bookmarks client
-        let client: BookmarksClient = BookmarksClient::new(cfg_path.as_path(), key_path.as_path()).unwrap();
+        let client: BookmarksClient =
+            BookmarksClient::new(cfg_path.as_path(), key_path.as_path()).unwrap();
         // Verify client
         assert_eq!(client.hosts.bookmarks.len(), 0);
         assert_eq!(client.hosts.recents.len(), 0);
@@ -402,7 +403,10 @@ mod tests {
 
     #[test]
     fn test_system_bookmarks_new_err() {
-        assert!(BookmarksClient::new(Path::new("/tmp/oifoif/omar"), Path::new("/tmp/efnnu/omar")).is_err());
+        assert!(
+            BookmarksClient::new(Path::new("/tmp/oifoif/omar"), Path::new("/tmp/efnnu/omar"))
+                .is_err()
+        );
     }
 
     #[test]
@@ -410,24 +414,40 @@ mod tests {
         let tmp_dir: tempfile::TempDir = create_tmp_dir();
         let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
         // Initialize a new bookmarks client
-        let mut client: BookmarksClient = BookmarksClient::new(cfg_path.as_path(), key_path.as_path()).unwrap();
+        let mut client: BookmarksClient =
+            BookmarksClient::new(cfg_path.as_path(), key_path.as_path()).unwrap();
         // Add some bookmarks
-        client.add_bookmark(String::from("raspberry"), String::from("192.168.1.31"), 22, FileTransferProtocol::Sftp, String::from("pi"), Some(String::from("mypassword")));
-        client.add_recent(String::from("192.168.1.31"), 22, FileTransferProtocol::Sftp, String::from("pi"));
+        client.add_bookmark(
+            String::from("raspberry"),
+            String::from("192.168.1.31"),
+            22,
+            FileTransferProtocol::Sftp,
+            String::from("pi"),
+            Some(String::from("mypassword")),
+        );
+        client.add_recent(
+            String::from("192.168.1.31"),
+            22,
+            FileTransferProtocol::Sftp,
+            String::from("pi"),
+        );
         let recent_key: String = String::from(client.iter_recents().next().unwrap());
         assert!(client.write_bookmarks().is_ok());
         let key: String = client.key.clone();
         // Re-initialize a client
-        let client: BookmarksClient = BookmarksClient::new(cfg_path.as_path(), key_path.as_path()).unwrap();
+        let client: BookmarksClient =
+            BookmarksClient::new(cfg_path.as_path(), key_path.as_path()).unwrap();
         // Verify it loaded parameters correctly
         assert_eq!(client.key, key);
-        let bookmark: (String, u16, FileTransferProtocol, String, Option<String>) = client.get_bookmark(&String::from("raspberry")).unwrap();
+        let bookmark: (String, u16, FileTransferProtocol, String, Option<String>) =
+            client.get_bookmark(&String::from("raspberry")).unwrap();
         assert_eq!(bookmark.0, String::from("192.168.1.31"));
         assert_eq!(bookmark.1, 22);
         assert_eq!(bookmark.2, FileTransferProtocol::Sftp);
         assert_eq!(bookmark.3, String::from("pi"));
         assert_eq!(*bookmark.4.as_ref().unwrap(), String::from("mypassword"));
-        let bookmark: (String, u16, FileTransferProtocol, String) = client.get_recent(&recent_key).unwrap();
+        let bookmark: (String, u16, FileTransferProtocol, String) =
+            client.get_recent(&recent_key).unwrap();
         assert_eq!(bookmark.0, String::from("192.168.1.31"));
         assert_eq!(bookmark.1, 22);
         assert_eq!(bookmark.2, FileTransferProtocol::Sftp);
@@ -439,11 +459,20 @@ mod tests {
         let tmp_dir: tempfile::TempDir = create_tmp_dir();
         let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
         // Initialize a new bookmarks client
-        let mut client: BookmarksClient = BookmarksClient::new(cfg_path.as_path(), key_path.as_path()).unwrap();
+        let mut client: BookmarksClient =
+            BookmarksClient::new(cfg_path.as_path(), key_path.as_path()).unwrap();
         // Add bookmark
-        client.add_bookmark(String::from("raspberry"), String::from("192.168.1.31"), 22, FileTransferProtocol::Sftp, String::from("pi"), Some(String::from("mypassword")));
+        client.add_bookmark(
+            String::from("raspberry"),
+            String::from("192.168.1.31"),
+            22,
+            FileTransferProtocol::Sftp,
+            String::from("pi"),
+            Some(String::from("mypassword")),
+        );
         // Get bookmark
-        let bookmark: (String, u16, FileTransferProtocol, String, Option<String>) = client.get_bookmark(&String::from("raspberry")).unwrap();
+        let bookmark: (String, u16, FileTransferProtocol, String, Option<String>) =
+            client.get_bookmark(&String::from("raspberry")).unwrap();
         assert_eq!(bookmark.0, String::from("192.168.1.31"));
         assert_eq!(bookmark.1, 22);
         assert_eq!(bookmark.2, FileTransferProtocol::Sftp);
@@ -464,12 +493,19 @@ mod tests {
         let tmp_dir: tempfile::TempDir = create_tmp_dir();
         let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
         // Initialize a new bookmarks client
-        let mut client: BookmarksClient = BookmarksClient::new(cfg_path.as_path(), key_path.as_path()).unwrap();
+        let mut client: BookmarksClient =
+            BookmarksClient::new(cfg_path.as_path(), key_path.as_path()).unwrap();
         // Add bookmark
-        client.add_recent(String::from("192.168.1.31"), 22, FileTransferProtocol::Sftp, String::from("pi"));
+        client.add_recent(
+            String::from("192.168.1.31"),
+            22,
+            FileTransferProtocol::Sftp,
+            String::from("pi"),
+        );
         let key: String = String::from(client.iter_recents().next().unwrap());
         // Get bookmark
-        let bookmark: (String, u16, FileTransferProtocol, String) = client.get_recent(&key).unwrap();
+        let bookmark: (String, u16, FileTransferProtocol, String) =
+            client.get_recent(&key).unwrap();
         assert_eq!(bookmark.0, String::from("192.168.1.31"));
         assert_eq!(bookmark.1, 22);
         assert_eq!(bookmark.2, FileTransferProtocol::Sftp);
@@ -485,7 +521,7 @@ mod tests {
     }
 
     /// ### get_paths
-    /// 
+    ///
     /// Get paths for configuration and key for bookmarks
     fn get_paths(dir: &Path) -> (PathBuf, PathBuf) {
         let mut k: PathBuf = PathBuf::from(dir);
@@ -496,10 +532,9 @@ mod tests {
     }
 
     /// ### create_tmp_dir
-    /// 
+    ///
     /// Create temporary directory
     fn create_tmp_dir() -> tempfile::TempDir {
         tempfile::TempDir::new().ok().unwrap()
     }
-
 }

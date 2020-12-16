@@ -269,7 +269,7 @@ impl FileTransferActivity {
     ///
     /// Instantiates a new FileTransferActivity
     pub fn new(params: FileTransferParams) -> FileTransferActivity {
-        let protocol: FileTransferProtocol = params.protocol.clone();
+        let protocol: FileTransferProtocol = params.protocol;
         FileTransferActivity {
             disconnected: false,
             quit: false,

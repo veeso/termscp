@@ -228,7 +228,7 @@ impl AuthActivity {
                     // Prepare paths
                     let mut bookmarks_file: PathBuf = path.clone();
                     bookmarks_file.push("bookmarks.toml");
-                    let mut key_file: PathBuf = path.clone();
+                    let mut key_file: PathBuf = path;
                     key_file.push(".bookmarks.key"); // key file is hidden
                                                      // Initialize client
                     match BookmarksClient::new(bookmarks_file.as_path(), key_file.as_path()) {
