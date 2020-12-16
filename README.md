@@ -24,6 +24,7 @@ Current version: 0.1.3 (13/12/2020)
     - [Address argument 🌎](#address-argument-)
       - [How Password can be provided 🔐](#how-password-can-be-provided-)
   - [Bookmarks ⭐](#bookmarks-)
+    - [Are my passwords Safe 😈](#are-my-passwords-safe-)
   - [Keybindings ⌨](#keybindings-)
   - [Documentation 📚](#documentation-)
   - [Known issues 🧻](#known-issues-)
@@ -184,10 +185,30 @@ Password can be basically provided through 3 ways when address argument is provi
 Since TermSCP 0.2.0, it is possible to save favourites hosts, which can be then loaded quickly from the main layout of termscp.
 TermSCP will also save the last 16 hosts you connected to.
 This feature allows you to load all the parameters required to connect to a certain remote, simply selecting the bookmark in the tab under the authentication form.
-For safety reason, termscp **WILL NEVER** save your passwords; you'll need to provide it everytime (Don't worry, every time you select a bookmark, the cursor will be placed in the password form to speed up this process 😉).
+
+Bookmarks will be saved, if possible at:
+
+- `$HOME/.config/termscp/` on Linux
+- `FOLDERID_RoamingAppData\termscp\` on Windows
+- `$HOME/Library/Application Support/termscp` on MacOs
+
+For bookmarks only (this won't apply to recent hosts) it is also possible to save the password used to authenticate. The password is not saved by default and must be specified through the prompt when saving a new Bookmark.
+
+> I was very undecided about storing passwords in termscp. The reason? Saving a password on your computer might give access to a hacker to any server you've registered. But I must admit by myself that for many machines typing the password everytime is really boring, also many times I have to work with machines in LAN, which wouldn't provide any advantage to an attacker, So I came out with a good compromise for passwords.
+
+I warmly suggest you to follow these guidelines in order to decide whether you should or you shouldn't save passwords:
+
+- **DON'T** save passwords for machines which are exposed on the internet, save passwords only for machines in LAN
+- Make sure your machine is protected by attackers. If possible encrypt your disk and don't leave your PC unlocked while you're away.
+- Preferably, save passwords only when a compromising of the target machine wouldn't be a problem.
 
 To create a bookmark, just fulfill the authentication form and then input `CTRL+S`; you'll then be asked to give a name to your bookmark, and tadah, the bookmark has been created.
-If you go to [galler](#gallery-), there is a GIF showing how bookmarks work 💪.
+If you go to [gallery](#gallery-), there is a GIF showing how bookmarks work 💪.
+
+### Are my passwords Safe 😈
+
+Well, kinda.
+As said before, bookmarks are saved in your configuration directory along with passwords. Passwords are obviously not plain text, they are encrypted with **AES-128**. Does this make them safe? Well, no, the key used to encrypt your passwords is generated at the first launch of termscp and stored on your drive. So it's still possible to retrieve the key to decrypt passwords. Luckily, the location of the key guarantees your key can't be read by users different from yours, but yeah, I still wouldn't save the password for a server exposed on the internet 😉.
 
 ---
 
@@ -239,7 +260,7 @@ The developer documentation can be found on Rust Docs at <https://docs.rs/termsc
 
 ## Upcoming Features 🧪
 
-- **Text viewer**: possibility to open and read file both on remote and on local host; this will also support syntax highlighting.
+- **Text editor**: possibility to open, read and write file both on remote and on local host; this will also support syntax highlighting.
 
 ---
 
@@ -271,7 +292,13 @@ TermSCP is powered by these aweseome projects:
 
 ## Gallery 🎬
 
+> Termscp Home
+
 ![Auth](assets/images/auth.gif)
+
+> Bookmarks
+
+![Bookmarks](assets/images/bookmarks.gif)
 
 ---
 
