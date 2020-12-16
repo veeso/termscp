@@ -27,8 +27,6 @@ use super::{
     AuthActivity, Context, DialogYesNoOption, FileTransferProtocol, InputField, InputForm,
     InputMode, PopupType,
 };
-
-use crate::bookmarks::Bookmark;
 use crate::utils::align_text_center;
 
 use tui::{
@@ -128,7 +126,7 @@ impl AuthActivity {
                 let (width, height): (u16, u16) = match popup {
                     PopupType::Alert(_, _) => (50, 10),
                     PopupType::Help => (50, 70),
-                    PopupType::Input(_, _) => (40, 10),
+                    PopupType::SaveBookmark => (20, 20),
                     PopupType::YesNo(_, _, _) => (30, 10),
                 };
                 let popup_area: Rect = self.draw_popup_area(f.size(), width, height);
@@ -139,12 +137,25 @@ impl AuthActivity {
                         popup_area,
                     ),
                     PopupType::Help => f.render_widget(self.draw_popup_help(), popup_area),
-                    PopupType::Input(txt, _) => {
-                        f.render_widget(self.draw_popup_input(txt.clone()), popup_area);
+                    PopupType::SaveBookmark => {
+                        let popup_chunks = Layout::default()
+                            .direction(Direction::Vertical)
+                            .constraints(
+                                [
+                                    Constraint::Length(3), // Input form
+                                    Constraint::Length(2), // Yes/No
+                                ]
+                                .as_ref(),
+                            )
+                            .split(popup_area);
+                        let (input, yes_no): (Paragraph, Tabs) = self.draw_popup_save_bookmark();
+                        // Render parts
+                        f.render_widget(input, popup_chunks[0]);
+                        f.render_widget(yes_no, popup_chunks[1]);
                         // Set cursor
                         f.set_cursor(
-                            popup_area.x + self.input_txt.width() as u16 + 1,
-                            popup_area.y + 1,
+                            popup_chunks[0].x + self.input_txt.width() as u16 + 1,
+                            popup_chunks[0].y + 1,
                         )
                     }
                     PopupType::YesNo(txt, _, _) => {
@@ -273,21 +284,26 @@ impl AuthActivity {
     ///
     /// Draw local explorer list
     pub(super) fn draw_bookmarks_tab(&self) -> Option<List> {
-        self.bookmarks.as_ref()?;
+        self.bookmarks_client.as_ref()?;
         let hosts: Vec<ListItem> = self
-            .bookmarks
+            .bookmarks_client
             .as_ref()
             .unwrap()
-            .bookmarks
-            .iter()
-            .map(|(key, entry): (&String, &Bookmark)| {
+            .iter_bookmarks()
+            .map(|key: &String| {
+                let entry: (String, u16, FileTransferProtocol, String, _) = self
+                    .bookmarks_client
+                    .as_ref()
+                    .unwrap()
+                    .get_bookmark(key)
+                    .unwrap();
                 ListItem::new(Span::from(format!(
                     "{} ({}://{}@{}:{})",
                     key,
-                    entry.protocol.to_lowercase(),
-                    entry.username,
-                    entry.address,
-                    entry.port
+                    AuthActivity::protocol_to_str(entry.2),
+                    entry.3,
+                    entry.0,
+                    entry.1
                 )))
             })
             .collect();
@@ -316,20 +332,25 @@ impl AuthActivity {
     ///
     /// Draw local explorer list
     pub(super) fn draw_recents_tab(&self) -> Option<List> {
-        self.bookmarks.as_ref()?;
+        self.bookmarks_client.as_ref()?;
         let hosts: Vec<ListItem> = self
-            .bookmarks
+            .bookmarks_client
             .as_ref()
             .unwrap()
-            .recents
-            .values()
-            .map(|entry: &Bookmark| {
+            .iter_recents()
+            .map(|key: &String| {
+                let entry: (String, u16, FileTransferProtocol, String) = self
+                    .bookmarks_client
+                    .as_ref()
+                    .unwrap()
+                    .get_recent(key)
+                    .unwrap();
                 ListItem::new(Span::from(format!(
                     "{}://{}@{}:{}",
-                    entry.protocol.to_lowercase(),
-                    entry.username,
-                    entry.address,
-                    entry.port
+                    AuthActivity::protocol_to_str(entry.2),
+                    entry.3,
+                    entry.0,
+                    entry.1
                 )))
             })
             .collect();
@@ -406,10 +427,33 @@ impl AuthActivity {
     /// ### draw_popup_input
     ///
     /// Draw input popup
-    pub(super) fn draw_popup_input(&self, text: String) -> Paragraph {
-        Paragraph::new(self.input_txt.as_ref())
+    pub(super) fn draw_popup_save_bookmark(&self) -> (Paragraph, Tabs) {
+        let input: Paragraph = Paragraph::new(self.input_txt.as_ref())
             .style(Style::default().fg(Color::White))
-            .block(Block::default().borders(Borders::ALL).title(text))
+            .block(
+                Block::default()
+                    .borders(Borders::TOP | Borders::RIGHT | Borders::LEFT)
+                    .title("Save bookmark as..."),
+            );
+        let choices: Vec<Spans> = vec![Spans::from("Yes"), Spans::from("No")];
+        let index: usize = match self.choice_opt {
+            DialogYesNoOption::Yes => 0,
+            DialogYesNoOption::No => 1,
+        };
+        let tabs: Tabs = Tabs::new(choices)
+            .block(
+                Block::default()
+                    .borders(Borders::BOTTOM | Borders::RIGHT | Borders::LEFT)
+                    .title("Save password?"),
+            )
+            .select(index)
+            .style(Style::default())
+            .highlight_style(
+                Style::default()
+                    .add_modifier(Modifier::BOLD)
+                    .fg(Color::LightRed),
+            );
+        (input, tabs)
     }
 
     /// ### draw_popup_yesno
@@ -537,5 +581,19 @@ impl AuthActivity {
                     .title("Help"),
             )
             .start_corner(Corner::TopLeft)
+    }
+
+    /// ### protocol_to_str
+    ///
+    /// Convert protocol to str for layouts
+    fn protocol_to_str(proto: FileTransferProtocol) -> &'static str {
+        match proto {
+            FileTransferProtocol::Ftp(secure) => match secure {
+                true => "ftps",
+                false => "ftp",
+            },
+            FileTransferProtocol::Scp => "scp",
+            FileTransferProtocol::Sftp => "sftp",
+        }
     }
 }

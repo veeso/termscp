@@ -27,78 +27,31 @@
 extern crate dirs;
 
 // Locals
-use super::{AuthActivity, Color, FileTransferProtocol, InputMode, PopupType, UserHosts};
-use crate::bookmarks::serializer::BookmarkSerializer;
-use crate::bookmarks::Bookmark;
-use crate::utils::time_to_str;
+use super::{AuthActivity, Color, DialogYesNoOption, InputMode, PopupType};
+use crate::system::bookmarks_client::BookmarksClient;
+use crate::system::environment;
 
 // Ext
 use std::path::PathBuf;
-use std::time::SystemTime;
 
 impl AuthActivity {
-    /// ### read_bookmarks
-    ///
-    /// Read bookmarks from data file; Show popup if necessary
-    pub(super) fn read_bookmarks(&mut self) {
-        // Init bookmarks
-        if let Some(bookmark_file) = self.init_bookmarks() {
-            // Read
-            if self.context.is_some() {
-                match self
-                    .context
-                    .as_ref()
-                    .unwrap()
-                    .local
-                    .open_file_read(bookmark_file.as_path())
-                {
-                    Ok(reader) => {
-                        // Read bookmarks
-                        let deserializer: BookmarkSerializer = BookmarkSerializer {};
-                        match deserializer.deserialize(Box::new(reader)) {
-                            Ok(bookmarks) => self.bookmarks = Some(bookmarks),
-                            Err(err) => {
-                                self.input_mode = InputMode::Popup(PopupType::Alert(
-                                    Color::Yellow,
-                                    format!(
-                                        "Could not read bookmarks from \"{}\": {}",
-                                        bookmark_file.display(),
-                                        err
-                                    ),
-                                ))
-                            }
-                        }
-                    }
-                    Err(err) => {
-                        self.input_mode = InputMode::Popup(PopupType::Alert(
-                            Color::Yellow,
-                            format!(
-                                "Could not read bookmarks from \"{}\": {}",
-                                bookmark_file.display(),
-                                err
-                            ),
-                        ))
-                    }
-                }
-            }
-        }
-    }
-
     /// ### del_bookmark
     ///
     /// Delete bookmark
     pub(super) fn del_bookmark(&mut self, idx: usize) {
-        if let Some(hosts) = self.bookmarks.as_mut() {
+        if let Some(bookmarks_cli) = self.bookmarks_client.as_mut() {
             // Iterate over kyes
             let mut name: Option<String> = None;
-            for (i, key) in hosts.bookmarks.keys().enumerate() {
+            for (i, key) in bookmarks_cli.iter_bookmarks().enumerate() {
                 if i == idx {
                     name = Some(key.clone());
                     break;
                 }
             }
             if let Some(name) = name {
-                hosts.bookmarks.remove(name.as_str());
+                bookmarks_cli.del_bookmark(&name);
+                // Write bookmarks
+                self.write_bookmarks();
             }
         }
     }
@@ -107,20 +60,20 @@ impl AuthActivity {
     ///
     /// Load selected bookmark (at index) to input fields
     pub(super) fn load_bookmark(&mut self, idx: usize) {
-        if let Some(hosts) = self.bookmarks.as_mut() {
+        if let Some(bookmarks_cli) = self.bookmarks_client.as_ref() {
             // Iterate over bookmarks
-            for (i, bookmark) in hosts.bookmarks.values().enumerate() {
+            for (i, key) in bookmarks_cli.iter_bookmarks().enumerate() {
                 if i == idx {
-                    // Load parameters
-                    self.address = bookmark.address.clone();
-                    self.port = bookmark.port.to_string();
-                    self.protocol = match bookmark.protocol.as_str().to_uppercase().as_str() {
-                        "FTP" => FileTransferProtocol::Ftp(false),
-                        "FTPS" => FileTransferProtocol::Ftp(true),
-                        "SCP" => FileTransferProtocol::Scp,
-                        _ => FileTransferProtocol::Sftp, // Default to SFTP
-                    };
-                    self.username = bookmark.username.clone();
+                    if let Some(bookmark) = bookmarks_cli.get_bookmark(&key) {
+                        // Load parameters
+                        self.address = bookmark.0;
+                        self.port = bookmark.1.to_string();
+                        self.protocol = bookmark.2;
+                        self.username = bookmark.3;
+                        if let Some(password) = bookmark.4 {
+                            self.password = password;
+                        }
+                    }
                     // Break
                     break;
                 }
@@ -132,29 +85,61 @@ impl AuthActivity {
     ///
     /// Save current input fields as a bookmark
     pub(super) fn save_bookmark(&mut self, name: String) {
-        if let Ok(host) = self.make_user_host() {
-            if let Some(hosts) = self.bookmarks.as_mut() {
-                hosts.bookmarks.insert(name, host);
-                // Write bookmarks
-                self.write_bookmarks();
+        // Check port
+        let port: u16 = match self.port.parse::<usize>() {
+            Ok(val) => {
+                if val > 65535 {
+                    self.input_mode = InputMode::Popup(PopupType::Alert(
+                        Color::Red,
+                        String::from("Specified port must be in range 0-65535"),
+                    ));
+                    return;
+                }
+                val as u16
             }
+            Err(_) => {
+                self.input_mode = InputMode::Popup(PopupType::Alert(
+                    Color::Red,
+                    String::from("Specified port is not a number"),
+                ));
+                return;
+            }
+        };
+        if let Some(bookmarks_cli) = self.bookmarks_client.as_mut() {
+            // Check if password must be saved
+            let password: Option<String> = match self.choice_opt {
+                DialogYesNoOption::Yes => Some(self.password.clone()),
+                DialogYesNoOption::No => None,
+            };
+            bookmarks_cli.add_bookmark(
+                name,
+                self.address.clone(),
+                port,
+                self.protocol,
+                self.username.clone(),
+                password,
+            );
+            // Save bookmarks
+            self.write_bookmarks();
         }
     }
     /// ### del_recent
     ///
     /// Delete recent
     pub(super) fn del_recent(&mut self, idx: usize) {
-        if let Some(hosts) = self.bookmarks.as_mut() {
+        if let Some(client) = self.bookmarks_client.as_mut() {
             // Iterate over kyes
             let mut name: Option<String> = None;
-            for (i, key) in hosts.recents.keys().enumerate() {
+            for (i, key) in client.iter_recents().enumerate() {
                 if i == idx {
                     name = Some(key.clone());
                     break;
                 }
             }
             if let Some(name) = name {
-                hosts.recents.remove(name.as_str());
+                client.del_recent(&name);
+                // Save bookmarks
+                self.write_bookmarks();
             }
         }
     }
@@ -163,22 +148,19 @@ impl AuthActivity {
     ///
     /// Load selected recent (at index) to input fields
     pub(super) fn load_recent(&mut self, idx: usize) {
-        if let Some(hosts) = self.bookmarks.as_mut() {
+        if let Some(client) = self.bookmarks_client.as_ref() {
             // Iterate over bookmarks
-            for (i, bookmark) in hosts.recents.values().enumerate() {
+            for (i, key) in client.iter_recents().enumerate() {
                 if i == idx {
-                    // Load parameters
-                    self.address = bookmark.address.clone();
-                    self.port = bookmark.port.to_string();
-                    self.protocol = match bookmark.protocol.as_str().to_uppercase().as_str() {
-                        "FTP" => FileTransferProtocol::Ftp(false),
-                        "FTPS" => FileTransferProtocol::Ftp(true),
-                        "SCP" => FileTransferProtocol::Scp,
-                        _ => FileTransferProtocol::Sftp, // Default to SFTP
-                    };
-                    self.username = bookmark.username.clone();
-                    // Break
-                    break;
+                    if let Some(bookmark) = client.get_recent(key) {
+                        // Load parameters
+                        self.address = bookmark.0;
+                        self.port = bookmark.1.to_string();
+                        self.protocol = bookmark.2;
+                        self.username = bookmark.3;
+                        // Break
+                        break;
+                    }
                 }
             }
         }
@@ -188,46 +170,6 @@ impl AuthActivity {
     ///
     /// Save current input fields as a "recent"
     pub(super) fn save_recent(&mut self) {
-        if let Ok(host) = self.make_user_host() {
-            if let Some(hosts) = self.bookmarks.as_mut() {
-                // Check if duplicated
-                for recent_host in hosts.recents.values() {
-                    if *recent_host == host {
-                        // Don't save duplicates
-                        return;
-                    }
-                }
-                // If hosts size is bigger than 16; pop last
-                if hosts.recents.len() >= 16 {
-                    let mut keys: Vec<String> = Vec::with_capacity(hosts.recents.len());
-                    for key in hosts.recents.keys() {
-                        keys.push(key.clone());
-                    }
-                    // Sort keys; NOTE: most recent is the last element
-                    keys.sort();
-                    // Delete keys starting from the last one
-                    for key in keys.iter() {
-                        let _ = hosts.recents.remove(key);
-                        // If length is < 16; break
-                        if hosts.recents.len() < 16 {
-                            break;
-                        }
-                    }
-                }
-                // Create name
-                let name: String = time_to_str(SystemTime::now(), "ISO%Y%m%dT%H%M%S");
-                // Save host to recents
-                hosts.recents.insert(name, host);
-                // Write bookmarks
-                self.write_bookmarks();
-            }
-        }
-    }
-
-    /// ### make_user_host
-    ///
-    /// Make user host from current input fields
-    fn make_user_host(&mut self) -> Result<Bookmark, ()> {
         // Check port
         let port: u16 = match self.port.parse::<usize>() {
             Ok(val) => {
@@ -236,7 +178,7 @@ impl AuthActivity {
                         Color::Red,
                         String::from("Specified port must be in range 0-65535"),
                     ));
-                    return Err(());
+                    return;
                 }
                 val as u16
             }
@@ -245,156 +187,72 @@ impl AuthActivity {
                     Color::Red,
                     String::from("Specified port is not a number"),
                 ));
-                return Err(());
+                return;
             }
         };
-        Ok(Bookmark {
-            address: self.address.clone(),
-            port,
-            protocol: match self.protocol {
-                FileTransferProtocol::Ftp(secure) => match secure {
-                    true => String::from("FTPS"),
-                    false => String::from("FTP"),
-                },
-                FileTransferProtocol::Scp => String::from("SCP"),
-                FileTransferProtocol::Sftp => String::from("SFTP"),
-            },
-            username: self.username.clone(),
-        })
+        if let Some(bookmarks_cli) = self.bookmarks_client.as_mut() {
+            bookmarks_cli.add_recent(
+                self.address.clone(),
+                port,
+                self.protocol,
+                self.username.clone(),
+            );
+            // Save bookmarks
+            self.write_bookmarks();
+        }
     }
 
     /// ### write_bookmarks
     ///
     /// Write bookmarks to file
     fn write_bookmarks(&mut self) {
-        if self.bookmarks.is_some() && self.context.is_some() {
-            // Open file for write
-            if let Some(bookmarks_file) = self.init_bookmarks() {
-                match self
-                    .context
-                    .as_ref()
-                    .unwrap()
-                    .local
-                    .open_file_write(bookmarks_file.as_path())
-                {
-                    Ok(writer) => {
-                        let serializer: BookmarkSerializer = BookmarkSerializer {};
-                        if let Err(err) = serializer
-                            .serialize(Box::new(writer), &self.bookmarks.as_ref().unwrap())
-                        {
-                            self.input_mode = InputMode::Popup(PopupType::Alert(
-                                Color::Yellow,
-                                format!(
-                                    "Could not write default bookmarks at \"{}\": {}",
-                                    bookmarks_file.display(),
-                                    err
-                                ),
-                            ));
-                        }
-                    }
-                    Err(err) => {
-                        self.input_mode = InputMode::Popup(PopupType::Alert(
-                            Color::Yellow,
-                            format!(
-                                "Could not write default bookmarks at \"{}\": {}",
-                                bookmarks_file.display(),
-                                err
-                            ),
-                        ))
-                    }
-                }
+        if let Some(bookmarks_cli) = self.bookmarks_client.as_ref() {
+            if let Err(err) = bookmarks_cli.write_bookmarks() {
+                self.input_mode = InputMode::Popup(PopupType::Alert(
+                    Color::Red,
+                    format!("Could not write bookmarks: {}", err),
+                ));
             }
         }
     }
 
-    /// ### init_bookmarks
+    /// ### init_bookmarks_client
     ///
-    /// Initialize bookmarks directory
-    /// Returns bookmark path
-    fn init_bookmarks(&mut self) -> Option<PathBuf> {
-        // Get file
-        lazy_static! {
-            static ref CONF_DIR: Option<PathBuf> = dirs::config_dir();
-        }
-        if CONF_DIR.is_some() {
-            // Get path of bookmarks
-            let mut p: PathBuf = CONF_DIR.as_ref().unwrap().clone();
-            // Append termscp dir
-            p.push("termscp/");
-            // Mkdir if doesn't exist
-            if self.context.is_some() {
-                if let Err(err) = self
-                    .context
-                    .as_mut()
-                    .unwrap()
-                    .local
-                    .mkdir_ex(p.as_path(), true)
-                {
-                    // Show popup
-                    self.input_mode = InputMode::Popup(PopupType::Alert(
-                        Color::Yellow,
-                        format!(
-                            "Could not create configuration directory at \"{}\": {}",
-                            p.display(),
-                            err
-                        ),
-                    ));
-                    // Return None
-                    return None;
-                }
-            }
-            // Append bookmarks.toml
-            p.push("bookmarks.toml");
-            // If bookmarks.toml doesn't exist, initializae it
-            if self.context.is_some()
-                && !self
-                    .context
-                    .as_ref()
-                    .unwrap()
-                    .local
-                    .file_exists(p.as_path())
-            {
-                // Write file
-                let default_hosts: UserHosts = Default::default();
-                match self
-                    .context
-                    .as_ref()
-                    .unwrap()
-                    .local
-                    .open_file_write(p.as_path())
-                {
-                    Ok(writer) => {
-                        let serializer: BookmarkSerializer = BookmarkSerializer {};
-                        // Serialize and write
-                        if let Err(err) = serializer.serialize(Box::new(writer), &default_hosts) {
+    /// Initialize bookmarks client
+    pub(super) fn init_bookmarks_client(&mut self) {
+        // Get config dir
+        match environment::init_config_dir() {
+            Ok(path) => {
+                // If some configure client, otherwise do nothing; don't bother users telling them that bookmarks are not supported on their system.
+                if let Some(path) = path {
+                    // Prepare paths
+                    let mut bookmarks_file: PathBuf = path.clone();
+                    bookmarks_file.push("bookmarks.toml");
+                    let mut key_file: PathBuf = path;
+                    key_file.push(".bookmarks.key"); // key file is hidden
+                                                     // Initialize client
+                    match BookmarksClient::new(bookmarks_file.as_path(), key_file.as_path()) {
+                        Ok(cli) => self.bookmarks_client = Some(cli),
+                        Err(err) => {
                             self.input_mode = InputMode::Popup(PopupType::Alert(
-                                Color::Yellow,
+                                Color::Red,
                                 format!(
-                                    "Could not write default bookmarks at \"{}\": {}",
-                                    p.display(),
+                                    "Could not initialize bookmarks (at \"{}\", \"{}\"): {}",
+                                    bookmarks_file.display(),
+                                    key_file.display(),
                                     err
                                 ),
-                            ));
-                            return None;
+                            ))
                         }
-                    }
-                    Err(err) => {
-                        self.input_mode = InputMode::Popup(PopupType::Alert(
-                            Color::Yellow,
-                            format!(
-                                "Could not write default bookmarks at \"{}\": {}",
-                                p.display(),
-                                err
-                            ),
-                        ));
-                        return None;
                     }
                 }
             }
-            // return path
-            Some(p)
-        } else {
-            None
+            Err(err) => {
+                self.input_mode = InputMode::Popup(PopupType::Alert(
+                    Color::Red,
+                    format!("Could not initialize configuration directory: {}", err),
+                ))
+            }
         }
     }
 }

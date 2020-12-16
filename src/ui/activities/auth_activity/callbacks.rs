@@ -53,6 +53,8 @@ impl AuthActivity {
     ///
     /// Callback used to save bookmark with name
     pub(super) fn callback_save_bookmark(&mut self, input: String) {
-        self.save_bookmark(input);
+        if !input.is_empty() {
+            self.save_bookmark(input);
+        }
     }
 }

@@ -23,6 +23,8 @@ ftp4 = { version = "^4.0.1", features = ["secure"] }
 getopts = "0.2.21"
 hostname = "0.3.1"
 lazy_static = "1.4.0"
+magic-crypt = "3.1.6"
+rand = "0.7.3"
 regex = "1.4.2"
 rpassword = "5.0.0"
 serde = { version = "1.0.118", features = ["derive"] }

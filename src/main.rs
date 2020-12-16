@@ -26,6 +26,8 @@ const TERMSCP_AUTHORS: &str = env!("CARGO_PKG_AUTHORS");
 extern crate getopts;
 #[macro_use]
 extern crate lazy_static;
+#[macro_use]
+extern crate magic_crypt;
 extern crate rpassword;
 
 // External libs
@@ -40,6 +42,7 @@ mod bookmarks;
 mod filetransfer;
 mod fs;
 mod host;
+mod system;
 mod ui;
 mod utils;
 

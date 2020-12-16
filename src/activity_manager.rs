@@ -160,7 +160,7 @@ impl ActivityManager {
                         0 => None,
                         _ => Some(activity.password.clone()),
                     },
-                    protocol: activity.protocol.clone(),
+                    protocol: activity.protocol,
                 });
                 break;
             }

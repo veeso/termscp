@@ -25,7 +25,7 @@
 
 use super::{
     AuthActivity, DialogCallback, DialogYesNoOption, FileTransferProtocol, InputEvent, InputField,
-    InputForm, InputMode, OnInputSubmitCallback, PopupType,
+    InputForm, InputMode, PopupType,
 };
 
 use crossterm::event::{KeyCode, KeyModifiers};
@@ -160,11 +160,10 @@ impl AuthActivity {
                                 self.input_mode = InputMode::Popup(PopupType::Help);
                             }
                             'S' | 's' => {
+                                // Default choice option to no
+                                self.choice_opt = DialogYesNoOption::No;
                                 // Save bookmark as...
-                                self.input_mode = InputMode::Popup(PopupType::Input(
-                                    String::from("Save bookmark as..."),
-                                    AuthActivity::callback_save_bookmark,
-                                ));
+                                self.input_mode = InputMode::Popup(PopupType::SaveBookmark);
                             }
                             _ => { /* Nothing to do */ }
                         }
@@ -234,14 +233,14 @@ impl AuthActivity {
                     // Move bookmarks index up
                     if self.bookmarks_idx > 0 {
                         self.bookmarks_idx -= 1;
-                    } else if let Some(hosts) = &self.bookmarks {
+                    } else if let Some(bookmarks_cli) = &self.bookmarks_client {
                         // Put to last index (wrap)
-                        self.bookmarks_idx = hosts.bookmarks.len() - 1;
+                        self.bookmarks_idx = bookmarks_cli.iter_bookmarks().count() - 1;
                     }
                 }
                 KeyCode::Down => {
-                    if let Some(hosts) = &self.bookmarks {
-                        let size: usize = hosts.bookmarks.len();
+                    if let Some(bookmarks_cli) = &self.bookmarks_client {
+                        let size: usize = bookmarks_cli.iter_bookmarks().count();
                         // Check if can move down
                         if self.bookmarks_idx + 1 >= size {
                             // Move bookmarks index down
@@ -282,11 +281,10 @@ impl AuthActivity {
                         self.input_mode = InputMode::Popup(PopupType::Help);
                     }
                     'S' | 's' => {
+                        // Default choice option to no
+                        self.choice_opt = DialogYesNoOption::No;
                         // Save bookmark as...
-                        self.input_mode = InputMode::Popup(PopupType::Input(
-                            String::from("Save bookmark as..."),
-                            AuthActivity::callback_save_bookmark,
-                        ));
+                        self.input_mode = InputMode::Popup(PopupType::SaveBookmark);
                     }
                     _ => { /* Nothing to do */ }
                 },
@@ -315,14 +313,14 @@ impl AuthActivity {
                     // Move bookmarks index up
                     if self.recents_idx > 0 {
                         self.recents_idx -= 1;
-                    } else if let Some(hosts) = &self.bookmarks {
+                    } else if let Some(bookmarks_cli) = &self.bookmarks_client {
                         // Put to last index (wrap)
-                        self.recents_idx = hosts.recents.len() - 1;
+                        self.recents_idx = bookmarks_cli.iter_recents().count() - 1;
                     }
                 }
                 KeyCode::Down => {
-                    if let Some(hosts) = &self.bookmarks {
-                        let size: usize = hosts.recents.len();
+                    if let Some(bookmarks_cli) = &self.bookmarks_client {
+                        let size: usize = bookmarks_cli.iter_recents().count();
                         // Check if can move down
                         if self.recents_idx + 1 >= size {
                             // Move bookmarks index down
@@ -363,11 +361,10 @@ impl AuthActivity {
                         self.input_mode = InputMode::Popup(PopupType::Help);
                     }
                     'S' | 's' => {
+                        // Default choice option to no
+                        self.choice_opt = DialogYesNoOption::No;
                         // Save bookmark as...
-                        self.input_mode = InputMode::Popup(PopupType::Input(
-                            String::from("Save bookmark as..."),
-                            AuthActivity::callback_save_bookmark,
-                        ));
+                        self.input_mode = InputMode::Popup(PopupType::SaveBookmark);
                     }
                     _ => { /* Nothing to do */ }
                 },
@@ -383,7 +380,7 @@ impl AuthActivity {
         match ptype {
             PopupType::Alert(_, _) => self.handle_input_event_mode_popup_alert(ev),
             PopupType::Help => self.handle_input_event_mode_popup_help(ev),
-            PopupType::Input(_, cb) => self.handle_input_event_mode_popup_input(ev, cb),
+            PopupType::SaveBookmark => self.handle_input_event_mode_popup_save_bookmark(ev),
             PopupType::YesNo(_, yes_cb, no_cb) => {
                 self.handle_input_event_mode_popup_yesno(ev, yes_cb, no_cb)
             }
@@ -418,14 +415,10 @@ impl AuthActivity {
         }
     }
 
-    /// ### handle_input_event_mode_popup_input
+    /// ### handle_input_event_mode_popup_save_bookmark
     ///
-    /// Input event handler for input popup
-    pub(super) fn handle_input_event_mode_popup_input(
-        &mut self,
-        ev: &InputEvent,
-        cb: OnInputSubmitCallback,
-    ) {
+    /// Input event handler for SaveBookmark popup
+    pub(super) fn handle_input_event_mode_popup_save_bookmark(&mut self, ev: &InputEvent) {
         // If enter, close popup, otherwise push chars to input
         if let InputEvent::Key(key) = ev {
             match key.code {
@@ -435,6 +428,8 @@ impl AuthActivity {
                     self.input_txt.clear();
                     // Set mode back to form
                     self.input_mode = InputMode::Form;
+                    // Reset choice option to yes
+                    self.choice_opt = DialogYesNoOption::Yes;
                 }
                 KeyCode::Enter => {
                     // Submit
@@ -444,8 +439,12 @@ impl AuthActivity {
                     // Set mode back to form BEFORE CALLBACKS!!! Callback can then overwrite this, clever uh?
                     self.input_mode = InputMode::Form;
                     // Call cb
-                    cb(self, input_text);
+                    self.callback_save_bookmark(input_text);
+                    // Reset choice option to yes
+                    self.choice_opt = DialogYesNoOption::Yes;
                 }
+                KeyCode::Left => self.choice_opt = DialogYesNoOption::Yes, // Move yes/no with arrows
+                KeyCode::Right => self.choice_opt = DialogYesNoOption::No, // Move yes/no with arrows
                 KeyCode::Char(ch) => self.input_txt.push(ch),
                 KeyCode::Backspace => {
                     let _ = self.input_txt.pop();
