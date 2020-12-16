@@ -37,7 +37,7 @@ pub mod sftp_transfer;
 ///
 /// This enum defines the different transfer protocol available in TermSCP
 
-#[derive(std::cmp::PartialEq, std::fmt::Debug, std::clone::Clone)]
+#[derive(std::cmp::PartialEq, std::fmt::Debug, std::clone::Clone, Copy)]
 pub enum FileTransferProtocol {
     Sftp,
     Scp,
