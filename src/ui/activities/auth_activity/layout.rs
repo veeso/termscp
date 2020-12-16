@@ -27,8 +27,6 @@ use super::{
     AuthActivity, Context, DialogYesNoOption, FileTransferProtocol, InputField, InputForm,
     InputMode, PopupType,
 };
-
-use crate::bookmarks::Bookmark;
 use crate::utils::align_text_center;
 
 use tui::{
@@ -273,21 +271,26 @@ impl AuthActivity {
     ///
     /// Draw local explorer list
     pub(super) fn draw_bookmarks_tab(&self) -> Option<List> {
-        self.bookmarks.as_ref()?;
+        self.bookmarks_client.as_ref()?;
         let hosts: Vec<ListItem> = self
-            .bookmarks
+            .bookmarks_client
             .as_ref()
             .unwrap()
-            .bookmarks
-            .iter()
-            .map(|(key, entry): (&String, &Bookmark)| {
+            .iter_bookmarks()
+            .map(|key: &String| {
+                let entry: (String, u16, FileTransferProtocol, String, _) = self
+                    .bookmarks_client
+                    .as_ref()
+                    .unwrap()
+                    .get_bookmark(key)
+                    .unwrap();
                 ListItem::new(Span::from(format!(
                     "{} ({}://{}@{}:{})",
                     key,
-                    entry.protocol.to_lowercase(),
-                    entry.username,
-                    entry.address,
-                    entry.port
+                    AuthActivity::protocol_to_str(entry.2),
+                    entry.3,
+                    entry.0,
+                    entry.1
                 )))
             })
             .collect();
@@ -316,20 +319,25 @@ impl AuthActivity {
     ///
     /// Draw local explorer list
     pub(super) fn draw_recents_tab(&self) -> Option<List> {
-        self.bookmarks.as_ref()?;
+        self.bookmarks_client.as_ref()?;
         let hosts: Vec<ListItem> = self
-            .bookmarks
+            .bookmarks_client
             .as_ref()
             .unwrap()
-            .recents
-            .values()
-            .map(|entry: &Bookmark| {
+            .iter_recents()
+            .map(|key: &String| {
+                let entry: (String, u16, FileTransferProtocol, String, _) = self
+                    .bookmarks_client
+                    .as_ref()
+                    .unwrap()
+                    .get_bookmark(key)
+                    .unwrap();
                 ListItem::new(Span::from(format!(
                     "{}://{}@{}:{}",
-                    entry.protocol.to_lowercase(),
-                    entry.username,
-                    entry.address,
-                    entry.port
+                    AuthActivity::protocol_to_str(entry.2),
+                    entry.3,
+                    entry.0,
+                    entry.1
                 )))
             })
             .collect();
@@ -537,5 +545,19 @@ impl AuthActivity {
                     .title("Help"),
             )
             .start_corner(Corner::TopLeft)
+    }
+
+    /// ### protocol_to_str
+    ///
+    /// Convert protocol to str for layouts
+    fn protocol_to_str(proto: FileTransferProtocol) -> &'static str {
+        match proto {
+            FileTransferProtocol::Ftp(secure) => match secure {
+                true => "ftps",
+                false => "ftp",
+            },
+            FileTransferProtocol::Scp => "scp",
+            FileTransferProtocol::Sftp => "sftp",
+        }
     }
 }

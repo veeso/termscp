@@ -36,8 +36,8 @@ extern crate unicode_width;
 
 // locals
 use super::{Activity, Context};
-use crate::bookmarks::UserHosts;
 use crate::filetransfer::FileTransferProtocol;
+use crate::system::bookmarks_client::BookmarksClient;
 
 // Includes
 use crossterm::event::Event as InputEvent;
@@ -111,7 +111,7 @@ pub struct AuthActivity {
     pub submit: bool, // becomes true after user has submitted fields
     pub quit: bool,   // Becomes true if user has pressed esc
     context: Option<Context>,
-    bookmarks: Option<UserHosts>,
+    bookmarks_client: Option<BookmarksClient>,
     selected_field: InputField, // Selected field in AuthCredentials Form
     input_mode: InputMode,
     input_form: InputForm,
@@ -143,7 +143,7 @@ impl AuthActivity {
             submit: false,
             quit: false,
             context: None,
-            bookmarks: None,
+            bookmarks_client: None,
             selected_field: InputField::Address,
             input_mode: InputMode::Form,
             input_form: InputForm::AuthCredentials,
@@ -171,9 +171,9 @@ impl Activity for AuthActivity {
         // Put raw mode on enabled
         let _ = enable_raw_mode();
         self.input_mode = InputMode::Form;
-        // Read bookmarks
-        if self.bookmarks.is_none() {
-            self.read_bookmarks();
+        // Init bookmarks client
+        if self.bookmarks_client.is_none() {
+            self.init_bookmarks_client();
         }
     }
 

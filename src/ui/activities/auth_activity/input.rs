@@ -234,14 +234,14 @@ impl AuthActivity {
                     // Move bookmarks index up
                     if self.bookmarks_idx > 0 {
                         self.bookmarks_idx -= 1;
-                    } else if let Some(hosts) = &self.bookmarks {
+                    } else if let Some(bookmarks_cli) = &self.bookmarks_client {
                         // Put to last index (wrap)
-                        self.bookmarks_idx = hosts.bookmarks.len() - 1;
+                        self.bookmarks_idx = bookmarks_cli.iter_bookmarks().count() - 1;
                     }
                 }
                 KeyCode::Down => {
-                    if let Some(hosts) = &self.bookmarks {
-                        let size: usize = hosts.bookmarks.len();
+                    if let Some(bookmarks_cli) = &self.bookmarks_client {
+                        let size: usize = bookmarks_cli.iter_bookmarks().count();
                         // Check if can move down
                         if self.bookmarks_idx + 1 >= size {
                             // Move bookmarks index down
@@ -315,14 +315,14 @@ impl AuthActivity {
                     // Move bookmarks index up
                     if self.recents_idx > 0 {
                         self.recents_idx -= 1;
-                    } else if let Some(hosts) = &self.bookmarks {
+                    } else if let Some(bookmarks_cli) = &self.bookmarks_client {
                         // Put to last index (wrap)
-                        self.recents_idx = hosts.recents.len() - 1;
+                        self.recents_idx = bookmarks_cli.iter_recents().count() - 1;
                     }
                 }
                 KeyCode::Down => {
-                    if let Some(hosts) = &self.bookmarks {
-                        let size: usize = hosts.recents.len();
+                    if let Some(bookmarks_cli) = &self.bookmarks_client {
+                        let size: usize = bookmarks_cli.iter_recents().count();
                         // Check if can move down
                         if self.recents_idx + 1 >= size {
                             // Move bookmarks index down
