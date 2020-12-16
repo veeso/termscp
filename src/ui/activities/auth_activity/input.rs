@@ -160,8 +160,10 @@ impl AuthActivity {
                                 self.input_mode = InputMode::Popup(PopupType::Help);
                             }
                             'S' | 's' => {
+                                // Default choice option to no
+                                self.choice_opt = DialogYesNoOption::No;
                                 // Save bookmark as...
-                                self.input_mode = InputMode::Popup(PopupType::Input(
+                                self.input_mode = InputMode::Popup(PopupType::SaveBookmark(
                                     String::from("Save bookmark as..."),
                                     AuthActivity::callback_save_bookmark,
                                 ));
@@ -282,8 +284,10 @@ impl AuthActivity {
                         self.input_mode = InputMode::Popup(PopupType::Help);
                     }
                     'S' | 's' => {
+                        // Default choice option to no
+                        self.choice_opt = DialogYesNoOption::No;
                         // Save bookmark as...
-                        self.input_mode = InputMode::Popup(PopupType::Input(
+                        self.input_mode = InputMode::Popup(PopupType::SaveBookmark(
                             String::from("Save bookmark as..."),
                             AuthActivity::callback_save_bookmark,
                         ));
@@ -363,8 +367,10 @@ impl AuthActivity {
                         self.input_mode = InputMode::Popup(PopupType::Help);
                     }
                     'S' | 's' => {
+                        // Default choice option to no
+                        self.choice_opt = DialogYesNoOption::No;
                         // Save bookmark as...
-                        self.input_mode = InputMode::Popup(PopupType::Input(
+                        self.input_mode = InputMode::Popup(PopupType::SaveBookmark(
                             String::from("Save bookmark as..."),
                             AuthActivity::callback_save_bookmark,
                         ));
@@ -383,7 +389,7 @@ impl AuthActivity {
         match ptype {
             PopupType::Alert(_, _) => self.handle_input_event_mode_popup_alert(ev),
             PopupType::Help => self.handle_input_event_mode_popup_help(ev),
-            PopupType::Input(_, cb) => self.handle_input_event_mode_popup_input(ev, cb),
+            PopupType::SaveBookmark(_, cb) => self.handle_input_event_mode_popup_save_bookmark(ev, cb),
             PopupType::YesNo(_, yes_cb, no_cb) => {
                 self.handle_input_event_mode_popup_yesno(ev, yes_cb, no_cb)
             }
@@ -418,10 +424,10 @@ impl AuthActivity {
         }
     }
 
-    /// ### handle_input_event_mode_popup_input
+    /// ### handle_input_event_mode_popup_save_bookmark
     ///
-    /// Input event handler for input popup
-    pub(super) fn handle_input_event_mode_popup_input(
+    /// Input event handler for SaveBookmark popup
+    pub(super) fn handle_input_event_mode_popup_save_bookmark(
         &mut self,
         ev: &InputEvent,
         cb: OnInputSubmitCallback,
@@ -435,6 +441,8 @@ impl AuthActivity {
                     self.input_txt.clear();
                     // Set mode back to form
                     self.input_mode = InputMode::Form;
+                    // Reset choice option to yes
+                    self.choice_opt = DialogYesNoOption::Yes;
                 }
                 KeyCode::Enter => {
                     // Submit
@@ -445,7 +453,11 @@ impl AuthActivity {
                     self.input_mode = InputMode::Form;
                     // Call cb
                     cb(self, input_text);
+                    // Reset choice option to yes
+                    self.choice_opt = DialogYesNoOption::Yes;
                 }
+                KeyCode::Left => self.choice_opt = DialogYesNoOption::Yes, // Move yes/no with arrows
+                KeyCode::Right => self.choice_opt = DialogYesNoOption::No, // Move yes/no with arrows
                 KeyCode::Char(ch) => self.input_txt.push(ch),
                 KeyCode::Backspace => {
                     let _ = self.input_txt.pop();
