@@ -110,6 +110,7 @@ mod tests {
         assert_eq!(host.port, 22);
         assert_eq!(host.protocol, String::from("SCP"));
         assert_eq!(host.username, String::from("root"));
+        assert_eq!(host.password, None);
         // Verify bookmarks
         assert_eq!(hosts.bookmarks.len(), 3);
         let host: &Bookmark = hosts.bookmarks.get("raspberrypi2").unwrap();
@@ -117,16 +118,19 @@ mod tests {
         assert_eq!(host.port, 22);
         assert_eq!(host.protocol, String::from("SFTP"));
         assert_eq!(host.username, String::from("root"));
+        assert_eq!(*host.password.as_ref().unwrap(), String::from("mypassword"));
         let host: &Bookmark = hosts.bookmarks.get("msi-estrem").unwrap();
         assert_eq!(host.address, String::from("192.168.1.30"));
         assert_eq!(host.port, 22);
         assert_eq!(host.protocol, String::from("SFTP"));
         assert_eq!(host.username, String::from("cvisintin"));
+        assert_eq!(*host.password.as_ref().unwrap(), String::from("mysecret"));
         let host: &Bookmark = hosts.bookmarks.get("aws-server-prod1").unwrap();
         assert_eq!(host.address, String::from("51.23.67.12"));
         assert_eq!(host.port, 21);
         assert_eq!(host.protocol, String::from("FTPS"));
         assert_eq!(host.username, String::from("aws001"));
+        assert_eq!(host.password, None);
     }
 
     #[test]
@@ -150,6 +154,7 @@ mod tests {
                 port: 22,
                 protocol: String::from("SFTP"),
                 username: String::from("root"),
+                password: None,
             },
         );
         bookmarks.insert(
@@ -159,6 +164,7 @@ mod tests {
                 port: 4022,
                 protocol: String::from("SFTP"),
                 username: String::from("cvisintin"),
+                password: Some(String::from("password")),
             },
         );
         let mut recents: HashMap<String, Bookmark> = HashMap::with_capacity(1);
@@ -169,6 +175,7 @@ mod tests {
                 port: 3022,
                 protocol: String::from("SCP"),
                 username: String::from("omar"),
+                password: Some(String::from("aaa")),
             },
         );
         let tmpfile: tempfile::NamedTempFile = tempfile::NamedTempFile::new().unwrap();
@@ -183,8 +190,8 @@ mod tests {
         let mut tmpfile: tempfile::NamedTempFile = tempfile::NamedTempFile::new().unwrap();
         let file_content: &str = r#"
         [bookmarks]
-        raspberrypi2 = { address = "192.168.1.31", port = 22, protocol = "SFTP", username = "root" }
-        msi-estrem = { address = "192.168.1.30", port = 22, protocol = "SFTP", username = "cvisintin" }
+        raspberrypi2 = { address = "192.168.1.31", port = 22, protocol = "SFTP", username = "root", password = "mypassword" }
+        msi-estrem = { address = "192.168.1.30", port = 22, protocol = "SFTP", username = "cvisintin", password = "mysecret" }
         aws-server-prod1 = { address = "51.23.67.12", port = 21, protocol = "FTPS", username = "aws001" }
 
         [recents]

@@ -47,6 +47,7 @@ pub struct Bookmark {
     pub port: u16,
     pub protocol: String,
     pub username: String,
+    pub password: Option<String>, // Password is optional; base64, aes-128 encrypted password
 }
 
 // Errors
