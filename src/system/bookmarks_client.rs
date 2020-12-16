@@ -24,17 +24,21 @@
 */
 
 // Deps
+extern crate magic_crypt;
 extern crate rand;
 
 // Local
 use crate::bookmarks::serializer::BookmarkSerializer;
 use crate::bookmarks::{Bookmark, SerializerError, SerializerErrorKind, UserHosts};
 use crate::filetransfer::FileTransferProtocol;
+use crate::utils::time_to_str;
 // Ext
+use magic_crypt::MagicCryptTrait;
 use rand::{distributions::Alphanumeric, Rng};
 use std::fs::{OpenOptions, Permissions};
-use std::io::Write;
+use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
+use std::time::SystemTime;
 
 /// ## BookmarksClient
 ///
@@ -42,7 +46,7 @@ use std::path::{Path, PathBuf};
 pub struct BookmarksClient {
     pub hosts: UserHosts,
     bookmarks_file: PathBuf,
-    key_file: PathBuf,
+    key: String,
 }
 
 impl BookmarksClient {
@@ -54,10 +58,21 @@ impl BookmarksClient {
     pub fn new(bookmarks_file: &Path, key_file: &Path) -> Result<BookmarksClient, SerializerError> {
         // Create default hosts
         let default_hosts: UserHosts = Default::default();
+        // If key file doesn't exist, create key, otherwise read it
+        let key: String = match key_file.exists() {
+            true => match BookmarksClient::load_key(key_file) {
+                Ok(key) => key,
+                Err(err) => return Err(err),
+            },
+            false => match BookmarksClient::generate_key(key_file) {
+                Ok(key) => key,
+                Err(err) => return Err(err),
+            },
+        };
         let client: BookmarksClient = BookmarksClient {
             hosts: default_hosts,
             bookmarks_file: PathBuf::from(bookmarks_file),
-            key_file: PathBuf::from(key_file),
+            key,
         };
         // If bookmark file doesn't exist, initialize it
         if !bookmarks_file.exists() {
@@ -65,12 +80,7 @@ impl BookmarksClient {
                 return Err(err);
             }
         }
-        // If key file doesn't exist, create key
-        if !key_file.exists() {
-            if let Err(err) = client.generate_key() {
-                return Err(err);
-            }
-        }
+        // Load key
         Ok(client)
     }
 
@@ -82,7 +92,6 @@ impl BookmarksClient {
         key: &String,
     ) -> Option<(String, u16, FileTransferProtocol, String, Option<String>)> {
         let entry: &Bookmark = self.hosts.bookmarks.get(key)?;
-        // TODO: decrypt password
         Some((
             entry.address.clone(),
             entry.port,
@@ -93,58 +102,91 @@ impl BookmarksClient {
                 _ => FileTransferProtocol::Sftp,
             },
             entry.username.clone(),
-            None,
-        ))
-    }
-
-    /// ### get_recent
-    ///
-    /// Get recent associated to key
-    pub fn get_recent(
-        &self,
-        key: &String,
-    ) -> Option<(String, u16, FileTransferProtocol, String, Option<String>)> {
-        let entry: &Bookmark = self.hosts.recents.get(key)?;
-        // TODO: decrypt password
-        Some((
-            entry.address.clone(),
-            entry.port,
-            match entry.protocol.to_ascii_uppercase().as_str() {
-                "FTP" => FileTransferProtocol::Ftp(false),
-                "FTPS" => FileTransferProtocol::Ftp(true),
-                "SCP" => FileTransferProtocol::Scp,
-                _ => FileTransferProtocol::Sftp,
+            match entry.password {
+                // Decrypted password if Some; if decryption fails return None
+                Some(pwd) => match self.decrypt_str(pwd.as_str()) {
+                    Ok(decrypted_pwd) => Some(decrypted_pwd),
+                    Err(_) => None,
+                },
+                None => None,
             },
-            entry.username.clone(),
-            None,
         ))
     }
 
-    /// ### make_bookmark
+    /// ### add_recent
     ///
-    /// Make bookmark from credentials
-    pub fn make_bookmark(
-        &self,
+    /// Add a new recent to bookmarks
+    pub fn add_bookmark(
+        &mut self,
+        name: String,
         addr: String,
         port: u16,
         protocol: FileTransferProtocol,
         username: String,
         password: Option<String>,
-    ) -> Bookmark {
-        // TODO: crypt password
-        Bookmark {
-            address: addr,
-            port,
-            username,
-            protocol: match protocol {
-                FileTransferProtocol::Ftp(secure) => match secure {
-                    true => String::from("FTPS"),
-                    false => String::from("FTP"),
-                },
-                FileTransferProtocol::Scp => String::from("SCP"),
-                FileTransferProtocol::Sftp => String::from("SFTP"),
+    ) {
+        // Make bookmark
+        let host: Bookmark = self.make_bookmark(addr, port, protocol, username, password);
+        self.hosts.bookmarks.insert(name, host);
+    }
+
+    /// ### get_recent
+    ///
+    /// Get recent associated to key
+    pub fn get_recent(&self, key: &String) -> Option<(String, u16, FileTransferProtocol, String)> {
+        // NOTE: password is not decrypted; recents will never have password
+        let entry: &Bookmark = self.hosts.recents.get(key)?;
+        Some((
+            entry.address.clone(),
+            entry.port,
+            match entry.protocol.to_ascii_uppercase().as_str() {
+                "FTP" => FileTransferProtocol::Ftp(false),
+                "FTPS" => FileTransferProtocol::Ftp(true),
+                "SCP" => FileTransferProtocol::Scp,
+                _ => FileTransferProtocol::Sftp,
             },
+            entry.username.clone(),
+        ))
+    }
+
+    /// ### add_recent
+    ///
+    /// Add a new recent to bookmarks
+    pub fn add_recent(
+        &mut self,
+        addr: String,
+        port: u16,
+        protocol: FileTransferProtocol,
+        username: String,
+    ) {
+        // Make bookmark
+        let host: Bookmark = self.make_bookmark(addr, port, protocol, username, None);
+        // Check if duplicated
+        for recent_host in self.hosts.recents.values() {
+            if *recent_host == host {
+                // Don't save duplicates
+                return;
+            }
         }
+        // If hosts size is bigger than 16; pop last
+        if self.hosts.recents.len() >= 16 {
+            let mut keys: Vec<String> = Vec::with_capacity(self.hosts.recents.len());
+            for key in self.hosts.recents.keys() {
+                keys.push(key.clone());
+            }
+            // Sort keys; NOTE: most recent is the last element
+            keys.sort();
+            // Delete keys starting from the last one
+            for key in keys.iter() {
+                let _ = self.hosts.recents.remove(key);
+                // If length is < 16; break
+                if self.hosts.recents.len() < 16 {
+                    break;
+                }
+            }
+        }
+        let name: String = time_to_str(SystemTime::now(), "ISO%Y%m%dT%H%M%S");
+        self.hosts.recents.insert(name, host);
     }
 
     /// ### write_bookmarks
@@ -172,7 +214,7 @@ impl BookmarksClient {
     /// ### generate_key
     ///
     /// Generate a new AES key and write it to key file
-    fn generate_key(&self) -> Result<(), SerializerError> {
+    fn generate_key(key_file: &Path) -> Result<String, SerializerError> {
         // Generate 256 bytes (2048 bits) key
         let key: String = rand::thread_rng()
             .sample_iter(Alphanumeric)
@@ -183,7 +225,7 @@ impl BookmarksClient {
             .create(true)
             .write(true)
             .truncate(true)
-            .open(self.key_file.as_path())
+            .open(key_file)
         {
             Ok(mut file) => {
                 // Write key to file
@@ -197,10 +239,79 @@ impl BookmarksClient {
                 let mut permissions: Permissions = file.metadata().unwrap().permissions();
                 permissions.set_readonly(true);
                 let _ = file.set_permissions(permissions);
-                Ok(())
+                Ok(key)
             }
             Err(err) => Err(SerializerError::new_ex(
                 SerializerErrorKind::IoError,
+                err.to_string(),
+            )),
+        }
+    }
+
+    /// ### make_bookmark
+    ///
+    /// Make bookmark from credentials
+    fn make_bookmark(
+        &self,
+        addr: String,
+        port: u16,
+        protocol: FileTransferProtocol,
+        username: String,
+        password: Option<String>,
+    ) -> Bookmark {
+        Bookmark {
+            address: addr,
+            port,
+            username,
+            protocol: match protocol {
+                FileTransferProtocol::Ftp(secure) => match secure {
+                    true => String::from("FTPS"),
+                    false => String::from("FTP"),
+                },
+                FileTransferProtocol::Scp => String::from("SCP"),
+                FileTransferProtocol::Sftp => String::from("SFTP"),
+            },
+            password: match password {
+                Some(p) => Some(self.encrypt_str(p.as_str())), // Encrypt password if provided
+                None => None,
+            },
+        }
+    }
+
+    /// ### load_key
+    ///
+    /// Load key from key_file
+    fn load_key(key_file: &Path) -> Result<String, SerializerError> {
+        match OpenOptions::new().read(true).open(key_file) {
+            Ok(mut file) => {
+                let mut key: String = String::with_capacity(256);
+                file.read_to_string(&mut key);
+                Ok(key)
+            }
+            Err(err) => Err(SerializerError::new_ex(
+                SerializerErrorKind::IoError,
+                err.to_string(),
+            )),
+        }
+    }
+
+    /// ### encrypt_str
+    ///
+    /// Encrypt provided string using AES-128. Encrypted buffer is then converted to BASE64
+    fn encrypt_str(&self, txt: &str) -> String {
+        let crypter = new_magic_crypt!(self.key.clone(), 128);
+        crypter.encrypt_str_to_base64(txt.to_string())
+    }
+
+    /// ### decrypt_str
+    ///
+    /// Decrypt provided string using AES-128
+    fn decrypt_str(&self, secret: &str) -> Result<String, SerializerError> {
+        let crypter = new_magic_crypt!(self.key.clone(), 128);
+        match crypter.decrypt_base64_to_string(secret.to_string()) {
+            Ok(txt) => Ok(txt),
+            Err(err) => Err(SerializerError::new_ex(
+                SerializerErrorKind::SyntaxError,
                 err.to_string(),
             )),
         }
