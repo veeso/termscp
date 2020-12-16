@@ -23,6 +23,8 @@ ftp4 = { version = "^4.0.1", features = ["secure"] }
 getopts = "0.2.21"
 hostname = "0.3.1"
 lazy_static = "1.4.0"
+magic-crypt = "3.1.6"
+rand = "0.7.3"
 regex = "1.4.2"
 rpassword = "5.0.0"
 serde = { version = "1.0.118", features = ["derive"] }
@@ -32,7 +34,6 @@ toml = "0.5.7"
 tui = { version = "0.13.0", features = ["crossterm"], default-features = false }
 unicode-width = "0.1.7"
 whoami = "1.0.0"
-rand = "0.7.3"
 
 [target.'cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))'.dependencies]
 users = "0.11.0"
