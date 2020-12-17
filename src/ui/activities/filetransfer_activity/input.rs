@@ -21,12 +21,11 @@
 
 use super::{
     DialogCallback, DialogYesNoOption, FileExplorerTab, FileTransferActivity, FsEntry, InputEvent,
-    InputField, InputMode, LogLevel, OnInputSubmitCallback, PopupType,
+    InputField, InputMode, OnInputSubmitCallback, PopupType,
 };
 
 use crossterm::event::{KeyCode, KeyModifiers};
 use std::path::PathBuf;
-use tui::style::Color;
 
 impl FileTransferActivity {
     /// ### read_input_event
@@ -221,7 +220,7 @@ impl FileTransferActivity {
                     }
                     'l' | 'L' => {
                         // Reload file entries
-                        let pwd: PathBuf = self.context.as_ref().unwrap().local.pwd();
+                        let pwd: PathBuf = self.local.wrkdir.clone();
                         self.local_scan(pwd.as_path());
                     }
                     'r' | 'R' => {
@@ -242,27 +241,14 @@ impl FileTransferActivity {
                     'u' | 'U' => {
                         // Go to parent directory
                         // Get pwd
-                        let path: PathBuf = self.context.as_ref().unwrap().local.pwd();
+                        let path: PathBuf = self.local.wrkdir.clone();
                         if let Some(parent) = path.as_path().parent() {
                             self.local_changedir(parent, true);
                         }
                     }
                     ' ' => {
                         // Get pwd
-                        let wrkdir: PathBuf = match self.client.pwd() {
-                            Ok(p) => p,
-                            Err(err) => {
-                                self.log(
-                                    LogLevel::Error,
-                                    format!("Could not get current remote path: {}", err).as_ref(),
-                                );
-                                self.input_mode = InputMode::Popup(PopupType::Alert(
-                                    Color::Red,
-                                    format!("Could not get current remote path: {}", err),
-                                ));
-                                return;
-                            }
-                        };
+                        let wrkdir: PathBuf = self.remote.wrkdir.clone();
                         // Get file and clone (due to mutable / immutable stuff...)
                         if self.local.files.get(self.local.index).is_some() {
                             let file: FsEntry =
@@ -436,20 +422,11 @@ impl FileTransferActivity {
                         ));
                     }
                     'u' | 'U' => {
-                        // Go to parent directory
                         // Get pwd
-                        match self.client.pwd() {
-                            Ok(path) => {
-                                if let Some(parent) = path.as_path().parent() {
-                                    self.remote_changedir(parent, true);
-                                }
-                            }
-                            Err(err) => {
-                                self.input_mode = InputMode::Popup(PopupType::Alert(
-                                    Color::Red,
-                                    format!("Could not change working directory: {}", err),
-                                ))
-                            }
+                        let path: PathBuf = self.remote.wrkdir.clone();
+                        // Go to parent directory
+                        if let Some(parent) = path.as_path().parent() {
+                            self.remote_changedir(parent, true);
                         }
                     }
                     ' ' => {
@@ -459,9 +436,10 @@ impl FileTransferActivity {
                                 self.remote.files.get(self.remote.index).unwrap().clone();
                             let name: String = file.get_name();
                             // Call upload; pass realfile, keep link name
+                            let wrkdir: PathBuf = self.local.wrkdir.clone();
                             self.filetransfer_recv(
                                 &file.get_realfile(),
-                                self.context.as_ref().unwrap().local.pwd().as_path(),
+                                wrkdir.as_path(),
                                 Some(name),
                             );
                         }

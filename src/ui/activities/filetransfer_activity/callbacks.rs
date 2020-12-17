@@ -40,7 +40,7 @@ impl FileTransferActivity {
                 // If path is relative, concat pwd
                 let abs_dir_path: PathBuf = match dir_path.is_relative() {
                     true => {
-                        let mut d: PathBuf = self.context.as_ref().unwrap().local.pwd();
+                        let mut d: PathBuf = self.local.wrkdir.clone();
                         d.push(dir_path);
                         d
                     }
@@ -51,19 +51,11 @@ impl FileTransferActivity {
             FileExplorerTab::Remote => {
                 // If path is relative, concat pwd
                 let abs_dir_path: PathBuf = match dir_path.is_relative() {
-                    true => match self.client.pwd() {
-                        Ok(mut wkrdir) => {
-                            wkrdir.push(dir_path);
-                            wkrdir
-                        }
-                        Err(err) => {
-                            self.input_mode = InputMode::Popup(PopupType::Alert(
-                                Color::Red,
-                                format!("Could not retrieve current directory: {}", err),
-                            ));
-                            return;
-                        }
-                    },
+                    true => {
+                        let mut wrkdir: PathBuf = self.remote.wrkdir.clone();
+                        wrkdir.push(dir_path);
+                        wrkdir
+                    }
                     false => dir_path,
                 };
                 self.remote_changedir(abs_dir_path.as_path(), true);
@@ -90,7 +82,7 @@ impl FileTransferActivity {
                             LogLevel::Info,
                             format!("Created directory \"{}\"", input).as_ref(),
                         );
-                        let wrkdir: PathBuf = self.context.as_ref().unwrap().local.pwd();
+                        let wrkdir: PathBuf = self.local.wrkdir.clone();
                         self.local_scan(wrkdir.as_path());
                     }
                     Err(err) => {
@@ -107,7 +99,11 @@ impl FileTransferActivity {
                 }
             }
             FileExplorerTab::Remote => {
-                match self.client.mkdir(PathBuf::from(input.as_str()).as_path()) {
+                match self
+                    .client
+                    .as_mut()
+                    .mkdir(PathBuf::from(input.as_str()).as_path())
+                {
                     Ok(_) => {
                         // Reload files
                         self.log(
@@ -141,7 +137,7 @@ impl FileTransferActivity {
                 let mut dst_path: PathBuf = PathBuf::from(input);
                 // Check if path is relative
                 if dst_path.as_path().is_relative() {
-                    let mut wrkdir: PathBuf = self.context.as_ref().unwrap().local.pwd();
+                    let mut wrkdir: PathBuf = self.local.wrkdir.clone();
                     wrkdir.push(dst_path);
                     dst_path = wrkdir;
                 }
@@ -158,7 +154,8 @@ impl FileTransferActivity {
                     {
                         Ok(_) => {
                             // Reload files
-                            self.local_scan(self.context.as_ref().unwrap().local.pwd().as_path());
+                            let path: PathBuf = self.local.wrkdir.clone();
+                            self.local_scan(path.as_path());
                             // Log
                             self.log(
                                 LogLevel::Info,
@@ -194,12 +191,11 @@ impl FileTransferActivity {
                     let full_path: PathBuf = entry.get_abs_path();
                     // Rename file or directory and report status as popup
                     let dst_path: PathBuf = PathBuf::from(input);
-                    match self.client.rename(entry, dst_path.as_path()) {
+                    match self.client.as_mut().rename(entry, dst_path.as_path()) {
                         Ok(_) => {
                             // Reload files
-                            if let Ok(path) = self.client.pwd() {
-                                self.remote_scan(path.as_path());
-                            }
+                            let path: PathBuf = self.remote.wrkdir.clone();
+                            self.remote_scan(path.as_path());
                             // Log
                             self.log(
                                 LogLevel::Info,
@@ -246,7 +242,8 @@ impl FileTransferActivity {
                     match self.context.as_mut().unwrap().local.remove(entry) {
                         Ok(_) => {
                             // Reload files
-                            self.local_scan(self.context.as_ref().unwrap().local.pwd().as_path());
+                            let p: PathBuf = self.local.wrkdir.clone();
+                            self.local_scan(p.as_path());
                             // Log
                             self.log(
                                 LogLevel::Info,
@@ -313,20 +310,7 @@ impl FileTransferActivity {
         match self.tab {
             FileExplorerTab::Local => {
                 // Get pwd
-                let wrkdir: PathBuf = match self.client.pwd() {
-                    Ok(p) => p,
-                    Err(err) => {
-                        self.log(
-                            LogLevel::Error,
-                            format!("Could not get current remote path: {}", err).as_ref(),
-                        );
-                        self.input_mode = InputMode::Popup(PopupType::Alert(
-                            Color::Red,
-                            format!("Could not get current remote path: {}", err),
-                        ));
-                        return;
-                    }
-                };
+                let wrkdir: PathBuf = self.remote.wrkdir.clone();
                 // Get file and clone (due to mutable / immutable stuff...)
                 if self.local.files.get(self.local.index).is_some() {
                     let file: FsEntry = self.local.files.get(self.local.index).unwrap().clone();
@@ -339,11 +323,8 @@ impl FileTransferActivity {
                 if self.remote.files.get(self.remote.index).is_some() {
                     let file: FsEntry = self.remote.files.get(self.remote.index).unwrap().clone();
                     // Call upload; pass realfile, keep link name
-                    self.filetransfer_recv(
-                        &file.get_realfile(),
-                        self.context.as_ref().unwrap().local.pwd().as_path(),
-                        Some(input),
-                    );
+                    let wrkdir: PathBuf = self.local.wrkdir.clone();
+                    self.filetransfer_recv(&file.get_realfile(), wrkdir.as_path(), Some(input));
                 }
             }
         }

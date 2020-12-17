@@ -31,7 +31,7 @@ use crate::utils::fmt_millis;
 // Ext
 use bytesize::ByteSize;
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
-use std::fs::{File, OpenOptions};
+use std::fs::OpenOptions;
 use std::io::{Read, Seek, Write};
 use std::path::{Path, PathBuf};
 use std::time::Instant;
@@ -102,6 +102,8 @@ impl FileTransferActivity {
         // Get current entries
         if let Ok(pwd) = self.client.pwd() {
             self.remote_scan(pwd.as_path());
+            // Set wrkdir
+            self.remote.wrkdir = pwd;
         }
     }
 
@@ -319,9 +321,8 @@ impl FileTransferActivity {
             }
         }
         // Scan dir on remote
-        if let Ok(path) = self.client.pwd() {
-            self.remote_scan(path.as_path());
-        }
+        let path: PathBuf = self.remote.wrkdir.clone();
+        self.remote_scan(path.as_path());
         // If aborted; show popup
         if self.transfer.aborted {
             // Log abort
@@ -684,7 +685,7 @@ impl FileTransferActivity {
     /// Change directory for local
     pub(super) fn local_changedir(&mut self, path: &Path, push: bool) {
         // Get current directory
-        let prev_dir: PathBuf = self.context.as_ref().unwrap().local.pwd();
+        let prev_dir: PathBuf = self.local.wrkdir.clone();
         // Change directory
         match self
             .context
@@ -702,6 +703,8 @@ impl FileTransferActivity {
                 self.local_scan(path);
                 // Reset index
                 self.local.index = 0;
+                // Set wrkdir
+                self.local.wrkdir = PathBuf::from(path);
                 // Push prev_dir to stack
                 if push {
                     self.local.pushd(prev_dir.as_path())
@@ -719,31 +722,23 @@ impl FileTransferActivity {
 
     pub(super) fn remote_changedir(&mut self, path: &Path, push: bool) {
         // Get current directory
-        match self.client.pwd() {
-            Ok(prev_dir) => {
-                // Change directory
-                match self.client.change_dir(path) {
-                    Ok(_) => {
-                        self.log(
-                            LogLevel::Info,
-                            format!("Changed directory on remote: {}", path.display()).as_str(),
-                        );
-                        // Update files
-                        self.remote_scan(path);
-                        // Reset index
-                        self.remote.index = 0;
-                        // Push prev_dir to stack
-                        if push {
-                            self.remote.pushd(prev_dir.as_path())
-                        }
-                    }
-                    Err(err) => {
-                        // Report err
-                        self.log_and_alert(
-                            LogLevel::Error,
-                            format!("Could not change working directory: {}", err),
-                        );
-                    }
+        let prev_dir: PathBuf = self.remote.wrkdir.clone();
+        // Change directory
+        match self.client.as_mut().change_dir(path) {
+            Ok(_) => {
+                self.log(
+                    LogLevel::Info,
+                    format!("Changed directory on remote: {}", path.display()).as_str(),
+                );
+                // Update files
+                self.remote_scan(path);
+                // Reset index
+                self.remote.index = 0;
+                // Set wrkdir
+                self.remote.wrkdir = PathBuf::from(path);
+                // Push prev_dir to stack
+                if push {
+                    self.remote.pushd(prev_dir.as_path())
                 }
             }
             Err(err) => {

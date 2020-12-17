@@ -119,9 +119,10 @@ enum InputMode {
 ///
 /// File explorer states
 struct FileExplorer {
-    pub index: usize,
-    pub files: Vec<FsEntry>,
-    dirstack: VecDeque<PathBuf>,
+    pub wrkdir: PathBuf,         // Current directory
+    pub index: usize,            // Selected file
+    pub files: Vec<FsEntry>,     // Files in directory
+    dirstack: VecDeque<PathBuf>, // Stack of visited directory (max 16)
 }
 
 impl FileExplorer {
@@ -130,6 +131,7 @@ impl FileExplorer {
     /// Instantiates a new FileExplorer
     pub fn new() -> FileExplorer {
         FileExplorer {
+            wrkdir: PathBuf::from("/"),
             index: 0,
             files: Vec::new(),
             dirstack: VecDeque::with_capacity(16),
@@ -347,8 +349,11 @@ impl Activity for FileTransferActivity {
         let _ = self.context.as_mut().unwrap().terminal.clear();
         // Put raw mode on enabled
         let _ = enable_raw_mode();
+        // Set working directory
+        let pwd: PathBuf = self.context.as_ref().unwrap().local.pwd();
         // Get files at current wd
-        self.local_scan(self.context.as_ref().unwrap().local.pwd().as_path());
+        self.local_scan(pwd.as_path());
+        self.local.wrkdir = pwd;
     }
 
     /// ### on_draw
@@ -356,8 +361,9 @@ impl Activity for FileTransferActivity {
     /// `on_draw` is the function which draws the graphical interface.
     /// This function must be called at each tick to refresh the interface
     fn on_draw(&mut self) {
-        let mut redraw: bool = false; // Should ui actually be redrawned?
-                                      // Context must be something
+        // Should ui actually be redrawned?
+        let mut redraw: bool = false;
+        // Context must be something
         if self.context.is_none() {
             return;
         }
