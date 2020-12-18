@@ -19,9 +19,15 @@
 *
 */
 
+// Deps
+extern crate bytesize;
+
+// Locals
 use super::{FileTransferActivity, FsEntry, InputMode, LogLevel, PopupType};
 use crate::utils::fmt_millis;
 
+// Ext
+use bytesize::ByteSize;
 use std::io::{Read, Seek, Write};
 use std::path::{Path, PathBuf};
 use std::time::Instant;
@@ -221,7 +227,7 @@ impl FileTransferActivity {
                                     }
                                 }
                                 // Increase progress
-                                self.set_progress(total_bytes_written, file_size);
+                                self.transfer.set_progress(total_bytes_written, file_size);
                                 // Draw only if a significant progress has been made (performance improvement)
                                 if last_progress_val < self.transfer.progress - 1.0 {
                                     // Draw
@@ -240,10 +246,11 @@ impl FileTransferActivity {
                             self.log(
                                 LogLevel::Info,
                                 format!(
-                                    "Saved file \"{}\" to \"{}\" (took {} seconds)",
+                                    "Saved file \"{}\" to \"{}\" (took {} seconds; at {}/s)",
                                     file.abs_path.display(),
                                     remote_path.display(),
                                     fmt_millis(self.transfer.started.elapsed()),
+                                    ByteSize(self.transfer.bytes_per_second()),
                                 )
                                 .as_ref(),
                             );
@@ -504,7 +511,7 @@ impl FileTransferActivity {
                                         }
                                     }
                                     // Set progress
-                                    self.set_progress(total_bytes_written, file.size);
+                                    self.transfer.set_progress(total_bytes_written, file.size);
                                     // Draw only if a significant progress has been made (performance improvement)
                                     if last_progress_val < self.transfer.progress - 1.0 {
                                         // Draw
@@ -550,10 +557,11 @@ impl FileTransferActivity {
                                 self.log(
                                     LogLevel::Info,
                                     format!(
-                                        "Saved file \"{}\" to \"{}\" (took {} seconds)",
+                                        "Saved file \"{}\" to \"{}\" (took {} seconds; at {}/s)",
                                         file.abs_path.display(),
                                         local_file_path.display(),
                                         fmt_millis(self.transfer.started.elapsed()),
+                                        ByteSize(self.transfer.bytes_per_second()),
                                     )
                                     .as_ref(),
                                 );

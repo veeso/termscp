@@ -209,9 +209,11 @@ impl LogRecord {
 ///
 /// TransferStates contains the states related to the transfer process
 struct TransferStates {
-    pub progress: f64,    // Current read/write progress (percentage)
-    pub started: Instant, // Instant the transfer process started
-    pub aborted: bool,    // Describes whether the transfer process has been aborted
+    pub progress: f64,        // Current read/write progress (percentage)
+    pub started: Instant,     // Instant the transfer process started
+    pub aborted: bool,        // Describes whether the transfer process has been aborted
+    pub bytes_written: usize, // Bytes written during transfer
+    pub bytes_total: usize,   // Total bytes to write
 }
 
 impl TransferStates {
@@ -223,6 +225,8 @@ impl TransferStates {
             progress: 0.0,
             started: Instant::now(),
             aborted: false,
+            bytes_written: 0,
+            bytes_total: 0,
         }
     }
 
@@ -233,6 +237,36 @@ impl TransferStates {
         self.progress = 0.0;
         self.started = Instant::now();
         self.aborted = false;
+        self.bytes_written = 0;
+        self.bytes_total = 0;
+    }
+
+    /// ### set_progress
+    ///
+    /// Calculate progress percentage based on current progress
+    pub fn set_progress(&mut self, w: usize, sz: usize) {
+        self.bytes_written = w;
+        self.bytes_total = sz;
+        let mut prog: f64 = ((self.bytes_written as f64) * 100.0) / (self.bytes_total as f64);
+        // Check value
+        if prog > 100.0 {
+            prog = 100.0;
+        } else if prog < 0.0 {
+            prog = 0.0;
+        }
+        self.progress = prog;
+    }
+
+    /// ### byte_per_second
+    ///
+    /// Calculate bytes per second
+    pub fn bytes_per_second(&self) -> u64 {
+        // bytes_written : elapsed_secs = x : 1
+        let elapsed_secs: u64 = self.started.elapsed().as_secs();
+        match elapsed_secs {
+            0 => 0, // NOTE: would divide by 0 :D
+            _ => self.bytes_written as u64 / elapsed_secs,
+        }
     }
 }
 
