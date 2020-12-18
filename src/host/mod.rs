@@ -23,12 +23,14 @@
 *
 */
 
-use std::fs::{self, set_permissions, File, Metadata, OpenOptions};
+use std::fs::{self, File, Metadata, OpenOptions};
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 // Metadata ext
 #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
 use std::os::unix::fs::{MetadataExt, PermissionsExt};
+#[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
+use std::fs::set_permissions;
 
 // Locals
 use crate::fs::{FsDirectory, FsEntry, FsFile};
