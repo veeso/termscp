@@ -20,6 +20,7 @@
 */
 
 use super::{FileTransferActivity, FsEntry, InputMode, LogLevel, PopupType};
+use crate::utils::fmt_millis;
 
 use std::io::{Read, Seek, Write};
 use std::path::{Path, PathBuf};
@@ -239,9 +240,10 @@ impl FileTransferActivity {
                             self.log(
                                 LogLevel::Info,
                                 format!(
-                                    "Saved file \"{}\" to \"{}\"",
+                                    "Saved file \"{}\" to \"{}\" (took {} seconds)",
                                     file.abs_path.display(),
-                                    remote_path.display()
+                                    remote_path.display(),
+                                    fmt_millis(self.transfer.started.elapsed()),
                                 )
                                 .as_ref(),
                             );
@@ -548,9 +550,10 @@ impl FileTransferActivity {
                                 self.log(
                                     LogLevel::Info,
                                     format!(
-                                        "Saved file \"{}\" to \"{}\"",
+                                        "Saved file \"{}\" to \"{}\" (took {} seconds)",
                                         file.abs_path.display(),
-                                        local_file_path.display()
+                                        local_file_path.display(),
+                                        fmt_millis(self.transfer.started.elapsed()),
                                     )
                                     .as_ref(),
                                 );

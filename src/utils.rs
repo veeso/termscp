@@ -203,6 +203,15 @@ pub fn time_to_str(time: SystemTime, fmt: &str) -> String {
     format!("{}", datetime.format(fmt))
 }
 
+/// ### fmt_millis
+/// 
+/// Format duration as {secs}.{millis}
+pub fn fmt_millis(duration: Duration) -> String {
+    let seconds: u128 = duration.as_millis() / 1000;
+    let millis: u128 = duration.as_millis() % 1000;
+    format!("{}.{:0width$}", seconds, millis, width = 3)
+}
+
 /// ### lstime_to_systime
 ///
 /// Convert ls syntax time to System Time
@@ -430,5 +439,12 @@ mod tests {
             align_text_center("hello world!", 8),
             String::from("hello world!")
         );
+    }
+    
+    #[test]
+    fn test_utils_fmt_millis() {
+        assert_eq!(fmt_millis(Duration::from_millis(2048)), String::from("2.048"));
+        assert_eq!(fmt_millis(Duration::from_millis(8192)), String::from("8.192"));
+        assert_eq!(fmt_millis(Duration::from_millis(18192)), String::from("18.192"));
     }
 }
