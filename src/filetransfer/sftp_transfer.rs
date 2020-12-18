@@ -859,4 +859,31 @@ mod tests {
         assert!(client.disconnect().is_ok());
     }
     */
+
+    #[test]
+    fn test_filetransfer_sftp_uninitialized() {
+        let file: FsFile = FsFile {
+            name: String::from("omar.txt"),
+            abs_path: PathBuf::from("/omar.txt"),
+            last_change_time: SystemTime::UNIX_EPOCH,
+            last_access_time: SystemTime::UNIX_EPOCH,
+            creation_time: SystemTime::UNIX_EPOCH,
+            size: 0,
+            ftype: Some(String::from("txt")), // File type
+            readonly: true,
+            symlink: None,             // UNIX only
+            user: Some(0),             // UNIX only
+            group: Some(0),            // UNIX only
+            unix_pex: Some((6, 4, 4)), // UNIX only
+        };
+        let mut sftp: SftpFileTransfer = SftpFileTransfer::new();
+        assert!(sftp.change_dir(Path::new("/tmp")).is_err());
+        assert!(sftp.disconnect().is_err());
+        assert!(sftp.list_dir(Path::new("/tmp")).is_err());
+        assert!(sftp.mkdir(Path::new("/tmp")).is_err());
+        assert!(sftp.pwd().is_err());
+        assert!(sftp.stat(Path::new("/tmp")).is_err());
+        assert!(sftp.recv_file(&file).is_err());
+        assert!(sftp.send_file(&file, Path::new("/tmp/omar.txt")).is_err());
+    }
 }

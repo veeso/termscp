@@ -231,7 +231,7 @@ impl AuthActivity {
                     let mut key_file: PathBuf = path;
                     key_file.push(".bookmarks.key"); // key file is hidden
                                                      // Initialize client
-                    match BookmarksClient::new(bookmarks_file.as_path(), key_file.as_path()) {
+                    match BookmarksClient::new(bookmarks_file.as_path(), key_file.as_path(), 16) {
                         Ok(cli) => self.bookmarks_client = Some(cli),
                         Err(err) => {
                             self.input_mode = InputMode::Popup(PopupType::Alert(

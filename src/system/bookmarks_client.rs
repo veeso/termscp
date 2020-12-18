@@ -47,6 +47,7 @@ pub struct BookmarksClient {
     hosts: UserHosts,
     bookmarks_file: PathBuf,
     key: String,
+    recents_size: usize,
 }
 
 impl BookmarksClient {
@@ -55,7 +56,11 @@ impl BookmarksClient {
     /// Instantiates a new BookmarksClient
     /// Bookmarks file path must be provided
     /// Key file must be provided
-    pub fn new(bookmarks_file: &Path, key_file: &Path) -> Result<BookmarksClient, SerializerError> {
+    pub fn new(
+        bookmarks_file: &Path,
+        key_file: &Path,
+        recents_size: usize,
+    ) -> Result<BookmarksClient, SerializerError> {
         // Create default hosts
         let default_hosts: UserHosts = Default::default();
         // If key file doesn't exist, create key, otherwise read it
@@ -73,6 +78,7 @@ impl BookmarksClient {
             hosts: default_hosts,
             bookmarks_file: PathBuf::from(bookmarks_file),
             key,
+            recents_size,
         };
         // If bookmark file doesn't exist, initialize it
         if !bookmarks_file.exists() {
@@ -196,8 +202,9 @@ impl BookmarksClient {
                 return;
             }
         }
-        // If hosts size is bigger than 16; pop last
-        if self.hosts.recents.len() >= 16 {
+        // If hosts size is bigger than self.recents_size; pop last
+        if self.hosts.recents.len() >= self.recents_size {
+            // Get keys
             let mut keys: Vec<String> = Vec::with_capacity(self.hosts.recents.len());
             for key in self.hosts.recents.keys() {
                 keys.push(key.clone());
@@ -207,8 +214,8 @@ impl BookmarksClient {
             // Delete keys starting from the last one
             for key in keys.iter() {
                 let _ = self.hosts.recents.remove(key);
-                // If length is < 16; break
-                if self.hosts.recents.len() < 16 {
+                // If length is < self.recents_size; break
+                if self.hosts.recents.len() < self.recents_size {
                     break;
                 }
             }
@@ -389,6 +396,8 @@ impl BookmarksClient {
 mod tests {
 
     use super::*;
+    use std::thread::sleep;
+    use std::time::Duration;
 
     #[test]
     fn test_system_bookmarks_new() {
@@ -396,19 +405,28 @@ mod tests {
         let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
         // Initialize a new bookmarks client
         let client: BookmarksClient =
-            BookmarksClient::new(cfg_path.as_path(), key_path.as_path()).unwrap();
+            BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16).unwrap();
         // Verify client
         assert_eq!(client.hosts.bookmarks.len(), 0);
         assert_eq!(client.hosts.recents.len(), 0);
         assert!(client.key.len() > 0);
         assert_eq!(client.bookmarks_file, cfg_path);
+        assert_eq!(client.recents_size, 16);
     }
 
     #[test]
     fn test_system_bookmarks_new_err() {
+        assert!(BookmarksClient::new(
+            Path::new("/tmp/oifoif/omar"),
+            Path::new("/tmp/efnnu/omar"),
+            16
+        )
+        .is_err());
+
+        let tmp_dir: tempfile::TempDir = create_tmp_dir();
+        let (cfg_path, _): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
         assert!(
-            BookmarksClient::new(Path::new("/tmp/oifoif/omar"), Path::new("/tmp/efnnu/omar"))
-                .is_err()
+            BookmarksClient::new(cfg_path.as_path(), Path::new("/tmp/efnnu/omar"), 16).is_err()
         );
     }
 
@@ -418,7 +436,7 @@ mod tests {
         let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
         // Initialize a new bookmarks client
         let mut client: BookmarksClient =
-            BookmarksClient::new(cfg_path.as_path(), key_path.as_path()).unwrap();
+            BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16).unwrap();
         // Add some bookmarks
         client.add_bookmark(
             String::from("raspberry"),
@@ -439,7 +457,7 @@ mod tests {
         let key: String = client.key.clone();
         // Re-initialize a client
         let client: BookmarksClient =
-            BookmarksClient::new(cfg_path.as_path(), key_path.as_path()).unwrap();
+            BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16).unwrap();
         // Verify it loaded parameters correctly
         assert_eq!(client.key, key);
         let bookmark: (String, u16, FileTransferProtocol, String, Option<String>) =
@@ -463,7 +481,7 @@ mod tests {
         let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
         // Initialize a new bookmarks client
         let mut client: BookmarksClient =
-            BookmarksClient::new(cfg_path.as_path(), key_path.as_path()).unwrap();
+            BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16).unwrap();
         // Add bookmark
         client.add_bookmark(
             String::from("raspberry"),
@@ -473,6 +491,16 @@ mod tests {
             String::from("pi"),
             Some(String::from("mypassword")),
         );
+        client.add_bookmark(
+            String::from("raspberry2"),
+            String::from("192.168.1.32"),
+            22,
+            FileTransferProtocol::Sftp,
+            String::from("pi"),
+            Some(String::from("mypassword2")),
+        );
+        // Iter
+        assert_eq!(client.iter_bookmarks().count(), 2);
         // Get bookmark
         let bookmark: (String, u16, FileTransferProtocol, String, Option<String>) =
             client.get_bookmark(&String::from("raspberry")).unwrap();
@@ -492,12 +520,31 @@ mod tests {
     }
 
     #[test]
+    #[should_panic]
+    fn test_system_bookmarks_bad_bookmark_name() {
+        let tmp_dir: tempfile::TempDir = create_tmp_dir();
+        let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
+        // Initialize a new bookmarks client
+        let mut client: BookmarksClient =
+            BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16).unwrap();
+        // Add bookmark
+        client.add_bookmark(
+            String::from(""),
+            String::from("192.168.1.31"),
+            22,
+            FileTransferProtocol::Sftp,
+            String::from("pi"),
+            Some(String::from("mypassword")),
+        );
+    }
+
+    #[test]
     fn test_system_bookmarks_manipulate_recents() {
         let tmp_dir: tempfile::TempDir = create_tmp_dir();
         let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
         // Initialize a new bookmarks client
         let mut client: BookmarksClient =
-            BookmarksClient::new(cfg_path.as_path(), key_path.as_path()).unwrap();
+            BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16).unwrap();
         // Add bookmark
         client.add_recent(
             String::from("192.168.1.31"),
@@ -505,6 +552,8 @@ mod tests {
             FileTransferProtocol::Sftp,
             String::from("pi"),
         );
+        // Iter
+        assert_eq!(client.iter_recents().count(), 1);
         let key: String = String::from(client.iter_recents().next().unwrap());
         // Get bookmark
         let bookmark: (String, u16, FileTransferProtocol, String) =
@@ -524,13 +573,83 @@ mod tests {
     }
 
     #[test]
+    fn test_system_bookmarks_dup_recent() {
+        let tmp_dir: tempfile::TempDir = create_tmp_dir();
+        let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
+        // Initialize a new bookmarks client
+        let mut client: BookmarksClient =
+            BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16).unwrap();
+        // Add bookmark
+        client.add_recent(
+            String::from("192.168.1.31"),
+            22,
+            FileTransferProtocol::Sftp,
+            String::from("pi"),
+        );
+        client.add_recent(
+            String::from("192.168.1.31"),
+            22,
+            FileTransferProtocol::Sftp,
+            String::from("pi"),
+        );
+        // There should be only one recent
+        assert_eq!(client.iter_recents().count(), 1);
+    }
+
+    #[test]
+    fn test_system_bookmarks_recents_more_than_limit() {
+        let tmp_dir: tempfile::TempDir = create_tmp_dir();
+        let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
+        // Initialize a new bookmarks client
+        let mut client: BookmarksClient =
+            BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 2).unwrap();
+        // Add recent, wait 1 second for each one (cause the name depends on time)
+        // 1
+        client.add_recent(
+            String::from("192.168.1.1"),
+            22,
+            FileTransferProtocol::Sftp,
+            String::from("pi"),
+        );
+        sleep(Duration::from_secs(1));
+        // 2
+        client.add_recent(
+            String::from("192.168.1.2"),
+            22,
+            FileTransferProtocol::Sftp,
+            String::from("pi"),
+        );
+        sleep(Duration::from_secs(1));
+        // 3
+        client.add_recent(
+            String::from("192.168.1.3"),
+            22,
+            FileTransferProtocol::Sftp,
+            String::from("pi"),
+        );
+        // Limit is 2
+        assert_eq!(client.iter_recents().count(), 2);
+        // Check that 192.168.1.1 has been removed
+        let key: String = client.iter_recents().nth(0).unwrap().to_string();
+        assert!(matches!(
+            client.hosts.recents.get(&key).unwrap().address.as_str(),
+            "192.168.1.2" | "192.168.1.3"
+        ));
+        let key: String = client.iter_recents().nth(1).unwrap().to_string();
+        assert!(matches!(
+            client.hosts.recents.get(&key).unwrap().address.as_str(),
+            "192.168.1.2" | "192.168.1.3"
+        ));
+    }
+
+    #[test]
     #[should_panic]
     fn test_system_bookmarks_add_bookmark_empty() {
         let tmp_dir: tempfile::TempDir = create_tmp_dir();
         let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
         // Initialize a new bookmarks client
         let mut client: BookmarksClient =
-            BookmarksClient::new(cfg_path.as_path(), key_path.as_path()).unwrap();
+            BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16).unwrap();
         // Add bookmark
         client.add_bookmark(
             String::from(""),

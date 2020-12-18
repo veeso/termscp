@@ -37,7 +37,7 @@ pub mod sftp_transfer;
 ///
 /// This enum defines the different transfer protocol available in TermSCP
 
-#[derive(std::cmp::PartialEq, std::fmt::Debug, std::clone::Clone, Copy)]
+#[derive(PartialEq, std::fmt::Debug, std::clone::Clone, Copy)]
 pub enum FileTransferProtocol {
     Sftp,
     Scp,
@@ -78,10 +78,7 @@ impl FileTransferError {
     ///
     /// Instantiates a new FileTransferError
     pub fn new(code: FileTransferErrorType) -> FileTransferError {
-        FileTransferError {
-            code,
-            msg: None,
-        }
+        FileTransferError { code, msg: None }
     }
 
     /// ### new_ex
@@ -102,7 +99,7 @@ impl std::fmt::Display for FileTransferError {
             FileTransferErrorType::ConnectionError => String::from("Connection error"),
             FileTransferErrorType::DirStatFailed => String::from("Could not stat directory"),
             FileTransferErrorType::FileCreateDenied => String::from("Failed to create file"),
-            FileTransferErrorType::IoErr(err) => format!("IO Error: {}", err),
+            FileTransferErrorType::IoErr(err) => format!("IO error: {}", err),
             FileTransferErrorType::NoSuchFileOrDirectory => {
                 String::from("No such file or directory")
             }
@@ -193,7 +190,11 @@ pub trait FileTransfer {
     /// File name is referred to the name of the file as it will be saved
     /// Data contains the file data
     /// Returns file and its size
-    fn send_file(&mut self, local: &FsFile, file_name: &Path) -> Result<Box<dyn Write>, FileTransferError>;
+    fn send_file(
+        &mut self,
+        local: &FsFile,
+        file_name: &Path,
+    ) -> Result<Box<dyn Write>, FileTransferError>;
 
     /// ### recv_file
     ///
@@ -218,4 +219,114 @@ pub trait FileTransfer {
     /// This mighe be necessary for some protocols.
     /// You must call this method each time you want to finalize the read of the remote file.
     fn on_recv(&mut self, readable: Box<dyn Read>) -> Result<(), FileTransferError>;
+}
+
+// Tests
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+
+    #[test]
+    fn test_filetransfer_mod_protocol() {
+        assert_eq!(
+            FileTransferProtocol::Ftp(true),
+            FileTransferProtocol::Ftp(true)
+        );
+        assert_eq!(
+            FileTransferProtocol::Ftp(false),
+            FileTransferProtocol::Ftp(false)
+        );
+    }
+
+    #[test]
+    fn test_filetransfer_mod_error() {
+        let err: FileTransferError = FileTransferError::new_ex(
+            FileTransferErrorType::IoErr(std::io::Error::from(std::io::ErrorKind::AddrInUse)),
+            String::from("non va una mazza"),
+        );
+        assert_eq!(*err.msg.as_ref().unwrap(), String::from("non va una mazza"));
+        assert_eq!(
+            format!("{}", err),
+            String::from("IO error: address in use (non va una mazza)")
+        );
+        assert_eq!(
+            format!(
+                "{}",
+                FileTransferError::new(FileTransferErrorType::AuthenticationFailed)
+            ),
+            String::from("Authentication failed")
+        );
+        assert_eq!(
+            format!(
+                "{}",
+                FileTransferError::new(FileTransferErrorType::BadAddress)
+            ),
+            String::from("Bad address syntax")
+        );
+        assert_eq!(
+            format!(
+                "{}",
+                FileTransferError::new(FileTransferErrorType::ConnectionError)
+            ),
+            String::from("Connection error")
+        );
+        assert_eq!(
+            format!(
+                "{}",
+                FileTransferError::new(FileTransferErrorType::DirStatFailed)
+            ),
+            String::from("Could not stat directory")
+        );
+        assert_eq!(
+            format!(
+                "{}",
+                FileTransferError::new(FileTransferErrorType::FileCreateDenied)
+            ),
+            String::from("Failed to create file")
+        );
+        assert_eq!(
+            format!(
+                "{}",
+                FileTransferError::new(FileTransferErrorType::NoSuchFileOrDirectory)
+            ),
+            String::from("No such file or directory")
+        );
+        assert_eq!(
+            format!(
+                "{}",
+                FileTransferError::new(FileTransferErrorType::PexError)
+            ),
+            String::from("Not enough permissions")
+        );
+        assert_eq!(
+            format!(
+                "{}",
+                FileTransferError::new(FileTransferErrorType::ProtocolError)
+            ),
+            String::from("Protocol error")
+        );
+        assert_eq!(
+            format!(
+                "{}",
+                FileTransferError::new(FileTransferErrorType::SslError)
+            ),
+            String::from("SSL error")
+        );
+        assert_eq!(
+            format!(
+                "{}",
+                FileTransferError::new(FileTransferErrorType::UninitializedSession)
+            ),
+            String::from("Uninitialized session")
+        );
+        assert_eq!(
+            format!(
+                "{}",
+                FileTransferError::new(FileTransferErrorType::UnsupportedFeature)
+            ),
+            String::from("Unsupported feature")
+        );
+    }
 }

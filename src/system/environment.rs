@@ -61,8 +61,35 @@ mod tests {
 
     use super::*;
 
+    use std::fs::{File, OpenOptions};
+    use std::io::Write;
+
     #[test]
     fn test_system_environment_get_config_dir() {
-        assert!(init_config_dir().ok().unwrap().is_some());
+        // Create and get conf_dir
+        let conf_dir: PathBuf = init_config_dir().ok().unwrap().unwrap();
+        // Remove dir
+        assert!(std::fs::remove_dir_all(conf_dir.as_path()).is_ok());
+    }
+
+    #[test]
+    fn test_system_environment_get_config_dir_err() {
+        let mut conf_dir: PathBuf = dirs::config_dir().unwrap();
+        conf_dir.push("termscp");
+        // Create file
+        let mut f: File = OpenOptions::new()
+            .create(true)
+            .write(true)
+            .open(conf_dir.as_path())
+            .ok()
+            .unwrap();
+        // Write
+        assert!(writeln!(f, "Hello world!").is_ok());
+        // Drop file
+        drop(f);
+        // Get config dir (will fail)
+        assert!(init_config_dir().is_err());
+        // Remove file
+        assert!(std::fs::remove_file(conf_dir.as_path()).is_ok());
     }
 }

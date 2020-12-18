@@ -64,7 +64,7 @@ pub struct SerializerError {
 /// ## SerializerErrorKind
 ///
 /// Describes the kind of error for the serializer/deserializer
-#[derive(std::fmt::Debug)]
+#[derive(std::fmt::Debug, PartialEq)]
 pub enum SerializerErrorKind {
     IoError,
     SerializationError,
@@ -101,7 +101,7 @@ impl SerializerError {
 impl std::fmt::Display for SerializerError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         let err: String = match &self.kind {
-            SerializerErrorKind::IoError => String::from("IO Error"),
+            SerializerErrorKind::IoError => String::from("IO error"),
             SerializerErrorKind::SerializationError => String::from("Serialization error"),
             SerializerErrorKind::SyntaxError => String::from("Syntax error"),
         };
@@ -109,5 +109,89 @@ impl std::fmt::Display for SerializerError {
             Some(msg) => write!(f, "{} ({})", err, msg),
             None => write!(f, "{}", err),
         }
+    }
+}
+
+// Tests
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+
+    #[test]
+    fn test_bookmarks_bookmark_new() {
+        let bookmark: Bookmark = Bookmark {
+            address: String::from("192.168.1.1"),
+            port: 22,
+            protocol: String::from("SFTP"),
+            username: String::from("root"),
+            password: Some(String::from("password")),
+        };
+        let recent: Bookmark = Bookmark {
+            address: String::from("192.168.1.2"),
+            port: 22,
+            protocol: String::from("SCP"),
+            username: String::from("admin"),
+            password: Some(String::from("password")),
+        };
+        let mut bookmarks: HashMap<String, Bookmark> = HashMap::with_capacity(1);
+        bookmarks.insert(String::from("test"), bookmark);
+        let mut recents: HashMap<String, Bookmark> = HashMap::with_capacity(1);
+        recents.insert(String::from("ISO20201218T181432"), recent);
+        let hosts: UserHosts = UserHosts {
+            bookmarks: bookmarks,
+            recents: recents,
+        };
+        // Verify
+        let bookmark: &Bookmark = hosts.bookmarks.get(&String::from("test")).unwrap();
+        assert_eq!(bookmark.address, String::from("192.168.1.1"));
+        assert_eq!(bookmark.port, 22);
+        assert_eq!(bookmark.protocol, String::from("SFTP"));
+        assert_eq!(bookmark.username, String::from("root"));
+        assert_eq!(
+            *bookmark.password.as_ref().unwrap(),
+            String::from("password")
+        );
+        let bookmark: &Bookmark = hosts
+            .recents
+            .get(&String::from("ISO20201218T181432"))
+            .unwrap();
+        assert_eq!(bookmark.address, String::from("192.168.1.2"));
+        assert_eq!(bookmark.port, 22);
+        assert_eq!(bookmark.protocol, String::from("SCP"));
+        assert_eq!(bookmark.username, String::from("admin"));
+        assert_eq!(
+            *bookmark.password.as_ref().unwrap(),
+            String::from("password")
+        );
+    }
+
+    #[test]
+    fn test_bookmarks_bookmark_errors() {
+        let error: SerializerError = SerializerError::new(SerializerErrorKind::SyntaxError);
+        assert_eq!(error.kind, SerializerErrorKind::SyntaxError);
+        assert!(error.msg.is_none());
+        assert_eq!(format!("{}", error), String::from("Syntax error"));
+        let error: SerializerError =
+            SerializerError::new_ex(SerializerErrorKind::SyntaxError, String::from("bad syntax"));
+        assert_eq!(error.kind, SerializerErrorKind::SyntaxError);
+        assert!(error.msg.is_some());
+        assert_eq!(
+            format!("{}", error),
+            String::from("Syntax error (bad syntax)")
+        );
+        // Fmt
+        assert_eq!(
+            format!("{}", SerializerError::new(SerializerErrorKind::IoError)),
+            String::from("IO error")
+        );
+        assert_eq!(
+            format!(
+                "{}",
+                SerializerError::new(SerializerErrorKind::SerializationError)
+            ),
+            String::from("Serialization error")
+        );
     }
 }

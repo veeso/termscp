@@ -185,7 +185,7 @@ impl ScpFileTransfer {
                     Some(p) => match self.stat(p.as_path()) {
                         Ok(e) => Some(Box::new(e)),
                         Err(_) => None, // Ignore errors
-                    }
+                    },
                 };
                 // Check if file_name is '.' or '..'
                 if file_name.as_str() == "." || file_name.as_str() == ".." {
@@ -1029,4 +1029,31 @@ mod tests {
         assert!(client.disconnect().is_ok());
     }
     */
+
+    #[test]
+    fn test_filetransfer_scp_uninitialized() {
+        let file: FsFile = FsFile {
+            name: String::from("omar.txt"),
+            abs_path: PathBuf::from("/omar.txt"),
+            last_change_time: SystemTime::UNIX_EPOCH,
+            last_access_time: SystemTime::UNIX_EPOCH,
+            creation_time: SystemTime::UNIX_EPOCH,
+            size: 0,
+            ftype: Some(String::from("txt")), // File type
+            readonly: true,
+            symlink: None,             // UNIX only
+            user: Some(0),             // UNIX only
+            group: Some(0),            // UNIX only
+            unix_pex: Some((6, 4, 4)), // UNIX only
+        };
+        let mut scp: ScpFileTransfer = ScpFileTransfer::new();
+        assert!(scp.change_dir(Path::new("/tmp")).is_err());
+        assert!(scp.disconnect().is_err());
+        assert!(scp.list_dir(Path::new("/tmp")).is_err());
+        assert!(scp.mkdir(Path::new("/tmp")).is_err());
+        assert!(scp.pwd().is_err());
+        assert!(scp.stat(Path::new("/tmp")).is_err());
+        assert!(scp.recv_file(&file).is_err());
+        assert!(scp.send_file(&file, Path::new("/tmp/omar.txt")).is_err());
+    }
 }

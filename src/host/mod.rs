@@ -23,7 +23,7 @@
 *
 */
 
-use std::fs::{self, File, Metadata, OpenOptions, set_permissions};
+use std::fs::{self, set_permissions, File, Metadata, OpenOptions};
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 // Metadata ext
@@ -74,7 +74,7 @@ impl std::fmt::Display for HostError {
             HostErrorType::NoSuchFileOrDirectory => "No such file or directory",
             HostErrorType::ReadonlyFile => "File is readonly",
             HostErrorType::DirNotAccessible => "Could not access directory",
-            HostErrorType::FileNotAccessible => "Could not access directory",
+            HostErrorType::FileNotAccessible => "Could not access file",
             HostErrorType::FileAlreadyExists => "File already exists",
             HostErrorType::CouldNotCreateFile => "Could not create file",
             HostErrorType::DeleteFailed => "Could not delete file",
@@ -764,6 +764,45 @@ mod tests {
         assert!(host
             .chmod(Path::new("/tmp/krgiogoiegj/kwrgnoerig"), (7, 7, 7))
             .is_err());
+    }
+
+    #[test]
+    fn test_host_fmt_error() {
+        let err: HostError = HostError::new(
+            HostErrorType::CouldNotCreateFile,
+            Some(std::io::Error::from(std::io::ErrorKind::AddrInUse)),
+        );
+        assert_eq!(
+            format!("{}", err),
+            String::from("Could not create file: address in use")
+        );
+        assert_eq!(
+            format!("{}", HostError::new(HostErrorType::DeleteFailed, None)),
+            String::from("Could not delete file")
+        );
+        assert_eq!(
+            format!("{}", HostError::new(HostErrorType::DirNotAccessible, None)),
+            String::from("Could not access directory")
+        );
+        assert_eq!(
+            format!(
+                "{}",
+                HostError::new(HostErrorType::NoSuchFileOrDirectory, None)
+            ),
+            String::from("No such file or directory")
+        );
+        assert_eq!(
+            format!("{}", HostError::new(HostErrorType::ReadonlyFile, None)),
+            String::from("File is readonly")
+        );
+        assert_eq!(
+            format!("{}", HostError::new(HostErrorType::FileNotAccessible, None)),
+            String::from("Could not access file")
+        );
+        assert_eq!(
+            format!("{}", HostError::new(HostErrorType::FileAlreadyExists, None)),
+            String::from("File already exists")
+        );
     }
 
     /// ### create_sample_file
