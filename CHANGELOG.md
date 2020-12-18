@@ -21,6 +21,7 @@ Released on ??
     - MacOS: `/Users/Alice/Library/Application Support/termscp/bookmarks.toml`
 - Bugfix:
   - File mode of file on remote is now reported on local file after being downloaded (unix, linux, macos only)
+  - Scp: when username was not provided, it didn't fallback to current username
 
 ## 0.1.3
 

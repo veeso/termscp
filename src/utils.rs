@@ -99,8 +99,8 @@ pub fn parse_remote_opt(
         }
         _ => return Err(String::from("Bad syntax")), // Too many tokens...
     }
-    // Set username to default if sftp
-    if protocol == FileTransferProtocol::Sftp {
+    // Set username to default if sftp or scp
+    if matches!(protocol, FileTransferProtocol::Sftp | FileTransferProtocol::Scp) {
         // Set username to current username
         username = Some(whoami::username());
     }
@@ -313,13 +313,21 @@ mod tests {
         assert!(result.3.is_none()); // Doesn't fall back
                                      // Protocol
         let result: (String, u16, FileTransferProtocol, Option<String>) =
+            parse_remote_opt(&String::from("sftp://172.26.104.1"))
+                .ok()
+                .unwrap();
+        assert_eq!(result.0, String::from("172.26.104.1"));
+        assert_eq!(result.1, 22); // Fallback to sftp default
+        assert_eq!(result.2, FileTransferProtocol::Sftp);
+        assert!(result.3.is_some()); // Doesn't fall back
+        let result: (String, u16, FileTransferProtocol, Option<String>) =
             parse_remote_opt(&String::from("scp://172.26.104.1"))
                 .ok()
                 .unwrap();
         assert_eq!(result.0, String::from("172.26.104.1"));
         assert_eq!(result.1, 22); // Fallback to scp default
         assert_eq!(result.2, FileTransferProtocol::Scp);
-        assert!(result.3.is_none()); // Doesn't fall back
+        assert!(result.3.is_some()); // Doesn't fall back
                                      // Protocol + user
         let result: (String, u16, FileTransferProtocol, Option<String>) =
             parse_remote_opt(&String::from("ftps://anon@172.26.104.1"))
@@ -416,6 +424,11 @@ mod tests {
         assert_eq!(
             align_text_center("hello world!", 24),
             String::from("      hello world!")
+        );
+        // Bad case
+        assert_eq!(
+            align_text_center("hello world!", 8),
+            String::from("hello world!")
         );
     }
 }
