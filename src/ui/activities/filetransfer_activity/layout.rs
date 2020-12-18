@@ -36,7 +36,9 @@ use tui::{
     layout::{Constraint, Corner, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Span, Spans},
-    widgets::{Block, Borders, Clear, Gauge, List, ListItem, ListState, Paragraph, Tabs},
+    widgets::{
+        Block, BorderType, Borders, Clear, Gauge, List, ListItem, ListState, Paragraph, Tabs,
+    },
 };
 use unicode_width::UnicodeWidthStr;
 #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
@@ -341,6 +343,7 @@ impl FileTransferActivity {
                 Block::default()
                     .borders(Borders::ALL)
                     .border_style(Style::default().fg(color))
+                    .border_type(BorderType::Rounded)
                     .title("Alert"),
             )
             .start_corner(Corner::TopLeft)
@@ -362,6 +365,7 @@ impl FileTransferActivity {
                 Block::default()
                     .borders(Borders::ALL)
                     .border_style(Style::default().fg(Color::Red))
+                    .border_type(BorderType::Rounded)
                     .title("Fatal error"),
             )
             .start_corner(Corner::TopLeft)
@@ -373,7 +377,12 @@ impl FileTransferActivity {
     pub(super) fn draw_popup_input(&self, text: String) -> Paragraph {
         Paragraph::new(self.input_txt.as_ref())
             .style(Style::default().fg(Color::White))
-            .block(Block::default().borders(Borders::ALL).title(text))
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .border_type(BorderType::Rounded)
+                    .title(text),
+            )
     }
 
     /// ### draw_popup_progress
@@ -424,6 +433,7 @@ impl FileTransferActivity {
                 Block::default()
                     .borders(Borders::ALL)
                     .border_style(Style::default().fg(Color::White))
+                    .border_type(BorderType::Rounded)
                     .title("Please wait"),
             )
             .start_corner(Corner::TopLeft)
@@ -440,7 +450,12 @@ impl FileTransferActivity {
             DialogYesNoOption::No => 1,
         };
         Tabs::new(choices)
-            .block(Block::default().borders(Borders::ALL).title(text))
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .border_type(BorderType::Rounded)
+                    .title(text),
+            )
             .select(index)
             .style(Style::default())
             .highlight_style(
@@ -605,6 +620,7 @@ impl FileTransferActivity {
                 Block::default()
                     .borders(Borders::ALL)
                     .border_style(Style::default())
+                    .border_type(BorderType::Rounded)
                     .title(file_name),
             )
             .start_corner(Corner::TopLeft)
@@ -812,6 +828,7 @@ impl FileTransferActivity {
                 Block::default()
                     .borders(Borders::ALL)
                     .border_style(Style::default())
+                    .border_type(BorderType::Rounded)
                     .title("Help"),
             )
             .start_corner(Corner::TopLeft)

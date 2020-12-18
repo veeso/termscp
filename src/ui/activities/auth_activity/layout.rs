@@ -33,7 +33,7 @@ use tui::{
     layout::{Constraint, Corner, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Span, Spans, Text},
-    widgets::{Block, Borders, Clear, List, ListItem, ListState, Paragraph, Tabs},
+    widgets::{Block, BorderType, Borders, Clear, List, ListItem, ListState, Paragraph, Tabs},
 };
 use unicode_width::UnicodeWidthStr;
 
@@ -179,6 +179,7 @@ impl AuthActivity {
             .block(
                 Block::default()
                     .borders(Borders::ALL)
+                    .border_type(BorderType::Rounded)
                     .title("Remote address"),
             )
     }
@@ -192,7 +193,12 @@ impl AuthActivity {
                 InputField::Port => Style::default().fg(Color::Cyan),
                 _ => Style::default(),
             })
-            .block(Block::default().borders(Borders::ALL).title("Remote port"))
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .border_type(BorderType::Rounded)
+                    .title("Remote port"),
+            )
     }
 
     /// ### draw_protocol_select
@@ -214,7 +220,12 @@ impl AuthActivity {
             },
         };
         Tabs::new(protocols)
-            .block(Block::default().borders(Borders::ALL).title("Protocol"))
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .border_type(BorderType::Rounded)
+                    .title("Protocol"),
+            )
             .select(index)
             .style(match self.selected_field {
                 InputField::Protocol => Style::default().fg(Color::Green),
@@ -237,7 +248,12 @@ impl AuthActivity {
                 InputField::Username => Style::default().fg(Color::Magenta),
                 _ => Style::default(),
             })
-            .block(Block::default().borders(Borders::ALL).title("Username"))
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .border_type(BorderType::Rounded)
+                    .title("Username"),
+            )
     }
 
     /// ### draw_protocol_password
@@ -251,7 +267,12 @@ impl AuthActivity {
                 InputField::Password => Style::default().fg(Color::LightBlue),
                 _ => Style::default(),
             })
-            .block(Block::default().borders(Borders::ALL).title("Password"))
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .border_type(BorderType::Rounded)
+                    .title("Password"),
+            )
     }
 
     /// ### draw_header
@@ -363,7 +384,7 @@ impl AuthActivity {
             List::new(hosts)
                 .block(
                     Block::default()
-                        .borders(Borders::ALL)
+                        .borders(Borders::TOP | Borders::BOTTOM | Borders::RIGHT)
                         .border_style(match self.input_form {
                             InputForm::Recents => Style::default().fg(Color::LightBlue),
                             _ => Style::default(),
@@ -418,6 +439,7 @@ impl AuthActivity {
                 Block::default()
                     .borders(Borders::ALL)
                     .border_style(Style::default().fg(color))
+                    .border_type(BorderType::Rounded)
                     .title("Alert"),
             )
             .start_corner(Corner::TopLeft)
@@ -433,6 +455,7 @@ impl AuthActivity {
             .block(
                 Block::default()
                     .borders(Borders::TOP | Borders::RIGHT | Borders::LEFT)
+                    .border_type(BorderType::Rounded)
                     .title("Save bookmark as..."),
             );
         let choices: Vec<Spans> = vec![Spans::from("Yes"), Spans::from("No")];
@@ -444,6 +467,7 @@ impl AuthActivity {
             .block(
                 Block::default()
                     .borders(Borders::BOTTOM | Borders::RIGHT | Borders::LEFT)
+                    .border_type(BorderType::Rounded)
                     .title("Save password?"),
             )
             .select(index)
@@ -466,7 +490,12 @@ impl AuthActivity {
             DialogYesNoOption::No => 1,
         };
         Tabs::new(choices)
-            .block(Block::default().borders(Borders::ALL).title(text))
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .border_type(BorderType::Rounded)
+                    .title(text),
+            )
             .select(index)
             .style(Style::default())
             .highlight_style(
@@ -578,6 +607,7 @@ impl AuthActivity {
                 Block::default()
                     .borders(Borders::ALL)
                     .border_style(Style::default())
+                    .border_type(BorderType::Rounded)
                     .title("Help"),
             )
             .start_corner(Corner::TopLeft)
