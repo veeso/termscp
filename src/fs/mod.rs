@@ -469,6 +469,37 @@ mod tests {
                 time_to_str(t, "%b %d %Y %H:%M")
             )
         );
+        // Elide name
+        let entry: FsEntry = FsEntry::File(FsFile {
+            name: String::from("piroparoporoperoperupupu.txt"),
+            abs_path: PathBuf::from("/bar.txt"),
+            last_change_time: t,
+            last_access_time: t,
+            creation_time: t,
+            size: 8192,
+            readonly: false,
+            ftype: Some(String::from("txt")),
+            symlink: None,             // UNIX only
+            user: Some(0),             // UNIX only
+            group: Some(0),            // UNIX only
+            unix_pex: Some((6, 4, 4)), // UNIX only
+        });
+        #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
+        assert_eq!(
+            format!("{}", entry),
+            format!(
+                "piroparoporoperoperu... \t-rw-r--r--  \troot        \t8.2 KB   \t{}",
+                time_to_str(t, "%b %d %Y %H:%M")
+            )
+        );
+        #[cfg(target_os = "windows")]
+        assert_eq!(
+            format!("{}", entry),
+            format!(
+                "piroparoporoperoperu... \t-rw-r--r--  \t0           \t8.2 KB   \t{}",
+                time_to_str(t, "%b %d %Y %H:%M")
+            )
+        );
         // No pex
         let entry: FsEntry = FsEntry::File(FsFile {
             name: String::from("bar.txt"),
