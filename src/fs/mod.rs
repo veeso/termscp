@@ -244,12 +244,12 @@ impl std::fmt::Display for FsEntry {
                 Some(user) => user.name().to_string_lossy().to_string(),
                 None => uid.to_string(),
             },
-            None => String::from("0"),
+            None => 0.to_string(),
         };
         #[cfg(target_os = "windows")]
-        let username: usize = match self.get_user() {
-            Some(uid) => uid as usize,
-            None => 0,
+        let username: String = match self.get_user() {
+            Some(uid) => uid.to_string(),
+            None => 0.to_string(),
         };
         // Get group
         /*
