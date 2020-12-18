@@ -435,4 +435,163 @@ mod tests {
             PathBuf::from("/home/cvisintin/projects")
         );
     }
+
+    #[test]
+    fn test_fs_fmt_file() {
+        let t: SystemTime = SystemTime::now();
+        let entry: FsEntry = FsEntry::File(FsFile {
+            name: String::from("bar.txt"),
+            abs_path: PathBuf::from("/bar.txt"),
+            last_change_time: t,
+            last_access_time: t,
+            creation_time: t,
+            size: 8192,
+            readonly: false,
+            ftype: Some(String::from("txt")),
+            symlink: None,             // UNIX only
+            user: Some(0),             // UNIX only
+            group: Some(0),            // UNIX only
+            unix_pex: Some((6, 4, 4)), // UNIX only
+        });
+        #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
+        assert_eq!(
+            format!("{}", entry),
+            format!(
+                "bar.txt                 \t-rw-r--r--  \troot        \t8.2 KB   \t{}",
+                time_to_str(t, "%b %d %Y %H:%M")
+            )
+        );
+        #[cfg(target_os = "windows")]
+        assert_eq!(
+            format!("{}", entry),
+            format!(
+                "bar.txt                 \t-rw-r--r--  \t0           \t8.2 KB   \t{}",
+                time_to_str(t, "%b %d %Y %H:%M")
+            )
+        );
+        // No pex
+        let entry: FsEntry = FsEntry::File(FsFile {
+            name: String::from("bar.txt"),
+            abs_path: PathBuf::from("/bar.txt"),
+            last_change_time: t,
+            last_access_time: t,
+            creation_time: t,
+            size: 8192,
+            readonly: false,
+            ftype: Some(String::from("txt")),
+            symlink: None,  // UNIX only
+            user: Some(0),  // UNIX only
+            group: Some(0), // UNIX only
+            unix_pex: None, // UNIX only
+        });
+        #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
+        assert_eq!(
+            format!("{}", entry),
+            format!(
+                "bar.txt                 \t-?????????  \troot        \t8.2 KB   \t{}",
+                time_to_str(t, "%b %d %Y %H:%M")
+            )
+        );
+        #[cfg(target_os = "windows")]
+        assert_eq!(
+            format!("{}", entry),
+            format!(
+                "bar.txt                 \t-?????????  \t0           \t8.2 KB   \t{}",
+                time_to_str(t, "%b %d %Y %H:%M")
+            )
+        );
+        // No user
+        let entry: FsEntry = FsEntry::File(FsFile {
+            name: String::from("bar.txt"),
+            abs_path: PathBuf::from("/bar.txt"),
+            last_change_time: t,
+            last_access_time: t,
+            creation_time: t,
+            size: 8192,
+            readonly: false,
+            ftype: Some(String::from("txt")),
+            symlink: None,  // UNIX only
+            user: None,     // UNIX only
+            group: Some(0), // UNIX only
+            unix_pex: None, // UNIX only
+        });
+        #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
+        assert_eq!(
+            format!("{}", entry),
+            format!(
+                "bar.txt                 \t-?????????  \t0           \t8.2 KB   \t{}",
+                time_to_str(t, "%b %d %Y %H:%M")
+            )
+        );
+        #[cfg(target_os = "windows")]
+        assert_eq!(
+            format!("{}", entry),
+            format!(
+                "bar.txt                 \t-?????????  \t0           \t8.2 KB   \t{}",
+                time_to_str(t, "%b %d %Y %H:%M")
+            )
+        );
+    }
+
+    #[test]
+    fn test_fs_fmt_dir() {
+        let t_now: SystemTime = SystemTime::now();
+        let entry: FsEntry = FsEntry::Directory(FsDirectory {
+            name: String::from("projects"),
+            abs_path: PathBuf::from("/home/cvisintin/projects"),
+            last_change_time: t_now,
+            last_access_time: t_now,
+            creation_time: t_now,
+            readonly: false,
+            symlink: None,             // UNIX only
+            user: Some(0),             // UNIX only
+            group: Some(0),            // UNIX only
+            unix_pex: Some((7, 5, 5)), // UNIX only
+        });
+        #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
+        assert_eq!(
+            format!("{}", entry),
+            format!(
+                "projects                \tdrwxr-xr-x  \troot        \t4.1 KB   \t{}",
+                time_to_str(t_now, "%b %d %Y %H:%M")
+            )
+        );
+        #[cfg(target_os = "windows")]
+        assert_eq!(
+            format!("{}", entry),
+            format!(
+                "projects                \tdrwxr-xr-x  \t0           \t4.1 KB   \t{}",
+                time_to_str(t_now, "%b %d %Y %H:%M")
+            )
+        );
+        // No pex, no user
+        let entry: FsEntry = FsEntry::Directory(FsDirectory {
+            name: String::from("projects"),
+            abs_path: PathBuf::from("/home/cvisintin/projects"),
+            last_change_time: t_now,
+            last_access_time: t_now,
+            creation_time: t_now,
+            readonly: false,
+            symlink: None,  // UNIX only
+            user: None,     // UNIX only
+            group: Some(0), // UNIX only
+            unix_pex: None, // UNIX only
+        });
+        #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
+        assert_eq!(
+            format!("{}", entry),
+            format!(
+                "projects                \td?????????  \t0           \t4.1 KB   \t{}",
+                time_to_str(t_now, "%b %d %Y %H:%M")
+            )
+        );
+        #[cfg(target_os = "windows")]
+        assert_eq!(
+            format!("{}", entry),
+            format!(
+                "projects                \td?????????  \t0           \t4.1 KB   \t{}",
+                time_to_str(t_now, "%b %d %Y %H:%M")
+            )
+        );
+    }
 }
