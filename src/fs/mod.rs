@@ -273,7 +273,7 @@ impl std::fmt::Display for FsEntry {
         };
         write!(
             f,
-            "{:24}\t{:12}\t{:12}\t{:9}\t{:17}",
+            "{:24}\t{:12}\t{:12}\t{:10}\t{:17}",
             name, mode, username, size, datetime
         )
     }
@@ -457,7 +457,7 @@ mod tests {
         assert_eq!(
             format!("{}", entry),
             format!(
-                "bar.txt                 \t-rw-r--r--  \troot        \t8.2 KB   \t{}",
+                "bar.txt                 \t-rw-r--r--  \troot        \t8.2 KB    \t{}",
                 time_to_str(t, "%b %d %Y %H:%M")
             )
         );
@@ -465,7 +465,7 @@ mod tests {
         assert_eq!(
             format!("{}", entry),
             format!(
-                "bar.txt                 \t-rw-r--r--  \t0           \t8.2 KB   \t{}",
+                "bar.txt                 \t-rw-r--r--  \t0           \t8.2 KB    \t{}",
                 time_to_str(t, "%b %d %Y %H:%M")
             )
         );
@@ -488,7 +488,7 @@ mod tests {
         assert_eq!(
             format!("{}", entry),
             format!(
-                "piroparoporoperoperu... \t-rw-r--r--  \troot        \t8.2 KB   \t{}",
+                "piroparoporoperoperu... \t-rw-r--r--  \troot        \t8.2 KB    \t{}",
                 time_to_str(t, "%b %d %Y %H:%M")
             )
         );
@@ -496,7 +496,7 @@ mod tests {
         assert_eq!(
             format!("{}", entry),
             format!(
-                "piroparoporoperoperu... \t-rw-r--r--  \t0           \t8.2 KB   \t{}",
+                "piroparoporoperoperu... \t-rw-r--r--  \t0           \t8.2 KB    \t{}",
                 time_to_str(t, "%b %d %Y %H:%M")
             )
         );
@@ -519,7 +519,7 @@ mod tests {
         assert_eq!(
             format!("{}", entry),
             format!(
-                "bar.txt                 \t-?????????  \troot        \t8.2 KB   \t{}",
+                "bar.txt                 \t-?????????  \troot        \t8.2 KB    \t{}",
                 time_to_str(t, "%b %d %Y %H:%M")
             )
         );
@@ -527,7 +527,7 @@ mod tests {
         assert_eq!(
             format!("{}", entry),
             format!(
-                "bar.txt                 \t-?????????  \t0           \t8.2 KB   \t{}",
+                "bar.txt                 \t-?????????  \t0           \t8.2 KB    \t{}",
                 time_to_str(t, "%b %d %Y %H:%M")
             )
         );
@@ -550,7 +550,7 @@ mod tests {
         assert_eq!(
             format!("{}", entry),
             format!(
-                "bar.txt                 \t-?????????  \t0           \t8.2 KB   \t{}",
+                "bar.txt                 \t-?????????  \t0           \t8.2 KB    \t{}",
                 time_to_str(t, "%b %d %Y %H:%M")
             )
         );
@@ -558,7 +558,7 @@ mod tests {
         assert_eq!(
             format!("{}", entry),
             format!(
-                "bar.txt                 \t-?????????  \t0           \t8.2 KB   \t{}",
+                "bar.txt                 \t-?????????  \t0           \t8.2 KB    \t{}",
                 time_to_str(t, "%b %d %Y %H:%M")
             )
         );
@@ -583,7 +583,7 @@ mod tests {
         assert_eq!(
             format!("{}", entry),
             format!(
-                "projects                \tdrwxr-xr-x  \troot        \t4.1 KB   \t{}",
+                "projects                \tdrwxr-xr-x  \troot        \t4.1 KB    \t{}",
                 time_to_str(t_now, "%b %d %Y %H:%M")
             )
         );
@@ -591,7 +591,7 @@ mod tests {
         assert_eq!(
             format!("{}", entry),
             format!(
-                "projects                \tdrwxr-xr-x  \t0           \t4.1 KB   \t{}",
+                "projects                \tdrwxr-xr-x  \t0           \t4.1 KB    \t{}",
                 time_to_str(t_now, "%b %d %Y %H:%M")
             )
         );
@@ -612,7 +612,7 @@ mod tests {
         assert_eq!(
             format!("{}", entry),
             format!(
-                "projects                \td?????????  \t0           \t4.1 KB   \t{}",
+                "projects                \td?????????  \t0           \t4.1 KB    \t{}",
                 time_to_str(t_now, "%b %d %Y %H:%M")
             )
         );
@@ -620,7 +620,7 @@ mod tests {
         assert_eq!(
             format!("{}", entry),
             format!(
-                "projects                \td?????????  \t0           \t4.1 KB   \t{}",
+                "projects                \td?????????  \t0           \t4.1 KB    \t{}",
                 time_to_str(t_now, "%b %d %Y %H:%M")
             )
         );
