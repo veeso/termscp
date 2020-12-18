@@ -23,12 +23,12 @@
 *
 */
 
-use std::fs::{self, File, Metadata, OpenOptions};
+use std::fs::{self, File, Metadata, OpenOptions, set_permissions};
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 // Metadata ext
 #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
-use std::os::unix::fs::MetadataExt;
+use std::os::unix::fs::{MetadataExt, PermissionsExt};
 
 // Locals
 use crate::fs::{FsDirectory, FsEntry, FsFile};
@@ -379,6 +379,25 @@ impl Localhost {
         })
     }
 
+    /// ### chmod
+    ///
+    /// Change file mode to file, according to UNIX permissions
+    #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
+    pub fn chmod(&self, path: &Path, pex: (u8, u8, u8)) -> Result<(), HostError> {
+        // Get metadta
+        match fs::metadata(path) {
+            Ok(metadata) => {
+                let mut mpex = metadata.permissions();
+                mpex.set_mode(self.mode_to_u32(pex));
+                match set_permissions(path, mpex) {
+                    Ok(_) => Ok(()),
+                    Err(err) => Err(HostError::new(HostErrorType::FileNotAccessible, Some(err))),
+                }
+            }
+            Err(err) => Err(HostError::new(HostErrorType::FileNotAccessible, Some(err))),
+        }
+    }
+
     /// ### open_file_read
     ///
     /// Open file for read
@@ -451,6 +470,14 @@ impl Localhost {
         let group: u8 = ((mode >> 3) & 0x7) as u8;
         let others: u8 = (mode & 0x7) as u8;
         (user, group, others)
+    }
+
+    /// mode_to_u32
+    ///
+    /// Convert owner,group,others to u32
+    #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
+    fn mode_to_u32(&self, mode: (u8, u8, u8)) -> u32 {
+        ((mode.0 as u32) << 6) + ((mode.1 as u32) << 3) + mode.2 as u32
     }
 }
 
@@ -717,6 +744,25 @@ mod tests {
         let bad_path: PathBuf = PathBuf::from("/asdailsjoidoewojdijow/ashdiuahu");
         assert!(host
             .rename(files.get(0).unwrap(), bad_path.as_path())
+            .is_err());
+    }
+
+    #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
+    #[test]
+    fn test_host_chmod() {
+        let tmpdir: tempfile::TempDir = tempfile::TempDir::new().unwrap();
+        let file: tempfile::NamedTempFile = create_sample_file();
+        let host: Localhost = Localhost::new(PathBuf::from(tmpdir.path())).ok().unwrap();
+        // mode_to_u32
+        assert_eq!(host.mode_to_u32((6, 4, 4)), 0o644);
+        assert_eq!(host.mode_to_u32((7, 7, 5)), 0o775);
+        // Chmod to file
+        assert!(host.chmod(file.path(), (7, 7, 5)).is_ok());
+        // Chmod to dir
+        assert!(host.chmod(tmpdir.path(), (7, 5, 0)).is_ok());
+        // Error
+        assert!(host
+            .chmod(Path::new("/tmp/krgiogoiegj/kwrgnoerig"), (7, 7, 7))
             .is_err());
     }
 

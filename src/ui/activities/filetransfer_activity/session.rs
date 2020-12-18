@@ -518,6 +518,32 @@ impl FileTransferActivity {
                                             .as_str(),
                                     );
                                 }
+                                // Apply file mode to file
+                                #[cfg(any(
+                                    target_os = "unix",
+                                    target_os = "macos",
+                                    target_os = "linux"
+                                ))]
+                                if let Some(pex) = file.unix_pex {
+                                    if let Err(err) = self
+                                        .context
+                                        .as_ref()
+                                        .unwrap()
+                                        .local
+                                        .chmod(local_file_path.as_path(), pex)
+                                    {
+                                        self.log(
+                                            LogLevel::Error,
+                                            format!(
+                                                "Could not apply file mode {:?} to \"{}\": {}",
+                                                pex,
+                                                local_file_path.display(),
+                                                err
+                                            )
+                                            .as_ref(),
+                                        );
+                                    }
+                                }
                                 // Log
                                 self.log(
                                     LogLevel::Info,
@@ -588,6 +614,28 @@ impl FileTransferActivity {
                     .mkdir_ex(local_dir_path.as_path(), true)
                 {
                     Ok(_) => {
+                        // Apply file mode to directory
+                        #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
+                        if let Some(pex) = dir.unix_pex {
+                            if let Err(err) = self
+                                .context
+                                .as_ref()
+                                .unwrap()
+                                .local
+                                .chmod(local_dir_path.as_path(), pex)
+                            {
+                                self.log(
+                                    LogLevel::Error,
+                                    format!(
+                                        "Could not apply file mode {:?} to \"{}\": {}",
+                                        pex,
+                                        local_dir_path.display(),
+                                        err
+                                    )
+                                    .as_ref(),
+                                );
+                            }
+                        }
                         self.log(
                             LogLevel::Info,
                             format!("Created directory \"{}\"", local_dir_path.display()).as_ref(),

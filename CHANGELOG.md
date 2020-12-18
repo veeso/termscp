@@ -19,6 +19,8 @@ Released on ??
     - Linux: `/home/alice/.config/termscp/bookmarks.toml`
     - Windows: `C:\Users\Alice\AppData\Roaming\termscp\bookmarks.toml`
     - MacOS: `/Users/Alice/Library/Application Support/termscp/bookmarks.toml`
+- Bugfix:
+  - File mode of file on remote is now reported on local file after being downloaded (unix, linux, macos only)
 
 ## 0.1.3
 
