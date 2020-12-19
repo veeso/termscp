@@ -19,10 +19,9 @@
 *
 */
 
-use super::{FileExplorerTab, FileTransferActivity, FsEntry, InputMode, LogLevel, PopupType};
+use super::{FileExplorerTab, FileTransferActivity, FsEntry, LogLevel};
 
 use std::path::PathBuf;
-use tui::style::Color;
 
 impl FileTransferActivity {
     /// ### callback_nothing_to_do
@@ -87,14 +86,10 @@ impl FileTransferActivity {
                     }
                     Err(err) => {
                         // Report err
-                        self.log(
+                        self.log_and_alert(
                             LogLevel::Error,
-                            format!("Could not create directory \"{}\": {}", input, err).as_ref(),
-                        );
-                        self.input_mode = InputMode::Popup(PopupType::Alert(
-                            Color::Red,
                             format!("Could not create directory \"{}\": {}", input, err),
-                        ));
+                        );
                     }
                 }
             }
@@ -114,14 +109,10 @@ impl FileTransferActivity {
                     }
                     Err(err) => {
                         // Report err
-                        self.log(
+                        self.log_and_alert(
                             LogLevel::Error,
-                            format!("Could not create directory \"{}\": {}", input, err).as_ref(),
-                        );
-                        self.input_mode = InputMode::Popup(PopupType::Alert(
-                            Color::Red,
                             format!("Could not create directory \"{}\": {}", input, err),
-                        ));
+                        );
                     }
                 }
             }
@@ -168,19 +159,14 @@ impl FileTransferActivity {
                             );
                         }
                         Err(err) => {
-                            self.log(
+                            self.log_and_alert(
                                 LogLevel::Error,
                                 format!(
                                     "Could not rename file \"{}\": {}",
                                     full_path.display(),
                                     err
-                                )
-                                .as_ref(),
+                                ),
                             );
-                            self.input_mode = InputMode::Popup(PopupType::Alert(
-                                Color::Red,
-                                format!("Could not rename file: {}", err),
-                            ))
                         }
                     }
                 }
@@ -208,19 +194,14 @@ impl FileTransferActivity {
                             );
                         }
                         Err(err) => {
-                            self.log(
+                            self.log_and_alert(
                                 LogLevel::Error,
                                 format!(
                                     "Could not rename file \"{}\": {}",
                                     full_path.display(),
                                     err
-                                )
-                                .as_ref(),
+                                ),
                             );
-                            self.input_mode = InputMode::Popup(PopupType::Alert(
-                                Color::Red,
-                                format!("Could not rename file: {}", err),
-                            ))
                         }
                     }
                 }
@@ -251,19 +232,14 @@ impl FileTransferActivity {
                             );
                         }
                         Err(err) => {
-                            self.log(
+                            self.log_and_alert(
                                 LogLevel::Error,
                                 format!(
                                     "Could not delete file \"{}\": {}",
                                     full_path.display(),
                                     err
-                                )
-                                .as_ref(),
+                                ),
                             );
-                            self.input_mode = InputMode::Popup(PopupType::Alert(
-                                Color::Red,
-                                format!("Could not delete file: {}", err),
-                            ))
                         }
                     }
                 }
@@ -282,19 +258,14 @@ impl FileTransferActivity {
                             );
                         }
                         Err(err) => {
-                            self.log(
+                            self.log_and_alert(
                                 LogLevel::Error,
                                 format!(
                                     "Could not delete file \"{}\": {}",
                                     full_path.display(),
                                     err
-                                )
-                                .as_ref(),
+                                ),
                             );
-                            self.input_mode = InputMode::Popup(PopupType::Alert(
-                                Color::Red,
-                                format!("Could not delete file: {}", err),
-                            ))
                         }
                     }
                 }
