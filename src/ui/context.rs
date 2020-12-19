@@ -32,8 +32,8 @@ use super::input::InputHandler;
 use crate::host::Localhost;
 
 // Includes
-use crossterm::execute;
 use crossterm::event::DisableMouseCapture;
+use crossterm::execute;
 use crossterm::terminal::{EnterAlternateScreen, LeaveAlternateScreen};
 use std::io::{stdout, Stdout, Write};
 use tui::backend::CrosstermBackend;
@@ -59,8 +59,28 @@ impl Context {
         Context {
             local,
             input_hnd: InputHandler::new(),
-            terminal: Terminal::new(CrosstermBackend::new(stdout)).unwrap()
+            terminal: Terminal::new(CrosstermBackend::new(stdout)).unwrap(),
         }
+    }
+
+    pub fn enter_alternate_screen(&mut self) {
+        let _ = execute!(
+            self.terminal.backend_mut(),
+            EnterAlternateScreen,
+            DisableMouseCapture
+        );
+    }
+
+    pub fn leave_alternate_screen(&mut self) {
+        let _ = execute!(
+            self.terminal.backend_mut(),
+            LeaveAlternateScreen,
+            DisableMouseCapture
+        );
+    }
+
+    pub fn clear_screen(&mut self) {
+        let _ = self.terminal.clear();
     }
 }
 
