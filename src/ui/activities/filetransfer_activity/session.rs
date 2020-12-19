@@ -761,12 +761,13 @@ impl FileTransferActivity {
                 // Read
                 let mut buff: [u8; 2048] = [0; 2048];
                 match f.read(&mut buff) {
-                    Ok(_) => {
-                        if content_inspector::inspect(&buff).is_binary() {
+                    Ok(size) => {
+                        if content_inspector::inspect(&buff[0..size]).is_binary() {
                             self.log_and_alert(
                                 LogLevel::Error,
                                 format!("Could not open file in editor: file is binary"),
                             );
+                            return;
                         }
                     }
                     Err(err) => {
@@ -785,9 +786,29 @@ impl FileTransferActivity {
         }
         // Put input mode back to normal
         let _ = disable_raw_mode();
+        // Leave alternate mode
+        if let Some(ctx) = self.context.as_mut() {
+            ctx.leave_alternate_screen();
+        }
         // Open editor
-        if let Err(err) = edit::edit_file(path) {
-            self.log_and_alert(LogLevel::Error, format!("Could not open editor: {}", err));
+        match edit::edit_file(path) {
+            Ok(_) => self.log(
+                LogLevel::Info,
+                format!(
+                    "Changes performed through editor saved to \"{}\"!",
+                    path.display()
+                )
+                .as_str(),
+            ),
+            Err(err) => {
+                self.log_and_alert(LogLevel::Error, format!("Could not open editor: {}", err))
+            }
+        }
+        if let Some(ctx) = self.context.as_mut() {
+            // Clear screen
+            ctx.clear_screen();
+            // Enter alternate mode
+            ctx.enter_alternate_screen();
         }
         // Re-enable raw mode
         let _ = enable_raw_mode();
