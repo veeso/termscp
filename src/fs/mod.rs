@@ -201,6 +201,13 @@ impl FsEntry {
         matches!(self, FsEntry::Directory(_))
     }
 
+    /// ### is_file
+    ///
+    /// Returns whether a FsEntry is a File
+    pub fn is_file(&self) -> bool {
+        matches!(self, FsEntry::File(_))
+    }
+
     /// ### get_realfile
     ///
     /// Return the real file pointed by a `FsEntry`
@@ -310,6 +317,7 @@ mod tests {
         assert_eq!(entry.get_group(), Some(0));
         assert_eq!(entry.is_symlink(), false);
         assert_eq!(entry.is_dir(), true);
+        assert_eq!(entry.is_file(), false);
         assert_eq!(entry.get_unix_pex(), Some((7, 5, 5)));
     }
 
@@ -342,6 +350,7 @@ mod tests {
         assert_eq!(entry.get_unix_pex(), Some((6, 4, 4)));
         assert_eq!(entry.is_symlink(), false);
         assert_eq!(entry.is_dir(), false);
+        assert_eq!(entry.is_file(), true);
     }
 
     #[test]
