@@ -19,7 +19,7 @@
 *
 */
 
-use super::{FileTransferActivity, InputField, InputMode, LogLevel, LogRecord, PopupType};
+use super::{Color, FileTransferActivity, InputField, InputMode, LogLevel, LogRecord, PopupType};
 
 impl FileTransferActivity {
     /// ### log
@@ -36,6 +36,20 @@ impl FileTransferActivity {
         self.log_records.push_front(record);
         // Set log index
         self.log_index = 0;
+    }
+
+    /// ### log_and_alert
+    ///
+    /// Add message to log events and also display it as an alert
+    pub(super) fn log_and_alert(&mut self, level: LogLevel, msg: String) {
+        // Set input mode
+        let color: Color = match level {
+            LogLevel::Error => Color::Red,
+            LogLevel::Info => Color::Green,
+            LogLevel::Warn => Color::Yellow,
+        };
+        self.log(level, msg.as_str());
+        self.input_mode = InputMode::Popup(PopupType::Alert(color, msg));
     }
 
     /// ### create_quit_popup
