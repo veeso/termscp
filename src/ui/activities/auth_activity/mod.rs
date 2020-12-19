@@ -166,7 +166,7 @@ impl Activity for AuthActivity {
         // Set context
         self.context = Some(context);
         // Clear terminal
-        let _ = self.context.as_mut().unwrap().terminal.clear();
+        self.context.as_mut().unwrap().clear_screen();
         // Put raw mode on enabled
         let _ = enable_raw_mode();
         self.input_mode = InputMode::Form;
@@ -215,7 +215,7 @@ impl Activity for AuthActivity {
         // Clear terminal and return
         match self.context.take() {
             Some(mut ctx) => {
-                let _ = ctx.terminal.clear();
+                ctx.clear_screen();
                 Some(ctx)
             }
             None => None,
