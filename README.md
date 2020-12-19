@@ -258,8 +258,6 @@ The developer documentation can be found on Rust Docs at <https://docs.rs/termsc
 
 ## Upcoming Features 🧪
 
-- **Text editor**: possibility to open, read and write file both on remote and on local host; this will also support syntax highlighting.
-
 ---
 
 ## Contributions 🤝🏻

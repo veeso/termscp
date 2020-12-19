@@ -21,6 +21,9 @@ Released on ??
     - Linux: `/home/alice/.config/termscp/bookmarks.toml`
     - Windows: `C:\Users\Alice\AppData\Roaming\termscp\bookmarks.toml`
     - MacOS: `/Users/Alice/Library/Application Support/termscp/bookmarks.toml`
+- **Text Editor**
+  - Added text editor feature to explorer view
+  - Added `o` to keybindings to open a text file
 - Enhancements:
   - User interface
     - Collpased borders to make everything more *aesthetic*

@@ -17,8 +17,10 @@ readme = "README.md"
 [dependencies]
 bytesize = "1.0.1"
 chrono = "0.4.19"
+content_inspector = "0.2.4"
 crossterm = "0.18.2"
 dirs = "3.0.1"
+edit = "0.1.2"
 ftp4 = { version = "^4.0.1", features = ["secure"] }
 getopts = "0.2.21"
 hostname = "0.3.1"
@@ -29,6 +31,7 @@ regex = "1.4.2"
 rpassword = "5.0.0"
 serde = { version = "1.0.118", features = ["derive"] }
 ssh2 = "0.9.0"
+tempfile = "3.1.0"
 textwrap = "0.13.0"
 toml = "0.5.7"
 tui = { version = "0.13.0", features = ["crossterm"], default-features = false }
@@ -37,9 +40,6 @@ whoami = "1.0.0"
 
 [target.'cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))'.dependencies]
 users = "0.11.0"
-
-[dev-dependencies]
-tempfile = "3"
 
 #[patch.crates-io]
 #ftp = { git = "https://github.com/ChristianVisintin/rust-ftp" }

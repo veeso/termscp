@@ -21,6 +21,8 @@
 
 // Deps
 extern crate bytesize;
+extern crate content_inspector;
+extern crate crossterm;
 
 // Locals
 use super::{FileTransferActivity, FsEntry, InputMode, LogLevel, PopupType};
@@ -28,6 +30,8 @@ use crate::utils::fmt_millis;
 
 // Ext
 use bytesize::ByteSize;
+use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
+use std::fs::{File, OpenOptions};
 use std::io::{Read, Seek, Write};
 use std::path::{Path, PathBuf};
 use std::time::Instant;
@@ -852,28 +856,62 @@ impl FileTransferActivity {
                     }
                     Err(err) => {
                         // Report err
-                        self.log(
+                        self.log_and_alert(
                             LogLevel::Error,
-                            format!("Could not change working directory: {}", err).as_str(),
-                        );
-                        self.input_mode = InputMode::Popup(PopupType::Alert(
-                            Color::Red,
                             format!("Could not change working directory: {}", err),
-                        ));
+                        );
                     }
                 }
             }
             Err(err) => {
                 // Report err
-                self.log(
+                self.log_and_alert(
                     LogLevel::Error,
-                    format!("Could not change working directory: {}", err).as_str(),
-                );
-                self.input_mode = InputMode::Popup(PopupType::Alert(
-                    Color::Red,
                     format!("Could not change working directory: {}", err),
-                ));
+                );
             }
         }
+    }
+
+    /// ### edit_file
+    ///
+    /// Edit a file on localhost
+    pub(super) fn edit_file(&mut self, path: &Path) {
+        // Read first 2048 bytes or less from file to check if it is textual
+        match OpenOptions::new().read(true).open(path) {
+            Ok(mut f) => {
+                // Read
+                let mut buff: [u8; 2048] = [0; 2048];
+                match f.read(&mut buff) {
+                    Ok(_) => {
+                        if content_inspector::inspect(&buff).is_binary() {
+                            self.log_and_alert(
+                                LogLevel::Error,
+                                format!("Could not open file in editor: file is binary"),
+                            );
+                        }
+                    }
+                    Err(err) => {
+                        self.log_and_alert(
+                            LogLevel::Error,
+                            format!("Could not read file: {}", err),
+                        );
+                        return;
+                    }
+                }
+            }
+            Err(err) => {
+                self.log_and_alert(LogLevel::Error, format!("Could not read file: {}", err));
+                return;
+            }
+        }
+        // Put input mode back to normal
+        let _ = disable_raw_mode();
+        // Open editor
+        if let Err(err) = edit::edit_file(path) {
+            self.log_and_alert(LogLevel::Error, format!("Could not open editor: {}", err));
+        }
+        // Re-enable raw mode
+        let _ = enable_raw_mode();
     }
 }
