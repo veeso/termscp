@@ -23,9 +23,11 @@
 extern crate bytesize;
 extern crate content_inspector;
 extern crate crossterm;
+extern crate tempfile;
 
 // Locals
-use super::{FileTransferActivity, FsEntry, InputMode, LogLevel, PopupType};
+use super::{FileTransferActivity, InputMode, LogLevel, PopupType};
+use crate::fs::{FsEntry, FsFile};
 use crate::utils::fmt_millis;
 
 // Ext
@@ -136,137 +138,7 @@ impl FileTransferActivity {
         // Match entry
         match entry {
             FsEntry::File(file) => {
-                // Upload file
-                // Try to open local file
-                match self
-                    .context
-                    .as_ref()
-                    .unwrap()
-                    .local
-                    .open_file_read(file.abs_path.as_path())
-                {
-                    Ok(mut fhnd) => match self.client.send_file(file, remote_path.as_path()) {
-                        Ok(mut rhnd) => {
-                            // Write file
-                            let file_size: usize =
-                                fhnd.seek(std::io::SeekFrom::End(0)).unwrap_or(0) as usize;
-                            // rewind
-                            if let Err(err) = fhnd.seek(std::io::SeekFrom::Start(0)) {
-                                self.log_and_alert(
-                                    LogLevel::Error,
-                                    format!("Could not rewind local file: {}", err),
-                                );
-                            }
-                            // Write remote file
-                            let mut total_bytes_written: usize = 0;
-                            // Set input state to popup progress
-                            self.input_mode = InputMode::Popup(PopupType::Progress(format!(
-                                "Uploading \"{}\"",
-                                file_name
-                            )));
-                            // Reset transfer states
-                            self.transfer.reset();
-                            let mut last_progress_val: f64 = 0.0;
-                            let mut last_input_event_fetch: Instant = Instant::now();
-                            // While the entire file hasn't been completely written,
-                            // Or filetransfer has been aborted
-                            while total_bytes_written < file_size && !self.transfer.aborted {
-                                // Handle input events (each 500ms)
-                                if last_input_event_fetch.elapsed().as_millis() >= 500 {
-                                    // Read events
-                                    self.read_input_event();
-                                    // Reset instant
-                                    last_input_event_fetch = Instant::now();
-                                }
-                                // Read till you can
-                                let mut buffer: [u8; 65536] = [0; 65536];
-                                match fhnd.read(&mut buffer) {
-                                    Ok(bytes_read) => {
-                                        total_bytes_written += bytes_read;
-                                        if bytes_read == 0 {
-                                            continue;
-                                        } else {
-                                            let mut buf_start: usize = 0;
-                                            while buf_start < bytes_read {
-                                                // Write bytes
-                                                match rhnd.write(&buffer[buf_start..bytes_read]) {
-                                                    Ok(bytes) => {
-                                                        buf_start += bytes;
-                                                    }
-                                                    Err(err) => {
-                                                        self.log_and_alert(
-                                                            LogLevel::Error,
-                                                            format!(
-                                                                "Could not write remote file: {}",
-                                                                err
-                                                            ),
-                                                        );
-                                                        break;
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                    Err(err) => {
-                                        self.log_and_alert(
-                                            LogLevel::Error,
-                                            format!("Could not read local file: {}", err),
-                                        );
-                                        break;
-                                    }
-                                }
-                                // Increase progress
-                                self.transfer.set_progress(total_bytes_written, file_size);
-                                // Draw only if a significant progress has been made (performance improvement)
-                                if last_progress_val < self.transfer.progress - 1.0 {
-                                    // Draw
-                                    self.draw();
-                                    last_progress_val = self.transfer.progress;
-                                }
-                            }
-                            // Finalize stream
-                            if let Err(err) = self.client.on_sent(rhnd) {
-                                self.log(
-                                    LogLevel::Warn,
-                                    format!("Could not finalize remote stream: \"{}\"", err)
-                                        .as_str(),
-                                );
-                            }
-                            self.log(
-                                LogLevel::Info,
-                                format!(
-                                    "Saved file \"{}\" to \"{}\" (took {} seconds; at {}/s)",
-                                    file.abs_path.display(),
-                                    remote_path.display(),
-                                    fmt_millis(self.transfer.started.elapsed()),
-                                    ByteSize(self.transfer.bytes_per_second()),
-                                )
-                                .as_ref(),
-                            );
-                        }
-                        Err(err) => {
-                            self.log_and_alert(
-                                LogLevel::Error,
-                                format!(
-                                    "Failed to upload file \"{}\": {}",
-                                    file.abs_path.display(),
-                                    err
-                                ),
-                            );
-                        }
-                    },
-                    Err(err) => {
-                        // Report error
-                        self.log_and_alert(
-                            LogLevel::Error,
-                            format!(
-                                "Failed to open file \"{}\": {}",
-                                file.abs_path.display(),
-                                err
-                            ),
-                        );
-                    }
-                }
+                let _ = self.filetransfer_send_file(file, remote_path.as_path());
             }
             FsEntry::Directory(dir) => {
                 // Create directory on remote
@@ -373,155 +245,9 @@ impl FileTransferActivity {
                     None => file.name.clone(),
                 };
                 local_file_path.push(local_file_name.as_str());
-                // Try to open local file
-                match self
-                    .context
-                    .as_ref()
-                    .unwrap()
-                    .local
-                    .open_file_write(local_file_path.as_path())
-                {
-                    Ok(mut local_file) => {
-                        // Download file from remote
-                        match self.client.recv_file(file) {
-                            Ok(mut rhnd) => {
-                                // Set popup progress
-                                self.input_mode = InputMode::Popup(PopupType::Progress(format!(
-                                    "Downloading \"{}\"...",
-                                    file_name
-                                )));
-                                let mut total_bytes_written: usize = 0;
-                                // Reset transfer states
-                                self.transfer.reset();
-                                // Write local file
-                                let mut last_progress_val: f64 = 0.0;
-                                let mut last_input_event_fetch: Instant = Instant::now();
-                                // While the entire file hasn't been completely read,
-                                // Or filetransfer has been aborted
-                                while total_bytes_written < file.size && !self.transfer.aborted {
-                                    // Handle input events (each 500 ms)
-                                    if last_input_event_fetch.elapsed().as_millis() >= 500 {
-                                        // Read events
-                                        self.read_input_event();
-                                        // Reset instant
-                                        last_input_event_fetch = Instant::now();
-                                    }
-                                    // Read till you can
-                                    let mut buffer: [u8; 65536] = [0; 65536];
-                                    match rhnd.read(&mut buffer) {
-                                        Ok(bytes_read) => {
-                                            total_bytes_written += bytes_read;
-                                            if bytes_read == 0 {
-                                                continue;
-                                            } else {
-                                                let mut buf_start: usize = 0;
-                                                while buf_start < bytes_read {
-                                                    // Write bytes
-                                                    match local_file
-                                                        .write(&buffer[buf_start..bytes_read])
-                                                    {
-                                                        Ok(bytes) => buf_start += bytes,
-                                                        Err(err) => {
-                                                            self.log_and_alert(
-                                                                LogLevel::Error,
-                                                                format!(
-                                                                "Could not write local file: {}",
-                                                                err
-                                                            ),
-                                                            );
-                                                            break;
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                        Err(err) => {
-                                            self.log_and_alert(
-                                                LogLevel::Error,
-                                                format!("Could not read remote file: {}", err),
-                                            );
-                                            break;
-                                        }
-                                    }
-                                    // Set progress
-                                    self.transfer.set_progress(total_bytes_written, file.size);
-                                    // Draw only if a significant progress has been made (performance improvement)
-                                    if last_progress_val < self.transfer.progress - 1.0 {
-                                        // Draw
-                                        self.draw();
-                                        last_progress_val = self.transfer.progress;
-                                    }
-                                }
-                                // Finalize stream
-                                if let Err(err) = self.client.on_recv(rhnd) {
-                                    self.log(
-                                        LogLevel::Warn,
-                                        format!("Could not finalize remote stream: \"{}\"", err)
-                                            .as_str(),
-                                    );
-                                }
-                                // Apply file mode to file
-                                #[cfg(any(
-                                    target_os = "unix",
-                                    target_os = "macos",
-                                    target_os = "linux"
-                                ))]
-                                if let Some(pex) = file.unix_pex {
-                                    if let Err(err) = self
-                                        .context
-                                        .as_ref()
-                                        .unwrap()
-                                        .local
-                                        .chmod(local_file_path.as_path(), pex)
-                                    {
-                                        self.log(
-                                            LogLevel::Error,
-                                            format!(
-                                                "Could not apply file mode {:?} to \"{}\": {}",
-                                                pex,
-                                                local_file_path.display(),
-                                                err
-                                            )
-                                            .as_ref(),
-                                        );
-                                    }
-                                }
-                                // Log
-                                self.log(
-                                    LogLevel::Info,
-                                    format!(
-                                        "Saved file \"{}\" to \"{}\" (took {} seconds; at {}/s)",
-                                        file.abs_path.display(),
-                                        local_file_path.display(),
-                                        fmt_millis(self.transfer.started.elapsed()),
-                                        ByteSize(self.transfer.bytes_per_second()),
-                                    )
-                                    .as_ref(),
-                                );
-                            }
-                            Err(err) => {
-                                self.log_and_alert(
-                                    LogLevel::Error,
-                                    format!(
-                                        "Failed to download file \"{}\": {}",
-                                        file.abs_path.display(),
-                                        err
-                                    ),
-                                );
-                            }
-                        }
-                    }
-                    Err(err) => {
-                        // Report error
-                        self.log_and_alert(
-                            LogLevel::Error,
-                            format!(
-                                "Failed to open local file for write \"{}\": {}",
-                                local_file_path.display(),
-                                err
-                            ),
-                        );
-                    }
+                // Download file
+                if let Err(err) = self.filetransfer_recv_file(local_file_path.as_path(), file) {
+                    self.log_and_alert(LogLevel::Error, err);
                 }
             }
             FsEntry::Directory(dir) => {
@@ -624,6 +350,252 @@ impl FileTransferActivity {
             // Eventually, Reset input mode to explorer
             self.input_mode = InputMode::Explorer;
         }
+    }
+
+    /// ### filetransfer_send_file
+    ///
+    /// Send local file and write it to remote path
+    fn filetransfer_send_file(&mut self, local: &FsFile, remote: &Path) -> Result<(), String> {
+        // Upload file
+        // Try to open local file
+        match self
+            .context
+            .as_ref()
+            .unwrap()
+            .local
+            .open_file_read(local.abs_path.as_path())
+        {
+            Ok(mut fhnd) => match self.client.send_file(local, remote) {
+                Ok(mut rhnd) => {
+                    // Write file
+                    let file_size: usize =
+                        fhnd.seek(std::io::SeekFrom::End(0)).unwrap_or(0) as usize;
+                    // rewind
+                    if let Err(err) = fhnd.seek(std::io::SeekFrom::Start(0)) {
+                        return Err(format!("Could not rewind local file: {}", err));
+                    }
+                    // Write remote file
+                    let mut total_bytes_written: usize = 0;
+                    // Set input state to popup progress
+                    self.input_mode = InputMode::Popup(PopupType::Progress(format!(
+                        "Uploading \"{}\"",
+                        local.name
+                    )));
+                    // Reset transfer states
+                    self.transfer.reset();
+                    let mut last_progress_val: f64 = 0.0;
+                    let mut last_input_event_fetch: Instant = Instant::now();
+                    // While the entire file hasn't been completely written,
+                    // Or filetransfer has been aborted
+                    while total_bytes_written < file_size && !self.transfer.aborted {
+                        // Handle input events (each 500ms)
+                        if last_input_event_fetch.elapsed().as_millis() >= 500 {
+                            // Read events
+                            self.read_input_event();
+                            // Reset instant
+                            last_input_event_fetch = Instant::now();
+                        }
+                        // Read till you can
+                        let mut buffer: [u8; 65536] = [0; 65536];
+                        match fhnd.read(&mut buffer) {
+                            Ok(bytes_read) => {
+                                total_bytes_written += bytes_read;
+                                if bytes_read == 0 {
+                                    continue;
+                                } else {
+                                    let mut buf_start: usize = 0;
+                                    while buf_start < bytes_read {
+                                        // Write bytes
+                                        match rhnd.write(&buffer[buf_start..bytes_read]) {
+                                            Ok(bytes) => {
+                                                buf_start += bytes;
+                                            }
+                                            Err(err) => {
+                                                return Err(format!(
+                                                    "Could not write remote file: {}",
+                                                    err
+                                                ))
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            Err(err) => return Err(format!("Could not read local file: {}", err)),
+                        }
+                        // Increase progress
+                        self.transfer.set_progress(total_bytes_written, file_size);
+                        // Draw only if a significant progress has been made (performance improvement)
+                        if last_progress_val < self.transfer.progress - 1.0 {
+                            // Draw
+                            self.draw();
+                            last_progress_val = self.transfer.progress;
+                        }
+                    }
+                    // Finalize stream
+                    if let Err(err) = self.client.on_sent(rhnd) {
+                        self.log(
+                            LogLevel::Warn,
+                            format!("Could not finalize remote stream: \"{}\"", err).as_str(),
+                        );
+                    }
+                    self.log(
+                        LogLevel::Info,
+                        format!(
+                            "Saved file \"{}\" to \"{}\" (took {} seconds; at {}/s)",
+                            local.abs_path.display(),
+                            remote.display(),
+                            fmt_millis(self.transfer.started.elapsed()),
+                            ByteSize(self.transfer.bytes_per_second()),
+                        )
+                        .as_ref(),
+                    );
+                }
+                Err(err) => {
+                    return Err(format!(
+                        "Failed to upload file \"{}\": {}",
+                        local.abs_path.display(),
+                        err
+                    ))
+                }
+            },
+            Err(err) => {
+                return Err(format!(
+                    "Failed to open file \"{}\": {}",
+                    local.abs_path.display(),
+                    err
+                ))
+            }
+        }
+        Ok(())
+    }
+
+    /// ### filetransfer_recv_file
+    ///
+    /// Receive file from remote and write it to local path
+    fn filetransfer_recv_file(&mut self, local: &Path, remote: &FsFile) -> Result<(), String> {
+        // Try to open local file
+        match self.context.as_ref().unwrap().local.open_file_write(local) {
+            Ok(mut local_file) => {
+                // Download file from remote
+                match self.client.recv_file(remote) {
+                    Ok(mut rhnd) => {
+                        // Set popup progress
+                        self.input_mode = InputMode::Popup(PopupType::Progress(format!(
+                            "Downloading \"{}\"...",
+                            remote.name,
+                        )));
+                        let mut total_bytes_written: usize = 0;
+                        // Reset transfer states
+                        self.transfer.reset();
+                        // Write local file
+                        let mut last_progress_val: f64 = 0.0;
+                        let mut last_input_event_fetch: Instant = Instant::now();
+                        // While the entire file hasn't been completely read,
+                        // Or filetransfer has been aborted
+                        while total_bytes_written < remote.size && !self.transfer.aborted {
+                            // Handle input events (each 500 ms)
+                            if last_input_event_fetch.elapsed().as_millis() >= 500 {
+                                // Read events
+                                self.read_input_event();
+                                // Reset instant
+                                last_input_event_fetch = Instant::now();
+                            }
+                            // Read till you can
+                            let mut buffer: [u8; 65536] = [0; 65536];
+                            match rhnd.read(&mut buffer) {
+                                Ok(bytes_read) => {
+                                    total_bytes_written += bytes_read;
+                                    if bytes_read == 0 {
+                                        continue;
+                                    } else {
+                                        let mut buf_start: usize = 0;
+                                        while buf_start < bytes_read {
+                                            // Write bytes
+                                            match local_file.write(&buffer[buf_start..bytes_read]) {
+                                                Ok(bytes) => buf_start += bytes,
+                                                Err(err) => {
+                                                    return Err(format!(
+                                                        "Could not write local file: {}",
+                                                        err
+                                                    ))
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                Err(err) => {
+                                    return Err(format!("Could not read remote file: {}", err))
+                                }
+                            }
+                            // Set progress
+                            self.transfer.set_progress(total_bytes_written, remote.size);
+                            // Draw only if a significant progress has been made (performance improvement)
+                            if last_progress_val < self.transfer.progress - 1.0 {
+                                // Draw
+                                self.draw();
+                                last_progress_val = self.transfer.progress;
+                            }
+                        }
+                        // Finalize stream
+                        if let Err(err) = self.client.on_recv(rhnd) {
+                            self.log(
+                                LogLevel::Warn,
+                                format!("Could not finalize remote stream: \"{}\"", err).as_str(),
+                            );
+                        }
+                        // Apply file mode to file
+                        #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
+                        if let Some(pex) = file.unix_pex {
+                            if let Err(err) = self
+                                .context
+                                .as_ref()
+                                .unwrap()
+                                .local
+                                .chmod(local_file_path.as_path(), pex)
+                            {
+                                self.log(
+                                    LogLevel::Error,
+                                    format!(
+                                        "Could not apply file mode {:?} to \"{}\": {}",
+                                        pex,
+                                        local_file_path.display(),
+                                        err
+                                    )
+                                    .as_ref(),
+                                );
+                            }
+                        }
+                        // Log
+                        self.log(
+                            LogLevel::Info,
+                            format!(
+                                "Saved file \"{}\" to \"{}\" (took {} seconds; at {}/s)",
+                                remote.abs_path.display(),
+                                local.display(),
+                                fmt_millis(self.transfer.started.elapsed()),
+                                ByteSize(self.transfer.bytes_per_second()),
+                            )
+                            .as_ref(),
+                        );
+                    }
+                    Err(err) => {
+                        return Err(format!(
+                            "Failed to download file \"{}\": {}",
+                            remote.abs_path.display(),
+                            err
+                        ))
+                    }
+                }
+            }
+            Err(err) => {
+                return Err(format!(
+                    "Failed to open local file for write \"{}\": {}",
+                    local.display(),
+                    err
+                ))
+            }
+        }
+        Ok(())
     }
 
     /// ### local_scan
