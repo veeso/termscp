@@ -31,7 +31,7 @@ extern crate rand;
 use crate::bookmarks::serializer::BookmarkSerializer;
 use crate::bookmarks::{Bookmark, SerializerError, SerializerErrorKind, UserHosts};
 use crate::filetransfer::FileTransferProtocol;
-use crate::utils::time_to_str;
+use crate::utils::fmt::fmt_time;
 // Ext
 use magic_crypt::MagicCryptTrait;
 use rand::{distributions::Alphanumeric, Rng};
@@ -220,7 +220,7 @@ impl BookmarksClient {
                 }
             }
         }
-        let name: String = time_to_str(SystemTime::now(), "ISO%Y%m%dT%H%M%S");
+        let name: String = fmt_time(SystemTime::now(), "ISO%Y%m%dT%H%M%S");
         self.hosts.recents.insert(name, host);
     }
 

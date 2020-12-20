@@ -30,7 +30,7 @@ extern crate regex;
 
 use super::{FileTransfer, FileTransferError, FileTransferErrorType};
 use crate::fs::{FsDirectory, FsEntry, FsFile};
-use crate::utils::lstime_to_systime;
+use crate::utils::parser::parse_lstime;
 
 // Includes
 use ftp4::native_tls::TlsConnector;
@@ -142,7 +142,7 @@ impl FtpFileTransfer {
                     (owner_pex, group_pex, others_pex)
                 };
                 // Parse mtime and convert to SystemTime
-                let mtime: SystemTime = match lstime_to_systime(
+                let mtime: SystemTime = match parse_lstime(
                     metadata.get(7).unwrap().as_str(),
                     "%b %d %Y",
                     "%b %d %H:%M",

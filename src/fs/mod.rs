@@ -27,7 +27,7 @@ extern crate bytesize;
 #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
 extern crate users;
 
-use crate::utils::{fmt_pex, time_to_str};
+use crate::utils::fmt::{fmt_pex, fmt_time};
 
 use bytesize::ByteSize;
 use std::path::PathBuf;
@@ -271,7 +271,7 @@ impl std::fmt::Display for FsEntry {
         // Get byte size
         let size: ByteSize = ByteSize(self.get_size() as u64);
         // Get date
-        let datetime: String = time_to_str(self.get_last_change_time(), "%b %d %Y %H:%M");
+        let datetime: String = fmt_time(self.get_last_change_time(), "%b %d %Y %H:%M");
         // Set file name (or elide if too long)
         let name: String = self.get_name();
         let name: String = match name.len() >= 24 {
@@ -467,7 +467,7 @@ mod tests {
             format!("{}", entry),
             format!(
                 "bar.txt                 \t-rw-r--r--  \troot        \t8.2 KB    \t{}",
-                time_to_str(t, "%b %d %Y %H:%M")
+                fmt_time(t, "%b %d %Y %H:%M")
             )
         );
         #[cfg(target_os = "windows")]
@@ -475,7 +475,7 @@ mod tests {
             format!("{}", entry),
             format!(
                 "bar.txt                 \t-rw-r--r--  \t0           \t8.2 KB    \t{}",
-                time_to_str(t, "%b %d %Y %H:%M")
+                fmt_time(t, "%b %d %Y %H:%M")
             )
         );
         // Elide name
@@ -498,7 +498,7 @@ mod tests {
             format!("{}", entry),
             format!(
                 "piroparoporoperoperu... \t-rw-r--r--  \troot        \t8.2 KB    \t{}",
-                time_to_str(t, "%b %d %Y %H:%M")
+                fmt_time(t, "%b %d %Y %H:%M")
             )
         );
         #[cfg(target_os = "windows")]
@@ -506,7 +506,7 @@ mod tests {
             format!("{}", entry),
             format!(
                 "piroparoporoperoperu... \t-rw-r--r--  \t0           \t8.2 KB    \t{}",
-                time_to_str(t, "%b %d %Y %H:%M")
+                fmt_time(t, "%b %d %Y %H:%M")
             )
         );
         // No pex
@@ -529,7 +529,7 @@ mod tests {
             format!("{}", entry),
             format!(
                 "bar.txt                 \t-?????????  \troot        \t8.2 KB    \t{}",
-                time_to_str(t, "%b %d %Y %H:%M")
+                fmt_time(t, "%b %d %Y %H:%M")
             )
         );
         #[cfg(target_os = "windows")]
@@ -537,7 +537,7 @@ mod tests {
             format!("{}", entry),
             format!(
                 "bar.txt                 \t-?????????  \t0           \t8.2 KB    \t{}",
-                time_to_str(t, "%b %d %Y %H:%M")
+                fmt_time(t, "%b %d %Y %H:%M")
             )
         );
         // No user
@@ -560,7 +560,7 @@ mod tests {
             format!("{}", entry),
             format!(
                 "bar.txt                 \t-?????????  \t0           \t8.2 KB    \t{}",
-                time_to_str(t, "%b %d %Y %H:%M")
+                fmt_time(t, "%b %d %Y %H:%M")
             )
         );
         #[cfg(target_os = "windows")]
@@ -568,7 +568,7 @@ mod tests {
             format!("{}", entry),
             format!(
                 "bar.txt                 \t-?????????  \t0           \t8.2 KB    \t{}",
-                time_to_str(t, "%b %d %Y %H:%M")
+                fmt_time(t, "%b %d %Y %H:%M")
             )
         );
     }
@@ -593,7 +593,7 @@ mod tests {
             format!("{}", entry),
             format!(
                 "projects                \tdrwxr-xr-x  \troot        \t4.1 KB    \t{}",
-                time_to_str(t_now, "%b %d %Y %H:%M")
+                fmt_time(t_now, "%b %d %Y %H:%M")
             )
         );
         #[cfg(target_os = "windows")]
@@ -601,7 +601,7 @@ mod tests {
             format!("{}", entry),
             format!(
                 "projects                \tdrwxr-xr-x  \t0           \t4.1 KB    \t{}",
-                time_to_str(t_now, "%b %d %Y %H:%M")
+                fmt_time(t_now, "%b %d %Y %H:%M")
             )
         );
         // No pex, no user
@@ -622,7 +622,7 @@ mod tests {
             format!("{}", entry),
             format!(
                 "projects                \td?????????  \t0           \t4.1 KB    \t{}",
-                time_to_str(t_now, "%b %d %Y %H:%M")
+                fmt_time(t_now, "%b %d %Y %H:%M")
             )
         );
         #[cfg(target_os = "windows")]
@@ -630,7 +630,7 @@ mod tests {
             format!("{}", entry),
             format!(
                 "projects                \td?????????  \t0           \t4.1 KB    \t{}",
-                time_to_str(t_now, "%b %d %Y %H:%M")
+                fmt_time(t_now, "%b %d %Y %H:%M")
             )
         );
     }

@@ -28,7 +28,8 @@ extern crate tempfile;
 // Locals
 use super::{FileTransferActivity, InputMode, LogLevel, PopupType};
 use crate::fs::{FsEntry, FsFile};
-use crate::utils::{fmt_millis, hash_sha256_file};
+use crate::utils::fmt::fmt_millis;
+use crate::utils::hash::hash_sha256_file;
 
 // Ext
 use bytesize::ByteSize;

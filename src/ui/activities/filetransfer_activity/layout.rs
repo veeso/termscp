@@ -28,7 +28,7 @@ use super::{
     Context, DialogYesNoOption, FileExplorerTab, FileTransferActivity, FsEntry, InputField,
     InputMode, LogLevel, LogRecord, PopupType,
 };
-use crate::utils::{align_text_center, time_to_str};
+use crate::utils::fmt::{align_text_center, fmt_time};
 
 use bytesize::ByteSize;
 use std::path::{Path, PathBuf};
@@ -484,10 +484,10 @@ impl FileTransferActivity {
                 // Get name and path
                 let abs_path: PathBuf = fsentry.get_abs_path();
                 let name: String = fsentry.get_name();
-                let ctime: String = time_to_str(fsentry.get_creation_time(), "%b %d %Y %H:%M:%S");
+                let ctime: String = fmt_time(fsentry.get_creation_time(), "%b %d %Y %H:%M:%S");
                 let atime: String =
-                    time_to_str(fsentry.get_last_access_time(), "%b %d %Y %H:%M:%S");
-                let mtime: String = time_to_str(fsentry.get_creation_time(), "%b %d %Y %H:%M:%S");
+                    fmt_time(fsentry.get_last_access_time(), "%b %d %Y %H:%M:%S");
+                let mtime: String = fmt_time(fsentry.get_creation_time(), "%b %d %Y %H:%M:%S");
                 let (bsize, size): (ByteSize, usize) =
                     (ByteSize(fsentry.get_size() as u64), fsentry.get_size());
                 let user: Option<u32> = fsentry.get_user();

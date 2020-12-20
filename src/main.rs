@@ -119,7 +119,7 @@ fn main() {
     let extra_args: Vec<String> = matches.free;
     if let Some(remote) = extra_args.get(0) {
         // Parse address
-        match utils::parse_remote_opt(remote) {
+        match utils::parser::parse_remote_opt(remote) {
             Ok((addr, portn, proto, user)) => {
                 // Set params
                 address = Some(addr);

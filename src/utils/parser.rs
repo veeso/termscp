@@ -1,6 +1,6 @@
-//! ## Utils
+//! ## Parser
 //!
-//! `utils` is the module which provides utilities of different kind
+//! `parser` is the module which provides utilities for parsing different kind of stuff
 
 /*
 *
@@ -25,20 +25,12 @@
 
 // Dependencies
 extern crate chrono;
-extern crate data_encoding;
-extern crate ring;
-extern crate textwrap;
 extern crate whoami;
 
 use crate::filetransfer::FileTransferProtocol;
 
 use chrono::format::ParseError;
 use chrono::prelude::*;
-use data_encoding::HEXLOWER;
-use ring::digest::{Context, Digest, SHA256};
-use std::fs::File;
-use std::io::Read;
-use std::path::Path;
 use std::time::{Duration, SystemTime};
 
 /// ### parse_remote_opt
@@ -152,87 +144,13 @@ pub fn parse_remote_opt(
     Ok((address, port, protocol, username))
 }
 
-/// ### fmt_pex
-///
-/// Convert 3 bytes of permissions value into ls notation (e.g. rwx-wx--x)
-pub fn fmt_pex(owner: u8, group: u8, others: u8) -> String {
-    let mut mode: String = String::with_capacity(9);
-    let read: u8 = (owner >> 2) & 0x1;
-    let write: u8 = (owner >> 1) & 0x1;
-    let exec: u8 = owner & 0x1;
-    mode.push_str(match read {
-        1 => "r",
-        _ => "-",
-    });
-    mode.push_str(match write {
-        1 => "w",
-        _ => "-",
-    });
-    mode.push_str(match exec {
-        1 => "x",
-        _ => "-",
-    });
-    let read: u8 = (group >> 2) & 0x1;
-    let write: u8 = (group >> 1) & 0x1;
-    let exec: u8 = group & 0x1;
-    mode.push_str(match read {
-        1 => "r",
-        _ => "-",
-    });
-    mode.push_str(match write {
-        1 => "w",
-        _ => "-",
-    });
-    mode.push_str(match exec {
-        1 => "x",
-        _ => "-",
-    });
-    let read: u8 = (others >> 2) & 0x1;
-    let write: u8 = (others >> 1) & 0x1;
-    let exec: u8 = others & 0x1;
-    mode.push_str(match read {
-        1 => "r",
-        _ => "-",
-    });
-    mode.push_str(match write {
-        1 => "w",
-        _ => "-",
-    });
-    mode.push_str(match exec {
-        1 => "x",
-        _ => "-",
-    });
-    mode
-}
-
-/// ### instant_to_str
-///
-/// Format a `Instant` into a time string
-pub fn time_to_str(time: SystemTime, fmt: &str) -> String {
-    let datetime: DateTime<Local> = time.into();
-    format!("{}", datetime.format(fmt))
-}
-
-/// ### fmt_millis
-///
-/// Format duration as {secs}.{millis}
-pub fn fmt_millis(duration: Duration) -> String {
-    let seconds: u128 = duration.as_millis() / 1000;
-    let millis: u128 = duration.as_millis() % 1000;
-    format!("{}.{:0width$}", seconds, millis, width = 3)
-}
-
-/// ### lstime_to_systime
+/// ### parse_lstime
 ///
 /// Convert ls syntax time to System Time
 /// ls time has two possible syntax:
 /// 1. if year is current: %b %d %H:%M (e.g. Nov 5 13:46)
 /// 2. else: %b %d %Y (e.g. Nov 5 2019)
-pub fn lstime_to_systime(
-    tm: &str,
-    fmt_year: &str,
-    fmt_hours: &str,
-) -> Result<SystemTime, ParseError> {
+pub fn parse_lstime(tm: &str, fmt_year: &str, fmt_hours: &str) -> Result<SystemTime, ParseError> {
     let datetime: NaiveDateTime = match NaiveDate::parse_from_str(tm, fmt_year) {
         Ok(date) => {
             // Case 2.
@@ -261,49 +179,10 @@ pub fn lstime_to_systime(
         .unwrap_or(SystemTime::UNIX_EPOCH))
 }
 
-/// align_text_center
-///
-/// Align text to center for a given width
-pub fn align_text_center(text: &str, width: u16) -> String {
-    let indent_size: usize = match (width as usize) >= text.len() {
-        // NOTE: The check prevents underflow
-        true => (width as usize - text.len()) / 2,
-        false => 0,
-    };
-    textwrap::indent(
-        text,
-        (0..indent_size).map(|_| " ").collect::<String>().as_str(),
-    )
-    .trim_end()
-    .to_string()
-}
-
-/// ### hash_sha256_file
-///
-/// Get SHA256 of provided path
-pub fn hash_sha256_file(file: &Path) -> Result<String, std::io::Error> {
-    // Open file
-    let mut reader: File = File::open(file)?;
-    let mut context = Context::new(&SHA256);
-    let mut buffer = [0; 8192];
-    loop {
-        let count = reader.read(&mut buffer)?;
-        if count == 0 {
-            break;
-        }
-        context.update(&buffer[..count]);
-    }
-    // Finish context
-    let digest: Digest = context.finish();
-    Ok(HEXLOWER.encode(digest.as_ref()))
-}
-
 #[cfg(test)]
 mod tests {
 
     use super::*;
-
-    use std::io::Write;
 
     #[test]
     fn test_utils_parse_remote_opt() {
@@ -395,31 +274,10 @@ mod tests {
     }
 
     #[test]
-    fn test_utils_fmt_pex() {
-        assert_eq!(fmt_pex(7, 7, 7), String::from("rwxrwxrwx"));
-        assert_eq!(fmt_pex(7, 5, 5), String::from("rwxr-xr-x"));
-        assert_eq!(fmt_pex(6, 6, 6), String::from("rw-rw-rw-"));
-        assert_eq!(fmt_pex(6, 4, 4), String::from("rw-r--r--"));
-        assert_eq!(fmt_pex(6, 0, 0), String::from("rw-------"));
-        assert_eq!(fmt_pex(0, 0, 0), String::from("---------"));
-        assert_eq!(fmt_pex(4, 4, 4), String::from("r--r--r--"));
-        assert_eq!(fmt_pex(1, 2, 1), String::from("--x-w---x"));
-    }
-
-    #[test]
-    fn test_utils_time_to_str() {
-        let system_time: SystemTime = SystemTime::from(SystemTime::UNIX_EPOCH);
-        assert_eq!(
-            time_to_str(system_time, "%Y-%m-%d"),
-            String::from("1970-01-01")
-        );
-    }
-
-    #[test]
-    fn test_utils_lstime_to_systime() {
+    fn test_utils_parse_lstime() {
         // Good cases
         assert_eq!(
-            lstime_to_systime("Nov 5 16:32", "%b %d %Y", "%b %d %H:%M")
+            parse_lstime("Nov 5 16:32", "%b %d %Y", "%b %d %H:%M")
                 .ok()
                 .unwrap()
                 .duration_since(SystemTime::UNIX_EPOCH)
@@ -428,7 +286,7 @@ mod tests {
             Duration::from_secs(1604593920)
         );
         assert_eq!(
-            lstime_to_systime("Dec 2 21:32", "%b %d %Y", "%b %d %H:%M")
+            parse_lstime("Dec 2 21:32", "%b %d %Y", "%b %d %H:%M")
                 .ok()
                 .unwrap()
                 .duration_since(SystemTime::UNIX_EPOCH)
@@ -437,7 +295,7 @@ mod tests {
             Duration::from_secs(1606944720)
         );
         assert_eq!(
-            lstime_to_systime("Nov 5 2018", "%b %d %Y", "%b %d %H:%M")
+            parse_lstime("Nov 5 2018", "%b %d %Y", "%b %d %H:%M")
                 .ok()
                 .unwrap()
                 .duration_since(SystemTime::UNIX_EPOCH)
@@ -446,7 +304,7 @@ mod tests {
             Duration::from_secs(1541376000)
         );
         assert_eq!(
-            lstime_to_systime("Mar 18 2018", "%b %d %Y", "%b %d %H:%M")
+            parse_lstime("Mar 18 2018", "%b %d %Y", "%b %d %H:%M")
                 .ok()
                 .unwrap()
                 .duration_since(SystemTime::UNIX_EPOCH)
@@ -455,50 +313,8 @@ mod tests {
             Duration::from_secs(1521331200)
         );
         // bad cases
-        assert!(lstime_to_systime("Oma 31 2018", "%b %d %Y", "%b %d %H:%M").is_err());
-        assert!(lstime_to_systime("Feb 31 2018", "%b %d %Y", "%b %d %H:%M").is_err());
-        assert!(lstime_to_systime("Feb 15 25:32", "%b %d %Y", "%b %d %H:%M").is_err());
-    }
-
-    #[test]
-    fn test_utils_align_text_center() {
-        assert_eq!(
-            align_text_center("hello world!", 24),
-            String::from("      hello world!")
-        );
-        // Bad case
-        assert_eq!(
-            align_text_center("hello world!", 8),
-            String::from("hello world!")
-        );
-    }
-    #[test]
-    fn test_utils_fmt_millis() {
-        assert_eq!(
-            fmt_millis(Duration::from_millis(2048)),
-            String::from("2.048")
-        );
-        assert_eq!(
-            fmt_millis(Duration::from_millis(8192)),
-            String::from("8.192")
-        );
-        assert_eq!(
-            fmt_millis(Duration::from_millis(18192)),
-            String::from("18.192")
-        );
-    }
-
-    #[test]
-    fn test_utils_hash_sha256() {
-        let tmp: tempfile::NamedTempFile = tempfile::NamedTempFile::new().unwrap();
-        // Write
-        let mut fhnd: File = File::create(tmp.path()).unwrap();
-        assert!(fhnd.write_all(b"Hello world!\n").is_ok());
-        assert_eq!(
-            *hash_sha256_file(tmp.path()).ok().as_ref().unwrap(),
-            String::from("0ba904eae8773b70c75333db4de2f3ac45a8ad4ddba1b242f0b3cfc199391dd8")
-        );
-        // Bad file
-        assert!(hash_sha256_file(Path::new("/tmp/oiojjt5ig/aiehgoiwg")).is_err());
+        assert!(parse_lstime("Oma 31 2018", "%b %d %Y", "%b %d %H:%M").is_err());
+        assert!(parse_lstime("Feb 31 2018", "%b %d %Y", "%b %d %H:%M").is_err());
+        assert!(parse_lstime("Feb 15 25:32", "%b %d %Y", "%b %d %H:%M").is_err());
     }
 }

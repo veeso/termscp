@@ -27,7 +27,7 @@ use super::{
     AuthActivity, Context, DialogYesNoOption, FileTransferProtocol, InputField, InputForm,
     InputMode, PopupType,
 };
-use crate::utils::align_text_center;
+use crate::utils::fmt::align_text_center;
 
 use tui::{
     layout::{Constraint, Corner, Direction, Layout, Rect},
