@@ -545,20 +545,20 @@ impl FileTransferActivity {
                         }
                         // Apply file mode to file
                         #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
-                        if let Some(pex) = file.unix_pex {
+                        if let Some(pex) = remote.unix_pex {
                             if let Err(err) = self
                                 .context
                                 .as_ref()
                                 .unwrap()
                                 .local
-                                .chmod(local_file_path.as_path(), pex)
+                                .chmod(local, pex)
                             {
                                 self.log(
                                     LogLevel::Error,
                                     format!(
                                         "Could not apply file mode {:?} to \"{}\": {}",
                                         pex,
-                                        local_file_path.display(),
+                                        local.display(),
                                         err
                                     )
                                     .as_ref(),
