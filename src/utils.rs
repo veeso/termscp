@@ -25,6 +25,8 @@
 
 // Dependencies
 extern crate chrono;
+extern crate data_encoding;
+extern crate ring;
 extern crate textwrap;
 extern crate whoami;
 
@@ -32,6 +34,11 @@ use crate::filetransfer::FileTransferProtocol;
 
 use chrono::format::ParseError;
 use chrono::prelude::*;
+use data_encoding::HEXLOWER;
+use ring::digest::{Context, Digest, SHA256};
+use std::fs::File;
+use std::io::Read;
+use std::path::Path;
 use std::time::{Duration, SystemTime};
 
 /// ### parse_remote_opt
@@ -100,7 +107,10 @@ pub fn parse_remote_opt(
         _ => return Err(String::from("Bad syntax")), // Too many tokens...
     }
     // Set username to default if sftp or scp
-    if matches!(protocol, FileTransferProtocol::Sftp | FileTransferProtocol::Scp) {
+    if matches!(
+        protocol,
+        FileTransferProtocol::Sftp | FileTransferProtocol::Scp
+    ) {
         // Set username to current username
         username = Some(whoami::username());
     }
@@ -204,7 +214,7 @@ pub fn time_to_str(time: SystemTime, fmt: &str) -> String {
 }
 
 /// ### fmt_millis
-/// 
+///
 /// Format duration as {secs}.{millis}
 pub fn fmt_millis(duration: Duration) -> String {
     let seconds: u128 = duration.as_millis() / 1000;
@@ -268,10 +278,32 @@ pub fn align_text_center(text: &str, width: u16) -> String {
     .to_string()
 }
 
+/// ### hash_sha256_file
+///
+/// Get SHA256 of provided path
+pub fn hash_sha256_file(file: &Path) -> Result<String, std::io::Error> {
+    // Open file
+    let mut reader: File = File::open(file)?;
+    let mut context = Context::new(&SHA256);
+    let mut buffer = [0; 8192];
+    loop {
+        let count = reader.read(&mut buffer)?;
+        if count == 0 {
+            break;
+        }
+        context.update(&buffer[..count]);
+    }
+    // Finish context
+    let digest: Digest = context.finish();
+    Ok(HEXLOWER.encode(digest.as_ref()))
+}
+
 #[cfg(test)]
 mod tests {
 
     use super::*;
+
+    use std::io::Write;
 
     #[test]
     fn test_utils_parse_remote_opt() {
@@ -440,11 +472,33 @@ mod tests {
             String::from("hello world!")
         );
     }
-    
     #[test]
     fn test_utils_fmt_millis() {
-        assert_eq!(fmt_millis(Duration::from_millis(2048)), String::from("2.048"));
-        assert_eq!(fmt_millis(Duration::from_millis(8192)), String::from("8.192"));
-        assert_eq!(fmt_millis(Duration::from_millis(18192)), String::from("18.192"));
+        assert_eq!(
+            fmt_millis(Duration::from_millis(2048)),
+            String::from("2.048")
+        );
+        assert_eq!(
+            fmt_millis(Duration::from_millis(8192)),
+            String::from("8.192")
+        );
+        assert_eq!(
+            fmt_millis(Duration::from_millis(18192)),
+            String::from("18.192")
+        );
+    }
+
+    #[test]
+    fn test_utils_hash_sha256() {
+        let tmp: tempfile::NamedTempFile = tempfile::NamedTempFile::new().unwrap();
+        // Write
+        let mut fhnd: File = File::create(tmp.path()).unwrap();
+        assert!(fhnd.write_all(b"Hello world!\n").is_ok());
+        assert_eq!(
+            *hash_sha256_file(tmp.path()).ok().as_ref().unwrap(),
+            String::from("0ba904eae8773b70c75333db4de2f3ac45a8ad4ddba1b242f0b3cfc199391dd8")
+        );
+        // Bad file
+        assert!(hash_sha256_file(Path::new("/tmp/oiojjt5ig/aiehgoiwg")).is_err());
     }
 }
