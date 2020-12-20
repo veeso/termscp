@@ -25,6 +25,8 @@ Current version: 0.1.3 (13/12/2020)
       - [How Password can be provided 🔐](#how-password-can-be-provided-)
   - [Bookmarks ⭐](#bookmarks-)
     - [Are my passwords Safe 😈](#are-my-passwords-safe-)
+  - [Text Editor ✏](#text-editor-)
+    - [How do I configure the text editor 🦥](#how-do-i-configure-the-text-editor-)
   - [Keybindings ⌨](#keybindings-)
   - [Documentation 📚](#documentation-)
   - [Known issues 🧻](#known-issues-)
@@ -182,7 +184,7 @@ Password can be basically provided through 3 ways when address argument is provi
 
 ## Bookmarks ⭐
 
-Since TermSCP 0.2.0, it is possible to save favourites hosts, which can be then loaded quickly from the main layout of termscp.
+In TermSCP it is possible to save favourites hosts, which can be then loaded quickly from the main layout of termscp.
 TermSCP will also save the last 16 hosts you connected to.
 This feature allows you to load all the parameters required to connect to a certain remote, simply selecting the bookmark in the tab under the authentication form.
 
@@ -212,6 +214,21 @@ As said before, bookmarks are saved in your configuration directory along with p
 
 ---
 
+## Text Editor ✏
+
+TermSCP has, as you might have noticed, many features, one of these is the possibility to view and edit text file. It doesn't matter if the file is located on the local host or on the remote host, termscp provides the possibility to open a file in your favourite text editor.
+In case the file is located on remote host, the file will be first downloaded into your temporary file directory and then, **only** if changes were made to the file, re-uploaded to the remote host. TermSCP checks if you made changes to the file calculating the digest of the file using `sha256`.
+
+Just a reminder: **you can edit only textual file**; binary files are not supported.
+
+### How do I configure the text editor 🦥
+
+Text editor is automatically found using this [awesome crate](https://github.com/milkey-mouse/edit), if you want to change the text editor it has chosen for you, just set the `EDITOR` variable in your environment.
+
+> This mechanism will probably change in 0.3.0, since I'm going to introduce the possibility to configure directly in termscp's settings.
+
+---
+
 ## Keybindings ⌨
 
 | Key           | Command                                               |
@@ -233,6 +250,7 @@ As said before, bookmarks are saved in your configuration directory along with p
 | `<H>`         | Show help                                             |
 | `<I>`         | Show info about selected file or directory            |
 | `<L>`         | Reload current directory's content                    |
+| `<O>`         | Edit file; see [Text editor](#text-editor-)           |
 | `<Q>`         | Quit TermSCP                                          |
 | `<R>`         | Rename file                                           |
 | `<U>`         | Go to parent directory                                |
@@ -278,6 +296,7 @@ TermSCP is powered by these aweseome projects:
 
 - [bytesize](https://github.com/hyunsik/bytesize)
 - [crossterm](https://github.com/crossterm-rs/crossterm)
+- [edit](https://github.com/milkey-mouse/edit)
 - [rpassword](https://github.com/conradkleinespel/rpassword)
 - [ssh2-rs](https://github.com/alexcrichton/ssh2-rs)
 - [textwrap](https://github.com/mgeisler/textwrap)
@@ -295,6 +314,10 @@ TermSCP is powered by these aweseome projects:
 > Bookmarks
 
 ![Bookmarks](assets/images/bookmarks.gif)
+
+> Text editor
+
+![TextEditor](assets/images/text-editor.gif)
 
 ---
 
