@@ -28,7 +28,7 @@ extern crate tempfile;
 // Locals
 use super::{FileTransferActivity, InputMode, LogLevel, PopupType};
 use crate::fs::{FsEntry, FsFile};
-use crate::utils::fmt_millis;
+use crate::utils::{fmt_millis, hash_sha256_file};
 
 // Ext
 use bytesize::ByteSize;
@@ -546,12 +546,7 @@ impl FileTransferActivity {
                         // Apply file mode to file
                         #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
                         if let Some(pex) = remote.unix_pex {
-                            if let Err(err) = self
-                                .context
-                                .as_ref()
-                                .unwrap()
-                                .local
-                                .chmod(local, pex)
+                            if let Err(err) = self.context.as_ref().unwrap().local.chmod(local, pex)
                             {
                                 self.log(
                                     LogLevel::Error,
@@ -723,10 +718,10 @@ impl FileTransferActivity {
         }
     }
 
-    /// ### edit_file
+    /// ### edit_local_file
     ///
     /// Edit a file on localhost
-    pub(super) fn edit_file(&mut self, path: &Path) {
+    pub(super) fn edit_local_file(&mut self, path: &Path) -> Result<(), String> {
         // Read first 2048 bytes or less from file to check if it is textual
         match OpenOptions::new().read(true).open(path) {
             Ok(mut f) => {
@@ -735,25 +730,16 @@ impl FileTransferActivity {
                 match f.read(&mut buff) {
                     Ok(size) => {
                         if content_inspector::inspect(&buff[0..size]).is_binary() {
-                            self.log_and_alert(
-                                LogLevel::Error,
-                                format!("Could not open file in editor: file is binary"),
-                            );
-                            return;
+                            return Err(format!("Could not open file in editor: file is binary"));
                         }
                     }
                     Err(err) => {
-                        self.log_and_alert(
-                            LogLevel::Error,
-                            format!("Could not read file: {}", err),
-                        );
-                        return;
+                        return Err(format!("Could not read file: {}", err));
                     }
                 }
             }
             Err(err) => {
-                self.log_and_alert(LogLevel::Error, format!("Could not read file: {}", err));
-                return;
+                return Err(format!("Could not read file: {}", err));
             }
         }
         // Put input mode back to normal
@@ -772,9 +758,7 @@ impl FileTransferActivity {
                 )
                 .as_str(),
             ),
-            Err(err) => {
-                self.log_and_alert(LogLevel::Error, format!("Could not open editor: {}", err))
-            }
+            Err(err) => return Err(format!("Could not open editor: {}", err)),
         }
         if let Some(ctx) = self.context.as_mut() {
             // Clear screen
@@ -784,5 +768,92 @@ impl FileTransferActivity {
         }
         // Re-enable raw mode
         let _ = enable_raw_mode();
+        Ok(())
+    }
+
+    /// ### edit_remote_file
+    ///
+    /// Edit file on remote host
+    pub(super) fn edit_remote_file(&mut self, file: &FsFile) -> Result<(), String> {
+        // Create temp file
+        let tmpfile: tempfile::NamedTempFile = match tempfile::NamedTempFile::new() {
+            Ok(f) => f,
+            Err(err) => {
+                return Err(format!("Could not create temporary file: {}", err));
+            }
+        };
+        // Download file
+        if let Err(err) = self.filetransfer_recv_file(tmpfile.path(), file) {
+            return Err(err);
+        }
+        // Get current file hash
+        let prev_hash: String = match hash_sha256_file(tmpfile.path()) {
+            Ok(s) => s,
+            Err(err) => {
+                return Err(format!(
+                    "Could not get sha256 for \"{}\": {}",
+                    file.abs_path.display(),
+                    err
+                ))
+            }
+        };
+        // Edit file
+        if let Err(err) = self.edit_local_file(tmpfile.path()) {
+            return Err(err);
+        }
+        // Check if file has changed
+        let new_hash: String = match hash_sha256_file(tmpfile.path()) {
+            Ok(s) => s,
+            Err(err) => {
+                return Err(format!(
+                    "Could not get sha256 for \"{}\": {}",
+                    file.abs_path.display(),
+                    err
+                ))
+            }
+        };
+        // If hash is different, write changes
+        match new_hash != prev_hash {
+            true => {
+                self.log(
+                    LogLevel::Info,
+                    format!(
+                        "File \"{}\" has changed; writing changes to remote",
+                        file.abs_path.display()
+                    )
+                    .as_ref(),
+                );
+                // Get local fs entry
+                let tmpfile_entry: FsEntry =
+                    match self.context.as_ref().unwrap().local.stat(tmpfile.path()) {
+                        Ok(e) => e,
+                        Err(err) => {
+                            return Err(format!(
+                                "Could not stat \"{}\": {}",
+                                tmpfile.path().display(),
+                                err
+                            ))
+                        }
+                    };
+                // Write file
+                let tmpfile_entry: &FsFile = match &tmpfile_entry {
+                    FsEntry::Directory(_) => panic!("tempfile is a directory for some reason"),
+                    FsEntry::File(f) => f,
+                };
+                // Send file
+                if let Err(err) =
+                    self.filetransfer_send_file(tmpfile_entry, file.abs_path.as_path())
+                {
+                    return Err(err);
+                }
+            }
+            false => {
+                self.log(
+                    LogLevel::Info,
+                    format!("File \"{}\" hasn't changed", file.abs_path.display()).as_ref(),
+                );
+            }
+        }
+        Ok(())
     }
 }

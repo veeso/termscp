@@ -19,9 +19,11 @@
 *
 */
 
+extern crate tempfile;
+
 use super::{
     DialogCallback, DialogYesNoOption, FileExplorerTab, FileTransferActivity, FsEntry, InputEvent,
-    InputField, InputMode, OnInputSubmitCallback, PopupType,
+    InputField, InputMode, LogLevel, OnInputSubmitCallback, PopupType,
 };
 
 use crossterm::event::{KeyCode, KeyModifiers};
@@ -175,10 +177,6 @@ impl FileTransferActivity {
                     }
                 }
                 KeyCode::Char(ch) => match ch {
-                    'q' | 'Q' => {
-                        // Create quit prompt dialog
-                        self.input_mode = self.create_quit_popup();
-                    }
                     'e' | 'E' => {
                         // Get file at index
                         if let Some(entry) = self.local.files.get(self.local.index) {
@@ -222,6 +220,38 @@ impl FileTransferActivity {
                         // Reload file entries
                         let pwd: PathBuf = self.local.wrkdir.clone();
                         self.local_scan(pwd.as_path());
+                    }
+                    'o' | 'O' => {
+                        // Edit local file
+                        if self.local.files.get(self.local.index).is_some() {
+                            // Clone entry due to mutable stuff...
+                            let fsentry: FsEntry =
+                                self.local.files.get(self.local.index).unwrap().clone();
+                            // Check if file
+                            if fsentry.is_file() {
+                                self.log(
+                                    LogLevel::Info,
+                                    format!(
+                                        "Opening file \"{}\"...",
+                                        fsentry.get_abs_path().display()
+                                    )
+                                    .as_str(),
+                                );
+                                // Edit file
+                                match self.edit_local_file(fsentry.get_abs_path().as_path()) {
+                                    Ok(_) => {
+                                        // Reload directory
+                                        let pwd: PathBuf = self.local.wrkdir.clone();
+                                        self.local_scan(pwd.as_path());
+                                    }
+                                    Err(err) => self.log_and_alert(LogLevel::Error, err),
+                                }
+                            }
+                        }
+                    }
+                    'q' | 'Q' => {
+                        // Create quit prompt dialog
+                        self.input_mode = self.create_quit_popup();
                     }
                     'r' | 'R' => {
                         // Rename
@@ -401,6 +431,33 @@ impl FileTransferActivity {
                     'l' | 'L' => {
                         // Reload file entries
                         self.reload_remote_dir();
+                    }
+                    'o' | 'O' => {
+                        // Edit remote file
+                        if self.remote.files.get(self.remote.index).is_some() {
+                            // Clone entry due to mutable stuff...
+                            let fsentry: FsEntry =
+                                self.remote.files.get(self.remote.index).unwrap().clone();
+                            // Check if file
+                            if let FsEntry::File(file) = fsentry {
+                                self.log(
+                                    LogLevel::Info,
+                                    format!("Opening file \"{}\"...", file.abs_path.display())
+                                        .as_str(),
+                                );
+                                // Edit file
+                                match self.edit_remote_file(&file) {
+                                    Ok(_) => {
+                                        // Reload directory
+                                        let pwd: PathBuf = self.remote.wrkdir.clone();
+                                        self.remote_scan(pwd.as_path());
+                                    }
+                                    Err(err) => self.log_and_alert(LogLevel::Error, err),
+                                }
+                                // Put input mode back to normal
+                                self.input_mode = InputMode::Explorer;
+                            }
+                        }
                     }
                     'q' | 'Q' => {
                         // Create quit prompt dialog
