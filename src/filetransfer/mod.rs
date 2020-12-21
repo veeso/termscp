@@ -157,6 +157,11 @@ pub trait FileTransfer {
 
     fn change_dir(&mut self, dir: &Path) -> Result<PathBuf, FileTransferError>;
 
+    /// ### copy
+    ///
+    /// Copy file to destination
+    fn copy(&mut self, src: &FsEntry, dst: &Path) -> Result<(), FileTransferError>;
+
     /// ### list_dir
     ///
     /// List directory entries

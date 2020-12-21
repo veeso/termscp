@@ -28,9 +28,9 @@ use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 // Metadata ext
 #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
-use std::os::unix::fs::{MetadataExt, PermissionsExt};
-#[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
 use std::fs::set_permissions;
+#[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
+use std::os::unix::fs::{MetadataExt, PermissionsExt};
 
 // Locals
 use crate::fs::{FsDirectory, FsEntry, FsFile};
@@ -187,10 +187,7 @@ impl Localhost {
             Ok(_) => {
                 // Update dir
                 if dir_name.is_relative() {
-                    self.files = match self.scan_dir(self.wrkdir.as_path()) {
-                        Ok(f) => f,
-                        Err(err) => return Err(err),
-                    };
+                    self.files = self.scan_dir(self.wrkdir.as_path())?;
                 }
                 Ok(())
             }
@@ -212,10 +209,7 @@ impl Localhost {
                 match std::fs::remove_dir_all(dir.abs_path.as_path()) {
                     Ok(_) => {
                         // Update dir
-                        self.files = match self.scan_dir(self.wrkdir.as_path()) {
-                            Ok(f) => f,
-                            Err(err) => return Err(err),
-                        };
+                        self.files = self.scan_dir(self.wrkdir.as_path())?;
                         Ok(())
                     }
                     Err(err) => Err(HostError::new(HostErrorType::DeleteFailed, Some(err))),
@@ -230,10 +224,7 @@ impl Localhost {
                 match std::fs::remove_file(file.abs_path.as_path()) {
                     Ok(_) => {
                         // Update dir
-                        self.files = match self.scan_dir(self.wrkdir.as_path()) {
-                            Ok(f) => f,
-                            Err(err) => return Err(err),
-                        };
+                        self.files = self.scan_dir(self.wrkdir.as_path())?;
                         Ok(())
                     }
                     Err(err) => Err(HostError::new(HostErrorType::DeleteFailed, Some(err))),
@@ -250,14 +241,83 @@ impl Localhost {
         match std::fs::rename(abs_path.as_path(), dst_path) {
             Ok(_) => {
                 // Scan dir
-                self.files = match self.scan_dir(self.wrkdir.as_path()) {
-                    Ok(f) => f,
-                    Err(err) => return Err(err),
-                };
+                self.files = self.scan_dir(self.wrkdir.as_path())?;
                 Ok(())
             }
             Err(err) => Err(HostError::new(HostErrorType::CouldNotCreateFile, Some(err))),
         }
+    }
+
+    /// ### copy
+    ///
+    /// Copy file to destination path
+    pub fn copy(&mut self, entry: &FsEntry, dst: &Path) -> Result<(), HostError> {
+        // Get absolute path of dest
+        let dst: PathBuf = match dst.is_absolute() {
+            true => PathBuf::from(dst),
+            false => {
+                let mut p: PathBuf = self.wrkdir.clone();
+                p.push(dst);
+                p
+            }
+        };
+        // Match entry
+        match entry {
+            FsEntry::File(file) => {
+                // Copy file
+                // If destination path is a directory, push file name
+                let dst: PathBuf = match dst.as_path().is_dir() {
+                    true => {
+                        let mut p: PathBuf = dst.clone();
+                        p.push(file.name.as_str());
+                        p
+                    }
+                    false => dst.clone(),
+                };
+                // Copy entry path to dst path
+                if let Err(err) = std::fs::copy(file.abs_path.as_path(), dst.as_path()) {
+                    return Err(HostError::new(HostErrorType::CouldNotCreateFile, Some(err)));
+                }
+            }
+            FsEntry::Directory(dir) => {
+                // If destination path doesn't exist, create destination
+                if !dst.exists() {
+                    self.mkdir(dst.as_path())?;
+                }
+                // Scan dir
+                let dir_files: Vec<FsEntry> = self.scan_dir(dir.abs_path.as_path())?;
+                // Iterate files
+                for dir_entry in dir_files.iter() {
+                    // Calculate dst
+                    let mut sub_dst: PathBuf = dst.clone();
+                    sub_dst.push(dir_entry.get_name());
+                    // Call function recursively
+                    self.copy(dir_entry, sub_dst.as_path())?;
+                }
+            }
+        }
+        // Reload directory if dst is pwd
+        match dst.is_dir() {
+            true => {
+                if dst == self.pwd().as_path() {
+                    self.files = self.scan_dir(self.wrkdir.as_path())?;
+                } else if let Some(parent) = dst.parent() {
+                    // If parent is pwd, scan directory
+                    if parent == self.pwd().as_path() {
+                        self.files = self.scan_dir(self.wrkdir.as_path())?;
+                    }
+                }
+            }
+            false => {
+                if let Some(parent) = dst.parent() {
+                    // If parent is pwd, scan directory
+                    if parent == self.pwd().as_path() {
+                        self.files = self.scan_dir(self.wrkdir.as_path())?;
+                    }
+                }
+            }
+        }
+        Ok(())
     }
 
     /// ### stat
@@ -766,6 +826,90 @@ mod tests {
         assert!(host
             .chmod(Path::new("/tmp/krgiogoiegj/kwrgnoerig"), (7, 7, 7))
             .is_err());
+    }
+
+    #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
+    #[test]
+    fn test_host_copy_file() {
+        let tmpdir: tempfile::TempDir = tempfile::TempDir::new().unwrap();
+        // Create file in tmpdir
+        let mut file1_path: PathBuf = PathBuf::from(tmpdir.path());
+        file1_path.push("foo.txt");
+        // Write file 1
+        let mut file1: File = File::create(file1_path.as_path()).ok().unwrap();
+        assert!(file1.write_all(b"Hello world!\n").is_ok());
+        // Get file 2 path
+        let mut file2_path: PathBuf = PathBuf::from(tmpdir.path());
+        file2_path.push("bar.txt");
+        // Create host
+        let mut host: Localhost = Localhost::new(PathBuf::from(tmpdir.path())).ok().unwrap();
+        let file1_entry: FsEntry = host.files.get(0).unwrap().clone();
+        assert_eq!(file1_entry.get_name(), String::from("foo.txt"));
+        // Copy
+        assert!(host.copy(&file1_entry, file2_path.as_path()).is_ok());
+        // Verify host has two files
+        assert_eq!(host.files.len(), 2);
+    }
+
+    #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
+    #[test]
+    fn test_hop_copy_directory_absolute() {
+        let tmpdir: tempfile::TempDir = tempfile::TempDir::new().unwrap();
+        // Create directory in tmpdir
+        let mut dir_src: PathBuf = PathBuf::from(tmpdir.path());
+        dir_src.push("test_dir/");
+        assert!(std::fs::create_dir(dir_src.as_path()).is_ok());
+        // Create file in src dir
+        let mut file1_path: PathBuf = dir_src.clone();
+        file1_path.push("foo.txt");
+        // Write file 1
+        let mut file1: File = File::create(file1_path.as_path()).ok().unwrap();
+        assert!(file1.write_all(b"Hello world!\n").is_ok());
+        // Copy dir src to dir ddest
+        let mut dir_dest: PathBuf = PathBuf::from(tmpdir.path());
+        dir_dest.push("test_dest_dir/");
+        // Create host
+        let mut host: Localhost = Localhost::new(PathBuf::from(tmpdir.path())).ok().unwrap();
+        let dir_src_entry: FsEntry = host.files.get(0).unwrap().clone();
+        assert_eq!(dir_src_entry.get_name(), String::from(""));
+        // Copy
+        assert!(host.copy(&dir_src_entry, dir_dest.as_path()).is_ok());
+        // Verify host has two files
+        assert_eq!(host.files.len(), 2);
+        // Verify dir_dest contains foo.txt
+        let mut test_file_path: PathBuf = dir_dest.clone();
+        test_file_path.push("foo.txt");
+        assert!(host.stat(test_file_path.as_path()).is_ok());
+    }
+
+    #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
+    #[test]
+    fn test_hop_copy_directory_relative() {
+        let tmpdir: tempfile::TempDir = tempfile::TempDir::new().unwrap();
+        // Create directory in tmpdir
+        let mut dir_src: PathBuf = PathBuf::from(tmpdir.path());
+        dir_src.push("test_dir/");
+        assert!(std::fs::create_dir(dir_src.as_path()).is_ok());
+        // Create file in src dir
+        let mut file1_path: PathBuf = dir_src.clone();
+        file1_path.push("foo.txt");
+        // Write file 1
+        let mut file1: File = File::create(file1_path.as_path()).ok().unwrap();
+        assert!(file1.write_all(b"Hello world!\n").is_ok());
+        // Copy dir src to dir ddest
+        let dir_dest: PathBuf = PathBuf::from("test_dest_dir/");
+        // Create host
+        let mut host: Localhost = Localhost::new(PathBuf::from(tmpdir.path())).ok().unwrap();
+        let dir_src_entry: FsEntry = host.files.get(0).unwrap().clone();
+        assert_eq!(dir_src_entry.get_name(), String::from(""));
+        // Copy
+        assert!(host.copy(&dir_src_entry, dir_dest.as_path()).is_ok());
+        // Verify host has two files
+        assert_eq!(host.files.len(), 2);
+        // Verify dir_dest contains foo.txt
+        let mut test_file_path: PathBuf = dir_dest.clone();
+        test_file_path.push("foo.txt");
+        assert!(host.stat(test_file_path.as_path()).is_ok());
     }
 
     #[test]

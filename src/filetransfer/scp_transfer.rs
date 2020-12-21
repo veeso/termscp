@@ -468,6 +468,47 @@ impl FileTransfer for ScpFileTransfer {
         }
     }
 
+    /// ### copy
+    ///
+    /// Copy file to destination
+    fn copy(&mut self, src: &FsEntry, dst: &Path) -> Result<(), FileTransferError> {
+        match self.is_connected() {
+            true => {
+                // Run `cp -rf`
+                let p: PathBuf = self.wrkdir.clone();
+                match self.perform_shell_cmd_with_path(
+                    p.as_path(),
+                    format!(
+                        "cp -rf \"{}\" \"{}\"; echo $?",
+                        src.get_abs_path().display(),
+                        dst.display()
+                    )
+                    .as_str(),
+                ) {
+                    Ok(output) =>
+                    // Check if output is 0
+                    {
+                        match output.as_str().trim() == "0" {
+                            true => Ok(()), // File copied
+                            false => Err(FileTransferError::new_ex(
+                                // Could not copy file
+                                FileTransferErrorType::FileCreateDenied,
+                                format!("\"{}\"", dst.display()),
+                            )),
+                        }
+                    }
+                    Err(err) => Err(FileTransferError::new_ex(
+                        FileTransferErrorType::ProtocolError,
+                        format!("{}", err),
+                    )),
+                }
+            }
+            false => Err(FileTransferError::new(
+                FileTransferErrorType::UninitializedSession,
+            )),
+        }
+    }
+
     /// ### list_dir
     ///
     /// List directory entries

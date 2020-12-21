@@ -348,6 +348,16 @@ impl FileTransfer for SftpFileTransfer {
         }
     }
 
+    /// ### copy
+    ///
+    /// Copy file to destination
+    fn copy(&mut self, _src: &FsEntry, _dst: &Path) -> Result<(), FileTransferError> {
+        // SFTP doesn't support file copy
+        Err(FileTransferError::new(
+            FileTransferErrorType::UnsupportedFeature,
+        ))
+    }
+
     /// ### list_dir
     ///
     /// List directory entries
@@ -699,6 +709,41 @@ mod tests {
         assert_eq!(client.wrkdir, PathBuf::from("/"));
         // Disconnect
         assert!(client.disconnect().is_ok());
+    }
+
+    #[test]
+    fn test_filetransfer_sftp_copy() {
+        let mut client: SftpFileTransfer = SftpFileTransfer::new();
+        assert!(client
+            .connect(
+                String::from("test.rebex.net"),
+                22,
+                Some(String::from("demo")),
+                Some(String::from("password"))
+            )
+            .is_ok());
+        // Check session and sftp
+        assert!(client.session.is_some());
+        assert!(client.sftp.is_some());
+        assert_eq!(client.wrkdir, PathBuf::from("/"));
+        // Copy
+        let file: FsFile = FsFile {
+            name: String::from("readme.txt"),
+            abs_path: PathBuf::from("/readme.txt"),
+            last_change_time: SystemTime::UNIX_EPOCH,
+            last_access_time: SystemTime::UNIX_EPOCH,
+            creation_time: SystemTime::UNIX_EPOCH,
+            size: 0,
+            ftype: Some(String::from("txt")), // File type
+            readonly: true,
+            symlink: None,             // UNIX only
+            user: Some(0),             // UNIX only
+            group: Some(0),            // UNIX only
+            unix_pex: Some((6, 4, 4)), // UNIX only
+        };
+        assert!(client
+            .copy(&FsEntry::File(file), &Path::new("/tmp/dest.txt"))
+            .is_err());
     }
 
     #[test]

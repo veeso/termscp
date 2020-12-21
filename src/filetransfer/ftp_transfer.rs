@@ -344,6 +344,16 @@ impl FileTransfer for FtpFileTransfer {
         }
     }
 
+    /// ### copy
+    ///
+    /// Copy file to destination
+    fn copy(&mut self, _src: &FsEntry, _dst: &Path) -> Result<(), FileTransferError> {
+        // FTP doesn't support file copy
+        Err(FileTransferError::new(
+            FileTransferErrorType::UnsupportedFeature,
+        ))
+    }
+
     /// ### list_dir
     ///
     /// List directory entries
@@ -794,6 +804,35 @@ mod tests {
         assert_eq!(ftp.pwd().ok().unwrap(), PathBuf::from("/upload"));
         // Disconnect
         assert!(ftp.disconnect().is_ok());
+    }
+
+    #[test]
+    fn test_filetransfer_sftp_copy() {
+        let mut ftp: FtpFileTransfer = FtpFileTransfer::new(false);
+        // Connect
+        assert!(ftp
+            .connect(String::from("speedtest.tele2.net"), 21, None, None)
+            .is_ok());
+        // Pwd
+        assert_eq!(ftp.pwd().ok().unwrap(), PathBuf::from("/"));
+        // Copy
+        let file: FsFile = FsFile {
+            name: String::from("readme.txt"),
+            abs_path: PathBuf::from("/readme.txt"),
+            last_change_time: SystemTime::UNIX_EPOCH,
+            last_access_time: SystemTime::UNIX_EPOCH,
+            creation_time: SystemTime::UNIX_EPOCH,
+            size: 0,
+            ftype: Some(String::from("txt")), // File type
+            readonly: true,
+            symlink: None,             // UNIX only
+            user: Some(0),             // UNIX only
+            group: Some(0),            // UNIX only
+            unix_pex: Some((6, 4, 4)), // UNIX only
+        };
+        assert!(ftp
+            .copy(&FsEntry::File(file), &Path::new("/tmp/dest.txt"))
+            .is_err());
     }
 
     /* NOTE: they don't work
