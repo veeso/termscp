@@ -81,8 +81,8 @@ cargo install termscp
 
 ### Deb package 📦
 
-Get `deb` package from [HERE](https://github.com/ChristianVisintin/TermSCP/releases/download/latest/termscp_0.2.0_amd64.deb)
-or run `wget https://github.com/ChristianVisintin/TermSCP/releases/download/latest/termscp_0.2.0_amd64.deb`
+Get `deb` package from [HERE](https://github.com/ChristianVisintin/termscp/releases/latest/download/termscp_0.2.0_amd64.deb)
+or run `wget https://github.com/ChristianVisintin/termscp/releases/latest/download/termscp_0.2.0_amd64.deb`
 
 then install through dpkg:
 
@@ -94,8 +94,8 @@ gdebi termscp_*.deb
 
 ### RPM package 📦
 
-Get `rpm` package from [HERE](https://github.com/ChristianVisintin/TermSCP/releases/download/latest/termscp-0.2.0-1.x86_64.rpm)
-or run `wget https://github.com/ChristianVisintin/TermSCP/releases/download/latest/termscp-0.2.0-1.x86_64.rpm`
+Get `rpm` package from [HERE](https://github.com/ChristianVisintin/termscp/releases/latest/download/termscp-0.2.0-1.x86_64.rpm)
+or run `wget https://github.com/ChristianVisintin/termscp/releases/latest/download/termscp-0.2.0-1.x86_64.rpm`
 
 then install through rpm:
 
@@ -121,7 +121,7 @@ Start PowerShell as administrator and run
 choco install termscp
 ```
 
-Alternatively you can download the ZIP file from [HERE](https://github.com/ChristianVisintin/TermSCP/releases/download/latest/termscp.0.2.0.nupkg)
+Alternatively you can download the ZIP file from [HERE](https://github.com/ChristianVisintin/termscp/releases/latest/download/termscp.0.2.0.nupkg)
 
 and then with PowerShell started with administrator previleges, run:
 
