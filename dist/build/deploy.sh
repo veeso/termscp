@@ -32,5 +32,7 @@ CONTAINER_NAME=$(docker create termscp-${VERSION}-x86_64_archlinux termscp-${VER
 docker cp ${CONTAINER_NAME}:/usr/src/termscp/termscp-${VERSION}-x86_64.tar.gz ${PKGS_DIR}/arch/
 docker cp ${CONTAINER_NAME}:/usr/src/termscp/PKGBUILD ${PKGS_DIR}/arch/
 docker cp ${CONTAINER_NAME}:/usr/src/termscp/.SRCINFO ${PKGS_DIR}/arch/
+# Replace termscp-bin with termscp in PKGBUILD
+sed -i 's/termscp-bin/termscp/g' ${PKGS_DIR}/arch/PKGBUILD
 
 exit $?

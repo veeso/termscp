@@ -1,5 +1,5 @@
 # Maintainer: Christian Visintin
-pkgname=termscp-bin
+pkgname=termscp
 pkgver=0.2.0
 pkgrel=1
 pkgdesc="TermSCP is a SCP/SFTP/FTPS client for command line with an integrated UI to explore the remote file system. Basically WinSCP on a terminal."
