@@ -6,9 +6,9 @@ RUN rustup target add x86_64-unknown-linux-gnu
 # Install dependencies
 RUN apt update && apt install -y rpm
 # Clone repository
-RUN git clone https://github.com/ChristianVisintin/TermSCP.git
+RUN git clone https://github.com/ChristianVisintin/termscp.git
 # Set workdir to termscp
-WORKDIR /usr/src/TermSCP/
+WORKDIR /usr/src/termscp/
 # Install cargo RPM/Deb
 RUN cargo install cargo-deb cargo-rpm
 # Build for x86_64
