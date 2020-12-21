@@ -1,0 +1,14 @@
+pkgbase = termscp-bin
+	pkgdesc = TermSCP is a SCP/SFTP/FTPS client for command line with an integrated UI to explore the remote file system. Basically WinSCP on a terminal.
+	pkgver = 0.2.0
+	pkgrel = 1
+	url = https://github.com/ChristianVisintin/termscp
+	arch = x86_64
+	license = GPL-3.0
+	provides = termscp
+	options = strip
+	source = https://github.com/ChristianVisintin/termscp/releases/download/v0.2.0/termscp-0.2.0-x86_64.tar.gz
+	sha256sums = 8fbf39be0c26c604dc75fb2a6fe9a62ffb50b3e95229db47365bb9cfbb5d95a2
+
+pkgname = termscp-bin
+
