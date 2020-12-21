@@ -875,7 +875,7 @@ mod tests {
 
     #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
     #[test]
-    fn test_hop_copy_directory_absolute() {
+    fn test_host_copy_directory_absolute() {
         let tmpdir: tempfile::TempDir = tempfile::TempDir::new().unwrap();
         // Create directory in tmpdir
         let mut dir_src: PathBuf = PathBuf::from(tmpdir.path());
@@ -893,7 +893,7 @@ mod tests {
         // Create host
         let mut host: Localhost = Localhost::new(PathBuf::from(tmpdir.path())).ok().unwrap();
         let dir_src_entry: FsEntry = host.files.get(0).unwrap().clone();
-        assert_eq!(dir_src_entry.get_name(), String::from(""));
+        assert_eq!(dir_src_entry.get_name(), String::from("test_dir"));
         // Copy
         assert!(host.copy(&dir_src_entry, dir_dest.as_path()).is_ok());
         // Verify host has two files
@@ -906,7 +906,7 @@ mod tests {
 
     #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
     #[test]
-    fn test_hop_copy_directory_relative() {
+    fn test_host_copy_directory_relative() {
         let tmpdir: tempfile::TempDir = tempfile::TempDir::new().unwrap();
         // Create directory in tmpdir
         let mut dir_src: PathBuf = PathBuf::from(tmpdir.path());
@@ -923,7 +923,7 @@ mod tests {
         // Create host
         let mut host: Localhost = Localhost::new(PathBuf::from(tmpdir.path())).ok().unwrap();
         let dir_src_entry: FsEntry = host.files.get(0).unwrap().clone();
-        assert_eq!(dir_src_entry.get_name(), String::from(""));
+        assert_eq!(dir_src_entry.get_name(), String::from("test_dir"));
         // Copy
         assert!(host.copy(&dir_src_entry, dir_dest.as_path()).is_ok());
         // Verify host has two files
