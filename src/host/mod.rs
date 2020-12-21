@@ -830,7 +830,7 @@ mod tests {
 
     #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
     #[test]
-    fn test_host_copy_file() {
+    fn test_host_copy_file_absolute() {
         let tmpdir: tempfile::TempDir = tempfile::TempDir::new().unwrap();
         // Create file in tmpdir
         let mut file1_path: PathBuf = PathBuf::from(tmpdir.path());
@@ -841,6 +841,28 @@ mod tests {
         // Get file 2 path
         let mut file2_path: PathBuf = PathBuf::from(tmpdir.path());
         file2_path.push("bar.txt");
+        // Create host
+        let mut host: Localhost = Localhost::new(PathBuf::from(tmpdir.path())).ok().unwrap();
+        let file1_entry: FsEntry = host.files.get(0).unwrap().clone();
+        assert_eq!(file1_entry.get_name(), String::from("foo.txt"));
+        // Copy
+        assert!(host.copy(&file1_entry, file2_path.as_path()).is_ok());
+        // Verify host has two files
+        assert_eq!(host.files.len(), 2);
+    }
+
+    #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
+    #[test]
+    fn test_host_copy_file_relative() {
+        let tmpdir: tempfile::TempDir = tempfile::TempDir::new().unwrap();
+        // Create file in tmpdir
+        let mut file1_path: PathBuf = PathBuf::from(tmpdir.path());
+        file1_path.push("foo.txt");
+        // Write file 1
+        let mut file1: File = File::create(file1_path.as_path()).ok().unwrap();
+        assert!(file1.write_all(b"Hello world!\n").is_ok());
+        // Get file 2 path
+        let file2_path: PathBuf = PathBuf::from("bar.txt");
         // Create host
         let mut host: Localhost = Localhost::new(PathBuf::from(tmpdir.path())).ok().unwrap();
         let file1_entry: FsEntry = host.files.get(0).unwrap().clone();

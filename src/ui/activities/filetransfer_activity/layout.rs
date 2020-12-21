@@ -718,6 +718,16 @@ impl FileTransferActivity {
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(
+                    "<C>",
+                    Style::default()
+                        .fg(Color::Cyan)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::raw("             "),
+                Span::raw("Copy"),
+            ])),
+            ListItem::new(Spans::from(vec![
+                Span::styled(
                     "<D>",
                     Style::default()
                         .fg(Color::Cyan)

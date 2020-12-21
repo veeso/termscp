@@ -62,6 +62,77 @@ impl FileTransferActivity {
         }
     }
 
+    /// ### callback_copy
+    ///
+    /// Callback for COPY command (both from local and remote)
+    pub(super) fn callback_copy(&mut self, input: String) {
+        let dest_path: PathBuf = PathBuf::from(input);
+        match self.tab {
+            FileExplorerTab::Local => {
+                // Get selected entry
+                if self.local.files.get(self.local.index).is_some() {
+                    let entry: FsEntry = self.local.files.get(self.local.index).unwrap().clone();
+                    if let Some(ctx) = self.context.as_mut() {
+                        match ctx.local.copy(&entry, dest_path.as_path()) {
+                            Ok(_) => {
+                                self.log(
+                                    LogLevel::Info,
+                                    format!(
+                                        "Copied \"{}\" to \"{}\"",
+                                        entry.get_abs_path().display(),
+                                        dest_path.display()
+                                    )
+                                    .as_str(),
+                                );
+                                // Reload entries
+                                let wrkdir: PathBuf = self.local.wrkdir.clone();
+                                self.local_scan(wrkdir.as_path());
+                            }
+                            Err(err) => self.log_and_alert(
+                                LogLevel::Error,
+                                format!(
+                                    "Could not copy \"{}\" to \"{}\": {}",
+                                    entry.get_abs_path().display(),
+                                    dest_path.display(),
+                                    err
+                                ),
+                            ),
+                        }
+                    }
+                }
+            }
+            FileExplorerTab::Remote => {
+                // Get selected entry
+                if self.remote.files.get(self.remote.index).is_some() {
+                    let entry: FsEntry = self.remote.files.get(self.remote.index).unwrap().clone();
+                    match self.client.as_mut().copy(&entry, dest_path.as_path()) {
+                        Ok(_) => {
+                            self.log(
+                                LogLevel::Info,
+                                format!(
+                                    "Copied \"{}\" to \"{}\"",
+                                    entry.get_abs_path().display(),
+                                    dest_path.display()
+                                )
+                                .as_str(),
+                            );
+                            self.reload_remote_dir();
+                        }
+                        Err(err) => self.log_and_alert(
+                            LogLevel::Error,
+                            format!(
+                                "Could not copy \"{}\" to \"{}\": {}",
+                                entry.get_abs_path().display(),
+                                dest_path.display(),
+                                err
+                            ),
+                        ),
+                    }
+                }
+            }
+        }
+    }
+
     /// ### callback_mkdir
     ///
     /// Callback for MKDIR command (supports both local and remote)

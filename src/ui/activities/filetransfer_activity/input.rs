@@ -177,6 +177,20 @@ impl FileTransferActivity {
                     }
                 }
                 KeyCode::Char(ch) => match ch {
+                    'c' | 'C' => {
+                        // Copy
+                        self.input_mode = InputMode::Popup(PopupType::Input(
+                            String::from("Insert destination name"),
+                            FileTransferActivity::callback_copy,
+                        ));
+                    }
+                    'd' | 'D' => {
+                        // Make directory
+                        self.input_mode = InputMode::Popup(PopupType::Input(
+                            String::from("Insert directory name"),
+                            FileTransferActivity::callback_mkdir,
+                        ));
+                    }
                     'e' | 'E' => {
                         // Get file at index
                         if let Some(entry) = self.local.files.get(self.local.index) {
@@ -199,13 +213,6 @@ impl FileTransferActivity {
                         self.input_mode = InputMode::Popup(PopupType::Input(
                             String::from("Change working directory"),
                             FileTransferActivity::callback_change_directory,
-                        ));
-                    }
-                    'd' | 'D' => {
-                        // Make directory
-                        self.input_mode = InputMode::Popup(PopupType::Input(
-                            String::from("Insert directory name"),
-                            FileTransferActivity::callback_mkdir,
                         ));
                     }
                     'h' | 'H' => {
@@ -389,6 +396,20 @@ impl FileTransferActivity {
                     }
                 }
                 KeyCode::Char(ch) => match ch {
+                    'c' | 'C' => {
+                        // Copy
+                        self.input_mode = InputMode::Popup(PopupType::Input(
+                            String::from("Insert destination name"),
+                            FileTransferActivity::callback_copy,
+                        ));
+                    }
+                    'd' | 'D' => {
+                        // Make directory
+                        self.input_mode = InputMode::Popup(PopupType::Input(
+                            String::from("Insert directory name"),
+                            FileTransferActivity::callback_mkdir,
+                        ));
+                    }
                     'e' | 'E' => {
                         // Get file at index
                         if let Some(entry) = self.remote.files.get(self.remote.index) {
@@ -404,13 +425,6 @@ impl FileTransferActivity {
                                 FileTransferActivity::callback_nothing_to_do,
                             ))
                         }
-                    }
-                    'd' | 'D' => {
-                        // Make directory
-                        self.input_mode = InputMode::Popup(PopupType::Input(
-                            String::from("Insert directory name"),
-                            FileTransferActivity::callback_mkdir,
-                        ));
                     }
                     'g' | 'G' => {
                         // Goto

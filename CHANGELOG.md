@@ -11,7 +11,7 @@
 
 ## 0.2.0
 
-Released on ??
+Released on 21/12/2020
 
 > The Bookmarks Update
 
@@ -24,6 +24,9 @@ Released on ??
 - **Text Editor**
   - Added text editor feature to explorer view
   - Added `o` to keybindings to open a text file
+- Keybindings:
+  - `C`: Copy file/directory
+  - `O`: Open text file in editor
 - Enhancements:
   - User interface
     - Collpased borders to make everything more *aesthetic*

@@ -244,6 +244,7 @@ Text editor is automatically found using this [awesome crate](https://github.com
 | `<PGDOWN>`    | Move down in selected list by 8 rows                  |
 | `<ENTER>`     | Enter directory                                       |
 | `<SPACE>`     | Upload / download selected file                       |
+| `<C>`         | Copy file/directory                                   |
 | `<D>`         | Make directory                                        |
 | `<E>`         | Delete file (Same as `CANC`)                          |
 | `<G>`         | Go to supplied path                                   |
