@@ -10,7 +10,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Publish AUR package
-        uses: KSXGitHub/github-actions-deploy-aur@2.2.3
+        uses: KSXGitHub/github-actions-deploy-aur@v2.2.3
         with:
           pkgname: termscp
           pkgbuild: ./dist/pkgs/arch/PKGBUILD
