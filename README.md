@@ -18,7 +18,7 @@ Current version: 0.2.0 (21/12/2020)
     - [Cargo 🦀](#cargo-)
     - [Deb package 📦](#deb-package-)
     - [RPM package 📦](#rpm-package-)
-    - [AUR Package](#aur-package)
+    - [AUR Package 🔼](#aur-package-)
     - [Chocolatey 🍫](#chocolatey-)
     - [Brew 🍻](#brew-)
   - [Usage ❓](#usage-)
@@ -101,7 +101,7 @@ then install through rpm:
 rpm -U termscp_*.rpm
 ```
 
-### AUR Package
+### AUR Package 🔼
 
 On Arch Linux based distribution, you can install termscp using for example [yay](https://github.com/Jguer/yay), which I recommend to install AUR packages.
 
