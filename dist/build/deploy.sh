@@ -7,25 +7,30 @@ fi
 
 VERSION=$1
 
-mkdir -p pkgs/${VERSION}/
+# Create pkgs directory
+cd ..
+PKGS_DIR=$(pwd)/pkgs
+cd -
+mkdir -p ${PKGS_DIR}/
 # Build x86_64
 cd x86_64/
 docker build --tag termscp-${VERSION}-x86_64 .
 # Create container and get deb, rpm
 cd -
-mkdir -p pkgs/${VERSION}/deb/
-mkdir -p pkgs/${VERSION}/rpm/
+mkdir -p ${PKGS_DIR}/deb/
+mkdir -p ${PKGS_DIR}/rpm/
 CONTAINER_NAME=$(docker create termscp-${VERSION}-x86_64 termscp-${VERSION}-x86_64)
-docker cp ${CONTAINER_NAME}:/usr/src/termscp/target/debian/termscp_${VERSION}_amd64.deb pkgs/${VERSION}/deb/
-docker cp ${CONTAINER_NAME}:/usr/src/termscp/target/release/rpmbuild/RPMS/x86_64/termscp-${VERSION}-1.x86_64.rpm pkgs/${VERSION}/rpm/
+docker cp ${CONTAINER_NAME}:/usr/src/termscp/target/debian/termscp_${VERSION}_amd64.deb ${PKGS_DIR}/deb/
+docker cp ${CONTAINER_NAME}:/usr/src/termscp/target/release/rpmbuild/RPMS/x86_64/termscp-${VERSION}-1.x86_64.rpm ${PKGS_DIR}/rpm/
 # Build x86_64_archlinux
 cd x86_64_archlinux/
 docker build --tag termscp-${VERSION}-x86_64_archlinux .
 # Create container and get AUR pkg
 cd -
-mkdir -p pkgs/${VERSION}/arch/
+mkdir -p ${PKGS_DIR}/arch/
 CONTAINER_NAME=$(docker create termscp-${VERSION}-x86_64_archlinux termscp-${VERSION}-x86_64_archlinux)
 docker cp ${CONTAINER_NAME}:/usr/src/termscp/termscp-${VERSION}-x86_64.tar.gz pkgs/arch/
-docker cp ${CONTAINER_NAME}:/usr/src/termscp/PKGBUILD pkgs/${VERSION}/arch/
+docker cp ${CONTAINER_NAME}:/usr/src/termscp/PKGBUILD ${PKGS_DIR}/arch/
+docker cp ${CONTAINER_NAME}:/usr/src/termscp/.SRCINFO ${PKGS_DIR}/arch/
 
 exit $?

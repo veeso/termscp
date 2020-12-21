@@ -6,7 +6,13 @@ RUN pacman -Syu --noconfirm \
     git \
     gcc \
     openssl \
-    pkg-config
+    pkg-config \
+    sudo
+# Create build user
+RUN useradd build -m && \
+    passwd -d build && \
+    mkdir -p termscp && \
+    chown -R build.build termscp/
 # Install rust
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > /tmp/rust.sh && \
     chmod +x /tmp/rust.sh && \
@@ -21,5 +27,7 @@ RUN source $HOME/.cargo/env && cargo install cargo-aur
 RUN source $HOME/.cargo/env && cargo build --release
 # Build pkgs
 RUN source $HOME/.cargo/env && cargo aur
+# Create SRCINFO
+RUN chown -R build.build ../termscp/ && sudo -u build bash -c 'makepkg --printsrcinfo > .SRCINFO'
 
 CMD ["sh"]

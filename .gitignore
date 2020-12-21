@@ -14,5 +14,6 @@
 
 # End of https://www.gitignore.io/api/rust
 
+# Distributions
 *.rpm
 *.deb
