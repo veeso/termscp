@@ -731,7 +731,7 @@ impl FileTransferActivity {
                 match f.read(&mut buff) {
                     Ok(size) => {
                         if content_inspector::inspect(&buff[0..size]).is_binary() {
-                            return Err(format!("Could not open file in editor: file is binary"));
+                            return Err("Could not open file in editor: file is binary".to_string());
                         }
                     }
                     Err(err) => {
