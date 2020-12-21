@@ -1,12 +1,12 @@
 # TermSCP
 
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![Stars](https://img.shields.io/github/stars/ChristianVisintin/TermSCP.svg)](https://github.com/ChristianVisintin/TermSCP) [![Issues](https://img.shields.io/github/issues/ChristianVisintin/TermSCP.svg)](https://github.com/ChristianVisintin/TermSCP/issues) [![Downloads](https://img.shields.io/crates/d/termscp.svg)](https://crates.io/crates/termscp) [![Crates.io](https://img.shields.io/badge/crates.io-v0.1.3-orange.svg)](https://crates.io/crates/termscp) [![Docs](https://docs.rs/termscp/badge.svg)](https://docs.rs/termscp)  
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![Stars](https://img.shields.io/github/stars/ChristianVisintin/TermSCP.svg)](https://github.com/ChristianVisintin/TermSCP) [![Issues](https://img.shields.io/github/issues/ChristianVisintin/TermSCP.svg)](https://github.com/ChristianVisintin/TermSCP/issues) [![Downloads](https://img.shields.io/crates/d/termscp.svg)](https://crates.io/crates/termscp) [![Crates.io](https://img.shields.io/badge/crates.io-v0.2.0-orange.svg)](https://crates.io/crates/termscp) [![Docs](https://docs.rs/termscp/badge.svg)](https://docs.rs/termscp)  
 
 [![Build](https://github.com/ChristianVisintin/TermSCP/workflows/Linux/badge.svg)](https://github.com/ChristianVisintin/TermSCP/actions) [![Build](https://github.com/ChristianVisintin/TermSCP/workflows/MacOS/badge.svg)](https://github.com/ChristianVisintin/TermSCP/actions) [![Build](https://github.com/ChristianVisintin/TermSCP/workflows/Windows/badge.svg)](https://github.com/ChristianVisintin/TermSCP/actions) [![codecov](https://codecov.io/gh/ChristianVisintin/termscp/branch/main/graph/badge.svg?token=au67l7nQah)](https://codecov.io/gh/ChristianVisintin/termscp)
 
 ~ Basically, WinSCP on a terminal ~  
 Developed by Christian Visintin  
-Current version: 0.1.3 (13/12/2020)
+Current version: 0.2.0 (21/12/2020)
 
 ---
 
@@ -18,6 +18,7 @@ Current version: 0.1.3 (13/12/2020)
     - [Cargo 🦀](#cargo-)
     - [Deb package 📦](#deb-package-)
     - [RPM package 📦](#rpm-package-)
+    - [AUR Package](#aur-package)
     - [Chocolatey 🍫](#chocolatey-)
     - [Brew 🍻](#brew-)
   - [Usage ❓](#usage-)
@@ -78,8 +79,8 @@ cargo install termscp
 
 ### Deb package 📦
 
-Get `deb` package from [HERE](https://github.com/ChristianVisintin/TermSCP/releases/download/latest/termscp_0.1.3_amd64.deb)
-or run `wget https://github.com/ChristianVisintin/TermSCP/releases/download/latest/termscp_0.1.3_amd64.deb`
+Get `deb` package from [HERE](https://github.com/ChristianVisintin/TermSCP/releases/download/latest/termscp_0.2.0_amd64.deb)
+or run `wget https://github.com/ChristianVisintin/TermSCP/releases/download/latest/termscp_0.2.0_amd64.deb`
 
 then install through dpkg:
 
@@ -91,13 +92,21 @@ gdebi termscp_*.deb
 
 ### RPM package 📦
 
-Get `rpm` package from [HERE](https://github.com/ChristianVisintin/TermSCP/releases/download/latest/termscp-0.1.3-1.x86_64.rpm)
-or run `wget https://github.com/ChristianVisintin/TermSCP/releases/download/latest/termscp-0.1.3-1.x86_64.rpm`
+Get `rpm` package from [HERE](https://github.com/ChristianVisintin/TermSCP/releases/download/latest/termscp-0.2.0-1.x86_64.rpm)
+or run `wget https://github.com/ChristianVisintin/TermSCP/releases/download/latest/termscp-0.2.0-1.x86_64.rpm`
 
 then install through rpm:
 
 ```sh
 rpm -U termscp_*.rpm
+```
+
+### AUR Package
+
+On Arch Linux based distribution, you can install termscp using for example [yay](https://github.com/Jguer/yay), which I recommend to install AUR packages.
+
+```sh
+yay -S termscp
 ```
 
 ### Chocolatey 🍫
@@ -110,7 +119,7 @@ Start PowerShell as administrator and run
 choco install termscp
 ```
 
-Alternatively you can download the ZIP file from [HERE](https://github.com/ChristianVisintin/TermSCP/releases/download/latest/termscp.0.1.3.nupkg)
+Alternatively you can download the ZIP file from [HERE](https://github.com/ChristianVisintin/TermSCP/releases/download/latest/termscp.0.2.0.nupkg)
 
 and then with PowerShell started with administrator previleges, run:
 
@@ -231,32 +240,32 @@ Text editor is automatically found using this [awesome crate](https://github.com
 
 ## Keybindings ⌨
 
-| Key           | Command                                               |
-|---------------|-------------------------------------------------------|
-| `<ESC>`       | Disconnect from remote; return to authentication page |
-| `<TAB>`       | Switch between log tab and explorer                   |
-| `<BACKSPACE>` | Go to previous directory in stack                     |
-| `<RIGHT>`     | Move to remote explorer tab                           |
-| `<LEFT>`      | Move to local explorer tab                            |
-| `<UP>`        | Move up in selected list                              |
-| `<DOWN>`      | Move down in selected list                            |
-| `<PGUP>`      | Move up in selected list by 8 rows                    |
-| `<PGDOWN>`    | Move down in selected list by 8 rows                  |
-| `<ENTER>`     | Enter directory                                       |
-| `<SPACE>`     | Upload / download selected file                       |
-| `<C>`         | Copy file/directory                                   |
-| `<D>`         | Make directory                                        |
-| `<E>`         | Delete file (Same as `CANC`)                          |
-| `<G>`         | Go to supplied path                                   |
-| `<H>`         | Show help                                             |
-| `<I>`         | Show info about selected file or directory            |
-| `<L>`         | Reload current directory's content                    |
-| `<O>`         | Edit file; see [Text editor](#text-editor-)           |
-| `<Q>`         | Quit TermSCP                                          |
-| `<R>`         | Rename file                                           |
-| `<U>`         | Go to parent directory                                |
-| `<DEL>`       | Delete file                                           |
-| `<CTRL+C>`    | Abort file transfer process                           |
+| Key           | Command                                               | Reminder  |
+|---------------|-------------------------------------------------------|-----------|
+| `<ESC>`       | Disconnect from remote; return to authentication page |           |
+| `<TAB>`       | Switch between log tab and explorer                   |           |
+| `<BACKSPACE>` | Go to previous directory in stack                     |           |
+| `<RIGHT>`     | Move to remote explorer tab                           |           |
+| `<LEFT>`      | Move to local explorer tab                            |           |
+| `<UP>`        | Move up in selected list                              |           |
+| `<DOWN>`      | Move down in selected list                            |           |
+| `<PGUP>`      | Move up in selected list by 8 rows                    |           |
+| `<PGDOWN>`    | Move down in selected list by 8 rows                  |           |
+| `<ENTER>`     | Enter directory                                       |           |
+| `<SPACE>`     | Upload / download selected file                       |           |
+| `<C>`         | Copy file/directory                                   | Copy      |
+| `<D>`         | Make directory                                        | Directory |
+| `<E>`         | Delete file (Same as `CANC`)                          | Erase     |
+| `<G>`         | Go to supplied path                                   | Go to     |
+| `<H>`         | Show help                                             | Help      |
+| `<I>`         | Show info about selected file or directory            | Info      |
+| `<L>`         | Reload current directory's content                    | List      |
+| `<O>`         | Edit file; see [Text editor](#text-editor-)           | Open      |
+| `<Q>`         | Quit TermSCP                                          | Quit      |
+| `<R>`         | Rename file                                           | Rename    |
+| `<U>`         | Go to parent directory                                | Upper     |
+| `<DEL>`       | Delete file                                           |           |
+| `<CTRL+C>`    | Abort file transfer process                           |           |
 
 ---
 
@@ -276,6 +285,10 @@ The developer documentation can be found on Rust Docs at <https://docs.rs/termsc
 ---
 
 ## Upcoming Features 🧪
+
+- **SSH Key storage**: termscp 0.3.0 will (finally) support the SSH key storage. From the configuration interface, you will be able to add SSH keys to the termscp's storage as you do indeed with other similiar clients.
+- **User customizations**: termscp 0.3.0 will support some user customizations, such as the possibility to setup the text editor directly from termscp and the default communication protocol. Everything will be configurable directly from the termscp user interface.
+- **Find command in explorer**: possibility to search for files in explorers.
 
 ---
 

@@ -11,7 +11,7 @@ jobs:
       - name: Publish AUR package
         uses: KSXGitHub/github-actions-deploy-aur@2.2.3
         with:
-          pkgname: my-awesome-package
+          pkgname: termscp
           pkgbuild: ./dist/pkgs/arch/PKGBUILD
           commit_username: ${{ secrets.AUR_USERNAME }}
           commit_email: ${{ secrets.AUR_EMAIL }}
