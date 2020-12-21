@@ -29,7 +29,7 @@ docker build --tag termscp-${VERSION}-x86_64_archlinux .
 cd -
 mkdir -p ${PKGS_DIR}/arch/
 CONTAINER_NAME=$(docker create termscp-${VERSION}-x86_64_archlinux termscp-${VERSION}-x86_64_archlinux)
-docker cp ${CONTAINER_NAME}:/usr/src/termscp/termscp-${VERSION}-x86_64.tar.gz pkgs/arch/
+docker cp ${CONTAINER_NAME}:/usr/src/termscp/termscp-${VERSION}-x86_64.tar.gz ${PKGS_DIR}/arch/
 docker cp ${CONTAINER_NAME}:/usr/src/termscp/PKGBUILD ${PKGS_DIR}/arch/
 docker cp ${CONTAINER_NAME}:/usr/src/termscp/.SRCINFO ${PKGS_DIR}/arch/
 

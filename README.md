@@ -59,6 +59,8 @@ It happens quite often to me, when using SCP at work to forget the path of a fil
   - SCP
   - FTP and FTPS
 - Practical user interface to explore and operate on the remote and on the local machine file system
+- Bookmarks and recent connections can be saved to access quickly to your favourite hosts
+- Supports text editors to view and edit text files
 - Compatible with Windows, Linux, BSD and MacOS
 - Written in Rust
 - Easy to extend with new file transfers protocols
