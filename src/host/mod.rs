@@ -136,7 +136,8 @@ impl Localhost {
     /// ### change_wrkdir
     ///
     /// Change working directory with the new provided directory
-    pub fn change_wrkdir(&mut self, new_dir: PathBuf) -> Result<PathBuf, HostError> {
+    pub fn change_wrkdir(&mut self, new_dir: &Path) -> Result<PathBuf, HostError> {
+        let new_dir: PathBuf = self.to_abs_path(new_dir);
         // Check whether directory exists
         if !self.file_exists(new_dir.as_path()) {
             return Err(HostError::new(HostErrorType::NoSuchFileOrDirectory, None));
@@ -168,14 +169,7 @@ impl Localhost {
     /// Extended option version of makedir.
     /// ignex: don't report error if directory already exists
     pub fn mkdir_ex(&mut self, dir_name: &Path, ignex: bool) -> Result<(), HostError> {
-        let dir_path: PathBuf = match dir_name.is_absolute() {
-            true => PathBuf::from(dir_name),
-            false => {
-                let mut dir_path: PathBuf = self.wrkdir.clone();
-                dir_path.push(dir_name);
-                dir_path
-            }
-        };
+        let dir_path: PathBuf = self.to_abs_path(dir_name);
         // If dir already exists, return Error
         if dir_path.exists() {
             match ignex {
@@ -253,14 +247,7 @@ impl Localhost {
     /// Copy file to destination path
     pub fn copy(&mut self, entry: &FsEntry, dst: &Path) -> Result<(), HostError> {
         // Get absolute path of dest
-        let dst: PathBuf = match dst.is_absolute() {
-            true => PathBuf::from(dst),
-            false => {
-                let mut p: PathBuf = self.wrkdir.clone();
-                p.push(dst);
-                p
-            }
-        };
+        let dst: PathBuf = self.to_abs_path(dst);
         // Match entry
         match entry {
             FsEntry::File(file) => {
@@ -325,7 +312,8 @@ impl Localhost {
     /// Stat file and create a FsEntry
     #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
     pub fn stat(&self, path: &Path) -> Result<FsEntry, HostError> {
-        let attr: Metadata = match fs::metadata(path) {
+        let path: PathBuf = self.to_abs_path(path);
+        let attr: Metadata = match fs::metadata(path.as_path()) {
             Ok(metadata) => metadata,
             Err(err) => return Err(HostError::new(HostErrorType::FileNotAccessible, Some(err))),
         };
@@ -334,12 +322,12 @@ impl Localhost {
         Ok(match path.is_dir() {
             true => FsEntry::Directory(FsDirectory {
                 name: file_name,
-                abs_path: PathBuf::from(path),
+                abs_path: path.clone(),
                 last_change_time: attr.modified().unwrap_or(SystemTime::UNIX_EPOCH),
                 last_access_time: attr.accessed().unwrap_or(SystemTime::UNIX_EPOCH),
                 creation_time: attr.created().unwrap_or(SystemTime::UNIX_EPOCH),
                 readonly: attr.permissions().readonly(),
-                symlink: match fs::read_link(path) {
+                symlink: match fs::read_link(path.as_path()) {
                     Ok(p) => match self.stat(p.as_path()) {
                         Ok(entry) => Some(Box::new(entry)),
                         Err(_) => None,
@@ -358,14 +346,14 @@ impl Localhost {
                 };
                 FsEntry::File(FsFile {
                     name: file_name,
-                    abs_path: PathBuf::from(path),
+                    abs_path: path.clone(),
                     last_change_time: attr.modified().unwrap_or(SystemTime::UNIX_EPOCH),
                     last_access_time: attr.accessed().unwrap_or(SystemTime::UNIX_EPOCH),
                     creation_time: attr.created().unwrap_or(SystemTime::UNIX_EPOCH),
                     readonly: attr.permissions().readonly(),
                     size: attr.len() as usize,
                     ftype: extension,
-                    symlink: match fs::read_link(path) {
+                    symlink: match fs::read_link(path.as_path()) {
                         Ok(p) => match self.stat(p.as_path()) {
                             Ok(entry) => Some(Box::new(entry)),
                             Err(_) => None,
@@ -386,7 +374,8 @@ impl Localhost {
     #[cfg(target_os = "windows")]
     #[cfg(not(tarpaulin_include))]
     pub fn stat(&self, path: &Path) -> Result<FsEntry, HostError> {
-        let attr: Metadata = match fs::metadata(path) {
+        let path: PathBuf = self.to_abs_path(path);
+        let attr: Metadata = match fs::metadata(path.as_path()) {
             Ok(metadata) => metadata,
             Err(err) => return Err(HostError::new(HostErrorType::FileNotAccessible, Some(err))),
         };
@@ -395,12 +384,12 @@ impl Localhost {
         Ok(match path.is_dir() {
             true => FsEntry::Directory(FsDirectory {
                 name: file_name,
-                abs_path: PathBuf::from(path),
+                abs_path: path.clone(),
                 last_change_time: attr.modified().unwrap_or(SystemTime::UNIX_EPOCH),
                 last_access_time: attr.accessed().unwrap_or(SystemTime::UNIX_EPOCH),
                 creation_time: attr.created().unwrap_or(SystemTime::UNIX_EPOCH),
                 readonly: attr.permissions().readonly(),
-                symlink: match fs::read_link(path) {
+                symlink: match fs::read_link(path.as_path()) {
                     Ok(p) => match self.stat(p.as_path()) {
                         Ok(entry) => Some(Box::new(entry)),
                         Err(_) => None, // Ignore errors
@@ -419,14 +408,14 @@ impl Localhost {
                 };
                 FsEntry::File(FsFile {
                     name: file_name,
-                    abs_path: PathBuf::from(path),
+                    abs_path: path.clone(),
                     last_change_time: attr.modified().unwrap_or(SystemTime::UNIX_EPOCH),
                     last_access_time: attr.accessed().unwrap_or(SystemTime::UNIX_EPOCH),
                     creation_time: attr.created().unwrap_or(SystemTime::UNIX_EPOCH),
                     readonly: attr.permissions().readonly(),
                     size: attr.len() as usize,
                     ftype: extension,
-                    symlink: match fs::read_link(path) {
+                    symlink: match fs::read_link(path.as_path()) {
                         Ok(p) => match self.stat(p.as_path()) {
                             Ok(entry) => Some(Box::new(entry)),
                             Err(_) => None,
@@ -446,12 +435,13 @@ impl Localhost {
     /// Change file mode to file, according to UNIX permissions
     #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
     pub fn chmod(&self, path: &Path, pex: (u8, u8, u8)) -> Result<(), HostError> {
+        let path: PathBuf = self.to_abs_path(path);
         // Get metadta
-        match fs::metadata(path) {
+        match fs::metadata(path.as_path()) {
             Ok(metadata) => {
                 let mut mpex = metadata.permissions();
                 mpex.set_mode(self.mode_to_u32(pex));
-                match set_permissions(path, mpex) {
+                match set_permissions(path.as_path(), mpex) {
                     Ok(_) => Ok(()),
                     Err(err) => Err(HostError::new(HostErrorType::FileNotAccessible, Some(err))),
                 }
@@ -464,14 +454,15 @@ impl Localhost {
     ///
     /// Open file for read
     pub fn open_file_read(&self, file: &Path) -> Result<File, HostError> {
-        if !self.file_exists(file) {
+        let file: PathBuf = self.to_abs_path(file);
+        if !self.file_exists(file.as_path()) {
             return Err(HostError::new(HostErrorType::NoSuchFileOrDirectory, None));
         }
         match OpenOptions::new()
             .create(false)
             .read(true)
             .write(false)
-            .open(file)
+            .open(file.as_path())
         {
             Ok(f) => Ok(f),
             Err(err) => Err(HostError::new(HostErrorType::FileNotAccessible, Some(err))),
@@ -482,14 +473,15 @@ impl Localhost {
     ///
     /// Open file for write
     pub fn open_file_write(&self, file: &Path) -> Result<File, HostError> {
+        let file: PathBuf = self.to_abs_path(file);
         match OpenOptions::new()
             .create(true)
             .write(true)
             .truncate(true)
-            .open(file)
+            .open(file.as_path())
         {
             Ok(f) => Ok(f),
-            Err(err) => match self.file_exists(file) {
+            Err(err) => match self.file_exists(file.as_path()) {
                 true => Err(HostError::new(HostErrorType::ReadonlyFile, Some(err))),
                 false => Err(HostError::new(HostErrorType::FileNotAccessible, Some(err))),
             },
@@ -540,6 +532,21 @@ impl Localhost {
     #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
     fn mode_to_u32(&self, mode: (u8, u8, u8)) -> u32 {
         ((mode.0 as u32) << 6) + ((mode.1 as u32) << 3) + mode.2 as u32
+    }
+
+    /// ### to_abs_path
+    ///
+    /// Convert path to absolute path
+    fn to_abs_path(&self, p: &Path) -> PathBuf {
+        // Convert to abs path
+        match p.is_relative() {
+            true => {
+                let mut path: PathBuf = self.wrkdir.clone();
+                path.push(p);
+                path
+            }
+            false => PathBuf::from(p),
+        }
     }
 }
 
@@ -623,7 +630,7 @@ mod tests {
     fn test_host_localhost_change_dir() {
         let mut host: Localhost = Localhost::new(PathBuf::from("/dev")).ok().unwrap();
         let new_dir: PathBuf = PathBuf::from("/dev");
-        assert!(host.change_wrkdir(new_dir.clone()).is_ok());
+        assert!(host.change_wrkdir(new_dir.as_path()).is_ok());
         // Verify new files
         // Scan dir
         let entries = std::fs::read_dir(PathBuf::from(new_dir).as_path()).unwrap();
@@ -640,7 +647,7 @@ mod tests {
     fn test_host_localhost_change_dir_failed() {
         let mut host: Localhost = Localhost::new(PathBuf::from("/bin")).ok().unwrap();
         let new_dir: PathBuf = PathBuf::from("/omar/gabber/123/456");
-        assert!(host.change_wrkdir(new_dir.clone()).is_ok());
+        assert!(host.change_wrkdir(new_dir.as_path()).is_ok());
     }
 
     #[test]
@@ -931,6 +938,7 @@ mod tests {
         // Verify dir_dest contains foo.txt
         let mut test_file_path: PathBuf = dir_dest.clone();
         test_file_path.push("foo.txt");
+        println!("{:?}", host.scan_dir(tmpdir.path()).ok().unwrap());
         assert!(host.stat(test_file_path.as_path()).is_ok());
     }
 

@@ -655,13 +655,7 @@ impl FileTransferActivity {
         // Get current directory
         let prev_dir: PathBuf = self.local.wrkdir.clone();
         // Change directory
-        match self
-            .context
-            .as_mut()
-            .unwrap()
-            .local
-            .change_wrkdir(PathBuf::from(path))
-        {
+        match self.context.as_mut().unwrap().local.change_wrkdir(path) {
             Ok(_) => {
                 self.log(
                     LogLevel::Info,
