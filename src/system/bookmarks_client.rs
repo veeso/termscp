@@ -24,16 +24,15 @@
 */
 
 // Deps
-extern crate magic_crypt;
 extern crate rand;
 
 // Local
 use crate::bookmarks::serializer::BookmarkSerializer;
 use crate::bookmarks::{Bookmark, SerializerError, SerializerErrorKind, UserHosts};
 use crate::filetransfer::FileTransferProtocol;
+use crate::utils::crypto;
 use crate::utils::fmt::fmt_time;
 // Ext
-use magic_crypt::MagicCryptTrait;
 use rand::{distributions::Alphanumeric, Rng};
 use std::fs::{OpenOptions, Permissions};
 use std::io::{Read, Write};
@@ -373,16 +372,14 @@ impl BookmarksClient {
     ///
     /// Encrypt provided string using AES-128. Encrypted buffer is then converted to BASE64
     fn encrypt_str(&self, txt: &str) -> String {
-        let crypter = new_magic_crypt!(self.key.clone(), 128);
-        crypter.encrypt_str_to_base64(txt.to_string())
+        crypto::aes128_b64_crypt(self.key.as_str(), txt)
     }
 
     /// ### decrypt_str
     ///
     /// Decrypt provided string using AES-128
     fn decrypt_str(&self, secret: &str) -> Result<String, SerializerError> {
-        let crypter = new_magic_crypt!(self.key.clone(), 128);
-        match crypter.decrypt_base64_to_string(secret.to_string()) {
+        match crypto::aes128_b64_decrypt(self.key.as_str(), secret) {
             Ok(txt) => Ok(txt),
             Err(err) => Err(SerializerError::new_ex(
                 SerializerErrorKind::SyntaxError,

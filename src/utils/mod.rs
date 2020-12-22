@@ -24,5 +24,6 @@
 */
 
 // modules
+pub mod crypto;
 pub mod fmt;
 pub mod parser;
