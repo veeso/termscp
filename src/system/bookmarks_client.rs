@@ -33,7 +33,7 @@ use crate::filetransfer::FileTransferProtocol;
 use crate::utils::crypto;
 use crate::utils::fmt::fmt_time;
 // Ext
-use rand::{distributions::Alphanumeric, Rng};
+use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use std::fs::{OpenOptions, Permissions};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
@@ -284,10 +284,12 @@ impl BookmarksClient {
     /// Generate a new AES key and write it to key file
     fn generate_key(key_file: &Path) -> Result<String, SerializerError> {
         // Generate 256 bytes (2048 bits) key
-        let key: String = rand::thread_rng()
-            .sample_iter(Alphanumeric)
+        let mut rng = thread_rng();
+        let key: String = std::iter::repeat(())
+            .map(|()| rng.sample(Alphanumeric))
+            .map(char::from)
             .take(256)
-            .collect::<String>();
+            .collect();
         // Write file
         match OpenOptions::new()
             .create(true)
@@ -406,7 +408,7 @@ mod tests {
         // Verify client
         assert_eq!(client.hosts.bookmarks.len(), 0);
         assert_eq!(client.hosts.recents.len(), 0);
-        assert!(client.key.len() > 0);
+        assert_eq!(client.key.len(), 256);
         assert_eq!(client.bookmarks_file, cfg_path);
         assert_eq!(client.recents_size, 16);
     }

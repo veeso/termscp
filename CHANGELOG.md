@@ -16,6 +16,11 @@ FIXME: Released on
 
 - Enhancements:
   - Replaced sha256 sum with last modification time check, to verify if a file has been changed in the text editor
+- dependencies:
+  - updated `rand` to `0.8.0`
+  - updated `textwrap` to `0.13.1`
+  - updated `toml` to `0.5.8`
+  - updated `whoami` to `1.0.1`
 
 ## 0.2.0
 
