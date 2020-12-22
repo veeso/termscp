@@ -30,7 +30,7 @@ extern crate magic_crypt;
 use magic_crypt::MagicCryptTrait;
 
 /// ### aes128_b64_crypt
-/// 
+///
 /// Crypt a string using AES128; output is returned as a BASE64 string
 pub fn aes128_b64_crypt(key: &str, input: &str) -> String {
     let crypter = new_magic_crypt!(key.to_string(), 128);
@@ -38,7 +38,7 @@ pub fn aes128_b64_crypt(key: &str, input: &str) -> String {
 }
 
 /// ### aes128_b64_decrypt
-/// 
+///
 /// Decrypt a string using AES128
 pub fn aes128_b64_decrypt(key: &str, secret: &str) -> Result<String, magic_crypt::MagicCryptError> {
     let crypter = new_magic_crypt!(key.to_string(), 128);
@@ -56,7 +56,12 @@ mod tests {
         let input: &str = "Hello world!";
         let secret: String = aes128_b64_crypt(&key, input);
         assert_eq!(secret.as_str(), "z4Z6LpcpYqBW4+bkIok+5A==");
-        assert_eq!(aes128_b64_decrypt(key, secret.as_str()).ok().unwrap().as_str(), input);
+        assert_eq!(
+            aes128_b64_decrypt(key, secret.as_str())
+                .ok()
+                .unwrap()
+                .as_str(),
+            input
+        );
     }
-
 }
