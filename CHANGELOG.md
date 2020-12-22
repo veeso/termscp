@@ -14,6 +14,9 @@
 
 FIXME: Released on
 
+- Enhancements:
+  - Replaced sha256 sum with last modification time check, to verify if a file has been changed in the text editor
+
 ## 0.2.0
 
 Released on 21/12/2020

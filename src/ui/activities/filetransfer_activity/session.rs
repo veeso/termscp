@@ -29,7 +29,6 @@ extern crate tempfile;
 use super::{FileTransferActivity, InputMode, LogLevel, PopupType};
 use crate::fs::{FsEntry, FsFile};
 use crate::utils::fmt::fmt_millis;
-use crate::utils::hash::hash_sha256_file;
 
 // Ext
 use bytesize::ByteSize;
@@ -37,7 +36,7 @@ use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use std::fs::OpenOptions;
 use std::io::{Read, Seek, Write};
 use std::path::{Path, PathBuf};
-use std::time::Instant;
+use std::time::{Instant, SystemTime};
 use tui::style::Color;
 
 impl FileTransferActivity {
@@ -781,13 +780,14 @@ impl FileTransferActivity {
         if let Err(err) = self.filetransfer_recv_file(tmpfile.path(), file) {
             return Err(err);
         }
-        // Get current file hash
-        let prev_hash: String = match hash_sha256_file(tmpfile.path()) {
-            Ok(s) => s,
+        // Get current file modification time
+        let prev_mtime: SystemTime = match self.context.as_ref().unwrap().local.stat(tmpfile.path())
+        {
+            Ok(e) => e.get_last_change_time(),
             Err(err) => {
                 return Err(format!(
-                    "Could not get sha256 for \"{}\": {}",
-                    file.abs_path.display(),
+                    "Could not stat \"{}\": {}",
+                    tmpfile.path().display(),
                     err
                 ))
             }
@@ -796,19 +796,20 @@ impl FileTransferActivity {
         if let Err(err) = self.edit_local_file(tmpfile.path()) {
             return Err(err);
         }
-        // Check if file has changed
-        let new_hash: String = match hash_sha256_file(tmpfile.path()) {
-            Ok(s) => s,
+        // Get local fs entry
+        let tmpfile_entry: FsEntry = match self.context.as_ref().unwrap().local.stat(tmpfile.path())
+        {
+            Ok(e) => e,
             Err(err) => {
                 return Err(format!(
-                    "Could not get sha256 for \"{}\": {}",
-                    file.abs_path.display(),
+                    "Could not stat \"{}\": {}",
+                    tmpfile.path().display(),
                     err
                 ))
             }
         };
-        // If hash is different, write changes
-        match new_hash != prev_hash {
+        // Check if file has changed
+        match prev_mtime != tmpfile_entry.get_last_change_time() {
             true => {
                 self.log(
                     LogLevel::Info,

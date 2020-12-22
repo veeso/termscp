@@ -228,7 +228,7 @@ As said before, bookmarks are saved in your configuration directory along with p
 ## Text Editor ✏
 
 TermSCP has, as you might have noticed, many features, one of these is the possibility to view and edit text file. It doesn't matter if the file is located on the local host or on the remote host, termscp provides the possibility to open a file in your favourite text editor.
-In case the file is located on remote host, the file will be first downloaded into your temporary file directory and then, **only** if changes were made to the file, re-uploaded to the remote host. TermSCP checks if you made changes to the file calculating the digest of the file using `sha256`.
+In case the file is located on remote host, the file will be first downloaded into your temporary file directory and then, **only** if changes were made to the file, re-uploaded to the remote host. TermSCP checks if you made changes to the file verifying the last modification time of the file.
 
 Just a reminder: **you can edit only textual file**; binary files are not supported.
 
