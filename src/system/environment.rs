@@ -27,7 +27,7 @@
 extern crate dirs;
 
 // Ext
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 /// ### get_config_dir
 ///
@@ -54,6 +54,32 @@ pub fn init_config_dir() -> Result<Option<PathBuf>, String> {
     } else {
         Ok(None)
     }
+}
+
+/// ### get_bookmarks_paths
+///
+/// Get paths for bookmarks client
+/// Returns: path of bookmarks.toml and path of key
+pub fn get_bookmarks_paths(config_dir: &Path) -> (PathBuf, PathBuf) {
+    // Prepare paths
+    let mut bookmarks_file: PathBuf = PathBuf::from(config_dir);
+    bookmarks_file.push("bookmarks.toml");
+    let mut key_file: PathBuf = PathBuf::from(config_dir);
+    key_file.push(".bookmarks.key"); // key file is hidden
+    (bookmarks_file, key_file)
+}
+
+/// ### get_config_paths
+///
+/// Returns paths for config client
+/// Returns: path of config.toml and path for ssh keys
+pub fn get_config_paths(config_dir: &Path) -> (PathBuf, PathBuf) {
+    // Prepare paths
+    let mut bookmarks_file: PathBuf = PathBuf::from(config_dir);
+    bookmarks_file.push("config.toml");
+    let mut keys_dir: PathBuf = PathBuf::from(config_dir);
+    keys_dir.push(".ssh/"); // Path where keys are stored
+    (bookmarks_file, keys_dir)
 }
 
 #[cfg(test)]
@@ -91,5 +117,27 @@ mod tests {
         assert!(init_config_dir().is_err());
         // Remove file
         assert!(std::fs::remove_file(conf_dir.as_path()).is_ok());
+    }
+
+    #[test]
+    fn test_system_environment_get_bookmarks_paths() {
+        assert_eq!(
+            get_bookmarks_paths(&Path::new("/home/omar/.config/termscp/")),
+            (
+                PathBuf::from("/home/omar/.config/termscp/bookmarks.toml"),
+                PathBuf::from("/home/omar/.config/termscp/.bookmarks.key")
+            )
+        );
+    }
+
+    #[test]
+    fn test_system_environment_get_config_paths() {
+        assert_eq!(
+            get_config_paths(&Path::new("/home/omar/.config/termscp/")),
+            (
+                PathBuf::from("/home/omar/.config/termscp/config.toml"),
+                PathBuf::from("/home/omar/.config/termscp/.ssh/")
+            )
+        );
     }
 }
