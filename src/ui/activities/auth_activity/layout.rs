@@ -583,6 +583,16 @@ impl AuthActivity {
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(
+                    "<CTRL+C>",
+                    Style::default()
+                        .fg(Color::Cyan)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::raw("        "),
+                Span::raw("Enter setup"),
+            ])),
+            ListItem::new(Spans::from(vec![
+                Span::styled(
                     "<CTRL+H>",
                     Style::default()
                         .fg(Color::Cyan)

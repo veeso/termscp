@@ -159,6 +159,10 @@ impl AuthActivity {
                                 // Show help
                                 self.input_mode = InputMode::Popup(PopupType::Help);
                             }
+                            'C' | 'c' => {
+                                // Show setup
+                                self.setup = true;
+                            }
                             'S' | 's' => {
                                 // Default choice option to no
                                 self.choice_opt = DialogYesNoOption::No;
@@ -268,6 +272,10 @@ impl AuthActivity {
                     self.selected_field = InputField::Password;
                 }
                 KeyCode::Char(ch) => match ch {
+                    'C' | 'c' => {
+                        // Show setup
+                        self.setup = true;
+                    }
                     'E' | 'e' => {
                         // Ask if user wants to delete bookmark; NOTE: same as <DEL>
                         self.input_mode = InputMode::Popup(PopupType::YesNo(
@@ -348,6 +356,10 @@ impl AuthActivity {
                     self.selected_field = InputField::Password;
                 }
                 KeyCode::Char(ch) => match ch {
+                    'C' | 'c' => {
+                        // Show setup
+                        self.setup = true;
+                    }
                     'E' | 'e' => {
                         // Ask if user wants to delete bookmark; NOTE: same as <DEL>
                         self.input_mode = InputMode::Popup(PopupType::YesNo(

@@ -109,6 +109,7 @@ pub struct AuthActivity {
     pub password: String,
     pub submit: bool, // becomes true after user has submitted fields
     pub quit: bool,   // Becomes true if user has pressed esc
+    pub setup: bool,  // Becomes true if user has requested setup
     context: Option<Context>,
     bookmarks_client: Option<BookmarksClient>,
     selected_field: InputField, // Selected field in AuthCredentials Form
@@ -141,6 +142,7 @@ impl AuthActivity {
             password: String::new(),
             submit: false,
             quit: false,
+            setup: false,
             context: None,
             bookmarks_client: None,
             selected_field: InputField::Address,
