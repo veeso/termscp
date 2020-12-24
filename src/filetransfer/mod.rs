@@ -226,12 +226,43 @@ pub trait FileTransfer {
     fn on_recv(&mut self, readable: Box<dyn Read>) -> Result<(), FileTransferError>;
 }
 
+// Traits
+
+impl std::string::ToString for FileTransferProtocol {
+    fn to_string(&self) -> String {
+        String::from(match self {
+            FileTransferProtocol::Ftp(secure) => match secure {
+                true => "FTPS",
+                false => "FTP",
+            },
+            FileTransferProtocol::Scp => "SCP",
+            FileTransferProtocol::Sftp => "SFTP",
+        })
+    }
+}
+
+impl std::str::FromStr for FileTransferProtocol {
+    type Err = ();
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_ascii_uppercase().as_str() {
+            "FTP" => Ok(FileTransferProtocol::Ftp(false)),
+            "FTPS" => Ok(FileTransferProtocol::Ftp(true)),
+            "SCP" => Ok(FileTransferProtocol::Scp),
+            "SFTP" => Ok(FileTransferProtocol::Sftp),
+            _ => Err(()),
+        }
+    }
+}
+
 // Tests
 
 #[cfg(test)]
 mod tests {
 
     use super::*;
+
+    use std::str::FromStr;
+    use std::string::ToString;
 
     #[test]
     fn test_filetransfer_mod_protocol() {
@@ -243,6 +274,52 @@ mod tests {
             FileTransferProtocol::Ftp(false),
             FileTransferProtocol::Ftp(false)
         );
+        // From str
+        assert_eq!(
+            FileTransferProtocol::from_str("FTPS").ok().unwrap(),
+            FileTransferProtocol::Ftp(true)
+        );
+        assert_eq!(
+            FileTransferProtocol::from_str("ftps").ok().unwrap(),
+            FileTransferProtocol::Ftp(true)
+        );
+        assert_eq!(
+            FileTransferProtocol::from_str("FTP").ok().unwrap(),
+            FileTransferProtocol::Ftp(false)
+        );
+        assert_eq!(
+            FileTransferProtocol::from_str("ftp").ok().unwrap(),
+            FileTransferProtocol::Ftp(false)
+        );
+        assert_eq!(
+            FileTransferProtocol::from_str("SFTP").ok().unwrap(),
+            FileTransferProtocol::Sftp
+        );
+        assert_eq!(
+            FileTransferProtocol::from_str("sftp").ok().unwrap(),
+            FileTransferProtocol::Sftp
+        );
+        assert_eq!(
+            FileTransferProtocol::from_str("SCP").ok().unwrap(),
+            FileTransferProtocol::Scp
+        );
+        assert_eq!(
+            FileTransferProtocol::from_str("scp").ok().unwrap(),
+            FileTransferProtocol::Scp
+        );
+        // Error
+        assert!(FileTransferProtocol::from_str("dummy").is_err());
+        // To String
+        assert_eq!(
+            FileTransferProtocol::Ftp(true).to_string(),
+            String::from("FTPS")
+        );
+        assert_eq!(
+            FileTransferProtocol::Ftp(false).to_string(),
+            String::from("FTP")
+        );
+        assert_eq!(FileTransferProtocol::Scp.to_string(), String::from("SCP"));
+        assert_eq!(FileTransferProtocol::Sftp.to_string(), String::from("SFTP"));
     }
 
     #[test]

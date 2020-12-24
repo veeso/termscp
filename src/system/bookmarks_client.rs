@@ -37,6 +37,8 @@ use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use std::fs::{OpenOptions, Permissions};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
+use std::str::FromStr;
+use std::string::ToString;
 use std::time::SystemTime;
 
 /// ## BookmarksClient
@@ -112,11 +114,9 @@ impl BookmarksClient {
         Some((
             entry.address.clone(),
             entry.port,
-            match entry.protocol.to_ascii_uppercase().as_str() {
-                "FTP" => FileTransferProtocol::Ftp(false),
-                "FTPS" => FileTransferProtocol::Ftp(true),
-                "SCP" => FileTransferProtocol::Scp,
-                _ => FileTransferProtocol::Sftp,
+            match FileTransferProtocol::from_str(entry.protocol.as_str()) {
+                Ok(proto) => proto,
+                Err(_) => FileTransferProtocol::Sftp, // Default
             },
             entry.username.clone(),
             match &entry.password {
@@ -172,11 +172,9 @@ impl BookmarksClient {
         Some((
             entry.address.clone(),
             entry.port,
-            match entry.protocol.to_ascii_uppercase().as_str() {
-                "FTP" => FileTransferProtocol::Ftp(false),
-                "FTPS" => FileTransferProtocol::Ftp(true),
-                "SCP" => FileTransferProtocol::Scp,
-                _ => FileTransferProtocol::Sftp,
+            match FileTransferProtocol::from_str(entry.protocol.as_str()) {
+                Ok(proto) => proto,
+                Err(_) => FileTransferProtocol::Sftp, // Default
             },
             entry.username.clone(),
         ))
@@ -333,14 +331,7 @@ impl BookmarksClient {
             address: addr,
             port,
             username,
-            protocol: match protocol {
-                FileTransferProtocol::Ftp(secure) => match secure {
-                    true => String::from("FTPS"),
-                    false => String::from("FTP"),
-                },
-                FileTransferProtocol::Scp => String::from("SCP"),
-                FileTransferProtocol::Sftp => String::from("SFTP"),
-            },
+            protocol: protocol.to_string(),
             password: match password {
                 Some(p) => Some(self.encrypt_str(p.as_str())), // Encrypt password if provided
                 None => None,
