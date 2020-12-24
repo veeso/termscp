@@ -26,6 +26,7 @@ extern crate magic_crypt;
 
 pub mod activity_manager;
 pub mod bookmarks;
+pub mod config;
 pub mod filetransfer;
 pub mod fs;
 pub mod host;

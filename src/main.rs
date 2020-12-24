@@ -39,6 +39,7 @@ use std::time::Duration;
 // Include
 mod activity_manager;
 mod bookmarks;
+mod config;
 mod filetransfer;
 mod fs;
 mod host;
