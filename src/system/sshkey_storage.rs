@@ -57,6 +57,15 @@ impl SshKeyStorage {
         SshKeyStorage { hosts }
     }
 
+    /// ### empty
+    ///
+    /// Create an empty ssh key storage; used in case `ConfigClient` is not available
+    pub fn empty() -> Self {
+        SshKeyStorage {
+            hosts: HashMap::new(),
+        }
+    }
+
     /// ### resolve
     ///
     /// Return RSA key path from host and username
@@ -97,9 +106,18 @@ mod tests {
         // Verify key exists
         let mut exp_key_path: PathBuf = key_path.clone();
         exp_key_path.push("pi@192.168.1.31.key");
-        assert_eq!(*storage.resolve("192.168.1.31", "pi").unwrap(), exp_key_path);
+        assert_eq!(
+            *storage.resolve("192.168.1.31", "pi").unwrap(),
+            exp_key_path
+        );
         // Verify unexisting key
         assert!(storage.resolve("deskichup", "veeso").is_none());
+    }
+
+    #[test]
+    fn test_system_sshkey_storage_empty() {
+        let storage: SshKeyStorage = SshKeyStorage::empty();
+        assert_eq!(storage.hosts.len(), 0);
     }
 
     /// ### get_paths
