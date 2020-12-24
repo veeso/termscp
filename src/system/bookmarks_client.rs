@@ -23,17 +23,14 @@
 *
 */
 
-// Deps
-extern crate rand;
-
 // Local
 use crate::bookmarks::serializer::BookmarkSerializer;
 use crate::bookmarks::{Bookmark, SerializerError, SerializerErrorKind, UserHosts};
 use crate::filetransfer::FileTransferProtocol;
 use crate::utils::crypto;
 use crate::utils::fmt::fmt_time;
+use crate::utils::random::random_alphanumeric_with_len;
 // Ext
-use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use std::fs::{OpenOptions, Permissions};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
@@ -282,12 +279,7 @@ impl BookmarksClient {
     /// Generate a new AES key and write it to key file
     fn generate_key(key_file: &Path) -> Result<String, SerializerError> {
         // Generate 256 bytes (2048 bits) key
-        let mut rng = thread_rng();
-        let key: String = std::iter::repeat(())
-            .map(|()| rng.sample(Alphanumeric))
-            .map(char::from)
-            .take(256)
-            .collect();
+        let key: String = random_alphanumeric_with_len(256);
         // Write file
         match OpenOptions::new()
             .create(true)

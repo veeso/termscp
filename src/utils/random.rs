@@ -1,6 +1,6 @@
-//! ## Utils
+//! ## Random
 //!
-//! `utils` is the module which provides utilities of different kind
+//! `random` is the module which provides utilities for rand
 
 /*
 *
@@ -23,8 +23,30 @@
 *
 */
 
-// modules
-pub mod crypto;
-pub mod fmt;
-pub mod parser;
-pub mod random;
+// Deps
+extern crate rand;
+// Ext
+use rand::{distributions::Alphanumeric, thread_rng, Rng};
+
+/// ## random_alphanumeric_with_len
+///
+/// Generate a random alphanumeric string with provided length
+pub fn random_alphanumeric_with_len(len: usize) -> String {
+    let mut rng = thread_rng();
+    std::iter::repeat(())
+        .map(|()| rng.sample(Alphanumeric))
+        .map(char::from)
+        .take(len)
+        .collect()
+}
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+
+    #[test]
+    fn test_utils_random_alphanumeric_with_len() {
+        assert_eq!(random_alphanumeric_with_len(256).len(), 256);
+    }
+}
