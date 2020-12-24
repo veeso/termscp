@@ -3,3 +3,5 @@ ignore:
   - src/lib.rs
   - src/activity_manager.rs
   - src/ui/
+fixes:
+  - "/::"
