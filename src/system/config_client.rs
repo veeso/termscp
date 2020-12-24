@@ -31,13 +31,13 @@ use crate::config::{SerializerError, SerializerErrorKind, UserConfig};
 use crate::filetransfer::FileTransferProtocol;
 // Ext
 use std::fs::{create_dir, remove_file, File, OpenOptions};
-use std::io::{Read, Write};
+use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use std::string::ToString;
 
 // Types
-pub type SshHost = (String, String, String); // 0: host, 1: username, 2: RSA key
+pub type SshHost = (String, String, PathBuf); // 0: host, 1: username, 2: RSA key path
 
 /// ## ConfigClient
 ///
@@ -191,15 +191,10 @@ impl ConfigClient {
         match self.config.remote.ssh_keys.get(mkey) {
             None => Ok(None),
             Some(key_path) => {
-                // Read key path
-                let mut key_file: File = File::open(key_path)?;
-                // Read
-                let mut key: String = String::new();
-                key_file.read_to_string(&mut key)?;
                 // Get host and username
                 let (host, username): (String, String) = Self::get_ssh_tokens(mkey);
                 // Return key
-                Ok(Some((host, username, key)))
+                Ok(Some((host, username, PathBuf::from(key_path))))
             }
         }
     }
@@ -299,6 +294,8 @@ mod tests {
     use crate::config::UserConfig;
     use crate::utils::random::random_alphanumeric_with_len;
 
+    use std::io::Read;
+
     #[test]
     fn test_system_config_new() {
         let tmp_dir: tempfile::TempDir = create_tmp_dir();
@@ -353,12 +350,14 @@ mod tests {
         // Verify client has updated parameters
         assert_eq!(client.get_default_protcol(), FileTransferProtocol::Scp);
         assert_eq!(client.get_text_editor(), PathBuf::from("/usr/bin/vim"));
+        let mut expected_key_path: PathBuf = key_path.clone();
+        expected_key_path.push("pi@192.168.1.31.key");
         assert_eq!(
             client.get_ssh_key("pi@192.168.1.31").unwrap().unwrap(),
             (
                 String::from("192.168.1.31"),
                 String::from("pi"),
-                String::from("piroporopero")
+                expected_key_path,
             )
         );
     }
@@ -406,7 +405,16 @@ mod tests {
             println!("{:?}", host);
             assert_eq!(host.0, String::from("192.168.1.31"));
             assert_eq!(host.1, String::from("pi"));
-            assert_eq!(host.2, rsa_key);
+            let mut expected_key_path: PathBuf = key_path.clone();
+            expected_key_path.push("pi@192.168.1.31.key");
+            assert_eq!(host.2, expected_key_path);
+            // Read rsa key
+            let mut key_file: File = File::open(expected_key_path.as_path()).ok().unwrap();
+            // Read
+            let mut key: String = String::new();
+            assert!(key_file.read_to_string(&mut key).is_ok());
+            // Verify rsa key
+            assert_eq!(key, rsa_key);
         }
         // Unexisting key
         assert!(client.get_ssh_key("test").ok().unwrap().is_none());
