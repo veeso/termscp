@@ -25,4 +25,5 @@
 
 // modules
 pub mod bookmarks_client;
+pub mod config_client;
 pub mod environment;
