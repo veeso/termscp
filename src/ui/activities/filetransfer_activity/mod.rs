@@ -45,8 +45,6 @@ use crate::filetransfer::sftp_transfer::SftpFileTransfer;
 use crate::filetransfer::{FileTransfer, FileTransferProtocol};
 use crate::fs::FsEntry;
 use crate::system::config_client::ConfigClient;
-use crate::system::environment;
-use crate::system::sshkey_storage::SshKeyStorage;
 
 // Includes
 use chrono::{DateTime, Local};
@@ -287,6 +285,7 @@ pub struct FileTransferActivity {
     context: Option<Context>,         // Context holder
     params: FileTransferParams,       // FT connection params
     client: Box<dyn FileTransfer>,    // File transfer client
+    config_cli: Option<ConfigClient>, // Config Client
     local: FileExplorer,              // Local File explorer state
     remote: FileExplorer,             // Remote File explorer state
     tab: FileExplorerTab,             // Current selected tab
@@ -306,19 +305,22 @@ impl FileTransferActivity {
     /// Instantiates a new FileTransferActivity
     pub fn new(params: FileTransferParams) -> FileTransferActivity {
         let protocol: FileTransferProtocol = params.protocol;
+        // Get config client
+        let config_client: Option<ConfigClient> = Self::init_config_client();
         FileTransferActivity {
             disconnected: false,
             quit: false,
             context: None,
             client: match protocol {
                 FileTransferProtocol::Sftp => {
-                    Box::new(SftpFileTransfer::new(Self::make_ssh_storage()))
+                    Box::new(SftpFileTransfer::new(Self::make_ssh_storage(config_client.as_ref())))
                 }
                 FileTransferProtocol::Ftp(ftps) => Box::new(FtpFileTransfer::new(ftps)),
                 FileTransferProtocol::Scp => {
-                    Box::new(ScpFileTransfer::new(Self::make_ssh_storage()))
+                    Box::new(ScpFileTransfer::new(Self::make_ssh_storage(config_client.as_ref())))
                 }
             },
+            config_cli: config_client,
             params,
             local: FileExplorer::new(),
             remote: FileExplorer::new(),
@@ -334,27 +336,6 @@ impl FileTransferActivity {
         }
     }
 
-    /// ### make_ssh_storage
-    ///
-    /// Make ssh storage using ConfigClient if possible, otherwise provide an empty storage.
-    /// This activity doesn't care of errors related to config client.
-    fn make_ssh_storage() -> SshKeyStorage {
-        match environment::init_config_dir() {
-            Ok(termscp_dir) => match termscp_dir {
-                Some(termscp_dir) => {
-                    // Make configuration file path and ssh keys path
-                    let (config_path, ssh_keys_path): (PathBuf, PathBuf) =
-                        environment::get_config_paths(termscp_dir.as_path());
-                    match ConfigClient::new(config_path.as_path(), ssh_keys_path.as_path()) {
-                        Ok(config_client) => SshKeyStorage::storage_from_config(&config_client),
-                        Err(_) => SshKeyStorage::empty(),
-                    }
-                }
-                None => SshKeyStorage::empty(),
-            },
-            Err(_) => SshKeyStorage::empty(),
-        }
-    }
 }
 
 /**
@@ -380,6 +361,8 @@ impl Activity for FileTransferActivity {
         // Get files at current wd
         self.local_scan(pwd.as_path());
         self.local.wrkdir = pwd;
+        // Configure text editor
+        self.setup_text_editor();
     }
 
     /// ### on_draw

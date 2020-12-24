@@ -19,7 +19,16 @@
 *
 */
 
-use super::{Color, FileTransferActivity, InputField, InputMode, LogLevel, LogRecord, PopupType};
+// Locals
+use super::{
+    Color, ConfigClient, FileTransferActivity, InputField, InputMode, LogLevel, LogRecord,
+    PopupType,
+};
+use crate::system::environment;
+use crate::system::sshkey_storage::SshKeyStorage;
+// Ext
+use std::env;
+use std::path::PathBuf;
 
 impl FileTransferActivity {
     /// ### log
@@ -81,6 +90,48 @@ impl FileTransferActivity {
         self.input_field = match self.input_field {
             InputField::Explorer => InputField::Logs,
             InputField::Logs => InputField::Explorer,
+        }
+    }
+
+    /// ### init_config_client
+    ///
+    /// Initialize configuration client if possible.
+    /// This function doesn't return errors.
+    pub(super) fn init_config_client() -> Option<ConfigClient> {
+        match environment::init_config_dir() {
+            Ok(termscp_dir) => match termscp_dir {
+                Some(termscp_dir) => {
+                    // Make configuration file path and ssh keys path
+                    let (config_path, ssh_keys_path): (PathBuf, PathBuf) =
+                        environment::get_config_paths(termscp_dir.as_path());
+                    match ConfigClient::new(config_path.as_path(), ssh_keys_path.as_path()) {
+                        Ok(config_client) => Some(config_client),
+                        Err(_) => None,
+                    }
+                }
+                None => None,
+            },
+            Err(_) => None,
+        }
+    }
+
+    /// ### make_ssh_storage
+    ///
+    /// Make ssh storage from `ConfigClient` if possible, empty otherwise
+    pub(super) fn make_ssh_storage(cli: Option<&ConfigClient>) -> SshKeyStorage {
+        match cli {
+            Some(cli) => SshKeyStorage::storage_from_config(cli),
+            None => SshKeyStorage::empty(),
+        }
+    }
+
+    /// ### setup_text_editor
+    ///
+    /// Set text editor to use
+    pub(super) fn setup_text_editor(&self) {
+        if let Some(config_cli) = &self.config_cli {
+            // Set text editor
+            env::set_var("EDITOR", config_cli.get_text_editor());
         }
     }
 }
