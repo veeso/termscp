@@ -39,14 +39,14 @@ extern crate unicode_width;
 
 // locals
 use super::{Activity, Context};
-use crate::filetransfer::FileTransferProtocol;
-
-// File transfer
 use crate::filetransfer::ftp_transfer::FtpFileTransfer;
 use crate::filetransfer::scp_transfer::ScpFileTransfer;
 use crate::filetransfer::sftp_transfer::SftpFileTransfer;
-use crate::filetransfer::FileTransfer;
+use crate::filetransfer::{FileTransfer, FileTransferProtocol};
 use crate::fs::FsEntry;
+use crate::system::config_client::ConfigClient;
+use crate::system::environment;
+use crate::system::sshkey_storage::SshKeyStorage;
 
 // Includes
 use chrono::{DateTime, Local};
@@ -311,9 +311,13 @@ impl FileTransferActivity {
             quit: false,
             context: None,
             client: match protocol {
-                FileTransferProtocol::Sftp => Box::new(SftpFileTransfer::new()),
+                FileTransferProtocol::Sftp => {
+                    Box::new(SftpFileTransfer::new(Self::make_ssh_storage()))
+                }
                 FileTransferProtocol::Ftp(ftps) => Box::new(FtpFileTransfer::new(ftps)),
-                FileTransferProtocol::Scp => Box::new(ScpFileTransfer::new()),
+                FileTransferProtocol::Scp => {
+                    Box::new(ScpFileTransfer::new(Self::make_ssh_storage()))
+                }
             },
             params,
             local: FileExplorer::new(),
@@ -327,6 +331,28 @@ impl FileTransferActivity {
             input_txt: String::new(),
             choice_opt: DialogYesNoOption::Yes,
             transfer: TransferStates::default(),
+        }
+    }
+
+    /// ### make_ssh_storage
+    ///
+    /// Make ssh storage using ConfigClient if possible, otherwise provide an empty storage.
+    /// This activity doesn't care of errors related to config client.
+    fn make_ssh_storage() -> SshKeyStorage {
+        match environment::init_config_dir() {
+            Ok(termscp_dir) => match termscp_dir {
+                Some(termscp_dir) => {
+                    // Make configuration file path and ssh keys path
+                    let (config_path, ssh_keys_path): (PathBuf, PathBuf) =
+                        environment::get_config_paths(termscp_dir.as_path());
+                    match ConfigClient::new(config_path.as_path(), ssh_keys_path.as_path()) {
+                        Ok(config_client) => SshKeyStorage::storage_from_config(&config_client),
+                        Err(_) => SshKeyStorage::empty(),
+                    }
+                }
+                None => SshKeyStorage::empty(),
+            },
+            Err(_) => SshKeyStorage::empty(),
         }
     }
 }
