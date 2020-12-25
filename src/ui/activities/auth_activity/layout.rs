@@ -23,12 +23,14 @@
 *
 */
 
+// Locals
 use super::{
     AuthActivity, Context, DialogYesNoOption, FileTransferProtocol, InputField, InputForm,
     InputMode, PopupType,
 };
 use crate::utils::fmt::align_text_center;
-
+// Ext
+use std::string::ToString;
 use tui::{
     layout::{Constraint, Corner, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
@@ -321,7 +323,7 @@ impl AuthActivity {
                 ListItem::new(Span::from(format!(
                     "{} ({}://{}@{}:{})",
                     key,
-                    AuthActivity::protocol_to_str(entry.2),
+                    entry.2.to_string().to_lowercase(),
                     entry.3,
                     entry.0,
                     entry.1
@@ -368,7 +370,7 @@ impl AuthActivity {
                     .unwrap();
                 ListItem::new(Span::from(format!(
                     "{}://{}@{}:{}",
-                    AuthActivity::protocol_to_str(entry.2),
+                    entry.2.to_string().to_lowercase(),
                     entry.3,
                     entry.0,
                     entry.1
@@ -621,19 +623,5 @@ impl AuthActivity {
                     .title("Help"),
             )
             .start_corner(Corner::TopLeft)
-    }
-
-    /// ### protocol_to_str
-    ///
-    /// Convert protocol to str for layouts
-    fn protocol_to_str(proto: FileTransferProtocol) -> &'static str {
-        match proto {
-            FileTransferProtocol::Ftp(secure) => match secure {
-                true => "ftps",
-                false => "ftp",
-            },
-            FileTransferProtocol::Scp => "scp",
-            FileTransferProtocol::Sftp => "sftp",
-        }
     }
 }
