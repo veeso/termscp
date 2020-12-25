@@ -29,9 +29,8 @@ use std::path::PathBuf;
 use crate::filetransfer::FileTransferProtocol;
 use crate::host::Localhost;
 use crate::ui::activities::{
-    auth_activity::AuthActivity,
-    filetransfer_activity::FileTransferActivity, filetransfer_activity::FileTransferParams,
-    Activity,
+    auth_activity::AuthActivity, filetransfer_activity::FileTransferActivity,
+    filetransfer_activity::FileTransferParams, setup_activity::SetupActivity, Activity,
 };
 use crate::ui::context::Context;
 
@@ -45,6 +44,7 @@ use std::time::Duration;
 pub enum NextActivity {
     Authentication,
     FileTransfer,
+    SetupActivity,
 }
 
 /// ### ActivityManager
@@ -60,10 +60,7 @@ impl ActivityManager {
     /// ### new
     ///
     /// Initializes a new Activity Manager
-    pub fn new(
-        local_dir: &PathBuf,
-        interval: Duration,
-    ) -> Result<ActivityManager, ()> {
+    pub fn new(local_dir: &PathBuf, interval: Duration) -> Result<ActivityManager, ()> {
         // Prepare Context
         let host: Localhost = match Localhost::new(local_dir.clone()) {
             Ok(h) => h,
@@ -109,6 +106,7 @@ impl ActivityManager {
                 Some(activity) => match activity {
                     NextActivity::Authentication => self.run_authentication(),
                     NextActivity::FileTransfer => self.run_filetransfer(),
+                    NextActivity::SetupActivity => self.run_setup(),
                 },
                 None => break, // Exit
             }
@@ -126,13 +124,13 @@ impl ActivityManager {
     /// Returns the next activity to run
     fn run_authentication(&mut self) -> Option<NextActivity> {
         // Prepare activity
-        let mut activity: AuthActivity = AuthActivity::new();
+        let mut activity: AuthActivity = AuthActivity::default();
         // Prepare result
         let result: Option<NextActivity>;
         // Get context
         let ctx: Context = match self.context.take() {
             Some(ctx) => ctx,
-            None => return None
+            None => return None,
         };
         // Create activity
         activity.on_create(ctx);
@@ -143,6 +141,11 @@ impl ActivityManager {
             if activity.quit {
                 // Quit activities
                 result = None;
+                break;
+            }
+            if activity.setup {
+                // User requested activity
+                result = Some(NextActivity::SetupActivity);
                 break;
             }
             if activity.submit {
@@ -189,7 +192,7 @@ impl ActivityManager {
         // Get context
         let ctx: Context = match self.context.take() {
             Some(ctx) => ctx,
-            None => return None
+            None => return None,
         };
         // Create activity
         activity.on_create(ctx);
@@ -213,5 +216,36 @@ impl ActivityManager {
         // Destroy activity
         self.context = activity.on_destroy();
         result
+    }
+
+    /// ### run_setup
+    ///
+    /// `SetupActivity` run loop.
+    /// Returns when activity terminates.
+    /// Returns the next activity to run
+    fn run_setup(&mut self) -> Option<NextActivity> {
+        // Prepare activity
+        let mut activity: SetupActivity = SetupActivity::default();
+        // Get context
+        let ctx: Context = match self.context.take() {
+            Some(ctx) => ctx,
+            None => return None,
+        };
+        // Create activity
+        activity.on_create(ctx);
+        loop {
+            // Draw activity
+            activity.on_draw();
+            // Check if activity has terminated
+            if activity.quit {
+                break;
+            }
+            // Sleep for ticks
+            sleep(self.interval);
+        }
+        // Destroy activity
+        self.context = activity.on_destroy();
+        // This activity always returns to AuthActivity
+        Some(NextActivity::Authentication)
     }
 }
