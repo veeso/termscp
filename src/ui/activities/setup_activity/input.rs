@@ -120,6 +120,15 @@ impl SetupActivity {
                     if key.modifiers.intersects(KeyModifiers::CONTROL) {
                         // Match char
                         match ch {
+                            'e' | 'E' => {
+                                // Prompt to delete selected key
+                                self.yesno_opt = YesNoDialogOption::No; // Default to no
+                                self.popup = Some(Popup::YesNo(
+                                    String::from("Delete key?"),
+                                    Self::callback_delete_ssh_key,
+                                    Self::callback_nothing_to_do,
+                                ));
+                            }
                             'h' | 'H' => {
                                 // Show help
                                 self.popup = Some(Popup::Help);

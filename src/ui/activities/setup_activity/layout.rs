@@ -546,6 +546,16 @@ impl SetupActivity {
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(
+                    "<CTRL+E>",
+                    Style::default()
+                        .fg(Color::Cyan)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::raw("        "),
+                Span::raw("Delete entry"),
+            ])),
+            ListItem::new(Spans::from(vec![
+                Span::styled(
                     "<CTRL+H>",
                     Style::default()
                         .fg(Color::Cyan)
