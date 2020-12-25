@@ -385,13 +385,11 @@ impl SetupActivity {
                 }
                 KeyCode::Char(ch) => {
                     // Get current input
-                    let input: &mut String =
-                        self.user_input.get_mut(self.user_input_ptr).unwrap();
+                    let input: &mut String = self.user_input.get_mut(self.user_input_ptr).unwrap();
                     input.push(ch);
                 }
                 KeyCode::Backspace => {
-                    let input: &mut String =
-                        self.user_input.get_mut(self.user_input_ptr).unwrap();
+                    let input: &mut String = self.user_input.get_mut(self.user_input_ptr).unwrap();
                     input.pop();
                 }
                 _ => { /* Nothing to do */ }
@@ -416,6 +414,8 @@ impl SetupActivity {
                         QuitDialogOption::DontSave => self.quit = true, // Just quit
                         QuitDialogOption::Save => self.callback_save_config_and_quit(), // Save and quit
                     }
+                    // Reset choice
+                    self.quit_opt = QuitDialogOption::Save;
                 }
                 KeyCode::Right => {
                     // Change option

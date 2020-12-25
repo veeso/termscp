@@ -110,6 +110,7 @@ pub struct SetupActivity {
     quit_opt: QuitDialogOption, // Popup::Quit selected option
     yesno_opt: YesNoDialogOption, // Popup::YesNo selected option
     ssh_key_idx: usize,       // Index of selected ssh key in list
+    redraw: bool,             // Redraw ui?
 }
 
 impl Default for SetupActivity {
@@ -130,6 +131,7 @@ impl Default for SetupActivity {
             quit_opt: QuitDialogOption::Save,
             yesno_opt: YesNoDialogOption::Yes,
             ssh_key_idx: 0,
+            redraw: true, // Draw at first `on_draw`
         }
     }
 }
@@ -162,20 +164,21 @@ impl Activity for SetupActivity {
         if self.context.is_none() {
             return;
         }
-        let mut redraw: bool = false;
         // Read one event
         if let Ok(event) = self.context.as_ref().unwrap().input_hnd.read_event() {
             if let Some(event) = event {
                 // Set redraw to true
-                redraw = true;
+                self.redraw = true;
                 // Handle event
                 self.handle_input_event(&event);
             }
         }
         // Redraw if necessary
-        if redraw {
+        if self.redraw {
             // Draw
             self.draw();
+            // Redraw back to false
+            self.redraw = false;
         }
     }
 
