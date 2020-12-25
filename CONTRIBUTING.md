@@ -1,7 +1,7 @@
 # Contributing
 
 Before contributing to this repository, please first discuss the change you wish to make via issue of this repository before making a change.
-Please note we have a [code of conduct](./CODE_OF_CONDUCT.md), please follow it in all your interactions with the project.
+Please note we have a [code of conduct](CODE_OF_CONDUCT.md), please follow it in all your interactions with the project.
 
 - [Contributing](#contributing)
   - [Preferred contributions](#preferred-contributions)
@@ -17,9 +17,8 @@ Please note we have a [code of conduct](./CODE_OF_CONDUCT.md), please follow it 
 
 At the moment, these kind of contributions are more appreciated and should be preferred:
 
-- Fix for issues described in [Known Issues](./README.md#known-issues) or [issues reported by the community](https://github.com/ChristianVisintin/TermSCP/issues)
+- Fix for issues described in [Known Issues](./README.md#known-issues) or [issues reported by the community](https://github.com/ChristianVisintin/termscp/issues)
 - New file transfers: for further details see [Implementing File Transfer](#implementing-file-transfers)
-- Improvements to translators: any improvement to transliteration is accepted if makes sense, consider that my implementations could be not 100% correct (and probably they're not), indeed consider that I don't speak all these languages (tbh I only can speak Russian as a language with a different alphabet from latin - and I can't even speak it very well).
 - Code optimizations: any optimization to the code is welcome
 
 For any other kind of contribution, especially for new features, please submit an issue first.
@@ -30,9 +29,9 @@ Let's make it simple and clear:
 
 1. Open an issue with an **appropriate label** (e.g. bug, enhancement, ...).
 2. Write a **properly documentation** compliant with **rustdoc** standard.
-3. Write tests for your code. This doesn't apply necessarily for implementation regarding the user-interface module (`ui`).
+3. Write tests for your code. This doesn't apply necessarily for implementation regarding the user-interface module (`ui`) and (if a test server is not available) for file transfers.
 4. Report changes to the issue you opened, writing a report of what you changed and what you have introduced.
-5. Update the `CHANGELOG.md` file with details of changes to the application.
+5. Update the `CHANGELOG.md` file with details of changes to the application. In changelog report changes under a chapter called `PR{PULL_REQUEST_NUMBER}` (e.g. PR12).
 6. Request maintainers to merge your changes.
 
 ## Developer contributions guide
