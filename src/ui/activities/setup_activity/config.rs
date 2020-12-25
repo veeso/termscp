@@ -28,6 +28,7 @@
 use super::{ConfigClient, Popup, SetupActivity};
 use crate::system::environment;
 // Ext
+use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use std::env;
 use std::path::PathBuf;
 
@@ -119,6 +120,12 @@ impl SetupActivity {
             Some(cli) => {
                 // Set text editor
                 env::set_var("EDITOR", cli.get_text_editor());
+                // Prepare terminal
+                let _ = disable_raw_mode();
+                // Leave alternate mode
+                if let Some(ctx) = self.context.as_mut() {
+                    ctx.leave_alternate_screen();
+                }
                 // Check if key exists
                 match cli.iter_ssh_keys().nth(self.ssh_key_idx) {
                     Some(key) => {
@@ -128,8 +135,30 @@ impl SetupActivity {
                                 None => Ok(()),
                                 Some((_, _, key_path)) => match edit::edit_file(key_path.as_path())
                                 {
-                                    Ok(_) => Ok(()),
-                                    Err(err) => Err(format!("Could not edit ssh key: {}", err)),
+                                    Ok(_) => {
+                                        // Restore terminal
+                                        if let Some(ctx) = self.context.as_mut() {
+                                            // Clear screen
+                                            ctx.clear_screen();
+                                            // Enter alternate mode
+                                            ctx.enter_alternate_screen();
+                                        }
+                                        // Re-enable raw mode
+                                        let _ = enable_raw_mode();
+                                        Ok(())
+                                    }
+                                    Err(err) => {
+                                        // Restore terminal
+                                        if let Some(ctx) = self.context.as_mut() {
+                                            // Clear screen
+                                            ctx.clear_screen();
+                                            // Enter alternate mode
+                                            ctx.enter_alternate_screen();
+                                        }
+                                        // Re-enable raw mode
+                                        let _ = enable_raw_mode();
+                                        Err(format!("Could not edit ssh key: {}", err))
+                                    }
                                 },
                             },
                             Err(err) => Err(format!("Could not read ssh key: {}", err)),

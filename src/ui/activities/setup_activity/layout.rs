@@ -409,6 +409,7 @@ impl SetupActivity {
                 Block::default()
                     .borders(Borders::TOP | Borders::RIGHT | Borders::LEFT)
                     .border_type(BorderType::Rounded)
+                    .style(Style::default().fg(Color::White))
                     .title("Host name or address"),
             );
         let username: Paragraph = Paragraph::new(self.user_input.get(1).unwrap().as_str())
@@ -418,8 +419,9 @@ impl SetupActivity {
             }))
             .block(
                 Block::default()
-                    .borders(Borders::TOP | Borders::RIGHT | Borders::LEFT)
+                    .borders(Borders::BOTTOM | Borders::RIGHT | Borders::LEFT)
                     .border_type(BorderType::Rounded)
+                    .style(Style::default().fg(Color::White))
                     .title("Username"),
             );
         (address, username)

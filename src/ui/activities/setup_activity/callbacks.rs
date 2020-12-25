@@ -27,6 +27,7 @@
 // Locals
 use super::{Color, Popup, SetupActivity};
 // Ext
+use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use std::env;
 
 impl SetupActivity {
@@ -103,6 +104,14 @@ impl SetupActivity {
             // Prepare text editor
             env::set_var("EDITOR", cli.get_text_editor());
             let placeholder: String = format!("# Type private SSH key for {}@{}\n", username, host);
+            // Put input mode back to normal
+            let _ = disable_raw_mode();
+            // Leave alternate mode
+            if let Some(ctx) = self.context.as_mut() {
+                ctx.leave_alternate_screen();
+            }
+            // Re-enable raw mode
+            let _ = enable_raw_mode();
             // Write key to file
             match edit::edit(placeholder.as_bytes()) {
                 Ok(rsa_key) => {
@@ -111,16 +120,16 @@ impl SetupActivity {
                     if rsa_key.is_empty() {
                         // Report error: empty key
                         self.popup = Some(Popup::Alert(Color::Red, format!("SSH Key is empty")));
-                        return;
-                    }
-                    // Add key
-                    if let Err(err) =
-                        self.add_ssh_key(host.as_str(), username.as_str(), rsa_key.as_str())
-                    {
-                        self.popup = Some(Popup::Alert(
-                            Color::Red,
-                            format!("Could not create new private key: {}", err),
-                        ))
+                    } else {
+                        // Add key
+                        if let Err(err) =
+                            self.add_ssh_key(host.as_str(), username.as_str(), rsa_key.as_str())
+                        {
+                            self.popup = Some(Popup::Alert(
+                                Color::Red,
+                                format!("Could not create new private key: {}", err),
+                            ))
+                        }
                     }
                 }
                 Err(err) => {
@@ -130,6 +139,13 @@ impl SetupActivity {
                         format!("Could not write private key to file: {}", err),
                     ))
                 }
+            }
+            // Restore terminal
+            if let Some(ctx) = self.context.as_mut() {
+                // Clear screen
+                ctx.clear_screen();
+                // Enter alternate mode
+                ctx.enter_alternate_screen();
             }
         }
     }
