@@ -102,12 +102,17 @@ impl SetupActivity {
         if let Some(cli) = self.config_cli.as_ref() {
             // Prepare text editor
             env::set_var("EDITOR", cli.get_text_editor());
-            let placeholder: String = format!("# Type private SSH key for {}@{}", username, host);
+            let placeholder: String = format!("# Type private SSH key for {}@{}\n", username, host);
             // Write key to file
             match edit::edit(placeholder.as_bytes()) {
                 Ok(rsa_key) => {
                     // Remove placeholder from `rsa_key`
                     let rsa_key: String = rsa_key.as_str().replace(placeholder.as_str(), "");
+                    if rsa_key.is_empty() {
+                        // Report error: empty key
+                        self.popup = Some(Popup::Alert(Color::Red, format!("SSH Key is empty")));
+                        return;
+                    }
                     // Add key
                     if let Err(err) =
                         self.add_ssh_key(host.as_str(), username.as_str(), rsa_key.as_str())
