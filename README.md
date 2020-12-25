@@ -28,6 +28,8 @@ Current version: 0.2.0 (21/12/2020)
     - [Are my passwords Safe 😈](#are-my-passwords-safe-)
   - [Text Editor ✏](#text-editor-)
     - [How do I configure the text editor 🦥](#how-do-i-configure-the-text-editor-)
+  - [Configuration ⚙️](#configuration-️)
+    - [SSH Key Storage 🔐](#ssh-key-storage-)
   - [Keybindings ⌨](#keybindings-)
   - [Documentation 📚](#documentation-)
   - [Known issues 🧻](#known-issues-)
@@ -50,7 +52,7 @@ TermSCP is basically a porting of WinSCP to terminal. So basically is a terminal
 
 ### Why TermSCP 🤔
 
-It happens quite often to me, when using SCP at work to forget the path of a file on a remote machine, which forces me then to connect through SSH, gather the file path and finally download it through SCP. I could use WinSCP, but I use Linux and I pratically use the terminal for everything, so I wanted something like WinSCP on my terminal. Yeah, I know there midnight commander too, but actually I don't like it very much tbh (and hasn't a decent support for scp).
+It happens quite often to me, when using SCP at work to forget the path of a file on a remote machine, which forces me then to connect through SSH, gather the file path and finally download it through SCP. I could use WinSCP, but I use Linux and I pratically use the terminal for everything, so I wanted something like WinSCP on my terminal. Yeah, I know there is midnight commander too, but actually I don't like it very much tbh (and hasn't a decent support for scp).
 
 ## Features 🎁
 
@@ -61,6 +63,8 @@ It happens quite often to me, when using SCP at work to forget the path of a fil
 - Practical user interface to explore and operate on the remote and on the local machine file system
 - Bookmarks and recent connections can be saved to access quickly to your favourite hosts
 - Supports text editors to view and edit text files
+- Supports both SFTP/SCP authentication through SSH keys and username/password
+- User customization directly from the user interface
 - Compatible with Windows, Linux, BSD and MacOS
 - Written in Rust
 - Easy to extend with new file transfers protocols
@@ -164,13 +168,13 @@ The address argument has the following syntax:
 
 Let's see some example of this particular syntax, since it's very comfortable and you'll probably going to use this instead of the other one...
 
-- Connect using default protocol (sftp) to 192.168.1.31, port is default for this protocol (22); username is current user's name
+- Connect using default protocol (*defined in configuration*) to 192.168.1.31, port is default for this protocol (22); username is current user's name
 
     ```sh
     termscp 192.168.1.31
     ```
 
-- Connect using default protocol (sftp) to 192.168.1.31, port is default for this protocol (22); username is `root`
+- Connect using default protocol (*defined in configuration*) to 192.168.1.31, port is default for this protocol (22); username is `root`
 
     ```sh
     termscp root@192.168.1.31
@@ -201,9 +205,9 @@ This feature allows you to load all the parameters required to connect to a cert
 
 Bookmarks will be saved, if possible at:
 
-- `$HOME/.config/termscp/` on Linux
-- `FOLDERID_RoamingAppData\termscp\` on Windows
+- `$HOME/.config/termscp/` on Linux/BSD
 - `$HOME/Library/Application Support/termscp` on MacOs
+- `FOLDERID_RoamingAppData\termscp\` on Windows
 
 For bookmarks only (this won't apply to recent hosts) it is also possible to save the password used to authenticate. The password is not saved by default and must be specified through the prompt when saving a new Bookmark.
 
@@ -234,9 +238,37 @@ Just a reminder: **you can edit only textual file**; binary files are not suppor
 
 ### How do I configure the text editor 🦥
 
-Text editor is automatically found using this [awesome crate](https://github.com/milkey-mouse/edit), if you want to change the text editor it has chosen for you, just set the `EDITOR` variable in your environment.
+Text editor is automatically found using this [awesome crate](https://github.com/milkey-mouse/edit), if you want to change the text editor to use, change it in termscp configuration. [View more](#configuration-️)
 
-> This mechanism will probably change in 0.3.0, since I'm going to introduce the possibility to configure directly in termscp's settings.
+---
+
+## Configuration ⚙️
+
+TermSCP supports some user defined parameters, which can be defined in the configuration.
+Underhood termscp has a TOML file and some other directories where all the parameters will be saved, but don't worry, you won't touch any of these files, since I made possible to configure termscp from its user interface entirely.
+
+termscp, like for bookmarks, just requires to have these paths accessible:
+
+- `$HOME/.config/termscp/` on Linux/BSD
+- `$HOME/Library/Application Support/termscp` on MacOs
+- `FOLDERID_RoamingAppData\termscp\` on Windows
+
+To access configuration, you just have to press `<CTRL+C>` from the home of termscp.
+
+These parameters can be changed:
+
+- **Default Protocol**: the default protocol is the default value for the file transfer protocol to be used in termscp. This applies for the login page and for the address CLI argument.
+- **Text Editor**: the text editor to use. By default termscp will find the default editor for you; with this option you can force an editor to be used (e.g. `vim`). **Also GUI editors are supported**, unless they `nohup` from the parent process so if you ask: yes, you can use `notepad.exe`, and no: **Visual Studio Code doesn't work**.
+
+### SSH Key Storage 🔐
+
+Along with configuration, termscp provides also an **essential** feature for **SFTP/SCP clients**: the SSH key storage.
+
+You can access the SSH key storage, from configuration moving to the `SSH Keys` tab, once there you can:
+
+- **Add a new key**: just press `<CTRL+N>` and you will be prompted to create a new key. Provide the hostname/ip address and the username associated to the key and finally a text editor will open up: paste the **PRIVATE** ssh key into the text editor, save and quit.
+- **Remove an existing key**: just press `<DEL>` or `<CTRL+E>` on the key you want to remove, to delete persistently the key from termscp.
+- **Edit an existing key**: just press `<ENTER>` on the key you want to edit, to change the private key.
 
 ---
 
@@ -288,8 +320,6 @@ The developer documentation can be found on Rust Docs at <https://docs.rs/termsc
 
 ## Upcoming Features 🧪
 
-- **SSH Key storage**: termscp 0.3.0 will (finally) support the SSH key storage. From the configuration interface, you will be able to add SSH keys to the termscp's storage as you do indeed with other similiar clients.
-- **User customizations**: termscp 0.3.0 will support some user customizations, such as the possibility to setup the text editor directly from termscp and the default communication protocol. Everything will be configurable directly from the termscp user interface.
 - **Find command in explorer**: possibility to search for files in explorers.
 
 ---
