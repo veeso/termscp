@@ -293,8 +293,20 @@ impl AuthActivity {
         let (footer, h_style) = (
             vec![
                 Span::raw("Press "),
-                Span::styled("<CTRL+H>", Style::default().add_modifier(Modifier::BOLD)),
-                Span::raw(" to show keybindings"),
+                Span::styled(
+                    "<CTRL+H>",
+                    Style::default()
+                        .add_modifier(Modifier::BOLD)
+                        .fg(Color::Cyan),
+                ),
+                Span::raw(" to show keybindings; "),
+                Span::styled(
+                    "<CTRL+C>",
+                    Style::default()
+                        .add_modifier(Modifier::BOLD)
+                        .fg(Color::Cyan),
+                ),
+                Span::raw(" to enter setup"),
             ],
             Style::default().add_modifier(Modifier::BOLD),
         );
@@ -507,9 +519,9 @@ impl AuthActivity {
             )
     }
 
-    /// ### draw_footer
+    /// ### draw_popup_help
     ///
-    /// Draw authentication page footer
+    /// Draw authentication page help popup
     pub(super) fn draw_popup_help(&self) -> List {
         // Write header
         let cmds: Vec<ListItem> = vec![
