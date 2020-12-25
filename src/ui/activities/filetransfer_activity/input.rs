@@ -605,7 +605,7 @@ impl FileTransferActivity {
     pub(super) fn handle_input_event_mode_popup_alert(&mut self, ev: &InputEvent) {
         // If enter, close popup
         if let InputEvent::Key(key) = ev {
-            if let KeyCode::Enter = key.code {
+            if matches!(key.code, KeyCode::Esc | KeyCode::Enter) {
                 // Set input mode back to explorer
                 self.input_mode = InputMode::Explorer;
             }
@@ -618,12 +618,9 @@ impl FileTransferActivity {
     pub(super) fn handle_input_event_mode_popup_fileinfo(&mut self, ev: &InputEvent) {
         // If enter, close popup
         if let InputEvent::Key(key) = ev {
-            match key.code {
-                KeyCode::Enter | KeyCode::Esc => {
-                    // Set input mode back to explorer
-                    self.input_mode = InputMode::Explorer;
-                }
-                _ => { /* Nothing to do */ }
+            if matches!(key.code, KeyCode::Esc | KeyCode::Enter) {
+                // Set input mode back to explorer
+                self.input_mode = InputMode::Explorer;
             }
         }
     }
@@ -634,12 +631,9 @@ impl FileTransferActivity {
     pub(super) fn handle_input_event_mode_popup_help(&mut self, ev: &InputEvent) {
         // If enter, close popup
         if let InputEvent::Key(key) = ev {
-            match key.code {
-                KeyCode::Enter | KeyCode::Esc => {
-                    // Set input mode back to explorer
-                    self.input_mode = InputMode::Explorer;
-                }
-                _ => { /* Nothing to do */ }
+            if matches!(key.code, KeyCode::Esc | KeyCode::Enter) {
+                // Set input mode back to explorer
+                self.input_mode = InputMode::Explorer;
             }
         }
     }
@@ -650,7 +644,7 @@ impl FileTransferActivity {
     pub(super) fn handle_input_event_mode_popup_fatal(&mut self, ev: &InputEvent) {
         // If enter, close popup
         if let InputEvent::Key(key) = ev {
-            if let KeyCode::Enter = key.code {
+            if matches!(key.code, KeyCode::Esc | KeyCode::Enter) {
                 // Set quit to true; since a fatal error happened
                 self.disconnect();
             }
