@@ -176,7 +176,7 @@ impl AuthActivity {
                     match ConfigClient::new(config_path.as_path(), ssh_dir.as_path()) {
                         Ok(cli) => {
                             // Set default protocol
-                            self.protocol = cli.get_default_protcol();
+                            self.protocol = cli.get_default_protocol();
                             // Set client
                             self.config_client = Some(cli);
                         }

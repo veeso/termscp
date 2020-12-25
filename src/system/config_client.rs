@@ -109,7 +109,7 @@ impl ConfigClient {
     /// ### get_default_protocol
     ///
     /// Get default protocol from configuration
-    pub fn get_default_protcol(&self) -> FileTransferProtocol {
+    pub fn get_default_protocol(&self) -> FileTransferProtocol {
         match FileTransferProtocol::from_str(self.config.user_interface.default_protocol.as_str()) {
             Ok(p) => p,
             Err(_) => FileTransferProtocol::Sftp,
@@ -348,7 +348,7 @@ mod tests {
             .ok()
             .unwrap();
         // Verify client has updated parameters
-        assert_eq!(client.get_default_protcol(), FileTransferProtocol::Scp);
+        assert_eq!(client.get_default_protocol(), FileTransferProtocol::Scp);
         assert_eq!(client.get_text_editor(), PathBuf::from("/usr/bin/vim"));
         let mut expected_key_path: PathBuf = key_path.clone();
         expected_key_path.push("pi@192.168.1.31.key");
@@ -382,7 +382,7 @@ mod tests {
             .unwrap();
         client.set_default_protocol(FileTransferProtocol::Ftp(true));
         assert_eq!(
-            client.get_default_protcol(),
+            client.get_default_protocol(),
             FileTransferProtocol::Ftp(true)
         );
     }
