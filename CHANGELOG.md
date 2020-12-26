@@ -35,7 +35,9 @@ FIXME: Released on
 - Enhancements:
   - Replaced `sha256` sum with last modification time check, to verify if a file has been changed in the text editor
   - Default protocol changed to default protocol in configuration when providing address as CLI argument
-- dependencies:
+- Keybindings:
+  - `N`: New file
+- Dependencies:
   - removed `data-encoding`
   - updated `rand` to `0.8.0`
   - removed `ring`

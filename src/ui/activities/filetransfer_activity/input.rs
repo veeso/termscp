@@ -228,6 +228,13 @@ impl FileTransferActivity {
                         let pwd: PathBuf = self.local.wrkdir.clone();
                         self.local_scan(pwd.as_path());
                     }
+                    'n' | 'N' => {
+                        // New file
+                        self.input_mode = InputMode::Popup(PopupType::Input(
+                            String::from("New file"),
+                            Self::callback_new_file,
+                        ));
+                    }
                     'o' | 'O' => {
                         // Edit local file
                         if self.local.files.get(self.local.index).is_some() {
@@ -445,6 +452,13 @@ impl FileTransferActivity {
                     'l' | 'L' => {
                         // Reload file entries
                         self.reload_remote_dir();
+                    }
+                    'n' | 'N' => {
+                        // New file
+                        self.input_mode = InputMode::Popup(PopupType::Input(
+                            String::from("New file"),
+                            Self::callback_new_file,
+                        ));
                     }
                     'o' | 'O' => {
                         // Edit remote file

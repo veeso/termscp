@@ -297,6 +297,7 @@ You can access the SSH key storage, from configuration moving to the `SSH Keys` 
 | `<H>`         | Show help                                             | Help      |
 | `<I>`         | Show info about selected file or directory            | Info      |
 | `<L>`         | Reload current directory's content                    | List      |
+| `<N>`         | Create new file with provided name                    | New       |
 | `<O>`         | Edit file; see [Text editor](#text-editor-)           | Open      |
 | `<Q>`         | Quit TermSCP                                          | Quit      |
 | `<R>`         | Rename file                                           | Rename    |

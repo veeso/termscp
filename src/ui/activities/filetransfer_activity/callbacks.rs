@@ -19,8 +19,9 @@
 *
 */
 
+// Locals
 use super::{FileExplorerTab, FileTransferActivity, FsEntry, LogLevel};
-
+// Ext
 use std::path::PathBuf;
 
 impl FileTransferActivity {
@@ -367,6 +368,100 @@ impl FileTransferActivity {
                     // Call upload; pass realfile, keep link name
                     let wrkdir: PathBuf = self.local.wrkdir.clone();
                     self.filetransfer_recv(&file.get_realfile(), wrkdir.as_path(), Some(input));
+                }
+            }
+        }
+    }
+
+    /// ### callback_new_file
+    ///
+    /// Create a new file in current directory with `input` as name
+    pub(super) fn callback_new_file(&mut self, input: String) {
+        match self.tab {
+            FileExplorerTab::Local => {
+                // Check if file exists
+                for file in self.local.files.iter() {
+                    if input == file.get_name() {
+                        self.log_and_alert(
+                            LogLevel::Warn,
+                            format!("File \"{}\" already exists", input,),
+                        );
+                        return;
+                    }
+                }
+                // Create file
+                let file_path: PathBuf = PathBuf::from(input.as_str());
+                if let Some(ctx) = self.context.as_mut() {
+                    if let Err(err) = ctx.local.open_file_write(file_path.as_path()) {
+                        self.log_and_alert(
+                            LogLevel::Error,
+                            format!("Could not create file \"{}\": {}", file_path.display(), err),
+                        );
+                    }
+                    // Reload files
+                    let path: PathBuf = self.local.wrkdir.clone();
+                    self.local_scan(path.as_path());
+                }
+            }
+            FileExplorerTab::Remote => {
+                // Check if file exists
+                for file in self.remote.files.iter() {
+                    if input == file.get_name() {
+                        self.log_and_alert(
+                            LogLevel::Warn,
+                            format!("File \"{}\" already exists", input,),
+                        );
+                        return;
+                    }
+                }
+                // Get path on remote
+                let file_path: PathBuf = PathBuf::from(input.as_str());
+                // Create file (on local)
+                match tempfile::NamedTempFile::new() {
+                    Err(err) => self.log_and_alert(
+                        LogLevel::Error,
+                        format!("Could not create tempfile: {}", err),
+                    ),
+                    Ok(tfile) => {
+                        // Stat tempfile
+                        if let Some(ctx) = self.context.as_mut() {
+                            let local_file: FsEntry = match ctx.local.stat(tfile.path()) {
+                                Err(err) => {
+                                    self.log_and_alert(
+                                        LogLevel::Error,
+                                        format!("Could not stat tempfile: {}", err),
+                                    );
+                                    return;
+                                }
+                                Ok(f) => f,
+                            };
+                            if let FsEntry::File(local_file) = local_file {
+                                // Create file
+                                match self.client.send_file(&local_file, file_path.as_path()) {
+                                    Err(err) => self.log_and_alert(
+                                        LogLevel::Error,
+                                        format!(
+                                            "Could not create file \"{}\": {}",
+                                            file_path.display(),
+                                            err
+                                        ),
+                                    ),
+                                    Ok(writer) => {
+                                        // Finalize write
+                                        if let Err(err) = self.client.on_sent(writer) {
+                                            self.log_and_alert(
+                                                LogLevel::Warn,
+                                                format!("Could not finalize file: {}", err),
+                                            );
+                                        }
+                                        // Reload files
+                                        let path: PathBuf = self.remote.wrkdir.clone();
+                                        self.remote_scan(path.as_path());
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
