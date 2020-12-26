@@ -101,7 +101,7 @@ impl FileTransferActivity {
                     PopupType::Alert(_, _) => (50, 10),
                     PopupType::Fatal(_) => (50, 10),
                     PopupType::FileInfo => (50, 50),
-                    PopupType::Help => (50, 70),
+                    PopupType::Help => (50, 80),
                     PopupType::Input(_, _) => (40, 10),
                     PopupType::Progress(_) => (40, 10),
                     PopupType::Wait(_) => (50, 10),
@@ -485,8 +485,7 @@ impl FileTransferActivity {
                 let abs_path: PathBuf = fsentry.get_abs_path();
                 let name: String = fsentry.get_name();
                 let ctime: String = fmt_time(fsentry.get_creation_time(), "%b %d %Y %H:%M:%S");
-                let atime: String =
-                    fmt_time(fsentry.get_last_access_time(), "%b %d %Y %H:%M:%S");
+                let atime: String = fmt_time(fsentry.get_last_access_time(), "%b %d %Y %H:%M:%S");
                 let mtime: String = fmt_time(fsentry.get_creation_time(), "%b %d %Y %H:%M:%S");
                 let (bsize, size): (ByteSize, usize) =
                     (ByteSize(fsentry.get_size() as u64), fsentry.get_size());
@@ -785,6 +784,26 @@ impl FileTransferActivity {
                 ),
                 Span::raw("             "),
                 Span::raw("Reload directory content"),
+            ])),
+            ListItem::new(Spans::from(vec![
+                Span::styled(
+                    "<N>",
+                    Style::default()
+                        .fg(Color::Cyan)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::raw("             "),
+                Span::raw("New file"),
+            ])),
+            ListItem::new(Spans::from(vec![
+                Span::styled(
+                    "<O>",
+                    Style::default()
+                        .fg(Color::Cyan)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::raw("             "),
+                Span::raw("Open text file"),
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(
