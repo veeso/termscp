@@ -23,17 +23,19 @@
 *
 */
 
+// Deps
 extern crate bytesize;
 extern crate hostname;
 #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
 extern crate users;
-
+// Local
 use super::{
     Context, DialogYesNoOption, FileExplorerTab, FileTransferActivity, FsEntry, InputField,
     InputMode, LogLevel, LogRecord, PopupType,
 };
+use crate::fs::explorer::{FileExplorer, FileSorting};
 use crate::utils::fmt::{align_text_center, fmt_time};
-
+// Ext
 use bytesize::ByteSize;
 use std::path::{Path, PathBuf};
 use tui::{
@@ -105,6 +107,7 @@ impl FileTransferActivity {
                     PopupType::Alert(_, _) => (50, 10),
                     PopupType::Fatal(_) => (50, 10),
                     PopupType::FileInfo => (50, 50),
+                    PopupType::FileSortingDialog => (50, 10),
                     PopupType::Help => (50, 80),
                     PopupType::Input(_, _) => (40, 10),
                     PopupType::Progress(_) => (40, 10),
@@ -123,6 +126,9 @@ impl FileTransferActivity {
                         popup_area,
                     ),
                     PopupType::FileInfo => f.render_widget(self.draw_popup_fileinfo(), popup_area),
+                    PopupType::FileSortingDialog => {
+                        f.render_widget(self.draw_popup_file_sorting_dialog(), popup_area)
+                    }
                     PopupType::Help => f.render_widget(self.draw_popup_help(), popup_area),
                     PopupType::Input(txt, _) => {
                         f.render_widget(self.draw_popup_input(txt.clone()), popup_area);
@@ -367,6 +373,44 @@ impl FileTransferActivity {
             .start_corner(Corner::TopLeft)
             .style(Style::default().fg(Color::Red))
     }
+
+    /// ### draw_popup_file_sorting_dialog
+    ///
+    /// Draw FileSorting mode select popup
+    pub(super) fn draw_popup_file_sorting_dialog(&self) -> Tabs {
+        let choices: Vec<Spans> = vec![
+            Spans::from("Name"),
+            Spans::from("Modify time"),
+            Spans::from("Creation time"),
+            Spans::from("Size"),
+        ];
+        let explorer: &FileExplorer = match self.tab {
+            FileExplorerTab::Local => &self.local,
+            FileExplorerTab::Remote => &self.remote,
+        };
+        let index: usize = match explorer.get_file_sorting() {
+            FileSorting::ByCreationTime => 2,
+            FileSorting::ByModifyTime => 1,
+            FileSorting::ByName => 0,
+            FileSorting::BySize => 3,
+        };
+        Tabs::new(choices)
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .border_type(BorderType::Rounded)
+                    .title("Sort files by"),
+            )
+            .select(index)
+            .style(Style::default())
+            .highlight_style(
+                Style::default()
+                    .add_modifier(Modifier::BOLD)
+                    .bg(Color::LightMagenta)
+                    .fg(Color::DarkGray),
+            )
+    }
+
     /// ### draw_popup_input
     ///
     /// Draw input popup
@@ -726,6 +770,16 @@ impl FileTransferActivity {
                 ),
                 Span::raw("             "),
                 Span::raw("Toggle hidden files"),
+            ])),
+            ListItem::new(Spans::from(vec![
+                Span::styled(
+                    "<B>",
+                    Style::default()
+                        .fg(Color::Cyan)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::raw("             "),
+                Span::raw("Change file sorting mode"),
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(

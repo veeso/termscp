@@ -23,13 +23,15 @@
 *
 */
 
+// Deps
 extern crate tempfile;
-
+// Local
 use super::{
     DialogCallback, DialogYesNoOption, FileExplorerTab, FileTransferActivity, FsEntry, InputEvent,
     InputField, InputMode, LogLevel, OnInputSubmitCallback, PopupType,
 };
-
+use crate::fs::explorer::{FileExplorer, FileSorting};
+// Ext
 use crossterm::event::{KeyCode, KeyModifiers};
 use std::path::PathBuf;
 
@@ -59,7 +61,7 @@ impl FileTransferActivity {
     /// ### handle_input_event
     ///
     /// Handle input event based on current input mode
-    pub(super) fn handle_input_event(&mut self, ev: &InputEvent) {
+    fn handle_input_event(&mut self, ev: &InputEvent) {
         // NOTE: this is necessary due to this <https://github.com/rust-lang/rust/issues/59159>
         // NOTE: Do you want my opinion about that issue? It's a bs and doesn't make any sense.
         let popup: Option<PopupType> = match &self.input_mode {
@@ -79,7 +81,7 @@ impl FileTransferActivity {
     /// ### handle_input_event_mode_explorer
     ///
     /// Input event handler for explorer mode
-    pub(super) fn handle_input_event_mode_explorer(&mut self, ev: &InputEvent) {
+    fn handle_input_event_mode_explorer(&mut self, ev: &InputEvent) {
         // Match input field
         match self.input_field {
             InputField::Explorer => match self.tab {
@@ -94,7 +96,7 @@ impl FileTransferActivity {
     /// ### handle_input_event_mode_explorer_tab_local
     ///
     /// Input event handler for explorer mode when localhost tab is selected
-    pub(super) fn handle_input_event_mode_explorer_tab_local(&mut self, ev: &InputEvent) {
+    fn handle_input_event_mode_explorer_tab_local(&mut self, ev: &InputEvent) {
         // Match events
         if let InputEvent::Key(key) = ev {
             match key.code {
@@ -171,6 +173,10 @@ impl FileTransferActivity {
                     'a' | 'A' => {
                         // Toggle hidden files
                         self.local.toggle_hidden_files();
+                    }
+                    'b' | 'B' => {
+                        // Choose file sorting type
+                        self.input_mode = InputMode::Popup(PopupType::FileSortingDialog);
                     }
                     'c' | 'C' => {
                         // Copy
@@ -309,7 +315,7 @@ impl FileTransferActivity {
     /// ### handle_input_event_mode_explorer_tab_local
     ///
     /// Input event handler for explorer mode when remote tab is selected
-    pub(super) fn handle_input_event_mode_explorer_tab_remote(&mut self, ev: &InputEvent) {
+    fn handle_input_event_mode_explorer_tab_remote(&mut self, ev: &InputEvent) {
         // Match events
         if let InputEvent::Key(key) = ev {
             match key.code {
@@ -386,6 +392,10 @@ impl FileTransferActivity {
                     'a' | 'A' => {
                         // Toggle hidden files
                         self.remote.toggle_hidden_files();
+                    }
+                    'b' | 'B' => {
+                        // Choose file sorting type
+                        self.input_mode = InputMode::Popup(PopupType::FileSortingDialog);
                     }
                     'c' | 'C' => {
                         // Copy
@@ -521,7 +531,7 @@ impl FileTransferActivity {
     /// ### handle_input_event_mode_explorer_log
     ///
     /// Input even handler for explorer mode when log tab is selected
-    pub(super) fn handle_input_event_mode_explorer_log(&mut self, ev: &InputEvent) {
+    fn handle_input_event_mode_explorer_log(&mut self, ev: &InputEvent) {
         // Match event
         let records_block: usize = 16;
         if let InputEvent::Key(key) = ev {
@@ -580,12 +590,13 @@ impl FileTransferActivity {
     /// ### handle_input_event_mode_explorer
     ///
     /// Input event handler for popup mode. Handler is then based on Popup type
-    pub(super) fn handle_input_event_mode_popup(&mut self, ev: &InputEvent, popup: PopupType) {
+    fn handle_input_event_mode_popup(&mut self, ev: &InputEvent, popup: PopupType) {
         match popup {
             PopupType::Alert(_, _) => self.handle_input_event_mode_popup_alert(ev),
             PopupType::FileInfo => self.handle_input_event_mode_popup_fileinfo(ev),
-            PopupType::Help => self.handle_input_event_mode_popup_help(ev),
             PopupType::Fatal(_) => self.handle_input_event_mode_popup_fatal(ev),
+            PopupType::FileSortingDialog => self.handle_input_event_mode_popup_file_sorting(ev),
+            PopupType::Help => self.handle_input_event_mode_popup_help(ev),
             PopupType::Input(_, cb) => self.handle_input_event_mode_popup_input(ev, cb),
             PopupType::Progress(_) => self.handle_input_event_mode_popup_progress(ev),
             PopupType::Wait(_) => self.handle_input_event_mode_popup_wait(ev),
@@ -598,7 +609,7 @@ impl FileTransferActivity {
     /// ### handle_input_event_mode_popup_alert
     ///
     /// Input event handler for popup alert
-    pub(super) fn handle_input_event_mode_popup_alert(&mut self, ev: &InputEvent) {
+    fn handle_input_event_mode_popup_alert(&mut self, ev: &InputEvent) {
         // If enter, close popup
         if let InputEvent::Key(key) = ev {
             if matches!(key.code, KeyCode::Esc | KeyCode::Enter) {
@@ -611,20 +622,7 @@ impl FileTransferActivity {
     /// ### handle_input_event_mode_popup_fileinfo
     ///
     /// Input event handler for popup fileinfo
-    pub(super) fn handle_input_event_mode_popup_fileinfo(&mut self, ev: &InputEvent) {
-        // If enter, close popup
-        if let InputEvent::Key(key) = ev {
-            if matches!(key.code, KeyCode::Esc | KeyCode::Enter) {
-                // Set input mode back to explorer
-                self.input_mode = InputMode::Explorer;
-            }
-        }
-    }
-
-    /// ### handle_input_event_mode_popup_help
-    ///
-    /// Input event handler for popup help
-    pub(super) fn handle_input_event_mode_popup_help(&mut self, ev: &InputEvent) {
+    fn handle_input_event_mode_popup_fileinfo(&mut self, ev: &InputEvent) {
         // If enter, close popup
         if let InputEvent::Key(key) = ev {
             if matches!(key.code, KeyCode::Esc | KeyCode::Enter) {
@@ -637,7 +635,7 @@ impl FileTransferActivity {
     /// ### handle_input_event_mode_popup_fatal
     ///
     /// Input event handler for popup alert
-    pub(super) fn handle_input_event_mode_popup_fatal(&mut self, ev: &InputEvent) {
+    fn handle_input_event_mode_popup_fatal(&mut self, ev: &InputEvent) {
         // If enter, close popup
         if let InputEvent::Key(key) = ev {
             if matches!(key.code, KeyCode::Esc | KeyCode::Enter) {
@@ -647,14 +645,61 @@ impl FileTransferActivity {
         }
     }
 
+    /// ### handle_input_event_mode_popup_file_sorting
+    ///
+    /// Handle input event for file sorting dialog popup
+    fn handle_input_event_mode_popup_file_sorting(&mut self, ev: &InputEvent) {
+        // Match key code
+        if let InputEvent::Key(key) = ev {
+            match key.code {
+                KeyCode::Esc | KeyCode::Enter => {
+                    // Exit
+                    self.input_mode = InputMode::Explorer;
+                }
+                KeyCode::Right => {
+                    // Update sorting mode
+                    match self.tab {
+                        FileExplorerTab::Local => {
+                            Self::move_sorting_mode_opt_right(&mut self.local);
+                        }
+                        FileExplorerTab::Remote => {
+                            Self::move_sorting_mode_opt_right(&mut self.remote);
+                        }
+                    }
+                }
+                KeyCode::Left => {
+                    // Update sorting mode
+                    match self.tab {
+                        FileExplorerTab::Local => {
+                            Self::move_sorting_mode_opt_left(&mut self.local);
+                        }
+                        FileExplorerTab::Remote => {
+                            Self::move_sorting_mode_opt_left(&mut self.remote);
+                        }
+                    }
+                }
+                _ => { /* Nothing to do */ }
+            }
+        }
+    }
+
+    /// ### handle_input_event_mode_popup_help
+    ///
+    /// Input event handler for popup help
+    fn handle_input_event_mode_popup_help(&mut self, ev: &InputEvent) {
+        // If enter, close popup
+        if let InputEvent::Key(key) = ev {
+            if matches!(key.code, KeyCode::Esc | KeyCode::Enter) {
+                // Set input mode back to explorer
+                self.input_mode = InputMode::Explorer;
+            }
+        }
+    }
+
     /// ### handle_input_event_mode_popup_input
     ///
     /// Input event handler for input popup
-    pub(super) fn handle_input_event_mode_popup_input(
-        &mut self,
-        ev: &InputEvent,
-        cb: OnInputSubmitCallback,
-    ) {
+    fn handle_input_event_mode_popup_input(&mut self, ev: &InputEvent, cb: OnInputSubmitCallback) {
         // If enter, close popup, otherwise push chars to input
         if let InputEvent::Key(key) = ev {
             match key.code {
@@ -687,7 +732,7 @@ impl FileTransferActivity {
     /// ### handle_input_event_mode_popup_progress
     ///
     /// Input event handler for popup alert
-    pub(super) fn handle_input_event_mode_popup_progress(&mut self, ev: &InputEvent) {
+    fn handle_input_event_mode_popup_progress(&mut self, ev: &InputEvent) {
         if let InputEvent::Key(key) = ev {
             if let KeyCode::Char(ch) = key.code {
                 // If is 'C' and CTRL
@@ -702,14 +747,14 @@ impl FileTransferActivity {
     /// ### handle_input_event_mode_popup_wait
     ///
     /// Input event handler for popup alert
-    pub(super) fn handle_input_event_mode_popup_wait(&mut self, _ev: &InputEvent) {
+    fn handle_input_event_mode_popup_wait(&mut self, _ev: &InputEvent) {
         // There's nothing you can do here I guess... maybe ctrl+c in the future idk
     }
 
     /// ### handle_input_event_mode_popup_yesno
     ///
     /// Input event handler for popup alert
-    pub(super) fn handle_input_event_mode_popup_yesno(
+    fn handle_input_event_mode_popup_yesno(
         &mut self,
         ev: &InputEvent,
         yes_cb: DialogCallback,
@@ -734,5 +779,31 @@ impl FileTransferActivity {
                 _ => { /* Nothing to do */ }
             }
         }
+    }
+
+    /// ### move_sorting_mode_opt_left
+    ///
+    /// Perform <LEFT> on file sorting dialog
+    fn move_sorting_mode_opt_left(explorer: &mut FileExplorer) {
+        let curr_sorting: FileSorting = explorer.get_file_sorting();
+        explorer.sort_by(match curr_sorting {
+            FileSorting::BySize => FileSorting::ByCreationTime,
+            FileSorting::ByCreationTime => FileSorting::ByModifyTime,
+            FileSorting::ByModifyTime => FileSorting::ByName,
+            FileSorting::ByName => FileSorting::BySize, // Wrap
+        });
+    }
+
+    /// ### move_sorting_mode_opt_left
+    ///
+    /// Perform <RIGHT> on file sorting dialog
+    fn move_sorting_mode_opt_right(explorer: &mut FileExplorer) {
+        let curr_sorting: FileSorting = explorer.get_file_sorting();
+        explorer.sort_by(match curr_sorting {
+            FileSorting::ByName => FileSorting::ByModifyTime,
+            FileSorting::ByModifyTime => FileSorting::ByCreationTime,
+            FileSorting::ByCreationTime => FileSorting::BySize,
+            FileSorting::BySize => FileSorting::ByName, // Wrap
+        });
     }
 }

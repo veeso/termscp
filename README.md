@@ -277,34 +277,35 @@ You can access the SSH key storage, from configuration moving to the `SSH Keys` 
 
 ## Keybindings ⌨
 
-| Key           | Command                                               | Reminder  |
-|---------------|-------------------------------------------------------|-----------|
-| `<ESC>`       | Disconnect from remote; return to authentication page |           |
-| `<TAB>`       | Switch between log tab and explorer                   |           |
-| `<BACKSPACE>` | Go to previous directory in stack                     |           |
-| `<RIGHT>`     | Move to remote explorer tab                           |           |
-| `<LEFT>`      | Move to local explorer tab                            |           |
-| `<UP>`        | Move up in selected list                              |           |
-| `<DOWN>`      | Move down in selected list                            |           |
-| `<PGUP>`      | Move up in selected list by 8 rows                    |           |
-| `<PGDOWN>`    | Move down in selected list by 8 rows                  |           |
-| `<ENTER>`     | Enter directory                                       |           |
-| `<SPACE>`     | Upload / download selected file                       |           |
-| `<A>`         | Toggle hidden files                                   | All       |
-| `<C>`         | Copy file/directory                                   | Copy      |
-| `<D>`         | Make directory                                        | Directory |
-| `<E>`         | Delete file (Same as `DEL`)                           | Erase     |
-| `<G>`         | Go to supplied path                                   | Go to     |
-| `<H>`         | Show help                                             | Help      |
-| `<I>`         | Show info about selected file or directory            | Info      |
-| `<L>`         | Reload current directory's content                    | List      |
-| `<N>`         | Create new file with provided name                    | New       |
-| `<O>`         | Edit file; see [Text editor](#text-editor-)           | Open      |
-| `<Q>`         | Quit TermSCP                                          | Quit      |
-| `<R>`         | Rename file                                           | Rename    |
-| `<U>`         | Go to parent directory                                | Upper     |
-| `<DEL>`       | Delete file                                           |           |
-| `<CTRL+C>`    | Abort file transfer process                           |           |
+| Key           | Command                                               | Reminder    |
+|---------------|-------------------------------------------------------|-------------|
+| `<ESC>`       | Disconnect from remote; return to authentication page |             |
+| `<TAB>`       | Switch between log tab and explorer                   |             |
+| `<BACKSPACE>` | Go to previous directory in stack                     |             |
+| `<RIGHT>`     | Move to remote explorer tab                           |             |
+| `<LEFT>`      | Move to local explorer tab                            |             |
+| `<UP>`        | Move up in selected list                              |             |
+| `<DOWN>`      | Move down in selected list                            |             |
+| `<PGUP>`      | Move up in selected list by 8 rows                    |             |
+| `<PGDOWN>`    | Move down in selected list by 8 rows                  |             |
+| `<ENTER>`     | Enter directory                                       |             |
+| `<SPACE>`     | Upload / download selected file                       |             |
+| `<A>`         | Toggle hidden files                                   | All         |
+| `<B>`         | Sort files by                                         | Bubblesort? |
+| `<C>`         | Copy file/directory                                   | Copy        |
+| `<D>`         | Make directory                                        | Directory   |
+| `<E>`         | Delete file (Same as `DEL`)                           | Erase       |
+| `<G>`         | Go to supplied path                                   | Go to       |
+| `<H>`         | Show help                                             | Help        |
+| `<I>`         | Show info about selected file or directory            | Info        |
+| `<L>`         | Reload current directory's content                    | List        |
+| `<N>`         | Create new file with provided name                    | New         |
+| `<O>`         | Edit file; see [Text editor](#text-editor-)           | Open        |
+| `<Q>`         | Quit TermSCP                                          | Quit        |
+| `<R>`         | Rename file                                           | Rename      |
+| `<U>`         | Go to parent directory                                | Upper       |
+| `<DEL>`       | Delete file                                           |             |
+| `<CTRL+C>`    | Abort file transfer process                           |             |
 
 ---
 

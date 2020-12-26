@@ -39,6 +39,7 @@ FIXME: Released on
     - Hidden files are now not shown by default; use `A` to show hidden files.
 - Keybindings:
   - `A`: Toggle hidden files
+  - `B`: Sort files by (name, size, creation time, modify time)
   - `N`: New file
 - Dependencies:
   - added `bitflags 1.2.1`

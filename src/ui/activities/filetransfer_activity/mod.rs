@@ -97,6 +97,7 @@ enum PopupType {
     Alert(Color, String),                          // Block color; Block text
     Fatal(String),                                 // Must quit after being hidden
     FileInfo,                                      // Show info about current file
+    FileSortingDialog,                             // Dialog for choosing file sorting type
     Help,                                          // Show Help
     Input(String, OnInputSubmitCallback),          // Input description; Callback for submit
     Progress(String),                              // Progress block text

@@ -52,6 +52,7 @@ pub enum FileSorting {
     ByName,
     ByModifyTime,
     ByCreationTime,
+    BySize,
 }
 
 /// ## GroupDirs
@@ -204,6 +205,7 @@ impl FileExplorer {
             FileSorting::ByName => self.sort_files_by_name(),
             FileSorting::ByCreationTime => self.sort_files_by_creation_time(),
             FileSorting::ByModifyTime => self.sort_files_by_mtime(),
+            FileSorting::BySize => self.sort_files_by_size(),
         }
         // Directories first (NOTE: MUST COME AFTER OTHER SORTING)
         // Group directories if necessary
@@ -238,6 +240,14 @@ impl FileExplorer {
     fn sort_files_by_creation_time(&mut self) {
         self.files
             .sort_by(|a: &FsEntry, b: &FsEntry| b.get_creation_time().cmp(&a.get_creation_time()));
+    }
+
+    /// ### sort_files_by_size
+    ///
+    /// Sort files by size
+    fn sort_files_by_size(&mut self) {
+        self.files
+            .sort_by(|a: &FsEntry, b: &FsEntry| b.get_size().cmp(&a.get_size()));
     }
 
     /// ### sort_files_directories_first
@@ -442,6 +452,7 @@ impl ToString for FileSorting {
             FileSorting::ByCreationTime => "by_creation_time",
             FileSorting::ByModifyTime => "by_mtime",
             FileSorting::ByName => "by_name",
+            FileSorting::BySize => "by_size",
         })
     }
 }
@@ -453,6 +464,7 @@ impl FromStr for FileSorting {
             "by_creation_time" => Ok(FileSorting::ByCreationTime),
             "by_mtime" => Ok(FileSorting::ByModifyTime),
             "by_name" => Ok(FileSorting::ByName),
+            "by_size" => Ok(FileSorting::BySize),
             _ => Err(()),
         }
     }
@@ -734,6 +746,22 @@ mod tests {
     }
 
     #[test]
+    fn test_fs_explorer_sort_by_size() {
+        let mut explorer: FileExplorer = FileExplorer::default();
+        // Create files (files are then sorted by name)
+        explorer.set_files(vec![
+            make_fs_entry_with_size("README.md", false, 1024),
+            make_fs_entry("src/", true),
+            make_fs_entry_with_size("CONTRIBUTING.md", false, 256),
+        ]);
+        explorer.sort_by(FileSorting::BySize);
+        // Directory has size 4096
+        assert_eq!(explorer.files.get(0).unwrap().get_name(), "src/");
+        assert_eq!(explorer.files.get(1).unwrap().get_name(), "README.md");
+        assert_eq!(explorer.files.get(2).unwrap().get_name(), "CONTRIBUTING.md");
+    }
+
+    #[test]
     fn test_fs_explorer_sort_by_name_and_dirs_first() {
         let mut explorer: FileExplorer = FileExplorer::default();
         // Create files (files are then sorted by name)
@@ -793,6 +821,7 @@ mod tests {
         assert_eq!(FileSorting::ByCreationTime.to_string(), "by_creation_time");
         assert_eq!(FileSorting::ByModifyTime.to_string(), "by_mtime");
         assert_eq!(FileSorting::ByName.to_string(), "by_name");
+        assert_eq!(FileSorting::BySize.to_string(), "by_size");
         assert_eq!(
             FileSorting::from_str("by_creation_time").ok().unwrap(),
             FileSorting::ByCreationTime
@@ -804,6 +833,10 @@ mod tests {
         assert_eq!(
             FileSorting::from_str("by_name").ok().unwrap(),
             FileSorting::ByName
+        );
+        assert_eq!(
+            FileSorting::from_str("by_size").ok().unwrap(),
+            FileSorting::BySize
         );
         assert!(FileSorting::from_str("omar").is_err());
         // Group dirs
@@ -824,6 +857,38 @@ mod tests {
                 last_access_time: t_now,
                 creation_time: t_now,
                 size: 64,
+                ftype: None, // File type
+                readonly: false,
+                symlink: None,             // UNIX only
+                user: Some(0),             // UNIX only
+                group: Some(0),            // UNIX only
+                unix_pex: Some((6, 4, 4)), // UNIX only
+            }),
+            true => FsEntry::Directory(FsDirectory {
+                name: name.to_string(),
+                abs_path: PathBuf::from(name),
+                last_change_time: t_now,
+                last_access_time: t_now,
+                creation_time: t_now,
+                readonly: false,
+                symlink: None,             // UNIX only
+                user: Some(0),             // UNIX only
+                group: Some(0),            // UNIX only
+                unix_pex: Some((7, 5, 5)), // UNIX only
+            }),
+        }
+    }
+
+    fn make_fs_entry_with_size(name: &str, is_dir: bool, size: usize) -> FsEntry {
+        let t_now: SystemTime = SystemTime::now();
+        match is_dir {
+            false => FsEntry::File(FsFile {
+                name: name.to_string(),
+                abs_path: PathBuf::from(name),
+                last_change_time: t_now,
+                last_access_time: t_now,
+                creation_time: t_now,
+                size: size,
                 ftype: None, // File type
                 readonly: false,
                 symlink: None,             // UNIX only
