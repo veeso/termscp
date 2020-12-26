@@ -35,7 +35,10 @@ FIXME: Released on
 - Enhancements:
   - Replaced `sha256` sum with last modification time check, to verify if a file has been changed in the text editor
   - Default protocol changed to default protocol in configuration when providing address as CLI argument
+  - Explorers:
+    - Hidden files are now not shown by default; use `A` to show hidden files.
 - Keybindings:
+  - `A`: Toggle hidden files
   - `N`: New file
 - Dependencies:
   - removed `data-encoding`

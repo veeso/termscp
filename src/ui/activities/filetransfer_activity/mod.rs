@@ -25,6 +25,7 @@
 
 // This module is split into files, cause it's just too big
 mod callbacks;
+mod explorer;
 mod input;
 mod layout;
 mod misc;
@@ -45,13 +46,14 @@ use crate::filetransfer::sftp_transfer::SftpFileTransfer;
 use crate::filetransfer::{FileTransfer, FileTransferProtocol};
 use crate::fs::FsEntry;
 use crate::system::config_client::ConfigClient;
+use explorer::FileExplorer;
 
 // Includes
 use chrono::{DateTime, Local};
 use crossterm::event::Event as InputEvent;
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use std::collections::VecDeque;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::time::Instant;
 use tui::style::Color;
 
@@ -111,59 +113,6 @@ enum PopupType {
 enum InputMode {
     Explorer,
     Popup(PopupType),
-}
-
-/// ## FileExplorer
-///
-/// File explorer states
-struct FileExplorer {
-    pub wrkdir: PathBuf,         // Current directory
-    pub index: usize,            // Selected file
-    pub files: Vec<FsEntry>,     // Files in directory
-    dirstack: VecDeque<PathBuf>, // Stack of visited directory (max 16)
-}
-
-impl FileExplorer {
-    /// ### new
-    ///
-    /// Instantiates a new FileExplorer
-    pub fn new() -> FileExplorer {
-        FileExplorer {
-            wrkdir: PathBuf::from("/"),
-            index: 0,
-            files: Vec::new(),
-            dirstack: VecDeque::with_capacity(16),
-        }
-    }
-
-    /// ### pushd
-    ///
-    /// push directory to stack
-    pub fn pushd(&mut self, dir: &Path) {
-        // Check if stack overflows the size
-        if self.dirstack.len() + 1 > 16 {
-            self.dirstack.pop_back(); // Start cleaning events from back
-        }
-        // Eventually push front the new record
-        self.dirstack.push_front(PathBuf::from(dir));
-    }
-
-    /// ### popd
-    ///
-    /// Pop directory from the stack and return the directory
-    pub fn popd(&mut self) -> Option<PathBuf> {
-        self.dirstack.pop_front()
-    }
-
-    /// ### sort_files_by_name
-    ///
-    /// Sort explorer files by their name
-    pub fn sort_files_by_name(&mut self) {
-        self.files.sort_by_key(|x: &FsEntry| match x {
-            FsEntry::Directory(dir) => dir.name.as_str().to_lowercase(),
-            FsEntry::File(file) => file.name.as_str().to_lowercase(),
-        });
-    }
 }
 
 /// ## FileExplorerTab
@@ -312,18 +261,18 @@ impl FileTransferActivity {
             quit: false,
             context: None,
             client: match protocol {
-                FileTransferProtocol::Sftp => {
-                    Box::new(SftpFileTransfer::new(Self::make_ssh_storage(config_client.as_ref())))
-                }
+                FileTransferProtocol::Sftp => Box::new(SftpFileTransfer::new(
+                    Self::make_ssh_storage(config_client.as_ref()),
+                )),
                 FileTransferProtocol::Ftp(ftps) => Box::new(FtpFileTransfer::new(ftps)),
-                FileTransferProtocol::Scp => {
-                    Box::new(ScpFileTransfer::new(Self::make_ssh_storage(config_client.as_ref())))
-                }
+                FileTransferProtocol::Scp => Box::new(ScpFileTransfer::new(
+                    Self::make_ssh_storage(config_client.as_ref()),
+                )),
             },
             config_cli: config_client,
             params,
-            local: FileExplorer::new(),
-            remote: FileExplorer::new(),
+            local: FileExplorer::new(16),
+            remote: FileExplorer::new(16),
             tab: FileExplorerTab::Local,
             log_index: 0,
             log_records: VecDeque::with_capacity(256), // 256 events is enough I guess
@@ -335,7 +284,6 @@ impl FileTransferActivity {
             transfer: TransferStates::default(),
         }
     }
-
 }
 
 /**

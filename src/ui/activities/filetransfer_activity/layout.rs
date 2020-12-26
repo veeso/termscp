@@ -1,3 +1,7 @@
+//! ## FileTransferActivity
+//!
+//! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
+
 /*
 *
 *   Copyright (C) 2020 Christian Visintin - christian.visintin1997@gmail.com
@@ -70,10 +74,10 @@ impl FileTransferActivity {
                 .split(chunks[0]);
             // Set localhost state
             let mut localhost_state: ListState = ListState::default();
-            localhost_state.select(Some(self.local.index));
+            localhost_state.select(Some(self.local.get_relative_index()));
             // Set remote state
             let mut remote_state: ListState = ListState::default();
-            remote_state.select(Some(self.remote.index));
+            remote_state.select(Some(self.remote.get_relative_index()));
             // Draw tabs
             f.render_stateful_widget(
                 self.draw_local_explorer(tabs_chunks[0].width),
@@ -158,8 +162,7 @@ impl FileTransferActivity {
         };
         let files: Vec<ListItem> = self
             .local
-            .files
-            .iter()
+            .iter_files()
             .map(|entry: &FsEntry| ListItem::new(Span::from(format!("{}", entry))))
             .collect();
         // Get colors to use; highlight element inverting fg/bg only when tab is active
@@ -199,8 +202,7 @@ impl FileTransferActivity {
     pub(super) fn draw_remote_explorer(&self, width: u16) -> List {
         let files: Vec<ListItem> = self
             .remote
-            .files
-            .iter()
+            .iter_files()
             .map(|entry: &FsEntry| ListItem::new(Span::from(format!("{}", entry))))
             .collect();
         // Get colors to use; highlight element inverting fg/bg only when tab is active
@@ -468,12 +470,12 @@ impl FileTransferActivity {
         let fsentry: Option<&FsEntry> = match self.tab {
             FileExplorerTab::Local => {
                 // Get selected file
-                match self.local.files.get(self.local.index) {
+                match self.local.get_current_file() {
                     Some(entry) => Some(entry),
                     None => None,
                 }
             }
-            FileExplorerTab::Remote => match self.remote.files.get(self.remote.index) {
+            FileExplorerTab::Remote => match self.remote.get_current_file() {
                 Some(entry) => Some(entry),
                 None => None,
             },
@@ -714,6 +716,16 @@ impl FileTransferActivity {
                 ),
                 Span::raw("           "),
                 Span::raw("Delete file"),
+            ])),
+            ListItem::new(Spans::from(vec![
+                Span::styled(
+                    "<A>",
+                    Style::default()
+                        .fg(Color::Cyan)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::raw("             "),
+                Span::raw("Toggle hidden files"),
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(

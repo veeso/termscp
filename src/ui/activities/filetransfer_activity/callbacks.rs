@@ -1,3 +1,7 @@
+//! ## FileTransferActivity
+//!
+//! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
+
 /*
 *
 *   Copyright (C) 2020 Christian Visintin - christian.visintin1997@gmail.com
@@ -71,8 +75,8 @@ impl FileTransferActivity {
         match self.tab {
             FileExplorerTab::Local => {
                 // Get selected entry
-                if self.local.files.get(self.local.index).is_some() {
-                    let entry: FsEntry = self.local.files.get(self.local.index).unwrap().clone();
+                if self.local.get_current_file().is_some() {
+                    let entry: FsEntry = self.local.get_current_file().unwrap().clone();
                     if let Some(ctx) = self.context.as_mut() {
                         match ctx.local.copy(&entry, dest_path.as_path()) {
                             Ok(_) => {
@@ -104,8 +108,8 @@ impl FileTransferActivity {
             }
             FileExplorerTab::Remote => {
                 // Get selected entry
-                if self.remote.files.get(self.remote.index).is_some() {
-                    let entry: FsEntry = self.remote.files.get(self.remote.index).unwrap().clone();
+                if self.remote.get_current_file().is_some() {
+                    let entry: FsEntry = self.remote.get_current_file().unwrap().clone();
                     match self.client.as_mut().copy(&entry, dest_path.as_path()) {
                         Ok(_) => {
                             self.log(
@@ -205,7 +209,7 @@ impl FileTransferActivity {
                     dst_path = wrkdir;
                 }
                 // Check if file entry exists
-                if let Some(entry) = self.local.files.get(self.local.index) {
+                if let Some(entry) = self.local.get_current_file() {
                     let full_path: PathBuf = entry.get_abs_path();
                     // Rename file or directory and report status as popup
                     match self
@@ -245,7 +249,7 @@ impl FileTransferActivity {
             }
             FileExplorerTab::Remote => {
                 // Check if file entry exists
-                if let Some(entry) = self.remote.files.get(self.remote.index) {
+                if let Some(entry) = self.remote.get_current_file() {
                     let full_path: PathBuf = entry.get_abs_path();
                     // Rename file or directory and report status as popup
                     let dst_path: PathBuf = PathBuf::from(input);
@@ -289,7 +293,7 @@ impl FileTransferActivity {
         match self.tab {
             FileExplorerTab::Local => {
                 // Check if file entry exists
-                if let Some(entry) = self.local.files.get(self.local.index) {
+                if let Some(entry) = self.local.get_current_file() {
                     let full_path: PathBuf = entry.get_abs_path();
                     // Delete file or directory and report status as popup
                     match self.context.as_mut().unwrap().local.remove(entry) {
@@ -318,7 +322,7 @@ impl FileTransferActivity {
             }
             FileExplorerTab::Remote => {
                 // Check if file entry exists
-                if let Some(entry) = self.remote.files.get(self.remote.index) {
+                if let Some(entry) = self.remote.get_current_file() {
                     let full_path: PathBuf = entry.get_abs_path();
                     // Delete file
                     match self.client.remove(entry) {
@@ -355,16 +359,16 @@ impl FileTransferActivity {
                 // Get pwd
                 let wrkdir: PathBuf = self.remote.wrkdir.clone();
                 // Get file and clone (due to mutable / immutable stuff...)
-                if self.local.files.get(self.local.index).is_some() {
-                    let file: FsEntry = self.local.files.get(self.local.index).unwrap().clone();
+                if self.local.get_current_file().is_some() {
+                    let file: FsEntry = self.local.get_current_file().unwrap().clone();
                     // Call upload; pass realfile, keep link name
                     self.filetransfer_send(&file.get_realfile(), wrkdir.as_path(), Some(input));
                 }
             }
             FileExplorerTab::Remote => {
                 // Get file and clone (due to mutable / immutable stuff...)
-                if self.remote.files.get(self.remote.index).is_some() {
-                    let file: FsEntry = self.remote.files.get(self.remote.index).unwrap().clone();
+                if self.remote.get_current_file().is_some() {
+                    let file: FsEntry = self.remote.get_current_file().unwrap().clone();
                     // Call upload; pass realfile, keep link name
                     let wrkdir: PathBuf = self.local.wrkdir.clone();
                     self.filetransfer_recv(&file.get_realfile(), wrkdir.as_path(), Some(input));
@@ -380,14 +384,18 @@ impl FileTransferActivity {
         match self.tab {
             FileExplorerTab::Local => {
                 // Check if file exists
-                for file in self.local.files.iter() {
+                let mut file_exists: bool = false;
+                for file in self.local.iter_files_all() {
                     if input == file.get_name() {
-                        self.log_and_alert(
-                            LogLevel::Warn,
-                            format!("File \"{}\" already exists", input,),
-                        );
-                        return;
+                        file_exists = true;
                     }
+                }
+                if file_exists {
+                    self.log_and_alert(
+                        LogLevel::Warn,
+                        format!("File \"{}\" already exists", input,),
+                    );
+                    return;
                 }
                 // Create file
                 let file_path: PathBuf = PathBuf::from(input.as_str());
@@ -409,14 +417,18 @@ impl FileTransferActivity {
             }
             FileExplorerTab::Remote => {
                 // Check if file exists
-                for file in self.remote.files.iter() {
+                let mut file_exists: bool = false;
+                for file in self.remote.iter_files_all() {
                     if input == file.get_name() {
-                        self.log_and_alert(
-                            LogLevel::Warn,
-                            format!("File \"{}\" already exists", input,),
-                        );
-                        return;
+                        file_exists = true;
                     }
+                }
+                if file_exists {
+                    self.log_and_alert(
+                        LogLevel::Warn,
+                        format!("File \"{}\" already exists", input,),
+                    );
+                    return;
                 }
                 // Get path on remote
                 let file_path: PathBuf = PathBuf::from(input.as_str());

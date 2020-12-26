@@ -212,7 +212,7 @@ impl FsEntry {
     ///
     /// Returns whether FsEntry is hidden
     pub fn is_hidden(&self) -> bool {
-        self.get_name().starts_with(".")
+        self.get_name().starts_with('.')
     }
 
     /// ### get_realfile

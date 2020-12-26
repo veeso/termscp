@@ -290,9 +290,10 @@ You can access the SSH key storage, from configuration moving to the `SSH Keys` 
 | `<PGDOWN>`    | Move down in selected list by 8 rows                  |           |
 | `<ENTER>`     | Enter directory                                       |           |
 | `<SPACE>`     | Upload / download selected file                       |           |
+| `<A>`         | Toggle hidden files                                   | All       |
 | `<C>`         | Copy file/directory                                   | Copy      |
 | `<D>`         | Make directory                                        | Directory |
-| `<E>`         | Delete file (Same as `CANC`)                          | Erase     |
+| `<E>`         | Delete file (Same as `DEL`)                           | Erase     |
 | `<G>`         | Go to supplied path                                   | Go to     |
 | `<H>`         | Show help                                             | Help      |
 | `<I>`         | Show info about selected file or directory            | Info      |

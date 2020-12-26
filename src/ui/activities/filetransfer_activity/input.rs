@@ -1,3 +1,7 @@
+//! ## FileTransferActivity
+//!
+//! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
+
 /*
 *
 *   Copyright (C) 2020 Christian Visintin - christian.visintin1997@gmail.com
@@ -102,41 +106,28 @@ impl FileTransferActivity {
                 KeyCode::Tab => self.switch_input_field(), // <TAB> switch tab
                 KeyCode::Right => self.tab = FileExplorerTab::Remote, // <RIGHT> switch to right tab
                 KeyCode::Up => {
-                    // Move index up; or move to the last element if 0
-                    self.local.index = match self.local.index {
-                        0 => self.local.files.len() - 1,
-                        _ => self.local.index - 1,
-                    };
+                    // Decrement index
+                    self.local.decr_index();
                 }
                 KeyCode::Down => {
-                    // Move index down
-                    if self.local.index + 1 < self.local.files.len() {
-                        self.local.index += 1;
-                    } else {
-                        self.local.index = 0; // Move at the beginning of the list
-                    }
+                    // Increment index
+                    self.local.incr_index();
                 }
                 KeyCode::PageUp => {
-                    // Move index up (fast)
-                    if self.local.index > 8 {
-                        self.local.index -= 8; // Decrease by `8` if possible
-                    } else {
-                        self.local.index = 0; // Set to 0 otherwise
-                    }
+                    // Decrement index by 8
+                    self.local.decr_index_by(8);
                 }
                 KeyCode::PageDown => {
-                    // Move index down (fast)
-                    if self.local.index + 8 >= self.local.files.len() {
-                        // If overflows, set to size
-                        self.local.index = self.local.files.len() - 1;
-                    } else {
-                        self.local.index += 8; // Increase by `8`
-                    }
+                    // Increment index by 8
+                    self.local.incr_index_by(8);
                 }
                 KeyCode::Enter => {
                     // Match selected file
-                    let local_files: Vec<FsEntry> = self.local.files.clone();
-                    if let Some(entry) = local_files.get(self.local.index) {
+                    let mut entry: Option<FsEntry> = None;
+                    if let Some(e) = self.local.get_current_file() {
+                        entry = Some(e.clone());
+                    }
+                    if let Some(entry) = entry {
                         // If directory, enter directory, otherwise check if symlink
                         match entry {
                             FsEntry::Directory(dir) => {
@@ -162,7 +153,7 @@ impl FileTransferActivity {
                 }
                 KeyCode::Delete => {
                     // Get file at index
-                    if let Some(entry) = self.local.files.get(self.local.index) {
+                    if let Some(entry) = self.local.get_current_file() {
                         // Get file name
                         let file_name: String = match entry {
                             FsEntry::Directory(dir) => dir.name.clone(),
@@ -177,6 +168,10 @@ impl FileTransferActivity {
                     }
                 }
                 KeyCode::Char(ch) => match ch {
+                    'a' | 'A' => {
+                        // Toggle hidden files
+                        self.local.toggle_hidden_files();
+                    }
                     'c' | 'C' => {
                         // Copy
                         self.input_mode = InputMode::Popup(PopupType::Input(
@@ -193,7 +188,7 @@ impl FileTransferActivity {
                     }
                     'e' | 'E' => {
                         // Get file at index
-                        if let Some(entry) = self.local.files.get(self.local.index) {
+                        if let Some(entry) = self.local.get_current_file() {
                             // Get file name
                             let file_name: String = match entry {
                                 FsEntry::Directory(dir) => dir.name.clone(),
@@ -237,10 +232,9 @@ impl FileTransferActivity {
                     }
                     'o' | 'O' => {
                         // Edit local file
-                        if self.local.files.get(self.local.index).is_some() {
+                        if self.local.get_current_file().is_some() {
                             // Clone entry due to mutable stuff...
-                            let fsentry: FsEntry =
-                                self.local.files.get(self.local.index).unwrap().clone();
+                            let fsentry: FsEntry = self.local.get_current_file().unwrap().clone();
                             // Check if file
                             if fsentry.is_file() {
                                 self.log(
@@ -294,9 +288,8 @@ impl FileTransferActivity {
                         // Get pwd
                         let wrkdir: PathBuf = self.remote.wrkdir.clone();
                         // Get file and clone (due to mutable / immutable stuff...)
-                        if self.local.files.get(self.local.index).is_some() {
-                            let file: FsEntry =
-                                self.local.files.get(self.local.index).unwrap().clone();
+                        if self.local.get_current_file().is_some() {
+                            let file: FsEntry = self.local.get_current_file().unwrap().clone();
                             let name: String = file.get_name().to_string();
                             // Call upload; pass realfile, keep link name
                             self.filetransfer_send(
@@ -328,41 +321,28 @@ impl FileTransferActivity {
                 KeyCode::Tab => self.switch_input_field(), // <TAB> switch tab
                 KeyCode::Left => self.tab = FileExplorerTab::Local, // <LEFT> switch to local tab
                 KeyCode::Up => {
-                    // Move index up; or move to the last element if 0
-                    self.remote.index = match self.remote.index {
-                        0 => self.remote.files.len() - 1,
-                        _ => self.remote.index - 1,
-                    };
+                    // Decrement index
+                    self.remote.decr_index();
                 }
                 KeyCode::Down => {
-                    // Move index down
-                    if self.remote.index + 1 < self.remote.files.len() {
-                        self.remote.index += 1;
-                    } else {
-                        self.remote.index = 0; // Move at the beginning of the list
-                    }
+                    // Increment index
+                    self.remote.incr_index();
                 }
                 KeyCode::PageUp => {
-                    // Move index up (fast)
-                    if self.remote.index > 8 {
-                        self.remote.index -= 8; // Decrease by `8` if possible
-                    } else {
-                        self.remote.index = 0; // Set to 0 otherwise
-                    }
+                    // Decrement index by 8
+                    self.remote.decr_index_by(8);
                 }
                 KeyCode::PageDown => {
-                    // Move index down (fast)
-                    if self.remote.index + 8 >= self.remote.files.len() {
-                        // If overflows, set to size
-                        self.remote.index = self.remote.files.len() - 1;
-                    } else {
-                        self.remote.index += 8; // Increase by `8`
-                    }
+                    // Increment index by 8
+                    self.remote.incr_index_by(8);
                 }
                 KeyCode::Enter => {
                     // Match selected file
-                    let files: Vec<FsEntry> = self.remote.files.clone();
-                    if let Some(entry) = files.get(self.remote.index) {
+                    let mut entry: Option<FsEntry> = None;
+                    if let Some(e) = self.remote.get_current_file() {
+                        entry = Some(e.clone());
+                    }
+                    if let Some(entry) = entry {
                         // If directory, enter directory; if file, check if is symlink
                         match entry {
                             FsEntry::Directory(dir) => {
@@ -388,7 +368,7 @@ impl FileTransferActivity {
                 }
                 KeyCode::Delete => {
                     // Get file at index
-                    if let Some(entry) = self.remote.files.get(self.remote.index) {
+                    if let Some(entry) = self.remote.get_current_file() {
                         // Get file name
                         let file_name: String = match entry {
                             FsEntry::Directory(dir) => dir.name.clone(),
@@ -403,6 +383,10 @@ impl FileTransferActivity {
                     }
                 }
                 KeyCode::Char(ch) => match ch {
+                    'a' | 'A' => {
+                        // Toggle hidden files
+                        self.remote.toggle_hidden_files();
+                    }
                     'c' | 'C' => {
                         // Copy
                         self.input_mode = InputMode::Popup(PopupType::Input(
@@ -419,7 +403,7 @@ impl FileTransferActivity {
                     }
                     'e' | 'E' => {
                         // Get file at index
-                        if let Some(entry) = self.remote.files.get(self.remote.index) {
+                        if let Some(entry) = self.remote.get_current_file() {
                             // Get file name
                             let file_name: String = match entry {
                                 FsEntry::Directory(dir) => dir.name.clone(),
@@ -462,10 +446,9 @@ impl FileTransferActivity {
                     }
                     'o' | 'O' => {
                         // Edit remote file
-                        if self.remote.files.get(self.remote.index).is_some() {
+                        if self.remote.get_current_file().is_some() {
                             // Clone entry due to mutable stuff...
-                            let fsentry: FsEntry =
-                                self.remote.files.get(self.remote.index).unwrap().clone();
+                            let fsentry: FsEntry = self.remote.get_current_file().unwrap().clone();
                             // Check if file
                             if let FsEntry::File(file) = fsentry {
                                 self.log(
@@ -516,9 +499,8 @@ impl FileTransferActivity {
                     }
                     ' ' => {
                         // Get file and clone (due to mutable / immutable stuff...)
-                        if self.remote.files.get(self.remote.index).is_some() {
-                            let file: FsEntry =
-                                self.remote.files.get(self.remote.index).unwrap().clone();
+                        if self.remote.get_current_file().is_some() {
+                            let file: FsEntry = self.remote.get_current_file().unwrap().clone();
                             let name: String = file.get_name().to_string();
                             // Call upload; pass realfile, keep link name
                             let wrkdir: PathBuf = self.local.wrkdir.clone();

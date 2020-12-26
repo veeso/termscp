@@ -1,3 +1,7 @@
+//! ## FileTransferActivity
+//!
+//! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
+
 /*
 *
 *   Copyright (C) 2020 Christian Visintin - christian.visintin1997@gmail.com
@@ -599,17 +603,17 @@ impl FileTransferActivity {
     pub(super) fn local_scan(&mut self, path: &Path) {
         match self.context.as_ref().unwrap().local.scan_dir(path) {
             Ok(files) => {
-                self.local.files = files;
-                // Set index; keep if possible, otherwise set to last item
-                self.local.index = match self.local.files.get(self.local.index) {
-                    Some(_) => self.local.index,
-                    None => match self.local.files.len() {
-                        0 => 0,
-                        _ => self.local.files.len() - 1,
-                    },
-                };
+                self.local.set_files(files);
                 // Sort files
                 self.local.sort_files_by_name();
+                // Set index; keep if possible, otherwise set to last item
+                self.local.set_index(match self.local.get_current_file() {
+                    Some(_) => self.local.get_index(),
+                    None => match self.local.count() {
+                        0 => 0,
+                        _ => self.local.count() - 1,
+                    },
+                });
             }
             Err(err) => {
                 self.log_and_alert(
@@ -626,17 +630,17 @@ impl FileTransferActivity {
     pub(super) fn remote_scan(&mut self, path: &Path) {
         match self.client.list_dir(path) {
             Ok(files) => {
-                self.remote.files = files;
-                // Set index; keep if possible, otherwise set to last item
-                self.remote.index = match self.remote.files.get(self.remote.index) {
-                    Some(_) => self.remote.index,
-                    None => match self.remote.files.len() {
-                        0 => 0,
-                        _ => self.remote.files.len() - 1,
-                    },
-                };
+                self.remote.set_files(files);
                 // Sort files
                 self.remote.sort_files_by_name();
+                // Set index; keep if possible, otherwise set to last item
+                self.remote.set_index(match self.remote.get_current_file() {
+                    Some(_) => self.remote.get_index(),
+                    None => match self.remote.count() {
+                        0 => 0,
+                        _ => self.remote.count() - 1,
+                    },
+                });
             }
             Err(err) => {
                 self.log_and_alert(
@@ -663,7 +667,7 @@ impl FileTransferActivity {
                 // Reload files
                 self.local_scan(path);
                 // Reset index
-                self.local.index = 0;
+                self.local.set_index(0);
                 // Set wrkdir
                 self.local.wrkdir = PathBuf::from(path);
                 // Push prev_dir to stack
@@ -694,7 +698,7 @@ impl FileTransferActivity {
                 // Update files
                 self.remote_scan(path);
                 // Reset index
-                self.remote.index = 0;
+                self.remote.set_index(0);
                 // Set wrkdir
                 self.remote.wrkdir = PathBuf::from(path);
                 // Push prev_dir to stack
