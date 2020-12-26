@@ -32,6 +32,8 @@ use super::FsEntry;
 // Ext
 use std::collections::VecDeque;
 use std::path::{Path, PathBuf};
+use std::str::FromStr;
+use std::string::ToString;
 
 bitflags! {
     /// ## ExplorerOpts
@@ -432,6 +434,50 @@ impl FileExplorer {
     }
 }
 
+// Traits
+
+impl ToString for FileSorting {
+    fn to_string(&self) -> String {
+        String::from(match self {
+            FileSorting::ByCreationTime => "by_creation_time",
+            FileSorting::ByModifyTime => "by_mtime",
+            FileSorting::ByName => "by_name",
+        })
+    }
+}
+
+impl FromStr for FileSorting {
+    type Err = ();
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_ascii_lowercase().as_str() {
+            "by_creation_time" => Ok(FileSorting::ByCreationTime),
+            "by_mtime" => Ok(FileSorting::ByModifyTime),
+            "by_name" => Ok(FileSorting::ByName),
+            _ => Err(()),
+        }
+    }
+}
+
+impl ToString for GroupDirs {
+    fn to_string(&self) -> String {
+        String::from(match self {
+            GroupDirs::First => "first",
+            GroupDirs::Last => "last",
+        })
+    }
+}
+
+impl FromStr for GroupDirs {
+    type Err = ();
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_ascii_lowercase().as_str() {
+            "first" => Ok(GroupDirs::First),
+            "last" => Ok(GroupDirs::Last),
+            _ => Err(()),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
 
@@ -739,6 +785,33 @@ mod tests {
         assert_eq!(explorer.files.get(0).unwrap().get_name(), "Cargo.lock");
         // Last in files should be "README.md" (last file for alphabetical ordening)
         assert_eq!(explorer.files.get(7).unwrap().get_name(), "README.md");
+    }
+
+    #[test]
+    fn test_fs_explorer_to_string_from_str_traits() {
+        // File Sorting
+        assert_eq!(FileSorting::ByCreationTime.to_string(), "by_creation_time");
+        assert_eq!(FileSorting::ByModifyTime.to_string(), "by_mtime");
+        assert_eq!(FileSorting::ByName.to_string(), "by_name");
+        assert_eq!(
+            FileSorting::from_str("by_creation_time").ok().unwrap(),
+            FileSorting::ByCreationTime
+        );
+        assert_eq!(
+            FileSorting::from_str("by_mtime").ok().unwrap(),
+            FileSorting::ByModifyTime
+        );
+        assert_eq!(
+            FileSorting::from_str("by_name").ok().unwrap(),
+            FileSorting::ByName
+        );
+        assert!(FileSorting::from_str("omar").is_err());
+        // Group dirs
+        assert_eq!(GroupDirs::First.to_string(), "first");
+        assert_eq!(GroupDirs::Last.to_string(), "last");
+        assert_eq!(GroupDirs::from_str("first").ok().unwrap(), GroupDirs::First);
+        assert_eq!(GroupDirs::from_str("last").ok().unwrap(), GroupDirs::Last);
+        assert!(GroupDirs::from_str("omar").is_err());
     }
 
     fn make_fs_entry(name: &str, is_dir: bool) -> FsEntry {
