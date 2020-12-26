@@ -208,6 +208,13 @@ impl FsEntry {
         matches!(self, FsEntry::File(_))
     }
 
+    /// ### is_hidden
+    ///
+    /// Returns whether FsEntry is hidden
+    pub fn is_hidden(&self) -> bool {
+        self.get_name().starts_with(".")
+    }
+
     /// ### get_realfile
     ///
     /// Return the real file pointed by a `FsEntry`
@@ -351,6 +358,54 @@ mod tests {
         assert_eq!(entry.is_symlink(), false);
         assert_eq!(entry.is_dir(), false);
         assert_eq!(entry.is_file(), true);
+    }
+
+    #[test]
+    fn test_fs_fsentry_hidden_files() {
+        let t_now: SystemTime = SystemTime::now();
+        let entry: FsEntry = FsEntry::File(FsFile {
+            name: String::from("bar.txt"),
+            abs_path: PathBuf::from("/bar.txt"),
+            last_change_time: t_now,
+            last_access_time: t_now,
+            creation_time: t_now,
+            size: 8192,
+            readonly: false,
+            ftype: Some(String::from("txt")),
+            symlink: None,             // UNIX only
+            user: Some(0),             // UNIX only
+            group: Some(0),            // UNIX only
+            unix_pex: Some((6, 4, 4)), // UNIX only
+        });
+        assert_eq!(entry.is_hidden(), false);
+        let entry: FsEntry = FsEntry::File(FsFile {
+            name: String::from(".gitignore"),
+            abs_path: PathBuf::from("/.gitignore"),
+            last_change_time: t_now,
+            last_access_time: t_now,
+            creation_time: t_now,
+            size: 8192,
+            readonly: false,
+            ftype: Some(String::from("txt")),
+            symlink: None,             // UNIX only
+            user: Some(0),             // UNIX only
+            group: Some(0),            // UNIX only
+            unix_pex: Some((6, 4, 4)), // UNIX only
+        });
+        assert_eq!(entry.is_hidden(), true);
+        let entry: FsEntry = FsEntry::Directory(FsDirectory {
+            name: String::from(".git"),
+            abs_path: PathBuf::from("/.git"),
+            last_change_time: t_now,
+            last_access_time: t_now,
+            creation_time: t_now,
+            readonly: false,
+            symlink: None,             // UNIX only
+            user: Some(0),             // UNIX only
+            group: Some(0),            // UNIX only
+            unix_pex: Some((7, 5, 5)), // UNIX only
+        });
+        assert_eq!(entry.is_hidden(), true);
     }
 
     #[test]
