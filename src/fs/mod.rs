@@ -97,10 +97,10 @@ impl FsEntry {
     /// ### get_name
     ///
     /// Get file name from `FsEntry`
-    pub fn get_name(&self) -> String {
+    pub fn get_name(&self) -> &'_ str {
         match self {
-            FsEntry::Directory(dir) => dir.name.clone(),
-            FsEntry::File(file) => file.name.clone(),
+            FsEntry::Directory(dir) => dir.name.as_ref(),
+            FsEntry::File(file) => file.name.as_ref(),
         }
     }
 
@@ -273,10 +273,10 @@ impl std::fmt::Display for FsEntry {
         // Get date
         let datetime: String = fmt_time(self.get_last_change_time(), "%b %d %Y %H:%M");
         // Set file name (or elide if too long)
-        let name: String = self.get_name();
+        let name: &str = self.get_name();
         let name: String = match name.len() >= 24 {
-            false => name,
-            true => format!("{}...", &name.as_str()[0..20]),
+            false => name.to_string(),
+            true => format!("{}...", &name[0..20]),
         };
         write!(
             f,

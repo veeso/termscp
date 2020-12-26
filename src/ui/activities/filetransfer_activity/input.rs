@@ -297,7 +297,7 @@ impl FileTransferActivity {
                         if self.local.files.get(self.local.index).is_some() {
                             let file: FsEntry =
                                 self.local.files.get(self.local.index).unwrap().clone();
-                            let name: String = file.get_name();
+                            let name: String = file.get_name().to_string();
                             // Call upload; pass realfile, keep link name
                             self.filetransfer_send(
                                 &file.get_realfile(),
@@ -519,7 +519,7 @@ impl FileTransferActivity {
                         if self.remote.files.get(self.remote.index).is_some() {
                             let file: FsEntry =
                                 self.remote.files.get(self.remote.index).unwrap().clone();
-                            let name: String = file.get_name();
+                            let name: String = file.get_name().to_string();
                             // Call upload; pass realfile, keep link name
                             let wrkdir: PathBuf = self.local.wrkdir.clone();
                             self.filetransfer_recv(

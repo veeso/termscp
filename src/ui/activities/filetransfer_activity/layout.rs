@@ -483,7 +483,7 @@ impl FileTransferActivity {
             Some(fsentry) => {
                 // Get name and path
                 let abs_path: PathBuf = fsentry.get_abs_path();
-                let name: String = fsentry.get_name();
+                let name: String = fsentry.get_name().to_string();
                 let ctime: String = fmt_time(fsentry.get_creation_time(), "%b %d %Y %H:%M:%S");
                 let atime: String = fmt_time(fsentry.get_last_access_time(), "%b %d %Y %H:%M:%S");
                 let mtime: String = fmt_time(fsentry.get_creation_time(), "%b %d %Y %H:%M:%S");
