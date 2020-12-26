@@ -434,6 +434,15 @@ mod tests {
         );
     }
 
+    #[test]
+    fn test_system_config_make_io_err() {
+        let err: SerializerError =
+            ConfigClient::make_io_err(std::io::Error::from(std::io::ErrorKind::PermissionDenied))
+                .err()
+                .unwrap();
+        assert_eq!(err.to_string(), "IO error (permission denied)");
+    }
+
     /// ### get_paths
     ///
     /// Get paths for configuration and keys directory
