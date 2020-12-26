@@ -34,35 +34,58 @@ use std::collections::VecDeque;
 use std::path::{Path, PathBuf};
 
 bitflags! {
+    /// ## ExplorerOpts
+    ///
+    /// ExplorerOpts are bit options which provides different behaviours to `FileExplorer`
     pub(crate) struct ExplorerOpts: u32 {
-        const SHOW_HIDDEN_FILES      =       0b00000001;
-        const SORT_BY_NAME      =       0b00000010;
-        const SORT_BY_MTIME     =       0b00000100;
-        const DIRS_FIRST        =       0b00001000;
+        const SHOW_HIDDEN_FILES = 0b00000001;
     }
+}
+
+/// ## FileSorting
+///
+/// FileSorting defines the criteria for sorting files
+#[derive(Copy, Clone, PartialEq, std::fmt::Debug)]
+pub enum FileSorting {
+    ByName,
+    ByModifyTime,
+    ByCreationTime,
+}
+
+/// ## GroupDirs
+///
+/// GroupDirs defines how directories should be grouped in sorting files
+#[derive(PartialEq, std::fmt::Debug)]
+pub enum GroupDirs {
+    First,
+    Last,
 }
 
 /// ## FileExplorer
 ///
 /// File explorer states
 pub struct FileExplorer {
-    pub wrkdir: PathBuf,                    // Current directory
-    index: usize,                           // Selected file
-    files: Vec<FsEntry>,                    // Files in directory
-    pub(crate) dirstack: VecDeque<PathBuf>, // Stack of visited directory (max 16)
-    pub(crate) stack_size: usize,           // Directory stack size
-    pub(crate) opts: ExplorerOpts,          // Explorer options
+    pub wrkdir: PathBuf,                      // Current directory
+    pub(crate) dirstack: VecDeque<PathBuf>,   // Stack of visited directory (max 16)
+    pub(crate) stack_size: usize,             // Directory stack size
+    pub(crate) file_sorting: FileSorting,     // File sorting criteria
+    pub(crate) group_dirs: Option<GroupDirs>, // If Some, defines how to group directories
+    pub(crate) opts: ExplorerOpts,            // Explorer options
+    index: usize,                             // Selected file
+    files: Vec<FsEntry>,                      // Files in directory
 }
 
 impl Default for FileExplorer {
     fn default() -> Self {
         FileExplorer {
             wrkdir: PathBuf::from("/"),
-            index: 0,
-            files: Vec::new(),
             dirstack: VecDeque::with_capacity(16),
             stack_size: 16,
+            file_sorting: FileSorting::ByName,
+            group_dirs: None,
             opts: ExplorerOpts::empty(),
+            index: 0,
+            files: Vec::new(),
         }
     }
 }
@@ -141,20 +164,52 @@ impl FileExplorer {
 
     // Sorting
 
+    /// ### sort_by
+    ///
+    /// Choose sorting method; then sort files
+    pub fn sort_by(&mut self, sorting: FileSorting) {
+        // If method HAS ACTUALLY CHANGED, sort (performance!)
+        if self.file_sorting != sorting {
+            self.file_sorting = sorting;
+            self.sort();
+        }
+    }
+
+    /// ### get_file_sorting
+    ///
+    /// Get current file sorting method
+    pub fn get_file_sorting(&self) -> FileSorting {
+        self.file_sorting
+    }
+
+    /// ### group_dirs_by
+    ///
+    /// Choose group dirs method; then sort files
+    pub fn group_dirs_by(&mut self, group_dirs: Option<GroupDirs>) {
+        // If method HAS ACTUALLY CHANGED, sort (performance!)
+        if self.group_dirs != group_dirs {
+            self.group_dirs = group_dirs;
+            self.sort();
+        }
+    }
+
     /// ### sort
     ///
     /// Sort files based on Explorer options.
     fn sort(&mut self) {
-        // Sort by name
-        if self.opts.intersects(ExplorerOpts::SORT_BY_NAME) {
-            self.sort_files_by_name();
-        } else if self.opts.intersects(ExplorerOpts::SORT_BY_MTIME) {
-            // Sort by mtime NOTE: else if cause exclusive
-            self.sort_files_by_name();
+        // Choose sorting method
+        match &self.file_sorting {
+            FileSorting::ByName => self.sort_files_by_name(),
+            FileSorting::ByCreationTime => self.sort_files_by_creation_time(),
+            FileSorting::ByModifyTime => self.sort_files_by_mtime(),
         }
-        // Directories first (MUST COME AFTER NAME)
-        if self.opts.intersects(ExplorerOpts::DIRS_FIRST) {
-            self.sort_files_directories_first();
+        // Directories first (NOTE: MUST COME AFTER OTHER SORTING)
+        // Group directories if necessary
+        if let Some(group_dirs) = &self.group_dirs {
+            match group_dirs {
+                GroupDirs::First => self.sort_files_directories_first(),
+                GroupDirs::Last => self.sort_files_directories_last(),
+            }
         }
     }
 
@@ -170,8 +225,17 @@ impl FileExplorer {
     ///
     /// Sort files by mtime; the newest comes first
     fn sort_files_by_mtime(&mut self) {
+        self.files.sort_by(|a: &FsEntry, b: &FsEntry| {
+            b.get_last_change_time().cmp(&a.get_last_change_time())
+        });
+    }
+
+    /// ### sort_files_by_creation_time
+    ///
+    /// Sort files by creation time; the newest comes first
+    fn sort_files_by_creation_time(&mut self) {
         self.files
-            .sort_by_key(|x: &FsEntry| x.get_last_change_time());
+            .sort_by(|a: &FsEntry, b: &FsEntry| b.get_creation_time().cmp(&a.get_creation_time()));
     }
 
     /// ### sort_files_directories_first
@@ -179,6 +243,13 @@ impl FileExplorer {
     /// Sort files; directories come first
     fn sort_files_directories_first(&mut self) {
         self.files.sort_by_key(|x: &FsEntry| x.is_file());
+    }
+
+    /// ### sort_files_directories_last
+    ///
+    /// Sort files; directories come last
+    fn sort_files_directories_last(&mut self) {
+        self.files.sort_by_key(|x: &FsEntry| x.is_dir());
     }
 
     /// ### incr_index
@@ -380,6 +451,9 @@ mod tests {
         assert_eq!(explorer.wrkdir, PathBuf::from("/"));
         assert_eq!(explorer.stack_size, 16);
         assert_eq!(explorer.index, 0);
+        assert_eq!(explorer.group_dirs, None);
+        assert_eq!(explorer.file_sorting, FileSorting::ByName);
+        assert_eq!(explorer.get_file_sorting(), FileSorting::ByName);
     }
 
     #[test]
@@ -412,8 +486,9 @@ mod tests {
     #[test]
     fn test_fs_explorer_files() {
         let mut explorer: FileExplorer = FileExplorer::default();
-        explorer.opts.remove(ExplorerOpts::SHOW_HIDDEN_FILES); // Don't show hidden files
-                                                               // Create files
+        // Don't show hidden files
+        explorer.opts.remove(ExplorerOpts::SHOW_HIDDEN_FILES);
+        // Create files
         explorer.set_files(vec![
             make_fs_entry("README.md", false),
             make_fs_entry("src/", true),
@@ -423,14 +498,7 @@ mod tests {
             make_fs_entry(".gitignore", false),
         ]);
         assert_eq!(explorer.count(), 6);
-        // Verify
-        assert_eq!(
-            explorer.files.get(0).unwrap().get_name(),
-            String::from("README.md")
-        );
-        // Sort files
-        explorer.sort_files_by_name();
-        // Verify
+        // Verify (files are sorted by name)
         assert_eq!(
             explorer.files.get(0).unwrap().get_name(),
             String::from(".git/")
@@ -448,8 +516,7 @@ mod tests {
     fn test_fs_explorer_index() {
         let mut explorer: FileExplorer = FileExplorer::default();
         explorer.opts.remove(ExplorerOpts::SHOW_HIDDEN_FILES);
-        explorer.opts.insert(ExplorerOpts::SORT_BY_NAME);
-        // Create files (files are then sorted by name)
+        // Create files (files are then sorted by name DEFAULT)
         explorer.set_files(vec![
             make_fs_entry("README.md", false),
             make_fs_entry("src/", true),
@@ -563,7 +630,6 @@ mod tests {
     #[test]
     fn test_fs_explorer_sort_by_name() {
         let mut explorer: FileExplorer = FileExplorer::default();
-        explorer.opts.insert(ExplorerOpts::SORT_BY_NAME);
         // Create files (files are then sorted by name)
         explorer.set_files(vec![
             make_fs_entry("README.md", false),
@@ -576,6 +642,7 @@ mod tests {
             make_fs_entry("Cargo.lock", false),
             make_fs_entry("codecov.yml", false),
         ]);
+        explorer.sort_by(FileSorting::ByName);
         // First entry should be "Cargo.lock"
         assert_eq!(explorer.files.get(0).unwrap().get_name(), "Cargo.lock");
         // Last should be "src/"
@@ -585,13 +652,13 @@ mod tests {
     #[test]
     fn test_fs_explorer_sort_by_mtime() {
         let mut explorer: FileExplorer = FileExplorer::default();
-        explorer.opts.insert(ExplorerOpts::SORT_BY_MTIME);
         let entry1: FsEntry = make_fs_entry("README.md", false);
         // Wait 1 sec
         sleep(Duration::from_secs(1));
         let entry2: FsEntry = make_fs_entry("CODE_OF_CONDUCT.md", false);
         // Create files (files are then sorted by name)
         explorer.set_files(vec![entry1, entry2]);
+        explorer.sort_by(FileSorting::ByModifyTime);
         // First entry should be "CODE_OF_CONDUCT.md"
         assert_eq!(
             explorer.files.get(0).unwrap().get_name(),
@@ -602,10 +669,27 @@ mod tests {
     }
 
     #[test]
-    fn test_fs_explorer_sort_by_name_and_dir() {
+    fn test_fs_explorer_sort_by_creation_time() {
         let mut explorer: FileExplorer = FileExplorer::default();
-        explorer.opts.insert(ExplorerOpts::SORT_BY_NAME);
-        explorer.opts.insert(ExplorerOpts::DIRS_FIRST);
+        let entry1: FsEntry = make_fs_entry("README.md", false);
+        // Wait 1 sec
+        sleep(Duration::from_secs(1));
+        let entry2: FsEntry = make_fs_entry("CODE_OF_CONDUCT.md", false);
+        // Create files (files are then sorted by name)
+        explorer.set_files(vec![entry1, entry2]);
+        explorer.sort_by(FileSorting::ByCreationTime);
+        // First entry should be "CODE_OF_CONDUCT.md"
+        assert_eq!(
+            explorer.files.get(0).unwrap().get_name(),
+            "CODE_OF_CONDUCT.md"
+        );
+        // Last should be "src/"
+        assert_eq!(explorer.files.get(1).unwrap().get_name(), "README.md");
+    }
+
+    #[test]
+    fn test_fs_explorer_sort_by_name_and_dirs_first() {
+        let mut explorer: FileExplorer = FileExplorer::default();
         // Create files (files are then sorted by name)
         explorer.set_files(vec![
             make_fs_entry("README.md", false),
@@ -619,6 +703,8 @@ mod tests {
             make_fs_entry("Cargo.lock", false),
             make_fs_entry("codecov.yml", false),
         ]);
+        explorer.sort_by(FileSorting::ByName);
+        explorer.group_dirs_by(Some(GroupDirs::First));
         // First entry should be "docs"
         assert_eq!(explorer.files.get(0).unwrap().get_name(), "docs/");
         assert_eq!(explorer.files.get(1).unwrap().get_name(), "src/");
@@ -626,6 +712,33 @@ mod tests {
         assert_eq!(explorer.files.get(2).unwrap().get_name(), "Cargo.lock");
         // Last should be "README.md" (last file for alphabetical ordening)
         assert_eq!(explorer.files.get(9).unwrap().get_name(), "README.md");
+    }
+
+    #[test]
+    fn test_fs_explorer_sort_by_name_and_dirs_last() {
+        let mut explorer: FileExplorer = FileExplorer::default();
+        // Create files (files are then sorted by name)
+        explorer.set_files(vec![
+            make_fs_entry("README.md", false),
+            make_fs_entry("src/", true),
+            make_fs_entry("docs/", true),
+            make_fs_entry("CONTRIBUTING.md", false),
+            make_fs_entry("CODE_OF_CONDUCT.md", false),
+            make_fs_entry("CHANGELOG.md", false),
+            make_fs_entry("LICENSE", false),
+            make_fs_entry("Cargo.toml", false),
+            make_fs_entry("Cargo.lock", false),
+            make_fs_entry("codecov.yml", false),
+        ]);
+        explorer.sort_by(FileSorting::ByName);
+        explorer.group_dirs_by(Some(GroupDirs::Last));
+        // Last entry should be "src"
+        assert_eq!(explorer.files.get(8).unwrap().get_name(), "docs/");
+        assert_eq!(explorer.files.get(9).unwrap().get_name(), "src/");
+        // first is file for alphabetical order
+        assert_eq!(explorer.files.get(0).unwrap().get_name(), "Cargo.lock");
+        // Last in files should be "README.md" (last file for alphabetical ordening)
+        assert_eq!(explorer.files.get(7).unwrap().get_name(), "README.md");
     }
 
     fn make_fs_entry(name: &str, is_dir: bool) -> FsEntry {

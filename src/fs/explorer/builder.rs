@@ -24,7 +24,7 @@
 */
 
 // Locals
-use super::{ExplorerOpts, FileExplorer};
+use super::{ExplorerOpts, FileExplorer, FileSorting, GroupDirs};
 // Ext
 use std::collections::VecDeque;
 
@@ -62,22 +62,12 @@ impl FileExplorerBuilder {
         self
     }
 
-    /// ### sort_by_name
+    /// ### with_file_sorting
     ///
-    /// Enable SORT_BY_NAME option
-    pub fn sort_by_name(&mut self) -> &mut FileExplorerBuilder {
+    /// Set sorting method
+    pub fn with_file_sorting(&mut self, sorting: FileSorting) -> &mut FileExplorerBuilder {
         if let Some(e) = self.explorer.as_mut() {
-            e.opts.insert(ExplorerOpts::SORT_BY_NAME);
-        }
-        self
-    }
-
-    /// ### sort_by_mtime
-    ///
-    /// Enable SORT_BY_MTIME option
-    pub fn sort_by_mtime(&mut self) -> &mut FileExplorerBuilder {
-        if let Some(e) = self.explorer.as_mut() {
-            e.opts.insert(ExplorerOpts::SORT_BY_MTIME);
+            e.sort_by(sorting);
         }
         self
     }
@@ -85,9 +75,9 @@ impl FileExplorerBuilder {
     /// ### with_dirs_first
     ///
     /// Enable DIRS_FIRST option
-    pub fn with_dirs_first(&mut self) -> &mut FileExplorerBuilder {
+    pub fn with_group_dirs(&mut self, group_dirs: Option<GroupDirs>) -> &mut FileExplorerBuilder {
         if let Some(e) = self.explorer.as_mut() {
-            e.opts.insert(ExplorerOpts::DIRS_FIRST);
+            e.group_dirs_by(group_dirs);
         }
         self
     }
@@ -114,26 +104,23 @@ mod tests {
         let explorer: FileExplorer = FileExplorerBuilder::new().build();
         // Verify
         assert!(!explorer.opts.intersects(ExplorerOpts::SHOW_HIDDEN_FILES));
-        assert!(!explorer.opts.intersects(ExplorerOpts::SORT_BY_MTIME));
-        assert!(!explorer.opts.intersects(ExplorerOpts::SORT_BY_NAME));
-        assert!(!explorer.opts.intersects(ExplorerOpts::DIRS_FIRST));
+        assert_eq!(explorer.file_sorting, FileSorting::ByName); // Default
+        assert_eq!(explorer.group_dirs, None);
         assert_eq!(explorer.stack_size, 16);
     }
 
     #[test]
     fn test_fs_explorer_builder_new_all() {
         let explorer: FileExplorer = FileExplorerBuilder::new()
-            .sort_by_mtime()
-            .sort_by_name()
-            .with_dirs_first()
+            .with_file_sorting(FileSorting::ByModifyTime)
+            .with_group_dirs(Some(GroupDirs::First))
             .with_hidden_files()
             .with_stack_size(24)
             .build();
         // Verify
         assert!(explorer.opts.intersects(ExplorerOpts::SHOW_HIDDEN_FILES));
-        assert!(explorer.opts.intersects(ExplorerOpts::SORT_BY_MTIME));
-        assert!(explorer.opts.intersects(ExplorerOpts::SORT_BY_NAME));
-        assert!(explorer.opts.intersects(ExplorerOpts::DIRS_FIRST));
+        assert_eq!(explorer.file_sorting, FileSorting::ByModifyTime); // Default
+        assert_eq!(explorer.group_dirs, Some(GroupDirs::First));
         assert_eq!(explorer.stack_size, 24);
     }
 }
