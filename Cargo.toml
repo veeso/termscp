@@ -15,6 +15,7 @@ readme = "README.md"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+bitflags = "1.2.1"
 bytesize = "1.0.1"
 chrono = "0.4.19"
 content_inspector = "0.2.4"

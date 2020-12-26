@@ -23,12 +23,16 @@
 *
 */
 
+// Mod
+pub mod explorer;
+
+// Deps
 extern crate bytesize;
 #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
 extern crate users;
-
+// Locals
 use crate::utils::fmt::{fmt_pex, fmt_time};
-
+// Ext
 use bytesize::ByteSize;
 use std::path::PathBuf;
 use std::time::SystemTime;

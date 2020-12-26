@@ -603,9 +603,8 @@ impl FileTransferActivity {
     pub(super) fn local_scan(&mut self, path: &Path) {
         match self.context.as_ref().unwrap().local.scan_dir(path) {
             Ok(files) => {
+                // Set files and sort (sorting is implicit)
                 self.local.set_files(files);
-                // Sort files
-                self.local.sort_files_by_name();
                 // Set index; keep if possible, otherwise set to last item
                 self.local.set_index(match self.local.get_current_file() {
                     Some(_) => self.local.get_index(),
@@ -630,9 +629,8 @@ impl FileTransferActivity {
     pub(super) fn remote_scan(&mut self, path: &Path) {
         match self.client.list_dir(path) {
             Ok(files) => {
+                // Set files and sort (sorting is implicit)
                 self.remote.set_files(files);
-                // Sort files
-                self.remote.sort_files_by_name();
                 // Set index; keep if possible, otherwise set to last item
                 self.remote.set_index(match self.remote.get_current_file() {
                     Some(_) => self.remote.get_index(),

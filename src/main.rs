@@ -25,6 +25,8 @@ const TERMSCP_AUTHORS: &str = env!("CARGO_PKG_AUTHORS");
 // Crates
 extern crate getopts;
 #[macro_use]
+extern crate bitflags;
+#[macro_use]
 extern crate lazy_static;
 #[macro_use]
 extern crate magic_crypt;

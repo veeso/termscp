@@ -24,6 +24,7 @@ use super::{
     Color, ConfigClient, FileTransferActivity, InputField, InputMode, LogLevel, LogRecord,
     PopupType,
 };
+use crate::fs::explorer::{builder::FileExplorerBuilder, FileExplorer};
 use crate::system::environment;
 use crate::system::sshkey_storage::SshKeyStorage;
 // Ext
@@ -123,6 +124,17 @@ impl FileTransferActivity {
             Some(cli) => SshKeyStorage::storage_from_config(cli),
             None => SshKeyStorage::empty(),
         }
+    }
+
+    /// ### build_explorer
+    ///
+    /// Build explorer reading configuration from `ConfigClient`
+    pub(super) fn build_explorer(cli: Option<&ConfigClient>) -> FileExplorer {
+        FileExplorerBuilder::new()
+            .sort_by_name()
+            .with_dirs_first()
+            .with_stack_size(16)
+            .build()
     }
 
     /// ### setup_text_editor

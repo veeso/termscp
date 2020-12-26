@@ -25,7 +25,6 @@
 
 // This module is split into files, cause it's just too big
 mod callbacks;
-mod explorer;
 mod input;
 mod layout;
 mod misc;
@@ -44,9 +43,9 @@ use crate::filetransfer::ftp_transfer::FtpFileTransfer;
 use crate::filetransfer::scp_transfer::ScpFileTransfer;
 use crate::filetransfer::sftp_transfer::SftpFileTransfer;
 use crate::filetransfer::{FileTransfer, FileTransferProtocol};
+use crate::fs::explorer::FileExplorer;
 use crate::fs::FsEntry;
 use crate::system::config_client::ConfigClient;
-use explorer::FileExplorer;
 
 // Includes
 use chrono::{DateTime, Local};
@@ -269,10 +268,10 @@ impl FileTransferActivity {
                     Self::make_ssh_storage(config_client.as_ref()),
                 )),
             },
-            config_cli: config_client,
             params,
-            local: FileExplorer::new(16),
-            remote: FileExplorer::new(16),
+            local: Self::build_explorer(config_client.as_ref()),
+            remote: Self::build_explorer(config_client.as_ref()),
+            config_cli: config_client,
             tab: FileExplorerTab::Local,
             log_index: 0,
             log_records: VecDeque::with_capacity(256), // 256 events is enough I guess

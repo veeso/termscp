@@ -41,6 +41,7 @@ FIXME: Released on
   - `A`: Toggle hidden files
   - `N`: New file
 - Dependencies:
+  - added `bitflags 1.2.1`
   - removed `data-encoding`
   - updated `rand` to `0.8.0`
   - removed `ring`

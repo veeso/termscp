@@ -1049,6 +1049,7 @@ dependencies = [
 name = "termscp"
 version = "0.3.0"
 dependencies = [
+ "bitflags",
  "bytesize",
  "chrono",
  "content_inspector",

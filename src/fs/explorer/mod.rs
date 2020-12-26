@@ -1,6 +1,6 @@
-//! ## FileTransferActivity
+//! ## Explorer
 //!
-//! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
+//! `explorer` is the module which provides an Helper in handling Directory status through
 
 /*
 *
@@ -23,39 +23,51 @@
 *
 */
 
+// Mods
+pub(crate) mod builder;
+// Deps
+extern crate bitflags;
 // Locals
 use super::FsEntry;
 // Ext
 use std::collections::VecDeque;
 use std::path::{Path, PathBuf};
 
+bitflags! {
+    pub(crate) struct ExplorerOpts: u32 {
+        const SHOW_HIDDEN_FILES      =       0b00000001;
+        const SORT_BY_NAME      =       0b00000010;
+        const SORT_BY_MTIME     =       0b00000100;
+        const DIRS_FIRST        =       0b00001000;
+    }
+}
+
 /// ## FileExplorer
 ///
 /// File explorer states
 pub struct FileExplorer {
-    pub wrkdir: PathBuf,         // Current directory
-    index: usize,                // Selected file
-    files: Vec<FsEntry>,         // Files in directory
-    dirstack: VecDeque<PathBuf>, // Stack of visited directory (max 16)
-    stack_size: usize,           // Directory stack size
-    hidden_files: bool,          // Should hidden files be shown or not; hidden if false
+    pub wrkdir: PathBuf,                    // Current directory
+    index: usize,                           // Selected file
+    files: Vec<FsEntry>,                    // Files in directory
+    pub(crate) dirstack: VecDeque<PathBuf>, // Stack of visited directory (max 16)
+    pub(crate) stack_size: usize,           // Directory stack size
+    pub(crate) opts: ExplorerOpts,          // Explorer options
 }
 
-impl FileExplorer {
-    /// ### new
-    ///
-    /// Instantiates a new FileExplorer
-    pub fn new(stack_size: usize) -> FileExplorer {
+impl Default for FileExplorer {
+    fn default() -> Self {
         FileExplorer {
             wrkdir: PathBuf::from("/"),
             index: 0,
             files: Vec::new(),
-            dirstack: VecDeque::with_capacity(stack_size),
-            stack_size,
-            hidden_files: false, // Default: don't show hidden files
+            dirstack: VecDeque::with_capacity(16),
+            stack_size: 16,
+            opts: ExplorerOpts::empty(),
         }
     }
+}
 
+impl FileExplorer {
     /// ### pushd
     ///
     /// push directory to stack
@@ -78,10 +90,13 @@ impl FileExplorer {
     /// ### set_files
     ///
     /// Set Explorer files
-    /// Index is then moved to first valid `FsEntry` for current setup
+    /// This method will also sort entries based on current options
+    /// Once all sorting have been performed, index is moved to first valid entry.
     pub fn set_files(&mut self, files: Vec<FsEntry>) {
         self.files = files;
-        // Set index to first valid entry
+        // Sort
+        self.sort();
+        // Reset index
         self.index_at_first();
     }
 
@@ -97,11 +112,17 @@ impl FileExplorer {
     /// Iterate over files
     /// Filters are applied based on current options (e.g. hidden files not returned)
     pub fn iter_files(&self) -> Box<dyn Iterator<Item = &FsEntry> + '_> {
-        // Match options
-        match self.hidden_files {
-            false => Box::new(self.files.iter().filter(|x| !x.is_hidden())), // Show only visible files
-            true => self.iter_files_all(),                                   // Show all
-        }
+        // Filter
+        let opts: ExplorerOpts = self.opts;
+        Box::new(self.files.iter().filter(move |x| {
+            // If true, element IS NOT filtered
+            let mut pass: bool = true;
+            // If hidden files SHOULDN'T be shown, AND pass with not hidden
+            if !opts.intersects(ExplorerOpts::SHOW_HIDDEN_FILES) {
+                pass &= !x.is_hidden();
+            }
+            pass
+        }))
     }
 
     /// ### iter_files_all
@@ -118,16 +139,46 @@ impl FileExplorer {
         self.files.get(self.index)
     }
 
+    // Sorting
+
+    /// ### sort
+    ///
+    /// Sort files based on Explorer options.
+    fn sort(&mut self) {
+        // Sort by name
+        if self.opts.intersects(ExplorerOpts::SORT_BY_NAME) {
+            self.sort_files_by_name();
+        } else if self.opts.intersects(ExplorerOpts::SORT_BY_MTIME) {
+            // Sort by mtime NOTE: else if cause exclusive
+            self.sort_files_by_name();
+        }
+        // Directories first (MUST COME AFTER NAME)
+        if self.opts.intersects(ExplorerOpts::DIRS_FIRST) {
+            self.sort_files_directories_first();
+        }
+    }
+
     /// ### sort_files_by_name
     ///
     /// Sort explorer files by their name. All names are converted to lowercase
-    pub fn sort_files_by_name(&mut self) {
-        self.files.sort_by_key(|x: &FsEntry| match x {
-            FsEntry::Directory(dir) => dir.name.as_str().to_lowercase(),
-            FsEntry::File(file) => file.name.as_str().to_lowercase(),
-        });
-        // Reset index
-        self.index_at_first();
+    fn sort_files_by_name(&mut self) {
+        self.files
+            .sort_by_key(|x: &FsEntry| x.get_name().to_lowercase());
+    }
+
+    /// ### sort_files_by_mtime
+    ///
+    /// Sort files by mtime; the newest comes first
+    fn sort_files_by_mtime(&mut self) {
+        self.files
+            .sort_by_key(|x: &FsEntry| x.get_last_change_time());
+    }
+
+    /// ### sort_files_directories_first
+    ///
+    /// Sort files; directories come first
+    fn sort_files_directories_first(&mut self) {
+        self.files.sort_by_key(|x: &FsEntry| x.is_file());
     }
 
     /// ### incr_index
@@ -145,7 +196,7 @@ impl FileExplorer {
         // Validate
         match self.files.get(self.index) {
             Some(assoc_entry) => {
-                if !self.hidden_files {
+                if !self.opts.intersects(ExplorerOpts::SHOW_HIDDEN_FILES) {
                     // Check if file is hidden, otherwise increment
                     if assoc_entry.is_hidden() {
                         // Check if all files are hidden (NOTE: PREVENT STACK OVERFLOWS)
@@ -194,7 +245,7 @@ impl FileExplorer {
         // Validate index
         match self.files.get(self.index) {
             Some(assoc_entry) => {
-                if !self.hidden_files {
+                if !self.opts.intersects(ExplorerOpts::SHOW_HIDDEN_FILES) {
                     // Check if file is hidden, otherwise increment
                     if assoc_entry.is_hidden() {
                         // Check if all files are hidden (NOTE: PREVENT STACK OVERFLOWS)
@@ -238,7 +289,7 @@ impl FileExplorer {
     ///
     /// Return first valid index
     fn get_first_valid_index(&self) -> usize {
-        match self.hidden_files {
+        match self.opts.intersects(ExplorerOpts::SHOW_HIDDEN_FILES) {
             true => 0,
             false => {
                 // Look for first "non-hidden" entry
@@ -302,7 +353,7 @@ impl FileExplorer {
     ///
     /// Enable/disable hidden files
     pub fn toggle_hidden_files(&mut self) {
-        self.hidden_files = !self.hidden_files;
+        self.opts.toggle(ExplorerOpts::SHOW_HIDDEN_FILES);
         // Adjust index
         if self.index < self.get_first_valid_index() {
             self.index_at_first();
@@ -316,23 +367,26 @@ mod tests {
     use super::*;
     use crate::fs::{FsDirectory, FsFile};
 
-    use std::time::SystemTime;
+    use std::thread::sleep;
+    use std::time::{Duration, SystemTime};
 
     #[test]
-    fn test_ui_filetransfer_activity_explorer_new() {
-        let explorer: FileExplorer = FileExplorer::new(16);
+    fn test_fs_explorer_new() {
+        let explorer: FileExplorer = FileExplorer::default();
         // Verify
         assert_eq!(explorer.dirstack.len(), 0);
         assert_eq!(explorer.files.len(), 0);
-        assert_eq!(explorer.hidden_files, false);
+        assert_eq!(explorer.opts, ExplorerOpts::empty());
         assert_eq!(explorer.wrkdir, PathBuf::from("/"));
         assert_eq!(explorer.stack_size, 16);
         assert_eq!(explorer.index, 0);
     }
 
     #[test]
-    fn test_ui_filetransfer_activity_explorer_stack() {
-        let mut explorer: FileExplorer = FileExplorer::new(2);
+    fn test_fs_explorer_stack() {
+        let mut explorer: FileExplorer = FileExplorer::default();
+        explorer.stack_size = 2;
+        explorer.dirstack = VecDeque::with_capacity(2);
         // Push dir
         explorer.pushd(&Path::new("/tmp"));
         explorer.pushd(&Path::new("/home/omar"));
@@ -356,10 +410,10 @@ mod tests {
     }
 
     #[test]
-    fn test_ui_filetransfer_activity_explorer_files() {
-        let mut explorer: FileExplorer = FileExplorer::new(16);
-        explorer.hidden_files = false;
-        // Create files
+    fn test_fs_explorer_files() {
+        let mut explorer: FileExplorer = FileExplorer::default();
+        explorer.opts.remove(ExplorerOpts::SHOW_HIDDEN_FILES); // Don't show hidden files
+                                                               // Create files
         explorer.set_files(vec![
             make_fs_entry("README.md", false),
             make_fs_entry("src/", true),
@@ -391,10 +445,11 @@ mod tests {
     }
 
     #[test]
-    fn test_ui_filetransfer_activity_explorer_index() {
-        let mut explorer: FileExplorer = FileExplorer::new(16);
-        explorer.hidden_files = false;
-        // Create files
+    fn test_fs_explorer_index() {
+        let mut explorer: FileExplorer = FileExplorer::default();
+        explorer.opts.remove(ExplorerOpts::SHOW_HIDDEN_FILES);
+        explorer.opts.insert(ExplorerOpts::SORT_BY_NAME);
+        // Create files (files are then sorted by name)
         explorer.set_files(vec![
             make_fs_entry("README.md", false),
             make_fs_entry("src/", true),
@@ -409,14 +464,15 @@ mod tests {
             make_fs_entry(".gitignore", false),
         ]);
         let sz: usize = explorer.count();
-        // Sort by name
-        explorer.sort_files_by_name();
         // Get first index
         assert_eq!(explorer.get_first_valid_index(), 2);
         // Index should be 2 now; files hidden; this happens because `index_at_first` is called after loading files
         assert_eq!(explorer.get_index(), 2);
         assert_eq!(explorer.get_relative_index(), 0); // Relative index should be 0
-        assert_eq!(explorer.hidden_files, false);
+        assert_eq!(
+            explorer.opts.intersects(ExplorerOpts::SHOW_HIDDEN_FILES),
+            false
+        );
         // Increment index
         explorer.incr_index();
         // Index should now be 3 (was 0, + 2 + 1); first 2 files are hidden (.git, .gitignore)
@@ -462,7 +518,10 @@ mod tests {
         assert_eq!(explorer.get_relative_index(), 0);
         // Toggle hidden files
         explorer.toggle_hidden_files();
-        assert_eq!(explorer.hidden_files, true);
+        assert_eq!(
+            explorer.opts.intersects(ExplorerOpts::SHOW_HIDDEN_FILES),
+            true
+        );
         // Move index to 0
         explorer.set_index(0);
         assert_eq!(explorer.get_index(), 0);
@@ -483,7 +542,10 @@ mod tests {
         assert_eq!(explorer.get_relative_index(), 0); // Now relative matches
                                                       // Toggle; move at first
         explorer.toggle_hidden_files();
-        assert_eq!(explorer.hidden_files, false);
+        assert_eq!(
+            explorer.opts.intersects(ExplorerOpts::SHOW_HIDDEN_FILES),
+            false
+        );
         explorer.index_at_first();
         assert_eq!(explorer.get_index(), 2);
         assert_eq!(explorer.get_relative_index(), 0);
@@ -496,6 +558,74 @@ mod tests {
         explorer.index_at_first();
         assert_eq!(explorer.get_index(), 0);
         assert_eq!(explorer.get_relative_index(), 0);
+    }
+
+    #[test]
+    fn test_fs_explorer_sort_by_name() {
+        let mut explorer: FileExplorer = FileExplorer::default();
+        explorer.opts.insert(ExplorerOpts::SORT_BY_NAME);
+        // Create files (files are then sorted by name)
+        explorer.set_files(vec![
+            make_fs_entry("README.md", false),
+            make_fs_entry("src/", true),
+            make_fs_entry("CONTRIBUTING.md", false),
+            make_fs_entry("CODE_OF_CONDUCT.md", false),
+            make_fs_entry("CHANGELOG.md", false),
+            make_fs_entry("LICENSE", false),
+            make_fs_entry("Cargo.toml", false),
+            make_fs_entry("Cargo.lock", false),
+            make_fs_entry("codecov.yml", false),
+        ]);
+        // First entry should be "Cargo.lock"
+        assert_eq!(explorer.files.get(0).unwrap().get_name(), "Cargo.lock");
+        // Last should be "src/"
+        assert_eq!(explorer.files.get(8).unwrap().get_name(), "src/");
+    }
+
+    #[test]
+    fn test_fs_explorer_sort_by_mtime() {
+        let mut explorer: FileExplorer = FileExplorer::default();
+        explorer.opts.insert(ExplorerOpts::SORT_BY_MTIME);
+        let entry1: FsEntry = make_fs_entry("README.md", false);
+        // Wait 1 sec
+        sleep(Duration::from_secs(1));
+        let entry2: FsEntry = make_fs_entry("CODE_OF_CONDUCT.md", false);
+        // Create files (files are then sorted by name)
+        explorer.set_files(vec![entry1, entry2]);
+        // First entry should be "CODE_OF_CONDUCT.md"
+        assert_eq!(
+            explorer.files.get(0).unwrap().get_name(),
+            "CODE_OF_CONDUCT.md"
+        );
+        // Last should be "src/"
+        assert_eq!(explorer.files.get(1).unwrap().get_name(), "README.md");
+    }
+
+    #[test]
+    fn test_fs_explorer_sort_by_name_and_dir() {
+        let mut explorer: FileExplorer = FileExplorer::default();
+        explorer.opts.insert(ExplorerOpts::SORT_BY_NAME);
+        explorer.opts.insert(ExplorerOpts::DIRS_FIRST);
+        // Create files (files are then sorted by name)
+        explorer.set_files(vec![
+            make_fs_entry("README.md", false),
+            make_fs_entry("src/", true),
+            make_fs_entry("docs/", true),
+            make_fs_entry("CONTRIBUTING.md", false),
+            make_fs_entry("CODE_OF_CONDUCT.md", false),
+            make_fs_entry("CHANGELOG.md", false),
+            make_fs_entry("LICENSE", false),
+            make_fs_entry("Cargo.toml", false),
+            make_fs_entry("Cargo.lock", false),
+            make_fs_entry("codecov.yml", false),
+        ]);
+        // First entry should be "docs"
+        assert_eq!(explorer.files.get(0).unwrap().get_name(), "docs/");
+        assert_eq!(explorer.files.get(1).unwrap().get_name(), "src/");
+        // 3rd is file first for alphabetical order
+        assert_eq!(explorer.files.get(2).unwrap().get_name(), "Cargo.lock");
+        // Last should be "README.md" (last file for alphabetical ordening)
+        assert_eq!(explorer.files.get(9).unwrap().get_name(), "README.md");
     }
 
     fn make_fs_entry(name: &str, is_dir: bool) -> FsEntry {
