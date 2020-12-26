@@ -119,7 +119,7 @@ impl SetupActivity {
                     let rsa_key: String = rsa_key.as_str().replace(placeholder.as_str(), "");
                     if rsa_key.is_empty() {
                         // Report error: empty key
-                        self.popup = Some(Popup::Alert(Color::Red, format!("SSH Key is empty")));
+                        self.popup = Some(Popup::Alert(Color::Red, "SSH Key is empty".to_string()));
                     } else {
                         // Add key
                         if let Err(err) =

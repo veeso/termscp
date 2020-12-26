@@ -55,9 +55,9 @@ impl SetupActivity {
                     }
                 }
                 None => {
-                    self.popup = Some(Popup::Fatal(format!(
-                        "No configuration directory is available on your system"
-                    )))
+                    self.popup = Some(Popup::Fatal(
+                        "No configuration directory is available on your system".to_string(),
+                    ))
                 }
             },
             Err(err) => {
