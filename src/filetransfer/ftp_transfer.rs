@@ -30,7 +30,7 @@ extern crate regex;
 
 use super::{FileTransfer, FileTransferError, FileTransferErrorType};
 use crate::fs::{FsDirectory, FsEntry, FsFile};
-use crate::utils::parser::parse_lstime;
+use crate::utils::parser::{parse_datetime, parse_lstime};
 
 // Includes
 use ftp4::native_tls::TlsConnector;
@@ -60,6 +60,25 @@ impl FtpFileTransfer {
     ///
     /// Parse a line of LIST command output and instantiates an FsEntry from it
     fn parse_list_line(&self, path: &Path, line: &str) -> Result<FsEntry, ()> {
+        // Try to parse using UNIX syntax
+        match self.parse_unix_list_line(path, line) {
+            Ok(entry) => Ok(entry),
+            Err(_) => match self.parse_dos_list_line(path, line) {
+                // If UNIX parsing fails, try DOS
+                Ok(entry) => Ok(entry),
+                Err(_) => Err(()),
+            },
+        }
+    }
+
+    /// ### parse_unix_list_line
+    ///
+    /// Try to parse a "LIST" output command line in UNIX format.
+    /// Returns error if syntax is not UNIX compliant.
+    /// UNIX syntax has the following syntax:
+    /// {FILE_TYPE}{UNIX_PEX} {HARD_LINKS} {USER} {GROUP} {SIZE} {DATE} {FILENAME}
+    /// -rw-r--r--   1 cvisintin  staff   4968 27 Dic 10:46 CHANGELOG.md
+    fn parse_unix_list_line(&self, path: &Path, line: &str) -> Result<FsEntry, ()> {
         // Prepare list regex
         // NOTE: about this damn regex <https://stackoverflow.com/questions/32480890/is-there-a-regex-to-parse-the-values-from-an-ftp-directory-listing>
         lazy_static! {
@@ -208,6 +227,96 @@ impl FtpFileTransfer {
                 })
             }
             None => Err(()),
+        }
+    }
+
+    /// ### parse_dos_list_line
+    ///
+    /// Try to parse a "LIST" output command line in DOS format.
+    /// Returns error if syntax is not DOS compliant.
+    /// DOS syntax has the following syntax:
+    /// {DATE} {TIME} {<DIR> | SIZE} {FILENAME}
+    /// 10-19-20  03:19PM <DIR> pub
+    /// 04-08-14  03:09PM 403   readme.txt
+    fn parse_dos_list_line(&self, path: &Path, line: &str) -> Result<FsEntry, ()> {
+        // Prepare list regex
+        // NOTE: you won't find this regex on the internet. It seems I'm the only person in the world who needs this
+        lazy_static! {
+            static ref DOS_RE: Regex = Regex::new(
+                r#"^(\d{2}\-\d{2}\-\d{2}\s+\d{2}:\d{2}\s*[AP]M)\s+(<DIR>)?([\d,]*)\s+(.+)$"#
+            )
+            .unwrap();
+        }
+        // Apply regex to result
+        match DOS_RE.captures(line) {
+            // String matches regex
+            Some(metadata) => {
+                // NOTE: metadata fmt: (regex, date_time, is_dir?, file_size?, file_name)
+                // Expected 4 + 1 (5) values: + 1 cause regex is repeated at 0
+                if metadata.len() < 5 {
+                    return Err(());
+                }
+                // Parse date time
+                let time: SystemTime =
+                    match parse_datetime(metadata.get(1).unwrap().as_str(), "%d-%m-%y %I:%M%p") {
+                        Ok(t) => t,
+                        Err(_) => SystemTime::UNIX_EPOCH, // Don't return error
+                    };
+                // Get if is a directory
+                let is_dir: bool = metadata.get(2).is_some();
+                // Get file size
+                let file_size: usize = match is_dir {
+                    true => 0, // If is directory, filesize is 0
+                    false => match metadata.get(3) {
+                        // If is file, parse arg 3
+                        Some(val) => match val.as_str().parse::<usize>() {
+                            Ok(sz) => sz,
+                            Err(_) => 0,
+                        },
+                        None => 0, // Should not happen
+                    },
+                };
+                // Get file name
+                let file_name: String = String::from(metadata.get(4).unwrap().as_str());
+                // Get absolute path
+                let mut abs_path: PathBuf = PathBuf::from(path);
+                abs_path.push(file_name.as_str());
+                // Get extension
+                let extension: Option<String> = match abs_path.as_path().extension() {
+                    None => None,
+                    Some(s) => Some(String::from(s.to_string_lossy())),
+                };
+                // Return entry
+                Ok(match is_dir {
+                    true => FsEntry::Directory(FsDirectory {
+                        name: file_name,
+                        abs_path,
+                        last_change_time: time,
+                        last_access_time: time,
+                        creation_time: time,
+                        readonly: false,
+                        symlink: None,
+                        user: None,
+                        group: None,
+                        unix_pex: None,
+                    }),
+                    false => FsEntry::File(FsFile {
+                        name: file_name,
+                        abs_path,
+                        last_change_time: time,
+                        last_access_time: time,
+                        creation_time: time,
+                        size: file_size,
+                        ftype: extension,
+                        readonly: false,
+                        symlink: None,
+                        user: None,
+                        group: None,
+                        unix_pex: None,
+                    }),
+                })
+            }
+            None => Err(()), // Invalid syntax
         }
     }
 }
@@ -835,9 +944,32 @@ mod tests {
             .is_err());
     }
 
-    /* NOTE: they don't work
     #[test]
-    fn test_filetransfer_ftp_list_dir() {
+    fn test_filetransfer_ftp_list_dir_dos_syntax() {
+        let mut ftp: FtpFileTransfer = FtpFileTransfer::new(false);
+        // Connect
+        assert!(ftp
+            .connect(
+                String::from("test.rebex.net"),
+                21,
+                Some(String::from("demo")),
+                Some(String::from("password"))
+            )
+            .is_ok());
+        // Pwd
+        assert_eq!(ftp.pwd().ok().unwrap(), PathBuf::from("/"));
+        // List dir
+        println!("{:?}", ftp.list_dir(PathBuf::from("/").as_path()));
+        let files: Vec<FsEntry> = ftp.list_dir(PathBuf::from("/").as_path()).ok().unwrap();
+        // There should be at least 1 file
+        assert!(files.len() > 0);
+        // Disconnect
+        assert!(ftp.disconnect().is_ok());
+    }
+
+    
+    #[test]
+    fn test_filetransfer_ftp_list_dir_unix_syntax() {
         let mut ftp: FtpFileTransfer = FtpFileTransfer::new(false);
         // Connect
         assert!(ftp.connect(String::from("speedtest.tele2.net"), 21, None, None).is_ok());
@@ -846,36 +978,13 @@ mod tests {
         // List dir
         println!("{:?}", ftp.list_dir(PathBuf::from("/").as_path()));
         let files: Vec<FsEntry> = ftp.list_dir(PathBuf::from("/").as_path()).ok().unwrap();
-        // There should be 19 files
-        assert_eq!(files.len(), 19);
-        // Verify first entry (1000GB.zip)
-        let first: &FsEntry = files.get(0).unwrap();
-        if let FsEntry::File(f) = first {
-            assert_eq!(f.name, String::from("1000GB.zip"));
-            assert_eq!(f.abs_path, PathBuf::from("/1000GB.zip"));
-            assert_eq!(f.size, 1073741824000);
-            assert_eq!(*f.ftype.as_ref().unwrap(), String::from("zip"));
-            assert_eq!(f.unix_pex.unwrap(), (6, 4, 4));
-            assert_eq!(f.creation_time.duration_since(SystemTime::UNIX_EPOCH).unwrap(), Duration::from_secs(1455840000));
-            assert_eq!(f.last_access_time.duration_since(SystemTime::UNIX_EPOCH).unwrap(), Duration::from_secs(1455840000));
-            assert_eq!(f.last_change_time.duration_since(SystemTime::UNIX_EPOCH).unwrap(), Duration::from_secs(1455840000));
-        } else {
-            panic!("First should be a file, but it a directory");
-        }
-        // Verify last entry (directory upload)
-        let last: &FsEntry = files.get(18).unwrap();
-        if let FsEntry::Directory(d) = last {
-            assert_eq!(d.name, String::from("upload"));
-            assert_eq!(d.abs_path, PathBuf::from("/upload"));
-            assert_eq!(d.readonly, false);
-            assert_eq!(d.unix_pex.unwrap(), (7, 5, 5));
-        } else {
-            panic!("Last should be a directory, but is a file");
-        }
+        // There should be at least 1 file
+        assert!(files.len() > 0);
         // Disconnect
         assert!(ftp.disconnect().is_ok());
     }
 
+    /* NOTE: they don't work
     #[test]
     fn test_filetransfer_ftp_recv() {
         let mut ftp: FtpFileTransfer = FtpFileTransfer::new(false);

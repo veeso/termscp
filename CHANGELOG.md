@@ -36,6 +36,8 @@ FIXME: Released on
     - Windows: `C:\Users\Alice\AppData\Roaming\termscp\.ssh\`
 - Enhancements:
   - Replaced `sha256` sum with last modification time check, to verify if a file has been changed in the text editor
+  - **FTP**
+    - Added `LIST` command parser for Windows server (DOS-like syntax)
   - Default protocol changed to default protocol in configuration when providing address as CLI argument
   - Explorers:
     - Hidden files are now not shown by default; use `A` to show hidden files.
@@ -44,6 +46,9 @@ FIXME: Released on
   - `A`: Toggle hidden files
   - `B`: Sort files by (name, size, creation time, modify time)
   - `N`: New file
+- Bugfix:
+  - SCP client didn't show file types for files
+  - FTP client didn't show file types for files
 - Dependencies:
   - added `bitflags 1.2.1`
   - removed `data-encoding`
