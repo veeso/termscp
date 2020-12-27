@@ -71,24 +71,15 @@ enum DialogYesNoOption {
     No,
 }
 
-/// ### PopupType
+/// ### Popup
 ///
-/// PopupType describes the type of the popup displayed
+/// Popup describes the type of the popup displayed
 #[derive(Clone)]
-enum PopupType {
+enum Popup {
     Alert(Color, String), // Show a message displaying text with the provided color
     Help,                 // Help page
     SaveBookmark,
     YesNo(String, DialogCallback, DialogCallback), // Yes, no callback
-}
-
-/// ### InputMode
-///
-/// InputMode describes the current input mode
-/// Each input mode handle the input events in a different way
-enum InputMode {
-    Form,
-    Popup(PopupType),
 }
 
 #[derive(std::cmp::PartialEq)]
@@ -117,7 +108,7 @@ pub struct AuthActivity {
     bookmarks_client: Option<BookmarksClient>,
     config_client: Option<ConfigClient>,
     selected_field: InputField, // Selected field in AuthCredentials Form
-    input_mode: InputMode,
+    popup: Option<Popup>,
     input_form: InputForm,
     password_placeholder: String,
     redraw: bool,                  // Should ui actually be redrawned?
@@ -151,7 +142,7 @@ impl AuthActivity {
             bookmarks_client: None,
             config_client: None,
             selected_field: InputField::Address,
-            input_mode: InputMode::Form,
+            popup: None,
             input_form: InputForm::AuthCredentials,
             password_placeholder: String::new(),
             redraw: true, // True at startup
@@ -181,7 +172,7 @@ impl AuthActivity {
                             self.config_client = Some(cli);
                         }
                         Err(err) => {
-                            self.input_mode = InputMode::Popup(PopupType::Alert(
+                            self.popup = Some(Popup::Alert(
                                 Color::Red,
                                 format!("Could not initialize user configuration: {}", err),
                             ))
@@ -190,7 +181,7 @@ impl AuthActivity {
                 }
             }
             Err(err) => {
-                self.input_mode = InputMode::Popup(PopupType::Alert(
+                self.popup = Some(Popup::Alert(
                     Color::Red,
                     format!("Could not initialize configuration directory: {}", err),
                 ))
@@ -212,7 +203,7 @@ impl Activity for AuthActivity {
         self.context.as_mut().unwrap().clear_screen();
         // Put raw mode on enabled
         let _ = enable_raw_mode();
-        self.input_mode = InputMode::Form;
+        self.popup = None;
         // Init bookmarks client
         if self.bookmarks_client.is_none() {
             self.init_bookmarks_client();

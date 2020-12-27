@@ -27,7 +27,7 @@
 extern crate dirs;
 
 // Locals
-use super::{AuthActivity, Color, DialogYesNoOption, InputMode, PopupType};
+use super::{AuthActivity, Color, DialogYesNoOption, Popup};
 use crate::system::bookmarks_client::BookmarksClient;
 use crate::system::environment;
 
@@ -89,7 +89,7 @@ impl AuthActivity {
         let port: u16 = match self.port.parse::<usize>() {
             Ok(val) => {
                 if val > 65535 {
-                    self.input_mode = InputMode::Popup(PopupType::Alert(
+                    self.popup = Some(Popup::Alert(
                         Color::Red,
                         String::from("Specified port must be in range 0-65535"),
                     ));
@@ -98,7 +98,7 @@ impl AuthActivity {
                 val as u16
             }
             Err(_) => {
-                self.input_mode = InputMode::Popup(PopupType::Alert(
+                self.popup = Some(Popup::Alert(
                     Color::Red,
                     String::from("Specified port is not a number"),
                 ));
@@ -174,7 +174,7 @@ impl AuthActivity {
         let port: u16 = match self.port.parse::<usize>() {
             Ok(val) => {
                 if val > 65535 {
-                    self.input_mode = InputMode::Popup(PopupType::Alert(
+                    self.popup = Some(Popup::Alert(
                         Color::Red,
                         String::from("Specified port must be in range 0-65535"),
                     ));
@@ -183,7 +183,7 @@ impl AuthActivity {
                 val as u16
             }
             Err(_) => {
-                self.input_mode = InputMode::Popup(PopupType::Alert(
+                self.popup = Some(Popup::Alert(
                     Color::Red,
                     String::from("Specified port is not a number"),
                 ));
@@ -208,7 +208,7 @@ impl AuthActivity {
     fn write_bookmarks(&mut self) {
         if let Some(bookmarks_cli) = self.bookmarks_client.as_ref() {
             if let Err(err) = bookmarks_cli.write_bookmarks() {
-                self.input_mode = InputMode::Popup(PopupType::Alert(
+                self.popup = Some(Popup::Alert(
                     Color::Red,
                     format!("Could not write bookmarks: {}", err),
                 ));
@@ -225,12 +225,13 @@ impl AuthActivity {
             Ok(path) => {
                 // If some configure client, otherwise do nothing; don't bother users telling them that bookmarks are not supported on their system.
                 if let Some(path) = path {
-                    let (bookmarks_file, key_file): (PathBuf, PathBuf) = environment::get_bookmarks_paths(path.as_path());
+                    let (bookmarks_file, key_file): (PathBuf, PathBuf) =
+                        environment::get_bookmarks_paths(path.as_path());
                     // Initialize client
                     match BookmarksClient::new(bookmarks_file.as_path(), key_file.as_path(), 16) {
                         Ok(cli) => self.bookmarks_client = Some(cli),
                         Err(err) => {
-                            self.input_mode = InputMode::Popup(PopupType::Alert(
+                            self.popup = Some(Popup::Alert(
                                 Color::Red,
                                 format!(
                                     "Could not initialize bookmarks (at \"{}\", \"{}\"): {}",
@@ -244,7 +245,7 @@ impl AuthActivity {
                 }
             }
             Err(err) => {
-                self.input_mode = InputMode::Popup(PopupType::Alert(
+                self.popup = Some(Popup::Alert(
                     Color::Red,
                     format!("Could not initialize configuration directory: {}", err),
                 ))

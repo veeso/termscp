@@ -25,8 +25,7 @@
 
 // Locals
 use super::{
-    AuthActivity, Context, DialogYesNoOption, FileTransferProtocol, InputField, InputForm,
-    InputMode, PopupType,
+    AuthActivity, Context, DialogYesNoOption, FileTransferProtocol, InputField, InputForm, Popup,
 };
 use crate::utils::fmt::align_text_center;
 // Ext
@@ -123,23 +122,23 @@ impl AuthActivity {
                 f.render_stateful_widget(tab, bookmark_chunks[1], &mut recents_state);
             }
             // Draw popup
-            if let InputMode::Popup(popup) = &self.input_mode {
+            if let Some(popup) = &self.popup {
                 // Calculate popup size
                 let (width, height): (u16, u16) = match popup {
-                    PopupType::Alert(_, _) => (50, 10),
-                    PopupType::Help => (50, 70),
-                    PopupType::SaveBookmark => (20, 20),
-                    PopupType::YesNo(_, _, _) => (30, 10),
+                    Popup::Alert(_, _) => (50, 10),
+                    Popup::Help => (50, 70),
+                    Popup::SaveBookmark => (20, 20),
+                    Popup::YesNo(_, _, _) => (30, 10),
                 };
                 let popup_area: Rect = self.draw_popup_area(f.size(), width, height);
                 f.render_widget(Clear, popup_area); //this clears out the background
                 match popup {
-                    PopupType::Alert(color, txt) => f.render_widget(
+                    Popup::Alert(color, txt) => f.render_widget(
                         self.draw_popup_alert(*color, txt.clone(), popup_area.width),
                         popup_area,
                     ),
-                    PopupType::Help => f.render_widget(self.draw_popup_help(), popup_area),
-                    PopupType::SaveBookmark => {
+                    Popup::Help => f.render_widget(self.draw_popup_help(), popup_area),
+                    Popup::SaveBookmark => {
                         let popup_chunks = Layout::default()
                             .direction(Direction::Vertical)
                             .constraints(
@@ -160,7 +159,7 @@ impl AuthActivity {
                             popup_chunks[0].y + 1,
                         )
                     }
-                    PopupType::YesNo(txt, _, _) => {
+                    Popup::YesNo(txt, _, _) => {
                         f.render_widget(self.draw_popup_yesno(txt.clone()), popup_area)
                     }
                 }

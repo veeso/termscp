@@ -25,7 +25,7 @@
 
 use super::{
     AuthActivity, DialogCallback, DialogYesNoOption, FileTransferProtocol, InputEvent, InputField,
-    InputForm, InputMode, PopupType,
+    InputForm, Popup,
 };
 
 use crossterm::event::{KeyCode, KeyModifiers};
@@ -36,13 +36,13 @@ impl AuthActivity {
     ///
     /// Handle input event, based on current input mode
     pub(super) fn handle_input_event(&mut self, ev: &InputEvent) {
-        let popup: Option<PopupType> = match &self.input_mode {
-            InputMode::Popup(ptype) => Some(ptype.clone()),
+        let popup: Option<Popup> = match &self.popup {
+            Some(ptype) => Some(ptype.clone()),
             _ => None,
         };
-        match self.input_mode {
-            InputMode::Form => self.handle_input_event_mode_form(ev),
-            InputMode::Popup(_) => {
+        match &self.popup {
+            None => self.handle_input_event_mode_form(ev),
+            Some(_) => {
                 if let Some(ptype) = popup {
                     self.handle_input_event_mode_popup(ev, ptype)
                 }
@@ -69,7 +69,7 @@ impl AuthActivity {
             match key.code {
                 KeyCode::Esc => {
                     // Show quit dialog
-                    self.input_mode = InputMode::Popup(PopupType::YesNo(
+                    self.popup = Some(Popup::YesNo(
                         String::from("Are you sure you want to quit termscp?"),
                         AuthActivity::callback_quit,
                         AuthActivity::callback_nothing_to_do,
@@ -81,10 +81,8 @@ impl AuthActivity {
                     // Check form
                     // Check address
                     if self.address.is_empty() {
-                        self.input_mode = InputMode::Popup(PopupType::Alert(
-                            Color::Red,
-                            String::from("Invalid address"),
-                        ));
+                        self.popup =
+                            Some(Popup::Alert(Color::Red, String::from("Invalid address")));
                         return;
                     }
                     // Check port
@@ -92,7 +90,7 @@ impl AuthActivity {
                     match self.port.parse::<usize>() {
                         Ok(val) => {
                             if val > 65535 {
-                                self.input_mode = InputMode::Popup(PopupType::Alert(
+                                self.popup = Some(Popup::Alert(
                                     Color::Red,
                                     String::from("Specified port must be in range 0-65535"),
                                 ));
@@ -100,7 +98,7 @@ impl AuthActivity {
                             }
                         }
                         Err(_) => {
-                            self.input_mode = InputMode::Popup(PopupType::Alert(
+                            self.popup = Some(Popup::Alert(
                                 Color::Red,
                                 String::from("Specified port is not a number"),
                             ));
@@ -157,7 +155,7 @@ impl AuthActivity {
                         match ch {
                             'H' | 'h' => {
                                 // Show help
-                                self.input_mode = InputMode::Popup(PopupType::Help);
+                                self.popup = Some(Popup::Help);
                             }
                             'C' | 'c' => {
                                 // Show setup
@@ -167,7 +165,7 @@ impl AuthActivity {
                                 // Default choice option to no
                                 self.choice_opt = DialogYesNoOption::No;
                                 // Save bookmark as...
-                                self.input_mode = InputMode::Popup(PopupType::SaveBookmark);
+                                self.popup = Some(Popup::SaveBookmark);
                             }
                             _ => { /* Nothing to do */ }
                         }
@@ -225,7 +223,7 @@ impl AuthActivity {
             match key.code {
                 KeyCode::Esc => {
                     // Show quit dialog
-                    self.input_mode = InputMode::Popup(PopupType::YesNo(
+                    self.popup = Some(Popup::YesNo(
                         String::from("Are you sure you want to quit termscp?"),
                         AuthActivity::callback_quit,
                         AuthActivity::callback_nothing_to_do,
@@ -257,7 +255,7 @@ impl AuthActivity {
                 }
                 KeyCode::Delete => {
                     // Ask if user wants to delete bookmark
-                    self.input_mode = InputMode::Popup(PopupType::YesNo(
+                    self.popup = Some(Popup::YesNo(
                         String::from("Are you sure you want to delete the selected bookmark?"),
                         AuthActivity::callback_del_bookmark,
                         AuthActivity::callback_nothing_to_do,
@@ -278,7 +276,7 @@ impl AuthActivity {
                     }
                     'E' | 'e' => {
                         // Ask if user wants to delete bookmark; NOTE: same as <DEL>
-                        self.input_mode = InputMode::Popup(PopupType::YesNo(
+                        self.popup = Some(Popup::YesNo(
                             String::from("Are you sure you want to delete the selected bookmark?"),
                             AuthActivity::callback_del_bookmark,
                             AuthActivity::callback_nothing_to_do,
@@ -286,13 +284,13 @@ impl AuthActivity {
                     }
                     'H' | 'h' => {
                         // Show help
-                        self.input_mode = InputMode::Popup(PopupType::Help);
+                        self.popup = Some(Popup::Help);
                     }
                     'S' | 's' => {
                         // Default choice option to no
                         self.choice_opt = DialogYesNoOption::No;
                         // Save bookmark as...
-                        self.input_mode = InputMode::Popup(PopupType::SaveBookmark);
+                        self.popup = Some(Popup::SaveBookmark);
                     }
                     _ => { /* Nothing to do */ }
                 },
@@ -309,7 +307,7 @@ impl AuthActivity {
             match key.code {
                 KeyCode::Esc => {
                     // Show quit dialog
-                    self.input_mode = InputMode::Popup(PopupType::YesNo(
+                    self.popup = Some(Popup::YesNo(
                         String::from("Are you sure you want to quit termscp?"),
                         AuthActivity::callback_quit,
                         AuthActivity::callback_nothing_to_do,
@@ -341,7 +339,7 @@ impl AuthActivity {
                 }
                 KeyCode::Delete => {
                     // Ask if user wants to delete bookmark
-                    self.input_mode = InputMode::Popup(PopupType::YesNo(
+                    self.popup = Some(Popup::YesNo(
                         String::from("Are you sure you want to delete the selected host?"),
                         AuthActivity::callback_del_bookmark,
                         AuthActivity::callback_nothing_to_do,
@@ -362,7 +360,7 @@ impl AuthActivity {
                     }
                     'E' | 'e' => {
                         // Ask if user wants to delete bookmark; NOTE: same as <DEL>
-                        self.input_mode = InputMode::Popup(PopupType::YesNo(
+                        self.popup = Some(Popup::YesNo(
                             String::from("Are you sure you want to delete the selected host?"),
                             AuthActivity::callback_del_bookmark,
                             AuthActivity::callback_nothing_to_do,
@@ -370,13 +368,13 @@ impl AuthActivity {
                     }
                     'H' | 'h' => {
                         // Show help
-                        self.input_mode = InputMode::Popup(PopupType::Help);
+                        self.popup = Some(Popup::Help);
                     }
                     'S' | 's' => {
                         // Default choice option to no
                         self.choice_opt = DialogYesNoOption::No;
                         // Save bookmark as...
-                        self.input_mode = InputMode::Popup(PopupType::SaveBookmark);
+                        self.popup = Some(Popup::SaveBookmark);
                     }
                     _ => { /* Nothing to do */ }
                 },
@@ -388,12 +386,12 @@ impl AuthActivity {
     /// ### handle_input_event_mode_text
     ///
     /// Handler for input event when in popup mode
-    fn handle_input_event_mode_popup(&mut self, ev: &InputEvent, ptype: PopupType) {
+    fn handle_input_event_mode_popup(&mut self, ev: &InputEvent, ptype: Popup) {
         match ptype {
-            PopupType::Alert(_, _) => self.handle_input_event_mode_popup_alert(ev),
-            PopupType::Help => self.handle_input_event_mode_popup_help(ev),
-            PopupType::SaveBookmark => self.handle_input_event_mode_popup_save_bookmark(ev),
-            PopupType::YesNo(_, yes_cb, no_cb) => {
+            Popup::Alert(_, _) => self.handle_input_event_mode_popup_alert(ev),
+            Popup::Help => self.handle_input_event_mode_popup_help(ev),
+            Popup::SaveBookmark => self.handle_input_event_mode_popup_save_bookmark(ev),
+            Popup::YesNo(_, yes_cb, no_cb) => {
                 self.handle_input_event_mode_popup_yesno(ev, yes_cb, no_cb)
             }
         }
@@ -406,7 +404,7 @@ impl AuthActivity {
         // Only enter should be allowed here
         if let InputEvent::Key(key) = ev {
             if matches!(key.code, KeyCode::Esc | KeyCode::Enter) {
-                self.input_mode = InputMode::Form; // Hide popup
+                self.popup = None; // Hide popup
             }
         }
     }
@@ -419,7 +417,7 @@ impl AuthActivity {
         if let InputEvent::Key(key) = ev {
             if matches!(key.code, KeyCode::Esc | KeyCode::Enter) {
                 // Set input mode back to form
-                self.input_mode = InputMode::Form;
+                self.popup = None;
             }
         }
     }
@@ -436,7 +434,7 @@ impl AuthActivity {
                     // Clear current input text
                     self.input_txt.clear();
                     // Set mode back to form
-                    self.input_mode = InputMode::Form;
+                    self.popup = None;
                     // Reset choice option to yes
                     self.choice_opt = DialogYesNoOption::Yes;
                 }
@@ -446,7 +444,7 @@ impl AuthActivity {
                     // Clear current input text
                     self.input_txt.clear();
                     // Set mode back to form BEFORE CALLBACKS!!! Callback can then overwrite this, clever uh?
-                    self.input_mode = InputMode::Form;
+                    self.popup = None;
                     // Call cb
                     self.callback_save_bookmark(input_text);
                     // Reset choice option to yes
@@ -477,7 +475,7 @@ impl AuthActivity {
             match key.code {
                 KeyCode::Enter => {
                     // @! Set input mode to Form BEFORE CALLBACKS!!! Callback can then overwrite this, clever uh?
-                    self.input_mode = InputMode::Form;
+                    self.popup = None;
                     // Check if user selected yes or not
                     match self.choice_opt {
                         DialogYesNoOption::No => no_cb(self),
