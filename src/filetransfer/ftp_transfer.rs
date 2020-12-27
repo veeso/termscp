@@ -719,7 +719,7 @@ mod tests {
     }
 
     #[test]
-    fn test_filetransfer_ftp_parse_list_line() {
+    fn test_filetransfer_ftp_parse_list_line_unix() {
         let ftp: FtpFileTransfer = FtpFileTransfer::new(false);
         // Simple file
         let fs_entry: FsEntry = ftp
@@ -851,6 +851,95 @@ mod tests {
     }
 
     #[test]
+    fn test_filetransfer_ftp_parse_list_line_dos() {
+        let ftp: FtpFileTransfer = FtpFileTransfer::new(false);
+        // Simple file
+        let fs_entry: FsEntry = ftp
+            .parse_list_line(
+                PathBuf::from("/tmp").as_path(),
+                "04-08-14  03:09PM  8192 omar.txt",
+            )
+            .ok()
+            .unwrap();
+        if let FsEntry::File(file) = fs_entry {
+            assert_eq!(file.abs_path, PathBuf::from("/tmp/omar.txt"));
+            assert_eq!(file.name, String::from("omar.txt"));
+            assert_eq!(file.size, 8192);
+            assert!(file.symlink.is_none());
+            assert_eq!(file.user, None);
+            assert_eq!(file.group, None);
+            assert_eq!(file.unix_pex, None);
+            assert_eq!(
+                file.last_access_time
+                    .duration_since(SystemTime::UNIX_EPOCH)
+                    .ok()
+                    .unwrap(),
+                Duration::from_secs(1407164940)
+            );
+            assert_eq!(
+                file.last_change_time
+                    .duration_since(SystemTime::UNIX_EPOCH)
+                    .ok()
+                    .unwrap(),
+                Duration::from_secs(1407164940)
+            );
+            assert_eq!(
+                file.creation_time
+                    .duration_since(SystemTime::UNIX_EPOCH)
+                    .ok()
+                    .unwrap(),
+                Duration::from_secs(1407164940)
+            );
+        } else {
+            panic!("Expected file, got directory");
+        }
+        // Directory
+        let fs_entry: FsEntry = ftp
+            .parse_list_line(
+                PathBuf::from("/tmp").as_path(),
+                "04-08-14  03:09PM  <DIR> docs",
+            )
+            .ok()
+            .unwrap();
+        if let FsEntry::Directory(dir) = fs_entry {
+            assert_eq!(dir.abs_path, PathBuf::from("/tmp/docs"));
+            assert_eq!(dir.name, String::from("docs"));
+            assert!(dir.symlink.is_none());
+            assert_eq!(dir.user, None);
+            assert_eq!(dir.group, None);
+            assert_eq!(dir.unix_pex, None);
+            assert_eq!(
+                dir.last_access_time
+                    .duration_since(SystemTime::UNIX_EPOCH)
+                    .ok()
+                    .unwrap(),
+                Duration::from_secs(1407164940)
+            );
+            assert_eq!(
+                dir.last_change_time
+                    .duration_since(SystemTime::UNIX_EPOCH)
+                    .ok()
+                    .unwrap(),
+                Duration::from_secs(1407164940)
+            );
+            assert_eq!(
+                dir.creation_time
+                    .duration_since(SystemTime::UNIX_EPOCH)
+                    .ok()
+                    .unwrap(),
+                Duration::from_secs(1407164940)
+            );
+            assert_eq!(dir.readonly, false);
+        } else {
+            panic!("Expected directory, got directory");
+        }
+        // Error
+        assert!(ftp
+            .parse_list_line(PathBuf::from("/").as_path(), "04-08-14  omar.txt")
+            .is_err());
+    }
+
+    #[test]
     fn test_filetransfer_ftp_connect_unsecure_anonymous() {
         let mut ftp: FtpFileTransfer = FtpFileTransfer::new(false);
         // Connect
@@ -968,13 +1057,14 @@ mod tests {
         assert!(ftp.disconnect().is_ok());
     }
 
-    
     #[test]
     #[cfg(not(target_os = "macos"))]
     fn test_filetransfer_ftp_list_dir_unix_syntax() {
         let mut ftp: FtpFileTransfer = FtpFileTransfer::new(false);
         // Connect
-        assert!(ftp.connect(String::from("speedtest.tele2.net"), 21, None, None).is_ok());
+        assert!(ftp
+            .connect(String::from("speedtest.tele2.net"), 21, None, None)
+            .is_ok());
         // Pwd
         assert_eq!(ftp.pwd().ok().unwrap(), PathBuf::from("/"));
         // List dir
