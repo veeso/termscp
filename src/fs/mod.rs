@@ -285,10 +285,19 @@ impl std::fmt::Display for FsEntry {
         let datetime: String = fmt_time(self.get_last_change_time(), "%b %d %Y %H:%M");
         // Set file name (or elide if too long)
         let name: &str = self.get_name();
-        let name: String = match name.len() >= 24 {
-            false => name.to_string(),
-            true => format!("{}...", &name[0..20]),
+        let last_idx: usize = match self.is_dir() {
+            // NOTE: For directories is 19, since we push '/' to name
+            true => 19,
+            false => 20,
         };
+        let mut name: String = match name.len() >= 24 {
+            false => name.to_string(),
+            true => format!("{}...", &name[0..last_idx]),
+        };
+        // If is directory, append '/'
+        if self.is_dir() {
+            name.push('/');
+        }
         write!(
             f,
             "{:24}\t{:12}\t{:12}\t{:10}\t{:17}",
@@ -651,7 +660,7 @@ mod tests {
         assert_eq!(
             format!("{}", entry),
             format!(
-                "projects                \tdrwxr-xr-x  \troot        \t4.1 KB    \t{}",
+                "projects/               \tdrwxr-xr-x  \troot        \t4.1 KB    \t{}",
                 fmt_time(t_now, "%b %d %Y %H:%M")
             )
         );
@@ -659,7 +668,7 @@ mod tests {
         assert_eq!(
             format!("{}", entry),
             format!(
-                "projects                \tdrwxr-xr-x  \t0           \t4.1 KB    \t{}",
+                "projects/               \tdrwxr-xr-x  \t0           \t4.1 KB    \t{}",
                 fmt_time(t_now, "%b %d %Y %H:%M")
             )
         );
@@ -680,7 +689,7 @@ mod tests {
         assert_eq!(
             format!("{}", entry),
             format!(
-                "projects                \td?????????  \t0           \t4.1 KB    \t{}",
+                "projects/               \td?????????  \t0           \t4.1 KB    \t{}",
                 fmt_time(t_now, "%b %d %Y %H:%M")
             )
         );
@@ -688,7 +697,7 @@ mod tests {
         assert_eq!(
             format!("{}", entry),
             format!(
-                "projects                \td?????????  \t0           \t4.1 KB    \t{}",
+                "projects/               \td?????????  \t0           \t4.1 KB    \t{}",
                 fmt_time(t_now, "%b %d %Y %H:%M")
             )
         );

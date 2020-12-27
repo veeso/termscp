@@ -39,6 +39,7 @@ FIXME: Released on
   - Default protocol changed to default protocol in configuration when providing address as CLI argument
   - Explorers:
     - Hidden files are now not shown by default; use `A` to show hidden files.
+    - Append `/` to directories name.
 - Keybindings:
   - `A`: Toggle hidden files
   - `B`: Sort files by (name, size, creation time, modify time)
