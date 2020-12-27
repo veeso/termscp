@@ -53,6 +53,8 @@ type OnChoiceCallback = fn(&mut SetupActivity);
 enum UserInterfaceInputField {
     DefaultProtocol,
     TextEditor,
+    ShowHiddenFiles,
+    GroupDirs,
 }
 
 /// ### SetupTab

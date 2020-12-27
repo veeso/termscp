@@ -55,9 +55,12 @@ impl FileExplorerBuilder {
     /// ### with_hidden_files
     ///
     /// Enable HIDDEN_FILES option
-    pub fn with_hidden_files(&mut self) -> &mut FileExplorerBuilder {
+    pub fn with_hidden_files(&mut self, val: bool) -> &mut FileExplorerBuilder {
         if let Some(e) = self.explorer.as_mut() {
-            e.opts.insert(ExplorerOpts::SHOW_HIDDEN_FILES);
+            match val {
+                true => e.opts.insert(ExplorerOpts::SHOW_HIDDEN_FILES),
+                false => e.opts.remove(ExplorerOpts::SHOW_HIDDEN_FILES),
+            }
         }
         self
     }
@@ -114,7 +117,7 @@ mod tests {
         let explorer: FileExplorer = FileExplorerBuilder::new()
             .with_file_sorting(FileSorting::ByModifyTime)
             .with_group_dirs(Some(GroupDirs::First))
-            .with_hidden_files()
+            .with_hidden_files(true)
             .with_stack_size(24)
             .build();
         // Verify

@@ -318,7 +318,7 @@ impl AuthActivity {
     /// ### draw_local_explorer
     ///
     /// Draw local explorer list
-    pub(super) fn draw_bookmarks_tab(&self) -> Option<List> {
+    fn draw_bookmarks_tab(&self) -> Option<List> {
         self.bookmarks_client.as_ref()?;
         let hosts: Vec<ListItem> = self
             .bookmarks_client
@@ -366,7 +366,7 @@ impl AuthActivity {
     /// ### draw_local_explorer
     ///
     /// Draw local explorer list
-    pub(super) fn draw_recents_tab(&self) -> Option<List> {
+    fn draw_recents_tab(&self) -> Option<List> {
         self.bookmarks_client.as_ref()?;
         let hosts: Vec<ListItem> = self
             .bookmarks_client
@@ -463,7 +463,7 @@ impl AuthActivity {
     /// ### draw_popup_input
     ///
     /// Draw input popup
-    pub(super) fn draw_popup_save_bookmark(&self) -> (Paragraph, Tabs) {
+    fn draw_popup_save_bookmark(&self) -> (Paragraph, Tabs) {
         let input: Paragraph = Paragraph::new(self.input_txt.as_ref())
             .style(Style::default().fg(Color::White))
             .block(
@@ -497,7 +497,7 @@ impl AuthActivity {
     /// ### draw_popup_yesno
     ///
     /// Draw yes/no select popup
-    pub(super) fn draw_popup_yesno(&self, text: String) -> Tabs {
+    fn draw_popup_yesno(&self, text: String) -> Tabs {
         let choices: Vec<Spans> = vec![Spans::from("Yes"), Spans::from("No")];
         let index: usize = match self.choice_opt {
             DialogYesNoOption::Yes => 0,
@@ -522,7 +522,7 @@ impl AuthActivity {
     /// ### draw_popup_help
     ///
     /// Draw authentication page help popup
-    pub(super) fn draw_popup_help(&self) -> List {
+    fn draw_popup_help(&self) -> List {
         // Write header
         let cmds: Vec<ListItem> = vec![
             ListItem::new(Spans::from(vec![

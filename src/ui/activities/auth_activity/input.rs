@@ -53,7 +53,7 @@ impl AuthActivity {
     /// ### handle_input_event_mode_form
     ///
     /// Handler for input event when in form mode
-    pub(super) fn handle_input_event_mode_form(&mut self, ev: &InputEvent) {
+    fn handle_input_event_mode_form(&mut self, ev: &InputEvent) {
         match self.input_form {
             InputForm::AuthCredentials => self.handle_input_event_mode_form_auth(ev),
             InputForm::Bookmarks => self.handle_input_event_mode_form_bookmarks(ev),
@@ -64,7 +64,7 @@ impl AuthActivity {
     /// ### handle_input_event_mode_form_auth
     ///
     /// Handle input event when input mode is Form and Tab is Auth
-    pub(super) fn handle_input_event_mode_form_auth(&mut self, ev: &InputEvent) {
+    fn handle_input_event_mode_form_auth(&mut self, ev: &InputEvent) {
         if let InputEvent::Key(key) = ev {
             match key.code {
                 KeyCode::Esc => {
@@ -220,7 +220,7 @@ impl AuthActivity {
     /// ### handle_input_event_mode_form_bookmarks
     ///
     /// Handle input event when input mode is Form and Tab is Bookmarks
-    pub(super) fn handle_input_event_mode_form_bookmarks(&mut self, ev: &InputEvent) {
+    fn handle_input_event_mode_form_bookmarks(&mut self, ev: &InputEvent) {
         if let InputEvent::Key(key) = ev {
             match key.code {
                 KeyCode::Esc => {
@@ -304,7 +304,7 @@ impl AuthActivity {
     /// ### handle_input_event_mode_form_recents
     ///
     /// Handle input event when input mode is Form and Tab is Recents
-    pub(super) fn handle_input_event_mode_form_recents(&mut self, ev: &InputEvent) {
+    fn handle_input_event_mode_form_recents(&mut self, ev: &InputEvent) {
         if let InputEvent::Key(key) = ev {
             match key.code {
                 KeyCode::Esc => {
@@ -388,7 +388,7 @@ impl AuthActivity {
     /// ### handle_input_event_mode_text
     ///
     /// Handler for input event when in popup mode
-    pub(super) fn handle_input_event_mode_popup(&mut self, ev: &InputEvent, ptype: PopupType) {
+    fn handle_input_event_mode_popup(&mut self, ev: &InputEvent, ptype: PopupType) {
         match ptype {
             PopupType::Alert(_, _) => self.handle_input_event_mode_popup_alert(ev),
             PopupType::Help => self.handle_input_event_mode_popup_help(ev),
@@ -402,7 +402,7 @@ impl AuthActivity {
     /// ### handle_input_event_mode_popup_alert
     ///
     /// Handle input event when the input mode is popup, and popup type is alert
-    pub(super) fn handle_input_event_mode_popup_alert(&mut self, ev: &InputEvent) {
+    fn handle_input_event_mode_popup_alert(&mut self, ev: &InputEvent) {
         // Only enter should be allowed here
         if let InputEvent::Key(key) = ev {
             if matches!(key.code, KeyCode::Esc | KeyCode::Enter) {
@@ -414,7 +414,7 @@ impl AuthActivity {
     /// ### handle_input_event_mode_popup_help
     ///
     /// Input event handler for popup help
-    pub(super) fn handle_input_event_mode_popup_help(&mut self, ev: &InputEvent) {
+    fn handle_input_event_mode_popup_help(&mut self, ev: &InputEvent) {
         // If enter, close popup
         if let InputEvent::Key(key) = ev {
             if matches!(key.code, KeyCode::Esc | KeyCode::Enter) {
@@ -427,7 +427,7 @@ impl AuthActivity {
     /// ### handle_input_event_mode_popup_save_bookmark
     ///
     /// Input event handler for SaveBookmark popup
-    pub(super) fn handle_input_event_mode_popup_save_bookmark(&mut self, ev: &InputEvent) {
+    fn handle_input_event_mode_popup_save_bookmark(&mut self, ev: &InputEvent) {
         // If enter, close popup, otherwise push chars to input
         if let InputEvent::Key(key) = ev {
             match key.code {
@@ -466,7 +466,7 @@ impl AuthActivity {
     /// ### handle_input_event_mode_popup_yesno
     ///
     /// Input event handler for popup alert
-    pub(super) fn handle_input_event_mode_popup_yesno(
+    fn handle_input_event_mode_popup_yesno(
         &mut self,
         ev: &InputEvent,
         yes_cb: DialogCallback,

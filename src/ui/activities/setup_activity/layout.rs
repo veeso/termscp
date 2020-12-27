@@ -29,8 +29,9 @@ use super::{
     YesNoDialogOption,
 };
 use crate::filetransfer::FileTransferProtocol;
+use crate::fs::explorer::GroupDirs;
 use crate::utils::fmt::align_text_center;
-
+// Ext
 use tui::{
     layout::{Constraint, Corner, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
@@ -86,6 +87,8 @@ impl SetupActivity {
                             [
                                 Constraint::Length(3),
                                 Constraint::Length(3),
+                                Constraint::Length(3),
+                                Constraint::Length(3),
                                 Constraint::Length(1),
                             ]
                             .as_ref(),
@@ -97,6 +100,12 @@ impl SetupActivity {
                     }
                     if let Some(tab) = self.draw_default_protocol_tab() {
                         f.render_widget(tab, ui_cfg_chunks[1]);
+                    }
+                    if let Some(tab) = self.draw_hidden_files_tab() {
+                        f.render_widget(tab, ui_cfg_chunks[2]);
+                    }
+                    if let Some(tab) = self.draw_default_group_dirs_tab() {
+                        f.render_widget(tab, ui_cfg_chunks[3]);
                     }
                     // Set cursor
                     if let Some(cli) = &self.config_cli {
@@ -217,6 +226,33 @@ impl SetupActivity {
         Paragraph::new(footer_text)
     }
 
+    /// ### draw_text_editor_input
+    ///
+    /// Draw input text field for text editor parameter
+    fn draw_text_editor_input(&self) -> Option<Paragraph> {
+        match &self.config_cli {
+            Some(cli) => Some(
+                Paragraph::new(String::from(
+                    cli.get_text_editor().as_path().to_string_lossy(),
+                ))
+                .style(Style::default().fg(match &self.tab {
+                    SetupTab::SshConfig => Color::White,
+                    SetupTab::UserInterface(field) => match field {
+                        UserInterfaceInputField::TextEditor => Color::LightGreen,
+                        _ => Color::White,
+                    },
+                }))
+                .block(
+                    Block::default()
+                        .borders(Borders::ALL)
+                        .border_type(BorderType::Rounded)
+                        .title("Text Editor"),
+                ),
+            ),
+            None => None,
+        }
+    }
+
     /// ### draw_default_protocol_tab
     ///
     /// Draw default protocol input tab
@@ -267,29 +303,91 @@ impl SetupActivity {
         }
     }
 
-    /// ### draw_text_editor_input
+    /// ### draw_default_protocol_tab
     ///
-    /// Draw input text field for text editor parameter
-    fn draw_text_editor_input(&self) -> Option<Paragraph> {
+    /// Draw default protocol input tab
+    fn draw_hidden_files_tab(&self) -> Option<Tabs> {
+        // Check if config client is some
         match &self.config_cli {
-            Some(cli) => Some(
-                Paragraph::new(String::from(
-                    cli.get_text_editor().as_path().to_string_lossy(),
-                ))
-                .style(Style::default().fg(match &self.tab {
-                    SetupTab::SshConfig => Color::White,
+            Some(cli) => {
+                let choices: Vec<Spans> = vec![Spans::from("Yes"), Spans::from("No")];
+                let index: usize = match cli.get_show_hidden_files() {
+                    true => 0,
+                    false => 1,
+                };
+                let (bg, fg, block_fg): (Color, Color, Color) = match &self.tab {
                     SetupTab::UserInterface(field) => match field {
-                        UserInterfaceInputField::TextEditor => Color::LightGreen,
-                        _ => Color::White,
+                        UserInterfaceInputField::ShowHiddenFiles => {
+                            (Color::LightRed, Color::Black, Color::LightRed)
+                        }
+                        _ => (Color::Reset, Color::LightRed, Color::Reset),
                     },
-                }))
-                .block(
-                    Block::default()
-                        .borders(Borders::ALL)
-                        .border_type(BorderType::Rounded)
-                        .title("Text Editor"),
-                ),
-            ),
+                    _ => (Color::Reset, Color::Reset, Color::Reset),
+                };
+                Some(
+                    Tabs::new(choices)
+                        .block(
+                            Block::default()
+                                .borders(Borders::ALL)
+                                .border_type(BorderType::Rounded)
+                                .style(Style::default().fg(block_fg))
+                                .title("Show hidden files (by default)"),
+                        )
+                        .select(index)
+                        .style(Style::default())
+                        .highlight_style(
+                            Style::default().add_modifier(Modifier::BOLD).fg(fg).bg(bg),
+                        ),
+                )
+            }
+            None => None,
+        }
+    }
+
+    /// ### draw_default_group_dirs_tab
+    ///
+    /// Draw group dirs input tab
+    fn draw_default_group_dirs_tab(&self) -> Option<Tabs> {
+        // Check if config client is some
+        match &self.config_cli {
+            Some(cli) => {
+                let choices: Vec<Spans> = vec![
+                    Spans::from("Display First"),
+                    Spans::from("Display Last"),
+                    Spans::from("No"),
+                ];
+                let index: usize = match cli.get_group_dirs() {
+                    None => 2,
+                    Some(val) => match val {
+                        GroupDirs::First => 0,
+                        GroupDirs::Last => 1,
+                    },
+                };
+                let (bg, fg, block_fg): (Color, Color, Color) = match &self.tab {
+                    SetupTab::UserInterface(field) => match field {
+                        UserInterfaceInputField::GroupDirs => {
+                            (Color::LightMagenta, Color::Black, Color::LightMagenta)
+                        }
+                        _ => (Color::Reset, Color::LightMagenta, Color::Reset),
+                    },
+                    _ => (Color::Reset, Color::Reset, Color::Reset),
+                };
+                Some(
+                    Tabs::new(choices)
+                        .block(
+                            Block::default()
+                                .borders(Borders::ALL)
+                                .border_type(BorderType::Rounded)
+                                .style(Style::default().fg(block_fg))
+                                .title("Group directories"),
+                        )
+                        .select(index)
+                        .style(Style::default())
+                        .highlight_style(
+                            Style::default().add_modifier(Modifier::BOLD).fg(fg).bg(bg),
+                        ),
+                )
+            }
             None => None,
         }
     }
@@ -481,7 +579,7 @@ impl SetupActivity {
     /// ### draw_popup_help
     ///
     /// Draw authentication page help popup
-    pub(super) fn draw_popup_help(&self) -> List {
+    fn draw_popup_help(&self) -> List {
         // Write header
         let cmds: Vec<ListItem> = vec![
             ListItem::new(Spans::from(vec![

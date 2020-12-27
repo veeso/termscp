@@ -54,6 +54,8 @@ pub struct UserConfig {
 pub struct UserInterfaceConfig {
     pub text_editor: PathBuf,
     pub default_protocol: String,
+    pub show_hidden_files: bool,
+    pub group_dirs: Option<String>,
 }
 
 #[derive(Deserialize, Serialize, std::fmt::Debug)]
@@ -81,6 +83,8 @@ impl Default for UserInterfaceConfig {
                 Err(_) => PathBuf::from("nano"), // Default to nano
             },
             default_protocol: FileTransferProtocol::Sftp.to_string(),
+            show_hidden_files: false,
+            group_dirs: None,
         }
     }
 }
@@ -165,14 +169,15 @@ mod tests {
         let ui: UserInterfaceConfig = UserInterfaceConfig {
             default_protocol: String::from("SFTP"),
             text_editor: PathBuf::from("nano"),
+            show_hidden_files: true,
+            group_dirs: Some(String::from("first")),
         };
         let cfg: UserConfig = UserConfig {
             user_interface: ui,
             remote: remote,
         };
         assert_eq!(
-            *cfg
-                .remote
+            *cfg.remote
                 .ssh_keys
                 .get(&String::from("192.168.1.31"))
                 .unwrap(),
@@ -180,6 +185,8 @@ mod tests {
         );
         assert_eq!(cfg.user_interface.default_protocol, String::from("SFTP"));
         assert_eq!(cfg.user_interface.text_editor, PathBuf::from("nano"));
+        assert_eq!(cfg.user_interface.show_hidden_files, true);
+        assert_eq!(cfg.user_interface.group_dirs, Some(String::from("first")));
     }
 
     #[test]

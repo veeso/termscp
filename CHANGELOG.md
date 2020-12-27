@@ -28,6 +28,8 @@ FIXME: Released on
     - Windows: `C:\Users\Alice\AppData\Roaming\termscp\config.toml`
   - Added Text editor to configuration
   - Added Default File transfer protocol to configuration
+  - Added "Show hidden files` to configuration
+  - Added "Group directories" to configuration
   - Added SSH keys to configuration; SSH keys will be stored at
     - Linux: `/home/alice/.config/termscp/.ssh/`
     - MacOS: `/Users/Alice/Library/Application Support/termscp/.ssh/`

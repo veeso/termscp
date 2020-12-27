@@ -106,6 +106,43 @@ mod tests {
         // Verify ui
         assert_eq!(cfg.user_interface.default_protocol, String::from("SCP"));
         assert_eq!(cfg.user_interface.text_editor, PathBuf::from("vim"));
+        assert_eq!(cfg.user_interface.show_hidden_files, true);
+        assert_eq!(cfg.user_interface.group_dirs, Some(String::from("last")));
+        // Verify keys
+        assert_eq!(
+            *cfg.remote
+                .ssh_keys
+                .get(&String::from("192.168.1.31"))
+                .unwrap(),
+            PathBuf::from("/home/omar/.ssh/raspberry.key")
+        );
+        assert_eq!(
+            *cfg.remote
+                .ssh_keys
+                .get(&String::from("192.168.1.32"))
+                .unwrap(),
+            PathBuf::from("/home/omar/.ssh/beaglebone.key")
+        );
+        assert!(cfg.remote.ssh_keys.get(&String::from("1.1.1.1")).is_none());
+    }
+
+    #[test]
+    fn test_config_serializer_deserialize_ok_no_opts() {
+        let toml_file: tempfile::NamedTempFile = create_good_toml_no_opts();
+        toml_file.as_file().sync_all().unwrap();
+        toml_file.as_file().seek(SeekFrom::Start(0)).unwrap();
+        // Parse
+        let deserializer: ConfigSerializer = ConfigSerializer {};
+        let cfg = deserializer.deserialize(Box::new(toml_file));
+        println!("{:?}", cfg);
+        assert!(cfg.is_ok());
+        let cfg: UserConfig = cfg.ok().unwrap();
+        // Verify configuration
+        // Verify ui
+        assert_eq!(cfg.user_interface.default_protocol, String::from("SCP"));
+        assert_eq!(cfg.user_interface.text_editor, PathBuf::from("vim"));
+        assert_eq!(cfg.user_interface.show_hidden_files, true);
+        assert_eq!(cfg.user_interface.group_dirs, None);
         // Verify keys
         assert_eq!(
             *cfg.remote
@@ -160,6 +197,25 @@ mod tests {
         [user_interface]
         default_protocol = "SCP"
         text_editor = "vim"
+        show_hidden_files = true
+        group_dirs = "last"
+
+        [remote.ssh_keys]
+        "192.168.1.31" = "/home/omar/.ssh/raspberry.key"
+        "192.168.1.32" = "/home/omar/.ssh/beaglebone.key"
+        "#;
+        tmpfile.write_all(file_content.as_bytes()).unwrap();
+        tmpfile
+    }
+
+    fn create_good_toml_no_opts() -> tempfile::NamedTempFile {
+        // Write
+        let mut tmpfile: tempfile::NamedTempFile = tempfile::NamedTempFile::new().unwrap();
+        let file_content: &str = r#"
+        [user_interface]
+        default_protocol = "SCP"
+        text_editor = "vim"
+        show_hidden_files = true
 
         [remote.ssh_keys]
         "192.168.1.31" = "/home/omar/.ssh/raspberry.key"

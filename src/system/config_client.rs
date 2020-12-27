@@ -29,6 +29,7 @@ extern crate rand;
 use crate::config::serializer::ConfigSerializer;
 use crate::config::{SerializerError, SerializerErrorKind, UserConfig};
 use crate::filetransfer::FileTransferProtocol;
+use crate::fs::explorer::GroupDirs;
 // Ext
 use std::fs::{create_dir, remove_file, File, OpenOptions};
 use std::io::Write;
@@ -121,6 +122,45 @@ impl ConfigClient {
     /// Set default protocol to configuration
     pub fn set_default_protocol(&mut self, proto: FileTransferProtocol) {
         self.config.user_interface.default_protocol = proto.to_string();
+    }
+
+    /// ### get_show_hidden_files
+    ///
+    /// Get value of `show_hidden_files`
+    pub fn get_show_hidden_files(&self) -> bool {
+        self.config.user_interface.show_hidden_files
+    }
+
+    /// ### set_show_hidden_files
+    ///
+    /// Set new value for `show_hidden_files`
+    pub fn set_show_hidden_files(&mut self, value: bool) {
+        self.config.user_interface.show_hidden_files = value;
+    }
+
+    /// ### get_group_dirs
+    ///
+    /// Get GroupDirs value from configuration (will be converted from string)
+    pub fn get_group_dirs(&self) -> Option<GroupDirs> {
+        // Convert string to `GroupDirs`
+        match &self.config.user_interface.group_dirs {
+            None => None,
+            Some(val) => match GroupDirs::from_str(val.as_str()) {
+                Ok(val) => Some(val),
+                Err(_) => None,
+            },
+        }
+    }
+
+    /// ### set_group_dirs
+    ///
+    /// Set value for group_dir in configuration.
+    /// Provided value, if `Some` will be converted to `GroupDirs`
+    pub fn set_group_dirs(&mut self, val: Option<GroupDirs>) {
+        self.config.user_interface.group_dirs = match val {
+            None => None,
+            Some(val) => Some(val.to_string()),
+        };
     }
 
     // SSH Keys
@@ -385,6 +425,30 @@ mod tests {
             client.get_default_protocol(),
             FileTransferProtocol::Ftp(true)
         );
+    }
+
+    #[test]
+    fn test_system_config_show_hidden_files() {
+        let tmp_dir: tempfile::TempDir = create_tmp_dir();
+        let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
+        let mut client: ConfigClient = ConfigClient::new(cfg_path.as_path(), key_path.as_path())
+            .ok()
+            .unwrap();
+        client.set_show_hidden_files(true);
+        assert_eq!(client.get_show_hidden_files(), true);
+    }
+
+    #[test]
+    fn test_system_config_group_dirs() {
+        let tmp_dir: tempfile::TempDir = create_tmp_dir();
+        let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
+        let mut client: ConfigClient = ConfigClient::new(cfg_path.as_path(), key_path.as_path())
+            .ok()
+            .unwrap();
+        client.set_group_dirs(Some(GroupDirs::First));
+        assert_eq!(client.get_group_dirs(), Some(GroupDirs::First),);
+        client.set_group_dirs(None);
+        assert_eq!(client.get_group_dirs(), None,);
     }
 
     #[test]

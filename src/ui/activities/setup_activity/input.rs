@@ -30,6 +30,7 @@ use super::{
     UserInterfaceInputField, YesNoDialogOption,
 };
 use crate::filetransfer::FileTransferProtocol;
+use crate::fs::explorer::GroupDirs;
 // Ext
 use crossterm::event::{KeyCode, KeyModifiers};
 use std::path::PathBuf;
@@ -195,59 +196,105 @@ impl SetupActivity {
                 KeyCode::Left => {
                     // Move left on fields which are tabs
                     if let Some(config_cli) = self.config_cli.as_mut() {
-                        if matches!(field, UserInterfaceInputField::DefaultProtocol) {
-                            // Move left
-                            config_cli.set_default_protocol(
-                                match config_cli.get_default_protocol() {
-                                    FileTransferProtocol::Ftp(secure) => match secure {
-                                        true => FileTransferProtocol::Ftp(false),
-                                        false => FileTransferProtocol::Scp,
+                        match field {
+                            UserInterfaceInputField::DefaultProtocol => {
+                                // Move left
+                                config_cli.set_default_protocol(
+                                    match config_cli.get_default_protocol() {
+                                        FileTransferProtocol::Ftp(secure) => match secure {
+                                            true => FileTransferProtocol::Ftp(false),
+                                            false => FileTransferProtocol::Scp,
+                                        },
+                                        FileTransferProtocol::Scp => FileTransferProtocol::Sftp,
+                                        FileTransferProtocol::Sftp => {
+                                            FileTransferProtocol::Ftp(true)
+                                        } // Wrap
                                     },
-                                    FileTransferProtocol::Scp => FileTransferProtocol::Sftp,
-                                    FileTransferProtocol::Sftp => FileTransferProtocol::Ftp(true), // Wrap
-                                },
-                            );
+                                );
+                            }
+                            UserInterfaceInputField::GroupDirs => {
+                                // Move left
+                                config_cli.set_group_dirs(match config_cli.get_group_dirs() {
+                                    None => Some(GroupDirs::Last),
+                                    Some(val) => match val {
+                                        GroupDirs::Last => Some(GroupDirs::First),
+                                        GroupDirs::First => None,
+                                    },
+                                });
+                            }
+                            UserInterfaceInputField::ShowHiddenFiles => {
+                                // Move left
+                                config_cli.set_show_hidden_files(true);
+                            }
+                            _ => { /* Not a tab field */ }
                         }
                     }
                 }
                 KeyCode::Right => {
                     // Move right on fields which are tabs
                     if let Some(config_cli) = self.config_cli.as_mut() {
-                        if matches!(field, UserInterfaceInputField::DefaultProtocol) {
-                            // Move left
-                            config_cli.set_default_protocol(
-                                match config_cli.get_default_protocol() {
-                                    FileTransferProtocol::Sftp => FileTransferProtocol::Scp,
-                                    FileTransferProtocol::Scp => FileTransferProtocol::Ftp(false),
-                                    FileTransferProtocol::Ftp(secure) => match secure {
-                                        false => FileTransferProtocol::Ftp(true),
-                                        true => FileTransferProtocol::Sftp, // Wrap
+                        match field {
+                            UserInterfaceInputField::DefaultProtocol => {
+                                // Move left
+                                config_cli.set_default_protocol(
+                                    match config_cli.get_default_protocol() {
+                                        FileTransferProtocol::Sftp => FileTransferProtocol::Scp,
+                                        FileTransferProtocol::Scp => {
+                                            FileTransferProtocol::Ftp(false)
+                                        }
+                                        FileTransferProtocol::Ftp(secure) => match secure {
+                                            false => FileTransferProtocol::Ftp(true),
+                                            true => FileTransferProtocol::Sftp, // Wrap
+                                        },
                                     },
-                                },
-                            );
+                                );
+                            }
+                            UserInterfaceInputField::GroupDirs => {
+                                // Move right
+                                config_cli.set_group_dirs(match config_cli.get_group_dirs() {
+                                    Some(val) => match val {
+                                        GroupDirs::First => Some(GroupDirs::Last),
+                                        GroupDirs::Last => None,
+                                    },
+                                    None => Some(GroupDirs::First),
+                                });
+                            }
+                            UserInterfaceInputField::ShowHiddenFiles => {
+                                // Move right
+                                config_cli.set_show_hidden_files(false);
+                            }
+                            _ => { /* Not a tab field */ }
                         }
                     }
                 }
                 KeyCode::Up => {
                     // Change selected field
                     self.tab = SetupTab::UserInterface(match field {
-                        UserInterfaceInputField::TextEditor => {
+                        UserInterfaceInputField::GroupDirs => {
+                            UserInterfaceInputField::ShowHiddenFiles
+                        }
+                        UserInterfaceInputField::ShowHiddenFiles => {
                             UserInterfaceInputField::DefaultProtocol
                         }
                         UserInterfaceInputField::DefaultProtocol => {
                             UserInterfaceInputField::TextEditor
-                        } // Wrap
+                        }
+                        UserInterfaceInputField::TextEditor => UserInterfaceInputField::GroupDirs, // Wrap
                     });
                 }
                 KeyCode::Down => {
                     // Change selected field
                     self.tab = SetupTab::UserInterface(match field {
-                        UserInterfaceInputField::DefaultProtocol => {
-                            UserInterfaceInputField::TextEditor
-                        }
                         UserInterfaceInputField::TextEditor => {
                             UserInterfaceInputField::DefaultProtocol
-                        } // Wrap
+                        }
+                        UserInterfaceInputField::DefaultProtocol => {
+                            UserInterfaceInputField::ShowHiddenFiles
+                        }
+                        UserInterfaceInputField::ShowHiddenFiles => {
+                            UserInterfaceInputField::GroupDirs
+                        }
+                        UserInterfaceInputField::GroupDirs => UserInterfaceInputField::TextEditor, // Wrap
                     });
                 }
                 KeyCode::Char(ch) => {
@@ -450,7 +497,7 @@ impl SetupActivity {
     /// ### handle_input_event_mode_popup_yesno
     ///
     /// Input event handler for popup alert
-    pub(super) fn handle_input_event_mode_popup_yesno(
+    fn handle_input_event_mode_popup_yesno(
         &mut self,
         ev: &InputEvent,
         yes_cb: OnChoiceCallback,
