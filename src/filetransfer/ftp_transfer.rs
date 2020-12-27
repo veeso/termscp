@@ -970,6 +970,7 @@ mod tests {
 
     
     #[test]
+    #[cfg(not(target_os = "macos"))]
     fn test_filetransfer_ftp_list_dir_unix_syntax() {
         let mut ftp: FtpFileTransfer = FtpFileTransfer::new(false);
         // Connect
