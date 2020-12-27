@@ -181,6 +181,21 @@ pub fn parse_lstime(tm: &str, fmt_year: &str, fmt_hours: &str) -> Result<SystemT
         .unwrap_or(SystemTime::UNIX_EPOCH))
 }
 
+/// ### parse_datetime
+///
+/// Parse date time string representation and transform it into `SystemTime`
+pub fn parse_datetime(tm: &str, fmt: &str) -> Result<SystemTime, ParseError> {
+    match NaiveDateTime::parse_from_str(tm, fmt) {
+        Ok(dt) => {
+            let sys_time: SystemTime = SystemTime::UNIX_EPOCH;
+            Ok(sys_time
+                .checked_add(Duration::from_secs(dt.timestamp() as u64))
+                .unwrap_or(SystemTime::UNIX_EPOCH))
+        }
+        Err(err) => Err(err),
+    }
+}
+
 #[cfg(test)]
 mod tests {
 
@@ -318,5 +333,20 @@ mod tests {
         assert!(parse_lstime("Oma 31 2018", "%b %d %Y", "%b %d %H:%M").is_err());
         assert!(parse_lstime("Feb 31 2018", "%b %d %Y", "%b %d %H:%M").is_err());
         assert!(parse_lstime("Feb 15 25:32", "%b %d %Y", "%b %d %H:%M").is_err());
+    }
+
+    #[test]
+    fn test_utils_parse_datetime() {
+        assert_eq!(
+            parse_datetime("04-08-14  03:09PM", "%d-%m-%y %I:%M%p")
+                .ok()
+                .unwrap()
+                .duration_since(SystemTime::UNIX_EPOCH)
+                .ok()
+                .unwrap(),
+            Duration::from_secs(1407164940)
+        );
+        // Not enough argument for datetime
+        assert!(parse_datetime("04-08-14", "%d-%m-%y").is_err());
     }
 }
