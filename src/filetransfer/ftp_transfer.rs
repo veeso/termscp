@@ -190,11 +190,12 @@ impl FtpFileTransfer {
                     return Err(());
                 }
                 let mut abs_path: PathBuf = PathBuf::from(path);
+                abs_path.push(file_name.as_str());
+                // get extension
                 let extension: Option<String> = match abs_path.as_path().extension() {
                     None => None,
                     Some(s) => Some(String::from(s.to_string_lossy())),
                 };
-                abs_path.push(file_name.as_str());
                 // Return
                 // Push to entries
                 Ok(match is_dir {
