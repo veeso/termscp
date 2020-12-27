@@ -89,11 +89,11 @@ enum DialogYesNoOption {
     No,
 }
 
-/// ## PopupType
+/// ## Popup
 ///
-/// PopupType describes the type of popup
+/// Popup describes the type of popup
 #[derive(Clone)]
-enum PopupType {
+enum Popup {
     Alert(Color, String),                          // Block color; Block text
     Fatal(String),                                 // Must quit after being hidden
     FileInfo,                                      // Show info about current file
@@ -103,16 +103,6 @@ enum PopupType {
     Progress(String),                              // Progress block text
     Wait(String),                                  // Wait block text
     YesNo(String, DialogCallback, DialogCallback), // Yes, no callback
-}
-
-/// ## InputMode
-///
-/// InputMode describes the current input mode
-/// Each input mode handle the input events in a different way
-#[derive(Clone)]
-enum InputMode {
-    Explorer,
-    Popup(PopupType),
 }
 
 /// ## FileExplorerTab
@@ -241,7 +231,7 @@ pub struct FileTransferActivity {
     log_index: usize,                 // Current log index entry selected
     log_records: VecDeque<LogRecord>, // Log records
     log_size: usize,                  // Log records size (max)
-    input_mode: InputMode,            // Current input mode
+    popup: Option<Popup>,             // Current input mode
     input_field: InputField,          // Current selected input mode
     input_txt: String,                // Input text
     choice_opt: DialogYesNoOption,    // Dialog popup selected option
@@ -277,7 +267,7 @@ impl FileTransferActivity {
             log_index: 0,
             log_records: VecDeque::with_capacity(256), // 256 events is enough I guess
             log_size: 256,                             // Must match with capacity
-            input_mode: InputMode::Explorer,
+            popup: None,
             input_field: InputField::Explorer,
             input_txt: String::new(),
             choice_opt: DialogYesNoOption::Yes,
@@ -324,11 +314,10 @@ impl Activity for FileTransferActivity {
         if self.context.is_none() {
             return;
         }
-        let is_explorer_mode: bool = matches!(self.input_mode, InputMode::Explorer);
-        // Check if connected
-        if !self.client.is_connected() && is_explorer_mode {
+        // Check if connected (popup must be None, otherwise would try reconnecting in loop in case of error)
+        if !self.client.is_connected() && self.popup.is_none() {
             // Set init state to connecting popup
-            self.input_mode = InputMode::Popup(PopupType::Wait(format!(
+            self.popup = Some(Popup::Wait(format!(
                 "Connecting to {}:{}...",
                 self.params.address, self.params.port
             )));

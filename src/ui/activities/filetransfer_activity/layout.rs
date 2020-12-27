@@ -31,7 +31,7 @@ extern crate users;
 // Local
 use super::{
     Context, DialogYesNoOption, FileExplorerTab, FileTransferActivity, FsEntry, InputField,
-    InputMode, LogLevel, LogRecord, PopupType,
+    LogLevel, LogRecord, Popup,
 };
 use crate::fs::explorer::{FileExplorer, FileSorting};
 use crate::utils::fmt::{align_text_center, fmt_time};
@@ -101,36 +101,36 @@ impl FileTransferActivity {
                 &mut log_state,
             );
             // Draw popup
-            if let InputMode::Popup(popup) = &self.input_mode {
+            if let Some(popup) = &self.popup {
                 // Calculate popup size
                 let (width, height): (u16, u16) = match popup {
-                    PopupType::Alert(_, _) => (50, 10),
-                    PopupType::Fatal(_) => (50, 10),
-                    PopupType::FileInfo => (50, 50),
-                    PopupType::FileSortingDialog => (50, 10),
-                    PopupType::Help => (50, 80),
-                    PopupType::Input(_, _) => (40, 10),
-                    PopupType::Progress(_) => (40, 10),
-                    PopupType::Wait(_) => (50, 10),
-                    PopupType::YesNo(_, _, _) => (30, 10),
+                    Popup::Alert(_, _) => (50, 10),
+                    Popup::Fatal(_) => (50, 10),
+                    Popup::FileInfo => (50, 50),
+                    Popup::FileSortingDialog => (50, 10),
+                    Popup::Help => (50, 80),
+                    Popup::Input(_, _) => (40, 10),
+                    Popup::Progress(_) => (40, 10),
+                    Popup::Wait(_) => (50, 10),
+                    Popup::YesNo(_, _, _) => (30, 10),
                 };
                 let popup_area: Rect = self.draw_popup_area(f.size(), width, height);
                 f.render_widget(Clear, popup_area); //this clears out the background
                 match popup {
-                    PopupType::Alert(color, txt) => f.render_widget(
+                    Popup::Alert(color, txt) => f.render_widget(
                         self.draw_popup_alert(*color, txt.clone(), popup_area.width),
                         popup_area,
                     ),
-                    PopupType::Fatal(txt) => f.render_widget(
+                    Popup::Fatal(txt) => f.render_widget(
                         self.draw_popup_fatal(txt.clone(), popup_area.width),
                         popup_area,
                     ),
-                    PopupType::FileInfo => f.render_widget(self.draw_popup_fileinfo(), popup_area),
-                    PopupType::FileSortingDialog => {
+                    Popup::FileInfo => f.render_widget(self.draw_popup_fileinfo(), popup_area),
+                    Popup::FileSortingDialog => {
                         f.render_widget(self.draw_popup_file_sorting_dialog(), popup_area)
                     }
-                    PopupType::Help => f.render_widget(self.draw_popup_help(), popup_area),
-                    PopupType::Input(txt, _) => {
+                    Popup::Help => f.render_widget(self.draw_popup_help(), popup_area),
+                    Popup::Input(txt, _) => {
                         f.render_widget(self.draw_popup_input(txt.clone()), popup_area);
                         // Set cursor
                         f.set_cursor(
@@ -138,14 +138,14 @@ impl FileTransferActivity {
                             popup_area.y + 1,
                         )
                     }
-                    PopupType::Progress(txt) => {
+                    Popup::Progress(txt) => {
                         f.render_widget(self.draw_popup_progress(txt.clone()), popup_area)
                     }
-                    PopupType::Wait(txt) => f.render_widget(
+                    Popup::Wait(txt) => f.render_widget(
                         self.draw_popup_wait(txt.clone(), popup_area.width),
                         popup_area,
                     ),
-                    PopupType::YesNo(txt, _, _) => {
+                    Popup::YesNo(txt, _, _) => {
                         f.render_widget(self.draw_popup_yesno(txt.clone()), popup_area)
                     }
                 }

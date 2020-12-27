@@ -30,7 +30,7 @@ extern crate crossterm;
 extern crate tempfile;
 
 // Locals
-use super::{FileTransferActivity, InputMode, LogLevel, PopupType};
+use super::{FileTransferActivity, LogLevel, Popup};
 use crate::fs::{FsEntry, FsFile};
 use crate::utils::fmt::fmt_millis;
 
@@ -68,12 +68,12 @@ impl FileTransferActivity {
                     );
                 }
                 // Set state to explorer
-                self.input_mode = InputMode::Explorer;
+                self.popup = None;
                 self.reload_remote_dir();
             }
             Err(err) => {
                 // Set popup fatal error
-                self.input_mode = InputMode::Popup(PopupType::Fatal(format!("{}", err)));
+                self.popup = Some(Popup::Fatal(format!("{}", err)));
             }
         }
     }
@@ -83,7 +83,7 @@ impl FileTransferActivity {
     /// disconnect from remote
     pub(super) fn disconnect(&mut self) {
         // Show popup disconnecting
-        self.input_mode = InputMode::Popup(PopupType::Alert(
+        self.popup = Some(Popup::Alert(
             Color::Red,
             String::from("Disconnecting from remote..."),
         ));
@@ -129,7 +129,7 @@ impl FileTransferActivity {
             FsEntry::Directory(dir) => dir.name.clone(),
             FsEntry::File(file) => file.name.clone(),
         };
-        self.input_mode = InputMode::Popup(PopupType::Wait(format!("Uploading \"{}\"", file_name)));
+        self.popup = Some(Popup::Wait(format!("Uploading \"{}\"", file_name)));
         // Draw
         self.draw();
         // Get remote path
@@ -211,9 +211,9 @@ impl FileTransferActivity {
         } else {
             // @! Successful
             // Eventually, Reset input mode to explorer (if input mode is wait or progress)
-            if let InputMode::Popup(ptype) = &self.input_mode {
-                if matches!(ptype, PopupType::Wait(_) | PopupType::Progress(_)) {
-                    self.input_mode = InputMode::Explorer
+            if let Some(ptype) = &self.popup {
+                if matches!(ptype, Popup::Wait(_) | Popup::Progress(_)) {
+                    self.popup = None
                 }
             }
         }
@@ -235,8 +235,7 @@ impl FileTransferActivity {
             FsEntry::Directory(dir) => dir.name.clone(),
             FsEntry::File(file) => file.name.clone(),
         };
-        self.input_mode =
-            InputMode::Popup(PopupType::Wait(format!("Downloading \"{}\"...", file_name)));
+        self.popup = Some(Popup::Wait(format!("Downloading \"{}\"...", file_name)));
         // Draw
         self.draw();
         // Match entry
@@ -352,7 +351,7 @@ impl FileTransferActivity {
             self.transfer.aborted = false;
         } else {
             // Eventually, Reset input mode to explorer
-            self.input_mode = InputMode::Explorer;
+            self.popup = None;
         }
     }
 
@@ -381,10 +380,7 @@ impl FileTransferActivity {
                     // Write remote file
                     let mut total_bytes_written: usize = 0;
                     // Set input state to popup progress
-                    self.input_mode = InputMode::Popup(PopupType::Progress(format!(
-                        "Uploading \"{}\"",
-                        local.name
-                    )));
+                    self.popup = Some(Popup::Progress(format!("Uploading \"{}\"", local.name)));
                     // Reset transfer states
                     self.transfer.reset();
                     let mut last_progress_val: f64 = 0.0;
@@ -484,7 +480,7 @@ impl FileTransferActivity {
                 match self.client.recv_file(remote) {
                     Ok(mut rhnd) => {
                         // Set popup progress
-                        self.input_mode = InputMode::Popup(PopupType::Progress(format!(
+                        self.popup = Some(Popup::Progress(format!(
                             "Downloading \"{}\"...",
                             remote.name,
                         )));

@@ -28,7 +28,7 @@ extern crate tempfile;
 // Local
 use super::{
     DialogCallback, DialogYesNoOption, FileExplorerTab, FileTransferActivity, FsEntry, InputEvent,
-    InputField, InputMode, LogLevel, OnInputSubmitCallback, PopupType,
+    InputField, LogLevel, OnInputSubmitCallback, Popup,
 };
 use crate::fs::explorer::{FileExplorer, FileSorting};
 // Ext
@@ -64,13 +64,13 @@ impl FileTransferActivity {
     fn handle_input_event(&mut self, ev: &InputEvent) {
         // NOTE: this is necessary due to this <https://github.com/rust-lang/rust/issues/59159>
         // NOTE: Do you want my opinion about that issue? It's a bs and doesn't make any sense.
-        let popup: Option<PopupType> = match &self.input_mode {
-            InputMode::Popup(ptype) => Some(ptype.clone()),
+        let popup: Option<Popup> = match &self.popup {
+            Some(ptype) => Some(ptype.clone()),
             _ => None,
         };
-        match &self.input_mode {
-            InputMode::Explorer => self.handle_input_event_mode_explorer(ev),
-            InputMode::Popup(_) => {
+        match &self.popup {
+            None => self.handle_input_event_mode_explorer(ev),
+            Some(_) => {
                 if let Some(popup) = popup {
                     self.handle_input_event_mode_popup(ev, popup);
                 }
@@ -103,7 +103,7 @@ impl FileTransferActivity {
                 KeyCode::Esc => {
                     // Handle quit event
                     // Create quit prompt dialog
-                    self.input_mode = self.create_disconnect_popup();
+                    self.popup = self.create_disconnect_popup();
                 }
                 KeyCode::Tab => self.switch_input_field(), // <TAB> switch tab
                 KeyCode::Right => self.tab = FileExplorerTab::Remote, // <RIGHT> switch to right tab
@@ -162,7 +162,7 @@ impl FileTransferActivity {
                             FsEntry::File(file) => file.name.clone(),
                         };
                         // Show delete prompt
-                        self.input_mode = InputMode::Popup(PopupType::YesNo(
+                        self.popup = Some(Popup::YesNo(
                             format!("Delete file \"{}\"", file_name),
                             FileTransferActivity::callback_delete_fsentry,
                             FileTransferActivity::callback_nothing_to_do,
@@ -176,18 +176,18 @@ impl FileTransferActivity {
                     }
                     'b' | 'B' => {
                         // Choose file sorting type
-                        self.input_mode = InputMode::Popup(PopupType::FileSortingDialog);
+                        self.popup = Some(Popup::FileSortingDialog);
                     }
                     'c' | 'C' => {
                         // Copy
-                        self.input_mode = InputMode::Popup(PopupType::Input(
+                        self.popup = Some(Popup::Input(
                             String::from("Insert destination name"),
                             FileTransferActivity::callback_copy,
                         ));
                     }
                     'd' | 'D' => {
                         // Make directory
-                        self.input_mode = InputMode::Popup(PopupType::Input(
+                        self.popup = Some(Popup::Input(
                             String::from("Insert directory name"),
                             FileTransferActivity::callback_mkdir,
                         ));
@@ -201,7 +201,7 @@ impl FileTransferActivity {
                                 FsEntry::File(file) => file.name.clone(),
                             };
                             // Show delete prompt
-                            self.input_mode = InputMode::Popup(PopupType::YesNo(
+                            self.popup = Some(Popup::YesNo(
                                 format!("Delete file \"{}\"", file_name),
                                 FileTransferActivity::callback_delete_fsentry,
                                 FileTransferActivity::callback_nothing_to_do,
@@ -211,18 +211,18 @@ impl FileTransferActivity {
                     'g' | 'G' => {
                         // Goto
                         // Show input popup
-                        self.input_mode = InputMode::Popup(PopupType::Input(
+                        self.popup = Some(Popup::Input(
                             String::from("Change working directory"),
                             FileTransferActivity::callback_change_directory,
                         ));
                     }
                     'h' | 'H' => {
                         // Show help
-                        self.input_mode = InputMode::Popup(PopupType::Help);
+                        self.popup = Some(Popup::Help);
                     }
                     'i' | 'I' => {
                         // Show file info
-                        self.input_mode = InputMode::Popup(PopupType::FileInfo);
+                        self.popup = Some(Popup::FileInfo);
                     }
                     'l' | 'L' => {
                         // Reload file entries
@@ -231,7 +231,7 @@ impl FileTransferActivity {
                     }
                     'n' | 'N' => {
                         // New file
-                        self.input_mode = InputMode::Popup(PopupType::Input(
+                        self.popup = Some(Popup::Input(
                             String::from("New file"),
                             Self::callback_new_file,
                         ));
@@ -265,11 +265,11 @@ impl FileTransferActivity {
                     }
                     'q' | 'Q' => {
                         // Create quit prompt dialog
-                        self.input_mode = self.create_quit_popup();
+                        self.popup = self.create_quit_popup();
                     }
                     'r' | 'R' => {
                         // Rename
-                        self.input_mode = InputMode::Popup(PopupType::Input(
+                        self.popup = Some(Popup::Input(
                             String::from("Insert new name"),
                             FileTransferActivity::callback_rename,
                         ));
@@ -277,7 +277,7 @@ impl FileTransferActivity {
                     's' | 'S' => {
                         // Save as...
                         // Ask for input
-                        self.input_mode = InputMode::Popup(PopupType::Input(
+                        self.popup = Some(Popup::Input(
                             String::from("Save as..."),
                             FileTransferActivity::callback_save_as,
                         ));
@@ -322,7 +322,7 @@ impl FileTransferActivity {
                 KeyCode::Esc => {
                     // Handle quit event
                     // Create quit prompt dialog
-                    self.input_mode = self.create_disconnect_popup();
+                    self.popup = self.create_disconnect_popup();
                 }
                 KeyCode::Tab => self.switch_input_field(), // <TAB> switch tab
                 KeyCode::Left => self.tab = FileExplorerTab::Local, // <LEFT> switch to local tab
@@ -381,7 +381,7 @@ impl FileTransferActivity {
                             FsEntry::File(file) => file.name.clone(),
                         };
                         // Show delete prompt
-                        self.input_mode = InputMode::Popup(PopupType::YesNo(
+                        self.popup = Some(Popup::YesNo(
                             format!("Delete file \"{}\"", file_name),
                             FileTransferActivity::callback_delete_fsentry,
                             FileTransferActivity::callback_nothing_to_do,
@@ -395,18 +395,18 @@ impl FileTransferActivity {
                     }
                     'b' | 'B' => {
                         // Choose file sorting type
-                        self.input_mode = InputMode::Popup(PopupType::FileSortingDialog);
+                        self.popup = Some(Popup::FileSortingDialog);
                     }
                     'c' | 'C' => {
                         // Copy
-                        self.input_mode = InputMode::Popup(PopupType::Input(
+                        self.popup = Some(Popup::Input(
                             String::from("Insert destination name"),
                             FileTransferActivity::callback_copy,
                         ));
                     }
                     'd' | 'D' => {
                         // Make directory
-                        self.input_mode = InputMode::Popup(PopupType::Input(
+                        self.popup = Some(Popup::Input(
                             String::from("Insert directory name"),
                             FileTransferActivity::callback_mkdir,
                         ));
@@ -420,7 +420,7 @@ impl FileTransferActivity {
                                 FsEntry::File(file) => file.name.clone(),
                             };
                             // Show delete prompt
-                            self.input_mode = InputMode::Popup(PopupType::YesNo(
+                            self.popup = Some(Popup::YesNo(
                                 format!("Delete file \"{}\"", file_name),
                                 FileTransferActivity::callback_delete_fsentry,
                                 FileTransferActivity::callback_nothing_to_do,
@@ -430,18 +430,18 @@ impl FileTransferActivity {
                     'g' | 'G' => {
                         // Goto
                         // Show input popup
-                        self.input_mode = InputMode::Popup(PopupType::Input(
+                        self.popup = Some(Popup::Input(
                             String::from("Change working directory"),
                             FileTransferActivity::callback_change_directory,
                         ));
                     }
                     'h' | 'H' => {
                         // Show help
-                        self.input_mode = InputMode::Popup(PopupType::Help);
+                        self.popup = Some(Popup::Help);
                     }
                     'i' | 'I' => {
                         // Show file info
-                        self.input_mode = InputMode::Popup(PopupType::FileInfo);
+                        self.popup = Some(Popup::FileInfo);
                     }
                     'l' | 'L' => {
                         // Reload file entries
@@ -449,7 +449,7 @@ impl FileTransferActivity {
                     }
                     'n' | 'N' => {
                         // New file
-                        self.input_mode = InputMode::Popup(PopupType::Input(
+                        self.popup = Some(Popup::Input(
                             String::from("New file"),
                             Self::callback_new_file,
                         ));
@@ -476,17 +476,17 @@ impl FileTransferActivity {
                                     Err(err) => self.log_and_alert(LogLevel::Error, err),
                                 }
                                 // Put input mode back to normal
-                                self.input_mode = InputMode::Explorer;
+                                self.popup = None;
                             }
                         }
                     }
                     'q' | 'Q' => {
                         // Create quit prompt dialog
-                        self.input_mode = self.create_quit_popup();
+                        self.popup = self.create_quit_popup();
                     }
                     'r' | 'R' => {
                         // Rename
-                        self.input_mode = InputMode::Popup(PopupType::Input(
+                        self.popup = Some(Popup::Input(
                             String::from("Insert new name"),
                             FileTransferActivity::callback_rename,
                         ));
@@ -494,7 +494,7 @@ impl FileTransferActivity {
                     's' | 'S' => {
                         // Save as...
                         // Ask for input
-                        self.input_mode = InputMode::Popup(PopupType::Input(
+                        self.popup = Some(Popup::Input(
                             String::from("Save as..."),
                             FileTransferActivity::callback_save_as,
                         ));
@@ -539,7 +539,7 @@ impl FileTransferActivity {
                 KeyCode::Esc => {
                     // Handle quit event
                     // Create quit prompt dialog
-                    self.input_mode = self.create_disconnect_popup();
+                    self.popup = self.create_disconnect_popup();
                 }
                 KeyCode::Tab => self.switch_input_field(), // <TAB> switch tab
                 KeyCode::Down => {
@@ -578,7 +578,7 @@ impl FileTransferActivity {
                 KeyCode::Char(ch) => match ch {
                     'q' | 'Q' => {
                         // Create quit prompt dialog
-                        self.input_mode = self.create_quit_popup();
+                        self.popup = self.create_quit_popup();
                     }
                     _ => { /* Nothing to do */ }
                 },
@@ -590,17 +590,17 @@ impl FileTransferActivity {
     /// ### handle_input_event_mode_explorer
     ///
     /// Input event handler for popup mode. Handler is then based on Popup type
-    fn handle_input_event_mode_popup(&mut self, ev: &InputEvent, popup: PopupType) {
+    fn handle_input_event_mode_popup(&mut self, ev: &InputEvent, popup: Popup) {
         match popup {
-            PopupType::Alert(_, _) => self.handle_input_event_mode_popup_alert(ev),
-            PopupType::FileInfo => self.handle_input_event_mode_popup_fileinfo(ev),
-            PopupType::Fatal(_) => self.handle_input_event_mode_popup_fatal(ev),
-            PopupType::FileSortingDialog => self.handle_input_event_mode_popup_file_sorting(ev),
-            PopupType::Help => self.handle_input_event_mode_popup_help(ev),
-            PopupType::Input(_, cb) => self.handle_input_event_mode_popup_input(ev, cb),
-            PopupType::Progress(_) => self.handle_input_event_mode_popup_progress(ev),
-            PopupType::Wait(_) => self.handle_input_event_mode_popup_wait(ev),
-            PopupType::YesNo(_, yes_cb, no_cb) => {
+            Popup::Alert(_, _) => self.handle_input_event_mode_popup_alert(ev),
+            Popup::FileInfo => self.handle_input_event_mode_popup_fileinfo(ev),
+            Popup::Fatal(_) => self.handle_input_event_mode_popup_fatal(ev),
+            Popup::FileSortingDialog => self.handle_input_event_mode_popup_file_sorting(ev),
+            Popup::Help => self.handle_input_event_mode_popup_help(ev),
+            Popup::Input(_, cb) => self.handle_input_event_mode_popup_input(ev, cb),
+            Popup::Progress(_) => self.handle_input_event_mode_popup_progress(ev),
+            Popup::Wait(_) => self.handle_input_event_mode_popup_wait(ev),
+            Popup::YesNo(_, yes_cb, no_cb) => {
                 self.handle_input_event_mode_popup_yesno(ev, yes_cb, no_cb)
             }
         }
@@ -614,7 +614,7 @@ impl FileTransferActivity {
         if let InputEvent::Key(key) = ev {
             if matches!(key.code, KeyCode::Esc | KeyCode::Enter) {
                 // Set input mode back to explorer
-                self.input_mode = InputMode::Explorer;
+                self.popup = None;
             }
         }
     }
@@ -627,7 +627,7 @@ impl FileTransferActivity {
         if let InputEvent::Key(key) = ev {
             if matches!(key.code, KeyCode::Esc | KeyCode::Enter) {
                 // Set input mode back to explorer
-                self.input_mode = InputMode::Explorer;
+                self.popup = None;
             }
         }
     }
@@ -654,7 +654,7 @@ impl FileTransferActivity {
             match key.code {
                 KeyCode::Esc | KeyCode::Enter => {
                     // Exit
-                    self.input_mode = InputMode::Explorer;
+                    self.popup = None;
                 }
                 KeyCode::Right => {
                     // Update sorting mode
@@ -691,7 +691,7 @@ impl FileTransferActivity {
         if let InputEvent::Key(key) = ev {
             if matches!(key.code, KeyCode::Esc | KeyCode::Enter) {
                 // Set input mode back to explorer
-                self.input_mode = InputMode::Explorer;
+                self.popup = None;
             }
         }
     }
@@ -708,7 +708,7 @@ impl FileTransferActivity {
                     // Clear current input text
                     self.input_txt.clear();
                     // Set mode back to explorer
-                    self.input_mode = InputMode::Explorer;
+                    self.popup = None;
                 }
                 KeyCode::Enter => {
                     // Submit
@@ -716,7 +716,7 @@ impl FileTransferActivity {
                     // Clear current input text
                     self.input_txt.clear();
                     // Set mode back to explorer BEFORE CALLBACKS!!! Callback can then overwrite this, clever uh?
-                    self.input_mode = InputMode::Explorer;
+                    self.popup = None;
                     // Call cb
                     cb(self, input_text);
                 }
@@ -765,7 +765,7 @@ impl FileTransferActivity {
             match key.code {
                 KeyCode::Enter => {
                     // @! Set input mode to Explorer BEFORE CALLBACKS!!! Callback can then overwrite this, clever uh?
-                    self.input_mode = InputMode::Explorer;
+                    self.popup = None;
                     // Check if user selected yes or not
                     match self.choice_opt {
                         DialogYesNoOption::No => no_cb(self),
