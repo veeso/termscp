@@ -397,7 +397,7 @@ impl AuthActivity {
             List::new(hosts)
                 .block(
                     Block::default()
-                        .borders(Borders::TOP | Borders::BOTTOM | Borders::RIGHT)
+                        .borders(Borders::ALL)
                         .border_style(match self.input_form {
                             InputForm::Recents => Style::default().fg(Color::LightBlue),
                             _ => Style::default(),
