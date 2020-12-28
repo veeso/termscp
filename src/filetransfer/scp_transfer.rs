@@ -772,7 +772,7 @@ impl FileTransfer for ScpFileTransfer {
                     (mtime, atime)
                 };
                 match session.scp_send(file_name, mode, local.size as u64, Some(times)) {
-                    Ok(channel) => Ok(Box::new(BufWriter::with_capacity(8192, channel))),
+                    Ok(channel) => Ok(Box::new(BufWriter::with_capacity(65536, channel))),
                     Err(err) => Err(FileTransferError::new_ex(
                         FileTransferErrorType::ProtocolError,
                         format!("{}", err),
@@ -795,7 +795,7 @@ impl FileTransfer for ScpFileTransfer {
                 // Set blocking to true
                 session.set_blocking(true);
                 match session.scp_recv(file.abs_path.as_path()) {
-                    Ok(reader) => Ok(Box::new(BufReader::with_capacity(8192, reader.0))),
+                    Ok(reader) => Ok(Box::new(BufReader::with_capacity(65536, reader.0))),
                     Err(err) => Err(FileTransferError::new_ex(
                         FileTransferErrorType::ProtocolError,
                         format!("{}", err),

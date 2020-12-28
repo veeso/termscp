@@ -578,7 +578,7 @@ impl FileTransfer for SftpFileTransfer {
                 };
                 // Open remote file
                 match sftp.open(remote_path.as_path()) {
-                    Ok(file) => Ok(Box::new(BufReader::with_capacity(8192, file))),
+                    Ok(file) => Ok(Box::new(BufReader::with_capacity(65536, file))),
                     Err(err) => Err(FileTransferError::new_ex(
                         FileTransferErrorType::NoSuchFileOrDirectory,
                         format!("{}", err),
