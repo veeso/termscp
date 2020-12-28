@@ -203,7 +203,11 @@ impl TransferStates {
         // bytes_written : elapsed_secs = x : 1
         let elapsed_secs: u64 = self.started.elapsed().as_secs();
         match elapsed_secs {
-            0 => 0, // NOTE: would divide by 0 :D
+            0 => match self.bytes_written == self.bytes_total {
+                // NOTE: would divide by 0 :D
+                true => self.bytes_total as u64, // Download completed in less than 1 second
+                false => 0,                      // 0 B/S
+            },
             _ => self.bytes_written as u64 / elapsed_secs,
         }
     }
