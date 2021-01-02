@@ -18,7 +18,7 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > /tmp/rust.sh && 
     chmod +x /tmp/rust.sh && \
     /tmp/rust.sh -y
 # Clone repository
-RUN git clone https://github.com/ChristianVisintin/termscp.git
+RUN git clone https://github.com/veeso/termscp.git
 # Set workdir to termscp
 WORKDIR /usr/src/termscp/
 # Install cargo arxch

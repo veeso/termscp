@@ -17,7 +17,7 @@ Please note we have a [code of conduct](CODE_OF_CONDUCT.md), please follow it in
 
 At the moment, these kind of contributions are more appreciated and should be preferred:
 
-- Fix for issues described in [Known Issues](./README.md#known-issues) or [issues reported by the community](https://github.com/ChristianVisintin/termscp/issues)
+- Fix for issues described in [Known Issues](./README.md#known-issues) or [issues reported by the community](https://github.com/veeso/termscp/issues)
 - New file transfers: for further details see [Implementing File Transfer](#implementing-file-transfers)
 - Code optimizations: any optimization to the code is welcome
 

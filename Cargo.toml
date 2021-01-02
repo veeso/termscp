@@ -7,8 +7,8 @@ license = "GPL-3.0"
 keywords = ["scp-client", "sftp-client", "ftp-client", "winscp", "command-line-utility"]
 categories = ["command-line-utilities"]
 description = "TermSCP is a SCP/SFTP/FTPS client for command line with an integrated UI to explore the remote file system. Basically WinSCP on a terminal."
-homepage = "https://github.com/ChristianVisintin/termscp"
-repository = "https://github.com/ChristianVisintin/termscp"
+homepage = "https://github.com/veeso/termscp"
+repository = "https://github.com/veeso/termscp"
 documentation = "https://docs.rs/termscp"
 readme = "README.md"
 
