@@ -57,7 +57,7 @@ use filetransfer::FileTransferProtocol;
 fn print_usage(opts: Options) {
     let brief = String::from("Usage: termscp [options]... [protocol://user@address:port]");
     print!("{}", opts.usage(&brief));
-    println!("\nPlease, report issues to <https://github.com/ChristianVisintin/termscp>");
+    println!("\nPlease, report issues to <https://github.com/veeso/termscp>");
 }
 
 fn main() {

@@ -17,7 +17,7 @@ Please note we have a [code of conduct](./CODE_OF_CONDUCT.md), please follow it 
 
 At the moment, these kind of contributions are more appreciated and should be preferred:
 
-- Fix for issues described in [Known Issues](./README.md#known-issues) or [issues reported by the community](https://github.com/ChristianVisintin/TermSCP/issues)
+- Fix for issues described in [Known Issues](./README.md#known-issues) or [issues reported by the community](https://github.com/veeso/termscp/issues)
 - New file transfers: for further details see [Implementing File Transfer](#implementing-file-transfers)
 - Improvements to translators: any improvement to transliteration is accepted if makes sense, consider that my implementations could be not 100% correct (and probably they're not), indeed consider that I don't speak all these languages (tbh I only can speak Russian as a language with a different alphabet from latin - and I can't even speak it very well).
 - Code optimizations: any optimization to the code is welcome
