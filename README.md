@@ -369,6 +369,10 @@ TermSCP is powered by these aweseome projects:
 
 ![Bookmarks](assets/images/bookmarks.gif)
 
+> Setup
+
+![Setup](assets/images/config.gif)
+
 > Text editor
 
 ![TextEditor](assets/images/text-editor.gif)
