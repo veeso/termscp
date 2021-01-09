@@ -1,12 +1,12 @@
 # TermSCP
 
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![Stars](https://img.shields.io/github/stars/veeso/termscp.svg)](https://github.com/veeso/termscp) [![Downloads](https://img.shields.io/crates/d/termscp.svg)](https://crates.io/crates/termscp) [![Crates.io](https://img.shields.io/badge/crates.io-v0.2.0-orange.svg)](https://crates.io/crates/termscp) [![Docs](https://docs.rs/termscp/badge.svg)](https://docs.rs/termscp)  
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![Stars](https://img.shields.io/github/stars/veeso/termscp.svg)](https://github.com/veeso/termscp) [![Downloads](https://img.shields.io/crates/d/termscp.svg)](https://crates.io/crates/termscp) [![Crates.io](https://img.shields.io/badge/crates.io-v0.3.0-orange.svg)](https://crates.io/crates/termscp) [![Docs](https://docs.rs/termscp/badge.svg)](https://docs.rs/termscp)  
 
 [![Build](https://github.com/veeso/termscp/workflows/Linux/badge.svg)](https://github.com/veeso/termscp/actions) [![Build](https://github.com/veeso/termscp/workflows/MacOS/badge.svg)](https://github.com/veeso/termscp/actions) [![Build](https://github.com/veeso/termscp/workflows/Windows/badge.svg)](https://github.com/veeso/termscp/actions) [![codecov](https://codecov.io/gh/veeso/termscp/branch/main/graph/badge.svg?token=au67l7nQah)](https://codecov.io/gh/veeso/termscp)
 
 ~ Basically, WinSCP on a terminal ~  
 Developed by Christian Visintin  
-Current version: 0.2.0 (21/12/2020)
+Current version: 0.3.0 (10/01/2021)
 
 ---
 
@@ -85,8 +85,8 @@ cargo install termscp
 
 ### Deb package 📦
 
-Get `deb` package from [HERE](https://github.com/veeso/termscp/releases/latest/download/termscp_0.2.0_amd64.deb)
-or run `wget https://github.com/veeso/termscp/releases/latest/download/termscp_0.2.0_amd64.deb`
+Get `deb` package from [HERE](https://github.com/veeso/termscp/releases/latest/download/termscp_0.3.0_amd64.deb)
+or run `wget https://github.com/veeso/termscp/releases/latest/download/termscp_0.3.0_amd64.deb`
 
 then install through dpkg:
 
@@ -98,8 +98,8 @@ gdebi termscp_*.deb
 
 ### RPM package 📦
 
-Get `rpm` package from [HERE](https://github.com/veeso/termscp/releases/latest/download/termscp-0.2.0-1.x86_64.rpm)
-or run `wget https://github.com/veeso/termscp/releases/latest/download/termscp-0.2.0-1.x86_64.rpm`
+Get `rpm` package from [HERE](https://github.com/veeso/termscp/releases/latest/download/termscp-0.3.0-1.x86_64.rpm)
+or run `wget https://github.com/veeso/termscp/releases/latest/download/termscp-0.3.0-1.x86_64.rpm`
 
 then install through rpm:
 
@@ -125,7 +125,7 @@ Start PowerShell as administrator and run
 choco install termscp
 ```
 
-Alternatively you can download the ZIP file from [HERE](https://github.com/veeso/termscp/releases/latest/download/termscp.0.2.0.nupkg)
+Alternatively you can download the ZIP file from [HERE](https://github.com/veeso/termscp/releases/latest/download/termscp.0.3.0.nupkg)
 
 and then with PowerShell started with administrator previleges, run:
 
@@ -319,15 +319,13 @@ The developer documentation can be found on Rust Docs at <https://docs.rs/termsc
 
 ## Known issues 🧻
 
-- Ftp:
-  - Time in explorer is `1 Jan 1970`, but shouldn't be: that's because chrono can't parse date in a different locale. So if your server has a locale different from the one on your machine, it won't be able to parse the date.
-  - Some servers don't work: yes, some kind of ftp server don't work correctly, sometimes it won't display any files in the directories, some other times uploading files will fail. Up to date, `vsftpd` is the only one server which I saw working correctly with TermSCP. Am I going to solve this? I'd like to, but it's not my fault at all. The library used for FTP, which is [rust-ftp](https://github.com/veeso/rust-ftp4) has been abandoned for 2 years and only in december 2020, the maintainer is back to work. I hope this issue will be solved soon.
-- `NoSuchFileOrDirectory` on connect: let me guess, you're running on WSL and you've installed termscp through cargo. I know about this issue and it's a glitch of WSL I guess. Don't worry about it, just move the termscp executable into another PATH location, such as `/usr/bin`, or install it through the appropriate package format (e.g. deb).
+- `NoSuchFileOrDirectory` on connect (WSL): I know about this issue and it's a glitch of WSL I guess. Don't worry about it, just move the termscp executable into another PATH location, such as `/usr/bin`, or install it through the appropriate package format (e.g. deb).
 
 ---
 
 ## Upcoming Features 🧪
 
+- **Custom explorer format**: possibility to customize the file line in the explorer directly from configuration, with the possibility to choose with information to display.
 - **Find command in explorer**: possibility to search for files in explorers.
 
 ---
@@ -352,6 +350,7 @@ TermSCP is powered by these aweseome projects:
 - [crossterm](https://github.com/crossterm-rs/crossterm)
 - [edit](https://github.com/milkey-mouse/edit)
 - [rpassword](https://github.com/conradkleinespel/rpassword)
+- [rust-ftp](https://github.com/mattnenterprise/rust-ftp)
 - [ssh2-rs](https://github.com/alexcrichton/ssh2-rs)
 - [textwrap](https://github.com/mgeisler/textwrap)
 - [tui-rs](https://github.com/fdehau/tui-rs)

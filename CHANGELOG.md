@@ -12,7 +12,7 @@
 
 ## 0.3.0
 
-FIXME: Released on
+ Released on 10/01/2021
 
 > The SSH Key Storage Update
 
