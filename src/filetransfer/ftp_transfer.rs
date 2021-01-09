@@ -705,6 +705,7 @@ impl FileTransfer for FtpFileTransfer {
 mod tests {
 
     use super::*;
+    use crate::utils::fmt::fmt_time;
     use std::time::Duration;
 
     #[test]
@@ -778,25 +779,16 @@ mod tests {
             assert_eq!(file.group, Some(9));
             assert_eq!(file.unix_pex.unwrap(), (7, 5, 5));
             assert_eq!(
-                file.last_access_time
-                    .duration_since(SystemTime::UNIX_EPOCH)
-                    .ok()
-                    .unwrap(),
-                Duration::from_secs(1604593920)
+                fmt_time(file.last_access_time, "%m %d %M").as_str(),
+                "11 05 32"
             );
             assert_eq!(
-                file.last_change_time
-                    .duration_since(SystemTime::UNIX_EPOCH)
-                    .ok()
-                    .unwrap(),
-                Duration::from_secs(1604593920)
+                fmt_time(file.last_change_time, "%m %d %M").as_str(),
+                "11 05 32"
             );
             assert_eq!(
-                file.creation_time
-                    .duration_since(SystemTime::UNIX_EPOCH)
-                    .ok()
-                    .unwrap(),
-                Duration::from_secs(1604593920)
+                fmt_time(file.creation_time, "%m %d %M").as_str(),
+                "11 05 32"
             );
         } else {
             panic!("Expected file, got directory");

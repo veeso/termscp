@@ -200,6 +200,7 @@ pub fn parse_datetime(tm: &str, fmt: &str) -> Result<SystemTime, ParseError> {
 mod tests {
 
     use super::*;
+    use crate::utils::fmt::fmt_time;
 
     #[test]
     fn test_utils_parse_remote_opt() {
@@ -294,22 +295,24 @@ mod tests {
     fn test_utils_parse_lstime() {
         // Good cases
         assert_eq!(
-            parse_lstime("Nov 5 16:32", "%b %d %Y", "%b %d %H:%M")
-                .ok()
-                .unwrap()
-                .duration_since(SystemTime::UNIX_EPOCH)
-                .ok()
-                .unwrap(),
-            Duration::from_secs(1604593920)
+            fmt_time(
+                parse_lstime("Nov 5 16:32", "%b %d %Y", "%b %d %H:%M")
+                    .ok()
+                    .unwrap(),
+                "%m %d %M"
+            )
+            .as_str(),
+            "11 05 32"
         );
         assert_eq!(
-            parse_lstime("Dec 2 21:32", "%b %d %Y", "%b %d %H:%M")
-                .ok()
-                .unwrap()
-                .duration_since(SystemTime::UNIX_EPOCH)
-                .ok()
-                .unwrap(),
-            Duration::from_secs(1606944720)
+            fmt_time(
+                parse_lstime("Dec 2 21:32", "%b %d %Y", "%b %d %H:%M")
+                    .ok()
+                    .unwrap(),
+                "%m %d %M"
+            )
+            .as_str(),
+            "12 02 32"
         );
         assert_eq!(
             parse_lstime("Nov 5 2018", "%b %d %Y", "%b %d %H:%M")
