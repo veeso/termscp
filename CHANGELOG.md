@@ -49,10 +49,12 @@ FIXME: Released on
 - Bugfix:
   - SCP client didn't show file types for files
   - FTP client didn't show file types for files
+  - FTP file transfer not working properly with `STOR` and `RETR`.
   - Fixed `0 B/S` transfer rate displayed after completing download in less than 1 second
 - Dependencies:
   - added `bitflags 1.2.1`
   - removed `data-encoding`
+  - updated `ftp` to `4.0.2`
   - updated `rand` to `0.8.0`
   - removed `ring`
   - updated `textwrap` to `0.13.1`

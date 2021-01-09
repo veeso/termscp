@@ -22,7 +22,7 @@ content_inspector = "0.2.4"
 crossterm = "0.18.2"
 dirs = "3.0.1"
 edit = "0.1.2"
-ftp4 = { version = "^4.0.1", features = ["secure"] }
+ftp4 = { version = "^4.0.2", features = ["secure"] }
 getopts = "0.2.21"
 hostname = "0.3.1"
 lazy_static = "1.4.0"
