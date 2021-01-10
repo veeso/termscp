@@ -68,6 +68,7 @@ It happens quite often to me, when using SCP at work to forget the path of a fil
 - Compatible with Windows, Linux, BSD and MacOS
 - Written in Rust
 - Easy to extend with new file transfers protocols
+- Developed keeping an eye on performance
 
 ---
 
