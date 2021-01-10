@@ -1,6 +1,10 @@
+//! ## FileTransferActivity
+//!
+//! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
+
 /*
 *
-*   Copyright (C) 2020 Christian Visintin - christian.visintin1997@gmail.com
+*   Copyright (C) 2020-2021Christian Visintin - christian.visintin1997@gmail.com
 *
 * 	This file is part of "TermSCP"
 *
@@ -19,13 +23,15 @@
 *
 */
 
+// Deps
 extern crate tempfile;
-
+// Local
 use super::{
     DialogCallback, DialogYesNoOption, FileExplorerTab, FileTransferActivity, FsEntry, InputEvent,
-    InputField, InputMode, LogLevel, OnInputSubmitCallback, PopupType,
+    InputField, LogLevel, OnInputSubmitCallback, Popup,
 };
-
+use crate::fs::explorer::{FileExplorer, FileSorting};
+// Ext
 use crossterm::event::{KeyCode, KeyModifiers};
 use std::path::PathBuf;
 
@@ -55,16 +61,16 @@ impl FileTransferActivity {
     /// ### handle_input_event
     ///
     /// Handle input event based on current input mode
-    pub(super) fn handle_input_event(&mut self, ev: &InputEvent) {
+    fn handle_input_event(&mut self, ev: &InputEvent) {
         // NOTE: this is necessary due to this <https://github.com/rust-lang/rust/issues/59159>
         // NOTE: Do you want my opinion about that issue? It's a bs and doesn't make any sense.
-        let popup: Option<PopupType> = match &self.input_mode {
-            InputMode::Popup(ptype) => Some(ptype.clone()),
+        let popup: Option<Popup> = match &self.popup {
+            Some(ptype) => Some(ptype.clone()),
             _ => None,
         };
-        match &self.input_mode {
-            InputMode::Explorer => self.handle_input_event_mode_explorer(ev),
-            InputMode::Popup(_) => {
+        match &self.popup {
+            None => self.handle_input_event_mode_explorer(ev),
+            Some(_) => {
                 if let Some(popup) = popup {
                     self.handle_input_event_mode_popup(ev, popup);
                 }
@@ -75,7 +81,7 @@ impl FileTransferActivity {
     /// ### handle_input_event_mode_explorer
     ///
     /// Input event handler for explorer mode
-    pub(super) fn handle_input_event_mode_explorer(&mut self, ev: &InputEvent) {
+    fn handle_input_event_mode_explorer(&mut self, ev: &InputEvent) {
         // Match input field
         match self.input_field {
             InputField::Explorer => match self.tab {
@@ -90,53 +96,40 @@ impl FileTransferActivity {
     /// ### handle_input_event_mode_explorer_tab_local
     ///
     /// Input event handler for explorer mode when localhost tab is selected
-    pub(super) fn handle_input_event_mode_explorer_tab_local(&mut self, ev: &InputEvent) {
+    fn handle_input_event_mode_explorer_tab_local(&mut self, ev: &InputEvent) {
         // Match events
         if let InputEvent::Key(key) = ev {
             match key.code {
                 KeyCode::Esc => {
                     // Handle quit event
                     // Create quit prompt dialog
-                    self.input_mode = self.create_disconnect_popup();
+                    self.popup = self.create_disconnect_popup();
                 }
                 KeyCode::Tab => self.switch_input_field(), // <TAB> switch tab
                 KeyCode::Right => self.tab = FileExplorerTab::Remote, // <RIGHT> switch to right tab
                 KeyCode::Up => {
-                    // Move index up; or move to the last element if 0
-                    self.local.index = match self.local.index {
-                        0 => self.local.files.len() - 1,
-                        _ => self.local.index - 1,
-                    };
+                    // Decrement index
+                    self.local.decr_index();
                 }
                 KeyCode::Down => {
-                    // Move index down
-                    if self.local.index + 1 < self.local.files.len() {
-                        self.local.index += 1;
-                    } else {
-                        self.local.index = 0; // Move at the beginning of the list
-                    }
+                    // Increment index
+                    self.local.incr_index();
                 }
                 KeyCode::PageUp => {
-                    // Move index up (fast)
-                    if self.local.index > 8 {
-                        self.local.index -= 8; // Decrease by `8` if possible
-                    } else {
-                        self.local.index = 0; // Set to 0 otherwise
-                    }
+                    // Decrement index by 8
+                    self.local.decr_index_by(8);
                 }
                 KeyCode::PageDown => {
-                    // Move index down (fast)
-                    if self.local.index + 8 >= self.local.files.len() {
-                        // If overflows, set to size
-                        self.local.index = self.local.files.len() - 1;
-                    } else {
-                        self.local.index += 8; // Increase by `8`
-                    }
+                    // Increment index by 8
+                    self.local.incr_index_by(8);
                 }
                 KeyCode::Enter => {
                     // Match selected file
-                    let local_files: Vec<FsEntry> = self.local.files.clone();
-                    if let Some(entry) = local_files.get(self.local.index) {
+                    let mut entry: Option<FsEntry> = None;
+                    if let Some(e) = self.local.get_current_file() {
+                        entry = Some(e.clone());
+                    }
+                    if let Some(entry) = entry {
                         // If directory, enter directory, otherwise check if symlink
                         match entry {
                             FsEntry::Directory(dir) => {
@@ -162,14 +155,14 @@ impl FileTransferActivity {
                 }
                 KeyCode::Delete => {
                     // Get file at index
-                    if let Some(entry) = self.local.files.get(self.local.index) {
+                    if let Some(entry) = self.local.get_current_file() {
                         // Get file name
                         let file_name: String = match entry {
                             FsEntry::Directory(dir) => dir.name.clone(),
                             FsEntry::File(file) => file.name.clone(),
                         };
                         // Show delete prompt
-                        self.input_mode = InputMode::Popup(PopupType::YesNo(
+                        self.popup = Some(Popup::YesNo(
                             format!("Delete file \"{}\"", file_name),
                             FileTransferActivity::callback_delete_fsentry,
                             FileTransferActivity::callback_nothing_to_do,
@@ -177,30 +170,38 @@ impl FileTransferActivity {
                     }
                 }
                 KeyCode::Char(ch) => match ch {
+                    'a' | 'A' => {
+                        // Toggle hidden files
+                        self.local.toggle_hidden_files();
+                    }
+                    'b' | 'B' => {
+                        // Choose file sorting type
+                        self.popup = Some(Popup::FileSortingDialog);
+                    }
                     'c' | 'C' => {
                         // Copy
-                        self.input_mode = InputMode::Popup(PopupType::Input(
+                        self.popup = Some(Popup::Input(
                             String::from("Insert destination name"),
                             FileTransferActivity::callback_copy,
                         ));
                     }
                     'd' | 'D' => {
                         // Make directory
-                        self.input_mode = InputMode::Popup(PopupType::Input(
+                        self.popup = Some(Popup::Input(
                             String::from("Insert directory name"),
                             FileTransferActivity::callback_mkdir,
                         ));
                     }
                     'e' | 'E' => {
                         // Get file at index
-                        if let Some(entry) = self.local.files.get(self.local.index) {
+                        if let Some(entry) = self.local.get_current_file() {
                             // Get file name
                             let file_name: String = match entry {
                                 FsEntry::Directory(dir) => dir.name.clone(),
                                 FsEntry::File(file) => file.name.clone(),
                             };
                             // Show delete prompt
-                            self.input_mode = InputMode::Popup(PopupType::YesNo(
+                            self.popup = Some(Popup::YesNo(
                                 format!("Delete file \"{}\"", file_name),
                                 FileTransferActivity::callback_delete_fsentry,
                                 FileTransferActivity::callback_nothing_to_do,
@@ -210,30 +211,36 @@ impl FileTransferActivity {
                     'g' | 'G' => {
                         // Goto
                         // Show input popup
-                        self.input_mode = InputMode::Popup(PopupType::Input(
+                        self.popup = Some(Popup::Input(
                             String::from("Change working directory"),
                             FileTransferActivity::callback_change_directory,
                         ));
                     }
                     'h' | 'H' => {
                         // Show help
-                        self.input_mode = InputMode::Popup(PopupType::Help);
+                        self.popup = Some(Popup::Help);
                     }
                     'i' | 'I' => {
                         // Show file info
-                        self.input_mode = InputMode::Popup(PopupType::FileInfo);
+                        self.popup = Some(Popup::FileInfo);
                     }
                     'l' | 'L' => {
                         // Reload file entries
                         let pwd: PathBuf = self.local.wrkdir.clone();
                         self.local_scan(pwd.as_path());
                     }
+                    'n' | 'N' => {
+                        // New file
+                        self.popup = Some(Popup::Input(
+                            String::from("New file"),
+                            Self::callback_new_file,
+                        ));
+                    }
                     'o' | 'O' => {
                         // Edit local file
-                        if self.local.files.get(self.local.index).is_some() {
+                        if self.local.get_current_file().is_some() {
                             // Clone entry due to mutable stuff...
-                            let fsentry: FsEntry =
-                                self.local.files.get(self.local.index).unwrap().clone();
+                            let fsentry: FsEntry = self.local.get_current_file().unwrap().clone();
                             // Check if file
                             if fsentry.is_file() {
                                 self.log(
@@ -258,11 +265,11 @@ impl FileTransferActivity {
                     }
                     'q' | 'Q' => {
                         // Create quit prompt dialog
-                        self.input_mode = self.create_quit_popup();
+                        self.popup = self.create_quit_popup();
                     }
                     'r' | 'R' => {
                         // Rename
-                        self.input_mode = InputMode::Popup(PopupType::Input(
+                        self.popup = Some(Popup::Input(
                             String::from("Insert new name"),
                             FileTransferActivity::callback_rename,
                         ));
@@ -270,7 +277,7 @@ impl FileTransferActivity {
                     's' | 'S' => {
                         // Save as...
                         // Ask for input
-                        self.input_mode = InputMode::Popup(PopupType::Input(
+                        self.popup = Some(Popup::Input(
                             String::from("Save as..."),
                             FileTransferActivity::callback_save_as,
                         ));
@@ -287,10 +294,9 @@ impl FileTransferActivity {
                         // Get pwd
                         let wrkdir: PathBuf = self.remote.wrkdir.clone();
                         // Get file and clone (due to mutable / immutable stuff...)
-                        if self.local.files.get(self.local.index).is_some() {
-                            let file: FsEntry =
-                                self.local.files.get(self.local.index).unwrap().clone();
-                            let name: String = file.get_name();
+                        if self.local.get_current_file().is_some() {
+                            let file: FsEntry = self.local.get_current_file().unwrap().clone();
+                            let name: String = file.get_name().to_string();
                             // Call upload; pass realfile, keep link name
                             self.filetransfer_send(
                                 &file.get_realfile(),
@@ -309,53 +315,40 @@ impl FileTransferActivity {
     /// ### handle_input_event_mode_explorer_tab_local
     ///
     /// Input event handler for explorer mode when remote tab is selected
-    pub(super) fn handle_input_event_mode_explorer_tab_remote(&mut self, ev: &InputEvent) {
+    fn handle_input_event_mode_explorer_tab_remote(&mut self, ev: &InputEvent) {
         // Match events
         if let InputEvent::Key(key) = ev {
             match key.code {
                 KeyCode::Esc => {
                     // Handle quit event
                     // Create quit prompt dialog
-                    self.input_mode = self.create_disconnect_popup();
+                    self.popup = self.create_disconnect_popup();
                 }
                 KeyCode::Tab => self.switch_input_field(), // <TAB> switch tab
                 KeyCode::Left => self.tab = FileExplorerTab::Local, // <LEFT> switch to local tab
                 KeyCode::Up => {
-                    // Move index up; or move to the last element if 0
-                    self.remote.index = match self.remote.index {
-                        0 => self.remote.files.len() - 1,
-                        _ => self.remote.index - 1,
-                    };
+                    // Decrement index
+                    self.remote.decr_index();
                 }
                 KeyCode::Down => {
-                    // Move index down
-                    if self.remote.index + 1 < self.remote.files.len() {
-                        self.remote.index += 1;
-                    } else {
-                        self.remote.index = 0; // Move at the beginning of the list
-                    }
+                    // Increment index
+                    self.remote.incr_index();
                 }
                 KeyCode::PageUp => {
-                    // Move index up (fast)
-                    if self.remote.index > 8 {
-                        self.remote.index -= 8; // Decrease by `8` if possible
-                    } else {
-                        self.remote.index = 0; // Set to 0 otherwise
-                    }
+                    // Decrement index by 8
+                    self.remote.decr_index_by(8);
                 }
                 KeyCode::PageDown => {
-                    // Move index down (fast)
-                    if self.remote.index + 8 >= self.remote.files.len() {
-                        // If overflows, set to size
-                        self.remote.index = self.remote.files.len() - 1;
-                    } else {
-                        self.remote.index += 8; // Increase by `8`
-                    }
+                    // Increment index by 8
+                    self.remote.incr_index_by(8);
                 }
                 KeyCode::Enter => {
                     // Match selected file
-                    let files: Vec<FsEntry> = self.remote.files.clone();
-                    if let Some(entry) = files.get(self.remote.index) {
+                    let mut entry: Option<FsEntry> = None;
+                    if let Some(e) = self.remote.get_current_file() {
+                        entry = Some(e.clone());
+                    }
+                    if let Some(entry) = entry {
                         // If directory, enter directory; if file, check if is symlink
                         match entry {
                             FsEntry::Directory(dir) => {
@@ -381,14 +374,14 @@ impl FileTransferActivity {
                 }
                 KeyCode::Delete => {
                     // Get file at index
-                    if let Some(entry) = self.remote.files.get(self.remote.index) {
+                    if let Some(entry) = self.remote.get_current_file() {
                         // Get file name
                         let file_name: String = match entry {
                             FsEntry::Directory(dir) => dir.name.clone(),
                             FsEntry::File(file) => file.name.clone(),
                         };
                         // Show delete prompt
-                        self.input_mode = InputMode::Popup(PopupType::YesNo(
+                        self.popup = Some(Popup::YesNo(
                             format!("Delete file \"{}\"", file_name),
                             FileTransferActivity::callback_delete_fsentry,
                             FileTransferActivity::callback_nothing_to_do,
@@ -396,30 +389,38 @@ impl FileTransferActivity {
                     }
                 }
                 KeyCode::Char(ch) => match ch {
+                    'a' | 'A' => {
+                        // Toggle hidden files
+                        self.remote.toggle_hidden_files();
+                    }
+                    'b' | 'B' => {
+                        // Choose file sorting type
+                        self.popup = Some(Popup::FileSortingDialog);
+                    }
                     'c' | 'C' => {
                         // Copy
-                        self.input_mode = InputMode::Popup(PopupType::Input(
+                        self.popup = Some(Popup::Input(
                             String::from("Insert destination name"),
                             FileTransferActivity::callback_copy,
                         ));
                     }
                     'd' | 'D' => {
                         // Make directory
-                        self.input_mode = InputMode::Popup(PopupType::Input(
+                        self.popup = Some(Popup::Input(
                             String::from("Insert directory name"),
                             FileTransferActivity::callback_mkdir,
                         ));
                     }
                     'e' | 'E' => {
                         // Get file at index
-                        if let Some(entry) = self.remote.files.get(self.remote.index) {
+                        if let Some(entry) = self.remote.get_current_file() {
                             // Get file name
                             let file_name: String = match entry {
                                 FsEntry::Directory(dir) => dir.name.clone(),
                                 FsEntry::File(file) => file.name.clone(),
                             };
                             // Show delete prompt
-                            self.input_mode = InputMode::Popup(PopupType::YesNo(
+                            self.popup = Some(Popup::YesNo(
                                 format!("Delete file \"{}\"", file_name),
                                 FileTransferActivity::callback_delete_fsentry,
                                 FileTransferActivity::callback_nothing_to_do,
@@ -429,29 +430,35 @@ impl FileTransferActivity {
                     'g' | 'G' => {
                         // Goto
                         // Show input popup
-                        self.input_mode = InputMode::Popup(PopupType::Input(
+                        self.popup = Some(Popup::Input(
                             String::from("Change working directory"),
                             FileTransferActivity::callback_change_directory,
                         ));
                     }
                     'h' | 'H' => {
                         // Show help
-                        self.input_mode = InputMode::Popup(PopupType::Help);
+                        self.popup = Some(Popup::Help);
                     }
                     'i' | 'I' => {
                         // Show file info
-                        self.input_mode = InputMode::Popup(PopupType::FileInfo);
+                        self.popup = Some(Popup::FileInfo);
                     }
                     'l' | 'L' => {
                         // Reload file entries
                         self.reload_remote_dir();
                     }
+                    'n' | 'N' => {
+                        // New file
+                        self.popup = Some(Popup::Input(
+                            String::from("New file"),
+                            Self::callback_new_file,
+                        ));
+                    }
                     'o' | 'O' => {
                         // Edit remote file
-                        if self.remote.files.get(self.remote.index).is_some() {
+                        if self.remote.get_current_file().is_some() {
                             // Clone entry due to mutable stuff...
-                            let fsentry: FsEntry =
-                                self.remote.files.get(self.remote.index).unwrap().clone();
+                            let fsentry: FsEntry = self.remote.get_current_file().unwrap().clone();
                             // Check if file
                             if let FsEntry::File(file) = fsentry {
                                 self.log(
@@ -469,17 +476,17 @@ impl FileTransferActivity {
                                     Err(err) => self.log_and_alert(LogLevel::Error, err),
                                 }
                                 // Put input mode back to normal
-                                self.input_mode = InputMode::Explorer;
+                                self.popup = None;
                             }
                         }
                     }
                     'q' | 'Q' => {
                         // Create quit prompt dialog
-                        self.input_mode = self.create_quit_popup();
+                        self.popup = self.create_quit_popup();
                     }
                     'r' | 'R' => {
                         // Rename
-                        self.input_mode = InputMode::Popup(PopupType::Input(
+                        self.popup = Some(Popup::Input(
                             String::from("Insert new name"),
                             FileTransferActivity::callback_rename,
                         ));
@@ -487,7 +494,7 @@ impl FileTransferActivity {
                     's' | 'S' => {
                         // Save as...
                         // Ask for input
-                        self.input_mode = InputMode::Popup(PopupType::Input(
+                        self.popup = Some(Popup::Input(
                             String::from("Save as..."),
                             FileTransferActivity::callback_save_as,
                         ));
@@ -502,10 +509,9 @@ impl FileTransferActivity {
                     }
                     ' ' => {
                         // Get file and clone (due to mutable / immutable stuff...)
-                        if self.remote.files.get(self.remote.index).is_some() {
-                            let file: FsEntry =
-                                self.remote.files.get(self.remote.index).unwrap().clone();
-                            let name: String = file.get_name();
+                        if self.remote.get_current_file().is_some() {
+                            let file: FsEntry = self.remote.get_current_file().unwrap().clone();
+                            let name: String = file.get_name().to_string();
                             // Call upload; pass realfile, keep link name
                             let wrkdir: PathBuf = self.local.wrkdir.clone();
                             self.filetransfer_recv(
@@ -525,7 +531,7 @@ impl FileTransferActivity {
     /// ### handle_input_event_mode_explorer_log
     ///
     /// Input even handler for explorer mode when log tab is selected
-    pub(super) fn handle_input_event_mode_explorer_log(&mut self, ev: &InputEvent) {
+    fn handle_input_event_mode_explorer_log(&mut self, ev: &InputEvent) {
         // Match event
         let records_block: usize = 16;
         if let InputEvent::Key(key) = ev {
@@ -533,7 +539,7 @@ impl FileTransferActivity {
                 KeyCode::Esc => {
                     // Handle quit event
                     // Create quit prompt dialog
-                    self.input_mode = self.create_disconnect_popup();
+                    self.popup = self.create_disconnect_popup();
                 }
                 KeyCode::Tab => self.switch_input_field(), // <TAB> switch tab
                 KeyCode::Down => {
@@ -572,7 +578,7 @@ impl FileTransferActivity {
                 KeyCode::Char(ch) => match ch {
                     'q' | 'Q' => {
                         // Create quit prompt dialog
-                        self.input_mode = self.create_quit_popup();
+                        self.popup = self.create_quit_popup();
                     }
                     _ => { /* Nothing to do */ }
                 },
@@ -584,16 +590,17 @@ impl FileTransferActivity {
     /// ### handle_input_event_mode_explorer
     ///
     /// Input event handler for popup mode. Handler is then based on Popup type
-    pub(super) fn handle_input_event_mode_popup(&mut self, ev: &InputEvent, popup: PopupType) {
+    fn handle_input_event_mode_popup(&mut self, ev: &InputEvent, popup: Popup) {
         match popup {
-            PopupType::Alert(_, _) => self.handle_input_event_mode_popup_alert(ev),
-            PopupType::FileInfo => self.handle_input_event_mode_popup_fileinfo(ev),
-            PopupType::Help => self.handle_input_event_mode_popup_help(ev),
-            PopupType::Fatal(_) => self.handle_input_event_mode_popup_fatal(ev),
-            PopupType::Input(_, cb) => self.handle_input_event_mode_popup_input(ev, cb),
-            PopupType::Progress(_) => self.handle_input_event_mode_popup_progress(ev),
-            PopupType::Wait(_) => self.handle_input_event_mode_popup_wait(ev),
-            PopupType::YesNo(_, yes_cb, no_cb) => {
+            Popup::Alert(_, _) => self.handle_input_event_mode_popup_alert(ev),
+            Popup::FileInfo => self.handle_input_event_mode_popup_fileinfo(ev),
+            Popup::Fatal(_) => self.handle_input_event_mode_popup_fatal(ev),
+            Popup::FileSortingDialog => self.handle_input_event_mode_popup_file_sorting(ev),
+            Popup::Help => self.handle_input_event_mode_popup_help(ev),
+            Popup::Input(_, cb) => self.handle_input_event_mode_popup_input(ev, cb),
+            Popup::Progress(_) => self.handle_input_event_mode_popup_progress(ev),
+            Popup::Wait(_) => self.handle_input_event_mode_popup_wait(ev),
+            Popup::YesNo(_, yes_cb, no_cb) => {
                 self.handle_input_event_mode_popup_yesno(ev, yes_cb, no_cb)
             }
         }
@@ -602,12 +609,12 @@ impl FileTransferActivity {
     /// ### handle_input_event_mode_popup_alert
     ///
     /// Input event handler for popup alert
-    pub(super) fn handle_input_event_mode_popup_alert(&mut self, ev: &InputEvent) {
+    fn handle_input_event_mode_popup_alert(&mut self, ev: &InputEvent) {
         // If enter, close popup
         if let InputEvent::Key(key) = ev {
-            if let KeyCode::Enter = key.code {
+            if matches!(key.code, KeyCode::Esc | KeyCode::Enter) {
                 // Set input mode back to explorer
-                self.input_mode = InputMode::Explorer;
+                self.popup = None;
             }
         }
     }
@@ -615,13 +622,61 @@ impl FileTransferActivity {
     /// ### handle_input_event_mode_popup_fileinfo
     ///
     /// Input event handler for popup fileinfo
-    pub(super) fn handle_input_event_mode_popup_fileinfo(&mut self, ev: &InputEvent) {
+    fn handle_input_event_mode_popup_fileinfo(&mut self, ev: &InputEvent) {
         // If enter, close popup
         if let InputEvent::Key(key) = ev {
+            if matches!(key.code, KeyCode::Esc | KeyCode::Enter) {
+                // Set input mode back to explorer
+                self.popup = None;
+            }
+        }
+    }
+
+    /// ### handle_input_event_mode_popup_fatal
+    ///
+    /// Input event handler for popup alert
+    fn handle_input_event_mode_popup_fatal(&mut self, ev: &InputEvent) {
+        // If enter, close popup
+        if let InputEvent::Key(key) = ev {
+            if matches!(key.code, KeyCode::Esc | KeyCode::Enter) {
+                // Set quit to true; since a fatal error happened
+                self.disconnect();
+            }
+        }
+    }
+
+    /// ### handle_input_event_mode_popup_file_sorting
+    ///
+    /// Handle input event for file sorting dialog popup
+    fn handle_input_event_mode_popup_file_sorting(&mut self, ev: &InputEvent) {
+        // Match key code
+        if let InputEvent::Key(key) = ev {
             match key.code {
-                KeyCode::Enter | KeyCode::Esc => {
-                    // Set input mode back to explorer
-                    self.input_mode = InputMode::Explorer;
+                KeyCode::Esc | KeyCode::Enter => {
+                    // Exit
+                    self.popup = None;
+                }
+                KeyCode::Right => {
+                    // Update sorting mode
+                    match self.tab {
+                        FileExplorerTab::Local => {
+                            Self::move_sorting_mode_opt_right(&mut self.local);
+                        }
+                        FileExplorerTab::Remote => {
+                            Self::move_sorting_mode_opt_right(&mut self.remote);
+                        }
+                    }
+                }
+                KeyCode::Left => {
+                    // Update sorting mode
+                    match self.tab {
+                        FileExplorerTab::Local => {
+                            Self::move_sorting_mode_opt_left(&mut self.local);
+                        }
+                        FileExplorerTab::Remote => {
+                            Self::move_sorting_mode_opt_left(&mut self.remote);
+                        }
+                    }
                 }
                 _ => { /* Nothing to do */ }
             }
@@ -631,28 +686,12 @@ impl FileTransferActivity {
     /// ### handle_input_event_mode_popup_help
     ///
     /// Input event handler for popup help
-    pub(super) fn handle_input_event_mode_popup_help(&mut self, ev: &InputEvent) {
+    fn handle_input_event_mode_popup_help(&mut self, ev: &InputEvent) {
         // If enter, close popup
         if let InputEvent::Key(key) = ev {
-            match key.code {
-                KeyCode::Enter | KeyCode::Esc => {
-                    // Set input mode back to explorer
-                    self.input_mode = InputMode::Explorer;
-                }
-                _ => { /* Nothing to do */ }
-            }
-        }
-    }
-
-    /// ### handle_input_event_mode_popup_fatal
-    ///
-    /// Input event handler for popup alert
-    pub(super) fn handle_input_event_mode_popup_fatal(&mut self, ev: &InputEvent) {
-        // If enter, close popup
-        if let InputEvent::Key(key) = ev {
-            if let KeyCode::Enter = key.code {
-                // Set quit to true; since a fatal error happened
-                self.disconnect();
+            if matches!(key.code, KeyCode::Esc | KeyCode::Enter) {
+                // Set input mode back to explorer
+                self.popup = None;
             }
         }
     }
@@ -660,11 +699,7 @@ impl FileTransferActivity {
     /// ### handle_input_event_mode_popup_input
     ///
     /// Input event handler for input popup
-    pub(super) fn handle_input_event_mode_popup_input(
-        &mut self,
-        ev: &InputEvent,
-        cb: OnInputSubmitCallback,
-    ) {
+    fn handle_input_event_mode_popup_input(&mut self, ev: &InputEvent, cb: OnInputSubmitCallback) {
         // If enter, close popup, otherwise push chars to input
         if let InputEvent::Key(key) = ev {
             match key.code {
@@ -673,7 +708,7 @@ impl FileTransferActivity {
                     // Clear current input text
                     self.input_txt.clear();
                     // Set mode back to explorer
-                    self.input_mode = InputMode::Explorer;
+                    self.popup = None;
                 }
                 KeyCode::Enter => {
                     // Submit
@@ -681,7 +716,7 @@ impl FileTransferActivity {
                     // Clear current input text
                     self.input_txt.clear();
                     // Set mode back to explorer BEFORE CALLBACKS!!! Callback can then overwrite this, clever uh?
-                    self.input_mode = InputMode::Explorer;
+                    self.popup = None;
                     // Call cb
                     cb(self, input_text);
                 }
@@ -697,7 +732,7 @@ impl FileTransferActivity {
     /// ### handle_input_event_mode_popup_progress
     ///
     /// Input event handler for popup alert
-    pub(super) fn handle_input_event_mode_popup_progress(&mut self, ev: &InputEvent) {
+    fn handle_input_event_mode_popup_progress(&mut self, ev: &InputEvent) {
         if let InputEvent::Key(key) = ev {
             if let KeyCode::Char(ch) = key.code {
                 // If is 'C' and CTRL
@@ -712,14 +747,14 @@ impl FileTransferActivity {
     /// ### handle_input_event_mode_popup_wait
     ///
     /// Input event handler for popup alert
-    pub(super) fn handle_input_event_mode_popup_wait(&mut self, _ev: &InputEvent) {
+    fn handle_input_event_mode_popup_wait(&mut self, _ev: &InputEvent) {
         // There's nothing you can do here I guess... maybe ctrl+c in the future idk
     }
 
     /// ### handle_input_event_mode_popup_yesno
     ///
     /// Input event handler for popup alert
-    pub(super) fn handle_input_event_mode_popup_yesno(
+    fn handle_input_event_mode_popup_yesno(
         &mut self,
         ev: &InputEvent,
         yes_cb: DialogCallback,
@@ -730,7 +765,7 @@ impl FileTransferActivity {
             match key.code {
                 KeyCode::Enter => {
                     // @! Set input mode to Explorer BEFORE CALLBACKS!!! Callback can then overwrite this, clever uh?
-                    self.input_mode = InputMode::Explorer;
+                    self.popup = None;
                     // Check if user selected yes or not
                     match self.choice_opt {
                         DialogYesNoOption::No => no_cb(self),
@@ -744,5 +779,31 @@ impl FileTransferActivity {
                 _ => { /* Nothing to do */ }
             }
         }
+    }
+
+    /// ### move_sorting_mode_opt_left
+    ///
+    /// Perform <LEFT> on file sorting dialog
+    fn move_sorting_mode_opt_left(explorer: &mut FileExplorer) {
+        let curr_sorting: FileSorting = explorer.get_file_sorting();
+        explorer.sort_by(match curr_sorting {
+            FileSorting::BySize => FileSorting::ByCreationTime,
+            FileSorting::ByCreationTime => FileSorting::ByModifyTime,
+            FileSorting::ByModifyTime => FileSorting::ByName,
+            FileSorting::ByName => FileSorting::BySize, // Wrap
+        });
+    }
+
+    /// ### move_sorting_mode_opt_left
+    ///
+    /// Perform <RIGHT> on file sorting dialog
+    fn move_sorting_mode_opt_right(explorer: &mut FileExplorer) {
+        let curr_sorting: FileSorting = explorer.get_file_sorting();
+        explorer.sort_by(match curr_sorting {
+            FileSorting::ByName => FileSorting::ByModifyTime,
+            FileSorting::ByModifyTime => FileSorting::ByCreationTime,
+            FileSorting::ByCreationTime => FileSorting::BySize,
+            FileSorting::BySize => FileSorting::ByName, // Wrap
+        });
     }
 }

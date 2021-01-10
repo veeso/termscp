@@ -4,7 +4,7 @@
 
 /*
 *
-*   Copyright (C) 2020 Christian Visintin - christian.visintin1997@gmail.com
+*   Copyright (C) 2020-2021Christian Visintin - christian.visintin1997@gmail.com
 *
 * 	This file is part of "TermSCP"
 *
@@ -23,12 +23,13 @@
 *
 */
 
+// Locals
 use super::{
-    AuthActivity, Context, DialogYesNoOption, FileTransferProtocol, InputField, InputForm,
-    InputMode, PopupType,
+    AuthActivity, Context, DialogYesNoOption, FileTransferProtocol, InputField, InputForm, Popup,
 };
 use crate::utils::fmt::align_text_center;
-
+// Ext
+use std::string::ToString;
 use tui::{
     layout::{Constraint, Corner, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
@@ -121,23 +122,23 @@ impl AuthActivity {
                 f.render_stateful_widget(tab, bookmark_chunks[1], &mut recents_state);
             }
             // Draw popup
-            if let InputMode::Popup(popup) = &self.input_mode {
+            if let Some(popup) = &self.popup {
                 // Calculate popup size
                 let (width, height): (u16, u16) = match popup {
-                    PopupType::Alert(_, _) => (50, 10),
-                    PopupType::Help => (50, 70),
-                    PopupType::SaveBookmark => (20, 20),
-                    PopupType::YesNo(_, _, _) => (30, 10),
+                    Popup::Alert(_, _) => (50, 10),
+                    Popup::Help => (50, 70),
+                    Popup::SaveBookmark => (20, 20),
+                    Popup::YesNo(_, _, _) => (30, 10),
                 };
                 let popup_area: Rect = self.draw_popup_area(f.size(), width, height);
                 f.render_widget(Clear, popup_area); //this clears out the background
                 match popup {
-                    PopupType::Alert(color, txt) => f.render_widget(
+                    Popup::Alert(color, txt) => f.render_widget(
                         self.draw_popup_alert(*color, txt.clone(), popup_area.width),
                         popup_area,
                     ),
-                    PopupType::Help => f.render_widget(self.draw_popup_help(), popup_area),
-                    PopupType::SaveBookmark => {
+                    Popup::Help => f.render_widget(self.draw_popup_help(), popup_area),
+                    Popup::SaveBookmark => {
                         let popup_chunks = Layout::default()
                             .direction(Direction::Vertical)
                             .constraints(
@@ -158,7 +159,7 @@ impl AuthActivity {
                             popup_chunks[0].y + 1,
                         )
                     }
-                    PopupType::YesNo(txt, _, _) => {
+                    Popup::YesNo(txt, _, _) => {
                         f.render_widget(self.draw_popup_yesno(txt.clone()), popup_area)
                     }
                 }
@@ -291,8 +292,20 @@ impl AuthActivity {
         let (footer, h_style) = (
             vec![
                 Span::raw("Press "),
-                Span::styled("<CTRL+H>", Style::default().add_modifier(Modifier::BOLD)),
-                Span::raw(" to show keybindings"),
+                Span::styled(
+                    "<CTRL+H>",
+                    Style::default()
+                        .add_modifier(Modifier::BOLD)
+                        .fg(Color::Cyan),
+                ),
+                Span::raw(" to show keybindings; "),
+                Span::styled(
+                    "<CTRL+C>",
+                    Style::default()
+                        .add_modifier(Modifier::BOLD)
+                        .fg(Color::Cyan),
+                ),
+                Span::raw(" to enter setup"),
             ],
             Style::default().add_modifier(Modifier::BOLD),
         );
@@ -304,7 +317,7 @@ impl AuthActivity {
     /// ### draw_local_explorer
     ///
     /// Draw local explorer list
-    pub(super) fn draw_bookmarks_tab(&self) -> Option<List> {
+    fn draw_bookmarks_tab(&self) -> Option<List> {
         self.bookmarks_client.as_ref()?;
         let hosts: Vec<ListItem> = self
             .bookmarks_client
@@ -321,7 +334,7 @@ impl AuthActivity {
                 ListItem::new(Span::from(format!(
                     "{} ({}://{}@{}:{})",
                     key,
-                    AuthActivity::protocol_to_str(entry.2),
+                    entry.2.to_string().to_lowercase(),
                     entry.3,
                     entry.0,
                     entry.1
@@ -352,7 +365,7 @@ impl AuthActivity {
     /// ### draw_local_explorer
     ///
     /// Draw local explorer list
-    pub(super) fn draw_recents_tab(&self) -> Option<List> {
+    fn draw_recents_tab(&self) -> Option<List> {
         self.bookmarks_client.as_ref()?;
         let hosts: Vec<ListItem> = self
             .bookmarks_client
@@ -368,7 +381,7 @@ impl AuthActivity {
                     .unwrap();
                 ListItem::new(Span::from(format!(
                     "{}://{}@{}:{}",
-                    AuthActivity::protocol_to_str(entry.2),
+                    entry.2.to_string().to_lowercase(),
                     entry.3,
                     entry.0,
                     entry.1
@@ -384,7 +397,7 @@ impl AuthActivity {
             List::new(hosts)
                 .block(
                     Block::default()
-                        .borders(Borders::TOP | Borders::BOTTOM | Borders::RIGHT)
+                        .borders(Borders::ALL)
                         .border_style(match self.input_form {
                             InputForm::Recents => Style::default().fg(Color::LightBlue),
                             _ => Style::default(),
@@ -449,7 +462,7 @@ impl AuthActivity {
     /// ### draw_popup_input
     ///
     /// Draw input popup
-    pub(super) fn draw_popup_save_bookmark(&self) -> (Paragraph, Tabs) {
+    fn draw_popup_save_bookmark(&self) -> (Paragraph, Tabs) {
         let input: Paragraph = Paragraph::new(self.input_txt.as_ref())
             .style(Style::default().fg(Color::White))
             .block(
@@ -483,7 +496,7 @@ impl AuthActivity {
     /// ### draw_popup_yesno
     ///
     /// Draw yes/no select popup
-    pub(super) fn draw_popup_yesno(&self, text: String) -> Tabs {
+    fn draw_popup_yesno(&self, text: String) -> Tabs {
         let choices: Vec<Spans> = vec![Spans::from("Yes"), Spans::from("No")];
         let index: usize = match self.choice_opt {
             DialogYesNoOption::Yes => 0,
@@ -505,10 +518,10 @@ impl AuthActivity {
             )
     }
 
-    /// ### draw_footer
+    /// ### draw_popup_help
     ///
-    /// Draw authentication page footer
-    pub(super) fn draw_popup_help(&self) -> List {
+    /// Draw authentication page help popup
+    fn draw_popup_help(&self) -> List {
         // Write header
         let cmds: Vec<ListItem> = vec![
             ListItem::new(Spans::from(vec![
@@ -583,6 +596,16 @@ impl AuthActivity {
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(
+                    "<CTRL+C>",
+                    Style::default()
+                        .fg(Color::Cyan)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::raw("        "),
+                Span::raw("Enter setup"),
+            ])),
+            ListItem::new(Spans::from(vec![
+                Span::styled(
                     "<CTRL+H>",
                     Style::default()
                         .fg(Color::Cyan)
@@ -611,19 +634,5 @@ impl AuthActivity {
                     .title("Help"),
             )
             .start_corner(Corner::TopLeft)
-    }
-
-    /// ### protocol_to_str
-    ///
-    /// Convert protocol to str for layouts
-    fn protocol_to_str(proto: FileTransferProtocol) -> &'static str {
-        match proto {
-            FileTransferProtocol::Ftp(secure) => match secure {
-                true => "ftps",
-                false => "ftp",
-            },
-            FileTransferProtocol::Scp => "scp",
-            FileTransferProtocol::Sftp => "sftp",
-        }
     }
 }

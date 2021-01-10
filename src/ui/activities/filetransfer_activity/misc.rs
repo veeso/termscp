@@ -1,6 +1,6 @@
 /*
 *
-*   Copyright (C) 2020 Christian Visintin - christian.visintin1997@gmail.com
+*   Copyright (C) 2020-2021Christian Visintin - christian.visintin1997@gmail.com
 *
 * 	This file is part of "TermSCP"
 *
@@ -19,7 +19,14 @@
 *
 */
 
-use super::{Color, FileTransferActivity, InputField, InputMode, LogLevel, LogRecord, PopupType};
+// Locals
+use super::{Color, ConfigClient, FileTransferActivity, InputField, LogLevel, LogRecord, Popup};
+use crate::fs::explorer::{builder::FileExplorerBuilder, FileExplorer, FileSorting, GroupDirs};
+use crate::system::environment;
+use crate::system::sshkey_storage::SshKeyStorage;
+// Ext
+use std::env;
+use std::path::PathBuf;
 
 impl FileTransferActivity {
     /// ### log
@@ -49,14 +56,14 @@ impl FileTransferActivity {
             LogLevel::Warn => Color::Yellow,
         };
         self.log(level, msg.as_str());
-        self.input_mode = InputMode::Popup(PopupType::Alert(color, msg));
+        self.popup = Some(Popup::Alert(color, msg));
     }
 
     /// ### create_quit_popup
     ///
     /// Create quit popup input mode (since must be shared between different input handlers)
-    pub(super) fn create_disconnect_popup(&mut self) -> InputMode {
-        InputMode::Popup(PopupType::YesNo(
+    pub(super) fn create_disconnect_popup(&mut self) -> Option<Popup> {
+        Some(Popup::YesNo(
             String::from("Are you sure you want to disconnect?"),
             FileTransferActivity::disconnect,
             FileTransferActivity::callback_nothing_to_do,
@@ -66,8 +73,8 @@ impl FileTransferActivity {
     /// ### create_quit_popup
     ///
     /// Create quit popup input mode (since must be shared between different input handlers)
-    pub(super) fn create_quit_popup(&mut self) -> InputMode {
-        InputMode::Popup(PopupType::YesNo(
+    pub(super) fn create_quit_popup(&mut self) -> Option<Popup> {
+        Some(Popup::YesNo(
             String::from("Are you sure you want to quit?"),
             FileTransferActivity::disconnect_and_quit,
             FileTransferActivity::callback_nothing_to_do,
@@ -81,6 +88,67 @@ impl FileTransferActivity {
         self.input_field = match self.input_field {
             InputField::Explorer => InputField::Logs,
             InputField::Logs => InputField::Explorer,
+        }
+    }
+
+    /// ### init_config_client
+    ///
+    /// Initialize configuration client if possible.
+    /// This function doesn't return errors.
+    pub(super) fn init_config_client() -> Option<ConfigClient> {
+        match environment::init_config_dir() {
+            Ok(termscp_dir) => match termscp_dir {
+                Some(termscp_dir) => {
+                    // Make configuration file path and ssh keys path
+                    let (config_path, ssh_keys_path): (PathBuf, PathBuf) =
+                        environment::get_config_paths(termscp_dir.as_path());
+                    match ConfigClient::new(config_path.as_path(), ssh_keys_path.as_path()) {
+                        Ok(config_client) => Some(config_client),
+                        Err(_) => None,
+                    }
+                }
+                None => None,
+            },
+            Err(_) => None,
+        }
+    }
+
+    /// ### make_ssh_storage
+    ///
+    /// Make ssh storage from `ConfigClient` if possible, empty otherwise
+    pub(super) fn make_ssh_storage(cli: Option<&ConfigClient>) -> SshKeyStorage {
+        match cli {
+            Some(cli) => SshKeyStorage::storage_from_config(cli),
+            None => SshKeyStorage::empty(),
+        }
+    }
+
+    /// ### build_explorer
+    ///
+    /// Build explorer reading configuration from `ConfigClient`
+    pub(super) fn build_explorer(cli: Option<&ConfigClient>) -> FileExplorer {
+        match &cli {
+            Some(cli) => FileExplorerBuilder::new() // Build according to current configuration
+                .with_file_sorting(FileSorting::ByName)
+                .with_group_dirs(cli.get_group_dirs())
+                .with_hidden_files(cli.get_show_hidden_files())
+                .with_stack_size(16)
+                .build(),
+            None => FileExplorerBuilder::new() // Build default
+                .with_file_sorting(FileSorting::ByName)
+                .with_group_dirs(Some(GroupDirs::First))
+                .with_stack_size(16)
+                .build(),
+        }
+    }
+
+    /// ### setup_text_editor
+    ///
+    /// Set text editor to use
+    pub(super) fn setup_text_editor(&self) {
+        if let Some(config_cli) = &self.config_cli {
+            // Set text editor
+            env::set_var("EDITOR", config_cli.get_text_editor());
         }
     }
 }

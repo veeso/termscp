@@ -1,6 +1,6 @@
 /*
 *
-*   Copyright (C) 2020 Christian Visintin - christian.visintin1997@gmail.com
+*   Copyright (C) 2020-2021Christian Visintin - christian.visintin1997@gmail.com
 *
 * 	This file is part of "TermSCP"
 *
@@ -20,12 +20,15 @@
 */
 
 #[macro_use]
+extern crate bitflags;
+#[macro_use]
 extern crate lazy_static;
 #[macro_use]
 extern crate magic_crypt;
 
 pub mod activity_manager;
 pub mod bookmarks;
+pub mod config;
 pub mod filetransfer;
 pub mod fs;
 pub mod host;

@@ -1,6 +1,7 @@
-//! ## Ui
+//! ## SetupActivity
 //!
-//! `ui` is the module which provides all the functionalities related to the UI
+//! `setup_activity` is the module which implements the Setup activity, which is the activity to
+//! work on termscp configuration
 
 /*
 *
@@ -23,7 +24,15 @@
 *
 */
 
-// Modules
-pub mod activities;
-pub mod context;
-pub(crate) mod input;
+use super::SetupActivity;
+
+impl SetupActivity {
+    /// ### clear_user_input
+    ///
+    /// Clear user input buffers
+    pub(super) fn clear_user_input(&mut self) {
+        for s in self.user_input.iter_mut() {
+            s.clear();
+        }
+    }
+}

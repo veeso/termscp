@@ -1,6 +1,6 @@
 /*
 *
-*   Copyright (C) 2020 Christian Visintin - christian.visintin1997@gmail.com
+*   Copyright (C) 2020-2021Christian Visintin - christian.visintin1997@gmail.com
 *
 * 	This file is part of "TermSCP"
 *
@@ -25,6 +25,8 @@ const TERMSCP_AUTHORS: &str = env!("CARGO_PKG_AUTHORS");
 // Crates
 extern crate getopts;
 #[macro_use]
+extern crate bitflags;
+#[macro_use]
 extern crate lazy_static;
 #[macro_use]
 extern crate magic_crypt;
@@ -39,6 +41,7 @@ use std::time::Duration;
 // Include
 mod activity_manager;
 mod bookmarks;
+mod config;
 mod filetransfer;
 mod fs;
 mod host;

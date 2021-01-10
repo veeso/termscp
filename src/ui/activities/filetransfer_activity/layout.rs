@@ -1,6 +1,10 @@
+//! ## FileTransferActivity
+//!
+//! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
+
 /*
 *
-*   Copyright (C) 2020 Christian Visintin - christian.visintin1997@gmail.com
+*   Copyright (C) 2020-2021Christian Visintin - christian.visintin1997@gmail.com
 *
 * 	This file is part of "TermSCP"
 *
@@ -19,17 +23,19 @@
 *
 */
 
+// Deps
 extern crate bytesize;
 extern crate hostname;
 #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
 extern crate users;
-
+// Local
 use super::{
     Context, DialogYesNoOption, FileExplorerTab, FileTransferActivity, FsEntry, InputField,
-    InputMode, LogLevel, LogRecord, PopupType,
+    LogLevel, LogRecord, Popup,
 };
+use crate::fs::explorer::{FileExplorer, FileSorting};
 use crate::utils::fmt::{align_text_center, fmt_time};
-
+// Ext
 use bytesize::ByteSize;
 use std::path::{Path, PathBuf};
 use tui::{
@@ -70,10 +76,10 @@ impl FileTransferActivity {
                 .split(chunks[0]);
             // Set localhost state
             let mut localhost_state: ListState = ListState::default();
-            localhost_state.select(Some(self.local.index));
+            localhost_state.select(Some(self.local.get_relative_index()));
             // Set remote state
             let mut remote_state: ListState = ListState::default();
-            remote_state.select(Some(self.remote.index));
+            remote_state.select(Some(self.remote.get_relative_index()));
             // Draw tabs
             f.render_stateful_widget(
                 self.draw_local_explorer(tabs_chunks[0].width),
@@ -95,32 +101,36 @@ impl FileTransferActivity {
                 &mut log_state,
             );
             // Draw popup
-            if let InputMode::Popup(popup) = &self.input_mode {
+            if let Some(popup) = &self.popup {
                 // Calculate popup size
                 let (width, height): (u16, u16) = match popup {
-                    PopupType::Alert(_, _) => (50, 10),
-                    PopupType::Fatal(_) => (50, 10),
-                    PopupType::FileInfo => (50, 50),
-                    PopupType::Help => (50, 70),
-                    PopupType::Input(_, _) => (40, 10),
-                    PopupType::Progress(_) => (40, 10),
-                    PopupType::Wait(_) => (50, 10),
-                    PopupType::YesNo(_, _, _) => (30, 10),
+                    Popup::Alert(_, _) => (50, 10),
+                    Popup::Fatal(_) => (50, 10),
+                    Popup::FileInfo => (50, 50),
+                    Popup::FileSortingDialog => (50, 10),
+                    Popup::Help => (50, 80),
+                    Popup::Input(_, _) => (40, 10),
+                    Popup::Progress(_) => (40, 10),
+                    Popup::Wait(_) => (50, 10),
+                    Popup::YesNo(_, _, _) => (30, 10),
                 };
                 let popup_area: Rect = self.draw_popup_area(f.size(), width, height);
                 f.render_widget(Clear, popup_area); //this clears out the background
                 match popup {
-                    PopupType::Alert(color, txt) => f.render_widget(
+                    Popup::Alert(color, txt) => f.render_widget(
                         self.draw_popup_alert(*color, txt.clone(), popup_area.width),
                         popup_area,
                     ),
-                    PopupType::Fatal(txt) => f.render_widget(
+                    Popup::Fatal(txt) => f.render_widget(
                         self.draw_popup_fatal(txt.clone(), popup_area.width),
                         popup_area,
                     ),
-                    PopupType::FileInfo => f.render_widget(self.draw_popup_fileinfo(), popup_area),
-                    PopupType::Help => f.render_widget(self.draw_popup_help(), popup_area),
-                    PopupType::Input(txt, _) => {
+                    Popup::FileInfo => f.render_widget(self.draw_popup_fileinfo(), popup_area),
+                    Popup::FileSortingDialog => {
+                        f.render_widget(self.draw_popup_file_sorting_dialog(), popup_area)
+                    }
+                    Popup::Help => f.render_widget(self.draw_popup_help(), popup_area),
+                    Popup::Input(txt, _) => {
                         f.render_widget(self.draw_popup_input(txt.clone()), popup_area);
                         // Set cursor
                         f.set_cursor(
@@ -128,14 +138,14 @@ impl FileTransferActivity {
                             popup_area.y + 1,
                         )
                     }
-                    PopupType::Progress(txt) => {
+                    Popup::Progress(txt) => {
                         f.render_widget(self.draw_popup_progress(txt.clone()), popup_area)
                     }
-                    PopupType::Wait(txt) => f.render_widget(
+                    Popup::Wait(txt) => f.render_widget(
                         self.draw_popup_wait(txt.clone(), popup_area.width),
                         popup_area,
                     ),
-                    PopupType::YesNo(txt, _, _) => {
+                    Popup::YesNo(txt, _, _) => {
                         f.render_widget(self.draw_popup_yesno(txt.clone()), popup_area)
                     }
                 }
@@ -158,8 +168,7 @@ impl FileTransferActivity {
         };
         let files: Vec<ListItem> = self
             .local
-            .files
-            .iter()
+            .iter_files()
             .map(|entry: &FsEntry| ListItem::new(Span::from(format!("{}", entry))))
             .collect();
         // Get colors to use; highlight element inverting fg/bg only when tab is active
@@ -199,8 +208,7 @@ impl FileTransferActivity {
     pub(super) fn draw_remote_explorer(&self, width: u16) -> List {
         let files: Vec<ListItem> = self
             .remote
-            .files
-            .iter()
+            .iter_files()
             .map(|entry: &FsEntry| ListItem::new(Span::from(format!("{}", entry))))
             .collect();
         // Get colors to use; highlight element inverting fg/bg only when tab is active
@@ -365,6 +373,44 @@ impl FileTransferActivity {
             .start_corner(Corner::TopLeft)
             .style(Style::default().fg(Color::Red))
     }
+
+    /// ### draw_popup_file_sorting_dialog
+    ///
+    /// Draw FileSorting mode select popup
+    pub(super) fn draw_popup_file_sorting_dialog(&self) -> Tabs {
+        let choices: Vec<Spans> = vec![
+            Spans::from("Name"),
+            Spans::from("Modify time"),
+            Spans::from("Creation time"),
+            Spans::from("Size"),
+        ];
+        let explorer: &FileExplorer = match self.tab {
+            FileExplorerTab::Local => &self.local,
+            FileExplorerTab::Remote => &self.remote,
+        };
+        let index: usize = match explorer.get_file_sorting() {
+            FileSorting::ByCreationTime => 2,
+            FileSorting::ByModifyTime => 1,
+            FileSorting::ByName => 0,
+            FileSorting::BySize => 3,
+        };
+        Tabs::new(choices)
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .border_type(BorderType::Rounded)
+                    .title("Sort files by"),
+            )
+            .select(index)
+            .style(Style::default())
+            .highlight_style(
+                Style::default()
+                    .add_modifier(Modifier::BOLD)
+                    .bg(Color::LightMagenta)
+                    .fg(Color::DarkGray),
+            )
+    }
+
     /// ### draw_popup_input
     ///
     /// Draw input popup
@@ -468,12 +514,12 @@ impl FileTransferActivity {
         let fsentry: Option<&FsEntry> = match self.tab {
             FileExplorerTab::Local => {
                 // Get selected file
-                match self.local.files.get(self.local.index) {
+                match self.local.get_current_file() {
                     Some(entry) => Some(entry),
                     None => None,
                 }
             }
-            FileExplorerTab::Remote => match self.remote.files.get(self.remote.index) {
+            FileExplorerTab::Remote => match self.remote.get_current_file() {
                 Some(entry) => Some(entry),
                 None => None,
             },
@@ -483,10 +529,9 @@ impl FileTransferActivity {
             Some(fsentry) => {
                 // Get name and path
                 let abs_path: PathBuf = fsentry.get_abs_path();
-                let name: String = fsentry.get_name();
+                let name: String = fsentry.get_name().to_string();
                 let ctime: String = fmt_time(fsentry.get_creation_time(), "%b %d %Y %H:%M:%S");
-                let atime: String =
-                    fmt_time(fsentry.get_last_access_time(), "%b %d %Y %H:%M:%S");
+                let atime: String = fmt_time(fsentry.get_last_access_time(), "%b %d %Y %H:%M:%S");
                 let mtime: String = fmt_time(fsentry.get_creation_time(), "%b %d %Y %H:%M:%S");
                 let (bsize, size): (ByteSize, usize) =
                     (ByteSize(fsentry.get_size() as u64), fsentry.get_size());
@@ -718,6 +763,26 @@ impl FileTransferActivity {
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(
+                    "<A>",
+                    Style::default()
+                        .fg(Color::Cyan)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::raw("             "),
+                Span::raw("Toggle hidden files"),
+            ])),
+            ListItem::new(Spans::from(vec![
+                Span::styled(
+                    "<B>",
+                    Style::default()
+                        .fg(Color::Cyan)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::raw("             "),
+                Span::raw("Change file sorting mode"),
+            ])),
+            ListItem::new(Spans::from(vec![
+                Span::styled(
                     "<C>",
                     Style::default()
                         .fg(Color::Cyan)
@@ -785,6 +850,26 @@ impl FileTransferActivity {
                 ),
                 Span::raw("             "),
                 Span::raw("Reload directory content"),
+            ])),
+            ListItem::new(Spans::from(vec![
+                Span::styled(
+                    "<N>",
+                    Style::default()
+                        .fg(Color::Cyan)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::raw("             "),
+                Span::raw("New file"),
+            ])),
+            ListItem::new(Spans::from(vec![
+                Span::styled(
+                    "<O>",
+                    Style::default()
+                        .fg(Color::Cyan)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::raw("             "),
+                Span::raw("Open text file"),
             ])),
             ListItem::new(Spans::from(vec![
                 Span::styled(

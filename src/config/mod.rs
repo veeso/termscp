@@ -1,6 +1,6 @@
-//! ## Bookmarks
+//! ## Config
 //!
-//! `bookmarks` is the module which provides data types and de/serializer for bookmarks
+//! `config` is the module which provides access to termscp configuration
 
 /*
 *
@@ -23,31 +23,78 @@
 *
 */
 
+// Modules
 pub mod serializer;
 
+// Deps
+extern crate edit;
+
+// Locals
+use crate::filetransfer::FileTransferProtocol;
+
+// Ext
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::path::PathBuf;
 
 #[derive(Deserialize, Serialize, std::fmt::Debug)]
-/// ## UserHosts
+/// ## UserConfig
 ///
-/// UserHosts contains all the hosts saved by the user in the data storage
-/// It contains both `Bookmark`
-pub struct UserHosts {
-    pub bookmarks: HashMap<String, Bookmark>,
-    pub recents: HashMap<String, Bookmark>,
+/// UserConfig contains all the configurations for the user,
+/// supported by termscp
+pub struct UserConfig {
+    pub user_interface: UserInterfaceConfig,
+    pub remote: RemoteConfig,
 }
 
-#[derive(Deserialize, Serialize, std::fmt::Debug, PartialEq)]
-/// ## Bookmark
+#[derive(Deserialize, Serialize, std::fmt::Debug)]
+/// ## UserInterfaceConfig
 ///
-/// Bookmark describes a single bookmark entry in the user hosts storage
-pub struct Bookmark {
-    pub address: String,
-    pub port: u16,
-    pub protocol: String,
-    pub username: String,
-    pub password: Option<String>, // Password is optional; base64, aes-128 encrypted password
+/// UserInterfaceConfig provides all the keys to configure the user interface
+pub struct UserInterfaceConfig {
+    pub text_editor: PathBuf,
+    pub default_protocol: String,
+    pub show_hidden_files: bool,
+    pub group_dirs: Option<String>,
+}
+
+#[derive(Deserialize, Serialize, std::fmt::Debug)]
+/// ## RemoteConfig
+///
+/// Contains configuratio related to remote hosts
+pub struct RemoteConfig {
+    pub ssh_keys: HashMap<String, PathBuf>, // Association between host name and path to private key
+}
+
+impl Default for UserConfig {
+    fn default() -> Self {
+        UserConfig {
+            user_interface: UserInterfaceConfig::default(),
+            remote: RemoteConfig::default(),
+        }
+    }
+}
+
+impl Default for UserInterfaceConfig {
+    fn default() -> Self {
+        UserInterfaceConfig {
+            text_editor: match edit::get_editor() {
+                Ok(p) => p,
+                Err(_) => PathBuf::from("nano"), // Default to nano
+            },
+            default_protocol: FileTransferProtocol::Sftp.to_string(),
+            show_hidden_files: false,
+            group_dirs: None,
+        }
+    }
+}
+
+impl Default for RemoteConfig {
+    fn default() -> Self {
+        RemoteConfig {
+            ssh_keys: HashMap::new(),
+        }
+    }
 }
 
 // Errors
@@ -69,15 +116,6 @@ pub enum SerializerErrorKind {
     IoError,
     SerializationError,
     SyntaxError,
-}
-
-impl Default for UserHosts {
-    fn default() -> Self {
-        UserHosts {
-            bookmarks: HashMap::new(),
-            recents: HashMap::new(),
-        }
-    }
 }
 
 impl SerializerError {
@@ -118,57 +156,52 @@ impl std::fmt::Display for SerializerError {
 mod tests {
 
     use super::*;
+    use std::env;
 
     #[test]
-    fn test_bookmarks_bookmark_new() {
-        let bookmark: Bookmark = Bookmark {
-            address: String::from("192.168.1.1"),
-            port: 22,
-            protocol: String::from("SFTP"),
-            username: String::from("root"),
-            password: Some(String::from("password")),
-        };
-        let recent: Bookmark = Bookmark {
-            address: String::from("192.168.1.2"),
-            port: 22,
-            protocol: String::from("SCP"),
-            username: String::from("admin"),
-            password: Some(String::from("password")),
-        };
-        let mut bookmarks: HashMap<String, Bookmark> = HashMap::with_capacity(1);
-        bookmarks.insert(String::from("test"), bookmark);
-        let mut recents: HashMap<String, Bookmark> = HashMap::with_capacity(1);
-        recents.insert(String::from("ISO20201218T181432"), recent);
-        let hosts: UserHosts = UserHosts {
-            bookmarks: bookmarks,
-            recents: recents,
-        };
-        // Verify
-        let bookmark: &Bookmark = hosts.bookmarks.get(&String::from("test")).unwrap();
-        assert_eq!(bookmark.address, String::from("192.168.1.1"));
-        assert_eq!(bookmark.port, 22);
-        assert_eq!(bookmark.protocol, String::from("SFTP"));
-        assert_eq!(bookmark.username, String::from("root"));
-        assert_eq!(
-            *bookmark.password.as_ref().unwrap(),
-            String::from("password")
+    fn test_config_mod_new() {
+        let mut keys: HashMap<String, PathBuf> = HashMap::with_capacity(1);
+        keys.insert(
+            String::from("192.168.1.31"),
+            PathBuf::from("/tmp/private.key"),
         );
-        let bookmark: &Bookmark = hosts
-            .recents
-            .get(&String::from("ISO20201218T181432"))
-            .unwrap();
-        assert_eq!(bookmark.address, String::from("192.168.1.2"));
-        assert_eq!(bookmark.port, 22);
-        assert_eq!(bookmark.protocol, String::from("SCP"));
-        assert_eq!(bookmark.username, String::from("admin"));
+        let remote: RemoteConfig = RemoteConfig { ssh_keys: keys };
+        let ui: UserInterfaceConfig = UserInterfaceConfig {
+            default_protocol: String::from("SFTP"),
+            text_editor: PathBuf::from("nano"),
+            show_hidden_files: true,
+            group_dirs: Some(String::from("first")),
+        };
+        let cfg: UserConfig = UserConfig {
+            user_interface: ui,
+            remote: remote,
+        };
         assert_eq!(
-            *bookmark.password.as_ref().unwrap(),
-            String::from("password")
+            *cfg.remote
+                .ssh_keys
+                .get(&String::from("192.168.1.31"))
+                .unwrap(),
+            PathBuf::from("/tmp/private.key")
         );
+        assert_eq!(cfg.user_interface.default_protocol, String::from("SFTP"));
+        assert_eq!(cfg.user_interface.text_editor, PathBuf::from("nano"));
+        assert_eq!(cfg.user_interface.show_hidden_files, true);
+        assert_eq!(cfg.user_interface.group_dirs, Some(String::from("first")));
     }
 
     #[test]
-    fn test_bookmarks_bookmark_errors() {
+    fn test_config_mod_new_default() {
+        // Force vim editor
+        env::set_var(String::from("EDITOR"), String::from("vim"));
+        // Get default
+        let cfg: UserConfig = UserConfig::default();
+        assert_eq!(cfg.user_interface.default_protocol, String::from("SFTP"));
+        assert_eq!(cfg.user_interface.text_editor, PathBuf::from("vim"));
+        assert_eq!(cfg.remote.ssh_keys.len(), 0);
+    }
+
+    #[test]
+    fn test_config_mod_errors() {
         let error: SerializerError = SerializerError::new(SerializerErrorKind::SyntaxError);
         assert_eq!(error.kind, SerializerErrorKind::SyntaxError);
         assert!(error.msg.is_none());

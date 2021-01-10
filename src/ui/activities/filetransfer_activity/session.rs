@@ -1,6 +1,10 @@
+//! ## FileTransferActivity
+//!
+//! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
+
 /*
 *
-*   Copyright (C) 2020 Christian Visintin - christian.visintin1997@gmail.com
+*   Copyright (C) 2020-2021Christian Visintin - christian.visintin1997@gmail.com
 *
 * 	This file is part of "TermSCP"
 *
@@ -26,10 +30,9 @@ extern crate crossterm;
 extern crate tempfile;
 
 // Locals
-use super::{FileTransferActivity, InputMode, LogLevel, PopupType};
+use super::{FileTransferActivity, LogLevel, Popup};
 use crate::fs::{FsEntry, FsFile};
 use crate::utils::fmt::fmt_millis;
-use crate::utils::hash::hash_sha256_file;
 
 // Ext
 use bytesize::ByteSize;
@@ -37,7 +40,7 @@ use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use std::fs::OpenOptions;
 use std::io::{Read, Seek, Write};
 use std::path::{Path, PathBuf};
-use std::time::Instant;
+use std::time::{Instant, SystemTime};
 use tui::style::Color;
 
 impl FileTransferActivity {
@@ -65,12 +68,12 @@ impl FileTransferActivity {
                     );
                 }
                 // Set state to explorer
-                self.input_mode = InputMode::Explorer;
+                self.popup = None;
                 self.reload_remote_dir();
             }
             Err(err) => {
                 // Set popup fatal error
-                self.input_mode = InputMode::Popup(PopupType::Fatal(format!("{}", err)));
+                self.popup = Some(Popup::Fatal(format!("{}", err)));
             }
         }
     }
@@ -80,7 +83,7 @@ impl FileTransferActivity {
     /// disconnect from remote
     pub(super) fn disconnect(&mut self) {
         // Show popup disconnecting
-        self.input_mode = InputMode::Popup(PopupType::Alert(
+        self.popup = Some(Popup::Alert(
             Color::Red,
             String::from("Disconnecting from remote..."),
         ));
@@ -126,7 +129,7 @@ impl FileTransferActivity {
             FsEntry::Directory(dir) => dir.name.clone(),
             FsEntry::File(file) => file.name.clone(),
         };
-        self.input_mode = InputMode::Popup(PopupType::Wait(format!("Uploading \"{}\"", file_name)));
+        self.popup = Some(Popup::Wait(format!("Uploading \"{}\"", file_name)));
         // Draw
         self.draw();
         // Get remote path
@@ -208,9 +211,9 @@ impl FileTransferActivity {
         } else {
             // @! Successful
             // Eventually, Reset input mode to explorer (if input mode is wait or progress)
-            if let InputMode::Popup(ptype) = &self.input_mode {
-                if matches!(ptype, PopupType::Wait(_) | PopupType::Progress(_)) {
-                    self.input_mode = InputMode::Explorer
+            if let Some(ptype) = &self.popup {
+                if matches!(ptype, Popup::Wait(_) | Popup::Progress(_)) {
+                    self.popup = None
                 }
             }
         }
@@ -232,8 +235,7 @@ impl FileTransferActivity {
             FsEntry::Directory(dir) => dir.name.clone(),
             FsEntry::File(file) => file.name.clone(),
         };
-        self.input_mode =
-            InputMode::Popup(PopupType::Wait(format!("Downloading \"{}\"...", file_name)));
+        self.popup = Some(Popup::Wait(format!("Downloading \"{}\"...", file_name)));
         // Draw
         self.draw();
         // Match entry
@@ -349,7 +351,7 @@ impl FileTransferActivity {
             self.transfer.aborted = false;
         } else {
             // Eventually, Reset input mode to explorer
-            self.input_mode = InputMode::Explorer;
+            self.popup = None;
         }
     }
 
@@ -378,10 +380,7 @@ impl FileTransferActivity {
                     // Write remote file
                     let mut total_bytes_written: usize = 0;
                     // Set input state to popup progress
-                    self.input_mode = InputMode::Popup(PopupType::Progress(format!(
-                        "Uploading \"{}\"",
-                        local.name
-                    )));
+                    self.popup = Some(Popup::Progress(format!("Uploading \"{}\"", local.name)));
                     // Reset transfer states
                     self.transfer.reset();
                     let mut last_progress_val: f64 = 0.0;
@@ -481,7 +480,7 @@ impl FileTransferActivity {
                 match self.client.recv_file(remote) {
                     Ok(mut rhnd) => {
                         // Set popup progress
-                        self.input_mode = InputMode::Popup(PopupType::Progress(format!(
+                        self.popup = Some(Popup::Progress(format!(
                             "Downloading \"{}\"...",
                             remote.name,
                         )));
@@ -600,17 +599,16 @@ impl FileTransferActivity {
     pub(super) fn local_scan(&mut self, path: &Path) {
         match self.context.as_ref().unwrap().local.scan_dir(path) {
             Ok(files) => {
-                self.local.files = files;
+                // Set files and sort (sorting is implicit)
+                self.local.set_files(files);
                 // Set index; keep if possible, otherwise set to last item
-                self.local.index = match self.local.files.get(self.local.index) {
-                    Some(_) => self.local.index,
-                    None => match self.local.files.len() {
+                self.local.set_index(match self.local.get_current_file() {
+                    Some(_) => self.local.get_index(),
+                    None => match self.local.count() {
                         0 => 0,
-                        _ => self.local.files.len() - 1,
+                        _ => self.local.count() - 1,
                     },
-                };
-                // Sort files
-                self.local.sort_files_by_name();
+                });
             }
             Err(err) => {
                 self.log_and_alert(
@@ -627,17 +625,16 @@ impl FileTransferActivity {
     pub(super) fn remote_scan(&mut self, path: &Path) {
         match self.client.list_dir(path) {
             Ok(files) => {
-                self.remote.files = files;
+                // Set files and sort (sorting is implicit)
+                self.remote.set_files(files);
                 // Set index; keep if possible, otherwise set to last item
-                self.remote.index = match self.remote.files.get(self.remote.index) {
-                    Some(_) => self.remote.index,
-                    None => match self.remote.files.len() {
+                self.remote.set_index(match self.remote.get_current_file() {
+                    Some(_) => self.remote.get_index(),
+                    None => match self.remote.count() {
                         0 => 0,
-                        _ => self.remote.files.len() - 1,
+                        _ => self.remote.count() - 1,
                     },
-                };
-                // Sort files
-                self.remote.sort_files_by_name();
+                });
             }
             Err(err) => {
                 self.log_and_alert(
@@ -664,7 +661,7 @@ impl FileTransferActivity {
                 // Reload files
                 self.local_scan(path);
                 // Reset index
-                self.local.index = 0;
+                self.local.set_index(0);
                 // Set wrkdir
                 self.local.wrkdir = PathBuf::from(path);
                 // Push prev_dir to stack
@@ -695,7 +692,7 @@ impl FileTransferActivity {
                 // Update files
                 self.remote_scan(path);
                 // Reset index
-                self.remote.index = 0;
+                self.remote.set_index(0);
                 // Set wrkdir
                 self.remote.wrkdir = PathBuf::from(path);
                 // Push prev_dir to stack
@@ -781,13 +778,14 @@ impl FileTransferActivity {
         if let Err(err) = self.filetransfer_recv_file(tmpfile.path(), file) {
             return Err(err);
         }
-        // Get current file hash
-        let prev_hash: String = match hash_sha256_file(tmpfile.path()) {
-            Ok(s) => s,
+        // Get current file modification time
+        let prev_mtime: SystemTime = match self.context.as_ref().unwrap().local.stat(tmpfile.path())
+        {
+            Ok(e) => e.get_last_change_time(),
             Err(err) => {
                 return Err(format!(
-                    "Could not get sha256 for \"{}\": {}",
-                    file.abs_path.display(),
+                    "Could not stat \"{}\": {}",
+                    tmpfile.path().display(),
                     err
                 ))
             }
@@ -796,19 +794,20 @@ impl FileTransferActivity {
         if let Err(err) = self.edit_local_file(tmpfile.path()) {
             return Err(err);
         }
-        // Check if file has changed
-        let new_hash: String = match hash_sha256_file(tmpfile.path()) {
-            Ok(s) => s,
+        // Get local fs entry
+        let tmpfile_entry: FsEntry = match self.context.as_ref().unwrap().local.stat(tmpfile.path())
+        {
+            Ok(e) => e,
             Err(err) => {
                 return Err(format!(
-                    "Could not get sha256 for \"{}\": {}",
-                    file.abs_path.display(),
+                    "Could not stat \"{}\": {}",
+                    tmpfile.path().display(),
                     err
                 ))
             }
         };
-        // If hash is different, write changes
-        match new_hash != prev_hash {
+        // Check if file has changed
+        match prev_mtime != tmpfile_entry.get_last_change_time() {
             true => {
                 self.log(
                     LogLevel::Info,

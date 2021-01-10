@@ -1,6 +1,10 @@
+//! ## FileTransferActivity
+//!
+//! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
+
 /*
 *
-*   Copyright (C) 2020 Christian Visintin - christian.visintin1997@gmail.com
+*   Copyright (C) 2020-2021Christian Visintin - christian.visintin1997@gmail.com
 *
 * 	This file is part of "TermSCP"
 *
@@ -19,8 +23,9 @@
 *
 */
 
+// Locals
 use super::{FileExplorerTab, FileTransferActivity, FsEntry, LogLevel};
-
+// Ext
 use std::path::PathBuf;
 
 impl FileTransferActivity {
@@ -70,8 +75,8 @@ impl FileTransferActivity {
         match self.tab {
             FileExplorerTab::Local => {
                 // Get selected entry
-                if self.local.files.get(self.local.index).is_some() {
-                    let entry: FsEntry = self.local.files.get(self.local.index).unwrap().clone();
+                if self.local.get_current_file().is_some() {
+                    let entry: FsEntry = self.local.get_current_file().unwrap().clone();
                     if let Some(ctx) = self.context.as_mut() {
                         match ctx.local.copy(&entry, dest_path.as_path()) {
                             Ok(_) => {
@@ -103,8 +108,8 @@ impl FileTransferActivity {
             }
             FileExplorerTab::Remote => {
                 // Get selected entry
-                if self.remote.files.get(self.remote.index).is_some() {
-                    let entry: FsEntry = self.remote.files.get(self.remote.index).unwrap().clone();
+                if self.remote.get_current_file().is_some() {
+                    let entry: FsEntry = self.remote.get_current_file().unwrap().clone();
                     match self.client.as_mut().copy(&entry, dest_path.as_path()) {
                         Ok(_) => {
                             self.log(
@@ -204,7 +209,7 @@ impl FileTransferActivity {
                     dst_path = wrkdir;
                 }
                 // Check if file entry exists
-                if let Some(entry) = self.local.files.get(self.local.index) {
+                if let Some(entry) = self.local.get_current_file() {
                     let full_path: PathBuf = entry.get_abs_path();
                     // Rename file or directory and report status as popup
                     match self
@@ -244,7 +249,7 @@ impl FileTransferActivity {
             }
             FileExplorerTab::Remote => {
                 // Check if file entry exists
-                if let Some(entry) = self.remote.files.get(self.remote.index) {
+                if let Some(entry) = self.remote.get_current_file() {
                     let full_path: PathBuf = entry.get_abs_path();
                     // Rename file or directory and report status as popup
                     let dst_path: PathBuf = PathBuf::from(input);
@@ -288,7 +293,7 @@ impl FileTransferActivity {
         match self.tab {
             FileExplorerTab::Local => {
                 // Check if file entry exists
-                if let Some(entry) = self.local.files.get(self.local.index) {
+                if let Some(entry) = self.local.get_current_file() {
                     let full_path: PathBuf = entry.get_abs_path();
                     // Delete file or directory and report status as popup
                     match self.context.as_mut().unwrap().local.remove(entry) {
@@ -317,7 +322,7 @@ impl FileTransferActivity {
             }
             FileExplorerTab::Remote => {
                 // Check if file entry exists
-                if let Some(entry) = self.remote.files.get(self.remote.index) {
+                if let Some(entry) = self.remote.get_current_file() {
                     let full_path: PathBuf = entry.get_abs_path();
                     // Delete file
                     match self.client.remove(entry) {
@@ -354,19 +359,130 @@ impl FileTransferActivity {
                 // Get pwd
                 let wrkdir: PathBuf = self.remote.wrkdir.clone();
                 // Get file and clone (due to mutable / immutable stuff...)
-                if self.local.files.get(self.local.index).is_some() {
-                    let file: FsEntry = self.local.files.get(self.local.index).unwrap().clone();
+                if self.local.get_current_file().is_some() {
+                    let file: FsEntry = self.local.get_current_file().unwrap().clone();
                     // Call upload; pass realfile, keep link name
                     self.filetransfer_send(&file.get_realfile(), wrkdir.as_path(), Some(input));
                 }
             }
             FileExplorerTab::Remote => {
                 // Get file and clone (due to mutable / immutable stuff...)
-                if self.remote.files.get(self.remote.index).is_some() {
-                    let file: FsEntry = self.remote.files.get(self.remote.index).unwrap().clone();
+                if self.remote.get_current_file().is_some() {
+                    let file: FsEntry = self.remote.get_current_file().unwrap().clone();
                     // Call upload; pass realfile, keep link name
                     let wrkdir: PathBuf = self.local.wrkdir.clone();
                     self.filetransfer_recv(&file.get_realfile(), wrkdir.as_path(), Some(input));
+                }
+            }
+        }
+    }
+
+    /// ### callback_new_file
+    ///
+    /// Create a new file in current directory with `input` as name
+    pub(super) fn callback_new_file(&mut self, input: String) {
+        match self.tab {
+            FileExplorerTab::Local => {
+                // Check if file exists
+                let mut file_exists: bool = false;
+                for file in self.local.iter_files_all() {
+                    if input == file.get_name() {
+                        file_exists = true;
+                    }
+                }
+                if file_exists {
+                    self.log_and_alert(
+                        LogLevel::Warn,
+                        format!("File \"{}\" already exists", input,),
+                    );
+                    return;
+                }
+                // Create file
+                let file_path: PathBuf = PathBuf::from(input.as_str());
+                if let Some(ctx) = self.context.as_mut() {
+                    if let Err(err) = ctx.local.open_file_write(file_path.as_path()) {
+                        self.log_and_alert(
+                            LogLevel::Error,
+                            format!("Could not create file \"{}\": {}", file_path.display(), err),
+                        );
+                    }
+                    self.log(
+                        LogLevel::Info,
+                        format!("Created file \"{}\"", file_path.display()).as_str(),
+                    );
+                    // Reload files
+                    let path: PathBuf = self.local.wrkdir.clone();
+                    self.local_scan(path.as_path());
+                }
+            }
+            FileExplorerTab::Remote => {
+                // Check if file exists
+                let mut file_exists: bool = false;
+                for file in self.remote.iter_files_all() {
+                    if input == file.get_name() {
+                        file_exists = true;
+                    }
+                }
+                if file_exists {
+                    self.log_and_alert(
+                        LogLevel::Warn,
+                        format!("File \"{}\" already exists", input,),
+                    );
+                    return;
+                }
+                // Get path on remote
+                let file_path: PathBuf = PathBuf::from(input.as_str());
+                // Create file (on local)
+                match tempfile::NamedTempFile::new() {
+                    Err(err) => self.log_and_alert(
+                        LogLevel::Error,
+                        format!("Could not create tempfile: {}", err),
+                    ),
+                    Ok(tfile) => {
+                        // Stat tempfile
+                        if let Some(ctx) = self.context.as_mut() {
+                            let local_file: FsEntry = match ctx.local.stat(tfile.path()) {
+                                Err(err) => {
+                                    self.log_and_alert(
+                                        LogLevel::Error,
+                                        format!("Could not stat tempfile: {}", err),
+                                    );
+                                    return;
+                                }
+                                Ok(f) => f,
+                            };
+                            if let FsEntry::File(local_file) = local_file {
+                                // Create file
+                                match self.client.send_file(&local_file, file_path.as_path()) {
+                                    Err(err) => self.log_and_alert(
+                                        LogLevel::Error,
+                                        format!(
+                                            "Could not create file \"{}\": {}",
+                                            file_path.display(),
+                                            err
+                                        ),
+                                    ),
+                                    Ok(writer) => {
+                                        // Finalize write
+                                        if let Err(err) = self.client.on_sent(writer) {
+                                            self.log_and_alert(
+                                                LogLevel::Warn,
+                                                format!("Could not finalize file: {}", err),
+                                            );
+                                        }
+                                        self.log(
+                                            LogLevel::Info,
+                                            format!("Created file \"{}\"", file_path.display())
+                                                .as_str(),
+                                        );
+                                        // Reload files
+                                        let path: PathBuf = self.remote.wrkdir.clone();
+                                        self.remote_scan(path.as_path());
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }

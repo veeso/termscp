@@ -4,7 +4,7 @@
 
 /*
 *
-*   Copyright (C) 2020 Christian Visintin - christian.visintin1997@gmail.com
+*   Copyright (C) 2020-2021Christian Visintin - christian.visintin1997@gmail.com
 *
 * 	This file is part of "TermSCP"
 *
@@ -23,12 +23,16 @@
 *
 */
 
+// Mod
+pub mod explorer;
+
+// Deps
 extern crate bytesize;
 #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
 extern crate users;
-
+// Locals
 use crate::utils::fmt::{fmt_pex, fmt_time};
-
+// Ext
 use bytesize::ByteSize;
 use std::path::PathBuf;
 use std::time::SystemTime;
@@ -97,10 +101,10 @@ impl FsEntry {
     /// ### get_name
     ///
     /// Get file name from `FsEntry`
-    pub fn get_name(&self) -> String {
+    pub fn get_name(&self) -> &'_ str {
         match self {
-            FsEntry::Directory(dir) => dir.name.clone(),
-            FsEntry::File(file) => file.name.clone(),
+            FsEntry::Directory(dir) => dir.name.as_ref(),
+            FsEntry::File(file) => file.name.as_ref(),
         }
     }
 
@@ -208,6 +212,13 @@ impl FsEntry {
         matches!(self, FsEntry::File(_))
     }
 
+    /// ### is_hidden
+    ///
+    /// Returns whether FsEntry is hidden
+    pub fn is_hidden(&self) -> bool {
+        self.get_name().starts_with('.')
+    }
+
     /// ### get_realfile
     ///
     /// Return the real file pointed by a `FsEntry`
@@ -273,11 +284,20 @@ impl std::fmt::Display for FsEntry {
         // Get date
         let datetime: String = fmt_time(self.get_last_change_time(), "%b %d %Y %H:%M");
         // Set file name (or elide if too long)
-        let name: String = self.get_name();
-        let name: String = match name.len() >= 24 {
-            false => name,
-            true => format!("{}...", &name.as_str()[0..20]),
+        let name: &str = self.get_name();
+        let last_idx: usize = match self.is_dir() {
+            // NOTE: For directories is 19, since we push '/' to name
+            true => 19,
+            false => 20,
         };
+        let mut name: String = match name.len() >= 24 {
+            false => name.to_string(),
+            true => format!("{}...", &name[0..last_idx]),
+        };
+        // If is directory, append '/'
+        if self.is_dir() {
+            name.push('/');
+        }
         write!(
             f,
             "{:24}\t{:12}\t{:12}\t{:10}\t{:17}",
@@ -351,6 +371,54 @@ mod tests {
         assert_eq!(entry.is_symlink(), false);
         assert_eq!(entry.is_dir(), false);
         assert_eq!(entry.is_file(), true);
+    }
+
+    #[test]
+    fn test_fs_fsentry_hidden_files() {
+        let t_now: SystemTime = SystemTime::now();
+        let entry: FsEntry = FsEntry::File(FsFile {
+            name: String::from("bar.txt"),
+            abs_path: PathBuf::from("/bar.txt"),
+            last_change_time: t_now,
+            last_access_time: t_now,
+            creation_time: t_now,
+            size: 8192,
+            readonly: false,
+            ftype: Some(String::from("txt")),
+            symlink: None,             // UNIX only
+            user: Some(0),             // UNIX only
+            group: Some(0),            // UNIX only
+            unix_pex: Some((6, 4, 4)), // UNIX only
+        });
+        assert_eq!(entry.is_hidden(), false);
+        let entry: FsEntry = FsEntry::File(FsFile {
+            name: String::from(".gitignore"),
+            abs_path: PathBuf::from("/.gitignore"),
+            last_change_time: t_now,
+            last_access_time: t_now,
+            creation_time: t_now,
+            size: 8192,
+            readonly: false,
+            ftype: Some(String::from("txt")),
+            symlink: None,             // UNIX only
+            user: Some(0),             // UNIX only
+            group: Some(0),            // UNIX only
+            unix_pex: Some((6, 4, 4)), // UNIX only
+        });
+        assert_eq!(entry.is_hidden(), true);
+        let entry: FsEntry = FsEntry::Directory(FsDirectory {
+            name: String::from(".git"),
+            abs_path: PathBuf::from("/.git"),
+            last_change_time: t_now,
+            last_access_time: t_now,
+            creation_time: t_now,
+            readonly: false,
+            symlink: None,             // UNIX only
+            user: Some(0),             // UNIX only
+            group: Some(0),            // UNIX only
+            unix_pex: Some((7, 5, 5)), // UNIX only
+        });
+        assert_eq!(entry.is_hidden(), true);
     }
 
     #[test]
@@ -592,7 +660,7 @@ mod tests {
         assert_eq!(
             format!("{}", entry),
             format!(
-                "projects                \tdrwxr-xr-x  \troot        \t4.1 KB    \t{}",
+                "projects/               \tdrwxr-xr-x  \troot        \t4.1 KB    \t{}",
                 fmt_time(t_now, "%b %d %Y %H:%M")
             )
         );
@@ -600,7 +668,7 @@ mod tests {
         assert_eq!(
             format!("{}", entry),
             format!(
-                "projects                \tdrwxr-xr-x  \t0           \t4.1 KB    \t{}",
+                "projects/               \tdrwxr-xr-x  \t0           \t4.1 KB    \t{}",
                 fmt_time(t_now, "%b %d %Y %H:%M")
             )
         );
@@ -621,7 +689,7 @@ mod tests {
         assert_eq!(
             format!("{}", entry),
             format!(
-                "projects                \td?????????  \t0           \t4.1 KB    \t{}",
+                "projects/               \td?????????  \t0           \t4.1 KB    \t{}",
                 fmt_time(t_now, "%b %d %Y %H:%M")
             )
         );
@@ -629,7 +697,7 @@ mod tests {
         assert_eq!(
             format!("{}", entry),
             format!(
-                "projects                \td?????????  \t0           \t4.1 KB    \t{}",
+                "projects/               \td?????????  \t0           \t4.1 KB    \t{}",
                 fmt_time(t_now, "%b %d %Y %H:%M")
             )
         );

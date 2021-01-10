@@ -4,7 +4,7 @@
 
 /*
 *
-*   Copyright (C) 2020 Christian Visintin - christian.visintin1997@gmail.com
+*   Copyright (C) 2020-2021Christian Visintin - christian.visintin1997@gmail.com
 *
 * 	This file is part of "TermSCP"
 *
@@ -25,4 +25,6 @@
 
 // modules
 pub mod bookmarks_client;
+pub mod config_client;
 pub mod environment;
+pub mod sshkey_storage;

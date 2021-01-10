@@ -1,12 +1,12 @@
 # TermSCP
 
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![Stars](https://img.shields.io/github/stars/veeso/termscp.svg)](https://github.com/veeso/termscp) [![Downloads](https://img.shields.io/crates/d/termscp.svg)](https://crates.io/crates/termscp) [![Crates.io](https://img.shields.io/badge/crates.io-v0.2.0-orange.svg)](https://crates.io/crates/termscp) [![Docs](https://docs.rs/termscp/badge.svg)](https://docs.rs/termscp)  
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![Stars](https://img.shields.io/github/stars/veeso/termscp.svg)](https://github.com/veeso/termscp) [![Downloads](https://img.shields.io/crates/d/termscp.svg)](https://crates.io/crates/termscp) [![Crates.io](https://img.shields.io/badge/crates.io-v0.3.0-orange.svg)](https://crates.io/crates/termscp) [![Docs](https://docs.rs/termscp/badge.svg)](https://docs.rs/termscp)  
 
 [![Build](https://github.com/veeso/termscp/workflows/Linux/badge.svg)](https://github.com/veeso/termscp/actions) [![Build](https://github.com/veeso/termscp/workflows/MacOS/badge.svg)](https://github.com/veeso/termscp/actions) [![Build](https://github.com/veeso/termscp/workflows/Windows/badge.svg)](https://github.com/veeso/termscp/actions) [![codecov](https://codecov.io/gh/veeso/termscp/branch/main/graph/badge.svg?token=au67l7nQah)](https://codecov.io/gh/veeso/termscp)
 
 ~ Basically, WinSCP on a terminal ~  
 Developed by Christian Visintin  
-Current version: 0.2.0 (21/12/2020)
+Current version: 0.3.0 (10/01/2021)
 
 ---
 
@@ -28,6 +28,8 @@ Current version: 0.2.0 (21/12/2020)
     - [Are my passwords Safe 😈](#are-my-passwords-safe-)
   - [Text Editor ✏](#text-editor-)
     - [How do I configure the text editor 🦥](#how-do-i-configure-the-text-editor-)
+  - [Configuration ⚙️](#configuration-️)
+    - [SSH Key Storage 🔐](#ssh-key-storage-)
   - [Keybindings ⌨](#keybindings-)
   - [Documentation 📚](#documentation-)
   - [Known issues 🧻](#known-issues-)
@@ -50,7 +52,7 @@ TermSCP is basically a porting of WinSCP to terminal. So basically is a terminal
 
 ### Why TermSCP 🤔
 
-It happens quite often to me, when using SCP at work to forget the path of a file on a remote machine, which forces me then to connect through SSH, gather the file path and finally download it through SCP. I could use WinSCP, but I use Linux and I pratically use the terminal for everything, so I wanted something like WinSCP on my terminal. Yeah, I know there midnight commander too, but actually I don't like it very much tbh (and hasn't a decent support for scp).
+It happens quite often to me, when using SCP at work to forget the path of a file on a remote machine, which forces me then to connect through SSH, gather the file path and finally download it through SCP. I could use WinSCP, but I use Linux and I pratically use the terminal for everything, so I wanted something like WinSCP on my terminal. Yeah, I know there is midnight commander too, but actually I don't like it very much tbh (and hasn't a decent support for scp).
 
 ## Features 🎁
 
@@ -61,9 +63,12 @@ It happens quite often to me, when using SCP at work to forget the path of a fil
 - Practical user interface to explore and operate on the remote and on the local machine file system
 - Bookmarks and recent connections can be saved to access quickly to your favourite hosts
 - Supports text editors to view and edit text files
+- Supports both SFTP/SCP authentication through SSH keys and username/password
+- User customization directly from the user interface
 - Compatible with Windows, Linux, BSD and MacOS
 - Written in Rust
 - Easy to extend with new file transfers protocols
+- Developed keeping an eye on performance
 
 ---
 
@@ -81,8 +86,8 @@ cargo install termscp
 
 ### Deb package 📦
 
-Get `deb` package from [HERE](https://github.com/veeso/termscp/releases/latest/download/termscp_0.2.0_amd64.deb)
-or run `wget https://github.com/veeso/termscp/releases/latest/download/termscp_0.2.0_amd64.deb`
+Get `deb` package from [HERE](https://github.com/veeso/termscp/releases/latest/download/termscp_0.3.0_amd64.deb)
+or run `wget https://github.com/veeso/termscp/releases/latest/download/termscp_0.3.0_amd64.deb`
 
 then install through dpkg:
 
@@ -94,8 +99,8 @@ gdebi termscp_*.deb
 
 ### RPM package 📦
 
-Get `rpm` package from [HERE](https://github.com/veeso/termscp/releases/latest/download/termscp-0.2.0-1.x86_64.rpm)
-or run `wget https://github.com/veeso/termscp/releases/latest/download/termscp-0.2.0-1.x86_64.rpm`
+Get `rpm` package from [HERE](https://github.com/veeso/termscp/releases/latest/download/termscp-0.3.0-1.x86_64.rpm)
+or run `wget https://github.com/veeso/termscp/releases/latest/download/termscp-0.3.0-1.x86_64.rpm`
 
 then install through rpm:
 
@@ -121,7 +126,7 @@ Start PowerShell as administrator and run
 choco install termscp
 ```
 
-Alternatively you can download the ZIP file from [HERE](https://github.com/veeso/termscp/releases/latest/download/termscp.0.2.0.nupkg)
+Alternatively you can download the ZIP file from [HERE](https://github.com/veeso/termscp/releases/latest/download/termscp.0.3.0.nupkg)
 
 and then with PowerShell started with administrator previleges, run:
 
@@ -164,13 +169,13 @@ The address argument has the following syntax:
 
 Let's see some example of this particular syntax, since it's very comfortable and you'll probably going to use this instead of the other one...
 
-- Connect using default protocol (sftp) to 192.168.1.31, port is default for this protocol (22); username is current user's name
+- Connect using default protocol (*defined in configuration*) to 192.168.1.31, port is default for this protocol (22); username is current user's name
 
     ```sh
     termscp 192.168.1.31
     ```
 
-- Connect using default protocol (sftp) to 192.168.1.31, port is default for this protocol (22); username is `root`
+- Connect using default protocol (*defined in configuration*) to 192.168.1.31, port is default for this protocol (22); username is `root`
 
     ```sh
     termscp root@192.168.1.31
@@ -201,9 +206,9 @@ This feature allows you to load all the parameters required to connect to a cert
 
 Bookmarks will be saved, if possible at:
 
-- `$HOME/.config/termscp/` on Linux
-- `FOLDERID_RoamingAppData\termscp\` on Windows
+- `$HOME/.config/termscp/` on Linux/BSD
 - `$HOME/Library/Application Support/termscp` on MacOs
+- `FOLDERID_RoamingAppData\termscp\` on Windows
 
 For bookmarks only (this won't apply to recent hosts) it is also possible to save the password used to authenticate. The password is not saved by default and must be specified through the prompt when saving a new Bookmark.
 
@@ -228,46 +233,82 @@ As said before, bookmarks are saved in your configuration directory along with p
 ## Text Editor ✏
 
 TermSCP has, as you might have noticed, many features, one of these is the possibility to view and edit text file. It doesn't matter if the file is located on the local host or on the remote host, termscp provides the possibility to open a file in your favourite text editor.
-In case the file is located on remote host, the file will be first downloaded into your temporary file directory and then, **only** if changes were made to the file, re-uploaded to the remote host. TermSCP checks if you made changes to the file calculating the digest of the file using `sha256`.
+In case the file is located on remote host, the file will be first downloaded into your temporary file directory and then, **only** if changes were made to the file, re-uploaded to the remote host. TermSCP checks if you made changes to the file verifying the last modification time of the file.
 
 Just a reminder: **you can edit only textual file**; binary files are not supported.
 
 ### How do I configure the text editor 🦥
 
-Text editor is automatically found using this [awesome crate](https://github.com/milkey-mouse/edit), if you want to change the text editor it has chosen for you, just set the `EDITOR` variable in your environment.
+Text editor is automatically found using this [awesome crate](https://github.com/milkey-mouse/edit), if you want to change the text editor to use, change it in termscp configuration. [View more](#configuration-️)
 
-> This mechanism will probably change in 0.3.0, since I'm going to introduce the possibility to configure directly in termscp's settings.
+---
+
+## Configuration ⚙️
+
+TermSCP supports some user defined parameters, which can be defined in the configuration.
+Underhood termscp has a TOML file and some other directories where all the parameters will be saved, but don't worry, you won't touch any of these files, since I made possible to configure termscp from its user interface entirely.
+
+termscp, like for bookmarks, just requires to have these paths accessible:
+
+- `$HOME/.config/termscp/` on Linux/BSD
+- `$HOME/Library/Application Support/termscp` on MacOs
+- `FOLDERID_RoamingAppData\termscp\` on Windows
+
+To access configuration, you just have to press `<CTRL+C>` from the home of termscp.
+
+These parameters can be changed:
+
+- **Default Protocol**: the default protocol is the default value for the file transfer protocol to be used in termscp. This applies for the login page and for the address CLI argument.
+- **Text Editor**: the text editor to use. By default termscp will find the default editor for you; with this option you can force an editor to be used (e.g. `vim`). **Also GUI editors are supported**, unless they `nohup` from the parent process so if you ask: yes, you can use `notepad.exe`, and no: **Visual Studio Code doesn't work**.
+- **Show Hidden Files**: select whether hidden files shall be displayed by default. You will be able to decide whether to show or not hidden files at runtime pressing `A` anyway.
+- **Group Dirs**: select whether directories should be groupped or not in file explorers. If `Display first` is selected, directories will be sorted using the configured method but displayed before files, viceversa if `Display last` is selected.
+
+### SSH Key Storage 🔐
+
+Along with configuration, termscp provides also an **essential** feature for **SFTP/SCP clients**: the SSH key storage.
+
+You can access the SSH key storage, from configuration moving to the `SSH Keys` tab, once there you can:
+
+- **Add a new key**: just press `<CTRL+N>` and you will be prompted to create a new key. Provide the hostname/ip address and the username associated to the key and finally a text editor will open up: paste the **PRIVATE** ssh key into the text editor, save and quit.
+- **Remove an existing key**: just press `<DEL>` or `<CTRL+E>` on the key you want to remove, to delete persistently the key from termscp.
+- **Edit an existing key**: just press `<ENTER>` on the key you want to edit, to change the private key.
+
+> Q: Wait, my private key is protected with password, can I use it?
+> A: Of course you can. The password provided for authentication in termscp, is valid both for username/password authentication and for RSA key authentication.
 
 ---
 
 ## Keybindings ⌨
 
-| Key           | Command                                               | Reminder  |
-|---------------|-------------------------------------------------------|-----------|
-| `<ESC>`       | Disconnect from remote; return to authentication page |           |
-| `<TAB>`       | Switch between log tab and explorer                   |           |
-| `<BACKSPACE>` | Go to previous directory in stack                     |           |
-| `<RIGHT>`     | Move to remote explorer tab                           |           |
-| `<LEFT>`      | Move to local explorer tab                            |           |
-| `<UP>`        | Move up in selected list                              |           |
-| `<DOWN>`      | Move down in selected list                            |           |
-| `<PGUP>`      | Move up in selected list by 8 rows                    |           |
-| `<PGDOWN>`    | Move down in selected list by 8 rows                  |           |
-| `<ENTER>`     | Enter directory                                       |           |
-| `<SPACE>`     | Upload / download selected file                       |           |
-| `<C>`         | Copy file/directory                                   | Copy      |
-| `<D>`         | Make directory                                        | Directory |
-| `<E>`         | Delete file (Same as `CANC`)                          | Erase     |
-| `<G>`         | Go to supplied path                                   | Go to     |
-| `<H>`         | Show help                                             | Help      |
-| `<I>`         | Show info about selected file or directory            | Info      |
-| `<L>`         | Reload current directory's content                    | List      |
-| `<O>`         | Edit file; see [Text editor](#text-editor-)           | Open      |
-| `<Q>`         | Quit TermSCP                                          | Quit      |
-| `<R>`         | Rename file                                           | Rename    |
-| `<U>`         | Go to parent directory                                | Upper     |
-| `<DEL>`       | Delete file                                           |           |
-| `<CTRL+C>`    | Abort file transfer process                           |           |
+| Key           | Command                                               | Reminder    |
+|---------------|-------------------------------------------------------|-------------|
+| `<ESC>`       | Disconnect from remote; return to authentication page |             |
+| `<TAB>`       | Switch between log tab and explorer                   |             |
+| `<BACKSPACE>` | Go to previous directory in stack                     |             |
+| `<RIGHT>`     | Move to remote explorer tab                           |             |
+| `<LEFT>`      | Move to local explorer tab                            |             |
+| `<UP>`        | Move up in selected list                              |             |
+| `<DOWN>`      | Move down in selected list                            |             |
+| `<PGUP>`      | Move up in selected list by 8 rows                    |             |
+| `<PGDOWN>`    | Move down in selected list by 8 rows                  |             |
+| `<ENTER>`     | Enter directory                                       |             |
+| `<SPACE>`     | Upload / download selected file                       |             |
+| `<A>`         | Toggle hidden files                                   | All         |
+| `<B>`         | Sort files by                                         | Bubblesort? |
+| `<C>`         | Copy file/directory                                   | Copy        |
+| `<D>`         | Make directory                                        | Directory   |
+| `<E>`         | Delete file (Same as `DEL`)                           | Erase       |
+| `<G>`         | Go to supplied path                                   | Go to       |
+| `<H>`         | Show help                                             | Help        |
+| `<I>`         | Show info about selected file or directory            | Info        |
+| `<L>`         | Reload current directory's content                    | List        |
+| `<N>`         | Create new file with provided name                    | New         |
+| `<O>`         | Edit file; see [Text editor](#text-editor-)           | Open        |
+| `<Q>`         | Quit TermSCP                                          | Quit        |
+| `<R>`         | Rename file                                           | Rename      |
+| `<U>`         | Go to parent directory                                | Upper       |
+| `<DEL>`       | Delete file                                           |             |
+| `<CTRL+C>`    | Abort file transfer process                           |             |
 
 ---
 
@@ -279,17 +320,13 @@ The developer documentation can be found on Rust Docs at <https://docs.rs/termsc
 
 ## Known issues 🧻
 
-- Ftp:
-  - Time in explorer is `1 Jan 1970`, but shouldn't be: that's because chrono can't parse date in a different locale. So if your server has a locale different from the one on your machine, it won't be able to parse the date.
-  - Some servers don't work: yes, some kind of ftp server don't work correctly, sometimes it won't display any files in the directories, some other times uploading files will fail. Up to date, `vsftpd` is the only one server which I saw working correctly with TermSCP. Am I going to solve this? I'd like to, but it's not my fault at all. Unfortunately [rust-ftp](https://github.com/mattnenterprise/rust-ftp) is an abandoned project (up to 2020), indeed I had to patch many stuff by myself. I'll try to solve these issues, but it will take a long time.
-- `NoSuchFileOrDirectory` on connect: let me guess, you're running on WSL and you've installed termscp through cargo. I know about this issue and it's a glitch of WSL I guess. Don't worry about it, just move the termscp executable into another PATH location, such as `/usr/bin`.
+- `NoSuchFileOrDirectory` on connect (WSL): I know about this issue and it's a glitch of WSL I guess. Don't worry about it, just move the termscp executable into another PATH location, such as `/usr/bin`, or install it through the appropriate package format (e.g. deb).
 
 ---
 
 ## Upcoming Features 🧪
 
-- **SSH Key storage**: termscp 0.3.0 will (finally) support the SSH key storage. From the configuration interface, you will be able to add SSH keys to the termscp's storage as you do indeed with other similiar clients.
-- **User customizations**: termscp 0.3.0 will support some user customizations, such as the possibility to setup the text editor directly from termscp and the default communication protocol. Everything will be configurable directly from the termscp user interface.
+- **Custom explorer format**: possibility to customize the file line in the explorer directly from configuration, with the possibility to choose with information to display.
 - **Find command in explorer**: possibility to search for files in explorers.
 
 ---
@@ -314,6 +351,7 @@ TermSCP is powered by these aweseome projects:
 - [crossterm](https://github.com/crossterm-rs/crossterm)
 - [edit](https://github.com/milkey-mouse/edit)
 - [rpassword](https://github.com/conradkleinespel/rpassword)
+- [rust-ftp](https://github.com/mattnenterprise/rust-ftp)
 - [ssh2-rs](https://github.com/alexcrichton/ssh2-rs)
 - [textwrap](https://github.com/mgeisler/textwrap)
 - [tui-rs](https://github.com/fdehau/tui-rs)
@@ -330,6 +368,10 @@ TermSCP is powered by these aweseome projects:
 > Bookmarks
 
 ![Bookmarks](assets/images/bookmarks.gif)
+
+> Setup
+
+![Setup](assets/images/config.gif)
 
 > Text editor
 

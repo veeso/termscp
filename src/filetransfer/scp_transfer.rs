@@ -4,7 +4,7 @@
 
 /*
 *
-*   Copyright (C) 2020 Christian Visintin - christian.visintin1997@gmail.com
+*   Copyright (C) 2020-2021Christian Visintin - christian.visintin1997@gmail.com
 *
 * 	This file is part of "TermSCP"
 *
@@ -30,6 +30,7 @@ extern crate ssh2;
 // Locals
 use super::{FileTransfer, FileTransferError, FileTransferErrorType};
 use crate::fs::{FsDirectory, FsEntry, FsFile};
+use crate::system::sshkey_storage::SshKeyStorage;
 use crate::utils::parser::parse_lstime;
 
 // Includes
@@ -46,22 +47,18 @@ use std::time::SystemTime;
 pub struct ScpFileTransfer {
     session: Option<Session>,
     wrkdir: PathBuf,
-}
-
-impl Default for ScpFileTransfer {
-    fn default() -> Self {
-        Self::new()
-    }
+    key_storage: SshKeyStorage,
 }
 
 impl ScpFileTransfer {
     /// ### new
     ///
     /// Instantiates a new ScpFileTransfer
-    pub fn new() -> ScpFileTransfer {
+    pub fn new(key_storage: SshKeyStorage) -> ScpFileTransfer {
         ScpFileTransfer {
             session: None,
             wrkdir: PathBuf::from("~"),
+            key_storage,
         }
     }
 
@@ -192,11 +189,12 @@ impl ScpFileTransfer {
                     return Err(());
                 }
                 let mut abs_path: PathBuf = PathBuf::from(path);
+                abs_path.push(file_name.as_str());
+                // Get extension
                 let extension: Option<String> = match abs_path.as_path().extension() {
                     None => None,
                     Some(s) => Some(String::from(s.to_string_lossy())),
                 };
-                abs_path.push(file_name.as_str());
                 // Return
                 // Push to entries
                 Ok(match is_dir {
@@ -345,17 +343,36 @@ impl FileTransfer for ScpFileTransfer {
             Some(u) => u,
             None => String::from(""),
         };
-        // Try authenticating with user agent
-        if session.userauth_agent(username.as_str()).is_err() {
-            // Try authentication with password then
-            if let Err(err) = session.userauth_password(
-                username.as_str(),
-                password.unwrap_or_else(|| String::from("")).as_str(),
-            ) {
-                return Err(FileTransferError::new_ex(
-                    FileTransferErrorType::AuthenticationFailed,
-                    format!("{}", err),
-                ));
+        // Check if it is possible to authenticate using a RSA key
+        match self
+            .key_storage
+            .resolve(address.as_str(), username.as_str())
+        {
+            Some(rsa_key) => {
+                // Authenticate with RSA key
+                if let Err(err) = session.userauth_pubkey_file(
+                    username.as_str(),
+                    None,
+                    rsa_key.as_path(),
+                    password.as_deref(),
+                ) {
+                    return Err(FileTransferError::new_ex(
+                        FileTransferErrorType::AuthenticationFailed,
+                        format!("{}", err),
+                    ));
+                }
+            }
+            None => {
+                // Proceeed with username/password authentication
+                if let Err(err) = session.userauth_password(
+                    username.as_str(),
+                    password.unwrap_or_else(|| String::from("")).as_str(),
+                ) {
+                    return Err(FileTransferError::new_ex(
+                        FileTransferErrorType::AuthenticationFailed,
+                        format!("{}", err),
+                    ));
+                }
             }
         }
         // Get banner
@@ -755,7 +772,7 @@ impl FileTransfer for ScpFileTransfer {
                     (mtime, atime)
                 };
                 match session.scp_send(file_name, mode, local.size as u64, Some(times)) {
-                    Ok(channel) => Ok(Box::new(BufWriter::with_capacity(8192, channel))),
+                    Ok(channel) => Ok(Box::new(BufWriter::with_capacity(65536, channel))),
                     Err(err) => Err(FileTransferError::new_ex(
                         FileTransferErrorType::ProtocolError,
                         format!("{}", err),
@@ -778,7 +795,7 @@ impl FileTransfer for ScpFileTransfer {
                 // Set blocking to true
                 session.set_blocking(true);
                 match session.scp_recv(file.abs_path.as_path()) {
-                    Ok(reader) => Ok(Box::new(BufReader::with_capacity(8192, reader.0))),
+                    Ok(reader) => Ok(Box::new(BufReader::with_capacity(65536, reader.0))),
                     Err(err) => Err(FileTransferError::new_ex(
                         FileTransferErrorType::ProtocolError,
                         format!("{}", err),
@@ -823,14 +840,14 @@ mod tests {
 
     #[test]
     fn test_filetransfer_scp_new() {
-        let client: ScpFileTransfer = ScpFileTransfer::new();
+        let client: ScpFileTransfer = ScpFileTransfer::new(SshKeyStorage::empty());
         assert!(client.session.is_none());
         assert_eq!(client.is_connected(), false);
     }
 
     #[test]
     fn test_filetransfer_scp_connect() {
-        let mut client: ScpFileTransfer = ScpFileTransfer::new();
+        let mut client: ScpFileTransfer = ScpFileTransfer::new(SshKeyStorage::empty());
         assert_eq!(client.is_connected(), false);
         assert!(client
             .connect(
@@ -849,7 +866,7 @@ mod tests {
     }
     #[test]
     fn test_filetransfer_scp_bad_auth() {
-        let mut client: ScpFileTransfer = ScpFileTransfer::new();
+        let mut client: ScpFileTransfer = ScpFileTransfer::new(SshKeyStorage::empty());
         assert!(client
             .connect(
                 String::from("test.rebex.net"),
@@ -862,7 +879,7 @@ mod tests {
 
     #[test]
     fn test_filetransfer_scp_no_credentials() {
-        let mut client: ScpFileTransfer = ScpFileTransfer::new();
+        let mut client: ScpFileTransfer = ScpFileTransfer::new(SshKeyStorage::empty());
         assert!(client
             .connect(String::from("test.rebex.net"), 22, None, None)
             .is_err());
@@ -870,7 +887,7 @@ mod tests {
 
     #[test]
     fn test_filetransfer_scp_bad_server() {
-        let mut client: ScpFileTransfer = ScpFileTransfer::new();
+        let mut client: ScpFileTransfer = ScpFileTransfer::new(SshKeyStorage::empty());
         assert!(client
             .connect(
                 String::from("mybadserver.veryverybad.awful"),
@@ -882,7 +899,7 @@ mod tests {
     }
     #[test]
     fn test_filetransfer_scp_pwd() {
-        let mut client: ScpFileTransfer = ScpFileTransfer::new();
+        let mut client: ScpFileTransfer = ScpFileTransfer::new(SshKeyStorage::empty());
         assert!(client
             .connect(
                 String::from("test.rebex.net"),
@@ -902,7 +919,7 @@ mod tests {
     #[test]
     #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
     fn test_filetransfer_scp_cwd() {
-        let mut client: ScpFileTransfer = ScpFileTransfer::new();
+        let mut client: ScpFileTransfer = ScpFileTransfer::new(SshKeyStorage::empty());
         assert!(client
             .connect(
                 String::from("test.rebex.net"),
@@ -923,7 +940,7 @@ mod tests {
 
     #[test]
     fn test_filetransfer_scp_cwd_error() {
-        let mut client: ScpFileTransfer = ScpFileTransfer::new();
+        let mut client: ScpFileTransfer = ScpFileTransfer::new(SshKeyStorage::empty());
         assert!(client
             .connect(
                 String::from("test.rebex.net"),
@@ -946,7 +963,7 @@ mod tests {
 
     #[test]
     fn test_filetransfer_scp_ls() {
-        let mut client: ScpFileTransfer = ScpFileTransfer::new();
+        let mut client: ScpFileTransfer = ScpFileTransfer::new(SshKeyStorage::empty());
         assert!(client
             .connect(
                 String::from("test.rebex.net"),
@@ -967,7 +984,7 @@ mod tests {
 
     #[test]
     fn test_filetransfer_scp_stat() {
-        let mut client: ScpFileTransfer = ScpFileTransfer::new();
+        let mut client: ScpFileTransfer = ScpFileTransfer::new(SshKeyStorage::empty());
         assert!(client
             .connect(
                 String::from("test.rebex.net"),
@@ -991,7 +1008,7 @@ mod tests {
 
     #[test]
     fn test_filetransfer_scp_recv() {
-        let mut client: ScpFileTransfer = ScpFileTransfer::new();
+        let mut client: ScpFileTransfer = ScpFileTransfer::new(SshKeyStorage::empty());
         assert!(client
             .connect(
                 String::from("test.rebex.net"),
@@ -1023,7 +1040,7 @@ mod tests {
     }
     #[test]
     fn test_filetransfer_scp_recv_failed_nosuchfile() {
-        let mut client: ScpFileTransfer = ScpFileTransfer::new();
+        let mut client: ScpFileTransfer = ScpFileTransfer::new(SshKeyStorage::empty());
         assert!(client
             .connect(
                 String::from("test.rebex.net"),
@@ -1058,7 +1075,7 @@ mod tests {
     /* NOTE: the server doesn't allow you to create directories
     #[test]
     fn test_filetransfer_scp_mkdir() {
-        let mut client: ScpFileTransfer = ScpFileTransfer::new();
+        let mut client: ScpFileTransfer = ScpFileTransfer::new(SshKeyStorage::empty());
         assert!(client.connect(String::from("test.rebex.net"), 22, Some(String::from("demo")), Some(String::from("password"))).is_ok());
         let dir: String = String::from("foo");
         // Mkdir
@@ -1087,7 +1104,7 @@ mod tests {
             group: Some(0),            // UNIX only
             unix_pex: Some((6, 4, 4)), // UNIX only
         };
-        let mut scp: ScpFileTransfer = ScpFileTransfer::new();
+        let mut scp: ScpFileTransfer = ScpFileTransfer::new(SshKeyStorage::empty());
         assert!(scp.change_dir(Path::new("/tmp")).is_err());
         assert!(scp.disconnect().is_err());
         assert!(scp.list_dir(Path::new("/tmp")).is_err());

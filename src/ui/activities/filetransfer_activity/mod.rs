@@ -4,7 +4,7 @@
 
 /*
 *
-*   Copyright (C) 2020 Christian Visintin - christian.visintin1997@gmail.com
+*   Copyright (C) 2020-2021Christian Visintin - christian.visintin1997@gmail.com
 *
 * 	This file is part of "TermSCP"
 *
@@ -39,21 +39,20 @@ extern crate unicode_width;
 
 // locals
 use super::{Activity, Context};
-use crate::filetransfer::FileTransferProtocol;
-
-// File transfer
 use crate::filetransfer::ftp_transfer::FtpFileTransfer;
 use crate::filetransfer::scp_transfer::ScpFileTransfer;
 use crate::filetransfer::sftp_transfer::SftpFileTransfer;
-use crate::filetransfer::FileTransfer;
+use crate::filetransfer::{FileTransfer, FileTransferProtocol};
+use crate::fs::explorer::FileExplorer;
 use crate::fs::FsEntry;
+use crate::system::config_client::ConfigClient;
 
 // Includes
 use chrono::{DateTime, Local};
 use crossterm::event::Event as InputEvent;
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use std::collections::VecDeque;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::time::Instant;
 use tui::style::Color;
 
@@ -90,82 +89,20 @@ enum DialogYesNoOption {
     No,
 }
 
-/// ## PopupType
+/// ## Popup
 ///
-/// PopupType describes the type of popup
+/// Popup describes the type of popup
 #[derive(Clone)]
-enum PopupType {
+enum Popup {
     Alert(Color, String),                          // Block color; Block text
     Fatal(String),                                 // Must quit after being hidden
     FileInfo,                                      // Show info about current file
+    FileSortingDialog,                             // Dialog for choosing file sorting type
     Help,                                          // Show Help
     Input(String, OnInputSubmitCallback),          // Input description; Callback for submit
     Progress(String),                              // Progress block text
     Wait(String),                                  // Wait block text
     YesNo(String, DialogCallback, DialogCallback), // Yes, no callback
-}
-
-/// ## InputMode
-///
-/// InputMode describes the current input mode
-/// Each input mode handle the input events in a different way
-#[derive(Clone)]
-enum InputMode {
-    Explorer,
-    Popup(PopupType),
-}
-
-/// ## FileExplorer
-///
-/// File explorer states
-struct FileExplorer {
-    pub wrkdir: PathBuf,         // Current directory
-    pub index: usize,            // Selected file
-    pub files: Vec<FsEntry>,     // Files in directory
-    dirstack: VecDeque<PathBuf>, // Stack of visited directory (max 16)
-}
-
-impl FileExplorer {
-    /// ### new
-    ///
-    /// Instantiates a new FileExplorer
-    pub fn new() -> FileExplorer {
-        FileExplorer {
-            wrkdir: PathBuf::from("/"),
-            index: 0,
-            files: Vec::new(),
-            dirstack: VecDeque::with_capacity(16),
-        }
-    }
-
-    /// ### pushd
-    ///
-    /// push directory to stack
-    pub fn pushd(&mut self, dir: &Path) {
-        // Check if stack overflows the size
-        if self.dirstack.len() + 1 > 16 {
-            self.dirstack.pop_back(); // Start cleaning events from back
-        }
-        // Eventually push front the new record
-        self.dirstack.push_front(PathBuf::from(dir));
-    }
-
-    /// ### popd
-    ///
-    /// Pop directory from the stack and return the directory
-    pub fn popd(&mut self) -> Option<PathBuf> {
-        self.dirstack.pop_front()
-    }
-
-    /// ### sort_files_by_name
-    ///
-    /// Sort explorer files by their name
-    pub fn sort_files_by_name(&mut self) {
-        self.files.sort_by_key(|x: &FsEntry| match x {
-            FsEntry::Directory(dir) => dir.name.as_str().to_lowercase(),
-            FsEntry::File(file) => file.name.as_str().to_lowercase(),
-        });
-    }
 }
 
 /// ## FileExplorerTab
@@ -266,7 +203,11 @@ impl TransferStates {
         // bytes_written : elapsed_secs = x : 1
         let elapsed_secs: u64 = self.started.elapsed().as_secs();
         match elapsed_secs {
-            0 => 0, // NOTE: would divide by 0 :D
+            0 => match self.bytes_written == self.bytes_total {
+                // NOTE: would divide by 0 :D
+                true => self.bytes_total as u64, // Download completed in less than 1 second
+                false => 0,                      // 0 B/S
+            },
             _ => self.bytes_written as u64 / elapsed_secs,
         }
     }
@@ -287,13 +228,14 @@ pub struct FileTransferActivity {
     context: Option<Context>,         // Context holder
     params: FileTransferParams,       // FT connection params
     client: Box<dyn FileTransfer>,    // File transfer client
+    config_cli: Option<ConfigClient>, // Config Client
     local: FileExplorer,              // Local File explorer state
     remote: FileExplorer,             // Remote File explorer state
     tab: FileExplorerTab,             // Current selected tab
     log_index: usize,                 // Current log index entry selected
     log_records: VecDeque<LogRecord>, // Log records
     log_size: usize,                  // Log records size (max)
-    input_mode: InputMode,            // Current input mode
+    popup: Option<Popup>,             // Current input mode
     input_field: InputField,          // Current selected input mode
     input_txt: String,                // Input text
     choice_opt: DialogYesNoOption,    // Dialog popup selected option
@@ -306,23 +248,30 @@ impl FileTransferActivity {
     /// Instantiates a new FileTransferActivity
     pub fn new(params: FileTransferParams) -> FileTransferActivity {
         let protocol: FileTransferProtocol = params.protocol;
+        // Get config client
+        let config_client: Option<ConfigClient> = Self::init_config_client();
         FileTransferActivity {
             disconnected: false,
             quit: false,
             context: None,
             client: match protocol {
-                FileTransferProtocol::Sftp => Box::new(SftpFileTransfer::new()),
+                FileTransferProtocol::Sftp => Box::new(SftpFileTransfer::new(
+                    Self::make_ssh_storage(config_client.as_ref()),
+                )),
                 FileTransferProtocol::Ftp(ftps) => Box::new(FtpFileTransfer::new(ftps)),
-                FileTransferProtocol::Scp => Box::new(ScpFileTransfer::new()),
+                FileTransferProtocol::Scp => Box::new(ScpFileTransfer::new(
+                    Self::make_ssh_storage(config_client.as_ref()),
+                )),
             },
             params,
-            local: FileExplorer::new(),
-            remote: FileExplorer::new(),
+            local: Self::build_explorer(config_client.as_ref()),
+            remote: Self::build_explorer(config_client.as_ref()),
+            config_cli: config_client,
             tab: FileExplorerTab::Local,
             log_index: 0,
             log_records: VecDeque::with_capacity(256), // 256 events is enough I guess
             log_size: 256,                             // Must match with capacity
-            input_mode: InputMode::Explorer,
+            popup: None,
             input_field: InputField::Explorer,
             input_txt: String::new(),
             choice_opt: DialogYesNoOption::Yes,
@@ -354,6 +303,8 @@ impl Activity for FileTransferActivity {
         // Get files at current wd
         self.local_scan(pwd.as_path());
         self.local.wrkdir = pwd;
+        // Configure text editor
+        self.setup_text_editor();
     }
 
     /// ### on_draw
@@ -367,11 +318,10 @@ impl Activity for FileTransferActivity {
         if self.context.is_none() {
             return;
         }
-        let is_explorer_mode: bool = matches!(self.input_mode, InputMode::Explorer);
-        // Check if connected
-        if !self.client.is_connected() && is_explorer_mode {
+        // Check if connected (popup must be None, otherwise would try reconnecting in loop in case of error)
+        if !self.client.is_connected() && self.popup.is_none() {
             // Set init state to connecting popup
-            self.input_mode = InputMode::Popup(PopupType::Wait(format!(
+            self.popup = Some(Popup::Wait(format!(
                 "Connecting to {}:{}...",
                 self.params.address, self.params.port
             )));

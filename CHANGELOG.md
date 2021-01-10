@@ -1,6 +1,7 @@
 # Changelog
 
 - [Changelog](#changelog)
+  - [0.3.0](#030)
   - [0.2.0](#020)
   - [0.1.3](#013)
   - [0.1.2](#012)
@@ -8,6 +9,57 @@
   - [0.1.0](#010)
 
 ---
+
+## 0.3.0
+
+ Released on 10/01/2021
+
+> The SSH Key Storage Update
+
+- **SSH Key Storage**
+  - Added the possibility to store SSH private keys to access to remote hosts; this feature is supported in both SFTP and SCP.
+  - SSH Keys can be manipulated through the new **Setup Interface**
+- **Setup Interface**
+  - Added a new area in the interface, where is possible to customize termscp. Access to this interface is achieved pressing `<CTRL+C>` from the home page (`AuthActivity`).
+- **Configuration**:
+  - Added configuration; configuration is stored at
+    - Linux: `/home/alice/.config/termscp/config.toml`
+    - MacOS: `/Users/Alice/Library/Application Support/termscp/config.toml`
+    - Windows: `C:\Users\Alice\AppData\Roaming\termscp\config.toml`
+  - Added Text editor to configuration
+  - Added Default File transfer protocol to configuration
+  - Added "Show hidden files" to configuration
+  - Added "Group directories" to configuration
+  - Added SSH keys to configuration; SSH keys will be stored at
+    - Linux: `/home/alice/.config/termscp/.ssh/`
+    - MacOS: `/Users/Alice/Library/Application Support/termscp/.ssh/`
+    - Windows: `C:\Users\Alice\AppData\Roaming\termscp\.ssh\`
+- Enhancements:
+  - Replaced `sha256` sum with last modification time check, to verify if a file has been changed in the text editor
+  - **FTP**
+    - Added `LIST` command parser for Windows server (DOS-like syntax)
+  - Default protocol changed to default protocol in configuration when providing address as CLI argument
+  - Explorers:
+    - Hidden files are now not shown by default; use `A` to show hidden files.
+    - Append `/` to directories name.
+- Keybindings:
+  - `A`: Toggle hidden files
+  - `B`: Sort files by (name, size, creation time, modify time)
+  - `N`: New file
+- Bugfix:
+  - SCP client didn't show file types for files
+  - FTP client didn't show file types for files
+  - FTP file transfer not working properly with `STOR` and `RETR`.
+  - Fixed `0 B/S` transfer rate displayed after completing download in less than 1 second
+- Dependencies:
+  - added `bitflags 1.2.1`
+  - removed `data-encoding`
+  - updated `ftp` to `4.0.2`
+  - updated `rand` to `0.8.0`
+  - removed `ring`
+  - updated `textwrap` to `0.13.1`
+  - updated `toml` to `0.5.8`
+  - updated `whoami` to `1.0.1`
 
 ## 0.2.0
 
@@ -19,8 +71,8 @@ Released on 21/12/2020
   - Bookmarks and recent connections are now displayed in the home page
   - Bookmarks are saved at
     - Linux: `/home/alice/.config/termscp/bookmarks.toml`
-    - Windows: `C:\Users\Alice\AppData\Roaming\termscp\bookmarks.toml`
     - MacOS: `/Users/Alice/Library/Application Support/termscp/bookmarks.toml`
+    - Windows: `C:\Users\Alice\AppData\Roaming\termscp\bookmarks.toml`
 - **Text Editor**
   - Added text editor feature to explorer view
   - Added `o` to keybindings to open a text file

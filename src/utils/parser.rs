@@ -4,7 +4,7 @@
 
 /*
 *
-*   Copyright (C) 2020 Christian Visintin - christian.visintin1997@gmail.com
+*   Copyright (C) 2020-2021Christian Visintin - christian.visintin1997@gmail.com
 *
 * 	This file is part of "TermSCP"
 *
@@ -27,10 +27,15 @@
 extern crate chrono;
 extern crate whoami;
 
+// Locals
 use crate::filetransfer::FileTransferProtocol;
+use crate::system::config_client::ConfigClient;
+use crate::system::environment;
 
+// Ext
 use chrono::format::ParseError;
 use chrono::prelude::*;
+use std::str::FromStr;
 use std::time::{Duration, SystemTime};
 
 /// ### parse_remote_opt
@@ -58,8 +63,22 @@ pub fn parse_remote_opt(
     let mut wrkstr: String = remote.to_string();
     let address: String;
     let mut port: u16 = 22;
-    let mut protocol: FileTransferProtocol = FileTransferProtocol::Sftp;
     let mut username: Option<String> = None;
+    // Set protocol to default protocol
+    let mut protocol: FileTransferProtocol = match environment::init_config_dir() {
+        Ok(p) => match p {
+            Some(p) => {
+                // Create config client
+                let (config_path, ssh_key_path) = environment::get_config_paths(p.as_path());
+                match ConfigClient::new(config_path.as_path(), ssh_key_path.as_path()) {
+                    Ok(cli) => cli.get_default_protocol(),
+                    Err(_) => FileTransferProtocol::Sftp,
+                }
+            }
+            None => FileTransferProtocol::Sftp,
+        },
+        Err(_) => FileTransferProtocol::Sftp,
+    };
     // Split string by '://'
     let tokens: Vec<&str> = wrkstr.split("://").collect();
     // If length is > 1, then token[0] is protocol
@@ -67,33 +86,16 @@ pub fn parse_remote_opt(
         1 => {}
         2 => {
             // Parse protocol
-            match tokens[0] {
-                "sftp" => {
-                    // Set protocol to sftp
-                    protocol = FileTransferProtocol::Sftp;
-                    // Set port to default (22)
-                    port = 22;
-                }
-                "scp" => {
-                    // Set protocol to scp
-                    protocol = FileTransferProtocol::Scp;
-                    // Set port to default (22)
-                    port = 22;
-                }
-                "ftp" => {
-                    // Set protocol to fpt
-                    protocol = FileTransferProtocol::Ftp(false);
-                    // Set port to default (21)
-                    port = 21;
-                }
-                "ftps" => {
-                    // Set protocol to fpt
-                    protocol = FileTransferProtocol::Ftp(true);
-                    // Set port to default (21)
-                    port = 21;
-                }
-                _ => return Err(format!("Unknown protocol '{}'", tokens[0])),
-            }
+            let (m_protocol, m_port) = match FileTransferProtocol::from_str(tokens[0]) {
+                Ok(proto) => match proto {
+                    FileTransferProtocol::Ftp(_) => (proto, 21),
+                    FileTransferProtocol::Scp => (proto, 22),
+                    FileTransferProtocol::Sftp => (proto, 22),
+                },
+                Err(_) => return Err(format!("Unknown protocol '{}'", tokens[0])),
+            };
+            protocol = m_protocol;
+            port = m_port;
             wrkstr = String::from(tokens[1]); // Wrkstr becomes tokens[1]
         }
         _ => return Err(String::from("Bad syntax")), // Too many tokens...
@@ -179,10 +181,26 @@ pub fn parse_lstime(tm: &str, fmt_year: &str, fmt_hours: &str) -> Result<SystemT
         .unwrap_or(SystemTime::UNIX_EPOCH))
 }
 
+/// ### parse_datetime
+///
+/// Parse date time string representation and transform it into `SystemTime`
+pub fn parse_datetime(tm: &str, fmt: &str) -> Result<SystemTime, ParseError> {
+    match NaiveDateTime::parse_from_str(tm, fmt) {
+        Ok(dt) => {
+            let sys_time: SystemTime = SystemTime::UNIX_EPOCH;
+            Ok(sys_time
+                .checked_add(Duration::from_secs(dt.timestamp() as u64))
+                .unwrap_or(SystemTime::UNIX_EPOCH))
+        }
+        Err(err) => Err(err),
+    }
+}
+
 #[cfg(test)]
 mod tests {
 
     use super::*;
+    use crate::utils::fmt::fmt_time;
 
     #[test]
     fn test_utils_parse_remote_opt() {
@@ -277,22 +295,24 @@ mod tests {
     fn test_utils_parse_lstime() {
         // Good cases
         assert_eq!(
-            parse_lstime("Nov 5 16:32", "%b %d %Y", "%b %d %H:%M")
-                .ok()
-                .unwrap()
-                .duration_since(SystemTime::UNIX_EPOCH)
-                .ok()
-                .unwrap(),
-            Duration::from_secs(1604593920)
+            fmt_time(
+                parse_lstime("Nov 5 16:32", "%b %d %Y", "%b %d %H:%M")
+                    .ok()
+                    .unwrap(),
+                "%m %d %M"
+            )
+            .as_str(),
+            "11 05 32"
         );
         assert_eq!(
-            parse_lstime("Dec 2 21:32", "%b %d %Y", "%b %d %H:%M")
-                .ok()
-                .unwrap()
-                .duration_since(SystemTime::UNIX_EPOCH)
-                .ok()
-                .unwrap(),
-            Duration::from_secs(1606944720)
+            fmt_time(
+                parse_lstime("Dec 2 21:32", "%b %d %Y", "%b %d %H:%M")
+                    .ok()
+                    .unwrap(),
+                "%m %d %M"
+            )
+            .as_str(),
+            "12 02 32"
         );
         assert_eq!(
             parse_lstime("Nov 5 2018", "%b %d %Y", "%b %d %H:%M")
@@ -316,5 +336,20 @@ mod tests {
         assert!(parse_lstime("Oma 31 2018", "%b %d %Y", "%b %d %H:%M").is_err());
         assert!(parse_lstime("Feb 31 2018", "%b %d %Y", "%b %d %H:%M").is_err());
         assert!(parse_lstime("Feb 15 25:32", "%b %d %Y", "%b %d %H:%M").is_err());
+    }
+
+    #[test]
+    fn test_utils_parse_datetime() {
+        assert_eq!(
+            parse_datetime("04-08-14  03:09PM", "%d-%m-%y %I:%M%p")
+                .ok()
+                .unwrap()
+                .duration_since(SystemTime::UNIX_EPOCH)
+                .ok()
+                .unwrap(),
+            Duration::from_secs(1407164940)
+        );
+        // Not enough argument for datetime
+        assert!(parse_datetime("04-08-14", "%d-%m-%y").is_err());
     }
 }

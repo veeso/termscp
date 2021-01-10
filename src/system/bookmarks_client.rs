@@ -4,7 +4,7 @@
 
 /*
 *
-*   Copyright (C) 2020 Christian Visintin - christian.visintin1997@gmail.com
+*   Copyright (C) 2020-2021Christian Visintin - christian.visintin1997@gmail.com
 *
 * 	This file is part of "TermSCP"
 *
@@ -23,21 +23,19 @@
 *
 */
 
-// Deps
-extern crate magic_crypt;
-extern crate rand;
-
 // Local
 use crate::bookmarks::serializer::BookmarkSerializer;
 use crate::bookmarks::{Bookmark, SerializerError, SerializerErrorKind, UserHosts};
 use crate::filetransfer::FileTransferProtocol;
+use crate::utils::crypto;
 use crate::utils::fmt::fmt_time;
+use crate::utils::random::random_alphanumeric_with_len;
 // Ext
-use magic_crypt::MagicCryptTrait;
-use rand::{distributions::Alphanumeric, Rng};
 use std::fs::{OpenOptions, Permissions};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
+use std::str::FromStr;
+use std::string::ToString;
 use std::time::SystemTime;
 
 /// ## BookmarksClient
@@ -113,11 +111,9 @@ impl BookmarksClient {
         Some((
             entry.address.clone(),
             entry.port,
-            match entry.protocol.to_ascii_uppercase().as_str() {
-                "FTP" => FileTransferProtocol::Ftp(false),
-                "FTPS" => FileTransferProtocol::Ftp(true),
-                "SCP" => FileTransferProtocol::Scp,
-                _ => FileTransferProtocol::Sftp,
+            match FileTransferProtocol::from_str(entry.protocol.as_str()) {
+                Ok(proto) => proto,
+                Err(_) => FileTransferProtocol::Sftp, // Default
             },
             entry.username.clone(),
             match &entry.password {
@@ -173,11 +169,9 @@ impl BookmarksClient {
         Some((
             entry.address.clone(),
             entry.port,
-            match entry.protocol.to_ascii_uppercase().as_str() {
-                "FTP" => FileTransferProtocol::Ftp(false),
-                "FTPS" => FileTransferProtocol::Ftp(true),
-                "SCP" => FileTransferProtocol::Scp,
-                _ => FileTransferProtocol::Sftp,
+            match FileTransferProtocol::from_str(entry.protocol.as_str()) {
+                Ok(proto) => proto,
+                Err(_) => FileTransferProtocol::Sftp, // Default
             },
             entry.username.clone(),
         ))
@@ -285,10 +279,7 @@ impl BookmarksClient {
     /// Generate a new AES key and write it to key file
     fn generate_key(key_file: &Path) -> Result<String, SerializerError> {
         // Generate 256 bytes (2048 bits) key
-        let key: String = rand::thread_rng()
-            .sample_iter(Alphanumeric)
-            .take(256)
-            .collect::<String>();
+        let key: String = random_alphanumeric_with_len(256);
         // Write file
         match OpenOptions::new()
             .create(true)
@@ -332,14 +323,7 @@ impl BookmarksClient {
             address: addr,
             port,
             username,
-            protocol: match protocol {
-                FileTransferProtocol::Ftp(secure) => match secure {
-                    true => String::from("FTPS"),
-                    false => String::from("FTP"),
-                },
-                FileTransferProtocol::Scp => String::from("SCP"),
-                FileTransferProtocol::Sftp => String::from("SFTP"),
-            },
+            protocol: protocol.to_string(),
             password: match password {
                 Some(p) => Some(self.encrypt_str(p.as_str())), // Encrypt password if provided
                 None => None,
@@ -373,16 +357,14 @@ impl BookmarksClient {
     ///
     /// Encrypt provided string using AES-128. Encrypted buffer is then converted to BASE64
     fn encrypt_str(&self, txt: &str) -> String {
-        let crypter = new_magic_crypt!(self.key.clone(), 128);
-        crypter.encrypt_str_to_base64(txt.to_string())
+        crypto::aes128_b64_crypt(self.key.as_str(), txt)
     }
 
     /// ### decrypt_str
     ///
     /// Decrypt provided string using AES-128
     fn decrypt_str(&self, secret: &str) -> Result<String, SerializerError> {
-        let crypter = new_magic_crypt!(self.key.clone(), 128);
-        match crypter.decrypt_base64_to_string(secret.to_string()) {
+        match crypto::aes128_b64_decrypt(self.key.as_str(), secret) {
             Ok(txt) => Ok(txt),
             Err(err) => Err(SerializerError::new_ex(
                 SerializerErrorKind::SyntaxError,
@@ -409,7 +391,7 @@ mod tests {
         // Verify client
         assert_eq!(client.hosts.bookmarks.len(), 0);
         assert_eq!(client.hosts.recents.len(), 0);
-        assert!(client.key.len() > 0);
+        assert_eq!(client.key.len(), 256);
         assert_eq!(client.bookmarks_file, cfg_path);
         assert_eq!(client.recents_size, 16);
     }

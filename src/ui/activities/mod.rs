@@ -5,7 +5,7 @@
 
 /*
 *
-*   Copyright (C) 2020 Christian Visintin - christian.visintin1997@gmail.com
+*   Copyright (C) 2020-2021Christian Visintin - christian.visintin1997@gmail.com
 *
 * 	This file is part of "TermSCP"
 *
@@ -30,6 +30,7 @@ use super::context::Context;
 // Activities
 pub mod auth_activity;
 pub mod filetransfer_activity;
+pub mod setup_activity;
 
 // Activity trait
 
