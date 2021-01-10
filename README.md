@@ -273,7 +273,7 @@ You can access the SSH key storage, from configuration moving to the `SSH Keys` 
 - **Remove an existing key**: just press `<DEL>` or `<CTRL+E>` on the key you want to remove, to delete persistently the key from termscp.
 - **Edit an existing key**: just press `<ENTER>` on the key you want to edit, to change the private key.
 
-> Q: Wait, my private key is protected with password, can I use it?
+> Q: Wait, my private key is protected with password, can I use it?  
 > A: Of course you can. The password provided for authentication in termscp, is valid both for username/password authentication and for RSA key authentication.
 
 ---
