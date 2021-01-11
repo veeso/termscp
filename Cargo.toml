@@ -11,6 +11,7 @@ homepage = "https://github.com/veeso/termscp"
 repository = "https://github.com/veeso/termscp"
 documentation = "https://docs.rs/termscp"
 readme = "README.md"
+include = ["src/**/*", "LICENSE", "README.md", "CHANGELOG.md"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
