@@ -84,6 +84,13 @@ If you want to contribute to this project, don't forget to check out our contrib
 cargo install termscp
 ```
 
+Requirements:
+
+- Linux
+  - pkg-config
+  - libssh2
+  - openssl
+
 ### Deb package 📦
 
 Get `deb` package from [HERE](https://github.com/veeso/termscp/releases/latest/download/termscp_0.3.0_amd64.deb)
