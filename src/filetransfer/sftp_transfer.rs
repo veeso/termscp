@@ -34,7 +34,7 @@ use crate::system::sshkey_storage::SshKeyStorage;
 // Includes
 use ssh2::{FileStat, OpenFlags, OpenType, Session, Sftp};
 use std::io::{BufReader, BufWriter, Read, Write};
-use std::net::TcpStream;
+use std::net::{SocketAddr, TcpStream, ToSocketAddrs};
 use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime};
 
@@ -203,12 +203,34 @@ impl FileTransfer for SftpFileTransfer {
         password: Option<String>,
     ) -> Result<Option<String>, FileTransferError> {
         // Setup tcp stream
-        let tcp: TcpStream = match TcpStream::connect(format!("{}:{}", address, port)) {
-            Ok(stream) => stream,
-            Err(err) => {
+        let socket_addresses: Vec<SocketAddr> =
+            match format!("{}:{}", address, port).to_socket_addrs() {
+                Ok(s) => s.collect(),
+                Err(err) => {
+                    return Err(FileTransferError::new_ex(
+                        FileTransferErrorType::BadAddress,
+                        format!("{}", err),
+                    ))
+                }
+            };
+        let mut tcp: Option<TcpStream> = None;
+        // Try addresses
+        for socket_addr in socket_addresses.iter() {
+            match TcpStream::connect_timeout(&socket_addr, Duration::from_secs(30)) {
+                Ok(stream) => {
+                    tcp = Some(stream);
+                    break;
+                }
+                Err(_) => continue,
+            }
+        }
+        // If stream is None, return connection timeout
+        let tcp: TcpStream = match tcp {
+            Some(t) => t,
+            None => {
                 return Err(FileTransferError::new_ex(
-                    FileTransferErrorType::BadAddress,
-                    format!("{}", err),
+                    FileTransferErrorType::ConnectionError,
+                    String::from("Connection timeout"),
                 ))
             }
         };

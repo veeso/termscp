@@ -15,6 +15,9 @@
 
 FIXME: Released on ???
 
+- Enhancements:
+  - Added connection timeout to 30 seconds to SFTP/SCP clients and improved name lookup system.
+
 ## 0.3.0
 
  Released on 10/01/2021
