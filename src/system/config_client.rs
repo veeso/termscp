@@ -242,7 +242,7 @@ impl ConfigClient {
     /// ### iter_ssh_keys
     ///
     /// Get an iterator through hosts in the ssh key storage
-    pub fn iter_ssh_keys(&self) -> Box<dyn Iterator<Item = &String> + '_> {
+    pub fn iter_ssh_keys(&self) -> impl Iterator<Item = &String> + '_ {
         Box::new(self.config.remote.ssh_keys.keys())
     }
 

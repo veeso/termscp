@@ -96,7 +96,7 @@ impl BookmarksClient {
     /// ### iter_bookmarks
     ///
     /// Iterate over bookmarks keys
-    pub fn iter_bookmarks(&self) -> Box<dyn Iterator<Item = &String> + '_> {
+    pub fn iter_bookmarks(&self) -> impl Iterator<Item = &String> + '_ {
         Box::new(self.hosts.bookmarks.keys())
     }
 
@@ -156,7 +156,7 @@ impl BookmarksClient {
     /// ### iter_recents
     ///
     /// Iterate over recents keys
-    pub fn iter_recents(&self) -> Box<dyn Iterator<Item = &String> + '_> {
+    pub fn iter_recents(&self) -> impl Iterator<Item = &String> + '_ {
         Box::new(self.hosts.recents.keys())
     }
 

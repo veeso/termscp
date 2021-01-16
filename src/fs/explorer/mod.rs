@@ -137,7 +137,7 @@ impl FileExplorer {
     ///
     /// Iterate over files
     /// Filters are applied based on current options (e.g. hidden files not returned)
-    pub fn iter_files(&self) -> Box<dyn Iterator<Item = &FsEntry> + '_> {
+    pub fn iter_files(&self) -> impl Iterator<Item = &FsEntry> + '_ {
         // Filter
         let opts: ExplorerOpts = self.opts;
         Box::new(self.files.iter().filter(move |x| {
@@ -154,7 +154,7 @@ impl FileExplorer {
     /// ### iter_files_all
     ///
     /// Iterate all files; doesn't care about options
-    pub fn iter_files_all(&self) -> Box<dyn Iterator<Item = &FsEntry> + '_> {
+    pub fn iter_files_all(&self) -> impl Iterator<Item = &FsEntry> + '_ {
         Box::new(self.files.iter())
     }
 
