@@ -18,3 +18,6 @@
 *.rpm
 *.deb
 dist/pkgs/arch/*.tar.gz
+
+# Macos
+.DS_Store
