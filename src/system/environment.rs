@@ -4,7 +4,7 @@
 
 /*
 *
-*   Copyright (C) 2020-2021Christian Visintin - christian.visintin1997@gmail.com
+*   Copyright (C) 2020-2021 Christian Visintin - christian.visintin1997@gmail.com
 *
 * 	This file is part of "TermSCP"
 *
@@ -59,14 +59,12 @@ pub fn init_config_dir() -> Result<Option<PathBuf>, String> {
 /// ### get_bookmarks_paths
 ///
 /// Get paths for bookmarks client
-/// Returns: path of bookmarks.toml and path of key
-pub fn get_bookmarks_paths(config_dir: &Path) -> (PathBuf, PathBuf) {
+/// Returns: path of bookmarks.toml
+pub fn get_bookmarks_paths(config_dir: &Path) -> PathBuf {
     // Prepare paths
     let mut bookmarks_file: PathBuf = PathBuf::from(config_dir);
     bookmarks_file.push("bookmarks.toml");
-    let mut key_file: PathBuf = PathBuf::from(config_dir);
-    key_file.push(".bookmarks.key"); // key file is hidden
-    (bookmarks_file, key_file)
+    bookmarks_file
 }
 
 /// ### get_config_paths
@@ -123,10 +121,7 @@ mod tests {
     fn test_system_environment_get_bookmarks_paths() {
         assert_eq!(
             get_bookmarks_paths(&Path::new("/home/omar/.config/termscp/")),
-            (
-                PathBuf::from("/home/omar/.config/termscp/bookmarks.toml"),
-                PathBuf::from("/home/omar/.config/termscp/.bookmarks.key")
-            )
+            PathBuf::from("/home/omar/.config/termscp/bookmarks.toml"),
         );
     }
 

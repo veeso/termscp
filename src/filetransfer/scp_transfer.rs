@@ -4,7 +4,7 @@
 
 /*
 *
-*   Copyright (C) 2020-2021Christian Visintin - christian.visintin1997@gmail.com
+*   Copyright (C) 2020-2021 Christian Visintin - christian.visintin1997@gmail.com
 *
 * 	This file is part of "TermSCP"
 *
@@ -167,10 +167,7 @@ impl ScpFileTransfer {
                     Err(_) => None,
                 };
                 // Get filesize
-                let filesize: usize = match metadata.get(6).unwrap().as_str().parse::<usize>() {
-                    Ok(sz) => sz,
-                    Err(_) => 0,
-                };
+                let filesize: usize = metadata.get(6).unwrap().as_str().parse::<usize>().unwrap_or(0);
                 // Get link and name
                 let (file_name, symlink_path): (String, Option<PathBuf>) = match is_symlink {
                     true => self.get_name_and_link(metadata.get(8).unwrap().as_str()),

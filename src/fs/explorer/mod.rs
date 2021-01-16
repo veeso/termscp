@@ -4,7 +4,7 @@
 
 /*
 *
-*   Copyright (C) 2020-2021Christian Visintin - christian.visintin1997@gmail.com
+*   Copyright (C) 2020-2021 Christian Visintin - christian.visintin1997@gmail.com
 *
 * 	This file is part of "TermSCP"
 *
@@ -30,6 +30,7 @@ extern crate bitflags;
 // Locals
 use super::FsEntry;
 // Ext
+use std::cmp::Reverse;
 use std::collections::VecDeque;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
@@ -238,16 +239,14 @@ impl FileExplorer {
     ///
     /// Sort files by creation time; the newest comes first
     fn sort_files_by_creation_time(&mut self) {
-        self.files
-            .sort_by(|a: &FsEntry, b: &FsEntry| b.get_creation_time().cmp(&a.get_creation_time()));
+        self.files.sort_by_key(|b: &FsEntry| Reverse(b.get_creation_time()));
     }
 
     /// ### sort_files_by_size
     ///
     /// Sort files by size
     fn sort_files_by_size(&mut self) {
-        self.files
-            .sort_by(|a: &FsEntry, b: &FsEntry| b.get_size().cmp(&a.get_size()));
+        self.files.sort_by_key(|b: &FsEntry| Reverse(b.get_size()));
     }
 
     /// ### sort_files_directories_first

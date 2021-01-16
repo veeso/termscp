@@ -4,7 +4,7 @@
 
 /*
 *
-*   Copyright (C) 2020-2021Christian Visintin - christian.visintin1997@gmail.com
+*   Copyright (C) 2020-2021 Christian Visintin - christian.visintin1997@gmail.com
 *
 * 	This file is part of "TermSCP"
 *
@@ -180,10 +180,12 @@ impl FtpFileTransfer {
                     Err(_) => None,
                 };
                 // Get filesize
-                let filesize: usize = match metadata.get(6).unwrap().as_str().parse::<usize>() {
-                    Ok(sz) => sz,
-                    Err(_) => 0,
-                };
+                let filesize: usize = metadata
+                    .get(6)
+                    .unwrap()
+                    .as_str()
+                    .parse::<usize>()
+                    .unwrap_or(0);
                 let file_name: String = String::from(metadata.get(8).unwrap().as_str());
                 // Check if file_name is '.' or '..'
                 if file_name.as_str() == "." || file_name.as_str() == ".." {
@@ -270,10 +272,7 @@ impl FtpFileTransfer {
                     true => 0, // If is directory, filesize is 0
                     false => match metadata.get(3) {
                         // If is file, parse arg 3
-                        Some(val) => match val.as_str().parse::<usize>() {
-                            Ok(sz) => sz,
-                            Err(_) => 0,
-                        },
+                        Some(val) => val.as_str().parse::<usize>().unwrap_or(0),
                         None => 0, // Should not happen
                     },
                 };
