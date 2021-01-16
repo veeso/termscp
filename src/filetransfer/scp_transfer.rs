@@ -793,7 +793,13 @@ impl FileTransfer for ScpFileTransfer {
                     };
                     (mtime, atime)
                 };
-                match session.scp_send(file_name, mode, local.size as u64, Some(times)) {
+                // We need to get the size of local; NOTE: don't use the `size` attribute, since might be out of sync
+                let file_size: u64 = match std::fs::metadata(local.abs_path.as_path()) {
+                    Ok(metadata) => metadata.len(),
+                    Err(_) => local.size as u64, // NOTE: fallback to fsentry size
+                };
+                // Send file
+                match session.scp_send(file_name, mode, file_size, Some(times)) {
                     Ok(channel) => Ok(Box::new(BufWriter::with_capacity(65536, channel))),
                     Err(err) => Err(FileTransferError::new_ex(
                         FileTransferErrorType::ProtocolError,

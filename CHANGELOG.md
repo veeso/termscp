@@ -19,6 +19,7 @@ FIXME: Released on ???
   - Added connection timeout to 30 seconds to SFTP/SCP clients and improved name lookup system.
 - Bugfix:
   - Solved index in explorer files list which was no more kept after 0.3.0
+  - SCP file transfer: fixed possible wrong file size when sending file, due to a possible incoherent size between the file explorer and the actual file size.
 
 ## 0.3.0
 
