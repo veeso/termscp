@@ -224,11 +224,15 @@ impl AuthActivity {
         match environment::init_config_dir() {
             Ok(path) => {
                 // If some configure client, otherwise do nothing; don't bother users telling them that bookmarks are not supported on their system.
-                if let Some(path) = path {
-                    let (bookmarks_file, key_file): (PathBuf, PathBuf) =
-                        environment::get_bookmarks_paths(path.as_path());
+                if let Some(config_dir_path) = path {
+                    let bookmarks_file: PathBuf =
+                        environment::get_bookmarks_paths(config_dir_path.as_path());
                     // Initialize client
-                    match BookmarksClient::new(bookmarks_file.as_path(), key_file.as_path(), 16) {
+                    match BookmarksClient::new(
+                        bookmarks_file.as_path(),
+                        config_dir_path.as_path(),
+                        16,
+                    ) {
                         Ok(cli) => self.bookmarks_client = Some(cli),
                         Err(err) => {
                             self.popup = Some(Popup::Alert(
@@ -236,7 +240,7 @@ impl AuthActivity {
                                 format!(
                                     "Could not initialize bookmarks (at \"{}\", \"{}\"): {}",
                                     bookmarks_file.display(),
-                                    key_file.display(),
+                                    config_dir_path.display(),
                                     err
                                 ),
                             ))

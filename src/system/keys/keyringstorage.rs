@@ -114,7 +114,7 @@ mod tests {
         let username: String = username();
         let storage: KeyringStorage = KeyringStorage::new(username.as_str());
         assert!(storage.is_supported());
-        let app_name: &str = "termscp";
+        let app_name: &str = "termscp-test2";
         let secret: &str = "Th15-15/My-Супер-Секрет";
         let kring: Keyring = Keyring::new(app_name, username.as_str());
         let _ = kring.delete_password();
