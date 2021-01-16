@@ -432,6 +432,19 @@ impl FileExplorer {
         }
     }
 
+    /// ### set_abs_index
+    ///
+    /// Set absolute index
+    pub fn set_abs_index(&mut self, idx: usize) {
+        self.index = match idx >= self.files.len() {
+            true => match self.files.len() {
+                0 => 0,
+                _ => self.files.len() - 1,
+            },
+            false => idx,
+        };
+    }
+
     /// ### toggle_hidden_files
     ///
     /// Enable/disable hidden files
@@ -724,6 +737,33 @@ mod tests {
         );
         // Last should be "src/"
         assert_eq!(explorer.files.get(1).unwrap().get_name(), "README.md");
+    }
+
+    #[test]
+    fn test_fs_explorer_set_abs_index() {
+        let mut explorer: FileExplorer = FileExplorer::default();
+        explorer.opts.remove(ExplorerOpts::SHOW_HIDDEN_FILES);
+        // Create files (files are then sorted by name DEFAULT)
+        explorer.set_files(vec![
+            make_fs_entry("README.md", false),
+            make_fs_entry("src/", true),
+            make_fs_entry(".git/", true),
+            make_fs_entry("CONTRIBUTING.md", false),
+            make_fs_entry("CODE_OF_CONDUCT.md", false),
+            make_fs_entry("CHANGELOG.md", false),
+            make_fs_entry("LICENSE", false),
+            make_fs_entry("Cargo.toml", false),
+            make_fs_entry("Cargo.lock", false),
+            make_fs_entry("codecov.yml", false),
+            make_fs_entry(".gitignore", false),
+        ]);
+        explorer.set_abs_index(3);
+        assert_eq!(explorer.get_index(), 3);
+        explorer.set_abs_index(12);
+        assert_eq!(explorer.get_index(), 10);
+        explorer.set_files(vec![]);
+        explorer.set_abs_index(12);
+        assert_eq!(explorer.get_index(), 0);
     }
 
     #[test]
