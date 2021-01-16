@@ -17,6 +17,8 @@ FIXME: Released on ???
 
 - Enhancements:
   - Added connection timeout to 30 seconds to SFTP/SCP clients and improved name lookup system.
+- Bugfix:
+  - Solved index in explorer files list which was no more kept after 0.3.0
 
 ## 0.3.0
 
