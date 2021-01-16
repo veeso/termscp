@@ -25,22 +25,24 @@
 
 // Storages
 pub mod filestorage;
+#[cfg(any(target_os = "windows", target_os = "macos"))]
+pub mod keyringstorage;
 
 /// ## KeyStorageError
-/// 
+///
 /// defines the error type for the `KeyStorage`
 #[derive(PartialEq, std::fmt::Debug)]
 pub enum KeyStorageError {
-    BadKey,
-    Io,
+    //BadKey,
+    ProviderError,
     NoSuchKey,
 }
 
 impl std::fmt::Display for KeyStorageError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         let err: String = String::from(match &self {
-            KeyStorageError::BadKey => "Bad key syntax",
-            KeyStorageError::Io => "Input/Output error",
+            //KeyStorageError::BadKey => "Bad key syntax",
+            KeyStorageError::ProviderError => "Provider service error",
             KeyStorageError::NoSuchKey => "No such key",
         });
         write!(f, "{}", err)
@@ -48,25 +50,41 @@ impl std::fmt::Display for KeyStorageError {
 }
 
 /// ## KeyStorage
-/// 
+///
 /// this traits provides the methods to communicate and interact with the key storage.
 pub trait KeyStorage {
-
     /// ### get_key
-    /// 
+    ///
     /// Retrieve key from the key storage.
     /// The key might be acccess through an identifier, which identifies
     /// the key in the storage
     fn get_key(&self, storage_id: &str) -> Result<String, KeyStorageError>;
 
     /// ### set_key
-    /// 
+    ///
     /// Set the key into the key storage
     fn set_key(&self, storage_id: &str, key: &str) -> Result<(), KeyStorageError>;
 
     /// is_supported
-    /// 
+    ///
     /// Returns whether the key storage is supported on the host system
     fn is_supported(&self) -> bool;
+}
 
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+
+    #[test]
+    fn test_system_keys_mod_errors() {
+        assert_eq!(
+            format!("{}", KeyStorageError::ProviderError),
+            String::from("Provider service error")
+        );
+        assert_eq!(
+            format!("{}", KeyStorageError::NoSuchKey),
+            String::from("No such key")
+        );
+    }
 }

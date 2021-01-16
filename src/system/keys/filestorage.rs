@@ -23,8 +23,9 @@
 *
 */
 
+// Local
 use super::{KeyStorage, KeyStorageError};
-
+// Ext
 use std::fs::{OpenOptions, Permissions};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
@@ -75,10 +76,10 @@ impl KeyStorage for FileStorage {
                 let mut key: String = String::new();
                 match file.read_to_string(&mut key) {
                     Ok(_) => Ok(key),
-                    Err(_) => Err(KeyStorageError::Io),
+                    Err(_) => Err(KeyStorageError::ProviderError),
                 }
             }
-            Err(_) => Err(KeyStorageError::Io),
+            Err(_) => Err(KeyStorageError::ProviderError),
         }
     }
 
@@ -97,7 +98,7 @@ impl KeyStorage for FileStorage {
             Ok(mut file) => {
                 // Write key to file
                 if let Err(_) = file.write_all(key.as_bytes()) {
-                    return Err(KeyStorageError::Io);
+                    return Err(KeyStorageError::ProviderError);
                 }
                 // Set file to readonly
                 let mut permissions: Permissions = file.metadata().unwrap().permissions();
@@ -105,7 +106,7 @@ impl KeyStorage for FileStorage {
                 let _ = file.set_permissions(permissions);
                 Ok(())
             }
-            Err(_) => Err(KeyStorageError::Io),
+            Err(_) => Err(KeyStorageError::ProviderError),
         }
     }
 
