@@ -137,6 +137,8 @@ mod tests {
         let key_dir: tempfile::TempDir =
             tempfile::TempDir::new().expect("Could not create tempdir");
         let storage: FileStorage = FileStorage::new(key_dir.path());
+        // Supported
+        assert!(storage.is_supported());
         let app_name: &str = "termscp";
         let secret: &str = "Th15-15/My-Супер-Секрет";
         // Secret should not exist

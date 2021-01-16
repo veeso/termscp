@@ -113,6 +113,7 @@ mod tests {
     fn test_system_keys_keyringstorage() {
         let username: String = username();
         let storage: KeyringStorage = KeyringStorage::new(username.as_str());
+        assert!(storage.is_supported());
         let app_name: &str = "termscp";
         let secret: &str = "Th15-15/My-Супер-Секрет";
         let kring: Keyring = Keyring::new(app_name, username.as_str());
