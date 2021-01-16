@@ -89,14 +89,7 @@ impl KeyStorage for KeyringStorage {
         // Check what kind of error is returned
         match storage.get_password() {
             Ok(_) => true,
-            Err(err) => match err {
-                KeyringError::NoBackendFound => false,
-                //#[cfg(target_os = "macos")]
-                //KeyringError::MacOsKeychainError(_) => false,
-                //#[cfg(target_os = "windows")]
-                //KeyringError::WindowsVaultError => false,
-                _ => true,
-            },
+            Err(err) => !matches!(err, KeyringError::NoBackendFound),
         }
     }
 }

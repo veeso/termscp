@@ -97,7 +97,7 @@ impl KeyStorage for FileStorage {
         {
             Ok(mut file) => {
                 // Write key to file
-                if let Err(_) = file.write_all(key.as_bytes()) {
+                if file.write_all(key.as_bytes()).is_err() {
                     return Err(KeyStorageError::ProviderError);
                 }
                 // Set file to readonly

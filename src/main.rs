@@ -167,8 +167,8 @@ fn main() {
     // Create activity manager (and context too)
     let mut manager: ActivityManager = match ActivityManager::new(&wrkdir, ticks) {
         Ok(m) => m,
-        Err(_) => {
-            eprintln!("Invalid directory '{}'", wrkdir.display());
+        Err(err) => {
+            eprintln!("Could not start activity manager: {}", err);
             std::process::exit(255);
         }
     };
