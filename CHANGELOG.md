@@ -13,7 +13,7 @@
 
 ## 0.3.1
 
-FIXME: Released on ???
+Released on 18/01/2021
 
 - **Keyring to store secrets**
   - On both MacOS and Windows, the secret used to encrypt passwords in bookmarks it is now store in the OS secret vault. This provides much more security to store the password

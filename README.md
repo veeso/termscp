@@ -6,7 +6,7 @@
 
 ~ Basically, WinSCP on a terminal ~  
 Developed by Christian Visintin  
-FIXME: Current version: 0.3.1 (17/01/2021)
+Current version: 0.3.1 (18/01/2021)
 
 ---
 
