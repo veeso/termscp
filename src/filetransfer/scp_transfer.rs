@@ -36,13 +36,11 @@ use crate::utils::parser::parse_lstime;
 // Includes
 use regex::Regex;
 use ssh2::{Channel, Session};
-use std::net::TcpStream;
+use std::io::{BufReader, BufWriter, Read, Write};
+use std::net::{SocketAddr, TcpStream, ToSocketAddrs};
+use std::ops::Range;
 use std::path::{Path, PathBuf};
-use std::time::SystemTime;
-use std::{
-    io::{BufReader, BufWriter, Read, Write},
-    ops::Range,
-};
+use std::time::{Duration, SystemTime};
 
 /// ## ScpFileTransfer
 ///
@@ -137,10 +135,7 @@ impl ScpFileTransfer {
                     Err(_) => None,
                 };
                 // Get filesize
-                let filesize: usize = match metadata.get(6).unwrap().as_str().parse::<usize>() {
-                    Ok(sz) => sz,
-                    Err(_) => 0,
-                };
+                let filesize: usize = metadata.get(6).unwrap().as_str().parse::<usize>().unwrap_or(0);
                 // Get link and name
                 let (file_name, symlink_path): (String, Option<PathBuf>) = match is_symlink {
                     true => self.get_name_and_link(metadata.get(8).unwrap().as_str()),
@@ -281,12 +276,34 @@ impl FileTransfer for ScpFileTransfer {
         password: Option<String>,
     ) -> Result<Option<String>, FileTransferError> {
         // Setup tcp stream
-        let tcp: TcpStream = match TcpStream::connect(format!("{}:{}", address, port)) {
-            Ok(stream) => stream,
-            Err(err) => {
+        let socket_addresses: Vec<SocketAddr> =
+            match format!("{}:{}", address, port).to_socket_addrs() {
+                Ok(s) => s.collect(),
+                Err(err) => {
+                    return Err(FileTransferError::new_ex(
+                        FileTransferErrorType::BadAddress,
+                        format!("{}", err),
+                    ))
+                }
+            };
+        let mut tcp: Option<TcpStream> = None;
+        // Try addresses
+        for socket_addr in socket_addresses.iter() {
+            match TcpStream::connect_timeout(&socket_addr, Duration::from_secs(30)) {
+                Ok(stream) => {
+                    tcp = Some(stream);
+                    break;
+                }
+                Err(_) => continue,
+            }
+        }
+        // If stream is None, return connection timeout
+        let tcp: TcpStream = match tcp {
+            Some(t) => t,
+            None => {
                 return Err(FileTransferError::new_ex(
-                    FileTransferErrorType::BadAddress,
-                    format!("{}", err),
+                    FileTransferErrorType::ConnectionError,
+                    String::from("Connection timeout"),
                 ))
             }
         };
@@ -741,7 +758,13 @@ impl FileTransfer for ScpFileTransfer {
                     };
                     (mtime, atime)
                 };
-                match session.scp_send(file_name, mode, local.size as u64, Some(times)) {
+                // We need to get the size of local; NOTE: don't use the `size` attribute, since might be out of sync
+                let file_size: u64 = match std::fs::metadata(local.abs_path.as_path()) {
+                    Ok(metadata) => metadata.len(),
+                    Err(_) => local.size as u64, // NOTE: fallback to fsentry size
+                };
+                // Send file
+                match session.scp_send(file_name, mode, file_size, Some(times)) {
                     Ok(channel) => Ok(Box::new(BufWriter::with_capacity(65536, channel))),
                     Err(err) => Err(FileTransferError::new_ex(
                         FileTransferErrorType::ProtocolError,

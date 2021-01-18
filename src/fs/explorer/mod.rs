@@ -30,6 +30,7 @@ extern crate bitflags;
 // Locals
 use super::FsEntry;
 // Ext
+use std::cmp::Reverse;
 use std::collections::VecDeque;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
@@ -137,7 +138,7 @@ impl FileExplorer {
     ///
     /// Iterate over files
     /// Filters are applied based on current options (e.g. hidden files not returned)
-    pub fn iter_files(&self) -> Box<dyn Iterator<Item = &FsEntry> + '_> {
+    pub fn iter_files(&self) -> impl Iterator<Item = &FsEntry> + '_ {
         // Filter
         let opts: ExplorerOpts = self.opts;
         Box::new(self.files.iter().filter(move |x| {
@@ -154,7 +155,7 @@ impl FileExplorer {
     /// ### iter_files_all
     ///
     /// Iterate all files; doesn't care about options
-    pub fn iter_files_all(&self) -> Box<dyn Iterator<Item = &FsEntry> + '_> {
+    pub fn iter_files_all(&self) -> impl Iterator<Item = &FsEntry> + '_ {
         Box::new(self.files.iter())
     }
 
@@ -238,16 +239,14 @@ impl FileExplorer {
     ///
     /// Sort files by creation time; the newest comes first
     fn sort_files_by_creation_time(&mut self) {
-        self.files
-            .sort_by(|a: &FsEntry, b: &FsEntry| b.get_creation_time().cmp(&a.get_creation_time()));
+        self.files.sort_by_key(|b: &FsEntry| Reverse(b.get_creation_time()));
     }
 
     /// ### sort_files_by_size
     ///
     /// Sort files by size
     fn sort_files_by_size(&mut self) {
-        self.files
-            .sort_by(|a: &FsEntry, b: &FsEntry| b.get_size().cmp(&a.get_size()));
+        self.files.sort_by_key(|b: &FsEntry| Reverse(b.get_size()));
     }
 
     /// ### sort_files_directories_first
@@ -430,6 +429,19 @@ impl FileExplorer {
                 false => self.index = idx,
             },
         }
+    }
+
+    /// ### set_abs_index
+    ///
+    /// Set absolute index
+    pub fn set_abs_index(&mut self, idx: usize) {
+        self.index = match idx >= self.files.len() {
+            true => match self.files.len() {
+                0 => 0,
+                _ => self.files.len() - 1,
+            },
+            false => idx,
+        };
     }
 
     /// ### toggle_hidden_files
@@ -724,6 +736,33 @@ mod tests {
         );
         // Last should be "src/"
         assert_eq!(explorer.files.get(1).unwrap().get_name(), "README.md");
+    }
+
+    #[test]
+    fn test_fs_explorer_set_abs_index() {
+        let mut explorer: FileExplorer = FileExplorer::default();
+        explorer.opts.remove(ExplorerOpts::SHOW_HIDDEN_FILES);
+        // Create files (files are then sorted by name DEFAULT)
+        explorer.set_files(vec![
+            make_fs_entry("README.md", false),
+            make_fs_entry("src/", true),
+            make_fs_entry(".git/", true),
+            make_fs_entry("CONTRIBUTING.md", false),
+            make_fs_entry("CODE_OF_CONDUCT.md", false),
+            make_fs_entry("CHANGELOG.md", false),
+            make_fs_entry("LICENSE", false),
+            make_fs_entry("Cargo.toml", false),
+            make_fs_entry("Cargo.lock", false),
+            make_fs_entry("codecov.yml", false),
+            make_fs_entry(".gitignore", false),
+        ]);
+        explorer.set_abs_index(3);
+        assert_eq!(explorer.get_index(), 3);
+        explorer.set_abs_index(12);
+        assert_eq!(explorer.get_index(), 10);
+        explorer.set_files(vec![]);
+        explorer.set_abs_index(12);
+        assert_eq!(explorer.get_index(), 0);
     }
 
     #[test]

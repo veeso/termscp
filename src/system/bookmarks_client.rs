@@ -23,6 +23,12 @@
 *
 */
 
+// Deps
+extern crate whoami;
+// Crate
+#[cfg(any(target_os = "windows", target_os = "macos"))]
+use super::keys::keyringstorage::KeyringStorage;
+use super::keys::{filestorage::FileStorage, KeyStorage, KeyStorageError};
 // Local
 use crate::bookmarks::serializer::BookmarkSerializer;
 use crate::bookmarks::{Bookmark, SerializerError, SerializerErrorKind, UserHosts};
@@ -31,8 +37,7 @@ use crate::utils::crypto;
 use crate::utils::fmt::fmt_time;
 use crate::utils::random::random_alphanumeric_with_len;
 // Ext
-use std::fs::{OpenOptions, Permissions};
-use std::io::{Read, Write};
+use std::fs::OpenOptions;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use std::string::ToString;
@@ -53,23 +58,60 @@ impl BookmarksClient {
     ///
     /// Instantiates a new BookmarksClient
     /// Bookmarks file path must be provided
-    /// Key file must be provided
+    /// Storage path for file provider must be provided
     pub fn new(
         bookmarks_file: &Path,
-        key_file: &Path,
+        storage_path: &Path,
         recents_size: usize,
     ) -> Result<BookmarksClient, SerializerError> {
         // Create default hosts
         let default_hosts: UserHosts = Default::default();
-        // If key file doesn't exist, create key, otherwise read it
-        let key: String = match key_file.exists() {
-            true => match BookmarksClient::load_key(key_file) {
-                Ok(key) => key,
-                Err(err) => return Err(err),
-            },
-            false => match BookmarksClient::generate_key(key_file) {
-                Ok(key) => key,
-                Err(err) => return Err(err),
+        // Make a key storage (windows / macos)
+        #[cfg(any(target_os = "windows", target_os = "macos"))]
+        let (key_storage, service_id): (Box<dyn KeyStorage>, &str) = {
+            let username: String = whoami::username();
+            let storage: KeyringStorage = KeyringStorage::new(username.as_str());
+            // Check if keyring storage is supported
+            #[cfg(not(test))]
+            let app_name: &str = "termscp";
+            #[cfg(test)] // NOTE: when running test, add -test
+            let app_name: &str = "termscp-test";
+            match storage.is_supported() {
+                true => (Box::new(storage), app_name),
+                false => (Box::new(FileStorage::new(storage_path)), "bookmarks"),
+            }
+        };
+        // Make a key storage (linux / unix)
+        #[cfg(any(target_os = "linux", target_os = "unix"))]
+        let (key_storage, service_id): (Box<dyn KeyStorage>, &str) = {
+            #[cfg(not(test))]
+            let app_name: &str = "bookmarks";
+            #[cfg(test)] // NOTE: when running test, add -test
+            let app_name: &str = "bookmarks-test";
+            (Box::new(FileStorage::new(storage_path)), app_name)
+        };
+        // Load key
+        let key: String = match key_storage.get_key(service_id) {
+            Ok(k) => k,
+            Err(e) => match e {
+                KeyStorageError::NoSuchKey => {
+                    // If no such key, generate key and set it into the storage
+                    let key: String = Self::generate_key();
+                    if let Err(e) = key_storage.set_key(service_id, key.as_str()) {
+                        return Err(SerializerError::new_ex(
+                            SerializerErrorKind::IoError,
+                            format!("Could not write key to storage: {}", e),
+                        ));
+                    }
+                    // Return key
+                    key
+                }
+                _ => {
+                    return Err(SerializerError::new_ex(
+                        SerializerErrorKind::IoError,
+                        format!("Could not get key from storage: {}", e),
+                    ))
+                }
             },
         };
         let mut client: BookmarksClient = BookmarksClient {
@@ -96,7 +138,7 @@ impl BookmarksClient {
     /// ### iter_bookmarks
     ///
     /// Iterate over bookmarks keys
-    pub fn iter_bookmarks(&self) -> Box<dyn Iterator<Item = &String> + '_> {
+    pub fn iter_bookmarks(&self) -> impl Iterator<Item = &String> + '_ {
         Box::new(self.hosts.bookmarks.keys())
     }
 
@@ -156,7 +198,7 @@ impl BookmarksClient {
     /// ### iter_recents
     ///
     /// Iterate over recents keys
-    pub fn iter_recents(&self) -> Box<dyn Iterator<Item = &String> + '_> {
+    pub fn iter_recents(&self) -> impl Iterator<Item = &String> + '_ {
         Box::new(self.hosts.recents.keys())
     }
 
@@ -276,36 +318,10 @@ impl BookmarksClient {
 
     /// ### generate_key
     ///
-    /// Generate a new AES key and write it to key file
-    fn generate_key(key_file: &Path) -> Result<String, SerializerError> {
+    /// Generate a new AES key
+    fn generate_key() -> String {
         // Generate 256 bytes (2048 bits) key
-        let key: String = random_alphanumeric_with_len(256);
-        // Write file
-        match OpenOptions::new()
-            .create(true)
-            .write(true)
-            .truncate(true)
-            .open(key_file)
-        {
-            Ok(mut file) => {
-                // Write key to file
-                if let Err(err) = file.write_all(key.as_bytes()) {
-                    return Err(SerializerError::new_ex(
-                        SerializerErrorKind::IoError,
-                        err.to_string(),
-                    ));
-                }
-                // Set file to readonly
-                let mut permissions: Permissions = file.metadata().unwrap().permissions();
-                permissions.set_readonly(true);
-                let _ = file.set_permissions(permissions);
-                Ok(key)
-            }
-            Err(err) => Err(SerializerError::new_ex(
-                SerializerErrorKind::IoError,
-                err.to_string(),
-            )),
-        }
+        random_alphanumeric_with_len(256)
     }
 
     /// ### make_bookmark
@@ -331,28 +347,6 @@ impl BookmarksClient {
         }
     }
 
-    /// ### load_key
-    ///
-    /// Load key from key_file
-    fn load_key(key_file: &Path) -> Result<String, SerializerError> {
-        match OpenOptions::new().read(true).open(key_file) {
-            Ok(mut file) => {
-                let mut key: String = String::with_capacity(256);
-                match file.read_to_string(&mut key) {
-                    Ok(_) => Ok(key),
-                    Err(err) => Err(SerializerError::new_ex(
-                        SerializerErrorKind::IoError,
-                        err.to_string(),
-                    )),
-                }
-            }
-            Err(err) => Err(SerializerError::new_ex(
-                SerializerErrorKind::IoError,
-                err.to_string(),
-            )),
-        }
-    }
-
     /// ### encrypt_str
     ///
     /// Encrypt provided string using AES-128. Encrypted buffer is then converted to BASE64
@@ -375,6 +369,7 @@ impl BookmarksClient {
 }
 
 #[cfg(test)]
+#[cfg(not(target_os = "macos"))] // CI/CD blocks
 mod tests {
 
     use super::*;
@@ -382,6 +377,7 @@ mod tests {
     use std::time::Duration;
 
     #[test]
+
     fn test_system_bookmarks_new() {
         let tmp_dir: tempfile::TempDir = create_tmp_dir();
         let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
@@ -397,6 +393,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(any(target_os = "unix", target_os = "linux"))]
     fn test_system_bookmarks_new_err() {
         assert!(BookmarksClient::new(
             Path::new("/tmp/oifoif/omar"),
@@ -413,6 +410,7 @@ mod tests {
     }
 
     #[test]
+
     fn test_system_bookmarks_new_from_existing() {
         let tmp_dir: tempfile::TempDir = create_tmp_dir();
         let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
@@ -458,6 +456,7 @@ mod tests {
     }
 
     #[test]
+
     fn test_system_bookmarks_manipulate_bookmarks() {
         let tmp_dir: tempfile::TempDir = create_tmp_dir();
         let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
@@ -503,6 +502,7 @@ mod tests {
 
     #[test]
     #[should_panic]
+
     fn test_system_bookmarks_bad_bookmark_name() {
         let tmp_dir: tempfile::TempDir = create_tmp_dir();
         let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
@@ -521,6 +521,7 @@ mod tests {
     }
 
     #[test]
+
     fn test_system_bookmarks_manipulate_recents() {
         let tmp_dir: tempfile::TempDir = create_tmp_dir();
         let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
@@ -555,6 +556,7 @@ mod tests {
     }
 
     #[test]
+
     fn test_system_bookmarks_dup_recent() {
         let tmp_dir: tempfile::TempDir = create_tmp_dir();
         let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
@@ -579,6 +581,7 @@ mod tests {
     }
 
     #[test]
+
     fn test_system_bookmarks_recents_more_than_limit() {
         let tmp_dir: tempfile::TempDir = create_tmp_dir();
         let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
@@ -626,6 +629,7 @@ mod tests {
 
     #[test]
     #[should_panic]
+
     fn test_system_bookmarks_add_bookmark_empty() {
         let tmp_dir: tempfile::TempDir = create_tmp_dir();
         let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
@@ -646,10 +650,10 @@ mod tests {
     /// ### get_paths
     ///
     /// Get paths for configuration and key for bookmarks
+
     fn get_paths(dir: &Path) -> (PathBuf, PathBuf) {
-        let mut k: PathBuf = PathBuf::from(dir);
+        let k: PathBuf = PathBuf::from(dir);
         let mut c: PathBuf = k.clone();
-        k.push("bookmarks.key");
         c.push("bookmarks.toml");
         (c, k)
     }
@@ -657,6 +661,7 @@ mod tests {
     /// ### create_tmp_dir
     ///
     /// Create temporary directory
+
     fn create_tmp_dir() -> tempfile::TempDir {
         tempfile::TempDir::new().ok().unwrap()
     }

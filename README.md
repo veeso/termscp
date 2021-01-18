@@ -1,12 +1,12 @@
 # TermSCP
 
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![Stars](https://img.shields.io/github/stars/veeso/termscp.svg)](https://github.com/veeso/termscp) [![Downloads](https://img.shields.io/crates/d/termscp.svg)](https://crates.io/crates/termscp) [![Crates.io](https://img.shields.io/badge/crates.io-v0.3.0-orange.svg)](https://crates.io/crates/termscp) [![Docs](https://docs.rs/termscp/badge.svg)](https://docs.rs/termscp)  
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![Stars](https://img.shields.io/github/stars/veeso/termscp.svg)](https://github.com/veeso/termscp) [![Downloads](https://img.shields.io/crates/d/termscp.svg)](https://crates.io/crates/termscp) [![Crates.io](https://img.shields.io/badge/crates.io-v0.3.1-orange.svg)](https://crates.io/crates/termscp) [![Docs](https://docs.rs/termscp/badge.svg)](https://docs.rs/termscp)  
 
 [![Build](https://github.com/veeso/termscp/workflows/Linux/badge.svg)](https://github.com/veeso/termscp/actions) [![Build](https://github.com/veeso/termscp/workflows/MacOS/badge.svg)](https://github.com/veeso/termscp/actions) [![Build](https://github.com/veeso/termscp/workflows/Windows/badge.svg)](https://github.com/veeso/termscp/actions) [![codecov](https://codecov.io/gh/veeso/termscp/branch/main/graph/badge.svg?token=au67l7nQah)](https://codecov.io/gh/veeso/termscp)
 
 ~ Basically, WinSCP on a terminal ~  
 Developed by Christian Visintin  
-Current version: 0.3.0 (10/01/2021)
+FIXME: Current version: 0.3.1 (17/01/2021)
 
 ---
 
@@ -93,8 +93,8 @@ Requirements:
 
 ### Deb package 📦
 
-Get `deb` package from [HERE](https://github.com/veeso/termscp/releases/latest/download/termscp_0.3.0_amd64.deb)
-or run `wget https://github.com/veeso/termscp/releases/latest/download/termscp_0.3.0_amd64.deb`
+Get `deb` package from [HERE](https://github.com/veeso/termscp/releases/latest/download/termscp_0.3.1_amd64.deb)
+or run `wget https://github.com/veeso/termscp/releases/latest/download/termscp_0.3.1_amd64.deb`
 
 then install through dpkg:
 
@@ -106,8 +106,8 @@ gdebi termscp_*.deb
 
 ### RPM package 📦
 
-Get `rpm` package from [HERE](https://github.com/veeso/termscp/releases/latest/download/termscp-0.3.0-1.x86_64.rpm)
-or run `wget https://github.com/veeso/termscp/releases/latest/download/termscp-0.3.0-1.x86_64.rpm`
+Get `rpm` package from [HERE](https://github.com/veeso/termscp/releases/latest/download/termscp-0.3.1-1.x86_64.rpm)
+or run `wget https://github.com/veeso/termscp/releases/latest/download/termscp-0.3.1-1.x86_64.rpm`
 
 then install through rpm:
 
@@ -133,7 +133,7 @@ Start PowerShell as administrator and run
 choco install termscp
 ```
 
-Alternatively you can download the ZIP file from [HERE](https://github.com/veeso/termscp/releases/latest/download/termscp.0.3.0.nupkg)
+Alternatively you can download the ZIP file from [HERE](https://github.com/veeso/termscp/releases/latest/download/termscp.0.3.1.nupkg)
 
 and then with PowerShell started with administrator previleges, run:
 
@@ -233,7 +233,12 @@ If you go to [gallery](#gallery-), there is a GIF showing how bookmarks work �
 ### Are my passwords Safe 😈
 
 Well, kinda.
-As said before, bookmarks are saved in your configuration directory along with passwords. Passwords are obviously not plain text, they are encrypted with **AES-128**. Does this make them safe? Well, no, the key used to encrypt your passwords is generated at the first launch of termscp and stored on your drive. So it's still possible to retrieve the key to decrypt passwords. Luckily, the location of the key guarantees your key can't be read by users different from yours, but yeah, I still wouldn't save the password for a server exposed on the internet 😉.
+As said before, bookmarks are saved in your configuration directory along with passwords. Passwords are obviously not plain text, they are encrypted with **AES-128**. Does this make them safe? Well, depends on your operating system:
+
+On Windows and MacOS the passwords are (if possible, but should be) in respectively the Windows Vault and the Keychain. This is actually super-safe and is directly managed by your operating system.
+
+On Linux and BSD, on the other hand the key used to encrypt your passwords is stored on your drive. So it's still possible to retrieve the key to decrypt passwords. Luckily, the location of the key guarantees your key can't be read by users different from yours, but yeah, I still wouldn't save the password for a server exposed on the internet 😉.
+Actually [keyring-rs](https://github.com/hwchen/keyring-rs), supports Linux, but for different reasons I preferred not to make it available for this configuration. If you want to read more about my decision read [this issue](https://github.com/veeso/termscp/issues/2), while if you think this might have been implemented differently feel free to open an issue with your proposal.
 
 ---
 
@@ -357,6 +362,7 @@ TermSCP is powered by these aweseome projects:
 - [bytesize](https://github.com/hyunsik/bytesize)
 - [crossterm](https://github.com/crossterm-rs/crossterm)
 - [edit](https://github.com/milkey-mouse/edit)
+- [keyring-rs](https://github.com/hwchen/keyring-rs)
 - [rpassword](https://github.com/conradkleinespel/rpassword)
 - [rust-ftp](https://github.com/mattnenterprise/rust-ftp)
 - [ssh2-rs](https://github.com/alexcrichton/ssh2-rs)

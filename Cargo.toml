@@ -1,6 +1,6 @@
 [package]
 name = "termscp"
-version = "0.3.0"
+version = "0.3.1"
 authors = ["Christian Visintin"]
 edition = "2018"
 license = "GPL-3.0"
@@ -42,6 +42,9 @@ whoami = "1.0.1"
 
 [target.'cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))'.dependencies]
 users = "0.11.0"
+
+[target.'cfg(any(target_os = "windows", target_os = "macos"))'.dependencies]
+keyring = "0.10.1"
 
 [[bin]]
 name = "termscp"
