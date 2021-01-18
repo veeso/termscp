@@ -38,6 +38,7 @@ use regex::Regex;
 use ssh2::{Channel, Session};
 use std::io::{BufReader, BufWriter, Read, Write};
 use std::net::{SocketAddr, TcpStream, ToSocketAddrs};
+use std::ops::Range;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime};
 
@@ -92,61 +93,28 @@ impl ScpFileTransfer {
                 if metadata.get(2).unwrap().as_str().len() < 9 {
                     return Err(());
                 }
-                // Get unix pex
-                let unix_pex: (u8, u8, u8) = {
-                    let owner_pex: u8 = {
-                        let mut count: u8 = 0;
-                        for (i, c) in metadata.get(2).unwrap().as_str()[0..3].chars().enumerate() {
-                            match c {
-                                '-' => {}
-                                _ => {
-                                    count += match i {
-                                        0 => 4,
-                                        1 => 2,
-                                        2 => 1,
-                                        _ => 0,
-                                    }
+
+                let pex = |range: Range<usize>| {
+                    let mut count: u8 = 0;
+                    for (i, c) in metadata.get(2).unwrap().as_str()[range].chars().enumerate() {
+                        match c {
+                            '-' => {}
+                            _ => {
+                                count += match i {
+                                    0 => 4,
+                                    1 => 2,
+                                    2 => 1,
+                                    _ => 0,
                                 }
                             }
                         }
-                        count
-                    };
-                    let group_pex: u8 = {
-                        let mut count: u8 = 0;
-                        for (i, c) in metadata.get(2).unwrap().as_str()[3..6].chars().enumerate() {
-                            match c {
-                                '-' => {}
-                                _ => {
-                                    count += match i {
-                                        0 => 4,
-                                        1 => 2,
-                                        2 => 1,
-                                        _ => 0,
-                                    }
-                                }
-                            }
-                        }
-                        count
-                    };
-                    let others_pex: u8 = {
-                        let mut count: u8 = 0;
-                        for (i, c) in metadata.get(2).unwrap().as_str()[6..9].chars().enumerate() {
-                            match c {
-                                '-' => {}
-                                _ => {
-                                    count += match i {
-                                        0 => 4,
-                                        1 => 2,
-                                        2 => 1,
-                                        _ => 0,
-                                    }
-                                }
-                            }
-                        }
-                        count
-                    };
-                    (owner_pex, group_pex, others_pex)
+                    }
+                    count
                 };
+
+                // Get unix pex
+                let unix_pex = (pex(0..3), pex(3..6), pex(6..9));
+
                 // Parse mtime and convert to SystemTime
                 let mtime: SystemTime = match parse_lstime(
                     metadata.get(7).unwrap().as_str(),
