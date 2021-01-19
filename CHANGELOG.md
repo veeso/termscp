@@ -1,6 +1,7 @@
 # Changelog
 
 - [Changelog](#changelog)
+  - [0.3.2](#032)
   - [0.3.1](#031)
   - [0.3.0](#030)
   - [0.2.0](#020)
@@ -10,6 +11,13 @@
   - [0.1.0](#010)
 
 ---
+
+## 0.3.2
+
+FIXME: Released on
+
+- Bugfix:
+  - Solved file index in explorer files at start of termscp, in case the first entry is an hidden file
 
 ## 0.3.1
 
