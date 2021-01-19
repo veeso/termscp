@@ -108,6 +108,8 @@ impl FileTransferActivity {
         // Get current entries
         if let Ok(pwd) = self.client.pwd() {
             self.remote_scan(pwd.as_path());
+            // Set index at first valid
+            self.remote.index_at_first();
             // Set wrkdir
             self.remote.wrkdir = pwd;
         }

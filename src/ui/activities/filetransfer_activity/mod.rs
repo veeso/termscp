@@ -303,6 +303,8 @@ impl Activity for FileTransferActivity {
         // Get files at current wd
         self.local_scan(pwd.as_path());
         self.local.wrkdir = pwd;
+        // Index at first valid
+        self.local.index_at_first();
         // Configure text editor
         self.setup_text_editor();
     }
