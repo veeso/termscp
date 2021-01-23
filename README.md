@@ -60,12 +60,16 @@ It happens quite often to me, when using SCP at work to forget the path of a fil
   - SFTP
   - SCP
   - FTP and FTPS
+- Compatible with Windows, Linux, BSD and MacOS
 - Practical user interface to explore and operate on the remote and on the local machine file system
 - Bookmarks and recent connections can be saved to access quickly to your favourite hosts
 - Supports text editors to view and edit text files
 - Supports both SFTP/SCP authentication through SSH keys and username/password
-- User customization directly from the user interface
-- Compatible with Windows, Linux, BSD and MacOS
+- Customizations:
+  - Custom file explorer format
+  - Customizable text editor
+  - Customizable file sorting
+- SSH key storage
 - Written in Rust
 - Easy to extend with new file transfers protocols
 - Developed keeping an eye on performance

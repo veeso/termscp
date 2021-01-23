@@ -169,7 +169,7 @@ impl FileTransferActivity {
         let files: Vec<ListItem> = self
             .local
             .iter_files()
-            .map(|entry: &FsEntry| ListItem::new(Span::from(format!("{}", entry))))
+            .map(|entry: &FsEntry| ListItem::new(Span::from(self.local.fmt_file(entry))))
             .collect();
         // Get colors to use; highlight element inverting fg/bg only when tab is active
         let (fg, bg): (Color, Color) = match self.tab {
@@ -209,7 +209,7 @@ impl FileTransferActivity {
         let files: Vec<ListItem> = self
             .remote
             .iter_files()
-            .map(|entry: &FsEntry| ListItem::new(Span::from(format!("{}", entry))))
+            .map(|entry: &FsEntry| ListItem::new(Span::from(self.remote.fmt_file(entry))))
             .collect();
         // Get colors to use; highlight element inverting fg/bg only when tab is active
         let (fg, bg): (Color, Color) = match self.tab {
