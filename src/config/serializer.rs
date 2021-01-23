@@ -108,6 +108,7 @@ mod tests {
         assert_eq!(cfg.user_interface.text_editor, PathBuf::from("vim"));
         assert_eq!(cfg.user_interface.show_hidden_files, true);
         assert_eq!(cfg.user_interface.group_dirs, Some(String::from("last")));
+        assert_eq!(cfg.user_interface.file_fmt, Some(String::from("{NAME} {PEX}")));
         // Verify keys
         assert_eq!(
             *cfg.remote
@@ -143,6 +144,7 @@ mod tests {
         assert_eq!(cfg.user_interface.text_editor, PathBuf::from("vim"));
         assert_eq!(cfg.user_interface.show_hidden_files, true);
         assert_eq!(cfg.user_interface.group_dirs, None);
+        assert_eq!(cfg.user_interface.file_fmt, None);
         // Verify keys
         assert_eq!(
             *cfg.remote
@@ -199,6 +201,7 @@ mod tests {
         text_editor = "vim"
         show_hidden_files = true
         group_dirs = "last"
+        file_fmt = "{NAME} {PEX}"
 
         [remote.ssh_keys]
         "192.168.1.31" = "/home/omar/.ssh/raspberry.key"
