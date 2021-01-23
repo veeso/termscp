@@ -193,7 +193,7 @@ impl SetupActivity {
                             }
                             UserInterfaceInputField::FileFmt => {
                                 // Push char to current file fmt
-                                let mut file_fmt = config_cli.get_file_fmt().unwrap_or(String::new());
+                                let mut file_fmt = config_cli.get_file_fmt().unwrap_or_default();
                                 // Pop from file fmt
                                 file_fmt.pop();
                                 // If len is 0, will become None
@@ -354,7 +354,7 @@ impl SetupActivity {
                                 }
                                 UserInterfaceInputField::FileFmt => {
                                     // Push char to current file fmt
-                                    let mut file_fmt = config_cli.get_file_fmt().unwrap_or(String::new());
+                                    let mut file_fmt = config_cli.get_file_fmt().unwrap_or_default();
                                     file_fmt.push(ch);
                                     // update value
                                     config_cli.set_file_fmt(file_fmt);

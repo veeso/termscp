@@ -123,7 +123,7 @@ impl SetupActivity {
                                 );
                             }
                             UserInterfaceInputField::FileFmt => {
-                                let file_fmt: String = cli.get_file_fmt().unwrap_or(String::new());
+                                let file_fmt: String = cli.get_file_fmt().unwrap_or_default();
                                 f.set_cursor(
                                     ui_cfg_chunks[4].x + file_fmt.width() as u16 + 1,
                                     ui_cfg_chunks[4].y + 1,
@@ -412,7 +412,7 @@ impl SetupActivity {
     fn draw_file_fmt_input(&self) -> Option<Paragraph> {
         match &self.config_cli {
             Some(cli) => Some(
-                Paragraph::new(cli.get_file_fmt().unwrap_or(String::new()))
+                Paragraph::new(cli.get_file_fmt().unwrap_or_default())
                     .style(Style::default().fg(match &self.tab {
                         SetupTab::SshConfig => Color::White,
                         SetupTab::UserInterface(field) => match field {
