@@ -165,26 +165,19 @@ impl ConfigClient {
 
     /// ### get_file_fmt
     ///
-    /// Get current file fmt; if none return ""
-    pub fn get_file_fmt(&self) -> String {
-        match &self.config.user_interface.file_fmt {
-            None => String::new(),
-            Some(s) => s.clone(),
-        }
+    /// Get current file fmt
+    pub fn get_file_fmt(&self) -> Option<String> {
+        self.config.user_interface.file_fmt.clone()
     }
 
     /// ### set_file_fmt
     ///
     /// Set file fmt parameter
     pub fn set_file_fmt(&mut self, s: String) {
-        self.config.user_interface.file_fmt = Some(s);
-    }
-
-    /// ### del_file_fmt
-    ///
-    /// Delete file fmt parameter
-    pub fn del_file_fmt(&mut self) {
-        self.config.user_interface.file_fmt = None;
+        self.config.user_interface.file_fmt = match s.is_empty() {
+            true => None,
+            false => Some(s),
+        };
     }
 
     // SSH Keys
@@ -482,12 +475,12 @@ mod tests {
         let mut client: ConfigClient = ConfigClient::new(cfg_path.as_path(), key_path.as_path())
             .ok()
             .unwrap();
-        assert_eq!(client.get_file_fmt(), String::from(""));
+        assert_eq!(client.get_file_fmt(), None);
         client.set_file_fmt(String::from("{NAME}"));
-        assert_eq!(client.get_file_fmt(), String::from("{NAME}"));
+        assert_eq!(client.get_file_fmt().unwrap(), String::from("{NAME}"));
         // Delete
-        client.del_file_fmt();
-        assert_eq!(client.get_file_fmt(), String::from(""));
+        client.set_file_fmt(String::from(""));
+        assert_eq!(client.get_file_fmt(), None);
     }
 
     #[test]
