@@ -24,6 +24,7 @@
 */
 
 // Locals
+use super::formatter::Formatter;
 use super::{ExplorerOpts, FileExplorer, FileSorting, GroupDirs};
 // Ext
 use std::collections::VecDeque;
@@ -95,6 +96,18 @@ impl FileExplorerBuilder {
         }
         self
     }
+
+    /// ### with_formatter
+    ///
+    /// Set formatter for FileExplorer
+    pub fn with_formatter(&mut self, fmt_str: Option<&str>) -> &mut FileExplorerBuilder {
+        if let Some(e) = self.explorer.as_mut() {
+            if let Some(fmt_str) = fmt_str {
+                e.fmt = Formatter::new(fmt_str);
+            }
+        }
+        self
+    }
 }
 
 #[cfg(test)]
@@ -119,6 +132,7 @@ mod tests {
             .with_group_dirs(Some(GroupDirs::First))
             .with_hidden_files(true)
             .with_stack_size(24)
+            .with_formatter(Some("{NAME}"))
             .build();
         // Verify
         assert!(explorer.opts.intersects(ExplorerOpts::SHOW_HIDDEN_FILES));
