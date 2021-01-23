@@ -25,10 +25,12 @@
 
 // Mods
 pub(crate) mod builder;
+mod formatter;
 // Deps
 extern crate bitflags;
 // Locals
 use super::FsEntry;
+use formatter::Formatter;
 // Ext
 use std::cmp::Reverse;
 use std::collections::VecDeque;
