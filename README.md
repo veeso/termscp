@@ -30,6 +30,7 @@ FIXME: Current version: 0.3.2 (18/01/2021)
     - [How do I configure the text editor 🦥](#how-do-i-configure-the-text-editor-)
   - [Configuration ⚙️](#configuration-️)
     - [SSH Key Storage 🔐](#ssh-key-storage-)
+    - [File Explorer Format](#file-explorer-format)
   - [Keybindings ⌨](#keybindings-)
   - [Documentation 📚](#documentation-)
   - [Known issues 🧻](#known-issues-)
@@ -291,6 +292,25 @@ You can access the SSH key storage, from configuration moving to the `SSH Keys` 
 
 > Q: Wait, my private key is protected with password, can I use it?  
 > A: Of course you can. The password provided for authentication in termscp, is valid both for username/password authentication and for RSA key authentication.
+
+### File Explorer Format
+
+It is possible through configuration to define a custom format for the file explorer. This field, with name `File formatter syntax` will define how the files will be displayed in the file explorer.
+The syntax for the formatter is the following `{KEY1}... {KEY2}... {KEYn}...`.
+Each key in bracket will be replaced with the related attribute, while everything outside brackets will be left unchanged.
+These are the keys supported by the formatter:
+
+- `ATIME`: Last access time (with syntax `%b %d %Y %H:%M`)
+- `CTIME`: Creation time (with syntax `%b %d %Y %H:%M`)
+- `GROUP`: Owner group
+- `MTIME`: Last change time (with syntax `%b %d %Y %H:%M`)
+- `NAME`: File name (Elided if longer than 24)
+- `PEX`: File permissions (UNIX format)
+- `SIZE`: File size (omitted for directories)
+- `SYMLINK`: Symlink (if any `-> {FILE_PATH}`)
+- `USER`: Owner user
+
+If left empty, the default formatter syntax will be used: `{NAME} {PEX} {USER} {SIZE} {MTIME}`
 
 ---
 
