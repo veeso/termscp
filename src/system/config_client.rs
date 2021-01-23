@@ -163,6 +163,30 @@ impl ConfigClient {
         };
     }
 
+    /// ### get_file_fmt
+    ///
+    /// Get current file fmt; if none return ""
+    pub fn get_file_fmt(&self) -> String {
+        match &self.config.user_interface.file_fmt {
+            None => String::new(),
+            Some(s) => s.clone(),
+        }
+    }
+
+    /// ### set_file_fmt
+    ///
+    /// Set file fmt parameter
+    pub fn set_file_fmt(&mut self, s: String) {
+        self.config.user_interface.file_fmt = Some(s);
+    }
+
+    /// ### del_file_fmt
+    ///
+    /// Delete file fmt parameter
+    pub fn del_file_fmt(&mut self) {
+        self.config.user_interface.file_fmt = None;
+    }
+
     // SSH Keys
 
     /// ### save_ssh_key
@@ -449,6 +473,21 @@ mod tests {
         assert_eq!(client.get_group_dirs(), Some(GroupDirs::First),);
         client.set_group_dirs(None);
         assert_eq!(client.get_group_dirs(), None,);
+    }
+
+    #[test]
+    fn test_system_config_file_fmt() {
+        let tmp_dir: tempfile::TempDir = create_tmp_dir();
+        let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
+        let mut client: ConfigClient = ConfigClient::new(cfg_path.as_path(), key_path.as_path())
+            .ok()
+            .unwrap();
+        assert_eq!(client.get_file_fmt(), String::from(""));
+        client.set_file_fmt(String::from("{NAME}"));
+        assert_eq!(client.get_file_fmt(), String::from("{NAME}"));
+        // Delete
+        client.del_file_fmt();
+        assert_eq!(client.get_file_fmt(), String::from(""));
     }
 
     #[test]
