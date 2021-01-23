@@ -181,16 +181,28 @@ impl SetupActivity {
                 KeyCode::Backspace => {
                     // Pop character from selected input
                     if let Some(config_cli) = self.config_cli.as_mut() {
-                        // NOTE: replace with match if other text fields are added
-                        if matches!(field, UserInterfaceInputField::TextEditor) {
-                            // Pop from text editor
-                            let mut input: String = String::from(
-                                config_cli.get_text_editor().as_path().to_string_lossy(),
-                            );
-                            input.pop();
-                            // Update text editor value
-                            config_cli.set_text_editor(PathBuf::from(input.as_str()));
+                        match field {
+                            UserInterfaceInputField::TextEditor => {
+                                // Pop from text editor
+                                let mut input: String = String::from(
+                                    config_cli.get_text_editor().as_path().to_string_lossy(),
+                                );
+                                input.pop();
+                                // Update text editor value
+                                config_cli.set_text_editor(PathBuf::from(input.as_str()));
+                            }
+                            UserInterfaceInputField::FileFmt => {
+                                // Push char to current file fmt
+                                let mut file_fmt = config_cli.get_file_fmt().unwrap_or(String::new());
+                                // Pop from file fmt
+                                file_fmt.pop();
+                                // If len is 0, will become None
+                                config_cli.set_file_fmt(file_fmt);
+                            }
+                            _ => { /* Not a text field */ }
                         }
+                        // NOTE: replace with match if other text fields are added
+                        if matches!(field, UserInterfaceInputField::TextEditor) {}
                     }
                 }
                 KeyCode::Left => {
@@ -270,6 +282,7 @@ impl SetupActivity {
                 KeyCode::Up => {
                     // Change selected field
                     self.tab = SetupTab::UserInterface(match field {
+                        UserInterfaceInputField::FileFmt => UserInterfaceInputField::GroupDirs,
                         UserInterfaceInputField::GroupDirs => {
                             UserInterfaceInputField::ShowHiddenFiles
                         }
@@ -279,7 +292,7 @@ impl SetupActivity {
                         UserInterfaceInputField::DefaultProtocol => {
                             UserInterfaceInputField::TextEditor
                         }
-                        UserInterfaceInputField::TextEditor => UserInterfaceInputField::GroupDirs, // Wrap
+                        UserInterfaceInputField::TextEditor => UserInterfaceInputField::FileFmt, // Wrap
                     });
                 }
                 KeyCode::Down => {
@@ -294,7 +307,8 @@ impl SetupActivity {
                         UserInterfaceInputField::ShowHiddenFiles => {
                             UserInterfaceInputField::GroupDirs
                         }
-                        UserInterfaceInputField::GroupDirs => UserInterfaceInputField::TextEditor, // Wrap
+                        UserInterfaceInputField::GroupDirs => UserInterfaceInputField::FileFmt,
+                        UserInterfaceInputField::FileFmt => UserInterfaceInputField::TextEditor, // Wrap
                     });
                 }
                 KeyCode::Char(ch) => {
@@ -328,14 +342,24 @@ impl SetupActivity {
                         // Push character to input field
                         if let Some(config_cli) = self.config_cli.as_mut() {
                             // NOTE: change to match if other fields are added
-                            if matches!(field, UserInterfaceInputField::TextEditor) {
-                                // Get current text editor and push character
-                                let mut input: String = String::from(
-                                    config_cli.get_text_editor().as_path().to_string_lossy(),
-                                );
-                                input.push(ch);
-                                // Update text editor value
-                                config_cli.set_text_editor(PathBuf::from(input.as_str()));
+                            match field {
+                                UserInterfaceInputField::TextEditor => {
+                                    // Get current text editor and push character
+                                    let mut input: String = String::from(
+                                        config_cli.get_text_editor().as_path().to_string_lossy(),
+                                    );
+                                    input.push(ch);
+                                    // Update text editor value
+                                    config_cli.set_text_editor(PathBuf::from(input.as_str()));
+                                }
+                                UserInterfaceInputField::FileFmt => {
+                                    // Push char to current file fmt
+                                    let mut file_fmt = config_cli.get_file_fmt().unwrap_or(String::new());
+                                    file_fmt.push(ch);
+                                    // update value
+                                    config_cli.set_file_fmt(file_fmt);
+                                }
+                                _ => { /* Not a text field */ }
                             }
                         }
                     }
