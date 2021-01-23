@@ -18,6 +18,7 @@ FIXME: Released on
 
 - Bugfix:
   - Solved file index in explorer files at start of termscp, in case the first entry is an hidden file
+  - SCP File transfer: when listing directory entries, check if a symlink points to a directory or to a file
 
 ## 0.3.1
 

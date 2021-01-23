@@ -83,7 +83,8 @@ impl ScpFileTransfer {
                 }
                 // Collect metadata
                 // Get if is directory and if is symlink
-                let (is_dir, is_symlink): (bool, bool) = match metadata.get(1).unwrap().as_str() {
+                let (mut is_dir, is_symlink): (bool, bool) = match metadata.get(1).unwrap().as_str()
+                {
                     "-" => (false, false),
                     "l" => (false, true),
                     "d" => (true, false),
@@ -135,12 +136,21 @@ impl ScpFileTransfer {
                     Err(_) => None,
                 };
                 // Get filesize
-                let filesize: usize = metadata.get(6).unwrap().as_str().parse::<usize>().unwrap_or(0);
+                let filesize: usize = metadata
+                    .get(6)
+                    .unwrap()
+                    .as_str()
+                    .parse::<usize>()
+                    .unwrap_or(0);
                 // Get link and name
                 let (file_name, symlink_path): (String, Option<PathBuf>) = match is_symlink {
                     true => self.get_name_and_link(metadata.get(8).unwrap().as_str()),
                     false => (String::from(metadata.get(8).unwrap().as_str()), None),
                 };
+                // Check if symlink points to a directory
+                if let Some(symlink_path) = symlink_path.as_ref() {
+                    is_dir = symlink_path.is_dir();
+                }
                 // Get symlink
                 let symlink: Option<Box<FsEntry>> = match symlink_path {
                     None => None,
