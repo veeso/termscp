@@ -20,7 +20,7 @@ bitflags = "1.2.1"
 bytesize = "1.0.1"
 chrono = "0.4.19"
 content_inspector = "0.2.4"
-crossterm = "0.18.2"
+crossterm = "0.19.0"
 dirs = "3.0.1"
 edit = "0.1.2"
 ftp4 = { version = "^4.0.2", features = ["secure"] }
@@ -28,17 +28,17 @@ getopts = "0.2.21"
 hostname = "0.3.1"
 lazy_static = "1.4.0"
 magic-crypt = "3.1.6"
-rand = "0.8.0"
+rand = "0.8.2"
 regex = "1.4.2"
-rpassword = "5.0.0"
-serde = { version = "1.0.118", features = ["derive"] }
+rpassword = "5.0.1"
+serde = { version = "1.0.121", features = ["derive"] }
 ssh2 = "0.9.0"
 tempfile = "3.1.0"
 textwrap = "0.13.1"
 toml = "0.5.8"
-tui = { version = "0.13.0", features = ["crossterm"], default-features = false }
+tui = { version = "0.14.0", features = ["crossterm"], default-features = false }
 unicode-width = "0.1.7"
-whoami = "1.0.1"
+whoami = "1.1.0"
 
 [target.'cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))'.dependencies]
 users = "0.11.0"

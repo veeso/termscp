@@ -35,7 +35,7 @@ use crate::host::Localhost;
 use crossterm::event::DisableMouseCapture;
 use crossterm::execute;
 use crossterm::terminal::{EnterAlternateScreen, LeaveAlternateScreen};
-use std::io::{stdout, Stdout, Write};
+use std::io::{stdout, Stdout};
 use tui::backend::CrosstermBackend;
 use tui::Terminal;
 

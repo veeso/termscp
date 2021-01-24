@@ -23,6 +23,13 @@ FIXME: Released on
 - Bugfix:
   - Solved file index in explorer files at start of termscp, in case the first entry is an hidden file
   - SCP File transfer: when listing directory entries, check if a symlink points to a directory or to a file
+- Dependencies:
+  - updated `crossterm` to `0.19.0`
+  - updated `rand` to `0.8.2`
+  - updated `rpassword` to `5.0.1`
+  - updated `serde` to `1.0.121`
+  - updated `tui` to `0.14.0`
+  - updated `whoami` to `1.1.0`
 
 ## 0.3.1
 
