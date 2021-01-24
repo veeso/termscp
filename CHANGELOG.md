@@ -14,7 +14,7 @@
 
 ## 0.3.2
 
-FIXME: Released on
+Released on 24/01/2021
 
 - **Explorer Formatter**:
   - Added possibility to customize the format when listing files in the explorers (Read more on README)
