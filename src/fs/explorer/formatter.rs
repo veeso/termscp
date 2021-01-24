@@ -37,7 +37,7 @@ use regex::Regex;
 #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
 use users::{get_group_by_gid, get_user_by_uid};
 // Types
-type FmtCallback = fn(&Formatter, &FsEntry, &str) -> String;
+type FmtCallback = fn(&Formatter, &FsEntry, &str, &str) -> String;
 
 // Keys
 const FMT_KEY_ATIME: &str = "{ATIME}";
@@ -64,6 +64,7 @@ lazy_static! {
 /// This method provides an extremely fast way to format fs entries
 struct CallChainBlock {
     func: FmtCallback,
+    prefix: String,
     next_block: Option<Box<CallChainBlock>>,
 }
 
@@ -71,9 +72,10 @@ impl CallChainBlock {
     /// ### new
     ///
     /// Create a new `CallChainBlock`
-    pub fn new(func: FmtCallback) -> Self {
+    pub fn new(func: FmtCallback, prefix: String) -> Self {
         CallChainBlock {
             func,
+            prefix,
             next_block: None,
         }
     }
@@ -83,7 +85,7 @@ impl CallChainBlock {
     /// Call next callback in the CallChain
     pub fn next(&self, fmt: &Formatter, fsentry: &FsEntry, cur_str: &str) -> String {
         // Call func
-        let new_str: String = (self.func)(fmt, fsentry, cur_str);
+        let new_str: String = (self.func)(fmt, fsentry, cur_str, self.prefix.as_str());
         // If next is some, call next, otherwise (END OF CHAIN) return new_str
         match &self.next_block {
             Some(block) => block.next(fmt, fsentry, new_str.as_str()),
@@ -94,11 +96,11 @@ impl CallChainBlock {
     /// ### push
     ///
     /// Push func to the last element in the Call chain
-    pub fn push(&mut self, func: FmtCallback) {
+    pub fn push(&mut self, func: FmtCallback, prefix: String) {
         // Call recursively until an element with next_block equal to None is found
         match &mut self.next_block {
-            None => self.next_block = Some(Box::new(CallChainBlock::new(func))),
-            Some(block) => block.push(func),
+            None => self.next_block = Some(Box::new(CallChainBlock::new(func, prefix))),
+            Some(block) => block.push(func, prefix),
         }
     }
 }
@@ -109,7 +111,6 @@ impl CallChainBlock {
 /// Formatting is performed using the `CallChainBlock`, which composed makes a Call Chain. This method is extremely fast compared to match the format groups
 /// at each fmt call.
 pub struct Formatter {
-    fmt_str: String,
     call_chain: CallChainBlock,
 }
 
@@ -119,7 +120,6 @@ impl Default for Formatter {
     /// Instantiates a Formatter with the default fmt syntax
     fn default() -> Self {
         Formatter {
-            fmt_str: FMT_DEFAULT_STX.to_string(),
             call_chain: Self::make_callchain(FMT_DEFAULT_STX),
         }
     }
@@ -131,7 +131,6 @@ impl Formatter {
     /// Instantiates a new `Formatter` with the provided format string
     pub fn new(fmt_str: &str) -> Self {
         Formatter {
-            fmt_str: fmt_str.to_string(),
             call_chain: Self::make_callchain(fmt_str),
         }
     }
@@ -141,7 +140,7 @@ impl Formatter {
     /// Format fsentry
     pub fn fmt(&self, fsentry: &FsEntry) -> String {
         // Execute callchain blocks
-        self.call_chain.next(self, fsentry, self.fmt_str.as_str())
+        self.call_chain.next(self, fsentry, "")
     }
 
     // Fmt methods
@@ -149,27 +148,27 @@ impl Formatter {
     /// ### fmt_atime
     ///
     /// Format last access time
-    fn fmt_atime(&self, fsentry: &FsEntry, cur_str: &str) -> String {
+    fn fmt_atime(&self, fsentry: &FsEntry, cur_str: &str, prefix: &str) -> String {
         // Get date
         let datetime: String = fmt_time(fsentry.get_last_access_time(), "%b %d %Y %H:%M");
-        // Replace `FMT_KEY_ATIME` with datetime
-        cur_str.replace(FMT_KEY_ATIME, format!("{:17}", datetime).as_str())
+        // Add to cur str, prefix and the key value
+        format!("{}{}{:17}", cur_str, prefix, datetime)
     }
 
     /// ### fmt_ctime
     ///
     /// Format creation time
-    fn fmt_ctime(&self, fsentry: &FsEntry, cur_str: &str) -> String {
+    fn fmt_ctime(&self, fsentry: &FsEntry, cur_str: &str, prefix: &str) -> String {
         // Get date
         let datetime: String = fmt_time(fsentry.get_creation_time(), "%b %d %Y %H:%M");
-        // Replace `FMT_KEY_ATIME` with datetime
-        cur_str.replace(FMT_KEY_CTIME, format!("{:17}", datetime).as_str())
+        // Add to cur str, prefix and the key value
+        format!("{}{}{:17}", cur_str, prefix, datetime)
     }
 
     /// ### fmt_group
     ///
     /// Format owner group
-    fn fmt_group(&self, fsentry: &FsEntry, cur_str: &str) -> String {
+    fn fmt_group(&self, fsentry: &FsEntry, cur_str: &str, prefix: &str) -> String {
         // Get username
         #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
         let group: String = match fsentry.get_group() {
@@ -184,24 +183,24 @@ impl Formatter {
             Some(gid) => gid.to_string(),
             None => 0.to_string(),
         };
-        // Replace `FMT_KEY_GROUP` with size
-        cur_str.replace(FMT_KEY_GROUP, format!("{:12}", group).as_str())
+        // Add to cur str, prefix and the key value
+        format!("{}{}{:12}", cur_str, prefix, group)
     }
 
     /// ### fmt_mtime
     ///
     /// Format last change time
-    fn fmt_mtime(&self, fsentry: &FsEntry, cur_str: &str) -> String {
+    fn fmt_mtime(&self, fsentry: &FsEntry, cur_str: &str, prefix: &str) -> String {
         // Get date
         let datetime: String = fmt_time(fsentry.get_last_change_time(), "%b %d %Y %H:%M");
-        // Replace `FMT_KEY_MTIME` with datetime
-        cur_str.replace(FMT_KEY_MTIME, format!("{:17}", datetime).as_str())
+        // Add to cur str, prefix and the key value
+        format!("{}{}{:17}", cur_str, prefix, datetime)
     }
 
     /// ### fmt_name
     ///
     /// Format file name
-    fn fmt_name(&self, fsentry: &FsEntry, cur_str: &str) -> String {
+    fn fmt_name(&self, fsentry: &FsEntry, cur_str: &str, prefix: &str) -> String {
         // Get file name (or elide if too long)
         let name: &str = fsentry.get_name();
         let last_idx: usize = match fsentry.is_dir() {
@@ -216,14 +215,14 @@ impl Formatter {
         if fsentry.is_dir() {
             name.push('/');
         }
-        // Replace `FMT_KEY_NAME` with name
-        cur_str.replace(FMT_KEY_NAME, format!("{:24}", name).as_str())
+        // Add to cur str, prefix and the key value
+        format!("{}{}{:24}", cur_str, prefix, name)
     }
 
     /// ### fmt_pex
     ///
     /// Format file permissions
-    fn fmt_pex(&self, fsentry: &FsEntry, cur_str: &str) -> String {
+    fn fmt_pex(&self, fsentry: &FsEntry, cur_str: &str, prefix: &str) -> String {
         // Create mode string
         let mut pex: String = String::with_capacity(10);
         let file_type: char = match fsentry.is_symlink() {
@@ -238,40 +237,38 @@ impl Formatter {
             None => pex.push_str("?????????"),
             Some((owner, group, others)) => pex.push_str(fmt_pex(owner, group, others).as_str()),
         }
-        // Replace `FMT_KEY_PEX` with pex
-        cur_str.replace(FMT_KEY_PEX, format!("{:10}", pex).as_str())
+        // Add to cur str, prefix and the key value
+        format!("{}{}{:10}", cur_str, prefix, pex)
     }
 
     /// ### fmt_size
     ///
     /// Format file size
-    fn fmt_size(&self, fsentry: &FsEntry, cur_str: &str) -> String {
+    fn fmt_size(&self, fsentry: &FsEntry, cur_str: &str, prefix: &str) -> String {
         if fsentry.is_file() {
             // Get byte size
             let size: ByteSize = ByteSize(fsentry.get_size() as u64);
-            // Replace `FMT_KEY_SIZE` with size
-            cur_str.replace(FMT_KEY_SIZE, format!("{:10}", size.to_string()).as_str())
+            // Add to cur str, prefix and the key value
+            format!("{}{}{:10}", cur_str, prefix, size.to_string())
         } else {
-            // No size for directories
-            cur_str.replace(FMT_KEY_SIZE, "          ")
+            // Add to cur str, prefix and the key value
+            format!("{}{}          ", cur_str, prefix)
         }
     }
 
     /// ### fmt_symlink
     ///
     /// Format file symlink (if any)
-    fn fmt_symlink(&self, fsentry: &FsEntry, cur_str: &str) -> String {
+    fn fmt_symlink(&self, fsentry: &FsEntry, cur_str: &str, prefix: &str) -> String {
         // Get file name (or elide if too long)
         // Replace `FMT_KEY_NAME` with name
         match fsentry.is_symlink() {
-            false => cur_str.replace(FMT_KEY_SYMLINK, "                        "),
-            true => cur_str.replace(
-                FMT_KEY_SYMLINK,
-                format!(
-                    "-> {:21}",
-                    fmt_path_elide(fsentry.get_realfile().get_abs_path().as_path(), 20)
-                )
-                .as_str(),
+            false => format!("{}{}                        ", cur_str, prefix),
+            true => format!(
+                "{}{}-> {:21}",
+                cur_str,
+                prefix,
+                fmt_path_elide(fsentry.get_realfile().get_abs_path().as_path(), 20)
             ),
         }
     }
@@ -279,7 +276,7 @@ impl Formatter {
     /// ### fmt_user
     ///
     /// Format owner user
-    fn fmt_user(&self, fsentry: &FsEntry, cur_str: &str) -> String {
+    fn fmt_user(&self, fsentry: &FsEntry, cur_str: &str, prefix: &str) -> String {
         // Get username
         #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
         let username: String = match fsentry.get_user() {
@@ -294,16 +291,17 @@ impl Formatter {
             Some(uid) => uid.to_string(),
             None => 0.to_string(),
         };
-        // Replace `FMT_KEY_USER` with size
-        cur_str.replace(FMT_KEY_USER, format!("{:12}", username).as_str())
+        // Add to cur str, prefix and the key value
+        format!("{}{}{:12}", cur_str, prefix, username)
     }
 
     /// ### fmt_fallback
     ///
     /// Fallback function in case the format key is unknown
     /// It does nothing, just returns cur_str
-    fn fmt_fallback(&self, _fsentry: &FsEntry, cur_str: &str) -> String {
-        cur_str.to_string()
+    fn fmt_fallback(&self, _fsentry: &FsEntry, cur_str: &str, prefix: &str) -> String {
+        // Add to cur str and prefix
+        format!("{}{}", cur_str, prefix)
     }
 
     // Static
@@ -314,8 +312,16 @@ impl Formatter {
     fn make_callchain(fmt_str: &str) -> CallChainBlock {
         // Init chain block
         let mut callchain: Option<CallChainBlock> = None;
+        // Track index of the last match found, to get the prefix for each token
+        let mut last_index: usize = 0;
         // Match fmt str against regex
         for regex_match in FMT_KEY_REGEX.captures_iter(fmt_str) {
+            // Get match index (unwrap is safe, since always exists)
+            let index: usize = fmt_str.find(&regex_match[0]).unwrap();
+            // Get prefix
+            let prefix: String = String::from(&fmt_str[last_index..index]);
+            // Increment last index (sum prefix lenght and the length of the key)
+            last_index += prefix.len() + regex_match[0].len();
             // Match the match (I guess...)
             let callback: FmtCallback = match &regex_match[0] {
                 FMT_KEY_ATIME => Self::fmt_atime,
@@ -331,14 +337,14 @@ impl Formatter {
             };
             // Create a callchain or push new element to its back
             match callchain.as_mut() {
-                None => callchain = Some(CallChainBlock::new(callback)),
-                Some(chain_block) => chain_block.push(callback),
+                None => callchain = Some(CallChainBlock::new(callback, prefix)),
+                Some(chain_block) => chain_block.push(callback, prefix),
             }
         }
         // Finalize and return
         match callchain {
             Some(callchain) => callchain,
-            None => CallChainBlock::new(Self::fmt_fallback),
+            None => CallChainBlock::new(Self::fmt_fallback, String::new()),
         }
     }
 }
@@ -371,22 +377,24 @@ mod tests {
             group: Some(0),            // UNIX only
             unix_pex: Some((6, 4, 4)), // UNIX only
         });
-        let mut callchain: CallChainBlock = CallChainBlock::new(dummy_fmt);
+        let prefix: String = String::from("h");
+        let mut callchain: CallChainBlock = CallChainBlock::new(dummy_fmt, prefix);
         assert!(callchain.next_block.is_none());
+        assert_eq!(callchain.prefix, String::from("h"));
         // Execute
         assert_eq!(
             callchain.next(&dummy_formatter, &dummy_entry, ""),
-            String::from("A")
+            String::from("hA")
         );
         // Push 4 new blocks
-        callchain.push(dummy_fmt);
-        callchain.push(dummy_fmt);
-        callchain.push(dummy_fmt);
-        callchain.push(dummy_fmt);
+        callchain.push(dummy_fmt, String::from("h"));
+        callchain.push(dummy_fmt, String::from("h"));
+        callchain.push(dummy_fmt, String::from("h"));
+        callchain.push(dummy_fmt, String::from("h"));
         // Verify
         assert_eq!(
             callchain.next(&dummy_formatter, &dummy_entry, ""),
-            String::from("AAAAA")
+            String::from("hAhAhAhAhA")
         );
     }
 
@@ -704,7 +712,7 @@ mod tests {
     /// ### dummy_fmt
     ///
     /// Dummy formatter, just yelds an 'A' at the end of the current string
-    fn dummy_fmt(_fmt: &Formatter, _entry: &FsEntry, cur_str: &str) -> String {
-        format!("{}A", cur_str)
+    fn dummy_fmt(_fmt: &Formatter, _entry: &FsEntry, cur_str: &str, prefix: &str) -> String {
+        format!("{}{}A", cur_str, prefix)
     }
 }
