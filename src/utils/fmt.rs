@@ -27,6 +27,7 @@ extern crate chrono;
 extern crate textwrap;
 
 use chrono::prelude::*;
+use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime};
 
 /// ### fmt_pex
@@ -116,6 +117,39 @@ pub fn align_text_center(text: &str, width: u16) -> String {
     .to_string()
 }
 
+/// ### elide_path
+///
+/// Elide a path if longer than width
+/// In this case, the path is formatted to {ANCESTOR[0]}/.../{PARENT[0]}/{BASENAME}
+pub fn fmt_path_elide(p: &Path, width: usize) -> String {
+    let fmt_path: String = format!("{}", p.display());
+    match fmt_path.len() > width as usize {
+        false => fmt_path,
+        true => {
+            // Elide
+            let ancestors_len: usize = p.ancestors().count();
+            let mut ancestors = p.ancestors();
+            let mut elided_path: PathBuf = PathBuf::new();
+            // If ancestors_len's size is bigger than 2, push count - 2
+            if ancestors_len > 2 {
+                elided_path.push(ancestors.nth(ancestors_len - 2).unwrap());
+            }
+            // If ancestors_len is bigger than 3, push '...' and parent too
+            if ancestors_len > 3 {
+                elided_path.push("...");
+                if let Some(parent) = p.ancestors().nth(1) {
+                    elided_path.push(parent.file_name().unwrap());
+                }
+            }
+            // Push file_name
+            if let Some(name) = p.file_name() {
+                elided_path.push(name);
+            }
+            format!("{}", elided_path.display())
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
 
@@ -168,5 +202,17 @@ mod tests {
             fmt_millis(Duration::from_millis(18192)),
             String::from("18.192")
         );
+    }
+
+    #[test]
+    #[cfg(any(target_os = "unix", target_os = "linux", target_os = "macos"))]
+    fn test_utils_fmt_path_elide() {
+        let p: &Path = &Path::new("/develop/pippo");
+        // Under max size
+        assert_eq!(fmt_path_elide(p, 16), String::from("/develop/pippo"));
+        // Above max size, only one ancestor
+        assert_eq!(fmt_path_elide(p, 8), String::from("/develop/pippo"));
+        let p: &Path = &Path::new("/develop/pippo/foo/bar");
+        assert_eq!(fmt_path_elide(p, 16), String::from("/develop/.../foo/bar"));
     }
 }

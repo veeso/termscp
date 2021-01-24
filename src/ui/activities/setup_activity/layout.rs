@@ -89,6 +89,7 @@ impl SetupActivity {
                                 Constraint::Length(3),
                                 Constraint::Length(3),
                                 Constraint::Length(3),
+                                Constraint::Length(3),
                                 Constraint::Length(1),
                             ]
                             .as_ref(),
@@ -107,15 +108,28 @@ impl SetupActivity {
                     if let Some(tab) = self.draw_default_group_dirs_tab() {
                         f.render_widget(tab, ui_cfg_chunks[3]);
                     }
+                    if let Some(tab) = self.draw_file_fmt_input() {
+                        f.render_widget(tab, ui_cfg_chunks[4]);
+                    }
                     // Set cursor
                     if let Some(cli) = &self.config_cli {
-                        if matches!(form_field, UserInterfaceInputField::TextEditor) {
-                            let editor_text: String =
-                                String::from(cli.get_text_editor().as_path().to_string_lossy());
-                            f.set_cursor(
-                                ui_cfg_chunks[0].x + editor_text.width() as u16 + 1,
-                                ui_cfg_chunks[0].y + 1,
-                            )
+                        match form_field {
+                            UserInterfaceInputField::TextEditor => {
+                                let editor_text: String =
+                                    String::from(cli.get_text_editor().as_path().to_string_lossy());
+                                f.set_cursor(
+                                    ui_cfg_chunks[0].x + editor_text.width() as u16 + 1,
+                                    ui_cfg_chunks[0].y + 1,
+                                );
+                            }
+                            UserInterfaceInputField::FileFmt => {
+                                let file_fmt: String = cli.get_file_fmt().unwrap_or_default();
+                                f.set_cursor(
+                                    ui_cfg_chunks[4].x + file_fmt.width() as u16 + 1,
+                                    ui_cfg_chunks[4].y + 1,
+                                );
+                            }
+                            _ => { /* Not a text field */ }
                         }
                     }
                 }
@@ -388,6 +402,31 @@ impl SetupActivity {
                         ),
                 )
             }
+            None => None,
+        }
+    }
+
+    /// ### draw_file_fmt_input
+    ///
+    /// Draw input text field for file fmt
+    fn draw_file_fmt_input(&self) -> Option<Paragraph> {
+        match &self.config_cli {
+            Some(cli) => Some(
+                Paragraph::new(cli.get_file_fmt().unwrap_or_default())
+                    .style(Style::default().fg(match &self.tab {
+                        SetupTab::SshConfig => Color::White,
+                        SetupTab::UserInterface(field) => match field {
+                            UserInterfaceInputField::FileFmt => Color::LightCyan,
+                            _ => Color::White,
+                        },
+                    }))
+                    .block(
+                        Block::default()
+                            .borders(Borders::ALL)
+                            .border_type(BorderType::Rounded)
+                            .title("File formatter syntax"),
+                    ),
+            ),
             None => None,
         }
     }

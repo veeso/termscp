@@ -55,6 +55,7 @@ enum UserInterfaceInputField {
     TextEditor,
     ShowHiddenFiles,
     GroupDirs,
+    FileFmt,
 }
 
 /// ### SetupTab

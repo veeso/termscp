@@ -133,6 +133,7 @@ impl FileTransferActivity {
                 .with_group_dirs(cli.get_group_dirs())
                 .with_hidden_files(cli.get_show_hidden_files())
                 .with_stack_size(16)
+                .with_formatter(cli.get_file_fmt().as_deref())
                 .build(),
             None => FileExplorerBuilder::new() // Build default
                 .with_file_sorting(FileSorting::ByName)

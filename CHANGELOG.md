@@ -16,6 +16,10 @@
 
 FIXME: Released on
 
+- **Explorer Formatter**:
+  - Added possibility to customize the format when listing files in the explorers (Read more on README)
+  - Added `file_fmt` key to configuration (if missing, default will be used).
+  - Added the text input to the Settings view to set the value for `file_fmt`.
 - Bugfix:
   - Solved file index in explorer files at start of termscp, in case the first entry is an hidden file
   - SCP File transfer: when listing directory entries, check if a symlink points to a directory or to a file

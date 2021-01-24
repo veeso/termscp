@@ -25,10 +25,12 @@
 
 // Mods
 pub(crate) mod builder;
+mod formatter;
 // Deps
 extern crate bitflags;
 // Locals
 use super::FsEntry;
+use formatter::Formatter;
 // Ext
 use std::cmp::Reverse;
 use std::collections::VecDeque;
@@ -75,6 +77,7 @@ pub struct FileExplorer {
     pub(crate) file_sorting: FileSorting,     // File sorting criteria
     pub(crate) group_dirs: Option<GroupDirs>, // If Some, defines how to group directories
     pub(crate) opts: ExplorerOpts,            // Explorer options
+    pub(crate) fmt: Formatter,                // FsEntry formatter
     index: usize,                             // Selected file
     files: Vec<FsEntry>,                      // Files in directory
 }
@@ -88,6 +91,7 @@ impl Default for FileExplorer {
             file_sorting: FileSorting::ByName,
             group_dirs: None,
             opts: ExplorerOpts::empty(),
+            fmt: Formatter::default(),
             index: 0,
             files: Vec::new(),
         }
@@ -166,6 +170,15 @@ impl FileExplorer {
         self.files.get(self.index)
     }
 
+    // Formatting
+
+    /// ### fmt_file
+    ///
+    /// Format a file entry
+    pub fn fmt_file(&self, entry: &FsEntry) -> String {
+        self.fmt.fmt(entry)
+    }
+
     // Sorting
 
     /// ### sort_by
@@ -239,7 +252,8 @@ impl FileExplorer {
     ///
     /// Sort files by creation time; the newest comes first
     fn sort_files_by_creation_time(&mut self) {
-        self.files.sort_by_key(|b: &FsEntry| Reverse(b.get_creation_time()));
+        self.files
+            .sort_by_key(|b: &FsEntry| Reverse(b.get_creation_time()));
     }
 
     /// ### sort_files_by_size
@@ -507,6 +521,7 @@ mod tests {
 
     use super::*;
     use crate::fs::{FsDirectory, FsFile};
+    use crate::utils::fmt::fmt_time;
 
     use std::thread::sleep;
     use std::time::{Duration, SystemTime};
@@ -852,6 +867,43 @@ mod tests {
         assert_eq!(explorer.files.get(0).unwrap().get_name(), "Cargo.lock");
         // Last in files should be "README.md" (last file for alphabetical ordening)
         assert_eq!(explorer.files.get(7).unwrap().get_name(), "README.md");
+    }
+
+    #[test]
+    fn test_fs_explorer_fmt() {
+        let explorer: FileExplorer = FileExplorer::default();
+        // Create fs entry
+        let t: SystemTime = SystemTime::now();
+        let entry: FsEntry = FsEntry::File(FsFile {
+            name: String::from("bar.txt"),
+            abs_path: PathBuf::from("/bar.txt"),
+            last_change_time: t,
+            last_access_time: t,
+            creation_time: t,
+            size: 8192,
+            readonly: false,
+            ftype: Some(String::from("txt")),
+            symlink: None,             // UNIX only
+            user: Some(0),             // UNIX only
+            group: Some(0),            // UNIX only
+            unix_pex: Some((6, 4, 4)), // UNIX only
+        });
+        #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
+        assert_eq!(
+            explorer.fmt_file(&entry),
+            format!(
+                "bar.txt                  -rw-r--r-- root         8.2 KB     {}",
+                fmt_time(t, "%b %d %Y %H:%M")
+            )
+        );
+        #[cfg(target_os = "windows")]
+        assert_eq!(
+            explorer.fmt_file(&entry),
+            format!(
+                "bar.txt                  -rw-r--r-- 0            8.2 KB     {}",
+                fmt_time(t, "%b %d %Y %H:%M")
+            )
+        );
     }
 
     #[test]

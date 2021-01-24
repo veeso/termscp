@@ -56,6 +56,7 @@ pub struct UserInterfaceConfig {
     pub default_protocol: String,
     pub show_hidden_files: bool,
     pub group_dirs: Option<String>,
+    pub file_fmt: Option<String>,
 }
 
 #[derive(Deserialize, Serialize, std::fmt::Debug)]
@@ -85,6 +86,7 @@ impl Default for UserInterfaceConfig {
             default_protocol: FileTransferProtocol::Sftp.to_string(),
             show_hidden_files: false,
             group_dirs: None,
+            file_fmt: None,
         }
     }
 }
@@ -171,6 +173,7 @@ mod tests {
             text_editor: PathBuf::from("nano"),
             show_hidden_files: true,
             group_dirs: Some(String::from("first")),
+            file_fmt: Some(String::from("{NAME}")),
         };
         let cfg: UserConfig = UserConfig {
             user_interface: ui,
@@ -187,6 +190,7 @@ mod tests {
         assert_eq!(cfg.user_interface.text_editor, PathBuf::from("nano"));
         assert_eq!(cfg.user_interface.show_hidden_files, true);
         assert_eq!(cfg.user_interface.group_dirs, Some(String::from("first")));
+        assert_eq!(cfg.user_interface.file_fmt, Some(String::from("{NAME}")));
     }
 
     #[test]
