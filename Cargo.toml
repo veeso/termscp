@@ -1,6 +1,6 @@
 [package]
 name = "termscp"
-version = "0.3.2"
+version = "0.3.3"
 authors = ["Christian Visintin"]
 edition = "2018"
 license = "GPL-3.0"
