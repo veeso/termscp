@@ -161,6 +161,8 @@ impl FileTransferActivity {
                             FsEntry::Directory(dir) => dir.name.clone(),
                             FsEntry::File(file) => file.name.clone(),
                         };
+                        // Default choice to NO for delete!
+                        self.choice_opt = DialogYesNoOption::No;
                         // Show delete prompt
                         self.popup = Some(Popup::YesNo(
                             format!("Delete file \"{}\"", file_name),
@@ -200,6 +202,8 @@ impl FileTransferActivity {
                                 FsEntry::Directory(dir) => dir.name.clone(),
                                 FsEntry::File(file) => file.name.clone(),
                             };
+                            // Default choice to NO for delete!
+                            self.choice_opt = DialogYesNoOption::No;
                             // Show delete prompt
                             self.popup = Some(Popup::YesNo(
                                 format!("Delete file \"{}\"", file_name),
@@ -380,6 +384,8 @@ impl FileTransferActivity {
                             FsEntry::Directory(dir) => dir.name.clone(),
                             FsEntry::File(file) => file.name.clone(),
                         };
+                        // Default choice to NO for delete!
+                        self.choice_opt = DialogYesNoOption::No;
                         // Show delete prompt
                         self.popup = Some(Popup::YesNo(
                             format!("Delete file \"{}\"", file_name),
@@ -419,6 +425,8 @@ impl FileTransferActivity {
                                 FsEntry::Directory(dir) => dir.name.clone(),
                                 FsEntry::File(file) => file.name.clone(),
                             };
+                            // Default choice to NO for delete!
+                            self.choice_opt = DialogYesNoOption::No;
                             // Show delete prompt
                             self.popup = Some(Popup::YesNo(
                                 format!("Delete file \"{}\"", file_name),

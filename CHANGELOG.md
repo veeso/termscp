@@ -1,6 +1,7 @@
 # Changelog
 
 - [Changelog](#changelog)
+  - [0.3.3](#033)
   - [0.3.2](#032)
   - [0.3.1](#031)
   - [0.3.0](#030)
@@ -11,6 +12,13 @@
   - [0.1.0](#010)
 
 ---
+
+## 0.3.3
+
+Released on ???
+
+- Enhancements:
+  - Default choice for deleting file set to "NO" (way too easy to delete files by mistake)
 
 ## 0.3.2
 
