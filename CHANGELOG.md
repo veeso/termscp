@@ -17,6 +17,9 @@
 
 Released on ???
 
+- Format key attributes:
+  - Added `EXTRA` and `LENGTH` parameters to format keys.
+  - Now keys are provided with this syntax `{KEY_NAME[:LEN[:EXTRA]}`
 - Enhancements:
   - Default choice for deleting file set to "NO" (way too easy to delete files by mistake)
   - Added CLI options to set starting workind directory on both local and remote hosts

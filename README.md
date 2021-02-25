@@ -299,22 +299,27 @@ You can access the SSH key storage, from configuration moving to the `SSH Keys` 
 
 ### File Explorer Format
 
-It is possible through configuration to define a custom format for the file explorer. This field, with name `File formatter syntax` will define how the files will be displayed in the file explorer.
-The syntax for the formatter is the following `{KEY1}... {KEY2}... {KEYn}...`.
+It is possible through configuration to define a custom format for the file explorer. This field, with name `File formatter syntax` will define how the file entries will be displayed in the file explorer.
+The syntax for the formatter is the following `{KEY1}... {KEY2:LENGTH}... {KEY3:LENGTH:EXTRA} {KEYn}...`.
 Each key in bracket will be replaced with the related attribute, while everything outside brackets will be left unchanged.
+
+- The key name is mandatory and must be one of the keys below
+- The length describes the length reserved to display the field. Static attributes doesn't support this (GROUP, PEX, SIZE, USER)
+- Extra is supported only by some parameters and is an additional options. See keys to check if extra is supported.
+
 These are the keys supported by the formatter:
 
-- `ATIME`: Last access time (with syntax `%b %d %Y %H:%M`)
-- `CTIME`: Creation time (with syntax `%b %d %Y %H:%M`)
+- `ATIME`: Last access time (with default syntax `%b %d %Y %H:%M`); Extra might be provided as the time syntax (e.g. `{ATIME:8:%H:%M}`)
+- `CTIME`: Creation time (with syntax `%b %d %Y %H:%M`); Extra might be provided as the time syntax (e.g. `{CTIME:8:%H:%M}`)
 - `GROUP`: Owner group
-- `MTIME`: Last change time (with syntax `%b %d %Y %H:%M`)
+- `MTIME`: Last change time (with syntax `%b %d %Y %H:%M`); Extra might be provided as the time syntax (e.g. `{MTIME:8:%H:%M}`)
 - `NAME`: File name (Elided if longer than 24)
 - `PEX`: File permissions (UNIX format)
 - `SIZE`: File size (omitted for directories)
 - `SYMLINK`: Symlink (if any `-> {FILE_PATH}`)
 - `USER`: Owner user
 
-If left empty, the default formatter syntax will be used: `{NAME} {PEX} {USER} {SIZE} {MTIME}`
+If left empty, the default formatter syntax will be used: `{NAME:24} {PEX} {USER} {SIZE} {MTIME:17:%b %d %Y %H:%M}`
 
 ---
 
