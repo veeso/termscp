@@ -37,23 +37,31 @@ use regex::Regex;
 #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
 use users::{get_group_by_gid, get_user_by_uid};
 // Types
-type FmtCallback = fn(&Formatter, &FsEntry, &str, &str) -> String;
+// FmtCallback: Formatter, fsentry: &FsEntry, cur_str, prefix, length, extra
+type FmtCallback = fn(&Formatter, &FsEntry, &str, &str, Option<&usize>, Option<&String>) -> String;
 
 // Keys
-const FMT_KEY_ATIME: &str = "{ATIME}";
-const FMT_KEY_CTIME: &str = "{CTIME}";
-const FMT_KEY_GROUP: &str = "{GROUP}";
-const FMT_KEY_MTIME: &str = "{MTIME}";
-const FMT_KEY_NAME: &str = "{NAME}";
-const FMT_KEY_PEX: &str = "{PEX}";
-const FMT_KEY_SIZE: &str = "{SIZE}";
-const FMT_KEY_SYMLINK: &str = "{SYMLINK}";
-const FMT_KEY_USER: &str = "{USER}";
+const FMT_KEY_ATIME: &str = "ATIME";
+const FMT_KEY_CTIME: &str = "CTIME";
+const FMT_KEY_GROUP: &str = "GROUP";
+const FMT_KEY_MTIME: &str = "MTIME";
+const FMT_KEY_NAME: &str = "NAME";
+const FMT_KEY_PEX: &str = "PEX";
+const FMT_KEY_SIZE: &str = "SIZE";
+const FMT_KEY_SYMLINK: &str = "SYMLINK";
+const FMT_KEY_USER: &str = "USER";
 // Default
 const FMT_DEFAULT_STX: &str = "{NAME} {PEX} {USER} {SIZE} {MTIME}";
 // Regex
 lazy_static! {
+    /**
+     * Regex matches:
+     *  - group 0: KEY NAME
+     *  - group 1?: LENGTH
+     *  - group 2?: EXTRA
+     */
     static ref FMT_KEY_REGEX: Regex = Regex::new(r"\{(.*?)\}").ok().unwrap();
+    static ref FMT_ATTR_REGEX: Regex = Regex::new(r"(?:([A-Z]+))(:?([0-9]+))?(:?(.+))?").ok().unwrap();
 }
 
 /// ## CallChainBlock
@@ -65,6 +73,8 @@ lazy_static! {
 struct CallChainBlock {
     func: FmtCallback,
     prefix: String,
+    fmt_len: Option<usize>,
+    fmt_extra: Option<String>,
     next_block: Option<Box<CallChainBlock>>,
 }
 
@@ -72,10 +82,17 @@ impl CallChainBlock {
     /// ### new
     ///
     /// Create a new `CallChainBlock`
-    pub fn new(func: FmtCallback, prefix: String) -> Self {
+    pub fn new(
+        func: FmtCallback,
+        prefix: String,
+        fmt_len: Option<usize>,
+        fmt_extra: Option<String>,
+    ) -> Self {
         CallChainBlock {
             func,
             prefix,
+            fmt_len,
+            fmt_extra,
             next_block: None,
         }
     }
@@ -85,7 +102,14 @@ impl CallChainBlock {
     /// Call next callback in the CallChain
     pub fn next(&self, fmt: &Formatter, fsentry: &FsEntry, cur_str: &str) -> String {
         // Call func
-        let new_str: String = (self.func)(fmt, fsentry, cur_str, self.prefix.as_str());
+        let new_str: String = (self.func)(
+            fmt,
+            fsentry,
+            cur_str,
+            self.prefix.as_str(),
+            self.fmt_len.as_ref(),
+            self.fmt_extra.as_ref(),
+        );
         // If next is some, call next, otherwise (END OF CHAIN) return new_str
         match &self.next_block {
             Some(block) => block.next(fmt, fsentry, new_str.as_str()),
@@ -96,11 +120,21 @@ impl CallChainBlock {
     /// ### push
     ///
     /// Push func to the last element in the Call chain
-    pub fn push(&mut self, func: FmtCallback, prefix: String) {
+    pub fn push(
+        &mut self,
+        func: FmtCallback,
+        prefix: String,
+        fmt_len: Option<usize>,
+        fmt_extra: Option<String>,
+    ) {
         // Call recursively until an element with next_block equal to None is found
         match &mut self.next_block {
-            None => self.next_block = Some(Box::new(CallChainBlock::new(func, prefix))),
-            Some(block) => block.push(func, prefix),
+            None => {
+                self.next_block = Some(Box::new(CallChainBlock::new(
+                    func, prefix, fmt_len, fmt_extra,
+                )))
+            }
+            Some(block) => block.push(func, prefix, fmt_len, fmt_extra),
         }
     }
 }
@@ -148,27 +182,72 @@ impl Formatter {
     /// ### fmt_atime
     ///
     /// Format last access time
-    fn fmt_atime(&self, fsentry: &FsEntry, cur_str: &str, prefix: &str) -> String {
-        // Get date
-        let datetime: String = fmt_time(fsentry.get_last_access_time(), "%b %d %Y %H:%M");
+    fn fmt_atime(
+        &self,
+        fsentry: &FsEntry,
+        cur_str: &str,
+        prefix: &str,
+        fmt_len: Option<&usize>,
+        fmt_extra: Option<&String>,
+    ) -> String {
+        // Get date (use extra args as format or default "%b %d %Y %H:%M")
+        let datetime: String = fmt_time(
+            fsentry.get_last_access_time(),
+            match fmt_extra {
+                Some(fmt) => fmt.as_ref(),
+                None => "%b %d %Y %H:%M",
+            },
+        );
         // Add to cur str, prefix and the key value
-        format!("{}{}{:17}", cur_str, prefix, datetime)
+        format!(
+            "{}{}{:0width$}",
+            cur_str,
+            prefix,
+            datetime,
+            width = fmt_len.unwrap_or(&17)
+        )
     }
 
     /// ### fmt_ctime
     ///
     /// Format creation time
-    fn fmt_ctime(&self, fsentry: &FsEntry, cur_str: &str, prefix: &str) -> String {
+    fn fmt_ctime(
+        &self,
+        fsentry: &FsEntry,
+        cur_str: &str,
+        prefix: &str,
+        fmt_len: Option<&usize>,
+        fmt_extra: Option<&String>,
+    ) -> String {
         // Get date
-        let datetime: String = fmt_time(fsentry.get_creation_time(), "%b %d %Y %H:%M");
+        let datetime: String = fmt_time(
+            fsentry.get_creation_time(),
+            match fmt_extra {
+                Some(fmt) => fmt.as_ref(),
+                None => "%b %d %Y %H:%M",
+            },
+        );
         // Add to cur str, prefix and the key value
-        format!("{}{}{:17}", cur_str, prefix, datetime)
+        format!(
+            "{}{}{:0width$}",
+            cur_str,
+            prefix,
+            datetime,
+            width = fmt_len.unwrap_or(&17)
+        )
     }
 
     /// ### fmt_group
     ///
     /// Format owner group
-    fn fmt_group(&self, fsentry: &FsEntry, cur_str: &str, prefix: &str) -> String {
+    fn fmt_group(
+        &self,
+        fsentry: &FsEntry,
+        cur_str: &str,
+        prefix: &str,
+        fmt_len: Option<&usize>,
+        _fmt_extra: Option<&String>,
+    ) -> String {
         // Get username
         #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
         let group: String = match fsentry.get_group() {
@@ -184,31 +263,67 @@ impl Formatter {
             None => 0.to_string(),
         };
         // Add to cur str, prefix and the key value
-        format!("{}{}{:12}", cur_str, prefix, group)
+        format!(
+            "{}{}{:0width$}",
+            cur_str,
+            prefix,
+            group,
+            width = fmt_len.unwrap_or(&12)
+        )
     }
 
     /// ### fmt_mtime
     ///
     /// Format last change time
-    fn fmt_mtime(&self, fsentry: &FsEntry, cur_str: &str, prefix: &str) -> String {
+    fn fmt_mtime(
+        &self,
+        fsentry: &FsEntry,
+        cur_str: &str,
+        prefix: &str,
+        fmt_len: Option<&usize>,
+        fmt_extra: Option<&String>,
+    ) -> String {
         // Get date
-        let datetime: String = fmt_time(fsentry.get_last_change_time(), "%b %d %Y %H:%M");
+        let datetime: String = fmt_time(
+            fsentry.get_last_change_time(),
+            match fmt_extra {
+                Some(fmt) => fmt.as_ref(),
+                None => "%b %d %Y %H:%M",
+            },
+        );
         // Add to cur str, prefix and the key value
-        format!("{}{}{:17}", cur_str, prefix, datetime)
+        format!(
+            "{}{}{:0width$}",
+            cur_str,
+            prefix,
+            datetime,
+            width = fmt_len.unwrap_or(&17)
+        )
     }
 
     /// ### fmt_name
     ///
     /// Format file name
-    fn fmt_name(&self, fsentry: &FsEntry, cur_str: &str, prefix: &str) -> String {
+    fn fmt_name(
+        &self,
+        fsentry: &FsEntry,
+        cur_str: &str,
+        prefix: &str,
+        fmt_len: Option<&usize>,
+        _fmt_extra: Option<&String>,
+    ) -> String {
         // Get file name (or elide if too long)
+        let file_len: usize = match fmt_len {
+            Some(l) => *l,
+            None => 24,
+        };
         let name: &str = fsentry.get_name();
         let last_idx: usize = match fsentry.is_dir() {
             // NOTE: For directories is 19, since we push '/' to name
-            true => 19,
-            false => 20,
+            true => file_len - 5,
+            false => file_len - 4,
         };
-        let mut name: String = match name.len() >= 24 {
+        let mut name: String = match name.len() >= file_len {
             false => name.to_string(),
             true => format!("{}...", &name[0..last_idx]),
         };
@@ -216,13 +331,20 @@ impl Formatter {
             name.push('/');
         }
         // Add to cur str, prefix and the key value
-        format!("{}{}{:24}", cur_str, prefix, name)
+        format!("{}{}{:0width$}", cur_str, prefix, name, width = file_len)
     }
 
     /// ### fmt_pex
     ///
     /// Format file permissions
-    fn fmt_pex(&self, fsentry: &FsEntry, cur_str: &str, prefix: &str) -> String {
+    fn fmt_pex(
+        &self,
+        fsentry: &FsEntry,
+        cur_str: &str,
+        prefix: &str,
+        _fmt_len: Option<&usize>,
+        _fmt_extra: Option<&String>,
+    ) -> String {
         // Create mode string
         let mut pex: String = String::with_capacity(10);
         let file_type: char = match fsentry.is_symlink() {
@@ -244,7 +366,14 @@ impl Formatter {
     /// ### fmt_size
     ///
     /// Format file size
-    fn fmt_size(&self, fsentry: &FsEntry, cur_str: &str, prefix: &str) -> String {
+    fn fmt_size(
+        &self,
+        fsentry: &FsEntry,
+        cur_str: &str,
+        prefix: &str,
+        _fmt_len: Option<&usize>,
+        _fmt_extra: Option<&String>,
+    ) -> String {
         if fsentry.is_file() {
             // Get byte size
             let size: ByteSize = ByteSize(fsentry.get_size() as u64);
@@ -259,16 +388,31 @@ impl Formatter {
     /// ### fmt_symlink
     ///
     /// Format file symlink (if any)
-    fn fmt_symlink(&self, fsentry: &FsEntry, cur_str: &str, prefix: &str) -> String {
+    fn fmt_symlink(
+        &self,
+        fsentry: &FsEntry,
+        cur_str: &str,
+        prefix: &str,
+        fmt_len: Option<&usize>,
+        _fmt_extra: Option<&String>,
+    ) -> String {
         // Get file name (or elide if too long)
+        let file_len: usize = match fmt_len {
+            Some(l) => *l,
+            None => 21,
+        };
         // Replace `FMT_KEY_NAME` with name
         match fsentry.is_symlink() {
             false => format!("{}{}                        ", cur_str, prefix),
             true => format!(
-                "{}{}-> {:21}",
+                "{}{}-> {:0width$}",
                 cur_str,
                 prefix,
-                fmt_path_elide(fsentry.get_realfile().get_abs_path().as_path(), 20)
+                fmt_path_elide(
+                    fsentry.get_realfile().get_abs_path().as_path(),
+                    file_len - 1
+                ),
+                width = file_len
             ),
         }
     }
@@ -276,7 +420,14 @@ impl Formatter {
     /// ### fmt_user
     ///
     /// Format owner user
-    fn fmt_user(&self, fsentry: &FsEntry, cur_str: &str, prefix: &str) -> String {
+    fn fmt_user(
+        &self,
+        fsentry: &FsEntry,
+        cur_str: &str,
+        prefix: &str,
+        _fmt_len: Option<&usize>,
+        _fmt_extra: Option<&String>,
+    ) -> String {
         // Get username
         #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
         let username: String = match fsentry.get_user() {
@@ -299,7 +450,14 @@ impl Formatter {
     ///
     /// Fallback function in case the format key is unknown
     /// It does nothing, just returns cur_str
-    fn fmt_fallback(&self, _fsentry: &FsEntry, cur_str: &str, prefix: &str) -> String {
+    fn fmt_fallback(
+        &self,
+        _fsentry: &FsEntry,
+        cur_str: &str,
+        prefix: &str,
+        _fmt_len: Option<&usize>,
+        _fmt_extra: Option<&String>,
+    ) -> String {
         // Add to cur str and prefix
         format!("{}{}", cur_str, prefix)
     }
@@ -322,29 +480,54 @@ impl Formatter {
             let prefix: String = String::from(&fmt_str[last_index..index]);
             // Increment last index (sum prefix lenght and the length of the key)
             last_index += prefix.len() + regex_match[0].len();
-            // Match the match (I guess...)
-            let callback: FmtCallback = match &regex_match[0] {
-                FMT_KEY_ATIME => Self::fmt_atime,
-                FMT_KEY_CTIME => Self::fmt_ctime,
-                FMT_KEY_GROUP => Self::fmt_group,
-                FMT_KEY_MTIME => Self::fmt_mtime,
-                FMT_KEY_NAME => Self::fmt_name,
-                FMT_KEY_PEX => Self::fmt_pex,
-                FMT_KEY_SIZE => Self::fmt_size,
-                FMT_KEY_SYMLINK => Self::fmt_symlink,
-                FMT_KEY_USER => Self::fmt_user,
-                _ => Self::fmt_fallback,
-            };
-            // Create a callchain or push new element to its back
-            match callchain.as_mut() {
-                None => callchain = Some(CallChainBlock::new(callback, prefix)),
-                Some(chain_block) => chain_block.push(callback, prefix),
+            // Match attributes
+            match FMT_ATTR_REGEX.captures(&regex_match[1]) {
+                Some(regex_match) => {
+                    // Match group 0 (which is name)
+                    let callback: FmtCallback = match &regex_match.get(1) {
+                        Some(key) => match key.as_str() {
+                            FMT_KEY_ATIME => Self::fmt_atime,
+                            FMT_KEY_CTIME => Self::fmt_ctime,
+                            FMT_KEY_GROUP => Self::fmt_group,
+                            FMT_KEY_MTIME => Self::fmt_mtime,
+                            FMT_KEY_NAME => Self::fmt_name,
+                            FMT_KEY_PEX => Self::fmt_pex,
+                            FMT_KEY_SIZE => Self::fmt_size,
+                            FMT_KEY_SYMLINK => Self::fmt_symlink,
+                            FMT_KEY_USER => Self::fmt_user,
+                            _ => Self::fmt_fallback,
+                        },
+                        None => Self::fmt_fallback,
+                    };
+                    // Match format length: group 3
+                    let fmt_len: Option<usize> = match &regex_match.get(3) {
+                        Some(len) => match len.as_str().parse::<usize>() {
+                            Ok(len) => Some(len),
+                            Err(_) => None,
+                        },
+                        None => None,
+                    };
+                    // Match format extra: group 2 + 1
+                    let fmt_extra: Option<String> = match &regex_match.get(5) {
+                        Some(extra) => Some(extra.as_str().to_string()),
+                        None => None,
+                    };
+                    // Create a callchain or push new element to its back
+                    match callchain.as_mut() {
+                        None => {
+                            callchain =
+                                Some(CallChainBlock::new(callback, prefix, fmt_len, fmt_extra))
+                        }
+                        Some(chain_block) => chain_block.push(callback, prefix, fmt_len, fmt_extra),
+                    }
+                }
+                None => continue,
             }
         }
         // Finalize and return
         match callchain {
             Some(callchain) => callchain,
-            None => CallChainBlock::new(Self::fmt_fallback, String::new()),
+            None => CallChainBlock::new(Self::fmt_fallback, String::new(), None, None),
         }
     }
 }
@@ -378,7 +561,7 @@ mod tests {
             unix_pex: Some((6, 4, 4)), // UNIX only
         });
         let prefix: String = String::from("h");
-        let mut callchain: CallChainBlock = CallChainBlock::new(dummy_fmt, prefix);
+        let mut callchain: CallChainBlock = CallChainBlock::new(dummy_fmt, prefix, None, None);
         assert!(callchain.next_block.is_none());
         assert_eq!(callchain.prefix, String::from("h"));
         // Execute
@@ -387,10 +570,10 @@ mod tests {
             String::from("hA")
         );
         // Push 4 new blocks
-        callchain.push(dummy_fmt, String::from("h"));
-        callchain.push(dummy_fmt, String::from("h"));
-        callchain.push(dummy_fmt, String::from("h"));
-        callchain.push(dummy_fmt, String::from("h"));
+        callchain.push(dummy_fmt, String::from("h"), None, None);
+        callchain.push(dummy_fmt, String::from("h"), None, None);
+        callchain.push(dummy_fmt, String::from("h"), None, None);
+        callchain.push(dummy_fmt, String::from("h"), None, None);
         // Verify
         assert_eq!(
             callchain.next(&dummy_formatter, &dummy_entry, ""),
@@ -597,7 +780,7 @@ mod tests {
     #[test]
     fn test_fs_explorer_formatter_all_together_now() {
         let formatter: Formatter =
-            Formatter::new("{NAME} {SYMLINK} {GROUP} {USER} {PEX} {SIZE} {ATIME} {CTIME} {MTIME}");
+            Formatter::new("{NAME:16} {SYMLINK:12} {GROUP} {USER} {PEX} {SIZE} {ATIME:20:%a %b %d %Y %H:%M} {CTIME:20:%a %b %d %Y %H:%M} {MTIME:20:%a %b %d %Y %H:%M}");
         // Directory (with symlink)
         let t: SystemTime = SystemTime::now();
         let pointer: FsEntry = FsEntry::File(FsFile {
@@ -627,10 +810,10 @@ mod tests {
             unix_pex: Some((7, 5, 5)),        // UNIX only
         });
         assert_eq!(formatter.fmt(&entry), format!(
-            "projects/                -> /project.info         0            0            lrwxr-xr-x            {} {} {}",
-            fmt_time(t, "%b %d %Y %H:%M"), 
-            fmt_time(t, "%b %d %Y %H:%M"), 
-            fmt_time(t, "%b %d %Y %H:%M"), 
+            "projects/        -> project.info 0            0            lrwxr-xr-x            {} {} {}",
+            fmt_time(t, "%a %b %d %Y %H:%M"), 
+            fmt_time(t, "%a %b %d %Y %H:%M"), 
+            fmt_time(t, "%a %b %d %Y %H:%M"), 
         ));
         // Directory without symlink
         let entry: FsEntry = FsEntry::Directory(FsDirectory {
@@ -646,10 +829,10 @@ mod tests {
             unix_pex: Some((7, 5, 5)), // UNIX only
         });
         assert_eq!(formatter.fmt(&entry), format!(
-            "projects/                                         0            0            drwxr-xr-x            {} {} {}",
-            fmt_time(t, "%b %d %Y %H:%M"), 
-            fmt_time(t, "%b %d %Y %H:%M"), 
-            fmt_time(t, "%b %d %Y %H:%M"), 
+            "projects/                                 0            0            drwxr-xr-x            {} {} {}",
+            fmt_time(t, "%a %b %d %Y %H:%M"), 
+            fmt_time(t, "%a %b %d %Y %H:%M"), 
+            fmt_time(t, "%a %b %d %Y %H:%M"), 
         ));
         // File with symlink
         let pointer: FsEntry = FsEntry::File(FsFile {
@@ -681,10 +864,10 @@ mod tests {
             unix_pex: Some((6, 4, 4)),        // UNIX only
         });
         assert_eq!(formatter.fmt(&entry), format!(
-            "bar.txt                  -> /project.info         0            0            lrw-r--r-- 8.2 KB     {} {} {}",
-            fmt_time(t, "%b %d %Y %H:%M"), 
-            fmt_time(t, "%b %d %Y %H:%M"), 
-            fmt_time(t, "%b %d %Y %H:%M"), 
+            "bar.txt          -> project.info 0            0            lrw-r--r-- 8.2 KB     {} {} {}",
+            fmt_time(t, "%a %b %d %Y %H:%M"), 
+            fmt_time(t, "%a %b %d %Y %H:%M"), 
+            fmt_time(t, "%a %b %d %Y %H:%M"), 
         ));
         // File without symlink
         let entry: FsEntry = FsEntry::File(FsFile {
@@ -702,17 +885,24 @@ mod tests {
             unix_pex: Some((6, 4, 4)), // UNIX only
         });
         assert_eq!(formatter.fmt(&entry), format!(
-            "bar.txt                                           0            0            -rw-r--r-- 8.2 KB     {} {} {}",
-            fmt_time(t, "%b %d %Y %H:%M"), 
-            fmt_time(t, "%b %d %Y %H:%M"), 
-            fmt_time(t, "%b %d %Y %H:%M"), 
+            "bar.txt                                   0            0            -rw-r--r-- 8.2 KB     {} {} {}",
+            fmt_time(t, "%a %b %d %Y %H:%M"), 
+            fmt_time(t, "%a %b %d %Y %H:%M"), 
+            fmt_time(t, "%a %b %d %Y %H:%M"), 
         ));
     }
 
     /// ### dummy_fmt
     ///
     /// Dummy formatter, just yelds an 'A' at the end of the current string
-    fn dummy_fmt(_fmt: &Formatter, _entry: &FsEntry, cur_str: &str, prefix: &str) -> String {
+    fn dummy_fmt(
+        _fmt: &Formatter,
+        _entry: &FsEntry,
+        cur_str: &str,
+        prefix: &str,
+        _fmt_len: Option<&usize>,
+        _fmt_extra: Option<&String>,
+    ) -> String {
         format!("{}{}A", cur_str, prefix)
     }
 }
