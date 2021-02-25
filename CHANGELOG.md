@@ -20,6 +20,7 @@ Released on ???
 - Enhancements:
   - Default choice for deleting file set to "NO" (way too easy to delete files by mistake)
   - Added CLI options to set starting workind directory on both local and remote hosts
+  - Now bookmarks and recents are sorted in the UI (bookmarks are sorted by name; recents are sorted by connection datetime)
 
 ## 0.3.2
 

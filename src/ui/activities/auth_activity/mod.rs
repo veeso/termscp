@@ -115,7 +115,9 @@ pub struct AuthActivity {
     input_txt: String,             // Input text
     choice_opt: DialogYesNoOption, // Dialog popup selected option
     bookmarks_idx: usize,          // Index of selected bookmark
+    bookmarks_list: Vec<String>,   // List of bookmarks
     recents_idx: usize,            // Index of selected recent
+    recents_list: Vec<String>,     // list of recents
 }
 
 impl Default for AuthActivity {
@@ -149,7 +151,9 @@ impl AuthActivity {
             input_txt: String::new(),
             choice_opt: DialogYesNoOption::Yes,
             bookmarks_idx: 0,
+            bookmarks_list: Vec::new(),
             recents_idx: 0,
+            recents_list: Vec::new(),
         }
     }
 

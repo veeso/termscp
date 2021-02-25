@@ -41,18 +41,14 @@ impl AuthActivity {
     pub(super) fn del_bookmark(&mut self, idx: usize) {
         if let Some(bookmarks_cli) = self.bookmarks_client.as_mut() {
             // Iterate over kyes
-            let mut name: Option<String> = None;
-            for (i, key) in bookmarks_cli.iter_bookmarks().enumerate() {
-                if i == idx {
-                    name = Some(key.clone());
-                    break;
-                }
-            }
+            let name: Option<&String> = self.bookmarks_list.get(idx);
             if let Some(name) = name {
                 bookmarks_cli.del_bookmark(&name);
                 // Write bookmarks
                 self.write_bookmarks();
             }
+            // Delete element from vec
+            self.recents_list.remove(idx);
         }
     }
 
@@ -62,20 +58,16 @@ impl AuthActivity {
     pub(super) fn load_bookmark(&mut self, idx: usize) {
         if let Some(bookmarks_cli) = self.bookmarks_client.as_ref() {
             // Iterate over bookmarks
-            for (i, key) in bookmarks_cli.iter_bookmarks().enumerate() {
-                if i == idx {
-                    if let Some(bookmark) = bookmarks_cli.get_bookmark(&key) {
-                        // Load parameters
-                        self.address = bookmark.0;
-                        self.port = bookmark.1.to_string();
-                        self.protocol = bookmark.2;
-                        self.username = bookmark.3;
-                        if let Some(password) = bookmark.4 {
-                            self.password = password;
-                        }
+            if let Some(key) = self.bookmarks_list.get(idx) {
+                if let Some(bookmark) = bookmarks_cli.get_bookmark(&key) {
+                    // Load parameters
+                    self.address = bookmark.0;
+                    self.port = bookmark.1.to_string();
+                    self.protocol = bookmark.2;
+                    self.username = bookmark.3;
+                    if let Some(password) = bookmark.4 {
+                        self.password = password;
                     }
-                    // Break
-                    break;
                 }
             }
         }
@@ -112,7 +104,7 @@ impl AuthActivity {
                 DialogYesNoOption::No => None,
             };
             bookmarks_cli.add_bookmark(
-                name,
+                name.clone(),
                 self.address.clone(),
                 port,
                 self.protocol,
@@ -121,6 +113,9 @@ impl AuthActivity {
             );
             // Save bookmarks
             self.write_bookmarks();
+            // Push bookmark to list and sort
+            self.bookmarks_list.push(name);
+            self.sort_bookmarks();
         }
     }
     /// ### del_recent
@@ -128,19 +123,14 @@ impl AuthActivity {
     /// Delete recent
     pub(super) fn del_recent(&mut self, idx: usize) {
         if let Some(client) = self.bookmarks_client.as_mut() {
-            // Iterate over kyes
-            let mut name: Option<String> = None;
-            for (i, key) in client.iter_recents().enumerate() {
-                if i == idx {
-                    name = Some(key.clone());
-                    break;
-                }
-            }
+            let name: Option<&String> = self.recents_list.get(idx);
             if let Some(name) = name {
                 client.del_recent(&name);
-                // Save bookmarks
+                // Write bookmarks
                 self.write_bookmarks();
             }
+            // Delete element from vec
+            self.recents_list.remove(idx);
         }
     }
 
@@ -150,17 +140,13 @@ impl AuthActivity {
     pub(super) fn load_recent(&mut self, idx: usize) {
         if let Some(client) = self.bookmarks_client.as_ref() {
             // Iterate over bookmarks
-            for (i, key) in client.iter_recents().enumerate() {
-                if i == idx {
-                    if let Some(bookmark) = client.get_recent(key) {
-                        // Load parameters
-                        self.address = bookmark.0;
-                        self.port = bookmark.1.to_string();
-                        self.protocol = bookmark.2;
-                        self.username = bookmark.3;
-                        // Break
-                        break;
-                    }
+            if let Some(key) = self.recents_list.get(idx) {
+                if let Some(bookmark) = client.get_recent(key) {
+                    // Load parameters
+                    self.address = bookmark.0;
+                    self.port = bookmark.1.to_string();
+                    self.protocol = bookmark.2;
+                    self.username = bookmark.3;
                 }
             }
         }
@@ -233,7 +219,26 @@ impl AuthActivity {
                         config_dir_path.as_path(),
                         16,
                     ) {
-                        Ok(cli) => self.bookmarks_client = Some(cli),
+                        Ok(cli) => {
+                            // Load bookmarks into list
+                            let mut bookmarks_list: Vec<String> =
+                                Vec::with_capacity(cli.iter_bookmarks().count());
+                            for bookmark in cli.iter_bookmarks() {
+                                bookmarks_list.push(bookmark.clone());
+                            }
+                            // Load recents into list
+                            let mut recents_list: Vec<String> =
+                                Vec::with_capacity(cli.iter_recents().count());
+                            for recent in cli.iter_recents() {
+                                recents_list.push(recent.clone());
+                            }
+                            self.bookmarks_client = Some(cli);
+                            self.bookmarks_list = bookmarks_list;
+                            self.recents_list = recents_list;
+                            // Sort bookmark list
+                            self.sort_bookmarks();
+                            self.sort_recents();
+                        }
                         Err(err) => {
                             self.popup = Some(Popup::Alert(
                                 Color::Red,
@@ -255,5 +260,20 @@ impl AuthActivity {
                 ))
             }
         }
+    }
+
+    /// ### sort_bookmarks
+    ///
+    /// Sort bookmarks in list
+    fn sort_bookmarks(&mut self) {
+        self.bookmarks_list.sort();
+    }
+
+    /// ### sort_recents
+    ///
+    /// Sort recents in list
+    fn sort_recents(&mut self) {
+        // Reverse order
+        self.recents_list.sort_by(|a, b| b.cmp(a));
     }
 }

@@ -320,10 +320,8 @@ impl AuthActivity {
     fn draw_bookmarks_tab(&self) -> Option<List> {
         self.bookmarks_client.as_ref()?;
         let hosts: Vec<ListItem> = self
-            .bookmarks_client
-            .as_ref()
-            .unwrap()
-            .iter_bookmarks()
+            .bookmarks_list
+            .iter()
             .map(|key: &String| {
                 let entry: (String, u16, FileTransferProtocol, String, _) = self
                     .bookmarks_client
@@ -368,10 +366,8 @@ impl AuthActivity {
     fn draw_recents_tab(&self) -> Option<List> {
         self.bookmarks_client.as_ref()?;
         let hosts: Vec<ListItem> = self
-            .bookmarks_client
-            .as_ref()
-            .unwrap()
-            .iter_recents()
+            .recents_list
+            .iter()
             .map(|key: &String| {
                 let entry: (String, u16, FileTransferProtocol, String) = self
                     .bookmarks_client
