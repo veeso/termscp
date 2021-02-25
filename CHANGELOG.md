@@ -19,6 +19,7 @@ Released on ???
 
 - Enhancements:
   - Default choice for deleting file set to "NO" (way too easy to delete files by mistake)
+  - Added CLI options to set starting workind directory on both local and remote hosts
 
 ## 0.3.2
 

@@ -69,6 +69,7 @@ pub struct FileTransferParams {
     pub protocol: FileTransferProtocol,
     pub username: Option<String>,
     pub password: Option<String>,
+    pub entry_directory: Option<PathBuf>,
 }
 
 /// ### InputField

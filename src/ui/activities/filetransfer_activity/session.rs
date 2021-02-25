@@ -67,6 +67,14 @@ impl FileTransferActivity {
                         .as_ref(),
                     );
                 }
+                // Try to change directory to entry directory
+                let mut remote_chdir: Option<PathBuf> = None;
+                if let Some(entry_directory) = &self.params.entry_directory {
+                    remote_chdir = Some(entry_directory.clone());
+                }
+                if let Some(entry_directory) = remote_chdir {
+                    self.remote_changedir(entry_directory.as_path(), false);
+                }
                 // Set state to explorer
                 self.popup = None;
                 self.reload_remote_dir();
@@ -607,13 +615,14 @@ impl FileTransferActivity {
                 // Restore index
                 self.local.set_abs_index(prev_index);
                 // Set index; keep if possible, otherwise set to last item
-                self.local.set_abs_index(match self.local.get_current_file() {
-                    Some(_) => self.local.get_index(),
-                    None => match self.local.count() {
-                        0 => 0,
-                        _ => self.local.count() - 1,
-                    },
-                });
+                self.local
+                    .set_abs_index(match self.local.get_current_file() {
+                        Some(_) => self.local.get_index(),
+                        None => match self.local.count() {
+                            0 => 0,
+                            _ => self.local.count() - 1,
+                        },
+                    });
             }
             Err(err) => {
                 self.log_and_alert(
@@ -636,13 +645,14 @@ impl FileTransferActivity {
                 // Restore index
                 self.remote.set_abs_index(prev_index);
                 // Set index; keep if possible, otherwise set to last item
-                self.remote.set_abs_index(match self.remote.get_current_file() {
-                    Some(_) => self.remote.get_index(),
-                    None => match self.remote.count() {
-                        0 => 0,
-                        _ => self.remote.count() - 1,
-                    },
-                });
+                self.remote
+                    .set_abs_index(match self.remote.get_current_file() {
+                        Some(_) => self.remote.get_index(),
+                        None => match self.remote.count() {
+                            0 => 0,
+                            _ => self.remote.count() - 1,
+                        },
+                    });
             }
             Err(err) => {
                 self.log_and_alert(

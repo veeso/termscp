@@ -163,6 +163,8 @@ brew install termscp
 
 TermSCP can be started with the following options:
 
+`termscp [options]... [protocol://user@address:port] [local-wrkdir] [remote-wrkdir]`
+
 - `-P, --password <password>` if address is provided, password will be this argument
 - `-v, --version` Print version info
 - `-h, --help` Print help page
@@ -170,6 +172,8 @@ TermSCP can be started with the following options:
 TermSCP can be started in two different mode, if no extra arguments is provided, TermSCP will show the authentication form, where the user will be able to provide the parameters required to connect to the remote peer.
 
 Alternatively, the user can provide an address as argument to skip the authentication form and starting directly the connection to the remote server.
+
+If address argument is provided you can also provide the start working directory for both local and remote hosts.
 
 ### Address argument 🌎
 

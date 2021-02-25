@@ -58,7 +58,9 @@ use filetransfer::FileTransferProtocol;
 /// Print usage
 
 fn print_usage(opts: Options) {
-    let brief = String::from("Usage: termscp [options]... [protocol://user@address:port]");
+    let brief = String::from(
+        "Usage: termscp [options]... [protocol://user@address:port] [local-wrkdir] [remote-wrkdir]",
+    );
     print!("{}", opts.usage(&brief));
     println!("\nPlease, report issues to <https://github.com/veeso/termscp>");
 }
@@ -120,6 +122,7 @@ fn main() {
     }
     // Check free args
     let extra_args: Vec<String> = matches.free;
+    // Remote argument
     if let Some(remote) = extra_args.get(0) {
         // Parse address
         match utils::parser::parse_remote_opt(remote) {
@@ -137,6 +140,20 @@ fn main() {
             }
         }
     }
+    // Local directory
+    if let Some(localdir) = extra_args.get(1) {
+        // Change working directory if local dir is set
+        let localdir: PathBuf = PathBuf::from(localdir);
+        if let Err(err) = env::set_current_dir(localdir.as_path()) {
+            eprintln!("Bad working directory argument: {}", err);
+            std::process::exit(255);
+        }
+    }
+    // Remote directory
+    let remote_wrkdir: Option<PathBuf> = match extra_args.get(2) {
+        Some(p) => Some(PathBuf::from(p)),
+        None => None,
+    };
     // Get working directory
     let wrkdir: PathBuf = match env::current_dir() {
         Ok(dir) => dir,
@@ -174,7 +191,7 @@ fn main() {
     };
     // Set file transfer params if set
     if let Some(address) = address {
-        manager.set_filetransfer_params(address, port, protocol, username, password);
+        manager.set_filetransfer_params(address, port, protocol, username, password, remote_wrkdir);
     }
     // Run
     manager.run(start_activity);
