@@ -266,7 +266,9 @@ impl AuthActivity {
     ///
     /// Sort bookmarks in list
     fn sort_bookmarks(&mut self) {
-        self.bookmarks_list.sort();
+        // Conver to lowercase when sorting
+        self.bookmarks_list
+            .sort_by(|a, b| a.to_lowercase().as_str().cmp(b.to_lowercase().as_str()));
     }
 
     /// ### sort_recents
