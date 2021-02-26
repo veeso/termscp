@@ -53,16 +53,16 @@ TermSCP is basically a porting of WinSCP to terminal. So basically is a terminal
 
 ### Why TermSCP 🤔
 
-It happens quite often to me, when using SCP at work to forget the path of a file on a remote machine, which forces me then to connect through SSH, gather the file path and finally download it through SCP. I could use WinSCP, but I use Linux and I pratically use the terminal for everything, so I wanted something like WinSCP on my terminal. Yeah, I know there is midnight commander too, but actually I don't like it very much tbh (and hasn't a decent support for scp).
+It happens quite often to me, when using SCP at work to forget the path of a file on a remote machine, which forces me to connect through SSH, gather the file path and finally download it through SCP. I could use WinSCP, but I use Linux and I pratically use the terminal for everything, so I wanted something like WinSCP on my terminal. Yeah, I know there is midnight commander too, but actually I don't like it very much tbh (and hasn't a decent support for scp).
 
 ## Features 🎁
 
-- Different communication protocols
+- Different communication protocols support
   - SFTP
   - SCP
   - FTP and FTPS
 - Compatible with Windows, Linux, BSD and MacOS
-- Practical user interface to explore and operate on the remote and on the local machine file system
+- Handy user interface to explore and operate on the remote and on the local machine file system
 - Bookmarks and recent connections can be saved to access quickly to your favourite hosts
 - Supports text editors to view and edit text files
 - Supports both SFTP/SCP authentication through SSH keys and username/password
@@ -163,7 +163,7 @@ brew install termscp
 
 TermSCP can be started with the following options:
 
-`termscp [options]... [protocol://user@address:port] [local-wrkdir] [remote-wrkdir]`
+`termscp [options]... [protocol://user@address:port:wrkdir] [local-wrkdir]`
 
 - `-P, --password <password>` if address is provided, password will be this argument
 - `-v, --version` Print version info
@@ -173,14 +173,14 @@ TermSCP can be started in two different mode, if no extra arguments is provided,
 
 Alternatively, the user can provide an address as argument to skip the authentication form and starting directly the connection to the remote server.
 
-If address argument is provided you can also provide the start working directory for both local and remote hosts.
+If address argument is provided you can also provide the start working directory for local host
 
 ### Address argument 🌎
 
 The address argument has the following syntax:
 
 ```txt
-[protocol]://[username@]<address>[:port]
+[protocol://][username@]<address>[:port][:wrkdir]
 ```
 
 Let's see some example of this particular syntax, since it's very comfortable and you'll probably going to use this instead of the other one...
@@ -201,6 +201,12 @@ Let's see some example of this particular syntax, since it's very comfortable an
 
     ```sh
     termscp scp://omar@192.168.1.31:4022
+    ```
+
+- Connect using scp to 192.168.1.31, port is 4022; username is `omar`. You will start in directory `/tmp`
+
+    ```sh
+    termscp scp://omar@192.168.1.31:4022:/tmp
     ```
 
 #### How Password can be provided 🔐

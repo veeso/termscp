@@ -59,7 +59,7 @@ use filetransfer::FileTransferProtocol;
 
 fn print_usage(opts: Options) {
     let brief = String::from(
-        "Usage: termscp [options]... [protocol://user@address:port] [local-wrkdir] [remote-wrkdir]",
+        "Usage: termscp [options]... [protocol://user@address:port:wrkdir] [local-wrkdir]",
     );
     print!("{}", opts.usage(&brief));
     println!("\nPlease, report issues to <https://github.com/veeso/termscp>");
@@ -72,6 +72,7 @@ fn main() {
     let mut port: u16 = 22; // Default port
     let mut username: Option<String> = None; // Default username
     let mut password: Option<String> = None; // Default password
+    let mut remote_wrkdir: Option<PathBuf> = None;
     let mut protocol: FileTransferProtocol = FileTransferProtocol::Sftp; // Default protocol
     let mut ticks: Duration = Duration::from_millis(10);
     //Process options
@@ -126,12 +127,13 @@ fn main() {
     if let Some(remote) = extra_args.get(0) {
         // Parse address
         match utils::parser::parse_remote_opt(remote) {
-            Ok((addr, portn, proto, user)) => {
+            Ok((addr, portn, proto, user, wrkdir)) => {
                 // Set params
                 address = Some(addr);
                 port = portn;
                 protocol = proto;
                 username = user;
+                remote_wrkdir = wrkdir;
             }
             Err(err) => {
                 eprintln!("Bad address option: {}", err);
@@ -149,11 +151,6 @@ fn main() {
             std::process::exit(255);
         }
     }
-    // Remote directory
-    let remote_wrkdir: Option<PathBuf> = match extra_args.get(2) {
-        Some(p) => Some(PathBuf::from(p)),
-        None => None,
-    };
     // Get working directory
     let wrkdir: PathBuf = match env::current_dir() {
         Ok(dir) => dir,
