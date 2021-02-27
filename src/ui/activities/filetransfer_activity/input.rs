@@ -41,17 +41,11 @@ impl FileTransferActivity {
     /// Read one event.
     /// Returns whether at least one event has been handled
     pub(super) fn read_input_event(&mut self) -> bool {
-        if let Ok(event) = self.context.as_ref().unwrap().input_hnd.read_event() {
-            // Iterate over input events
-            if let Some(event) = event {
-                // Handle event
-                self.handle_input_event(&event);
-                // Return true
-                true
-            } else {
-                // No event
-                false
-            }
+        if let Ok(Some(event)) = self.context.as_ref().unwrap().input_hnd.read_event() {
+            // Handle event
+            self.handle_input_event(&event);
+            // Return true
+            true
         } else {
             // Error
             false
@@ -103,7 +97,7 @@ impl FileTransferActivity {
                 KeyCode::Esc => {
                     // Handle quit event
                     // Create quit prompt dialog
-                    self.popup = self.create_disconnect_popup();
+                    self.popup = Some(self.create_disconnect_popup());
                 }
                 KeyCode::Tab => self.switch_input_field(), // <TAB> switch tab
                 KeyCode::Right => self.tab = FileExplorerTab::Remote, // <RIGHT> switch to right tab
@@ -269,7 +263,7 @@ impl FileTransferActivity {
                     }
                     'q' | 'Q' => {
                         // Create quit prompt dialog
-                        self.popup = self.create_quit_popup();
+                        self.popup = Some(self.create_quit_popup());
                     }
                     'r' | 'R' => {
                         // Rename
@@ -326,7 +320,7 @@ impl FileTransferActivity {
                 KeyCode::Esc => {
                     // Handle quit event
                     // Create quit prompt dialog
-                    self.popup = self.create_disconnect_popup();
+                    self.popup = Some(self.create_disconnect_popup());
                 }
                 KeyCode::Tab => self.switch_input_field(), // <TAB> switch tab
                 KeyCode::Left => self.tab = FileExplorerTab::Local, // <LEFT> switch to local tab
@@ -490,7 +484,7 @@ impl FileTransferActivity {
                     }
                     'q' | 'Q' => {
                         // Create quit prompt dialog
-                        self.popup = self.create_quit_popup();
+                        self.popup = Some(self.create_quit_popup());
                     }
                     'r' | 'R' => {
                         // Rename
@@ -547,7 +541,7 @@ impl FileTransferActivity {
                 KeyCode::Esc => {
                     // Handle quit event
                     // Create quit prompt dialog
-                    self.popup = self.create_disconnect_popup();
+                    self.popup = Some(self.create_disconnect_popup());
                 }
                 KeyCode::Tab => self.switch_input_field(), // <TAB> switch tab
                 KeyCode::Down => {
@@ -586,7 +580,7 @@ impl FileTransferActivity {
                 KeyCode::Char(ch) => match ch {
                     'q' | 'Q' => {
                         // Create quit prompt dialog
-                        self.popup = self.create_quit_popup();
+                        self.popup = Some(self.create_quit_popup());
                     }
                     _ => { /* Nothing to do */ }
                 },

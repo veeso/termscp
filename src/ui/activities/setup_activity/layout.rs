@@ -441,15 +441,11 @@ impl SetupActivity {
                 // Iterate over ssh keys
                 let mut ssh_keys: Vec<ListItem> = Vec::with_capacity(cli.iter_ssh_keys().count());
                 for key in cli.iter_ssh_keys() {
-                    if let Ok(host) = cli.get_ssh_key(key) {
-                        if let Some((addr, username, _)) = host {
-                            ssh_keys.push(ListItem::new(Span::from(format!(
-                                "{} at {}",
-                                username, addr,
-                            ))));
-                        } else {
-                            continue;
-                        }
+                    if let Ok(Some((addr, username, _))) = cli.get_ssh_key(key) {
+                        ssh_keys.push(ListItem::new(Span::from(format!(
+                            "{} at {}",
+                            username, addr,
+                        ))));
                     } else {
                         continue;
                     }

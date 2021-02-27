@@ -127,13 +127,13 @@ fn main() {
     if let Some(remote) = extra_args.get(0) {
         // Parse address
         match utils::parser::parse_remote_opt(remote) {
-            Ok((addr, portn, proto, user, wrkdir)) => {
+            Ok(host_opts) => {
                 // Set params
-                address = Some(addr);
-                port = portn;
-                protocol = proto;
-                username = user;
-                remote_wrkdir = wrkdir;
+                address = Some(host_opts.hostname);
+                port = host_opts.port;
+                protocol = host_opts.protocol;
+                username = host_opts.username;
+                remote_wrkdir = host_opts.wrkdir;
             }
             Err(err) => {
                 eprintln!("Bad address option: {}", err);

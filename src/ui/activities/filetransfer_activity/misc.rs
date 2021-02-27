@@ -62,23 +62,23 @@ impl FileTransferActivity {
     /// ### create_quit_popup
     ///
     /// Create quit popup input mode (since must be shared between different input handlers)
-    pub(super) fn create_disconnect_popup(&mut self) -> Option<Popup> {
-        Some(Popup::YesNo(
+    pub(super) fn create_disconnect_popup(&mut self) -> Popup {
+        Popup::YesNo(
             String::from("Are you sure you want to disconnect?"),
             FileTransferActivity::disconnect,
             FileTransferActivity::callback_nothing_to_do,
-        ))
+        )
     }
 
     /// ### create_quit_popup
     ///
     /// Create quit popup input mode (since must be shared between different input handlers)
-    pub(super) fn create_quit_popup(&mut self) -> Option<Popup> {
-        Some(Popup::YesNo(
+    pub(super) fn create_quit_popup(&mut self) -> Popup {
+        Popup::YesNo(
             String::from("Are you sure you want to quit?"),
             FileTransferActivity::disconnect_and_quit,
             FileTransferActivity::callback_nothing_to_do,
-        ))
+        )
     }
 
     /// ### switch_input_field

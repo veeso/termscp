@@ -168,13 +168,11 @@ impl Activity for SetupActivity {
             return;
         }
         // Read one event
-        if let Ok(event) = self.context.as_ref().unwrap().input_hnd.read_event() {
-            if let Some(event) = event {
-                // Set redraw to true
-                self.redraw = true;
-                // Handle event
-                self.handle_input_event(&event);
-            }
+        if let Ok(Some(event)) = self.context.as_ref().unwrap().input_hnd.read_event() {
+            // Set redraw to true
+            self.redraw = true;
+            // Handle event
+            self.handle_input_event(&event);
         }
         // Redraw if necessary
         if self.redraw {
