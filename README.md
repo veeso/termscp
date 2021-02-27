@@ -6,7 +6,7 @@
 
 ~ Basically, WinSCP on a terminal ~  
 Developed by Christian Visintin  
-Current version: 0.3.3 FIXME: (24/01/2021)
+Current version: 0.3.3 (28/02/2021)
 
 ---
 
@@ -122,7 +122,7 @@ rpm -U termscp_*.rpm
 
 ### AUR Package 🔼
 
-On Arch Linux based distribution, you can install termscp using for example [yay](https://github.com/Jguer/yay), which I recommend to install AUR packages.
+On Arch Linux based distribution, you can install termscp using for istance [yay](https://github.com/Jguer/yay), which I recommend to install AUR packages.
 
 ```sh
 yay -S termscp
@@ -185,13 +185,13 @@ The address argument has the following syntax:
 
 Let's see some example of this particular syntax, since it's very comfortable and you'll probably going to use this instead of the other one...
 
-- Connect using default protocol (*defined in configuration*) to 192.168.1.31, port is default for this protocol (22); username is current user's name
+- Connect using default protocol (*defined in configuration*) to 192.168.1.31, port if not provided is default for the selected protocol (in this case depends on your configuration); username is current user's name
 
     ```sh
     termscp 192.168.1.31
     ```
 
-- Connect using default protocol (*defined in configuration*) to 192.168.1.31, port is default for this protocol (22); username is `root`
+- Connect using default protocol (*defined in configuration*) to 192.168.1.31; username is `root`
 
     ```sh
     termscp root@192.168.1.31
@@ -242,7 +242,7 @@ I warmly suggest you to follow these guidelines in order to decide whether you s
 - Make sure your machine is protected by attackers. If possible encrypt your disk and don't leave your PC unlocked while you're away.
 - Preferably, save passwords only when a compromising of the target machine wouldn't be a problem.
 
-To create a bookmark, just fulfill the authentication form and then input `CTRL+S`; you'll then be asked to give a name to your bookmark, and tadah, the bookmark has been created.
+To create a bookmark, just fulfill the authentication form and then input `<CTRL+S>`; you'll then be asked to give a name to your bookmark, and tadah, the bookmark has been created.
 If you go to [gallery](#gallery-), there is a GIF showing how bookmarks work 💪.
 
 ### Are my passwords Safe 😈
@@ -377,8 +377,11 @@ The developer documentation can be found on Rust Docs at <https://docs.rs/termsc
 
 ## Upcoming Features 🧪
 
-- **Custom explorer format**: possibility to customize the file line in the explorer directly from configuration, with the possibility to choose with information to display.
-- **Find command in explorer**: possibility to search for files in explorers.
+- **New commands in file explorer** (0.4.0 - March 2021)
+  - **Find**: search for files through directories, with built-in regex support
+  - **Execute**: run a command on both local host and remote host in protocols where this is supported
+    - SCP for sure
+    - SFTP: might be a challenge, since I should start a SSH session, but I guess it's not impossible
 
 ---
 

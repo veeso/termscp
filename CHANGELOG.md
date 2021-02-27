@@ -15,7 +15,7 @@
 
 ## 0.3.3
 
-Released on ???
+Released on 28/02/2021
 
 - Format key attributes:
   - Added `EXTRA` and `LENGTH` parameters to format keys.
@@ -25,6 +25,7 @@ Released on ???
   - Added CLI options to set starting workind directory on both local and remote hosts
   - Parse remote host now uses a Regex to gather parts (increased stability).
   - Now bookmarks and recents are sorted in the UI (bookmarks are sorted by name; recents are sorted by connection datetime)
+  - Improved stability
 
 ## 0.3.2
 
