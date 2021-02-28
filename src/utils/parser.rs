@@ -54,6 +54,13 @@ lazy_static! {
      *  - group 5: Some(path) | None
      */
     static ref REMOTE_OPT_REGEX: Regex = Regex::new(r"(?:([a-z]+)://)?(?:([^@]+)@)?(?:([^:]+))(?::((?:[0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])(?:[0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])))?(?::([^:]+))?").ok().unwrap();
+    /**
+     * Regex matches:
+     * - group 1: Version
+     * E.g. termscp-0.3.2 => 0.3.2
+     *      v0.4.0 => 0.4.0
+     */
+    static ref SEMVER_REGEX: Regex = Regex::new(r".*(:?[0-9]\.[0-9]\.[0-9])").unwrap();
 }
 
 pub struct RemoteOptions {
@@ -208,6 +215,19 @@ pub fn parse_datetime(tm: &str, fmt: &str) -> Result<SystemTime, ParseError> {
                 .unwrap_or(SystemTime::UNIX_EPOCH))
         }
         Err(err) => Err(err),
+    }
+}
+
+/// ### parse_semver
+///
+/// Parse semver string
+pub fn parse_semver(haystack: &str) -> Option<String> {
+    match SEMVER_REGEX.captures(haystack) {
+        Some(groups) => match groups.get(1) {
+            Some(version) => Some(version.as_str().to_string()),
+            None => None,
+        },
+        None => None,
     }
 }
 
@@ -383,5 +403,16 @@ mod tests {
         );
         // Not enough argument for datetime
         assert!(parse_datetime("04-08-14", "%d-%m-%y").is_err());
+    }
+
+    #[test]
+    fn test_utils_parse_semver() {
+        assert_eq!(
+            parse_semver("termscp-0.3.2").unwrap(),
+            String::from("0.3.2")
+        );
+        assert_eq!(parse_semver("v0.4.1").unwrap(), String::from("0.4.1"),);
+        assert_eq!(parse_semver("1.0.0").unwrap(), String::from("1.0.0"),);
+        assert!(parse_semver("v1.1").is_none());
     }
 }
