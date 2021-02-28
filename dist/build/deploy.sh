@@ -27,7 +27,7 @@ docker build --tag termscp-${VERSION}-x86_64_centos7 .
 cd -
 mkdir -p ${PKGS_DIR}/rpm/
 CONTAINER_NAME=$(docker create termscp-${VERSION}-x86_64_centos7 termscp-${VERSION}-x86_64_centos7)
-docker cp ${CONTAINER_NAME}:/usr/src/termscp/target/release/rpmbuild/RPMS/x86_64/termscp-${VERSION}-1.x86_64.rpm ${PKGS_DIR}/rpm/
+docker cp ${CONTAINER_NAME}:/usr/src/termscp/target/release/rpmbuild/RPMS/x86_64/termscp-${VERSION}-1.el7.x86_64.rpm ${PKGS_DIR}/rpm/termscp-${VERSION}-1.x86_64.rpm
 # Build x86_64_archlinux
 
 ##################### TEMP REMOVED  ###################################
