@@ -15,11 +15,11 @@ PKGS_DIR=$(pwd)/pkgs
 cd -
 mkdir -p ${PKGS_DIR}/
 # Build x86_64_deb
-cd x86_64_debian8/
-docker build --tag termscp-${VERSION}-x86_64_debian8 .
+cd x86_64_debian9/
+docker build --tag termscp-${VERSION}-x86_64_debian9 .
 cd -
 mkdir -p ${PKGS_DIR}/deb/
-CONTAINER_NAME=$(docker create termscp-${VERSION}-x86_64_debian8 termscp-${VERSION}-x86_64_debian8)
+CONTAINER_NAME=$(docker create termscp-${VERSION}-x86_64_debian9 termscp-${VERSION}-x86_64_debian9)
 docker cp ${CONTAINER_NAME}:/usr/src/termscp/target/debian/termscp_${VERSION}_amd64.deb ${PKGS_DIR}/deb/
 # Build x86_64_centos7
 cd x86_64_centos7/
