@@ -55,6 +55,7 @@ pub struct UserInterfaceConfig {
     pub text_editor: PathBuf,
     pub default_protocol: String,
     pub show_hidden_files: bool,
+    pub check_for_updates: Option<bool>, // @! Since 0.3.3
     pub group_dirs: Option<String>,
     pub file_fmt: Option<String>,
 }
@@ -85,6 +86,7 @@ impl Default for UserInterfaceConfig {
             },
             default_protocol: FileTransferProtocol::Sftp.to_string(),
             show_hidden_files: false,
+            check_for_updates: Some(true),
             group_dirs: None,
             file_fmt: None,
         }
@@ -172,6 +174,7 @@ mod tests {
             default_protocol: String::from("SFTP"),
             text_editor: PathBuf::from("nano"),
             show_hidden_files: true,
+            check_for_updates: Some(true),
             group_dirs: Some(String::from("first")),
             file_fmt: Some(String::from("{NAME}")),
         };
@@ -189,6 +192,7 @@ mod tests {
         assert_eq!(cfg.user_interface.default_protocol, String::from("SFTP"));
         assert_eq!(cfg.user_interface.text_editor, PathBuf::from("nano"));
         assert_eq!(cfg.user_interface.show_hidden_files, true);
+        assert_eq!(cfg.user_interface.check_for_updates, Some(true));
         assert_eq!(cfg.user_interface.group_dirs, Some(String::from("first")));
         assert_eq!(cfg.user_interface.file_fmt, Some(String::from("{NAME}")));
     }
@@ -201,6 +205,7 @@ mod tests {
         let cfg: UserConfig = UserConfig::default();
         assert_eq!(cfg.user_interface.default_protocol, String::from("SFTP"));
         assert_eq!(cfg.user_interface.text_editor, PathBuf::from("vim"));
+        assert_eq!(cfg.user_interface.check_for_updates.unwrap(), true);
         assert_eq!(cfg.remote.ssh_keys.len(), 0);
     }
 

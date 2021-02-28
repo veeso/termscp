@@ -107,8 +107,12 @@ mod tests {
         assert_eq!(cfg.user_interface.default_protocol, String::from("SCP"));
         assert_eq!(cfg.user_interface.text_editor, PathBuf::from("vim"));
         assert_eq!(cfg.user_interface.show_hidden_files, true);
+        assert_eq!(cfg.user_interface.check_for_updates.unwrap(), true);
         assert_eq!(cfg.user_interface.group_dirs, Some(String::from("last")));
-        assert_eq!(cfg.user_interface.file_fmt, Some(String::from("{NAME} {PEX}")));
+        assert_eq!(
+            cfg.user_interface.file_fmt,
+            Some(String::from("{NAME} {PEX}"))
+        );
         // Verify keys
         assert_eq!(
             *cfg.remote
@@ -144,6 +148,7 @@ mod tests {
         assert_eq!(cfg.user_interface.text_editor, PathBuf::from("vim"));
         assert_eq!(cfg.user_interface.show_hidden_files, true);
         assert_eq!(cfg.user_interface.group_dirs, None);
+        assert!(cfg.user_interface.check_for_updates.is_none());
         assert_eq!(cfg.user_interface.file_fmt, None);
         // Verify keys
         assert_eq!(
@@ -200,6 +205,7 @@ mod tests {
         default_protocol = "SCP"
         text_editor = "vim"
         show_hidden_files = true
+        check_for_updates = true
         group_dirs = "last"
         file_fmt = "{NAME} {PEX}"
 

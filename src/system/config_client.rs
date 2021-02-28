@@ -138,6 +138,20 @@ impl ConfigClient {
         self.config.user_interface.show_hidden_files = value;
     }
 
+    /// ### get_check_for_updates
+    ///
+    /// Get value of `check_for_updates`
+    pub fn get_check_for_updates(&self) -> bool {
+        self.config.user_interface.check_for_updates.unwrap_or(true)
+    }
+
+    /// ### set_check_for_updates
+    ///
+    /// Set new value for `check_for_updates`
+    pub fn set_check_for_updates(&mut self, value: bool) {
+        self.config.user_interface.check_for_updates = Some(value);
+    }
+
     /// ### get_group_dirs
     ///
     /// Get GroupDirs value from configuration (will be converted from string)
@@ -453,6 +467,20 @@ mod tests {
             .unwrap();
         client.set_show_hidden_files(true);
         assert_eq!(client.get_show_hidden_files(), true);
+    }
+
+    #[test]
+    fn test_system_config_check_for_updates() {
+        let tmp_dir: tempfile::TempDir = create_tmp_dir();
+        let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
+        let mut client: ConfigClient = ConfigClient::new(cfg_path.as_path(), key_path.as_path())
+            .ok()
+            .unwrap();
+        assert_eq!(client.get_check_for_updates(), true); // Null ?
+        client.set_check_for_updates(true);
+        assert_eq!(client.get_check_for_updates(), true);
+        client.set_check_for_updates(false);
+        assert_eq!(client.get_check_for_updates(), false);
     }
 
     #[test]
