@@ -9,6 +9,7 @@ Please note we have a [code of conduct](CODE_OF_CONDUCT.md), please follow it in
   - [Developer contributions guide](#developer-contributions-guide)
     - [How TermSCP works](#how-termscp-works)
       - [Activities](#activities)
+    - [Tests fails due to receivers](#tests-fails-due-to-receivers)
     - [Implementing File Transfers](#implementing-file-transfers)
 
 ---
@@ -62,6 +63,12 @@ This trait provides only 3 methods:
 - `on_create`: this method must initialize the activity; the context is passed to the activity, which will be the only owner of the Context, until the activity terminates.
 - `on_draw`: this method must be called each time you want to perform an update of the user interface. This is basically the run method of the activity. This method also cares about handling input events. The developer shouldn't draw the interface on each call of this method (consider that this method might be called hundreds of times per second), but only when actually something has changed (for example after an input event has been raised).
 - `on_destroy`: this method finalizes the activity and drops it; this method returns the Context to the caller (the activity manager).
+
+---
+
+### Tests fails due to receivers
+
+Yes. This happens quite often and is related to the fact that I'm using public SSH/SFTP/FTP server to test file receivers and sometimes this server go down for even a day or more. If your tests don't pass due to this, don't worry, submit the pull request and I'll take care of testing them by myself.
 
 ---
 
