@@ -1,4 +1,4 @@
-FROM archlinux/archlinux:latest as builder
+FROM archlinux/archlinux:base-20210110.0.13332 as builder
 
 WORKDIR /usr/src/
 # Install dependencies
