@@ -90,6 +90,7 @@ impl SetupActivity {
                                 Constraint::Length(3),
                                 Constraint::Length(3),
                                 Constraint::Length(3),
+                                Constraint::Length(3),
                                 Constraint::Length(1),
                             ]
                             .as_ref(),
@@ -105,11 +106,14 @@ impl SetupActivity {
                     if let Some(tab) = self.draw_hidden_files_tab() {
                         f.render_widget(tab, ui_cfg_chunks[2]);
                     }
-                    if let Some(tab) = self.draw_default_group_dirs_tab() {
+                    if let Some(tab) = self.draw_check_for_updates_tab() {
                         f.render_widget(tab, ui_cfg_chunks[3]);
                     }
-                    if let Some(tab) = self.draw_file_fmt_input() {
+                    if let Some(tab) = self.draw_default_group_dirs_tab() {
                         f.render_widget(tab, ui_cfg_chunks[4]);
+                    }
+                    if let Some(tab) = self.draw_file_fmt_input() {
+                        f.render_widget(tab, ui_cfg_chunks[5]);
                     }
                     // Set cursor
                     if let Some(cli) = &self.config_cli {
@@ -317,9 +321,9 @@ impl SetupActivity {
         }
     }
 
-    /// ### draw_default_protocol_tab
+    /// ### draw_hidden_files_tab
     ///
-    /// Draw default protocol input tab
+    /// Draw default hidden files tab
     fn draw_hidden_files_tab(&self) -> Option<Tabs> {
         // Check if config client is some
         match &self.config_cli {
@@ -346,6 +350,47 @@ impl SetupActivity {
                                 .border_type(BorderType::Rounded)
                                 .style(Style::default().fg(block_fg))
                                 .title("Show hidden files (by default)"),
+                        )
+                        .select(index)
+                        .style(Style::default())
+                        .highlight_style(
+                            Style::default().add_modifier(Modifier::BOLD).fg(fg).bg(bg),
+                        ),
+                )
+            }
+            None => None,
+        }
+    }
+
+    /// ### draw_check_for_updates_tab
+    ///
+    /// Draw check for updates tab
+    fn draw_check_for_updates_tab(&self) -> Option<Tabs> {
+        // Check if config client is some
+        match &self.config_cli {
+            Some(cli) => {
+                let choices: Vec<Spans> = vec![Spans::from("Yes"), Spans::from("No")];
+                let index: usize = match cli.get_check_for_updates() {
+                    true => 0,
+                    false => 1,
+                };
+                let (bg, fg, block_fg): (Color, Color, Color) = match &self.tab {
+                    SetupTab::UserInterface(field) => match field {
+                        UserInterfaceInputField::CheckForUpdates => {
+                            (Color::LightYellow, Color::Black, Color::LightYellow)
+                        }
+                        _ => (Color::Reset, Color::LightYellow, Color::Reset),
+                    },
+                    _ => (Color::Reset, Color::Reset, Color::Reset),
+                };
+                Some(
+                    Tabs::new(choices)
+                        .block(
+                            Block::default()
+                                .borders(Borders::ALL)
+                                .border_type(BorderType::Rounded)
+                                .style(Style::default().fg(block_fg))
+                                .title("Check for updates?"),
                         )
                         .select(index)
                         .style(Style::default())
