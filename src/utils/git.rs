@@ -44,13 +44,14 @@ struct TagInfo {
 
 pub fn check_for_updates(current_version: &str) -> Result<Option<String>, String> {
     // Send request
-    let github_version: Result<String, String> = match ureq::get("https://api.github.com/repos/veeso/termscp/releases/latest").call() {
-        Ok(response) => match response.into_json::<TagInfo>() {
-            Ok(tag_info) => Ok(tag_info.tag_name.clone()),
-            Err(err) => Err(err.to_string())
-        }
-        Err(err) => Err(err.to_string())
-    };
+    let github_version: Result<String, String> =
+        match ureq::get("https://api.github.com/repos/veeso/termscp/releases/latest").call() {
+            Ok(response) => match response.into_json::<TagInfo>() {
+                Ok(tag_info) => Ok(tag_info.tag_name),
+                Err(err) => Err(err.to_string()),
+            },
+            Err(err) => Err(err.to_string()),
+        };
     // Check version
     match github_version {
         Err(err) => Err(err),
@@ -65,9 +66,7 @@ pub fn check_for_updates(current_version: &str) -> Result<Option<String>, String
                         Ok(None) // No new version
                     }
                 }
-                None => {
-                    Err(String::from("Got bad response from Github"))
-                }
+                None => Err(String::from("Got bad response from Github")),
             }
         }
     }
@@ -83,5 +82,4 @@ mod tests {
         assert!(check_for_updates("100.0.0").ok().unwrap().is_none());
         assert!(check_for_updates("0.0.1").ok().unwrap().is_some());
     }
-
 }

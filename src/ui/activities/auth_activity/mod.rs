@@ -40,6 +40,7 @@ use crate::filetransfer::FileTransferProtocol;
 use crate::system::bookmarks_client::BookmarksClient;
 use crate::system::config_client::ConfigClient;
 use crate::system::environment;
+use crate::utils::git;
 
 // Includes
 use crossterm::event::Event as InputEvent;
@@ -118,6 +119,8 @@ pub struct AuthActivity {
     bookmarks_list: Vec<String>,   // List of bookmarks
     recents_idx: usize,            // Index of selected recent
     recents_list: Vec<String>,     // list of recents
+    // misc
+    new_version: Option<String>, // Contains new version of termscp
 }
 
 impl Default for AuthActivity {
@@ -154,6 +157,7 @@ impl AuthActivity {
             bookmarks_list: Vec::new(),
             recents_idx: 0,
             recents_list: Vec::new(),
+            new_version: None,
         }
     }
 
@@ -192,6 +196,27 @@ impl AuthActivity {
             }
         }
     }
+
+    /// ### on_create
+    ///
+    /// If enabled in configuration, check for updates from Github
+    fn check_for_updates(&mut self) {
+        if let Some(client) = self.config_client.as_ref() {
+            if client.get_check_for_updates() {
+                // Send request
+                match git::check_for_updates(env!("CARGO_PKG_VERSION")) {
+                    Ok(version) => self.new_version = version,
+                    Err(err) => {
+                        // Report error
+                        self.popup = Some(Popup::Alert(
+                            Color::Red,
+                            format!("Could not check for new updates: {}", err),
+                        ))
+                    }
+                }
+            }
+        }
+    }
 }
 
 impl Activity for AuthActivity {
@@ -216,6 +241,8 @@ impl Activity for AuthActivity {
         if self.config_client.is_none() {
             self.init_config_client();
         }
+        // If check for updates is enabled, check for updates
+        self.check_for_updates();
     }
 
     /// ### on_draw
