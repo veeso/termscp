@@ -238,6 +238,10 @@ impl SetupActivity {
                                 // Move left
                                 config_cli.set_show_hidden_files(true);
                             }
+                            UserInterfaceInputField::CheckForUpdates => {
+                                // move left
+                                config_cli.set_check_for_updates(true);
+                            }
                             _ => { /* Not a tab field */ }
                         }
                     }
@@ -275,6 +279,10 @@ impl SetupActivity {
                                 // Move right
                                 config_cli.set_show_hidden_files(false);
                             }
+                            UserInterfaceInputField::CheckForUpdates => {
+                                // move right
+                                config_cli.set_check_for_updates(false);
+                            }
                             _ => { /* Not a tab field */ }
                         }
                     }
@@ -284,6 +292,9 @@ impl SetupActivity {
                     self.tab = SetupTab::UserInterface(match field {
                         UserInterfaceInputField::FileFmt => UserInterfaceInputField::GroupDirs,
                         UserInterfaceInputField::GroupDirs => {
+                            UserInterfaceInputField::CheckForUpdates
+                        }
+                        UserInterfaceInputField::CheckForUpdates => {
                             UserInterfaceInputField::ShowHiddenFiles
                         }
                         UserInterfaceInputField::ShowHiddenFiles => {
@@ -305,6 +316,9 @@ impl SetupActivity {
                             UserInterfaceInputField::ShowHiddenFiles
                         }
                         UserInterfaceInputField::ShowHiddenFiles => {
+                            UserInterfaceInputField::CheckForUpdates
+                        }
+                        UserInterfaceInputField::CheckForUpdates => {
                             UserInterfaceInputField::GroupDirs
                         }
                         UserInterfaceInputField::GroupDirs => UserInterfaceInputField::FileFmt,
@@ -354,7 +368,8 @@ impl SetupActivity {
                                 }
                                 UserInterfaceInputField::FileFmt => {
                                     // Push char to current file fmt
-                                    let mut file_fmt = config_cli.get_file_fmt().unwrap_or_default();
+                                    let mut file_fmt =
+                                        config_cli.get_file_fmt().unwrap_or_default();
                                     file_fmt.push(ch);
                                     // update value
                                     config_cli.set_file_fmt(file_fmt);

@@ -62,6 +62,7 @@ impl AuthActivity {
                 .constraints(
                     [
                         Constraint::Length(5),
+                        Constraint::Length(1), // Version
                         Constraint::Length(3),
                         Constraint::Length(3),
                         Constraint::Length(3),
@@ -80,32 +81,33 @@ impl AuthActivity {
                 .split(chunks[1]);
             // Draw header
             f.render_widget(self.draw_header(), auth_chunks[0]);
+            f.render_widget(self.draw_new_version(), auth_chunks[1]);
             // Draw input fields
-            f.render_widget(self.draw_remote_address(), auth_chunks[1]);
-            f.render_widget(self.draw_remote_port(), auth_chunks[2]);
-            f.render_widget(self.draw_protocol_select(), auth_chunks[3]);
-            f.render_widget(self.draw_protocol_username(), auth_chunks[4]);
-            f.render_widget(self.draw_protocol_password(), auth_chunks[5]);
+            f.render_widget(self.draw_remote_address(), auth_chunks[2]);
+            f.render_widget(self.draw_remote_port(), auth_chunks[3]);
+            f.render_widget(self.draw_protocol_select(), auth_chunks[4]);
+            f.render_widget(self.draw_protocol_username(), auth_chunks[5]);
+            f.render_widget(self.draw_protocol_password(), auth_chunks[6]);
             // Draw footer
-            f.render_widget(self.draw_footer(), auth_chunks[6]);
+            f.render_widget(self.draw_footer(), auth_chunks[7]);
             // Set cursor
             if let InputForm::AuthCredentials = self.input_form {
                 match self.selected_field {
                     InputField::Address => f.set_cursor(
-                        auth_chunks[1].x + self.address.width() as u16 + 1,
-                        auth_chunks[1].y + 1,
-                    ),
-                    InputField::Port => f.set_cursor(
-                        auth_chunks[2].x + self.port.width() as u16 + 1,
+                        auth_chunks[2].x + self.address.width() as u16 + 1,
                         auth_chunks[2].y + 1,
                     ),
+                    InputField::Port => f.set_cursor(
+                        auth_chunks[3].x + self.port.width() as u16 + 1,
+                        auth_chunks[3].y + 1,
+                    ),
                     InputField::Username => f.set_cursor(
-                        auth_chunks[4].x + self.username.width() as u16 + 1,
-                        auth_chunks[4].y + 1,
+                        auth_chunks[5].x + self.username.width() as u16 + 1,
+                        auth_chunks[5].y + 1,
                     ),
                     InputField::Password => f.set_cursor(
-                        auth_chunks[5].x + self.password_placeholder.width() as u16 + 1,
-                        auth_chunks[5].y + 1,
+                        auth_chunks[6].x + self.password_placeholder.width() as u16 + 1,
+                        auth_chunks[6].y + 1,
                     ),
                     _ => {}
                 }
@@ -282,6 +284,21 @@ impl AuthActivity {
     fn draw_header(&self) -> Paragraph {
         Paragraph::new(" _____                   ____   ____ ____  \n|_   _|__ _ __ _ __ ___ / ___| / ___|  _ \\ \n  | |/ _ \\ '__| '_ ` _ \\\\___ \\| |   | |_) |\n  | |  __/ |  | | | | | |___) | |___|  __/ \n  |_|\\___|_|  |_| |_| |_|____/ \\____|_|    \n")
             .style(Style::default().fg(Color::White).add_modifier(Modifier::BOLD))
+    }
+
+    /// ### draw_new_version
+    ///
+    /// Draw new version disclaimer
+    fn draw_new_version(&self) -> Paragraph {
+        let content: String = match self.new_version.as_ref() {
+            Some(ver) => format!("TermSCP {} is now available! Download it from <https://github.com/veeso/termscp/releases/latest>", ver),
+            None => String::new(),
+        };
+        Paragraph::new(content).style(
+            Style::default()
+                .fg(Color::Yellow)
+                .add_modifier(Modifier::BOLD),
+        )
     }
 
     /// ### draw_footer

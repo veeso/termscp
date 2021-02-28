@@ -54,6 +54,7 @@ enum UserInterfaceInputField {
     DefaultProtocol,
     TextEditor,
     ShowHiddenFiles,
+    CheckForUpdates,
     GroupDirs,
     FileFmt,
 }

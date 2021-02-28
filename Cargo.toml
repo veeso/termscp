@@ -38,6 +38,7 @@ textwrap = "0.13.1"
 toml = "0.5.8"
 tui = { version = "0.14.0", features = ["crossterm"], default-features = false }
 unicode-width = "0.1.7"
+ureq = { version = "2.0.2", features = ["json"] }
 whoami = "1.1.0"
 
 [target.'cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))'.dependencies]
