@@ -14,7 +14,7 @@ RUN useradd build -m && \
     mkdir -p termscp && \
     chown -R build.build termscp/
 # Install rust
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > /tmp/rust.sh && \
+RUN mount -o remount,exec /tmp && curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > /tmp/rust.sh && \
     chmod +x /tmp/rust.sh && \
     /tmp/rust.sh -y
 # Clone repository
