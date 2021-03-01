@@ -14,6 +14,6 @@ jobs:
       - name: Build
         run: cargo build --verbose
       - name: Run tests
-        run: cargo test --verbose -- --test-threads 1
+        run: cargo test --verbose --features githubActions -- --test-threads 1
       - name: Clippy
         run: cargo clippy

@@ -47,6 +47,10 @@ users = "0.11.0"
 [target.'cfg(any(target_os = "windows", target_os = "macos"))'.dependencies]
 keyring = "0.10.1"
 
+# Features
+[features]
+githubActions = [] # used to run particular on github actions
+
 [[bin]]
 name = "termscp"
 path = "src/main.rs"

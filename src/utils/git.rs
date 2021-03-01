@@ -78,6 +78,7 @@ mod tests {
     use super::*;
 
     #[test]
+    #[cfg(not(all(target_os = "macos", feature = "githubActions")))]
     fn test_utils_git_check_for_updates() {
         assert!(check_for_updates("100.0.0").ok().unwrap().is_none());
         assert!(check_for_updates("0.0.1").ok().unwrap().is_some());
