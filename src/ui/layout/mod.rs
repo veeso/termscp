@@ -1,6 +1,6 @@
-//! ## Ui
+//! ## Layout
 //!
-//! `ui` is the module which provides all the functionalities related to the UI
+//! `Layout` is the module which provides components, view, state and properties to create layouts
 
 /*
 *
@@ -24,7 +24,4 @@
 */
 
 // Modules
-pub mod activities;
-pub mod context;
-pub(crate) mod input;
-pub(crate) mod layout;
+pub(crate) mod props;
