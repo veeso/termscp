@@ -31,11 +31,12 @@ use tui::style::Color;
 // Callback types
 pub type OnSubmitCb = fn(&mut dyn Activity, Option<String>); // Activity, Value
 
-// --- Props
+// -- Props
 
 /// ## Props
 ///
 /// Props holds all the possible properties for a layout component
+#[derive(Clone)]
 pub struct Props {
     // Values
     pub visible: bool,     // Is the element visible ON CREATE?
@@ -66,7 +67,7 @@ impl Default for Props {
     }
 }
 
-// --- Props builder
+// -- Props builder
 
 /// ## PropsBuilder
 ///
@@ -76,6 +77,13 @@ pub struct PropsBuilder {
 }
 
 impl PropsBuilder {
+    /// ### from_props
+    ///
+    /// Create a props builder from existing properties
+    pub fn from_props(props: Props) -> Self {
+        PropsBuilder { props: Some(props) }
+    }
+
     /// ### build
     ///
     /// Build Props from builder
@@ -172,11 +180,12 @@ impl Default for PropsBuilder {
     }
 }
 
-// --- Text parts
+// -- Text parts
 
 /// ## TextParts
 ///
 /// TextParts holds optional component for the text displayed by a component
+#[derive(Clone)]
 pub struct TextParts {
     pub title: Option<String>,
     pub body: Option<Vec<String>>,
@@ -246,6 +255,47 @@ mod tests {
         assert_eq!(props.underlined, true);
         assert!(props.on_submit.is_some());
         assert_eq!(props.visible, false);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_ui_layout_props_build_twice() {
+        let mut builder: PropsBuilder = PropsBuilder::default();
+        let _ = builder.build();
+        builder
+            .hidden()
+            .with_background(Color::Blue)
+            .with_foreground(Color::Green)
+            .bold()
+            .italic()
+            .underlined()
+            .on_submit(on_submit_cb)
+            .with_texts(TextParts::new(
+                Some(String::from("hello")),
+                Some(vec![String::from("hey")]),
+            ));
+        // Rebuild
+        let _ = builder.build();
+    }
+
+    #[test]
+    fn test_ui_layout_props_builder_from_props() {
+        let props: Props = PropsBuilder::default()
+            .hidden()
+            .with_background(Color::Blue)
+            .with_foreground(Color::Green)
+            .bold()
+            .italic()
+            .underlined()
+            .on_submit(on_submit_cb)
+            .with_texts(TextParts::new(
+                Some(String::from("hello")),
+                Some(vec![String::from("hey")]),
+            ))
+            .build();
+        // Ok, now make a builder from properties
+        let builder: PropsBuilder = PropsBuilder::from_props(props);
+        assert!(builder.props.is_some());
     }
 
     #[test]
