@@ -24,7 +24,7 @@
 */
 
 // ext
-use tui::style::Color;
+use tui::style::{Color, Modifier};
 
 // -- Props
 
@@ -35,6 +35,7 @@ use tui::style::Color;
 pub struct Props {
     // Values
     pub visible: bool,     // Is the element visible ON CREATE?
+    pub focus: bool,       // Is the element focused
     pub foreground: Color, // Foreground color
     pub background: Color, // Background color
     pub bold: bool,        // Text bold
@@ -48,6 +49,7 @@ impl Default for Props {
         Self {
             // Values
             visible: true,
+            focus: false,
             foreground: Color::Reset,
             background: Color::Reset,
             bold: false,
@@ -55,6 +57,27 @@ impl Default for Props {
             underlined: false,
             texts: TextParts::default(),
         }
+    }
+}
+
+impl Props {
+    /// ### get_modifiers
+    ///
+    /// Get text modifiers from properties
+    pub fn get_modifiers(&self) -> Modifier {
+        Modifier::empty()
+            | (match self.bold {
+                true => Modifier::BOLD,
+                false => Modifier::empty(),
+            })
+            | (match self.italic {
+                true => Modifier::ITALIC,
+                false => Modifier::empty(),
+            })
+            | (match self.underlined {
+                true => Modifier::UNDERLINED,
+                false => Modifier::empty(),
+            })
     }
 }
 
@@ -90,6 +113,36 @@ impl PropsBuilder {
     pub fn hidden(&mut self) -> &mut Self {
         if let Some(props) = self.props.as_mut() {
             props.visible = false;
+        }
+        self
+    }
+
+    /// ### visible
+    ///
+    /// Initialize props with visible set to True
+    pub fn visible(&mut self) -> &mut Self {
+        if let Some(props) = self.props.as_mut() {
+            props.visible = true;
+        }
+        self
+    }
+
+    /// ### has_focus
+    ///
+    /// Initialize props with focus set to True
+    pub fn has_focus(&mut self) -> &mut Self {
+        if let Some(props) = self.props.as_mut() {
+            props.focus = true;
+        }
+        self
+    }
+
+    /// ### hasnt_focus
+    ///
+    /// Initialize props with focus set to False
+    pub fn hasnt_focus(&mut self) -> &mut Self {
+        if let Some(props) = self.props.as_mut() {
+            props.focus = false;
         }
         self
     }
@@ -204,6 +257,7 @@ mod tests {
         assert_eq!(props.background, Color::Reset);
         assert_eq!(props.foreground, Color::Reset);
         assert_eq!(props.bold, false);
+        assert_eq!(props.focus, false);
         assert_eq!(props.italic, false);
         assert_eq!(props.underlined, false);
         assert!(props.texts.title.is_none());
@@ -211,9 +265,21 @@ mod tests {
     }
 
     #[test]
+    fn test_ui_layout_props_modifiers() {
+        // Make properties
+        let props: Props = PropsBuilder::default().bold().italic().underlined().build();
+        // Get modifiers
+        let modifiers: Modifier = props.get_modifiers();
+        assert!(modifiers.intersects(Modifier::BOLD));
+        assert!(modifiers.intersects(Modifier::ITALIC));
+        assert!(modifiers.intersects(Modifier::UNDERLINED));
+    }
+
+    #[test]
     fn test_ui_layout_props_builder() {
         let props: Props = PropsBuilder::default()
             .hidden()
+            .has_focus()
             .with_background(Color::Blue)
             .with_foreground(Color::Green)
             .bold()
@@ -226,6 +292,7 @@ mod tests {
             .build();
         assert_eq!(props.background, Color::Blue);
         assert_eq!(props.bold, true);
+        assert_eq!(props.focus, true);
         assert_eq!(props.foreground, Color::Green);
         assert_eq!(props.italic, true);
         assert_eq!(props.texts.title.as_ref().unwrap().as_str(), "hello");
@@ -234,8 +301,32 @@ mod tests {
             "hey"
         );
         assert_eq!(props.underlined, true);
-        assert!(props.on_submit.is_some());
         assert_eq!(props.visible, false);
+        let props: Props = PropsBuilder::default()
+            .visible()
+            .hasnt_focus()
+            .with_background(Color::Blue)
+            .with_foreground(Color::Green)
+            .bold()
+            .italic()
+            .underlined()
+            .with_texts(TextParts::new(
+                Some(String::from("hello")),
+                Some(vec![String::from("hey")]),
+            ))
+            .build();
+        assert_eq!(props.background, Color::Blue);
+        assert_eq!(props.bold, true);
+        assert_eq!(props.focus, false);
+        assert_eq!(props.foreground, Color::Green);
+        assert_eq!(props.italic, true);
+        assert_eq!(props.texts.title.as_ref().unwrap().as_str(), "hello");
+        assert_eq!(
+            props.texts.body.as_ref().unwrap().get(0).unwrap().as_str(),
+            "hey"
+        );
+        assert_eq!(props.underlined, true);
+        assert_eq!(props.visible, true);
     }
 
     #[test]
@@ -273,7 +364,7 @@ mod tests {
             ))
             .build();
         // Ok, now make a builder from properties
-        let builder: PropsBuilder = PropsBuilder::from_props(props);
+        let builder: PropsBuilder = PropsBuilder::from_props(&props);
         assert!(builder.props.is_some());
     }
 

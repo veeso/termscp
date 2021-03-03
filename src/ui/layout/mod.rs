@@ -28,31 +28,34 @@ pub mod components;
 pub mod props;
 
 // locals
-use crate::ui::activities::Activity;
 use props::{Props, PropsBuilder};
 // ext
 use crossterm::event::Event as InputEvent;
+use crossterm::event::KeyEvent;
 use tui::widgets::Widget;
 
 // -- Msg
 
 /// ## Msg
-/// 
+///
 /// Msg is an enum returned by an `Update` or an `On`.
 /// Yep, I took inspiration from Elm.
+#[derive(std::fmt::Debug)]
 pub enum Msg {
     OnSubmit(Payload),
+    OnKey(KeyEvent),
     None,
 }
 
 /// ## Payload
-/// 
+///
 /// Payload describes the payload for a `Msg`
+#[derive(std::fmt::Debug)]
 pub enum Payload {
     Text(String),
     Number(isize),
     Unumber(usize),
-    None
+    None,
 }
 
 // -- States
