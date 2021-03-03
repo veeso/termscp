@@ -26,7 +26,7 @@
 // locals
 use super::super::activities::Activity;
 // ext
-use tui::style::{Color};
+use tui::style::Color;
 
 // Callback types
 pub type OnSubmitCb = fn(&mut dyn Activity, Option<String>); // Activity, Value
@@ -113,32 +113,32 @@ impl PropsBuilder {
         self
     }
 
-    /// ### with_bold
+    /// ### bold
     ///
     /// Set bold property for component
-    pub fn with_bold(&mut self, bold: bool) -> &mut Self {
+    pub fn bold(&mut self) -> &mut Self {
         if let Some(props) = self.props.as_mut() {
-            props.bold = bold;
+            props.bold = true;
         }
         self
     }
 
-    /// ### with_italic
+    /// ### italic
     ///
     /// Set italic property for component
-    pub fn with_italic(&mut self, italic: bool) -> &mut Self {
+    pub fn italic(&mut self) -> &mut Self {
         if let Some(props) = self.props.as_mut() {
-            props.italic = italic;
+            props.italic = true;
         }
         self
     }
 
-    /// ### with_underlined
+    /// ### underlined
     ///
     /// Set underlined property for component
-    pub fn with_underlined(&mut self, underlined: bool) -> &mut Self {
+    pub fn underlined(&mut self) -> &mut Self {
         if let Some(props) = self.props.as_mut() {
-            props.underlined = underlined;
+            props.underlined = true;
         }
         self
     }
@@ -197,5 +197,84 @@ impl Default for TextParts {
             title: None,
             body: None,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+
+    #[test]
+    fn test_ui_layout_props_default() {
+        let props: Props = Props::default();
+        assert_eq!(props.visible, true);
+        assert_eq!(props.background, Color::Reset);
+        assert_eq!(props.foreground, Color::Reset);
+        assert_eq!(props.bold, false);
+        assert_eq!(props.italic, false);
+        assert_eq!(props.underlined, false);
+        assert!(props.on_submit.is_none());
+        assert!(props.texts.title.is_none());
+        assert!(props.texts.body.is_none());
+    }
+
+    #[test]
+    fn test_ui_layout_props_builder() {
+        let props: Props = PropsBuilder::default()
+            .hidden()
+            .with_background(Color::Blue)
+            .with_foreground(Color::Green)
+            .bold()
+            .italic()
+            .underlined()
+            .on_submit(on_submit_cb)
+            .with_texts(TextParts::new(
+                Some(String::from("hello")),
+                Some(vec![String::from("hey")]),
+            ))
+            .build();
+        assert_eq!(props.background, Color::Blue);
+        assert_eq!(props.bold, true);
+        assert_eq!(props.foreground, Color::Green);
+        assert_eq!(props.italic, true);
+        assert_eq!(props.texts.title.as_ref().unwrap().as_str(), "hello");
+        assert_eq!(
+            props.texts.body.as_ref().unwrap().get(0).unwrap().as_str(),
+            "hey"
+        );
+        assert_eq!(props.underlined, true);
+        assert!(props.on_submit.is_some());
+        assert_eq!(props.visible, false);
+    }
+
+    #[test]
+    fn test_ui_layout_props_text_parts_with_values() {
+        let parts: TextParts = TextParts::new(
+            Some(String::from("Hello world!")),
+            Some(vec![String::from("row1"), String::from("row2")]),
+        );
+        assert_eq!(parts.title.as_ref().unwrap().as_str(), "Hello world!");
+        assert_eq!(
+            parts.body.as_ref().unwrap().get(0).unwrap().as_str(),
+            "row1"
+        );
+        assert_eq!(
+            parts.body.as_ref().unwrap().get(1).unwrap().as_str(),
+            "row2"
+        );
+    }
+
+    #[test]
+    fn test_ui_layout_props_text_parts_default() {
+        let parts: TextParts = TextParts::default();
+        assert!(parts.title.is_none());
+        assert!(parts.body.is_none());
+    }
+
+    // Callbacks
+
+    fn on_submit_cb(_activity: &mut dyn Activity, val: Option<String>) {
+        println!("Val: {:?}", val);
     }
 }
