@@ -24,13 +24,36 @@
 */
 
 // Modules
+pub mod components;
 pub mod props;
 
 // locals
+use crate::ui::activities::Activity;
 use props::{Props, PropsBuilder};
 // ext
 use crossterm::event::Event as InputEvent;
 use tui::widgets::Widget;
+
+// -- Msg
+
+/// ## Msg
+/// 
+/// Msg is an enum returned by an `Update` or an `On`.
+/// Yep, I took inspiration from Elm.
+pub enum Msg {
+    OnSubmit(Payload),
+    None,
+}
+
+/// ## Payload
+/// 
+/// Payload describes the payload for a `Msg`
+pub enum Payload {
+    Text(String),
+    Number(isize),
+    Unumber(usize),
+    None
+}
 
 // -- States
 
@@ -38,12 +61,7 @@ use tui::widgets::Widget;
 ///
 /// States is a trait which defines the behaviours for the states model for the different component.
 /// A state contains internal values for each component.
-pub(crate) trait States {
-    /// ### update
-    ///
-    /// Create a new state from current one and new
-    fn update(&self, new: dyn States) -> dyn States;
-}
+pub(crate) trait States {}
 
 // -- Component
 
@@ -62,8 +80,9 @@ pub trait Component {
     ///
     /// Update component properties
     /// Properties should first be retrieved through `get_props` which creates a builder from
-    /// existing properties and then edited before calling update
-    fn update(&mut self, props: Option<Props>);
+    /// existing properties and then edited before calling update.
+    /// Returns a Msg to the view
+    fn update(&mut self, props: Props) -> Msg;
 
     /// ### get_props
     ///
@@ -74,8 +93,9 @@ pub trait Component {
 
     /// ### on
     ///
-    /// Handle input event and update internal states
-    fn on(&mut self, ev: InputEvent);
+    /// Handle input event and update internal states.
+    /// Returns a Msg to the view
+    fn on(&mut self, ev: InputEvent) -> Msg;
 
     // -- events
 

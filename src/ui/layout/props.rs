@@ -23,13 +23,8 @@
 *
 */
 
-// locals
-use super::super::activities::Activity;
 // ext
 use tui::style::Color;
-
-// Callback types
-pub type OnSubmitCb = fn(&mut dyn Activity, Option<String>); // Activity, Value
 
 // -- Props
 
@@ -46,8 +41,6 @@ pub struct Props {
     pub italic: bool,      // Italic
     pub underlined: bool,  // Underlined
     pub texts: TextParts,  // text parts
-    // Callbacks
-    pub on_submit: Option<OnSubmitCb>,
 }
 
 impl Default for Props {
@@ -61,8 +54,6 @@ impl Default for Props {
             italic: false,
             underlined: false,
             texts: TextParts::default(),
-            // Callbacks
-            on_submit: None,
         }
     }
 }
@@ -80,8 +71,10 @@ impl PropsBuilder {
     /// ### from_props
     ///
     /// Create a props builder from existing properties
-    pub fn from_props(props: Props) -> Self {
-        PropsBuilder { props: Some(props) }
+    pub fn from_props(props: &Props) -> Self {
+        PropsBuilder {
+            props: Some(props.clone()),
+        }
     }
 
     /// ### build
@@ -160,16 +153,6 @@ impl PropsBuilder {
         }
         self
     }
-
-    /// ### on_submit
-    ///
-    /// Set on_submit callback for component
-    pub fn on_submit(&mut self, on_submit: OnSubmitCb) -> &mut Self {
-        if let Some(props) = self.props.as_mut() {
-            props.on_submit = Some(on_submit);
-        }
-        self
-    }
 }
 
 impl Default for PropsBuilder {
@@ -223,7 +206,6 @@ mod tests {
         assert_eq!(props.bold, false);
         assert_eq!(props.italic, false);
         assert_eq!(props.underlined, false);
-        assert!(props.on_submit.is_none());
         assert!(props.texts.title.is_none());
         assert!(props.texts.body.is_none());
     }
@@ -237,7 +219,6 @@ mod tests {
             .bold()
             .italic()
             .underlined()
-            .on_submit(on_submit_cb)
             .with_texts(TextParts::new(
                 Some(String::from("hello")),
                 Some(vec![String::from("hey")]),
@@ -269,7 +250,6 @@ mod tests {
             .bold()
             .italic()
             .underlined()
-            .on_submit(on_submit_cb)
             .with_texts(TextParts::new(
                 Some(String::from("hello")),
                 Some(vec![String::from("hey")]),
@@ -287,7 +267,6 @@ mod tests {
             .bold()
             .italic()
             .underlined()
-            .on_submit(on_submit_cb)
             .with_texts(TextParts::new(
                 Some(String::from("hello")),
                 Some(vec![String::from("hey")]),
@@ -320,11 +299,5 @@ mod tests {
         let parts: TextParts = TextParts::default();
         assert!(parts.title.is_none());
         assert!(parts.body.is_none());
-    }
-
-    // Callbacks
-
-    fn on_submit_cb(_activity: &mut dyn Activity, val: Option<String>) {
-        println!("Val: {:?}", val);
     }
 }
