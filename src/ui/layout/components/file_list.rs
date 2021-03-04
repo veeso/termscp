@@ -74,8 +74,8 @@ impl OwnStates {
     /// Incremenet list index
     pub fn incr_list_index(&mut self) {
         // Check if index is at last element
-        if self.list_len + 1 < self.list_len {
-            self.list_len += 1;
+        if self.list_index + 1 < self.list_len {
+            self.list_index += 1;
         }
     }
 
@@ -84,8 +84,8 @@ impl OwnStates {
     /// Decrement list index
     pub fn decr_list_index(&mut self) {
         // Check if index is bigger than 0
-        if self.list_len > 0 {
-            self.list_len -= 1;
+        if self.list_index > 0 {
+            self.list_index -= 1;
         }
     }
 
@@ -93,7 +93,7 @@ impl OwnStates {
     ///
     /// Reset list index to 0
     pub fn reset_list_index(&mut self) {
-        self.list_len = 0;
+        self.list_index = 0;
     }
 }
 
@@ -172,7 +172,7 @@ impl Component for FileList {
                                     .add_modifier(self.props.get_modifiers()),
                             ),
                     ),
-                    value: self.get_value(),
+                    cursor: self.states.list_index,
                 })
             }
         }
@@ -237,7 +237,7 @@ impl Component for FileList {
                 }
                 KeyCode::Enter => {
                     // Report event
-                    Msg::OnSubmit(Payload::Unumber(self.states.get_list_index()))
+                    Msg::OnSubmit(self.get_value())
                 }
                 _ => {
                     // Return key event to activity
@@ -251,8 +251,8 @@ impl Component for FileList {
     }
 
     /// ### get_value
-    /// 
-    /// Return component value
+    ///
+    /// Return component value. File list return index
     fn get_value(&self) -> Payload {
         Payload::Unumber(self.states.get_list_index())
     }
@@ -266,5 +266,92 @@ impl Component for FileList {
     fn should_umount(&self) -> bool {
         // Never true
         false
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+    use crate::ui::layout::props::TextParts;
+
+    use crossterm::event::KeyEvent;
+
+    #[test]
+    fn test_ui_layout_components_file_list() {
+        // Make component
+        let mut component: FileList = FileList::new(
+            PropsBuilder::default()
+                .with_texts(TextParts::new(
+                    Some(String::from("filelist")),
+                    Some(vec![String::from("file1"), String::from("file2")]),
+                ))
+                .build(),
+        );
+        // Verify states
+        assert_eq!(component.states.list_index, 0);
+        assert_eq!(component.states.list_len, 2);
+        // Increment list index
+        component.states.list_index += 1;
+        assert_eq!(component.render().unwrap().cursor, 1);
+        // Should umount
+        assert_eq!(component.should_umount(), false);
+        // Update
+        component.update(
+            component
+                .get_props()
+                .with_texts(TextParts::new(
+                    Some(String::from("filelist")),
+                    Some(vec![
+                        String::from("file1"),
+                        String::from("file2"),
+                        String::from("file3"),
+                    ]),
+                ))
+                .build(),
+        );
+        // Verify states
+        assert_eq!(component.states.list_index, 0);
+        assert_eq!(component.states.list_len, 3);
+        // Render
+        assert_eq!(component.render().unwrap().cursor, 0);
+        // Handle inputs
+        assert_eq!(
+            component.on(InputEvent::Key(KeyEvent::from(KeyCode::Down))),
+            Msg::None
+        );
+        // Index should be incremented
+        assert_eq!(component.states.list_index, 1);
+        // Index should be decremented
+        assert_eq!(
+            component.on(InputEvent::Key(KeyEvent::from(KeyCode::Up))),
+            Msg::None
+        );
+        // Index should be incremented
+        assert_eq!(component.states.list_index, 0);
+        // Index should be 2
+        assert_eq!(
+            component.on(InputEvent::Key(KeyEvent::from(KeyCode::PageDown))),
+            Msg::None
+        );
+        // Index should be incremented
+        assert_eq!(component.states.list_index, 2);
+        // Index should be 0
+        assert_eq!(
+            component.on(InputEvent::Key(KeyEvent::from(KeyCode::PageUp))),
+            Msg::None
+        );
+        // Index should be incremented
+        assert_eq!(component.states.list_index, 0);
+        // Enter
+        assert_eq!(
+            component.on(InputEvent::Key(KeyEvent::from(KeyCode::Enter))),
+            Msg::OnSubmit(Payload::Unumber(0))
+        );
+        // On key
+        assert_eq!(
+            component.on(InputEvent::Key(KeyEvent::from(KeyCode::Backspace))),
+            Msg::OnKey(KeyEvent::from(KeyCode::Backspace))
+        );
     }
 }

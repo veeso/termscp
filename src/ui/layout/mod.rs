@@ -40,7 +40,7 @@ use tui::widgets::Widget;
 ///
 /// Msg is an enum returned after an event is raised for a certain component
 /// Yep, I took inspiration from Elm.
-#[derive(std::fmt::Debug)]
+#[derive(std::fmt::Debug, PartialEq)]
 pub enum Msg {
     OnSubmit(Payload),
     OnKey(KeyEvent),
@@ -50,7 +50,7 @@ pub enum Msg {
 /// ## Payload
 ///
 /// Payload describes a component value
-#[derive(std::fmt::Debug)]
+#[derive(std::fmt::Debug, PartialEq)]
 pub enum Payload {
     Text(String),
     Number(isize),
@@ -64,8 +64,8 @@ pub enum Payload {
 ///
 /// Render is the object which contains data related to the component render
 pub struct Render {
-    pub widget: Box<dyn Widget>,
-    pub value: Payload,
+    pub widget: Box<dyn Widget>, // Widget
+    pub cursor: usize,           // Cursor position
 }
 
 // -- States

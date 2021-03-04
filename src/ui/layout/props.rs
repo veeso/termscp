@@ -351,7 +351,7 @@ mod tests {
         assert_eq!(props.italic, true);
         assert_eq!(props.texts.title.as_ref().unwrap().as_str(), "hello");
         assert_eq!(props.input_type, InputType::Password);
-        assert_eq!(props.input_len.as_ref().unwrap(), 16);
+        assert_eq!(*props.input_len.as_ref().unwrap(), 16);
         assert_eq!(props.value.as_ref().unwrap().as_str(), "Hello");
         assert_eq!(
             props.texts.body.as_ref().unwrap().get(0).unwrap().as_str(),
