@@ -64,8 +64,8 @@ pub enum Payload {
 ///
 /// Render is the object which contains data related to the component render
 pub struct Render {
-    widget: Box<dyn Widget>,
-    value: Payload,
+    pub widget: Box<dyn Widget>,
+    pub value: Payload,
 }
 
 // -- States

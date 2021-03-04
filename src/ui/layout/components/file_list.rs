@@ -24,7 +24,7 @@
 */
 
 // locals
-use super::{Component, InputEvent, Msg, Payload, Props, PropsBuilder, States, Widget};
+use super::{Component, InputEvent, Msg, Payload, Props, PropsBuilder, Render, States};
 // ext
 use crossterm::event::KeyCode;
 use tui::{
@@ -131,7 +131,7 @@ impl Component for FileList {
     ///
     /// Based on the current properties and states, return a Widget instance for the Component
     /// Returns None if the component is hidden
-    fn render(&self) -> Option<Box<dyn Widget>> {
+    fn render(&self) -> Option<Render> {
         match self.props.visible {
             false => None,
             true => {
@@ -152,25 +152,28 @@ impl Component for FileList {
                     None => String::new(),
                 };
                 // Render
-                Some(Box::new(
-                    List::new(list_item)
-                        .block(
-                            Block::default()
-                                .borders(Borders::ALL)
-                                .border_style(match self.props.focus {
-                                    true => Style::default().fg(self.props.foreground),
-                                    false => Style::default(),
-                                })
-                                .title(title),
-                        )
-                        .start_corner(Corner::TopLeft)
-                        .highlight_style(
-                            Style::default()
-                                .bg(bg)
-                                .fg(fg)
-                                .add_modifier(self.props.get_modifiers()),
-                        ),
-                ))
+                Some(Render {
+                    widget: Box::new(
+                        List::new(list_item)
+                            .block(
+                                Block::default()
+                                    .borders(Borders::ALL)
+                                    .border_style(match self.props.focus {
+                                        true => Style::default().fg(self.props.foreground),
+                                        false => Style::default(),
+                                    })
+                                    .title(title),
+                            )
+                            .start_corner(Corner::TopLeft)
+                            .highlight_style(
+                                Style::default()
+                                    .bg(bg)
+                                    .fg(fg)
+                                    .add_modifier(self.props.get_modifiers()),
+                            ),
+                    ),
+                    value: self.get_value(),
+                })
             }
         }
     }
@@ -245,6 +248,13 @@ impl Component for FileList {
             // Unhandled event
             Msg::None
         }
+    }
+
+    /// ### get_value
+    /// 
+    /// Return component value
+    fn get_value(&self) -> Payload {
+        Payload::Unumber(self.states.get_list_index())
     }
 
     // -- events
