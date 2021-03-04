@@ -309,7 +309,7 @@ mod tests {
         // Focus
         component.active();
         assert_eq!(component.states.focus, true);
-        component.blue();
+        component.blur();
         assert_eq!(component.states.focus, false);
         // Increment list index
         component.states.list_index += 1;
