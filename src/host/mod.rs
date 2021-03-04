@@ -971,7 +971,10 @@ mod tests {
         let tmpdir: tempfile::TempDir = tempfile::TempDir::new().unwrap();
         let host: Localhost = Localhost::new(PathBuf::from(tmpdir.path())).ok().unwrap();
         // Execute
+        #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
         assert_eq!(host.exec("echo 5").ok().unwrap().as_str(), "5\n");
+        #[cfg(target_os = "windows")]
+        assert_eq!(host.exec("echo 5").ok().unwrap().as_str(), "5\r\n");
     }
 
     #[test]
