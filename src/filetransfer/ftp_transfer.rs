@@ -581,6 +581,15 @@ impl FileTransfer for FtpFileTransfer {
         }
     }
 
+    /// ### exec
+    ///
+    /// Execute a command on remote host
+    fn exec(&mut self, _cmd: &str) -> Result<String, FileTransferError> {
+        Err(FileTransferError::new(
+            FileTransferErrorType::UnsupportedFeature,
+        ))
+    }
+
     /// ### send_file
     ///
     /// Send file to remote
@@ -1067,6 +1076,19 @@ mod tests {
         // Disconnect
         assert!(ftp.disconnect().is_ok());
     }*/
+
+    #[test]
+    fn test_filetransfer_ftp_exec() {
+        let mut ftp: FtpFileTransfer = FtpFileTransfer::new(false);
+        // Connect
+        assert!(ftp
+            .connect(String::from("speedtest.tele2.net"), 21, None, None)
+            .is_ok());
+        // Pwd
+        assert!(ftp.exec("echo 1;").is_err());
+        // Disconnect
+        assert!(ftp.disconnect().is_ok());
+    }
 
     #[test]
     fn test_filetransfer_ftp_uninitialized() {

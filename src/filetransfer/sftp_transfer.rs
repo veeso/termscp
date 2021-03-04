@@ -32,7 +32,7 @@ use crate::fs::{FsDirectory, FsEntry, FsFile};
 use crate::system::sshkey_storage::SshKeyStorage;
 
 // Includes
-use ssh2::{FileStat, OpenFlags, OpenType, Session, Sftp};
+use ssh2::{Channel, FileStat, OpenFlags, OpenType, Session, Sftp};
 use std::io::{BufReader, BufWriter, Read, Write};
 use std::net::{SocketAddr, TcpStream, ToSocketAddrs};
 use std::path::{Path, PathBuf};
@@ -187,6 +187,57 @@ impl SftpFileTransfer {
                 group: gid,
                 unix_pex: pex,
             }),
+        }
+    }
+
+    /// ### perform_shell_cmd_with
+    ///
+    /// Perform a shell command, but change directory to specified path first
+    fn perform_shell_cmd_with_path(&mut self, cmd: &str) -> Result<String, FileTransferError> {
+        self.perform_shell_cmd(format!("cd \"{}\"; {}", self.wrkdir.display(), cmd).as_str())
+    }
+
+    /// ### perform_shell_cmd
+    ///
+    /// Perform a shell command and read the output from shell
+    /// This operation is, obviously, blocking.
+    fn perform_shell_cmd(&mut self, cmd: &str) -> Result<String, FileTransferError> {
+        match self.session.as_mut() {
+            Some(session) => {
+                // Create channel
+                let mut channel: Channel = match session.channel_session() {
+                    Ok(ch) => ch,
+                    Err(err) => {
+                        return Err(FileTransferError::new_ex(
+                            FileTransferErrorType::ProtocolError,
+                            format!("Could not open channel: {}", err),
+                        ))
+                    }
+                };
+                // Execute command
+                if let Err(err) = channel.exec(cmd) {
+                    return Err(FileTransferError::new_ex(
+                        FileTransferErrorType::ProtocolError,
+                        format!("Could not execute command \"{}\": {}", cmd, err),
+                    ));
+                }
+                // Read output
+                let mut output: String = String::new();
+                match channel.read_to_string(&mut output) {
+                    Ok(_) => {
+                        // Wait close
+                        let _ = channel.wait_close();
+                        Ok(output)
+                    }
+                    Err(err) => Err(FileTransferError::new_ex(
+                        FileTransferErrorType::ProtocolError,
+                        format!("Could not read output: {}", err),
+                    )),
+                }
+            }
+            None => Err(FileTransferError::new(
+                FileTransferErrorType::UninitializedSession,
+            )),
         }
     }
 }
@@ -547,6 +598,26 @@ impl FileTransfer for SftpFileTransfer {
         }
     }
 
+    /// ### exec
+    ///
+    /// Execute a command on remote host
+    fn exec(&mut self, cmd: &str) -> Result<String, FileTransferError> {
+        match self.is_connected() {
+            true => {
+                match self.perform_shell_cmd_with_path(cmd) {
+                    Ok(output) => Ok(output),
+                    Err(err) => Err(FileTransferError::new_ex(
+                        FileTransferErrorType::ProtocolError,
+                        format!("{}", err),
+                    )),
+                }
+            }
+            false => Err(FileTransferError::new(
+                FileTransferErrorType::UninitializedSession,
+            )),
+        }
+    }
+
     /// ### send_file
     ///
     /// Send file to remote
@@ -854,6 +925,25 @@ mod tests {
         } else {
             panic!("Expected readme.txt to be a file");
         }
+    }
+
+    #[test]
+    fn test_filetransfer_sftp_exec() {
+        let mut client: SftpFileTransfer = SftpFileTransfer::new(SshKeyStorage::empty());
+        assert!(client
+            .connect(
+                String::from("test.rebex.net"),
+                22,
+                Some(String::from("demo")),
+                Some(String::from("password"))
+            )
+            .is_ok());
+        // Check session and scp
+        assert!(client.session.is_some());
+        // Exec
+        assert_eq!(client.exec("echo 5").ok().unwrap().as_str(), "5\n");
+        // Disconnect
+        assert!(client.disconnect().is_ok());
     }
 
     #[test]

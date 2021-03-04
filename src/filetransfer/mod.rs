@@ -189,6 +189,11 @@ pub trait FileTransfer {
     /// Stat file and return FsEntry
     fn stat(&mut self, path: &Path) -> Result<FsEntry, FileTransferError>;
 
+    /// ### exec
+    ///
+    /// Execute a command on remote host
+    fn exec(&mut self, cmd: &str) -> Result<String, FileTransferError>;
+
     /// ### send_file
     ///
     /// Send file to remote

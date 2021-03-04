@@ -737,6 +737,27 @@ impl FileTransfer for ScpFileTransfer {
         }
     }
 
+    /// ### exec
+    ///
+    /// Execute a command on remote host
+    fn exec(&mut self, cmd: &str) -> Result<String, FileTransferError> {
+        match self.is_connected() {
+            true => {
+                let p: PathBuf = self.wrkdir.clone();
+                match self.perform_shell_cmd_with_path(p.as_path(), cmd) {
+                    Ok(output) => Ok(output),
+                    Err(err) => Err(FileTransferError::new_ex(
+                        FileTransferErrorType::ProtocolError,
+                        format!("{}", err),
+                    )),
+                }
+            }
+            false => Err(FileTransferError::new(
+                FileTransferErrorType::UninitializedSession,
+            )),
+        }
+    }
+
     /// ### send_file
     ///
     /// Send file to remote
@@ -1014,6 +1035,25 @@ mod tests {
         } else {
             panic!("Expected readme.txt to be a file");
         }
+    }
+
+    #[test]
+    fn test_filetransfer_scp_exec() {
+        let mut client: ScpFileTransfer = ScpFileTransfer::new(SshKeyStorage::empty());
+        assert!(client
+            .connect(
+                String::from("test.rebex.net"),
+                22,
+                Some(String::from("demo")),
+                Some(String::from("password"))
+            )
+            .is_ok());
+        // Check session and scp
+        assert!(client.session.is_some());
+        // Exec
+        assert_eq!(client.exec("echo 5").ok().unwrap().as_str(), "5\n");
+        // Disconnect
+        assert!(client.disconnect().is_ok());
     }
 
     #[test]
