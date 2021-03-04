@@ -34,14 +34,15 @@ use tui::style::{Color, Modifier};
 #[derive(Clone)]
 pub struct Props {
     // Values
-    pub visible: bool,     // Is the element visible ON CREATE?
-    pub focus: bool,       // Is the element focused
-    pub foreground: Color, // Foreground color
-    pub background: Color, // Background color
-    pub bold: bool,        // Text bold
-    pub italic: bool,      // Italic
-    pub underlined: bool,  // Underlined
-    pub texts: TextParts,  // text parts
+    pub visible: bool,         // Is the element visible ON CREATE?
+    pub focus: bool,           // Is the element focused
+    pub foreground: Color,     // Foreground color
+    pub background: Color,     // Background color
+    pub bold: bool,            // Text bold
+    pub italic: bool,          // Italic
+    pub underlined: bool,      // Underlined
+    pub input_type: InputType, // Input type
+    pub texts: TextParts,      // text parts
 }
 
 impl Default for Props {
@@ -55,6 +56,7 @@ impl Default for Props {
             bold: false,
             italic: false,
             underlined: false,
+            input_type: InputType::Text,
             texts: TextParts::default(),
         }
     }
@@ -206,6 +208,16 @@ impl PropsBuilder {
         }
         self
     }
+
+    /// ### with_input
+    ///
+    /// Set input type for component
+    pub fn with_input(&mut self, input_type: InputType) -> &mut Self {
+        if let Some(props) = self.props.as_mut() {
+            props.input_type = input_type;
+        }
+        self
+    }
 }
 
 impl Default for PropsBuilder {
@@ -245,6 +257,18 @@ impl Default for TextParts {
     }
 }
 
+// -- Input Type
+
+/// ## InputType
+///
+/// Input type for text inputs
+#[derive(Clone, PartialEq, std::fmt::Debug)]
+pub enum InputType {
+    Text,
+    Number,
+    Password,
+}
+
 #[cfg(test)]
 mod tests {
 
@@ -261,6 +285,7 @@ mod tests {
         assert_eq!(props.italic, false);
         assert_eq!(props.underlined, false);
         assert!(props.texts.title.is_none());
+        assert_eq!(props.input_type, InputType::Text);
         assert!(props.texts.body.is_none());
     }
 
@@ -289,6 +314,7 @@ mod tests {
                 Some(String::from("hello")),
                 Some(vec![String::from("hey")]),
             ))
+            .with_input(InputType::Password)
             .build();
         assert_eq!(props.background, Color::Blue);
         assert_eq!(props.bold, true);
@@ -296,6 +322,7 @@ mod tests {
         assert_eq!(props.foreground, Color::Green);
         assert_eq!(props.italic, true);
         assert_eq!(props.texts.title.as_ref().unwrap().as_str(), "hello");
+        assert_eq!(props.input_type, InputType::Password);
         assert_eq!(
             props.texts.body.as_ref().unwrap().get(0).unwrap().as_str(),
             "hey"
