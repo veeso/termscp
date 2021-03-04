@@ -27,7 +27,7 @@ use super::{SerializerError, SerializerErrorKind, UserHosts};
 
 use std::io::{Read, Write};
 
-pub struct BookmarkSerializer {}
+pub struct BookmarkSerializer;
 
 impl BookmarkSerializer {
     /// ### serialize

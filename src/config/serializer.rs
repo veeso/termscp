@@ -27,7 +27,7 @@ use super::{SerializerError, SerializerErrorKind, UserConfig};
 
 use std::io::{Read, Write};
 
-pub struct ConfigSerializer {}
+pub struct ConfigSerializer;
 
 impl ConfigSerializer {
     /// ### serialize
