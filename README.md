@@ -1,12 +1,12 @@
 # TermSCP
 
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![Stars](https://img.shields.io/github/stars/veeso/termscp.svg)](https://github.com/veeso/termscp) [![Downloads](https://img.shields.io/crates/d/termscp.svg)](https://crates.io/crates/termscp) [![Crates.io](https://img.shields.io/badge/crates.io-v0.3.3-orange.svg)](https://crates.io/crates/termscp) [![Docs](https://docs.rs/termscp/badge.svg)](https://docs.rs/termscp)  
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![Stars](https://img.shields.io/github/stars/veeso/termscp.svg)](https://github.com/veeso/termscp) [![Downloads](https://img.shields.io/crates/d/termscp.svg)](https://crates.io/crates/termscp) [![Crates.io](https://img.shields.io/badge/crates.io-v0.4.0-orange.svg)](https://crates.io/crates/termscp) [![Docs](https://docs.rs/termscp/badge.svg)](https://docs.rs/termscp)  
 
 [![Build](https://github.com/veeso/termscp/workflows/Linux/badge.svg)](https://github.com/veeso/termscp/actions) [![Build](https://github.com/veeso/termscp/workflows/MacOS/badge.svg)](https://github.com/veeso/termscp/actions) [![Build](https://github.com/veeso/termscp/workflows/Windows/badge.svg)](https://github.com/veeso/termscp/actions) [![codecov](https://codecov.io/gh/veeso/termscp/branch/main/graph/badge.svg?token=au67l7nQah)](https://codecov.io/gh/veeso/termscp)
 
 ~ Basically, WinSCP on a terminal ~  
 Developed by Christian Visintin  
-Current version: 0.3.3 (28/02/2021)
+Current version: 0.4.0 FIXME: (28/02/2021)
 
 ---
 
@@ -98,8 +98,8 @@ Requirements:
 
 ### Deb package 📦
 
-Get `deb` package from [HERE](https://github.com/veeso/termscp/releases/latest/download/termscp_0.3.3_amd64.deb)
-or run `wget https://github.com/veeso/termscp/releases/latest/download/termscp_0.3.3_amd64.deb`
+Get `deb` package from [HERE](https://github.com/veeso/termscp/releases/latest/download/termscp_0.4.0_amd64.deb)
+or run `wget https://github.com/veeso/termscp/releases/latest/download/termscp_0.4.0_amd64.deb`
 
 then install through dpkg:
 
@@ -111,8 +111,8 @@ gdebi termscp_*.deb
 
 ### RPM package 📦
 
-Get `rpm` package from [HERE](https://github.com/veeso/termscp/releases/latest/download/termscp-0.3.3-1.x86_64.rpm)
-or run `wget https://github.com/veeso/termscp/releases/latest/download/termscp-0.3.3-1.x86_64.rpm`
+Get `rpm` package from [HERE](https://github.com/veeso/termscp/releases/latest/download/termscp-0.4.0-1.x86_64.rpm)
+or run `wget https://github.com/veeso/termscp/releases/latest/download/termscp-0.4.0-1.x86_64.rpm`
 
 then install through rpm:
 
@@ -138,7 +138,7 @@ Start PowerShell as administrator and run
 choco install termscp
 ```
 
-Alternatively you can download the ZIP file from [HERE](https://github.com/veeso/termscp/releases/latest/download/termscp.0.3.3.nupkg)
+Alternatively you can download the ZIP file from [HERE](https://github.com/veeso/termscp/releases/latest/download/termscp.0.4.0.nupkg)
 
 and then with PowerShell started with administrator previleges, run:
 
