@@ -38,7 +38,7 @@ use tui::widgets::Widget;
 
 /// ## Msg
 ///
-/// Msg is an enum returned by an `Update` or an `On`.
+/// Msg is an enum returned after an event is raised for a certain component
 /// Yep, I took inspiration from Elm.
 #[derive(std::fmt::Debug)]
 pub enum Msg {
@@ -49,13 +49,23 @@ pub enum Msg {
 
 /// ## Payload
 ///
-/// Payload describes the payload for a `Msg`
+/// Payload describes a component value
 #[derive(std::fmt::Debug)]
 pub enum Payload {
     Text(String),
     Number(isize),
     Unumber(usize),
     None,
+}
+
+// -- Render
+
+/// ## Render
+///
+/// Render is the object which contains data related to the component render
+pub struct Render {
+    widget: Box<dyn Widget>,
+    value: Payload,
 }
 
 // -- States
@@ -77,7 +87,7 @@ pub trait Component {
     ///
     /// Based on the current properties and states, return a Widget instance for the Component
     /// Returns None if the component is hidden
-    fn render(&self) -> Option<Box<dyn Widget>>;
+    fn render(&self) -> Option<Render>;
 
     /// ### update
     ///
@@ -99,6 +109,11 @@ pub trait Component {
     /// Handle input event and update internal states.
     /// Returns a Msg to the view
     fn on(&mut self, ev: InputEvent) -> Msg;
+
+    /// ### get_value
+    ///
+    /// Get current value from component
+    fn get_value(&self) -> Payload;
 
     // -- events
 
