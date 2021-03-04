@@ -42,6 +42,7 @@ use tui::{
 struct OwnStates {
     input: Vec<char>, // Current input
     cursor: usize,    // Input position
+    focus: bool,      // Focus
 }
 
 impl Default for OwnStates {
@@ -49,6 +50,7 @@ impl Default for OwnStates {
         OwnStates {
             input: Vec::new(),
             cursor: 0,
+            focus: false,
         }
     }
 }
@@ -115,7 +117,7 @@ impl OwnStates {
     }
 
     /// ### render_value
-    /// 
+    ///
     /// Get value as string to render
     pub fn render_value(&self, itype: InputType) -> String {
         match itype {
@@ -172,7 +174,7 @@ impl Component for Input {
                 None => String::new(),
             };
             let p: Paragraph = Paragraph::new(self.states.get_value())
-                .style(match self.props.focus {
+                .style(match self.states.focus {
                     true => Style::default().fg(self.props.foreground),
                     false => Style::default(),
                 })
@@ -284,6 +286,20 @@ impl Component for Input {
     fn should_umount(&self) -> bool {
         false
     }
+
+    /// ### blur
+    ///
+    /// Blur component; basically remove focus
+    fn blur(&mut self) {
+        self.states.focus = false;
+    }
+
+    /// ### active
+    ///
+    /// Active component; basically give focus
+    fn active(&mut self) {
+        self.states.focus = true;
+    }
 }
 
 #[cfg(test)]
@@ -295,8 +311,5 @@ mod tests {
     use crossterm::event::KeyEvent;
 
     #[test]
-    fn test_ui_layout_components_input_text() {
-
-    }
-
+    fn test_ui_layout_components_input_text() {}
 }

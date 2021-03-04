@@ -43,6 +43,7 @@ use tui::{
 struct OwnStates {
     list_index: usize, // Index of selected element in list
     list_len: usize,   // Length of file list
+    focus: bool,       // Has focus?
 }
 
 impl Default for OwnStates {
@@ -50,6 +51,7 @@ impl Default for OwnStates {
         OwnStates {
             list_index: 0,
             list_len: 0,
+            focus: false,
         }
     }
 }
@@ -141,7 +143,7 @@ impl Component for FileList {
                         .map(|line: &String| ListItem::new(Span::from(line.to_string())))
                         .collect(),
                 };
-                let (fg, bg): (Color, Color) = match self.props.focus {
+                let (fg, bg): (Color, Color) = match self.states.focus {
                     true => (Color::Reset, self.props.background),
                     false => (self.props.foreground, Color::Reset),
                 };
@@ -156,7 +158,7 @@ impl Component for FileList {
                             .block(
                                 Block::default()
                                     .borders(Borders::ALL)
-                                    .border_style(match self.props.focus {
+                                    .border_style(match self.states.focus {
                                         true => Style::default().fg(self.props.foreground),
                                         false => Style::default(),
                                     })
@@ -265,6 +267,20 @@ impl Component for FileList {
         // Never true
         false
     }
+
+    /// ### blur
+    ///
+    /// Blur component; basically remove focus
+    fn blur(&mut self) {
+        self.states.focus = false;
+    }
+
+    /// ### active
+    ///
+    /// Active component; basically give focus
+    fn active(&mut self) {
+        self.states.focus = true;
+    }
 }
 
 #[cfg(test)]
@@ -289,6 +305,12 @@ mod tests {
         // Verify states
         assert_eq!(component.states.list_index, 0);
         assert_eq!(component.states.list_len, 2);
+        assert_eq!(component.states.focus, false);
+        // Focus
+        component.active();
+        assert_eq!(component.states.focus, true);
+        component.blue();
+        assert_eq!(component.states.focus, false);
         // Increment list index
         component.states.list_index += 1;
         assert_eq!(component.render().unwrap().cursor, 1);

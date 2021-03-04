@@ -35,7 +35,6 @@ use tui::style::{Color, Modifier};
 pub struct Props {
     // Values
     pub visible: bool,            // Is the element visible ON CREATE?
-    pub focus: bool,              // Is the element focused
     pub foreground: Color,        // Foreground color
     pub background: Color,        // Background color
     pub bold: bool,               // Text bold
@@ -52,7 +51,6 @@ impl Default for Props {
         Self {
             // Values
             visible: true,
-            focus: false,
             foreground: Color::Reset,
             background: Color::Reset,
             bold: false,
@@ -129,26 +127,6 @@ impl PropsBuilder {
     pub fn visible(&mut self) -> &mut Self {
         if let Some(props) = self.props.as_mut() {
             props.visible = true;
-        }
-        self
-    }
-
-    /// ### has_focus
-    ///
-    /// Initialize props with focus set to True
-    pub fn has_focus(&mut self) -> &mut Self {
-        if let Some(props) = self.props.as_mut() {
-            props.focus = true;
-        }
-        self
-    }
-
-    /// ### hasnt_focus
-    ///
-    /// Initialize props with focus set to False
-    pub fn hasnt_focus(&mut self) -> &mut Self {
-        if let Some(props) = self.props.as_mut() {
-            props.focus = false;
         }
         self
     }
@@ -305,7 +283,6 @@ mod tests {
         assert_eq!(props.background, Color::Reset);
         assert_eq!(props.foreground, Color::Reset);
         assert_eq!(props.bold, false);
-        assert_eq!(props.focus, false);
         assert_eq!(props.italic, false);
         assert_eq!(props.underlined, false);
         assert!(props.texts.title.is_none());
@@ -330,7 +307,6 @@ mod tests {
     fn test_ui_layout_props_builder() {
         let props: Props = PropsBuilder::default()
             .hidden()
-            .has_focus()
             .with_background(Color::Blue)
             .with_foreground(Color::Green)
             .bold()
@@ -346,7 +322,6 @@ mod tests {
             .build();
         assert_eq!(props.background, Color::Blue);
         assert_eq!(props.bold, true);
-        assert_eq!(props.focus, true);
         assert_eq!(props.foreground, Color::Green);
         assert_eq!(props.italic, true);
         assert_eq!(props.texts.title.as_ref().unwrap().as_str(), "hello");
@@ -361,7 +336,6 @@ mod tests {
         assert_eq!(props.visible, false);
         let props: Props = PropsBuilder::default()
             .visible()
-            .hasnt_focus()
             .with_background(Color::Blue)
             .with_foreground(Color::Green)
             .bold()
@@ -374,7 +348,6 @@ mod tests {
             .build();
         assert_eq!(props.background, Color::Blue);
         assert_eq!(props.bold, true);
-        assert_eq!(props.focus, false);
         assert_eq!(props.foreground, Color::Green);
         assert_eq!(props.italic, true);
         assert_eq!(props.texts.title.as_ref().unwrap().as_str(), "hello");
