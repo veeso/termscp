@@ -286,7 +286,7 @@ impl Default for TextParts {
 /// ## InputType
 ///
 /// Input type for text inputs
-#[derive(Clone, PartialEq, std::fmt::Debug)]
+#[derive(Clone, Copy, PartialEq, std::fmt::Debug)]
 pub enum InputType {
     Text,
     Number,

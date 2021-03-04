@@ -24,7 +24,7 @@
 */
 
 // locals
-use super::{Component, InputEvent, Msg, Payload, Props, PropsBuilder, Render, States};
+use super::{Component, InputEvent, Msg, Payload, Props, PropsBuilder, Render};
 // ext
 use crossterm::event::KeyCode;
 use tui::{
@@ -96,8 +96,6 @@ impl OwnStates {
         self.list_index = 0;
     }
 }
-
-impl States for OwnStates {}
 
 // -- Component
 

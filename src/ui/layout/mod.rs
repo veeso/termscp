@@ -68,14 +68,6 @@ pub struct Render {
     pub cursor: usize,           // Cursor position
 }
 
-// -- States
-
-/// ## States
-///
-/// States is a trait which defines the behaviours for the states model for the different component.
-/// A state contains internal values for each component.
-pub(crate) trait States {}
-
 // -- Component
 
 /// ## Component
