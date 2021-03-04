@@ -46,6 +46,7 @@ pub enum HostErrorType {
     FileNotAccessible,
     FileAlreadyExists,
     CouldNotCreateFile,
+    ExecutionFailed,
     DeleteFailed,
 }
 
@@ -79,6 +80,7 @@ impl std::fmt::Display for HostError {
             HostErrorType::FileNotAccessible => "Could not access file",
             HostErrorType::FileAlreadyExists => "File already exists",
             HostErrorType::CouldNotCreateFile => "Could not create file",
+            HostErrorType::ExecutionFailed => "Could not run command",
             HostErrorType::DeleteFailed => "Could not delete file",
         };
         match &self.ioerr {
@@ -142,8 +144,13 @@ impl Localhost {
         if !self.file_exists(new_dir.as_path()) {
             return Err(HostError::new(HostErrorType::NoSuchFileOrDirectory, None));
         }
+        // Change directory
+        if std::env::set_current_dir(new_dir.as_path()).is_err() {
+            return Err(HostError::new(HostErrorType::NoSuchFileOrDirectory, None));
+        }
         let prev_dir: PathBuf = self.wrkdir.clone(); // Backup location
                                                      // Update working directory
+                                                     // Change dir
         self.wrkdir = new_dir;
         // Scan new directory
         self.files = match self.scan_dir(self.wrkdir.as_path()) {
@@ -428,6 +435,23 @@ impl Localhost {
                 })
             }
         })
+    }
+
+    /// ### exec
+    ///
+    /// Execute a command on localhost
+    pub fn exec(&self, cmd: &str) -> Result<String, HostError> {
+        // Make command
+        let args: Vec<&str> = cmd.split(' ').collect();
+        let cmd: &str = args.first().unwrap();
+        let argv: &[&str] = &args[1..];
+        match std::process::Command::new(cmd).args(argv).output() {
+            Ok(output) => match std::str::from_utf8(&output.stdout) {
+                Ok(s) => Ok(s.to_string()),
+                Err(_) => Ok(String::new()),
+            },
+            Err(err) => Err(HostError::new(HostErrorType::ExecutionFailed, Some(err))),
+        }
     }
 
     /// ### chmod
@@ -943,6 +967,14 @@ mod tests {
     }
 
     #[test]
+    fn test_host_exec() {
+        let tmpdir: tempfile::TempDir = tempfile::TempDir::new().unwrap();
+        let host: Localhost = Localhost::new(PathBuf::from(tmpdir.path())).ok().unwrap();
+        // Execute
+        assert_eq!(host.exec("echo 5").ok().unwrap().as_str(), "5\n");
+    }
+
+    #[test]
     fn test_host_fmt_error() {
         let err: HostError = HostError::new(
             HostErrorType::CouldNotCreateFile,
@@ -955,6 +987,10 @@ mod tests {
         assert_eq!(
             format!("{}", HostError::new(HostErrorType::DeleteFailed, None)),
             String::from("Could not delete file")
+        );
+        assert_eq!(
+            format!("{}", HostError::new(HostErrorType::ExecutionFailed, None)),
+            String::from("Could not run command")
         );
         assert_eq!(
             format!("{}", HostError::new(HostErrorType::DirNotAccessible, None)),
