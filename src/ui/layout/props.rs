@@ -34,15 +34,17 @@ use tui::style::{Color, Modifier};
 #[derive(Clone)]
 pub struct Props {
     // Values
-    pub visible: bool,         // Is the element visible ON CREATE?
-    pub focus: bool,           // Is the element focused
-    pub foreground: Color,     // Foreground color
-    pub background: Color,     // Background color
-    pub bold: bool,            // Text bold
-    pub italic: bool,          // Italic
-    pub underlined: bool,      // Underlined
-    pub input_type: InputType, // Input type
-    pub texts: TextParts,      // text parts
+    pub visible: bool,            // Is the element visible ON CREATE?
+    pub focus: bool,              // Is the element focused
+    pub foreground: Color,        // Foreground color
+    pub background: Color,        // Background color
+    pub bold: bool,               // Text bold
+    pub italic: bool,             // Italic
+    pub underlined: bool,         // Underlined
+    pub input_type: InputType,    // Input type
+    pub input_len: Option<usize>, // max input len
+    pub texts: TextParts,         // text parts
+    pub value: Option<String>,    // Initial value
 }
 
 impl Default for Props {
@@ -57,7 +59,9 @@ impl Default for Props {
             italic: false,
             underlined: false,
             input_type: InputType::Text,
+            input_len: None,
             texts: TextParts::default(),
+            value: None,
         }
     }
 }
@@ -218,6 +222,26 @@ impl PropsBuilder {
         }
         self
     }
+
+    /// ### with_input_len
+    ///
+    /// Set max input len
+    pub fn with_input_len(&mut self, len: usize) -> &mut Self {
+        if let Some(props) = self.props.as_mut() {
+            props.input_len = Some(len);
+        }
+        self
+    }
+
+    /// ### with_value
+    ///
+    /// Set initial value for component
+    pub fn with_value(&mut self, value: String) -> &mut Self {
+        if let Some(props) = self.props.as_mut() {
+            props.value = Some(value);
+        }
+        self
+    }
 }
 
 impl Default for PropsBuilder {
@@ -286,6 +310,8 @@ mod tests {
         assert_eq!(props.underlined, false);
         assert!(props.texts.title.is_none());
         assert_eq!(props.input_type, InputType::Text);
+        assert!(props.input_len.is_none());
+        assert!(props.value.is_none());
         assert!(props.texts.body.is_none());
     }
 
@@ -315,6 +341,8 @@ mod tests {
                 Some(vec![String::from("hey")]),
             ))
             .with_input(InputType::Password)
+            .with_input_len(16)
+            .with_value(String::from("Hello"))
             .build();
         assert_eq!(props.background, Color::Blue);
         assert_eq!(props.bold, true);
@@ -323,6 +351,8 @@ mod tests {
         assert_eq!(props.italic, true);
         assert_eq!(props.texts.title.as_ref().unwrap().as_str(), "hello");
         assert_eq!(props.input_type, InputType::Password);
+        assert_eq!(props.input_len.as_ref().unwrap(), 16);
+        assert_eq!(props.value.as_ref().unwrap().as_str(), "Hello");
         assert_eq!(
             props.texts.body.as_ref().unwrap().get(0).unwrap().as_str(),
             "hey"
