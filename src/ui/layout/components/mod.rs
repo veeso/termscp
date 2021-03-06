@@ -24,7 +24,7 @@
 */
 
 // imports
-use super::{Component, InputEvent, Msg, Payload, Props, PropsBuilder, Render};
+use super::{Component, InputEvent, Msg, Payload, PropValue, Props, PropsBuilder, Render};
 
 // exports
 pub mod file_list;

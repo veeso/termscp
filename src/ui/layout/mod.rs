@@ -28,7 +28,7 @@ pub mod components;
 pub mod props;
 
 // locals
-use props::{Props, PropsBuilder};
+use props::{Props, PropsBuilder, PropValue};
 // ext
 use crossterm::event::Event as InputEvent;
 use crossterm::event::KeyEvent;

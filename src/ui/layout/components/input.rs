@@ -25,7 +25,7 @@
 
 // locals
 use super::super::props::InputType;
-use super::{Component, InputEvent, Msg, Payload, Props, PropsBuilder, Render};
+use super::{Component, InputEvent, Msg, Payload, PropValue, Props, PropsBuilder, Render};
 // ext
 use crossterm::event::{KeyCode, KeyModifiers};
 use tui::{
@@ -153,7 +153,7 @@ impl Input {
         // Initialize states
         let mut states: OwnStates = OwnStates::default();
         // Set state value from props
-        if let Some(val) = props.value.as_ref() {
+        if let PropValue::Str(val) = props.value.clone() {
             for ch in val.chars() {
                 states.append(ch, props.input_type);
             }

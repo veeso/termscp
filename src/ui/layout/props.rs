@@ -43,7 +43,7 @@ pub struct Props {
     pub input_type: InputType,    // Input type
     pub input_len: Option<usize>, // max input len
     pub texts: TextParts,         // text parts
-    pub value: Option<String>,    // Initial value
+    pub value: PropValue,         // Initial value
 }
 
 impl Default for Props {
@@ -59,7 +59,7 @@ impl Default for Props {
             input_type: InputType::Text,
             input_len: None,
             texts: TextParts::default(),
-            value: None,
+            value: PropValue::None,
         }
     }
 }
@@ -214,9 +214,9 @@ impl PropsBuilder {
     /// ### with_value
     ///
     /// Set initial value for component
-    pub fn with_value(&mut self, value: String) -> &mut Self {
+    pub fn with_value(&mut self, value: PropValue) -> &mut Self {
         if let Some(props) = self.props.as_mut() {
-            props.value = Some(value);
+            props.value = value;
         }
         self
     }
@@ -259,6 +259,21 @@ impl Default for TextParts {
     }
 }
 
+// -- Prop value
+
+/// ### PropValue
+///
+/// PropValue describes a property initial value
+#[derive(Clone, PartialEq, std::fmt::Debug)]
+pub enum PropValue {
+    Str(String),
+    Unsigned(usize),
+    Signed(isize),
+    Float(f64),
+    Boolean(bool),
+    None,
+}
+
 // -- Input Type
 
 /// ## InputType
@@ -288,7 +303,7 @@ mod tests {
         assert!(props.texts.title.is_none());
         assert_eq!(props.input_type, InputType::Text);
         assert!(props.input_len.is_none());
-        assert!(props.value.is_none());
+        assert_eq!(props.value, PropValue::None);
         assert!(props.texts.body.is_none());
     }
 
@@ -318,7 +333,7 @@ mod tests {
             ))
             .with_input(InputType::Password)
             .with_input_len(16)
-            .with_value(String::from("Hello"))
+            .with_value(PropValue::Str(String::from("Hello")))
             .build();
         assert_eq!(props.background, Color::Blue);
         assert_eq!(props.bold, true);
@@ -327,7 +342,11 @@ mod tests {
         assert_eq!(props.texts.title.as_ref().unwrap().as_str(), "hello");
         assert_eq!(props.input_type, InputType::Password);
         assert_eq!(*props.input_len.as_ref().unwrap(), 16);
-        assert_eq!(props.value.as_ref().unwrap().as_str(), "Hello");
+        if let PropValue::Str(s) = props.value {
+            assert_eq!(s.as_str(), "Hello");
+        } else {
+            panic!("Expected value to be a string");
+        }
         assert_eq!(
             props.texts.body.as_ref().unwrap().get(0).unwrap().as_str(),
             "hey"
