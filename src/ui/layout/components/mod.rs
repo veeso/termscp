@@ -30,3 +30,4 @@ use super::{Component, InputEvent, Msg, Payload, PropValue, Props, PropsBuilder,
 pub mod file_list;
 pub mod input;
 pub mod radio_group;
+pub mod text;

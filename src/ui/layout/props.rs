@@ -262,36 +262,99 @@ impl Default for TextParts {
 #[derive(Clone, std::fmt::Debug)]
 pub struct TextSpan {
     pub content: String,
-    pub color: Color,
+    pub fg: Color,
+    pub bg: Color,
     pub bold: bool,
     pub italic: bool,
     pub underlined: bool,
-}
-
-impl TextSpan {
-    /// ### new
-    ///
-    /// Instantiates a new TextSpan with all the attributes
-    pub fn new(content: String, color: Color, bold: bool, italic: bool, underlined: bool) -> Self {
-        TextSpan {
-            content,
-            color,
-            bold,
-            italic,
-            underlined,
-        }
-    }
 }
 
 impl From<&str> for TextSpan {
     fn from(txt: &str) -> Self {
         TextSpan {
             content: txt.to_string(),
-            color: Color::Reset,
+            fg: Color::Reset,
+            bg: Color::Reset,
             bold: false,
             italic: false,
             underlined: false,
         }
+    }
+}
+
+// -- TextSpan builder
+
+/// ## TextSpanBuilder
+///
+/// TextSpanBuilder is a struct which helps building quickly a TextSpan
+pub struct TextSpanBuilder {
+    text: Option<TextSpan>,
+}
+
+impl TextSpanBuilder {
+    /// ### new
+    ///
+    /// Instantiate a new TextSpanBuilder
+    pub fn new(text: &str) -> Self {
+        TextSpanBuilder {
+            text: Some(TextSpan::from(text)),
+        }
+    }
+
+    /// ### with_foreground
+    ///
+    /// Set foreground for text span
+    pub fn with_foreground(&mut self, color: Color) -> &mut Self {
+        if let Some(text) = self.text.as_mut() {
+            text.fg = color;
+        }
+        self
+    }
+
+    /// ### with_background
+    ///
+    /// Set background for text span
+    pub fn with_background(&mut self, color: Color) -> &mut Self {
+        if let Some(text) = self.text.as_mut() {
+            text.bg = color;
+        }
+        self
+    }
+
+    /// ### italic
+    ///
+    /// Set italic for text span
+    pub fn italic(&mut self) -> &mut Self {
+        if let Some(text) = self.text.as_mut() {
+            text.italic = true;
+        }
+        self
+    }
+    /// ### bold
+    ///
+    /// Set bold for text span
+    pub fn bold(&mut self) -> &mut Self {
+        if let Some(text) = self.text.as_mut() {
+            text.bold = true;
+        }
+        self
+    }
+
+    /// ### underlined
+    ///
+    /// Set underlined for text span
+    pub fn underlined(&mut self) -> &mut Self {
+        if let Some(text) = self.text.as_mut() {
+            text.underlined = true;
+        }
+        self
+    }
+
+    /// ### build
+    ///
+    /// Make TextSpan out of builder
+    pub fn build(&mut self) -> TextSpan {
+        self.text.take().unwrap()
     }
 }
 
@@ -512,14 +575,22 @@ mod tests {
         let span: TextSpan = TextSpan::from("Hello!");
         assert_eq!(span.content.as_str(), "Hello!");
         assert_eq!(span.bold, false);
-        assert_eq!(span.color, Color::Reset);
+        assert_eq!(span.fg, Color::Reset);
+        assert_eq!(span.bg, Color::Reset);
         assert_eq!(span.italic, false);
         assert_eq!(span.underlined, false);
         // With attributes
-        let span: TextSpan = TextSpan::new(String::from("Error"), Color::Red, true, true, true);
+        let span: TextSpan = TextSpanBuilder::new("Error")
+            .with_background(Color::Red)
+            .with_foreground(Color::Black)
+            .bold()
+            .italic()
+            .underlined()
+            .build();
         assert_eq!(span.content.as_str(), "Error");
         assert_eq!(span.bold, true);
-        assert_eq!(span.color, Color::Red);
+        assert_eq!(span.fg, Color::Black);
+        assert_eq!(span.bg, Color::Red);
         assert_eq!(span.italic, true);
         assert_eq!(span.underlined, true);
     }
