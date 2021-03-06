@@ -95,15 +95,6 @@ pub struct PropsBuilder {
 }
 
 impl PropsBuilder {
-    /// ### from_props
-    ///
-    /// Create a props builder from existing properties
-    pub fn from_props(props: &Props) -> Self {
-        PropsBuilder {
-            props: Some(props.clone()),
-        }
-    }
-
     /// ### build
     ///
     /// Build Props from builder
@@ -219,6 +210,12 @@ impl PropsBuilder {
             props.value = value;
         }
         self
+    }
+}
+
+impl From<Props> for PropsBuilder {
+    fn from(props: Props) -> Self {
+        PropsBuilder { props: Some(props) }
     }
 }
 
@@ -413,7 +410,7 @@ mod tests {
             ))
             .build();
         // Ok, now make a builder from properties
-        let builder: PropsBuilder = PropsBuilder::from_props(&props);
+        let builder: PropsBuilder = PropsBuilder::from(props);
         assert!(builder.props.is_some());
     }
 

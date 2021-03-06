@@ -180,7 +180,7 @@ impl Component for RadioGroup {
     /// This returns a prop builder in order to make easier to create
     /// new properties for the element.
     fn get_props(&self) -> PropsBuilder {
-        PropsBuilder::from_props(&self.props)
+        PropsBuilder::from(self.props.clone())
     }
 
     /// ### on
