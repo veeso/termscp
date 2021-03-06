@@ -53,8 +53,8 @@ pub enum Msg {
 #[derive(std::fmt::Debug, PartialEq)]
 pub enum Payload {
     Text(String),
-    Number(isize),
-    Unumber(usize),
+    Signed(isize),
+    Unsigned(usize),
     None,
 }
 

@@ -61,7 +61,7 @@ impl OwnStates {
     /// Append, if possible according to input type, the character to the input vec
     pub fn append(&mut self, ch: char, itype: InputType) {
         match itype {
-            InputType::Number => {
+            InputType::Signed => {
                 if ch.is_digit(10) {
                     // Must be digit
                     self.input.push(ch);
@@ -269,8 +269,8 @@ impl Component for Input {
     /// Returns the value as string or as a number based on the input value
     fn get_value(&self) -> Payload {
         match self.props.input_type {
-            InputType::Number => {
-                Payload::Unumber(self.states.get_value().parse::<usize>().ok().unwrap_or(0))
+            InputType::Signed => {
+                Payload::Unsigned(self.states.get_value().parse::<usize>().ok().unwrap_or(0))
             }
             _ => Payload::Text(self.states.get_value()),
         }

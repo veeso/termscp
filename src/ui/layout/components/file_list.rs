@@ -254,7 +254,7 @@ impl Component for FileList {
     ///
     /// Return component value. File list return index
     fn get_value(&self) -> Payload {
-        Payload::Unumber(self.states.get_list_index())
+        Payload::Unsigned(self.states.get_list_index())
     }
 
     // -- events
@@ -366,7 +366,7 @@ mod tests {
         // Enter
         assert_eq!(
             component.on(InputEvent::Key(KeyEvent::from(KeyCode::Enter))),
-            Msg::OnSubmit(Payload::Unumber(0))
+            Msg::OnSubmit(Payload::Unsigned(0))
         );
         // On key
         assert_eq!(
