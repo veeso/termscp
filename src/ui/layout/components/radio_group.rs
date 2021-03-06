@@ -24,6 +24,7 @@
 */
 
 // locals
+use super::super::props::TextSpan;
 use super::{Component, InputEvent, Msg, Payload, PropValue, Props, PropsBuilder, Render};
 // ext
 use crossterm::event::KeyCode;
@@ -73,6 +74,13 @@ impl OwnStates {
             self.choice -= 1;
         }
     }
+
+    /// ### make_choices
+    ///
+    /// Set OwnStates choices from a vector of text spans
+    pub fn make_choices(&mut self, spans: &Vec<TextSpan>) {
+        self.choices = spans.iter().map(|x| x.content.clone()).collect();
+    }
 }
 
 // -- component
@@ -92,8 +100,8 @@ impl RadioGroup {
     pub fn new(props: Props) -> Self {
         // Make states
         let mut states: OwnStates = OwnStates::default();
-        // Update choices
-        states.choices = props.texts.body.clone().unwrap_or(Vec::new());
+        // Update choices (vec of TextSpan to String)
+        states.make_choices(props.texts.rows.as_ref().unwrap_or(&Vec::new()));
         // Get value
         if let PropValue::Unsigned(choice) = props.value {
             states.choice = choice;
@@ -164,7 +172,8 @@ impl Component for RadioGroup {
     /// Returns a Msg to the view
     fn update(&mut self, props: Props) -> Msg {
         // Reset choices
-        self.states.choices = props.texts.body.clone().unwrap_or(Vec::new());
+        self.states
+            .make_choices(props.texts.rows.as_ref().unwrap_or(&Vec::new()));
         // Get value
         if let PropValue::Unsigned(choice) = props.value {
             self.states.choice = choice;
@@ -256,7 +265,7 @@ impl Component for RadioGroup {
 mod tests {
 
     use super::*;
-    use crate::ui::layout::props::TextParts;
+    use crate::ui::layout::props::{TextParts, TextSpan};
 
     use crossterm::event::KeyEvent;
 
@@ -268,9 +277,9 @@ mod tests {
                 .with_texts(TextParts::new(
                     Some(String::from("yes or no?")),
                     Some(vec![
-                        String::from("Yes!"),
-                        String::from("No"),
-                        String::from("Maybe"),
+                        TextSpan::from("Yes!"),
+                        TextSpan::from("No"),
+                        TextSpan::from("Maybe"),
                     ]),
                 ))
                 .with_value(PropValue::Unsigned(1))

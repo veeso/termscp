@@ -235,15 +235,15 @@ impl Default for PropsBuilder {
 #[derive(Clone)]
 pub struct TextParts {
     pub title: Option<String>,
-    pub body: Option<Vec<String>>,
+    pub rows: Option<Vec<TextSpan>>,
 }
 
 impl TextParts {
     /// ### new
     ///
     /// Instantiates a new TextParts entity
-    pub fn new(title: Option<String>, body: Option<Vec<String>>) -> Self {
-        TextParts { title, body }
+    pub fn new(title: Option<String>, rows: Option<Vec<TextSpan>>) -> Self {
+        TextParts { title, rows }
     }
 }
 
@@ -251,7 +251,46 @@ impl Default for TextParts {
     fn default() -> Self {
         TextParts {
             title: None,
-            body: None,
+            rows: None,
+        }
+    }
+}
+
+/// ### TextSpan
+///
+/// TextSpan is a "cell" of text with its attributes
+#[derive(Clone, std::fmt::Debug)]
+pub struct TextSpan {
+    pub content: String,
+    pub color: Color,
+    pub bold: bool,
+    pub italic: bool,
+    pub underlined: bool,
+}
+
+impl TextSpan {
+    /// ### new
+    ///
+    /// Instantiates a new TextSpan with all the attributes
+    pub fn new(content: String, color: Color, bold: bool, italic: bool, underlined: bool) -> Self {
+        TextSpan {
+            content,
+            color,
+            bold,
+            italic,
+            underlined,
+        }
+    }
+}
+
+impl From<&str> for TextSpan {
+    fn from(txt: &str) -> Self {
+        TextSpan {
+            content: txt.to_string(),
+            color: Color::Reset,
+            bold: false,
+            italic: false,
+            underlined: false,
         }
     }
 }
@@ -301,7 +340,7 @@ mod tests {
         assert_eq!(props.input_type, InputType::Text);
         assert!(props.input_len.is_none());
         assert_eq!(props.value, PropValue::None);
-        assert!(props.texts.body.is_none());
+        assert!(props.texts.rows.is_none());
     }
 
     #[test]
@@ -326,7 +365,7 @@ mod tests {
             .underlined()
             .with_texts(TextParts::new(
                 Some(String::from("hello")),
-                Some(vec![String::from("hey")]),
+                Some(vec![TextSpan::from("hey")]),
             ))
             .with_input(InputType::Password)
             .with_input_len(16)
@@ -345,7 +384,15 @@ mod tests {
             panic!("Expected value to be a string");
         }
         assert_eq!(
-            props.texts.body.as_ref().unwrap().get(0).unwrap().as_str(),
+            props
+                .texts
+                .rows
+                .as_ref()
+                .unwrap()
+                .get(0)
+                .unwrap()
+                .content
+                .as_str(),
             "hey"
         );
         assert_eq!(props.underlined, true);
@@ -359,7 +406,7 @@ mod tests {
             .underlined()
             .with_texts(TextParts::new(
                 Some(String::from("hello")),
-                Some(vec![String::from("hey")]),
+                Some(vec![TextSpan::from("hey")]),
             ))
             .build();
         assert_eq!(props.background, Color::Blue);
@@ -368,7 +415,15 @@ mod tests {
         assert_eq!(props.italic, true);
         assert_eq!(props.texts.title.as_ref().unwrap().as_str(), "hello");
         assert_eq!(
-            props.texts.body.as_ref().unwrap().get(0).unwrap().as_str(),
+            props
+                .texts
+                .rows
+                .as_ref()
+                .unwrap()
+                .get(0)
+                .unwrap()
+                .content
+                .as_str(),
             "hey"
         );
         assert_eq!(props.underlined, true);
@@ -389,7 +444,7 @@ mod tests {
             .underlined()
             .with_texts(TextParts::new(
                 Some(String::from("hello")),
-                Some(vec![String::from("hey")]),
+                Some(vec![TextSpan::from("hey")]),
             ));
         // Rebuild
         let _ = builder.build();
@@ -406,7 +461,7 @@ mod tests {
             .underlined()
             .with_texts(TextParts::new(
                 Some(String::from("hello")),
-                Some(vec![String::from("hey")]),
+                Some(vec![TextSpan::from("hey")]),
             ))
             .build();
         // Ok, now make a builder from properties
@@ -418,15 +473,29 @@ mod tests {
     fn test_ui_layout_props_text_parts_with_values() {
         let parts: TextParts = TextParts::new(
             Some(String::from("Hello world!")),
-            Some(vec![String::from("row1"), String::from("row2")]),
+            Some(vec![TextSpan::from("row1"), TextSpan::from("row2")]),
         );
         assert_eq!(parts.title.as_ref().unwrap().as_str(), "Hello world!");
         assert_eq!(
-            parts.body.as_ref().unwrap().get(0).unwrap().as_str(),
+            parts
+                .rows
+                .as_ref()
+                .unwrap()
+                .get(0)
+                .unwrap()
+                .content
+                .as_str(),
             "row1"
         );
         assert_eq!(
-            parts.body.as_ref().unwrap().get(1).unwrap().as_str(),
+            parts
+                .rows
+                .as_ref()
+                .unwrap()
+                .get(1)
+                .unwrap()
+                .content
+                .as_str(),
             "row2"
         );
     }
@@ -435,6 +504,23 @@ mod tests {
     fn test_ui_layout_props_text_parts_default() {
         let parts: TextParts = TextParts::default();
         assert!(parts.title.is_none());
-        assert!(parts.body.is_none());
+        assert!(parts.rows.is_none());
+    }
+
+    #[test]
+    fn test_ui_layout_props_text_span() {
+        let span: TextSpan = TextSpan::from("Hello!");
+        assert_eq!(span.content.as_str(), "Hello!");
+        assert_eq!(span.bold, false);
+        assert_eq!(span.color, Color::Reset);
+        assert_eq!(span.italic, false);
+        assert_eq!(span.underlined, false);
+        // With attributes
+        let span: TextSpan = TextSpan::new(String::from("Error"), Color::Red, true, true, true);
+        assert_eq!(span.content.as_str(), "Error");
+        assert_eq!(span.bold, true);
+        assert_eq!(span.color, Color::Red);
+        assert_eq!(span.italic, true);
+        assert_eq!(span.underlined, true);
     }
 }

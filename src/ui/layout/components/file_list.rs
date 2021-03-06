@@ -118,7 +118,7 @@ impl FileList {
         // Initialize states
         let mut states: OwnStates = OwnStates::default();
         // Set list length
-        states.set_list_len(match &props.texts.body {
+        states.set_list_len(match &props.texts.rows {
             Some(tokens) => tokens.len(),
             None => 0,
         });
@@ -136,11 +136,11 @@ impl Component for FileList {
             false => None,
             true => {
                 // Make list
-                let list_item: Vec<ListItem> = match self.props.texts.body.as_ref() {
+                let list_item: Vec<ListItem> = match self.props.texts.rows.as_ref() {
                     None => vec![],
                     Some(lines) => lines
                         .iter()
-                        .map(|line: &String| ListItem::new(Span::from(line.to_string())))
+                        .map(|line| ListItem::new(Span::from(line.content.to_string())))
                         .collect(),
                 };
                 let (fg, bg): (Color, Color) = match self.states.focus {
@@ -186,7 +186,7 @@ impl Component for FileList {
     fn update(&mut self, props: Props) -> Msg {
         self.props = props;
         // re-Set list length
-        self.states.set_list_len(match &self.props.texts.body {
+        self.states.set_list_len(match &self.props.texts.rows {
             Some(tokens) => tokens.len(),
             None => 0,
         });
@@ -287,7 +287,7 @@ impl Component for FileList {
 mod tests {
 
     use super::*;
-    use crate::ui::layout::props::TextParts;
+    use crate::ui::layout::props::{TextParts, TextSpan};
 
     use crossterm::event::KeyEvent;
 
@@ -298,7 +298,7 @@ mod tests {
             PropsBuilder::default()
                 .with_texts(TextParts::new(
                     Some(String::from("filelist")),
-                    Some(vec![String::from("file1"), String::from("file2")]),
+                    Some(vec![TextSpan::from("file1"), TextSpan::from("file2")]),
                 ))
                 .build(),
         );
@@ -323,9 +323,9 @@ mod tests {
                 .with_texts(TextParts::new(
                     Some(String::from("filelist")),
                     Some(vec![
-                        String::from("file1"),
-                        String::from("file2"),
-                        String::from("file3"),
+                        TextSpan::from("file1"),
+                        TextSpan::from("file2"),
+                        TextSpan::from("file3"),
                     ]),
                 ))
                 .build(),
