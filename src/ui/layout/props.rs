@@ -282,6 +282,27 @@ impl From<&str> for TextSpan {
     }
 }
 
+impl TextSpan {
+    /// ### get_modifiers
+    ///
+    /// Get text modifiers from properties
+    pub fn get_modifiers(&self) -> Modifier {
+        Modifier::empty()
+            | (match self.bold {
+                true => Modifier::BOLD,
+                false => Modifier::empty(),
+            })
+            | (match self.italic {
+                true => Modifier::ITALIC,
+                false => Modifier::empty(),
+            })
+            | (match self.underlined {
+                true => Modifier::UNDERLINED,
+                false => Modifier::empty(),
+            })
+    }
+}
+
 // -- TextSpan builder
 
 /// ## TextSpanBuilder
@@ -593,5 +614,10 @@ mod tests {
         assert_eq!(span.bg, Color::Red);
         assert_eq!(span.italic, true);
         assert_eq!(span.underlined, true);
+        // Check modifiers
+        let modifiers: Modifier = span.get_modifiers();
+        assert!(modifiers.intersects(Modifier::BOLD));
+        assert!(modifiers.intersects(Modifier::ITALIC));
+        assert!(modifiers.intersects(Modifier::UNDERLINED));
     }
 }
