@@ -59,21 +59,24 @@ impl OwnStates {
     /// ### append
     ///
     /// Append, if possible according to input type, the character to the input vec
-    pub fn append(&mut self, ch: char, itype: InputType) {
-        match itype {
-            InputType::Signed => {
-                if ch.is_digit(10) {
-                    // Must be digit
-                    self.input.push(ch);
+    pub fn append(&mut self, ch: char, itype: InputType, max_len: Option<usize>) {
+        // Check if max length has been reached
+        if self.input.len() < max_len.unwrap_or(usize::MAX) {
+            match itype {
+                InputType::Number => {
+                    if ch.is_digit(10) {
+                        // Must be digit
+                        self.input.insert(self.cursor, ch);
+                        // Increment cursor
+                        self.cursor += 1;
+                    }
+                }
+                _ => {
+                    // No rule
+                    self.input.insert(self.cursor, ch);
                     // Increment cursor
                     self.cursor += 1;
                 }
-            }
-            _ => {
-                // No rule
-                self.input.push(ch);
-                // Increment cursor
-                self.cursor += 1;
             }
         }
     }
@@ -93,7 +96,7 @@ impl OwnStates {
     ///
     /// Delete element at cursor
     pub fn delete(&mut self) {
-        if self.cursor + 1 < self.input.len() {
+        if self.cursor < self.input.len() {
             self.input.remove(self.cursor);
         }
     }
@@ -102,7 +105,7 @@ impl OwnStates {
     ///
     /// Increment cursor value by one if possible
     pub fn incr_cursor(&mut self) {
-        if self.cursor + 1 < self.input.len() {
+        if self.cursor + 1 <= self.input.len() {
             self.cursor += 1;
         }
     }
@@ -155,7 +158,7 @@ impl Input {
         // Set state value from props
         if let PropValue::Str(val) = props.value.clone() {
             for ch in val.chars() {
-                states.append(ch, props.input_type);
+                states.append(ch, props.input_type, props.input_len);
             }
         }
         Input { props, states }
@@ -248,7 +251,8 @@ impl Component for Input {
                         && !key.modifiers.intersects(KeyModifiers::ALT)
                     {
                         // Push char to input
-                        self.states.append(ch, self.props.input_type);
+                        self.states
+                            .append(ch, self.props.input_type, self.props.input_len);
                         // Message none
                         Msg::None
                     } else {
@@ -269,7 +273,7 @@ impl Component for Input {
     /// Returns the value as string or as a number based on the input value
     fn get_value(&self) -> Payload {
         match self.props.input_type {
-            InputType::Signed => {
+            InputType::Number => {
                 Payload::Unsigned(self.states.get_value().parse::<usize>().ok().unwrap_or(0))
             }
             _ => Payload::Text(self.states.get_value()),
@@ -306,10 +310,182 @@ impl Component for Input {
 mod tests {
 
     use super::*;
-    use crate::ui::layout::props::TextParts;
 
     use crossterm::event::KeyEvent;
 
     #[test]
-    fn test_ui_layout_components_input_text() {}
+    fn test_ui_layout_components_input_text() {
+        // Instantiate Input with value
+        let mut component: Input = Input::new(
+            PropsBuilder::default()
+                .with_input(InputType::Text)
+                .with_input_len(5)
+                .with_value(PropValue::Str(String::from("home")))
+                .build(),
+        );
+        // Verify initial state
+        assert_eq!(component.states.cursor, 4);
+        assert_eq!(component.states.input.len(), 4);
+        // Focus
+        assert_eq!(component.states.focus, false);
+        component.active();
+        assert_eq!(component.states.focus, true);
+        component.blur();
+        assert_eq!(component.states.focus, false);
+        // Should umount
+        assert_eq!(component.should_umount(), false);
+        // Get value
+        assert_eq!(component.get_value(), Payload::Text(String::from("home")));
+        // Render
+        assert_eq!(component.render().unwrap().cursor, 4);
+        // Handle events
+        // Try key with ctrl
+        assert_eq!(
+            component.on(InputEvent::Key(KeyEvent::new(
+                KeyCode::Char('a'),
+                KeyModifiers::CONTROL
+            ))),
+            Msg::OnKey(KeyEvent::new(KeyCode::Char('a'), KeyModifiers::CONTROL)),
+        );
+        // String shouldn't have changed
+        assert_eq!(component.get_value(), Payload::Text(String::from("home")));
+        assert_eq!(component.render().unwrap().cursor, 4);
+        // Character
+        assert_eq!(
+            component.on(InputEvent::Key(KeyEvent::from(KeyCode::Char('/')))),
+            Msg::None
+        );
+        assert_eq!(component.get_value(), Payload::Text(String::from("home/")));
+        assert_eq!(component.render().unwrap().cursor, 5);
+        // Verify max length (shouldn't push any character)
+        assert_eq!(
+            component.on(InputEvent::Key(KeyEvent::from(KeyCode::Char('a')))),
+            Msg::None
+        );
+        assert_eq!(component.get_value(), Payload::Text(String::from("home/")));
+        assert_eq!(component.render().unwrap().cursor, 5);
+        // Enter
+        assert_eq!(
+            component.on(InputEvent::Key(KeyEvent::from(KeyCode::Enter))),
+            Msg::OnSubmit(Payload::Text(String::from("home/")))
+        );
+        // Backspace
+        assert_eq!(
+            component.on(InputEvent::Key(KeyEvent::from(KeyCode::Backspace))),
+            Msg::None
+        );
+        assert_eq!(component.get_value(), Payload::Text(String::from("home")));
+        assert_eq!(component.render().unwrap().cursor, 4);
+        // Check backspace at 0
+        component.states.input = vec!['h'];
+        component.states.cursor = 1;
+        assert_eq!(
+            component.on(InputEvent::Key(KeyEvent::from(KeyCode::Backspace))),
+            Msg::None
+        );
+        assert_eq!(component.get_value(), Payload::Text(String::from("")));
+        assert_eq!(component.render().unwrap().cursor, 0);
+        // Another one...
+        assert_eq!(
+            component.on(InputEvent::Key(KeyEvent::from(KeyCode::Backspace))),
+            Msg::None
+        );
+        assert_eq!(component.get_value(), Payload::Text(String::from("")));
+        assert_eq!(component.render().unwrap().cursor, 0);
+        // See del behaviour here
+        assert_eq!(
+            component.on(InputEvent::Key(KeyEvent::from(KeyCode::Delete))),
+            Msg::None
+        );
+        assert_eq!(component.get_value(), Payload::Text(String::from("")));
+        assert_eq!(component.render().unwrap().cursor, 0);
+        // Check del behaviour
+        component.states.input = vec!['h', 'e'];
+        component.states.cursor = 1;
+        assert_eq!(
+            component.on(InputEvent::Key(KeyEvent::from(KeyCode::Delete))),
+            Msg::None
+        );
+        assert_eq!(component.get_value(), Payload::Text(String::from("h")));
+        assert_eq!(component.render().unwrap().cursor, 1); // Shouldn't move
+                                                           // Another one (should do nothing)
+        assert_eq!(
+            component.on(InputEvent::Key(KeyEvent::from(KeyCode::Delete))),
+            Msg::None
+        );
+        assert_eq!(component.get_value(), Payload::Text(String::from("h")));
+        assert_eq!(component.render().unwrap().cursor, 1); // Shouldn't move
+                                                           // Move cursor right
+        component.states.input = vec!['h', 'e', 'l', 'l', 'o'];
+        component.states.cursor = 1;
+        component.props.input_len = Some(16); // Let's change length
+        assert_eq!(
+            component.on(InputEvent::Key(KeyEvent::from(KeyCode::Right))),  // between 'e' and 'l'
+            Msg::None
+        );
+        assert_eq!(component.render().unwrap().cursor, 2); // Should increment
+                                                           // Put a character here
+        assert_eq!(
+            component.on(InputEvent::Key(KeyEvent::from(KeyCode::Char('a')))),
+            Msg::None
+        );
+        assert_eq!(component.get_value(), Payload::Text(String::from("heallo")));
+        assert_eq!(component.render().unwrap().cursor, 3);
+        // Move left
+        assert_eq!(
+            component.on(InputEvent::Key(KeyEvent::from(KeyCode::Left))),
+            Msg::None
+        );
+        assert_eq!(component.render().unwrap().cursor, 2); // Should decrement
+                                                           // Go at the end
+        component.states.cursor = 6;
+        // Move right
+        assert_eq!(
+            component.on(InputEvent::Key(KeyEvent::from(KeyCode::Right))),
+            Msg::None
+        );
+        assert_eq!(component.render().unwrap().cursor, 6); // Should stay
+                                                           // Move left
+        assert_eq!(
+            component.on(InputEvent::Key(KeyEvent::from(KeyCode::Left))),
+            Msg::None
+        );
+        assert_eq!(component.render().unwrap().cursor, 5); // Should decrement
+                                                           // Go at the beginning
+        component.states.cursor = 0;
+        assert_eq!(
+            component.on(InputEvent::Key(KeyEvent::from(KeyCode::Left))),
+            Msg::None
+        );
+        assert_eq!(component.render().unwrap().cursor, 0); // Should stay
+    }
+
+    #[test]
+    fn test_ui_layout_components_input_number() {
+        // Instantiate Input with value
+        let mut component: Input = Input::new(
+            PropsBuilder::default()
+                .with_input(InputType::Number)
+                .with_input_len(5)
+                .with_value(PropValue::Str(String::from("3000")))
+                .build(),
+        );
+        // Verify initial state
+        assert_eq!(component.states.cursor, 4);
+        assert_eq!(component.states.input.len(), 4);
+        // Push a non numeric value
+        assert_eq!(
+            component.on(InputEvent::Key(KeyEvent::from(KeyCode::Char('a')))),
+            Msg::None
+        );
+        assert_eq!(component.get_value(), Payload::Unsigned(3000));
+        assert_eq!(component.render().unwrap().cursor, 4);
+        // Push a number
+        assert_eq!(
+            component.on(InputEvent::Key(KeyEvent::from(KeyCode::Char('1')))),
+            Msg::None
+        );
+        assert_eq!(component.get_value(), Payload::Unsigned(30001));
+        assert_eq!(component.render().unwrap().cursor, 5);
+    }
 }

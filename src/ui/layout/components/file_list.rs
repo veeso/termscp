@@ -333,6 +333,8 @@ mod tests {
         // Verify states
         assert_eq!(component.states.list_index, 0);
         assert_eq!(component.states.list_len, 3);
+        // get value
+        assert_eq!(component.get_value(), Payload::Unsigned(0));
         // Render
         assert_eq!(component.render().unwrap().cursor, 0);
         // Handle inputs

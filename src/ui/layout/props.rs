@@ -282,7 +282,7 @@ pub enum PropValue {
 #[derive(Clone, Copy, PartialEq, std::fmt::Debug)]
 pub enum InputType {
     Text,
-    Signed,
+    Number,
     Password,
 }
 
