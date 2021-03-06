@@ -32,7 +32,7 @@ use std::time::Duration;
 ///
 /// InputHandler is the struct which runs a thread which waits for
 /// input events from the user and reports them through a receiver
-pub(crate) struct InputHandler {}
+pub(crate) struct InputHandler;
 
 impl InputHandler {
     /// ### InputHandler
