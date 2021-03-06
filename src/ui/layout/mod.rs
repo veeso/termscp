@@ -43,6 +43,7 @@ use tui::widgets::Widget;
 #[derive(std::fmt::Debug, PartialEq)]
 pub enum Msg {
     OnSubmit(Payload),
+    OnChange(Payload),
     OnKey(KeyEvent),
     None,
 }

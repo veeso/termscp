@@ -420,7 +420,7 @@ mod tests {
         component.states.cursor = 1;
         component.props.input_len = Some(16); // Let's change length
         assert_eq!(
-            component.on(InputEvent::Key(KeyEvent::from(KeyCode::Right))),  // between 'e' and 'l'
+            component.on(InputEvent::Key(KeyEvent::from(KeyCode::Right))), // between 'e' and 'l'
             Msg::None
         );
         assert_eq!(component.render().unwrap().cursor, 2); // Should increment
