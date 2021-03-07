@@ -32,12 +32,23 @@ use tui::{
     widgets::Paragraph,
 };
 
-// NOTE: this component doesn't handle any state
+// -- state
+
+struct OwnStates {
+    focus: bool,
+}
+
+impl Default for OwnStates {
+    fn default() -> Self {
+        OwnStates { focus: false }
+    }
+}
 
 // -- component
 
 pub struct Text {
     props: Props,
+    states: OwnStates,
 }
 
 impl Text {
@@ -45,7 +56,10 @@ impl Text {
     ///
     /// Instantiate a new Text component
     pub fn new(props: Props) -> Self {
-        Text { props }
+        Text {
+            props,
+            states: OwnStates::default(),
+        }
     }
 }
 
@@ -117,8 +131,13 @@ impl Component for Text {
     /// Handle input event and update internal states.
     /// Returns a Msg to the view.
     /// Returns always None, since cannot have any focus
-    fn on(&mut self, _ev: InputEvent) -> Msg {
-        Msg::None
+    fn on(&mut self, ev: InputEvent) -> Msg {
+        // Return key
+        if let InputEvent::Key(key) = ev {
+            Msg::OnKey(key)
+        } else {
+            Msg::None
+        }
     }
 
     /// ### get_value
@@ -142,13 +161,17 @@ impl Component for Text {
 
     /// ### blur
     ///
-    /// Blur component; does nothing on this component
-    fn blur(&mut self) {}
+    /// Blur component
+    fn blur(&mut self) {
+        self.states.focus = false;
+    }
 
     /// ### active
     ///
-    /// Active component; does nothing on this component
-    fn active(&mut self) {}
+    /// Active component
+    fn active(&mut self) {
+        self.states.focus = true;
+    }
 }
 
 #[cfg(test)]
@@ -178,8 +201,11 @@ mod tests {
                 .build(),
         );
         // Focus
+        assert_eq!(component.states.focus, false);
         component.active();
+        assert_eq!(component.states.focus, true);
         component.blur();
+        assert_eq!(component.states.focus, false);
         // Should umount
         assert_eq!(component.should_umount(), false);
         // Get value
@@ -189,7 +215,7 @@ mod tests {
         // Event
         assert_eq!(
             component.on(InputEvent::Key(KeyEvent::from(KeyCode::Delete))),
-            Msg::None
+            Msg::OnKey(KeyEvent::from(KeyCode::Delete))
         );
     }
 }

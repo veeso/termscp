@@ -33,7 +33,17 @@ use tui::{
     widgets::{Block, BorderType, Borders, List, ListItem},
 };
 
-// NOTE: this component doesn't handle any state
+// -- state
+
+struct OwnStates {
+    focus: bool,
+}
+
+impl Default for OwnStates {
+    fn default() -> Self {
+        OwnStates { focus: false }
+    }
+}
 
 // -- component
 
@@ -42,6 +52,7 @@ use tui::{
 /// Table is a table component. List n rows with n text span columns
 pub struct Table {
     props: Props,
+    states: OwnStates,
 }
 
 impl Table {
@@ -49,7 +60,10 @@ impl Table {
     ///
     /// Instantiate a new Table component
     pub fn new(props: Props) -> Self {
-        Table { props }
+        Table {
+            props,
+            states: OwnStates::default(),
+        }
     }
 }
 
@@ -134,8 +148,13 @@ impl Component for Table {
     /// Handle input event and update internal states.
     /// Returns a Msg to the view.
     /// Returns always None, since cannot have any focus
-    fn on(&mut self, _ev: InputEvent) -> Msg {
-        Msg::None
+    fn on(&mut self, ev: InputEvent) -> Msg {
+        // Return key
+        if let InputEvent::Key(key) = ev {
+            Msg::OnKey(key)
+        } else {
+            Msg::None
+        }
     }
 
     /// ### get_value
@@ -159,13 +178,17 @@ impl Component for Table {
 
     /// ### blur
     ///
-    /// Blur component; does nothing on this component
-    fn blur(&mut self) {}
+    /// Blur component
+    fn blur(&mut self) {
+        self.states.focus = false;
+    }
 
     /// ### active
     ///
-    /// Active component; does nothing on this component
-    fn active(&mut self) {}
+    /// Active component
+    fn active(&mut self) {
+        self.states.focus = true;
+    }
 }
 
 #[cfg(test)]
@@ -193,8 +216,11 @@ mod tests {
                 .build(),
         );
         // Focus
+        assert_eq!(component.states.focus, false);
         component.active();
+        assert_eq!(component.states.focus, true);
         component.blur();
+        assert_eq!(component.states.focus, false);
         // Should umount
         assert_eq!(component.should_umount(), false);
         // Get value
@@ -204,7 +230,7 @@ mod tests {
         // Event
         assert_eq!(
             component.on(InputEvent::Key(KeyEvent::from(KeyCode::Delete))),
-            Msg::None
+            Msg::OnKey(KeyEvent::from(KeyCode::Delete))
         );
     }
 }
