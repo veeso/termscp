@@ -31,4 +31,5 @@ pub mod file_list;
 pub mod input;
 pub mod progress_bar;
 pub mod radio_group;
+pub mod table;
 pub mod text;
