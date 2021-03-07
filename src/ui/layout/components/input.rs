@@ -176,7 +176,7 @@ impl Component for Input {
                 Some(t) => t.clone(),
                 None => String::new(),
             };
-            let p: Paragraph = Paragraph::new(self.states.get_value())
+            let p: Paragraph = Paragraph::new(self.states.render_value(self.props.input_type))
                 .style(match self.states.focus {
                     true => Style::default().fg(self.props.foreground),
                     false => Style::default(),

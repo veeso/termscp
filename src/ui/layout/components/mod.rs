@@ -29,5 +29,6 @@ use super::{Component, InputEvent, Msg, Payload, PropValue, Props, PropsBuilder,
 // exports
 pub mod file_list;
 pub mod input;
+pub mod progress_bar;
 pub mod radio_group;
 pub mod text;
