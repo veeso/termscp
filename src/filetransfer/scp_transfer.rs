@@ -151,12 +151,19 @@ impl ScpFileTransfer {
                 if let Some(symlink_path) = symlink_path.as_ref() {
                     is_dir = symlink_path.is_dir();
                 }
-                // Get symlink
+                // Get symlink; PATH mustn't be equal to filename
                 let symlink: Option<Box<FsEntry>> = match symlink_path {
                     None => None,
-                    Some(p) => match self.stat(p.as_path()) {
-                        Ok(e) => Some(Box::new(e)),
-                        Err(_) => None, // Ignore errors
+                    Some(p) => match p.file_name().unwrap_or(&std::ffi::OsStr::new(""))
+                        == file_name.as_str()
+                    {
+                        // If name is equal, don't stat path; otherwise it would get stuck
+                        true => None,
+                        false => match self.stat(p.as_path()) {
+                            // If path match filename
+                            Ok(e) => Some(Box::new(e)),
+                            Err(_) => None, // Ignore errors
+                        },
                     },
                 };
                 // Check if file_name is '.' or '..'
