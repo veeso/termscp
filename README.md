@@ -63,6 +63,7 @@ It happens quite often to me, when using SCP at work to forget the path of a fil
   - FTP and FTPS
 - Compatible with Windows, Linux, BSD and MacOS
 - Handy user interface to explore and operate on the remote and on the local machine file system
+  - Create, remove, rename, search, view and edit files
 - Bookmarks and recent connections can be saved to access quickly to your favourite hosts
 - Supports text editors to view and edit text files
 - Supports both SFTP/SCP authentication through SSH keys and username/password
@@ -379,11 +380,7 @@ The developer documentation can be found on Rust Docs at <https://docs.rs/termsc
 
 ## Upcoming Features 🧪
 
-- **New commands in file explorer** (0.4.0 - March 2021)
-  - **Find**: search for files through directories, with built-in regex support
-  - **Execute**: run a command on both local host and remote host in protocols where this is supported
-    - SCP for sure
-    - SFTP: might be a challenge, since I should start a SSH session, but I guess it's not impossible
+FIXME: add new
 
 ---
 
