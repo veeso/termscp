@@ -29,6 +29,7 @@ extern crate tui;
 
 // Locals
 use super::input::InputHandler;
+use super::store::Store;
 use crate::host::Localhost;
 use crate::system::config_client::ConfigClient;
 
@@ -46,6 +47,7 @@ use tui::Terminal;
 pub struct Context {
     pub local: Localhost,
     pub(crate) config_client: Option<ConfigClient>,
+    pub(crate) store: Store,
     pub(crate) input_hnd: InputHandler,
     pub(crate) terminal: Terminal<CrosstermBackend<Stdout>>,
     error: Option<String>,
@@ -66,6 +68,7 @@ impl Context {
         Context {
             local,
             config_client,
+            store: Store::init(),
             input_hnd: InputHandler::new(),
             terminal: Terminal::new(CrosstermBackend::new(stdout)).unwrap(),
             error,
