@@ -237,7 +237,7 @@ pub trait FileTransfer {
     ///
     /// Find files from current directory (in all subdirectories) whose name matches the provided search
     /// Search supports wildcards ('?', '*')
-    fn find(&mut self, search: &str) -> Result<Vec<FsFile>, FileTransferError> {
+    fn find(&mut self, search: &str) -> Result<Vec<FsEntry>, FileTransferError> {
         match self.is_connected() {
             true => {
                 // Starting from current directory, iter dir
@@ -261,8 +261,8 @@ pub trait FileTransfer {
         &mut self,
         dir: &Path,
         filter: &WildMatch,
-    ) -> Result<Vec<FsFile>, FileTransferError> {
-        let mut drained: Vec<FsFile> = Vec::new();
+    ) -> Result<Vec<FsEntry>, FileTransferError> {
+        let mut drained: Vec<FsEntry> = Vec::new();
         // Scan directory
         match self.list_dir(dir) {
             Ok(entries) => {
@@ -275,6 +275,10 @@ pub trait FileTransfer {
                 for entry in entries.iter() {
                     match entry {
                         FsEntry::Directory(dir) => {
+                            // If directory name, matches wildcard, push it to drained
+                            if filter.is_match(dir.name.as_str()) {
+                                drained.push(FsEntry::Directory(dir.clone()));
+                            }
                             match self.iter_search(dir.abs_path.as_path(), filter) {
                                 Ok(mut filtered) => drained.append(&mut filtered),
                                 Err(err) => return Err(err),
@@ -282,7 +286,7 @@ pub trait FileTransfer {
                         }
                         FsEntry::File(file) => {
                             if filter.is_match(file.name.as_str()) {
-                                drained.push(file.clone());
+                                drained.push(FsEntry::File(file.clone()));
                             }
                         }
                     }

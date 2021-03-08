@@ -547,7 +547,7 @@ impl Localhost {
     ///
     /// Find files matching `search` on localhost starting from current directory. Search supports recursive search of course.
     /// The `search` argument supports wilcards ('*', '?')
-    pub fn find(&self, search: &str) -> Result<Vec<FsFile>, HostError> {
+    pub fn find(&self, search: &str) -> Result<Vec<FsEntry>, HostError> {
         self.iter_search(self.wrkdir.as_path(), &WildMatch::new(search))
     }
 
@@ -558,9 +558,9 @@ impl Localhost {
     /// Recursive call for `find` method.
     /// Search in current directory for files which match `filter`.
     /// If a directory is found in current directory, `iter_search` will be called using that dir as argument.
-    fn iter_search(&self, dir: &Path, filter: &WildMatch) -> Result<Vec<FsFile>, HostError> {
+    fn iter_search(&self, dir: &Path, filter: &WildMatch) -> Result<Vec<FsEntry>, HostError> {
         // Scan directory
-        let mut drained: Vec<FsFile> = Vec::new();
+        let mut drained: Vec<FsEntry> = Vec::new();
         match self.scan_dir(dir) {
             Err(err) => Err(err),
             Ok(entries) => {
@@ -574,6 +574,10 @@ impl Localhost {
                 for entry in entries.iter() {
                     match entry {
                         FsEntry::Directory(dir) => {
+                            // If directory matches; push directory to drained
+                            if filter.is_match(dir.name.as_str()) {
+                                drained.push(FsEntry::Directory(dir.clone()));
+                            }
                             match self.iter_search(dir.abs_path.as_path(), filter) {
                                 Ok(mut filtered) => drained.append(&mut filtered),
                                 Err(err) => return Err(err),
@@ -581,7 +585,7 @@ impl Localhost {
                         }
                         FsEntry::File(file) => {
                             if filter.is_match(file.name.as_str()) {
-                                drained.push(file.clone());
+                                drained.push(FsEntry::File(file.clone()));
                             }
                         }
                     }
@@ -1043,15 +1047,21 @@ mod tests {
         assert!(make_sample_file(subdir.as_path(), "omar.txt").is_ok());
         assert!(make_sample_file(subdir.as_path(), "errors.txt").is_ok());
         assert!(make_sample_file(subdir.as_path(), "screenshot.png").is_ok());
+        assert!(make_sample_file(subdir.as_path(), "examples.csv").is_ok());
         let host: Localhost = Localhost::new(PathBuf::from(dir_path)).ok().unwrap();
         // Find txt files
-        let result: Vec<FsFile> = host.find("*.txt").ok().unwrap();
+        let result: Vec<FsEntry> = host.find("*.txt").ok().unwrap();
         // There should be 3 entries
         assert_eq!(result.len(), 3);
         // Check names (they should be sorted alphabetically already; NOTE: examples/ comes before pippo.txt)
-        assert_eq!(result[0].name.as_str(), "errors.txt");
-        assert_eq!(result[1].name.as_str(), "omar.txt");
-        assert_eq!(result[2].name.as_str(), "pippo.txt");
+        assert_eq!(result[0].get_name(), "errors.txt");
+        assert_eq!(result[1].get_name(), "omar.txt");
+        assert_eq!(result[2].get_name(), "pippo.txt");
+        // Search for directory
+        let result: Vec<FsEntry> = host.find("examples*").ok().unwrap();
+        assert_eq!(result.len(), 2);
+        assert_eq!(result[0].get_name(), "examples");
+        assert_eq!(result[1].get_name(), "examples.csv");
     }
 
     #[test]

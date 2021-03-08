@@ -1070,11 +1070,14 @@ mod tests {
         // Check session and scp
         assert!(client.session.is_some());
         // Search for file (let's search for pop3-*.png); there should be 2
-        let search_res: Vec<FsFile> = client.find("pop3-*.png").ok().unwrap();
+        let search_res: Vec<FsEntry> = client.find("pop3-*.png").ok().unwrap();
         assert_eq!(search_res.len(), 2);
         // verify names
-        assert_eq!(search_res[0].name.as_str(), "pop3-browser.png");
-        assert_eq!(search_res[1].name.as_str(), "pop3-console-client.png");
+        assert_eq!(search_res[0].get_name(), "pop3-browser.png");
+        assert_eq!(search_res[1].get_name(), "pop3-console-client.png");
+        // Search directory
+        let search_res: Vec<FsEntry> = client.find("pub").ok().unwrap();
+        assert_eq!(search_res.len(), 1);
         // Disconnect
         assert!(client.disconnect().is_ok());
         // Verify err
