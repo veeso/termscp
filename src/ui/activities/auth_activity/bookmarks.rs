@@ -94,6 +94,8 @@ impl AuthActivity {
             bookmarks_cli.add_bookmark(name.clone(), address, port, protocol, username, password);
             // Save bookmarks
             self.write_bookmarks();
+            // Remove `name` from bookmarks if exists
+            self.bookmarks_list.retain(|b| b.as_str() != name.as_str());
             // Push bookmark to list and sort
             self.bookmarks_list.push(name);
             self.sort_bookmarks();
