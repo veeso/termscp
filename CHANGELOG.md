@@ -18,7 +18,12 @@
 
 Released on FIXME: date
 
-- REPL
+- **New explorer features**:
+  - **Execute** a command pressing `X`. This feature is supported on both local and remote hosts (only SFTP/SCP protocols support this feature).
+- Bugfix:
+  - Prevent resetting explorer index on remote tab after performing certain actions (list dir, exec, ...)
+  - SCP file transfer: prevent infinite loops while performing `stat` on symbolic links pointing to themselves (e.g. `mylink -> mylink`)
+  - Fixed a bug causing termscp to crash if removing a bookmark
 
 ## 0.3.3
 

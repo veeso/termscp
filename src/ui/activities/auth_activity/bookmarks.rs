@@ -50,7 +50,7 @@ impl AuthActivity {
                 self.write_bookmarks();
             }
             // Delete element from vec
-            self.recents_list.remove(idx);
+            self.bookmarks_list.remove(idx);
         }
     }
 
