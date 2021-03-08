@@ -30,6 +30,7 @@ extern crate tui;
 // Locals
 use super::input::InputHandler;
 use crate::host::Localhost;
+use crate::system::config_client::ConfigClient;
 
 // Includes
 use crossterm::event::DisableMouseCapture;
@@ -44,25 +45,52 @@ use tui::Terminal;
 /// Context holds data structures used by the ui
 pub struct Context {
     pub local: Localhost,
+    pub(crate) config_client: Option<ConfigClient>,
     pub(crate) input_hnd: InputHandler,
     pub(crate) terminal: Terminal<CrosstermBackend<Stdout>>,
+    error: Option<String>,
 }
 
 impl Context {
     /// ### new
     ///
     /// Instantiates a new Context
-    pub fn new(local: Localhost) -> Context {
+    pub fn new(
+        local: Localhost,
+        config_client: Option<ConfigClient>,
+        error: Option<String>,
+    ) -> Context {
         // Create terminal
         let mut stdout = stdout();
         assert!(execute!(stdout, EnterAlternateScreen).is_ok());
         Context {
             local,
+            config_client,
             input_hnd: InputHandler::new(),
             terminal: Terminal::new(CrosstermBackend::new(stdout)).unwrap(),
+            error,
         }
     }
 
+    /* NOTE: in case is necessary
+    /// ### set_error
+    ///
+    /// Set context error
+    pub fn set_error(&mut self, err: String) {
+        self.error = Some(err);
+    }
+    */
+
+    /// ### get_error
+    ///
+    /// Get error message and remove it from the context
+    pub fn get_error(&mut self) -> Option<String> {
+        self.error.take()
+    }
+
+    /// ### enter_alternate_screen
+    ///
+    /// Enter alternate screen (gui window)
     pub fn enter_alternate_screen(&mut self) {
         let _ = execute!(
             self.terminal.backend_mut(),
@@ -71,6 +99,9 @@ impl Context {
         );
     }
 
+    /// ### leave_alternate_screen
+    ///
+    /// Go back to normal screen (gui window)
     pub fn leave_alternate_screen(&mut self) {
         let _ = execute!(
             self.terminal.backend_mut(),
@@ -79,6 +110,9 @@ impl Context {
         );
     }
 
+    /// ### clear_screen
+    ///
+    /// Clear terminal screen
     pub fn clear_screen(&mut self) {
         let _ = self.terminal.clear();
     }

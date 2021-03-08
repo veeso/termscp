@@ -37,7 +37,6 @@ extern crate tui;
 
 // Locals
 use super::{Activity, Context};
-use crate::system::config_client::ConfigClient;
 // Ext
 use crossterm::event::Event as InputEvent;
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
@@ -106,7 +105,6 @@ enum Popup {
 pub struct SetupActivity {
     pub quit: bool,           // Becomes true when user requests the activity to terminate
     context: Option<Context>, // Context holder
-    config_cli: Option<ConfigClient>, // Config client
     tab: SetupTab,            // Current setup tab
     popup: Option<Popup>,     // Active popup
     user_input: Vec<String>,  // User input holder
@@ -127,7 +125,6 @@ impl Default for SetupActivity {
         SetupActivity {
             quit: false,
             context: None,
-            config_cli: None,
             tab: SetupTab::UserInterface(UserInterfaceInputField::TextEditor),
             popup: None,
             user_input: user_input_buffer, // Max 16
@@ -153,9 +150,9 @@ impl Activity for SetupActivity {
         self.context.as_mut().unwrap().clear_screen();
         // Put raw mode on enabled
         let _ = enable_raw_mode();
-        // Initialize config client
-        if self.config_cli.is_none() {
-            self.init_config_client();
+        // Verify error state from context
+        if let Some(err) = self.context.as_mut().unwrap().get_error() {
+            self.popup = Some(Popup::Fatal(err));
         }
     }
 

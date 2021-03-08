@@ -18,7 +18,10 @@
 
 Released on FIXME: date
 
-- REPL
+- Enhancements:
+  - Improved performance regarding configuration I/O (config client is now shared in the activity context)
+- Bugfix:
+  - Fixed file format cursor position in the GUI
 
 ## 0.3.3
 

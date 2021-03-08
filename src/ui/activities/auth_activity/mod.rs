@@ -38,14 +38,11 @@ extern crate unicode_width;
 use super::{Activity, Context};
 use crate::filetransfer::FileTransferProtocol;
 use crate::system::bookmarks_client::BookmarksClient;
-use crate::system::config_client::ConfigClient;
-use crate::system::environment;
 use crate::utils::git;
 
 // Includes
 use crossterm::event::Event as InputEvent;
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
-use std::path::PathBuf;
 use tui::style::Color;
 
 // Types
@@ -107,7 +104,6 @@ pub struct AuthActivity {
     pub setup: bool,  // Becomes true if user has requested setup
     context: Option<Context>,
     bookmarks_client: Option<BookmarksClient>,
-    config_client: Option<ConfigClient>,
     selected_field: InputField, // Selected field in AuthCredentials Form
     popup: Option<Popup>,
     input_form: InputForm,
@@ -145,7 +141,6 @@ impl AuthActivity {
             setup: false,
             context: None,
             bookmarks_client: None,
-            config_client: None,
             selected_field: InputField::Address,
             popup: None,
             input_form: InputForm::AuthCredentials,
@@ -161,47 +156,11 @@ impl AuthActivity {
         }
     }
 
-    /// ### init_config_client
-    ///
-    /// Initialize config client
-    fn init_config_client(&mut self) {
-        // Get config dir
-        match environment::init_config_dir() {
-            Ok(config_dir) => {
-                if let Some(config_dir) = config_dir {
-                    // Get config client paths
-                    let (config_path, ssh_dir): (PathBuf, PathBuf) =
-                        environment::get_config_paths(config_dir.as_path());
-                    match ConfigClient::new(config_path.as_path(), ssh_dir.as_path()) {
-                        Ok(cli) => {
-                            // Set default protocol
-                            self.protocol = cli.get_default_protocol();
-                            // Set client
-                            self.config_client = Some(cli);
-                        }
-                        Err(err) => {
-                            self.popup = Some(Popup::Alert(
-                                Color::Red,
-                                format!("Could not initialize user configuration: {}", err),
-                            ))
-                        }
-                    }
-                }
-            }
-            Err(err) => {
-                self.popup = Some(Popup::Alert(
-                    Color::Red,
-                    format!("Could not initialize configuration directory: {}", err),
-                ))
-            }
-        }
-    }
-
     /// ### on_create
     ///
     /// If enabled in configuration, check for updates from Github
     fn check_for_updates(&mut self) {
-        if let Some(client) = self.config_client.as_ref() {
+        if let Some(client) = self.context.as_ref().unwrap().config_client.as_ref() {
             if client.get_check_for_updates() {
                 // Send request
                 match git::check_for_updates(env!("CARGO_PKG_VERSION")) {
@@ -237,9 +196,9 @@ impl Activity for AuthActivity {
         if self.bookmarks_client.is_none() {
             self.init_bookmarks_client();
         }
-        // init config client
-        if self.config_client.is_none() {
-            self.init_config_client();
+        // Verify error state from context
+        if let Some(err) = self.context.as_mut().unwrap().get_error() {
+            self.popup = Some(Popup::Alert(Color::Red, err));
         }
         // If check for updates is enabled, check for updates
         self.check_for_updates();

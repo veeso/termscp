@@ -147,7 +147,7 @@ impl FileTransferActivity {
     ///
     /// Set text editor to use
     pub(super) fn setup_text_editor(&self) {
-        if let Some(config_cli) = &self.config_cli {
+        if let Some(config_cli) = self.context.as_ref().unwrap().config_client.as_ref() {
             // Set text editor
             env::set_var("EDITOR", config_cli.get_text_editor());
         }
