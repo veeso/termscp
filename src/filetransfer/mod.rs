@@ -23,12 +23,15 @@
 *
 */
 
+// dependencies
+extern crate wildmatch;
+// locals
+use crate::fs::{FsEntry, FsFile};
+// ext
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
-
-use crate::fs::{FsEntry, FsFile};
-
-// Transfers
+use wildmatch::WildMatch;
+// exports
 pub mod ftp_transfer;
 pub mod scp_transfer;
 pub mod sftp_transfer;
@@ -229,6 +232,66 @@ pub trait FileTransfer {
     /// This mighe be necessary for some protocols.
     /// You must call this method each time you want to finalize the read of the remote file.
     fn on_recv(&mut self, readable: Box<dyn Read>) -> Result<(), FileTransferError>;
+
+    /// ### find
+    ///
+    /// Find files from current directory (in all subdirectories) whose name matches the provided search
+    /// Search supports wildcards ('?', '*')
+    fn find(&mut self, search: &str) -> Result<Vec<FsFile>, FileTransferError> {
+        match self.is_connected() {
+            true => {
+                // Starting from current directory, iter dir
+                match self.pwd() {
+                    Ok(p) => self.iter_search(p.as_path(), &WildMatch::new(search)),
+                    Err(err) => Err(err),
+                }
+            }
+            false => Err(FileTransferError::new(
+                FileTransferErrorType::UninitializedSession,
+            )),
+        }
+    }
+
+    /// ### iter_search
+    ///
+    /// Search recursively in `dir` for file matching the wildcard.
+    /// NOTE: DON'T RE-IMPLEMENT THIS FUNCTION, unless the file transfer provides a faster way to do so
+    /// NOTE: don't call this method from outside; consider it as private
+    fn iter_search(
+        &mut self,
+        dir: &Path,
+        filter: &WildMatch,
+    ) -> Result<Vec<FsFile>, FileTransferError> {
+        let mut drained: Vec<FsFile> = Vec::new();
+        // Scan directory
+        match self.list_dir(dir) {
+            Ok(entries) => {
+                /* For each entry:
+                - if is dir: call iter_search with `dir`
+                    - push `iter_search` result to `drained`
+                - if is file: check if it matches `filter`
+                    - if it matches `filter`: push to to filter
+                */
+                for entry in entries.iter() {
+                    match entry {
+                        FsEntry::Directory(dir) => {
+                            match self.iter_search(dir.abs_path.as_path(), filter) {
+                                Ok(mut filtered) => drained.append(&mut filtered),
+                                Err(err) => return Err(err),
+                            }
+                        }
+                        FsEntry::File(file) => {
+                            if filter.is_match(file.name.as_str()) {
+                                drained.push(file.clone());
+                            }
+                        }
+                    }
+                }
+                Ok(drained)
+            }
+            Err(err) => Err(err),
+        }
+    }
 }
 
 // Traits

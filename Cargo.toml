@@ -39,6 +39,7 @@ toml = "0.5.8"
 tui = { version = "0.14.0", features = ["crossterm"], default-features = false }
 ureq = { version = "2.0.2", features = ["json"] }
 whoami = "1.1.0"
+wildmatch = "1.0.13"
 
 [target.'cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))'.dependencies]
 users = "0.11.0"

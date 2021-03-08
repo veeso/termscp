@@ -1409,6 +1409,7 @@ dependencies = [
  "ureq",
  "users",
  "whoami",
+ "wildmatch",
 ]
 
 [[package]]
@@ -1702,6 +1703,12 @@ dependencies = [
  "wasm-bindgen",
  "web-sys",
 ]
+
+[[package]]
+name = "wildmatch"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7f44b95f62d34113cf558c93511ac93027e03e9c29a60dd0fd70e6e025c7270a"
 
 [[package]]
 name = "winapi"

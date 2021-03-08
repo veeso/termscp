@@ -603,15 +603,13 @@ impl FileTransfer for SftpFileTransfer {
     /// Execute a command on remote host
     fn exec(&mut self, cmd: &str) -> Result<String, FileTransferError> {
         match self.is_connected() {
-            true => {
-                match self.perform_shell_cmd_with_path(cmd) {
-                    Ok(output) => Ok(output),
-                    Err(err) => Err(FileTransferError::new_ex(
-                        FileTransferErrorType::ProtocolError,
-                        format!("{}", err),
-                    )),
-                }
-            }
+            true => match self.perform_shell_cmd_with_path(cmd) {
+                Ok(output) => Ok(output),
+                Err(err) => Err(FileTransferError::new_ex(
+                    FileTransferErrorType::ProtocolError,
+                    format!("{}", err),
+                )),
+            },
             false => Err(FileTransferError::new(
                 FileTransferErrorType::UninitializedSession,
             )),
@@ -876,6 +874,9 @@ mod tests {
             .is_err());
         // Disconnect
         assert!(client.disconnect().is_ok());
+        assert!(client
+            .change_dir(PathBuf::from("gomar/pett").as_path())
+            .is_err());
     }
 
     #[test]
@@ -899,6 +900,8 @@ mod tests {
         assert_eq!(files.len(), 3); // There are 3 files
                                     // Disconnect
         assert!(client.disconnect().is_ok());
+        // Verify err
+        assert!(client.list_dir(pwd.as_path()).is_err());
     }
 
     #[test]
@@ -944,6 +947,33 @@ mod tests {
         assert_eq!(client.exec("echo 5").ok().unwrap().as_str(), "5\n");
         // Disconnect
         assert!(client.disconnect().is_ok());
+        // Verify err
+        assert!(client.exec("echo 1").is_err());
+    }
+
+    #[test]
+    fn test_filetransfer_sftp_find() {
+        let mut client: SftpFileTransfer = SftpFileTransfer::new(SshKeyStorage::empty());
+        assert!(client
+            .connect(
+                String::from("test.rebex.net"),
+                22,
+                Some(String::from("demo")),
+                Some(String::from("password"))
+            )
+            .is_ok());
+        // Check session and scp
+        assert!(client.session.is_some());
+        // Search for file (let's search for pop3-*.png); there should be 2
+        let search_res: Vec<FsFile> = client.find("pop3-*.png").ok().unwrap();
+        assert_eq!(search_res.len(), 2);
+        // verify names
+        assert_eq!(search_res[0].name.as_str(), "pop3-browser.png");
+        assert_eq!(search_res[1].name.as_str(), "pop3-console-client.png");
+        // Disconnect
+        assert!(client.disconnect().is_ok());
+        // Verify err
+        assert!(client.find("pippo").is_err());
     }
 
     #[test]

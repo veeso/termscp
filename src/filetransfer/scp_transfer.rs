@@ -1057,6 +1057,31 @@ mod tests {
     }
 
     #[test]
+    fn test_filetransfer_scp_find() {
+        let mut client: ScpFileTransfer = ScpFileTransfer::new(SshKeyStorage::empty());
+        assert!(client
+            .connect(
+                String::from("test.rebex.net"),
+                22,
+                Some(String::from("demo")),
+                Some(String::from("password"))
+            )
+            .is_ok());
+        // Check session and scp
+        assert!(client.session.is_some());
+        // Search for file (let's search for pop3-*.png); there should be 2
+        let search_res: Vec<FsFile> = client.find("pop3-*.png").ok().unwrap();
+        assert_eq!(search_res.len(), 2);
+        // verify names
+        assert_eq!(search_res[0].name.as_str(), "pop3-browser.png");
+        assert_eq!(search_res[1].name.as_str(), "pop3-console-client.png");
+        // Disconnect
+        assert!(client.disconnect().is_ok());
+        // Verify err
+        assert!(client.find("pippo").is_err());
+    }
+
+    #[test]
     fn test_filetransfer_scp_recv() {
         let mut client: ScpFileTransfer = ScpFileTransfer::new(SshKeyStorage::empty());
         assert!(client

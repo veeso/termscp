@@ -976,7 +976,7 @@ mod tests {
     }
 
     #[test]
-    fn test_filetransfer_sftp_copy() {
+    fn test_filetransfer_ftp_copy() {
         let mut ftp: FtpFileTransfer = FtpFileTransfer::new(false);
         // Connect
         assert!(ftp
@@ -1088,6 +1088,32 @@ mod tests {
         assert!(ftp.exec("echo 1;").is_err());
         // Disconnect
         assert!(ftp.disconnect().is_ok());
+    }
+
+    #[test]
+    fn test_filetransfer_ftp_find() {
+        let mut client: FtpFileTransfer = FtpFileTransfer::new(false);
+        // Connect
+        assert!(client
+            .connect(
+                String::from("test.rebex.net"),
+                21,
+                Some(String::from("demo")),
+                Some(String::from("password"))
+            )
+            .is_ok());
+        // Pwd
+        assert_eq!(client.pwd().ok().unwrap(), PathBuf::from("/"));
+        // Search for file (let's search for pop3-*.png); there should be 2
+        let search_res: Vec<FsFile> = client.find("pop3-*.png").ok().unwrap();
+        assert_eq!(search_res.len(), 2);
+        // verify names
+        assert_eq!(search_res[0].name.as_str(), "pop3-browser.png");
+        assert_eq!(search_res[1].name.as_str(), "pop3-console-client.png");
+        // Disconnect
+        assert!(client.disconnect().is_ok());
+        // Verify err
+        assert!(client.find("pippo").is_err());
     }
 
     #[test]
