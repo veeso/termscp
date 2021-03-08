@@ -23,9 +23,13 @@
 *
 */
 
+// dependencies
+extern crate wildmatch;
+// ext
 use std::fs::{self, File, Metadata, OpenOptions};
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
+use wildmatch::WildMatch;
 // Metadata ext
 #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
 use std::fs::set_permissions;
@@ -539,6 +543,54 @@ impl Localhost {
         Ok(fs_entries)
     }
 
+    /// ### find
+    ///
+    /// Find files matching `search` on localhost starting from current directory. Search supports recursive search of course.
+    /// The `search` argument supports wilcards ('*', '?')
+    pub fn find(&self, search: &str) -> Result<Vec<FsFile>, HostError> {
+        self.iter_search(self.wrkdir.as_path(), &WildMatch::new(search))
+    }
+
+    // -- privates
+
+    /// ### iter_search
+    ///
+    /// Recursive call for `find` method.
+    /// Search in current directory for files which match `filter`.
+    /// If a directory is found in current directory, `iter_search` will be called using that dir as argument.
+    fn iter_search(&self, dir: &Path, filter: &WildMatch) -> Result<Vec<FsFile>, HostError> {
+        // Scan directory
+        let mut drained: Vec<FsFile> = Vec::new();
+        match self.scan_dir(dir) {
+            Err(err) => Err(err),
+            Ok(entries) => {
+                // Iter entries
+                /* For each entry:
+                - if is dir: call iter_search with `dir`
+                    - push `iter_search` result to `drained`
+                - if is file: check if it matches `filter`
+                    - if it matches `filter`: push to to filter
+                */
+                for entry in entries.iter() {
+                    match entry {
+                        FsEntry::Directory(dir) => {
+                            match self.iter_search(dir.abs_path.as_path(), filter) {
+                                Ok(mut filtered) => drained.append(&mut filtered),
+                                Err(err) => return Err(err),
+                            }
+                        }
+                        FsEntry::File(file) => {
+                            if filter.is_match(file.name.as_str()) {
+                                drained.push(file.clone());
+                            }
+                        }
+                    }
+                }
+                Ok(drained)
+            }
+        }
+    }
+
     /// ### u32_to_mode
     ///
     /// Return string with format xxxxxx to tuple of permissions (user, group, others)
@@ -978,6 +1030,31 @@ mod tests {
     }
 
     #[test]
+    fn test_host_find() {
+        let tmpdir: tempfile::TempDir = tempfile::TempDir::new().unwrap();
+        let dir_path: &Path = tmpdir.path();
+        // Make files
+        assert!(make_sample_file(dir_path, "pippo.txt").is_ok());
+        assert!(make_sample_file(dir_path, "foo.jpg").is_ok());
+        // Make nested struct
+        assert!(make_dir(dir_path, "examples").is_ok());
+        let mut subdir: PathBuf = PathBuf::from(dir_path);
+        subdir.push("examples/");
+        assert!(make_sample_file(subdir.as_path(), "omar.txt").is_ok());
+        assert!(make_sample_file(subdir.as_path(), "errors.txt").is_ok());
+        assert!(make_sample_file(subdir.as_path(), "screenshot.png").is_ok());
+        let host: Localhost = Localhost::new(PathBuf::from(dir_path)).ok().unwrap();
+        // Find txt files
+        let result: Vec<FsFile> = host.find("*.txt").ok().unwrap();
+        // There should be 3 entries
+        assert_eq!(result.len(), 3);
+        // Check names (they should be sorted alphabetically already; NOTE: examples/ comes before pippo.txt)
+        assert_eq!(result[0].name.as_str(), "errors.txt");
+        assert_eq!(result[1].name.as_str(), "omar.txt");
+        assert_eq!(result[2].name.as_str(), "pippo.txt");
+    }
+
+    #[test]
     fn test_host_fmt_error() {
         let err: HostError = HostError::new(
             HostErrorType::CouldNotCreateFile,
@@ -1018,6 +1095,26 @@ mod tests {
             format!("{}", HostError::new(HostErrorType::FileAlreadyExists, None)),
             String::from("File already exists")
         );
+    }
+
+    /// ### make_sample_file
+    ///
+    /// Make a file with `name` in the current directory
+    fn make_sample_file(dir: &Path, filename: &str) -> std::io::Result<()> {
+        let mut p: PathBuf = PathBuf::from(dir);
+        p.push(filename);
+        let mut file: File = File::create(p.as_path())?;
+        file.write_all(b"termscp test file")?;
+        Ok(())
+    }
+
+    /// ### make_dir
+    ///
+    /// Make a directory in `dir`
+    fn make_dir(dir: &Path, dirname: &str) -> std::io::Result<()> {
+        let mut p: PathBuf = PathBuf::from(dir);
+        p.push(dirname);
+        std::fs::create_dir(p.as_path())
     }
 
     /// ### create_sample_file
