@@ -32,6 +32,7 @@ use std::collections::HashMap;
 /// ## StoreState
 ///
 /// Store state describes a value in the store
+#[allow(dead_code)]
 enum StoreState {
     Str(String),     // String
     Signed(isize),   // Signed number
@@ -52,6 +53,7 @@ pub(crate) struct Store {
     store: HashMap<String, StoreState>,
 }
 
+#[allow(dead_code)]
 impl Store {
     /// ### init
     ///
@@ -68,11 +70,8 @@ impl Store {
     /// Get string from store
     pub fn get_string(&self, key: &str) -> Option<&str> {
         match self.store.get(key) {
-            None => None,
-            Some(val) => match val {
-                StoreState::Str(s) => Some(s.as_str()),
-                _ => None,
-            },
+            Some(StoreState::Str(s)) => Some(s.as_str()),
+            _ => None,
         }
     }
 
@@ -81,11 +80,8 @@ impl Store {
     /// Get signed from store
     pub fn get_signed(&self, key: &str) -> Option<isize> {
         match self.store.get(key) {
-            None => None,
-            Some(val) => match val {
-                StoreState::Signed(i) => Some(*i),
-                _ => None,
-            },
+            Some(StoreState::Signed(i)) => Some(*i),
+            _ => None,
         }
     }
 
@@ -94,11 +90,8 @@ impl Store {
     /// Get unsigned from store
     pub fn get_unsigned(&self, key: &str) -> Option<usize> {
         match self.store.get(key) {
-            None => None,
-            Some(val) => match val {
-                StoreState::Unsigned(u) => Some(*u),
-                _ => None,
-            },
+            Some(StoreState::Unsigned(u)) => Some(*u),
+            _ => None,
         }
     }
 
@@ -107,11 +100,8 @@ impl Store {
     /// get float from store
     pub fn get_float(&self, key: &str) -> Option<f64> {
         match self.store.get(key) {
-            None => None,
-            Some(val) => match val {
-                StoreState::Float(f) => Some(*f),
-                _ => None,
-            },
+            Some(StoreState::Float(f)) => Some(*f),
+            _ => None,
         }
     }
 
@@ -120,11 +110,8 @@ impl Store {
     /// get boolean from store
     pub fn get_boolean(&self, key: &str) -> Option<bool> {
         match self.store.get(key) {
-            None => None,
-            Some(val) => match val {
-                StoreState::Boolean(b) => Some(*b),
-                _ => None,
-            },
+            Some(StoreState::Boolean(b)) => Some(*b),
+            _ => None,
         }
     }
 

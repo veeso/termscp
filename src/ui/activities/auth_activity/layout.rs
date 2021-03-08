@@ -27,6 +27,7 @@
 use super::{
     AuthActivity, Context, DialogYesNoOption, FileTransferProtocol, InputField, InputForm, Popup,
 };
+use crate::ui::store::Store;
 use crate::utils::fmt::align_text_center;
 // Ext
 use std::string::ToString;
@@ -44,6 +45,7 @@ impl AuthActivity {
     /// Draw UI
     pub(super) fn draw(&mut self) {
         let mut ctx: Context = self.context.take().unwrap();
+        let store: &Store = &ctx.store;
         let _ = ctx.terminal.draw(|f| {
             // Prepare chunks
             let chunks = Layout::default()
@@ -81,7 +83,7 @@ impl AuthActivity {
                 .split(chunks[1]);
             // Draw header
             f.render_widget(self.draw_header(), auth_chunks[0]);
-            f.render_widget(self.draw_new_version(), auth_chunks[1]);
+            f.render_widget(self.draw_new_version(store), auth_chunks[1]);
             // Draw input fields
             f.render_widget(self.draw_remote_address(), auth_chunks[2]);
             f.render_widget(self.draw_remote_port(), auth_chunks[3]);
@@ -289,8 +291,8 @@ impl AuthActivity {
     /// ### draw_new_version
     ///
     /// Draw new version disclaimer
-    fn draw_new_version(&self) -> Paragraph {
-        let content: String = match self.new_version.as_ref() {
+    fn draw_new_version(&self, store: &Store) -> Paragraph {
+        let content: String = match store.get_string(super::STORE_KEY_LATEST_VERSION) {
             Some(ver) => format!("TermSCP {} is now available! Download it from <https://github.com/veeso/termscp/releases/latest>", ver),
             None => String::new(),
         };

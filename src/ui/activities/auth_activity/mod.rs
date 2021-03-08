@@ -48,6 +48,9 @@ use tui::style::Color;
 // Types
 type DialogCallback = fn(&mut AuthActivity);
 
+// Store keys
+const STORE_KEY_LATEST_VERSION: &str = "AUTH_LATEST_VERSION";
+
 /// ### InputField
 ///
 /// InputField describes the current input field to edit
@@ -115,8 +118,6 @@ pub struct AuthActivity {
     bookmarks_list: Vec<String>,   // List of bookmarks
     recents_idx: usize,            // Index of selected recent
     recents_list: Vec<String>,     // list of recents
-    // misc
-    new_version: Option<String>, // Contains new version of termscp
 }
 
 impl Default for AuthActivity {
@@ -152,7 +153,6 @@ impl AuthActivity {
             bookmarks_list: Vec::new(),
             recents_idx: 0,
             recents_list: Vec::new(),
-            new_version: None,
         }
     }
 
@@ -160,19 +160,36 @@ impl AuthActivity {
     ///
     /// If enabled in configuration, check for updates from Github
     fn check_for_updates(&mut self) {
-        if let Some(client) = self.context.as_ref().unwrap().config_client.as_ref() {
-            if client.get_check_for_updates() {
-                // Send request
-                match git::check_for_updates(env!("CARGO_PKG_VERSION")) {
-                    Ok(version) => self.new_version = version,
-                    Err(err) => {
-                        // Report error
-                        self.popup = Some(Popup::Alert(
-                            Color::Red,
-                            format!("Could not check for new updates: {}", err),
-                        ))
+        // Check version only if unset in the store
+        let ctx: &Context = self.context.as_ref().unwrap();
+        if !ctx.store.isset(STORE_KEY_LATEST_VERSION) {
+            let mut new_version: Option<String> = match ctx.config_client.as_ref() {
+                Some(client) => {
+                    if client.get_check_for_updates() {
+                        // Send request
+                        match git::check_for_updates(env!("CARGO_PKG_VERSION")) {
+                            Ok(version) => version,
+                            Err(err) => {
+                                // Report error
+                                self.popup = Some(Popup::Alert(
+                                    Color::Red,
+                                    format!("Could not check for new updates: {}", err),
+                                ));
+                                // None
+                                None
+                            }
+                        }
+                    } else {
+                        None
                     }
                 }
+                None => None,
+            };
+            let ctx: &mut Context = self.context.as_mut().unwrap();
+            // Set version into the store (or just a flag)
+            match new_version.take() {
+                Some(new_version) => ctx.store.set_string(STORE_KEY_LATEST_VERSION, new_version), // If Some, set String
+                None => ctx.store.set(STORE_KEY_LATEST_VERSION), // If None, just set flag
             }
         }
     }
