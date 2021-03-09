@@ -27,6 +27,7 @@
 use super::{Component, InputEvent, Msg, Payload, PropValue, Props, PropsBuilder, Render};
 
 // exports
+pub mod bookmark_list;
 pub mod file_list;
 pub mod input;
 pub mod logbox;
