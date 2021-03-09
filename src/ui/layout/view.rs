@@ -40,30 +40,6 @@ pub struct View {
     focus_stack: Vec<String>,                        // Focus stack; used to give focus in case the current element loses focus
 }
 
-/// ## Ligature
-///
-/// A ligature describes how a certain event must be handled by the view when a certain element 'a has focus.
-/// The purpose of the ligature is to make a certain event to trigger another component.
-/// This means a ligature is an event that if triggered on 'a causes 'b to something else.
-/// E.g. 'a -> onKey(KeyCode::Char('e')) -> focus -> 'b
-struct Ligature {
-    origin: String, // Element which causes the Ligature to trigger
-    event: Msg,     // The event the ligature summons
-    action: Action, // The action which must be performed in case the ligature triggers
-    target: String, // The element the action is performed for
-}
-
-/// ## Action
-///
-/// Action describes an action to perform in case a ligature triggers
-pub enum Action {
-    Active, // Give focus to component
-    Blur,   // Remove focus to component
-    Show,   // Set component to visible
-    Hide,   // Hide component
-    Umount, // Umount element
-}
-
 // -- view
 
 impl View {
