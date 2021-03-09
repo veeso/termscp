@@ -204,7 +204,15 @@ impl Component for Input {
     /// Returns a Msg to the view
     fn update(&mut self, props: Props) -> Msg {
         self.props = props;
-        // Don't reset value
+        // Set value from props
+        if let PropValue::Str(val) = self.props.value.clone() {
+            self.states.input = Vec::new();
+            self.states.cursor = 0;
+            for ch in val.chars() {
+                self.states
+                    .append(ch, self.props.input_type, self.props.input_len);
+            }
+        }
         Msg::None
     }
 
@@ -214,7 +222,10 @@ impl Component for Input {
     /// This returns a prop builder in order to make easier to create
     /// new properties for the element.
     fn get_props(&self) -> PropsBuilder {
-        PropsBuilder::from(self.props.clone())
+        // Make properties with value from states
+        let mut props: Props = self.props.clone();
+        props.value = PropValue::Str(self.states.get_value());
+        PropsBuilder::from(props)
     }
 
     /// ### on
@@ -447,6 +458,9 @@ mod tests {
             Msg::None
         );
         assert_eq!(component.render().unwrap().cursor, 0); // Should stay
+        // Update value
+        component.update(component.get_props().with_value(PropValue::Str("new-value".to_string())).build());
+        assert_eq!(component.get_value(), Payload::Text(String::from("new-value")));
     }
 
     #[test]
