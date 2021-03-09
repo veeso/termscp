@@ -25,9 +25,10 @@
 
 // Sub modules
 mod bookmarks;
-mod callbacks;
-mod input;
-mod layout;
+mod callbacks; // REMOVE
+mod input; // REMOVE
+mod layout; // REMOVE
+mod update;
 
 // Dependencies
 extern crate crossterm;
@@ -40,6 +41,7 @@ use crate::filetransfer::FileTransferProtocol;
 use crate::system::bookmarks_client::BookmarksClient;
 use crate::system::config_client::ConfigClient;
 use crate::system::environment;
+use crate::ui::layout::view::View;
 use crate::utils::git;
 
 // Includes
@@ -50,6 +52,22 @@ use tui::style::Color;
 
 // Types
 type DialogCallback = fn(&mut AuthActivity);
+
+// -- components
+const COMPONENT_TEXT_HEADER: &str = "TEXT_HEADER";
+const COMPONENT_TEXT_FOOTER: &str = "TEXT_FOOTER";
+const COMPONENT_TEXT_HELP: &str = "TEXT_HELP";
+const COMPONENT_TEXT_ERROR: &str = "TEXT_ERROR";
+const COMPONENT_INPUT_ADDR: &str = "INPUT_ADDRESS";
+const COMPONENT_INPUT_PORT: &str = "INPUT_PORT";
+const COMPONENT_INPUT_USERNAME: &str = "INPUT_USERNAME";
+const COMPONENT_INPUT_PASSWORD: &str = "INPUT_PASSWORD";
+const COMPONENT_INPUT_BOOKMARK_NAME: &str = "INPUT_BOOKMARK_NAME";
+const COMPONENT_RADIO_PROTOCOL: &str = "RADIO_PROTOCOL";
+const COMPONENT_RADIO_BOOKMARK_DEL: &str = "RADIO_DELETE_BOOKMARK";
+const COMPONENT_RADIO_BOOKMARK_SAVE_PWD: &str = "RADIO_SAVE_PASSWORD";
+const COMPONENT_BOOKMARKS_LIST: &str = "BOOKMARKS_LIST";
+const COMPONENT_RECENTS_LIST: &str = "RECENTS_LIST";
 
 /// ### InputField
 ///
@@ -106,6 +124,7 @@ pub struct AuthActivity {
     pub quit: bool,   // Becomes true if user has pressed esc
     pub setup: bool,  // Becomes true if user has requested setup
     context: Option<Context>,
+    view: View,
     bookmarks_client: Option<BookmarksClient>,
     config_client: Option<ConfigClient>,
     selected_field: InputField, // Selected field in AuthCredentials Form
@@ -144,6 +163,7 @@ impl AuthActivity {
             quit: false,
             setup: false,
             context: None,
+            view: View::init(),
             bookmarks_client: None,
             config_client: None,
             selected_field: InputField::Address,
