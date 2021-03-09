@@ -111,12 +111,6 @@ pub trait Component {
 
     // -- events
 
-    /// ### should_umount
-    ///
-    /// The component must provide to the supervisor whether it should be umounted (destroyed)
-    /// This makes sense to be called after an `on` or after an `update`, where the states changes.
-    fn should_umount(&self) -> bool;
-
     /// ### blur
     ///
     /// Blur component; basically remove focus

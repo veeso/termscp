@@ -282,15 +282,6 @@ impl Component for Input {
 
     // -- events
 
-    /// ### should_umount
-    ///
-    /// The component must provide to the supervisor whether it should be umounted (destroyed)
-    /// This makes sense to be called after an `on` or after an `update`, where the states changes.
-    /// This component never umounts
-    fn should_umount(&self) -> bool {
-        false
-    }
-
     /// ### blur
     ///
     /// Blur component; basically remove focus
@@ -332,8 +323,6 @@ mod tests {
         assert_eq!(component.states.focus, true);
         component.blur();
         assert_eq!(component.states.focus, false);
-        // Should umount
-        assert_eq!(component.should_umount(), false);
         // Get value
         assert_eq!(component.get_value(), Payload::Text(String::from("home")));
         // Render

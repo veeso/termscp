@@ -267,15 +267,6 @@ impl Component for LogBox {
 
     // -- events
 
-    /// ### should_umount
-    ///
-    /// The component must provide to the supervisor whether it should be umounted (destroyed)
-    /// This makes sense to be called after an `on` or after an `update`, where the states changes.
-    fn should_umount(&self) -> bool {
-        // Never true
-        false
-    }
-
     /// ### blur
     ///
     /// Blur component; basically remove focus
@@ -327,8 +318,6 @@ mod tests {
         // Increment list index
         component.states.list_index -= 1;
         assert_eq!(component.render().unwrap().cursor, 0);
-        // Should umount
-        assert_eq!(component.should_umount(), false);
         // Update
         component.update(
             component
