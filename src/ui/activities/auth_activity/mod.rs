@@ -64,10 +64,12 @@ const COMPONENT_INPUT_USERNAME: &str = "INPUT_USERNAME";
 const COMPONENT_INPUT_PASSWORD: &str = "INPUT_PASSWORD";
 const COMPONENT_INPUT_BOOKMARK_NAME: &str = "INPUT_BOOKMARK_NAME";
 const COMPONENT_RADIO_PROTOCOL: &str = "RADIO_PROTOCOL";
-const COMPONENT_RADIO_BOOKMARK_DEL: &str = "RADIO_DELETE_BOOKMARK";
+const COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK: &str = "RADIO_DELETE_BOOKMARK";
+const COMPONENT_RADIO_BOOKMARK_DEL_RECENT: &str = "RADIO_DELETE_RECENT";
 const COMPONENT_RADIO_BOOKMARK_SAVE_PWD: &str = "RADIO_SAVE_PASSWORD";
 const COMPONENT_BOOKMARKS_LIST: &str = "BOOKMARKS_LIST";
 const COMPONENT_RECENTS_LIST: &str = "RECENTS_LIST";
+const COMPONENT_RADIO_OPT_SAVE_BOOKMARK: &str = "RADIO_OPT_SAVE_BOOKMARK";
 
 /// ### InputField
 ///
@@ -279,7 +281,7 @@ impl Activity for AuthActivity {
             // Set redraw to true
             self.redraw = true;
             // Handle event
-            self.handle_input_event(&event);
+            self.handle_input_event(event);
         }
         // Redraw if necessary
         if self.redraw {

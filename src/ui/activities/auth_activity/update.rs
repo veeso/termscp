@@ -25,48 +25,498 @@
 
 // locals
 use super::{
-    AuthActivity, FileTransferProtocol, InputEvent,
-    COMPONENT_TEXT_HELP
+    AuthActivity, FileTransferProtocol, InputEvent, COMPONENT_BOOKMARKS_LIST, COMPONENT_INPUT_ADDR,
+    COMPONENT_INPUT_BOOKMARK_NAME, COMPONENT_INPUT_PASSWORD, COMPONENT_INPUT_PORT,
+    COMPONENT_INPUT_USERNAME, COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK,
+    COMPONENT_RADIO_BOOKMARK_DEL_RECENT, COMPONENT_RADIO_BOOKMARK_SAVE_PWD,
+    COMPONENT_RADIO_PROTOCOL, COMPONENT_RECENTS_LIST, COMPONENT_TEXT_ERROR, COMPONENT_TEXT_HELP,
 };
-use crate::ui::layout::{Msg, Payload};
+use crate::ui::layout::{
+    props::{TextParts, TextSpan},
+    Msg, Payload,
+};
 // ext
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+
+// -- keymap
+const MSG_KEY_ENTER: Msg = Msg::OnKey(KeyEvent {
+    code: KeyCode::Enter,
+    modifiers: KeyModifiers::NONE,
+});
+const MSG_KEY_ESC: Msg = Msg::OnKey(KeyEvent {
+    code: KeyCode::Esc,
+    modifiers: KeyModifiers::NONE,
+});
+const MSG_KEY_TAB: Msg = Msg::OnKey(KeyEvent {
+    code: KeyCode::Tab,
+    modifiers: KeyModifiers::NONE,
+});
+const MSG_KEY_DOWN: Msg = Msg::OnKey(KeyEvent {
+    code: KeyCode::Down,
+    modifiers: KeyModifiers::NONE,
+});
+const MSG_KEY_LEFT: Msg = Msg::OnKey(KeyEvent {
+    code: KeyCode::Left,
+    modifiers: KeyModifiers::NONE,
+});
+const MSG_KEY_RIGHT: Msg = Msg::OnKey(KeyEvent {
+    code: KeyCode::Right,
+    modifiers: KeyModifiers::NONE,
+});
+const MSG_KEY_UP: Msg = Msg::OnKey(KeyEvent {
+    code: KeyCode::Up,
+    modifiers: KeyModifiers::NONE,
+});
+const MSG_KEY_DEL: Msg = Msg::OnKey(KeyEvent {
+    code: KeyCode::Delete,
+    modifiers: KeyModifiers::NONE,
+});
+const MSG_KEY_CHAR_E: Msg = Msg::OnKey(KeyEvent {
+    code: KeyCode::Char('c'),
+    modifiers: KeyModifiers::NONE,
+});
+const MSG_KEY_CTRL_C: Msg = Msg::OnKey(KeyEvent {
+    code: KeyCode::Char('c'),
+    modifiers: KeyModifiers::CONTROL,
+});
+const MSG_KEY_CTRL_H: Msg = Msg::OnKey(KeyEvent {
+    code: KeyCode::Char('h'),
+    modifiers: KeyModifiers::CONTROL,
+});
+const MSG_KEY_CTRL_S: Msg = Msg::OnKey(KeyEvent {
+    code: KeyCode::Char('s'),
+    modifiers: KeyModifiers::CONTROL,
+});
 
 // -- update
 
 impl AuthActivity {
-
     /// ### handle_input_event
     ///
     /// Handle input event, based on current input mode
     pub(super) fn handle_input_event(&mut self, ev: InputEvent) {
         // Call update passing the return value from on
-        self.update(self.view.on(ev));
+        let msg = self.view.on(ev);
+        self.update(msg);
     }
 
     /// ### update
-    /// 
+    ///
     /// Update auth activity model based on msg
     /// The function exits when returns None
-    pub(super) fn update(&mut self, msg: Option<(&str, Msg)>) -> Option<(&str, Msg)> {
-        let key_enter = KeyEvent::from(KeyCode::Enter);
+    pub(super) fn update(&mut self, msg: Option<(String, Msg)>) -> Option<(String, Msg)> {
+        let ref_msg: Option<(&str, &Msg)> = match msg.as_ref() {
+            None => None,
+            Some((s, msg)) => Some((s, msg)),
+        };
         // Match msg
-        match msg {
+        match ref_msg {
             None => None, // Exit after None
             Some(msg) => match msg {
-                (COMPONENT_TEXT_HELP, Msg::OnKey(key_enter) | (COMPONENT_TEXT_HELP, Msg::OnKey(KeyEvent::from(KeyCode::Esc))) => {
-                    // Hide text help
-                    match self.view.get_props(COMPONENT_TEXT_HELP) {
+                // Focus ( DOWN )
+                (COMPONENT_INPUT_ADDR, &MSG_KEY_DOWN) => {
+                    // Give focus to port
+                    self.view.active(COMPONENT_INPUT_PORT);
+                    None
+                }
+                (COMPONENT_INPUT_PORT, &MSG_KEY_DOWN) => {
+                    // Give focus to port
+                    self.view.active(COMPONENT_RADIO_PROTOCOL);
+                    None
+                }
+                (COMPONENT_RADIO_PROTOCOL, &MSG_KEY_DOWN) => {
+                    // Give focus to port
+                    self.view.active(COMPONENT_INPUT_USERNAME);
+                    None
+                }
+                (COMPONENT_INPUT_USERNAME, &MSG_KEY_DOWN) => {
+                    // Give focus to port
+                    self.view.active(COMPONENT_INPUT_PASSWORD);
+                    None
+                }
+                (COMPONENT_INPUT_PASSWORD, &MSG_KEY_DOWN) => {
+                    // Give focus to port
+                    self.view.active(COMPONENT_INPUT_USERNAME);
+                    None
+                }
+                // Focus ( UP )
+                (COMPONENT_INPUT_PASSWORD, &MSG_KEY_UP) => {
+                    // Give focus to port
+                    self.view.active(COMPONENT_INPUT_USERNAME);
+                    None
+                }
+                (COMPONENT_INPUT_USERNAME, &MSG_KEY_UP) => {
+                    // Give focus to port
+                    self.view.active(COMPONENT_RADIO_PROTOCOL);
+                    None
+                }
+                (COMPONENT_RADIO_PROTOCOL, &MSG_KEY_UP) => {
+                    // Give focus to port
+                    self.view.active(COMPONENT_INPUT_PORT);
+                    None
+                }
+                (COMPONENT_INPUT_PORT, &MSG_KEY_UP) => {
+                    // Give focus to port
+                    self.view.active(COMPONENT_INPUT_ADDR);
+                    None
+                }
+                (COMPONENT_INPUT_ADDR, &MSG_KEY_UP) => {
+                    // Give focus to port
+                    self.view.active(COMPONENT_INPUT_PASSWORD);
+                    None
+                }
+                // <TAB> bookmarks
+                (COMPONENT_BOOKMARKS_LIST, &MSG_KEY_TAB)
+                | (COMPONENT_RECENTS_LIST, &MSG_KEY_TAB) => {
+                    // Give focus to address
+                    self.view.active(COMPONENT_INPUT_ADDR);
+                    None
+                }
+                // Any <TAB>, go to bookmarks
+                (_, &MSG_KEY_TAB) => {
+                    self.view.active(COMPONENT_BOOKMARKS_LIST);
+                    None
+                }
+                // Bookmarks commands
+                // <RIGHT> / <LEFT>
+                (COMPONENT_BOOKMARKS_LIST, &MSG_KEY_RIGHT) => {
+                    // Give focus to recents
+                    self.view.active(COMPONENT_RECENTS_LIST);
+                    None
+                }
+                (COMPONENT_RECENTS_LIST, &MSG_KEY_LEFT) => {
+                    // Give focus to bookmarks
+                    self.view.active(COMPONENT_BOOKMARKS_LIST);
+                    None
+                }
+                // <DEL>
+                (COMPONENT_BOOKMARKS_LIST, &MSG_KEY_DEL) => {
+                    // Show delete popup
+                    match self
+                        .view
+                        .get_props(COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK)
+                        .as_mut()
+                    {
                         None => None,
-                        Some(props) => self.update(self.view.update(COMPONENT_TEXT_HELP, props.hidden().build())),
+                        Some(props) => {
+                            let msg = self.view.update(
+                                COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK,
+                                props.visible().build(),
+                            );
+                            self.update(msg)
+                        }
                     }
                 }
-                (_, Msg::OnSubmit(_)) | (_, Msg::OnKey(KeyEvent::from(KeyCode::Enter))) => {
+                (COMPONENT_RECENTS_LIST, &MSG_KEY_DEL) => {
+                    // Show delete popup
+                    match self
+                        .view
+                        .get_props(COMPONENT_RADIO_BOOKMARK_DEL_RECENT)
+                        .as_mut()
+                    {
+                        None => None,
+                        Some(props) => {
+                            let msg = self.view.update(
+                                COMPONENT_RADIO_BOOKMARK_DEL_RECENT,
+                                props.visible().build(),
+                            );
+                            self.update(msg)
+                        }
+                    }
+                }
+                // Bookmark radio
+                // Del bookmarks
+                (
+                    COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK,
+                    Msg::OnSubmit(Payload::Unsigned(index)),
+                ) => {
+                    // Delete bookmark
+                    self.del_bookmark(*index);
+                    // TODO: view bookmarks
+                    // Hide bookmark del
+                    if let Some(props) = self
+                        .view
+                        .get_props(COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK)
+                        .as_mut()
+                    {
+                        let msg = self.view.update(
+                            COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK,
+                            props.hidden().build(),
+                        );
+                        let _ = self.update(msg);
+                    }
+                    // Update bookmarks
+                    match self.view.get_props(COMPONENT_BOOKMARKS_LIST).as_mut() {
+                        None => None,
+                        Some(props) => {
+                            let msg = self.view.update(COMPONENT_BOOKMARKS_LIST, props.build()); // TODO: set rows
+                            self.update(msg)
+                        }
+                    }
+                }
+                (COMPONENT_RADIO_BOOKMARK_DEL_RECENT, Msg::OnSubmit(Payload::Unsigned(index))) => {
+                    // Delete recent
+                    self.del_recent(*index);
+                    // TODO: view bookmarks
+                    // Hide bookmark del
+                    if let Some(props) = self
+                        .view
+                        .get_props(COMPONENT_RADIO_BOOKMARK_DEL_RECENT)
+                        .as_mut()
+                    {
+                        let msg = self
+                            .view
+                            .update(COMPONENT_RADIO_BOOKMARK_DEL_RECENT, props.hidden().build());
+                        let _ = self.update(msg);
+                    }
+                    // Update bookmarks
+                    match self.view.get_props(COMPONENT_RECENTS_LIST).as_mut() {
+                        None => None,
+                        Some(props) => {
+                            let msg = self.view.update(COMPONENT_RECENTS_LIST, props.build()); // TODO: set rows
+                            self.update(msg)
+                        }
+                    }
+                }
+                // <ESC> hide tab
+                (COMPONENT_RADIO_BOOKMARK_DEL_RECENT, &MSG_KEY_ESC) => {
+                    match self
+                        .view
+                        .get_props(COMPONENT_RADIO_BOOKMARK_DEL_RECENT)
+                        .as_mut()
+                    {
+                        Some(props) => {
+                            let msg = self.view.update(
+                                COMPONENT_RADIO_BOOKMARK_DEL_RECENT,
+                                props.hidden().build(),
+                            );
+                            self.update(msg)
+                        }
+                        None => None,
+                    }
+                }
+                (COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK, &MSG_KEY_ESC) => {
+                    match self
+                        .view
+                        .get_props(COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK)
+                        .as_mut()
+                    {
+                        Some(props) => {
+                            let msg = self.view.update(
+                                COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK,
+                                props.hidden().build(),
+                            );
+                            self.update(msg)
+                        }
+                        None => None,
+                    }
+                }
+                // Help
+                (_, &MSG_KEY_CTRL_H) => {
+                    // Show help
+                    match self.view.get_props(COMPONENT_TEXT_HELP).as_mut() {
+                        Some(props) => {
+                            let msg = self
+                                .view
+                                .update(COMPONENT_TEXT_HELP, props.visible().build());
+                            self.update(msg)
+                        }
+                        None => None,
+                    }
+                }
+                (COMPONENT_TEXT_HELP, &MSG_KEY_ENTER) | (COMPONENT_TEXT_HELP, &MSG_KEY_ESC) => {
+                    // Hide text help
+                    match self.view.get_props(COMPONENT_TEXT_HELP).as_mut() {
+                        None => None,
+                        Some(props) => {
+                            let msg = self
+                                .view
+                                .update(COMPONENT_TEXT_HELP, props.hidden().build());
+                            self.update(msg)
+                        }
+                    }
+                }
+                // Enter setup
+                (_, &MSG_KEY_CTRL_C) => {
+                    self.setup = true;
+                    None
+                }
+                // Save bookmark; show popup
+                (_, &MSG_KEY_CTRL_S) => {
+                    // Show popup
+                    if let Some(props) = self
+                        .view
+                        .get_props(COMPONENT_RADIO_BOOKMARK_SAVE_PWD)
+                        .as_mut()
+                    {
+                        let msg = self
+                            .view
+                            .update(COMPONENT_RADIO_BOOKMARK_SAVE_PWD, props.visible().build());
+                        let _ = self.update(msg);
+                    }
+                    if let Some(props) = self.view.get_props(COMPONENT_INPUT_BOOKMARK_NAME).as_mut()
+                    {
+                        let msg = self
+                            .view
+                            .update(COMPONENT_INPUT_BOOKMARK_NAME, props.visible().build());
+                        let _ = self.update(msg);
+                    }
+                    // Give focus to bookmark name
+                    self.view.active(COMPONENT_INPUT_BOOKMARK_NAME);
+                    None
+                }
+                (COMPONENT_INPUT_BOOKMARK_NAME, &MSG_KEY_DOWN) => {
+                    // Give focus to pwd
+                    self.view.active(COMPONENT_RADIO_BOOKMARK_SAVE_PWD);
+                    None
+                }
+                (COMPONENT_RADIO_BOOKMARK_SAVE_PWD, &MSG_KEY_UP) => {
+                    // Give focus to pwd
+                    self.view.active(COMPONENT_INPUT_BOOKMARK_NAME);
+                    None
+                }
+                // Save bookmark
+                (COMPONENT_INPUT_BOOKMARK_NAME, Msg::OnSubmit(_))
+                | (COMPONENT_RADIO_BOOKMARK_SAVE_PWD, Msg::OnSubmit(_)) => {
+                    // Get values
+                    let bookmark_name: String =
+                        match self.view.get_value(COMPONENT_INPUT_BOOKMARK_NAME) {
+                            Some(Payload::Text(s)) => s,
+                            _ => String::new(),
+                        };
+                    let save_pwd: bool =
+                        match self.view.get_value(COMPONENT_RADIO_BOOKMARK_SAVE_PWD) {
+                            Some(Payload::Unsigned(idx)) => match idx {
+                                0 => true,
+                                _ => false,
+                            },
+                            _ => false,
+                        };
+                    // TODO: save bookmark
+                    // Hide popup
+                    if let Some(props) = self
+                        .view
+                        .get_props(COMPONENT_RADIO_BOOKMARK_SAVE_PWD)
+                        .as_mut()
+                    {
+                        let msg = self
+                            .view
+                            .update(COMPONENT_RADIO_BOOKMARK_SAVE_PWD, props.hidden().build());
+                        let _ = self.update(msg);
+                    }
+                    if let Some(props) = self.view.get_props(COMPONENT_INPUT_BOOKMARK_NAME).as_mut()
+                    {
+                        let msg = self
+                            .view
+                            .update(COMPONENT_INPUT_BOOKMARK_NAME, props.hidden().build());
+                        let _ = self.update(msg);
+                    }
+                    None
+                }
+                // Hide save bookmark
+                (COMPONENT_INPUT_BOOKMARK_NAME, &MSG_KEY_ESC)
+                | (COMPONENT_RADIO_BOOKMARK_SAVE_PWD, &MSG_KEY_ESC) => {
+                    // Hide popup
+                    if let Some(props) = self
+                        .view
+                        .get_props(COMPONENT_RADIO_BOOKMARK_SAVE_PWD)
+                        .as_mut()
+                    {
+                        let msg = self
+                            .view
+                            .update(COMPONENT_RADIO_BOOKMARK_SAVE_PWD, props.hidden().build());
+                        let _ = self.update(msg);
+                    }
+                    if let Some(props) = self.view.get_props(COMPONENT_INPUT_BOOKMARK_NAME).as_mut()
+                    {
+                        let msg = self
+                            .view
+                            .update(COMPONENT_INPUT_BOOKMARK_NAME, props.hidden().build());
+                        let _ = self.update(msg);
+                    }
+                    None
+                }
+                // On submit on any unhandled (connect)
+                (_, Msg::OnSubmit(_)) | (_, &MSG_KEY_ENTER) => {
                     // Match <ENTER> key for all other components
+                    // Collect values from inputs
+                    let address: String = match self.view.get_value(COMPONENT_INPUT_ADDR) {
+                        Some(Payload::Text(addr)) => addr,
+                        _ => {
+                            // Show error
+                            if let Some(props) = self.view.get_props(COMPONENT_TEXT_ERROR).as_mut()
+                            {
+                                let msg = self.view.update(
+                                    COMPONENT_TEXT_ERROR,
+                                    props
+                                        .visible()
+                                        .with_texts(TextParts::new(
+                                            None,
+                                            Some(vec![TextSpan::from("Invalid address!")]),
+                                        ))
+                                        .build(),
+                                );
+                                return self.update(msg);
+                            }
+                            // Return None
+                            return None;
+                        }
+                    };
+                    let port: u16 = match self.view.get_value(COMPONENT_INPUT_PORT) {
+                        Some(Payload::Unsigned(p)) => p as u16,
+                        _ => {
+                            // Show error
+                            if let Some(props) = self.view.get_props(COMPONENT_TEXT_ERROR).as_mut()
+                            {
+                                let msg = self.view.update(
+                                    COMPONENT_TEXT_ERROR,
+                                    props
+                                        .visible()
+                                        .with_texts(TextParts::new(
+                                            None,
+                                            Some(vec![TextSpan::from("Invalid port number!")]),
+                                        ))
+                                        .build(),
+                                );
+                                return self.update(msg);
+                            }
+                            // Return None
+                            return None;
+                        }
+                    };
+                    let username: String = match self.view.get_value(COMPONENT_INPUT_USERNAME) {
+                        Some(Payload::Text(u)) => u,
+                        _ => String::new(),
+                    };
+                    let password: String = match self.view.get_value(COMPONENT_INPUT_PASSWORD) {
+                        Some(Payload::Text(p)) => p,
+                        _ => String::new(),
+                    };
+                    let protocol: FileTransferProtocol =
+                        match self.view.get_value(COMPONENT_RADIO_PROTOCOL) {
+                            Some(Payload::Unsigned(choice)) => match choice {
+                                1 => FileTransferProtocol::Scp,
+                                2 => FileTransferProtocol::Ftp(false),
+                                3 => FileTransferProtocol::Ftp(true),
+                                _ => FileTransferProtocol::Sftp,
+                            },
+                            _ => FileTransferProtocol::Sftp,
+                        };
+                    // FIXME: save recent, pass attributes
+                    self.save_recent();
+                    // TOREM: remove this after removing states
+                    self.address = address;
+                    self.port = port.to_string();
+                    self.protocol = protocol;
+                    self.username = username;
+                    self.password = password;
+                    // Submit true
+                    self.submit = true;
+                    // Return None
+                    None
                 }
                 (_, _) => None, // Ignore other events
-            }
+            },
         }
     }
-
 }

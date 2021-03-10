@@ -32,6 +32,7 @@ use crossterm::event::{KeyCode, KeyModifiers};
 use tui::style::Color;
 
 impl AuthActivity {
+    /*
     /// ### handle_input_event
     ///
     /// Handle input event, based on current input mode
@@ -49,6 +50,7 @@ impl AuthActivity {
             }
         }
     }
+    */
 
     /// ### handle_input_event_mode_form
     ///
