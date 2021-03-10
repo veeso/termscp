@@ -24,7 +24,7 @@
 */
 
 // imports
-use super::{Component, InputEvent, Msg, Payload, Props, PropsBuilder};
+use super::{Component, InputEvent, Msg, Payload, Props, PropsBuilder, Render};
 // ext
 use std::collections::HashMap;
 
@@ -67,6 +67,18 @@ impl View {
     /// Umount a component from the view
     pub fn umount(&mut self, id: &str) {
         self.components.remove(id);
+    }
+
+    // -- render
+
+    /// ### render
+    ///
+    /// Render component with the provided id
+    pub fn render(&self, id: &str) -> Option<Render> {
+        match self.components.get(id) {
+            None => None,
+            Some(component) => component.render(),
+        }
     }
 
     // -- props
@@ -225,6 +237,16 @@ mod tests {
     }
 
     #[test]
+    fn test_ui_layout_view_mount_render() {
+        let mut view: View = View::init();
+        // Mount component
+        let input: &str = "INPUT";
+        view.mount(input, make_component_input());
+        assert!(view.render(input).is_some());
+        assert!(view.render("unexisting").is_none());
+    }
+
+    #[test]
     fn test_ui_layout_view_focus() {
         let mut view: View = View::init();
         // Prepare ids
@@ -352,7 +374,10 @@ mod tests {
         assert_eq!(
             view.on(InputEvent::Key(KeyEvent::from(KeyCode::Enter)))
                 .unwrap(),
-            (input.to_string(), Msg::OnSubmit(Payload::Text(String::from("text1"))))
+            (
+                input.to_string(),
+                Msg::OnSubmit(Payload::Text(String::from("text1")))
+            )
         );
     }
 
