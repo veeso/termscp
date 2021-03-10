@@ -64,8 +64,18 @@ impl View {
 
     /// ### umount
     ///
-    /// Umount a component from the view
+    /// Umount a component from the view.
+    /// If component has focus, blur component and remove it from the stack
     pub fn umount(&mut self, id: &str) {
+        // Check if component has focus
+        if let Some(focus) = self.focus.as_ref() {
+            // If has focus, blur component
+            if focus == id {
+                self.blur();
+            }
+        }
+        // Remove component from focus stack
+        self.pop_from_stack(id);
         self.components.remove(id);
     }
 
@@ -308,6 +318,40 @@ mod tests {
         assert_eq!(view.focus_stack.len(), 0);
         // Blur again; now everything should be none
         view.blur();
+        assert!(view.focus.is_none());
+        assert_eq!(view.focus_stack.len(), 0);
+    }
+
+    #[test]
+    fn test_ui_layout_view_focus_umount() {
+        let mut view: View = View::init();
+        // Mount component
+        let input: &str = "INPUT";
+        let text: &str = "TEXT";
+        let text2: &str = "TEXT2";
+        view.mount(input, make_component_input());
+        view.mount(text, make_component_text());
+        view.mount(text2, make_component_text());
+        // Give focus to input
+        view.active(input);
+        // Give focus to text
+        view.active(text);
+        view.active(text2);
+        // Stack should have 1 element
+        assert_eq!(view.focus_stack.len(), 2);
+        // Focus should be some
+        assert!(view.focus.is_some());
+        // Umount text
+        view.umount(text2);
+        // Focus should now be hold by 'text'; stack should now have size 1
+        assert_eq!(view.focus.as_ref().unwrap(), text);
+        assert_eq!(view.focus_stack.len(), 1);
+        // Umount input
+        view.umount(input);
+        assert_eq!(view.focus.as_ref().unwrap(), text);
+        assert_eq!(view.focus_stack.len(), 0);
+        // Umount text
+        view.umount(text);
         assert!(view.focus.is_none());
         assert_eq!(view.focus_stack.len(), 0);
     }
