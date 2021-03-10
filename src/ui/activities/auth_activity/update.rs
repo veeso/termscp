@@ -189,8 +189,8 @@ impl AuthActivity {
                     self.view.active(COMPONENT_BOOKMARKS_LIST);
                     None
                 }
-                // <DEL>
-                (COMPONENT_BOOKMARKS_LIST, &MSG_KEY_DEL) => {
+                // <DEL | 'E'>
+                (COMPONENT_BOOKMARKS_LIST, &MSG_KEY_DEL) | (COMPONENT_BOOKMARKS_LIST, &MSG_KEY_CHAR_E) => {
                     // Show delete popup
                     match self
                         .view
@@ -207,7 +207,7 @@ impl AuthActivity {
                         }
                     }
                 }
-                (COMPONENT_RECENTS_LIST, &MSG_KEY_DEL) => {
+                (COMPONENT_RECENTS_LIST, &MSG_KEY_DEL) | (COMPONENT_RECENTS_LIST, &MSG_KEY_CHAR_E) => {
                     // Show delete popup
                     match self
                         .view
