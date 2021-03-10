@@ -91,14 +91,6 @@ const MSG_KEY_CTRL_S: Msg = Msg::OnKey(KeyEvent {
 // -- update
 
 impl AuthActivity {
-    /// ### handle_input_event
-    ///
-    /// Handle input event, based on current input mode
-    pub(super) fn handle_input_event(&mut self, ev: InputEvent) {
-        // Call update passing the return value from on
-        let msg = self.view.on(ev);
-        self.update(msg);
-    }
 
     /// ### update
     ///

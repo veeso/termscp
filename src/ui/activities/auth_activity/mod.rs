@@ -25,10 +25,9 @@
 
 // Sub modules
 mod bookmarks;
-mod callbacks; // REMOVE
-mod input; // REMOVE
-mod layout; // REMOVE
+mod layout; // TOREM: this
 mod update;
+mod view;
 
 // Dependencies
 extern crate crossterm;
@@ -69,7 +68,6 @@ const COMPONENT_RADIO_BOOKMARK_DEL_RECENT: &str = "RADIO_DELETE_RECENT";
 const COMPONENT_RADIO_BOOKMARK_SAVE_PWD: &str = "RADIO_SAVE_PASSWORD";
 const COMPONENT_BOOKMARKS_LIST: &str = "BOOKMARKS_LIST";
 const COMPONENT_RECENTS_LIST: &str = "RECENTS_LIST";
-const COMPONENT_RADIO_OPT_SAVE_BOOKMARK: &str = "RADIO_OPT_SAVE_BOOKMARK";
 
 /// ### InputField
 ///
@@ -265,6 +263,8 @@ impl Activity for AuthActivity {
         }
         // If check for updates is enabled, check for updates
         self.check_for_updates();
+        // Initialize view
+        self.init();
     }
 
     /// ### on_draw
@@ -280,13 +280,14 @@ impl Activity for AuthActivity {
         if let Ok(Some(event)) = self.context.as_ref().unwrap().input_hnd.read_event() {
             // Set redraw to true
             self.redraw = true;
-            // Handle event
-            self.handle_input_event(event);
+            // Handle event on view and update
+            let msg = self.view.on(event);
+            self.update(msg);
         }
         // Redraw if necessary
         if self.redraw {
-            // Draw
-            self.draw();
+            // View
+            self.view();
             // Set redraw to false
             self.redraw = false;
         }
