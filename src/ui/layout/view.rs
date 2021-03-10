@@ -85,10 +85,10 @@ impl View {
     ///
     /// Update component properties
     /// Returns `None` if component doesn't exist
-    pub fn update<'a>(&mut self, id: &'a str, props: Props) -> Option<(&'a str, Msg)> {
+    pub fn update(&mut self, id: &str, props: Props) -> Option<(String, Msg)> {
         match self.components.get_mut(id) {
             None => None,
-            Some(cmp) => Some((id, cmp.update(props))),
+            Some(cmp) => Some((id.to_string(), cmp.update(props))),
         }
     }
 
@@ -110,12 +110,12 @@ impl View {
     ///
     /// Handle event for the focused component (if any)
     /// Returns `None` if no component is focused
-    pub fn on(&mut self, ev: InputEvent) -> Option<(&str, Msg)> {
+    pub fn on(&mut self, ev: InputEvent) -> Option<(String, Msg)> {
         match self.focus.as_ref() {
             None => None,
             Some(id) => match self.components.get_mut(id) {
                 None => None,
-                Some(cmp) => Some((id, cmp.on(ev))),
+                Some(cmp) => Some((id.to_string(), cmp.on(ev))),
             },
         }
     }
@@ -341,7 +341,7 @@ mod tests {
         assert_eq!(
             view.on(InputEvent::Key(KeyEvent::from(KeyCode::Char('1'))))
                 .unwrap(),
-            (input, Msg::None)
+            (input.to_string(), Msg::None)
         );
         // Verify new value
         assert_eq!(
@@ -352,7 +352,7 @@ mod tests {
         assert_eq!(
             view.on(InputEvent::Key(KeyEvent::from(KeyCode::Enter)))
                 .unwrap(),
-            (input, Msg::OnSubmit(Payload::Text(String::from("text1"))))
+            (input.to_string(), Msg::OnSubmit(Payload::Text(String::from("text1"))))
         );
     }
 

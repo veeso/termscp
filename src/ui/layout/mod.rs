@@ -41,7 +41,7 @@ use tui::widgets::Widget;
 ///
 /// Msg is an enum returned after an event is raised for a certain component
 /// Yep, I took inspiration from Elm.
-#[derive(std::fmt::Debug, PartialEq)]
+#[derive(std::fmt::Debug, PartialEq, Eq)]
 pub enum Msg {
     OnSubmit(Payload),
     OnChange(Payload),
@@ -52,7 +52,7 @@ pub enum Msg {
 /// ## Payload
 ///
 /// Payload describes a component value
-#[derive(std::fmt::Debug, PartialEq)]
+#[derive(std::fmt::Debug, PartialEq, Eq)]
 pub enum Payload {
     Text(String),
     Signed(isize),
