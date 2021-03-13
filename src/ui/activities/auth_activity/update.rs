@@ -25,7 +25,7 @@
 
 // locals
 use super::{
-    AuthActivity, FileTransferProtocol, InputEvent, COMPONENT_BOOKMARKS_LIST, COMPONENT_INPUT_ADDR,
+    AuthActivity, FileTransferProtocol, COMPONENT_BOOKMARKS_LIST, COMPONENT_INPUT_ADDR,
     COMPONENT_INPUT_BOOKMARK_NAME, COMPONENT_INPUT_PASSWORD, COMPONENT_INPUT_PORT,
     COMPONENT_INPUT_USERNAME, COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK,
     COMPONENT_RADIO_BOOKMARK_DEL_RECENT, COMPONENT_RADIO_BOOKMARK_SAVE_PWD,
@@ -91,7 +91,6 @@ const MSG_KEY_CTRL_S: Msg = Msg::OnKey(KeyEvent {
 // -- update
 
 impl AuthActivity {
-
     /// ### update
     ///
     /// Update auth activity model based on msg
@@ -182,39 +181,17 @@ impl AuthActivity {
                     None
                 }
                 // <DEL | 'E'>
-                (COMPONENT_BOOKMARKS_LIST, &MSG_KEY_DEL) | (COMPONENT_BOOKMARKS_LIST, &MSG_KEY_CHAR_E) => {
+                (COMPONENT_BOOKMARKS_LIST, &MSG_KEY_DEL)
+                | (COMPONENT_BOOKMARKS_LIST, &MSG_KEY_CHAR_E) => {
                     // Show delete popup
-                    match self
-                        .view
-                        .get_props(COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK)
-                        .as_mut()
-                    {
-                        None => None,
-                        Some(props) => {
-                            let msg = self.view.update(
-                                COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK,
-                                props.visible().build(),
-                            );
-                            self.update(msg)
-                        }
-                    }
+                    self.mount_bookmark_del_dialog();
+                    None
                 }
-                (COMPONENT_RECENTS_LIST, &MSG_KEY_DEL) | (COMPONENT_RECENTS_LIST, &MSG_KEY_CHAR_E) => {
+                (COMPONENT_RECENTS_LIST, &MSG_KEY_DEL)
+                | (COMPONENT_RECENTS_LIST, &MSG_KEY_CHAR_E) => {
                     // Show delete popup
-                    match self
-                        .view
-                        .get_props(COMPONENT_RADIO_BOOKMARK_DEL_RECENT)
-                        .as_mut()
-                    {
-                        None => None,
-                        Some(props) => {
-                            let msg = self.view.update(
-                                COMPONENT_RADIO_BOOKMARK_DEL_RECENT,
-                                props.visible().build(),
-                            );
-                            self.update(msg)
-                        }
-                    }
+                    self.mount_recent_del_dialog();
+                    None
                 }
                 // Bookmark radio
                 // Del bookmarks
@@ -222,52 +199,65 @@ impl AuthActivity {
                     COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK,
                     Msg::OnSubmit(Payload::Unsigned(index)),
                 ) => {
-                    // Delete bookmark
-                    self.del_bookmark(*index);
-                    // TODO: view bookmarks
-                    // Hide bookmark del
-                    if let Some(props) = self
-                        .view
-                        .get_props(COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK)
-                        .as_mut()
-                    {
-                        let msg = self.view.update(
-                            COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK,
-                            props.hidden().build(),
-                        );
-                        let _ = self.update(msg);
-                    }
-                    // Update bookmarks
-                    match self.view.get_props(COMPONENT_BOOKMARKS_LIST).as_mut() {
-                        None => None,
-                        Some(props) => {
-                            let msg = self.view.update(COMPONENT_BOOKMARKS_LIST, props.build()); // TODO: set rows
-                            self.update(msg)
+                    // hide bookmark delete
+                    self.umount_bookmark_del_dialog();
+                    // Index must be 0 => YES
+                    match *index {
+                        0 => {
+                            // Get selected bookmark
+                            match self.view.get_value(COMPONENT_BOOKMARKS_LIST) {
+                                Some(Payload::Unsigned(index)) => {
+                                    // Delete bookmark
+                                    self.del_bookmark(index);
+                                    // TODO: view bookmarks
+                                    // Update bookmarks
+                                    match self.view.get_props(COMPONENT_BOOKMARKS_LIST).as_mut() {
+                                        None => None,
+                                        Some(props) => {
+                                            let msg = self
+                                                .view
+                                                .update(COMPONENT_BOOKMARKS_LIST, props.with_texts(
+                                                    TextParts::new(Some(String::from("Bookmarks")), Some(self.view_bookmarks()))
+                                                ).build()); // TODO: set rows
+                                            self.update(msg)
+                                        }
+                                    }
+                                }
+                                _ => None,
+                            }
                         }
+                        _ => None,
                     }
                 }
                 (COMPONENT_RADIO_BOOKMARK_DEL_RECENT, Msg::OnSubmit(Payload::Unsigned(index))) => {
-                    // Delete recent
-                    self.del_recent(*index);
-                    // TODO: view bookmarks
-                    // Hide bookmark del
-                    if let Some(props) = self
-                        .view
-                        .get_props(COMPONENT_RADIO_BOOKMARK_DEL_RECENT)
-                        .as_mut()
-                    {
-                        let msg = self
-                            .view
-                            .update(COMPONENT_RADIO_BOOKMARK_DEL_RECENT, props.hidden().build());
-                        let _ = self.update(msg);
-                    }
-                    // Update bookmarks
-                    match self.view.get_props(COMPONENT_RECENTS_LIST).as_mut() {
-                        None => None,
-                        Some(props) => {
-                            let msg = self.view.update(COMPONENT_RECENTS_LIST, props.build()); // TODO: set rows
-                            self.update(msg)
+                    // hide bookmark delete
+                    self.umount_recent_del_dialog();
+                    // Index must be 0 => YES
+                    match *index {
+                        0 => {
+                            // Get selected bookmark
+                            match self.view.get_value(COMPONENT_RECENTS_LIST) {
+                                Some(Payload::Unsigned(index)) => {
+                                    // Delete recent
+                                    self.del_recent(index);
+                                    // TODO: view recents
+                                    // Update bookmarks
+                                    match self.view.get_props(COMPONENT_RECENTS_LIST).as_mut() {
+                                        None => None,
+                                        Some(props) => {
+                                            let msg = self
+                                                .view
+                                                .update(COMPONENT_RECENTS_LIST, props.with_texts(
+                                                    TextParts::new(Some(String::from("Recent connections")), Some(self.view_recent_connections()))
+                                                ).build()); // TODO: set rows
+                                            self.update(msg)
+                                        }
+                                    }
+                                }
+                                _ => None,
+                            }
                         }
+                        _ => None,
                     }
                 }
                 // <ESC> hide tab
@@ -306,27 +296,13 @@ impl AuthActivity {
                 // Help
                 (_, &MSG_KEY_CTRL_H) => {
                     // Show help
-                    match self.view.get_props(COMPONENT_TEXT_HELP).as_mut() {
-                        Some(props) => {
-                            let msg = self
-                                .view
-                                .update(COMPONENT_TEXT_HELP, props.visible().build());
-                            self.update(msg)
-                        }
-                        None => None,
-                    }
+                    self.mount_help();
+                    None
                 }
                 (COMPONENT_TEXT_HELP, &MSG_KEY_ENTER) | (COMPONENT_TEXT_HELP, &MSG_KEY_ESC) => {
                     // Hide text help
-                    match self.view.get_props(COMPONENT_TEXT_HELP).as_mut() {
-                        None => None,
-                        Some(props) => {
-                            let msg = self
-                                .view
-                                .update(COMPONENT_TEXT_HELP, props.hidden().build());
-                            self.update(msg)
-                        }
-                    }
+                    self.umount_help();
+                    None
                 }
                 // Enter setup
                 (_, &MSG_KEY_CTRL_C) => {
@@ -336,23 +312,7 @@ impl AuthActivity {
                 // Save bookmark; show popup
                 (_, &MSG_KEY_CTRL_S) => {
                     // Show popup
-                    if let Some(props) = self
-                        .view
-                        .get_props(COMPONENT_RADIO_BOOKMARK_SAVE_PWD)
-                        .as_mut()
-                    {
-                        let msg = self
-                            .view
-                            .update(COMPONENT_RADIO_BOOKMARK_SAVE_PWD, props.visible().build());
-                        let _ = self.update(msg);
-                    }
-                    if let Some(props) = self.view.get_props(COMPONENT_INPUT_BOOKMARK_NAME).as_mut()
-                    {
-                        let msg = self
-                            .view
-                            .update(COMPONENT_INPUT_BOOKMARK_NAME, props.visible().build());
-                        let _ = self.update(msg);
-                    }
+                    self.mount_bookmark_save_dialog();
                     // Give focus to bookmark name
                     self.view.active(COMPONENT_INPUT_BOOKMARK_NAME);
                     None
@@ -385,47 +345,21 @@ impl AuthActivity {
                             _ => false,
                         };
                     // TODO: save bookmark
-                    // Hide popup
-                    if let Some(props) = self
-                        .view
-                        .get_props(COMPONENT_RADIO_BOOKMARK_SAVE_PWD)
-                        .as_mut()
-                    {
-                        let msg = self
-                            .view
-                            .update(COMPONENT_RADIO_BOOKMARK_SAVE_PWD, props.hidden().build());
-                        let _ = self.update(msg);
-                    }
-                    if let Some(props) = self.view.get_props(COMPONENT_INPUT_BOOKMARK_NAME).as_mut()
-                    {
-                        let msg = self
-                            .view
-                            .update(COMPONENT_INPUT_BOOKMARK_NAME, props.hidden().build());
-                        let _ = self.update(msg);
-                    }
+                    // Umount popup
+                    self.umount_bookmark_save_dialog();
                     None
                 }
                 // Hide save bookmark
                 (COMPONENT_INPUT_BOOKMARK_NAME, &MSG_KEY_ESC)
                 | (COMPONENT_RADIO_BOOKMARK_SAVE_PWD, &MSG_KEY_ESC) => {
-                    // Hide popup
-                    if let Some(props) = self
-                        .view
-                        .get_props(COMPONENT_RADIO_BOOKMARK_SAVE_PWD)
-                        .as_mut()
-                    {
-                        let msg = self
-                            .view
-                            .update(COMPONENT_RADIO_BOOKMARK_SAVE_PWD, props.hidden().build());
-                        let _ = self.update(msg);
-                    }
-                    if let Some(props) = self.view.get_props(COMPONENT_INPUT_BOOKMARK_NAME).as_mut()
-                    {
-                        let msg = self
-                            .view
-                            .update(COMPONENT_INPUT_BOOKMARK_NAME, props.hidden().build());
-                        let _ = self.update(msg);
-                    }
+                    // Umount popup
+                    self.umount_bookmark_save_dialog();
+                    None
+                }
+                // Error message
+                (COMPONENT_TEXT_ERROR, &MSG_KEY_ENTER) => {
+                    // Umount text error
+                    self.umount_error();
                     None
                 }
                 // On submit on any unhandled (connect)
@@ -436,21 +370,7 @@ impl AuthActivity {
                         Some(Payload::Text(addr)) => addr,
                         _ => {
                             // Show error
-                            if let Some(props) = self.view.get_props(COMPONENT_TEXT_ERROR).as_mut()
-                            {
-                                let msg = self.view.update(
-                                    COMPONENT_TEXT_ERROR,
-                                    props
-                                        .visible()
-                                        .with_texts(TextParts::new(
-                                            None,
-                                            Some(vec![TextSpan::from("Invalid address!")]),
-                                        ))
-                                        .build(),
-                                );
-                                return self.update(msg);
-                            }
-                            // Return None
+                            self.mount_error("Invalid address!");
                             return None;
                         }
                     };
@@ -458,20 +378,7 @@ impl AuthActivity {
                         Some(Payload::Unsigned(p)) => p as u16,
                         _ => {
                             // Show error
-                            if let Some(props) = self.view.get_props(COMPONENT_TEXT_ERROR).as_mut()
-                            {
-                                let msg = self.view.update(
-                                    COMPONENT_TEXT_ERROR,
-                                    props
-                                        .visible()
-                                        .with_texts(TextParts::new(
-                                            None,
-                                            Some(vec![TextSpan::from("Invalid port number!")]),
-                                        ))
-                                        .build(),
-                                );
-                                return self.update(msg);
-                            }
+                            self.mount_error("Invalid port number!");
                             // Return None
                             return None;
                         }
