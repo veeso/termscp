@@ -28,6 +28,7 @@ use super::{Canvas, Component, InputEvent, Msg, Payload, PropValue, Props, Props
 
 // exports
 pub mod bookmark_list;
+pub mod ctext;
 pub mod file_list;
 pub mod input;
 pub mod logbox;
