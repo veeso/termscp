@@ -38,7 +38,7 @@ use crate::ui::layout::{Msg, Payload};
 use tui::{
     layout::{Constraint, Direction, Layout},
     style::Color,
-    widgets::{Borders, Clear},
+    widgets::Clear,
 };
 
 impl AuthActivity {

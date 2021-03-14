@@ -20,6 +20,12 @@ Released on FIXME: date
 
 - **New explorer features**:
   - **Execute** a command pressing `X`. This feature is supported on both local and remote hosts (only SFTP/SCP protocols support this feature).
+- Enhancements:
+  - Input fields will now support **"input keys"** (such as moving cursor, DEL, END, HOME, ...)
+- For developers:
+  - Activity refactoring
+    - Developed an internal library used to create components, components are then nested inside a View
+    - The new engine works through properties and states, then returns Messages. I was inspired by both React and Elm.
 - Bugfix:
   - Prevent resetting explorer index on remote tab after performing certain actions (list dir, exec, ...)
   - SCP file transfer: prevent infinite loops while performing `stat` on symbolic links pointing to themselves (e.g. `mylink -> mylink`)
