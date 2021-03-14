@@ -33,13 +33,10 @@ use crate::ui::layout::props::{
 };
 use crate::utils::fmt::align_text_center;
 // Ext
-use std::string::ToString;
 use tui::{
-    layout::{Constraint, Corner, Direction, Layout, Rect},
-    style::{Color, Modifier, Style},
-    widgets::{Block, BorderType, Borders, Clear, List, ListItem, ListState, Paragraph, Tabs, Widget},
+    layout::{Constraint, Corner, Direction, Layout},
+    style::Color,
 };
-use unicode_width::UnicodeWidthStr;
 
 impl AuthActivity {
     /// ### init
@@ -150,7 +147,7 @@ impl AuthActivity {
                 Box::new(Text::new(
                     PropsBuilder::default()
                         .with_foreground(Color::Yellow)
-                        .with_texts(TextParts::new(None, Some(vec![format!("TermSCP {} is now available! Download it from <https://github.com/veeso/termscp/releases/latest>", version)])))
+                        .with_texts(TextParts::new(None, Some(vec![TextSpan::from(format!("TermSCP {} is now available! Download it from <https://github.com/veeso/termscp/releases/latest>", version).as_str())])))
                         .bold()
                         .build()
                 ))
@@ -180,14 +177,14 @@ impl AuthActivity {
             let auth_chunks = Layout::default()
                 .constraints(
                     [
-                        Constraint::Length(5),
+                        Constraint::Length(5), // header
                         Constraint::Length(1), // Version
-                        Constraint::Length(3),
-                        Constraint::Length(3),
-                        Constraint::Length(3),
-                        Constraint::Length(3),
-                        Constraint::Length(3),
-                        Constraint::Length(3),
+                        Constraint::Length(3), // host
+                        Constraint::Length(3), // port
+                        Constraint::Length(3), // protocol
+                        Constraint::Length(3), // username
+                        Constraint::Length(3), // password
+                        Constraint::Length(3), // footer
                     ]
                     .as_ref(),
                 )
@@ -198,11 +195,30 @@ impl AuthActivity {
                 .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
                 .direction(Direction::Horizontal)
                 .split(chunks[1]);
-            // Get focus holder
-            let focus: Option<String> = self.view.who_has_focus();
             // Render
-            // Header
-            self.view.render(super::COMPONENT_TEXT_HEADER, f, auth_chunks[0]);
+            // Auth chunks
+            self.view
+                .render(super::COMPONENT_TEXT_HEADER, f, auth_chunks[0]);
+            self.view
+                .render(super::COMPONENT_TEXT_NEW_VERSION, f, auth_chunks[1]);
+            self.view
+                .render(super::COMPONENT_INPUT_ADDR, f, auth_chunks[2]);
+            self.view
+                .render(super::COMPONENT_INPUT_PORT, f, auth_chunks[3]);
+            self.view
+                .render(super::COMPONENT_RADIO_PROTOCOL, f, auth_chunks[4]);
+            self.view
+                .render(super::COMPONENT_INPUT_USERNAME, f, auth_chunks[5]);
+            self.view
+                .render(super::COMPONENT_INPUT_PASSWORD, f, auth_chunks[6]);
+            self.view
+                .render(super::COMPONENT_TEXT_FOOTER, f, auth_chunks[7]);
+            // Bookmark chunks
+            self.view
+                .render(super::COMPONENT_BOOKMARKS_LIST, f, bookmark_chunks[0]);
+            self.view
+                .render(super::COMPONENT_RECENTS_LIST, f, bookmark_chunks[1]);
+            // Popup
         });
     }
 

@@ -25,7 +25,6 @@
 
 // Sub modules
 mod bookmarks;
-mod layout; // TOREM: this
 mod update;
 mod view;
 
@@ -44,7 +43,6 @@ use crate::ui::layout::view::View;
 use crate::utils::git;
 
 // Includes
-use crossterm::event::Event as InputEvent;
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use std::path::PathBuf;
 use tui::style::Color;
