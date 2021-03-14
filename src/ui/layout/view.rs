@@ -160,6 +160,10 @@ impl View {
                 // Set focus to last element
                 new = Some(last.clone());
                 self.focus = Some(last.clone());
+                // Active
+                if let Some(new) = self.components.get_mut(last) {
+                    new.active();
+                }
             }
             // Pop element from stack
             if let Some(new) = new {
