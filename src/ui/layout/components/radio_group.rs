@@ -127,7 +127,7 @@ impl Component for RadioGroup {
                 .map(|x| Spans::from(x.clone()))
                 .collect();
             // Make colors
-            let (bg, fg, block_fg): (Color, Color, Color) = match &self.states.focus {
+            let (bg, fg, block_color): (Color, Color, Color) = match &self.states.focus {
                 true => (
                     self.props.foreground,
                     self.props.background,
@@ -145,11 +145,11 @@ impl Component for RadioGroup {
                         Block::default()
                             .borders(Borders::ALL)
                             .border_type(BorderType::Rounded)
-                            .style(Style::default().fg(block_fg))
+                            .style(Style::default())
                             .title(title),
                     )
                     .select(self.states.choice)
-                    .style(Style::default())
+                    .style(Style::default().fg(block_color))
                     .highlight_style(
                         Style::default()
                             .add_modifier(self.props.get_modifiers())
