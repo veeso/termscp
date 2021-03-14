@@ -1050,7 +1050,8 @@ mod tests {
         assert!(make_sample_file(subdir.as_path(), "examples.csv").is_ok());
         let host: Localhost = Localhost::new(PathBuf::from(dir_path)).ok().unwrap();
         // Find txt files
-        let result: Vec<FsEntry> = host.find("*.txt").ok().unwrap();
+        let mut result: Vec<FsEntry> = host.find("*.txt").ok().unwrap();
+        result.sort_by_key(|x: &FsEntry| x.get_name().to_lowercase());
         // There should be 3 entries
         assert_eq!(result.len(), 3);
         // Check names (they should be sorted alphabetically already; NOTE: examples/ comes before pippo.txt)
@@ -1058,7 +1059,8 @@ mod tests {
         assert_eq!(result[1].get_name(), "omar.txt");
         assert_eq!(result[2].get_name(), "pippo.txt");
         // Search for directory
-        let result: Vec<FsEntry> = host.find("examples*").ok().unwrap();
+        let mut result: Vec<FsEntry> = host.find("examples*").ok().unwrap();
+        result.sort_by_key(|x: &FsEntry| x.get_name().to_lowercase());
         assert_eq!(result.len(), 2);
         assert_eq!(result[0].get_name(), "examples");
         assert_eq!(result[1].get_name(), "examples.csv");
@@ -1114,7 +1116,10 @@ mod tests {
         let mut p: PathBuf = PathBuf::from(dir);
         p.push(filename);
         let mut file: File = File::create(p.as_path())?;
-        file.write_all(b"termscp test file")?;
+        write!(
+            file,
+            "Lorem ipsum dolor sit amet, consectetur adipiscing elit.\nMauris ultricies consequat eros,\nnec scelerisque magna imperdiet metus.\n"
+        )?;
         Ok(())
     }
 
