@@ -94,6 +94,7 @@ pub struct PropsBuilder {
     props: Option<Props>,
 }
 
+#[allow(dead_code)]
 impl PropsBuilder {
     /// ### build
     ///
@@ -382,6 +383,7 @@ pub struct TextSpanBuilder {
     text: Option<TextSpan>,
 }
 
+#[allow(dead_code)]
 impl TextSpanBuilder {
     /// ### new
     ///
@@ -456,6 +458,7 @@ impl TextSpanBuilder {
 ///
 /// PropValue describes a property initial value
 #[derive(Clone, PartialEq, std::fmt::Debug)]
+#[allow(dead_code)]
 pub enum PropValue {
     Str(String),
     Unsigned(usize),

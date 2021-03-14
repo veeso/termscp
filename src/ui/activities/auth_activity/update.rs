@@ -25,16 +25,13 @@
 
 // locals
 use super::{
-    AuthActivity, FileTransferProtocol, COMPONENT_BOOKMARKS_LIST, COMPONENT_INPUT_ADDR,
-    COMPONENT_INPUT_BOOKMARK_NAME, COMPONENT_INPUT_PASSWORD, COMPONENT_INPUT_PORT,
-    COMPONENT_INPUT_USERNAME, COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK,
-    COMPONENT_RADIO_BOOKMARK_DEL_RECENT, COMPONENT_RADIO_BOOKMARK_SAVE_PWD,
-    COMPONENT_RADIO_PROTOCOL, COMPONENT_RECENTS_LIST, COMPONENT_TEXT_ERROR, COMPONENT_TEXT_HELP,
+    AuthActivity, COMPONENT_BOOKMARKS_LIST, COMPONENT_INPUT_ADDR, COMPONENT_INPUT_BOOKMARK_NAME,
+    COMPONENT_INPUT_PASSWORD, COMPONENT_INPUT_PORT, COMPONENT_INPUT_USERNAME,
+    COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK, COMPONENT_RADIO_BOOKMARK_DEL_RECENT,
+    COMPONENT_RADIO_BOOKMARK_SAVE_PWD, COMPONENT_RADIO_PROTOCOL, COMPONENT_RECENTS_LIST,
+    COMPONENT_TEXT_ERROR, COMPONENT_TEXT_HELP,
 };
-use crate::ui::layout::{
-    props::{TextParts, TextSpan},
-    Msg, Payload,
-};
+use crate::ui::layout::{props::TextParts, Msg, Payload};
 // ext
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
@@ -193,6 +190,15 @@ impl AuthActivity {
                     self.mount_recent_del_dialog();
                     None
                 }
+                // Enter
+                (COMPONENT_BOOKMARKS_LIST, Msg::OnSubmit(Payload::Unsigned(idx))) => {
+                    self.load_bookmark(*idx);
+                    None
+                }
+                (COMPONENT_RECENTS_LIST, Msg::OnSubmit(Payload::Unsigned(idx))) => {
+                    self.load_recent(*idx);
+                    None
+                }
                 // Bookmark radio
                 // Del bookmarks
                 (
@@ -209,16 +215,19 @@ impl AuthActivity {
                                 Some(Payload::Unsigned(index)) => {
                                     // Delete bookmark
                                     self.del_bookmark(index);
-                                    // TODO: view bookmarks
                                     // Update bookmarks
                                     match self.view.get_props(COMPONENT_BOOKMARKS_LIST).as_mut() {
                                         None => None,
                                         Some(props) => {
-                                            let msg = self
-                                                .view
-                                                .update(COMPONENT_BOOKMARKS_LIST, props.with_texts(
-                                                    TextParts::new(Some(String::from("Bookmarks")), Some(self.view_bookmarks()))
-                                                ).build()); // TODO: set rows
+                                            let msg = self.view.update(
+                                                COMPONENT_BOOKMARKS_LIST,
+                                                props
+                                                    .with_texts(TextParts::new(
+                                                        Some(String::from("Bookmarks")),
+                                                        Some(self.view_bookmarks()),
+                                                    ))
+                                                    .build(),
+                                            );
                                             self.update(msg)
                                         }
                                     }
@@ -240,16 +249,19 @@ impl AuthActivity {
                                 Some(Payload::Unsigned(index)) => {
                                     // Delete recent
                                     self.del_recent(index);
-                                    // TODO: view recents
                                     // Update bookmarks
                                     match self.view.get_props(COMPONENT_RECENTS_LIST).as_mut() {
                                         None => None,
                                         Some(props) => {
-                                            let msg = self
-                                                .view
-                                                .update(COMPONENT_RECENTS_LIST, props.with_texts(
-                                                    TextParts::new(Some(String::from("Recent connections")), Some(self.view_recent_connections()))
-                                                ).build()); // TODO: set rows
+                                            let msg = self.view.update(
+                                                COMPONENT_RECENTS_LIST,
+                                                props
+                                                    .with_texts(TextParts::new(
+                                                        Some(String::from("Recent connections")),
+                                                        Some(self.view_recent_connections()),
+                                                    ))
+                                                    .build(),
+                                            );
                                             self.update(msg)
                                         }
                                     }
@@ -344,7 +356,8 @@ impl AuthActivity {
                             },
                             _ => false,
                         };
-                    // TODO: save bookmark
+                    // Save bookmark
+                    self.save_bookmark(bookmark_name, save_pwd);
                     // Umount popup
                     self.umount_bookmark_save_dialog();
                     None
@@ -365,44 +378,8 @@ impl AuthActivity {
                 // On submit on any unhandled (connect)
                 (_, Msg::OnSubmit(_)) | (_, &MSG_KEY_ENTER) => {
                     // Match <ENTER> key for all other components
-                    // Collect values from inputs
-                    let address: String = match self.view.get_value(COMPONENT_INPUT_ADDR) {
-                        Some(Payload::Text(addr)) => addr,
-                        _ => {
-                            // Show error
-                            self.mount_error("Invalid address!");
-                            return None;
-                        }
-                    };
-                    let port: u16 = match self.view.get_value(COMPONENT_INPUT_PORT) {
-                        Some(Payload::Unsigned(p)) => p as u16,
-                        _ => {
-                            // Show error
-                            self.mount_error("Invalid port number!");
-                            // Return None
-                            return None;
-                        }
-                    };
-                    let username: String = match self.view.get_value(COMPONENT_INPUT_USERNAME) {
-                        Some(Payload::Text(u)) => u,
-                        _ => String::new(),
-                    };
-                    let password: String = match self.view.get_value(COMPONENT_INPUT_PASSWORD) {
-                        Some(Payload::Text(p)) => p,
-                        _ => String::new(),
-                    };
-                    let protocol: FileTransferProtocol =
-                        match self.view.get_value(COMPONENT_RADIO_PROTOCOL) {
-                            Some(Payload::Unsigned(choice)) => match choice {
-                                1 => FileTransferProtocol::Scp,
-                                2 => FileTransferProtocol::Ftp(false),
-                                3 => FileTransferProtocol::Ftp(true),
-                                _ => FileTransferProtocol::Sftp,
-                            },
-                            _ => FileTransferProtocol::Sftp,
-                        };
-                    // FIXME: save recent, pass attributes
                     self.save_recent();
+                    let (address, port, protocol, username, password) = self.get_input();
                     // TOREM: remove this after removing states
                     self.address = address;
                     self.port = port.to_string();

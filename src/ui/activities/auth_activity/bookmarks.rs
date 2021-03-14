@@ -27,9 +27,11 @@
 extern crate dirs;
 
 // Locals
-use super::{AuthActivity, Color, DialogYesNoOption, Popup};
+use super::{AuthActivity, FileTransferProtocol};
 use crate::system::bookmarks_client::BookmarksClient;
 use crate::system::environment;
+use crate::ui::layout::props::PropValue;
+use crate::ui::layout::Payload;
 
 // Ext
 use std::path::PathBuf;
@@ -60,14 +62,10 @@ impl AuthActivity {
             // Iterate over bookmarks
             if let Some(key) = self.bookmarks_list.get(idx) {
                 if let Some(bookmark) = bookmarks_cli.get_bookmark(&key) {
-                    // Load parameters
-                    self.address = bookmark.0;
-                    self.port = bookmark.1.to_string();
-                    self.protocol = bookmark.2;
-                    self.username = bookmark.3;
-                    if let Some(password) = bookmark.4 {
-                        self.password = password;
-                    }
+                    // Load parameters into components
+                    self.load_bookmark_into_gui(
+                        bookmark.0, bookmark.1, bookmark.2, bookmark.3, bookmark.4,
+                    );
                 }
             }
         }
@@ -76,41 +74,24 @@ impl AuthActivity {
     /// ### save_bookmark
     ///
     /// Save current input fields as a bookmark
-    pub(super) fn save_bookmark(&mut self, name: String) {
-        // Check port
-        let port: u16 = match self.port.parse::<usize>() {
-            Ok(val) => {
-                if val > 65535 {
-                    self.popup = Some(Popup::Alert(
-                        Color::Red,
-                        String::from("Specified port must be in range 0-65535"),
-                    ));
-                    return;
-                }
-                val as u16
-            }
-            Err(_) => {
-                self.popup = Some(Popup::Alert(
-                    Color::Red,
-                    String::from("Specified port is not a number"),
-                ));
-                return;
-            }
-        };
+    pub(super) fn save_bookmark(&mut self, name: String, save_password: bool) {
+        let (address, port, protocol, username, password) = self.get_input();
         if let Some(bookmarks_cli) = self.bookmarks_client.as_mut() {
             // Check if password must be saved
-            let password: Option<String> = match self.choice_opt {
-                DialogYesNoOption::Yes => Some(self.password.clone()),
-                DialogYesNoOption::No => None,
+            let password: Option<String> = match save_password {
+                true => match self
+                    .view
+                    .get_value(super::COMPONENT_RADIO_BOOKMARK_SAVE_PWD)
+                {
+                    Some(Payload::Unsigned(choice)) => match choice {
+                        0 => Some(password), // Yes
+                        _ => None,           // No
+                    },
+                    _ => None, // No such component
+                },
+                false => None,
             };
-            bookmarks_cli.add_bookmark(
-                name.clone(),
-                self.address.clone(),
-                port,
-                self.protocol,
-                self.username.clone(),
-                password,
-            );
+            bookmarks_cli.add_bookmark(name.clone(), address, port, protocol, username, password);
             // Save bookmarks
             self.write_bookmarks();
             // Push bookmark to list and sort
@@ -143,10 +124,9 @@ impl AuthActivity {
             if let Some(key) = self.recents_list.get(idx) {
                 if let Some(bookmark) = client.get_recent(key) {
                     // Load parameters
-                    self.address = bookmark.0;
-                    self.port = bookmark.1.to_string();
-                    self.protocol = bookmark.2;
-                    self.username = bookmark.3;
+                    self.load_bookmark_into_gui(
+                        bookmark.0, bookmark.1, bookmark.2, bookmark.3, None,
+                    );
                 }
             }
         }
@@ -156,33 +136,9 @@ impl AuthActivity {
     ///
     /// Save current input fields as a "recent"
     pub(super) fn save_recent(&mut self) {
-        // Check port
-        let port: u16 = match self.port.parse::<usize>() {
-            Ok(val) => {
-                if val > 65535 {
-                    self.popup = Some(Popup::Alert(
-                        Color::Red,
-                        String::from("Specified port must be in range 0-65535"),
-                    ));
-                    return;
-                }
-                val as u16
-            }
-            Err(_) => {
-                self.popup = Some(Popup::Alert(
-                    Color::Red,
-                    String::from("Specified port is not a number"),
-                ));
-                return;
-            }
-        };
+        let (address, port, protocol, username, _password) = self.get_input();
         if let Some(bookmarks_cli) = self.bookmarks_client.as_mut() {
-            bookmarks_cli.add_recent(
-                self.address.clone(),
-                port,
-                self.protocol,
-                self.username.clone(),
-            );
+            bookmarks_cli.add_recent(address, port, protocol, username);
             // Save bookmarks
             self.write_bookmarks();
         }
@@ -194,10 +150,7 @@ impl AuthActivity {
     fn write_bookmarks(&mut self) {
         if let Some(bookmarks_cli) = self.bookmarks_client.as_ref() {
             if let Err(err) = bookmarks_cli.write_bookmarks() {
-                self.popup = Some(Popup::Alert(
-                    Color::Red,
-                    format!("Could not write bookmarks: {}", err),
-                ));
+                self.mount_error(format!("Could not write bookmarks: {}", err).as_str());
             }
         }
     }
@@ -240,27 +193,28 @@ impl AuthActivity {
                             self.sort_recents();
                         }
                         Err(err) => {
-                            self.popup = Some(Popup::Alert(
-                                Color::Red,
+                            self.mount_error(
                                 format!(
                                     "Could not initialize bookmarks (at \"{}\", \"{}\"): {}",
                                     bookmarks_file.display(),
                                     config_dir_path.display(),
                                     err
-                                ),
-                            ))
+                                )
+                                .as_str(),
+                            );
                         }
                     }
                 }
             }
             Err(err) => {
-                self.popup = Some(Popup::Alert(
-                    Color::Red,
-                    format!("Could not initialize configuration directory: {}", err),
-                ))
+                self.mount_error(
+                    format!("Could not initialize configuration directory: {}", err).as_str(),
+                );
             }
         }
     }
+
+    // -- privates
 
     /// ### sort_bookmarks
     ///
@@ -277,5 +231,48 @@ impl AuthActivity {
     fn sort_recents(&mut self) {
         // Reverse order
         self.recents_list.sort_by(|a, b| b.cmp(a));
+    }
+
+    /// ### load_bookmark_into_gui
+    ///
+    /// Load bookmark data into the gui components
+    fn load_bookmark_into_gui(
+        &mut self,
+        addr: String,
+        port: u16,
+        protocol: FileTransferProtocol,
+        username: String,
+        password: Option<String>,
+    ) {
+        // Load parameters into components
+        if let Some(mut props) = self.view.get_props(super::COMPONENT_INPUT_ADDR) {
+            let props = props.with_value(PropValue::Str(addr)).build();
+            self.view.update(super::COMPONENT_INPUT_ADDR, props);
+        }
+        if let Some(mut props) = self.view.get_props(super::COMPONENT_INPUT_PORT) {
+            let props = props.with_value(PropValue::Unsigned(port as usize)).build();
+            self.view.update(super::COMPONENT_INPUT_PORT, props);
+        }
+        if let Some(mut props) = self.view.get_props(super::COMPONENT_RADIO_PROTOCOL) {
+            let props = props
+                .with_value(PropValue::Unsigned(match protocol {
+                    FileTransferProtocol::Sftp => 0,
+                    FileTransferProtocol::Scp => 1,
+                    FileTransferProtocol::Ftp(false) => 2,
+                    FileTransferProtocol::Ftp(true) => 3,
+                }))
+                .build();
+            self.view.update(super::COMPONENT_RADIO_PROTOCOL, props);
+        }
+        if let Some(mut props) = self.view.get_props(super::COMPONENT_INPUT_USERNAME) {
+            let props = props.with_value(PropValue::Str(username)).build();
+            self.view.update(super::COMPONENT_INPUT_USERNAME, props);
+        }
+        if let Some(password) = password {
+            if let Some(mut props) = self.view.get_props(super::COMPONENT_INPUT_PASSWORD) {
+                let props = props.with_value(PropValue::Str(password)).build();
+                self.view.update(super::COMPONENT_INPUT_PASSWORD, props);
+            }
+        }
     }
 }

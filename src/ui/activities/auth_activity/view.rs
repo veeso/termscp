@@ -24,17 +24,19 @@
 */
 
 // Locals
-use super::{AuthActivity, Context};
+use super::{AuthActivity, Context, FileTransferProtocol};
 use crate::ui::layout::components::{
-    bookmark_list::BookmarkList, input::Input, radio_group::RadioGroup, table::Table, text::Text,
+    bookmark_list::BookmarkList, ctext::CText, input::Input, radio_group::RadioGroup, table::Table,
+    text::Text,
 };
 use crate::ui::layout::props::{
-    InputType, PropValue, Props, PropsBuilder, TableBuilder, TextParts, TextSpan, TextSpanBuilder,
+    InputType, PropValue, PropsBuilder, TableBuilder, TextParts, TextSpan, TextSpanBuilder,
 };
-use crate::utils::fmt::align_text_center;
+use crate::ui::layout::utils::draw_area_in;
+use crate::ui::layout::Payload;
 // Ext
 use tui::{
-    layout::{Constraint, Corner, Direction, Layout},
+    layout::{Constraint, Direction, Layout},
     style::Color,
 };
 
@@ -153,6 +155,34 @@ impl AuthActivity {
                 ))
             );
         }
+        // Bookmarks
+        self.view.mount(
+            super::COMPONENT_BOOKMARKS_LIST,
+            Box::new(BookmarkList::new(
+                PropsBuilder::default()
+                    .with_foreground(Color::LightGreen)
+                    .with_texts(TextParts::new(
+                        Some(String::from("Bookmarks")),
+                        Some(self.view_bookmarks()),
+                    ))
+                    .build(),
+            )),
+        );
+        // Recents
+        self.view.mount(
+            super::COMPONENT_RECENTS_LIST,
+            Box::new(BookmarkList::new(
+                PropsBuilder::default()
+                    .with_foreground(Color::LightBlue)
+                    .with_texts(TextParts::new(
+                        Some(String::from("Recent connections")),
+                        Some(self.view_recent_connections()),
+                    ))
+                    .build(),
+            )),
+        );
+        // Active address
+        self.view.active(super::COMPONENT_INPUT_ADDR);
     }
 
     /// ### view
@@ -218,8 +248,68 @@ impl AuthActivity {
                 .render(super::COMPONENT_BOOKMARKS_LIST, f, bookmark_chunks[0]);
             self.view
                 .render(super::COMPONENT_RECENTS_LIST, f, bookmark_chunks[1]);
-            // Popup
+            // Popups
+            if let Some(mut props) = self.view.get_props(super::COMPONENT_TEXT_ERROR) {
+                if props.build().visible {
+                    // make popup
+                    self.view.render(
+                        super::COMPONENT_TEXT_ERROR,
+                        f,
+                        draw_area_in(f.size(), 50, 10),
+                    );
+                }
+            }
+            if let Some(mut props) = self
+                .view
+                .get_props(super::COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK)
+            {
+                if props.build().visible {
+                    // make popup
+                    self.view.render(
+                        super::COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK,
+                        f,
+                        draw_area_in(f.size(), 30, 10),
+                    );
+                }
+            }
+            if let Some(mut props) = self
+                .view
+                .get_props(super::COMPONENT_RADIO_BOOKMARK_DEL_RECENT)
+            {
+                if props.build().visible {
+                    // make popup
+                    self.view.render(
+                        super::COMPONENT_RADIO_BOOKMARK_DEL_RECENT,
+                        f,
+                        draw_area_in(f.size(), 30, 10),
+                    );
+                }
+            }
+            if let Some(mut props) = self.view.get_props(super::COMPONENT_TEXT_HELP) {
+                if props.build().visible {
+                    // make popup
+                    self.view.render(
+                        super::COMPONENT_TEXT_HELP,
+                        f,
+                        draw_area_in(f.size(), 50, 70),
+                    );
+                }
+            }
+            if let Some(mut props) = self
+                .view
+                .get_props(super::COMPONENT_RADIO_BOOKMARK_SAVE_PWD)
+            {
+                if props.build().visible {
+                    // make popup
+                    let popup = draw_area_in(f.size(), 20, 20);
+                    self.view
+                        .render(super::COMPONENT_INPUT_BOOKMARK_NAME, f, popup);
+                    self.view
+                        .render(super::COMPONENT_RADIO_BOOKMARK_SAVE_PWD, f, popup);
+                }
+            }
         });
+        self.context = Some(ctx);
     }
 
     // -- partials
@@ -253,7 +343,7 @@ impl AuthActivity {
         // Mount
         self.view.mount(
             super::COMPONENT_TEXT_ERROR,
-            Box::new(Text::new(
+            Box::new(CText::new(
                 PropsBuilder::default()
                     .with_foreground(Color::Red)
                     .bold()
@@ -458,5 +548,38 @@ impl AuthActivity {
     /// Umount help
     pub(super) fn umount_help(&mut self) {
         self.view.umount(super::COMPONENT_TEXT_HELP);
+    }
+
+    /// ### get_input
+    ///
+    /// Collect input values from view
+    pub(super) fn get_input(&self) -> (String, u16, FileTransferProtocol, String, String) {
+        let addr: String = match self.view.get_value(super::COMPONENT_INPUT_ADDR) {
+            Some(Payload::Text(a)) => a,
+            _ => String::new(),
+        };
+        let port: u16 = match self.view.get_value(super::COMPONENT_INPUT_PORT) {
+            Some(Payload::Unsigned(p)) => p as u16,
+            _ => 0,
+        };
+        let protocol: FileTransferProtocol =
+            match self.view.get_value(super::COMPONENT_RADIO_PROTOCOL) {
+                Some(Payload::Unsigned(p)) => match p {
+                    1 => FileTransferProtocol::Scp,
+                    2 => FileTransferProtocol::Ftp(false),
+                    3 => FileTransferProtocol::Ftp(true),
+                    _ => FileTransferProtocol::Sftp,
+                },
+                _ => FileTransferProtocol::Sftp,
+            };
+        let username: String = match self.view.get_value(super::COMPONENT_INPUT_USERNAME) {
+            Some(Payload::Text(a)) => a,
+            _ => String::new(),
+        };
+        let password: String = match self.view.get_value(super::COMPONENT_INPUT_PASSWORD) {
+            Some(Payload::Text(a)) => a,
+            _ => String::new(),
+        };
+        (addr, port, protocol, username, password)
     }
 }

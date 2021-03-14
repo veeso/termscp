@@ -45,10 +45,6 @@ use crate::utils::git;
 // Includes
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use std::path::PathBuf;
-use tui::style::Color;
-
-// Types
-type DialogCallback = fn(&mut AuthActivity);
 
 // -- components
 const COMPONENT_TEXT_HEADER: &str = "TEXT_HEADER";
@@ -68,48 +64,6 @@ const COMPONENT_RADIO_BOOKMARK_SAVE_PWD: &str = "RADIO_SAVE_PASSWORD";
 const COMPONENT_BOOKMARKS_LIST: &str = "BOOKMARKS_LIST";
 const COMPONENT_RECENTS_LIST: &str = "RECENTS_LIST";
 
-/// ### InputField
-///
-/// InputField describes the current input field to edit
-#[derive(std::cmp::PartialEq)]
-enum InputField {
-    Address,
-    Port,
-    Protocol,
-    Username,
-    Password,
-}
-
-/// ### DialogYesNoOption
-///
-/// Current yes/no dialog option
-#[derive(std::cmp::PartialEq, Clone)]
-enum DialogYesNoOption {
-    Yes,
-    No,
-}
-
-/// ### Popup
-///
-/// Popup describes the type of the popup displayed
-#[derive(Clone)]
-enum Popup {
-    Alert(Color, String), // Show a message displaying text with the provided color
-    Help,                 // Help page
-    SaveBookmark,
-    YesNo(String, DialogCallback, DialogCallback), // Yes, no callback
-}
-
-#[derive(std::cmp::PartialEq)]
-/// ### InputForm
-///
-/// InputForm describes the selected input form
-enum InputForm {
-    AuthCredentials,
-    Bookmarks,
-    Recents,
-}
-
 /// ### AuthActivity
 ///
 /// AuthActivity is the data holder for the authentication activity
@@ -126,17 +80,9 @@ pub struct AuthActivity {
     view: View,
     bookmarks_client: Option<BookmarksClient>,
     config_client: Option<ConfigClient>,
-    selected_field: InputField, // Selected field in AuthCredentials Form
-    popup: Option<Popup>,
-    input_form: InputForm,
-    password_placeholder: String,
-    redraw: bool,                  // Should ui actually be redrawned?
-    input_txt: String,             // Input text
-    choice_opt: DialogYesNoOption, // Dialog popup selected option
-    bookmarks_idx: usize,          // Index of selected bookmark
-    bookmarks_list: Vec<String>,   // List of bookmarks
-    recents_idx: usize,            // Index of selected recent
-    recents_list: Vec<String>,     // list of recents
+    redraw: bool,                // Should ui actually be redrawned?
+    bookmarks_list: Vec<String>, // List of bookmarks
+    recents_list: Vec<String>,   // list of recents
     // misc
     new_version: Option<String>, // Contains new version of termscp
 }
@@ -165,16 +111,8 @@ impl AuthActivity {
             view: View::init(),
             bookmarks_client: None,
             config_client: None,
-            selected_field: InputField::Address,
-            popup: None,
-            input_form: InputForm::AuthCredentials,
-            password_placeholder: String::new(),
             redraw: true, // True at startup
-            input_txt: String::new(),
-            choice_opt: DialogYesNoOption::Yes,
-            bookmarks_idx: 0,
             bookmarks_list: Vec::new(),
-            recents_idx: 0,
             recents_list: Vec::new(),
             new_version: None,
         }
@@ -199,19 +137,18 @@ impl AuthActivity {
                             self.config_client = Some(cli);
                         }
                         Err(err) => {
-                            self.popup = Some(Popup::Alert(
-                                Color::Red,
-                                format!("Could not initialize user configuration: {}", err),
-                            ))
+                            self.mount_error(
+                                format!("Could not initialize user configuration: {}", err)
+                                    .as_str(),
+                            );
                         }
                     }
                 }
             }
             Err(err) => {
-                self.popup = Some(Popup::Alert(
-                    Color::Red,
-                    format!("Could not initialize configuration directory: {}", err),
-                ))
+                self.mount_error(
+                    format!("Could not initialize configuration directory: {}", err).as_str(),
+                );
             }
         }
     }
@@ -227,10 +164,9 @@ impl AuthActivity {
                     Ok(version) => self.new_version = version,
                     Err(err) => {
                         // Report error
-                        self.popup = Some(Popup::Alert(
-                            Color::Red,
-                            format!("Could not check for new updates: {}", err),
-                        ))
+                        self.mount_error(
+                            format!("Could not check for new updates: {}", err).as_str(),
+                        );
                     }
                 }
             }
@@ -251,7 +187,6 @@ impl Activity for AuthActivity {
         self.context.as_mut().unwrap().clear_screen();
         // Put raw mode on enabled
         let _ = enable_raw_mode();
-        self.popup = None;
         // Init bookmarks client
         if self.bookmarks_client.is_none() {
             self.init_bookmarks_client();
