@@ -29,7 +29,7 @@ use super::{Canvas, Component, InputEvent, Msg, Payload, PropValue, Props, Props
 use tui::{
     layout::Rect,
     style::Style,
-    widgets::{Block, Borders, Gauge},
+    widgets::{Block, Gauge},
 };
 
 // -- state
@@ -92,7 +92,7 @@ impl Component for ProgressBar {
             // Make progress bar
             render.render_widget(
                 Gauge::default()
-                    .block(Block::default().borders(Borders::ALL).title(title))
+                    .block(Block::default().borders(self.props.borders).title(title))
                     .gauge_style(
                         Style::default()
                             .fg(self.props.foreground)

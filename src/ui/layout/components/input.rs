@@ -31,7 +31,7 @@ use crossterm::event::{KeyCode, KeyModifiers};
 use tui::{
     layout::Rect,
     style::Style,
-    widgets::{Block, BorderType, Borders, Paragraph},
+    widgets::{Block, BorderType, Paragraph},
 };
 
 // -- states
@@ -199,7 +199,7 @@ impl Component for Input {
                 })
                 .block(
                     Block::default()
-                        .borders(Borders::ALL)
+                        .borders(self.props.borders)
                         .border_type(BorderType::Rounded)
                         .title(title),
                 );

@@ -31,7 +31,7 @@ use tui::{
     layout::{Corner, Rect},
     style::{Color, Style},
     text::Span,
-    widgets::{Block, Borders, List, ListItem, ListState},
+    widgets::{Block, List, ListItem, ListState},
 };
 
 // -- states
@@ -157,7 +157,7 @@ impl Component for BookmarkList {
                 List::new(list_item)
                     .block(
                         Block::default()
-                            .borders(Borders::ALL)
+                            .borders(self.props.borders)
                             .border_style(match self.states.focus {
                                 true => Style::default().fg(self.props.background),
                                 false => Style::default(),

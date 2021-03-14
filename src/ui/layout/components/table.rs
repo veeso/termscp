@@ -30,7 +30,7 @@ use tui::{
     layout::{Corner, Rect},
     style::Style,
     text::{Span, Spans},
-    widgets::{Block, BorderType, Borders, List, ListItem},
+    widgets::{Block, BorderType, List, ListItem},
 };
 
 // -- state
@@ -107,7 +107,7 @@ impl Component for Table {
                 List::new(list_items)
                     .block(
                         Block::default()
-                            .borders(Borders::ALL)
+                            .borders(self.props.borders)
                             .border_style(Style::default())
                             .border_type(BorderType::Rounded)
                             .title(title),

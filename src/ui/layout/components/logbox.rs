@@ -31,7 +31,7 @@ use tui::{
     layout::{Corner, Rect},
     style::Style,
     text::{Span, Spans},
-    widgets::{Block, Borders, List, ListItem, ListState},
+    widgets::{Block, List, ListItem, ListState},
 };
 
 // -- states
@@ -170,7 +170,7 @@ impl Component for LogBox {
             let w = List::new(list_items)
                 .block(
                     Block::default()
-                        .borders(Borders::ALL)
+                        .borders(self.props.borders)
                         .border_style(match self.states.focus {
                             true => Style::default().fg(self.props.foreground),
                             false => Style::default(),

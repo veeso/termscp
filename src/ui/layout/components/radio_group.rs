@@ -32,7 +32,7 @@ use tui::{
     layout::Rect,
     style::{Color, Style},
     text::Spans,
-    widgets::{Block, BorderType, Borders, Tabs},
+    widgets::{Block, BorderType, Tabs},
 };
 
 // -- states
@@ -143,7 +143,7 @@ impl Component for RadioGroup {
                 Tabs::new(choices)
                     .block(
                         Block::default()
-                            .borders(Borders::ALL)
+                            .borders(self.props.borders)
                             .border_type(BorderType::Rounded)
                             .style(Style::default())
                             .title(title),
