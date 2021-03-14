@@ -33,7 +33,6 @@ use tui::{
     style::Style,
     widgets::{Block, BorderType, Borders, Paragraph},
 };
-use unicode_width::UnicodeWidthStr;
 
 // -- states
 
@@ -208,7 +207,7 @@ impl Component for Input {
             // Set cursor, if focus
             if self.states.focus {
                 let x: u16 =
-                    area.x + (self.states.render_value(self.props.input_type).width() as u16) + 1;
+                    area.x + (self.states.cursor as u16) + 1;
                 render.set_cursor(x, area.y + 1);
             }
         }
