@@ -188,16 +188,6 @@ impl View {
         }
     }
 
-    /// ### who_has_focus
-    ///
-    /// Returns component id associated to the focus
-    pub fn who_has_focus(&self) -> Option<String> {
-        match self.focus.as_ref() {
-            Some(focus) => Some(focus.to_string()),
-            None => None,
-        }
-    }
-
     // -- private
 
     /// ### push_to_stack
@@ -279,7 +269,6 @@ mod tests {
         let input3: &str = "INPUT_3";
         let text1: &str = "TEXT_1";
         let text2: &str = "TEXT_2";
-        assert!(view.who_has_focus().is_none());
         // Mount components
         view.mount(input1, make_component_input());
         view.mount(input2, make_component_input());
@@ -299,7 +288,6 @@ mod tests {
         assert_eq!(view.focus_stack.len(), 0);
         // Give focus to a component
         view.active(input1);
-        assert_eq!(view.who_has_focus().as_ref().unwrap().as_str(), input1);
         // Check focus
         assert_eq!(view.focus.as_ref().unwrap().as_str(), input1);
         assert_eq!(view.focus_stack.len(), 0); // NOTE: stack is empty until a focus gets blurred
