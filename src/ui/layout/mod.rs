@@ -27,6 +27,7 @@
 pub mod components;
 pub mod props;
 pub mod view;
+pub mod utils;
 
 // locals
 use props::{PropValue, Props, PropsBuilder};
@@ -61,18 +62,9 @@ pub enum Msg {
 #[derive(std::fmt::Debug, PartialEq, Eq)]
 pub enum Payload {
     Text(String),
-    Signed(isize),
+    //Signed(isize),
     Unsigned(usize),
     None,
-}
-
-// -- RenderData
-
-/// ## RenderData
-///
-/// RenderData is the object which contains data related to the component render
-pub struct RenderData {
-    pub cursor: usize, // Cursor position
 }
 
 // -- Component
