@@ -634,9 +634,7 @@ impl Localhost {
 mod tests {
 
     use super::*;
-    #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
     use std::fs::File;
-    #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
     use std::io::Write;
 
     #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
