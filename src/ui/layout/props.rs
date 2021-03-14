@@ -25,6 +25,7 @@
 
 // ext
 use tui::style::{Color, Modifier};
+use tui::widgets::Borders;
 
 // -- Props
 
@@ -37,6 +38,7 @@ pub struct Props {
     pub visible: bool,            // Is the element visible ON CREATE?
     pub foreground: Color,        // Foreground color
     pub background: Color,        // Background color
+    pub borders: Borders,         // Borders
     pub bold: bool,               // Text bold
     pub italic: bool,             // Italic
     pub underlined: bool,         // Underlined
@@ -53,6 +55,7 @@ impl Default for Props {
             visible: true,
             foreground: Color::Reset,
             background: Color::Reset,
+            borders: Borders::ALL,
             bold: false,
             italic: false,
             underlined: false,
@@ -140,6 +143,16 @@ impl PropsBuilder {
     pub fn with_background(&mut self, color: Color) -> &mut Self {
         if let Some(props) = self.props.as_mut() {
             props.background = color;
+        }
+        self
+    }
+
+    /// ### with_borders
+    ///
+    /// Set component borders style
+    pub fn with_borders(&mut self, borders: Borders) -> &mut Self {
+        if let Some(props) = self.props.as_mut() {
+            props.borders = borders;
         }
         self
     }
@@ -491,6 +504,7 @@ mod tests {
         assert_eq!(props.visible, true);
         assert_eq!(props.background, Color::Reset);
         assert_eq!(props.foreground, Color::Reset);
+        assert_eq!(props.borders, Borders::ALL);
         assert_eq!(props.bold, false);
         assert_eq!(props.italic, false);
         assert_eq!(props.underlined, false);
@@ -518,6 +532,7 @@ mod tests {
             .hidden()
             .with_background(Color::Blue)
             .with_foreground(Color::Green)
+            .with_borders(Borders::BOTTOM)
             .bold()
             .italic()
             .underlined()
@@ -530,6 +545,7 @@ mod tests {
             .with_value(PropValue::Str(String::from("Hello")))
             .build();
         assert_eq!(props.background, Color::Blue);
+        assert_eq!(props.borders, Borders::BOTTOM);
         assert_eq!(props.bold, true);
         assert_eq!(props.foreground, Color::Green);
         assert_eq!(props.italic, true);
