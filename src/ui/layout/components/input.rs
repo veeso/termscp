@@ -209,7 +209,7 @@ impl Component for Input {
             if self.states.focus {
                 let x: u16 =
                     area.x + (self.states.render_value(self.props.input_type).width() as u16) + 1;
-                render.set_cursor(x, area.y);
+                render.set_cursor(x, area.y + 1);
             }
         }
     }
