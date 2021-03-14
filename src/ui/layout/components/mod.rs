@@ -36,3 +36,4 @@ pub mod progress_bar;
 pub mod radio_group;
 pub mod table;
 pub mod text;
+pub mod title;
