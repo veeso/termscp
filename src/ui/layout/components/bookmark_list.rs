@@ -143,7 +143,7 @@ impl Component for BookmarkList {
                     .collect(),
             };
             let (fg, bg): (Color, Color) = match self.states.focus {
-                true => (Color::Reset, self.props.background),
+                true => (self.props.foreground, self.props.background),
                 false => (Color::Reset, Color::Reset),
             };
             let title: String = match self.props.texts.title.as_ref() {
@@ -159,7 +159,7 @@ impl Component for BookmarkList {
                         Block::default()
                             .borders(Borders::ALL)
                             .border_style(match self.states.focus {
-                                true => Style::default().fg(self.props.foreground),
+                                true => Style::default().fg(self.props.background),
                                 false => Style::default(),
                             })
                             .title(title),
