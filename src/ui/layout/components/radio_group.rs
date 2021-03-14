@@ -133,7 +133,7 @@ impl Component for RadioGroup {
                     self.props.background,
                     self.props.foreground,
                 ),
-                false => (Color::Reset, Color::Reset, Color::Reset),
+                false => (Color::Reset, self.props.foreground, Color::Reset),
             };
             let title: String = match &self.props.texts.title {
                 Some(t) => t.clone(),
