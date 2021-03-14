@@ -183,9 +183,11 @@ impl View {
             cmp.active();
             // Put current focus if any, into the stack
             if let Some(active_component) = self.focus.take() {
-                // Blur active component
-                if let Some(active_component) = self.components.get_mut(active_component.as_str()) {
-                    active_component.blur();
+                if active_component != component {
+                    // Blur active component if are different
+                    if let Some(active_component) = self.components.get_mut(active_component.as_str()) {
+                        active_component.blur();
+                    }
                 }
                 self.push_to_stack(active_component.as_str());
             }
