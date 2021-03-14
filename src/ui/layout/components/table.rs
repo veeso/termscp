@@ -24,10 +24,10 @@
 */
 
 // locals
-use super::{Component, InputEvent, Msg, Payload, Props, PropsBuilder, Render};
+use super::{Canvas, Component, InputEvent, Msg, Payload, Props, PropsBuilder};
 // ext
 use tui::{
-    layout::Corner,
+    layout::{Corner, Rect},
     style::Style,
     text::{Span, Spans},
     widgets::{Block, BorderType, Borders, List, ListItem},
@@ -70,9 +70,10 @@ impl Table {
 impl Component for Table {
     /// ### render
     ///
-    /// Based on the current properties and states, return a Widget instance for the Component
-    /// Returns None if the component is hidden
-    fn render(&self) -> Option<Render> {
+    /// Based on the current properties and states, renders a widget using the provided render engine in the provided Area
+    /// If focused, cursor is also set (if supported by widget)
+    #[cfg(not(tarpaulin_include))]
+    fn render(&self, render: &mut Canvas, area: Rect) {
         // Make a Span
         if self.props.visible {
             let title: String = match self.props.texts.title.as_ref() {
@@ -102,23 +103,18 @@ impl Component for Table {
                     .collect(), // Make List item from TextSpan
             };
             // Make list
-            Some(Render {
-                cursor: 0,
-                widget: Box::new(
-                    List::new(list_items)
-                        .block(
-                            Block::default()
-                                .borders(Borders::ALL)
-                                .border_style(Style::default())
-                                .border_type(BorderType::Rounded)
-                                .title(title),
-                        )
-                        .start_corner(Corner::TopLeft),
-                ),
-            })
-        } else {
-            // Invisible
-            None
+            render.render_widget(
+                List::new(list_items)
+                    .block(
+                        Block::default()
+                            .borders(Borders::ALL)
+                            .border_style(Style::default())
+                            .border_type(BorderType::Rounded)
+                            .title(title),
+                    )
+                    .start_corner(Corner::TopLeft),
+                area,
+            );
         }
     }
 
@@ -214,8 +210,6 @@ mod tests {
         assert_eq!(component.states.focus, false);
         // Get value
         assert_eq!(component.get_value(), Payload::None);
-        // Render
-        assert_eq!(component.render().unwrap().cursor, 0);
         // Event
         assert_eq!(
             component.on(InputEvent::Key(KeyEvent::from(KeyCode::Delete))),

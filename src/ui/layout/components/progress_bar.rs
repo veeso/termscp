@@ -24,9 +24,10 @@
 */
 
 // locals
-use super::{Component, InputEvent, Msg, Payload, PropValue, Props, PropsBuilder, Render};
+use super::{Canvas, Component, InputEvent, Msg, Payload, PropValue, Props, PropsBuilder};
 // ext
 use tui::{
+    layout::Rect,
     style::Style,
     widgets::{Block, Borders, Gauge},
 };
@@ -65,9 +66,10 @@ impl ProgressBar {
 impl Component for ProgressBar {
     /// ### render
     ///
-    /// Based on the current properties and states, return a Widget instance for the Component
-    /// Returns None if the component is hidden
-    fn render(&self) -> Option<Render> {
+    /// Based on the current properties and states, renders a widget using the provided render engine in the provided Area
+    /// If focused, cursor is also set (if supported by widget)
+    #[cfg(not(tarpaulin_include))]
+    fn render(&self, render: &mut Canvas, area: Rect) {
         // Make a Span
         if self.props.visible {
             let title: String = match self.props.texts.title.as_ref() {
@@ -88,24 +90,19 @@ impl Component for ProgressBar {
                 _ => 0.0,
             };
             // Make progress bar
-            Some(Render {
-                cursor: 0,
-                widget: Box::new(
-                    Gauge::default()
-                        .block(Block::default().borders(Borders::ALL).title(title))
-                        .gauge_style(
-                            Style::default()
-                                .fg(self.props.foreground)
-                                .bg(self.props.background)
-                                .add_modifier(self.props.get_modifiers()),
-                        )
-                        .label(label)
-                        .ratio(percentage),
-                ),
-            })
-        } else {
-            // Invisible
-            None
+            render.render_widget(
+                Gauge::default()
+                    .block(Block::default().borders(Borders::ALL).title(title))
+                    .gauge_style(
+                        Style::default()
+                            .fg(self.props.foreground)
+                            .bg(self.props.background)
+                            .add_modifier(self.props.get_modifiers()),
+                    )
+                    .label(label)
+                    .ratio(percentage),
+                area,
+            );
         }
     }
 
@@ -195,8 +192,6 @@ mod tests {
         assert_eq!(component.states.focus, false);
         // Get value
         assert_eq!(component.get_value(), Payload::None);
-        // Render
-        assert_eq!(component.render().unwrap().cursor, 0);
         // Event
         assert_eq!(
             component.on(InputEvent::Key(KeyEvent::from(KeyCode::Delete))),

@@ -29,11 +29,17 @@ pub mod props;
 pub mod view;
 
 // locals
-use props::{Props, PropsBuilder, PropValue};
+use props::{PropValue, Props, PropsBuilder};
 // ext
 use crossterm::event::Event as InputEvent;
 use crossterm::event::KeyEvent;
-use tui::widgets::Widget;
+use std::io::Stdout;
+use tui::backend::CrosstermBackend;
+use tui::layout::Rect;
+use tui::Frame;
+
+type Backend = CrosstermBackend<Stdout>;
+pub(crate) type Canvas<'a> = Frame<'a, Backend>;
 
 // -- Msg
 
@@ -60,14 +66,13 @@ pub enum Payload {
     None,
 }
 
-// -- Render
+// -- RenderData
 
-/// ## Render
+/// ## RenderData
 ///
-/// Render is the object which contains data related to the component render
-pub struct Render {
-    pub widget: Box<dyn Widget>, // Widget
-    pub cursor: usize,           // Cursor position
+/// RenderData is the object which contains data related to the component render
+pub struct RenderData {
+    pub cursor: usize, // Cursor position
 }
 
 // -- Component
@@ -79,9 +84,9 @@ pub struct Render {
 pub trait Component {
     /// ### render
     ///
-    /// Based on the current properties and states, return a Widget instance for the Component
-    /// Returns None if the component is hidden
-    fn render(&self) -> Option<Render>;
+    /// Based on the current properties and states, renders the component in the provided area frame
+    #[cfg(not(tarpaulin_include))]
+    fn render(&self, frame: &mut Canvas, area: Rect);
 
     /// ### update
     ///

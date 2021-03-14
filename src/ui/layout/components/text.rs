@@ -24,9 +24,10 @@
 */
 
 // locals
-use super::{Component, InputEvent, Msg, Payload, Props, PropsBuilder, Render};
+use super::{Canvas, Component, InputEvent, Msg, Payload, Props, PropsBuilder};
 // ext
 use tui::{
+    layout::Rect,
     style::Style,
     text::{Span, Spans, Text as TuiText},
     widgets::Paragraph,
@@ -66,9 +67,10 @@ impl Text {
 impl Component for Text {
     /// ### render
     ///
-    /// Based on the current properties and states, return a Widget instance for the Component
-    /// Returns None if the component is hidden
-    fn render(&self) -> Option<Render> {
+    /// Based on the current properties and states, renders a widget using the provided render engine in the provided Area
+    /// If focused, cursor is also set (if supported by widget)
+    #[cfg(not(tarpaulin_include))]
+    fn render(&self, render: &mut Canvas, area: Rect) {
         // Make a Span
         if self.props.visible {
             let spans: Vec<Span> = match self.props.texts.rows.as_ref() {
@@ -95,13 +97,7 @@ impl Component for Text {
                     .fg(self.props.foreground)
                     .bg(self.props.background),
             );
-            Some(Render {
-                widget: Box::new(Paragraph::new(text)),
-                cursor: 0,
-            })
-        } else {
-            // Invisible
-            None
+            render.render_widget(Paragraph::new(text), area);
         }
     }
 
@@ -199,8 +195,6 @@ mod tests {
         assert_eq!(component.states.focus, false);
         // Get value
         assert_eq!(component.get_value(), Payload::None);
-        // Render
-        assert_eq!(component.render().unwrap().cursor, 0);
         // Event
         assert_eq!(
             component.on(InputEvent::Key(KeyEvent::from(KeyCode::Delete))),

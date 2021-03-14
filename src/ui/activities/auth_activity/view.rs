@@ -202,9 +202,7 @@ impl AuthActivity {
             let focus: Option<String> = self.view.who_has_focus();
             // Render
             // Header
-            if let Some(render) = self.view.render(super::COMPONENT_TEXT_HEADER).as_ref() {
-                f.render_widget(render.widget, auth_chunks[0]);
-            }
+            self.view.render(super::COMPONENT_TEXT_HEADER, f, auth_chunks[0]);
         });
     }
 

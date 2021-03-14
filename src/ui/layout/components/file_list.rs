@@ -24,14 +24,14 @@
 */
 
 // locals
-use super::{Component, InputEvent, Msg, Payload, Props, PropsBuilder, Render};
+use super::{Canvas, Component, InputEvent, Msg, Payload, Props, PropsBuilder};
 // ext
 use crossterm::event::KeyCode;
 use tui::{
-    layout::Corner,
+    layout::{Corner, Rect},
     style::{Color, Style},
     text::Span,
-    widgets::{Block, Borders, List, ListItem},
+    widgets::{Block, Borders, List, ListItem, ListState},
 };
 
 // -- states
@@ -129,52 +129,51 @@ impl FileList {
 impl Component for FileList {
     /// ### render
     ///
-    /// Based on the current properties and states, return a Widget instance for the Component
-    /// Returns None if the component is hidden
-    fn render(&self) -> Option<Render> {
-        match self.props.visible {
-            false => None,
-            true => {
-                // Make list
-                let list_item: Vec<ListItem> = match self.props.texts.rows.as_ref() {
-                    None => vec![],
-                    Some(lines) => lines
-                        .iter()
-                        .map(|line| ListItem::new(Span::from(line.content.to_string())))
-                        .collect(),
-                };
-                let (fg, bg): (Color, Color) = match self.states.focus {
-                    true => (Color::Reset, self.props.background),
-                    false => (self.props.foreground, Color::Reset),
-                };
-                let title: String = match self.props.texts.title.as_ref() {
-                    Some(t) => t.clone(),
-                    None => String::new(),
-                };
-                // Render
-                Some(Render {
-                    widget: Box::new(
-                        List::new(list_item)
-                            .block(
-                                Block::default()
-                                    .borders(Borders::ALL)
-                                    .border_style(match self.states.focus {
-                                        true => Style::default().fg(self.props.foreground),
-                                        false => Style::default(),
-                                    })
-                                    .title(title),
-                            )
-                            .start_corner(Corner::TopLeft)
-                            .highlight_style(
-                                Style::default()
-                                    .bg(bg)
-                                    .fg(fg)
-                                    .add_modifier(self.props.get_modifiers()),
-                            ),
+    /// Based on the current properties and states, renders a widget using the provided render engine in the provided Area
+    /// If focused, cursor is also set (if supported by widget)
+    #[cfg(not(tarpaulin_include))]
+    fn render(&self, render: &mut Canvas, area: Rect) {
+        if self.props.visible {
+            // Make list
+            let list_item: Vec<ListItem> = match self.props.texts.rows.as_ref() {
+                None => vec![],
+                Some(lines) => lines
+                    .iter()
+                    .map(|line| ListItem::new(Span::from(line.content.to_string())))
+                    .collect(),
+            };
+            let (fg, bg): (Color, Color) = match self.states.focus {
+                true => (Color::Reset, self.props.background),
+                false => (self.props.foreground, Color::Reset),
+            };
+            let title: String = match self.props.texts.title.as_ref() {
+                Some(t) => t.clone(),
+                None => String::new(),
+            };
+            // Render
+            let mut state: ListState = ListState::default();
+            state.select(Some(self.states.list_index));
+            render.render_stateful_widget(
+                List::new(list_item)
+                    .block(
+                        Block::default()
+                            .borders(Borders::ALL)
+                            .border_style(match self.states.focus {
+                                true => Style::default().fg(self.props.foreground),
+                                false => Style::default(),
+                            })
+                            .title(title),
+                    )
+                    .start_corner(Corner::TopLeft)
+                    .highlight_style(
+                        Style::default()
+                            .bg(bg)
+                            .fg(fg)
+                            .add_modifier(self.props.get_modifiers()),
                     ),
-                    cursor: self.states.list_index,
-                })
-            }
+                area,
+                &mut state,
+            );
         }
     }
 
@@ -304,7 +303,7 @@ mod tests {
         assert_eq!(component.states.focus, false);
         // Increment list index
         component.states.list_index += 1;
-        assert_eq!(component.render().unwrap().cursor, 1);
+        assert_eq!(component.states.list_index, 1);
         // Update
         component.update(
             component
@@ -325,7 +324,7 @@ mod tests {
         // get value
         assert_eq!(component.get_value(), Payload::Unsigned(0));
         // Render
-        assert_eq!(component.render().unwrap().cursor, 0);
+        assert_eq!(component.states.list_index, 0);
         // Handle inputs
         assert_eq!(
             component.on(InputEvent::Key(KeyEvent::from(KeyCode::Down))),

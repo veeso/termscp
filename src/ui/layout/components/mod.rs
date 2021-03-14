@@ -24,7 +24,7 @@
 */
 
 // imports
-use super::{Component, InputEvent, Msg, Payload, PropValue, Props, PropsBuilder, Render};
+use super::{Canvas, Component, InputEvent, Msg, Payload, PropValue, Props, PropsBuilder};
 
 // exports
 pub mod bookmark_list;

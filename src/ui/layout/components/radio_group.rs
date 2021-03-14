@@ -25,10 +25,11 @@
 
 // locals
 use super::super::props::TextSpan;
-use super::{Component, InputEvent, Msg, Payload, PropValue, Props, PropsBuilder, Render};
+use super::{Canvas, Component, InputEvent, Msg, Payload, PropValue, Props, PropsBuilder};
 // ext
 use crossterm::event::KeyCode;
 use tui::{
+    layout::Rect,
     style::{Color, Style},
     text::Spans,
     widgets::{Block, BorderType, Borders, Tabs},
@@ -113,54 +114,50 @@ impl RadioGroup {
 impl Component for RadioGroup {
     /// ### render
     ///
-    /// Based on the current properties and states, return a Widget instance for the Component
-    /// Returns None if the component is hidden
-    fn render(&self) -> Option<Render> {
-        match self.props.visible {
-            false => None,
-            true => {
-                // Make choices
-                let choices: Vec<Spans> = self
-                    .states
-                    .choices
-                    .iter()
-                    .map(|x| Spans::from(x.clone()))
-                    .collect();
-                // Make colors
-                let (bg, fg, block_fg): (Color, Color, Color) = match &self.states.focus {
-                    true => (
-                        self.props.foreground,
-                        self.props.background,
-                        self.props.foreground,
+    /// Based on the current properties and states, renders a widget using the provided render engine in the provided Area
+    /// If focused, cursor is also set (if supported by widget)
+    #[cfg(not(tarpaulin_include))]
+    fn render(&self, render: &mut Canvas, area: Rect) {
+        if self.props.visible {
+            // Make choices
+            let choices: Vec<Spans> = self
+                .states
+                .choices
+                .iter()
+                .map(|x| Spans::from(x.clone()))
+                .collect();
+            // Make colors
+            let (bg, fg, block_fg): (Color, Color, Color) = match &self.states.focus {
+                true => (
+                    self.props.foreground,
+                    self.props.background,
+                    self.props.foreground,
+                ),
+                false => (Color::Reset, Color::Reset, Color::Reset),
+            };
+            let title: String = match &self.props.texts.title {
+                Some(t) => t.clone(),
+                None => String::new(),
+            };
+            render.render_widget(
+                Tabs::new(choices)
+                    .block(
+                        Block::default()
+                            .borders(Borders::ALL)
+                            .border_type(BorderType::Rounded)
+                            .style(Style::default().fg(block_fg))
+                            .title(title),
+                    )
+                    .select(self.states.choice)
+                    .style(Style::default())
+                    .highlight_style(
+                        Style::default()
+                            .add_modifier(self.props.get_modifiers())
+                            .fg(fg)
+                            .bg(bg),
                     ),
-                    false => (Color::Reset, Color::Reset, Color::Reset),
-                };
-                let title: String = match &self.props.texts.title {
-                    Some(t) => t.clone(),
-                    None => String::new(),
-                };
-                Some(Render {
-                    cursor: 0,
-                    widget: Box::new(
-                        Tabs::new(choices)
-                            .block(
-                                Block::default()
-                                    .borders(Borders::ALL)
-                                    .border_type(BorderType::Rounded)
-                                    .style(Style::default().fg(block_fg))
-                                    .title(title),
-                            )
-                            .select(self.states.choice)
-                            .style(Style::default())
-                            .highlight_style(
-                                Style::default()
-                                    .add_modifier(self.props.get_modifiers())
-                                    .fg(fg)
-                                    .bg(bg),
-                            ),
-                    ),
-                })
-            }
+                area,
+            );
         }
     }
 
@@ -287,8 +284,6 @@ mod tests {
         assert_eq!(component.states.focus, false);
         // Get value
         assert_eq!(component.get_value(), Payload::Unsigned(1));
-        // Render
-        assert_eq!(component.render().unwrap().cursor, 0);
         // Handle events
         assert_eq!(
             component.on(InputEvent::Key(KeyEvent::from(KeyCode::Left))),

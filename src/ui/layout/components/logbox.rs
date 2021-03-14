@@ -24,14 +24,14 @@
 */
 
 // locals
-use super::{Component, InputEvent, Msg, Payload, Props, PropsBuilder, Render};
+use super::{Canvas, Component, InputEvent, Msg, Payload, Props, PropsBuilder};
 // ext
 use crossterm::event::KeyCode;
 use tui::{
-    layout::Corner,
+    layout::{Corner, Rect},
     style::Style,
     text::{Span, Spans},
-    widgets::{Block, Borders, List, ListItem},
+    widgets::{Block, Borders, List, ListItem, ListState},
 };
 
 // -- states
@@ -134,59 +134,54 @@ impl LogBox {
 impl Component for LogBox {
     /// ### render
     ///
-    /// Based on the current properties and states, return a Widget instance for the Component
-    /// Returns None if the component is hidden
-    fn render(&self) -> Option<Render> {
-        match self.props.visible {
-            false => None,
-            true => {
-                // Make list
-                let list_items: Vec<ListItem> = match self.props.texts.table.as_ref() {
-                    None => Vec::new(),
-                    Some(table) => table
-                        .iter()
-                        .map(|row| {
-                            let columns: Vec<Span> = row
-                                .iter()
-                                .map(|col| {
-                                    Span::styled(
-                                        col.content.clone(),
-                                        Style::default()
-                                            .add_modifier(col.get_modifiers())
-                                            .fg(col.fg)
-                                            .bg(col.bg),
-                                    )
-                                })
-                                .collect();
-                            ListItem::new(Spans::from(columns))
+    /// Based on the current properties and states, renders a widget using the provided render engine in the provided Area
+    /// If focused, cursor is also set (if supported by widget)
+    #[cfg(not(tarpaulin_include))]
+    fn render(&self, render: &mut Canvas, area: Rect) {
+        if self.props.visible {
+            // Make list
+            let list_items: Vec<ListItem> = match self.props.texts.table.as_ref() {
+                None => Vec::new(),
+                Some(table) => table
+                    .iter()
+                    .map(|row| {
+                        let columns: Vec<Span> = row
+                            .iter()
+                            .map(|col| {
+                                Span::styled(
+                                    col.content.clone(),
+                                    Style::default()
+                                        .add_modifier(col.get_modifiers())
+                                        .fg(col.fg)
+                                        .bg(col.bg),
+                                )
+                            })
+                            .collect();
+                        ListItem::new(Spans::from(columns))
+                    })
+                    .collect(), // Make List item from TextSpan
+            };
+            let title: String = match self.props.texts.title.as_ref() {
+                Some(t) => t.clone(),
+                None => String::new(),
+            };
+            // Render
+
+            let w = List::new(list_items)
+                .block(
+                    Block::default()
+                        .borders(Borders::ALL)
+                        .border_style(match self.states.focus {
+                            true => Style::default().fg(self.props.foreground),
+                            false => Style::default(),
                         })
-                        .collect(), // Make List item from TextSpan
-                };
-                let title: String = match self.props.texts.title.as_ref() {
-                    Some(t) => t.clone(),
-                    None => String::new(),
-                };
-                // Render
-                Some(Render {
-                    widget: Box::new(
-                        List::new(list_items)
-                            .block(
-                                Block::default()
-                                    .borders(Borders::ALL)
-                                    .border_style(match self.states.focus {
-                                        true => Style::default().fg(self.props.foreground),
-                                        false => Style::default(),
-                                    })
-                                    .title(title),
-                            )
-                            .start_corner(Corner::BottomLeft)
-                            .highlight_style(
-                                Style::default().add_modifier(self.props.get_modifiers()),
-                            ),
-                    ),
-                    cursor: self.states.list_index,
-                })
-            }
+                        .title(title),
+                )
+                .start_corner(Corner::BottomLeft)
+                .highlight_style(Style::default().add_modifier(self.props.get_modifiers()));
+            let mut state: ListState = ListState::default();
+            state.select(Some(self.states.list_index));
+            render.render_stateful_widget(w, area, &mut state);
         }
     }
 
@@ -317,7 +312,7 @@ mod tests {
         assert_eq!(component.states.focus, false);
         // Increment list index
         component.states.list_index -= 1;
-        assert_eq!(component.render().unwrap().cursor, 0);
+        assert_eq!(component.states.list_index, 0);
         // Update
         component.update(
             component
@@ -342,8 +337,8 @@ mod tests {
         assert_eq!(component.states.list_len, 3);
         // get value
         assert_eq!(component.get_value(), Payload::Unsigned(2));
-        // Render
-        assert_eq!(component.render().unwrap().cursor, 2);
+        // RenderData
+        assert_eq!(component.states.list_index, 2);
         // Set cursor to 0
         component.states.list_index = 0;
         // Handle inputs
