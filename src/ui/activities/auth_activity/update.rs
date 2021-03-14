@@ -31,7 +31,7 @@ use super::{
     COMPONENT_RADIO_BOOKMARK_SAVE_PWD, COMPONENT_RADIO_PROTOCOL, COMPONENT_RADIO_QUIT,
     COMPONENT_RECENTS_LIST, COMPONENT_TEXT_ERROR, COMPONENT_TEXT_HELP,
 };
-use crate::ui::layout::{props::TextParts, Msg, Payload};
+use crate::ui::layout::{Msg, Payload};
 // ext
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
@@ -193,10 +193,14 @@ impl AuthActivity {
                 // Enter
                 (COMPONENT_BOOKMARKS_LIST, Msg::OnSubmit(Payload::Unsigned(idx))) => {
                     self.load_bookmark(*idx);
+                    // Give focus to input password
+                    self.view.active(COMPONENT_INPUT_PASSWORD);
                     None
                 }
                 (COMPONENT_RECENTS_LIST, Msg::OnSubmit(Payload::Unsigned(idx))) => {
                     self.load_recent(*idx);
+                    // Give focus to input password
+                    self.view.active(COMPONENT_INPUT_PASSWORD);
                     None
                 }
                 // Bookmark radio
@@ -216,21 +220,7 @@ impl AuthActivity {
                                     // Delete bookmark
                                     self.del_bookmark(index);
                                     // Update bookmarks
-                                    match self.view.get_props(COMPONENT_BOOKMARKS_LIST).as_mut() {
-                                        None => None,
-                                        Some(props) => {
-                                            let msg = self.view.update(
-                                                COMPONENT_BOOKMARKS_LIST,
-                                                props
-                                                    .with_texts(TextParts::new(
-                                                        Some(String::from("Bookmarks")),
-                                                        Some(self.view_bookmarks()),
-                                                    ))
-                                                    .build(),
-                                            );
-                                            self.update(msg)
-                                        }
-                                    }
+                                    self.view_bookmarks()
                                 }
                                 _ => None,
                             }
@@ -250,21 +240,7 @@ impl AuthActivity {
                                     // Delete recent
                                     self.del_recent(index);
                                     // Update bookmarks
-                                    match self.view.get_props(COMPONENT_RECENTS_LIST).as_mut() {
-                                        None => None,
-                                        Some(props) => {
-                                            let msg = self.view.update(
-                                                COMPONENT_RECENTS_LIST,
-                                                props
-                                                    .with_texts(TextParts::new(
-                                                        Some(String::from("Recent connections")),
-                                                        Some(self.view_recent_connections()),
-                                                    ))
-                                                    .build(),
-                                            );
-                                            self.update(msg)
-                                        }
-                                    }
+                                    self.view_recent_connections()
                                 }
                                 _ => None,
                             }
@@ -360,7 +336,8 @@ impl AuthActivity {
                     self.save_bookmark(bookmark_name, save_pwd);
                     // Umount popup
                     self.umount_bookmark_save_dialog();
-                    None
+                    // Reload bookmarks
+                    self.view_bookmarks()
                 }
                 // Hide save bookmark
                 (COMPONENT_INPUT_BOOKMARK_NAME, &MSG_KEY_ESC)
@@ -381,6 +358,10 @@ impl AuthActivity {
                     if *choice == 0 {
                         self.quit = true;
                     }
+                    self.umount_quit();
+                    None
+                }
+                (COMPONENT_RADIO_QUIT, &MSG_KEY_ESC) => {
                     self.umount_quit();
                     None
                 }

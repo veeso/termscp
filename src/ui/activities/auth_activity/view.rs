@@ -27,18 +27,18 @@
 use super::{AuthActivity, Context, FileTransferProtocol};
 use crate::ui::layout::components::{
     bookmark_list::BookmarkList, ctext::CText, input::Input, radio_group::RadioGroup, table::Table,
-    text::Text,
+    text::Text, title::Title,
 };
 use crate::ui::layout::props::{
     InputType, PropValue, PropsBuilder, TableBuilder, TextParts, TextSpan, TextSpanBuilder,
 };
 use crate::ui::layout::utils::draw_area_in;
-use crate::ui::layout::Payload;
+use crate::ui::layout::{Msg, Payload};
 // Ext
 use tui::{
     layout::{Constraint, Direction, Layout},
     style::Color,
-    widgets::Clear,
+    widgets::{Borders, Clear},
 };
 
 impl AuthActivity {
@@ -48,9 +48,9 @@ impl AuthActivity {
     pub(super) fn init(&mut self) {
         // Header
         self.view.mount(super::COMPONENT_TEXT_HEADER, Box::new(
-            Text::new(
+            Title::new(
                 PropsBuilder::default().with_foreground(Color::White).with_texts(
-                    TextParts::new(None, Some(vec![TextSpan::from(" _____                   ____   ____ ____  \n|_   _|__ _ __ _ __ ___ / ___| / ___|  _ \\ \n  | |/ _ \\ '__| '_ ` _ \\\\___ \\| |   | |_) |\n  | |  __/ |  | | | | | |___) | |___|  __/ \n  |_|\\___|_|  |_| |_| |_|____/ \\____|_|    \n")]))
+                    TextParts::new(Some(String::from(" _____                   ____   ____ ____  \n|_   _|__ _ __ _ __ ___ / ___| / ___|  _ \\ \n  | |/ _ \\ '__| '_ ` _ \\\\___ \\| |   | |_) |\n  | |  __/ |  | | | | | |___) | |___|  __/ \n  |_|\\___|_|  |_| |_| |_|____/ \\____|_|    \n")), None)
                 ).bold().build()
             )
         ));
@@ -100,7 +100,7 @@ impl AuthActivity {
                     .with_texts(TextParts::new(Some(String::from("Port number")), None))
                     .with_input(InputType::Number)
                     .with_input_len(5)
-                    .with_value(PropValue::Unsigned(22))
+                    .with_value(PropValue::Str(String::from("22")))
                     .build(),
             )),
         );
@@ -110,6 +110,7 @@ impl AuthActivity {
             Box::new(RadioGroup::new(
                 PropsBuilder::default()
                     .with_foreground(Color::LightGreen)
+                    .with_background(Color::Black)
                     .with_texts(TextParts::new(
                         Some(String::from("Protocol")),
                         Some(vec![
@@ -161,27 +162,28 @@ impl AuthActivity {
             super::COMPONENT_BOOKMARKS_LIST,
             Box::new(BookmarkList::new(
                 PropsBuilder::default()
-                    .with_foreground(Color::LightGreen)
-                    .with_texts(TextParts::new(
-                        Some(String::from("Bookmarks")),
-                        Some(self.view_bookmarks()),
-                    ))
+                    .with_background(Color::LightGreen)
+                    .with_foreground(Color::Black)
+                    .with_texts(TextParts::new(Some(String::from("Bookmarks")), None))
                     .build(),
             )),
         );
+        let _ = self.view_bookmarks();
         // Recents
         self.view.mount(
             super::COMPONENT_RECENTS_LIST,
             Box::new(BookmarkList::new(
                 PropsBuilder::default()
-                    .with_foreground(Color::LightBlue)
+                    .with_background(Color::LightBlue)
+                    .with_foreground(Color::Black)
                     .with_texts(TextParts::new(
                         Some(String::from("Recent connections")),
-                        Some(self.view_recent_connections()),
+                        None,
                     ))
                     .build(),
             )),
         );
+        let _ = self.view_recent_connections();
         // Active address
         self.view.active(super::COMPONENT_INPUT_ADDR);
     }
@@ -306,10 +308,20 @@ impl AuthActivity {
                     // make popup
                     let popup = draw_area_in(f.size(), 20, 20);
                     f.render_widget(Clear, popup);
+                    let popup_chunks = Layout::default()
+                        .direction(Direction::Vertical)
+                        .constraints(
+                            [
+                                Constraint::Length(3), // Input form
+                                Constraint::Length(2), // Yes/No
+                            ]
+                            .as_ref(),
+                        )
+                        .split(popup);
                     self.view
-                        .render(super::COMPONENT_INPUT_BOOKMARK_NAME, f, popup);
+                        .render(super::COMPONENT_INPUT_BOOKMARK_NAME, f, popup_chunks[0]);
                     self.view
-                        .render(super::COMPONENT_RADIO_BOOKMARK_SAVE_PWD, f, popup);
+                        .render(super::COMPONENT_RADIO_BOOKMARK_SAVE_PWD, f, popup_chunks[1]);
                 }
             }
         });
@@ -321,21 +333,92 @@ impl AuthActivity {
     /// ### view_bookmarks
     ///
     /// Make text span from bookmarks
-    pub(super) fn view_bookmarks(&self) -> Vec<TextSpan> {
-        self.bookmarks_list
+    pub(super) fn view_bookmarks(&mut self) -> Option<(String, Msg)> {
+        let bookmarks: Vec<TextSpan> = self
+            .bookmarks_list
             .iter()
-            .map(|x| TextSpan::from(x.as_str()))
-            .collect()
+            .map(|x| {
+                let entry: (String, u16, FileTransferProtocol, String, _) = self
+                    .bookmarks_client
+                    .as_ref()
+                    .unwrap()
+                    .get_bookmark(x)
+                    .unwrap();
+                TextSpan::from(
+                    format!(
+                        "{} ({}://{}@{}:{})",
+                        x,
+                        entry.2.to_string().to_lowercase(),
+                        entry.3,
+                        entry.0,
+                        entry.1
+                    )
+                    .as_str(),
+                )
+            })
+            .collect();
+        match self
+            .view
+            .get_props(super::COMPONENT_BOOKMARKS_LIST)
+            .as_mut()
+        {
+            None => None,
+            Some(props) => {
+                let msg = self.view.update(
+                    super::COMPONENT_BOOKMARKS_LIST,
+                    props
+                        .with_texts(TextParts::new(
+                            Some(String::from("Bookmarks")),
+                            Some(bookmarks),
+                        ))
+                        .build(),
+                );
+                msg
+            }
+        }
     }
 
     /// ### view_recent_connections
     ///
     /// View recent connections
-    pub(super) fn view_recent_connections(&self) -> Vec<TextSpan> {
-        self.recents_list
+    pub(super) fn view_recent_connections(&mut self) -> Option<(String, Msg)> {
+        let bookmarks: Vec<TextSpan> = self
+            .recents_list
             .iter()
-            .map(|x| TextSpan::from(x.as_str()))
-            .collect()
+            .map(|x| {
+                let entry: (String, u16, FileTransferProtocol, String) = self
+                    .bookmarks_client
+                    .as_ref()
+                    .unwrap()
+                    .get_recent(x)
+                    .unwrap();
+                TextSpan::from(
+                    format!(
+                        "{}://{}@{}:{}",
+                        entry.2.to_string().to_lowercase(),
+                        entry.3,
+                        entry.0,
+                        entry.1
+                    )
+                    .as_str(),
+                )
+            })
+            .collect();
+        match self.view.get_props(super::COMPONENT_RECENTS_LIST).as_mut() {
+            None => None,
+            Some(props) => {
+                let msg = self.view.update(
+                    super::COMPONENT_RECENTS_LIST,
+                    props
+                        .with_texts(TextParts::new(
+                            Some(String::from("Recent connections")),
+                            Some(bookmarks),
+                        ))
+                        .build(),
+                );
+                msg
+            }
+        }
     }
 
     // -- mount
@@ -376,6 +459,7 @@ impl AuthActivity {
             Box::new(RadioGroup::new(
                 PropsBuilder::default()
                     .with_foreground(Color::Yellow)
+                    .with_background(Color::Black)
                     .with_texts(TextParts::new(
                         Some(String::from("Quit TermSCP?")),
                         Some(vec![TextSpan::from("Yes"), TextSpan::from("No")]),
@@ -402,6 +486,7 @@ impl AuthActivity {
             Box::new(RadioGroup::new(
                 PropsBuilder::default()
                     .with_foreground(Color::Yellow)
+                    .with_background(Color::Black)
                     .with_texts(TextParts::new(
                         Some(String::from("Delete bookmark?")),
                         Some(vec![TextSpan::from("Yes"), TextSpan::from("No")]),
@@ -432,6 +517,7 @@ impl AuthActivity {
             Box::new(RadioGroup::new(
                 PropsBuilder::default()
                     .with_foreground(Color::Yellow)
+                    .with_background(Color::Black)
                     .with_texts(TextParts::new(
                         Some(String::from("Delete bookmark?")),
                         Some(vec![TextSpan::from("Yes"), TextSpan::from("No")]),
@@ -459,10 +545,12 @@ impl AuthActivity {
             super::COMPONENT_INPUT_BOOKMARK_NAME,
             Box::new(Input::new(
                 PropsBuilder::default()
+                    .with_foreground(Color::LightCyan)
                     .with_texts(TextParts::new(
                         Some(String::from("Save bookmark as...")),
                         None,
                     ))
+                    //.with_borders(Borders::TOP | Borders::RIGHT | Borders::LEFT)
                     .build(),
             )),
         );
@@ -471,11 +559,12 @@ impl AuthActivity {
             Box::new(RadioGroup::new(
                 PropsBuilder::default()
                     .with_foreground(Color::Red)
+                    //.with_borders(Borders::BOTTOM | Borders::RIGHT | Borders::LEFT)
                     .with_texts(TextParts::new(
                         Some(String::from("Save password?")),
                         Some(vec![TextSpan::from("Yes"), TextSpan::from("No")]),
                     ))
-                    .with_value(PropValue::Unsigned(1))
+                    //.with_value(PropValue::Unsigned(1))
                     .build(),
             )),
         );
