@@ -93,9 +93,9 @@ impl Component for Text {
             // Apply style
             text.patch_style(
                 Style::default()
-                    .add_modifier(self.props.get_modifiers())
-                    .fg(self.props.foreground)
-                    .bg(self.props.background),
+                    //.add_modifier(self.props.get_modifiers())
+                    //.fg(self.props.foreground) NOTE: don't style twice !!!
+                    //.bg(self.props.background),
             );
             render.render_widget(Paragraph::new(text), area);
         }
