@@ -38,6 +38,7 @@ use crate::ui::layout::Payload;
 use tui::{
     layout::{Constraint, Direction, Layout},
     style::Color,
+    widgets::Clear,
 };
 
 impl AuthActivity {
@@ -251,22 +252,18 @@ impl AuthActivity {
             // Popups
             if let Some(mut props) = self.view.get_props(super::COMPONENT_TEXT_ERROR) {
                 if props.build().visible {
+                    let popup = draw_area_in(f.size(), 50, 10);
+                    f.render_widget(Clear, popup);
                     // make popup
-                    self.view.render(
-                        super::COMPONENT_TEXT_ERROR,
-                        f,
-                        draw_area_in(f.size(), 50, 10),
-                    );
+                    self.view.render(super::COMPONENT_TEXT_ERROR, f, popup);
                 }
             }
             if let Some(mut props) = self.view.get_props(super::COMPONENT_RADIO_QUIT) {
                 if props.build().visible {
                     // make popup
-                    self.view.render(
-                        super::COMPONENT_RADIO_QUIT,
-                        f,
-                        draw_area_in(f.size(), 30, 10),
-                    );
+                    let popup = draw_area_in(f.size(), 30, 10);
+                    f.render_widget(Clear, popup);
+                    self.view.render(super::COMPONENT_RADIO_QUIT, f, popup);
                 }
             }
             if let Some(mut props) = self
@@ -275,11 +272,10 @@ impl AuthActivity {
             {
                 if props.build().visible {
                     // make popup
-                    self.view.render(
-                        super::COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK,
-                        f,
-                        draw_area_in(f.size(), 30, 10),
-                    );
+                    let popup = draw_area_in(f.size(), 30, 10);
+                    f.render_widget(Clear, popup);
+                    self.view
+                        .render(super::COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK, f, popup);
                 }
             }
             if let Some(mut props) = self
@@ -288,21 +284,18 @@ impl AuthActivity {
             {
                 if props.build().visible {
                     // make popup
-                    self.view.render(
-                        super::COMPONENT_RADIO_BOOKMARK_DEL_RECENT,
-                        f,
-                        draw_area_in(f.size(), 30, 10),
-                    );
+                    let popup = draw_area_in(f.size(), 30, 10);
+                    f.render_widget(Clear, popup);
+                    self.view
+                        .render(super::COMPONENT_RADIO_BOOKMARK_DEL_RECENT, f, popup);
                 }
             }
             if let Some(mut props) = self.view.get_props(super::COMPONENT_TEXT_HELP) {
                 if props.build().visible {
                     // make popup
-                    self.view.render(
-                        super::COMPONENT_TEXT_HELP,
-                        f,
-                        draw_area_in(f.size(), 50, 70),
-                    );
+                    let popup = draw_area_in(f.size(), 50, 70);
+                    f.render_widget(Clear, popup);
+                    self.view.render(super::COMPONENT_TEXT_HELP, f, popup);
                 }
             }
             if let Some(mut props) = self
@@ -312,6 +305,7 @@ impl AuthActivity {
                 if props.build().visible {
                     // make popup
                     let popup = draw_area_in(f.size(), 20, 20);
+                    f.render_widget(Clear, popup);
                     self.view
                         .render(super::COMPONENT_INPUT_BOOKMARK_NAME, f, popup);
                     self.view
