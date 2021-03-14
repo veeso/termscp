@@ -28,8 +28,8 @@ use super::{
     AuthActivity, COMPONENT_BOOKMARKS_LIST, COMPONENT_INPUT_ADDR, COMPONENT_INPUT_BOOKMARK_NAME,
     COMPONENT_INPUT_PASSWORD, COMPONENT_INPUT_PORT, COMPONENT_INPUT_USERNAME,
     COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK, COMPONENT_RADIO_BOOKMARK_DEL_RECENT,
-    COMPONENT_RADIO_BOOKMARK_SAVE_PWD, COMPONENT_RADIO_PROTOCOL, COMPONENT_RECENTS_LIST,
-    COMPONENT_TEXT_ERROR, COMPONENT_TEXT_HELP,
+    COMPONENT_RADIO_BOOKMARK_SAVE_PWD, COMPONENT_RADIO_PROTOCOL, COMPONENT_RADIO_QUIT,
+    COMPONENT_RECENTS_LIST, COMPONENT_TEXT_ERROR, COMPONENT_TEXT_HELP,
 };
 use crate::ui::layout::{props::TextParts, Msg, Payload};
 // ext
@@ -124,7 +124,7 @@ impl AuthActivity {
                 }
                 (COMPONENT_INPUT_PASSWORD, &MSG_KEY_DOWN) => {
                     // Give focus to port
-                    self.view.active(COMPONENT_INPUT_USERNAME);
+                    self.view.active(COMPONENT_INPUT_ADDR);
                     None
                 }
                 // Focus ( UP )
@@ -375,6 +375,15 @@ impl AuthActivity {
                     self.umount_error();
                     None
                 }
+                // Quit dialog
+                (COMPONENT_RADIO_QUIT, Msg::OnSubmit(Payload::Unsigned(choice))) => {
+                    // If choice is 0, quit termscp
+                    if *choice == 0 {
+                        self.quit = true;
+                    }
+                    self.umount_quit();
+                    None
+                }
                 // On submit on any unhandled (connect)
                 (_, Msg::OnSubmit(_)) | (_, &MSG_KEY_ENTER) => {
                     // Match <ENTER> key for all other components
@@ -389,6 +398,11 @@ impl AuthActivity {
                     // Submit true
                     self.submit = true;
                     // Return None
+                    None
+                }
+                // <ESC> => Quit
+                (_, &MSG_KEY_ESC) => {
+                    self.mount_quit();
                     None
                 }
                 (_, _) => None, // Ignore other events

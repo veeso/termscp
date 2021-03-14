@@ -259,6 +259,16 @@ impl AuthActivity {
                     );
                 }
             }
+            if let Some(mut props) = self.view.get_props(super::COMPONENT_RADIO_QUIT) {
+                if props.build().visible {
+                    // make popup
+                    self.view.render(
+                        super::COMPONENT_RADIO_QUIT,
+                        f,
+                        draw_area_in(f.size(), 30, 10),
+                    );
+                }
+            }
             if let Some(mut props) = self
                 .view
                 .get_props(super::COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK)
@@ -360,6 +370,33 @@ impl AuthActivity {
     /// Umount error message
     pub(super) fn umount_error(&mut self) {
         self.view.umount(super::COMPONENT_TEXT_ERROR);
+    }
+
+    /// ### mount_quit
+    ///
+    /// Mount quit popup
+    pub(super) fn mount_quit(&mut self) {
+        // Protocol
+        self.view.mount(
+            super::COMPONENT_RADIO_QUIT,
+            Box::new(RadioGroup::new(
+                PropsBuilder::default()
+                    .with_foreground(Color::Yellow)
+                    .with_texts(TextParts::new(
+                        Some(String::from("Quit TermSCP?")),
+                        Some(vec![TextSpan::from("Yes"), TextSpan::from("No")]),
+                    ))
+                    .build(),
+            )),
+        );
+        self.view.active(super::COMPONENT_RADIO_QUIT);
+    }
+
+    /// ### umount_quit
+    ///
+    /// Umount quit popup
+    pub(super) fn umount_quit(&mut self) {
+        self.view.umount(super::COMPONENT_RADIO_QUIT);
     }
 
     /// ### mount_bookmark_del_dialog
