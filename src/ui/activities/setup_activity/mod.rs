@@ -25,10 +25,10 @@
 */
 
 // Submodules
-mod callbacks;
+mod callbacks; // TOREM: this
 mod config;
-mod input;
-mod layout;
+mod input; // TOREM: this
+mod layout; // TOREM: this
 mod misc;
 
 // Deps
@@ -42,6 +42,21 @@ use crate::system::config_client::ConfigClient;
 use crossterm::event::Event as InputEvent;
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use tui::style::Color;
+
+// -- components
+const COMPONENT_TEXT_HELP: &str = "TEXT_HELP";
+const COMPONENT_TEXT_FOOTER: &str = "TEXT_FOOTER";
+const COMPONENT_RADIO_QUIT: &str = "RADIO_QUIT";
+const COMPONENT_RADIO_SAVE: &str = "RADIO_SAVE";
+const COMPONENT_INPUT_TEXT_EDITOR: &str = "INPUT_TEXT_EDITOR";
+const COMPONENT_RADIO_DEFAULT_PROTOCOL: &str = "RADIO_DEFAULT_PROTOCOL";
+const COMPONENT_RADIO_HIDDEN_FILES: &str = "RADIO_HIDDEN_FILES";
+const COMPONENT_RADIO_UPDATES: &str = "RADIO_CHECK_UPDATES";
+const COMPONENT_RADIO_GROUP_DIRS: &str = "RADIO_GROUP_DIRS";
+const COMPONENT_INPUT_FILE_FMT: &str = "INPUT_FILE_FMT";
+const COMPONENT_RADIO_TAB: &str = "RADIO_TAB";
+const COMPONENT_LIST_SSH_KEYS: &str = "LIST_SSH_KEYS";
+const COMPONENT_RADIO_DEL_SSH_KEY: &str = "RADIO_DEL_SSH_KEY";
 
 // Types
 type OnChoiceCallback = fn(&mut SetupActivity);
