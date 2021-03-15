@@ -69,7 +69,7 @@ impl SetupActivity {
     /// Callback for performing the delete of a ssh key
     pub(super) fn callback_delete_ssh_key(&mut self) {
         // Get key
-        if let Some(config_cli) = self.config_cli.as_mut() {
+        if let Some(config_cli) = self.context.as_mut().unwrap().config_client.as_mut() {
             let key: Option<String> = match config_cli.iter_ssh_keys().nth(self.ssh_key_idx) {
                 Some(k) => Some(k.clone()),
                 None => None,
@@ -100,7 +100,7 @@ impl SetupActivity {
     ///
     /// Create a new ssh key with provided parameters
     pub(super) fn callback_new_ssh_key(&mut self, host: String, username: String) {
-        if let Some(cli) = self.config_cli.as_ref() {
+        if let Some(cli) = self.context.as_mut().unwrap().config_client.as_mut() {
             // Prepare text editor
             env::set_var("EDITOR", cli.get_text_editor());
             let placeholder: String = format!("# Type private SSH key for {}@{}\n", username, host);

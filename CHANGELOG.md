@@ -22,14 +22,17 @@ Released on FIXME: date
   - **Execute** a command pressing `X`. This feature is supported on both local and remote hosts (only SFTP/SCP protocols support this feature).
 - Enhancements:
   - Input fields will now support **"input keys"** (such as moving cursor, DEL, END, HOME, ...)
-- For developers:
-  - Activity refactoring
-    - Developed an internal library used to create components, components are then nested inside a View
-    - The new engine works through properties and states, then returns Messages. I was inspired by both React and Elm.
+  - Improved performance regarding configuration I/O (config client is now shared in the activity context)
+  - Fetch latest version from Github once; cache previous value in the Context Storage.
 - Bugfix:
   - Prevent resetting explorer index on remote tab after performing certain actions (list dir, exec, ...)
   - SCP file transfer: prevent infinite loops while performing `stat` on symbolic links pointing to themselves (e.g. `mylink -> mylink`)
   - Fixed a bug causing termscp to crash if removing a bookmark
+  - Fixed file format cursor position in the GUI
+- For developers:
+  - Activity refactoring
+    - Developed an internal library used to create components, components are then nested inside a View
+    - The new engine works through properties and states, then returns Messages. I was inspired by both React and Elm.
 
 ## 0.3.3
 

@@ -229,7 +229,6 @@ pub struct FileTransferActivity {
     context: Option<Context>,         // Context holder
     params: FileTransferParams,       // FT connection params
     client: Box<dyn FileTransfer>,    // File transfer client
-    config_cli: Option<ConfigClient>, // Config Client
     local: FileExplorer,              // Local File explorer state
     remote: FileExplorer,             // Remote File explorer state
     tab: FileExplorerTab,             // Current selected tab
@@ -267,7 +266,6 @@ impl FileTransferActivity {
             params,
             local: Self::build_explorer(config_client.as_ref()),
             remote: Self::build_explorer(config_client.as_ref()),
-            config_cli: config_client,
             tab: FileExplorerTab::Local,
             log_index: 0,
             log_records: VecDeque::with_capacity(256), // 256 events is enough I guess
@@ -308,6 +306,10 @@ impl Activity for FileTransferActivity {
         self.local.index_at_first();
         // Configure text editor
         self.setup_text_editor();
+        // Verify error state from context
+        if let Some(err) = self.context.as_mut().unwrap().get_error() {
+            self.popup = Some(Popup::Fatal(err));
+        }
     }
 
     /// ### on_draw

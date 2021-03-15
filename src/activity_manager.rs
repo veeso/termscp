@@ -28,6 +28,8 @@ use std::path::PathBuf;
 // Deps
 use crate::filetransfer::FileTransferProtocol;
 use crate::host::{HostError, Localhost};
+use crate::system::config_client::ConfigClient;
+use crate::system::environment;
 use crate::ui::activities::{
     auth_activity::AuthActivity, filetransfer_activity::FileTransferActivity,
     filetransfer_activity::FileTransferParams, setup_activity::SetupActivity, Activity,
@@ -66,7 +68,13 @@ impl ActivityManager {
             Ok(h) => h,
             Err(e) => return Err(e),
         };
-        let ctx: Context = Context::new(host);
+        // Initialize configuration client
+        let (config_client, error): (Option<ConfigClient>, Option<String>) =
+            match Self::init_config_client() {
+                Ok(cli) => (Some(cli), None),
+                Err(err) => (None, Some(err)),
+            };
+        let ctx: Context = Context::new(host, config_client, error);
         Ok(ActivityManager {
             context: Some(ctx),
             ftparams: None,
@@ -117,7 +125,7 @@ impl ActivityManager {
         drop(self.context.take());
     }
 
-    // Loops
+    // -- Activity Loops
 
     /// ### run_authentication
     ///
@@ -250,5 +258,36 @@ impl ActivityManager {
         self.context = activity.on_destroy();
         // This activity always returns to AuthActivity
         Some(NextActivity::Authentication)
+    }
+
+    // -- misc
+
+    /// ### init_config_client
+    ///
+    /// Initialize configuration client
+    fn init_config_client() -> Result<ConfigClient, String> {
+        // Get config dir
+        match environment::init_config_dir() {
+            Ok(config_dir) => {
+                match config_dir {
+                    Some(config_dir) => {
+                        // Get config client paths
+                        let (config_path, ssh_dir): (PathBuf, PathBuf) =
+                            environment::get_config_paths(config_dir.as_path());
+                        match ConfigClient::new(config_path.as_path(), ssh_dir.as_path()) {
+                            Ok(cli) => Ok(cli),
+                            Err(err) => Err(format!("Could not read configuration: {}", err)),
+                        }
+                    }
+                    None => Err(String::from(
+                        "Your system doesn't support configuration paths",
+                    )),
+                }
+            }
+            Err(err) => Err(format!(
+                "Could not initialize configuration directory: {}",
+                err
+            )),
+        }
     }
 }

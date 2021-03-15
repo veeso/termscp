@@ -30,6 +30,7 @@ use super::{
 };
 use crate::filetransfer::FileTransferProtocol;
 use crate::fs::explorer::GroupDirs;
+use crate::system::config_client::ConfigClient;
 use crate::utils::fmt::align_text_center;
 // Ext
 use tui::{
@@ -46,6 +47,7 @@ impl SetupActivity {
     /// Draw UI
     pub(super) fn draw(&mut self) {
         let mut ctx: Context = self.context.take().unwrap();
+        let config_client: Option<&ConfigClient> = ctx.config_client.as_ref();
         let _ = ctx.terminal.draw(|f| {
             // Prepare main chunks
             let chunks = Layout::default()
@@ -71,7 +73,7 @@ impl SetupActivity {
                         .direction(Direction::Vertical)
                         .constraints([Constraint::Percentage(100)].as_ref())
                         .split(chunks[1]);
-                    if let Some(ssh_key_tab) = self.draw_ssh_keys_list() {
+                    if let Some(ssh_key_tab) = self.draw_ssh_keys_list(config_client) {
                         // Create ssh list state
                         let mut ssh_key_state: ListState = ListState::default();
                         ssh_key_state.select(Some(self.ssh_key_idx));
@@ -97,26 +99,26 @@ impl SetupActivity {
                         )
                         .split(chunks[1]);
                     // Render input forms
-                    if let Some(field) = self.draw_text_editor_input() {
+                    if let Some(field) = self.draw_text_editor_input(config_client) {
                         f.render_widget(field, ui_cfg_chunks[0]);
                     }
-                    if let Some(tab) = self.draw_default_protocol_tab() {
+                    if let Some(tab) = self.draw_default_protocol_tab(config_client) {
                         f.render_widget(tab, ui_cfg_chunks[1]);
                     }
-                    if let Some(tab) = self.draw_hidden_files_tab() {
+                    if let Some(tab) = self.draw_hidden_files_tab(config_client) {
                         f.render_widget(tab, ui_cfg_chunks[2]);
                     }
-                    if let Some(tab) = self.draw_check_for_updates_tab() {
+                    if let Some(tab) = self.draw_check_for_updates_tab(config_client) {
                         f.render_widget(tab, ui_cfg_chunks[3]);
                     }
-                    if let Some(tab) = self.draw_default_group_dirs_tab() {
+                    if let Some(tab) = self.draw_default_group_dirs_tab(config_client) {
                         f.render_widget(tab, ui_cfg_chunks[4]);
                     }
-                    if let Some(tab) = self.draw_file_fmt_input() {
+                    if let Some(tab) = self.draw_file_fmt_input(config_client) {
                         f.render_widget(tab, ui_cfg_chunks[5]);
                     }
                     // Set cursor
-                    if let Some(cli) = &self.config_cli {
+                    if let Some(cli) = config_client {
                         match form_field {
                             UserInterfaceInputField::TextEditor => {
                                 let editor_text: String =
@@ -129,8 +131,8 @@ impl SetupActivity {
                             UserInterfaceInputField::FileFmt => {
                                 let file_fmt: String = cli.get_file_fmt().unwrap_or_default();
                                 f.set_cursor(
-                                    ui_cfg_chunks[4].x + file_fmt.width() as u16 + 1,
-                                    ui_cfg_chunks[4].y + 1,
+                                    ui_cfg_chunks[5].x + file_fmt.width() as u16 + 1,
+                                    ui_cfg_chunks[5].y + 1,
                                 );
                             }
                             _ => { /* Not a text field */ }
@@ -247,8 +249,8 @@ impl SetupActivity {
     /// ### draw_text_editor_input
     ///
     /// Draw input text field for text editor parameter
-    fn draw_text_editor_input(&self) -> Option<Paragraph> {
-        match &self.config_cli {
+    fn draw_text_editor_input(&self, config_cli: Option<&ConfigClient>) -> Option<Paragraph> {
+        match config_cli.as_ref() {
             Some(cli) => Some(
                 Paragraph::new(String::from(
                     cli.get_text_editor().as_path().to_string_lossy(),
@@ -274,9 +276,9 @@ impl SetupActivity {
     /// ### draw_default_protocol_tab
     ///
     /// Draw default protocol input tab
-    fn draw_default_protocol_tab(&self) -> Option<Tabs> {
+    fn draw_default_protocol_tab(&self, config_cli: Option<&ConfigClient>) -> Option<Tabs> {
         // Check if config client is some
-        match &self.config_cli {
+        match config_cli.as_ref() {
             Some(cli) => {
                 let choices: Vec<Spans> = vec![
                     Spans::from("SFTP"),
@@ -324,9 +326,9 @@ impl SetupActivity {
     /// ### draw_hidden_files_tab
     ///
     /// Draw default hidden files tab
-    fn draw_hidden_files_tab(&self) -> Option<Tabs> {
+    fn draw_hidden_files_tab(&self, config_cli: Option<&ConfigClient>) -> Option<Tabs> {
         // Check if config client is some
-        match &self.config_cli {
+        match config_cli.as_ref() {
             Some(cli) => {
                 let choices: Vec<Spans> = vec![Spans::from("Yes"), Spans::from("No")];
                 let index: usize = match cli.get_show_hidden_files() {
@@ -365,9 +367,9 @@ impl SetupActivity {
     /// ### draw_check_for_updates_tab
     ///
     /// Draw check for updates tab
-    fn draw_check_for_updates_tab(&self) -> Option<Tabs> {
+    fn draw_check_for_updates_tab(&self, config_cli: Option<&ConfigClient>) -> Option<Tabs> {
         // Check if config client is some
-        match &self.config_cli {
+        match config_cli.as_ref() {
             Some(cli) => {
                 let choices: Vec<Spans> = vec![Spans::from("Yes"), Spans::from("No")];
                 let index: usize = match cli.get_check_for_updates() {
@@ -406,9 +408,9 @@ impl SetupActivity {
     /// ### draw_default_group_dirs_tab
     ///
     /// Draw group dirs input tab
-    fn draw_default_group_dirs_tab(&self) -> Option<Tabs> {
+    fn draw_default_group_dirs_tab(&self, config_cli: Option<&ConfigClient>) -> Option<Tabs> {
         // Check if config client is some
-        match &self.config_cli {
+        match config_cli.as_ref() {
             Some(cli) => {
                 let choices: Vec<Spans> = vec![
                     Spans::from("Display First"),
@@ -454,8 +456,8 @@ impl SetupActivity {
     /// ### draw_file_fmt_input
     ///
     /// Draw input text field for file fmt
-    fn draw_file_fmt_input(&self) -> Option<Paragraph> {
-        match &self.config_cli {
+    fn draw_file_fmt_input(&self, config_cli: Option<&ConfigClient>) -> Option<Paragraph> {
+        match config_cli.as_ref() {
             Some(cli) => Some(
                 Paragraph::new(cli.get_file_fmt().unwrap_or_default())
                     .style(Style::default().fg(match &self.tab {
@@ -479,9 +481,9 @@ impl SetupActivity {
     /// ### draw_ssh_keys_list
     ///
     /// Draw ssh keys list
-    fn draw_ssh_keys_list(&self) -> Option<List> {
+    fn draw_ssh_keys_list(&self, config_cli: Option<&ConfigClient>) -> Option<List> {
         // Check if config client is some
-        match &self.config_cli {
+        match config_cli.as_ref() {
             Some(cli) => {
                 // Iterate over ssh keys
                 let mut ssh_keys: Vec<ListItem> = Vec::with_capacity(cli.iter_ssh_keys().count());

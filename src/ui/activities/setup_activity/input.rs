@@ -76,7 +76,8 @@ impl SetupActivity {
                     self.tab = SetupTab::UserInterface(UserInterfaceInputField::DefaultProtocol)
                 } // Switch tab to user interface config
                 KeyCode::Up => {
-                    if let Some(config_cli) = self.config_cli.as_ref() {
+                    if let Some(config_cli) = self.context.as_ref().unwrap().config_client.as_ref()
+                    {
                         // Move ssh key index up
                         let ssh_key_size: usize = config_cli.iter_ssh_keys().count();
                         if self.ssh_key_idx > 0 {
@@ -89,7 +90,8 @@ impl SetupActivity {
                     }
                 }
                 KeyCode::Down => {
-                    if let Some(config_cli) = self.config_cli.as_ref() {
+                    if let Some(config_cli) = self.context.as_ref().unwrap().config_client.as_ref()
+                    {
                         // Move ssh key index down
                         let ssh_key_size: usize = config_cli.iter_ssh_keys().count();
                         if self.ssh_key_idx + 1 < ssh_key_size {
@@ -180,7 +182,8 @@ impl SetupActivity {
                 KeyCode::Tab => self.tab = SetupTab::SshConfig, // Switch tab to ssh config
                 KeyCode::Backspace => {
                     // Pop character from selected input
-                    if let Some(config_cli) = self.config_cli.as_mut() {
+                    if let Some(config_cli) = self.context.as_mut().unwrap().config_client.as_mut()
+                    {
                         match field {
                             UserInterfaceInputField::TextEditor => {
                                 // Pop from text editor
@@ -207,7 +210,8 @@ impl SetupActivity {
                 }
                 KeyCode::Left => {
                     // Move left on fields which are tabs
-                    if let Some(config_cli) = self.config_cli.as_mut() {
+                    if let Some(config_cli) = self.context.as_mut().unwrap().config_client.as_mut()
+                    {
                         match field {
                             UserInterfaceInputField::DefaultProtocol => {
                                 // Move left
@@ -248,7 +252,8 @@ impl SetupActivity {
                 }
                 KeyCode::Right => {
                     // Move right on fields which are tabs
-                    if let Some(config_cli) = self.config_cli.as_mut() {
+                    if let Some(config_cli) = self.context.as_mut().unwrap().config_client.as_mut()
+                    {
                         match field {
                             UserInterfaceInputField::DefaultProtocol => {
                                 // Move left
@@ -354,7 +359,9 @@ impl SetupActivity {
                         }
                     } else {
                         // Push character to input field
-                        if let Some(config_cli) = self.config_cli.as_mut() {
+                        if let Some(config_cli) =
+                            self.context.as_mut().unwrap().config_client.as_mut()
+                        {
                             // NOTE: change to match if other fields are added
                             match field {
                                 UserInterfaceInputField::TextEditor => {

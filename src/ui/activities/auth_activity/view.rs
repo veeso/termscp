@@ -145,7 +145,13 @@ impl AuthActivity {
             )),
         );
         // Version notice
-        if let Some(version) = self.new_version.as_ref() {
+        if let Some(version) = self
+            .context
+            .as_ref()
+            .unwrap()
+            .store
+            .get_string(super::STORE_KEY_LATEST_VERSION)
+        {
             self.view.mount(
                 super::COMPONENT_TEXT_NEW_VERSION,
                 Box::new(Text::new(

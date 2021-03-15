@@ -37,14 +37,11 @@ extern crate unicode_width;
 use super::{Activity, Context};
 use crate::filetransfer::FileTransferProtocol;
 use crate::system::bookmarks_client::BookmarksClient;
-use crate::system::config_client::ConfigClient;
-use crate::system::environment;
 use crate::ui::layout::view::View;
 use crate::utils::git;
 
 // Includes
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
-use std::path::PathBuf;
 
 // -- components
 const COMPONENT_TEXT_HEADER: &str = "TEXT_HEADER";
@@ -65,6 +62,9 @@ const COMPONENT_RADIO_BOOKMARK_SAVE_PWD: &str = "RADIO_SAVE_PASSWORD";
 const COMPONENT_BOOKMARKS_LIST: &str = "BOOKMARKS_LIST";
 const COMPONENT_RECENTS_LIST: &str = "RECENTS_LIST";
 
+// Store keys
+const STORE_KEY_LATEST_VERSION: &str = "AUTH_LATEST_VERSION";
+
 /// ### AuthActivity
 ///
 /// AuthActivity is the data holder for the authentication activity
@@ -80,12 +80,9 @@ pub struct AuthActivity {
     context: Option<Context>,
     view: View,
     bookmarks_client: Option<BookmarksClient>,
-    config_client: Option<ConfigClient>,
     redraw: bool,                // Should ui actually be redrawned?
     bookmarks_list: Vec<String>, // List of bookmarks
     recents_list: Vec<String>,   // list of recents
-    // misc
-    new_version: Option<String>, // Contains new version of termscp
 }
 
 impl Default for AuthActivity {
@@ -111,46 +108,9 @@ impl AuthActivity {
             context: None,
             view: View::init(),
             bookmarks_client: None,
-            config_client: None,
             redraw: true, // True at startup
             bookmarks_list: Vec::new(),
             recents_list: Vec::new(),
-            new_version: None,
-        }
-    }
-
-    /// ### init_config_client
-    ///
-    /// Initialize config client
-    fn init_config_client(&mut self) {
-        // Get config dir
-        match environment::init_config_dir() {
-            Ok(config_dir) => {
-                if let Some(config_dir) = config_dir {
-                    // Get config client paths
-                    let (config_path, ssh_dir): (PathBuf, PathBuf) =
-                        environment::get_config_paths(config_dir.as_path());
-                    match ConfigClient::new(config_path.as_path(), ssh_dir.as_path()) {
-                        Ok(cli) => {
-                            // Set default protocol
-                            self.protocol = cli.get_default_protocol();
-                            // Set client
-                            self.config_client = Some(cli);
-                        }
-                        Err(err) => {
-                            self.mount_error(
-                                format!("Could not initialize user configuration: {}", err)
-                                    .as_str(),
-                            );
-                        }
-                    }
-                }
-            }
-            Err(err) => {
-                self.mount_error(
-                    format!("Could not initialize configuration directory: {}", err).as_str(),
-                );
-            }
         }
     }
 
@@ -158,18 +118,35 @@ impl AuthActivity {
     ///
     /// If enabled in configuration, check for updates from Github
     fn check_for_updates(&mut self) {
-        if let Some(client) = self.config_client.as_ref() {
-            if client.get_check_for_updates() {
-                // Send request
-                match git::check_for_updates(env!("CARGO_PKG_VERSION")) {
-                    Ok(version) => self.new_version = version,
-                    Err(err) => {
-                        // Report error
-                        self.mount_error(
-                            format!("Could not check for new updates: {}", err).as_str(),
-                        );
+        // Check version only if unset in the store
+        let ctx: &Context = self.context.as_ref().unwrap();
+        if !ctx.store.isset(STORE_KEY_LATEST_VERSION) {
+            let mut new_version: Option<String> = match ctx.config_client.as_ref() {
+                Some(client) => {
+                    if client.get_check_for_updates() {
+                        // Send request
+                        match git::check_for_updates(env!("CARGO_PKG_VERSION")) {
+                            Ok(version) => version,
+                            Err(err) => {
+                                // Report error
+                                self.mount_error(
+                                    format!("Could not check for new updates: {}", err).as_str(),
+                                );
+                                // None
+                                None
+                            }
+                        }
+                    } else {
+                        None
                     }
                 }
+                None => None,
+            };
+            let ctx: &mut Context = self.context.as_mut().unwrap();
+            // Set version into the store (or just a flag)
+            match new_version.take() {
+                Some(new_version) => ctx.store.set_string(STORE_KEY_LATEST_VERSION, new_version), // If Some, set String
+                None => ctx.store.set(STORE_KEY_LATEST_VERSION), // If None, just set flag
             }
         }
     }
@@ -192,9 +169,9 @@ impl Activity for AuthActivity {
         if self.bookmarks_client.is_none() {
             self.init_bookmarks_client();
         }
-        // init config client
-        if self.config_client.is_none() {
-            self.init_config_client();
+        // Verify error state from context
+        if let Some(err) = self.context.as_mut().unwrap().get_error() {
+            self.mount_error(err.as_str());
         }
         // If check for updates is enabled, check for updates
         self.check_for_updates();
