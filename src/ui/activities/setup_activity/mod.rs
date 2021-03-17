@@ -25,11 +25,10 @@
 */
 
 // Submodules
-mod callbacks; // TOREM: this
+mod actions;
 mod config;
-mod input; // TOREM: this
-mod layout; // TOREM: this
-mod misc;
+mod update;
+mod view;
 
 // Deps
 extern crate crossterm;
@@ -37,14 +36,14 @@ extern crate tui;
 
 // Locals
 use super::{Activity, Context};
+use crate::ui::layout::view::View;
 // Ext
-use crossterm::event::Event as InputEvent;
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
-use tui::style::Color;
 
 // -- components
 const COMPONENT_TEXT_HELP: &str = "TEXT_HELP";
 const COMPONENT_TEXT_FOOTER: &str = "TEXT_FOOTER";
+const COMPONENT_TEXT_ERROR: &str = "TEXT_ERROR";
 const COMPONENT_RADIO_QUIT: &str = "RADIO_QUIT";
 const COMPONENT_RADIO_SAVE: &str = "RADIO_SAVE";
 const COMPONENT_INPUT_TEXT_EDITOR: &str = "INPUT_TEXT_EDITOR";
@@ -55,63 +54,17 @@ const COMPONENT_RADIO_GROUP_DIRS: &str = "RADIO_GROUP_DIRS";
 const COMPONENT_INPUT_FILE_FMT: &str = "INPUT_FILE_FMT";
 const COMPONENT_RADIO_TAB: &str = "RADIO_TAB";
 const COMPONENT_LIST_SSH_KEYS: &str = "LIST_SSH_KEYS";
+const COMPONENT_INPUT_SSH_HOST: &str = "INPUT_SSH_HOST";
+const COMPONENT_INPUT_SSH_USERNAME: &str = "INPUT_SSH_USERNAME";
 const COMPONENT_RADIO_DEL_SSH_KEY: &str = "RADIO_DEL_SSH_KEY";
 
-// Types
-type OnChoiceCallback = fn(&mut SetupActivity);
-
-/// ### UserInterfaceInputField
+/// ### ViewLayout
 ///
-/// Input field selected in user interface
-#[derive(std::cmp::PartialEq, Clone)]
-enum UserInterfaceInputField {
-    DefaultProtocol,
-    TextEditor,
-    ShowHiddenFiles,
-    CheckForUpdates,
-    GroupDirs,
-    FileFmt,
-}
-
-/// ### SetupTab
-///
-/// Selected setup tab
+/// Current view layout
 #[derive(std::cmp::PartialEq)]
-enum SetupTab {
-    UserInterface(UserInterfaceInputField),
-    SshConfig,
-}
-
-/// ### QuitDialogOption
-///
-/// Quit dialog options
-#[derive(std::cmp::PartialEq, Clone)]
-enum QuitDialogOption {
-    Save,
-    DontSave,
-    Cancel,
-}
-
-/// ### YesNoDialogOption
-///
-/// YesNo dialog options
-#[derive(std::cmp::PartialEq, Clone)]
-enum YesNoDialogOption {
-    Yes,
-    No,
-}
-
-/// ## Popup
-///
-/// Popup describes the type of popup
-#[derive(Clone)]
-enum Popup {
-    Alert(Color, String),                              // Block color; Block text
-    Fatal(String),                                     // Must quit after being hidden
-    Help,                                              // Show Help
-    NewSshKey,                                         //
-    Quit,                                              // Quit dialog
-    YesNo(String, OnChoiceCallback, OnChoiceCallback), // Yes/No Dialog
+enum ViewLayout {
+    SetupForm,
+    SshKeys,
 }
 
 /// ## SetupActivity
@@ -120,14 +73,9 @@ enum Popup {
 pub struct SetupActivity {
     pub quit: bool,           // Becomes true when user requests the activity to terminate
     context: Option<Context>, // Context holder
-    tab: SetupTab,            // Current setup tab
-    popup: Option<Popup>,     // Active popup
-    user_input: Vec<String>,  // User input holder
-    user_input_ptr: usize,    // Selected user input
-    quit_opt: QuitDialogOption, // Popup::Quit selected option
-    yesno_opt: YesNoDialogOption, // Popup::YesNo selected option
-    ssh_key_idx: usize,       // Index of selected ssh key in list
-    redraw: bool,             // Redraw ui?
+    view: View,               // View
+    layout: ViewLayout,       // View layout
+    redraw: bool,
 }
 
 impl Default for SetupActivity {
@@ -140,13 +88,8 @@ impl Default for SetupActivity {
         SetupActivity {
             quit: false,
             context: None,
-            tab: SetupTab::UserInterface(UserInterfaceInputField::TextEditor),
-            popup: None,
-            user_input: user_input_buffer, // Max 16
-            user_input_ptr: 0,
-            quit_opt: QuitDialogOption::Save,
-            yesno_opt: YesNoDialogOption::Yes,
-            ssh_key_idx: 0,
+            view: View::init(),
+            layout: ViewLayout::SetupForm,
             redraw: true, // Draw at first `on_draw`
         }
     }
@@ -165,9 +108,11 @@ impl Activity for SetupActivity {
         self.context.as_mut().unwrap().clear_screen();
         // Put raw mode on enabled
         let _ = enable_raw_mode();
+        // Init view
+        self.init_setup();
         // Verify error state from context
         if let Some(err) = self.context.as_mut().unwrap().get_error() {
-            self.popup = Some(Popup::Fatal(err));
+            self.mount_error(err.as_str());
         }
     }
 
@@ -185,12 +130,13 @@ impl Activity for SetupActivity {
             // Set redraw to true
             self.redraw = true;
             // Handle event
-            self.handle_input_event(&event);
+            let msg = self.view.on(event);
+            self.update(msg);
         }
         // Redraw if necessary
         if self.redraw {
-            // Draw
-            self.draw();
+            // View
+            self.view();
             // Redraw back to false
             self.redraw = false;
         }

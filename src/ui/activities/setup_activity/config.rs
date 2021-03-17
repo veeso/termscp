@@ -77,7 +77,7 @@ impl SetupActivity {
     /// ### edit_ssh_key
     ///
     /// Edit selected ssh key
-    pub(super) fn edit_ssh_key(&mut self) -> Result<(), String> {
+    pub(super) fn edit_ssh_key(&mut self, idx: usize) -> Result<(), String> {
         match self.context.as_mut() {
             None => Ok(()),
             Some(ctx) => {
@@ -91,7 +91,7 @@ impl SetupActivity {
                 ctx.leave_alternate_screen();
                 // Get result
                 let result: Result<(), String> = match ctx.config_client.as_ref() {
-                    Some(config_cli) => match config_cli.iter_ssh_keys().nth(self.ssh_key_idx) {
+                    Some(config_cli) => match config_cli.iter_ssh_keys().nth(idx) {
                         Some(key) => {
                             // Get key path
                             match config_cli.get_ssh_key(key) {
