@@ -30,7 +30,7 @@ extern crate crossterm;
 extern crate tempfile;
 
 // Locals
-use super::{FileTransferActivity, LogLevel, Popup};
+use super::{FileTransferActivity, LogLevel};
 use crate::fs::{FsEntry, FsFile};
 use crate::utils::fmt::fmt_millis;
 
@@ -41,7 +41,6 @@ use std::fs::OpenOptions;
 use std::io::{Read, Seek, Write};
 use std::path::{Path, PathBuf};
 use std::time::{Instant, SystemTime};
-use tui::style::Color;
 
 impl FileTransferActivity {
     /// ### connect
@@ -76,12 +75,15 @@ impl FileTransferActivity {
                     self.remote_changedir(entry_directory.as_path(), false);
                 }
                 // Set state to explorer
-                self.popup = None;
+                self.umount_wait();
                 self.reload_remote_dir();
+                // Update file lists
+                self.update_local_filelist();
+                self.update_remote_filelist();
             }
             Err(err) => {
                 // Set popup fatal error
-                self.popup = Some(Popup::Fatal(format!("{}", err)));
+                self.mount_fatal(&err.to_string());
             }
         }
     }
@@ -91,10 +93,7 @@ impl FileTransferActivity {
     /// disconnect from remote
     pub(super) fn disconnect(&mut self) {
         // Show popup disconnecting
-        self.popup = Some(Popup::Alert(
-            Color::Red,
-            String::from("Disconnecting from remote..."),
-        ));
+        self.mount_wait(format!("Disconnecting from {}...", self.params.address).as_str());
         // Disconnect
         let _ = self.client.disconnect();
         // Quit
@@ -139,9 +138,6 @@ impl FileTransferActivity {
             FsEntry::Directory(dir) => dir.name.clone(),
             FsEntry::File(file) => file.name.clone(),
         };
-        self.popup = Some(Popup::Wait(format!("Uploading \"{}\"", file_name)));
-        // Draw
-        self.draw();
         // Get remote path
         let mut remote_path: PathBuf = PathBuf::from(curr_remote_path);
         let remote_file_name: PathBuf = match dst_name {
@@ -152,7 +148,7 @@ impl FileTransferActivity {
         // Match entry
         match entry {
             FsEntry::File(file) => {
-                let _ = self.filetransfer_send_file(file, remote_path.as_path());
+                let _ = self.filetransfer_send_file(file, remote_path.as_path(), file_name);
             }
             FsEntry::Directory(dir) => {
                 // Create directory on remote
@@ -220,12 +216,8 @@ impl FileTransferActivity {
             self.transfer.aborted = false;
         } else {
             // @! Successful
-            // Eventually, Reset input mode to explorer (if input mode is wait or progress)
-            if let Some(ptype) = &self.popup {
-                if matches!(ptype, Popup::Wait(_) | Popup::Progress(_)) {
-                    self.popup = None
-                }
-            }
+            // Eventually, Remove progress bar
+            self.umount_progress_bar();
         }
     }
 
@@ -245,9 +237,6 @@ impl FileTransferActivity {
             FsEntry::Directory(dir) => dir.name.clone(),
             FsEntry::File(file) => file.name.clone(),
         };
-        self.popup = Some(Popup::Wait(format!("Downloading \"{}\"...", file_name)));
-        // Draw
-        self.draw();
         // Match entry
         match entry {
             FsEntry::File(file) => {
@@ -259,7 +248,9 @@ impl FileTransferActivity {
                 };
                 local_file_path.push(local_file_name.as_str());
                 // Download file
-                if let Err(err) = self.filetransfer_recv_file(local_file_path.as_path(), file) {
+                if let Err(err) =
+                    self.filetransfer_recv_file(local_file_path.as_path(), file, file_name)
+                {
                     self.log_and_alert(LogLevel::Error, err);
                 }
             }
@@ -361,14 +352,19 @@ impl FileTransferActivity {
             self.transfer.aborted = false;
         } else {
             // Eventually, Reset input mode to explorer
-            self.popup = None;
+            self.umount_progress_bar();
         }
     }
 
     /// ### filetransfer_send_file
     ///
     /// Send local file and write it to remote path
-    fn filetransfer_send_file(&mut self, local: &FsFile, remote: &Path) -> Result<(), String> {
+    fn filetransfer_send_file(
+        &mut self,
+        local: &FsFile,
+        remote: &Path,
+        file_name: String,
+    ) -> Result<(), String> {
         // Upload file
         // Try to open local file
         match self
@@ -389,12 +385,12 @@ impl FileTransferActivity {
                     }
                     // Write remote file
                     let mut total_bytes_written: usize = 0;
-                    // Set input state to popup progress
-                    self.popup = Some(Popup::Progress(format!("Uploading \"{}\"", local.name)));
                     // Reset transfer states
                     self.transfer.reset();
                     let mut last_progress_val: f64 = 0.0;
                     let mut last_input_event_fetch: Instant = Instant::now();
+                    // Mount progress bar
+                    self.mount_progress_bar();
                     // While the entire file hasn't been completely written,
                     // Or filetransfer has been aborted
                     while total_bytes_written < file_size && !self.transfer.aborted {
@@ -421,26 +417,33 @@ impl FileTransferActivity {
                                                 buf_start += bytes;
                                             }
                                             Err(err) => {
+                                                self.umount_progress_bar();
                                                 return Err(format!(
                                                     "Could not write remote file: {}",
                                                     err
-                                                ))
+                                                ));
                                             }
                                         }
                                     }
                                 }
                             }
-                            Err(err) => return Err(format!("Could not read local file: {}", err)),
+                            Err(err) => {
+                                self.umount_progress_bar();
+                                return Err(format!("Could not read local file: {}", err));
+                            }
                         }
                         // Increase progress
                         self.transfer.set_progress(total_bytes_written, file_size);
                         // Draw only if a significant progress has been made (performance improvement)
                         if last_progress_val < self.transfer.progress - 1.0 {
                             // Draw
-                            self.draw();
+                            self.update_progress_bar(format!("Uploading \"{}\"...", file_name));
+                            self.view();
                             last_progress_val = self.transfer.progress;
                         }
                     }
+                    // Umount progress bar
+                    self.umount_progress_bar();
                     // Finalize stream
                     if let Err(err) = self.client.on_sent(rhnd) {
                         self.log(
@@ -482,24 +485,26 @@ impl FileTransferActivity {
     /// ### filetransfer_recv_file
     ///
     /// Receive file from remote and write it to local path
-    fn filetransfer_recv_file(&mut self, local: &Path, remote: &FsFile) -> Result<(), String> {
+    fn filetransfer_recv_file(
+        &mut self,
+        local: &Path,
+        remote: &FsFile,
+        file_name: String,
+    ) -> Result<(), String> {
         // Try to open local file
         match self.context.as_ref().unwrap().local.open_file_write(local) {
             Ok(mut local_file) => {
                 // Download file from remote
                 match self.client.recv_file(remote) {
                     Ok(mut rhnd) => {
-                        // Set popup progress
-                        self.popup = Some(Popup::Progress(format!(
-                            "Downloading \"{}\"...",
-                            remote.name,
-                        )));
                         let mut total_bytes_written: usize = 0;
                         // Reset transfer states
                         self.transfer.reset();
                         // Write local file
                         let mut last_progress_val: f64 = 0.0;
                         let mut last_input_event_fetch: Instant = Instant::now();
+                        // Mount progress bar
+                        self.mount_progress_bar();
                         // While the entire file hasn't been completely read,
                         // Or filetransfer has been aborted
                         while total_bytes_written < remote.size && !self.transfer.aborted {
@@ -524,17 +529,19 @@ impl FileTransferActivity {
                                             match local_file.write(&buffer[buf_start..bytes_read]) {
                                                 Ok(bytes) => buf_start += bytes,
                                                 Err(err) => {
+                                                    self.umount_progress_bar();
                                                     return Err(format!(
                                                         "Could not write local file: {}",
                                                         err
-                                                    ))
+                                                    ));
                                                 }
                                             }
                                         }
                                     }
                                 }
                                 Err(err) => {
-                                    return Err(format!("Could not read remote file: {}", err))
+                                    self.umount_progress_bar();
+                                    return Err(format!("Could not read remote file: {}", err));
                                 }
                             }
                             // Set progress
@@ -542,10 +549,13 @@ impl FileTransferActivity {
                             // Draw only if a significant progress has been made (performance improvement)
                             if last_progress_val < self.transfer.progress - 1.0 {
                                 // Draw
-                                self.draw();
+                                self.update_progress_bar(format!("Downloading \"{}\"", file_name));
+                                self.view();
                                 last_progress_val = self.transfer.progress;
                             }
                         }
+                        // Umount progress bar
+                        self.umount_progress_bar();
                         // Finalize stream
                         if let Err(err) = self.client.on_recv(rhnd) {
                             self.log(
@@ -793,7 +803,7 @@ impl FileTransferActivity {
             }
         };
         // Download file
-        if let Err(err) = self.filetransfer_recv_file(tmpfile.path(), file) {
+        if let Err(err) = self.filetransfer_recv_file(tmpfile.path(), file, file.name.clone()) {
             return Err(err);
         }
         // Get current file modification time
@@ -853,9 +863,11 @@ impl FileTransferActivity {
                     FsEntry::File(f) => f,
                 };
                 // Send file
-                if let Err(err) =
-                    self.filetransfer_send_file(tmpfile_entry, file.abs_path.as_path())
-                {
+                if let Err(err) = self.filetransfer_send_file(
+                    tmpfile_entry,
+                    file.abs_path.as_path(),
+                    file.name.clone(),
+                ) {
                     return Err(err);
                 }
             }

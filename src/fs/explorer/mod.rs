@@ -171,10 +171,27 @@ impl FileExplorer {
     }
 
     /// ### get
-    /// 
-    /// Get file at index
+    ///
+    /// Get file at relative index
     pub fn get(&self, idx: usize) -> Option<&FsEntry> {
-        self.files.get(idx)
+        let opts: ExplorerOpts = self.opts;
+        let filtered = self
+            .files
+            .iter()
+            .filter(move |x| {
+                // If true, element IS NOT filtered
+                let mut pass: bool = true;
+                // If hidden files SHOULDN'T be shown, AND pass with not hidden
+                if !opts.intersects(ExplorerOpts::SHOW_HIDDEN_FILES) {
+                    pass &= !x.is_hidden();
+                }
+                pass
+            })
+            .collect::<Vec<_>>();
+        match filtered.get(idx) {
+            None => None,
+            Some(file) => Some(file),
+        }
     }
 
     // Formatting

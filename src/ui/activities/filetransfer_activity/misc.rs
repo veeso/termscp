@@ -20,7 +20,7 @@
 */
 
 // Locals
-use super::{Color, ConfigClient, FileTransferActivity, InputField, LogLevel, LogRecord, Popup};
+use super::{ConfigClient, FileTransferActivity, LogLevel, LogRecord};
 use crate::fs::explorer::{builder::FileExplorerBuilder, FileExplorer, FileSorting, GroupDirs};
 use crate::system::environment;
 use crate::system::sshkey_storage::SshKeyStorage;
@@ -43,52 +43,20 @@ impl FileTransferActivity {
         self.log_records.push_front(record);
         // Set log index
         self.log_index = 0;
+        // Update log
+        let msg = self.update_logbox();
+        self.update(msg);
     }
 
     /// ### log_and_alert
     ///
     /// Add message to log events and also display it as an alert
     pub(super) fn log_and_alert(&mut self, level: LogLevel, msg: String) {
-        // Set input mode
-        let color: Color = match level {
-            LogLevel::Error => Color::Red,
-            LogLevel::Info => Color::Green,
-            LogLevel::Warn => Color::Yellow,
-        };
         self.log(level, msg.as_str());
-        self.popup = Some(Popup::Alert(color, msg));
-    }
-
-    /// ### create_quit_popup
-    ///
-    /// Create quit popup input mode (since must be shared between different input handlers)
-    pub(super) fn create_disconnect_popup(&mut self) -> Popup {
-        Popup::YesNo(
-            String::from("Are you sure you want to disconnect?"),
-            FileTransferActivity::disconnect,
-            FileTransferActivity::callback_nothing_to_do,
-        )
-    }
-
-    /// ### create_quit_popup
-    ///
-    /// Create quit popup input mode (since must be shared between different input handlers)
-    pub(super) fn create_quit_popup(&mut self) -> Popup {
-        Popup::YesNo(
-            String::from("Are you sure you want to quit?"),
-            FileTransferActivity::disconnect_and_quit,
-            FileTransferActivity::callback_nothing_to_do,
-        )
-    }
-
-    /// ### switch_input_field
-    ///
-    /// Switch input field based on current input field
-    pub(super) fn switch_input_field(&mut self) {
-        self.input_field = match self.input_field {
-            InputField::Explorer => InputField::Logs,
-            InputField::Logs => InputField::Explorer,
-        }
+        self.mount_error(msg.as_str());
+        // Update log
+        let msg = self.update_logbox();
+        self.update(msg);
     }
 
     /// ### init_config_client
@@ -150,6 +118,23 @@ impl FileTransferActivity {
         if let Some(config_cli) = self.context.as_ref().unwrap().config_client.as_ref() {
             // Set text editor
             env::set_var("EDITOR", config_cli.get_text_editor());
+        }
+    }
+
+    /// ### read_input_event
+    ///
+    /// Read one event.
+    /// Returns whether at least one event has been handled
+    pub(super) fn read_input_event(&mut self) -> bool {
+        if let Ok(Some(event)) = self.context.as_ref().unwrap().input_hnd.read_event() {
+            // Handle event
+            let msg = self.view.on(event);
+            self.update(msg);
+            // Return true
+            true
+        } else {
+            // Error
+            false
         }
     }
 }

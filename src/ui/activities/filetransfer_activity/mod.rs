@@ -24,11 +24,11 @@
 */
 
 // This module is split into files, cause it's just too big
-mod callbacks;
-mod input;
-mod layout;
+mod actions;
 mod misc;
 mod session;
+mod update;
+mod view;
 
 // Dependencies
 extern crate chrono;
@@ -46,19 +46,41 @@ use crate::filetransfer::{FileTransfer, FileTransferProtocol};
 use crate::fs::explorer::FileExplorer;
 use crate::fs::FsEntry;
 use crate::system::config_client::ConfigClient;
+use crate::ui::layout::view::View;
 
 // Includes
 use chrono::{DateTime, Local};
-use crossterm::event::Event as InputEvent;
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use std::collections::VecDeque;
 use std::path::PathBuf;
 use std::time::Instant;
-use tui::style::Color;
 
-// Types
-type DialogCallback = fn(&mut FileTransferActivity);
-type OnInputSubmitCallback = fn(&mut FileTransferActivity, String);
+// -- Storage keys
+
+const STORAGE_EXPLORER_WIDTH: &str = "FILETRANSFER_EXPLORER_WIDTH";
+const STORAGE_LOGBOX_WIDTH: &str = "LOGBOX_WIDTH";
+
+// -- components
+
+const COMPONENT_EXPLORER_LOCAL: &str = "EXPLORER_LOCAL";
+const COMPONENT_EXPLORER_REMOTE: &str = "EXPLORER_REMOTE";
+const COMPONENT_LOG_BOX: &str = "LOG_BOX";
+const COMPONENT_PROGRESS_BAR: &str = "PROGRESS_BAR";
+const COMPONENT_TEXT_HELP: &str = "TEXT_HELP";
+const COMPONENT_TEXT_ERROR: &str = "TEXT_ERROR";
+const COMPONENT_TEXT_WAIT: &str = "TEXT_WAIT";
+const COMPONENT_TEXT_FATAL: &str = "TEXT_FATAL";
+const COMPONENT_INPUT_COPY: &str = "INPUT_COPY";
+const COMPONENT_INPUT_MKDIR: &str = "INPUT_MKDIR";
+const COMPONENT_INPUT_GOTO: &str = "INPUT_GOTO";
+const COMPONENT_INPUT_SAVEAS: &str = "INPUT_SAVEAS";
+const COMPONENT_INPUT_NEWFILE: &str = "INPUT_NEWFILE";
+const COMPONENT_INPUT_RENAME: &str = "INPUT_RENAME";
+const COMPONENT_RADIO_QUIT: &str = "RADIO_QUIT";
+const COMPONENT_RADIO_DISCONNECT: &str = "RADIO_DISCONNECT";
+const COMPONENT_RADIO_SORTING: &str = "RADIO_SORTING";
+const COMPONENT_RADIO_DELETE: &str = "RADIO_DELETE";
+const COMPONENT_LIST_FILEINFO: &str = "LIST_FILEINFO";
 
 /// ### FileTransferParams
 ///
@@ -70,40 +92,6 @@ pub struct FileTransferParams {
     pub username: Option<String>,
     pub password: Option<String>,
     pub entry_directory: Option<PathBuf>,
-}
-
-/// ### InputField
-///
-/// Input field selected
-#[derive(std::cmp::PartialEq)]
-enum InputField {
-    Explorer,
-    Logs,
-}
-
-/// ### DialogYesNoOption
-///
-/// Current yes/no dialog option
-#[derive(std::cmp::PartialEq, Clone)]
-enum DialogYesNoOption {
-    Yes,
-    No,
-}
-
-/// ## Popup
-///
-/// Popup describes the type of popup
-#[derive(Clone)]
-enum Popup {
-    Alert(Color, String),                          // Block color; Block text
-    Fatal(String),                                 // Must quit after being hidden
-    FileInfo,                                      // Show info about current file
-    FileSortingDialog,                             // Dialog for choosing file sorting type
-    Help,                                          // Show Help
-    Input(String, OnInputSubmitCallback),          // Input description; Callback for submit
-    Progress(String),                              // Progress block text
-    Wait(String),                                  // Wait block text
-    YesNo(String, DialogCallback, DialogCallback), // Yes, no callback
 }
 
 /// ## FileExplorerTab
@@ -227,6 +215,7 @@ pub struct FileTransferActivity {
     pub disconnected: bool,           // Has disconnected from remote?
     pub quit: bool,                   // Has quit term scp?
     context: Option<Context>,         // Context holder
+    view: View,                       // View
     params: FileTransferParams,       // FT connection params
     client: Box<dyn FileTransfer>,    // File transfer client
     local: FileExplorer,              // Local File explorer state
@@ -235,10 +224,6 @@ pub struct FileTransferActivity {
     log_index: usize,                 // Current log index entry selected
     log_records: VecDeque<LogRecord>, // Log records
     log_size: usize,                  // Log records size (max)
-    popup: Option<Popup>,             // Current input mode
-    input_field: InputField,          // Current selected input mode
-    input_txt: String,                // Input text
-    choice_opt: DialogYesNoOption,    // Dialog popup selected option
     transfer: TransferStates,         // Transfer states
 }
 
@@ -254,6 +239,7 @@ impl FileTransferActivity {
             disconnected: false,
             quit: false,
             context: None,
+            view: View::init(),
             client: match protocol {
                 FileTransferProtocol::Sftp => Box::new(SftpFileTransfer::new(
                     Self::make_ssh_storage(config_client.as_ref()),
@@ -270,10 +256,6 @@ impl FileTransferActivity {
             log_index: 0,
             log_records: VecDeque::with_capacity(256), // 256 events is enough I guess
             log_size: 256,                             // Must match with capacity
-            popup: None,
-            input_field: InputField::Explorer,
-            input_txt: String::new(),
-            choice_opt: DialogYesNoOption::Yes,
             transfer: TransferStates::default(),
         }
     }
@@ -306,9 +288,11 @@ impl Activity for FileTransferActivity {
         self.local.index_at_first();
         // Configure text editor
         self.setup_text_editor();
+        // init view
+        self.init();
         // Verify error state from context
         if let Some(err) = self.context.as_mut().unwrap().get_error() {
-            self.popup = Some(Popup::Fatal(err));
+            self.mount_fatal(&err);
         }
     }
 
@@ -324,14 +308,14 @@ impl Activity for FileTransferActivity {
             return;
         }
         // Check if connected (popup must be None, otherwise would try reconnecting in loop in case of error)
-        if !self.client.is_connected() && self.popup.is_none() {
+        if !self.client.is_connected() && self.view.get_props(COMPONENT_TEXT_FATAL).is_none() {
             // Set init state to connecting popup
-            self.popup = Some(Popup::Wait(format!(
+            self.mount_wait(format!(
                 "Connecting to {}:{}...",
                 self.params.address, self.params.port
-            )));
+            ).as_str());
             // Force ui draw
-            self.draw();
+            self.view();
             // Connect to remote
             self.connect();
             // Redraw
@@ -341,7 +325,7 @@ impl Activity for FileTransferActivity {
         redraw |= self.read_input_event();
         // @! draw interface
         if redraw {
-            self.draw();
+            self.view();
         }
     }
 

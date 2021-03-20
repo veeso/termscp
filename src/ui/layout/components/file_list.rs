@@ -143,7 +143,7 @@ impl Component for FileList {
                     .collect(),
             };
             let (fg, bg): (Color, Color) = match self.states.focus {
-                true => (Color::Reset, self.props.background),
+                true => (Color::Black, self.props.background),
                 false => (self.props.foreground, Color::Reset),
             };
             let title: String = match self.props.texts.title.as_ref() {

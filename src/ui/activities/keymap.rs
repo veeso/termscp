@@ -44,6 +44,10 @@ pub const MSG_KEY_DEL: Msg = Msg::OnKey(KeyEvent {
     code: KeyCode::Delete,
     modifiers: KeyModifiers::NONE,
 });
+pub const MSG_KEY_BACKSPACE: Msg = Msg::OnKey(KeyEvent {
+    code: KeyCode::Backspace,
+    modifiers: KeyModifiers::NONE,
+});
 pub const MSG_KEY_DOWN: Msg = Msg::OnKey(KeyEvent {
     code: KeyCode::Down,
     modifiers: KeyModifiers::NONE,
