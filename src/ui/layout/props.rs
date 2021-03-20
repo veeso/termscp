@@ -366,6 +366,19 @@ impl From<&str> for TextSpan {
     }
 }
 
+impl From<String> for TextSpan {
+    fn from(content: String) -> Self {
+        TextSpan {
+            content,
+            fg: Color::Reset,
+            bg: Color::Reset,
+            bold: false,
+            italic: false,
+            underlined: false,
+        }
+    }
+}
+
 impl TextSpan {
     /// ### get_modifiers
     ///
@@ -725,8 +738,17 @@ mod tests {
 
     #[test]
     fn test_ui_layout_props_text_span() {
+        // from str
         let span: TextSpan = TextSpan::from("Hello!");
         assert_eq!(span.content.as_str(), "Hello!");
+        assert_eq!(span.bold, false);
+        assert_eq!(span.fg, Color::Reset);
+        assert_eq!(span.bg, Color::Reset);
+        assert_eq!(span.italic, false);
+        assert_eq!(span.underlined, false);
+        // From String
+        let span: TextSpan = TextSpan::from(String::from("omar"));
+        assert_eq!(span.content.as_str(), "omar");
         assert_eq!(span.bold, false);
         assert_eq!(span.fg, Color::Reset);
         assert_eq!(span.bg, Color::Reset);
