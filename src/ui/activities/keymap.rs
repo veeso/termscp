@@ -83,10 +83,12 @@ pub const MSG_KEY_CHAR_E: Msg = Msg::OnKey(KeyEvent {
     code: KeyCode::Char('e'),
     modifiers: KeyModifiers::NONE,
 });
+/*
 pub const MSG_KEY_CHAR_F: Msg = Msg::OnKey(KeyEvent {
     code: KeyCode::Char('f'),
     modifiers: KeyModifiers::NONE,
 });
+*/
 pub const MSG_KEY_CHAR_G: Msg = Msg::OnKey(KeyEvent {
     code: KeyCode::Char('g'),
     modifiers: KeyModifiers::NONE,
@@ -99,6 +101,7 @@ pub const MSG_KEY_CHAR_I: Msg = Msg::OnKey(KeyEvent {
     code: KeyCode::Char('i'),
     modifiers: KeyModifiers::NONE,
 });
+/*
 pub const MSG_KEY_CHAR_J: Msg = Msg::OnKey(KeyEvent {
     code: KeyCode::Char('j'),
     modifiers: KeyModifiers::NONE,
@@ -107,14 +110,17 @@ pub const MSG_KEY_CHAR_K: Msg = Msg::OnKey(KeyEvent {
     code: KeyCode::Char('k'),
     modifiers: KeyModifiers::NONE,
 });
+*/
 pub const MSG_KEY_CHAR_L: Msg = Msg::OnKey(KeyEvent {
     code: KeyCode::Char('l'),
     modifiers: KeyModifiers::NONE,
 });
+/*
 pub const MSG_KEY_CHAR_M: Msg = Msg::OnKey(KeyEvent {
     code: KeyCode::Char('m'),
     modifiers: KeyModifiers::NONE,
 });
+*/
 pub const MSG_KEY_CHAR_N: Msg = Msg::OnKey(KeyEvent {
     code: KeyCode::Char('n'),
     modifiers: KeyModifiers::NONE,
@@ -123,10 +129,12 @@ pub const MSG_KEY_CHAR_O: Msg = Msg::OnKey(KeyEvent {
     code: KeyCode::Char('o'),
     modifiers: KeyModifiers::NONE,
 });
+/*
 pub const MSG_KEY_CHAR_P: Msg = Msg::OnKey(KeyEvent {
     code: KeyCode::Char('p'),
     modifiers: KeyModifiers::NONE,
 });
+*/
 pub const MSG_KEY_CHAR_Q: Msg = Msg::OnKey(KeyEvent {
     code: KeyCode::Char('q'),
     modifiers: KeyModifiers::NONE,
@@ -139,14 +147,17 @@ pub const MSG_KEY_CHAR_S: Msg = Msg::OnKey(KeyEvent {
     code: KeyCode::Char('s'),
     modifiers: KeyModifiers::NONE,
 });
+/*
 pub const MSG_KEY_CHAR_T: Msg = Msg::OnKey(KeyEvent {
     code: KeyCode::Char('t'),
     modifiers: KeyModifiers::NONE,
 });
+*/
 pub const MSG_KEY_CHAR_U: Msg = Msg::OnKey(KeyEvent {
     code: KeyCode::Char('u'),
     modifiers: KeyModifiers::NONE,
 });
+/*
 pub const MSG_KEY_CHAR_V: Msg = Msg::OnKey(KeyEvent {
     code: KeyCode::Char('v'),
     modifiers: KeyModifiers::NONE,
@@ -167,6 +178,7 @@ pub const MSG_KEY_CHAR_Z: Msg = Msg::OnKey(KeyEvent {
     code: KeyCode::Char('z'),
     modifiers: KeyModifiers::NONE,
 });
+*/
 
 // -- control
 pub const MSG_KEY_CTRL_C: Msg = Msg::OnKey(KeyEvent {
@@ -181,11 +193,11 @@ pub const MSG_KEY_CTRL_H: Msg = Msg::OnKey(KeyEvent {
     code: KeyCode::Char('h'),
     modifiers: KeyModifiers::CONTROL,
 });
-const MSG_KEY_CTRL_N: Msg = Msg::OnKey(KeyEvent {
+pub const MSG_KEY_CTRL_N: Msg = Msg::OnKey(KeyEvent {
     code: KeyCode::Char('n'),
     modifiers: KeyModifiers::CONTROL,
 });
-const MSG_KEY_CTRL_R: Msg = Msg::OnKey(KeyEvent {
+pub const MSG_KEY_CTRL_R: Msg = Msg::OnKey(KeyEvent {
     code: KeyCode::Char('r'),
     modifiers: KeyModifiers::CONTROL,
 });
