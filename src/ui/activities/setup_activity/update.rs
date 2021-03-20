@@ -32,57 +32,8 @@ use super::{
     COMPONENT_RADIO_HIDDEN_FILES, COMPONENT_RADIO_QUIT, COMPONENT_RADIO_SAVE,
     COMPONENT_RADIO_UPDATES, COMPONENT_TEXT_ERROR, COMPONENT_TEXT_HELP,
 };
+use crate::ui::activities::keymap::*;
 use crate::ui::layout::{Msg, Payload};
-// ext
-use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-
-// -- keymap
-const MSG_KEY_ENTER: Msg = Msg::OnKey(KeyEvent {
-    code: KeyCode::Enter,
-    modifiers: KeyModifiers::NONE,
-});
-const MSG_KEY_ESC: Msg = Msg::OnKey(KeyEvent {
-    code: KeyCode::Esc,
-    modifiers: KeyModifiers::NONE,
-});
-const MSG_KEY_TAB: Msg = Msg::OnKey(KeyEvent {
-    code: KeyCode::Tab,
-    modifiers: KeyModifiers::NONE,
-});
-const MSG_KEY_DOWN: Msg = Msg::OnKey(KeyEvent {
-    code: KeyCode::Down,
-    modifiers: KeyModifiers::NONE,
-});
-const MSG_KEY_UP: Msg = Msg::OnKey(KeyEvent {
-    code: KeyCode::Up,
-    modifiers: KeyModifiers::NONE,
-});
-const MSG_KEY_DEL: Msg = Msg::OnKey(KeyEvent {
-    code: KeyCode::Delete,
-    modifiers: KeyModifiers::NONE,
-});
-const MSG_KEY_CTRL_E: Msg = Msg::OnKey(KeyEvent {
-    code: KeyCode::Char('c'),
-    modifiers: KeyModifiers::CONTROL,
-});
-const MSG_KEY_CTRL_H: Msg = Msg::OnKey(KeyEvent {
-    code: KeyCode::Char('h'),
-    modifiers: KeyModifiers::CONTROL,
-});
-const MSG_KEY_CTRL_N: Msg = Msg::OnKey(KeyEvent {
-    code: KeyCode::Char('n'),
-    modifiers: KeyModifiers::CONTROL,
-});
-const MSG_KEY_CTRL_R: Msg = Msg::OnKey(KeyEvent {
-    code: KeyCode::Char('r'),
-    modifiers: KeyModifiers::CONTROL,
-});
-const MSG_KEY_CTRL_S: Msg = Msg::OnKey(KeyEvent {
-    code: KeyCode::Char('s'),
-    modifiers: KeyModifiers::CONTROL,
-});
-
-// -- update
 
 impl SetupActivity {
     /// ### update
@@ -233,11 +184,13 @@ impl SetupActivity {
                     None
                 }
                 // New key <UP>
-                (COMPONENT_INPUT_SSH_USERNAME, &MSG_KEY_UP) | (COMPONENT_INPUT_SSH_USERNAME, &MSG_KEY_TAB) => {
+                (COMPONENT_INPUT_SSH_USERNAME, &MSG_KEY_UP)
+                | (COMPONENT_INPUT_SSH_USERNAME, &MSG_KEY_TAB) => {
                     self.view.active(COMPONENT_INPUT_SSH_HOST);
                     None
                 }
-                (COMPONENT_INPUT_SSH_HOST, &MSG_KEY_UP) | (COMPONENT_INPUT_SSH_HOST, &MSG_KEY_TAB) => {
+                (COMPONENT_INPUT_SSH_HOST, &MSG_KEY_UP)
+                | (COMPONENT_INPUT_SSH_HOST, &MSG_KEY_TAB) => {
                     self.view.active(COMPONENT_INPUT_SSH_USERNAME);
                     None
                 }

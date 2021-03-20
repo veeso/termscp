@@ -26,7 +26,8 @@
 
 // Locals
 use super::context::Context;
-
+// keymap
+pub(crate) mod keymap;
 // Activities
 pub mod auth_activity;
 pub mod filetransfer_activity;
