@@ -170,6 +170,13 @@ impl FileExplorer {
         self.files.get(self.index)
     }
 
+    /// ### get
+    /// 
+    /// Get file at index
+    pub fn get(&self, idx: usize) -> Option<&FsEntry> {
+        self.files.get(idx)
+    }
+
     // Formatting
 
     /// ### fmt_file
@@ -582,6 +589,9 @@ mod tests {
             make_fs_entry("codecov.yml", false),
             make_fs_entry(".gitignore", false),
         ]);
+        assert!(explorer.get_current_file().is_some());
+        assert!(explorer.get(0).is_some());
+        assert!(explorer.get(100).is_none());
         assert_eq!(explorer.count(), 6);
         // Verify (files are sorted by name)
         assert_eq!(
