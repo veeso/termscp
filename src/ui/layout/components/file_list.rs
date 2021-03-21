@@ -95,8 +95,10 @@ impl OwnStates {
     ///
     /// Keep index if possible, otherwise set to lenght - 1
     pub fn fix_list_index(&mut self) {
-        if self.list_index >= self.list_len {
+        if self.list_index >= self.list_len && self.list_len > 0 {
             self.list_index = self.list_len - 1;
+        } else if self.list_len == 0 {
+            self.list_index = 0;
         }
     }
 }
