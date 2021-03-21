@@ -572,10 +572,10 @@ mod tests {
     #[test]
     #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
     fn test_host_localhost_new() {
-        let host: Localhost = Localhost::new(PathBuf::from("/bin")).ok().unwrap();
-        assert_eq!(host.wrkdir, PathBuf::from("/bin"));
+        let host: Localhost = Localhost::new(PathBuf::from("/dev")).ok().unwrap();
+        assert_eq!(host.wrkdir, PathBuf::from("/dev"));
         // Scan dir
-        let entries = std::fs::read_dir(PathBuf::from("/bin").as_path()).unwrap();
+        let entries = std::fs::read_dir(PathBuf::from("/dev").as_path()).unwrap();
         let mut counter: usize = 0;
         for _ in entries {
             counter = counter + 1;
@@ -608,16 +608,16 @@ mod tests {
     #[test]
     #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
     fn test_host_localhost_pwd() {
-        let host: Localhost = Localhost::new(PathBuf::from("/bin")).ok().unwrap();
-        assert_eq!(host.pwd(), PathBuf::from("/bin"));
+        let host: Localhost = Localhost::new(PathBuf::from("/dev")).ok().unwrap();
+        assert_eq!(host.pwd(), PathBuf::from("/dev"));
     }
 
     #[test]
     #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
     fn test_host_localhost_list_files() {
-        let host: Localhost = Localhost::new(PathBuf::from("/bin")).ok().unwrap();
+        let host: Localhost = Localhost::new(PathBuf::from("/dev")).ok().unwrap();
         // Scan dir
-        let entries = std::fs::read_dir(PathBuf::from("/bin").as_path()).unwrap();
+        let entries = std::fs::read_dir(PathBuf::from("/dev").as_path()).unwrap();
         let mut counter: usize = 0;
         for _ in entries {
             counter = counter + 1;
@@ -645,7 +645,7 @@ mod tests {
     #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
     #[should_panic]
     fn test_host_localhost_change_dir_failed() {
-        let mut host: Localhost = Localhost::new(PathBuf::from("/bin")).ok().unwrap();
+        let mut host: Localhost = Localhost::new(PathBuf::from("/dev")).ok().unwrap();
         let new_dir: PathBuf = PathBuf::from("/omar/gabber/123/456");
         assert!(host.change_wrkdir(new_dir.as_path()).is_ok());
     }
@@ -653,7 +653,7 @@ mod tests {
     #[test]
     #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
     fn test_host_localhost_open_read() {
-        let host: Localhost = Localhost::new(PathBuf::from("/bin")).ok().unwrap();
+        let host: Localhost = Localhost::new(PathBuf::from("/dev")).ok().unwrap();
         // Create temp file
         let file: tempfile::NamedTempFile = create_sample_file();
         assert!(host.open_file_read(file.path()).is_ok());
@@ -663,7 +663,7 @@ mod tests {
     #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
     #[should_panic]
     fn test_host_localhost_open_read_err_no_such_file() {
-        let host: Localhost = Localhost::new(PathBuf::from("/bin")).ok().unwrap();
+        let host: Localhost = Localhost::new(PathBuf::from("/dev")).ok().unwrap();
         assert!(host
             .open_file_read(PathBuf::from("/bin/foo-bar-test-omar-123-456-789.txt").as_path())
             .is_ok());
@@ -672,7 +672,7 @@ mod tests {
     #[test]
     #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
     fn test_host_localhost_open_read_err_not_accessible() {
-        let host: Localhost = Localhost::new(PathBuf::from("/bin")).ok().unwrap();
+        let host: Localhost = Localhost::new(PathBuf::from("/dev")).ok().unwrap();
         let file: tempfile::NamedTempFile = create_sample_file();
         //let mut perms = fs::metadata(file.path())?.permissions();
         fs::set_permissions(file.path(), PermissionsExt::from_mode(0o222)).unwrap();
@@ -683,7 +683,7 @@ mod tests {
     #[test]
     #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
     fn test_host_localhost_open_write() {
-        let host: Localhost = Localhost::new(PathBuf::from("/bin")).ok().unwrap();
+        let host: Localhost = Localhost::new(PathBuf::from("/dev")).ok().unwrap();
         // Create temp file
         let file: tempfile::NamedTempFile = create_sample_file();
         assert!(host.open_file_write(file.path()).is_ok());
@@ -692,7 +692,7 @@ mod tests {
     #[test]
     #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
     fn test_host_localhost_open_write_err() {
-        let host: Localhost = Localhost::new(PathBuf::from("/bin")).ok().unwrap();
+        let host: Localhost = Localhost::new(PathBuf::from("/dev")).ok().unwrap();
         let file: tempfile::NamedTempFile = create_sample_file();
         //let mut perms = fs::metadata(file.path())?.permissions();
         fs::set_permissions(file.path(), PermissionsExt::from_mode(0o444)).unwrap();
