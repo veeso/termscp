@@ -560,6 +560,12 @@ impl FileTransferActivity {
                     self.umount_help();
                     None
                 }
+                // -- progress bar
+                (COMPONENT_PROGRESS_BAR, &MSG_KEY_CTRL_C) => {
+                    // Set transfer aborted to True
+                    self.transfer.aborted = true;
+                    None
+                }
                 // -- fallback
                 (_, _) => None, // Nothing to do
             },
