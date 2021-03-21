@@ -1,6 +1,6 @@
-//! ## CText
+//! ## MsgBox
 //!
-//! `CText` component renders a simple readonly no event associated centered text
+//! `MsgBox` component renders a simple readonly no event associated centered text
 
 /*
 *
@@ -23,15 +23,17 @@
 *
 */
 
+// deps
+extern crate textwrap;
 // locals
 use super::{Canvas, Component, InputEvent, Msg, Payload, Props, PropsBuilder};
 use crate::utils::fmt::align_text_center;
 // ext
 use tui::{
-    layout::Rect,
-    style::Style,
-    text::{Span, Spans, Text as TuiText},
-    widgets::{Block, BorderType, Paragraph},
+    layout::{Corner, Rect},
+    style::{Color, Style},
+    text::{Span, Spans},
+    widgets::{Block, BorderType, List, ListItem},
 };
 
 // -- state
@@ -48,24 +50,24 @@ impl Default for OwnStates {
 
 // -- component
 
-pub struct CText {
+pub struct MsgBox {
     props: Props,
     states: OwnStates,
 }
 
-impl CText {
+impl MsgBox {
     /// ### new
     ///
     /// Instantiate a new Text component
     pub fn new(props: Props) -> Self {
-        CText {
+        MsgBox {
             props,
             states: OwnStates::default(),
         }
     }
 }
 
-impl Component for CText {
+impl Component for MsgBox {
     /// ### render
     ///
     /// Based on the current properties and states, renders a widget using the provided render engine in the provided Area
@@ -74,37 +76,56 @@ impl Component for CText {
     fn render(&self, render: &mut Canvas, area: Rect) {
         // Make a Span
         if self.props.visible {
-            let spans: Vec<Span> = match self.props.texts.rows.as_ref() {
+            let lines: Vec<ListItem> = match self.props.texts.rows.as_ref() {
                 None => Vec::new(),
-                Some(rows) => rows
-                    .iter()
-                    .map(|x| {
-                        Span::styled(
-                            align_text_center(x.content.as_str(), area.width),
-                            Style::default()
-                                .add_modifier(x.get_modifiers())
-                                .fg(x.fg)
-                                .bg(x.bg),
-                        )
-                    })
-                    .collect(),
+                Some(rows) => {
+                    let mut lines: Vec<ListItem> = Vec::new();
+                    for line in rows.iter() {
+                        // Keep line color, or use default
+                        let line_fg: Color = match line.fg {
+                            Color::Reset => self.props.foreground,
+                            _ => line.fg,
+                        };
+                        let line_bg: Color = match line.bg {
+                            Color::Reset => self.props.background,
+                            _ => line.bg,
+                        };
+                        let mut spans: Vec<Span> = Vec::new();
+                        let message_row =
+                            textwrap::wrap(line.content.as_str(), area.width as usize);
+                        for msg in message_row.iter() {
+                            spans.push(Span::styled(
+                                align_text_center(msg, area.width),
+                                Style::default()
+                                    .add_modifier(line.get_modifiers())
+                                    .fg(line_fg)
+                                    .bg(line_bg),
+                            ));
+                        }
+                        lines.push(ListItem::new(Spans::from(spans)));
+                    }
+                    lines
+                }
             };
-            // Make text
-            let mut text: TuiText = TuiText::from(Spans::from(spans));
-            // Apply style
-            text.patch_style(
-                Style::default()
-                    .add_modifier(self.props.get_modifiers())
-                    .fg(self.props.foreground)
-                    .bg(self.props.background),
-            );
+            let title: String = match self.props.texts.title.as_ref() {
+                Some(t) => t.clone(),
+                None => String::new(),
+            };
             render.render_widget(
-                Paragraph::new(text).block(
-                    Block::default()
-                        .borders(self.props.borders)
-                        .border_style(Style::default().fg(self.props.foreground))
-                        .border_type(BorderType::Rounded),
-                ),
+                List::new(lines)
+                    .block(
+                        Block::default()
+                            .borders(self.props.borders)
+                            .border_style(Style::default().fg(self.props.foreground))
+                            .border_type(BorderType::Rounded)
+                            .title(title),
+                    )
+                    .start_corner(Corner::TopLeft)
+                    .style(
+                        Style::default()
+                            .fg(self.props.foreground)
+                            .bg(self.props.background),
+                    ),
                 area,
             );
         }
@@ -180,8 +201,8 @@ mod tests {
     use tui::style::Color;
 
     #[test]
-    fn test_ui_layout_components_ctext() {
-        let mut component: CText = CText::new(
+    fn test_ui_layout_components_msgbox() {
+        let mut component: MsgBox = MsgBox::new(
             PropsBuilder::default()
                 .with_texts(TextParts::new(
                     None,

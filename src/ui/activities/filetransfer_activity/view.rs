@@ -33,7 +33,7 @@ use super::{Context, FileExplorerTab, FileTransferActivity};
 use crate::fs::explorer::FileSorting;
 use crate::fs::FsEntry;
 use crate::ui::layout::components::{
-    ctext::CText, file_list::FileList, input::Input, logbox::LogBox, progress_bar::ProgressBar,
+    msgbox::MsgBox, file_list::FileList, input::Input, logbox::LogBox, progress_bar::ProgressBar,
     radio_group::RadioGroup, table::Table,
 };
 use crate::ui::layout::props::{
@@ -280,7 +280,7 @@ impl FileTransferActivity {
         // Mount
         self.view.mount(
             super::COMPONENT_TEXT_ERROR,
-            Box::new(CText::new(
+            Box::new(MsgBox::new(
                 PropsBuilder::default()
                     .with_foreground(Color::Red)
                     .bold()
@@ -303,7 +303,7 @@ impl FileTransferActivity {
         // Mount
         self.view.mount(
             super::COMPONENT_TEXT_FATAL,
-            Box::new(CText::new(
+            Box::new(MsgBox::new(
                 PropsBuilder::default()
                     .with_foreground(Color::Red)
                     .bold()
@@ -319,7 +319,7 @@ impl FileTransferActivity {
         // Mount
         self.view.mount(
             super::COMPONENT_TEXT_WAIT,
-            Box::new(CText::new(
+            Box::new(MsgBox::new(
                 PropsBuilder::default()
                     .with_foreground(Color::White)
                     .bold()
@@ -501,8 +501,8 @@ impl FileTransferActivity {
             super::COMPONENT_PROGRESS_BAR,
             Box::new(ProgressBar::new(
                 PropsBuilder::default()
-                    .with_foreground(Color::Black)
-                    .with_background(Color::LightGreen)
+                    .with_foreground(Color::LightGreen)
+                    .with_background(Color::Black)
                     .with_texts(TextParts::new(Some(String::from("Please wait")), None))
                     .build(),
             )),

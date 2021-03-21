@@ -37,7 +37,7 @@ use super::{
 use crate::fs::explorer::FileSorting;
 use crate::fs::FsEntry;
 use crate::ui::activities::keymap::*;
-use crate::ui::layout::props::{TableBuilder, TextParts, TextSpan, TextSpanBuilder};
+use crate::ui::layout::props::{PropValue, TableBuilder, TextParts, TextSpan, TextSpanBuilder};
 use crate::ui::layout::{Msg, Payload};
 // externals
 use bytesize::ByteSize;
@@ -470,9 +470,9 @@ impl FileTransferActivity {
                     }
                     self.umount_saveas();
                     // Reload files
-                    match self.tab {
-                        FileExplorerTab::Local => self.update_local_filelist(),
-                        FileExplorerTab::Remote => self.update_remote_filelist(),
+                    match self.tab { // NOTE: Swapped is intentional
+                        FileExplorerTab::Local => self.update_remote_filelist(),
+                        FileExplorerTab::Remote => self.update_local_filelist(),
                     }
                 }
                 // -- fileinfo
@@ -769,6 +769,7 @@ impl FileTransferActivity {
                         Some(text),
                         Some(vec![TextSpan::from(label)]),
                     ))
+                    .with_value(PropValue::Float(self.transfer.progress / 100.0))
                     .build();
                 self.view.update(COMPONENT_PROGRESS_BAR, props)
             }

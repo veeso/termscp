@@ -331,7 +331,7 @@ impl FileTransferActivity {
     pub(super) fn action_remote_saveas(&mut self, input: String) {
         if let Some(idx) = self.get_remote_file_idx() {
             // Get pwd
-            let wrkdir: PathBuf = self.remote.wrkdir.clone();
+            let wrkdir: PathBuf = self.local.wrkdir.clone();
             if self.remote.get(idx).is_some() {
                 let file: FsEntry = self.remote.get(idx).unwrap().clone();
                 // Call upload; pass realfile, keep link name

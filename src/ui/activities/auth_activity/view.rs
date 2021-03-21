@@ -26,7 +26,7 @@
 // Locals
 use super::{AuthActivity, Context, FileTransferProtocol};
 use crate::ui::layout::components::{
-    bookmark_list::BookmarkList, ctext::CText, input::Input, radio_group::RadioGroup, table::Table,
+    bookmark_list::BookmarkList, msgbox::MsgBox, input::Input, radio_group::RadioGroup, table::Table,
     text::Text, title::Title,
 };
 use crate::ui::layout::props::{
@@ -436,7 +436,7 @@ impl AuthActivity {
         // Mount
         self.view.mount(
             super::COMPONENT_TEXT_ERROR,
-            Box::new(CText::new(
+            Box::new(MsgBox::new(
                 PropsBuilder::default()
                     .with_foreground(Color::Red)
                     .bold()
