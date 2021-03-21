@@ -24,29 +24,25 @@
 */
 
 // locals
-use super::{Canvas, Component, InputEvent, Msg, Payload, PropValue, Props, PropsBuilder};
+use super::{Canvas, Component, InputEvent, Msg, Payload, Props, PropsBuilder};
 use crate::utils::fmt::align_text_center;
 // ext
 use tui::{
     layout::Rect,
     style::Style,
     text::{Span, Spans, Text as TuiText},
-    widgets::Paragraph,
+    widgets::{Block, BorderType, Paragraph},
 };
 
 // -- state
 
 struct OwnStates {
     focus: bool,
-    width: u16,
 }
 
-impl OwnStates {
-    fn new(width: u16) -> Self {
-        Self {
-            focus: false,
-            width,
-        }
+impl Default for OwnStates {
+    fn default() -> Self {
+        Self { focus: false }
     }
 }
 
@@ -62,14 +58,9 @@ impl CText {
     ///
     /// Instantiate a new Text component
     pub fn new(props: Props) -> Self {
-        // Get width
-        let width: u16 = match props.value {
-            PropValue::Unsigned(w) => w as u16,
-            _ => 0,
-        };
         CText {
             props,
-            states: OwnStates::new(width),
+            states: OwnStates::default(),
         }
     }
 }
@@ -89,7 +80,7 @@ impl Component for CText {
                     .iter()
                     .map(|x| {
                         Span::styled(
-                            align_text_center(x.content.as_str(), self.states.width),
+                            align_text_center(x.content.as_str(), area.width),
                             Style::default()
                                 .add_modifier(x.get_modifiers())
                                 .fg(x.fg)
@@ -107,7 +98,15 @@ impl Component for CText {
                     .fg(self.props.foreground)
                     .bg(self.props.background),
             );
-            render.render_widget(Paragraph::new(text), area);
+            render.render_widget(
+                Paragraph::new(text).block(
+                    Block::default()
+                        .borders(self.props.borders)
+                        .border_style(Style::default().fg(self.props.foreground))
+                        .border_type(BorderType::Rounded),
+                ),
+                area,
+            );
         }
     }
 
