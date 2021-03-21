@@ -91,11 +91,13 @@ impl OwnStates {
         }
     }
 
-    /// ### reset_list_index
+    /// ### fix_list_index
     ///
-    /// Reset list index to 0
-    pub fn reset_list_index(&mut self) {
-        self.list_index = 0;
+    /// Keep index if possible, otherwise set to lenght - 1
+    pub fn fix_list_index(&mut self) {
+        if self.list_index >= self.list_len {
+            self.list_index = self.list_len - 1;
+        }
     }
 }
 
@@ -189,8 +191,8 @@ impl Component for FileList {
             Some(tokens) => tokens.len(),
             None => 0,
         });
-        // Reset list index
-        self.states.reset_list_index();
+        // Fix list index
+        self.states.fix_list_index();
         Msg::None
     }
 
@@ -319,26 +321,26 @@ mod tests {
                 .build(),
         );
         // Verify states
-        assert_eq!(component.states.list_index, 0);
+        assert_eq!(component.states.list_index, 1); // Kept
         assert_eq!(component.states.list_len, 3);
         // get value
-        assert_eq!(component.get_value(), Payload::Unsigned(0));
+        assert_eq!(component.get_value(), Payload::Unsigned(1));
         // Render
-        assert_eq!(component.states.list_index, 0);
+        assert_eq!(component.states.list_index, 1);
         // Handle inputs
         assert_eq!(
             component.on(InputEvent::Key(KeyEvent::from(KeyCode::Down))),
             Msg::None
         );
         // Index should be incremented
-        assert_eq!(component.states.list_index, 1);
+        assert_eq!(component.states.list_index, 2);
         // Index should be decremented
         assert_eq!(
             component.on(InputEvent::Key(KeyEvent::from(KeyCode::Up))),
             Msg::None
         );
         // Index should be incremented
-        assert_eq!(component.states.list_index, 0);
+        assert_eq!(component.states.list_index, 1);
         // Index should be 2
         assert_eq!(
             component.on(InputEvent::Key(KeyEvent::from(KeyCode::PageDown))),
