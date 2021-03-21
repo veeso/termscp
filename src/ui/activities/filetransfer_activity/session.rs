@@ -115,8 +115,6 @@ impl FileTransferActivity {
         // Get current entries
         if let Ok(pwd) = self.client.pwd() {
             self.remote_scan(pwd.as_path());
-            // Set index at first valid
-            self.remote.index_at_first();
             // Set wrkdir
             self.remote.wrkdir = pwd;
         }
@@ -620,19 +618,7 @@ impl FileTransferActivity {
         match self.context.as_ref().unwrap().local.scan_dir(path) {
             Ok(files) => {
                 // Set files and sort (sorting is implicit)
-                let prev_index: usize = self.local.get_index();
                 self.local.set_files(files);
-                // Restore index
-                self.local.set_abs_index(prev_index);
-                // Set index; keep if possible, otherwise set to last item
-                self.local
-                    .set_abs_index(match self.local.get_current_file() {
-                        Some(_) => self.local.get_index(),
-                        None => match self.local.count() {
-                            0 => 0,
-                            _ => self.local.count() - 1,
-                        },
-                    });
             }
             Err(err) => {
                 self.log_and_alert(
@@ -650,19 +636,7 @@ impl FileTransferActivity {
         match self.client.list_dir(path) {
             Ok(files) => {
                 // Set files and sort (sorting is implicit)
-                let prev_index: usize = self.remote.get_index();
                 self.remote.set_files(files);
-                // Restore index
-                self.remote.set_abs_index(prev_index);
-                // Set index; keep if possible, otherwise set to last item
-                self.remote
-                    .set_abs_index(match self.remote.get_current_file() {
-                        Some(_) => self.remote.get_index(),
-                        None => match self.remote.count() {
-                            0 => 0,
-                            _ => self.remote.count() - 1,
-                        },
-                    });
             }
             Err(err) => {
                 self.log_and_alert(
@@ -688,8 +662,6 @@ impl FileTransferActivity {
                 );
                 // Reload files
                 self.local_scan(path);
-                // Reset index
-                self.local.set_index(0);
                 // Set wrkdir
                 self.local.wrkdir = PathBuf::from(path);
                 // Push prev_dir to stack
@@ -719,8 +691,6 @@ impl FileTransferActivity {
                 );
                 // Update files
                 self.remote_scan(path);
-                // Reset index
-                self.remote.set_index(0);
                 // Set wrkdir
                 self.remote.wrkdir = PathBuf::from(path);
                 // Push prev_dir to stack

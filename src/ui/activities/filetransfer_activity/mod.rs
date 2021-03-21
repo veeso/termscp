@@ -284,8 +284,6 @@ impl Activity for FileTransferActivity {
         // Get files at current wd
         self.local_scan(pwd.as_path());
         self.local.wrkdir = pwd;
-        // Index at first valid
-        self.local.index_at_first();
         // Configure text editor
         self.setup_text_editor();
         // init view
@@ -310,10 +308,13 @@ impl Activity for FileTransferActivity {
         // Check if connected (popup must be None, otherwise would try reconnecting in loop in case of error)
         if !self.client.is_connected() && self.view.get_props(COMPONENT_TEXT_FATAL).is_none() {
             // Set init state to connecting popup
-            self.mount_wait(format!(
-                "Connecting to {}:{}...",
-                self.params.address, self.params.port
-            ).as_str());
+            self.mount_wait(
+                format!(
+                    "Connecting to {}:{}...",
+                    self.params.address, self.params.port
+                )
+                .as_str(),
+            );
             // Force ui draw
             self.view();
             // Connect to remote

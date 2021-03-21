@@ -78,7 +78,6 @@ pub struct FileExplorer {
     pub(crate) group_dirs: Option<GroupDirs>, // If Some, defines how to group directories
     pub(crate) opts: ExplorerOpts,            // Explorer options
     pub(crate) fmt: Formatter,                // FsEntry formatter
-    index: usize,                             // Selected file
     files: Vec<FsEntry>,                      // Files in directory
 }
 
@@ -92,7 +91,6 @@ impl Default for FileExplorer {
             group_dirs: None,
             opts: ExplorerOpts::empty(),
             fmt: Formatter::default(),
-            index: 0,
             files: Vec::new(),
         }
     }
@@ -127,16 +125,16 @@ impl FileExplorer {
         self.files = files;
         // Sort
         self.sort();
-        // Reset index
-        self.index_at_first();
     }
 
+    /*
     /// ### count
     ///
     /// Return amount of files
     pub fn count(&self) -> usize {
         self.files.len()
     }
+    */
 
     /// ### iter_files
     ///
@@ -161,13 +159,6 @@ impl FileExplorer {
     /// Iterate all files; doesn't care about options
     pub fn iter_files_all(&self) -> impl Iterator<Item = &FsEntry> + '_ {
         Box::new(self.files.iter())
-    }
-
-    /// ### get_current_file
-    ///
-    /// Get file at index
-    pub fn get_current_file(&self) -> Option<&FsEntry> {
-        self.files.get(self.index)
     }
 
     /// ### get
@@ -301,196 +292,11 @@ impl FileExplorer {
         self.files.sort_by_key(|x: &FsEntry| x.is_dir());
     }
 
-    /// ### incr_index
-    ///
-    /// Increment index to the first visible FsEntry.
-    /// If index goes to `files.len() - 1`, the value will be seto to the minimum acceptable value
-    pub fn incr_index(&mut self) {
-        let sz: usize = self.files.len();
-        // Increment or wrap
-        if self.index + 1 >= sz {
-            self.index = 0; // Wrap
-        } else {
-            self.index += 1; // Increment
-        }
-        // Validate
-        match self.files.get(self.index) {
-            Some(assoc_entry) => {
-                if !self.opts.intersects(ExplorerOpts::SHOW_HIDDEN_FILES) {
-                    // Check if file is hidden, otherwise increment
-                    if assoc_entry.is_hidden() {
-                        // Check if all files are hidden (NOTE: PREVENT STACK OVERFLOWS)
-                        let hidden_files: usize =
-                            self.files.iter().filter(|x| x.is_hidden()).count();
-                        // Only if there are more files, than hidden files keep incrementing
-                        if sz > hidden_files {
-                            self.incr_index();
-                        }
-                    }
-                }
-            }
-            None => self.index = 0, // Reset to 0, for safety reasons
-        }
-    }
-
-    /// ### incr_index_by
-    ///
-    /// Increment index by up to n
-    /// If index goes to `files.len() - 1`, the value will be seto to the minimum acceptable value
-    pub fn incr_index_by(&mut self, n: usize) {
-        for _ in 0..n {
-            let prev_idx: usize = self.index;
-            // Increment
-            self.incr_index();
-            // If prev index is > index and break
-            if prev_idx > self.index {
-                self.index = prev_idx;
-                break;
-            }
-        }
-    }
-
-    /// ### decr_index
-    ///
-    /// Decrement index to the first visible FsEntry.
-    /// If index is 0, its value will be set to the maximum acceptable value
-    pub fn decr_index(&mut self) {
-        let sz: usize = self.files.len();
-        // Increment or wrap
-        if self.index > 0 {
-            self.index -= 1; // Decrement
-        } else {
-            self.index = sz - 1; // Wrap
-        }
-        // Validate index
-        match self.files.get(self.index) {
-            Some(assoc_entry) => {
-                if !self.opts.intersects(ExplorerOpts::SHOW_HIDDEN_FILES) {
-                    // Check if file is hidden, otherwise increment
-                    if assoc_entry.is_hidden() {
-                        // Check if all files are hidden (NOTE: PREVENT STACK OVERFLOWS)
-                        let hidden_files: usize =
-                            self.files.iter().filter(|x| x.is_hidden()).count();
-                        // Only if there are more files, than hidden files keep decrementing
-                        if sz > hidden_files {
-                            self.decr_index();
-                        }
-                    }
-                }
-            }
-            None => self.index = 0, // Reset to 0, for safety reasons
-        }
-    }
-
-    /// ### decr_index_by
-    ///
-    /// Decrement index by up to n
-    pub fn decr_index_by(&mut self, n: usize) {
-        for _ in 0..n {
-            let prev_idx: usize = self.index;
-            // Increment
-            self.decr_index();
-            // If prev index is < index and break
-            if prev_idx < self.index {
-                self.index = prev_idx;
-                break;
-            }
-        }
-    }
-
-    /// ### index_at_first
-    ///
-    /// Move index to first "visible" fs entry
-    pub fn index_at_first(&mut self) {
-        self.index = self.get_first_valid_index();
-    }
-
-    /// ### get_first_valid_index
-    ///
-    /// Return first valid index
-    fn get_first_valid_index(&self) -> usize {
-        match self.opts.intersects(ExplorerOpts::SHOW_HIDDEN_FILES) {
-            true => 0,
-            false => {
-                // Look for first "non-hidden" entry
-                for (i, f) in self.files.iter().enumerate() {
-                    if !f.is_hidden() {
-                        return i;
-                    }
-                }
-                // If all files are hidden, return 0
-                0
-            }
-        }
-    }
-
-    /// ### get_index
-    ///
-    /// Return index
-    pub fn get_index(&self) -> usize {
-        self.index
-    }
-
-    /// ### get_relative_index
-    ///
-    /// Get relative index based on current options
-    pub fn get_relative_index(&self) -> usize {
-        match self.files.get(self.index) {
-            Some(abs_entry) => {
-                // Search abs entry in relative iterator
-                for (i, f) in self.iter_files().enumerate() {
-                    if abs_entry.get_name() == f.get_name() {
-                        // If abs entry is f, return index
-                        return i;
-                    }
-                }
-                // Return 0 if not found
-                0
-            }
-            None => 0, // Absolute entry doesn't exist
-        }
-    }
-
-    /// ### set_index
-    ///
-    /// Set index to idx.
-    /// If index exceeds size, is set to count() - 1; or 0
-    pub fn set_index(&mut self, idx: usize) {
-        let visible_sz: usize = self.iter_files().count();
-        match idx >= visible_sz {
-            true => match visible_sz {
-                0 => self.index_at_first(),
-                _ => self.index = visible_sz - 1,
-            },
-            false => match self.get_first_valid_index() > idx {
-                true => self.index_at_first(),
-                false => self.index = idx,
-            },
-        }
-    }
-
-    /// ### set_abs_index
-    ///
-    /// Set absolute index
-    pub fn set_abs_index(&mut self, idx: usize) {
-        self.index = match idx >= self.files.len() {
-            true => match self.files.len() {
-                0 => 0,
-                _ => self.files.len() - 1,
-            },
-            false => idx,
-        };
-    }
-
     /// ### toggle_hidden_files
     ///
     /// Enable/disable hidden files
     pub fn toggle_hidden_files(&mut self) {
         self.opts.toggle(ExplorerOpts::SHOW_HIDDEN_FILES);
-        // Adjust index
-        if self.index < self.get_first_valid_index() {
-            self.index_at_first();
-        }
     }
 }
 
@@ -559,7 +365,6 @@ mod tests {
         assert_eq!(explorer.opts, ExplorerOpts::empty());
         assert_eq!(explorer.wrkdir, PathBuf::from("/"));
         assert_eq!(explorer.stack_size, 16);
-        assert_eq!(explorer.index, 0);
         assert_eq!(explorer.group_dirs, None);
         assert_eq!(explorer.file_sorting, FileSorting::ByName);
         assert_eq!(explorer.get_file_sorting(), FileSorting::ByName);
@@ -606,10 +411,9 @@ mod tests {
             make_fs_entry("codecov.yml", false),
             make_fs_entry(".gitignore", false),
         ]);
-        assert!(explorer.get_current_file().is_some());
         assert!(explorer.get(0).is_some());
         assert!(explorer.get(100).is_none());
-        assert_eq!(explorer.count(), 6);
+        //assert_eq!(explorer.count(), 6);
         // Verify (files are sorted by name)
         assert_eq!(
             explorer.files.get(0).unwrap().get_name(),
@@ -622,121 +426,6 @@ mod tests {
         // Toggle hidden
         explorer.toggle_hidden_files();
         assert_eq!(explorer.iter_files().count(), 6); // All files are returned now
-    }
-
-    #[test]
-    fn test_fs_explorer_index() {
-        let mut explorer: FileExplorer = FileExplorer::default();
-        explorer.opts.remove(ExplorerOpts::SHOW_HIDDEN_FILES);
-        // Create files (files are then sorted by name DEFAULT)
-        explorer.set_files(vec![
-            make_fs_entry("README.md", false),
-            make_fs_entry("src/", true),
-            make_fs_entry(".git/", true),
-            make_fs_entry("CONTRIBUTING.md", false),
-            make_fs_entry("CODE_OF_CONDUCT.md", false),
-            make_fs_entry("CHANGELOG.md", false),
-            make_fs_entry("LICENSE", false),
-            make_fs_entry("Cargo.toml", false),
-            make_fs_entry("Cargo.lock", false),
-            make_fs_entry("codecov.yml", false),
-            make_fs_entry(".gitignore", false),
-        ]);
-        let sz: usize = explorer.count();
-        // Get first index
-        assert_eq!(explorer.get_first_valid_index(), 2);
-        // Index should be 2 now; files hidden; this happens because `index_at_first` is called after loading files
-        assert_eq!(explorer.get_index(), 2);
-        assert_eq!(explorer.get_relative_index(), 0); // Relative index should be 0
-        assert_eq!(
-            explorer.opts.intersects(ExplorerOpts::SHOW_HIDDEN_FILES),
-            false
-        );
-        // Increment index
-        explorer.incr_index();
-        // Index should now be 3 (was 0, + 2 + 1); first 2 files are hidden (.git, .gitignore)
-        assert_eq!(explorer.get_index(), 3);
-        // Relative index should be 1 instead
-        assert_eq!(explorer.get_relative_index(), 1);
-        // Increment by 2
-        explorer.incr_index_by(2);
-        // Index should now be 5, 3
-        assert_eq!(explorer.get_index(), 5);
-        assert_eq!(explorer.get_relative_index(), 3);
-        // Increment by (exceed size)
-        explorer.incr_index_by(20);
-        // Index should be at last element
-        assert_eq!(explorer.get_index(), sz - 1);
-        assert_eq!(explorer.get_relative_index(), sz - 3);
-        // Increment; should go to 2
-        explorer.incr_index();
-        assert_eq!(explorer.get_index(), 2);
-        assert_eq!(explorer.get_relative_index(), 0);
-        // Increment and then decrement
-        explorer.incr_index();
-        explorer.decr_index();
-        assert_eq!(explorer.get_index(), 2);
-        assert_eq!(explorer.get_relative_index(), 0);
-        // Decrement (and wrap)
-        explorer.decr_index();
-        // Index should be at last element
-        assert_eq!(explorer.get_index(), sz - 1);
-        assert_eq!(explorer.get_relative_index(), sz - 3);
-        // Set index to 5
-        explorer.set_index(5);
-        assert_eq!(explorer.get_index(), 5);
-        assert_eq!(explorer.get_relative_index(), 3);
-        // Decr by 2
-        explorer.decr_index_by(2);
-        assert_eq!(explorer.get_index(), 3);
-        assert_eq!(explorer.get_relative_index(), 1);
-        // Decr by 2
-        explorer.decr_index_by(2);
-        // Should decrement actually by 1 (since first two files are hidden)
-        assert_eq!(explorer.get_index(), 2);
-        assert_eq!(explorer.get_relative_index(), 0);
-        // Toggle hidden files
-        explorer.toggle_hidden_files();
-        assert_eq!(
-            explorer.opts.intersects(ExplorerOpts::SHOW_HIDDEN_FILES),
-            true
-        );
-        // Move index to 0
-        explorer.set_index(0);
-        assert_eq!(explorer.get_index(), 0);
-        // Toggle hidden files
-        explorer.toggle_hidden_files();
-        // Index should now have been moved to 2
-        assert_eq!(explorer.get_index(), 2);
-        // Show hidden files
-        explorer.toggle_hidden_files();
-        // Set index to 5
-        explorer.set_index(5);
-        // Verify index
-        assert_eq!(explorer.get_index(), 5);
-        assert_eq!(explorer.get_relative_index(), 5); // Now relative matches
-                                                      // Decrement by 6, goes to 0
-        explorer.decr_index_by(6);
-        assert_eq!(explorer.get_index(), 0);
-        assert_eq!(explorer.get_relative_index(), 0); // Now relative matches
-                                                      // Toggle; move at first
-        explorer.toggle_hidden_files();
-        assert_eq!(
-            explorer.opts.intersects(ExplorerOpts::SHOW_HIDDEN_FILES),
-            false
-        );
-        explorer.index_at_first();
-        assert_eq!(explorer.get_index(), 2);
-        assert_eq!(explorer.get_relative_index(), 0);
-        // Verify set index if exceeds
-        let sz: usize = explorer.iter_files().count();
-        explorer.set_index(sz);
-        assert_eq!(explorer.get_index(), sz - 1); // Should be at last element
-                                                  // Empty files
-        explorer.files.clear();
-        explorer.index_at_first();
-        assert_eq!(explorer.get_index(), 0);
-        assert_eq!(explorer.get_relative_index(), 0);
     }
 
     #[test]
@@ -778,33 +467,6 @@ mod tests {
         );
         // Last should be "src/"
         assert_eq!(explorer.files.get(1).unwrap().get_name(), "README.md");
-    }
-
-    #[test]
-    fn test_fs_explorer_set_abs_index() {
-        let mut explorer: FileExplorer = FileExplorer::default();
-        explorer.opts.remove(ExplorerOpts::SHOW_HIDDEN_FILES);
-        // Create files (files are then sorted by name DEFAULT)
-        explorer.set_files(vec![
-            make_fs_entry("README.md", false),
-            make_fs_entry("src/", true),
-            make_fs_entry(".git/", true),
-            make_fs_entry("CONTRIBUTING.md", false),
-            make_fs_entry("CODE_OF_CONDUCT.md", false),
-            make_fs_entry("CHANGELOG.md", false),
-            make_fs_entry("LICENSE", false),
-            make_fs_entry("Cargo.toml", false),
-            make_fs_entry("Cargo.lock", false),
-            make_fs_entry("codecov.yml", false),
-            make_fs_entry(".gitignore", false),
-        ]);
-        explorer.set_abs_index(3);
-        assert_eq!(explorer.get_index(), 3);
-        explorer.set_abs_index(12);
-        assert_eq!(explorer.get_index(), 10);
-        explorer.set_files(vec![]);
-        explorer.set_abs_index(12);
-        assert_eq!(explorer.get_index(), 0);
     }
 
     #[test]
