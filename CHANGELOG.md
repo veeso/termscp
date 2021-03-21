@@ -29,6 +29,8 @@ Released on FIXME: date
   - SCP file transfer: prevent infinite loops while performing `stat` on symbolic links pointing to themselves (e.g. `mylink -> mylink`)
   - Fixed a bug causing termscp to crash if removing a bookmark
   - Fixed file format cursor position in the GUI
+- Dependencies:
+  - Removed `unicode-width`
 - For developers:
   - Activity refactoring
     - Developed an internal library used to create components, components are then nested inside a View

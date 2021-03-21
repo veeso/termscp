@@ -1406,7 +1406,6 @@ dependencies = [
  "textwrap",
  "toml",
  "tui",
- "unicode-width",
  "ureq",
  "users",
  "whoami",

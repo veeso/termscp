@@ -35,7 +35,6 @@ extern crate chrono;
 extern crate crossterm;
 extern crate textwrap;
 extern crate tui;
-extern crate unicode_width;
 
 // locals
 use super::{Activity, Context};

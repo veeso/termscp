@@ -31,7 +31,6 @@ mod view;
 // Dependencies
 extern crate crossterm;
 extern crate tui;
-extern crate unicode_width;
 
 // locals
 use super::{Activity, Context};
