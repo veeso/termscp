@@ -75,6 +75,51 @@ impl FileTransferActivity {
                     // Reload file list component
                     self.update_local_filelist()
                 }
+                (COMPONENT_EXPLORER_LOCAL, Msg::OnSubmit(Payload::Unsigned(idx))) => {
+                    // Match selected file
+                    let mut entry: Option<FsEntry> = None;
+                    if let Some(e) = self.local.get(*idx) {
+                        entry = Some(e.clone());
+                    }
+                    if let Some(entry) = entry {
+                        // If directory, enter directory, otherwise check if symlink
+                        match entry {
+                            FsEntry::Directory(dir) => {
+                                self.local_changedir(dir.abs_path.as_path(), true);
+                                self.update_local_filelist()
+                            }
+                            FsEntry::File(file) => {
+                                // Check if symlink
+                                match &file.symlink {
+                                    Some(pointer) => match &**pointer {
+                                        FsEntry::Directory(dir) => {
+                                            self.local_changedir(dir.abs_path.as_path(), true);
+                                            self.update_local_filelist()
+                                        }
+                                        _ => None,
+                                    },
+                                    None => None,
+                                }
+                            }
+                        }
+                    } else {
+                        None
+                    }
+                }
+                (COMPONENT_EXPLORER_LOCAL, &MSG_KEY_SPACE) => {
+                    // Get pwd
+                    let wrkdir: PathBuf = self.remote.wrkdir.clone();
+                    // Get file and clone (due to mutable / immutable stuff...)
+                    if self.get_local_file_entry().is_some() {
+                        let file: FsEntry = self.get_local_file_entry().unwrap().clone();
+                        let name: String = file.get_name().to_string();
+                        // Call upload; pass realfile, keep link name
+                        self.filetransfer_send(&file.get_realfile(), wrkdir.as_path(), Some(name));
+                        self.update_local_filelist()
+                    } else {
+                        None
+                    }
+                }
                 (COMPONENT_EXPLORER_LOCAL, &MSG_KEY_CHAR_A) => {
                     // Toggle hidden files
                     self.local.toggle_hidden_files();
@@ -139,6 +184,52 @@ impl FileTransferActivity {
                     self.view.active(COMPONENT_EXPLORER_LOCAL);
                     self.tab = FileExplorerTab::Local;
                     None
+                }
+                (COMPONENT_EXPLORER_REMOTE, Msg::OnSubmit(Payload::Unsigned(idx))) => {
+                    // Match selected file
+                    let mut entry: Option<FsEntry> = None;
+                    if let Some(e) = self.remote.get(*idx) {
+                        entry = Some(e.clone());
+                    }
+                    if let Some(entry) = entry {
+                        // If directory, enter directory; if file, check if is symlink
+                        match entry {
+                            FsEntry::Directory(dir) => {
+                                self.remote_changedir(dir.abs_path.as_path(), true);
+                                self.update_remote_filelist()
+                            }
+                            FsEntry::File(file) => {
+                                match &file.symlink {
+                                    Some(symlink_entry) => {
+                                        // If symlink and is directory, point to symlink
+                                        match &**symlink_entry {
+                                            FsEntry::Directory(dir) => {
+                                                self.remote_changedir(dir.abs_path.as_path(), true);
+                                                self.update_remote_filelist()
+                                            }
+                                            _ => None,
+                                        }
+                                    }
+                                    None => None,
+                                }
+                            }
+                        }
+                    } else {
+                        None
+                    }
+                }
+                (COMPONENT_EXPLORER_REMOTE, &MSG_KEY_SPACE) => {
+                    // Get file and clone (due to mutable / immutable stuff...)
+                    if self.get_remote_file_entry().is_some() {
+                        let file: FsEntry = self.get_remote_file_entry().unwrap().clone();
+                        let name: String = file.get_name().to_string();
+                        // Call upload; pass realfile, keep link name
+                        let wrkdir: PathBuf = self.local.wrkdir.clone();
+                        self.filetransfer_recv(&file.get_realfile(), wrkdir.as_path(), Some(name));
+                        self.update_remote_filelist()
+                    } else {
+                        None
+                    }
                 }
                 (COMPONENT_EXPLORER_REMOTE, &MSG_KEY_BACKSPACE) => {
                     // Go to previous directory

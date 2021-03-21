@@ -64,6 +64,10 @@ pub const MSG_KEY_UP: Msg = Msg::OnKey(KeyEvent {
     code: KeyCode::Up,
     modifiers: KeyModifiers::NONE,
 });
+pub const MSG_KEY_SPACE: Msg = Msg::OnKey(KeyEvent {
+    code: KeyCode::Char(' '),
+    modifiers: KeyModifiers::NONE,
+});
 
 // -- char keys
 
