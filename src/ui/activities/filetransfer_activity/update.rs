@@ -115,7 +115,7 @@ impl FileTransferActivity {
                         let name: String = file.get_name().to_string();
                         // Call upload; pass realfile, keep link name
                         self.filetransfer_send(&file.get_realfile(), wrkdir.as_path(), Some(name));
-                        self.update_local_filelist()
+                        self.update_remote_filelist()
                     } else {
                         None
                     }
@@ -226,7 +226,7 @@ impl FileTransferActivity {
                         // Call upload; pass realfile, keep link name
                         let wrkdir: PathBuf = self.local.wrkdir.clone();
                         self.filetransfer_recv(&file.get_realfile(), wrkdir.as_path(), Some(name));
-                        self.update_remote_filelist()
+                        self.update_local_filelist()
                     } else {
                         None
                     }
