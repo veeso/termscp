@@ -244,7 +244,7 @@ impl AuthActivity {
                 }
                 // Enter setup
                 (_, &MSG_KEY_CTRL_C) => {
-                    self.setup = true;
+                    self.exit_reason = Some(super::ExitReason::EnterSetup);
                     None
                 }
                 // Save bookmark; show popup
@@ -306,7 +306,7 @@ impl AuthActivity {
                 (COMPONENT_RADIO_QUIT, Msg::OnSubmit(Payload::Unsigned(choice))) => {
                     // If choice is 0, quit termscp
                     if *choice == 0 {
-                        self.quit = true;
+                        self.exit_reason = Some(super::ExitReason::Quit);
                     }
                     self.umount_quit();
                     None
@@ -334,8 +334,8 @@ impl AuthActivity {
                         true => None,
                         false => Some(password),
                     };
-                    // Submit true
-                    self.submit = true;
+                    // Set exit reason
+                    self.exit_reason = Some(super::ExitReason::Connect);
                     // Return None
                     None
                 }

@@ -98,7 +98,7 @@ impl FileTransferActivity {
         // Disconnect
         let _ = self.client.disconnect();
         // Quit
-        self.disconnected = true;
+        self.exit_reason = Some(super::ExitReason::Disconnect);
     }
 
     /// ### disconnect_and_quit
@@ -106,7 +106,7 @@ impl FileTransferActivity {
     /// disconnect from remote and then quit
     pub(super) fn disconnect_and_quit(&mut self) {
         self.disconnect();
-        self.quit = true;
+        self.exit_reason = Some(super::ExitReason::Quit);
     }
 
     /// ### reload_remote_dir

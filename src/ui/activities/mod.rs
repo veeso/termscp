@@ -33,7 +33,16 @@ pub mod auth_activity;
 pub mod filetransfer_activity;
 pub mod setup_activity;
 
-// Activity trait
+// -- Exit reason
+
+pub enum ExitReason {
+    Quit,
+    Connect,
+    Disconnect,
+    EnterSetup,
+}
+
+// -- Activity trait
 
 pub trait Activity {
     /// ### on_create
@@ -48,6 +57,13 @@ pub trait Activity {
     /// `on_draw` is the function which draws the graphical interface.
     /// This function must be called at each tick to refresh the interface
     fn on_draw(&mut self);
+
+    /// ### will_umount
+    ///
+    /// `will_umount` is the method which must be able to report to the activity manager, whether
+    /// the activity should be terminated or not.
+    /// If not, the call will return `None`, otherwise return`Some(ExitReason)`
+    fn will_umount(&self) -> Option<&ExitReason>;
 
     /// ### on_destroy
     ///

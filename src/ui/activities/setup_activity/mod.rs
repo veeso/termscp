@@ -35,7 +35,7 @@ extern crate crossterm;
 extern crate tui;
 
 // Locals
-use super::{Activity, Context};
+use super::{Activity, Context, ExitReason};
 use crate::ui::layout::view::View;
 // Ext
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
@@ -71,7 +71,7 @@ enum ViewLayout {
 ///
 /// Setup activity states holder
 pub struct SetupActivity {
-    pub quit: bool,           // Becomes true when user requests the activity to terminate
+    exit_reason: Option<ExitReason>,
     context: Option<Context>, // Context holder
     view: View,               // View
     layout: ViewLayout,       // View layout
@@ -86,7 +86,7 @@ impl Default for SetupActivity {
             user_input_buffer.push(String::new());
         }
         SetupActivity {
-            quit: false,
+            exit_reason: None,
             context: None,
             view: View::init(),
             layout: ViewLayout::SetupForm,
@@ -140,6 +140,15 @@ impl Activity for SetupActivity {
             // Redraw back to false
             self.redraw = false;
         }
+    }
+
+    /// ### will_umount
+    ///
+    /// `will_umount` is the method which must be able to report to the activity manager, whether
+    /// the activity should be terminated or not.
+    /// If not, the call will return `None`, otherwise return`Some(ExitReason)`
+    fn will_umount(&self) -> Option<&ExitReason> {
+        self.exit_reason.as_ref()
     }
 
     /// ### on_destroy

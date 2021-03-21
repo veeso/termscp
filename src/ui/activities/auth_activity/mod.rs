@@ -33,7 +33,7 @@ extern crate crossterm;
 extern crate tui;
 
 // locals
-use super::{Activity, Context};
+use super::{Activity, Context, ExitReason};
 use crate::filetransfer::FileTransferProtocol;
 use crate::system::bookmarks_client::BookmarksClient;
 use crate::ui::context::FileTransferParams;
@@ -69,9 +69,7 @@ const STORE_KEY_LATEST_VERSION: &str = "AUTH_LATEST_VERSION";
 ///
 /// AuthActivity is the data holder for the authentication activity
 pub struct AuthActivity {
-    pub submit: bool, // becomes true after user has submitted fields
-    pub quit: bool,   // Becomes true if user has pressed esc
-    pub setup: bool,  // Becomes true if user has requested setup
+    exit_reason: Option<ExitReason>,
     context: Option<Context>,
     view: View,
     bookmarks_client: Option<BookmarksClient>,
@@ -92,9 +90,7 @@ impl AuthActivity {
     /// Instantiates a new AuthActivity
     pub fn new() -> AuthActivity {
         AuthActivity {
-            submit: false,
-            quit: false,
-            setup: false,
+            exit_reason: None,
             context: None,
             view: View::init(),
             bookmarks_client: None,
@@ -195,6 +191,15 @@ impl Activity for AuthActivity {
             // Set redraw to false
             self.redraw = false;
         }
+    }
+
+    /// ### will_umount
+    /// 
+    /// `will_umount` is the method which must be able to report to the activity manager, whether
+    /// the activity should be terminated or not.
+    /// If not, the call will return `None`, otherwise return`Some(ExitReason)`
+    fn will_umount(&self) -> Option<&ExitReason> {
+        self.exit_reason.as_ref()
     }
 
     /// ### on_destroy

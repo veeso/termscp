@@ -37,7 +37,7 @@ extern crate textwrap;
 extern crate tui;
 
 // locals
-use super::{Activity, Context};
+use super::{Activity, Context, ExitReason};
 use crate::filetransfer::ftp_transfer::FtpFileTransfer;
 use crate::filetransfer::scp_transfer::ScpFileTransfer;
 use crate::filetransfer::sftp_transfer::SftpFileTransfer;
@@ -199,8 +199,7 @@ impl Default for TransferStates {
 ///
 /// FileTransferActivity is the data holder for the file transfer activity
 pub struct FileTransferActivity {
-    pub disconnected: bool,           // Has disconnected from remote?
-    pub quit: bool,                   // Has quit term scp?
+    exit_reason: Option<ExitReason>,  // Exit reason
     context: Option<Context>,         // Context holder
     view: View,                       // View
     client: Box<dyn FileTransfer>,    // File transfer client
@@ -221,8 +220,7 @@ impl FileTransferActivity {
         // Get config client
         let config_client: Option<ConfigClient> = Self::init_config_client();
         FileTransferActivity {
-            disconnected: false,
-            quit: false,
+            exit_reason: None,
             context: None,
             view: View::init(),
             client: match protocol {
@@ -308,6 +306,15 @@ impl Activity for FileTransferActivity {
         if redraw {
             self.view();
         }
+    }
+
+    /// ### will_umount
+    ///
+    /// `will_umount` is the method which must be able to report to the activity manager, whether
+    /// the activity should be terminated or not.
+    /// If not, the call will return `None`, otherwise return`Some(ExitReason)`
+    fn will_umount(&self) -> Option<&ExitReason> {
+        self.exit_reason.as_ref()
     }
 
     /// ### on_destroy

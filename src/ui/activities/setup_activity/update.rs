@@ -112,12 +112,12 @@ impl SetupActivity {
                         self.mount_error(err.as_str());
                     }
                     // Exit
-                    self.quit = true;
+                    self.exit_reason = Some(super::ExitReason::Quit);
                     None
                 }
                 (COMPONENT_RADIO_QUIT, Msg::OnSubmit(Payload::Unsigned(1))) => {
                     // Quit
-                    self.quit = true;
+                    self.exit_reason = Some(super::ExitReason::Quit);
                     self.umount_quit();
                     None
                 }

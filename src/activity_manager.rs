@@ -32,7 +32,7 @@ use crate::system::config_client::ConfigClient;
 use crate::system::environment;
 use crate::ui::activities::{
     auth_activity::AuthActivity, filetransfer_activity::FileTransferActivity,
-    setup_activity::SetupActivity, Activity,
+    setup_activity::SetupActivity, Activity, ExitReason,
 };
 use crate::ui::context::{Context, FileTransferParams};
 
@@ -147,20 +147,24 @@ impl ActivityManager {
             // Draw activity
             activity.on_draw();
             // Check if has to be terminated
-            if activity.quit {
-                // Quit activities
-                result = None;
-                break;
-            }
-            if activity.setup {
-                // User requested activity
-                result = Some(NextActivity::SetupActivity);
-                break;
-            }
-            if activity.submit {
-                // User submitted, set next activity
-                result = Some(NextActivity::FileTransfer);
-                break;
+            if let Some(exit_reason) = activity.will_umount() {
+                match exit_reason {
+                    ExitReason::Quit => {
+                        result = None;
+                        break;
+                    }
+                    ExitReason::EnterSetup => {
+                        // User requested activity
+                        result = Some(NextActivity::SetupActivity);
+                        break;
+                    }
+                    ExitReason::Connect => {
+                        // User submitted, set next activity
+                        result = Some(NextActivity::FileTransfer);
+                        break;
+                    }
+                    _ => { /* Nothing to do */ }
+                }
             }
             // Sleep for ticks
             sleep(self.interval);
@@ -197,15 +201,19 @@ impl ActivityManager {
             // Draw activity
             activity.on_draw();
             // Check if has to be terminated
-            if activity.quit {
-                // Quit activities
-                result = None;
-                break;
-            }
-            if activity.disconnected {
-                // User disconnected, set next activity to authentication
-                result = Some(NextActivity::Authentication);
-                break;
+            if let Some(exit_reason) = activity.will_umount() {
+                match exit_reason {
+                    ExitReason::Quit => {
+                        result = None;
+                        break;
+                    }
+                    ExitReason::Disconnect => {
+                        // User disconnected, set next activity to authentication
+                        result = Some(NextActivity::Authentication);
+                        break;
+                    }
+                    _ => { /* Nothing to do */ }
+                }
             }
             // Sleep for ticks
             sleep(self.interval);
@@ -234,7 +242,7 @@ impl ActivityManager {
             // Draw activity
             activity.on_draw();
             // Check if activity has terminated
-            if activity.quit {
+            if let Some(ExitReason::Quit) = activity.will_umount() {
                 break;
             }
             // Sleep for ticks

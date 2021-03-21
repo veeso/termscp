@@ -553,7 +553,7 @@ impl FileTransferActivity {
                 }
                 // -- fatal
                 (COMPONENT_TEXT_FATAL, &MSG_KEY_ESC) | (COMPONENT_TEXT_FATAL, &MSG_KEY_ENTER) => {
-                    self.disconnected = true;
+                    self.exit_reason = Some(super::ExitReason::Disconnect);
                     None
                 }
                 // -- help
