@@ -86,6 +86,7 @@ impl FileTransferActivity {
             Box::new(LogBox::new(
                 PropsBuilder::default()
                     .with_foreground(Color::LightGreen)
+                    .bold()
                     .build(),
             )),
         );

@@ -95,10 +95,7 @@ impl OwnStates {
     ///
     /// Reset list index to last element
     pub fn reset_list_index(&mut self) {
-        self.list_index = match self.list_len {
-            0 => 0,
-            _ => self.list_len - 1,
-        };
+        self.list_index = 0; // Last element is always 0
     }
 }
 
@@ -144,8 +141,9 @@ impl Component for LogBox {
                 None => Vec::new(),
                 Some(table) => table
                     .iter()
-                    .map(|row| {
-                        let columns: Vec<Span> = row
+                    .enumerate()
+                    .map(|(idx, row)| {
+                        let mut columns: Vec<Span> = row
                             .iter()
                             .map(|col| {
                                 Span::styled(
@@ -157,7 +155,19 @@ impl Component for LogBox {
                                 )
                             })
                             .collect();
-                        ListItem::new(Spans::from(columns))
+                        let mut row: Vec<Span> = Vec::with_capacity(columns.len() + 1);
+                        // Push green cursor if selected line
+                        row.push(Span::styled(
+                            match self.states.list_index == idx {
+                                true => "> ",
+                                false => "  ",
+                            },
+                            Style::default()
+                                .fg(self.props.foreground)
+                                .bg(self.props.background),
+                        ));
+                        row.append(&mut columns);
+                        ListItem::new(Spans::from(row))
                     })
                     .collect(), // Make List item from TextSpan
             };
@@ -218,24 +228,24 @@ impl Component for LogBox {
         // Match event
         if let InputEvent::Key(key) = ev {
             match key.code {
-                KeyCode::Down => {
+                KeyCode::Up => {
                     // Update states
                     self.states.incr_list_index();
                     Msg::None
                 }
-                KeyCode::Up => {
+                KeyCode::Down => {
                     // Update states
                     self.states.decr_list_index();
                     Msg::None
                 }
-                KeyCode::PageDown => {
+                KeyCode::PageUp => {
                     // Update states
                     for _ in 0..8 {
                         self.states.incr_list_index();
                     }
                     Msg::None
                 }
-                KeyCode::PageUp => {
+                KeyCode::PageDown => {
                     // Update states
                     for _ in 0..8 {
                         self.states.decr_list_index();
@@ -302,7 +312,7 @@ mod tests {
                 .build(),
         );
         // Verify states
-        assert_eq!(component.states.list_index, 1);
+        assert_eq!(component.states.list_index, 0);
         assert_eq!(component.states.list_len, 2);
         assert_eq!(component.states.focus, false);
         // Focus
@@ -311,8 +321,8 @@ mod tests {
         component.blur();
         assert_eq!(component.states.focus, false);
         // Increment list index
-        component.states.list_index -= 1;
-        assert_eq!(component.states.list_index, 0);
+        component.states.list_index += 1;
+        assert_eq!(component.states.list_index, 1);
         // Update
         component.update(
             component
@@ -333,38 +343,38 @@ mod tests {
                 .build(),
         );
         // Verify states
-        assert_eq!(component.states.list_index, 2); // Last item
+        assert_eq!(component.states.list_index, 0); // Last item
         assert_eq!(component.states.list_len, 3);
         // get value
-        assert_eq!(component.get_value(), Payload::Unsigned(2));
+        assert_eq!(component.get_value(), Payload::Unsigned(0));
         // RenderData
-        assert_eq!(component.states.list_index, 2);
+        assert_eq!(component.states.list_index, 0);
         // Set cursor to 0
         component.states.list_index = 0;
         // Handle inputs
         assert_eq!(
-            component.on(InputEvent::Key(KeyEvent::from(KeyCode::Down))),
+            component.on(InputEvent::Key(KeyEvent::from(KeyCode::Up))),
             Msg::None
         );
         // Index should be incremented
         assert_eq!(component.states.list_index, 1);
         // Index should be decremented
         assert_eq!(
-            component.on(InputEvent::Key(KeyEvent::from(KeyCode::Up))),
+            component.on(InputEvent::Key(KeyEvent::from(KeyCode::Down))),
             Msg::None
         );
         // Index should be incremented
         assert_eq!(component.states.list_index, 0);
         // Index should be 2
         assert_eq!(
-            component.on(InputEvent::Key(KeyEvent::from(KeyCode::PageDown))),
+            component.on(InputEvent::Key(KeyEvent::from(KeyCode::PageUp))),
             Msg::None
         );
         // Index should be incremented
         assert_eq!(component.states.list_index, 2);
         // Index should be 0
         assert_eq!(
-            component.on(InputEvent::Key(KeyEvent::from(KeyCode::PageUp))),
+            component.on(InputEvent::Key(KeyEvent::from(KeyCode::PageDown))),
             Msg::None
         );
         // Index should be incremented

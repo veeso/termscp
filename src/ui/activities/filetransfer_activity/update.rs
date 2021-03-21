@@ -470,7 +470,8 @@ impl FileTransferActivity {
                     }
                     self.umount_saveas();
                     // Reload files
-                    match self.tab { // NOTE: Swapped is intentional
+                    match self.tab {
+                        // NOTE: Swapped is intentional
                         FileExplorerTab::Local => self.update_remote_filelist(),
                         FileExplorerTab::Remote => self.update_local_filelist(),
                     }
@@ -693,7 +694,7 @@ impl FileTransferActivity {
                 // Make log entries
                 let mut table: TableBuilder = TableBuilder::default();
                 for (idx, record) in self.log_records.iter().enumerate() {
-                    let record_rows = textwrap::wrap(record.msg.as_str(), (width as usize) - 35); // -35 'cause log prefix
+                    let record_rows = textwrap::wrap(record.msg.as_str(), (width as usize) - 38); // -35 'cause log prefix -3 cause of log line cursor
                                                                                                   // Add row if not first row
                     if idx > 0 {
                         table.add_row();
