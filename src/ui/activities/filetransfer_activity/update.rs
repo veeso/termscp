@@ -28,8 +28,8 @@ extern crate bytesize;
 // locals
 use super::{
     FileExplorerTab, FileTransferActivity, LogLevel, COMPONENT_EXPLORER_LOCAL,
-    COMPONENT_EXPLORER_REMOTE, COMPONENT_INPUT_COPY, COMPONENT_INPUT_GOTO, COMPONENT_INPUT_MKDIR,
-    COMPONENT_INPUT_NEWFILE, COMPONENT_INPUT_RENAME, COMPONENT_INPUT_SAVEAS,
+    COMPONENT_EXPLORER_REMOTE, COMPONENT_INPUT_COPY, COMPONENT_INPUT_EXEC, COMPONENT_INPUT_GOTO,
+    COMPONENT_INPUT_MKDIR, COMPONENT_INPUT_NEWFILE, COMPONENT_INPUT_RENAME, COMPONENT_INPUT_SAVEAS,
     COMPONENT_LIST_FILEINFO, COMPONENT_LOG_BOX, COMPONENT_PROGRESS_BAR, COMPONENT_RADIO_DELETE,
     COMPONENT_RADIO_DISCONNECT, COMPONENT_RADIO_QUIT, COMPONENT_RADIO_SORTING,
     COMPONENT_TEXT_ERROR, COMPONENT_TEXT_FATAL, COMPONENT_TEXT_HELP,
@@ -343,8 +343,14 @@ impl FileTransferActivity {
                 }
                 (COMPONENT_EXPLORER_LOCAL, &MSG_KEY_CHAR_S)
                 | (COMPONENT_EXPLORER_REMOTE, &MSG_KEY_CHAR_S) => {
-                    // Mount rename
+                    // Mount save as
                     self.mount_saveas();
+                    None
+                }
+                (COMPONENT_EXPLORER_LOCAL, &MSG_KEY_CHAR_X)
+                | (COMPONENT_EXPLORER_REMOTE, &MSG_KEY_CHAR_X) => {
+                    // Mount exec
+                    self.mount_exec();
                     None
                 }
                 (COMPONENT_EXPLORER_LOCAL, &MSG_KEY_ESC)
@@ -383,6 +389,24 @@ impl FileTransferActivity {
                         FileExplorerTab::Remote => self.action_remote_copy(input.to_string()),
                     }
                     self.umount_copy();
+                    // Reload files
+                    match self.tab {
+                        FileExplorerTab::Local => self.update_local_filelist(),
+                        FileExplorerTab::Remote => self.update_remote_filelist(),
+                    }
+                }
+                // -- exec popup
+                (COMPONENT_INPUT_EXEC, &MSG_KEY_ESC) => {
+                    self.umount_exec();
+                    None
+                }
+                (COMPONENT_INPUT_EXEC, Msg::OnSubmit(Payload::Text(input))) => {
+                    // Exex command
+                    match self.tab {
+                        FileExplorerTab::Local => self.action_local_exec(input.to_string()),
+                        FileExplorerTab::Remote => self.action_remote_exec(input.to_string()),
+                    }
+                    self.umount_exec();
                     // Reload files
                     match self.tab {
                         FileExplorerTab::Local => self.update_local_filelist(),

@@ -186,6 +186,14 @@ impl FileTransferActivity {
                     self.view.render(super::COMPONENT_INPUT_SAVEAS, f, popup);
                 }
             }
+            if let Some(mut props) = self.view.get_props(super::COMPONENT_INPUT_EXEC) {
+                if props.build().visible {
+                    let popup = draw_area_in(f.size(), 40, 10);
+                    f.render_widget(Clear, popup);
+                    // make popup
+                    self.view.render(super::COMPONENT_INPUT_EXEC, f, popup);
+                }
+            }
             if let Some(mut props) = self.view.get_props(super::COMPONENT_LIST_FILEINFO) {
                 if props.build().visible {
                     let popup = draw_area_in(f.size(), 50, 50);
@@ -409,6 +417,22 @@ impl FileTransferActivity {
 
     pub(super) fn umount_copy(&mut self) {
         self.view.umount(super::COMPONENT_INPUT_COPY);
+    }
+
+    pub(super) fn mount_exec(&mut self) {
+        self.view.mount(
+            super::COMPONENT_INPUT_EXEC,
+            Box::new(Input::new(
+                PropsBuilder::default()
+                    .with_texts(TextParts::new(Some(String::from("Execute command")), None))
+                    .build(),
+            )),
+        );
+        self.view.active(super::COMPONENT_INPUT_EXEC);
+    }
+
+    pub(super) fn umount_exec(&mut self) {
+        self.view.umount(super::COMPONENT_INPUT_EXEC);
     }
 
     pub(super) fn mount_goto(&mut self) {

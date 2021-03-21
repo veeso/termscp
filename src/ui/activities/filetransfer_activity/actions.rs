@@ -444,6 +444,47 @@ impl FileTransferActivity {
         }
     }
 
+    pub(super) fn action_local_exec(&mut self, input: String) {
+        match self.context.as_mut().unwrap().local.exec(input.as_str()) {
+            Ok(output) => {
+                // Reload files
+                self.log(
+                    LogLevel::Info,
+                    format!("\"{}\" output: \"{}\"", input, output).as_ref(),
+                );
+                let wrkdir: PathBuf = self.local.wrkdir.clone();
+                self.local_scan(wrkdir.as_path());
+            }
+            Err(err) => {
+                // Report err
+                self.log_and_alert(
+                    LogLevel::Error,
+                    format!("Could not execute command \"{}\": {}", input, err),
+                );
+            }
+        }
+    }
+
+    pub(super) fn action_remote_exec(&mut self, input: String) {
+        match self.client.as_mut().exec(input.as_str()) {
+            Ok(output) => {
+                // Reload files
+                self.log(
+                    LogLevel::Info,
+                    format!("\"{}\" output: \"{}\"", input, output).as_ref(),
+                );
+                self.reload_remote_dir();
+            }
+            Err(err) => {
+                // Report err
+                self.log_and_alert(
+                    LogLevel::Error,
+                    format!("Could not execute command \"{}\": {}", input, err),
+                );
+            }
+        }
+    }
+
     /// ### get_local_file_entry
     ///
     /// Get local file entry

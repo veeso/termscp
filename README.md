@@ -359,6 +359,7 @@ If left empty, the default formatter syntax will be used: `{NAME:24} {PEX} {USER
 | `<Q>`         | Quit TermSCP                                          | Quit        |
 | `<R>`         | Rename file                                           | Rename      |
 | `<U>`         | Go to parent directory                                | Upper       |
+| `<X>`         | Execute a command                                     | eXecute     |
 | `<DEL>`       | Delete file                                           |             |
 | `<CTRL+C>`    | Abort file transfer process                           |             |
 
