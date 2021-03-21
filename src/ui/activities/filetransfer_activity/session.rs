@@ -47,28 +47,27 @@ impl FileTransferActivity {
     ///
     /// Connect to remote
     pub(super) fn connect(&mut self) {
+        let params = self.context.as_ref().unwrap().ft_params.as_ref().unwrap();
+        let addr: String = params.address.clone();
+        let entry_dir: Option<PathBuf> = params.entry_directory.clone();
         // Connect to remote
         match self.client.connect(
-            self.params.address.clone(),
-            self.params.port,
-            self.params.username.clone(),
-            self.params.password.clone(),
+            params.address.clone(),
+            params.port,
+            params.username.clone(),
+            params.password.clone(),
         ) {
             Ok(welcome) => {
                 if let Some(banner) = welcome {
                     // Log welcome
                     self.log(
                         LogLevel::Info,
-                        format!(
-                            "Established connection with '{}': \"{}\"",
-                            self.params.address, banner
-                        )
-                        .as_ref(),
+                        format!("Established connection with '{}': \"{}\"", addr, banner).as_ref(),
                     );
                 }
                 // Try to change directory to entry directory
                 let mut remote_chdir: Option<PathBuf> = None;
-                if let Some(entry_directory) = &self.params.entry_directory {
+                if let Some(entry_directory) = &entry_dir {
                     remote_chdir = Some(entry_directory.clone());
                 }
                 if let Some(entry_directory) = remote_chdir {
@@ -92,8 +91,10 @@ impl FileTransferActivity {
     ///
     /// disconnect from remote
     pub(super) fn disconnect(&mut self) {
+        let params = self.context.as_ref().unwrap().ft_params.as_ref().unwrap();
+        let msg: String = format!("Disconnecting from {}...", params.address);
         // Show popup disconnecting
-        self.mount_wait(format!("Disconnecting from {}...", self.params.address).as_str());
+        self.mount_wait(msg.as_str());
         // Disconnect
         let _ = self.client.disconnect();
         // Quit

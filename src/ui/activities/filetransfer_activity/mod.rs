@@ -81,18 +81,6 @@ const COMPONENT_RADIO_SORTING: &str = "RADIO_SORTING";
 const COMPONENT_RADIO_DELETE: &str = "RADIO_DELETE";
 const COMPONENT_LIST_FILEINFO: &str = "LIST_FILEINFO";
 
-/// ### FileTransferParams
-///
-/// Holds connection parameters for file transfers
-pub struct FileTransferParams {
-    pub address: String,
-    pub port: u16,
-    pub protocol: FileTransferProtocol,
-    pub username: Option<String>,
-    pub password: Option<String>,
-    pub entry_directory: Option<PathBuf>,
-}
-
 /// ## FileExplorerTab
 ///
 /// File explorer tab
@@ -215,7 +203,6 @@ pub struct FileTransferActivity {
     pub quit: bool,                   // Has quit term scp?
     context: Option<Context>,         // Context holder
     view: View,                       // View
-    params: FileTransferParams,       // FT connection params
     client: Box<dyn FileTransfer>,    // File transfer client
     local: FileExplorer,              // Local File explorer state
     remote: FileExplorer,             // Remote File explorer state
@@ -230,8 +217,7 @@ impl FileTransferActivity {
     /// ### new
     ///
     /// Instantiates a new FileTransferActivity
-    pub fn new(params: FileTransferParams) -> FileTransferActivity {
-        let protocol: FileTransferProtocol = params.protocol;
+    pub fn new(protocol: FileTransferProtocol) -> FileTransferActivity {
         // Get config client
         let config_client: Option<ConfigClient> = Self::init_config_client();
         FileTransferActivity {
@@ -248,7 +234,6 @@ impl FileTransferActivity {
                     Self::make_ssh_storage(config_client.as_ref()),
                 )),
             },
-            params,
             local: Self::build_explorer(config_client.as_ref()),
             remote: Self::build_explorer(config_client.as_ref()),
             tab: FileExplorerTab::Local,
@@ -306,14 +291,10 @@ impl Activity for FileTransferActivity {
         }
         // Check if connected (popup must be None, otherwise would try reconnecting in loop in case of error)
         if !self.client.is_connected() && self.view.get_props(COMPONENT_TEXT_FATAL).is_none() {
+            let params = self.context.as_ref().unwrap().ft_params.as_ref().unwrap();
+            let msg: String = format!("Connecting to {}:{}...", params.address, params.port);
             // Set init state to connecting popup
-            self.mount_wait(
-                format!(
-                    "Connecting to {}:{}...",
-                    self.params.address, self.params.port
-                )
-                .as_str(),
-            );
+            self.mount_wait(msg.as_str());
             // Force ui draw
             self.view();
             // Connect to remote

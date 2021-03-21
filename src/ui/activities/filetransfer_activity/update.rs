@@ -649,12 +649,13 @@ impl FileTransferActivity {
                     Some(val) => val,
                     None => 256, // Default
                 };
+                let params = self.context.as_ref().unwrap().ft_params.as_ref().unwrap();
                 let hostname: String = format!(
                     "{}:{} ",
-                    self.params.address,
+                    params.address,
                     FileTransferActivity::elide_wrkdir_path(
                         self.remote.wrkdir.as_path(),
-                        self.params.address.as_str(),
+                        params.address.as_str(),
                         width
                     )
                     .display()

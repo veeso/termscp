@@ -30,6 +30,7 @@ extern crate tui;
 // Locals
 use super::input::InputHandler;
 use super::store::Store;
+use crate::filetransfer::FileTransferProtocol;
 use crate::host::Localhost;
 use crate::system::config_client::ConfigClient;
 
@@ -38,6 +39,7 @@ use crossterm::event::DisableMouseCapture;
 use crossterm::execute;
 use crossterm::terminal::{EnterAlternateScreen, LeaveAlternateScreen};
 use std::io::{stdout, Stdout};
+use std::path::PathBuf;
 use tui::backend::CrosstermBackend;
 use tui::Terminal;
 
@@ -46,11 +48,24 @@ use tui::Terminal;
 /// Context holds data structures used by the ui
 pub struct Context {
     pub local: Localhost,
+    pub ft_params: Option<FileTransferParams>,
     pub(crate) config_client: Option<ConfigClient>,
     pub(crate) store: Store,
     pub(crate) input_hnd: InputHandler,
     pub(crate) terminal: Terminal<CrosstermBackend<Stdout>>,
     error: Option<String>,
+}
+
+/// ### FileTransferParams
+///
+/// Holds connection parameters for file transfers
+pub struct FileTransferParams {
+    pub address: String,
+    pub port: u16,
+    pub protocol: FileTransferProtocol,
+    pub username: Option<String>,
+    pub password: Option<String>,
+    pub entry_directory: Option<PathBuf>,
 }
 
 impl Context {
@@ -67,6 +82,7 @@ impl Context {
         assert!(execute!(stdout, EnterAlternateScreen).is_ok());
         Context {
             local,
+            ft_params: None,
             config_client,
             store: Store::init(),
             input_hnd: InputHandler::new(),
@@ -132,14 +148,38 @@ impl Drop for Context {
     }
 }
 
-/*
+impl Default for FileTransferParams {
+    fn default() -> Self {
+        Self {
+            address: String::new(),
+            port: 22,
+            protocol: FileTransferProtocol::Sftp,
+            username: None,
+            password: None,
+            entry_directory: None,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
 
     use super::*;
-    use crate::filetransfer::sftp_transfer::SftpFileTransfer;
-    use std::path::PathBuf;
 
+    #[test]
+    fn test_ui_context_ft_params() {
+        let params: FileTransferParams = FileTransferParams::default();
+        assert_eq!(params.address.as_str(), "");
+        assert_eq!(params.port, 22);
+        assert_eq!(params.protocol, FileTransferProtocol::Sftp);
+        assert!(params.username.is_none());
+        assert!(params.password.is_none());
+    }
+
+    //use crate::filetransfer::sftp_transfer::SftpFileTransfer;
+    //use std::path::PathBuf;
+
+    /*
     #[test]
     fn test_ui_context_new() {
         // Prepare stuff
@@ -162,5 +202,5 @@ mod tests {
             .is_ok());
         Box::new(sftp_client)
     }
+    */
 }
-*/

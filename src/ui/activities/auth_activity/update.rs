@@ -25,11 +25,12 @@
 
 // locals
 use super::{
-    AuthActivity, COMPONENT_BOOKMARKS_LIST, COMPONENT_INPUT_ADDR, COMPONENT_INPUT_BOOKMARK_NAME,
-    COMPONENT_INPUT_PASSWORD, COMPONENT_INPUT_PORT, COMPONENT_INPUT_USERNAME,
-    COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK, COMPONENT_RADIO_BOOKMARK_DEL_RECENT,
-    COMPONENT_RADIO_BOOKMARK_SAVE_PWD, COMPONENT_RADIO_PROTOCOL, COMPONENT_RADIO_QUIT,
-    COMPONENT_RECENTS_LIST, COMPONENT_TEXT_ERROR, COMPONENT_TEXT_HELP,
+    AuthActivity, FileTransferParams, COMPONENT_BOOKMARKS_LIST, COMPONENT_INPUT_ADDR,
+    COMPONENT_INPUT_BOOKMARK_NAME, COMPONENT_INPUT_PASSWORD, COMPONENT_INPUT_PORT,
+    COMPONENT_INPUT_USERNAME, COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK,
+    COMPONENT_RADIO_BOOKMARK_DEL_RECENT, COMPONENT_RADIO_BOOKMARK_SAVE_PWD,
+    COMPONENT_RADIO_PROTOCOL, COMPONENT_RADIO_QUIT, COMPONENT_RECENTS_LIST, COMPONENT_TEXT_ERROR,
+    COMPONENT_TEXT_HELP,
 };
 use crate::ui::activities::keymap::*;
 use crate::ui::layout::{Msg, Payload};
@@ -319,12 +320,20 @@ impl AuthActivity {
                     // Match <ENTER> key for all other components
                     self.save_recent();
                     let (address, port, protocol, username, password) = self.get_input();
-                    // TOREM: remove this after removing states
-                    self.address = address;
-                    self.port = port.to_string();
-                    self.protocol = protocol;
-                    self.username = username;
-                    self.password = password;
+                    // Set file transfer params to context
+                    let mut ft_params: &mut FileTransferParams =
+                        &mut self.context.as_mut().unwrap().ft_params.as_mut().unwrap();
+                    ft_params.address = address;
+                    ft_params.port = port;
+                    ft_params.protocol = protocol;
+                    ft_params.username = match username.is_empty() {
+                        true => None,
+                        false => Some(username),
+                    };
+                    ft_params.password = match password.is_empty() {
+                        true => None,
+                        false => Some(password),
+                    };
                     // Submit true
                     self.submit = true;
                     // Return None

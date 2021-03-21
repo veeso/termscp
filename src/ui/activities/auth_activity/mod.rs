@@ -36,6 +36,7 @@ extern crate tui;
 use super::{Activity, Context};
 use crate::filetransfer::FileTransferProtocol;
 use crate::system::bookmarks_client::BookmarksClient;
+use crate::ui::context::FileTransferParams;
 use crate::ui::layout::view::View;
 use crate::utils::git;
 
@@ -68,11 +69,6 @@ const STORE_KEY_LATEST_VERSION: &str = "AUTH_LATEST_VERSION";
 ///
 /// AuthActivity is the data holder for the authentication activity
 pub struct AuthActivity {
-    pub address: String,
-    pub port: String,
-    pub protocol: FileTransferProtocol,
-    pub username: String,
-    pub password: String,
     pub submit: bool, // becomes true after user has submitted fields
     pub quit: bool,   // Becomes true if user has pressed esc
     pub setup: bool,  // Becomes true if user has requested setup
@@ -96,11 +92,6 @@ impl AuthActivity {
     /// Instantiates a new AuthActivity
     pub fn new() -> AuthActivity {
         AuthActivity {
-            address: String::new(),
-            port: String::from("22"),
-            protocol: FileTransferProtocol::Sftp,
-            username: String::new(),
-            password: String::new(),
             submit: false,
             quit: false,
             setup: false,
@@ -157,7 +148,9 @@ impl Activity for AuthActivity {
     /// `on_create` is the function which must be called to initialize the activity.
     /// `on_create` must initialize all the data structures used by the activity
     /// Context is taken from activity manager and will be released only when activity is destroyed
-    fn on_create(&mut self, context: Context) {
+    fn on_create(&mut self, mut context: Context) {
+        // Initialize file transfer params
+        context.ft_params = Some(FileTransferParams::default());
         // Set context
         self.context = Some(context);
         // Clear terminal

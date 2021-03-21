@@ -32,9 +32,9 @@ use crate::system::config_client::ConfigClient;
 use crate::system::environment;
 use crate::ui::activities::{
     auth_activity::AuthActivity, filetransfer_activity::FileTransferActivity,
-    filetransfer_activity::FileTransferParams, setup_activity::SetupActivity, Activity,
+    setup_activity::SetupActivity, Activity,
 };
-use crate::ui::context::Context;
+use crate::ui::context::{Context, FileTransferParams};
 
 // Namespaces
 use std::thread::sleep;
@@ -54,7 +54,6 @@ pub enum NextActivity {
 /// The activity manager takes care of running activities and handling them until the application has ended
 pub struct ActivityManager {
     context: Option<Context>,
-    ftparams: Option<FileTransferParams>,
     interval: Duration,
 }
 
@@ -77,7 +76,6 @@ impl ActivityManager {
         let ctx: Context = Context::new(host, config_client, error);
         Ok(ActivityManager {
             context: Some(ctx),
-            ftparams: None,
             interval,
         })
     }
@@ -94,7 +92,8 @@ impl ActivityManager {
         password: Option<String>,
         entry_directory: Option<PathBuf>,
     ) {
-        self.ftparams = Some(FileTransferParams {
+        // Put params into the context
+        self.context.as_mut().unwrap().ft_params = Some(FileTransferParams {
             address,
             port,
             protocol,
@@ -161,21 +160,6 @@ impl ActivityManager {
             if activity.submit {
                 // User submitted, set next activity
                 result = Some(NextActivity::FileTransfer);
-                // Get params
-                self.ftparams = Some(FileTransferParams {
-                    address: activity.address.clone(),
-                    port: activity.port.parse::<u16>().ok().unwrap(),
-                    username: match activity.username.len() {
-                        0 => None,
-                        _ => Some(activity.username.clone()),
-                    },
-                    password: match activity.password.len() {
-                        0 => None,
-                        _ => Some(activity.password.clone()),
-                    },
-                    protocol: activity.protocol,
-                    entry_directory: None, // Has use only when accessing with address
-                });
                 break;
             }
             // Sleep for ticks
@@ -192,19 +176,21 @@ impl ActivityManager {
     /// Returns when activity terminates.
     /// Returns the next activity to run
     fn run_filetransfer(&mut self) -> Option<NextActivity> {
-        if self.ftparams.is_none() {
-            return Some(NextActivity::Authentication);
-        }
-        // Prepare activity
-        let mut activity: FileTransferActivity =
-            FileTransferActivity::new(self.ftparams.take().unwrap());
-        // Prepare result
-        let result: Option<NextActivity>;
         // Get context
         let ctx: Context = match self.context.take() {
             Some(ctx) => ctx,
             None => return None,
         };
+        // If ft params is None, return None
+        let ft_params: &FileTransferParams = match ctx.ft_params.as_ref() {
+            Some(ft_params) => &ft_params,
+            None => return None,
+        };
+        // Prepare activity
+        let protocol: FileTransferProtocol = ft_params.protocol;
+        let mut activity: FileTransferActivity = FileTransferActivity::new(protocol);
+        // Prepare result
+        let result: Option<NextActivity>;
         // Create activity
         activity.on_create(ctx);
         loop {
