@@ -90,19 +90,17 @@ impl Component for MsgBox {
                             Color::Reset => self.props.background,
                             _ => line.bg,
                         };
-                        let mut spans: Vec<Span> = Vec::new();
                         let message_row =
                             textwrap::wrap(line.content.as_str(), area.width as usize);
                         for msg in message_row.iter() {
-                            spans.push(Span::styled(
+                            lines.push(ListItem::new(Spans::from(vec![Span::styled(
                                 align_text_center(msg, area.width),
                                 Style::default()
                                     .add_modifier(line.get_modifiers())
                                     .fg(line_fg)
                                     .bg(line_bg),
-                            ));
+                            )])));
                         }
-                        lines.push(ListItem::new(Spans::from(spans)));
                     }
                     lines
                 }
