@@ -111,6 +111,19 @@ impl FileTransferActivity {
         }
     }
 
+    /// ### build_found_explorer
+    ///
+    /// Build explorer reading from `ConfigClient`, for found result (has some differences)
+    pub(super) fn build_found_explorer() -> FileExplorer {
+        FileExplorerBuilder::new()
+            .with_file_sorting(FileSorting::ByName)
+            .with_group_dirs(Some(GroupDirs::First))
+            .with_hidden_files(true)
+            .with_stack_size(0)
+            .with_formatter(Some("{NAME} {SYMLINK}"))
+            .build()
+    }
+
     /// ### setup_text_editor
     ///
     /// Set text editor to use

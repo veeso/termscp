@@ -32,6 +32,7 @@ Released on FIXME: date
   - Fixed a bug causing termscp to show two equal bookmarks when overwriting one.
 - Dependencies:
   - Removed `unicode-width`
+  - Added `wildmatch 1.0.13`
 - For developers:
   - Activity refactoring
     - Developed an internal library used to create components, components are then nested inside a View

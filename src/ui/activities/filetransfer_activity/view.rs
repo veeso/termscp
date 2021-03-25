@@ -33,7 +33,7 @@ use super::{Context, FileExplorerTab, FileTransferActivity};
 use crate::fs::explorer::FileSorting;
 use crate::fs::FsEntry;
 use crate::ui::layout::components::{
-    msgbox::MsgBox, file_list::FileList, input::Input, logbox::LogBox, progress_bar::ProgressBar,
+    file_list::FileList, input::Input, logbox::LogBox, msgbox::MsgBox, progress_bar::ProgressBar,
     radio_group::RadioGroup, table::Table,
 };
 use crate::ui::layout::props::{
@@ -138,12 +138,28 @@ impl FileTransferActivity {
             // Draw log box
             self.view.render(super::COMPONENT_LOG_BOX, f, chunks[1]);
             // Draw popups
+            if let Some(mut props) = self.view.get_props(super::COMPONENT_EXPLORER_FIND) {
+                if props.build().visible {
+                    let popup = draw_area_in(f.size(), 60, 80);
+                    f.render_widget(Clear, popup);
+                    // make popup
+                    self.view.render(super::COMPONENT_EXPLORER_FIND, f, popup);
+                }
+            }
             if let Some(mut props) = self.view.get_props(super::COMPONENT_INPUT_COPY) {
                 if props.build().visible {
                     let popup = draw_area_in(f.size(), 40, 10);
                     f.render_widget(Clear, popup);
                     // make popup
                     self.view.render(super::COMPONENT_INPUT_COPY, f, popup);
+                }
+            }
+            if let Some(mut props) = self.view.get_props(super::COMPONENT_INPUT_FIND) {
+                if props.build().visible {
+                    let popup = draw_area_in(f.size(), 40, 10);
+                    f.render_widget(Clear, popup);
+                    // make popup
+                    self.view.render(super::COMPONENT_INPUT_FIND, f, popup);
                 }
             }
             if let Some(mut props) = self.view.get_props(super::COMPONENT_INPUT_GOTO) {
@@ -435,6 +451,55 @@ impl FileTransferActivity {
         self.view.umount(super::COMPONENT_INPUT_EXEC);
     }
 
+    pub(super) fn mount_find(&mut self, search: &str) {
+        // Get color
+        let color: Color = match self.tab {
+            FileExplorerTab::Local | FileExplorerTab::FindLocal => Color::Yellow,
+            FileExplorerTab::Remote | FileExplorerTab::FindRemote => Color::LightBlue,
+        };
+        // Mount component
+        self.view.mount(
+            super::COMPONENT_EXPLORER_FIND,
+            Box::new(FileList::new(
+                PropsBuilder::default()
+                    .with_texts(TextParts::new(
+                        Some(format!("Search results for \"{}\"", search)),
+                        Some(vec![]),
+                    ))
+                    .with_background(color)
+                    .with_foreground(color)
+                    .build(),
+            )),
+        );
+        // Give focus to explorer findd
+        self.view.active(super::COMPONENT_EXPLORER_FIND);
+    }
+
+    pub(super) fn umount_find(&mut self) {
+        self.view.umount(super::COMPONENT_EXPLORER_FIND);
+    }
+
+    pub(super) fn mount_find_input(&mut self) {
+        self.view.mount(
+            super::COMPONENT_INPUT_FIND,
+            Box::new(Input::new(
+                PropsBuilder::default()
+                    .with_texts(TextParts::new(
+                        Some(String::from("Search files by name")),
+                        None,
+                    ))
+                    .build(),
+            )),
+        );
+        // Give focus to input find
+        self.view.active(super::COMPONENT_INPUT_FIND);
+    }
+
+    pub(super) fn umount_find_input(&mut self) {
+        // Umount input find
+        self.view.umount(super::COMPONENT_INPUT_FIND);
+    }
+
     pub(super) fn mount_goto(&mut self) {
         self.view.mount(
             super::COMPONENT_INPUT_GOTO,
@@ -543,6 +608,7 @@ impl FileTransferActivity {
         let sorting: FileSorting = match self.tab {
             FileExplorerTab::Local => self.local.get_file_sorting(),
             FileExplorerTab::Remote => self.remote.get_file_sorting(),
+            _ => panic!("You can't mount file sorting when in found result"),
         };
         let index: usize = match sorting {
             FileSorting::ByCreationTime => 2,

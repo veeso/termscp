@@ -127,6 +127,13 @@ impl FileExplorer {
         self.sort();
     }
 
+    /// ### del_entry
+    ///
+    /// Delete file at provided index
+    pub fn del_entry(&mut self, idx: usize) {
+        self.files.remove(idx);
+    }
+
     /*
     /// ### count
     ///
@@ -625,6 +632,23 @@ mod tests {
         assert_eq!(GroupDirs::from_str("first").ok().unwrap(), GroupDirs::First);
         assert_eq!(GroupDirs::from_str("last").ok().unwrap(), GroupDirs::Last);
         assert!(GroupDirs::from_str("omar").is_err());
+    }
+
+    #[test]
+    fn test_fs_explorer_del_entry() {
+        let mut explorer: FileExplorer = FileExplorer::default();
+        // Create files (files are then sorted by name)
+        explorer.set_files(vec![
+            make_fs_entry("CONTRIBUTING.md", false),
+            make_fs_entry("docs/", true),
+            make_fs_entry("src/", true),
+            make_fs_entry("README.md", false),
+        ]);
+        explorer.del_entry(0);
+        assert_eq!(explorer.files.len(), 3);
+        assert_eq!(explorer.files[0].get_name(), "docs/");
+        explorer.del_entry(5);
+        assert_eq!(explorer.files.len(), 3);
     }
 
     fn make_fs_entry(name: &str, is_dir: bool) -> FsEntry {

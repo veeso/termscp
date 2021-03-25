@@ -24,7 +24,7 @@
 */
 
 // locals
-use super::{FileTransferActivity, FsEntry, LogLevel};
+use super::{FileExplorerTab, FileTransferActivity, FsEntry, LogLevel};
 use crate::ui::layout::Payload;
 // externals
 use std::path::PathBuf;
@@ -481,6 +481,124 @@ impl FileTransferActivity {
                     LogLevel::Error,
                     format!("Could not execute command \"{}\": {}", input, err),
                 );
+            }
+        }
+    }
+
+    pub(super) fn action_local_find(&mut self, input: String) -> Result<Vec<FsEntry>, String> {
+        match self.context.as_mut().unwrap().local.find(input.as_str()) {
+            Ok(entries) => Ok(entries),
+            Err(err) => Err(format!("Could not search for files: {}", err)),
+        }
+    }
+
+    pub(super) fn action_remote_find(&mut self, input: String) -> Result<Vec<FsEntry>, String> {
+        match self.client.as_mut().find(input.as_str()) {
+            Ok(entries) => Ok(entries),
+            Err(err) => Err(format!("Could not search for files: {}", err)),
+        }
+    }
+
+    pub(super) fn action_find_changedir(&mut self, idx: usize) {
+        // Match entry
+        if let Some(entry) = self.found.as_ref().unwrap().get(idx) {
+            // Get path: if a directory, use directory path; if it is a File, get parent path
+            let path: PathBuf = match entry {
+                FsEntry::Directory(dir) => dir.abs_path.clone(),
+                FsEntry::File(file) => match file.abs_path.parent() {
+                    None => PathBuf::from("."),
+                    Some(p) => p.to_path_buf(),
+                },
+            };
+            // Change directory
+            match self.tab {
+                FileExplorerTab::FindLocal | FileExplorerTab::Local => {
+                    self.local_changedir(path.as_path(), true)
+                }
+                FileExplorerTab::FindRemote | FileExplorerTab::Remote => {
+                    self.remote_changedir(path.as_path(), true)
+                }
+            }
+        }
+    }
+
+    pub(super) fn action_find_transfer(&mut self, idx: usize, name: Option<String>) {
+        let entry: Option<FsEntry> = match self.found.as_ref().unwrap().get(idx) {
+            None => None,
+            Some(e) => Some(e.clone()),
+        };
+        if let Some(entry) = entry {
+            // Download file
+            match self.tab {
+                FileExplorerTab::FindLocal | FileExplorerTab::Local => {
+                    let wrkdir: PathBuf = self.remote.wrkdir.clone();
+                    self.filetransfer_send(&entry.get_realfile(), wrkdir.as_path(), name);
+                }
+                FileExplorerTab::FindRemote | FileExplorerTab::Remote => {
+                    let wrkdir: PathBuf = self.local.wrkdir.clone();
+                    self.filetransfer_recv(&entry.get_realfile(), wrkdir.as_path(), name);
+                }
+            }
+        }
+    }
+
+    pub(super) fn action_find_delete(&mut self, idx: usize) {
+        let entry: Option<FsEntry> = match self.found.as_ref().unwrap().get(idx) {
+            None => None,
+            Some(e) => Some(e.clone()),
+        };
+        if let Some(entry) = entry {
+            // Download file
+            match self.tab {
+                FileExplorerTab::FindLocal | FileExplorerTab::Local => {
+                    let full_path: PathBuf = entry.get_abs_path();
+                    // Delete file or directory and report status as popup
+                    match self.context.as_mut().unwrap().local.remove(&entry) {
+                        Ok(_) => {
+                            // Reload files
+                            let p: PathBuf = self.local.wrkdir.clone();
+                            self.local_scan(p.as_path());
+                            // Log
+                            self.log(
+                                LogLevel::Info,
+                                format!("Removed file \"{}\"", full_path.display()).as_ref(),
+                            );
+                        }
+                        Err(err) => {
+                            self.log_and_alert(
+                                LogLevel::Error,
+                                format!(
+                                    "Could not delete file \"{}\": {}",
+                                    full_path.display(),
+                                    err
+                                ),
+                            );
+                        }
+                    }
+                }
+                FileExplorerTab::FindRemote | FileExplorerTab::Remote => {
+                    let full_path: PathBuf = entry.get_abs_path();
+                    // Delete file
+                    match self.client.remove(&entry) {
+                        Ok(_) => {
+                            self.reload_remote_dir();
+                            self.log(
+                                LogLevel::Info,
+                                format!("Removed file \"{}\"", full_path.display()).as_ref(),
+                            );
+                        }
+                        Err(err) => {
+                            self.log_and_alert(
+                                LogLevel::Error,
+                                format!(
+                                    "Could not delete file \"{}\": {}",
+                                    full_path.display(),
+                                    err
+                                ),
+                            );
+                        }
+                    }
+                }
             }
         }
     }

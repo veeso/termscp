@@ -27,9 +27,10 @@
 extern crate bytesize;
 // locals
 use super::{
-    FileExplorerTab, FileTransferActivity, LogLevel, COMPONENT_EXPLORER_LOCAL,
-    COMPONENT_EXPLORER_REMOTE, COMPONENT_INPUT_COPY, COMPONENT_INPUT_EXEC, COMPONENT_INPUT_GOTO,
-    COMPONENT_INPUT_MKDIR, COMPONENT_INPUT_NEWFILE, COMPONENT_INPUT_RENAME, COMPONENT_INPUT_SAVEAS,
+    FileExplorerTab, FileTransferActivity, LogLevel, COMPONENT_EXPLORER_FIND,
+    COMPONENT_EXPLORER_LOCAL, COMPONENT_EXPLORER_REMOTE, COMPONENT_INPUT_COPY,
+    COMPONENT_INPUT_EXEC, COMPONENT_INPUT_FIND, COMPONENT_INPUT_GOTO, COMPONENT_INPUT_MKDIR,
+    COMPONENT_INPUT_NEWFILE, COMPONENT_INPUT_RENAME, COMPONENT_INPUT_SAVEAS,
     COMPONENT_LIST_FILEINFO, COMPONENT_LOG_BOX, COMPONENT_PROGRESS_BAR, COMPONENT_RADIO_DELETE,
     COMPONENT_RADIO_DISCONNECT, COMPONENT_RADIO_QUIT, COMPONENT_RADIO_SORTING,
     COMPONENT_TEXT_ERROR, COMPONENT_TEXT_FATAL, COMPONENT_TEXT_HELP,
@@ -37,7 +38,9 @@ use super::{
 use crate::fs::explorer::FileSorting;
 use crate::fs::FsEntry;
 use crate::ui::activities::keymap::*;
-use crate::ui::layout::props::{PropValue, TableBuilder, TextParts, TextSpan, TextSpanBuilder};
+use crate::ui::layout::props::{
+    PropValue, PropsBuilder, TableBuilder, TextParts, TextSpan, TextSpanBuilder,
+};
 use crate::ui::layout::{Msg, Payload};
 // externals
 use bytesize::ByteSize;
@@ -314,6 +317,11 @@ impl FileTransferActivity {
                     self.mount_mkdir();
                     None
                 }
+                (COMPONENT_EXPLORER_LOCAL, &MSG_KEY_CHAR_F)
+                | (COMPONENT_EXPLORER_REMOTE, &MSG_KEY_CHAR_F) => {
+                    self.mount_find_input();
+                    None
+                }
                 (COMPONENT_EXPLORER_LOCAL, &MSG_KEY_CHAR_G)
                 | (COMPONENT_EXPLORER_REMOTE, &MSG_KEY_CHAR_G) => {
                     self.mount_goto();
@@ -342,7 +350,8 @@ impl FileTransferActivity {
                     None
                 }
                 (COMPONENT_EXPLORER_LOCAL, &MSG_KEY_CHAR_S)
-                | (COMPONENT_EXPLORER_REMOTE, &MSG_KEY_CHAR_S) => {
+                | (COMPONENT_EXPLORER_REMOTE, &MSG_KEY_CHAR_S)
+                | (COMPONENT_EXPLORER_FIND, &MSG_KEY_CHAR_S) => {
                     // Mount save as
                     self.mount_saveas();
                     None
@@ -362,9 +371,49 @@ impl FileTransferActivity {
                 (COMPONENT_EXPLORER_LOCAL, &MSG_KEY_DEL)
                 | (COMPONENT_EXPLORER_LOCAL, &MSG_KEY_CHAR_E)
                 | (COMPONENT_EXPLORER_REMOTE, &MSG_KEY_DEL)
-                | (COMPONENT_EXPLORER_REMOTE, &MSG_KEY_CHAR_E) => {
+                | (COMPONENT_EXPLORER_REMOTE, &MSG_KEY_CHAR_E)
+                | (COMPONENT_EXPLORER_FIND, &MSG_KEY_DEL)
+                | (COMPONENT_EXPLORER_FIND, &MSG_KEY_CHAR_E) => {
                     self.mount_radio_delete();
                     None
+                }
+                // -- find result explorer
+                (COMPONENT_EXPLORER_FIND, &MSG_KEY_ESC) => {
+                    // Umount find
+                    self.umount_find();
+                    // Finalize find
+                    self.finalize_find();
+                    None
+                }
+                (COMPONENT_EXPLORER_FIND, Msg::OnSubmit(Payload::Unsigned(idx))) => {
+                    // Find changedir
+                    self.action_find_changedir(*idx);
+                    // Umount find
+                    self.umount_find();
+                    // Finalize find
+                    self.finalize_find();
+                    // Reload files
+                    match self.tab {
+                        FileExplorerTab::Local => self.update_local_filelist(),
+                        FileExplorerTab::Remote => self.update_remote_filelist(),
+                        _ => None,
+                    }
+                }
+                (COMPONENT_EXPLORER_FIND, &MSG_KEY_SPACE) => {
+                    // Get entry
+                    match self.view.get_value(COMPONENT_EXPLORER_FIND) {
+                        Some(Payload::Unsigned(idx)) => {
+                            self.action_find_transfer(idx, None);
+                            // Reload files
+                            match self.tab {
+                                // NOTE: swapped by purpose
+                                FileExplorerTab::FindLocal => self.update_remote_filelist(),
+                                FileExplorerTab::FindRemote => self.update_local_filelist(),
+                                _ => None,
+                            }
+                        }
+                        _ => None,
+                    }
                 }
                 // -- switch to log
                 (COMPONENT_EXPLORER_LOCAL, &MSG_KEY_TAB)
@@ -387,12 +436,14 @@ impl FileTransferActivity {
                     match self.tab {
                         FileExplorerTab::Local => self.action_local_copy(input.to_string()),
                         FileExplorerTab::Remote => self.action_remote_copy(input.to_string()),
+                        _ => panic!("Found tab doesn't support COPY"),
                     }
                     self.umount_copy();
                     // Reload files
                     match self.tab {
                         FileExplorerTab::Local => self.update_local_filelist(),
                         FileExplorerTab::Remote => self.update_remote_filelist(),
+                        _ => None,
                     }
                 }
                 // -- exec popup
@@ -405,13 +456,52 @@ impl FileTransferActivity {
                     match self.tab {
                         FileExplorerTab::Local => self.action_local_exec(input.to_string()),
                         FileExplorerTab::Remote => self.action_remote_exec(input.to_string()),
+                        _ => panic!("Found tab doesn't support EXEC"),
                     }
                     self.umount_exec();
                     // Reload files
                     match self.tab {
                         FileExplorerTab::Local => self.update_local_filelist(),
                         FileExplorerTab::Remote => self.update_remote_filelist(),
+                        _ => None,
                     }
+                }
+                // -- find popup
+                (COMPONENT_INPUT_FIND, &MSG_KEY_ESC) => {
+                    self.umount_find_input();
+                    None
+                }
+                (COMPONENT_INPUT_FIND, Msg::OnSubmit(Payload::Text(input))) => {
+                    self.umount_find_input();
+                    // Find
+                    let res: Result<Vec<FsEntry>, String> = match self.tab {
+                        FileExplorerTab::Local => self.action_local_find(input.to_string()),
+                        FileExplorerTab::Remote => self.action_remote_find(input.to_string()),
+                        _ => panic!("Trying to search for files, while already in a find result"),
+                    };
+                    // Match result
+                    match res {
+                        Err(err) => {
+                            // Mount error
+                            self.mount_error(err.as_str());
+                        }
+                        Ok(files) => {
+                            // Create explorer and load files
+                            let mut explorer = Self::build_found_explorer();
+                            explorer.set_files(files);
+                            self.found = Some(explorer);
+                            // Mount result widget
+                            self.mount_find(input);
+                            self.update_find_list();
+                            // Initialize tab
+                            self.tab = match self.tab {
+                                FileExplorerTab::Local => FileExplorerTab::FindLocal,
+                                FileExplorerTab::Remote => FileExplorerTab::FindRemote,
+                                _ => FileExplorerTab::FindLocal,
+                            };
+                        }
+                    }
+                    None
                 }
                 // -- goto popup
                 (COMPONENT_INPUT_GOTO, &MSG_KEY_ESC) => {
@@ -422,6 +512,7 @@ impl FileTransferActivity {
                     match self.tab {
                         FileExplorerTab::Local => self.action_change_local_dir(input.to_string()),
                         FileExplorerTab::Remote => self.action_change_remote_dir(input.to_string()),
+                        _ => panic!("Found tab doesn't support GOTO"),
                     }
                     // Umount
                     self.umount_goto();
@@ -429,6 +520,7 @@ impl FileTransferActivity {
                     match self.tab {
                         FileExplorerTab::Local => self.update_local_filelist(),
                         FileExplorerTab::Remote => self.update_remote_filelist(),
+                        _ => None,
                     }
                 }
                 // -- make directory
@@ -440,12 +532,14 @@ impl FileTransferActivity {
                     match self.tab {
                         FileExplorerTab::Local => self.action_local_mkdir(input.to_string()),
                         FileExplorerTab::Remote => self.action_remote_mkdir(input.to_string()),
+                        _ => panic!("Found tab doesn't support MKDIR"),
                     }
                     self.umount_mkdir();
                     // Reload files
                     match self.tab {
                         FileExplorerTab::Local => self.update_local_filelist(),
                         FileExplorerTab::Remote => self.update_remote_filelist(),
+                        _ => None,
                     }
                 }
                 // -- new file
@@ -457,12 +551,14 @@ impl FileTransferActivity {
                     match self.tab {
                         FileExplorerTab::Local => self.action_local_newfile(input.to_string()),
                         FileExplorerTab::Remote => self.action_remote_newfile(input.to_string()),
+                        _ => panic!("Found tab doesn't support NEWFILE"),
                     }
                     self.umount_newfile();
                     // Reload files
                     match self.tab {
                         FileExplorerTab::Local => self.update_local_filelist(),
                         FileExplorerTab::Remote => self.update_remote_filelist(),
+                        _ => None,
                     }
                 }
                 // -- rename
@@ -474,12 +570,14 @@ impl FileTransferActivity {
                     match self.tab {
                         FileExplorerTab::Local => self.action_local_rename(input.to_string()),
                         FileExplorerTab::Remote => self.action_remote_rename(input.to_string()),
+                        _ => panic!("Found tab doesn't support RENAME"),
                     }
                     self.umount_rename();
                     // Reload files
                     match self.tab {
                         FileExplorerTab::Local => self.update_local_filelist(),
                         FileExplorerTab::Remote => self.update_remote_filelist(),
+                        _ => None,
                     }
                 }
                 // -- save as
@@ -491,6 +589,14 @@ impl FileTransferActivity {
                     match self.tab {
                         FileExplorerTab::Local => self.action_local_saveas(input.to_string()),
                         FileExplorerTab::Remote => self.action_remote_saveas(input.to_string()),
+                        FileExplorerTab::FindLocal | FileExplorerTab::FindRemote => {
+                            // Get entry
+                            if let Some(Payload::Unsigned(idx)) =
+                                self.view.get_value(COMPONENT_EXPLORER_FIND)
+                            {
+                                self.action_find_transfer(idx, Some(input.to_string()));
+                            }
+                        }
                     }
                     self.umount_saveas();
                     // Reload files
@@ -498,6 +604,8 @@ impl FileTransferActivity {
                         // NOTE: Swapped is intentional
                         FileExplorerTab::Local => self.update_remote_filelist(),
                         FileExplorerTab::Remote => self.update_local_filelist(),
+                        FileExplorerTab::FindLocal => self.update_remote_filelist(),
+                        FileExplorerTab::FindRemote => self.update_local_filelist(),
                     }
                 }
                 // -- fileinfo
@@ -517,12 +625,25 @@ impl FileTransferActivity {
                     match self.tab {
                         FileExplorerTab::Local => self.action_local_delete(),
                         FileExplorerTab::Remote => self.action_remote_delete(),
+                        FileExplorerTab::FindLocal | FileExplorerTab::FindRemote => {
+                            // Get entry
+                            if let Some(Payload::Unsigned(idx)) =
+                                self.view.get_value(COMPONENT_EXPLORER_FIND)
+                            {
+                                self.action_find_delete(idx);
+                                // Reload entries
+                                self.found.as_mut().unwrap().del_entry(idx);
+                                self.update_find_list();
+                            }
+                        }
                     }
                     self.umount_radio_delete();
                     // Reload files
                     match self.tab {
                         FileExplorerTab::Local => self.update_local_filelist(),
                         FileExplorerTab::Remote => self.update_remote_filelist(),
+                        FileExplorerTab::FindLocal => self.update_local_filelist(),
+                        FileExplorerTab::FindRemote => self.update_remote_filelist(),
                     }
                 }
                 // -- disconnect
@@ -547,6 +668,7 @@ impl FileTransferActivity {
                     self.umount_quit();
                     None
                 }
+                // -- sorting
                 (COMPONENT_RADIO_SORTING, &MSG_KEY_ESC) => {
                     self.umount_file_sorting();
                     None
@@ -562,12 +684,14 @@ impl FileTransferActivity {
                     match self.tab {
                         FileExplorerTab::Local => self.local.sort_by(sorting),
                         FileExplorerTab::Remote => self.remote.sort_by(sorting),
+                        _ => panic!("Found result doesn't support SORTING"),
                     }
                     self.umount_file_sorting();
                     // Reload files
                     match self.tab {
                         FileExplorerTab::Local => self.update_local_filelist(),
                         FileExplorerTab::Remote => self.update_remote_filelist(),
+                        _ => None,
                     }
                 }
                 // -- error
@@ -806,6 +930,43 @@ impl FileTransferActivity {
                 self.view.update(COMPONENT_PROGRESS_BAR, props)
             }
             None => None,
+        }
+    }
+
+    /// ### finalize_find
+    ///
+    /// Finalize find process
+    fn finalize_find(&mut self) {
+        // Set found to none
+        self.found = None;
+        // Restore tab
+        self.tab = match self.tab {
+            FileExplorerTab::FindLocal => FileExplorerTab::Local,
+            FileExplorerTab::FindRemote => FileExplorerTab::Remote,
+            _ => FileExplorerTab::Local,
+        };
+    }
+
+    fn update_find_list(&mut self) -> Option<(String, Msg)> {
+        match self.view.get_props(COMPONENT_EXPLORER_FIND).as_mut() {
+            None => None,
+            Some(props) => {
+                let props = props.build();
+                let title: String = props.texts.title.clone().unwrap_or(String::new());
+                let mut props = PropsBuilder::from(props.clone());
+                // Prepare files
+                let file_texts: Vec<TextSpan> = self
+                    .found
+                    .as_ref()
+                    .unwrap()
+                    .iter_files()
+                    .map(|x: &FsEntry| TextSpan::from(self.found.as_ref().unwrap().fmt_file(x)))
+                    .collect();
+                let props = props
+                    .with_texts(TextParts::new(Some(title), Some(file_texts)))
+                    .build();
+                self.view.update(COMPONENT_EXPLORER_FIND, props)
+            }
         }
     }
 

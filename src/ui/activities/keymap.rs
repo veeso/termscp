@@ -91,12 +91,10 @@ pub const MSG_KEY_CHAR_E: Msg = Msg::OnKey(KeyEvent {
     code: KeyCode::Char('e'),
     modifiers: KeyModifiers::NONE,
 });
-/*
 pub const MSG_KEY_CHAR_F: Msg = Msg::OnKey(KeyEvent {
     code: KeyCode::Char('f'),
     modifiers: KeyModifiers::NONE,
 });
-*/
 pub const MSG_KEY_CHAR_G: Msg = Msg::OnKey(KeyEvent {
     code: KeyCode::Char('g'),
     modifiers: KeyModifiers::NONE,

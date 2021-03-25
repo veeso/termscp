@@ -63,23 +63,25 @@ const STORAGE_LOGBOX_WIDTH: &str = "LOGBOX_WIDTH";
 
 const COMPONENT_EXPLORER_LOCAL: &str = "EXPLORER_LOCAL";
 const COMPONENT_EXPLORER_REMOTE: &str = "EXPLORER_REMOTE";
+const COMPONENT_EXPLORER_FIND: &str = "EXPLORER_FIND";
 const COMPONENT_LOG_BOX: &str = "LOG_BOX";
 const COMPONENT_PROGRESS_BAR: &str = "PROGRESS_BAR";
-const COMPONENT_TEXT_HELP: &str = "TEXT_HELP";
 const COMPONENT_TEXT_ERROR: &str = "TEXT_ERROR";
-const COMPONENT_TEXT_WAIT: &str = "TEXT_WAIT";
 const COMPONENT_TEXT_FATAL: &str = "TEXT_FATAL";
+const COMPONENT_TEXT_HELP: &str = "TEXT_HELP";
+const COMPONENT_TEXT_WAIT: &str = "TEXT_WAIT";
 const COMPONENT_INPUT_COPY: &str = "INPUT_COPY";
 const COMPONENT_INPUT_EXEC: &str = "INPUT_EXEC";
-const COMPONENT_INPUT_MKDIR: &str = "INPUT_MKDIR";
+const COMPONENT_INPUT_FIND: &str = "INPUT_FIND";
 const COMPONENT_INPUT_GOTO: &str = "INPUT_GOTO";
-const COMPONENT_INPUT_SAVEAS: &str = "INPUT_SAVEAS";
+const COMPONENT_INPUT_MKDIR: &str = "INPUT_MKDIR";
 const COMPONENT_INPUT_NEWFILE: &str = "INPUT_NEWFILE";
 const COMPONENT_INPUT_RENAME: &str = "INPUT_RENAME";
-const COMPONENT_RADIO_QUIT: &str = "RADIO_QUIT";
-const COMPONENT_RADIO_DISCONNECT: &str = "RADIO_DISCONNECT";
-const COMPONENT_RADIO_SORTING: &str = "RADIO_SORTING";
+const COMPONENT_INPUT_SAVEAS: &str = "INPUT_SAVEAS";
 const COMPONENT_RADIO_DELETE: &str = "RADIO_DELETE";
+const COMPONENT_RADIO_DISCONNECT: &str = "RADIO_DISCONNECT";
+const COMPONENT_RADIO_QUIT: &str = "RADIO_QUIT";
+const COMPONENT_RADIO_SORTING: &str = "RADIO_SORTING";
 const COMPONENT_LIST_FILEINFO: &str = "LIST_FILEINFO";
 
 /// ## FileExplorerTab
@@ -88,6 +90,8 @@ const COMPONENT_LIST_FILEINFO: &str = "LIST_FILEINFO";
 enum FileExplorerTab {
     Local,
     Remote,
+    FindLocal,  // Find result tab
+    FindRemote, // Find result tab
 }
 
 /// ## LogLevel
@@ -206,6 +210,7 @@ pub struct FileTransferActivity {
     client: Box<dyn FileTransfer>,    // File transfer client
     local: FileExplorer,              // Local File explorer state
     remote: FileExplorer,             // Remote File explorer state
+    found: Option<FileExplorer>,      // File explorer for find result
     tab: FileExplorerTab,             // Current selected tab
     log_index: usize,                 // Current log index entry selected
     log_records: VecDeque<LogRecord>, // Log records
@@ -235,6 +240,7 @@ impl FileTransferActivity {
             },
             local: Self::build_explorer(config_client.as_ref()),
             remote: Self::build_explorer(config_client.as_ref()),
+            found: None,
             tab: FileExplorerTab::Local,
             log_index: 0,
             log_records: VecDeque::with_capacity(256), // 256 events is enough I guess
