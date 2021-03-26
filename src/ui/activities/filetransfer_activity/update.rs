@@ -732,16 +732,13 @@ impl FileTransferActivity {
         {
             Some(props) => {
                 // Get width
-                let width: usize = match self
+                let width: usize = self
                     .context
                     .as_ref()
                     .unwrap()
                     .store
                     .get_unsigned(super::STORAGE_EXPLORER_WIDTH)
-                {
-                    Some(val) => val,
-                    None => 256, // Default
-                };
+                    .unwrap_or(256);
                 let hostname: String = match hostname::get() {
                     Ok(h) => {
                         let hostname: String = h.as_os_str().to_string_lossy().to_string();
@@ -787,16 +784,13 @@ impl FileTransferActivity {
         {
             Some(props) => {
                 // Get width
-                let width: usize = match self
+                let width: usize = self
                     .context
                     .as_ref()
                     .unwrap()
                     .store
                     .get_unsigned(super::STORAGE_EXPLORER_WIDTH)
-                {
-                    Some(val) => val,
-                    None => 256, // Default
-                };
+                    .unwrap_or(256);
                 let params = self.context.as_ref().unwrap().ft_params.as_ref().unwrap();
                 let hostname: String = format!(
                     "{}:{} ",
@@ -830,16 +824,13 @@ impl FileTransferActivity {
         match self.view.get_props(super::COMPONENT_LOG_BOX).as_mut() {
             Some(props) => {
                 // Get width
-                let width: usize = match self
+                let width: usize = self
                     .context
                     .as_ref()
                     .unwrap()
                     .store
                     .get_unsigned(super::STORAGE_LOGBOX_WIDTH)
-                {
-                    Some(val) => val,
-                    None => 256, // Default
-                };
+                    .unwrap_or(256);
                 // Make log entries
                 let mut table: TableBuilder = TableBuilder::default();
                 for (idx, record) in self.log_records.iter().enumerate() {
@@ -952,8 +943,8 @@ impl FileTransferActivity {
             None => None,
             Some(props) => {
                 let props = props.build();
-                let title: String = props.texts.title.clone().unwrap_or(String::new());
-                let mut props = PropsBuilder::from(props.clone());
+                let title: String = props.texts.title.clone().unwrap_or_default();
+                let mut props = PropsBuilder::from(props);
                 // Prepare files
                 let file_texts: Vec<TextSpan> = self
                     .found

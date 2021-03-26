@@ -16,10 +16,11 @@
 
 ## 0.4.0
 
-Released on FIXME: date
+Released on 27/03/2021
 
 - **New explorer features**:
   - **Execute** a command pressing `X`. This feature is supported on both local and remote hosts (only SFTP/SCP protocols support this feature).
+  - **Find**: search for files pressing `F` using wild matches.
 - Enhancements:
   - Input fields will now support **"input keys"** (such as moving cursor, DEL, END, HOME, ...)
   - Improved performance regarding configuration I/O (config client is now shared in the activity context)

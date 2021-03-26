@@ -86,7 +86,7 @@ impl OwnStates {
     ///
     /// Delete element at cursor -1; then decrement cursor by 1
     pub fn backspace(&mut self) {
-        if self.cursor > 0 && self.input.len() > 0 {
+        if self.cursor > 0 && !self.input.is_empty() {
             self.input.remove(self.cursor - 1);
             // Decrement cursor
             self.cursor -= 1;
@@ -106,7 +106,7 @@ impl OwnStates {
     ///
     /// Increment cursor value by one if possible
     pub fn incr_cursor(&mut self) {
-        if self.cursor + 1 <= self.input.len() {
+        if self.cursor < self.input.len() {
             self.cursor += 1;
         }
     }

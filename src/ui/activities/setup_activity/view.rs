@@ -703,7 +703,7 @@ impl SetupActivity {
                 .get_props(super::COMPONENT_INPUT_FILE_FMT)
                 .as_mut()
             {
-                let file_fmt: String = cli.get_file_fmt().unwrap_or(String::new());
+                let file_fmt: String = cli.get_file_fmt().unwrap_or_default();
                 let props = props.with_value(PropValue::Str(file_fmt)).build();
                 let _ = self.view.update(super::COMPONENT_INPUT_FILE_FMT, props);
             }
@@ -734,19 +734,13 @@ impl SetupActivity {
             if let Some(Payload::Unsigned(opt)) =
                 self.view.get_value(super::COMPONENT_RADIO_HIDDEN_FILES)
             {
-                let show: bool = match opt {
-                    0 => true,
-                    _ => false,
-                };
+                let show: bool = matches!(opt, 0);
                 cli.set_show_hidden_files(show);
             }
             if let Some(Payload::Unsigned(opt)) =
                 self.view.get_value(super::COMPONENT_RADIO_UPDATES)
             {
-                let check: bool = match opt {
-                    0 => true,
-                    _ => false,
-                };
+                let check: bool = matches!(opt, 0);
                 cli.set_check_for_updates(check);
             }
             if let Some(Payload::Text(fmt)) = self.view.get_value(super::COMPONENT_INPUT_FILE_FMT) {

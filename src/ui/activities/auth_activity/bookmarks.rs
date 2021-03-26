@@ -83,11 +83,8 @@ impl AuthActivity {
                     .view
                     .get_value(super::COMPONENT_RADIO_BOOKMARK_SAVE_PWD)
                 {
-                    Some(Payload::Unsigned(choice)) => match choice {
-                        0 => Some(password), // Yes
-                        _ => None,           // No
-                    },
-                    _ => None, // No such component
+                    Some(Payload::Unsigned(0)) => Some(password), // Yes
+                    _ => None,                                    // No such component / No
                 },
                 false => None,
             };

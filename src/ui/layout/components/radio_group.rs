@@ -79,7 +79,7 @@ impl OwnStates {
     /// ### make_choices
     ///
     /// Set OwnStates choices from a vector of text spans
-    pub fn make_choices(&mut self, spans: &Vec<TextSpan>) {
+    pub fn make_choices(&mut self, spans: &[TextSpan]) {
         self.choices = spans.iter().map(|x| x.content.clone()).collect();
     }
 }

@@ -274,14 +274,10 @@ impl AuthActivity {
                             Some(Payload::Text(s)) => s,
                             _ => String::new(),
                         };
-                    let save_pwd: bool =
-                        match self.view.get_value(COMPONENT_RADIO_BOOKMARK_SAVE_PWD) {
-                            Some(Payload::Unsigned(idx)) => match idx {
-                                0 => true,
-                                _ => false,
-                            },
-                            _ => false,
-                        };
+                    let save_pwd: bool = matches!(
+                        self.view.get_value(COMPONENT_RADIO_BOOKMARK_SAVE_PWD),
+                        Some(Payload::Unsigned(0))
+                    );
                     // Save bookmark
                     self.save_bookmark(bookmark_name, save_pwd);
                     // Umount popup

@@ -6,7 +6,7 @@
 
 ~ Basically, WinSCP on a terminal ~  
 Developed by Christian Visintin  
-Current version: 0.4.0 FIXME: (28/02/2021)
+Current version: 0.4.0 (27/03/2021)
 
 ---
 
@@ -351,6 +351,7 @@ If left empty, the default formatter syntax will be used: `{NAME:24} {PEX} {USER
 | `<C>`         | Copy file/directory                                   | Copy        |
 | `<D>`         | Make directory                                        | Directory   |
 | `<E>`         | Delete file (Same as `DEL`)                           | Erase       |
+| `<F>`         | Search for files (wild match is supported)            | Find        |
 | `<G>`         | Go to supplied path                                   | Go to       |
 | `<H>`         | Show help                                             | Help        |
 | `<I>`         | Show info about selected file or directory            | Info        |
@@ -380,7 +381,16 @@ The developer documentation can be found on Rust Docs at <https://docs.rs/termsc
 
 ## Upcoming Features 🧪
 
-FIXME: add new
+- **Themes provider**: I'm still thinking about how I will implement this, but basically the idea is to have a configuration file where it will be possible
+    to define the color schema for the entire application. I haven't planned this release yet
+
+No other new feature is planned at the moment. I actually think that termscp is getting mature and now I should focus upcoming updates more on bug fixing and
+code/performance improvements than on new features.
+Anyway there are some ideas which I'd like to implement. If you want to start working on them, feel free to open a PR:
+
+- Amazon S3 support
+- Samba support
+- Themes provider
 
 ---
 
