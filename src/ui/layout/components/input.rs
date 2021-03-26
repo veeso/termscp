@@ -206,8 +206,7 @@ impl Component for Input {
             render.render_widget(p, area);
             // Set cursor, if focus
             if self.states.focus {
-                let x: u16 =
-                    area.x + (self.states.cursor as u16) + 1;
+                let x: u16 = area.x + (self.states.cursor as u16) + 1;
                 render.set_cursor(x, area.y + 1);
             }
         }

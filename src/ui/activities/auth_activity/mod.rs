@@ -194,7 +194,7 @@ impl Activity for AuthActivity {
     }
 
     /// ### will_umount
-    /// 
+    ///
     /// `will_umount` is the method which must be able to report to the activity manager, whether
     /// the activity should be terminated or not.
     /// If not, the call will return `None`, otherwise return`Some(ExitReason)`

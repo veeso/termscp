@@ -185,7 +185,9 @@ impl View {
             if let Some(active_component) = self.focus.take() {
                 if active_component != component {
                     // Blur active component if are different
-                    if let Some(active_component) = self.components.get_mut(active_component.as_str()) {
+                    if let Some(active_component) =
+                        self.components.get_mut(active_component.as_str())
+                    {
                         active_component.blur();
                     }
                 }

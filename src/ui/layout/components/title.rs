@@ -26,11 +26,7 @@
 // locals
 use super::{Canvas, Component, InputEvent, Msg, Payload, Props, PropsBuilder};
 // ext
-use tui::{
-    layout::Rect,
-    style::Style,
-    widgets::Paragraph,
-};
+use tui::{layout::Rect, style::Style, widgets::Paragraph};
 
 // -- state
 

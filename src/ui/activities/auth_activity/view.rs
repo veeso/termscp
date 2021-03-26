@@ -26,8 +26,8 @@
 // Locals
 use super::{AuthActivity, Context, FileTransferProtocol};
 use crate::ui::layout::components::{
-    bookmark_list::BookmarkList, msgbox::MsgBox, input::Input, radio_group::RadioGroup, table::Table,
-    text::Text, title::Title,
+    bookmark_list::BookmarkList, input::Input, msgbox::MsgBox, radio_group::RadioGroup,
+    table::Table, text::Text, title::Title,
 };
 use crate::ui::layout::props::{
     InputType, PropValue, PropsBuilder, TableBuilder, TextParts, TextSpan, TextSpanBuilder,

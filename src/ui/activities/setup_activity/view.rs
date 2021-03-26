@@ -29,8 +29,8 @@ use super::{Context, SetupActivity, ViewLayout};
 use crate::filetransfer::FileTransferProtocol;
 use crate::fs::explorer::GroupDirs;
 use crate::ui::layout::components::{
-    bookmark_list::BookmarkList, msgbox::MsgBox, input::Input, radio_group::RadioGroup, table::Table,
-    text::Text,
+    bookmark_list::BookmarkList, input::Input, msgbox::MsgBox, radio_group::RadioGroup,
+    table::Table, text::Text,
 };
 use crate::ui::layout::props::{
     PropValue, PropsBuilder, TableBuilder, TextParts, TextSpan, TextSpanBuilder,

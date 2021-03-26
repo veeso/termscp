@@ -26,8 +26,8 @@
 // Modules
 pub mod components;
 pub mod props;
-pub mod view;
 pub mod utils;
+pub mod view;
 
 // locals
 use props::{PropValue, Props, PropsBuilder};
