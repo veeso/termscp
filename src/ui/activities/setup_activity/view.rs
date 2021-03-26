@@ -26,7 +26,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
 // Locals
 use super::{Context, SetupActivity, ViewLayout};
 use crate::filetransfer::FileTransferProtocol;

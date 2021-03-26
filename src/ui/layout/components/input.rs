@@ -25,7 +25,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
 // locals
 use super::super::props::InputType;
 use super::{Canvas, Component, InputEvent, Msg, Payload, PropValue, Props, PropsBuilder};
