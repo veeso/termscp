@@ -131,7 +131,9 @@ impl FileExplorer {
     ///
     /// Delete file at provided index
     pub fn del_entry(&mut self, idx: usize) {
-        self.files.remove(idx);
+        if self.files.len() > idx {
+            self.files.remove(idx);
+        }
     }
 
     /*
