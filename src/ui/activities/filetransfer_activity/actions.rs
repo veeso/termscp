@@ -363,11 +363,12 @@ impl FileTransferActivity {
                     LogLevel::Error,
                     format!("Could not create file \"{}\": {}", file_path.display(), err),
                 );
+            } else {
+                self.log(
+                    LogLevel::Info,
+                    format!("Created file \"{}\"", file_path.display()).as_str(),
+                );
             }
-            self.log(
-                LogLevel::Info,
-                format!("Created file \"{}\"", file_path.display()).as_str(),
-            );
             // Reload files
             let path: PathBuf = self.local.wrkdir.clone();
             self.local_scan(path.as_path());
@@ -428,11 +429,13 @@ impl FileTransferActivity {
                                         LogLevel::Warn,
                                         format!("Could not finalize file: {}", err),
                                     );
+                                } else {
+                                    self.log(
+                                        LogLevel::Info,
+                                        format!("Created file \"{}\"", file_path.display())
+                                            .as_str(),
+                                    );
                                 }
-                                self.log(
-                                    LogLevel::Info,
-                                    format!("Created file \"{}\"", file_path.display()).as_str(),
-                                );
                                 // Reload files
                                 let path: PathBuf = self.remote.wrkdir.clone();
                                 self.remote_scan(path.as_path());
