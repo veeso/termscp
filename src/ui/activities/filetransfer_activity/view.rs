@@ -131,21 +131,29 @@ impl FileTransferActivity {
                 store.set_unsigned(super::STORAGE_LOGBOX_WIDTH, chunks[1].width as usize);
             }
             // Draw explorers
-            self.view
-                .render(super::COMPONENT_EXPLORER_LOCAL, f, tabs_chunks[0]);
-            self.view
-                .render(super::COMPONENT_EXPLORER_REMOTE, f, tabs_chunks[1]);
+            // @! Local explorer (Find or default)
+            match self.tab {
+                FileExplorerTab::FindLocal => {
+                    self.view
+                        .render(super::COMPONENT_EXPLORER_FIND, f, tabs_chunks[0])
+                }
+                _ => self
+                    .view
+                    .render(super::COMPONENT_EXPLORER_LOCAL, f, tabs_chunks[0]),
+            }
+            // @! Remote explorer (Find or default)
+            match self.tab {
+                FileExplorerTab::FindRemote => {
+                    self.view
+                        .render(super::COMPONENT_EXPLORER_FIND, f, tabs_chunks[1])
+                }
+                _ => self
+                    .view
+                    .render(super::COMPONENT_EXPLORER_REMOTE, f, tabs_chunks[1]),
+            }
             // Draw log box
             self.view.render(super::COMPONENT_LOG_BOX, f, chunks[1]);
-            // Draw popups
-            if let Some(mut props) = self.view.get_props(super::COMPONENT_EXPLORER_FIND) {
-                if props.build().visible {
-                    let popup = draw_area_in(f.size(), 60, 80);
-                    f.render_widget(Clear, popup);
-                    // make popup
-                    self.view.render(super::COMPONENT_EXPLORER_FIND, f, popup);
-                }
-            }
+            // @! Draw popups
             if let Some(mut props) = self.view.get_props(super::COMPONENT_INPUT_COPY) {
                 if props.build().visible {
                     let popup = draw_area_in(f.size(), 40, 10);
