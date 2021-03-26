@@ -1057,6 +1057,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
     fn test_filetransfer_scp_find() {
         let mut client: ScpFileTransfer = ScpFileTransfer::new(SshKeyStorage::empty());
         assert!(client
