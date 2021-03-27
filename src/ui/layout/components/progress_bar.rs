@@ -34,23 +34,10 @@ use tui::{
     widgets::{Block, Gauge},
 };
 
-// -- state
-
-struct OwnStates {
-    focus: bool,
-}
-
-impl Default for OwnStates {
-    fn default() -> Self {
-        OwnStates { focus: false }
-    }
-}
-
 // -- component
 
 pub struct ProgressBar {
     props: Props,
-    states: OwnStates,
 }
 
 impl ProgressBar {
@@ -58,10 +45,7 @@ impl ProgressBar {
     ///
     /// Instantiate a new Progress Bar
     pub fn new(props: Props) -> Self {
-        ProgressBar {
-            props,
-            states: OwnStates::default(),
-        }
+        ProgressBar { props }
     }
 }
 
@@ -156,16 +140,12 @@ impl Component for ProgressBar {
     /// ### blur
     ///
     /// Blur component
-    fn blur(&mut self) {
-        self.states.focus = false;
-    }
+    fn blur(&mut self) {}
 
     /// ### active
     ///
     /// Active component
-    fn active(&mut self) {
-        self.states.focus = true;
-    }
+    fn active(&mut self) {}
 }
 
 #[cfg(test)]
@@ -186,12 +166,6 @@ mod tests {
                 ))
                 .build(),
         );
-        // Focus
-        assert_eq!(component.states.focus, false);
-        component.active();
-        assert_eq!(component.states.focus, true);
-        component.blur();
-        assert_eq!(component.states.focus, false);
         // Get value
         assert_eq!(component.get_value(), Payload::None);
         // Event

@@ -214,7 +214,6 @@ pub struct FileTransferActivity {
     remote: FileExplorer,             // Remote File explorer state
     found: Option<FileExplorer>,      // File explorer for find result
     tab: FileExplorerTab,             // Current selected tab
-    log_index: usize,                 // Current log index entry selected
     log_records: VecDeque<LogRecord>, // Log records
     log_size: usize,                  // Log records size (max)
     transfer: TransferStates,         // Transfer states
@@ -244,7 +243,6 @@ impl FileTransferActivity {
             remote: Self::build_explorer(config_client.as_ref()),
             found: None,
             tab: FileExplorerTab::Local,
-            log_index: 0,
             log_records: VecDeque::with_capacity(256), // 256 events is enough I guess
             log_size: 256,                             // Must match with capacity
             transfer: TransferStates::default(),

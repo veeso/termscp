@@ -25,8 +25,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-use std::path::PathBuf;
-
 // Deps
 use crate::filetransfer::FileTransferProtocol;
 use crate::host::{HostError, Localhost};
@@ -39,6 +37,7 @@ use crate::ui::activities::{
 use crate::ui::context::{Context, FileTransferParams};
 
 // Namespaces
+use std::path::{Path, PathBuf};
 use std::thread::sleep;
 use std::time::Duration;
 
@@ -63,9 +62,9 @@ impl ActivityManager {
     /// ### new
     ///
     /// Initializes a new Activity Manager
-    pub fn new(local_dir: &PathBuf, interval: Duration) -> Result<ActivityManager, HostError> {
+    pub fn new(local_dir: &Path, interval: Duration) -> Result<ActivityManager, HostError> {
         // Prepare Context
-        let host: Localhost = match Localhost::new(local_dir.clone()) {
+        let host: Localhost = match Localhost::new(local_dir.to_path_buf()) {
             Ok(h) => h,
             Err(e) => return Err(e),
         };

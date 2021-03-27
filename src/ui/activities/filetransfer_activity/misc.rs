@@ -43,8 +43,6 @@ impl FileTransferActivity {
         }
         // Eventually push front the new record
         self.log_records.push_front(record);
-        // Set log index
-        self.log_index = 0;
         // Update log
         let msg = self.update_logbox();
         self.update(msg);

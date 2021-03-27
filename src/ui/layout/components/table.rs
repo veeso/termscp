@@ -35,18 +35,6 @@ use tui::{
     widgets::{Block, BorderType, List, ListItem},
 };
 
-// -- state
-
-struct OwnStates {
-    focus: bool,
-}
-
-impl Default for OwnStates {
-    fn default() -> Self {
-        OwnStates { focus: false }
-    }
-}
-
 // -- component
 
 /// ## Table
@@ -54,7 +42,6 @@ impl Default for OwnStates {
 /// Table is a table component. List n rows with n text span columns
 pub struct Table {
     props: Props,
-    states: OwnStates,
 }
 
 impl Table {
@@ -62,10 +49,7 @@ impl Table {
     ///
     /// Instantiate a new Table component
     pub fn new(props: Props) -> Self {
-        Table {
-            props,
-            states: OwnStates::default(),
-        }
+        Table { props }
     }
 }
 
@@ -168,16 +152,12 @@ impl Component for Table {
     /// ### blur
     ///
     /// Blur component
-    fn blur(&mut self) {
-        self.states.focus = false;
-    }
+    fn blur(&mut self) {}
 
     /// ### active
     ///
     /// Active component
-    fn active(&mut self) {
-        self.states.focus = true;
-    }
+    fn active(&mut self) {}
 }
 
 #[cfg(test)]
@@ -204,12 +184,6 @@ mod tests {
                 ))
                 .build(),
         );
-        // Focus
-        assert_eq!(component.states.focus, false);
-        component.active();
-        assert_eq!(component.states.focus, true);
-        component.blur();
-        assert_eq!(component.states.focus, false);
         // Get value
         assert_eq!(component.get_value(), Payload::None);
         // Event

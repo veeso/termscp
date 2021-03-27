@@ -30,23 +30,10 @@ use super::{Canvas, Component, InputEvent, Msg, Payload, Props, PropsBuilder};
 // ext
 use tui::{layout::Rect, style::Style, widgets::Paragraph};
 
-// -- state
-
-struct OwnStates {
-    focus: bool,
-}
-
-impl Default for OwnStates {
-    fn default() -> Self {
-        OwnStates { focus: false }
-    }
-}
-
 // -- component
 
 pub struct Title {
     props: Props,
-    states: OwnStates,
 }
 
 impl Title {
@@ -54,10 +41,7 @@ impl Title {
     ///
     /// Instantiate a new Title component
     pub fn new(props: Props) -> Self {
-        Title {
-            props,
-            states: OwnStates::default(),
-        }
+        Title { props }
     }
 }
 
@@ -134,16 +118,12 @@ impl Component for Title {
     /// ### blur
     ///
     /// Blur component
-    fn blur(&mut self) {
-        self.states.focus = false;
-    }
+    fn blur(&mut self) {}
 
     /// ### active
     ///
     /// Active component
-    fn active(&mut self) {
-        self.states.focus = true;
-    }
+    fn active(&mut self) {}
 }
 
 #[cfg(test)]
@@ -161,12 +141,6 @@ mod tests {
                 .with_texts(TextParts::new(Some(String::from("Title")), None))
                 .build(),
         );
-        // Focus
-        assert_eq!(component.states.focus, false);
-        component.active();
-        assert_eq!(component.states.focus, true);
-        component.blur();
-        assert_eq!(component.states.focus, false);
         // Get value
         assert_eq!(component.get_value(), Payload::None);
         // Event
