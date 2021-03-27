@@ -37,8 +37,13 @@ use std::path::{Path, PathBuf};
 /// Returns None, if it's not possible to get it
 pub fn init_config_dir() -> Result<Option<PathBuf>, String> {
     // Get file
+    #[cfg(not(test))]
     lazy_static! {
         static ref CONF_DIR: Option<PathBuf> = dirs::config_dir();
+    }
+    #[cfg(test)]
+    lazy_static! {
+        static ref CONF_DIR: Option<PathBuf> = Some(std::env::temp_dir());
     }
     if CONF_DIR.is_some() {
         // Get path of bookmarks
@@ -100,7 +105,7 @@ mod tests {
 
     #[test]
     fn test_system_environment_get_config_dir_err() {
-        let mut conf_dir: PathBuf = dirs::config_dir().unwrap();
+        let mut conf_dir: PathBuf = std::env::temp_dir();
         conf_dir.push("termscp");
         // Create file
         let mut f: File = OpenOptions::new()

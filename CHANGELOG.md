@@ -31,6 +31,7 @@ Released on 27/03/2021
   - Fixed a bug causing termscp to crash if removing a bookmark
   - Fixed file format cursor position in the GUI
   - Fixed a bug causing termscp to show two equal bookmarks when overwriting one.
+  - Fixed system tests which deleted the termscp configuration when launched
 - **LICENSE**: changed license to MIT
 - Dependencies:
   - Removed `unicode-width`
