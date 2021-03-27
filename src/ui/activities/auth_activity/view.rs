@@ -157,10 +157,8 @@ impl AuthActivity {
             self.view.mount(
                 super::COMPONENT_TEXT_NEW_VERSION,
                 Box::new(Text::new(
-                    PropsBuilder::default()
-                        .with_foreground(Color::Yellow)
-                        .with_texts(TextParts::new(None, Some(vec![TextSpan::from(format!("TermSCP {} is now available! Download it from <https://github.com/veeso/termscp/releases/latest>", version).as_str())])))
-                        .bold()
+                        PropsBuilder::default()
+                        .with_texts(TextParts::new(None, Some(vec![TextSpanBuilder::new(format!("TermSCP {} is now available! Download it from <https://github.com/veeso/termscp/releases/latest>", version).as_str()).with_foreground(Color::Yellow).bold().build()])))
                         .build()
                 ))
             );
@@ -218,7 +216,7 @@ impl AuthActivity {
             let auth_chunks = Layout::default()
                 .constraints(
                     [
-                        Constraint::Length(5), // header
+                        Constraint::Length(6), // header
                         Constraint::Length(1), // Version
                         Constraint::Length(3), // host
                         Constraint::Length(3), // port
