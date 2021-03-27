@@ -827,8 +827,9 @@ impl FileTransferActivity {
                 // Make log entries
                 let mut table: TableBuilder = TableBuilder::default();
                 for (idx, record) in self.log_records.iter().enumerate() {
-                    let record_rows = textwrap::wrap(record.msg.as_str(), (width as usize) - 38); // -35 'cause log prefix -3 cause of log line cursor
-                                                                                                  // Add row if not first row
+                    // Split rows by width  NOTE: -37 'cause log prefix -3 cause of log line cursor
+                    let record_rows = textwrap::wrap(record.msg.as_str(), (width as usize) - 40);
+                    // Add row if not first row
                     if idx > 0 {
                         table.add_row();
                     }
@@ -868,7 +869,7 @@ impl FileTransferActivity {
                             _ => {
                                 table.add_col(TextSpan::from(textwrap::indent(
                                     row.as_ref(),
-                                    "                                   ",
+                                    "                                        ",
                                 )));
                             }
                         }

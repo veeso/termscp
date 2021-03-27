@@ -29,6 +29,7 @@
 use super::{Canvas, Component, InputEvent, Msg, Payload, Props, PropsBuilder};
 // ext
 use crossterm::event::KeyCode;
+use std::collections::VecDeque;
 use tui::{
     layout::{Corner, Rect},
     style::Style,
@@ -145,7 +146,7 @@ impl Component for LogBox {
                     .iter()
                     .enumerate()
                     .map(|(idx, row)| {
-                        let mut columns: Vec<Span> = row
+                        let mut columns: VecDeque<Span> = row
                             .iter()
                             .map(|col| {
                                 Span::styled(
@@ -157,9 +158,10 @@ impl Component for LogBox {
                                 )
                             })
                             .collect();
-                        let mut row: Vec<Span> = Vec::with_capacity(columns.len() + 1);
-                        // Push green cursor if selected line
-                        row.push(Span::styled(
+                        // Let's convert column spans into Spans rows NOTE: -4 because first line is always made by 5 columns; but there's always 1
+                        let mut rows: Vec<Spans> = Vec::with_capacity(columns.len() - 4);
+                        // Get first row
+                        let mut first_row: Vec<Span> = vec![Span::styled(
                             match self.states.list_index == idx {
                                 true => "> ",
                                 false => "  ",
@@ -167,9 +169,21 @@ impl Component for LogBox {
                             Style::default()
                                 .fg(self.props.foreground)
                                 .bg(self.props.background),
-                        ));
-                        row.append(&mut columns);
-                        ListItem::new(Spans::from(row))
+                        )];
+                        for _ in 0..5 {
+                            if let Some(col) = columns.pop_front() {
+                                first_row.push(col);
+                            }
+                        }
+                        rows.push(Spans::from(first_row));
+                        // Fill remaining rows
+                        let cycles: usize = columns.len();
+                        for _ in 0..cycles {
+                            if let Some(col) = columns.pop_front() {
+                                rows.push(Spans::from(vec![col]));
+                            }
+                        }
+                        ListItem::new(rows)
                     })
                     .collect(), // Make List item from TextSpan
             };

@@ -449,7 +449,7 @@ impl FileTransferActivity {
                 // Reload files
                 self.log(
                     LogLevel::Info,
-                    format!("\"{}\" output: \"{}\"", input, output).as_ref(),
+                    format!("\"{}\": {}", input, output).as_ref(),
                 );
                 let wrkdir: PathBuf = self.local.wrkdir.clone();
                 self.local_scan(wrkdir.as_path());
@@ -470,7 +470,7 @@ impl FileTransferActivity {
                 // Reload files
                 self.log(
                     LogLevel::Info,
-                    format!("\"{}\" output: \"{}\"", input, output).as_ref(),
+                    format!("\"{}\": {}", input, output).as_ref(),
                 );
                 self.reload_remote_dir();
             }
