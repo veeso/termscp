@@ -45,10 +45,7 @@ impl AuthActivity {
     /// Update auth activity model based on msg
     /// The function exits when returns None
     pub(super) fn update(&mut self, msg: Option<(String, Msg)>) -> Option<(String, Msg)> {
-        let ref_msg: Option<(&str, &Msg)> = match msg.as_ref() {
-            None => None,
-            Some((s, msg)) => Some((s, msg)),
-        };
+        let ref_msg: Option<(&str, &Msg)> = msg.as_ref().map(|(s, msg)| (s.as_str(), msg));
         // Match msg
         match ref_msg {
             None => None, // Exit after None

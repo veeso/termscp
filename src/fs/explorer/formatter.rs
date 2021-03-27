@@ -510,10 +510,10 @@ impl Formatter {
                         None => None,
                     };
                     // Match format extra: group 2 + 1
-                    let fmt_extra: Option<String> = match &regex_match.get(5) {
-                        Some(extra) => Some(extra.as_str().to_string()),
-                        None => None,
-                    };
+                    let fmt_extra: Option<String> = regex_match
+                        .get(5)
+                        .as_ref()
+                        .map(|extra| extra.as_str().to_string());
                     // Create a callchain or push new element to its back
                     match callchain.as_mut() {
                         None => {

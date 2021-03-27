@@ -68,10 +68,7 @@ impl SetupActivity {
                 _ => None,
             };
             if let Some(idx) = idx {
-                let key: Option<String> = match config_cli.iter_ssh_keys().nth(idx) {
-                    Some(k) => Some(k.clone()),
-                    None => None,
-                };
+                let key: Option<String> = config_cli.iter_ssh_keys().nth(idx).cloned();
                 if let Some(key) = key {
                     match config_cli.get_ssh_key(&key) {
                         Ok(opt) => {

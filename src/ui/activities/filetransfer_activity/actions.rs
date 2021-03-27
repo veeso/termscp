@@ -185,10 +185,7 @@ impl FileTransferActivity {
     }
 
     pub(super) fn action_local_rename(&mut self, input: String) {
-        let entry: Option<FsEntry> = match self.get_local_file_entry() {
-            Some(f) => Some(f.clone()),
-            None => None,
-        };
+        let entry: Option<FsEntry> = self.get_local_file_entry().cloned();
         if let Some(entry) = entry {
             let mut dst_path: PathBuf = PathBuf::from(input);
             // Check if path is relative
@@ -265,10 +262,7 @@ impl FileTransferActivity {
     }
 
     pub(super) fn action_local_delete(&mut self) {
-        let entry: Option<FsEntry> = match self.get_local_file_entry() {
-            Some(f) => Some(f.clone()),
-            None => None,
-        };
+        let entry: Option<FsEntry> = self.get_local_file_entry().cloned();
         if let Some(entry) = entry {
             let full_path: PathBuf = entry.get_abs_path();
             // Delete file or directory and report status as popup
@@ -528,10 +522,7 @@ impl FileTransferActivity {
     }
 
     pub(super) fn action_find_transfer(&mut self, idx: usize, name: Option<String>) {
-        let entry: Option<FsEntry> = match self.found.as_ref().unwrap().get(idx) {
-            None => None,
-            Some(e) => Some(e.clone()),
-        };
+        let entry: Option<FsEntry> = self.found.as_ref().unwrap().get(idx).cloned();
         if let Some(entry) = entry {
             // Download file
             match self.tab {
@@ -548,10 +539,7 @@ impl FileTransferActivity {
     }
 
     pub(super) fn action_find_delete(&mut self, idx: usize) {
-        let entry: Option<FsEntry> = match self.found.as_ref().unwrap().get(idx) {
-            None => None,
-            Some(e) => Some(e.clone()),
-        };
+        let entry: Option<FsEntry> = self.found.as_ref().unwrap().get(idx).cloned();
         if let Some(entry) = entry {
             // Download file
             match self.tab {

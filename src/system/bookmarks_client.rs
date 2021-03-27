@@ -342,10 +342,7 @@ impl BookmarksClient {
             port,
             username,
             protocol: protocol.to_string(),
-            password: match password {
-                Some(p) => Some(self.encrypt_str(p.as_str())), // Encrypt password if provided
-                None => None,
-            },
+            password: password.map(|p| self.encrypt_str(p.as_str())),
         }
     }
 

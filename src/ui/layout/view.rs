@@ -99,10 +99,7 @@ impl View {
     ///
     /// Get component properties
     pub fn get_props(&self, id: &str) -> Option<PropsBuilder> {
-        match self.components.get(id) {
-            None => None,
-            Some(cmp) => Some(cmp.get_props()),
-        }
+        self.components.get(id).map(|cmp| cmp.get_props())
     }
 
     /// update
@@ -110,10 +107,9 @@ impl View {
     /// Update component properties
     /// Returns `None` if component doesn't exist
     pub fn update(&mut self, id: &str, props: Props) -> Option<(String, Msg)> {
-        match self.components.get_mut(id) {
-            None => None,
-            Some(cmp) => Some((id.to_string(), cmp.update(props))),
-        }
+        self.components
+            .get_mut(id)
+            .map(|cmp| (id.to_string(), cmp.update(props)))
     }
 
     // -- state
@@ -122,10 +118,7 @@ impl View {
     ///
     /// Get component value
     pub fn get_value(&self, id: &str) -> Option<Payload> {
-        match self.components.get(id) {
-            None => None,
-            Some(cmp) => Some(cmp.get_value()),
-        }
+        self.components.get(id).map(|cmp| cmp.get_value())
     }
 
     // -- events
@@ -137,10 +130,10 @@ impl View {
     pub fn on(&mut self, ev: InputEvent) -> Option<(String, Msg)> {
         match self.focus.as_ref() {
             None => None,
-            Some(id) => match self.components.get_mut(id) {
-                None => None,
-                Some(cmp) => Some((id.to_string(), cmp.on(ev))),
-            },
+            Some(id) => self
+                .components
+                .get_mut(id)
+                .map(|cmp| (id.to_string(), cmp.on(ev))),
         }
     }
 

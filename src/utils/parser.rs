@@ -154,10 +154,7 @@ pub fn parse_remote_opt(remote: &str) -> Result<RemoteOptions, String> {
                 };
             }
             // Get workdir
-            let wrkdir: Option<PathBuf> = match groups.get(5) {
-                Some(group) => Some(PathBuf::from(group.as_str())),
-                None => None,
-            };
+            let wrkdir: Option<PathBuf> = groups.get(5).map(|group| PathBuf::from(group.as_str()));
             Ok(RemoteOptions {
                 hostname,
                 port,
@@ -225,10 +222,7 @@ pub fn parse_datetime(tm: &str, fmt: &str) -> Result<SystemTime, ParseError> {
 /// Parse semver string
 pub fn parse_semver(haystack: &str) -> Option<String> {
     match SEMVER_REGEX.captures(haystack) {
-        Some(groups) => match groups.get(1) {
-            Some(version) => Some(version.as_str().to_string()),
-            None => None,
-        },
+        Some(groups) => groups.get(1).map(|version| version.as_str().to_string()),
         None => None,
     }
 }

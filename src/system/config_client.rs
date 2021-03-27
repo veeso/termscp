@@ -173,10 +173,7 @@ impl ConfigClient {
     /// Set value for group_dir in configuration.
     /// Provided value, if `Some` will be converted to `GroupDirs`
     pub fn set_group_dirs(&mut self, val: Option<GroupDirs>) {
-        self.config.user_interface.group_dirs = match val {
-            None => None,
-            Some(val) => Some(val.to_string()),
-        };
+        self.config.user_interface.group_dirs = val.map(|val| val.to_string());
     }
 
     /// ### get_file_fmt

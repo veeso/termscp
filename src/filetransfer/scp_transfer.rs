@@ -175,10 +175,10 @@ impl ScpFileTransfer {
                 let mut abs_path: PathBuf = PathBuf::from(path);
                 abs_path.push(file_name.as_str());
                 // Get extension
-                let extension: Option<String> = match abs_path.as_path().extension() {
-                    None => None,
-                    Some(s) => Some(String::from(s.to_string_lossy())),
-                };
+                let extension: Option<String> = abs_path
+                    .as_path()
+                    .extension()
+                    .map(|s| String::from(s.to_string_lossy()));
                 // Return
                 // Push to entries
                 Ok(match is_dir {
@@ -220,10 +220,7 @@ impl ScpFileTransfer {
     fn get_name_and_link(&self, token: &str) -> (String, Option<PathBuf>) {
         let tokens: Vec<&str> = token.split(" -> ").collect();
         let filename: String = String::from(*tokens.get(0).unwrap());
-        let symlink: Option<PathBuf> = match tokens.get(1) {
-            Some(s) => Some(PathBuf::from(s)),
-            None => None,
-        };
+        let symlink: Option<PathBuf> = tokens.get(1).map(PathBuf::from);
         (filename, symlink)
     }
 
@@ -382,10 +379,7 @@ impl FileTransfer for ScpFileTransfer {
             }
         }
         // Get banner
-        let banner: Option<String> = match session.banner() {
-            Some(s) => Some(String::from(s)),
-            None => None,
-        };
+        let banner: Option<String> = session.banner().map(String::from);
         // Set session
         self.session = Some(session);
         // Get working directory

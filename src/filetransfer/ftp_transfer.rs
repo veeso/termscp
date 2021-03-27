@@ -166,10 +166,10 @@ impl FtpFileTransfer {
                 let mut abs_path: PathBuf = PathBuf::from(path);
                 abs_path.push(file_name.as_str());
                 // get extension
-                let extension: Option<String> = match abs_path.as_path().extension() {
-                    None => None,
-                    Some(s) => Some(String::from(s.to_string_lossy())),
-                };
+                let extension: Option<String> = abs_path
+                    .as_path()
+                    .extension()
+                    .map(|s| String::from(s.to_string_lossy()));
                 // Return
                 // Push to entries
                 Ok(match is_dir {
@@ -254,10 +254,10 @@ impl FtpFileTransfer {
                 let mut abs_path: PathBuf = PathBuf::from(path);
                 abs_path.push(file_name.as_str());
                 // Get extension
-                let extension: Option<String> = match abs_path.as_path().extension() {
-                    None => None,
-                    Some(s) => Some(String::from(s.to_string_lossy())),
-                };
+                let extension: Option<String> = abs_path
+                    .as_path()
+                    .extension()
+                    .map(|s| String::from(s.to_string_lossy()));
                 // Return entry
                 Ok(match is_dir {
                     true => FsEntry::Directory(FsDirectory {

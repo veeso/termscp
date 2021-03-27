@@ -190,10 +190,7 @@ impl FileExplorer {
                 pass
             })
             .collect::<Vec<_>>();
-        match filtered.get(idx) {
-            None => None,
-            Some(file) => Some(file),
-        }
+        filtered.get(idx).copied()
     }
 
     // Formatting

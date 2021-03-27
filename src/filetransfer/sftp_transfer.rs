@@ -123,20 +123,18 @@ impl SftpFileTransfer {
     fn make_fsentry(&mut self, path: &Path, metadata: &FileStat) -> FsEntry {
         // Get common parameters
         let file_name: String = String::from(path.file_name().unwrap().to_str().unwrap_or(""));
-        let file_type: Option<String> = match path.extension() {
-            Some(ext) => Some(String::from(ext.to_str().unwrap_or(""))),
-            None => None,
-        };
+        let file_type: Option<String> = path
+            .extension()
+            .map(|ext| String::from(ext.to_str().unwrap_or("")));
         let uid: Option<u32> = metadata.uid;
         let gid: Option<u32> = metadata.gid;
-        let pex: Option<(u8, u8, u8)> = match metadata.perm {
-            Some(perms) => Some((
-                ((perms >> 6) & 0x7) as u8,
-                ((perms >> 3) & 0x7) as u8,
-                (perms & 0x7) as u8,
-            )),
-            None => None,
-        };
+        let pex: Option<(u8, u8, u8)> = metadata.perm.map(|x| {
+            (
+                ((x >> 6) & 0x7) as u8,
+                ((x >> 3) & 0x7) as u8,
+                (x & 0x7) as u8,
+            )
+        });
         let size: u64 = metadata.size.unwrap_or(0);
         let mut atime: SystemTime = SystemTime::UNIX_EPOCH;
         atime = atime
@@ -365,10 +363,7 @@ impl FileTransfer for SftpFileTransfer {
             }
         };
         // Set session
-        let banner: Option<String> = match session.banner() {
-            Some(s) => Some(String::from(s)),
-            None => None,
-        };
+        let banner: Option<String> = session.banner().map(String::from);
         self.session = Some(session);
         // Set sftp
         self.sftp = Some(sftp);

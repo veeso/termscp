@@ -57,10 +57,7 @@ impl FileTransferActivity {
     /// Update auth activity model based on msg
     /// The function exits when returns None
     pub(super) fn update(&mut self, msg: Option<(String, Msg)>) -> Option<(String, Msg)> {
-        let ref_msg: Option<(&str, &Msg)> = match msg.as_ref() {
-            None => None,
-            Some((s, msg)) => Some((s, msg)),
-        };
+        let ref_msg: Option<(&str, &Msg)> = msg.as_ref().map(|(s, msg)| (s.as_str(), msg));
         // Match msg
         match ref_msg {
             None => None, // Exit after None
@@ -132,10 +129,7 @@ impl FileTransferActivity {
                     self.update_local_filelist()
                 }
                 (COMPONENT_EXPLORER_LOCAL, &MSG_KEY_CHAR_I) => {
-                    let file: Option<FsEntry> = match self.get_local_file_entry() {
-                        Some(f) => Some(f.clone()),
-                        None => None,
-                    };
+                    let file: Option<FsEntry> = self.get_local_file_entry().cloned();
                     if let Some(file) = file {
                         self.mount_file_info(&file);
                     }
@@ -251,10 +245,7 @@ impl FileTransferActivity {
                     self.update_remote_filelist()
                 }
                 (COMPONENT_EXPLORER_REMOTE, &MSG_KEY_CHAR_I) => {
-                    let file: Option<FsEntry> = match self.get_remote_file_entry() {
-                        Some(f) => Some(f.clone()),
-                        None => None,
-                    };
+                    let file: Option<FsEntry> = self.get_remote_file_entry().cloned();
                     if let Some(file) = file {
                         self.mount_file_info(&file);
                     }

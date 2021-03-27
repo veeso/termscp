@@ -353,10 +353,9 @@ impl Localhost {
             }),
             false => {
                 // Is File
-                let extension: Option<String> = match path.extension() {
-                    Some(s) => Some(String::from(s.to_str().unwrap_or(""))),
-                    None => None,
-                };
+                let extension: Option<String> = path
+                    .extension()
+                    .map(|s| String::from(s.to_str().unwrap_or("")));
                 FsEntry::File(FsFile {
                     name: file_name,
                     abs_path: path.clone(),
@@ -534,13 +533,11 @@ impl Localhost {
             Err(err) => return Err(HostError::new(HostErrorType::DirNotAccessible, Some(err))),
         };
         let mut fs_entries: Vec<FsEntry> = Vec::new();
-        for entry in entries {
-            if let Ok(entry) = entry {
-                fs_entries.push(match self.stat(entry.path().as_path()) {
-                    Ok(entry) => entry,
-                    Err(err) => return Err(err),
-                });
-            }
+        for entry in entries.flatten() {
+            fs_entries.push(match self.stat(entry.path().as_path()) {
+                Ok(entry) => entry,
+                Err(err) => return Err(err),
+            });
         }
         Ok(fs_entries)
     }
