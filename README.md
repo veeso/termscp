@@ -445,6 +445,8 @@ TermSCP is powered by these aweseome projects:
 
 ## License 📃
 
-termscp is licensed under the MIT license since 0.4.0 version. *Older version are licensed under the [GPL-V3](http://www.gnu.org/licenses/gpl-3.0.txt) license.
+termscp is licensed under the MIT license since version 0.4.0.
 
 You can read the entire license [HERE](LICENSE)
+
+*Older version (0.1.0 ~ 0.3.3) are licensed under the [GPL-V3](http://www.gnu.org/licenses/gpl-3.0.txt) license*

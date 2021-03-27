@@ -9,6 +9,7 @@ Please note we have a [code of conduct](CODE_OF_CONDUCT.md), please follow it in
   - [Developer contributions guide](#developer-contributions-guide)
     - [How TermSCP works](#how-termscp-works)
       - [Activities](#activities)
+      - [The Context](#the-context)
     - [Tests fails due to receivers](#tests-fails-due-to-receivers)
     - [Implementing File Transfers](#implementing-file-transfers)
 
@@ -18,9 +19,10 @@ Please note we have a [code of conduct](CODE_OF_CONDUCT.md), please follow it in
 
 At the moment, these kind of contributions are more appreciated and should be preferred:
 
-- Fix for issues described in [Known Issues](./README.md#known-issues) or [issues reported by the community](https://github.com/veeso/termscp/issues)
+- Fix for issues described in [Known Issues](./README.md#known-issues-) or [issues reported by the community](https://github.com/veeso/termscp/issues)
 - New file transfers: for further details see [Implementing File Transfer](#implementing-file-transfers)
 - Code optimizations: any optimization to the code is welcome
+- See also features described in [Upcoming features](./README.md##upcoming-features-). Open an issue first though.
 
 For any other kind of contribution, especially for new features, please submit an issue first.
 
@@ -28,10 +30,10 @@ For any other kind of contribution, especially for new features, please submit a
 
 Let's make it simple and clear:
 
-1. Open an issue with an **appropriate label** (e.g. bug, enhancement, ...).
+1. Open a PR with an **appropriate label** (e.g. bug, enhancement, ...).
 2. Write a **properly documentation** compliant with **rustdoc** standard.
-3. Write tests for your code. This doesn't apply necessarily for implementation regarding the user-interface module (`ui`) and (if a test server is not available) for file transfers.
-4. Report changes to the issue you opened, writing a report of what you changed and what you have introduced.
+3. Write tests for your code. This doesn't apply necessarily for implementation regarding the user-interface module (`ui/activities`) and (if a test server is not available) for file transfers.
+4. Report changes to the PR you opened, writing a report of what you changed and what you have introduced.
 5. Update the `CHANGELOG.md` file with details of changes to the application. In changelog report changes under a chapter called `PR{PULL_REQUEST_NUMBER}` (e.g. PR12).
 6. Request maintainers to merge your changes.
 
@@ -49,20 +51,44 @@ TermSCP is basically made up of 4 components:
 - the **ui**: this module contains the implementation of the user interface, as we'll see in the next chapter, this is achieved through **activities**.
 - the **activity_manager**: the activity manager takes care of managing activities, basically it runs the activities of the user interface, and chooses, based on their state, when is the moment to terminate the current activity and which activity to run after the current one.
 
+In addition to the 4 main components, other have been added through the time:
+
+- **config**: this module provides the configuration schema and serialization methods for it.
+- **fs**: this modules exposes the FsEntry entity and the explorers. The explorers are structs which hold the content of the current directory; they also they take of filtering files up to your preferences and format file entries based on your configuration.
+- **system**: the system module provides a way to actually interact with the configuration, the ssh key storage and with the bookmarks.
+- **utils**: contains the utilities used by pretty much all the project.
+
 #### Activities
 
 Just a little paragraph about activities. Really, read the code and the documentation to have a clear idea of how the ui works.
-I think there are many ways to implement a user interface; for termscp, I decided to go for a **Android-like** approach.
-Android works with Activity, each activity represents a view and there is a context shared between them, and so it works here.
+I think there are many ways to implement a user interface and I've worked with different languages and frameworks in my career, so for this project I've decided to get what I like the most from different frameworks to implement it.
 
-Just a little note about activities, activities work with a `Context`, the context is a data holder for different data, which are shared and common between the activities.
+My approach was this:
+
+- **Activities on top**: each "page" is an Activity and an `Activity Manager` handles them. I got inspired by Android for this case. I think that's a good way to implement the ui in case like this, where you have different pages, each one with their view, their components and their logics. Activities work with the `Context`, which is a data holder for different data, which are shared and common between the activities.
+- **Activities display Views**: Each activity can show different views. A view is basically a list of **components**, each one with its properties. The view is a facade to the components and also handles the focus, which is the current active component. You cannot have more than one component active, so you need to handle this; but at the same time you also have to give focus to the previously active component if the current one is destroyed. So basically view takes care of all this stuff.
+- **Components**: I've decided to write around `tui` in order to re-use widgets. To do so I've implemented the `Component` trait. To implement traits I got inspired by [React](https://reactjs.org/). Each component has its *Properties* and can have its *States*. Then each component must be able to handle input events and to be updated with new properties. Last but not least, each component must provide a method to **render** itself.
+- **Messages: an Elm based approach**: I was really satisfied with my implementation choices; the problem at this point was solving one of the biggest teardrops I've ever had with this project: **events**. Input events were really a pain to handle, since I had to handle states in the activity to handle which component was enabled etc. To solve this I got inspired by a wonderful language I had recently studied, which is [Elm](https://elm-lang.org/). Basically in Elm you implement your ui using three basic functions: **update**, **view** and **init**. View and init were pretty much already implemented here, but at this point I decided to implement also something like the **elm update function**. I came out with a huge match case to handle events inside a recursive function, which you can basically find in the `update.rs` file inside each activity. This match case handles a tuple, made out of the **component id** and the **input event** received from the view. It matches the two propeties against the input event we want to handle for each component *et voilà*.
 
 I've implemented a Trait called `Activity`, which, is a very very reduced version of the Android activity of course.
 This trait provides only 3 methods:
 
 - `on_create`: this method must initialize the activity; the context is passed to the activity, which will be the only owner of the Context, until the activity terminates.
 - `on_draw`: this method must be called each time you want to perform an update of the user interface. This is basically the run method of the activity. This method also cares about handling input events. The developer shouldn't draw the interface on each call of this method (consider that this method might be called hundreds of times per second), but only when actually something has changed (for example after an input event has been raised).
+- `will_umount`: this method was added in 0.4.0 and returns whethere the activity should be destroyed. If so returns an ExitReason, which indicates why the activity should be terminated. Based on the reason, the activity manager chooses whether to stop the execution of termscp or to start a new activity and which one.
 - `on_destroy`: this method finalizes the activity and drops it; this method returns the Context to the caller (the activity manager).
+
+#### The Context
+
+The context is a structure which holds data which must be shared between activities. Everytime an Activity starts, the Context is taken by the activity, until it is destroyed, where finally the context is returned to the activity manager.
+The context basically holds the following data:
+
+- The **Localhost**: the local host structure
+- The **File Transfer Params**: the current parameters set to connect to the remote
+- The **Config Client**: the configuration client is a structure which provides functions to access the user configuration
+- The **Store**: the store is a key-value storage which can hold any kind of data. This can be used to store states to share between activities or to keep persistence for heavy/slow tasks (such as checking for updates).
+- The **Input handler**: the input handler is used to read input events from the keyboard
+- The **Terminal**: the terminal is used to view the tui on the terminal
 
 ---
 
