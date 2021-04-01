@@ -19,6 +19,9 @@
 
 Released on FIXME:
 
+- Bugfix:
+  - [Issue 10](https://github.com/veeso/termscp/issues/10): Fixed port not being loaded from bookmarks into gui
+
 ## 0.4.0
 
 Released on 27/03/2021

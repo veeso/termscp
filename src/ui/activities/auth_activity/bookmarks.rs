@@ -251,7 +251,7 @@ impl AuthActivity {
             self.view.update(super::COMPONENT_INPUT_ADDR, props);
         }
         if let Some(mut props) = self.view.get_props(super::COMPONENT_INPUT_PORT) {
-            let props = props.with_value(PropValue::Unsigned(port as usize)).build();
+            let props = props.with_value(PropValue::Str(port.to_string())).build();
             self.view.update(super::COMPONENT_INPUT_PORT, props);
         }
         if let Some(mut props) = self.view.get_props(super::COMPONENT_RADIO_PROTOCOL) {
