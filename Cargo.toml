@@ -41,11 +41,17 @@ ureq = { version = "2.0.2", features = ["json"] }
 whoami = "1.1.0"
 wildmatch = "1.0.13"
 
+# POSIX dependencies
 [target.'cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))'.dependencies]
 users = "0.11.0"
 
+# Windows + MacOS
 [target.'cfg(any(target_os = "windows", target_os = "macos"))'.dependencies]
 keyring = "0.10.1"
+
+# Windows dependencies
+[target.'cfg(target_os = "windows")'.dependencies]
+path-slash = "0.1.4"
 
 # Features
 [features]

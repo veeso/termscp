@@ -21,6 +21,9 @@ Released on FIXME:
 
 - Bugfix:
   - [Issue 10](https://github.com/veeso/termscp/issues/10): Fixed port not being loaded from bookmarks into gui
+  - [Issue 9](https://github.com/veeso/termscp/issues/9): Fixed issues related to paths on remote when using Windows
+- Dependencies:
+  - Added `path-slash 0.1.4` (Windows only)
 
 ## 0.4.0
 
