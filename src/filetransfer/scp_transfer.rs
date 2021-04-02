@@ -26,6 +26,8 @@
  * SOFTWARE.
  */
 // Dependencies
+#[cfg(os_target = "windows")]
+extern crate path_slash;
 extern crate regex;
 extern crate ssh2;
 
@@ -63,6 +65,20 @@ impl ScpFileTransfer {
             wrkdir: PathBuf::from("~"),
             key_storage,
         }
+    }
+
+    /// ### resolve
+    ///
+    /// Fix provided path; on Windows fixes the backslashes, converting them to slashes
+    /// While on POSIX does nothing
+    #[cfg(target_os = "windows")]
+    fn resolve(p: &Path) -> PathBuf {
+        PathBuf::from(path_slash::PathExt::to_slash_lossy(p).as_str())
+    }
+
+    #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
+    fn resolve(p: &Path) -> PathBuf {
+        p.to_path_buf()
     }
 
     /// ### parse_ls_output
@@ -174,6 +190,7 @@ impl ScpFileTransfer {
                 }
                 let mut abs_path: PathBuf = PathBuf::from(path);
                 abs_path.push(file_name.as_str());
+                let abs_path: PathBuf = Self::resolve(abs_path.as_path());
                 // Get extension
                 let extension: Option<String> = abs_path
                     .as_path()
@@ -448,7 +465,7 @@ impl FileTransfer for ScpFileTransfer {
                     false => {
                         let mut p: PathBuf = PathBuf::from(".");
                         p.push(dir);
-                        p
+                        Self::resolve(p.as_path())
                     }
                 };
                 // Change directory
@@ -491,6 +508,7 @@ impl FileTransfer for ScpFileTransfer {
     fn copy(&mut self, src: &FsEntry, dst: &Path) -> Result<(), FileTransferError> {
         match self.is_connected() {
             true => {
+                let dst: PathBuf = Self::resolve(dst);
                 // Run `cp -rf`
                 let p: PathBuf = self.wrkdir.clone();
                 match self.perform_shell_cmd_with_path(
@@ -534,6 +552,7 @@ impl FileTransfer for ScpFileTransfer {
         match self.is_connected() {
             true => {
                 // Send ls -l to path
+                let path: PathBuf = Self::resolve(path);
                 let p: PathBuf = self.wrkdir.clone();
                 match self.perform_shell_cmd_with_path(
                     p.as_path(),
@@ -546,7 +565,7 @@ impl FileTransfer for ScpFileTransfer {
                         for line in lines.iter() {
                             // First line must always be ignored
                             // Parse row, if ok push to entries
-                            if let Ok(entry) = self.parse_ls_output(path, line) {
+                            if let Ok(entry) = self.parse_ls_output(path.as_path(), line) {
                                 entries.push(entry);
                             }
                         }
@@ -571,6 +590,7 @@ impl FileTransfer for ScpFileTransfer {
     fn mkdir(&mut self, dir: &Path) -> Result<(), FileTransferError> {
         match self.is_connected() {
             true => {
+                let dir: PathBuf = Self::resolve(dir);
                 let p: PathBuf = self.wrkdir.clone();
                 // Mkdir dir && echo 0
                 match self.perform_shell_cmd_with_path(
@@ -644,6 +664,7 @@ impl FileTransfer for ScpFileTransfer {
         match self.is_connected() {
             true => {
                 // Get path
+                let dst: PathBuf = Self::resolve(dst);
                 let path: PathBuf = file.get_abs_path();
                 let p: PathBuf = self.wrkdir.clone();
                 match self.perform_shell_cmd_with_path(
@@ -693,7 +714,7 @@ impl FileTransfer for ScpFileTransfer {
             false => {
                 let mut p: PathBuf = self.wrkdir.clone();
                 p.push(path);
-                p
+                Self::resolve(p.as_path())
             }
         };
         match self.is_connected() {
@@ -767,6 +788,7 @@ impl FileTransfer for ScpFileTransfer {
     ) -> Result<Box<dyn Write>, FileTransferError> {
         match self.session.as_ref() {
             Some(session) => {
+                let file_name: PathBuf = Self::resolve(file_name);
                 // Set blocking to true
                 session.set_blocking(true);
                 // Calculate file mode
@@ -798,7 +820,7 @@ impl FileTransfer for ScpFileTransfer {
                     Err(_) => local.size as u64, // NOTE: fallback to fsentry size
                 };
                 // Send file
-                match session.scp_send(file_name, mode, file_size, Some(times)) {
+                match session.scp_send(file_name.as_path(), mode, file_size, Some(times)) {
                     Ok(channel) => Ok(Box::new(BufWriter::with_capacity(65536, channel))),
                     Err(err) => Err(FileTransferError::new_ex(
                         FileTransferErrorType::ProtocolError,
@@ -1053,7 +1075,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
+    //#[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
     fn test_filetransfer_scp_find() {
         let mut client: ScpFileTransfer = ScpFileTransfer::new(SshKeyStorage::empty());
         assert!(client
