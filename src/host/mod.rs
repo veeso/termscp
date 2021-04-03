@@ -680,7 +680,7 @@ impl Localhost {
                     match entry {
                         FsEntry::Directory(dir) => {
                             // If directory matches; push directory to drained
-                            if filter.is_match(dir.name.as_str()) {
+                            if filter.matches(dir.name.as_str()) {
                                 drained.push(FsEntry::Directory(dir.clone()));
                             }
                             match self.iter_search(dir.abs_path.as_path(), filter) {
@@ -689,7 +689,7 @@ impl Localhost {
                             }
                         }
                         FsEntry::File(file) => {
-                            if filter.is_match(file.name.as_str()) {
+                            if filter.matches(file.name.as_str()) {
                                 drained.push(FsEntry::File(file.clone()));
                             }
                         }

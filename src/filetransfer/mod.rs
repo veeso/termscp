@@ -275,7 +275,7 @@ pub trait FileTransfer {
                     match entry {
                         FsEntry::Directory(dir) => {
                             // If directory name, matches wildcard, push it to drained
-                            if filter.is_match(dir.name.as_str()) {
+                            if filter.matches(dir.name.as_str()) {
                                 drained.push(FsEntry::Directory(dir.clone()));
                             }
                             match self.iter_search(dir.abs_path.as_path(), filter) {
@@ -284,7 +284,7 @@ pub trait FileTransfer {
                             }
                         }
                         FsEntry::File(file) => {
-                            if filter.is_match(file.name.as_str()) {
+                            if filter.matches(file.name.as_str()) {
                                 drained.push(FsEntry::File(file.clone()));
                             }
                         }

@@ -25,6 +25,14 @@ Released on FIXME:
 - Dependencies:
   - Added `path-slash 0.1.4` (Windows only)
   - Added `thiserror 1.0.24`
+  - Updated `edit` to `0.1.3`
+  - Updated `magic-crypt` to `3.1.7`
+  - Updated `rand` to `0.8.3`
+  - Updated `regex` to `1.4.5`
+  - Updated `textwrap` to `0.13.4`
+  - Updated `ureq` to `2.1.0`
+  - Updated `whoami` to `1.1.1`
+  - Updated `wildmatch` to `2.0.0`
 
 ## 0.4.0
 
