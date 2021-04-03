@@ -30,7 +30,7 @@ use super::{Canvas, Component, InputEvent, Msg, Payload, Props, PropsBuilder};
 // ext
 use tui::{
     layout::Rect,
-    style::Style,
+    style::{Color, Style},
     text::{Span, Spans, Text as TuiText},
     widgets::Paragraph,
 };
@@ -64,12 +64,21 @@ impl Component for Text {
                 Some(rows) => rows
                     .iter()
                     .map(|x| {
+                        // Keep line color, or use default
+                        let fg: Color = match x.fg {
+                            Color::Reset => self.props.foreground,
+                            _ => x.fg,
+                        };
+                        let bg: Color = match x.bg {
+                            Color::Reset => self.props.background,
+                            _ => x.bg,
+                        };
                         Span::styled(
                             x.content.clone(),
                             Style::default()
                                 .add_modifier(x.get_modifiers())
-                                .fg(x.fg)
-                                .bg(x.bg),
+                                .fg(fg)
+                                .bg(bg),
                         )
                     })
                     .collect(),

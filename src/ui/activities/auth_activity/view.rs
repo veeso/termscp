@@ -61,7 +61,6 @@ impl AuthActivity {
             super::COMPONENT_TEXT_FOOTER,
             Box::new(Text::new(
                 PropsBuilder::default()
-                    .with_foreground(Color::White)
                     .with_texts(TextParts::new(
                         None,
                         Some(vec![
@@ -158,7 +157,8 @@ impl AuthActivity {
                 super::COMPONENT_TEXT_NEW_VERSION,
                 Box::new(Text::new(
                         PropsBuilder::default()
-                        .with_texts(TextParts::new(None, Some(vec![TextSpanBuilder::new(format!("TermSCP {} is now available! Download it from <https://github.com/veeso/termscp/releases/latest>", version).as_str()).with_foreground(Color::Yellow).bold().build()])))
+                        .with_foreground(Color::Yellow)
+                        .with_texts(TextParts::new(None, Some(vec![TextSpan::from(format!("TermSCP {} is now available! Download it from <https://github.com/veeso/termscp/releases/latest>", version))])))
                         .build()
                 ))
             );
