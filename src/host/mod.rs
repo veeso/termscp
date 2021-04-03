@@ -83,7 +83,7 @@ impl HostError {
         HostError {
             error,
             ioerr: errno,
-            path: Some(p.to_path_buf())
+            path: Some(p.to_path_buf()),
         }
     }
 }
@@ -131,7 +131,11 @@ impl Localhost {
         };
         // Check if dir exists
         if !host.file_exists(host.wrkdir.as_path()) {
-            return Err(HostError::new(HostErrorType::NoSuchFileOrDirectory, None, host.wrkdir.as_path()));
+            return Err(HostError::new(
+                HostErrorType::NoSuchFileOrDirectory,
+                None,
+                host.wrkdir.as_path(),
+            ));
         }
         // Retrieve files for provided path
         host.files = match host.scan_dir(host.wrkdir.as_path()) {
@@ -163,11 +167,19 @@ impl Localhost {
         let new_dir: PathBuf = self.to_abs_path(new_dir);
         // Check whether directory exists
         if !self.file_exists(new_dir.as_path()) {
-            return Err(HostError::new(HostErrorType::NoSuchFileOrDirectory, None, new_dir.as_path()));
+            return Err(HostError::new(
+                HostErrorType::NoSuchFileOrDirectory,
+                None,
+                new_dir.as_path(),
+            ));
         }
         // Change directory
         if std::env::set_current_dir(new_dir.as_path()).is_err() {
-            return Err(HostError::new(HostErrorType::NoSuchFileOrDirectory, None, new_dir.as_path()));
+            return Err(HostError::new(
+                HostErrorType::NoSuchFileOrDirectory,
+                None,
+                new_dir.as_path(),
+            ));
         }
         let prev_dir: PathBuf = self.wrkdir.clone(); // Backup location
                                                      // Update working directory
@@ -202,7 +214,13 @@ impl Localhost {
         if dir_path.exists() {
             match ignex {
                 true => return Ok(()),
-                false => return Err(HostError::new(HostErrorType::FileAlreadyExists, None, dir_path.as_path())),
+                false => {
+                    return Err(HostError::new(
+                        HostErrorType::FileAlreadyExists,
+                        None,
+                        dir_path.as_path(),
+                    ))
+                }
             }
         }
         match std::fs::create_dir(dir_path.as_path()) {
@@ -213,7 +231,11 @@ impl Localhost {
                 }
                 Ok(())
             }
-            Err(err) => Err(HostError::new(HostErrorType::CouldNotCreateFile, Some(err), dir_path.as_path())),
+            Err(err) => Err(HostError::new(
+                HostErrorType::CouldNotCreateFile,
+                Some(err),
+                dir_path.as_path(),
+            )),
         }
     }
 
@@ -225,7 +247,11 @@ impl Localhost {
             FsEntry::Directory(dir) => {
                 // If file doesn't exist; return error
                 if !dir.abs_path.as_path().exists() {
-                    return Err(HostError::new(HostErrorType::NoSuchFileOrDirectory, None, dir.abs_path.as_path()));
+                    return Err(HostError::new(
+                        HostErrorType::NoSuchFileOrDirectory,
+                        None,
+                        dir.abs_path.as_path(),
+                    ));
                 }
                 // Remove
                 match std::fs::remove_dir_all(dir.abs_path.as_path()) {
@@ -234,13 +260,21 @@ impl Localhost {
                         self.files = self.scan_dir(self.wrkdir.as_path())?;
                         Ok(())
                     }
-                    Err(err) => Err(HostError::new(HostErrorType::DeleteFailed, Some(err), dir.abs_path.as_path())),
+                    Err(err) => Err(HostError::new(
+                        HostErrorType::DeleteFailed,
+                        Some(err),
+                        dir.abs_path.as_path(),
+                    )),
                 }
             }
             FsEntry::File(file) => {
                 // If file doesn't exist; return error
                 if !file.abs_path.as_path().exists() {
-                    return Err(HostError::new(HostErrorType::NoSuchFileOrDirectory, None, file.abs_path.as_path()));
+                    return Err(HostError::new(
+                        HostErrorType::NoSuchFileOrDirectory,
+                        None,
+                        file.abs_path.as_path(),
+                    ));
                 }
                 // Remove
                 match std::fs::remove_file(file.abs_path.as_path()) {
@@ -249,7 +283,11 @@ impl Localhost {
                         self.files = self.scan_dir(self.wrkdir.as_path())?;
                         Ok(())
                     }
-                    Err(err) => Err(HostError::new(HostErrorType::DeleteFailed, Some(err), file.abs_path.as_path())),
+                    Err(err) => Err(HostError::new(
+                        HostErrorType::DeleteFailed,
+                        Some(err),
+                        file.abs_path.as_path(),
+                    )),
                 }
             }
         }
@@ -266,7 +304,11 @@ impl Localhost {
                 self.files = self.scan_dir(self.wrkdir.as_path())?;
                 Ok(())
             }
-            Err(err) => Err(HostError::new(HostErrorType::CouldNotCreateFile, Some(err), abs_path.as_path())),
+            Err(err) => Err(HostError::new(
+                HostErrorType::CouldNotCreateFile,
+                Some(err),
+                abs_path.as_path(),
+            )),
         }
     }
 
@@ -291,7 +333,11 @@ impl Localhost {
                 };
                 // Copy entry path to dst path
                 if let Err(err) = std::fs::copy(file.abs_path.as_path(), dst.as_path()) {
-                    return Err(HostError::new(HostErrorType::CouldNotCreateFile, Some(err), file.abs_path.as_path()));
+                    return Err(HostError::new(
+                        HostErrorType::CouldNotCreateFile,
+                        Some(err),
+                        file.abs_path.as_path(),
+                    ));
                 }
             }
             FsEntry::Directory(dir) => {
@@ -343,7 +389,13 @@ impl Localhost {
         let path: PathBuf = self.to_abs_path(path);
         let attr: Metadata = match fs::metadata(path.as_path()) {
             Ok(metadata) => metadata,
-            Err(err) => return Err(HostError::new(HostErrorType::FileNotAccessible, Some(err), path.as_path())),
+            Err(err) => {
+                return Err(HostError::new(
+                    HostErrorType::FileNotAccessible,
+                    Some(err),
+                    path.as_path(),
+                ))
+            }
         };
         let file_name: String = String::from(path.file_name().unwrap().to_str().unwrap_or(""));
         // Match dir / file
@@ -404,7 +456,13 @@ impl Localhost {
         let path: PathBuf = self.to_abs_path(path);
         let attr: Metadata = match fs::metadata(path.as_path()) {
             Ok(metadata) => metadata,
-            Err(err) => return Err(HostError::new(HostErrorType::FileNotAccessible, Some(err), path.as_path())),
+            Err(err) => {
+                return Err(HostError::new(
+                    HostErrorType::FileNotAccessible,
+                    Some(err),
+                    path.as_path(),
+                ))
+            }
         };
         let file_name: String = String::from(path.file_name().unwrap().to_str().unwrap_or(""));
         // Match dir / file
@@ -470,7 +528,11 @@ impl Localhost {
                 Ok(s) => Ok(s.to_string()),
                 Err(_) => Ok(String::new()),
             },
-            Err(err) => Err(HostError::new(HostErrorType::ExecutionFailed, Some(err), self.wrkdir.as_path())),
+            Err(err) => Err(HostError::new(
+                HostErrorType::ExecutionFailed,
+                Some(err),
+                self.wrkdir.as_path(),
+            )),
         }
     }
 
@@ -487,10 +549,18 @@ impl Localhost {
                 mpex.set_mode(self.mode_to_u32(pex));
                 match set_permissions(path.as_path(), mpex) {
                     Ok(_) => Ok(()),
-                    Err(err) => Err(HostError::new(HostErrorType::FileNotAccessible, Some(err), path.as_path())),
+                    Err(err) => Err(HostError::new(
+                        HostErrorType::FileNotAccessible,
+                        Some(err),
+                        path.as_path(),
+                    )),
                 }
             }
-            Err(err) => Err(HostError::new(HostErrorType::FileNotAccessible, Some(err), path.as_path())),
+            Err(err) => Err(HostError::new(
+                HostErrorType::FileNotAccessible,
+                Some(err),
+                path.as_path(),
+            )),
         }
     }
 
@@ -500,7 +570,11 @@ impl Localhost {
     pub fn open_file_read(&self, file: &Path) -> Result<File, HostError> {
         let file: PathBuf = self.to_abs_path(file);
         if !self.file_exists(file.as_path()) {
-            return Err(HostError::new(HostErrorType::NoSuchFileOrDirectory, None, file.as_path()));
+            return Err(HostError::new(
+                HostErrorType::NoSuchFileOrDirectory,
+                None,
+                file.as_path(),
+            ));
         }
         match OpenOptions::new()
             .create(false)
@@ -509,7 +583,11 @@ impl Localhost {
             .open(file.as_path())
         {
             Ok(f) => Ok(f),
-            Err(err) => Err(HostError::new(HostErrorType::FileNotAccessible, Some(err), file.as_path())),
+            Err(err) => Err(HostError::new(
+                HostErrorType::FileNotAccessible,
+                Some(err),
+                file.as_path(),
+            )),
         }
     }
 
@@ -526,8 +604,16 @@ impl Localhost {
         {
             Ok(f) => Ok(f),
             Err(err) => match self.file_exists(file.as_path()) {
-                true => Err(HostError::new(HostErrorType::ReadonlyFile, Some(err), file.as_path())),
-                false => Err(HostError::new(HostErrorType::FileNotAccessible, Some(err), file.as_path())),
+                true => Err(HostError::new(
+                    HostErrorType::ReadonlyFile,
+                    Some(err),
+                    file.as_path(),
+                )),
+                false => Err(HostError::new(
+                    HostErrorType::FileNotAccessible,
+                    Some(err),
+                    file.as_path(),
+                )),
             },
         }
     }
@@ -553,8 +639,12 @@ impl Localhost {
                     }
                 }
                 Ok(fs_entries)
-            },
-            Err(err) => Err(HostError::new(HostErrorType::DirNotAccessible, Some(err), dir)),
+            }
+            Err(err) => Err(HostError::new(
+                HostErrorType::DirNotAccessible,
+                Some(err),
+                dir,
+            )),
         }
     }
 
@@ -657,7 +747,8 @@ mod tests {
 
     #[test]
     fn test_host_error_new() {
-        let error: HostError = HostError::new(HostErrorType::CouldNotCreateFile, None, Path::new("/tmp"));
+        let error: HostError =
+            HostError::new(HostErrorType::CouldNotCreateFile, None, Path::new("/tmp"));
         assert!(error.ioerr.is_none());
         assert_eq!(error.path.as_ref().unwrap(), Path::new("/tmp"));
     }
@@ -1103,10 +1194,7 @@ mod tests {
             String::from("Could not access directory"),
         );
         assert_eq!(
-            format!(
-                "{}",
-                HostError::from(HostErrorType::NoSuchFileOrDirectory)
-            ),
+            format!("{}", HostError::from(HostErrorType::NoSuchFileOrDirectory)),
             String::from("No such file or directory")
         );
         assert_eq!(
