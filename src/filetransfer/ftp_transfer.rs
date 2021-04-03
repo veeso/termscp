@@ -28,6 +28,8 @@
 // Dependencies
 extern crate chrono;
 extern crate ftp4;
+#[cfg(os_target = "windows")]
+extern crate path_slash;
 extern crate regex;
 
 use super::{FileTransfer, FileTransferError, FileTransferErrorType};
@@ -59,6 +61,20 @@ impl FtpFileTransfer {
     /// Instantiates a new `FtpFileTransfer`
     pub fn new(ftps: bool) -> FtpFileTransfer {
         FtpFileTransfer { stream: None, ftps }
+    }
+
+    /// ### resolve
+    ///
+    /// Fix provided path; on Windows fixes the backslashes, converting them to slashes
+    /// While on POSIX does nothing
+    #[cfg(target_os = "windows")]
+    fn resolve(p: &Path) -> PathBuf {
+        PathBuf::from(path_slash::PathExt::to_slash_lossy(p).as_str())
+    }
+
+    #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
+    fn resolve(p: &Path) -> PathBuf {
+        p.to_path_buf()
     }
 
     /// ### parse_list_line
@@ -165,6 +181,7 @@ impl FtpFileTransfer {
                 }
                 let mut abs_path: PathBuf = PathBuf::from(path);
                 abs_path.push(file_name.as_str());
+                let abs_path: PathBuf = Self::resolve(abs_path.as_path());
                 // get extension
                 let extension: Option<String> = abs_path
                     .as_path()
@@ -253,6 +270,7 @@ impl FtpFileTransfer {
                 // Get absolute path
                 let mut abs_path: PathBuf = PathBuf::from(path);
                 abs_path.push(file_name.as_str());
+                let abs_path: PathBuf = Self::resolve(abs_path.as_path());
                 // Get extension
                 let extension: Option<String> = abs_path
                     .as_path()
@@ -411,9 +429,10 @@ impl FileTransfer for FtpFileTransfer {
     /// Change working directory
 
     fn change_dir(&mut self, dir: &Path) -> Result<PathBuf, FileTransferError> {
+        let dir: PathBuf = Self::resolve(dir);
         match &mut self.stream {
-            Some(stream) => match stream.cwd(&dir.to_string_lossy()) {
-                Ok(_) => Ok(PathBuf::from(dir)),
+            Some(stream) => match stream.cwd(&dir.as_path().to_string_lossy()) {
+                Ok(_) => Ok(dir),
                 Err(err) => Err(FileTransferError::new_ex(
                     FileTransferErrorType::ConnectionError,
                     format!("{}", err),
@@ -440,14 +459,15 @@ impl FileTransfer for FtpFileTransfer {
     /// List directory entries
 
     fn list_dir(&mut self, path: &Path) -> Result<Vec<FsEntry>, FileTransferError> {
+        let dir: PathBuf = Self::resolve(path);
         match &mut self.stream {
-            Some(stream) => match stream.list(Some(&path.to_string_lossy())) {
+            Some(stream) => match stream.list(Some(&dir.as_path().to_string_lossy())) {
                 Ok(entries) => {
                     // Prepare result
                     let mut result: Vec<FsEntry> = Vec::with_capacity(entries.len());
                     // Iterate over entries
                     for entry in entries.iter() {
-                        if let Ok(file) = self.parse_list_line(path, entry) {
+                        if let Ok(file) = self.parse_list_line(dir.as_path(), entry) {
                             result.push(file);
                         }
                     }
@@ -468,8 +488,9 @@ impl FileTransfer for FtpFileTransfer {
     ///
     /// Make directory
     fn mkdir(&mut self, dir: &Path) -> Result<(), FileTransferError> {
+        let dir: PathBuf = Self::resolve(dir);
         match &mut self.stream {
-            Some(stream) => match stream.mkdir(&dir.to_string_lossy()) {
+            Some(stream) => match stream.mkdir(&dir.as_path().to_string_lossy()) {
                 Ok(_) => Ok(()),
                 Err(err) => Err(FileTransferError::new_ex(
                     FileTransferErrorType::FileCreateDenied,
@@ -538,6 +559,7 @@ impl FileTransfer for FtpFileTransfer {
     ///
     /// Rename file or a directory
     fn rename(&mut self, file: &FsEntry, dst: &Path) -> Result<(), FileTransferError> {
+        let dst: PathBuf = Self::resolve(dst);
         match &mut self.stream {
             Some(stream) => {
                 // Get name
@@ -603,8 +625,9 @@ impl FileTransfer for FtpFileTransfer {
         _local: &FsFile,
         file_name: &Path,
     ) -> Result<Box<dyn Write>, FileTransferError> {
+        let file_name: PathBuf = Self::resolve(file_name);
         match &mut self.stream {
-            Some(stream) => match stream.put_with_stream(&file_name.to_string_lossy()) {
+            Some(stream) => match stream.put_with_stream(&file_name.as_path().to_string_lossy()) {
                 Ok(writer) => Ok(Box::new(writer)), // NOTE: don't use BufWriter here, since already returned by the library
                 Err(err) => Err(FileTransferError::new_ex(
                     FileTransferErrorType::FileCreateDenied,

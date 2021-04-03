@@ -931,6 +931,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "path-slash"
+version = "0.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3cacbb3c4ff353b534a67fb8d7524d00229da4cb1dc8c79f4db96e375ab5b619"
+
+[[package]]
 name = "percent-encoding"
 version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1397,6 +1403,7 @@ dependencies = [
  "keyring",
  "lazy_static",
  "magic-crypt",
+ "path-slash",
  "rand 0.8.2",
  "regex",
  "rpassword",
