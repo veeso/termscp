@@ -205,7 +205,17 @@ mod tests {
         // Get default
         let cfg: UserConfig = UserConfig::default();
         assert_eq!(cfg.user_interface.default_protocol, String::from("SFTP"));
-        assert_eq!(cfg.user_interface.text_editor, PathBuf::from("vim"));
+        // Text editor
+        #[cfg(target_os = "windows")]
+        assert_eq!(
+            PathBuf::from(cfg.user_interface.text_editor.file_name().unwrap()), // NOTE: since edit 0.1.3 real path is used
+            PathBuf::from("vim.EXE")
+        );
+        #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
+        assert_eq!(
+            PathBuf::from(cfg.user_interface.text_editor.file_name().unwrap()), // NOTE: since edit 0.1.3 real path is used
+            PathBuf::from("vim")
+        );
         assert_eq!(cfg.user_interface.check_for_updates.unwrap(), true);
         assert_eq!(cfg.remote.ssh_keys.len(), 0);
     }
