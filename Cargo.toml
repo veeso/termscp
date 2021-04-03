@@ -13,7 +13,6 @@ readme = "README.md"
 repository = "https://github.com/veeso/termscp"
 version = "0.4.1"
 
-[metadata]
 [metadata.rpm]
 package = "termscp"
 
@@ -23,6 +22,7 @@ buildflags = ["--release"]
 [metadata.rpm.targets]
 [metadata.rpm.targets.termscp]
 path = "/usr/bin/termscp"
+
 [[bin]]
 name = "termscp"
 path = "src/main.rs"
@@ -70,7 +70,6 @@ version = "2.0.2"
 [features]
 githubActions = []
 
-[target]
 [target."cfg(any(target_os = \"unix\", target_os = \"macos\", target_os = \"linux\"))"]
 [target."cfg(any(target_os = \"unix\", target_os = \"macos\", target_os = \"linux\"))".dependencies]
 users = "0.11.0"
