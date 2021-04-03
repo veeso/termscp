@@ -24,6 +24,7 @@ Released on FIXME:
   - [Issue 9](https://github.com/veeso/termscp/issues/9): Fixed issues related to paths on remote when using Windows
 - Dependencies:
   - Added `path-slash 0.1.4` (Windows only)
+  - Added `thiserror 1.0.24`
 
 ## 0.4.0
 

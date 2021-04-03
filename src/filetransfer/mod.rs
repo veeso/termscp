@@ -32,6 +32,7 @@ use crate::fs::{FsEntry, FsFile};
 // ext
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
+use thiserror::Error;
 use wildmatch::WildMatch;
 // exports
 pub mod ftp_transfer;
@@ -62,19 +63,31 @@ pub struct FileTransferError {
 ///
 /// FileTransferErrorType defines the possible errors available for a file transfer
 #[allow(dead_code)]
-#[derive(std::fmt::Debug)]
+#[derive(Error, Debug)]
 pub enum FileTransferErrorType {
+    #[error("Authentication failed")]
     AuthenticationFailed,
+    #[error("Bad address syntax")]
     BadAddress,
+    #[error("Connection error")]
     ConnectionError,
+    #[error("SSL error")]
     SslError,
+    #[error("Could not stat directory")]
     DirStatFailed,
+    #[error("Failed to create file")]
     FileCreateDenied,
+    #[error("IO error: {0}")]
     IoErr(std::io::Error),
+    #[error("No such file or directory")]
     NoSuchFileOrDirectory,
+    #[error("Not enough permissions")]
     PexError,
+    #[error("Protocol error")]
     ProtocolError,
+    #[error("Uninitialized session")]
     UninitializedSession,
+    #[error("Unsupported feature")]
     UnsupportedFeature,
 }
 
@@ -98,25 +111,9 @@ impl FileTransferError {
 
 impl std::fmt::Display for FileTransferError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        let err: String = match &self.code {
-            FileTransferErrorType::AuthenticationFailed => String::from("Authentication failed"),
-            FileTransferErrorType::BadAddress => String::from("Bad address syntax"),
-            FileTransferErrorType::ConnectionError => String::from("Connection error"),
-            FileTransferErrorType::DirStatFailed => String::from("Could not stat directory"),
-            FileTransferErrorType::FileCreateDenied => String::from("Failed to create file"),
-            FileTransferErrorType::IoErr(err) => format!("IO error: {}", err),
-            FileTransferErrorType::NoSuchFileOrDirectory => {
-                String::from("No such file or directory")
-            }
-            FileTransferErrorType::PexError => String::from("Not enough permissions"),
-            FileTransferErrorType::ProtocolError => String::from("Protocol error"),
-            FileTransferErrorType::SslError => String::from("SSL error"),
-            FileTransferErrorType::UninitializedSession => String::from("Uninitialized session"),
-            FileTransferErrorType::UnsupportedFeature => String::from("Unsupported feature"),
-        };
         match &self.msg {
-            Some(msg) => write!(f, "{} ({})", err, msg),
-            None => write!(f, "{}", err),
+            Some(msg) => write!(f, "{} ({})", self.code, msg),
+            None => write!(f, "{}", self.code),
         }
     }
 }

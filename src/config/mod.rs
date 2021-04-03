@@ -38,6 +38,7 @@ use crate::filetransfer::FileTransferProtocol;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
+use thiserror::Error;
 
 #[derive(Deserialize, Serialize, std::fmt::Debug)]
 /// ## UserConfig
@@ -117,10 +118,13 @@ pub struct SerializerError {
 /// ## SerializerErrorKind
 ///
 /// Describes the kind of error for the serializer/deserializer
-#[derive(std::fmt::Debug, PartialEq)]
+#[derive(Error, Debug)]
 pub enum SerializerErrorKind {
+    #[error("IO error")]
     IoError,
+    #[error("Serialization error")]
     SerializationError,
+    #[error("Syntax error")]
     SyntaxError,
 }
 
@@ -144,14 +148,9 @@ impl SerializerError {
 
 impl std::fmt::Display for SerializerError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        let err: String = match &self.kind {
-            SerializerErrorKind::IoError => String::from("IO error"),
-            SerializerErrorKind::SerializationError => String::from("Serialization error"),
-            SerializerErrorKind::SyntaxError => String::from("Syntax error"),
-        };
         match &self.msg {
-            Some(msg) => write!(f, "{} ({})", err, msg),
-            None => write!(f, "{}", err),
+            Some(msg) => write!(f, "{} ({})", self.kind, msg),
+            None => write!(f, "{}", self.kind),
         }
     }
 }
@@ -214,12 +213,10 @@ mod tests {
     #[test]
     fn test_config_mod_errors() {
         let error: SerializerError = SerializerError::new(SerializerErrorKind::SyntaxError);
-        assert_eq!(error.kind, SerializerErrorKind::SyntaxError);
         assert!(error.msg.is_none());
         assert_eq!(format!("{}", error), String::from("Syntax error"));
         let error: SerializerError =
             SerializerError::new_ex(SerializerErrorKind::SyntaxError, String::from("bad syntax"));
-        assert_eq!(error.kind, SerializerErrorKind::SyntaxError);
         assert!(error.msg.is_some());
         assert_eq!(
             format!("{}", error),

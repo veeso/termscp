@@ -1,19 +1,31 @@
 [package]
-name = "termscp"
-version = "0.4.1"
 authors = ["Christian Visintin"]
-edition = "2018"
-license = "MIT"
-keywords = ["scp-client", "sftp-client", "ftp-client", "winscp", "command-line-utility"]
 categories = ["command-line-utilities"]
 description = "TermSCP is a SCP/SFTP/FTPS client for command line with an integrated UI to explore the remote file system. Basically WinSCP on a terminal."
-homepage = "https://github.com/veeso/termscp"
-repository = "https://github.com/veeso/termscp"
 documentation = "https://docs.rs/termscp"
-readme = "README.md"
+edition = "2018"
+homepage = "https://github.com/veeso/termscp"
 include = ["src/**/*", "LICENSE", "README.md", "CHANGELOG.md"]
+keywords = ["scp-client", "sftp-client", "ftp-client", "winscp", "command-line-utility"]
+license = "MIT"
+name = "termscp"
+readme = "README.md"
+repository = "https://github.com/veeso/termscp"
+version = "0.4.1"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[metadata.rpm]
+package = "termscp"
+
+[metadata.rpm.cargo]
+buildflags = ["--release"]
+
+[metadata.rpm.targets]
+[metadata.rpm.targets.termscp]
+path = "/usr/bin/termscp"
+
+[[bin]]
+name = "termscp"
+path = "src/main.rs"
 
 [dependencies]
 bitflags = "1.2.1"
@@ -23,7 +35,6 @@ content_inspector = "0.2.4"
 crossterm = "0.19.0"
 dirs = "3.0.1"
 edit = "0.1.2"
-ftp4 = { version = "^4.0.2", features = ["secure"] }
 getopts = "0.2.21"
 hostname = "0.3.1"
 lazy_static = "1.4.0"
@@ -31,41 +42,42 @@ magic-crypt = "3.1.6"
 rand = "0.8.2"
 regex = "1.4.2"
 rpassword = "5.0.1"
-serde = { version = "1.0.121", features = ["derive"] }
 ssh2 = "0.9.0"
 tempfile = "3.1.0"
 textwrap = "0.13.1"
+thiserror = "^1.0.0"
 toml = "0.5.8"
-tui = { version = "0.14.0", features = ["crossterm"], default-features = false }
-ureq = { version = "2.0.2", features = ["json"] }
 whoami = "1.1.0"
 wildmatch = "1.0.13"
 
-# POSIX dependencies
-[target.'cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))'.dependencies]
+[dependencies.ftp4]
+features = ["secure"]
+version = "^4.0.2"
+
+[dependencies.serde]
+features = ["derive"]
+version = "1.0.121"
+
+[dependencies.tui]
+default-features = false
+features = ["crossterm"]
+version = "0.14.0"
+
+[dependencies.ureq]
+features = ["json"]
+version = "2.0.2"
+
+[features]
+githubActions = []
+
+[target."cfg(any(target_os = \"unix\", target_os = \"macos\", target_os = \"linux\"))"]
+[target."cfg(any(target_os = \"unix\", target_os = \"macos\", target_os = \"linux\"))".dependencies]
 users = "0.11.0"
 
-# Windows + MacOS
-[target.'cfg(any(target_os = "windows", target_os = "macos"))'.dependencies]
+[target."cfg(any(target_os = \"windows\", target_os = \"macos\"))"]
+[target."cfg(any(target_os = \"windows\", target_os = \"macos\"))".dependencies]
 keyring = "0.10.1"
 
-# Windows dependencies
-[target.'cfg(target_os = "windows")'.dependencies]
+[target."cfg(target_os = \"windows\")"]
+[target."cfg(target_os = \"windows\")".dependencies]
 path-slash = "0.1.4"
-
-# Features
-[features]
-githubActions = [] # used to run particular on github actions
-
-[[bin]]
-name = "termscp"
-path = "src/main.rs"
-
-[package.metadata.rpm]
-package = "termscp"
-
-[package.metadata.rpm.cargo]
-buildflags = ["--release"]
-
-[package.metadata.rpm.targets]
-termscp = { path = "/usr/bin/termscp" }
