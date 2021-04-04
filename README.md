@@ -35,7 +35,7 @@ Current version: 0.4.1 FIXME: (27/03/2021)
   - [Documentation 📚](#documentation-)
   - [Known issues 🧻](#known-issues-)
   - [Upcoming Features 🧪](#upcoming-features-)
-  - [Contributions 🤝🏻](#contributions-)
+  - [Contributing and issues 🤝🏻](#contributing-and-issues-)
   - [Changelog ⏳](#changelog-)
   - [Powered by 🚀](#powered-by-)
   - [Gallery 🎬](#gallery-)
@@ -395,11 +395,14 @@ Anyway there are some ideas which I'd like to implement. If you want to start wo
 
 ---
 
-## Contributions 🤝🏻
+## Contributing and issues 🤝🏻
 
-Contributions are welcome! 😉
+Contributions, bug reports, new features and questions are welcome! 😉
+If you have any question or concern, or you want to suggest a new feature, or you want just want to improve termscp, feel free to open an issue or a PR.
 
-If you think you can contribute to TermSCP, please follow [TermSCP's contributions guide](CONTRIBUTING.md)
+Please follow [our contributing guidelines](CONTRIBUTING.md)
+
+---
 
 ## Changelog ⏳
 

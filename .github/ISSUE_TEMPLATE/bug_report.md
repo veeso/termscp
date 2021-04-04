@@ -1,9 +1,9 @@
 ---
 name: Bug report
-about: Create a report to help me improving TermSCP
-title: "[BUG]"
+about: Create a report of the bug you've encountered
+title: "[BUG] - ISSUE_TITLE"
 labels: bug
-assignees: ChristianVisintin
+assignees: veeso
 
 ---
 
@@ -24,7 +24,7 @@ A clear and concise description of what you expected to happen.
 - OS: [e.g. GNU/Linux Debian 10]
 - Architecture [Arm, x86_64, ...]
 - Rust version
-- TermSCP version
+- termscp version
 - Protocol used
 - Remote server version and name
 

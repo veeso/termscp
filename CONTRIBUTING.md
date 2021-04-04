@@ -4,14 +4,90 @@ Before contributing to this repository, please first discuss the change you wish
 Please note we have a [code of conduct](CODE_OF_CONDUCT.md), please follow it in all your interactions with the project.
 
 - [Contributing](#contributing)
+  - [Project mission](#project-mission)
+    - [Project goals](#project-goals)
+  - [Open an issue](#open-an-issue)
+    - [Questions](#questions)
+    - [Bug reports](#bug-reports)
+    - [Feature requests](#feature-requests)
   - [Preferred contributions](#preferred-contributions)
   - [Pull Request Process](#pull-request-process)
+    - [Software guidelines](#software-guidelines)
   - [Developer contributions guide](#developer-contributions-guide)
-    - [How TermSCP works](#how-termscp-works)
-      - [Activities](#activities)
-      - [The Context](#the-context)
-    - [Tests fails due to receivers](#tests-fails-due-to-receivers)
-    - [Implementing File Transfers](#implementing-file-transfers)
+
+---
+
+## Project mission
+
+TermSCP was born because, as a terminal lover and Linux user, I wanted something like WinSCP on Linux and on terminal. I my previous job I used SFTP/SCP pratically everyday and that made me to desire an application like termscp so much, that eventually I started to work on it in the spare time. I saw there was a very cool library to create terminal user interface (`tui-rs`), so I started to code it. I wrote termscp as an experiment, I designed kinda nothing at the time. I just said
+
+> Ok, there must be a `FileTransfer` trait somehow, I'll have more views, so I'll use something like Android activities, and there must be a module to interact with the local host".
+
+And so in december 2020 I had the first version of termscp running and it worked, but was very simple, raw and minimal.
+A lot of things have changed since them, both the features the project provides and my personal view of this project.
+
+Today I don't see TermSCP as a WinSCP clone anymore. I've also thought about changing the name as the time passed by, but I liked it and it would be hard to change the name on the registries, etc.
+
+Right now I see TermSCP as a **rich-featured file transfer client for terminals**. All I want is to provide all the features users need to use it correctly, I want it to be **safe and reliable** and eventually I want people to consider termscp **the first choice as a file transfer client**.
+
+### Project goals
+
+- Have support for all the most used file transfer protocol
+- Provide all the features a file explorer requires
+- Have a well designed application
+- Make a reliable, safe and fast application
+
+---
+
+## Open an issue
+
+Open an issue when:
+
+- You have questions or concerns regarding the project or the application itself.
+- You have a bug to report.
+- You have a feature or a suggestion to improve termscp to submit.
+
+### Questions
+
+If you have a question open an issue using the `Question` template.
+By default your question should already be labeled with the `question` label, if you need help with your installation, please also add the `help wanted` label.
+Check the issue is always assigned to `veeso`.
+
+### Bug reports
+
+If you want to report an issue or a bug you've encountered while using termscp, open an issue using the `Bug report` template.
+The `Bug` label should already be set and the issue should already be assigned to `veeso`.
+Don't set other labels to your issue, not even priority.
+
+When you open a bug try to be the most precise as possible in describing your issue. I'm not saying you should always be that precise, since sometimes it's very easy for maintainers to understand what you're talking about. Just try to be reasonable to understand sometimes we might not know what you're talking about or we just don't have the technical knowledge you might think.
+Please always provide the environment you're working on and consider that we don't provide any support for older version of termscp, at least for those not classified as LTS (if we'll ever have them).
+Last but not least: the template I've written must be used. Full stop.
+
+Maintainers will may add additional labels to your issue:
+
+- **duplicate**: the issue is duplicated; the reference to the related issue will be added to your description. Your issue will be closed.
+- **priority**: this must be fixed asap
+- **sorcery**: it is not possible to find out what's causing your bug, nor is reproducible on our test environments.
+- **wontfix**: your bug has a very high ratio between the probability to encounter it and the difficult to fix it, or it just isn't a bug, but a feature.
+
+### Feature requests
+
+Whenever you have a good idea which chould improve the project, it is a good idea to submit it to the project owner.
+The first thing you should do though, is not starting to write the code, but is to become concern about how termscp works, what kind
+of contribution I appreciate and what kind of contribution I won't consider.
+Said so, follow these steps:
+
+- Read the contributing guidelines, entirely
+- Think on whether your idea would fit in the project mission and guidelines or not
+- Think about the impact your idea would have on the project
+- Open an issue using the `feature request` template describing with accuracy your suggestion
+- Wait for the maintainer feedback on your idea
+
+If you want to implement the feature by yourself and your suggestion gets approved, start writing the code. Remember that on [docs.rs](https://docs.rs/termscp) there is the documentation for the project. Open a PR related to your issue. See [Pull request process for more details](#pull-request-process)
+
+It is very important to follow these steps, since it will prevent you from working on a feature that will be rejected and trust me, none of us wants to deal with this situation.
+
+Always mind that your suggestion, may be rejected: I'll always provide a feedback on the reasons that brought me to reject your feature, just try not to get mad about that.
 
 ---
 
@@ -23,217 +99,38 @@ At the moment, these kind of contributions are more appreciated and should be pr
 - New file transfers: for further details see [Implementing File Transfer](#implementing-file-transfers)
 - Code optimizations: any optimization to the code is welcome
 - See also features described in [Upcoming features](./README.md##upcoming-features-). Open an issue first though.
+- A **logo** for the project: I'd really love to have a logo for termscp 💛
 
-For any other kind of contribution, especially for new features, please submit an issue first.
+For any other kind of contribution, especially for new features, please submit a new issue first.
 
 ## Pull Request Process
 
 Let's make it simple and clear:
 
 1. Open a PR with an **appropriate label** (e.g. bug, enhancement, ...).
-2. Write a **properly documentation** compliant with **rustdoc** standard.
+2. Write a **properly documentation** for your software compliant with **rustdoc** standard.
 3. Write tests for your code. This doesn't apply necessarily for implementation regarding the user-interface module (`ui/activities`) and (if a test server is not available) for file transfers.
-4. Report changes to the PR you opened, writing a report of what you changed and what you have introduced.
-5. Update the `CHANGELOG.md` file with details of changes to the application. In changelog report changes under a chapter called `PR{PULL_REQUEST_NUMBER}` (e.g. PR12).
-6. Request maintainers to merge your changes.
+4. Check your code with `cargo clippy`.
+5. Check if the CI for your commits reports three-green.
+6. Report changes to the PR you opened, writing a report of what you changed and what you have introduced.
+7. Update the `CHANGELOG.md` file with details of changes to the application. In changelog report changes under a chapter called `PR{PULL_REQUEST_NUMBER}` (e.g. PR12).
+8. Assign a maintainer to the reviewers.
+9. Request maintainers to merge your changes.
+
+### Software guidelines
+
+In addition to the process described for the PRs, I've also decided to introduce a list of guidelines to follow when writing the code, that should be followed:
+
+1. **Let's stop the NPM apocalypse**: personally I'm against the abuse of dependencies we make in software projects and I think that NodeJS has opened the way to this drama (and has already gone too far). Nowadays nobody cares about adding hundreds of dependencies to their projects. Don't misunderstand me: I think that package managers are cool, but I'm totally against the abuse we're making of them. I think when we work on a project, we should try to use the minor quantity of dependencies as possible, especially because it's not hard to see how many libraries are getting abandoned right now, causing compatibility issues after a while. So please, when working on termscp, try not to add useless dependencies.
+2. **No C-bindings**: personally I think that Rust still relies too much on C. And that's bad, really bad. Many libraries in Rust are just wrappers to C libraries, which is a huge problem, especially considering this is a multiplatform project. Everytime you add a C-binding to your project, you're forcing your users to install additional libraries to their systems. Sometimes these libraries are already installed on their systems (as happens for libssh2 or openssl in this case), but sometimes not. So if you really have to add a dependency to this project, please AVOID completely adding C-bounded libraries.
+3. **Test units matter**: Whenever you implement something new to this project, always implement test units which cover the most cases as possible.
+4. **Comments are useful**: Many people say that the code should be that simple to talk by itself about what it does, and comments should then be useless. I personally don't agree. I'm not saying they're wrong, but I'm just saying that this approach has, in my personal opinion, many aspects which are underrated:
+   1. What's obvious for me, might not be for the others.
+   2. Our capacity to work on a code depends mostly on **time and experience**, not on complexity: I'm not denying complexity matter, but the most decisive factor when working on code is the experience we've acquired working on it and the time we've spent. As the author of the project, I know the project like the back of my hands, but if I didn't work on it for a year, then I would probably have some problems in working on it again as the same speed as before. And do you know what's really time-saving in these cases? Comments.
 
 ## Developer contributions guide
 
-Welcome to the contributions guide for TermSCP. This chapter DOESN'T contain the documentation for TermSCP, which can instead be found on Rust Docs at <https://docs.rs/termscp>
-This chapter describes how TermSCP works and the guide lines to implement stuff such as file transfers and add features to the user interface.
-
-### How TermSCP works
-
-TermSCP is basically made up of 4 components:
-
-- the **filetransfer**: the filetransfer takes care of managing the remote file system; it provides function to establish a connection with the remote, operating on the remote server file system (e.g. remove files, make directories, rename files, ...), read files and write files. The FileTransfer, as we'll see later, is actually a trait, and for each protocol a FileTransfer must be implement the trait.
-- the **host**: the host module provides functions to interact with the local host file system.
-- the **ui**: this module contains the implementation of the user interface, as we'll see in the next chapter, this is achieved through **activities**.
-- the **activity_manager**: the activity manager takes care of managing activities, basically it runs the activities of the user interface, and chooses, based on their state, when is the moment to terminate the current activity and which activity to run after the current one.
-
-In addition to the 4 main components, other have been added through the time:
-
-- **config**: this module provides the configuration schema and serialization methods for it.
-- **fs**: this modules exposes the FsEntry entity and the explorers. The explorers are structs which hold the content of the current directory; they also they take of filtering files up to your preferences and format file entries based on your configuration.
-- **system**: the system module provides a way to actually interact with the configuration, the ssh key storage and with the bookmarks.
-- **utils**: contains the utilities used by pretty much all the project.
-
-#### Activities
-
-Just a little paragraph about activities. Really, read the code and the documentation to have a clear idea of how the ui works.
-I think there are many ways to implement a user interface and I've worked with different languages and frameworks in my career, so for this project I've decided to get what I like the most from different frameworks to implement it.
-
-My approach was this:
-
-- **Activities on top**: each "page" is an Activity and an `Activity Manager` handles them. I got inspired by Android for this case. I think that's a good way to implement the ui in case like this, where you have different pages, each one with their view, their components and their logics. Activities work with the `Context`, which is a data holder for different data, which are shared and common between the activities.
-- **Activities display Views**: Each activity can show different views. A view is basically a list of **components**, each one with its properties. The view is a facade to the components and also handles the focus, which is the current active component. You cannot have more than one component active, so you need to handle this; but at the same time you also have to give focus to the previously active component if the current one is destroyed. So basically view takes care of all this stuff.
-- **Components**: I've decided to write around `tui` in order to re-use widgets. To do so I've implemented the `Component` trait. To implement traits I got inspired by [React](https://reactjs.org/). Each component has its *Properties* and can have its *States*. Then each component must be able to handle input events and to be updated with new properties. Last but not least, each component must provide a method to **render** itself.
-- **Messages: an Elm based approach**: I was really satisfied with my implementation choices; the problem at this point was solving one of the biggest teardrops I've ever had with this project: **events**. Input events were really a pain to handle, since I had to handle states in the activity to handle which component was enabled etc. To solve this I got inspired by a wonderful language I had recently studied, which is [Elm](https://elm-lang.org/). Basically in Elm you implement your ui using three basic functions: **update**, **view** and **init**. View and init were pretty much already implemented here, but at this point I decided to implement also something like the **elm update function**. I came out with a huge match case to handle events inside a recursive function, which you can basically find in the `update.rs` file inside each activity. This match case handles a tuple, made out of the **component id** and the **input event** received from the view. It matches the two propeties against the input event we want to handle for each component *et voilà*.
-
-I've implemented a Trait called `Activity`, which, is a very very reduced version of the Android activity of course.
-This trait provides only 3 methods:
-
-- `on_create`: this method must initialize the activity; the context is passed to the activity, which will be the only owner of the Context, until the activity terminates.
-- `on_draw`: this method must be called each time you want to perform an update of the user interface. This is basically the run method of the activity. This method also cares about handling input events. The developer shouldn't draw the interface on each call of this method (consider that this method might be called hundreds of times per second), but only when actually something has changed (for example after an input event has been raised).
-- `will_umount`: this method was added in 0.4.0 and returns whethere the activity should be destroyed. If so returns an ExitReason, which indicates why the activity should be terminated. Based on the reason, the activity manager chooses whether to stop the execution of termscp or to start a new activity and which one.
-- `on_destroy`: this method finalizes the activity and drops it; this method returns the Context to the caller (the activity manager).
-
-#### The Context
-
-The context is a structure which holds data which must be shared between activities. Everytime an Activity starts, the Context is taken by the activity, until it is destroyed, where finally the context is returned to the activity manager.
-The context basically holds the following data:
-
-- The **Localhost**: the local host structure
-- The **File Transfer Params**: the current parameters set to connect to the remote
-- The **Config Client**: the configuration client is a structure which provides functions to access the user configuration
-- The **Store**: the store is a key-value storage which can hold any kind of data. This can be used to store states to share between activities or to keep persistence for heavy/slow tasks (such as checking for updates).
-- The **Input handler**: the input handler is used to read input events from the keyboard
-- The **Terminal**: the terminal is used to view the tui on the terminal
-
----
-
-### Tests fails due to receivers
-
-Yes. This happens quite often and is related to the fact that I'm using public SSH/SFTP/FTP server to test file receivers and sometimes this server go down for even a day or more. If your tests don't pass due to this, don't worry, submit the pull request and I'll take care of testing them by myself.
-
----
-
-### Implementing File Transfers
-
-This chapter describes how to implement a file transfer in TermSCP. A file transfer is a module which implements the `FileTransfer` trait. The file transfer provides different modules to interact with a remote server, which in addition to the most obvious methods, used to download and upload files, provides also methods to list files, delete files, create directories etc.
-
-In the following steps I will describe how to implement a new file transfer, in this case I will be implementing the SCP file transfer (which I'm actually implementing the moment I'm writing this lines).
-
-1. Add the Scp protocol to the `FileTransferProtocol` enum.
-
-    Move to `src/filetransfer/mod.rs` and add `Scp` to the `FileTransferProtocol` enum
-
-    ```rs
-    /// ## FileTransferProtocol
-    ///
-    /// This enum defines the different transfer protocol available in TermSCP
-    #[derive(std::cmp::PartialEq, std::fmt::Debug, std::clone::Clone)]
-    pub enum FileTransferProtocol {
-        Sftp,
-        Ftp(bool), // Bool is for secure (true => ftps)
-        Scp, // <-- here
-    }
-    ```
-
-    In this case Scp is a "plain" enum type. If you need particular options, follow the implementation of `Ftp` which uses a boolean flag for indicating if using FTPS or FTP.
-
-2. Implement the FileTransfer struct
-
-    Create a file at `src/filetransfer/mytransfer.rs`
-
-    Declare your file transfer struct
-
-    ```rs
-    /// ## ScpFileTransfer
-    ///
-    /// SFTP file transfer structure
-    pub struct ScpFileTransfer {
-        session: Option<Session>,
-        sftp: Option<Sftp>,
-        wrkdir: PathBuf,
-    }
-    ```
-
-3. Implement the `FileTransfer` trait for it
-
-    You'll have to implement the following methods for your file transfer:
-
-    - connect: connect to remote server
-    - disconnect: disconnect from remote server
-    - is_connected: returns whether the file transfer is connected to remote
-    - pwd: get working directory
-    - change_dir: change working directory.
-    - list_dir: get files and directories at a certain path
-    - mkdir: make a new directory. Return an error in case the directory already exists
-    - remove: remove a file or a directory. In case the protocol doesn't support recursive removing of directories you MUST implement this through a recursive algorithm
-    - rename: rename a file or a directory
-    - stat: returns detail for a certain path
-    - send_file: opens a stream to a remote path for write purposes (write a remote file)
-    - recv_file: opens a stream to a remote path for read purposes (write a local file)
-    - on_sent: finalize a stream when writing a remote file. In case it's not necessary just return `Ok(())`
-    - on_recv: fianlize a stream when reading a remote file. In case it's not necessary just return `Ok(())`
-
-    In case the protocol you're working on doesn't support any of this features, just return `Err(FileTransferError::new(FileTransferErrorType::UnsupportedFeature))`
-
-4. Add your transfer to filetransfers:
-
-    Move to `src/filetransfer/mod.rs` and declare your file transfer:
-
-    ```rs
-    // Transfers
-    pub mod ftp_transfer;
-    pub mod scp_transfer; // <-- here
-    pub mod sftp_transfer;
-    ```
-
-5. Handle FileTransfer in `FileTransferActivity::new`
-
-    Move to `src/ui/activities/filetransfer_activity/mod.rs` and add the new protocol to the client match
-
-    ```rs
-    client: match protocol {
-        FileTransferProtocol::Sftp => Box::new(SftpFileTransfer::new()),
-        FileTransferProtocol::Ftp(ftps) => Box::new(FtpFileTransfer::new(ftps)),
-        FileTransferProtocol::Scp => Box::new(ScpFileTransfer::new()), // <--- here
-    },
-    ```
-
-6. Handle right/left input events in `AuthActivity`:
-
-    Move to `src/ui/activities/auth_activity.rs` and handle the new protocol in `handle_input_event_mode_text` for `KeyCode::Left` and `KeyCode::Right`.
-    Consider that the order they "rotate" must match the way they will be drawned in the interface.
-    For newer protocols, please put them always at the end of the list. In this list I won't, because Scp is more important than Ftp imo.
-
-    ```rs
-    KeyCode::Left => {
-        // If current field is Protocol handle event... (move element left)
-        if self.selected_field == InputField::Protocol {
-            self.protocol = match self.protocol {
-                FileTransferProtocol::Sftp => FileTransferProtocol::Ftp(true), // End of list (wrap)
-                FileTransferProtocol::Scp => FileTransferProtocol::Sftp,
-                FileTransferProtocol::Ftp(ftps) => match ftps {
-                    false => FileTransferProtocol::Scp,
-                    true => FileTransferProtocol::Ftp(false),
-                }
-            };
-        }
-    }
-    KeyCode::Right => {
-        // If current field is Protocol handle event... ( move element right )
-        if self.selected_field == InputField::Protocol {
-            self.protocol = match self.protocol {
-                FileTransferProtocol::Sftp => FileTransferProtocol::Scp,
-                FileTransferProtocol::Scp => FileTransferProtocol::Ftp(false),
-                FileTransferProtocol::Ftp(ftps) => match ftps {
-                    false => FileTransferProtocol::Ftp(true),
-                    true => FileTransferProtocol::Sftp, // End of list (wrap)
-                }
-            };
-        }
-    }
-    ```
-
-7. Add your new file transfer to the protocol input field
-
-    Move to `AuthActivity::draw_protocol_select` method.
-    Here add your new protocol to the `Spans` vector and to the match case, which chooses which element to highlight.
-
-    ```rs
-    let protocols: Vec<Spans> = vec![Spans::from("SFTP"), Spans::from("SCP"), Spans::from("FTP"), Spans::from("FTPS")];
-    let index: usize = match self.protocol {
-        FileTransferProtocol::Sftp => 0,
-        FileTransferProtocol::Scp => 1,
-        FileTransferProtocol::Ftp(ftps) => match ftps {
-            false => 2,
-            true => 3,
-        }
-    };
-    ```
+You can view the developer guide [here](docs/developer.md).
 
 ---
 
