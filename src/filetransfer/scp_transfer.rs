@@ -315,7 +315,7 @@ impl FileTransfer for ScpFileTransfer {
                 Err(err) => {
                     return Err(FileTransferError::new_ex(
                         FileTransferErrorType::BadAddress,
-                        format!("{}", err),
+                        err.to_string(),
                     ))
                 }
             };
@@ -346,7 +346,7 @@ impl FileTransfer for ScpFileTransfer {
             Err(err) => {
                 return Err(FileTransferError::new_ex(
                     FileTransferErrorType::ConnectionError,
-                    format!("{}", err),
+                    err.to_string(),
                 ))
             }
         };
@@ -356,7 +356,7 @@ impl FileTransfer for ScpFileTransfer {
         if let Err(err) = session.handshake() {
             return Err(FileTransferError::new_ex(
                 FileTransferErrorType::ConnectionError,
-                format!("{}", err),
+                err.to_string(),
             ));
         }
         let username: String = match username {
@@ -378,7 +378,7 @@ impl FileTransfer for ScpFileTransfer {
                 ) {
                     return Err(FileTransferError::new_ex(
                         FileTransferErrorType::AuthenticationFailed,
-                        format!("{}", err),
+                        err.to_string(),
                     ));
                 }
             }
@@ -390,7 +390,7 @@ impl FileTransfer for ScpFileTransfer {
                 ) {
                     return Err(FileTransferError::new_ex(
                         FileTransferErrorType::AuthenticationFailed,
-                        format!("{}", err),
+                        err.to_string(),
                     ));
                 }
             }
@@ -422,7 +422,7 @@ impl FileTransfer for ScpFileTransfer {
                     }
                     Err(err) => Err(FileTransferError::new_ex(
                         FileTransferErrorType::ConnectionError,
-                        format!("{}", err),
+                        err.to_string(),
                     )),
                 }
             }
@@ -492,7 +492,7 @@ impl FileTransfer for ScpFileTransfer {
                     }
                     Err(err) => Err(FileTransferError::new_ex(
                         FileTransferErrorType::ProtocolError,
-                        format!("{}", err),
+                        err.to_string(),
                     )),
                 }
             }
@@ -534,7 +534,7 @@ impl FileTransfer for ScpFileTransfer {
                     }
                     Err(err) => Err(FileTransferError::new_ex(
                         FileTransferErrorType::ProtocolError,
-                        format!("{}", err),
+                        err.to_string(),
                     )),
                 }
             }
@@ -573,7 +573,7 @@ impl FileTransfer for ScpFileTransfer {
                     }
                     Err(err) => Err(FileTransferError::new_ex(
                         FileTransferErrorType::ProtocolError,
-                        format!("{}", err),
+                        err.to_string(),
                     )),
                 }
             }
@@ -610,7 +610,7 @@ impl FileTransfer for ScpFileTransfer {
                     }
                     Err(err) => Err(FileTransferError::new_ex(
                         FileTransferErrorType::ProtocolError,
-                        format!("{}", err),
+                        err.to_string(),
                     )),
                 }
             }
@@ -647,7 +647,7 @@ impl FileTransfer for ScpFileTransfer {
                     }
                     Err(err) => Err(FileTransferError::new_ex(
                         FileTransferErrorType::ProtocolError,
-                        format!("{}", err),
+                        err.to_string(),
                     )),
                 }
             }
@@ -689,7 +689,7 @@ impl FileTransfer for ScpFileTransfer {
                     }
                     Err(err) => Err(FileTransferError::new_ex(
                         FileTransferErrorType::ProtocolError,
-                        format!("{}", err),
+                        err.to_string(),
                     )),
                 }
             }
@@ -744,7 +744,7 @@ impl FileTransfer for ScpFileTransfer {
                     }
                     Err(err) => Err(FileTransferError::new_ex(
                         FileTransferErrorType::ProtocolError,
-                        format!("{}", err),
+                        err.to_string(),
                     )),
                 }
             }
@@ -765,7 +765,7 @@ impl FileTransfer for ScpFileTransfer {
                     Ok(output) => Ok(output),
                     Err(err) => Err(FileTransferError::new_ex(
                         FileTransferErrorType::ProtocolError,
-                        format!("{}", err),
+                        err.to_string(),
                     )),
                 }
             }
@@ -824,7 +824,7 @@ impl FileTransfer for ScpFileTransfer {
                     Ok(channel) => Ok(Box::new(BufWriter::with_capacity(65536, channel))),
                     Err(err) => Err(FileTransferError::new_ex(
                         FileTransferErrorType::ProtocolError,
-                        format!("{}", err),
+                        err.to_string(),
                     )),
                 }
             }
@@ -847,7 +847,7 @@ impl FileTransfer for ScpFileTransfer {
                     Ok(reader) => Ok(Box::new(BufReader::with_capacity(65536, reader.0))),
                     Err(err) => Err(FileTransferError::new_ex(
                         FileTransferErrorType::ProtocolError,
-                        format!("{}", err),
+                        err.to_string(),
                     )),
                 }
             }
