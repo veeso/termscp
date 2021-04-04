@@ -38,7 +38,7 @@ use crate::utils::parser::{parse_datetime, parse_lstime};
 
 // Includes
 use ftp4::native_tls::TlsConnector;
-use ftp4::FtpStream;
+use ftp4::{types::FileType, FtpStream};
 use regex::Regex;
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
@@ -329,7 +329,7 @@ impl FileTransfer for FtpFileTransfer {
             Err(err) => {
                 return Err(FileTransferError::new_ex(
                     FileTransferErrorType::ConnectionError,
-                    format!("{}", err),
+                    err.to_string(),
                 ))
             }
         };
@@ -344,7 +344,7 @@ impl FileTransfer for FtpFileTransfer {
                 Err(err) => {
                     return Err(FileTransferError::new_ex(
                         FileTransferErrorType::SslError,
-                        format!("{}", err),
+                        err.to_string(),
                     ))
                 }
             };
@@ -353,7 +353,7 @@ impl FileTransfer for FtpFileTransfer {
                 Err(err) => {
                     return Err(FileTransferError::new_ex(
                         FileTransferErrorType::SslError,
-                        format!("{}", err),
+                        err.to_string(),
                     ))
                 }
             };
@@ -370,7 +370,14 @@ impl FileTransfer for FtpFileTransfer {
         if let Err(err) = stream.login(username.as_str(), password.as_str()) {
             return Err(FileTransferError::new_ex(
                 FileTransferErrorType::AuthenticationFailed,
-                format!("{}", err),
+                err.to_string(),
+            ));
+        }
+        // Initialize file type
+        if let Err(err) = stream.transfer_type(FileType::Binary) {
+            return Err(FileTransferError::new_ex(
+                FileTransferErrorType::ProtocolError,
+                err.to_string(),
             ));
         }
         // Set stream
@@ -389,7 +396,7 @@ impl FileTransfer for FtpFileTransfer {
                 Ok(_) => Ok(()),
                 Err(err) => Err(FileTransferError::new_ex(
                     FileTransferErrorType::ConnectionError,
-                    format!("{}", err),
+                    err.to_string(),
                 )),
             },
             None => Err(FileTransferError::new(
@@ -415,7 +422,7 @@ impl FileTransfer for FtpFileTransfer {
                 Ok(path) => Ok(PathBuf::from(path.as_str())),
                 Err(err) => Err(FileTransferError::new_ex(
                     FileTransferErrorType::ConnectionError,
-                    format!("{}", err),
+                    err.to_string(),
                 )),
             },
             None => Err(FileTransferError::new(
@@ -435,7 +442,7 @@ impl FileTransfer for FtpFileTransfer {
                 Ok(_) => Ok(dir),
                 Err(err) => Err(FileTransferError::new_ex(
                     FileTransferErrorType::ConnectionError,
-                    format!("{}", err),
+                    err.to_string(),
                 )),
             },
             None => Err(FileTransferError::new(
@@ -475,7 +482,7 @@ impl FileTransfer for FtpFileTransfer {
                 }
                 Err(err) => Err(FileTransferError::new_ex(
                     FileTransferErrorType::DirStatFailed,
-                    format!("{}", err),
+                    err.to_string(),
                 )),
             },
             None => Err(FileTransferError::new(
@@ -494,7 +501,7 @@ impl FileTransfer for FtpFileTransfer {
                 Ok(_) => Ok(()),
                 Err(err) => Err(FileTransferError::new_ex(
                     FileTransferErrorType::FileCreateDenied,
-                    format!("{}", err),
+                    err.to_string(),
                 )),
             },
             None => Err(FileTransferError::new(
@@ -520,7 +527,7 @@ impl FileTransfer for FtpFileTransfer {
                     Ok(_) => Ok(()),
                     Err(err) => Err(FileTransferError::new_ex(
                         FileTransferErrorType::PexError,
-                        format!("{}", err),
+                        err.to_string(),
                     )),
                 }
             }
@@ -533,7 +540,7 @@ impl FileTransfer for FtpFileTransfer {
                             if let Err(err) = self.remove(&file) {
                                 return Err(FileTransferError::new_ex(
                                     FileTransferErrorType::PexError,
-                                    format!("{}", err),
+                                    err.to_string(),
                                 ));
                             }
                         }
@@ -542,13 +549,13 @@ impl FileTransfer for FtpFileTransfer {
                             Ok(_) => Ok(()),
                             Err(err) => Err(FileTransferError::new_ex(
                                 FileTransferErrorType::PexError,
-                                format!("{}", err),
+                                err.to_string(),
                             )),
                         }
                     }
                     Err(err) => Err(FileTransferError::new_ex(
                         FileTransferErrorType::DirStatFailed,
-                        format!("{}", err),
+                        err.to_string(),
                     )),
                 }
             }
@@ -581,7 +588,7 @@ impl FileTransfer for FtpFileTransfer {
                     Ok(_) => Ok(()),
                     Err(err) => Err(FileTransferError::new_ex(
                         FileTransferErrorType::FileCreateDenied,
-                        format!("{}", err),
+                        err.to_string(),
                     )),
                 }
             }
@@ -631,7 +638,7 @@ impl FileTransfer for FtpFileTransfer {
                 Ok(writer) => Ok(Box::new(writer)), // NOTE: don't use BufWriter here, since already returned by the library
                 Err(err) => Err(FileTransferError::new_ex(
                     FileTransferErrorType::FileCreateDenied,
-                    format!("{}", err),
+                    err.to_string(),
                 )),
             },
             None => Err(FileTransferError::new(
@@ -650,7 +657,7 @@ impl FileTransfer for FtpFileTransfer {
                 Ok(reader) => Ok(Box::new(reader)), // NOTE: don't use BufReader here, since already returned by the library
                 Err(err) => Err(FileTransferError::new_ex(
                     FileTransferErrorType::NoSuchFileOrDirectory,
-                    format!("{}", err),
+                    err.to_string(),
                 )),
             },
             None => Err(FileTransferError::new(
@@ -672,7 +679,7 @@ impl FileTransfer for FtpFileTransfer {
                 Ok(_) => Ok(()),
                 Err(err) => Err(FileTransferError::new_ex(
                     FileTransferErrorType::ProtocolError,
-                    format!("{}", err),
+                    err.to_string(),
                 )),
             },
             None => Err(FileTransferError::new(
@@ -694,7 +701,7 @@ impl FileTransfer for FtpFileTransfer {
                 Ok(_) => Ok(()),
                 Err(err) => Err(FileTransferError::new_ex(
                     FileTransferErrorType::ProtocolError,
-                    format!("{}", err),
+                    err.to_string(),
                 )),
             },
             None => Err(FileTransferError::new(

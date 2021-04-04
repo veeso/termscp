@@ -76,12 +76,12 @@ impl SftpFileTransfer {
                         Ok(_) => Ok(p),
                         Err(err) => Err(FileTransferError::new_ex(
                             FileTransferErrorType::NoSuchFileOrDirectory,
-                            format!("{}", err),
+                            err.to_string(),
                         )),
                     },
                     Err(err) => Err(FileTransferError::new_ex(
                         FileTransferErrorType::NoSuchFileOrDirectory,
-                        format!("{}", err),
+                        err.to_string(),
                     )),
                 }
             }
@@ -90,7 +90,7 @@ impl SftpFileTransfer {
                     Ok(_) => Ok(p),
                     Err(err) => Err(FileTransferError::new_ex(
                         FileTransferErrorType::NoSuchFileOrDirectory,
-                        format!("{}", err),
+                        err.to_string(),
                     )),
                 },
                 Err(_) => Err(FileTransferError::new(
@@ -260,7 +260,7 @@ impl FileTransfer for SftpFileTransfer {
                 Err(err) => {
                     return Err(FileTransferError::new_ex(
                         FileTransferErrorType::BadAddress,
-                        format!("{}", err),
+                        err.to_string(),
                     ))
                 }
             };
@@ -291,7 +291,7 @@ impl FileTransfer for SftpFileTransfer {
             Err(err) => {
                 return Err(FileTransferError::new_ex(
                     FileTransferErrorType::ConnectionError,
-                    format!("{}", err),
+                    err.to_string(),
                 ))
             }
         };
@@ -301,7 +301,7 @@ impl FileTransfer for SftpFileTransfer {
         if let Err(err) = session.handshake() {
             return Err(FileTransferError::new_ex(
                 FileTransferErrorType::ConnectionError,
-                format!("{}", err),
+                err.to_string(),
             ));
         }
         let username: String = match username {
@@ -323,7 +323,7 @@ impl FileTransfer for SftpFileTransfer {
                 ) {
                     return Err(FileTransferError::new_ex(
                         FileTransferErrorType::AuthenticationFailed,
-                        format!("{}", err),
+                        err.to_string(),
                     ));
                 }
             }
@@ -335,7 +335,7 @@ impl FileTransfer for SftpFileTransfer {
                 ) {
                     return Err(FileTransferError::new_ex(
                         FileTransferErrorType::AuthenticationFailed,
-                        format!("{}", err),
+                        err.to_string(),
                     ));
                 }
             }
@@ -348,7 +348,7 @@ impl FileTransfer for SftpFileTransfer {
             Err(err) => {
                 return Err(FileTransferError::new_ex(
                     FileTransferErrorType::ProtocolError,
-                    format!("{}", err),
+                    err.to_string(),
                 ))
             }
         };
@@ -358,7 +358,7 @@ impl FileTransfer for SftpFileTransfer {
             Err(err) => {
                 return Err(FileTransferError::new_ex(
                     FileTransferErrorType::ProtocolError,
-                    format!("{}", err),
+                    err.to_string(),
                 ))
             }
         };
@@ -386,7 +386,7 @@ impl FileTransfer for SftpFileTransfer {
                     }
                     Err(err) => Err(FileTransferError::new_ex(
                         FileTransferErrorType::ConnectionError,
-                        format!("{}", err),
+                        err.to_string(),
                     )),
                 }
             }
@@ -459,7 +459,7 @@ impl FileTransfer for SftpFileTransfer {
                 match sftp.readdir(dir.as_path()) {
                     Err(err) => Err(FileTransferError::new_ex(
                         FileTransferErrorType::DirStatFailed,
-                        format!("{}", err),
+                        err.to_string(),
                     )),
                     Ok(files) => {
                         // Allocate vector
@@ -490,7 +490,7 @@ impl FileTransfer for SftpFileTransfer {
                     Ok(_) => Ok(()),
                     Err(err) => Err(FileTransferError::new_ex(
                         FileTransferErrorType::FileCreateDenied,
-                        format!("{}", err),
+                        err.to_string(),
                     )),
                 }
             }
@@ -517,7 +517,7 @@ impl FileTransfer for SftpFileTransfer {
                     Ok(_) => Ok(()),
                     Err(err) => Err(FileTransferError::new_ex(
                         FileTransferErrorType::PexError,
-                        format!("{}", err),
+                        err.to_string(),
                     )),
                 }
             }
@@ -538,7 +538,7 @@ impl FileTransfer for SftpFileTransfer {
                     Ok(_) => Ok(()),
                     Err(err) => Err(FileTransferError::new_ex(
                         FileTransferErrorType::PexError,
-                        format!("{}", err),
+                        err.to_string(),
                     )),
                 }
             }
@@ -562,7 +562,7 @@ impl FileTransfer for SftpFileTransfer {
                     Ok(_) => Ok(()),
                     Err(err) => Err(FileTransferError::new_ex(
                         FileTransferErrorType::FileCreateDenied,
-                        format!("{}", err),
+                        err.to_string(),
                     )),
                 }
             }
@@ -585,7 +585,7 @@ impl FileTransfer for SftpFileTransfer {
                     Ok(metadata) => Ok(self.make_fsentry(dir.as_path(), &metadata)),
                     Err(err) => Err(FileTransferError::new_ex(
                         FileTransferErrorType::NoSuchFileOrDirectory,
-                        format!("{}", err),
+                        err.to_string(),
                     )),
                 }
             }
@@ -604,7 +604,7 @@ impl FileTransfer for SftpFileTransfer {
                 Ok(output) => Ok(output),
                 Err(err) => Err(FileTransferError::new_ex(
                     FileTransferErrorType::ProtocolError,
-                    format!("{}", err),
+                    err.to_string(),
                 )),
             },
             false => Err(FileTransferError::new(
@@ -643,7 +643,7 @@ impl FileTransfer for SftpFileTransfer {
                     Ok(file) => Ok(Box::new(BufWriter::with_capacity(65536, file))),
                     Err(err) => Err(FileTransferError::new_ex(
                         FileTransferErrorType::FileCreateDenied,
-                        format!("{}", err),
+                        err.to_string(),
                     )),
                 }
             }
@@ -669,7 +669,7 @@ impl FileTransfer for SftpFileTransfer {
                     Ok(file) => Ok(Box::new(BufReader::with_capacity(65536, file))),
                     Err(err) => Err(FileTransferError::new_ex(
                         FileTransferErrorType::NoSuchFileOrDirectory,
-                        format!("{}", err),
+                        err.to_string(),
                     )),
                 }
             }

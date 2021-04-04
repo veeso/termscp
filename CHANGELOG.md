@@ -23,6 +23,7 @@ Released on FIXME:
   - SCP file transfer:
     - Added possibility to stat directories.
 - Bugfix:
+  - [Issue 18](https://github.com/veeso/termscp/issues/18): Set file transfer type to `Binary` for FTP
   - [Issue 17](https://github.com/veeso/termscp/issues/17)
     - SCP: fixed symlink not properly detected
   - [Issue 10](https://github.com/veeso/termscp/issues/10): Fixed port not being loaded from bookmarks into gui
