@@ -38,7 +38,7 @@ use crate::utils::parser::{parse_datetime, parse_lstime};
 
 // Includes
 use ftp4::native_tls::TlsConnector;
-use ftp4::FtpStream;
+use ftp4::{types::FileType, FtpStream};
 use regex::Regex;
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
@@ -370,7 +370,14 @@ impl FileTransfer for FtpFileTransfer {
         if let Err(err) = stream.login(username.as_str(), password.as_str()) {
             return Err(FileTransferError::new_ex(
                 FileTransferErrorType::AuthenticationFailed,
-                format!("{}", err),
+                err.to_string(),
+            ));
+        }
+        // Initialize file type
+        if let Err(err) = stream.transfer_type(FileType::Binary) {
+            return Err(FileTransferError::new_ex(
+                FileTransferErrorType::ProtocolError,
+                err.to_string(),
             ));
         }
         // Set stream
