@@ -26,6 +26,7 @@ Released on FIXME:
   - [Issue 18](https://github.com/veeso/termscp/issues/18): Set file transfer type to `Binary` for FTP
   - [Issue 17](https://github.com/veeso/termscp/issues/17)
     - SCP: fixed symlink not properly detected
+    - FTP: added symlink support for Linux targets
   - [Issue 10](https://github.com/veeso/termscp/issues/10): Fixed port not being loaded from bookmarks into gui
   - [Issue 9](https://github.com/veeso/termscp/issues/9): Fixed issues related to paths on remote when using Windows
 - Dependencies:
