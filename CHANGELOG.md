@@ -19,7 +19,12 @@
 
 Released on FIXME:
 
+- Enhancements:
+  - SCP file transfer:
+    - Added possibility to stat directories.
 - Bugfix:
+  - [Issue 17](https://github.com/veeso/termscp/issues/17)
+    - SCP: fixed symlink not properly detected
   - [Issue 10](https://github.com/veeso/termscp/issues/10): Fixed port not being loaded from bookmarks into gui
   - [Issue 9](https://github.com/veeso/termscp/issues/9): Fixed issues related to paths on remote when using Windows
 - Dependencies:
@@ -37,6 +42,8 @@ Released on FIXME:
 ## 0.4.0
 
 Released on 27/03/2021
+
+> The UI refactoring update
 
 - **New explorer features**:
   - **Execute** a command pressing `X`. This feature is supported on both local and remote hosts (only SFTP/SCP protocols support this feature).
