@@ -133,6 +133,7 @@ mod tests {
     use crate::ui::layout::props::TextParts;
 
     use crossterm::event::{KeyCode, KeyEvent};
+    use tui::style::Color;
 
     #[test]
     fn test_ui_layout_components_title() {
@@ -141,6 +142,12 @@ mod tests {
                 .with_texts(TextParts::new(Some(String::from("Title")), None))
                 .build(),
         );
+        component.active();
+        component.blur();
+        // Update
+        let props = component.get_props().with_foreground(Color::Red).build();
+        assert_eq!(component.update(props), Msg::None);
+        assert_eq!(component.props.foreground, Color::Red);
         // Get value
         assert_eq!(component.get_value(), Payload::None);
         // Event

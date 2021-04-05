@@ -342,6 +342,7 @@ mod tests {
     use super::*;
 
     use crossterm::event::KeyEvent;
+    use tui::style::Color;
 
     #[test]
     fn test_ui_layout_components_input_text() {
@@ -362,6 +363,10 @@ mod tests {
         assert_eq!(component.states.focus, true);
         component.blur();
         assert_eq!(component.states.focus, false);
+        // Update
+        let props = component.get_props().with_foreground(Color::Red).build();
+        assert_eq!(component.update(props), Msg::None);
+        assert_eq!(component.props.foreground, Color::Red);
         // Get value
         assert_eq!(component.get_value(), Payload::Text(String::from("home")));
         // RenderData

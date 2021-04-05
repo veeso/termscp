@@ -178,6 +178,12 @@ mod tests {
                 ))
                 .build(),
         );
+        component.active();
+        component.blur();
+        // Update
+        let props = component.get_props().with_foreground(Color::Red).build();
+        assert_eq!(component.update(props), Msg::None);
+        assert_eq!(component.props.foreground, Color::Red);
         // Get value
         assert_eq!(component.get_value(), Payload::None);
         // Event

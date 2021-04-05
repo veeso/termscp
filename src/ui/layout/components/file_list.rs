@@ -307,6 +307,10 @@ mod tests {
         assert_eq!(component.states.focus, true);
         component.blur();
         assert_eq!(component.states.focus, false);
+        // Update
+        let props = component.get_props().with_foreground(Color::Red).build();
+        assert_eq!(component.update(props), Msg::None);
+        assert_eq!(component.props.foreground, Color::Red);
         // Increment list index
         component.states.list_index += 1;
         assert_eq!(component.states.list_index, 1);

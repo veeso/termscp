@@ -39,6 +39,7 @@ pub struct KeyringStorage {
     username: String,
 }
 
+#[cfg(not(tarpaulin_include))]
 impl KeyringStorage {
     /// ### new
     ///
@@ -50,6 +51,7 @@ impl KeyringStorage {
     }
 }
 
+#[cfg(not(tarpaulin_include))]
 impl KeyStorage for KeyringStorage {
     /// ### get_key
     ///
