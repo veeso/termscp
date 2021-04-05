@@ -1,0 +1,22 @@
+name: coverage
+
+on: [push, pull_request]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  coverage:
+    name: Generate coverage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Run cargo-tarpaulin
+        uses: actions-rs/tarpaulin@v0.1
+        with:
+          args: "--ignore-tests -- --test-threads 1"
+
+      - name: Upload to codecov.io
+        uses: codecov/codecov-action@v1

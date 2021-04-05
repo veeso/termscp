@@ -28,9 +28,3 @@ jobs:
         run: cargo fmt --all -- --check
       - name: Clippy
         run: cargo clippy -- -Dwarnings
-      - name: Coverage with grcov
-        uses: actions-rs/grcov@v0.1
-      - name: Upload to codecov.io
-        uses: codecov/codecov-action@v1
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
