@@ -165,9 +165,9 @@ impl ScpFileTransfer {
                     true => self.get_name_and_link(metadata.get(8).unwrap().as_str()),
                     false => (String::from(metadata.get(8).unwrap().as_str()), None),
                 };
-                // Check if symlink points to a directory
-                if let Some(symlink_path) = symlink_path.as_ref() {
-                    is_dir = symlink_path.is_dir();
+                // Check if file_name is '.' or '..'
+                if file_name.as_str() == "." || file_name.as_str() == ".." {
+                    return Err(());
                 }
                 // Get symlink; PATH mustn't be equal to filename
                 let symlink: Option<Box<FsEntry>> = match symlink_path {
@@ -179,15 +179,18 @@ impl ScpFileTransfer {
                         true => None,
                         false => match self.stat(p.as_path()) {
                             // If path match filename
-                            Ok(e) => Some(Box::new(e)),
+                            Ok(e) => {
+                                // If e is a directory, set is_dir to true
+                                if e.is_dir() {
+                                    is_dir = true;
+                                }
+                                Some(Box::new(e))
+                            }
                             Err(_) => None, // Ignore errors
                         },
                     },
                 };
-                // Check if file_name is '.' or '..'
-                if file_name.as_str() == "." || file_name.as_str() == ".." {
-                    return Err(());
-                }
+                // Re-check if is directory
                 let mut abs_path: PathBuf = PathBuf::from(path);
                 abs_path.push(file_name.as_str());
                 let abs_path: PathBuf = Self::resolve(abs_path.as_path());
@@ -556,7 +559,7 @@ impl FileTransfer for ScpFileTransfer {
                 let p: PathBuf = self.wrkdir.clone();
                 match self.perform_shell_cmd_with_path(
                     p.as_path(),
-                    format!("unset LANG; ls -la \"{}\"", path.display()).as_str(),
+                    format!("unset LANG; ls -la \"{}/\"", path.display()).as_str(),
                 ) {
                     Ok(output) => {
                         // Split output by (\r)\n
@@ -703,12 +706,6 @@ impl FileTransfer for ScpFileTransfer {
     ///
     /// Stat file and return FsEntry
     fn stat(&mut self, path: &Path) -> Result<FsEntry, FileTransferError> {
-        if path.is_dir() {
-            return Err(FileTransferError::new_ex(
-                FileTransferErrorType::UnsupportedFeature,
-                String::from("stat is not supported for directories"),
-            ));
-        }
         let path: PathBuf = match path.is_absolute() {
             true => PathBuf::from(path),
             false => {
@@ -720,10 +717,12 @@ impl FileTransfer for ScpFileTransfer {
         match self.is_connected() {
             true => {
                 let p: PathBuf = self.wrkdir.clone();
-                match self.perform_shell_cmd_with_path(
-                    p.as_path(),
-                    format!("ls -l \"{}\"", path.display()).as_str(),
-                ) {
+                // make command; Directories require `-d` option
+                let cmd: String = match path.to_string_lossy().ends_with('/') {
+                    true => format!("ls -ld \"{}\"", path.display()),
+                    false => format!("ls -l \"{}\"", path.display()),
+                };
+                match self.perform_shell_cmd_with_path(p.as_path(), cmd.as_str()) {
                     Ok(line) => {
                         // Parse ls line
                         let parent: PathBuf = match path.as_path().parent() {

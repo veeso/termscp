@@ -80,7 +80,7 @@ impl FtpFileTransfer {
     /// ### parse_list_line
     ///
     /// Parse a line of LIST command output and instantiates an FsEntry from it
-    fn parse_list_line(&self, path: &Path, line: &str) -> Result<FsEntry, ()> {
+    fn parse_list_line(&mut self, path: &Path, line: &str) -> Result<FsEntry, ()> {
         // Try to parse using UNIX syntax
         match self.parse_unix_list_line(path, line) {
             Ok(entry) => Ok(entry),
@@ -99,7 +99,7 @@ impl FtpFileTransfer {
     /// UNIX syntax has the following syntax:
     /// {FILE_TYPE}{UNIX_PEX} {HARD_LINKS} {USER} {GROUP} {SIZE} {DATE} {FILENAME}
     /// -rw-r--r--   1 cvisintin  staff   4968 27 Dic 10:46 CHANGELOG.md
-    fn parse_unix_list_line(&self, path: &Path, line: &str) -> Result<FsEntry, ()> {
+    fn parse_unix_list_line(&mut self, path: &Path, line: &str) -> Result<FsEntry, ()> {
         // Prepare list regex
         // NOTE: about this damn regex <https://stackoverflow.com/questions/32480890/is-there-a-regex-to-parse-the-values-from-an-ftp-directory-listing>
         lazy_static! {
@@ -116,7 +116,8 @@ impl FtpFileTransfer {
                 }
                 // Collect metadata
                 // Get if is directory and if is symlink
-                let (is_dir, _is_symlink): (bool, bool) = match metadata.get(1).unwrap().as_str() {
+                let (mut is_dir, is_symlink): (bool, bool) = match metadata.get(1).unwrap().as_str()
+                {
                     "-" => (false, false),
                     "l" => (false, true),
                     "d" => (true, false),
@@ -174,11 +175,60 @@ impl FtpFileTransfer {
                     .as_str()
                     .parse::<usize>()
                     .unwrap_or(0);
-                let file_name: String = String::from(metadata.get(8).unwrap().as_str());
+                // Split filename if required
+                let (file_name, symlink_path): (String, Option<PathBuf>) = match is_symlink {
+                    true => self.get_name_and_link(metadata.get(8).unwrap().as_str()),
+                    false => (String::from(metadata.get(8).unwrap().as_str()), None),
+                };
                 // Check if file_name is '.' or '..'
                 if file_name.as_str() == "." || file_name.as_str() == ".." {
                     return Err(());
                 }
+                // Get symlink
+                let symlink: Option<Box<FsEntry>> = match symlink_path {
+                    None => None,
+                    Some(p) => Some(Box::new(match p.to_string_lossy().ends_with('/') {
+                        true => {
+                            // NOTE: is_dir becomes true
+                            is_dir = true;
+                            FsEntry::Directory(FsDirectory {
+                                name: p
+                                    .file_name()
+                                    .unwrap_or(&std::ffi::OsStr::new(""))
+                                    .to_string_lossy()
+                                    .to_string(),
+                                abs_path: p.clone(),
+                                last_change_time: mtime,
+                                last_access_time: mtime,
+                                creation_time: mtime,
+                                readonly: false,
+                                symlink: None,
+                                user: uid,
+                                group: gid,
+                                unix_pex: Some(unix_pex),
+                            })
+                        }
+                        false => FsEntry::File(FsFile {
+                            name: p
+                                .file_name()
+                                .unwrap_or(&std::ffi::OsStr::new(""))
+                                .to_string_lossy()
+                                .to_string(),
+                            abs_path: p.clone(),
+                            last_change_time: mtime,
+                            last_access_time: mtime,
+                            creation_time: mtime,
+                            readonly: false,
+                            symlink: None,
+                            size: filesize,
+                            ftype: p.extension().map(|s| String::from(s.to_string_lossy())),
+                            user: uid,
+                            group: gid,
+                            unix_pex: Some(unix_pex),
+                        }),
+                    })),
+                };
+                eprintln!("{:?};{:?}", is_dir, symlink);
                 let mut abs_path: PathBuf = PathBuf::from(path);
                 abs_path.push(file_name.as_str());
                 let abs_path: PathBuf = Self::resolve(abs_path.as_path());
@@ -197,7 +247,7 @@ impl FtpFileTransfer {
                         last_access_time: mtime,
                         creation_time: mtime,
                         readonly: false,
-                        symlink: None,
+                        symlink,
                         user: uid,
                         group: gid,
                         unix_pex: Some(unix_pex),
@@ -211,7 +261,7 @@ impl FtpFileTransfer {
                         size: filesize,
                         ftype: extension,
                         readonly: false,
-                        symlink: None,
+                        symlink,
                         user: uid,
                         group: gid,
                         unix_pex: Some(unix_pex),
@@ -308,6 +358,16 @@ impl FtpFileTransfer {
             }
             None => Err(()), // Invalid syntax
         }
+    }
+
+    /// ### get_name_and_link
+    ///
+    /// Returns from a `ls -l` command output file name token, the name of the file and the symbolic link (if there is any)
+    fn get_name_and_link(&self, token: &str) -> (String, Option<PathBuf>) {
+        let tokens: Vec<&str> = token.split(" -> ").collect();
+        let filename: String = String::from(*tokens.get(0).unwrap());
+        let symlink: Option<PathBuf> = tokens.get(1).map(PathBuf::from);
+        (filename, symlink)
     }
 }
 
@@ -731,7 +791,7 @@ mod tests {
 
     #[test]
     fn test_filetransfer_ftp_parse_list_line_unix() {
-        let ftp: FtpFileTransfer = FtpFileTransfer::new(false);
+        let mut ftp: FtpFileTransfer = FtpFileTransfer::new(false);
         // Simple file
         let fs_entry: FsEntry = ftp
             .parse_list_line(
@@ -854,7 +914,7 @@ mod tests {
 
     #[test]
     fn test_filetransfer_ftp_parse_list_line_dos() {
-        let ftp: FtpFileTransfer = FtpFileTransfer::new(false);
+        let mut ftp: FtpFileTransfer = FtpFileTransfer::new(false);
         // Simple file
         let fs_entry: FsEntry = ftp
             .parse_list_line(
