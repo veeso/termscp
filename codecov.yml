@@ -5,5 +5,3 @@ ignore:
   - src/ui/activities/
   - src/ui/context.rs
   - src/ui/input.rs
-fixes:
-  - "/::"
