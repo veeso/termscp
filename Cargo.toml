@@ -13,15 +13,14 @@ readme = "README.md"
 repository = "https://github.com/veeso/termscp"
 version = "0.4.1"
 
-[metadata.rpm]
+[package.metadata.rpm]
 package = "termscp"
 
-[metadata.rpm.cargo]
+[package.metadata.rpm.cargo]
 buildflags = ["--release"]
 
-[metadata.rpm.targets]
-[metadata.rpm.targets.termscp]
-path = "/usr/bin/termscp"
+[package.metadata.rpm.targets]
+termscp = { path = "/usr/bin/termscp" }
 
 [[bin]]
 name = "termscp"
