@@ -154,8 +154,7 @@ You can install TermSCP on MacOS using [brew](https://brew.sh/)
 From your terminal run
 
 ```sh
-brew tap veeso/termscp
-brew install termscp
+brew install veeso/termscp/termscp
 ```
 
 ---
