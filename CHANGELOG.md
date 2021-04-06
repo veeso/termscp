@@ -17,7 +17,7 @@
 
 ## 0.4.1
 
-Released on FIXME:
+Released on 07/04/2021
 
 - Enhancements:
   - SCP file transfer:
