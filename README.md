@@ -39,6 +39,7 @@ Current version: 0.4.1 (07/04/2021)
   - [Changelog ⏳](#changelog-)
   - [Powered by 🚀](#powered-by-)
   - [Gallery 🎬](#gallery-)
+  - [Buy me a coffee ☕](#buy-me-a-coffee-)
   - [License 📃](#license-)
 
 ---
@@ -381,8 +382,11 @@ The developer documentation can be found on Rust Docs at <https://docs.rs/termsc
 
 ## Upcoming Features 🧪
 
-- **Themes provider**: I'm still thinking about how I will implement this, but basically the idea is to have a configuration file where it will be possible
+- **Themes provider 🎨**: I'm still thinking about how I will implement this, but basically the idea is to have a configuration file where it will be possible
     to define the color schema for the entire application. I haven't planned this release yet
+- **Local and remote file explorer format 🃏**: From 0.5.0 you will be able to customize the file format for both local and remote hosts.
+- **Synchronized browsing of local and remote directories ⌚**: See [Issue 8](https://github.com/veeso/termscp/issues/8)
+- **Group file select 🤩**: Possibility to select a group of files in explorers to operate on
 
 No other new feature is planned at the moment. I actually think that termscp is getting mature and now I should focus upcoming updates more on bug fixing and
 code/performance improvements than on new features.
@@ -443,6 +447,14 @@ TermSCP is powered by these aweseome projects:
 > Text editor
 
 ![TextEditor](assets/images/text-editor.gif)
+
+---
+
+## Buy me a coffee ☕
+
+If you like termscp and you'd love to see the project to grow, please consider a little donation 🥳
+
+[![Buy-me-a-coffee](https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=&slug=veeso&button_colour=404040&font_colour=ffffff&font_family=Comic&outline_colour=ffffff&coffee_colour=FFDD00)](https://www.buymeacoffee.com/veeso)
 
 ---
 
