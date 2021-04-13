@@ -144,8 +144,7 @@ impl Component for LogBox {
                 None => Vec::new(),
                 Some(table) => table
                     .iter()
-                    .enumerate()
-                    .map(|(idx, row)| {
+                    .map(|row| {
                         let mut columns: VecDeque<Span> = row
                             .iter()
                             .map(|col| {
@@ -161,15 +160,7 @@ impl Component for LogBox {
                         // Let's convert column spans into Spans rows NOTE: -4 because first line is always made by 5 columns; but there's always 1
                         let mut rows: Vec<Spans> = Vec::with_capacity(columns.len() - 4);
                         // Get first row
-                        let mut first_row: Vec<Span> = vec![Span::styled(
-                            match self.states.list_index == idx {
-                                true => "> ",
-                                false => "  ",
-                            },
-                            Style::default()
-                                .fg(self.props.foreground)
-                                .bg(self.props.background),
-                        )];
+                        let mut first_row: Vec<Span> = Vec::with_capacity(5);
                         for _ in 0..5 {
                             if let Some(col) = columns.pop_front() {
                                 first_row.push(col);
@@ -204,6 +195,7 @@ impl Component for LogBox {
                         .title(title),
                 )
                 .start_corner(Corner::BottomLeft)
+                .highlight_symbol(">> ")
                 .highlight_style(Style::default().add_modifier(self.props.get_modifiers()));
             let mut state: ListState = ListState::default();
             state.select(Some(self.states.list_index));

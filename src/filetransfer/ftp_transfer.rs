@@ -228,7 +228,6 @@ impl FtpFileTransfer {
                         }),
                     })),
                 };
-                eprintln!("{:?};{:?}", is_dir, symlink);
                 let mut abs_path: PathBuf = PathBuf::from(path);
                 abs_path.push(file_name.as_str());
                 let abs_path: PathBuf = Self::resolve(abs_path.as_path());
@@ -1111,7 +1110,6 @@ mod tests {
         // Pwd
         assert_eq!(ftp.pwd().ok().unwrap(), PathBuf::from("/"));
         // List dir
-        println!("{:?}", ftp.list_dir(PathBuf::from("/").as_path()));
         let files: Vec<FsEntry> = ftp.list_dir(PathBuf::from("/").as_path()).ok().unwrap();
         // There should be at least 1 file
         assert!(files.len() > 0);
@@ -1130,7 +1128,6 @@ mod tests {
         // Pwd
         assert_eq!(ftp.pwd().ok().unwrap(), PathBuf::from("/"));
         // List dir
-        println!("{:?}", ftp.list_dir(PathBuf::from("/").as_path()));
         let files: Vec<FsEntry> = ftp.list_dir(PathBuf::from("/").as_path()).ok().unwrap();
         // There should be at least 1 file
         assert!(files.len() > 0);

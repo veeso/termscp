@@ -1,6 +1,7 @@
 # Changelog
 
 - [Changelog](#changelog)
+  - [0.4.2](#042)
   - [0.4.1](#041)
   - [0.4.0](#040)
   - [0.3.3](#033)
@@ -14,6 +15,15 @@
   - [0.1.0](#010)
 
 ---
+
+## 0.4.2
+
+Released on 13/04/2021
+
+- Enhancements:
+  - Use highlight symbol for logbox of `tui-rs` instead of adding a `Span`
+- Bugfix:
+  - removed `eprintln!` in ftp transfer causing UI to break in Windows
 
 ## 0.4.1
 

@@ -1322,7 +1322,7 @@ dependencies = [
 
 [[package]]
 name = "termscp"
-version = "0.4.1"
+version = "0.4.2"
 dependencies = [
  "bitflags",
  "bytesize",

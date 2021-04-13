@@ -525,7 +525,6 @@ mod tests {
         // Iterate keys
         for key in client.iter_ssh_keys() {
             let host: SshHost = client.get_ssh_key(key).ok().unwrap().unwrap();
-            println!("{:?}", host);
             assert_eq!(host.0, String::from("192.168.1.31"));
             assert_eq!(host.1, String::from("pi"));
             let mut expected_key_path: PathBuf = key_path.clone();
