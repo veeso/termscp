@@ -20,6 +20,8 @@
 
 Released on 13/04/2021
 
+- Enhancements:
+  - Use highlight symbol for logbox of `tui-rs` instead of adding a `Span`
 - Bugfix:
   - removed `eprintln!` in ftp transfer causing UI to break in Windows
 
