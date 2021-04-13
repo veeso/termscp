@@ -8,7 +8,7 @@ pkgbase = termscp
 	provides = termscp
 	options = strip
 	source = https://github.com/veeso/termscp/releases/download/v0.4.2/termscp-0.4.2-x86_64.tar.gz
-	sha256sums = 0862fafbeb957a657db14dc5954bb73350c1675ba30a01580b96cb044f1443fe
+	sha256sums = c72f78a4707402f7f970a883899f4f1583fd9eca6166cb7f7616be97cabf768a
 
 pkgname = termscp
 
