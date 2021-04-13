@@ -898,7 +898,6 @@ mod tests {
         // Get dir
         let host: Localhost = Localhost::new(PathBuf::from(tmpdir.path())).ok().unwrap();
         let files: Vec<FsEntry> = host.list_dir();
-        println!("Entries {:?}", files);
         // Verify files
         let file_0: &FsEntry = files.get(0).unwrap();
         match file_0 {
@@ -1122,7 +1121,6 @@ mod tests {
         // Verify dir_dest contains foo.txt
         let mut test_file_path: PathBuf = dir_dest.clone();
         test_file_path.push("foo.txt");
-        println!("{:?}", host.scan_dir(tmpdir.path()).ok().unwrap());
         assert!(host.stat(test_file_path.as_path()).is_ok());
     }
 

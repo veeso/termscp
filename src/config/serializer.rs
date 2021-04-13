@@ -101,7 +101,6 @@ mod tests {
         // Parse
         let deserializer: ConfigSerializer = ConfigSerializer {};
         let cfg = deserializer.deserialize(Box::new(toml_file));
-        println!("{:?}", cfg);
         assert!(cfg.is_ok());
         let cfg: UserConfig = cfg.ok().unwrap();
         // Verify configuration
@@ -141,7 +140,6 @@ mod tests {
         // Parse
         let deserializer: ConfigSerializer = ConfigSerializer {};
         let cfg = deserializer.deserialize(Box::new(toml_file));
-        println!("{:?}", cfg);
         assert!(cfg.is_ok());
         let cfg: UserConfig = cfg.ok().unwrap();
         // Verify configuration

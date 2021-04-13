@@ -64,7 +64,6 @@ mod tests {
     fn test_ui_layout_utils_draw_area_in() {
         let area: Rect = Rect::new(0, 0, 1024, 512);
         let child: Rect = draw_area_in(area, 75, 30);
-        println!("{:?}", child);
         assert_eq!(child.x, 43);
         assert_eq!(child.y, 63);
         assert_eq!(child.width, 271);
