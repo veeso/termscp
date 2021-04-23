@@ -4,7 +4,7 @@
 
 [![Build](https://github.com/veeso/termscp/workflows/Linux/badge.svg)](https://github.com/veeso/termscp/actions) [![Build](https://github.com/veeso/termscp/workflows/MacOS/badge.svg)](https://github.com/veeso/termscp/actions) [![Build](https://github.com/veeso/termscp/workflows/Windows/badge.svg)](https://github.com/veeso/termscp/actions)
 
-~ Basically, WinSCP on a terminal ~  
+~ A feature rich terminal file transfer ~  
 Developed by Christian Visintin  
 Current version: 0.4.2 (13/04/2021)
 
@@ -46,7 +46,7 @@ Current version: 0.4.2 (13/04/2021)
 
 ## About TermSCP 🖥
 
-TermSCP is basically a porting of WinSCP to terminal. So basically is a terminal utility with an TUI to connect to a remote server to retrieve and upload files and to interact with the local file system. It works both on **Linux**, **MacOS**, **BSD** and **Windows** and supports SFTP, SCP, FTP and FTPS.
+Termscp is a feature rich terminal file transfer and explorer, with support for SCP/SFTP/FTP. So basically is a terminal utility with an TUI to connect to a remote server to retrieve and upload files and to interact with the local file system. It is **Linux**, **MacOS**, **BSD** and **Windows** compatible and supports SFTP, SCP, FTP and FTPS.
 
 ![Explorer](assets/images/explorer.gif)
 
