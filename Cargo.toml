@@ -46,6 +46,7 @@ tempfile = "3.1.0"
 textwrap = "0.13.4"
 thiserror = "^1.0.0"
 toml = "0.5.8"
+tuirealm = { version = "0.1.0", features = [ "with-components" ] }
 whoami = "1.1.1"
 wildmatch = "2.0.0"
 
@@ -56,11 +57,6 @@ version = "^4.0.2"
 [dependencies.serde]
 features = ["derive"]
 version = "^1.0.0"
-
-[dependencies.tui]
-default-features = false
-features = ["crossterm"]
-version = "0.14.0"
 
 [dependencies.ureq]
 features = ["json"]

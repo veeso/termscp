@@ -25,17 +25,84 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-// locals
-use super::{Canvas, Component, InputEvent, Msg, Payload, Props, PropsBuilder};
 // ext
-use crossterm::event::KeyCode;
-use std::collections::VecDeque;
-use tui::{
+use tuirealm::components::utils::{get_block, wrap_spans};
+use tuirealm::event::{Event, KeyCode};
+use tuirealm::props::{BordersProps, Props, PropsBuilder, Table as TextTable, TextParts};
+use tuirealm::tui::{
     layout::{Corner, Rect},
-    style::Style,
-    text::{Span, Spans},
-    widgets::{Block, List, ListItem, ListState},
+    style::{Color, Style},
+    widgets::{BorderType, Borders, List, ListItem, ListState},
 };
+use tuirealm::{Canvas, Component, Msg, Payload};
+
+// -- props
+
+pub struct LogboxPropsBuilder {
+    props: Option<Props>,
+}
+
+impl Default for LogboxPropsBuilder {
+    fn default() -> Self {
+        LogboxPropsBuilder {
+            props: Some(Props::default()),
+        }
+    }
+}
+
+impl PropsBuilder for LogboxPropsBuilder {
+    fn build(&mut self) -> Props {
+        self.props.take().unwrap()
+    }
+
+    fn hidden(&mut self) -> &mut Self {
+        if let Some(props) = self.props.as_mut() {
+            props.visible = false;
+        }
+        self
+    }
+
+    fn visible(&mut self) -> &mut Self {
+        if let Some(props) = self.props.as_mut() {
+            props.visible = true;
+        }
+        self
+    }
+}
+
+impl From<Props> for LogboxPropsBuilder {
+    fn from(props: Props) -> Self {
+        LogboxPropsBuilder { props: Some(props) }
+    }
+}
+
+impl LogboxPropsBuilder {
+    /// ### with_borders
+    ///
+    /// Set component borders style
+    pub fn with_borders(
+        &mut self,
+        borders: Borders,
+        variant: BorderType,
+        color: Color,
+    ) -> &mut Self {
+        if let Some(props) = self.props.as_mut() {
+            props.borders = BordersProps {
+                borders,
+                variant,
+                color,
+            }
+        }
+        self
+    }
+
+    pub fn with_log(&mut self, title: Option<String>, table: TextTable) -> &mut Self {
+        if let Some(props) = self.props.as_mut() {
+            props.texts = TextParts::table(title, table);
+        }
+        self
+    }
+}
 
 // -- states
 
@@ -132,10 +199,6 @@ impl LogBox {
 }
 
 impl Component for LogBox {
-    /// ### render
-    ///
-    /// Based on the current properties and states, renders a widget using the provided render engine in the provided Area
-    /// If focused, cursor is also set (if supported by widget)
     #[cfg(not(tarpaulin_include))]
     fn render(&self, render: &mut Canvas, area: Rect) {
         if self.props.visible {
@@ -144,70 +207,24 @@ impl Component for LogBox {
                 None => Vec::new(),
                 Some(table) => table
                     .iter()
-                    .map(|row| {
-                        let mut columns: VecDeque<Span> = row
-                            .iter()
-                            .map(|col| {
-                                Span::styled(
-                                    col.content.clone(),
-                                    Style::default()
-                                        .add_modifier(col.get_modifiers())
-                                        .fg(col.fg)
-                                        .bg(col.bg),
-                                )
-                            })
-                            .collect();
-                        // Let's convert column spans into Spans rows NOTE: -4 because first line is always made by 5 columns; but there's always 1
-                        let mut rows: Vec<Spans> = Vec::with_capacity(columns.len() - 4);
-                        // Get first row
-                        let mut first_row: Vec<Span> = Vec::with_capacity(5);
-                        for _ in 0..5 {
-                            if let Some(col) = columns.pop_front() {
-                                first_row.push(col);
-                            }
-                        }
-                        rows.push(Spans::from(first_row));
-                        // Fill remaining rows
-                        let cycles: usize = columns.len();
-                        for _ in 0..cycles {
-                            if let Some(col) = columns.pop_front() {
-                                rows.push(Spans::from(vec![col]));
-                            }
-                        }
-                        ListItem::new(rows)
-                    })
+                    .map(|row| ListItem::new(wrap_spans(row, area.width.into(), &self.props)))
                     .collect(), // Make List item from TextSpan
             };
-            let title: String = match self.props.texts.title.as_ref() {
-                Some(t) => t.clone(),
-                None => String::new(),
-            };
-            // Render
-
             let w = List::new(list_items)
-                .block(
-                    Block::default()
-                        .borders(self.props.borders)
-                        .border_style(match self.states.focus {
-                            true => Style::default().fg(self.props.foreground),
-                            false => Style::default(),
-                        })
-                        .title(title),
-                )
+                .block(get_block(
+                    &self.props.borders,
+                    &self.props.texts.title,
+                    self.states.focus,
+                ))
                 .start_corner(Corner::BottomLeft)
                 .highlight_symbol(">> ")
-                .highlight_style(Style::default().add_modifier(self.props.get_modifiers()));
+                .highlight_style(Style::default().add_modifier(self.props.modifiers));
             let mut state: ListState = ListState::default();
             state.select(Some(self.states.list_index));
             render.render_stateful_widget(w, area, &mut state);
         }
     }
 
-    /// ### update
-    ///
-    /// Update component properties
-    /// Properties should first be retrieved through `get_props` which creates a builder from
-    /// existing properties and then edited before calling update
     fn update(&mut self, props: Props) -> Msg {
         self.props = props;
         // re-Set list length
@@ -220,21 +237,13 @@ impl Component for LogBox {
         Msg::None
     }
 
-    /// ### get_props
-    ///
-    /// Returns a props builder starting from component properties.
-    /// This returns a prop builder in order to make easier to create
-    /// new properties for the element.
-    fn get_props(&self) -> PropsBuilder {
-        PropsBuilder::from(self.props.clone())
+    fn get_props(&self) -> Props {
+        self.props.clone()
     }
 
-    /// ### on
-    ///
-    /// Handle input event and update internal states
-    fn on(&mut self, ev: InputEvent) -> Msg {
+    fn on(&mut self, ev: Event) -> Msg {
         // Match event
-        if let InputEvent::Key(key) = ev {
+        if let Event::Key(key) = ev {
             match key.code {
                 KeyCode::Up => {
                     // Update states
@@ -271,25 +280,14 @@ impl Component for LogBox {
         }
     }
 
-    /// ### get_value
-    ///
-    /// Return component value. File list return index
-    fn get_value(&self) -> Payload {
+    fn get_state(&self) -> Payload {
         Payload::Unsigned(self.states.get_list_index())
     }
 
-    // -- events
-
-    /// ### blur
-    ///
-    /// Blur component; basically remove focus
     fn blur(&mut self) {
         self.states.focus = false;
     }
 
-    /// ### active
-    ///
-    /// Active component; basically give focus
     fn active(&mut self) {
         self.states.focus = true;
     }
@@ -299,16 +297,18 @@ impl Component for LogBox {
 mod tests {
 
     use super::*;
-    use crate::ui::layout::props::{TableBuilder, TextParts, TextSpan};
-
-    use crossterm::event::{KeyCode, KeyEvent};
-    use tui::style::Color;
+    use tuirealm::event::{KeyCode, KeyEvent};
+    use tuirealm::props::{TableBuilder, TextSpan};
+    use tuirealm::tui::style::Color;
 
     #[test]
-    fn test_ui_layout_components_logbox() {
+    fn test_ui_components_logbox() {
         let mut component: LogBox = LogBox::new(
-            PropsBuilder::default()
-                .with_texts(TextParts::table(
+            LogboxPropsBuilder::default()
+                .hidden()
+                .visible()
+                .with_borders(Borders::ALL, BorderType::Double, Color::Red)
+                .with_log(
                     Some(String::from("Log")),
                     TableBuilder::default()
                         .add_col(TextSpan::from("12:29"))
@@ -317,9 +317,15 @@ mod tests {
                         .add_col(TextSpan::from("12:38"))
                         .add_col(TextSpan::from("system alive"))
                         .build(),
-                ))
+                )
                 .build(),
         );
+        assert_eq!(component.props.visible, true);
+        assert_eq!(
+            component.props.texts.title.as_ref().unwrap().as_str(),
+            "Log"
+        );
+        assert_eq!(component.props.texts.table.as_ref().unwrap().len(), 2);
         // Verify states
         assert_eq!(component.states.list_index, 0);
         assert_eq!(component.states.list_len, 2);
@@ -330,17 +336,18 @@ mod tests {
         component.blur();
         assert_eq!(component.states.focus, false);
         // Update
-        let props = component.get_props().with_foreground(Color::Red).build();
+        let props = LogboxPropsBuilder::from(component.get_props())
+            .hidden()
+            .build();
         assert_eq!(component.update(props), Msg::None);
-        assert_eq!(component.props.foreground, Color::Red);
+        assert_eq!(component.props.visible, false);
         // Increment list index
         component.states.list_index += 1;
         assert_eq!(component.states.list_index, 1);
         // Update
         component.update(
-            component
-                .get_props()
-                .with_texts(TextParts::table(
+            LogboxPropsBuilder::from(component.get_props())
+                .with_log(
                     Some(String::from("Log")),
                     TableBuilder::default()
                         .add_col(TextSpan::from("12:29"))
@@ -352,49 +359,49 @@ mod tests {
                         .add_col(TextSpan::from("12:41"))
                         .add_col(TextSpan::from("system is going down for REBOOT"))
                         .build(),
-                ))
+                )
                 .build(),
         );
         // Verify states
         assert_eq!(component.states.list_index, 0); // Last item
         assert_eq!(component.states.list_len, 3);
         // get value
-        assert_eq!(component.get_value(), Payload::Unsigned(0));
+        assert_eq!(component.get_state(), Payload::Unsigned(0));
         // RenderData
         assert_eq!(component.states.list_index, 0);
         // Set cursor to 0
         component.states.list_index = 0;
         // Handle inputs
         assert_eq!(
-            component.on(InputEvent::Key(KeyEvent::from(KeyCode::Up))),
+            component.on(Event::Key(KeyEvent::from(KeyCode::Up))),
             Msg::None
         );
         // Index should be incremented
         assert_eq!(component.states.list_index, 1);
         // Index should be decremented
         assert_eq!(
-            component.on(InputEvent::Key(KeyEvent::from(KeyCode::Down))),
+            component.on(Event::Key(KeyEvent::from(KeyCode::Down))),
             Msg::None
         );
         // Index should be incremented
         assert_eq!(component.states.list_index, 0);
         // Index should be 2
         assert_eq!(
-            component.on(InputEvent::Key(KeyEvent::from(KeyCode::PageUp))),
+            component.on(Event::Key(KeyEvent::from(KeyCode::PageUp))),
             Msg::None
         );
         // Index should be incremented
         assert_eq!(component.states.list_index, 2);
         // Index should be 0
         assert_eq!(
-            component.on(InputEvent::Key(KeyEvent::from(KeyCode::PageDown))),
+            component.on(Event::Key(KeyEvent::from(KeyCode::PageDown))),
             Msg::None
         );
         // Index should be incremented
         assert_eq!(component.states.list_index, 0);
         // On key
         assert_eq!(
-            component.on(InputEvent::Key(KeyEvent::from(KeyCode::Backspace))),
+            component.on(Event::Key(KeyEvent::from(KeyCode::Backspace))),
             Msg::OnKey(KeyEvent::from(KeyCode::Backspace))
         );
     }

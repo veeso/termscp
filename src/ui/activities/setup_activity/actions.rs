@@ -28,10 +28,10 @@
  */
 // Locals
 use super::SetupActivity;
-use crate::ui::layout::Payload;
 // Ext
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use std::env;
+use tuirealm::Payload;
 
 impl SetupActivity {
     /// ### action_save_config
@@ -63,7 +63,7 @@ impl SetupActivity {
         // Get key
         if let Some(config_cli) = self.context.as_mut().unwrap().config_client.as_mut() {
             // get index
-            let idx: Option<usize> = match self.view.get_value(super::COMPONENT_LIST_SSH_KEYS) {
+            let idx: Option<usize> = match self.view.get_state(super::COMPONENT_LIST_SSH_KEYS) {
                 Some(Payload::Unsigned(idx)) => Some(idx),
                 _ => None,
             };
@@ -99,11 +99,11 @@ impl SetupActivity {
     pub(super) fn action_new_ssh_key(&mut self) {
         if let Some(cli) = self.context.as_mut().unwrap().config_client.as_mut() {
             // get parameters
-            let host: String = match self.view.get_value(super::COMPONENT_INPUT_SSH_HOST) {
+            let host: String = match self.view.get_state(super::COMPONENT_INPUT_SSH_HOST) {
                 Some(Payload::Text(host)) => host,
                 _ => String::new(),
             };
-            let username: String = match self.view.get_value(super::COMPONENT_INPUT_SSH_USERNAME) {
+            let username: String = match self.view.get_state(super::COMPONENT_INPUT_SSH_USERNAME) {
                 Some(Payload::Text(user)) => user,
                 _ => String::new(),
             };

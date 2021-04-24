@@ -25,8 +25,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-use crate::ui::layout::Msg;
-use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+use tuirealm::event::{KeyCode, KeyEvent, KeyModifiers};
+use tuirealm::Msg;
 
 // -- Special keys
 

@@ -27,7 +27,7 @@
  */
 // Dependencies
 extern crate crossterm;
-extern crate tui;
+extern crate tuirealm;
 
 // Locals
 use super::input::InputHandler;
@@ -42,8 +42,8 @@ use crossterm::execute;
 use crossterm::terminal::{EnterAlternateScreen, LeaveAlternateScreen};
 use std::io::{stdout, Stdout};
 use std::path::PathBuf;
-use tui::backend::CrosstermBackend;
-use tui::Terminal;
+use tuirealm::tui::backend::CrosstermBackend;
+use tuirealm::tui::Terminal;
 
 /// ## Context
 ///

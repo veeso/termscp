@@ -25,16 +25,106 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-// locals
-use super::{Canvas, Component, InputEvent, Msg, Payload, Props, PropsBuilder};
 // ext
-use crossterm::event::KeyCode;
-use tui::{
+use tuirealm::components::utils::get_block;
+use tuirealm::event::{Event, KeyCode};
+use tuirealm::props::{BordersProps, Props, PropsBuilder, TextParts, TextSpan};
+use tuirealm::tui::{
     layout::{Corner, Rect},
     style::{Color, Style},
     text::Span,
-    widgets::{Block, List, ListItem, ListState},
+    widgets::{BorderType, Borders, List, ListItem, ListState},
 };
+use tuirealm::{Canvas, Component, Msg, Payload};
+
+// -- props
+
+pub struct FileListPropsBuilder {
+    props: Option<Props>,
+}
+
+impl Default for FileListPropsBuilder {
+    fn default() -> Self {
+        FileListPropsBuilder {
+            props: Some(Props::default()),
+        }
+    }
+}
+
+impl PropsBuilder for FileListPropsBuilder {
+    fn build(&mut self) -> Props {
+        self.props.take().unwrap()
+    }
+
+    fn hidden(&mut self) -> &mut Self {
+        if let Some(props) = self.props.as_mut() {
+            props.visible = false;
+        }
+        self
+    }
+
+    fn visible(&mut self) -> &mut Self {
+        if let Some(props) = self.props.as_mut() {
+            props.visible = true;
+        }
+        self
+    }
+}
+
+impl From<Props> for FileListPropsBuilder {
+    fn from(props: Props) -> Self {
+        FileListPropsBuilder { props: Some(props) }
+    }
+}
+
+impl FileListPropsBuilder {
+    /// ### with_foreground
+    ///
+    /// Set foreground color for area
+    pub fn with_foreground(&mut self, color: Color) -> &mut Self {
+        if let Some(props) = self.props.as_mut() {
+            props.foreground = color;
+        }
+        self
+    }
+
+    /// ### with_background
+    ///
+    /// Set background color for area
+    pub fn with_background(&mut self, color: Color) -> &mut Self {
+        if let Some(props) = self.props.as_mut() {
+            props.background = color;
+        }
+        self
+    }
+
+    /// ### with_borders
+    ///
+    /// Set component borders style
+    pub fn with_borders(
+        &mut self,
+        borders: Borders,
+        variant: BorderType,
+        color: Color,
+    ) -> &mut Self {
+        if let Some(props) = self.props.as_mut() {
+            props.borders = BordersProps {
+                borders,
+                variant,
+                color,
+            }
+        }
+        self
+    }
+
+    pub fn with_files(&mut self, title: Option<String>, files: Vec<String>) -> &mut Self {
+        if let Some(props) = self.props.as_mut() {
+            let files: Vec<TextSpan> = files.into_iter().map(TextSpan::from).collect();
+            props.texts = TextParts::new(title, Some(files));
+        }
+        self
+    }
+}
 
 // -- states
 
@@ -124,7 +214,7 @@ impl FileList {
         // Initialize states
         let mut states: OwnStates = OwnStates::default();
         // Set list length
-        states.set_list_len(match &props.texts.rows {
+        states.set_list_len(match &props.texts.spans {
             Some(tokens) => tokens.len(),
             None => 0,
         });
@@ -133,15 +223,11 @@ impl FileList {
 }
 
 impl Component for FileList {
-    /// ### render
-    ///
-    /// Based on the current properties and states, renders a widget using the provided render engine in the provided Area
-    /// If focused, cursor is also set (if supported by widget)
     #[cfg(not(tarpaulin_include))]
     fn render(&self, render: &mut Canvas, area: Rect) {
         if self.props.visible {
             // Make list
-            let list_item: Vec<ListItem> = match self.props.texts.rows.as_ref() {
+            let list_item: Vec<ListItem> = match self.props.texts.spans.as_ref() {
                 None => vec![],
                 Some(lines) => lines
                     .iter()
@@ -152,30 +238,22 @@ impl Component for FileList {
                 true => (Color::Black, self.props.background),
                 false => (self.props.foreground, Color::Reset),
             };
-            let title: String = match self.props.texts.title.as_ref() {
-                Some(t) => t.clone(),
-                None => String::new(),
-            };
             // Render
             let mut state: ListState = ListState::default();
             state.select(Some(self.states.list_index));
             render.render_stateful_widget(
                 List::new(list_item)
-                    .block(
-                        Block::default()
-                            .borders(self.props.borders)
-                            .border_style(match self.states.focus {
-                                true => Style::default().fg(self.props.foreground),
-                                false => Style::default(),
-                            })
-                            .title(title),
-                    )
+                    .block(get_block(
+                        &self.props.borders,
+                        &self.props.texts.title,
+                        self.states.focus,
+                    ))
                     .start_corner(Corner::TopLeft)
                     .highlight_style(
                         Style::default()
                             .bg(bg)
                             .fg(fg)
-                            .add_modifier(self.props.get_modifiers()),
+                            .add_modifier(self.props.modifiers),
                     ),
                 area,
                 &mut state,
@@ -183,15 +261,10 @@ impl Component for FileList {
         }
     }
 
-    /// ### update
-    ///
-    /// Update component properties
-    /// Properties should first be retrieved through `get_props` which creates a builder from
-    /// existing properties and then edited before calling update
     fn update(&mut self, props: Props) -> Msg {
         self.props = props;
         // re-Set list length
-        self.states.set_list_len(match &self.props.texts.rows {
+        self.states.set_list_len(match &self.props.texts.spans {
             Some(tokens) => tokens.len(),
             None => 0,
         });
@@ -200,21 +273,13 @@ impl Component for FileList {
         Msg::None
     }
 
-    /// ### get_props
-    ///
-    /// Returns a props builder starting from component properties.
-    /// This returns a prop builder in order to make easier to create
-    /// new properties for the element.
-    fn get_props(&self) -> PropsBuilder {
-        PropsBuilder::from(self.props.clone())
+    fn get_props(&self) -> Props {
+        self.props.clone()
     }
 
-    /// ### on
-    ///
-    /// Handle input event and update internal states
-    fn on(&mut self, ev: InputEvent) -> Msg {
+    fn on(&mut self, ev: Event) -> Msg {
         // Match event
-        if let InputEvent::Key(key) = ev {
+        if let Event::Key(key) = ev {
             match key.code {
                 KeyCode::Down => {
                     // Update states
@@ -242,7 +307,7 @@ impl Component for FileList {
                 }
                 KeyCode::Enter => {
                     // Report event
-                    Msg::OnSubmit(self.get_value())
+                    Msg::OnSubmit(self.get_state())
                 }
                 _ => {
                     // Return key event to activity
@@ -255,10 +320,7 @@ impl Component for FileList {
         }
     }
 
-    /// ### get_value
-    ///
-    /// Return component value. File list return index
-    fn get_value(&self) -> Payload {
+    fn get_state(&self) -> Payload {
         Payload::Unsigned(self.states.get_list_index())
     }
 
@@ -283,21 +345,32 @@ impl Component for FileList {
 mod tests {
 
     use super::*;
-    use crate::ui::layout::props::{TextParts, TextSpan};
-
-    use crossterm::event::KeyEvent;
+    use tuirealm::event::KeyEvent;
 
     #[test]
-    fn test_ui_layout_components_file_list() {
+    fn test_ui_components_file_list() {
         // Make component
         let mut component: FileList = FileList::new(
-            PropsBuilder::default()
-                .with_texts(TextParts::new(
-                    Some(String::from("filelist")),
-                    Some(vec![TextSpan::from("file1"), TextSpan::from("file2")]),
-                ))
+            FileListPropsBuilder::default()
+                .hidden()
+                .visible()
+                .with_foreground(Color::Red)
+                .with_background(Color::Blue)
+                .with_borders(Borders::ALL, BorderType::Double, Color::Red)
+                .with_files(
+                    Some(String::from("files")),
+                    vec![String::from("file1"), String::from("file2")],
+                )
                 .build(),
         );
+        assert_eq!(component.props.foreground, Color::Red);
+        assert_eq!(component.props.background, Color::Blue);
+        assert_eq!(component.props.visible, true);
+        assert_eq!(
+            component.props.texts.title.as_ref().unwrap().as_str(),
+            "files"
+        );
+        assert_eq!(component.props.texts.spans.as_ref().unwrap().len(), 2);
         // Verify states
         assert_eq!(component.states.list_index, 0);
         assert_eq!(component.states.list_len, 2);
@@ -308,69 +381,72 @@ mod tests {
         component.blur();
         assert_eq!(component.states.focus, false);
         // Update
-        let props = component.get_props().with_foreground(Color::Red).build();
+        let props = FileListPropsBuilder::from(component.get_props())
+            .with_foreground(Color::Yellow)
+            .hidden()
+            .build();
         assert_eq!(component.update(props), Msg::None);
-        assert_eq!(component.props.foreground, Color::Red);
+        assert_eq!(component.props.visible, false);
+        assert_eq!(component.props.foreground, Color::Yellow);
         // Increment list index
         component.states.list_index += 1;
         assert_eq!(component.states.list_index, 1);
         // Update
         component.update(
-            component
-                .get_props()
-                .with_texts(TextParts::new(
+            FileListPropsBuilder::from(component.get_props())
+                .with_files(
                     Some(String::from("filelist")),
-                    Some(vec![
-                        TextSpan::from("file1"),
-                        TextSpan::from("file2"),
-                        TextSpan::from("file3"),
-                    ]),
-                ))
+                    vec![
+                        String::from("file1"),
+                        String::from("file2"),
+                        String::from("file3"),
+                    ],
+                )
                 .build(),
         );
         // Verify states
         assert_eq!(component.states.list_index, 1); // Kept
         assert_eq!(component.states.list_len, 3);
         // get value
-        assert_eq!(component.get_value(), Payload::Unsigned(1));
+        assert_eq!(component.get_state(), Payload::Unsigned(1));
         // Render
         assert_eq!(component.states.list_index, 1);
         // Handle inputs
         assert_eq!(
-            component.on(InputEvent::Key(KeyEvent::from(KeyCode::Down))),
+            component.on(Event::Key(KeyEvent::from(KeyCode::Down))),
             Msg::None
         );
         // Index should be incremented
         assert_eq!(component.states.list_index, 2);
         // Index should be decremented
         assert_eq!(
-            component.on(InputEvent::Key(KeyEvent::from(KeyCode::Up))),
+            component.on(Event::Key(KeyEvent::from(KeyCode::Up))),
             Msg::None
         );
         // Index should be incremented
         assert_eq!(component.states.list_index, 1);
         // Index should be 2
         assert_eq!(
-            component.on(InputEvent::Key(KeyEvent::from(KeyCode::PageDown))),
+            component.on(Event::Key(KeyEvent::from(KeyCode::PageDown))),
             Msg::None
         );
         // Index should be incremented
         assert_eq!(component.states.list_index, 2);
         // Index should be 0
         assert_eq!(
-            component.on(InputEvent::Key(KeyEvent::from(KeyCode::PageUp))),
+            component.on(Event::Key(KeyEvent::from(KeyCode::PageUp))),
             Msg::None
         );
         // Index should be incremented
         assert_eq!(component.states.list_index, 0);
         // Enter
         assert_eq!(
-            component.on(InputEvent::Key(KeyEvent::from(KeyCode::Enter))),
+            component.on(Event::Key(KeyEvent::from(KeyCode::Enter))),
             Msg::OnSubmit(Payload::Unsigned(0))
         );
         // On key
         assert_eq!(
-            component.on(InputEvent::Key(KeyEvent::from(KeyCode::Backspace))),
+            component.on(Event::Key(KeyEvent::from(KeyCode::Backspace))),
             Msg::OnKey(KeyEvent::from(KeyCode::Backspace))
         );
     }

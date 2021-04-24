@@ -36,7 +36,7 @@ mod view;
 extern crate chrono;
 extern crate crossterm;
 extern crate textwrap;
-extern crate tui;
+extern crate tuirealm;
 
 // locals
 use super::{Activity, Context, ExitReason};
@@ -47,7 +47,6 @@ use crate::filetransfer::{FileTransfer, FileTransferProtocol};
 use crate::fs::explorer::FileExplorer;
 use crate::fs::FsEntry;
 use crate::system::config_client::ConfigClient;
-use crate::ui::layout::view::View;
 
 // Includes
 use chrono::{DateTime, Local};
@@ -55,6 +54,7 @@ use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use std::collections::VecDeque;
 use std::path::PathBuf;
 use std::time::Instant;
+use tuirealm::View;
 
 // -- Storage keys
 

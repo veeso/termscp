@@ -35,7 +35,9 @@ use super::{
     COMPONENT_RADIO_UPDATES, COMPONENT_TEXT_ERROR, COMPONENT_TEXT_HELP,
 };
 use crate::ui::activities::keymap::*;
-use crate::ui::layout::{Msg, Payload};
+
+// ext
+use tuirealm::{Msg, Payload};
 
 impl SetupActivity {
     /// ### update

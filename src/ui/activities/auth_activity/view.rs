@@ -27,20 +27,27 @@
  */
 // Locals
 use super::{AuthActivity, Context, FileTransferProtocol};
-use crate::ui::layout::components::{
-    bookmark_list::BookmarkList, input::Input, msgbox::MsgBox, radio_group::RadioGroup,
-    table::Table, text::Text, title::Title,
+use crate::ui::components::{
+    bookmark_list::{BookmarkList, BookmarkListPropsBuilder},
+    msgbox::{MsgBox, MsgBoxPropsBuilder},
 };
-use crate::ui::layout::props::{
-    InputType, PropValue, PropsBuilder, TableBuilder, TextParts, TextSpan, TextSpanBuilder,
-};
-use crate::ui::layout::utils::draw_area_in;
-use crate::ui::layout::{Msg, Payload};
+use crate::utils::ui::draw_area_in;
 // Ext
-use tui::{
+use tuirealm::components::{
+    input::{Input, InputPropsBuilder},
+    label::{Label, LabelPropsBuilder},
+    radio::{Radio, RadioPropsBuilder},
+    span::{Span, SpanPropsBuilder},
+    table::{Table, TablePropsBuilder},
+};
+use tuirealm::tui::{
     layout::{Constraint, Direction, Layout},
     style::Color,
-    widgets::Clear,
+    widgets::{BorderType, Borders, Clear},
+};
+use tuirealm::{
+    props::{InputType, PropsBuilder, TableBuilder, TextSpan, TextSpanBuilder},
+    Msg, Payload,
 };
 
 impl AuthActivity {
@@ -50,35 +57,32 @@ impl AuthActivity {
     pub(super) fn init(&mut self) {
         // Header
         self.view.mount(super::COMPONENT_TEXT_HEADER, Box::new(
-            Title::new(
-                PropsBuilder::default().with_foreground(Color::White).with_texts(
-                    TextParts::new(Some(String::from(" _____                   ____   ____ ____  \n|_   _|__ _ __ _ __ ___ / ___| / ___|  _ \\ \n  | |/ _ \\ '__| '_ ` _ \\\\___ \\| |   | |_) |\n  | |  __/ |  | | | | | |___) | |___|  __/ \n  |_|\\___|_|  |_| |_| |_|____/ \\____|_|    \n")), None)
+            Label::new(
+                LabelPropsBuilder::default().with_foreground(Color::White).with_text(
+                    String::from(" _____                   ____   ____ ____  \n|_   _|__ _ __ _ __ ___ / ___| / ___|  _ \\ \n  | |/ _ \\ '__| '_ ` _ \\\\___ \\| |   | |_) |\n  | |  __/ |  | | | | | |___) | |___|  __/ \n  |_|\\___|_|  |_| |_| |_|____/ \\____|_|    \n")
                 ).bold().build()
             )
         ));
         // Footer
         self.view.mount(
             super::COMPONENT_TEXT_FOOTER,
-            Box::new(Text::new(
-                PropsBuilder::default()
-                    .with_texts(TextParts::new(
-                        None,
-                        Some(vec![
-                            TextSpanBuilder::new("Press ").bold().build(),
-                            TextSpanBuilder::new("<CTRL+H>")
-                                .bold()
-                                .with_foreground(Color::Cyan)
-                                .build(),
-                            TextSpanBuilder::new(" to show keybindings; ")
-                                .bold()
-                                .build(),
-                            TextSpanBuilder::new("<CTRL+C>")
-                                .bold()
-                                .with_foreground(Color::Cyan)
-                                .build(),
-                            TextSpanBuilder::new(" to enter setup").bold().build(),
-                        ]),
-                    ))
+            Box::new(Span::new(
+                SpanPropsBuilder::default()
+                    .with_spans(vec![
+                        TextSpanBuilder::new("Press ").bold().build(),
+                        TextSpanBuilder::new("<CTRL+H>")
+                            .bold()
+                            .with_foreground(Color::Cyan)
+                            .build(),
+                        TextSpanBuilder::new(" to show keybindings; ")
+                            .bold()
+                            .build(),
+                        TextSpanBuilder::new("<CTRL+C>")
+                            .bold()
+                            .with_foreground(Color::Cyan)
+                            .build(),
+                        TextSpanBuilder::new(" to enter setup").bold().build(),
+                    ])
                     .build(),
             )),
         );
@@ -86,9 +90,10 @@ impl AuthActivity {
         self.view.mount(
             super::COMPONENT_INPUT_ADDR,
             Box::new(Input::new(
-                PropsBuilder::default()
+                InputPropsBuilder::default()
                     .with_foreground(Color::Yellow)
-                    .with_texts(TextParts::new(Some(String::from("Remote address")), None))
+                    .with_borders(Borders::ALL, BorderType::Rounded, Color::LightYellow)
+                    .with_label(String::from("Remote address"))
                     .build(),
             )),
         );
@@ -96,31 +101,33 @@ impl AuthActivity {
         self.view.mount(
             super::COMPONENT_INPUT_PORT,
             Box::new(Input::new(
-                PropsBuilder::default()
+                InputPropsBuilder::default()
                     .with_foreground(Color::LightCyan)
-                    .with_texts(TextParts::new(Some(String::from("Port number")), None))
+                    .with_borders(Borders::ALL, BorderType::Rounded, Color::LightCyan)
+                    .with_label(String::from("Port number"))
                     .with_input(InputType::Number)
                     .with_input_len(5)
-                    .with_value(PropValue::Str(String::from("22")))
+                    .with_value(String::from("22"))
                     .build(),
             )),
         );
         // Protocol
         self.view.mount(
             super::COMPONENT_RADIO_PROTOCOL,
-            Box::new(RadioGroup::new(
-                PropsBuilder::default()
-                    .with_foreground(Color::LightGreen)
-                    .with_background(Color::Black)
-                    .with_texts(TextParts::new(
+            Box::new(Radio::new(
+                RadioPropsBuilder::default()
+                    .with_color(Color::LightGreen)
+                    .with_inverted_color(Color::Black)
+                    .with_borders(Borders::ALL, BorderType::Rounded, Color::LightGreen)
+                    .with_options(
                         Some(String::from("Protocol")),
-                        Some(vec![
-                            TextSpan::from("SFTP"),
-                            TextSpan::from("SCP"),
-                            TextSpan::from("FTP"),
-                            TextSpan::from("FTPS"),
-                        ]),
-                    ))
+                        vec![
+                            String::from("SFTP"),
+                            String::from("SCP"),
+                            String::from("FTP"),
+                            String::from("FTPS"),
+                        ],
+                    )
                     .build(),
             )),
         );
@@ -128,9 +135,10 @@ impl AuthActivity {
         self.view.mount(
             super::COMPONENT_INPUT_USERNAME,
             Box::new(Input::new(
-                PropsBuilder::default()
+                InputPropsBuilder::default()
                     .with_foreground(Color::LightMagenta)
-                    .with_texts(TextParts::new(Some(String::from("Username")), None))
+                    .with_borders(Borders::ALL, BorderType::Rounded, Color::LightMagenta)
+                    .with_label(String::from("Username"))
                     .build(),
             )),
         );
@@ -138,9 +146,10 @@ impl AuthActivity {
         self.view.mount(
             super::COMPONENT_INPUT_PASSWORD,
             Box::new(Input::new(
-                PropsBuilder::default()
+                InputPropsBuilder::default()
                     .with_foreground(Color::LightBlue)
-                    .with_texts(TextParts::new(Some(String::from("Password")), None))
+                    .with_borders(Borders::ALL, BorderType::Rounded, Color::LightBlue)
+                    .with_label(String::from("Password"))
                     .with_input(InputType::Password)
                     .build(),
             )),
@@ -155,10 +164,16 @@ impl AuthActivity {
         {
             self.view.mount(
                 super::COMPONENT_TEXT_NEW_VERSION,
-                Box::new(Text::new(
-                        PropsBuilder::default()
+                Box::new(Span::new(
+                        SpanPropsBuilder::default()
                         .with_foreground(Color::Yellow)
-                        .with_texts(TextParts::new(None, Some(vec![TextSpan::from(format!("TermSCP {} is now available! Download it from <https://github.com/veeso/termscp/releases/latest>", version))])))
+                        .with_spans(
+                            vec![
+                                TextSpan::from("TermSCP "),
+                                TextSpanBuilder::new(version).underlined().bold().build(),
+                                TextSpan::from(" is now available! Download it from <https://github.com/veeso/termscp/releases/latest>")
+                            ]
+                        )
                         .build()
                 ))
             );
@@ -167,10 +182,11 @@ impl AuthActivity {
         self.view.mount(
             super::COMPONENT_BOOKMARKS_LIST,
             Box::new(BookmarkList::new(
-                PropsBuilder::default()
+                BookmarkListPropsBuilder::default()
                     .with_background(Color::LightGreen)
                     .with_foreground(Color::Black)
-                    .with_texts(TextParts::new(Some(String::from("Bookmarks")), None))
+                    .with_borders(Borders::ALL, BorderType::Plain, Color::LightGreen)
+                    .with_bookmarks(Some(String::from("Bookmarks")), vec![])
                     .build(),
             )),
         );
@@ -179,13 +195,11 @@ impl AuthActivity {
         self.view.mount(
             super::COMPONENT_RECENTS_LIST,
             Box::new(BookmarkList::new(
-                PropsBuilder::default()
+                BookmarkListPropsBuilder::default()
                     .with_background(Color::LightBlue)
                     .with_foreground(Color::Black)
-                    .with_texts(TextParts::new(
-                        Some(String::from("Recent connections")),
-                        None,
-                    ))
+                    .with_borders(Borders::ALL, BorderType::Plain, Color::LightBlue)
+                    .with_bookmarks(Some(String::from("Recent connections")), vec![])
                     .build(),
             )),
         );
@@ -258,27 +272,27 @@ impl AuthActivity {
             self.view
                 .render(super::COMPONENT_RECENTS_LIST, f, bookmark_chunks[1]);
             // Popups
-            if let Some(mut props) = self.view.get_props(super::COMPONENT_TEXT_ERROR) {
-                if props.build().visible {
+            if let Some(props) = self.view.get_props(super::COMPONENT_TEXT_ERROR) {
+                if props.visible {
                     let popup = draw_area_in(f.size(), 50, 10);
                     f.render_widget(Clear, popup);
                     // make popup
                     self.view.render(super::COMPONENT_TEXT_ERROR, f, popup);
                 }
             }
-            if let Some(mut props) = self.view.get_props(super::COMPONENT_RADIO_QUIT) {
-                if props.build().visible {
+            if let Some(props) = self.view.get_props(super::COMPONENT_RADIO_QUIT) {
+                if props.visible {
                     // make popup
                     let popup = draw_area_in(f.size(), 30, 10);
                     f.render_widget(Clear, popup);
                     self.view.render(super::COMPONENT_RADIO_QUIT, f, popup);
                 }
             }
-            if let Some(mut props) = self
+            if let Some(props) = self
                 .view
                 .get_props(super::COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK)
             {
-                if props.build().visible {
+                if props.visible {
                     // make popup
                     let popup = draw_area_in(f.size(), 30, 10);
                     f.render_widget(Clear, popup);
@@ -286,11 +300,11 @@ impl AuthActivity {
                         .render(super::COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK, f, popup);
                 }
             }
-            if let Some(mut props) = self
+            if let Some(props) = self
                 .view
                 .get_props(super::COMPONENT_RADIO_BOOKMARK_DEL_RECENT)
             {
-                if props.build().visible {
+                if props.visible {
                     // make popup
                     let popup = draw_area_in(f.size(), 30, 10);
                     f.render_widget(Clear, popup);
@@ -298,19 +312,19 @@ impl AuthActivity {
                         .render(super::COMPONENT_RADIO_BOOKMARK_DEL_RECENT, f, popup);
                 }
             }
-            if let Some(mut props) = self.view.get_props(super::COMPONENT_TEXT_HELP) {
-                if props.build().visible {
+            if let Some(props) = self.view.get_props(super::COMPONENT_TEXT_HELP) {
+                if props.visible {
                     // make popup
                     let popup = draw_area_in(f.size(), 50, 70);
                     f.render_widget(Clear, popup);
                     self.view.render(super::COMPONENT_TEXT_HELP, f, popup);
                 }
             }
-            if let Some(mut props) = self
+            if let Some(props) = self
                 .view
                 .get_props(super::COMPONENT_RADIO_BOOKMARK_SAVE_PWD)
             {
-                if props.build().visible {
+                if props.visible {
                     // make popup
                     let popup = draw_area_in(f.size(), 20, 20);
                     f.render_widget(Clear, popup);
@@ -340,7 +354,7 @@ impl AuthActivity {
     ///
     /// Make text span from bookmarks
     pub(super) fn view_bookmarks(&mut self) -> Option<(String, Msg)> {
-        let bookmarks: Vec<TextSpan> = self
+        let bookmarks: Vec<String> = self
             .bookmarks_list
             .iter()
             .map(|x| {
@@ -350,33 +364,23 @@ impl AuthActivity {
                     .unwrap()
                     .get_bookmark(x)
                     .unwrap();
-                TextSpan::from(
-                    format!(
-                        "{} ({}://{}@{}:{})",
-                        x,
-                        entry.2.to_string().to_lowercase(),
-                        entry.3,
-                        entry.0,
-                        entry.1
-                    )
-                    .as_str(),
+                format!(
+                    "{} ({}://{}@{}:{})",
+                    x,
+                    entry.2.to_string().to_lowercase(),
+                    entry.3,
+                    entry.0,
+                    entry.1
                 )
             })
             .collect();
-        match self
-            .view
-            .get_props(super::COMPONENT_BOOKMARKS_LIST)
-            .as_mut()
-        {
+        match self.view.get_props(super::COMPONENT_BOOKMARKS_LIST) {
             None => None,
             Some(props) => {
                 let msg = self.view.update(
                     super::COMPONENT_BOOKMARKS_LIST,
-                    props
-                        .with_texts(TextParts::new(
-                            Some(String::from("Bookmarks")),
-                            Some(bookmarks),
-                        ))
+                    BookmarkListPropsBuilder::from(props)
+                        .with_bookmarks(Some(String::from("Bookmarks")), bookmarks)
                         .build(),
                 );
                 msg
@@ -388,7 +392,7 @@ impl AuthActivity {
     ///
     /// View recent connections
     pub(super) fn view_recent_connections(&mut self) -> Option<(String, Msg)> {
-        let bookmarks: Vec<TextSpan> = self
+        let bookmarks: Vec<String> = self
             .recents_list
             .iter()
             .map(|x| {
@@ -398,28 +402,23 @@ impl AuthActivity {
                     .unwrap()
                     .get_recent(x)
                     .unwrap();
-                TextSpan::from(
-                    format!(
-                        "{}://{}@{}:{}",
-                        entry.2.to_string().to_lowercase(),
-                        entry.3,
-                        entry.0,
-                        entry.1
-                    )
-                    .as_str(),
+
+                format!(
+                    "{}://{}@{}:{}",
+                    entry.2.to_string().to_lowercase(),
+                    entry.3,
+                    entry.0,
+                    entry.1
                 )
             })
             .collect();
-        match self.view.get_props(super::COMPONENT_RECENTS_LIST).as_mut() {
+        match self.view.get_props(super::COMPONENT_RECENTS_LIST) {
             None => None,
             Some(props) => {
                 let msg = self.view.update(
                     super::COMPONENT_RECENTS_LIST,
-                    props
-                        .with_texts(TextParts::new(
-                            Some(String::from("Recent connections")),
-                            Some(bookmarks),
-                        ))
+                    BookmarkListPropsBuilder::from(props)
+                        .with_bookmarks(Some(String::from("Recent connections")), bookmarks)
                         .build(),
                 );
                 msg
@@ -437,10 +436,11 @@ impl AuthActivity {
         self.view.mount(
             super::COMPONENT_TEXT_ERROR,
             Box::new(MsgBox::new(
-                PropsBuilder::default()
+                MsgBoxPropsBuilder::default()
                     .with_foreground(Color::Red)
+                    .with_borders(Borders::ALL, BorderType::Thick, Color::Red)
                     .bold()
-                    .with_texts(TextParts::new(None, Some(vec![TextSpan::from(text)])))
+                    .with_texts(None, vec![TextSpan::from(text)])
                     .build(),
             )),
         );
@@ -462,14 +462,15 @@ impl AuthActivity {
         // Protocol
         self.view.mount(
             super::COMPONENT_RADIO_QUIT,
-            Box::new(RadioGroup::new(
-                PropsBuilder::default()
-                    .with_foreground(Color::Yellow)
-                    .with_background(Color::Black)
-                    .with_texts(TextParts::new(
+            Box::new(Radio::new(
+                RadioPropsBuilder::default()
+                    .with_color(Color::Yellow)
+                    .with_borders(Borders::ALL, BorderType::Rounded, Color::Yellow)
+                    .with_inverted_color(Color::Black)
+                    .with_options(
                         Some(String::from("Quit TermSCP?")),
-                        Some(vec![TextSpan::from("Yes"), TextSpan::from("No")]),
-                    ))
+                        vec![String::from("Yes"), String::from("No")],
+                    )
                     .build(),
             )),
         );
@@ -489,15 +490,16 @@ impl AuthActivity {
     pub(super) fn mount_bookmark_del_dialog(&mut self) {
         self.view.mount(
             super::COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK,
-            Box::new(RadioGroup::new(
-                PropsBuilder::default()
-                    .with_foreground(Color::Yellow)
-                    .with_background(Color::Black)
-                    .with_texts(TextParts::new(
+            Box::new(Radio::new(
+                RadioPropsBuilder::default()
+                    .with_color(Color::Yellow)
+                    .with_inverted_color(Color::Black)
+                    .with_borders(Borders::ALL, BorderType::Rounded, Color::Yellow)
+                    .with_options(
                         Some(String::from("Delete bookmark?")),
-                        Some(vec![TextSpan::from("Yes"), TextSpan::from("No")]),
-                    ))
-                    .with_value(PropValue::Unsigned(1))
+                        vec![String::from("Yes"), String::from("No")],
+                    )
+                    .with_value(1)
                     .build(),
             )),
         );
@@ -520,15 +522,16 @@ impl AuthActivity {
     pub(super) fn mount_recent_del_dialog(&mut self) {
         self.view.mount(
             super::COMPONENT_RADIO_BOOKMARK_DEL_RECENT,
-            Box::new(RadioGroup::new(
-                PropsBuilder::default()
-                    .with_foreground(Color::Yellow)
-                    .with_background(Color::Black)
-                    .with_texts(TextParts::new(
+            Box::new(Radio::new(
+                RadioPropsBuilder::default()
+                    .with_color(Color::Yellow)
+                    .with_inverted_color(Color::Black)
+                    .with_borders(Borders::ALL, BorderType::Rounded, Color::Yellow)
+                    .with_options(
                         Some(String::from("Delete bookmark?")),
-                        Some(vec![TextSpan::from("Yes"), TextSpan::from("No")]),
-                    ))
-                    .with_value(PropValue::Unsigned(1))
+                        vec![String::from("Yes"), String::from("No")],
+                    )
+                    .with_value(1)
                     .build(),
             )),
         );
@@ -550,27 +553,31 @@ impl AuthActivity {
         self.view.mount(
             super::COMPONENT_INPUT_BOOKMARK_NAME,
             Box::new(Input::new(
-                PropsBuilder::default()
+                InputPropsBuilder::default()
                     .with_foreground(Color::LightCyan)
-                    .with_texts(TextParts::new(
-                        Some(String::from("Save bookmark as...")),
-                        None,
-                    ))
-                    //.with_borders(Borders::TOP | Borders::RIGHT | Borders::LEFT)
+                    .with_label(String::from("Save bookmark as..."))
+                    .with_borders(
+                        Borders::TOP | Borders::RIGHT | Borders::LEFT,
+                        BorderType::Rounded,
+                        Color::Reset,
+                    )
                     .build(),
             )),
         );
         self.view.mount(
             super::COMPONENT_RADIO_BOOKMARK_SAVE_PWD,
-            Box::new(RadioGroup::new(
-                PropsBuilder::default()
-                    .with_foreground(Color::Red)
-                    //.with_borders(Borders::BOTTOM | Borders::RIGHT | Borders::LEFT)
-                    .with_texts(TextParts::new(
+            Box::new(Radio::new(
+                RadioPropsBuilder::default()
+                    .with_color(Color::Red)
+                    .with_borders(
+                        Borders::BOTTOM | Borders::RIGHT | Borders::LEFT,
+                        BorderType::Rounded,
+                        Color::Reset,
+                    )
+                    .with_options(
                         Some(String::from("Save password?")),
-                        Some(vec![TextSpan::from("Yes"), TextSpan::from("No")]),
-                    ))
-                    //.with_value(PropValue::Unsigned(1))
+                        vec![String::from("Yes"), String::from("No")],
+                    )
                     .build(),
             )),
         );
@@ -593,8 +600,9 @@ impl AuthActivity {
         self.view.mount(
             super::COMPONENT_TEXT_HELP,
             Box::new(Table::new(
-                PropsBuilder::default()
-                    .with_texts(TextParts::table(
+                TablePropsBuilder::default()
+                    .with_borders(Borders::ALL, BorderType::Rounded, Color::White)
+                    .with_table(
                         Some(String::from("Help")),
                         TableBuilder::default()
                             .add_col(
@@ -661,7 +669,7 @@ impl AuthActivity {
                             )
                             .add_col(TextSpan::from("        Save bookmark"))
                             .build(),
-                    ))
+                    )
                     .build(),
             )),
         );
@@ -680,16 +688,16 @@ impl AuthActivity {
     ///
     /// Collect input values from view
     pub(super) fn get_input(&self) -> (String, u16, FileTransferProtocol, String, String) {
-        let addr: String = match self.view.get_value(super::COMPONENT_INPUT_ADDR) {
+        let addr: String = match self.view.get_state(super::COMPONENT_INPUT_ADDR) {
             Some(Payload::Text(a)) => a,
             _ => String::new(),
         };
-        let port: u16 = match self.view.get_value(super::COMPONENT_INPUT_PORT) {
+        let port: u16 = match self.view.get_state(super::COMPONENT_INPUT_PORT) {
             Some(Payload::Unsigned(p)) => p as u16,
             _ => 0,
         };
         let protocol: FileTransferProtocol =
-            match self.view.get_value(super::COMPONENT_RADIO_PROTOCOL) {
+            match self.view.get_state(super::COMPONENT_RADIO_PROTOCOL) {
                 Some(Payload::Unsigned(p)) => match p {
                     1 => FileTransferProtocol::Scp,
                     2 => FileTransferProtocol::Ftp(false),
@@ -698,11 +706,11 @@ impl AuthActivity {
                 },
                 _ => FileTransferProtocol::Sftp,
             };
-        let username: String = match self.view.get_value(super::COMPONENT_INPUT_USERNAME) {
+        let username: String = match self.view.get_state(super::COMPONENT_INPUT_USERNAME) {
             Some(Payload::Text(a)) => a,
             _ => String::new(),
         };
-        let password: String = match self.view.get_value(super::COMPONENT_INPUT_PASSWORD) {
+        let password: String = match self.view.get_state(super::COMPONENT_INPUT_PASSWORD) {
             Some(Payload::Text(a)) => a,
             _ => String::new(),
         };

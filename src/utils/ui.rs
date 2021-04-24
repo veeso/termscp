@@ -25,7 +25,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-use tui::layout::{Constraint, Direction, Layout, Rect};
+use tuirealm::tui::layout::{Constraint, Direction, Layout, Rect};
 
 /// ### draw_area_in
 ///
@@ -61,7 +61,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_ui_layout_utils_draw_area_in() {
+    fn test_utils_ui_draw_area_in() {
         let area: Rect = Rect::new(0, 0, 1024, 512);
         let child: Rect = draw_area_in(area, 75, 30);
         assert_eq!(child.x, 43);

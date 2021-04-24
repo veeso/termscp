@@ -34,23 +34,28 @@ extern crate users;
 use super::{Context, FileExplorerTab, FileTransferActivity};
 use crate::fs::explorer::FileSorting;
 use crate::fs::FsEntry;
-use crate::ui::layout::components::{
-    file_list::FileList, input::Input, logbox::LogBox, msgbox::MsgBox, progress_bar::ProgressBar,
-    radio_group::RadioGroup, table::Table,
+use crate::ui::components::{
+    file_list::{FileList, FileListPropsBuilder},
+    logbox::{LogBox, LogboxPropsBuilder},
+    msgbox::{MsgBox, MsgBoxPropsBuilder},
 };
-use crate::ui::layout::props::{
-    PropValue, PropsBuilder, TableBuilder, TextParts, TextSpan, TextSpanBuilder,
-};
-use crate::ui::layout::utils::draw_area_in;
 use crate::ui::store::Store;
 use crate::utils::fmt::fmt_time;
+use crate::utils::ui::draw_area_in;
 // Ext
 use bytesize::ByteSize;
 use std::path::PathBuf;
-use tui::{
+use tuirealm::components::{
+    input::{Input, InputPropsBuilder},
+    progress_bar::{ProgressBar, ProgressBarPropsBuilder},
+    radio::{Radio, RadioPropsBuilder},
+    table::{Table, TablePropsBuilder},
+};
+use tuirealm::props::{PropsBuilder, TableBuilder, TextSpan, TextSpanBuilder};
+use tuirealm::tui::{
     layout::{Constraint, Direction, Layout},
     style::Color,
-    widgets::Clear,
+    widgets::{BorderType, Borders, Clear},
 };
 #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
 use users::{get_group_by_gid, get_user_by_uid};
@@ -66,9 +71,10 @@ impl FileTransferActivity {
         self.view.mount(
             super::COMPONENT_EXPLORER_LOCAL,
             Box::new(FileList::new(
-                PropsBuilder::default()
+                FileListPropsBuilder::default()
                     .with_background(Color::Yellow)
                     .with_foreground(Color::Yellow)
+                    .with_borders(Borders::ALL, BorderType::Plain, Color::Yellow)
                     .build(),
             )),
         );
@@ -76,9 +82,10 @@ impl FileTransferActivity {
         self.view.mount(
             super::COMPONENT_EXPLORER_REMOTE,
             Box::new(FileList::new(
-                PropsBuilder::default()
+                FileListPropsBuilder::default()
                     .with_background(Color::LightBlue)
                     .with_foreground(Color::LightBlue)
+                    .with_borders(Borders::ALL, BorderType::Plain, Color::LightBlue)
                     .build(),
             )),
         );
@@ -86,9 +93,8 @@ impl FileTransferActivity {
         self.view.mount(
             super::COMPONENT_LOG_BOX,
             Box::new(LogBox::new(
-                PropsBuilder::default()
-                    .with_foreground(Color::LightGreen)
-                    .bold()
+                LogboxPropsBuilder::default()
+                    .with_borders(Borders::ALL, BorderType::Plain, Color::LightGreen)
                     .build(),
             )),
         );
@@ -156,96 +162,96 @@ impl FileTransferActivity {
             // Draw log box
             self.view.render(super::COMPONENT_LOG_BOX, f, chunks[1]);
             // @! Draw popups
-            if let Some(mut props) = self.view.get_props(super::COMPONENT_INPUT_COPY) {
-                if props.build().visible {
+            if let Some(props) = self.view.get_props(super::COMPONENT_INPUT_COPY) {
+                if props.visible {
                     let popup = draw_area_in(f.size(), 40, 10);
                     f.render_widget(Clear, popup);
                     // make popup
                     self.view.render(super::COMPONENT_INPUT_COPY, f, popup);
                 }
             }
-            if let Some(mut props) = self.view.get_props(super::COMPONENT_INPUT_FIND) {
-                if props.build().visible {
+            if let Some(props) = self.view.get_props(super::COMPONENT_INPUT_FIND) {
+                if props.visible {
                     let popup = draw_area_in(f.size(), 40, 10);
                     f.render_widget(Clear, popup);
                     // make popup
                     self.view.render(super::COMPONENT_INPUT_FIND, f, popup);
                 }
             }
-            if let Some(mut props) = self.view.get_props(super::COMPONENT_INPUT_GOTO) {
-                if props.build().visible {
+            if let Some(props) = self.view.get_props(super::COMPONENT_INPUT_GOTO) {
+                if props.visible {
                     let popup = draw_area_in(f.size(), 40, 10);
                     f.render_widget(Clear, popup);
                     // make popup
                     self.view.render(super::COMPONENT_INPUT_GOTO, f, popup);
                 }
             }
-            if let Some(mut props) = self.view.get_props(super::COMPONENT_INPUT_MKDIR) {
-                if props.build().visible {
+            if let Some(props) = self.view.get_props(super::COMPONENT_INPUT_MKDIR) {
+                if props.visible {
                     let popup = draw_area_in(f.size(), 40, 10);
                     f.render_widget(Clear, popup);
                     // make popup
                     self.view.render(super::COMPONENT_INPUT_MKDIR, f, popup);
                 }
             }
-            if let Some(mut props) = self.view.get_props(super::COMPONENT_INPUT_NEWFILE) {
-                if props.build().visible {
+            if let Some(props) = self.view.get_props(super::COMPONENT_INPUT_NEWFILE) {
+                if props.visible {
                     let popup = draw_area_in(f.size(), 40, 10);
                     f.render_widget(Clear, popup);
                     // make popup
                     self.view.render(super::COMPONENT_INPUT_NEWFILE, f, popup);
                 }
             }
-            if let Some(mut props) = self.view.get_props(super::COMPONENT_INPUT_RENAME) {
-                if props.build().visible {
+            if let Some(props) = self.view.get_props(super::COMPONENT_INPUT_RENAME) {
+                if props.visible {
                     let popup = draw_area_in(f.size(), 40, 10);
                     f.render_widget(Clear, popup);
                     // make popup
                     self.view.render(super::COMPONENT_INPUT_RENAME, f, popup);
                 }
             }
-            if let Some(mut props) = self.view.get_props(super::COMPONENT_INPUT_SAVEAS) {
-                if props.build().visible {
+            if let Some(props) = self.view.get_props(super::COMPONENT_INPUT_SAVEAS) {
+                if props.visible {
                     let popup = draw_area_in(f.size(), 40, 10);
                     f.render_widget(Clear, popup);
                     // make popup
                     self.view.render(super::COMPONENT_INPUT_SAVEAS, f, popup);
                 }
             }
-            if let Some(mut props) = self.view.get_props(super::COMPONENT_INPUT_EXEC) {
-                if props.build().visible {
+            if let Some(props) = self.view.get_props(super::COMPONENT_INPUT_EXEC) {
+                if props.visible {
                     let popup = draw_area_in(f.size(), 40, 10);
                     f.render_widget(Clear, popup);
                     // make popup
                     self.view.render(super::COMPONENT_INPUT_EXEC, f, popup);
                 }
             }
-            if let Some(mut props) = self.view.get_props(super::COMPONENT_LIST_FILEINFO) {
-                if props.build().visible {
+            if let Some(props) = self.view.get_props(super::COMPONENT_LIST_FILEINFO) {
+                if props.visible {
                     let popup = draw_area_in(f.size(), 50, 50);
                     f.render_widget(Clear, popup);
                     // make popup
                     self.view.render(super::COMPONENT_LIST_FILEINFO, f, popup);
                 }
             }
-            if let Some(mut props) = self.view.get_props(super::COMPONENT_PROGRESS_BAR) {
-                if props.build().visible {
+            if let Some(props) = self.view.get_props(super::COMPONENT_PROGRESS_BAR) {
+                if props.visible {
                     let popup = draw_area_in(f.size(), 40, 10);
                     f.render_widget(Clear, popup);
                     // make popup
                     self.view.render(super::COMPONENT_PROGRESS_BAR, f, popup);
                 }
             }
-            if let Some(mut props) = self.view.get_props(super::COMPONENT_RADIO_DELETE) {
-                if props.build().visible {
+            if let Some(props) = self.view.get_props(super::COMPONENT_RADIO_DELETE) {
+                if props.visible {
                     let popup = draw_area_in(f.size(), 30, 10);
                     f.render_widget(Clear, popup);
                     // make popup
                     self.view.render(super::COMPONENT_RADIO_DELETE, f, popup);
                 }
             }
-            if let Some(mut props) = self.view.get_props(super::COMPONENT_RADIO_DISCONNECT) {
-                if props.build().visible {
+            if let Some(props) = self.view.get_props(super::COMPONENT_RADIO_DISCONNECT) {
+                if props.visible {
                     let popup = draw_area_in(f.size(), 30, 10);
                     f.render_widget(Clear, popup);
                     // make popup
@@ -253,48 +259,48 @@ impl FileTransferActivity {
                         .render(super::COMPONENT_RADIO_DISCONNECT, f, popup);
                 }
             }
-            if let Some(mut props) = self.view.get_props(super::COMPONENT_RADIO_QUIT) {
-                if props.build().visible {
+            if let Some(props) = self.view.get_props(super::COMPONENT_RADIO_QUIT) {
+                if props.visible {
                     let popup = draw_area_in(f.size(), 30, 10);
                     f.render_widget(Clear, popup);
                     // make popup
                     self.view.render(super::COMPONENT_RADIO_QUIT, f, popup);
                 }
             }
-            if let Some(mut props) = self.view.get_props(super::COMPONENT_RADIO_SORTING) {
-                if props.build().visible {
+            if let Some(props) = self.view.get_props(super::COMPONENT_RADIO_SORTING) {
+                if props.visible {
                     let popup = draw_area_in(f.size(), 50, 10);
                     f.render_widget(Clear, popup);
                     // make popup
                     self.view.render(super::COMPONENT_RADIO_SORTING, f, popup);
                 }
             }
-            if let Some(mut props) = self.view.get_props(super::COMPONENT_TEXT_ERROR) {
-                if props.build().visible {
+            if let Some(props) = self.view.get_props(super::COMPONENT_TEXT_ERROR) {
+                if props.visible {
                     let popup = draw_area_in(f.size(), 50, 10);
                     f.render_widget(Clear, popup);
                     // make popup
                     self.view.render(super::COMPONENT_TEXT_ERROR, f, popup);
                 }
             }
-            if let Some(mut props) = self.view.get_props(super::COMPONENT_TEXT_FATAL) {
-                if props.build().visible {
+            if let Some(props) = self.view.get_props(super::COMPONENT_TEXT_FATAL) {
+                if props.visible {
                     let popup = draw_area_in(f.size(), 50, 10);
                     f.render_widget(Clear, popup);
                     // make popup
                     self.view.render(super::COMPONENT_TEXT_FATAL, f, popup);
                 }
             }
-            if let Some(mut props) = self.view.get_props(super::COMPONENT_TEXT_WAIT) {
-                if props.build().visible {
+            if let Some(props) = self.view.get_props(super::COMPONENT_TEXT_WAIT) {
+                if props.visible {
                     let popup = draw_area_in(f.size(), 50, 10);
                     f.render_widget(Clear, popup);
                     // make popup
                     self.view.render(super::COMPONENT_TEXT_WAIT, f, popup);
                 }
             }
-            if let Some(mut props) = self.view.get_props(super::COMPONENT_TEXT_HELP) {
-                if props.build().visible {
+            if let Some(props) = self.view.get_props(super::COMPONENT_TEXT_HELP) {
+                if props.visible {
                     let popup = draw_area_in(f.size(), 50, 80);
                     f.render_widget(Clear, popup);
                     // make popup
@@ -316,10 +322,11 @@ impl FileTransferActivity {
         self.view.mount(
             super::COMPONENT_TEXT_ERROR,
             Box::new(MsgBox::new(
-                PropsBuilder::default()
+                MsgBoxPropsBuilder::default()
                     .with_foreground(Color::Red)
+                    .with_borders(Borders::ALL, BorderType::Rounded, Color::Red)
                     .bold()
-                    .with_texts(TextParts::new(None, Some(vec![TextSpan::from(text)])))
+                    .with_texts(None, vec![TextSpan::from(text)])
                     .build(),
             )),
         );
@@ -339,10 +346,11 @@ impl FileTransferActivity {
         self.view.mount(
             super::COMPONENT_TEXT_FATAL,
             Box::new(MsgBox::new(
-                PropsBuilder::default()
+                MsgBoxPropsBuilder::default()
                     .with_foreground(Color::Red)
+                    .with_borders(Borders::ALL, BorderType::Rounded, Color::Red)
                     .bold()
-                    .with_texts(TextParts::new(None, Some(vec![TextSpan::from(text)])))
+                    .with_texts(None, vec![TextSpan::from(text)])
                     .build(),
             )),
         );
@@ -355,10 +363,11 @@ impl FileTransferActivity {
         self.view.mount(
             super::COMPONENT_TEXT_WAIT,
             Box::new(MsgBox::new(
-                PropsBuilder::default()
+                MsgBoxPropsBuilder::default()
                     .with_foreground(Color::White)
+                    .with_borders(Borders::ALL, BorderType::Rounded, Color::White)
                     .bold()
-                    .with_texts(TextParts::new(None, Some(vec![TextSpan::from(text)])))
+                    .with_texts(None, vec![TextSpan::from(text)])
                     .build(),
             )),
         );
@@ -377,14 +386,15 @@ impl FileTransferActivity {
         // Protocol
         self.view.mount(
             super::COMPONENT_RADIO_QUIT,
-            Box::new(RadioGroup::new(
-                PropsBuilder::default()
-                    .with_foreground(Color::Yellow)
-                    .with_background(Color::Black)
-                    .with_texts(TextParts::new(
+            Box::new(Radio::new(
+                RadioPropsBuilder::default()
+                    .with_color(Color::Yellow)
+                    .with_inverted_color(Color::Black)
+                    .with_borders(Borders::ALL, BorderType::Rounded, Color::Yellow)
+                    .with_options(
                         Some(String::from("Are you sure you want to quit?")),
-                        Some(vec![TextSpan::from("Yes"), TextSpan::from("No")]),
-                    ))
+                        vec![String::from("Yes"), String::from("No")],
+                    )
                     .build(),
             )),
         );
@@ -405,14 +415,15 @@ impl FileTransferActivity {
         // Protocol
         self.view.mount(
             super::COMPONENT_RADIO_DISCONNECT,
-            Box::new(RadioGroup::new(
-                PropsBuilder::default()
-                    .with_foreground(Color::Yellow)
-                    .with_background(Color::Black)
-                    .with_texts(TextParts::new(
+            Box::new(Radio::new(
+                RadioPropsBuilder::default()
+                    .with_color(Color::Yellow)
+                    .with_inverted_color(Color::Black)
+                    .with_borders(Borders::ALL, BorderType::Rounded, Color::Yellow)
+                    .with_options(
                         Some(String::from("Are you sure you want to disconnect?")),
-                        Some(vec![TextSpan::from("Yes"), TextSpan::from("No")]),
-                    ))
+                        vec![String::from("Yes"), String::from("No")],
+                    )
                     .build(),
             )),
         );
@@ -430,11 +441,9 @@ impl FileTransferActivity {
         self.view.mount(
             super::COMPONENT_INPUT_COPY,
             Box::new(Input::new(
-                PropsBuilder::default()
-                    .with_texts(TextParts::new(
-                        Some(String::from("Insert destination name")),
-                        None,
-                    ))
+                InputPropsBuilder::default()
+                    .with_borders(Borders::ALL, BorderType::Rounded, Color::White)
+                    .with_label(String::from("Insert destination name"))
                     .build(),
             )),
         );
@@ -449,8 +458,9 @@ impl FileTransferActivity {
         self.view.mount(
             super::COMPONENT_INPUT_EXEC,
             Box::new(Input::new(
-                PropsBuilder::default()
-                    .with_texts(TextParts::new(Some(String::from("Execute command")), None))
+                InputPropsBuilder::default()
+                    .with_borders(Borders::ALL, BorderType::Plain, Color::White)
+                    .with_label(String::from("Execute command"))
                     .build(),
             )),
         );
@@ -471,11 +481,9 @@ impl FileTransferActivity {
         self.view.mount(
             super::COMPONENT_EXPLORER_FIND,
             Box::new(FileList::new(
-                PropsBuilder::default()
-                    .with_texts(TextParts::new(
-                        Some(format!("Search results for \"{}\"", search)),
-                        Some(vec![]),
-                    ))
+                FileListPropsBuilder::default()
+                    .with_files(Some(format!("Search results for \"{}\"", search)), vec![])
+                    .with_borders(Borders::ALL, BorderType::Plain, color)
                     .with_background(color)
                     .with_foreground(color)
                     .build(),
@@ -493,11 +501,9 @@ impl FileTransferActivity {
         self.view.mount(
             super::COMPONENT_INPUT_FIND,
             Box::new(Input::new(
-                PropsBuilder::default()
-                    .with_texts(TextParts::new(
-                        Some(String::from("Search files by name")),
-                        None,
-                    ))
+                InputPropsBuilder::default()
+                    .with_borders(Borders::ALL, BorderType::Rounded, Color::White)
+                    .with_label(String::from("Search files by name"))
                     .build(),
             )),
         );
@@ -514,11 +520,9 @@ impl FileTransferActivity {
         self.view.mount(
             super::COMPONENT_INPUT_GOTO,
             Box::new(Input::new(
-                PropsBuilder::default()
-                    .with_texts(TextParts::new(
-                        Some(String::from("Change working directory")),
-                        None,
-                    ))
+                InputPropsBuilder::default()
+                    .with_borders(Borders::ALL, BorderType::Rounded, Color::White)
+                    .with_label(String::from("Change working directory"))
                     .build(),
             )),
         );
@@ -533,11 +537,9 @@ impl FileTransferActivity {
         self.view.mount(
             super::COMPONENT_INPUT_MKDIR,
             Box::new(Input::new(
-                PropsBuilder::default()
-                    .with_texts(TextParts::new(
-                        Some(String::from("Insert directory name")),
-                        None,
-                    ))
+                InputPropsBuilder::default()
+                    .with_borders(Borders::ALL, BorderType::Rounded, Color::White)
+                    .with_label(String::from("Insert directory name"))
                     .build(),
             )),
         );
@@ -552,8 +554,9 @@ impl FileTransferActivity {
         self.view.mount(
             super::COMPONENT_INPUT_NEWFILE,
             Box::new(Input::new(
-                PropsBuilder::default()
-                    .with_texts(TextParts::new(Some(String::from("New file name")), None))
+                InputPropsBuilder::default()
+                    .with_borders(Borders::ALL, BorderType::Rounded, Color::White)
+                    .with_label(String::from("New file name"))
                     .build(),
             )),
         );
@@ -568,8 +571,9 @@ impl FileTransferActivity {
         self.view.mount(
             super::COMPONENT_INPUT_RENAME,
             Box::new(Input::new(
-                PropsBuilder::default()
-                    .with_texts(TextParts::new(Some(String::from("Insert new name")), None))
+                InputPropsBuilder::default()
+                    .with_borders(Borders::ALL, BorderType::Rounded, Color::White)
+                    .with_label(String::from("Insert new name"))
                     .build(),
             )),
         );
@@ -584,8 +588,9 @@ impl FileTransferActivity {
         self.view.mount(
             super::COMPONENT_INPUT_SAVEAS,
             Box::new(Input::new(
-                PropsBuilder::default()
-                    .with_texts(TextParts::new(Some(String::from("Save as...")), None))
+                InputPropsBuilder::default()
+                    .with_borders(Borders::ALL, BorderType::Rounded, Color::White)
+                    .with_label(String::from("Save as..."))
                     .build(),
             )),
         );
@@ -600,10 +605,11 @@ impl FileTransferActivity {
         self.view.mount(
             super::COMPONENT_PROGRESS_BAR,
             Box::new(ProgressBar::new(
-                PropsBuilder::default()
-                    .with_foreground(Color::LightGreen)
+                ProgressBarPropsBuilder::default()
+                    .with_progbar_color(Color::LightGreen)
                     .with_background(Color::Black)
-                    .with_texts(TextParts::new(Some(String::from("Please wait")), None))
+                    .with_borders(Borders::ALL, BorderType::Rounded, Color::LightGreen)
+                    .with_texts(Some(String::from("Please wait")), String::new())
                     .build(),
             )),
         );
@@ -628,20 +634,21 @@ impl FileTransferActivity {
         };
         self.view.mount(
             super::COMPONENT_RADIO_SORTING,
-            Box::new(RadioGroup::new(
-                PropsBuilder::default()
-                    .with_foreground(Color::LightMagenta)
-                    .with_background(Color::Black)
-                    .with_texts(TextParts::new(
+            Box::new(Radio::new(
+                RadioPropsBuilder::default()
+                    .with_color(Color::LightMagenta)
+                    .with_inverted_color(Color::Black)
+                    .with_borders(Borders::ALL, BorderType::Rounded, Color::LightMagenta)
+                    .with_options(
                         Some(String::from("Sort files by")),
-                        Some(vec![
-                            TextSpan::from("Name"),
-                            TextSpan::from("Modify time"),
-                            TextSpan::from("Creation time"),
-                            TextSpan::from("Size"),
-                        ]),
-                    ))
-                    .with_value(PropValue::Unsigned(index))
+                        vec![
+                            String::from("Name"),
+                            String::from("Modify time"),
+                            String::from("Creation time"),
+                            String::from("Size"),
+                        ],
+                    )
+                    .with_value(index)
                     .build(),
             )),
         );
@@ -655,15 +662,16 @@ impl FileTransferActivity {
     pub(super) fn mount_radio_delete(&mut self) {
         self.view.mount(
             super::COMPONENT_RADIO_DELETE,
-            Box::new(RadioGroup::new(
-                PropsBuilder::default()
-                    .with_foreground(Color::Red)
-                    .with_background(Color::Black)
-                    .with_texts(TextParts::new(
+            Box::new(Radio::new(
+                RadioPropsBuilder::default()
+                    .with_color(Color::Red)
+                    .with_inverted_color(Color::Black)
+                    .with_borders(Borders::ALL, BorderType::Plain, Color::Red)
+                    .with_options(
                         Some(String::from("Delete file")),
-                        Some(vec![TextSpan::from("Yes"), TextSpan::from("No")]),
-                    ))
-                    .with_value(PropValue::Unsigned(1))
+                        vec![String::from("Yes"), String::from("No")],
+                    )
+                    .with_value(1)
                     .build(),
             )),
         );
@@ -772,11 +780,9 @@ impl FileTransferActivity {
         self.view.mount(
             super::COMPONENT_LIST_FILEINFO,
             Box::new(Table::new(
-                PropsBuilder::default()
-                    .with_texts(TextParts::table(
-                        Some(file.get_name().to_string()),
-                        texts.build(),
-                    ))
+                TablePropsBuilder::default()
+                    .with_borders(Borders::ALL, BorderType::Rounded, Color::White)
+                    .with_table(Some(file.get_name().to_string()), texts.build())
                     .build(),
             )),
         );
@@ -794,8 +800,9 @@ impl FileTransferActivity {
         self.view.mount(
             super::COMPONENT_TEXT_HELP,
             Box::new(Table::new(
-                PropsBuilder::default()
-                    .with_texts(TextParts::table(
+                TablePropsBuilder::default()
+                    .with_borders(Borders::ALL, BorderType::Rounded, Color::White)
+                    .with_table(
                         Some(String::from("Help")),
                         TableBuilder::default()
                             .add_col(
@@ -984,7 +991,7 @@ impl FileTransferActivity {
                             )
                             .add_col(TextSpan::from("        Interrupt file transfer"))
                             .build(),
-                    ))
+                    )
                     .build(),
             )),
         );
