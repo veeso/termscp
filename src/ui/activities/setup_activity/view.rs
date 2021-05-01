@@ -173,12 +173,22 @@ impl SetupActivity {
             )),
         );
         self.view.mount(
-            super::COMPONENT_INPUT_FILE_FMT,
+            super::COMPONENT_INPUT_LOCAL_FILE_FMT,
             Box::new(Input::new(
                 InputPropsBuilder::default()
                     .with_foreground(Color::LightBlue)
                     .with_borders(Borders::ALL, BorderType::Rounded, Color::LightBlue)
-                    .with_label(String::from("File formatter syntax"))
+                    .with_label(String::from("File formatter syntax (local)"))
+                    .build(),
+            )),
+        );
+        self.view.mount(
+            super::COMPONENT_INPUT_REMOTE_FILE_FMT,
+            Box::new(Input::new(
+                InputPropsBuilder::default()
+                    .with_foreground(Color::LightGreen)
+                    .with_borders(Borders::ALL, BorderType::Rounded, Color::LightGreen)
+                    .with_label(String::from("File formatter syntax (remote)"))
                     .build(),
             )),
         );
@@ -280,7 +290,8 @@ impl SetupActivity {
                                 Constraint::Length(3), // Hidden files
                                 Constraint::Length(3), // Updates tab
                                 Constraint::Length(3), // Group dirs
-                                Constraint::Length(3), // Format input
+                                Constraint::Length(3), // Local Format input
+                                Constraint::Length(3), // Remote Format input
                                 Constraint::Length(1), // Empty ?
                             ]
                             .as_ref(),
@@ -297,7 +308,9 @@ impl SetupActivity {
                     self.view
                         .render(super::COMPONENT_RADIO_GROUP_DIRS, f, ui_cfg_chunks[4]);
                     self.view
-                        .render(super::COMPONENT_INPUT_FILE_FMT, f, ui_cfg_chunks[5]);
+                        .render(super::COMPONENT_INPUT_LOCAL_FILE_FMT, f, ui_cfg_chunks[5]);
+                    self.view
+                        .render(super::COMPONENT_INPUT_REMOTE_FILE_FMT, f, ui_cfg_chunks[6]);
                 }
                 ViewLayout::SshKeys => {
                     let sshcfg_chunks = Layout::default()
@@ -692,11 +705,21 @@ impl SetupActivity {
                 let props = RadioPropsBuilder::from(props).with_value(dirs).build();
                 let _ = self.view.update(super::COMPONENT_RADIO_GROUP_DIRS, props);
             }
-            // File Fmt
-            if let Some(props) = self.view.get_props(super::COMPONENT_INPUT_FILE_FMT) {
-                let file_fmt: String = cli.get_file_fmt().unwrap_or_default();
+            // Local File Fmt
+            if let Some(props) = self.view.get_props(super::COMPONENT_INPUT_LOCAL_FILE_FMT) {
+                let file_fmt: String = cli.get_local_file_fmt().unwrap_or_default();
                 let props = InputPropsBuilder::from(props).with_value(file_fmt).build();
-                let _ = self.view.update(super::COMPONENT_INPUT_FILE_FMT, props);
+                let _ = self
+                    .view
+                    .update(super::COMPONENT_INPUT_LOCAL_FILE_FMT, props);
+            }
+            // Remote File Fmt
+            if let Some(props) = self.view.get_props(super::COMPONENT_INPUT_REMOTE_FILE_FMT) {
+                let file_fmt: String = cli.get_remote_file_fmt().unwrap_or_default();
+                let props = InputPropsBuilder::from(props).with_value(file_fmt).build();
+                let _ = self
+                    .view
+                    .update(super::COMPONENT_INPUT_REMOTE_FILE_FMT, props);
             }
         }
     }
@@ -734,8 +757,15 @@ impl SetupActivity {
                 let check: bool = matches!(opt, 0);
                 cli.set_check_for_updates(check);
             }
-            if let Some(Payload::Text(fmt)) = self.view.get_state(super::COMPONENT_INPUT_FILE_FMT) {
-                cli.set_file_fmt(fmt);
+            if let Some(Payload::Text(fmt)) =
+                self.view.get_state(super::COMPONENT_INPUT_LOCAL_FILE_FMT)
+            {
+                cli.set_local_file_fmt(fmt);
+            }
+            if let Some(Payload::Text(fmt)) =
+                self.view.get_state(super::COMPONENT_INPUT_REMOTE_FILE_FMT)
+            {
+                cli.set_remote_file_fmt(fmt);
             }
             if let Some(Payload::Unsigned(opt)) =
                 self.view.get_state(super::COMPONENT_RADIO_GROUP_DIRS)

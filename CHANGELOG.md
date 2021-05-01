@@ -21,6 +21,8 @@
 
 Released on FIXME: ??
 
+- **Remote and Local hosts file formatter**:
+  - Added the possibility to set different formatters for local and remote hosts
 - Bugfix:
   - Fixed wrong text wrap in log box
 - Dependencies:

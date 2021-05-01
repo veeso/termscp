@@ -239,8 +239,8 @@ impl FileTransferActivity {
                     Self::make_ssh_storage(config_client.as_ref()),
                 )),
             },
-            local: Self::build_explorer(config_client.as_ref()),
-            remote: Self::build_explorer(config_client.as_ref()),
+            local: Self::build_local_explorer(config_client.as_ref()),
+            remote: Self::build_remote_explorer(config_client.as_ref()),
             found: None,
             tab: FileExplorerTab::Local,
             log_records: VecDeque::with_capacity(256), // 256 events is enough I guess

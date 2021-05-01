@@ -60,7 +60,8 @@ pub struct UserInterfaceConfig {
     pub show_hidden_files: bool,
     pub check_for_updates: Option<bool>, // @! Since 0.3.3
     pub group_dirs: Option<String>,
-    pub file_fmt: Option<String>,
+    pub file_fmt: Option<String>, // Refers to local host (for backward compatibility)
+    pub remote_file_fmt: Option<String>, // @! Since 0.5.0
 }
 
 #[derive(Deserialize, Serialize, std::fmt::Debug)]
@@ -92,6 +93,7 @@ impl Default for UserInterfaceConfig {
             check_for_updates: Some(true),
             group_dirs: None,
             file_fmt: None,
+            remote_file_fmt: None,
         }
     }
 }
@@ -178,6 +180,7 @@ mod tests {
             check_for_updates: Some(true),
             group_dirs: Some(String::from("first")),
             file_fmt: Some(String::from("{NAME}")),
+            remote_file_fmt: Some(String::from("{USER}")),
         };
         let cfg: UserConfig = UserConfig {
             user_interface: ui,
@@ -196,6 +199,10 @@ mod tests {
         assert_eq!(cfg.user_interface.check_for_updates, Some(true));
         assert_eq!(cfg.user_interface.group_dirs, Some(String::from("first")));
         assert_eq!(cfg.user_interface.file_fmt, Some(String::from("{NAME}")));
+        assert_eq!(
+            cfg.user_interface.remote_file_fmt,
+            Some(String::from("{USER}"))
+        );
     }
 
     #[test]
@@ -218,6 +225,8 @@ mod tests {
         );
         assert_eq!(cfg.user_interface.check_for_updates.unwrap(), true);
         assert_eq!(cfg.remote.ssh_keys.len(), 0);
+        assert!(cfg.user_interface.file_fmt.is_none());
+        assert!(cfg.user_interface.remote_file_fmt.is_none());
     }
 
     #[test]

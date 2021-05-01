@@ -176,18 +176,35 @@ impl ConfigClient {
         self.config.user_interface.group_dirs = val.map(|val| val.to_string());
     }
 
-    /// ### get_file_fmt
+    /// ### get_local_file_fmt
     ///
-    /// Get current file fmt
-    pub fn get_file_fmt(&self) -> Option<String> {
+    /// Get current file fmt for local host
+    pub fn get_local_file_fmt(&self) -> Option<String> {
         self.config.user_interface.file_fmt.clone()
     }
 
-    /// ### set_file_fmt
+    /// ### set_local_file_fmt
     ///
-    /// Set file fmt parameter
-    pub fn set_file_fmt(&mut self, s: String) {
+    /// Set file fmt parameter for local host
+    pub fn set_local_file_fmt(&mut self, s: String) {
         self.config.user_interface.file_fmt = match s.is_empty() {
+            true => None,
+            false => Some(s),
+        };
+    }
+
+    /// ### get_remote_file_fmt
+    ///
+    /// Get current file fmt for remote host
+    pub fn get_remote_file_fmt(&self) -> Option<String> {
+        self.config.user_interface.remote_file_fmt.clone()
+    }
+
+    /// ### set_remote_file_fmt
+    ///
+    /// Set file fmt parameter for remote host
+    pub fn set_remote_file_fmt(&mut self, s: String) {
+        self.config.user_interface.remote_file_fmt = match s.is_empty() {
             true => None,
             false => Some(s),
         };
@@ -496,18 +513,36 @@ mod tests {
     }
 
     #[test]
-    fn test_system_config_file_fmt() {
+    fn test_system_config_local_file_fmt() {
         let tmp_dir: tempfile::TempDir = create_tmp_dir();
         let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
         let mut client: ConfigClient = ConfigClient::new(cfg_path.as_path(), key_path.as_path())
             .ok()
             .unwrap();
-        assert_eq!(client.get_file_fmt(), None);
-        client.set_file_fmt(String::from("{NAME}"));
-        assert_eq!(client.get_file_fmt().unwrap(), String::from("{NAME}"));
+        assert_eq!(client.get_local_file_fmt(), None);
+        client.set_local_file_fmt(String::from("{NAME}"));
+        assert_eq!(client.get_local_file_fmt().unwrap(), String::from("{NAME}"));
         // Delete
-        client.set_file_fmt(String::from(""));
-        assert_eq!(client.get_file_fmt(), None);
+        client.set_local_file_fmt(String::from(""));
+        assert_eq!(client.get_local_file_fmt(), None);
+    }
+
+    #[test]
+    fn test_system_config_remote_file_fmt() {
+        let tmp_dir: tempfile::TempDir = create_tmp_dir();
+        let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
+        let mut client: ConfigClient = ConfigClient::new(cfg_path.as_path(), key_path.as_path())
+            .ok()
+            .unwrap();
+        assert_eq!(client.get_remote_file_fmt(), None);
+        client.set_remote_file_fmt(String::from("{NAME}"));
+        assert_eq!(
+            client.get_remote_file_fmt().unwrap(),
+            String::from("{NAME}")
+        );
+        // Delete
+        client.set_remote_file_fmt(String::from(""));
+        assert_eq!(client.get_remote_file_fmt(), None);
     }
 
     #[test]

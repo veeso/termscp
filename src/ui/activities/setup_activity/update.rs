@@ -28,11 +28,11 @@
  */
 // locals
 use super::{
-    SetupActivity, COMPONENT_INPUT_FILE_FMT, COMPONENT_INPUT_SSH_HOST,
-    COMPONENT_INPUT_SSH_USERNAME, COMPONENT_INPUT_TEXT_EDITOR, COMPONENT_LIST_SSH_KEYS,
-    COMPONENT_RADIO_DEFAULT_PROTOCOL, COMPONENT_RADIO_DEL_SSH_KEY, COMPONENT_RADIO_GROUP_DIRS,
-    COMPONENT_RADIO_HIDDEN_FILES, COMPONENT_RADIO_QUIT, COMPONENT_RADIO_SAVE,
-    COMPONENT_RADIO_UPDATES, COMPONENT_TEXT_ERROR, COMPONENT_TEXT_HELP,
+    SetupActivity, COMPONENT_INPUT_LOCAL_FILE_FMT, COMPONENT_INPUT_REMOTE_FILE_FMT,
+    COMPONENT_INPUT_SSH_HOST, COMPONENT_INPUT_SSH_USERNAME, COMPONENT_INPUT_TEXT_EDITOR,
+    COMPONENT_LIST_SSH_KEYS, COMPONENT_RADIO_DEFAULT_PROTOCOL, COMPONENT_RADIO_DEL_SSH_KEY,
+    COMPONENT_RADIO_GROUP_DIRS, COMPONENT_RADIO_HIDDEN_FILES, COMPONENT_RADIO_QUIT,
+    COMPONENT_RADIO_SAVE, COMPONENT_RADIO_UPDATES, COMPONENT_TEXT_ERROR, COMPONENT_TEXT_HELP,
 };
 use crate::ui::activities::keymap::*;
 
@@ -68,15 +68,23 @@ impl SetupActivity {
                     None
                 }
                 (COMPONENT_RADIO_GROUP_DIRS, &MSG_KEY_DOWN) => {
-                    self.view.active(COMPONENT_INPUT_FILE_FMT);
+                    self.view.active(COMPONENT_INPUT_LOCAL_FILE_FMT);
                     None
                 }
-                (COMPONENT_INPUT_FILE_FMT, &MSG_KEY_DOWN) => {
+                (COMPONENT_INPUT_LOCAL_FILE_FMT, &MSG_KEY_DOWN) => {
+                    self.view.active(COMPONENT_INPUT_REMOTE_FILE_FMT);
+                    None
+                }
+                (COMPONENT_INPUT_REMOTE_FILE_FMT, &MSG_KEY_DOWN) => {
                     self.view.active(COMPONENT_INPUT_TEXT_EDITOR);
                     None
                 }
                 // Input field <UP>
-                (COMPONENT_INPUT_FILE_FMT, &MSG_KEY_UP) => {
+                (COMPONENT_INPUT_REMOTE_FILE_FMT, &MSG_KEY_UP) => {
+                    self.view.active(COMPONENT_INPUT_LOCAL_FILE_FMT);
+                    None
+                }
+                (COMPONENT_INPUT_LOCAL_FILE_FMT, &MSG_KEY_UP) => {
                     self.view.active(COMPONENT_RADIO_GROUP_DIRS);
                     None
                 }
@@ -97,7 +105,7 @@ impl SetupActivity {
                     None
                 }
                 (COMPONENT_INPUT_TEXT_EDITOR, &MSG_KEY_UP) => {
-                    self.view.active(COMPONENT_INPUT_FILE_FMT);
+                    self.view.active(COMPONENT_INPUT_REMOTE_FILE_FMT);
                     None
                 }
                 // Error <ENTER> or <ESC>

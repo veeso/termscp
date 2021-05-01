@@ -94,21 +94,46 @@ impl FileTransferActivity {
     /// ### build_explorer
     ///
     /// Build explorer reading configuration from `ConfigClient`
-    pub(super) fn build_explorer(cli: Option<&ConfigClient>) -> FileExplorer {
+    fn build_explorer(cli: Option<&ConfigClient>) -> FileExplorerBuilder {
+        let mut builder: FileExplorerBuilder = FileExplorerBuilder::new();
+        // Set common keys
+        builder
+            .with_file_sorting(FileSorting::ByName)
+            .with_stack_size(16);
         match &cli {
-            Some(cli) => FileExplorerBuilder::new() // Build according to current configuration
-                .with_file_sorting(FileSorting::ByName)
-                .with_group_dirs(cli.get_group_dirs())
-                .with_hidden_files(cli.get_show_hidden_files())
-                .with_stack_size(16)
-                .with_formatter(cli.get_file_fmt().as_deref())
-                .build(),
-            None => FileExplorerBuilder::new() // Build default
-                .with_file_sorting(FileSorting::ByName)
-                .with_group_dirs(Some(GroupDirs::First))
-                .with_stack_size(16)
-                .build(),
+            Some(cli) => {
+                builder // Build according to current configuration
+                    .with_group_dirs(cli.get_group_dirs())
+                    .with_hidden_files(cli.get_show_hidden_files());
+            }
+            None => {
+                builder // Build default
+                    .with_group_dirs(Some(GroupDirs::First));
+            }
+        };
+        builder
+    }
+
+    /// ### build_local_explorer
+    ///
+    /// Build a file explorer with local host setup
+    pub(super) fn build_local_explorer(cli: Option<&ConfigClient>) -> FileExplorer {
+        let mut builder = Self::build_explorer(cli);
+        if let Some(cli) = cli {
+            builder.with_formatter(cli.get_local_file_fmt().as_deref());
         }
+        builder.build()
+    }
+
+    /// ### build_remote_explorer
+    ///
+    /// Build a file explorer with remote host setup
+    pub(super) fn build_remote_explorer(cli: Option<&ConfigClient>) -> FileExplorer {
+        let mut builder = Self::build_explorer(cli);
+        if let Some(cli) = cli {
+            builder.with_formatter(cli.get_remote_file_fmt().as_deref());
+        }
+        builder.build()
     }
 
     /// ### build_found_explorer
