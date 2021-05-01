@@ -196,7 +196,7 @@ You can access the SSH key storage, from configuration moving to the `SSH Keys` 
 
 ### File Explorer Format
 
-It is possible through configuration to define a custom format for the file explorer. This field, with name `File formatter syntax` will define how the file entries will be displayed in the file explorer.
+It is possible through configuration to define a custom format for the file explorer. This is possible both for local and remote host, so you can have two different syntax in use. These fields, with name `File formatter syntax (local)` and `File formatter syntax (remote)` will define how the file entries will be displayed in the file explorer.
 The syntax for the formatter is the following `{KEY1}... {KEY2:LENGTH}... {KEY3:LENGTH:EXTRA} {KEYn}...`.
 Each key in bracket will be replaced with the related attribute, while everything outside brackets will be left unchanged.
 
