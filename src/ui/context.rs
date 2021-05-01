@@ -142,11 +142,7 @@ impl Context {
 impl Drop for Context {
     fn drop(&mut self) {
         // Re-enable terminal stuff
-        let _ = execute!(
-            self.terminal.backend_mut(),
-            LeaveAlternateScreen,
-            DisableMouseCapture
-        );
+        self.leave_alternate_screen();
     }
 }
 
@@ -167,6 +163,7 @@ impl Default for FileTransferParams {
 mod tests {
 
     use super::*;
+    use std::path::PathBuf;
 
     #[test]
     fn test_ui_context_ft_params() {
@@ -178,31 +175,24 @@ mod tests {
         assert!(params.password.is_none());
     }
 
-    //use crate::filetransfer::sftp_transfer::SftpFileTransfer;
-    //use std::path::PathBuf;
-
-    /*
     #[test]
-    fn test_ui_context_new() {
+    #[cfg(not(feature = "githubActions"))]
+    fn test_ui_context() {
         // Prepare stuff
-        Context::new(
-            build_sftp_client(),
-            Localhost::new(PathBuf::from("/")).ok().unwrap(),
+        let wrkdir: PathBuf = std::env::current_dir().unwrap_or(PathBuf::from("/"));
+        let mut ctx: Context = Context::new(
+            Localhost::new(wrkdir).ok().unwrap(),
+            None,
+            Some(String::from("alles kaput")),
         );
+        assert!(ctx.error.is_some());
+        assert_eq!(ctx.get_error().unwrap().as_str(), "alles kaput");
+        assert!(ctx.error.is_none());
+        assert!(ctx.get_error().is_none());
+        // Try other methods
+        ctx.enter_alternate_screen();
+        ctx.clear_screen();
+        ctx.leave_alternate_screen();
+        drop(ctx);
     }
-
-    fn build_sftp_client() -> Box<dyn FileTransfer> {
-        let mut sftp_client: SftpFileTransfer = SftpFileTransfer::new();
-        // Connect to remote
-        assert!(sftp_client
-            .connect(
-                String::from("test.rebex.net"),
-                22,
-                Some(String::from("demo")),
-                Some(String::from("password"))
-            )
-            .is_ok());
-        Box::new(sftp_client)
-    }
-    */
 }
