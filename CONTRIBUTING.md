@@ -99,7 +99,6 @@ At the moment, these kind of contributions are more appreciated and should be pr
 - New file transfers: for further details see [Implementing File Transfer](#implementing-file-transfers)
 - Code optimizations: any optimization to the code is welcome
 - See also features described in [Upcoming features](./README.md##upcoming-features-). Open an issue first though.
-- A **logo** for the project: I'd really love to have a logo for termscp 💛
 
 For any other kind of contribution, especially for new features, please submit a new issue first.
 
