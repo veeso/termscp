@@ -16,7 +16,7 @@ jobs:
       - name: Run cargo-tarpaulin
         uses: actions-rs/tarpaulin@v0.1
         with:
-          args: "--ignore-tests -- --test-threads 1 --features githubActions"
+          args: "--ignore-tests --features githubActions -- --test-threads 1"
 
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v1
