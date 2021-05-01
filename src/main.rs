@@ -66,6 +66,7 @@ fn print_usage(opts: Options) {
     );
     print!("{}", opts.usage(&brief));
     println!("\nPlease, report issues to <https://github.com/veeso/termscp>");
+    println!("Please, consider supporting the author <https://www.buymeacoffee.com/veeso>")
 }
 
 fn main() {
@@ -80,12 +81,7 @@ fn main() {
     let mut ticks: Duration = Duration::from_millis(10);
     //Process options
     let mut opts = Options::new();
-    opts.optopt(
-        "P",
-        "password",
-        "Provide password from CLI (use at your own risk)",
-        "<password>",
-    );
+    opts.optopt("P", "password", "Provide password from CLI", "<password>");
     opts.optopt("T", "ticks", "Set UI ticks; default 10ms", "<ms>");
     opts.optflag("v", "version", "");
     opts.optflag("h", "help", "Print this menu");
