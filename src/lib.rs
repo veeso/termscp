@@ -1,3 +1,11 @@
+#![doc(html_playground_url = "https://play.rust-lang.org")]
+#![doc(
+    html_favicon_url = "https://raw.githubusercontent.com/veeso/termscp/main/assets/images/termscp-128.png"
+)]
+#![doc(
+    html_logo_url = "https://raw.githubusercontent.com/veeso/termscp/main/assets/images/termscp-512.png"
+)]
+
 /**
  * MIT License
  *
