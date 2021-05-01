@@ -35,7 +35,7 @@ use super::{
     COMPONENT_TEXT_HELP,
 };
 use crate::ui::activities::keymap::*;
-use crate::ui::layout::{Msg, Payload};
+use tuirealm::{Msg, Payload};
 
 // -- update
 
@@ -164,7 +164,7 @@ impl AuthActivity {
                     match *index {
                         0 => {
                             // Get selected bookmark
-                            match self.view.get_value(COMPONENT_BOOKMARKS_LIST) {
+                            match self.view.get_state(COMPONENT_BOOKMARKS_LIST) {
                                 Some(Payload::Unsigned(index)) => {
                                     // Delete bookmark
                                     self.del_bookmark(index);
@@ -184,7 +184,7 @@ impl AuthActivity {
                     match *index {
                         0 => {
                             // Get selected bookmark
-                            match self.view.get_value(COMPONENT_RECENTS_LIST) {
+                            match self.view.get_state(COMPONENT_RECENTS_LIST) {
                                 Some(Payload::Unsigned(index)) => {
                                     // Delete recent
                                     self.del_recent(index);
@@ -199,36 +199,12 @@ impl AuthActivity {
                 }
                 // <ESC> hide tab
                 (COMPONENT_RADIO_BOOKMARK_DEL_RECENT, &MSG_KEY_ESC) => {
-                    match self
-                        .view
-                        .get_props(COMPONENT_RADIO_BOOKMARK_DEL_RECENT)
-                        .as_mut()
-                    {
-                        Some(props) => {
-                            let msg = self.view.update(
-                                COMPONENT_RADIO_BOOKMARK_DEL_RECENT,
-                                props.hidden().build(),
-                            );
-                            self.update(msg)
-                        }
-                        None => None,
-                    }
+                    self.umount_recent_del_dialog();
+                    None
                 }
                 (COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK, &MSG_KEY_ESC) => {
-                    match self
-                        .view
-                        .get_props(COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK)
-                        .as_mut()
-                    {
-                        Some(props) => {
-                            let msg = self.view.update(
-                                COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK,
-                                props.hidden().build(),
-                            );
-                            self.update(msg)
-                        }
-                        None => None,
-                    }
+                    self.umount_bookmark_del_dialog();
+                    None
                 }
                 // Help
                 (_, &MSG_KEY_CTRL_H) => {
@@ -269,12 +245,12 @@ impl AuthActivity {
                 | (COMPONENT_RADIO_BOOKMARK_SAVE_PWD, Msg::OnSubmit(_)) => {
                     // Get values
                     let bookmark_name: String =
-                        match self.view.get_value(COMPONENT_INPUT_BOOKMARK_NAME) {
+                        match self.view.get_state(COMPONENT_INPUT_BOOKMARK_NAME) {
                             Some(Payload::Text(s)) => s,
                             _ => String::new(),
                         };
                     let save_pwd: bool = matches!(
-                        self.view.get_value(COMPONENT_RADIO_BOOKMARK_SAVE_PWD),
+                        self.view.get_state(COMPONENT_RADIO_BOOKMARK_SAVE_PWD),
                         Some(Payload::Unsigned(0))
                     );
                     // Save bookmark

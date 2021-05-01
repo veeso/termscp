@@ -34,13 +34,13 @@ mod view;
 
 // Deps
 extern crate crossterm;
-extern crate tui;
+extern crate tuirealm;
 
 // Locals
 use super::{Activity, Context, ExitReason};
-use crate::ui::layout::view::View;
 // Ext
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
+use tuirealm::View;
 
 // -- components
 const COMPONENT_TEXT_HELP: &str = "TEXT_HELP";

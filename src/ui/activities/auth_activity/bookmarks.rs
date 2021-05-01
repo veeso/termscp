@@ -32,11 +32,11 @@ extern crate dirs;
 use super::{AuthActivity, FileTransferProtocol};
 use crate::system::bookmarks_client::BookmarksClient;
 use crate::system::environment;
-use crate::ui::layout::props::PropValue;
-use crate::ui::layout::Payload;
 
 // Ext
 use std::path::PathBuf;
+use tuirealm::components::{input::InputPropsBuilder, radio::RadioPropsBuilder};
+use tuirealm::{Payload, PropsBuilder};
 
 impl AuthActivity {
     /// ### del_bookmark
@@ -83,7 +83,7 @@ impl AuthActivity {
             let password: Option<String> = match save_password {
                 true => match self
                     .view
-                    .get_value(super::COMPONENT_RADIO_BOOKMARK_SAVE_PWD)
+                    .get_state(super::COMPONENT_RADIO_BOOKMARK_SAVE_PWD)
                 {
                     Some(Payload::Unsigned(0)) => Some(password), // Yes
                     _ => None,                                    // No such component / No
@@ -246,32 +246,34 @@ impl AuthActivity {
         password: Option<String>,
     ) {
         // Load parameters into components
-        if let Some(mut props) = self.view.get_props(super::COMPONENT_INPUT_ADDR) {
-            let props = props.with_value(PropValue::Str(addr)).build();
+        if let Some(props) = self.view.get_props(super::COMPONENT_INPUT_ADDR) {
+            let props = InputPropsBuilder::from(props).with_value(addr).build();
             self.view.update(super::COMPONENT_INPUT_ADDR, props);
         }
-        if let Some(mut props) = self.view.get_props(super::COMPONENT_INPUT_PORT) {
-            let props = props.with_value(PropValue::Str(port.to_string())).build();
+        if let Some(props) = self.view.get_props(super::COMPONENT_INPUT_PORT) {
+            let props = InputPropsBuilder::from(props)
+                .with_value(port.to_string())
+                .build();
             self.view.update(super::COMPONENT_INPUT_PORT, props);
         }
-        if let Some(mut props) = self.view.get_props(super::COMPONENT_RADIO_PROTOCOL) {
-            let props = props
-                .with_value(PropValue::Unsigned(match protocol {
+        if let Some(props) = self.view.get_props(super::COMPONENT_RADIO_PROTOCOL) {
+            let props = RadioPropsBuilder::from(props)
+                .with_value(match protocol {
                     FileTransferProtocol::Sftp => 0,
                     FileTransferProtocol::Scp => 1,
                     FileTransferProtocol::Ftp(false) => 2,
                     FileTransferProtocol::Ftp(true) => 3,
-                }))
+                })
                 .build();
             self.view.update(super::COMPONENT_RADIO_PROTOCOL, props);
         }
-        if let Some(mut props) = self.view.get_props(super::COMPONENT_INPUT_USERNAME) {
-            let props = props.with_value(PropValue::Str(username)).build();
+        if let Some(props) = self.view.get_props(super::COMPONENT_INPUT_USERNAME) {
+            let props = InputPropsBuilder::from(props).with_value(username).build();
             self.view.update(super::COMPONENT_INPUT_USERNAME, props);
         }
         if let Some(password) = password {
-            if let Some(mut props) = self.view.get_props(super::COMPONENT_INPUT_PASSWORD) {
-                let props = props.with_value(PropValue::Str(password)).build();
+            if let Some(props) = self.view.get_props(super::COMPONENT_INPUT_PASSWORD) {
+                let props = InputPropsBuilder::from(props).with_value(password).build();
                 self.view.update(super::COMPONENT_INPUT_PASSWORD, props);
             }
         }

@@ -27,7 +27,7 @@
  */
 // locals
 use super::{FileExplorerTab, FileTransferActivity, FsEntry, LogLevel};
-use crate::ui::layout::Payload;
+use tuirealm::Payload;
 // externals
 use std::path::PathBuf;
 
@@ -622,7 +622,7 @@ impl FileTransferActivity {
     ///
     /// Get index of selected file in the local tab
     fn get_local_file_idx(&self) -> Option<usize> {
-        match self.view.get_value(super::COMPONENT_EXPLORER_LOCAL) {
+        match self.view.get_state(super::COMPONENT_EXPLORER_LOCAL) {
             Some(Payload::Unsigned(idx)) => Some(idx),
             _ => None,
         }
@@ -632,7 +632,7 @@ impl FileTransferActivity {
     ///
     /// Get index of selected file in the remote file
     fn get_remote_file_idx(&self) -> Option<usize> {
-        match self.view.get_value(super::COMPONENT_EXPLORER_REMOTE) {
+        match self.view.get_state(super::COMPONENT_EXPLORER_REMOTE) {
             Some(Payload::Unsigned(idx)) => Some(idx),
             _ => None,
         }

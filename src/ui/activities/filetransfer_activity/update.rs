@@ -40,14 +40,16 @@ use super::{
 use crate::fs::explorer::FileSorting;
 use crate::fs::FsEntry;
 use crate::ui::activities::keymap::*;
-use crate::ui::layout::props::{
-    PropValue, PropsBuilder, TableBuilder, TextParts, TextSpan, TextSpanBuilder,
-};
-use crate::ui::layout::{Msg, Payload};
+use crate::ui::components::{file_list::FileListPropsBuilder, logbox::LogboxPropsBuilder};
 // externals
 use bytesize::ByteSize;
 use std::path::{Path, PathBuf};
-use tui::style::Color;
+use tuirealm::{
+    components::progress_bar::ProgressBarPropsBuilder,
+    props::{PropsBuilder, TableBuilder, TextSpan, TextSpanBuilder},
+    tui::style::Color,
+    Msg, Payload,
+};
 
 impl FileTransferActivity {
     // -- update
@@ -394,7 +396,7 @@ impl FileTransferActivity {
                 }
                 (COMPONENT_EXPLORER_FIND, &MSG_KEY_SPACE) => {
                     // Get entry
-                    match self.view.get_value(COMPONENT_EXPLORER_FIND) {
+                    match self.view.get_state(COMPONENT_EXPLORER_FIND) {
                         Some(Payload::Unsigned(idx)) => {
                             self.action_find_transfer(idx, None);
                             // Reload files
@@ -585,7 +587,7 @@ impl FileTransferActivity {
                         FileExplorerTab::FindLocal | FileExplorerTab::FindRemote => {
                             // Get entry
                             if let Some(Payload::Unsigned(idx)) =
-                                self.view.get_value(COMPONENT_EXPLORER_FIND)
+                                self.view.get_state(COMPONENT_EXPLORER_FIND)
                             {
                                 self.action_find_transfer(idx, Some(input.to_string()));
                             }
@@ -621,7 +623,7 @@ impl FileTransferActivity {
                         FileExplorerTab::FindLocal | FileExplorerTab::FindRemote => {
                             // Get entry
                             if let Some(Payload::Unsigned(idx)) =
-                                self.view.get_value(COMPONENT_EXPLORER_FIND)
+                                self.view.get_state(COMPONENT_EXPLORER_FIND)
                             {
                                 self.action_find_delete(idx);
                                 // Reload entries
@@ -662,11 +664,12 @@ impl FileTransferActivity {
                     None
                 }
                 // -- sorting
-                (COMPONENT_RADIO_SORTING, &MSG_KEY_ESC) => {
+                (COMPONENT_RADIO_SORTING, &MSG_KEY_ESC)
+                | (COMPONENT_RADIO_SORTING, Msg::OnSubmit(_)) => {
                     self.umount_file_sorting();
                     None
                 }
-                (COMPONENT_RADIO_SORTING, Msg::OnSubmit(Payload::Unsigned(mode))) => {
+                (COMPONENT_RADIO_SORTING, Msg::OnChange(Payload::Unsigned(mode))) => {
                     // Get sorting mode
                     let sorting: FileSorting = match mode {
                         1 => FileSorting::ByModifyTime,
@@ -679,7 +682,6 @@ impl FileTransferActivity {
                         FileExplorerTab::Remote => self.remote.sort_by(sorting),
                         _ => panic!("Found result doesn't support SORTING"),
                     }
-                    self.umount_file_sorting();
                     // Reload files
                     match self.tab {
                         FileExplorerTab::Local => self.update_local_filelist(),
@@ -718,11 +720,7 @@ impl FileTransferActivity {
     ///
     /// Update local file list
     pub(super) fn update_local_filelist(&mut self) -> Option<(String, Msg)> {
-        match self
-            .view
-            .get_props(super::COMPONENT_EXPLORER_LOCAL)
-            .as_mut()
-        {
+        match self.view.get_props(super::COMPONENT_EXPLORER_LOCAL) {
             Some(props) => {
                 // Get width
                 let width: usize = self
@@ -750,14 +748,14 @@ impl FileTransferActivity {
                     )
                     .display()
                 );
-                let files: Vec<TextSpan> = self
+                let files: Vec<String> = self
                     .local
                     .iter_files()
-                    .map(|x: &FsEntry| TextSpan::from(self.local.fmt_file(x)))
+                    .map(|x: &FsEntry| self.local.fmt_file(x))
                     .collect();
                 // Update
-                let props = props
-                    .with_texts(TextParts::new(Some(hostname), Some(files)))
+                let props = FileListPropsBuilder::from(props)
+                    .with_files(Some(hostname), files)
                     .build();
                 // Update
                 self.view.update(super::COMPONENT_EXPLORER_LOCAL, props)
@@ -770,11 +768,7 @@ impl FileTransferActivity {
     ///
     /// Update remote file list
     pub(super) fn update_remote_filelist(&mut self) -> Option<(String, Msg)> {
-        match self
-            .view
-            .get_props(super::COMPONENT_EXPLORER_REMOTE)
-            .as_mut()
-        {
+        match self.view.get_props(super::COMPONENT_EXPLORER_REMOTE) {
             Some(props) => {
                 // Get width
                 let width: usize = self
@@ -795,14 +789,14 @@ impl FileTransferActivity {
                     )
                     .display()
                 );
-                let files: Vec<TextSpan> = self
+                let files: Vec<String> = self
                     .remote
                     .iter_files()
-                    .map(|x: &FsEntry| TextSpan::from(self.remote.fmt_file(x)))
+                    .map(|x: &FsEntry| self.remote.fmt_file(x))
                     .collect();
                 // Update
-                let props = props
-                    .with_texts(TextParts::new(Some(hostname), Some(files)))
+                let props = FileListPropsBuilder::from(props)
+                    .with_files(Some(hostname), files)
                     .build();
                 self.view.update(super::COMPONENT_EXPLORER_REMOTE, props)
             }
@@ -814,7 +808,7 @@ impl FileTransferActivity {
     ///
     /// Update log box
     pub(super) fn update_logbox(&mut self) -> Option<(String, Msg)> {
-        match self.view.get_props(super::COMPONENT_LOG_BOX).as_mut() {
+        match self.view.get_props(super::COMPONENT_LOG_BOX) {
             Some(props) => {
                 // Get width
                 let width: usize = self
@@ -876,8 +870,8 @@ impl FileTransferActivity {
                     }
                 }
                 let table = table.build();
-                let props = props
-                    .with_texts(TextParts::table(Some(String::from("Log")), table))
+                let props = LogboxPropsBuilder::from(props)
+                    .with_log(Some(String::from("Log")), table)
                     .build();
                 self.view.update(super::COMPONENT_LOG_BOX, props)
             }
@@ -886,7 +880,7 @@ impl FileTransferActivity {
     }
 
     pub(super) fn update_progress_bar(&mut self, text: String) -> Option<(String, Msg)> {
-        match self.view.get_props(COMPONENT_PROGRESS_BAR).as_mut() {
+        match self.view.get_props(COMPONENT_PROGRESS_BAR) {
             Some(props) => {
                 // Calculate ETA
                 let elapsed_secs: u64 = self.transfer.started.elapsed().as_secs();
@@ -905,12 +899,9 @@ impl FileTransferActivity {
                     eta,
                     ByteSize(self.transfer.bytes_per_second())
                 );
-                let props = props
-                    .with_texts(TextParts::new(
-                        Some(text),
-                        Some(vec![TextSpan::from(label)]),
-                    ))
-                    .with_value(PropValue::Float(self.transfer.progress / 100.0))
+                let props = ProgressBarPropsBuilder::from(props)
+                    .with_texts(Some(text), label)
+                    .with_progress(self.transfer.progress / 100.0)
                     .build();
                 self.view.update(COMPONENT_PROGRESS_BAR, props)
             }
@@ -933,22 +924,20 @@ impl FileTransferActivity {
     }
 
     fn update_find_list(&mut self) -> Option<(String, Msg)> {
-        match self.view.get_props(COMPONENT_EXPLORER_FIND).as_mut() {
+        match self.view.get_props(COMPONENT_EXPLORER_FIND) {
             None => None,
             Some(props) => {
-                let props = props.build();
                 let title: String = props.texts.title.clone().unwrap_or_default();
-                let mut props = PropsBuilder::from(props);
                 // Prepare files
-                let file_texts: Vec<TextSpan> = self
+                let files: Vec<String> = self
                     .found
                     .as_ref()
                     .unwrap()
                     .iter_files()
-                    .map(|x: &FsEntry| TextSpan::from(self.found.as_ref().unwrap().fmt_file(x)))
+                    .map(|x: &FsEntry| self.found.as_ref().unwrap().fmt_file(x))
                     .collect();
-                let props = props
-                    .with_texts(TextParts::new(Some(title), Some(file_texts)))
+                let props = FileListPropsBuilder::from(props)
+                    .with_files(Some(title), files)
                     .build();
                 self.view.update(COMPONENT_EXPLORER_FIND, props)
             }

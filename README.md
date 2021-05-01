@@ -426,6 +426,7 @@ TermSCP is powered by these aweseome projects:
 - [ssh2-rs](https://github.com/alexcrichton/ssh2-rs)
 - [textwrap](https://github.com/mgeisler/textwrap)
 - [tui-rs](https://github.com/fdehau/tui-rs)
+- [tui-realm](https://github.com/veeso/tui-realm)
 - [whoami](https://github.com/libcala/whoami)
 
 ---

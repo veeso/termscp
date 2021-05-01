@@ -32,18 +32,18 @@ mod view;
 
 // Dependencies
 extern crate crossterm;
-extern crate tui;
+extern crate tuirealm;
 
 // locals
 use super::{Activity, Context, ExitReason};
 use crate::filetransfer::FileTransferProtocol;
 use crate::system::bookmarks_client::BookmarksClient;
 use crate::ui::context::FileTransferParams;
-use crate::ui::layout::view::View;
 use crate::utils::git;
 
 // Includes
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
+use tuirealm::View;
 
 // -- components
 const COMPONENT_TEXT_HEADER: &str = "TEXT_HEADER";

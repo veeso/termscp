@@ -21,6 +21,12 @@
 
 Released on FIXME: ??
 
+- Bugfix:
+  - Fixed wrong text wrap in log box
+- Dependencies:
+  - Added `tui-realm 0.1.0`
+  - Removed `tui`
+
 ## 0.4.2
 
 Released on 13/04/2021

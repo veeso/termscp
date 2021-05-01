@@ -30,22 +30,27 @@
 use super::{Context, SetupActivity, ViewLayout};
 use crate::filetransfer::FileTransferProtocol;
 use crate::fs::explorer::GroupDirs;
-use crate::ui::layout::components::{
-    bookmark_list::BookmarkList, input::Input, msgbox::MsgBox, radio_group::RadioGroup,
-    table::Table, text::Text,
+use crate::ui::components::{
+    bookmark_list::{BookmarkList, BookmarkListPropsBuilder},
+    msgbox::{MsgBox, MsgBoxPropsBuilder},
 };
-use crate::ui::layout::props::{
-    PropValue, PropsBuilder, TableBuilder, TextParts, TextSpan, TextSpanBuilder,
-};
-use crate::ui::layout::utils::draw_area_in;
-use crate::ui::layout::view::View;
-use crate::ui::layout::Payload;
+use crate::utils::ui::draw_area_in;
 // Ext
 use std::path::PathBuf;
-use tui::{
+use tuirealm::components::{
+    input::{Input, InputPropsBuilder},
+    radio::{Radio, RadioPropsBuilder},
+    span::{Span, SpanPropsBuilder},
+    table::{Table, TablePropsBuilder},
+};
+use tuirealm::tui::{
     layout::{Constraint, Direction, Layout},
     style::Color,
-    widgets::{Borders, Clear},
+    widgets::{BorderType, Borders, Clear},
+};
+use tuirealm::{
+    props::{PropsBuilder, TableBuilder, TextSpan, TextSpanBuilder},
+    Payload, View,
 };
 
 impl SetupActivity {
@@ -61,38 +66,32 @@ impl SetupActivity {
         // Radio tab
         self.view.mount(
             super::COMPONENT_RADIO_TAB,
-            Box::new(RadioGroup::new(
-                PropsBuilder::default()
-                    .with_foreground(Color::LightYellow)
-                    .with_background(Color::Black)
-                    .with_borders(Borders::BOTTOM)
-                    .with_texts(TextParts::new(
+            Box::new(Radio::new(
+                RadioPropsBuilder::default()
+                    .with_color(Color::LightYellow)
+                    .with_inverted_color(Color::Black)
+                    .with_borders(Borders::BOTTOM, BorderType::Thick, Color::White)
+                    .with_options(
                         None,
-                        Some(vec![
-                            TextSpan::from("User Interface"),
-                            TextSpan::from("SSH Keys"),
-                        ]),
-                    ))
-                    .with_value(PropValue::Unsigned(0))
+                        vec![String::from("User Interface"), String::from("SSH Keys")],
+                    )
+                    .with_value(0)
                     .build(),
             )),
         );
         // Footer
         self.view.mount(
             super::COMPONENT_TEXT_FOOTER,
-            Box::new(Text::new(
-                PropsBuilder::default()
-                    .with_texts(TextParts::new(
-                        None,
-                        Some(vec![
-                            TextSpanBuilder::new("Press ").bold().build(),
-                            TextSpanBuilder::new("<CTRL+H>")
-                                .bold()
-                                .with_foreground(Color::Cyan)
-                                .build(),
-                            TextSpanBuilder::new(" to show keybindings").bold().build(),
-                        ]),
-                    ))
+            Box::new(Span::new(
+                SpanPropsBuilder::default()
+                    .with_spans(vec![
+                        TextSpanBuilder::new("Press ").bold().build(),
+                        TextSpanBuilder::new("<CTRL+H>")
+                            .bold()
+                            .with_foreground(Color::Cyan)
+                            .build(),
+                        TextSpanBuilder::new(" to show keybindings").bold().build(),
+                    ])
                     .build(),
             )),
         );
@@ -100,83 +99,86 @@ impl SetupActivity {
         self.view.mount(
             super::COMPONENT_INPUT_TEXT_EDITOR,
             Box::new(Input::new(
-                PropsBuilder::default()
+                InputPropsBuilder::default()
                     .with_foreground(Color::LightGreen)
-                    .with_texts(TextParts::new(Some(String::from("Text editor")), None))
+                    .with_borders(Borders::ALL, BorderType::Rounded, Color::LightGreen)
+                    .with_label(String::from("Text editor"))
                     .build(),
             )),
         );
         self.view.active(super::COMPONENT_INPUT_TEXT_EDITOR); // <-- Focus
         self.view.mount(
             super::COMPONENT_RADIO_DEFAULT_PROTOCOL,
-            Box::new(RadioGroup::new(
-                PropsBuilder::default()
-                    .with_foreground(Color::LightCyan)
-                    .with_background(Color::Black)
-                    .with_texts(TextParts::new(
+            Box::new(Radio::new(
+                RadioPropsBuilder::default()
+                    .with_color(Color::LightCyan)
+                    .with_inverted_color(Color::Black)
+                    .with_borders(Borders::ALL, BorderType::Rounded, Color::LightCyan)
+                    .with_options(
                         Some(String::from("Default file transfer protocol")),
-                        Some(vec![
-                            TextSpan::from("SFTP"),
-                            TextSpan::from("SCP"),
-                            TextSpan::from("FTP"),
-                            TextSpan::from("FTPS"),
-                        ]),
-                    ))
+                        vec![
+                            String::from("SFTP"),
+                            String::from("SCP"),
+                            String::from("FTP"),
+                            String::from("FTPS"),
+                        ],
+                    )
                     .build(),
             )),
         );
         self.view.mount(
             super::COMPONENT_RADIO_HIDDEN_FILES,
-            Box::new(RadioGroup::new(
-                PropsBuilder::default()
-                    .with_foreground(Color::LightRed)
-                    .with_background(Color::Black)
-                    .with_texts(TextParts::new(
+            Box::new(Radio::new(
+                RadioPropsBuilder::default()
+                    .with_color(Color::LightRed)
+                    .with_inverted_color(Color::Black)
+                    .with_borders(Borders::ALL, BorderType::Rounded, Color::LightRed)
+                    .with_options(
                         Some(String::from("Show hidden files (by default)")),
-                        Some(vec![TextSpan::from("Yes"), TextSpan::from("No")]),
-                    ))
+                        vec![String::from("Yes"), String::from("No")],
+                    )
                     .build(),
             )),
         );
         self.view.mount(
             super::COMPONENT_RADIO_UPDATES,
-            Box::new(RadioGroup::new(
-                PropsBuilder::default()
-                    .with_foreground(Color::LightYellow)
-                    .with_background(Color::Black)
-                    .with_texts(TextParts::new(
+            Box::new(Radio::new(
+                RadioPropsBuilder::default()
+                    .with_color(Color::LightYellow)
+                    .with_inverted_color(Color::Black)
+                    .with_borders(Borders::ALL, BorderType::Rounded, Color::LightYellow)
+                    .with_options(
                         Some(String::from("Check for updates?")),
-                        Some(vec![TextSpan::from("Yes"), TextSpan::from("No")]),
-                    ))
+                        vec![String::from("Yes"), String::from("No")],
+                    )
                     .build(),
             )),
         );
         self.view.mount(
             super::COMPONENT_RADIO_GROUP_DIRS,
-            Box::new(RadioGroup::new(
-                PropsBuilder::default()
-                    .with_foreground(Color::LightMagenta)
-                    .with_background(Color::Black)
-                    .with_texts(TextParts::new(
+            Box::new(Radio::new(
+                RadioPropsBuilder::default()
+                    .with_color(Color::LightMagenta)
+                    .with_inverted_color(Color::Black)
+                    .with_borders(Borders::ALL, BorderType::Rounded, Color::LightMagenta)
+                    .with_options(
                         Some(String::from("Group directories")),
-                        Some(vec![
-                            TextSpan::from("Display first"),
-                            TextSpan::from("Display Last"),
-                            TextSpan::from("No"),
-                        ]),
-                    ))
+                        vec![
+                            String::from("Display first"),
+                            String::from("Display Last"),
+                            String::from("No"),
+                        ],
+                    )
                     .build(),
             )),
         );
         self.view.mount(
             super::COMPONENT_INPUT_FILE_FMT,
             Box::new(Input::new(
-                PropsBuilder::default()
+                InputPropsBuilder::default()
                     .with_foreground(Color::LightBlue)
-                    .with_texts(TextParts::new(
-                        Some(String::from("File formatter syntax")),
-                        None,
-                    ))
+                    .with_borders(Borders::ALL, BorderType::Rounded, Color::LightBlue)
+                    .with_label(String::from("File formatter syntax"))
                     .build(),
             )),
         );
@@ -196,46 +198,41 @@ impl SetupActivity {
         // Radio tab
         self.view.mount(
             super::COMPONENT_RADIO_TAB,
-            Box::new(RadioGroup::new(
-                PropsBuilder::default()
-                    .with_foreground(Color::LightYellow)
-                    .with_background(Color::Black)
-                    .with_borders(Borders::BOTTOM)
-                    .with_texts(TextParts::new(
+            Box::new(Radio::new(
+                RadioPropsBuilder::default()
+                    .with_color(Color::LightYellow)
+                    .with_inverted_color(Color::Black)
+                    .with_borders(Borders::BOTTOM, BorderType::Thick, Color::LightYellow)
+                    .with_options(
                         None,
-                        Some(vec![
-                            TextSpan::from("User Interface"),
-                            TextSpan::from("SSH Keys"),
-                        ]),
-                    ))
-                    .with_value(PropValue::Unsigned(1))
+                        vec![String::from("User Interface"), String::from("SSH Keys")],
+                    )
+                    .with_value(1)
                     .build(),
             )),
         );
         // Footer
         self.view.mount(
             super::COMPONENT_TEXT_FOOTER,
-            Box::new(Text::new(
-                PropsBuilder::default()
-                    .with_texts(TextParts::new(
-                        None,
-                        Some(vec![
-                            TextSpanBuilder::new("Press ").bold().build(),
-                            TextSpanBuilder::new("<CTRL+H>")
-                                .bold()
-                                .with_foreground(Color::Cyan)
-                                .build(),
-                            TextSpanBuilder::new(" to show keybindings").bold().build(),
-                        ]),
-                    ))
+            Box::new(Span::new(
+                SpanPropsBuilder::default()
+                    .with_spans(vec![
+                        TextSpanBuilder::new("Press ").bold().build(),
+                        TextSpanBuilder::new("<CTRL+H>")
+                            .bold()
+                            .with_foreground(Color::Cyan)
+                            .build(),
+                        TextSpanBuilder::new(" to show keybindings").bold().build(),
+                    ])
                     .build(),
             )),
         );
         self.view.mount(
             super::COMPONENT_LIST_SSH_KEYS,
             Box::new(BookmarkList::new(
-                PropsBuilder::default()
-                    .with_texts(TextParts::new(Some(String::from("SSH Keys")), Some(vec![])))
+                BookmarkListPropsBuilder::default()
+                    .with_bookmarks(Some(String::from("SSH Keys")), vec![])
+                    .with_borders(Borders::ALL, BorderType::Plain, Color::LightGreen)
                     .with_background(Color::LightGreen)
                     .with_foreground(Color::Black)
                     .build(),
@@ -312,40 +309,40 @@ impl SetupActivity {
                 }
             }
             // Popups
-            if let Some(mut props) = self.view.get_props(super::COMPONENT_TEXT_ERROR) {
-                if props.build().visible {
+            if let Some(props) = self.view.get_props(super::COMPONENT_TEXT_ERROR) {
+                if props.visible {
                     let popup = draw_area_in(f.size(), 50, 10);
                     f.render_widget(Clear, popup);
                     // make popup
                     self.view.render(super::COMPONENT_TEXT_ERROR, f, popup);
                 }
             }
-            if let Some(mut props) = self.view.get_props(super::COMPONENT_RADIO_QUIT) {
-                if props.build().visible {
+            if let Some(props) = self.view.get_props(super::COMPONENT_RADIO_QUIT) {
+                if props.visible {
                     // make popup
                     let popup = draw_area_in(f.size(), 40, 10);
                     f.render_widget(Clear, popup);
                     self.view.render(super::COMPONENT_RADIO_QUIT, f, popup);
                 }
             }
-            if let Some(mut props) = self.view.get_props(super::COMPONENT_TEXT_HELP) {
-                if props.build().visible {
+            if let Some(props) = self.view.get_props(super::COMPONENT_TEXT_HELP) {
+                if props.visible {
                     // make popup
                     let popup = draw_area_in(f.size(), 50, 70);
                     f.render_widget(Clear, popup);
                     self.view.render(super::COMPONENT_TEXT_HELP, f, popup);
                 }
             }
-            if let Some(mut props) = self.view.get_props(super::COMPONENT_RADIO_SAVE) {
-                if props.build().visible {
+            if let Some(props) = self.view.get_props(super::COMPONENT_RADIO_SAVE) {
+                if props.visible {
                     // make popup
                     let popup = draw_area_in(f.size(), 30, 10);
                     f.render_widget(Clear, popup);
                     self.view.render(super::COMPONENT_RADIO_SAVE, f, popup);
                 }
             }
-            if let Some(mut props) = self.view.get_props(super::COMPONENT_RADIO_DEL_SSH_KEY) {
-                if props.build().visible {
+            if let Some(props) = self.view.get_props(super::COMPONENT_RADIO_DEL_SSH_KEY) {
+                if props.visible {
                     // make popup
                     let popup = draw_area_in(f.size(), 30, 10);
                     f.render_widget(Clear, popup);
@@ -353,8 +350,8 @@ impl SetupActivity {
                         .render(super::COMPONENT_RADIO_DEL_SSH_KEY, f, popup);
                 }
             }
-            if let Some(mut props) = self.view.get_props(super::COMPONENT_INPUT_SSH_HOST) {
-                if props.build().visible {
+            if let Some(props) = self.view.get_props(super::COMPONENT_INPUT_SSH_HOST) {
+                if props.visible {
                     // make popup
                     let popup = draw_area_in(f.size(), 50, 20);
                     f.render_widget(Clear, popup);
@@ -389,10 +386,11 @@ impl SetupActivity {
         self.view.mount(
             super::COMPONENT_TEXT_ERROR,
             Box::new(MsgBox::new(
-                PropsBuilder::default()
+                MsgBoxPropsBuilder::default()
                     .with_foreground(Color::Red)
                     .bold()
-                    .with_texts(TextParts::new(None, Some(vec![TextSpan::from(text)])))
+                    .with_borders(Borders::ALL, BorderType::Rounded, Color::Red)
+                    .with_texts(None, vec![TextSpan::from(text)])
                     .build(),
             )),
         );
@@ -413,15 +411,16 @@ impl SetupActivity {
     pub(super) fn mount_del_ssh_key(&mut self) {
         self.view.mount(
             super::COMPONENT_RADIO_DEL_SSH_KEY,
-            Box::new(RadioGroup::new(
-                PropsBuilder::default()
-                    .with_foreground(Color::LightRed)
-                    .bold()
-                    .with_texts(TextParts::new(
+            Box::new(Radio::new(
+                RadioPropsBuilder::default()
+                    .with_color(Color::LightRed)
+                    .with_inverted_color(Color::Black)
+                    .with_borders(Borders::ALL, BorderType::Rounded, Color::LightRed)
+                    .with_options(
                         Some(String::from("Delete key?")),
-                        Some(vec![TextSpan::from("Yes"), TextSpan::from("No")]),
-                    ))
-                    .with_value(PropValue::Unsigned(1)) // Default: No
+                        vec![String::from("Yes"), String::from("No")],
+                    )
+                    .with_value(1) // Default: No
                     .build(),
             )),
         );
@@ -443,21 +442,26 @@ impl SetupActivity {
         self.view.mount(
             super::COMPONENT_INPUT_SSH_HOST,
             Box::new(Input::new(
-                PropsBuilder::default()
-                    .with_texts(TextParts::new(
-                        Some(String::from("Hostname or address")),
-                        None,
-                    ))
-                    .with_borders(Borders::TOP | Borders::RIGHT | Borders::LEFT)
+                InputPropsBuilder::default()
+                    .with_label(String::from("Hostname or address"))
+                    .with_borders(
+                        Borders::TOP | Borders::RIGHT | Borders::LEFT,
+                        BorderType::Plain,
+                        Color::Reset,
+                    )
                     .build(),
             )),
         );
         self.view.mount(
             super::COMPONENT_INPUT_SSH_USERNAME,
             Box::new(Input::new(
-                PropsBuilder::default()
-                    .with_texts(TextParts::new(Some(String::from("Username")), None))
-                    .with_borders(Borders::BOTTOM | Borders::RIGHT | Borders::LEFT)
+                InputPropsBuilder::default()
+                    .with_label(String::from("Username"))
+                    .with_borders(
+                        Borders::ALL | Borders::RIGHT | Borders::LEFT,
+                        BorderType::Plain,
+                        Color::Reset,
+                    )
                     .build(),
             )),
         );
@@ -478,18 +482,19 @@ impl SetupActivity {
     pub(super) fn mount_quit(&mut self) {
         self.view.mount(
             super::COMPONENT_RADIO_QUIT,
-            Box::new(RadioGroup::new(
-                PropsBuilder::default()
-                    .with_foreground(Color::LightRed)
-                    .bold()
-                    .with_texts(TextParts::new(
+            Box::new(Radio::new(
+                RadioPropsBuilder::default()
+                    .with_color(Color::LightRed)
+                    .with_inverted_color(Color::Black)
+                    .with_borders(Borders::ALL, BorderType::Rounded, Color::LightRed)
+                    .with_options(
                         Some(String::from("Exit setup?")),
-                        Some(vec![
-                            TextSpan::from("Save"),
-                            TextSpan::from("Don't save"),
-                            TextSpan::from("Cancel"),
-                        ]),
-                    ))
+                        vec![
+                            String::from("Save"),
+                            String::from("Don't save"),
+                            String::from("Cancel"),
+                        ],
+                    )
                     .build(),
             )),
         );
@@ -510,14 +515,15 @@ impl SetupActivity {
     pub(super) fn mount_save_popup(&mut self) {
         self.view.mount(
             super::COMPONENT_RADIO_SAVE,
-            Box::new(RadioGroup::new(
-                PropsBuilder::default()
-                    .with_foreground(Color::LightYellow)
-                    .bold()
-                    .with_texts(TextParts::new(
+            Box::new(Radio::new(
+                RadioPropsBuilder::default()
+                    .with_color(Color::LightYellow)
+                    .with_inverted_color(Color::Black)
+                    .with_borders(Borders::ALL, BorderType::Rounded, Color::LightYellow)
+                    .with_options(
                         Some(String::from("Save changes?")),
-                        Some(vec![TextSpan::from("Yes"), TextSpan::from("No")]),
-                    ))
+                        vec![String::from("Yes"), String::from("No")],
+                    )
                     .build(),
             )),
         );
@@ -539,8 +545,9 @@ impl SetupActivity {
         self.view.mount(
             super::COMPONENT_TEXT_HELP,
             Box::new(Table::new(
-                PropsBuilder::default()
-                    .with_texts(TextParts::table(
+                TablePropsBuilder::default()
+                    .with_borders(Borders::ALL, BorderType::Rounded, Color::White)
+                    .with_table(
                         Some(String::from("Help")),
                         TableBuilder::default()
                             .add_col(
@@ -615,7 +622,7 @@ impl SetupActivity {
                             )
                             .add_col(TextSpan::from("        Save configuration"))
                             .build(),
-                    ))
+                    )
                     .build(),
             )),
         );
@@ -636,77 +643,59 @@ impl SetupActivity {
     pub(super) fn load_input_values(&mut self) {
         if let Some(cli) = self.context.as_mut().unwrap().config_client.as_mut() {
             // Text editor
-            if let Some(props) = self
-                .view
-                .get_props(super::COMPONENT_INPUT_TEXT_EDITOR)
-                .as_mut()
-            {
+            if let Some(props) = self.view.get_props(super::COMPONENT_INPUT_TEXT_EDITOR) {
                 let text_editor: String =
                     String::from(cli.get_text_editor().as_path().to_string_lossy());
-                let props = props.with_value(PropValue::Str(text_editor)).build();
+                let props = InputPropsBuilder::from(props)
+                    .with_value(text_editor)
+                    .build();
                 let _ = self.view.update(super::COMPONENT_INPUT_TEXT_EDITOR, props);
             }
             // Protocol
-            if let Some(props) = self
-                .view
-                .get_props(super::COMPONENT_RADIO_DEFAULT_PROTOCOL)
-                .as_mut()
-            {
+            if let Some(props) = self.view.get_props(super::COMPONENT_RADIO_DEFAULT_PROTOCOL) {
                 let protocol: usize = match cli.get_default_protocol() {
                     FileTransferProtocol::Sftp => 0,
                     FileTransferProtocol::Scp => 1,
                     FileTransferProtocol::Ftp(false) => 2,
                     FileTransferProtocol::Ftp(true) => 3,
                 };
-                let props = props.with_value(PropValue::Unsigned(protocol)).build();
+                let props = RadioPropsBuilder::from(props).with_value(protocol).build();
                 let _ = self
                     .view
                     .update(super::COMPONENT_RADIO_DEFAULT_PROTOCOL, props);
             }
             // Hidden files
-            if let Some(props) = self
-                .view
-                .get_props(super::COMPONENT_RADIO_HIDDEN_FILES)
-                .as_mut()
-            {
+            if let Some(props) = self.view.get_props(super::COMPONENT_RADIO_HIDDEN_FILES) {
                 let hidden: usize = match cli.get_show_hidden_files() {
                     true => 0,
                     false => 1,
                 };
-                let props = props.with_value(PropValue::Unsigned(hidden)).build();
+                let props = RadioPropsBuilder::from(props).with_value(hidden).build();
                 let _ = self.view.update(super::COMPONENT_RADIO_HIDDEN_FILES, props);
             }
             // Updates
-            if let Some(props) = self.view.get_props(super::COMPONENT_RADIO_UPDATES).as_mut() {
+            if let Some(props) = self.view.get_props(super::COMPONENT_RADIO_UPDATES) {
                 let updates: usize = match cli.get_check_for_updates() {
                     true => 0,
                     false => 1,
                 };
-                let props = props.with_value(PropValue::Unsigned(updates)).build();
+                let props = RadioPropsBuilder::from(props).with_value(updates).build();
                 let _ = self.view.update(super::COMPONENT_RADIO_UPDATES, props);
             }
             // Group dirs
-            if let Some(props) = self
-                .view
-                .get_props(super::COMPONENT_RADIO_GROUP_DIRS)
-                .as_mut()
-            {
+            if let Some(props) = self.view.get_props(super::COMPONENT_RADIO_GROUP_DIRS) {
                 let dirs: usize = match cli.get_group_dirs() {
                     Some(GroupDirs::First) => 0,
                     Some(GroupDirs::Last) => 1,
                     None => 2,
                 };
-                let props = props.with_value(PropValue::Unsigned(dirs)).build();
+                let props = RadioPropsBuilder::from(props).with_value(dirs).build();
                 let _ = self.view.update(super::COMPONENT_RADIO_GROUP_DIRS, props);
             }
             // File Fmt
-            if let Some(props) = self
-                .view
-                .get_props(super::COMPONENT_INPUT_FILE_FMT)
-                .as_mut()
-            {
+            if let Some(props) = self.view.get_props(super::COMPONENT_INPUT_FILE_FMT) {
                 let file_fmt: String = cli.get_file_fmt().unwrap_or_default();
-                let props = props.with_value(PropValue::Str(file_fmt)).build();
+                let props = InputPropsBuilder::from(props).with_value(file_fmt).build();
                 let _ = self.view.update(super::COMPONENT_INPUT_FILE_FMT, props);
             }
         }
@@ -718,12 +707,12 @@ impl SetupActivity {
     pub(super) fn collect_input_values(&mut self) {
         if let Some(cli) = self.context.as_mut().unwrap().config_client.as_mut() {
             if let Some(Payload::Text(editor)) =
-                self.view.get_value(super::COMPONENT_INPUT_TEXT_EDITOR)
+                self.view.get_state(super::COMPONENT_INPUT_TEXT_EDITOR)
             {
                 cli.set_text_editor(PathBuf::from(editor.as_str()));
             }
             if let Some(Payload::Unsigned(protocol)) =
-                self.view.get_value(super::COMPONENT_RADIO_DEFAULT_PROTOCOL)
+                self.view.get_state(super::COMPONENT_RADIO_DEFAULT_PROTOCOL)
             {
                 let protocol: FileTransferProtocol = match protocol {
                     1 => FileTransferProtocol::Scp,
@@ -734,22 +723,22 @@ impl SetupActivity {
                 cli.set_default_protocol(protocol);
             }
             if let Some(Payload::Unsigned(opt)) =
-                self.view.get_value(super::COMPONENT_RADIO_HIDDEN_FILES)
+                self.view.get_state(super::COMPONENT_RADIO_HIDDEN_FILES)
             {
                 let show: bool = matches!(opt, 0);
                 cli.set_show_hidden_files(show);
             }
             if let Some(Payload::Unsigned(opt)) =
-                self.view.get_value(super::COMPONENT_RADIO_UPDATES)
+                self.view.get_state(super::COMPONENT_RADIO_UPDATES)
             {
                 let check: bool = matches!(opt, 0);
                 cli.set_check_for_updates(check);
             }
-            if let Some(Payload::Text(fmt)) = self.view.get_value(super::COMPONENT_INPUT_FILE_FMT) {
+            if let Some(Payload::Text(fmt)) = self.view.get_state(super::COMPONENT_INPUT_FILE_FMT) {
                 cli.set_file_fmt(fmt);
             }
             if let Some(Payload::Unsigned(opt)) =
-                self.view.get_value(super::COMPONENT_RADIO_GROUP_DIRS)
+                self.view.get_state(super::COMPONENT_RADIO_GROUP_DIRS)
             {
                 let dirs: Option<GroupDirs> = match opt {
                     0 => Some(GroupDirs::First),
@@ -767,17 +756,17 @@ impl SetupActivity {
     pub(super) fn reload_ssh_keys(&mut self) {
         if let Some(cli) = self.context.as_ref().unwrap().config_client.as_ref() {
             // get props
-            if let Some(props) = self.view.get_props(super::COMPONENT_LIST_SSH_KEYS).as_mut() {
+            if let Some(props) = self.view.get_props(super::COMPONENT_LIST_SSH_KEYS) {
                 // Create texts
-                let keys: Vec<TextSpan> = cli
+                let keys: Vec<String> = cli
                     .iter_ssh_keys()
                     .map(|x| {
                         let (addr, username, _) = cli.get_ssh_key(x).ok().unwrap().unwrap();
-                        TextSpan::from(format!("{} at {}", addr, username).as_str())
+                        format!("{} at {}", addr, username)
                     })
                     .collect();
-                let props = props
-                    .with_texts(TextParts::new(Some(String::from("SSH Keys")), Some(keys)))
+                let props = BookmarkListPropsBuilder::from(props)
+                    .with_bookmarks(Some(String::from("SSH Keys")), keys)
                     .build();
                 self.view.update(super::COMPONENT_LIST_SSH_KEYS, props);
             }
