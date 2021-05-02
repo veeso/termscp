@@ -82,7 +82,7 @@ If you want to contribute to this project, don't forget to check out our contrib
 ### Cargo 🦀
 
 ```sh
-# Install termscp through cargo
+# Install termscp via cargo
 cargo install termscp
 ```
 
@@ -98,7 +98,7 @@ Requirements:
 Get `deb` package from [HERE](https://github.com/veeso/termscp/releases/latest/download/termscp_0.5.0_amd64.deb)
 or run `wget https://github.com/veeso/termscp/releases/latest/download/termscp_0.5.0_amd64.deb`
 
-then install through dpkg:
+then install via dpkg:
 
 ```sh
 dpkg -i termscp_*.deb
@@ -111,7 +111,7 @@ gdebi termscp_*.deb
 Get `rpm` package from [HERE](https://github.com/veeso/termscp/releases/latest/download/termscp-0.5.0-1.x86_64.rpm)
 or run `wget https://github.com/veeso/termscp/releases/latest/download/termscp-0.5.0-1.x86_64.rpm`
 
-then install through rpm:
+then install via rpm:
 
 ```sh
 rpm -U termscp_*.rpm
@@ -184,12 +184,10 @@ The developer documentation can be found on Rust Docs at <https://docs.rs/termsc
 
 - **Themes provider 🎨**: I'm still thinking about how I will implement this, but basically the idea is to have a configuration file where it will be possible
     to define the color schema for the entire application. I haven't planned this release yet
-- **Local and remote file explorer format 🃏**: From 0.5.0 you will be able to customize the file format for both local and remote hosts.
 - **Synchronized browsing of local and remote directories ⌚**: See [Issue 8](https://github.com/veeso/termscp/issues/8)
 - **Group file select 🤩**: Possibility to select a group of files in explorers to operate on
 
-No other new feature is planned at the moment. I actually think that termscp is getting mature and now I should focus upcoming updates more on bug fixing and
-code/performance improvements than on new features.
+No other new feature is planned at the moment. I actually think that termscp is getting mature and now I should focus upcoming updates more on bug fixing and code/performance improvements than on new features.
 Anyway there are some ideas which I'd like to implement. If you want to start working on them, feel free to open a PR:
 
 - Amazon S3 support

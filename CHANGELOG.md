@@ -25,6 +25,8 @@ Released on FIXME: ??
   - Added the possibility to set different formatters for local and remote hosts
 - Bugfix:
   - Fixed wrong text wrap in log box
+  - Fixed error message not being shown after an upload failure
+  - [Issue 23](https://github.com/veeso/termscp/issues/23): Remove created file if transfer failed or was abrupted
 - Dependencies:
   - Added `tui-realm 0.1.0`
   - Removed `tui`

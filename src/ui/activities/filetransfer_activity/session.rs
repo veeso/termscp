@@ -33,7 +33,9 @@ extern crate tempfile;
 
 // Locals
 use super::{FileTransferActivity, LogLevel};
+use crate::filetransfer::FileTransferError;
 use crate::fs::{FsEntry, FsFile};
+use crate::host::HostError;
 use crate::utils::fmt::fmt_millis;
 
 // Ext
@@ -43,6 +45,26 @@ use std::fs::OpenOptions;
 use std::io::{Read, Seek, Write};
 use std::path::{Path, PathBuf};
 use std::time::{Instant, SystemTime};
+use thiserror::Error;
+
+/// ## TransferErrorReason
+///
+/// Describes the reason that caused an error during a file transfer
+#[derive(Error, Debug)]
+enum TransferErrorReason {
+    #[error("File transfer aborted")]
+    Abrupted,
+    #[error("Failed to seek file: {0}")]
+    CouldNotRewind(std::io::Error),
+    #[error("I/O error on localhost: {0}")]
+    LocalIoError(std::io::Error),
+    #[error("Host error: {0}")]
+    HostError(HostError),
+    #[error("I/O error on remote: {0}")]
+    RemoteIoError(std::io::Error),
+    #[error("File transfer error: {0}")]
+    FileTransferError(FileTransferError),
+}
 
 impl FileTransferActivity {
     /// ### connect
@@ -149,7 +171,46 @@ impl FileTransferActivity {
         // Match entry
         match entry {
             FsEntry::File(file) => {
-                let _ = self.filetransfer_send_file(file, remote_path.as_path(), file_name);
+                if let Err(err) =
+                    self.filetransfer_send_file(file, remote_path.as_path(), file_name)
+                {
+                    // Log error
+                    self.log_and_alert(
+                        LogLevel::Error,
+                        format!("Failed to upload file {}: {}", file.name, err),
+                    );
+                    // If transfer was abrupted or there was an IO error on remote, remove file
+                    if matches!(
+                        err,
+                        TransferErrorReason::Abrupted | TransferErrorReason::RemoteIoError(_)
+                    ) {
+                        // Stat file on remote and remove it if exists
+                        match self.client.stat(remote_path.as_path()) {
+                            Err(err) => self.log(
+                                LogLevel::Error,
+                                format!(
+                                    "Could not remove created file {}: {}",
+                                    remote_path.display(),
+                                    err
+                                )
+                                .as_str(),
+                            ),
+                            Ok(entry) => {
+                                if let Err(err) = self.client.remove(&entry) {
+                                    self.log(
+                                        LogLevel::Error,
+                                        format!(
+                                            "Could not remove created file {}: {}",
+                                            remote_path.display(),
+                                            err
+                                        )
+                                        .as_str(),
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
             }
             FsEntry::Directory(dir) => {
                 // Create directory on remote
@@ -252,7 +313,42 @@ impl FileTransferActivity {
                 if let Err(err) =
                     self.filetransfer_recv_file(local_file_path.as_path(), file, file_name)
                 {
-                    self.log_and_alert(LogLevel::Error, err);
+                    self.log_and_alert(
+                        LogLevel::Error,
+                        format!("Could not download file {}: {}", file.name, err),
+                    );
+                    // If transfer was abrupted or there was an IO error on remote, remove file
+                    if matches!(
+                        err,
+                        TransferErrorReason::Abrupted | TransferErrorReason::LocalIoError(_)
+                    ) {
+                        let local = &mut self.context.as_mut().unwrap().local;
+                        // Stat file
+                        match local.stat(local_file_path.as_path()) {
+                            Err(err) => self.log(
+                                LogLevel::Error,
+                                format!(
+                                    "Could not remove created file {}: {}",
+                                    local_file_path.display(),
+                                    err
+                                )
+                                .as_str(),
+                            ),
+                            Ok(entry) => {
+                                if let Err(err) = local.remove(&entry) {
+                                    self.log(
+                                        LogLevel::Error,
+                                        format!(
+                                            "Could not remove created file {}: {}",
+                                            local_file_path.display(),
+                                            err
+                                        )
+                                        .as_str(),
+                                    );
+                                }
+                            }
+                        }
+                    }
                 }
             }
             FsEntry::Directory(dir) => {
@@ -365,7 +461,7 @@ impl FileTransferActivity {
         local: &FsFile,
         remote: &Path,
         file_name: String,
-    ) -> Result<(), String> {
+    ) -> Result<(), TransferErrorReason> {
         // Upload file
         // Try to open local file
         match self
@@ -382,7 +478,7 @@ impl FileTransferActivity {
                         fhnd.seek(std::io::SeekFrom::End(0)).unwrap_or(0) as usize;
                     // rewind
                     if let Err(err) = fhnd.seek(std::io::SeekFrom::Start(0)) {
-                        return Err(format!("Could not rewind local file: {}", err));
+                        return Err(TransferErrorReason::CouldNotRewind(err));
                     }
                     // Write remote file
                     let mut total_bytes_written: usize = 0;
@@ -419,9 +515,8 @@ impl FileTransferActivity {
                                             }
                                             Err(err) => {
                                                 self.umount_progress_bar();
-                                                return Err(format!(
-                                                    "Could not write remote file: {}",
-                                                    err
+                                                return Err(TransferErrorReason::RemoteIoError(
+                                                    err,
                                                 ));
                                             }
                                         }
@@ -430,7 +525,7 @@ impl FileTransferActivity {
                             }
                             Err(err) => {
                                 self.umount_progress_bar();
-                                return Err(format!("Could not read local file: {}", err));
+                                return Err(TransferErrorReason::LocalIoError(err));
                             }
                         }
                         // Increase progress
@@ -452,6 +547,10 @@ impl FileTransferActivity {
                             format!("Could not finalize remote stream: \"{}\"", err).as_str(),
                         );
                     }
+                    // if upload was abrupted, return error
+                    if self.transfer.aborted {
+                        return Err(TransferErrorReason::Abrupted);
+                    }
                     self.log(
                         LogLevel::Info,
                         format!(
@@ -464,21 +563,9 @@ impl FileTransferActivity {
                         .as_ref(),
                     );
                 }
-                Err(err) => {
-                    return Err(format!(
-                        "Failed to upload file \"{}\": {}",
-                        local.abs_path.display(),
-                        err
-                    ))
-                }
+                Err(err) => return Err(TransferErrorReason::FileTransferError(err)),
             },
-            Err(err) => {
-                return Err(format!(
-                    "Failed to open file \"{}\": {}",
-                    local.abs_path.display(),
-                    err
-                ))
-            }
+            Err(err) => return Err(TransferErrorReason::HostError(err)),
         }
         Ok(())
     }
@@ -491,7 +578,7 @@ impl FileTransferActivity {
         local: &Path,
         remote: &FsFile,
         file_name: String,
-    ) -> Result<(), String> {
+    ) -> Result<(), TransferErrorReason> {
         // Try to open local file
         match self.context.as_ref().unwrap().local.open_file_write(local) {
             Ok(mut local_file) => {
@@ -531,9 +618,8 @@ impl FileTransferActivity {
                                                 Ok(bytes) => buf_start += bytes,
                                                 Err(err) => {
                                                     self.umount_progress_bar();
-                                                    return Err(format!(
-                                                        "Could not write local file: {}",
-                                                        err
+                                                    return Err(TransferErrorReason::LocalIoError(
+                                                        err,
                                                     ));
                                                 }
                                             }
@@ -542,7 +628,7 @@ impl FileTransferActivity {
                                 }
                                 Err(err) => {
                                     self.umount_progress_bar();
-                                    return Err(format!("Could not read remote file: {}", err));
+                                    return Err(TransferErrorReason::RemoteIoError(err));
                                 }
                             }
                             // Set progress
@@ -563,6 +649,10 @@ impl FileTransferActivity {
                                 LogLevel::Warn,
                                 format!("Could not finalize remote stream: \"{}\"", err).as_str(),
                             );
+                        }
+                        // If download was abrupted, return Error
+                        if self.transfer.aborted {
+                            return Err(TransferErrorReason::Abrupted);
                         }
                         // Apply file mode to file
                         #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
@@ -594,22 +684,10 @@ impl FileTransferActivity {
                             .as_ref(),
                         );
                     }
-                    Err(err) => {
-                        return Err(format!(
-                            "Failed to download file \"{}\": {}",
-                            remote.abs_path.display(),
-                            err
-                        ))
-                    }
+                    Err(err) => return Err(TransferErrorReason::FileTransferError(err)),
                 }
             }
-            Err(err) => {
-                return Err(format!(
-                    "Failed to open local file for write \"{}\": {}",
-                    local.display(),
-                    err
-                ))
-            }
+            Err(err) => return Err(TransferErrorReason::HostError(err)),
         }
         Ok(())
     }
@@ -777,7 +855,7 @@ impl FileTransferActivity {
         };
         // Download file
         if let Err(err) = self.filetransfer_recv_file(tmpfile.path(), file, file.name.clone()) {
-            return Err(err);
+            return Err(format!("Could not open file {}: {}", file.name, err));
         }
         // Get current file modification time
         let prev_mtime: SystemTime = match self.context.as_ref().unwrap().local.stat(tmpfile.path())
@@ -841,7 +919,11 @@ impl FileTransferActivity {
                     file.abs_path.as_path(),
                     file.name.clone(),
                 ) {
-                    return Err(err);
+                    return Err(format!(
+                        "Could not write file {}: {}",
+                        file.abs_path.display(),
+                        err
+                    ));
                 }
             }
             false => {
