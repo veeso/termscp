@@ -108,6 +108,7 @@ Password can be basically provided through 3 ways when address argument is provi
 | `<S>`         | Save file as...                                       | Save        |
 | `<U>`         | Go to parent directory                                | Upper       |
 | `<X>`         | Execute a command                                     | eXecute     |
+| `<Y>`         | Toggle synchronized browsing                          | sYnc        |
 | `<DEL>`       | Delete file                                           |             |
 | `<CTRL+C>`    | Abort file transfer process                           |             |
 
