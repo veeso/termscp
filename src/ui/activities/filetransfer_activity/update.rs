@@ -357,6 +357,12 @@ impl FileTransferActivity {
                     self.mount_exec();
                     None
                 }
+                (COMPONENT_EXPLORER_LOCAL, &MSG_KEY_CHAR_Y)
+                | (COMPONENT_EXPLORER_REMOTE, &MSG_KEY_CHAR_Y) => {
+                    // Toggle browser sync
+                    self.browser.toggle_sync_browsing();
+                    None
+                }
                 (COMPONENT_EXPLORER_LOCAL, &MSG_KEY_ESC)
                 | (COMPONENT_EXPLORER_REMOTE, &MSG_KEY_ESC)
                 | (COMPONENT_LOG_BOX, &MSG_KEY_ESC) => {

@@ -976,6 +976,22 @@ impl FileTransferActivity {
                             .add_col(TextSpan::from("             Go to parent directory"))
                             .add_row()
                             .add_col(
+                                TextSpanBuilder::new("<X>")
+                                    .bold()
+                                    .with_foreground(Color::Cyan)
+                                    .build(),
+                            )
+                            .add_col(TextSpan::from("             Execute shell command"))
+                            .add_row()
+                            .add_col(
+                                TextSpanBuilder::new("<Y>")
+                                    .bold()
+                                    .with_foreground(Color::Cyan)
+                                    .build(),
+                            )
+                            .add_col(TextSpan::from("             Toggle synchronized browsing"))
+                            .add_row()
+                            .add_col(
                                 TextSpanBuilder::new("<DEL|E>")
                                     .bold()
                                     .with_foreground(Color::Cyan)
