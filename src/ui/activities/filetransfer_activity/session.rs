@@ -52,16 +52,16 @@ use thiserror::Error;
 /// Describes the reason that caused an error during a file transfer
 #[derive(Error, Debug)]
 enum TransferErrorReason {
-    #[error("Abrupted")]
+    #[error("File transfer aborted")]
     Abrupted,
     #[error("Failed to seek file: {0}")]
     CouldNotRewind(std::io::Error),
     #[error("I/O error on localhost: {0}")]
-    LocalIOError(std::io::Error),
+    LocalIoError(std::io::Error),
     #[error("Host error: {0}")]
     HostError(HostError),
     #[error("I/O error on remote: {0}")]
-    RemoteIOError(std::io::Error),
+    RemoteIoError(std::io::Error),
     #[error("File transfer error: {0}")]
     FileTransferError(FileTransferError),
 }
@@ -182,9 +182,33 @@ impl FileTransferActivity {
                     // If transfer was abrupted or there was an IO error on remote, remove file
                     if matches!(
                         err,
-                        TransferErrorReason::Abrupted | TransferErrorReason::RemoteIOError(_)
+                        TransferErrorReason::Abrupted | TransferErrorReason::RemoteIoError(_)
                     ) {
-                        // TODO: make dummy fs entry
+                        // Stat file on remote and remove it if exists
+                        match self.client.stat(remote_path.as_path()) {
+                            Err(err) => self.log(
+                                LogLevel::Error,
+                                format!(
+                                    "Could not remove created file {}: {}",
+                                    remote_path.display(),
+                                    err
+                                )
+                                .as_str(),
+                            ),
+                            Ok(entry) => {
+                                if let Err(err) = self.client.remove(&entry) {
+                                    self.log(
+                                        LogLevel::Error,
+                                        format!(
+                                            "Could not remove created file {}: {}",
+                                            remote_path.display(),
+                                            err
+                                        )
+                                        .as_str(),
+                                    );
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -293,7 +317,38 @@ impl FileTransferActivity {
                         LogLevel::Error,
                         format!("Could not download file {}: {}", file.name, err),
                     );
-                    // TODO: delete file
+                    // If transfer was abrupted or there was an IO error on remote, remove file
+                    if matches!(
+                        err,
+                        TransferErrorReason::Abrupted | TransferErrorReason::LocalIoError(_)
+                    ) {
+                        let local = &mut self.context.as_mut().unwrap().local;
+                        // Stat file
+                        match local.stat(local_file_path.as_path()) {
+                            Err(err) => self.log(
+                                LogLevel::Error,
+                                format!(
+                                    "Could not remove created file {}: {}",
+                                    local_file_path.display(),
+                                    err
+                                )
+                                .as_str(),
+                            ),
+                            Ok(entry) => {
+                                if let Err(err) = local.remove(&entry) {
+                                    self.log(
+                                        LogLevel::Error,
+                                        format!(
+                                            "Could not remove created file {}: {}",
+                                            local_file_path.display(),
+                                            err
+                                        )
+                                        .as_str(),
+                                    );
+                                }
+                            }
+                        }
+                    }
                 }
             }
             FsEntry::Directory(dir) => {
@@ -460,7 +515,7 @@ impl FileTransferActivity {
                                             }
                                             Err(err) => {
                                                 self.umount_progress_bar();
-                                                return Err(TransferErrorReason::RemoteIOError(
+                                                return Err(TransferErrorReason::RemoteIoError(
                                                     err,
                                                 ));
                                             }
@@ -470,7 +525,7 @@ impl FileTransferActivity {
                             }
                             Err(err) => {
                                 self.umount_progress_bar();
-                                return Err(TransferErrorReason::LocalIOError(err));
+                                return Err(TransferErrorReason::LocalIoError(err));
                             }
                         }
                         // Increase progress
@@ -563,7 +618,7 @@ impl FileTransferActivity {
                                                 Ok(bytes) => buf_start += bytes,
                                                 Err(err) => {
                                                     self.umount_progress_bar();
-                                                    return Err(TransferErrorReason::LocalIOError(
+                                                    return Err(TransferErrorReason::LocalIoError(
                                                         err,
                                                     ));
                                                 }
@@ -573,7 +628,7 @@ impl FileTransferActivity {
                                 }
                                 Err(err) => {
                                     self.umount_progress_bar();
-                                    return Err(TransferErrorReason::RemoteIOError(err));
+                                    return Err(TransferErrorReason::RemoteIoError(err));
                                 }
                             }
                             // Set progress
