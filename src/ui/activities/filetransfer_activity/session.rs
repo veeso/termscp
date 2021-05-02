@@ -749,6 +749,12 @@ impl FileTransferActivity {
                 if push {
                     self.local.pushd(prev_dir.as_path())
                 }
+                // @! if synchronized browsing is enabled, change directory on remote too ~ since 0.5.0
+                if self.browser.sync_browsing {
+                    if let Some(name) = path.file_name() {
+                        self.remote_changedir(PathBuf::from(name).as_path(), push);
+                    }
+                }
             }
             Err(err) => {
                 // Report err
@@ -777,6 +783,13 @@ impl FileTransferActivity {
                 // Push prev_dir to stack
                 if push {
                     self.remote.pushd(prev_dir.as_path())
+                }
+                // @! if synchronized browsing is enabled, change directory on local too ~ since 0.5.0
+                if self.browser.sync_browsing {
+                    if let Some(name) = path.file_name() {
+                        self.local_changedir(PathBuf::from(name).as_path(), push);
+                        // TODO: move this somewhere else, since it's calling recursively
+                    }
                 }
             }
             Err(err) => {
