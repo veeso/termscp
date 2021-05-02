@@ -31,7 +31,7 @@ use super::SetupActivity;
 // Ext
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use std::env;
-use tuirealm::Payload;
+use tuirealm::{Payload, Value};
 
 impl SetupActivity {
     /// ### action_save_config
@@ -64,7 +64,7 @@ impl SetupActivity {
         if let Some(config_cli) = self.context.as_mut().unwrap().config_client.as_mut() {
             // get index
             let idx: Option<usize> = match self.view.get_state(super::COMPONENT_LIST_SSH_KEYS) {
-                Some(Payload::Unsigned(idx)) => Some(idx),
+                Some(Payload::One(Value::Usize(idx))) => Some(idx),
                 _ => None,
             };
             if let Some(idx) = idx {
@@ -100,11 +100,11 @@ impl SetupActivity {
         if let Some(cli) = self.context.as_mut().unwrap().config_client.as_mut() {
             // get parameters
             let host: String = match self.view.get_state(super::COMPONENT_INPUT_SSH_HOST) {
-                Some(Payload::Text(host)) => host,
+                Some(Payload::One(Value::Str(host))) => host,
                 _ => String::new(),
             };
             let username: String = match self.view.get_state(super::COMPONENT_INPUT_SSH_USERNAME) {
-                Some(Payload::Text(user)) => user,
+                Some(Payload::One(Value::Str(user))) => user,
                 _ => String::new(),
             };
             // Prepare text editor

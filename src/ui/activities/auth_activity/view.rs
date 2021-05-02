@@ -47,7 +47,7 @@ use tuirealm::tui::{
 };
 use tuirealm::{
     props::{InputType, PropsBuilder, TableBuilder, TextSpan, TextSpanBuilder},
-    Msg, Payload,
+    Msg, Payload, Value,
 };
 
 impl AuthActivity {
@@ -689,16 +689,16 @@ impl AuthActivity {
     /// Collect input values from view
     pub(super) fn get_input(&self) -> (String, u16, FileTransferProtocol, String, String) {
         let addr: String = match self.view.get_state(super::COMPONENT_INPUT_ADDR) {
-            Some(Payload::Text(a)) => a,
+            Some(Payload::One(Value::Str(a))) => a,
             _ => String::new(),
         };
         let port: u16 = match self.view.get_state(super::COMPONENT_INPUT_PORT) {
-            Some(Payload::Unsigned(p)) => p as u16,
+            Some(Payload::One(Value::Usize(p))) => p as u16,
             _ => 0,
         };
         let protocol: FileTransferProtocol =
             match self.view.get_state(super::COMPONENT_RADIO_PROTOCOL) {
-                Some(Payload::Unsigned(p)) => match p {
+                Some(Payload::One(Value::Usize(p))) => match p {
                     1 => FileTransferProtocol::Scp,
                     2 => FileTransferProtocol::Ftp(false),
                     3 => FileTransferProtocol::Ftp(true),
@@ -707,11 +707,11 @@ impl AuthActivity {
                 _ => FileTransferProtocol::Sftp,
             };
         let username: String = match self.view.get_state(super::COMPONENT_INPUT_USERNAME) {
-            Some(Payload::Text(a)) => a,
+            Some(Payload::One(Value::Str(a))) => a,
             _ => String::new(),
         };
         let password: String = match self.view.get_state(super::COMPONENT_INPUT_PASSWORD) {
-            Some(Payload::Text(a)) => a,
+            Some(Payload::One(Value::Str(a))) => a,
             _ => String::new(),
         };
         (addr, port, protocol, username, password)

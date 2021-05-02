@@ -34,7 +34,7 @@ use tuirealm::tui::{
     style::{Color, Style},
     widgets::{BorderType, Borders, List, ListItem, ListState},
 };
-use tuirealm::{Canvas, Component, Msg, Payload};
+use tuirealm::{Canvas, Component, Msg, Payload, Value};
 
 // -- props
 
@@ -281,7 +281,7 @@ impl Component for LogBox {
     }
 
     fn get_state(&self) -> Payload {
-        Payload::Unsigned(self.states.get_list_index())
+        Payload::One(Value::Usize(self.states.get_list_index()))
     }
 
     fn blur(&mut self) {
@@ -366,7 +366,7 @@ mod tests {
         assert_eq!(component.states.list_index, 0); // Last item
         assert_eq!(component.states.list_len, 3);
         // get value
-        assert_eq!(component.get_state(), Payload::Unsigned(0));
+        assert_eq!(component.get_state(), Payload::One(Value::Usize(0)));
         // RenderData
         assert_eq!(component.states.list_index, 0);
         // Set cursor to 0

@@ -50,7 +50,7 @@ use tuirealm::tui::{
 };
 use tuirealm::{
     props::{PropsBuilder, TableBuilder, TextSpan, TextSpanBuilder},
-    Payload, View,
+    Payload, Value, View,
 };
 
 impl SetupActivity {
@@ -729,12 +729,12 @@ impl SetupActivity {
     /// Collect values from input and put them into the configuration
     pub(super) fn collect_input_values(&mut self) {
         if let Some(cli) = self.context.as_mut().unwrap().config_client.as_mut() {
-            if let Some(Payload::Text(editor)) =
+            if let Some(Payload::One(Value::Str(editor))) =
                 self.view.get_state(super::COMPONENT_INPUT_TEXT_EDITOR)
             {
                 cli.set_text_editor(PathBuf::from(editor.as_str()));
             }
-            if let Some(Payload::Unsigned(protocol)) =
+            if let Some(Payload::One(Value::Usize(protocol))) =
                 self.view.get_state(super::COMPONENT_RADIO_DEFAULT_PROTOCOL)
             {
                 let protocol: FileTransferProtocol = match protocol {
@@ -745,29 +745,29 @@ impl SetupActivity {
                 };
                 cli.set_default_protocol(protocol);
             }
-            if let Some(Payload::Unsigned(opt)) =
+            if let Some(Payload::One(Value::Usize(opt))) =
                 self.view.get_state(super::COMPONENT_RADIO_HIDDEN_FILES)
             {
                 let show: bool = matches!(opt, 0);
                 cli.set_show_hidden_files(show);
             }
-            if let Some(Payload::Unsigned(opt)) =
+            if let Some(Payload::One(Value::Usize(opt))) =
                 self.view.get_state(super::COMPONENT_RADIO_UPDATES)
             {
                 let check: bool = matches!(opt, 0);
                 cli.set_check_for_updates(check);
             }
-            if let Some(Payload::Text(fmt)) =
+            if let Some(Payload::One(Value::Str(fmt))) =
                 self.view.get_state(super::COMPONENT_INPUT_LOCAL_FILE_FMT)
             {
                 cli.set_local_file_fmt(fmt);
             }
-            if let Some(Payload::Text(fmt)) =
+            if let Some(Payload::One(Value::Str(fmt))) =
                 self.view.get_state(super::COMPONENT_INPUT_REMOTE_FILE_FMT)
             {
                 cli.set_remote_file_fmt(fmt);
             }
-            if let Some(Payload::Unsigned(opt)) =
+            if let Some(Payload::One(Value::Usize(opt))) =
                 self.view.get_state(super::COMPONENT_RADIO_GROUP_DIRS)
             {
                 let dirs: Option<GroupDirs> = match opt {

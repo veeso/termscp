@@ -28,8 +28,9 @@ Released on FIXME: ??
   - Fixed error message not being shown after an upload failure
   - [Issue 23](https://github.com/veeso/termscp/issues/23): Remove created file if transfer failed or was abrupted
 - Dependencies:
-  - Added `tui-realm 0.1.0`
-  - Removed `tui`
+  - Added `tui-realm 0.2.1`
+  - Removed `tui` (as direct dependency)
+  - Updated `regex` to `1.5.3`
 
 ## 0.4.2
 
