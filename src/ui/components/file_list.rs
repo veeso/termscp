@@ -35,7 +35,7 @@ use tuirealm::tui::{
     text::Span,
     widgets::{BorderType, Borders, List, ListItem, ListState},
 };
-use tuirealm::{Canvas, Component, Msg, Payload};
+use tuirealm::{Canvas, Component, Msg, Payload, Value};
 
 // -- props
 
@@ -321,7 +321,7 @@ impl Component for FileList {
     }
 
     fn get_state(&self) -> Payload {
-        Payload::Unsigned(self.states.get_list_index())
+        Payload::One(Value::Usize(self.states.get_list_index()))
     }
 
     // -- events
@@ -408,7 +408,7 @@ mod tests {
         assert_eq!(component.states.list_index, 1); // Kept
         assert_eq!(component.states.list_len, 3);
         // get value
-        assert_eq!(component.get_state(), Payload::Unsigned(1));
+        assert_eq!(component.get_state(), Payload::One(Value::Usize(1)));
         // Render
         assert_eq!(component.states.list_index, 1);
         // Handle inputs
@@ -442,7 +442,7 @@ mod tests {
         // Enter
         assert_eq!(
             component.on(Event::Key(KeyEvent::from(KeyCode::Enter))),
-            Msg::OnSubmit(Payload::Unsigned(0))
+            Msg::OnSubmit(Payload::One(Value::Usize(0)))
         );
         // On key
         assert_eq!(

@@ -37,7 +37,7 @@ use super::{
 use crate::ui::activities::keymap::*;
 
 // ext
-use tuirealm::{Msg, Payload};
+use tuirealm::{Msg, Payload, Value};
 
 impl SetupActivity {
     /// ### update
@@ -115,7 +115,7 @@ impl SetupActivity {
                     None
                 }
                 // Exit
-                (COMPONENT_RADIO_QUIT, Msg::OnSubmit(Payload::Unsigned(0))) => {
+                (COMPONENT_RADIO_QUIT, Msg::OnSubmit(Payload::One(Value::Usize(0)))) => {
                     // Save changes
                     if let Err(err) = self.action_save_config() {
                         self.mount_error(err.as_str());
@@ -124,7 +124,7 @@ impl SetupActivity {
                     self.exit_reason = Some(super::ExitReason::Quit);
                     None
                 }
-                (COMPONENT_RADIO_QUIT, Msg::OnSubmit(Payload::Unsigned(1))) => {
+                (COMPONENT_RADIO_QUIT, Msg::OnSubmit(Payload::One(Value::Usize(1)))) => {
                     // Quit
                     self.exit_reason = Some(super::ExitReason::Quit);
                     self.umount_quit();
@@ -142,7 +142,7 @@ impl SetupActivity {
                     None
                 }
                 // Delete key
-                (COMPONENT_RADIO_DEL_SSH_KEY, Msg::OnSubmit(Payload::Unsigned(0))) => {
+                (COMPONENT_RADIO_DEL_SSH_KEY, Msg::OnSubmit(Payload::One(Value::Usize(0)))) => {
                     // Delete key
                     self.action_delete_ssh_key();
                     // Reload ssh keys
@@ -157,7 +157,7 @@ impl SetupActivity {
                     None
                 }
                 // Save popup
-                (COMPONENT_RADIO_SAVE, Msg::OnSubmit(Payload::Unsigned(0))) => {
+                (COMPONENT_RADIO_SAVE, Msg::OnSubmit(Payload::One(Value::Usize(0)))) => {
                     // Save config
                     if let Err(err) = self.action_save_config() {
                         self.mount_error(err.as_str());
@@ -226,7 +226,7 @@ impl SetupActivity {
                     None
                 }
                 // <ENTER> Edit key
-                (COMPONENT_LIST_SSH_KEYS, Msg::OnSubmit(Payload::Unsigned(idx))) => {
+                (COMPONENT_LIST_SSH_KEYS, Msg::OnSubmit(Payload::One(Value::Usize(idx)))) => {
                     // Edit ssh key
                     if let Err(err) = self.edit_ssh_key(*idx) {
                         self.mount_error(err.as_str());

@@ -48,7 +48,7 @@ use tuirealm::{
     components::progress_bar::ProgressBarPropsBuilder,
     props::{PropsBuilder, TableBuilder, TextSpan, TextSpanBuilder},
     tui::style::Color,
-    Msg, Payload,
+    Msg, Payload, Value,
 };
 
 impl FileTransferActivity {
@@ -79,7 +79,7 @@ impl FileTransferActivity {
                     // Reload file list component
                     self.update_local_filelist()
                 }
-                (COMPONENT_EXPLORER_LOCAL, Msg::OnSubmit(Payload::Unsigned(idx))) => {
+                (COMPONENT_EXPLORER_LOCAL, Msg::OnSubmit(Payload::One(Value::Usize(idx)))) => {
                     // Match selected file
                     let mut entry: Option<FsEntry> = None;
                     if let Some(e) = self.local.get(*idx) {
@@ -186,7 +186,7 @@ impl FileTransferActivity {
                     self.tab = FileExplorerTab::Local;
                     None
                 }
-                (COMPONENT_EXPLORER_REMOTE, Msg::OnSubmit(Payload::Unsigned(idx))) => {
+                (COMPONENT_EXPLORER_REMOTE, Msg::OnSubmit(Payload::One(Value::Usize(idx)))) => {
                     // Match selected file
                     let mut entry: Option<FsEntry> = None;
                     if let Some(e) = self.remote.get(*idx) {
@@ -380,7 +380,7 @@ impl FileTransferActivity {
                     self.finalize_find();
                     None
                 }
-                (COMPONENT_EXPLORER_FIND, Msg::OnSubmit(Payload::Unsigned(idx))) => {
+                (COMPONENT_EXPLORER_FIND, Msg::OnSubmit(Payload::One(Value::Usize(idx)))) => {
                     // Find changedir
                     self.action_find_changedir(*idx);
                     // Umount find
@@ -397,7 +397,7 @@ impl FileTransferActivity {
                 (COMPONENT_EXPLORER_FIND, &MSG_KEY_SPACE) => {
                     // Get entry
                     match self.view.get_state(COMPONENT_EXPLORER_FIND) {
-                        Some(Payload::Unsigned(idx)) => {
+                        Some(Payload::One(Value::Usize(idx))) => {
                             self.action_find_transfer(idx, None);
                             // Reload files
                             match self.tab {
@@ -426,7 +426,7 @@ impl FileTransferActivity {
                     self.umount_copy();
                     None
                 }
-                (COMPONENT_INPUT_COPY, Msg::OnSubmit(Payload::Text(input))) => {
+                (COMPONENT_INPUT_COPY, Msg::OnSubmit(Payload::One(Value::Str(input)))) => {
                     // Copy file
                     match self.tab {
                         FileExplorerTab::Local => self.action_local_copy(input.to_string()),
@@ -446,7 +446,7 @@ impl FileTransferActivity {
                     self.umount_exec();
                     None
                 }
-                (COMPONENT_INPUT_EXEC, Msg::OnSubmit(Payload::Text(input))) => {
+                (COMPONENT_INPUT_EXEC, Msg::OnSubmit(Payload::One(Value::Str(input)))) => {
                     // Exex command
                     match self.tab {
                         FileExplorerTab::Local => self.action_local_exec(input.to_string()),
@@ -466,7 +466,7 @@ impl FileTransferActivity {
                     self.umount_find_input();
                     None
                 }
-                (COMPONENT_INPUT_FIND, Msg::OnSubmit(Payload::Text(input))) => {
+                (COMPONENT_INPUT_FIND, Msg::OnSubmit(Payload::One(Value::Str(input)))) => {
                     self.umount_find_input();
                     // Find
                     let res: Result<Vec<FsEntry>, String> = match self.tab {
@@ -503,7 +503,7 @@ impl FileTransferActivity {
                     self.umount_goto();
                     None
                 }
-                (COMPONENT_INPUT_GOTO, Msg::OnSubmit(Payload::Text(input))) => {
+                (COMPONENT_INPUT_GOTO, Msg::OnSubmit(Payload::One(Value::Str(input)))) => {
                     match self.tab {
                         FileExplorerTab::Local => self.action_change_local_dir(input.to_string()),
                         FileExplorerTab::Remote => self.action_change_remote_dir(input.to_string()),
@@ -523,7 +523,7 @@ impl FileTransferActivity {
                     self.umount_mkdir();
                     None
                 }
-                (COMPONENT_INPUT_MKDIR, Msg::OnSubmit(Payload::Text(input))) => {
+                (COMPONENT_INPUT_MKDIR, Msg::OnSubmit(Payload::One(Value::Str(input)))) => {
                     match self.tab {
                         FileExplorerTab::Local => self.action_local_mkdir(input.to_string()),
                         FileExplorerTab::Remote => self.action_remote_mkdir(input.to_string()),
@@ -542,7 +542,7 @@ impl FileTransferActivity {
                     self.umount_newfile();
                     None
                 }
-                (COMPONENT_INPUT_NEWFILE, Msg::OnSubmit(Payload::Text(input))) => {
+                (COMPONENT_INPUT_NEWFILE, Msg::OnSubmit(Payload::One(Value::Str(input)))) => {
                     match self.tab {
                         FileExplorerTab::Local => self.action_local_newfile(input.to_string()),
                         FileExplorerTab::Remote => self.action_remote_newfile(input.to_string()),
@@ -561,7 +561,7 @@ impl FileTransferActivity {
                     self.umount_rename();
                     None
                 }
-                (COMPONENT_INPUT_RENAME, Msg::OnSubmit(Payload::Text(input))) => {
+                (COMPONENT_INPUT_RENAME, Msg::OnSubmit(Payload::One(Value::Str(input)))) => {
                     match self.tab {
                         FileExplorerTab::Local => self.action_local_rename(input.to_string()),
                         FileExplorerTab::Remote => self.action_remote_rename(input.to_string()),
@@ -580,13 +580,13 @@ impl FileTransferActivity {
                     self.umount_saveas();
                     None
                 }
-                (COMPONENT_INPUT_SAVEAS, Msg::OnSubmit(Payload::Text(input))) => {
+                (COMPONENT_INPUT_SAVEAS, Msg::OnSubmit(Payload::One(Value::Str(input)))) => {
                     match self.tab {
                         FileExplorerTab::Local => self.action_local_saveas(input.to_string()),
                         FileExplorerTab::Remote => self.action_remote_saveas(input.to_string()),
                         FileExplorerTab::FindLocal | FileExplorerTab::FindRemote => {
                             // Get entry
-                            if let Some(Payload::Unsigned(idx)) =
+                            if let Some(Payload::One(Value::Usize(idx))) =
                                 self.view.get_state(COMPONENT_EXPLORER_FIND)
                             {
                                 self.action_find_transfer(idx, Some(input.to_string()));
@@ -611,18 +611,18 @@ impl FileTransferActivity {
                 }
                 // -- delete
                 (COMPONENT_RADIO_DELETE, &MSG_KEY_ESC)
-                | (COMPONENT_RADIO_DELETE, Msg::OnSubmit(Payload::Unsigned(1))) => {
+                | (COMPONENT_RADIO_DELETE, Msg::OnSubmit(Payload::One(Value::Usize(1)))) => {
                     self.umount_radio_delete();
                     None
                 }
-                (COMPONENT_RADIO_DELETE, Msg::OnSubmit(Payload::Unsigned(0))) => {
+                (COMPONENT_RADIO_DELETE, Msg::OnSubmit(Payload::One(Value::Usize(0)))) => {
                     // Choice is 'YES'
                     match self.tab {
                         FileExplorerTab::Local => self.action_local_delete(),
                         FileExplorerTab::Remote => self.action_remote_delete(),
                         FileExplorerTab::FindLocal | FileExplorerTab::FindRemote => {
                             // Get entry
-                            if let Some(Payload::Unsigned(idx)) =
+                            if let Some(Payload::One(Value::Usize(idx))) =
                                 self.view.get_state(COMPONENT_EXPLORER_FIND)
                             {
                                 self.action_find_delete(idx);
@@ -643,22 +643,22 @@ impl FileTransferActivity {
                 }
                 // -- disconnect
                 (COMPONENT_RADIO_DISCONNECT, &MSG_KEY_ESC)
-                | (COMPONENT_RADIO_DISCONNECT, Msg::OnSubmit(Payload::Unsigned(1))) => {
+                | (COMPONENT_RADIO_DISCONNECT, Msg::OnSubmit(Payload::One(Value::Usize(1)))) => {
                     self.umount_disconnect();
                     None
                 }
-                (COMPONENT_RADIO_DISCONNECT, Msg::OnSubmit(Payload::Unsigned(0))) => {
+                (COMPONENT_RADIO_DISCONNECT, Msg::OnSubmit(Payload::One(Value::Usize(0)))) => {
                     self.disconnect();
                     self.umount_disconnect();
                     None
                 }
                 // -- quit
                 (COMPONENT_RADIO_QUIT, &MSG_KEY_ESC)
-                | (COMPONENT_RADIO_QUIT, Msg::OnSubmit(Payload::Unsigned(1))) => {
+                | (COMPONENT_RADIO_QUIT, Msg::OnSubmit(Payload::One(Value::Usize(1)))) => {
                     self.umount_quit();
                     None
                 }
-                (COMPONENT_RADIO_QUIT, Msg::OnSubmit(Payload::Unsigned(0))) => {
+                (COMPONENT_RADIO_QUIT, Msg::OnSubmit(Payload::One(Value::Usize(0)))) => {
                     self.disconnect_and_quit();
                     self.umount_quit();
                     None
@@ -669,7 +669,7 @@ impl FileTransferActivity {
                     self.umount_file_sorting();
                     None
                 }
-                (COMPONENT_RADIO_SORTING, Msg::OnChange(Payload::Unsigned(mode))) => {
+                (COMPONENT_RADIO_SORTING, Msg::OnChange(Payload::One(Value::Usize(mode)))) => {
                     // Get sorting mode
                     let sorting: FileSorting = match mode {
                         1 => FileSorting::ByModifyTime,

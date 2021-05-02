@@ -36,7 +36,7 @@ use crate::system::environment;
 // Ext
 use std::path::PathBuf;
 use tuirealm::components::{input::InputPropsBuilder, radio::RadioPropsBuilder};
-use tuirealm::{Payload, PropsBuilder};
+use tuirealm::{Payload, PropsBuilder, Value};
 
 impl AuthActivity {
     /// ### del_bookmark
@@ -85,8 +85,8 @@ impl AuthActivity {
                     .view
                     .get_state(super::COMPONENT_RADIO_BOOKMARK_SAVE_PWD)
                 {
-                    Some(Payload::Unsigned(0)) => Some(password), // Yes
-                    _ => None,                                    // No such component / No
+                    Some(Payload::One(Value::Usize(0))) => Some(password), // Yes
+                    _ => None,                                             // No such component / No
                 },
                 false => None,
             };

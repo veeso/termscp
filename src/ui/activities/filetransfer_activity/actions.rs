@@ -27,7 +27,7 @@
  */
 // locals
 use super::{FileExplorerTab, FileTransferActivity, FsEntry, LogLevel};
-use tuirealm::Payload;
+use tuirealm::{Payload, Value};
 // externals
 use std::path::PathBuf;
 
@@ -623,7 +623,7 @@ impl FileTransferActivity {
     /// Get index of selected file in the local tab
     fn get_local_file_idx(&self) -> Option<usize> {
         match self.view.get_state(super::COMPONENT_EXPLORER_LOCAL) {
-            Some(Payload::Unsigned(idx)) => Some(idx),
+            Some(Payload::One(Value::Usize(idx))) => Some(idx),
             _ => None,
         }
     }
@@ -633,7 +633,7 @@ impl FileTransferActivity {
     /// Get index of selected file in the remote file
     fn get_remote_file_idx(&self) -> Option<usize> {
         match self.view.get_state(super::COMPONENT_EXPLORER_REMOTE) {
-            Some(Payload::Unsigned(idx)) => Some(idx),
+            Some(Payload::One(Value::Usize(idx))) => Some(idx),
             _ => None,
         }
     }

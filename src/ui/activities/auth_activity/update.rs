@@ -35,7 +35,7 @@ use super::{
     COMPONENT_TEXT_HELP,
 };
 use crate::ui::activities::keymap::*;
-use tuirealm::{Msg, Payload};
+use tuirealm::{Msg, Payload, Value};
 
 // -- update
 
@@ -140,13 +140,13 @@ impl AuthActivity {
                     None
                 }
                 // Enter
-                (COMPONENT_BOOKMARKS_LIST, Msg::OnSubmit(Payload::Unsigned(idx))) => {
+                (COMPONENT_BOOKMARKS_LIST, Msg::OnSubmit(Payload::One(Value::Usize(idx)))) => {
                     self.load_bookmark(*idx);
                     // Give focus to input password
                     self.view.active(COMPONENT_INPUT_PASSWORD);
                     None
                 }
-                (COMPONENT_RECENTS_LIST, Msg::OnSubmit(Payload::Unsigned(idx))) => {
+                (COMPONENT_RECENTS_LIST, Msg::OnSubmit(Payload::One(Value::Usize(idx)))) => {
                     self.load_recent(*idx);
                     // Give focus to input password
                     self.view.active(COMPONENT_INPUT_PASSWORD);
@@ -156,7 +156,7 @@ impl AuthActivity {
                 // Del bookmarks
                 (
                     COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK,
-                    Msg::OnSubmit(Payload::Unsigned(index)),
+                    Msg::OnSubmit(Payload::One(Value::Usize(index))),
                 ) => {
                     // hide bookmark delete
                     self.umount_bookmark_del_dialog();
@@ -165,7 +165,7 @@ impl AuthActivity {
                         0 => {
                             // Get selected bookmark
                             match self.view.get_state(COMPONENT_BOOKMARKS_LIST) {
-                                Some(Payload::Unsigned(index)) => {
+                                Some(Payload::One(Value::Usize(index))) => {
                                     // Delete bookmark
                                     self.del_bookmark(index);
                                     // Update bookmarks
@@ -177,7 +177,10 @@ impl AuthActivity {
                         _ => None,
                     }
                 }
-                (COMPONENT_RADIO_BOOKMARK_DEL_RECENT, Msg::OnSubmit(Payload::Unsigned(index))) => {
+                (
+                    COMPONENT_RADIO_BOOKMARK_DEL_RECENT,
+                    Msg::OnSubmit(Payload::One(Value::Usize(index))),
+                ) => {
                     // hide bookmark delete
                     self.umount_recent_del_dialog();
                     // Index must be 0 => YES
@@ -185,7 +188,7 @@ impl AuthActivity {
                         0 => {
                             // Get selected bookmark
                             match self.view.get_state(COMPONENT_RECENTS_LIST) {
-                                Some(Payload::Unsigned(index)) => {
+                                Some(Payload::One(Value::Usize(index))) => {
                                     // Delete recent
                                     self.del_recent(index);
                                     // Update bookmarks
@@ -246,12 +249,12 @@ impl AuthActivity {
                     // Get values
                     let bookmark_name: String =
                         match self.view.get_state(COMPONENT_INPUT_BOOKMARK_NAME) {
-                            Some(Payload::Text(s)) => s,
+                            Some(Payload::One(Value::Str(s))) => s,
                             _ => String::new(),
                         };
                     let save_pwd: bool = matches!(
                         self.view.get_state(COMPONENT_RADIO_BOOKMARK_SAVE_PWD),
-                        Some(Payload::Unsigned(0))
+                        Some(Payload::One(Value::Usize(0)))
                     );
                     // Save bookmark
                     self.save_bookmark(bookmark_name, save_pwd);
@@ -274,7 +277,7 @@ impl AuthActivity {
                     None
                 }
                 // Quit dialog
-                (COMPONENT_RADIO_QUIT, Msg::OnSubmit(Payload::Unsigned(choice))) => {
+                (COMPONENT_RADIO_QUIT, Msg::OnSubmit(Payload::One(Value::Usize(choice)))) => {
                     // If choice is 0, quit termscp
                     if *choice == 0 {
                         self.exit_reason = Some(super::ExitReason::Quit);
