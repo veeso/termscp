@@ -336,6 +336,8 @@ impl FileTransferActivity {
                 | (COMPONENT_EXPLORER_REMOTE, &MSG_KEY_CHAR_Y) => {
                     // Toggle browser sync
                     self.browser.toggle_sync_browsing();
+                    // Update status bar
+                    self.refresh_status_bar();
                     None
                 }
                 (COMPONENT_EXPLORER_LOCAL, &MSG_KEY_ESC)
@@ -675,6 +677,8 @@ impl FileTransferActivity {
                         FileExplorerTab::Remote => self.remote.sort_by(sorting),
                         _ => panic!("Found result doesn't support SORTING"),
                     }
+                    // Update status bar
+                    self.refresh_status_bar();
                     // Reload files
                     match self.tab {
                         FileExplorerTab::Local => self.update_local_filelist(),
