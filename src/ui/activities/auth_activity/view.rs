@@ -110,6 +110,17 @@ impl AuthActivity {
                     .build(),
             )),
         );
+        // Get default protocol
+        let default_protocol: FileTransferProtocol =
+            match self.context.as_ref().unwrap().config_client.as_ref() {
+                Some(cli) => cli.get_default_protocol(),
+                None => FileTransferProtocol::Sftp,
+            };
+        // Calc default port
+        let default_port: String = String::from(match default_protocol {
+            FileTransferProtocol::Ftp(_) => "21",
+            FileTransferProtocol::Sftp | FileTransferProtocol::Scp => "22",
+        });
         // Port
         self.view.mount(
             super::COMPONENT_INPUT_PORT,
@@ -120,7 +131,7 @@ impl AuthActivity {
                     .with_label(String::from("Port number"))
                     .with_input(InputType::Number)
                     .with_input_len(5)
-                    .with_value(String::from("22"))
+                    .with_value(default_port)
                     .build(),
             )),
         );
@@ -141,6 +152,7 @@ impl AuthActivity {
                             String::from("FTPS"),
                         ],
                     )
+                    .with_value(Self::protocol_enum_to_opt(default_protocol))
                     .build(),
             )),
         );
@@ -714,12 +726,7 @@ impl AuthActivity {
         };
         let protocol: FileTransferProtocol =
             match self.view.get_state(super::COMPONENT_RADIO_PROTOCOL) {
-                Some(Payload::One(Value::Usize(p))) => match p {
-                    1 => FileTransferProtocol::Scp,
-                    2 => FileTransferProtocol::Ftp(false),
-                    3 => FileTransferProtocol::Ftp(true),
-                    _ => FileTransferProtocol::Sftp,
-                },
+                Some(Payload::One(Value::Usize(p))) => Self::protocol_opt_to_enum(p),
                 _ => FileTransferProtocol::Sftp,
             };
         let username: String = match self.view.get_state(super::COMPONENT_INPUT_USERNAME) {
@@ -731,5 +738,31 @@ impl AuthActivity {
             _ => String::new(),
         };
         (addr, port, protocol, username, password)
+    }
+
+    // -- utils
+
+    /// ### protocol_opt_to_enum
+    ///
+    /// Convert radio index for protocol into a `FileTransferProtocol`
+    pub(crate) fn protocol_opt_to_enum(protocol: usize) -> FileTransferProtocol {
+        match protocol {
+            1 => FileTransferProtocol::Scp,
+            2 => FileTransferProtocol::Ftp(false),
+            3 => FileTransferProtocol::Ftp(true),
+            _ => FileTransferProtocol::Sftp,
+        }
+    }
+
+    /// ### protocol_enum_to_opt
+    ///
+    /// Convert `FileTransferProtocol` enum into radio group index
+    pub(crate) fn protocol_enum_to_opt(protocol: FileTransferProtocol) -> usize {
+        match protocol {
+            FileTransferProtocol::Sftp => 0,
+            FileTransferProtocol::Scp => 1,
+            FileTransferProtocol::Ftp(false) => 2,
+            FileTransferProtocol::Ftp(true) => 3,
+        }
     }
 }

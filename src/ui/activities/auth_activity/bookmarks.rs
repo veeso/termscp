@@ -258,12 +258,7 @@ impl AuthActivity {
         }
         if let Some(props) = self.view.get_props(super::COMPONENT_RADIO_PROTOCOL) {
             let props = RadioPropsBuilder::from(props)
-                .with_value(match protocol {
-                    FileTransferProtocol::Sftp => 0,
-                    FileTransferProtocol::Scp => 1,
-                    FileTransferProtocol::Ftp(false) => 2,
-                    FileTransferProtocol::Ftp(true) => 3,
-                })
+                .with_value(Self::protocol_enum_to_opt(protocol))
                 .build();
             self.view.update(super::COMPONENT_RADIO_PROTOCOL, props);
         }
