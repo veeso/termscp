@@ -73,8 +73,9 @@ impl FileTransferActivity {
                 }
                 (COMPONENT_EXPLORER_LOCAL, &MSG_KEY_BACKSPACE) => {
                     // Go to previous directory
-                    if let Some(d) = self.local.popd() {
-                        self.local_changedir(d.as_path(), false);
+                    self.action_go_to_previous_local_dir(false);
+                    if self.browser.sync_browsing {
+                        let _ = self.update_remote_filelist();
                     }
                     // Reload file list component
                     self.update_local_filelist()
@@ -86,25 +87,14 @@ impl FileTransferActivity {
                         entry = Some(e.clone());
                     }
                     if let Some(entry) = entry {
-                        // If directory, enter directory, otherwise check if symlink
-                        match entry {
-                            FsEntry::Directory(dir) => {
-                                self.local_changedir(dir.abs_path.as_path(), true);
-                                self.update_local_filelist()
+                        if self.action_enter_local_dir(entry, false) {
+                            // Update file list if sync
+                            if self.browser.sync_browsing {
+                                let _ = self.update_remote_filelist();
                             }
-                            FsEntry::File(file) => {
-                                // Check if symlink
-                                match &file.symlink {
-                                    Some(pointer) => match &**pointer {
-                                        FsEntry::Directory(dir) => {
-                                            self.local_changedir(dir.abs_path.as_path(), true);
-                                            self.update_local_filelist()
-                                        }
-                                        _ => None,
-                                    },
-                                    None => None,
-                                }
-                            }
+                            self.update_local_filelist()
+                        } else {
+                            None
                         }
                     } else {
                         None
@@ -170,13 +160,11 @@ impl FileTransferActivity {
                     self.update_local_filelist()
                 }
                 (COMPONENT_EXPLORER_LOCAL, &MSG_KEY_CHAR_U) => {
-                    // Get pwd
-                    let path: PathBuf = self.local.wrkdir.clone();
-                    // Go to parent directory
-                    if let Some(parent) = path.as_path().parent() {
-                        self.local_changedir(parent, true);
-                        // Reload file list component
+                    self.action_go_to_local_upper_dir(false);
+                    if self.browser.sync_browsing {
+                        let _ = self.update_remote_filelist();
                     }
+                    // Reload file list component
                     self.update_local_filelist()
                 }
                 // -- remote tab
@@ -193,27 +181,14 @@ impl FileTransferActivity {
                         entry = Some(e.clone());
                     }
                     if let Some(entry) = entry {
-                        // If directory, enter directory; if file, check if is symlink
-                        match entry {
-                            FsEntry::Directory(dir) => {
-                                self.remote_changedir(dir.abs_path.as_path(), true);
-                                self.update_remote_filelist()
+                        if self.action_enter_remote_dir(entry, false) {
+                            // Update file list if sync
+                            if self.browser.sync_browsing {
+                                let _ = self.update_local_filelist();
                             }
-                            FsEntry::File(file) => {
-                                match &file.symlink {
-                                    Some(symlink_entry) => {
-                                        // If symlink and is directory, point to symlink
-                                        match &**symlink_entry {
-                                            FsEntry::Directory(dir) => {
-                                                self.remote_changedir(dir.abs_path.as_path(), true);
-                                                self.update_remote_filelist()
-                                            }
-                                            _ => None,
-                                        }
-                                    }
-                                    None => None,
-                                }
-                            }
+                            self.update_remote_filelist()
+                        } else {
+                            None
                         }
                     } else {
                         None
@@ -234,8 +209,10 @@ impl FileTransferActivity {
                 }
                 (COMPONENT_EXPLORER_REMOTE, &MSG_KEY_BACKSPACE) => {
                     // Go to previous directory
-                    if let Some(d) = self.remote.popd() {
-                        self.remote_changedir(d.as_path(), false);
+                    self.action_go_to_previous_remote_dir(false);
+                    // If sync is enabled update local too
+                    if self.browser.sync_browsing {
+                        let _ = self.update_local_filelist();
                     }
                     // Reload file list component
                     self.update_remote_filelist()
@@ -286,11 +263,9 @@ impl FileTransferActivity {
                     self.update_remote_filelist()
                 }
                 (COMPONENT_EXPLORER_REMOTE, &MSG_KEY_CHAR_U) => {
-                    // Get pwd
-                    let path: PathBuf = self.remote.wrkdir.clone();
-                    // Go to parent directory
-                    if let Some(parent) = path.as_path().parent() {
-                        self.remote_changedir(parent, true);
+                    self.action_go_to_remote_upper_dir(false);
+                    if self.browser.sync_browsing {
+                        let _ = self.update_local_filelist();
                     }
                     // Reload file list component
                     self.update_remote_filelist()
@@ -355,6 +330,14 @@ impl FileTransferActivity {
                 | (COMPONENT_EXPLORER_REMOTE, &MSG_KEY_CHAR_X) => {
                     // Mount exec
                     self.mount_exec();
+                    None
+                }
+                (COMPONENT_EXPLORER_LOCAL, &MSG_KEY_CHAR_Y)
+                | (COMPONENT_EXPLORER_REMOTE, &MSG_KEY_CHAR_Y) => {
+                    // Toggle browser sync
+                    self.browser.toggle_sync_browsing();
+                    // Update status bar
+                    self.refresh_status_bar();
                     None
                 }
                 (COMPONENT_EXPLORER_LOCAL, &MSG_KEY_ESC)
@@ -505,12 +488,24 @@ impl FileTransferActivity {
                 }
                 (COMPONENT_INPUT_GOTO, Msg::OnSubmit(Payload::One(Value::Str(input)))) => {
                     match self.tab {
-                        FileExplorerTab::Local => self.action_change_local_dir(input.to_string()),
-                        FileExplorerTab::Remote => self.action_change_remote_dir(input.to_string()),
+                        FileExplorerTab::Local => {
+                            self.action_change_local_dir(input.to_string(), false)
+                        }
+                        FileExplorerTab::Remote => {
+                            self.action_change_remote_dir(input.to_string(), false)
+                        }
                         _ => panic!("Found tab doesn't support GOTO"),
                     }
                     // Umount
                     self.umount_goto();
+                    // Reload files if sync
+                    if self.browser.sync_browsing {
+                        match self.tab {
+                            FileExplorerTab::Remote => self.update_local_filelist(),
+                            FileExplorerTab::Local => self.update_remote_filelist(),
+                            _ => None,
+                        };
+                    }
                     // Reload files
                     match self.tab {
                         FileExplorerTab::Local => self.update_local_filelist(),
@@ -682,6 +677,8 @@ impl FileTransferActivity {
                         FileExplorerTab::Remote => self.remote.sort_by(sorting),
                         _ => panic!("Found result doesn't support SORTING"),
                     }
+                    // Update status bar
+                    self.refresh_status_bar();
                     // Reload files
                     match self.tab {
                         FileExplorerTab::Local => self.update_local_filelist(),

@@ -28,7 +28,7 @@ use crate::system::environment;
 use crate::system::sshkey_storage::SshKeyStorage;
 // Ext
 use std::env;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 impl FileTransferActivity {
     /// ### log
@@ -173,6 +173,34 @@ impl FileTransferActivity {
         } else {
             // Error
             false
+        }
+    }
+
+    /// ### local_to_abs_path
+    ///
+    /// Convert a path to absolute according to local explorer
+    pub(super) fn local_to_abs_path(&self, path: &Path) -> PathBuf {
+        match path.is_relative() {
+            true => {
+                let mut d: PathBuf = self.local.wrkdir.clone();
+                d.push(path);
+                d
+            }
+            false => path.to_path_buf(),
+        }
+    }
+
+    /// ### remote_to_abs_path
+    ///
+    /// Convert a path to absolute according to remote explorer
+    pub(super) fn remote_to_abs_path(&self, path: &Path) -> PathBuf {
+        match path.is_relative() {
+            true => {
+                let mut wrkdir: PathBuf = self.remote.wrkdir.clone();
+                wrkdir.push(path);
+                wrkdir
+            }
+            false => path.to_path_buf(),
         }
     }
 }

@@ -21,14 +21,20 @@
 
 Released on FIXME: ??
 
+- **Synchronized browsing**:
+  - Added the possibility to enabled the synchronized brower navigation
+    - when you enter a directory, the same directory will be entered on the other tab
+    - Enable sync browser with `<Y>`
 - **Remote and Local hosts file formatter**:
   - Added the possibility to set different formatters for local and remote hosts
+- Enhancements
+  - Added a status bar in the file explorer showing whether the sync browser is enabled and which file sorting mode is selected
 - Bugfix:
   - Fixed wrong text wrap in log box
   - Fixed error message not being shown after an upload failure
   - [Issue 23](https://github.com/veeso/termscp/issues/23): Remove created file if transfer failed or was abrupted
 - Dependencies:
-  - Added `tui-realm 0.2.1`
+  - Added `tui-realm 0.2.2`
   - Removed `tui` (as direct dependency)
   - Updated `regex` to `1.5.3`
 

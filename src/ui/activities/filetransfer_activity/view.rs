@@ -49,6 +49,7 @@ use tuirealm::components::{
     input::{Input, InputPropsBuilder},
     progress_bar::{ProgressBar, ProgressBarPropsBuilder},
     radio::{Radio, RadioPropsBuilder},
+    span::{Span, SpanPropsBuilder},
     table::{Table, TablePropsBuilder},
 };
 use tuirealm::props::{PropsBuilder, TableBuilder, TextSpan, TextSpanBuilder};
@@ -98,6 +99,13 @@ impl FileTransferActivity {
                     .build(),
             )),
         );
+        // Mount status bar
+        self.view.mount(
+            super::COMPONENT_SPAN_STATUS_BAR,
+            Box::new(Span::new(SpanPropsBuilder::default().build())),
+        );
+        // Load process bar
+        self.refresh_status_bar();
         // Update components
         let _ = self.update_local_filelist();
         let _ = self.update_remote_filelist();
@@ -131,6 +139,11 @@ impl FileTransferActivity {
                 .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
                 .direction(Direction::Horizontal)
                 .split(chunks[0]);
+            // Create log box chunks
+            let bottom_chunks = Layout::default()
+                .constraints([Constraint::Length(1), Constraint::Length(10)].as_ref())
+                .direction(Direction::Vertical)
+                .split(chunks[1]);
             // If width is unset in the storage, set width
             if !store.isset(super::STORAGE_EXPLORER_WIDTH) {
                 store.set_unsigned(super::STORAGE_EXPLORER_WIDTH, tabs_chunks[0].width as usize);
@@ -159,8 +172,11 @@ impl FileTransferActivity {
                     .view
                     .render(super::COMPONENT_EXPLORER_REMOTE, f, tabs_chunks[1]),
             }
-            // Draw log box
-            self.view.render(super::COMPONENT_LOG_BOX, f, chunks[1]);
+            // Draw log box and status bar
+            self.view
+                .render(super::COMPONENT_LOG_BOX, f, bottom_chunks[1]);
+            self.view
+                .render(super::COMPONENT_SPAN_STATUS_BAR, f, bottom_chunks[0]);
             // @! Draw popups
             if let Some(props) = self.view.get_props(super::COMPONENT_INPUT_COPY) {
                 if props.visible {
@@ -793,6 +809,41 @@ impl FileTransferActivity {
         self.view.umount(super::COMPONENT_LIST_FILEINFO);
     }
 
+    pub(super) fn refresh_status_bar(&mut self) {
+        let bar_spans: Vec<TextSpan> = vec![
+            TextSpanBuilder::new("Synchronized Browsing: ")
+                .with_foreground(Color::LightGreen)
+                .build(),
+            TextSpanBuilder::new(match self.browser.sync_browsing {
+                true => "ON ",
+                false => "OFF",
+            })
+            .with_foreground(Color::LightGreen)
+            .reversed()
+            .build(),
+            TextSpanBuilder::new(" Localhost file sorting: ")
+                .with_foreground(Color::LightYellow)
+                .build(),
+            TextSpanBuilder::new(Self::get_file_sorting_str(self.local.get_file_sorting()))
+                .with_foreground(Color::LightYellow)
+                .reversed()
+                .build(),
+            TextSpanBuilder::new(" Remote host file sorting: ")
+                .with_foreground(Color::LightBlue)
+                .build(),
+            TextSpanBuilder::new(Self::get_file_sorting_str(self.remote.get_file_sorting()))
+                .with_foreground(Color::LightBlue)
+                .reversed()
+                .build(),
+        ];
+        if let Some(props) = self.view.get_props(super::COMPONENT_SPAN_STATUS_BAR) {
+            self.view.update(
+                super::COMPONENT_SPAN_STATUS_BAR,
+                SpanPropsBuilder::from(props).with_spans(bar_spans).build(),
+            );
+        }
+    }
+
     /// ### mount_help
     ///
     /// Mount help
@@ -976,6 +1027,22 @@ impl FileTransferActivity {
                             .add_col(TextSpan::from("             Go to parent directory"))
                             .add_row()
                             .add_col(
+                                TextSpanBuilder::new("<X>")
+                                    .bold()
+                                    .with_foreground(Color::Cyan)
+                                    .build(),
+                            )
+                            .add_col(TextSpan::from("             Execute shell command"))
+                            .add_row()
+                            .add_col(
+                                TextSpanBuilder::new("<Y>")
+                                    .bold()
+                                    .with_foreground(Color::Cyan)
+                                    .build(),
+                            )
+                            .add_col(TextSpan::from("             Toggle synchronized browsing"))
+                            .add_row()
+                            .add_col(
                                 TextSpanBuilder::new("<DEL|E>")
                                     .bold()
                                     .with_foreground(Color::Cyan)
@@ -1001,5 +1068,14 @@ impl FileTransferActivity {
 
     pub(super) fn umount_help(&mut self) {
         self.view.umount(super::COMPONENT_TEXT_HELP);
+    }
+
+    fn get_file_sorting_str(mode: FileSorting) -> &'static str {
+        match mode {
+            FileSorting::ByName => "By name",
+            FileSorting::ByCreationTime => "By creation time",
+            FileSorting::ByModifyTime => "By modify time",
+            FileSorting::BySize => "By size",
+        }
     }
 }

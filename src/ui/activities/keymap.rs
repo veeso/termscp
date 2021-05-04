@@ -179,11 +179,11 @@ pub const MSG_KEY_CHAR_X: Msg = Msg::OnKey(KeyEvent {
     code: KeyCode::Char('x'),
     modifiers: KeyModifiers::NONE,
 });
-/*
 pub const MSG_KEY_CHAR_Y: Msg = Msg::OnKey(KeyEvent {
     code: KeyCode::Char('y'),
     modifiers: KeyModifiers::NONE,
 });
+/*
 pub const MSG_KEY_CHAR_Z: Msg = Msg::OnKey(KeyEvent {
     code: KeyCode::Char('z'),
     modifiers: KeyModifiers::NONE,

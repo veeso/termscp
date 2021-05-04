@@ -84,6 +84,7 @@ const COMPONENT_RADIO_DELETE: &str = "RADIO_DELETE";
 const COMPONENT_RADIO_DISCONNECT: &str = "RADIO_DISCONNECT";
 const COMPONENT_RADIO_QUIT: &str = "RADIO_QUIT";
 const COMPONENT_RADIO_SORTING: &str = "RADIO_SORTING";
+const COMPONENT_SPAN_STATUS_BAR: &str = "STATUS_BAR";
 const COMPONENT_LIST_FILEINFO: &str = "LIST_FILEINFO";
 
 /// ## FileExplorerTab
@@ -202,6 +203,30 @@ impl Default for TransferStates {
     }
 }
 
+/// ## Browser
+///
+/// Browser contains the browser options
+struct Browser {
+    pub sync_browsing: bool,
+}
+
+impl Default for Browser {
+    fn default() -> Self {
+        Self {
+            sync_browsing: false,
+        }
+    }
+}
+
+impl Browser {
+    /// ### toggle_sync_browsing
+    ///
+    /// Invert the current state for the sync browsing
+    pub fn toggle_sync_browsing(&mut self) {
+        self.sync_browsing = !self.sync_browsing;
+    }
+}
+
 /// ## FileTransferActivity
 ///
 /// FileTransferActivity is the data holder for the file transfer activity
@@ -217,6 +242,7 @@ pub struct FileTransferActivity {
     log_records: VecDeque<LogRecord>, // Log records
     log_size: usize,                  // Log records size (max)
     transfer: TransferStates,         // Transfer states
+    browser: Browser,                 // Browser states
 }
 
 impl FileTransferActivity {
@@ -246,6 +272,7 @@ impl FileTransferActivity {
             log_records: VecDeque::with_capacity(256), // 256 events is enough I guess
             log_size: 256,                             // Must match with capacity
             transfer: TransferStates::default(),
+            browser: Browser::default(),
         }
     }
 }
