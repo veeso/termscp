@@ -55,14 +55,27 @@ impl AuthActivity {
     ///
     /// Initialize view, mounting all startup components inside the view
     pub(super) fn init(&mut self) {
-        // Header
-        self.view.mount(super::COMPONENT_TEXT_HEADER, Box::new(
-            Label::new(
-                LabelPropsBuilder::default().with_foreground(Color::White).with_text(
-                    String::from(" _____                   ____   ____ ____  \n|_   _|__ _ __ _ __ ___ / ___| / ___|  _ \\ \n  | |/ _ \\ '__| '_ ` _ \\\\___ \\| |   | |_) |\n  | |  __/ |  | | | | | |___) | |___|  __/ \n  |_|\\___|_|  |_| |_| |_|____/ \\____|_|    \n")
-                ).bold().build()
-            )
-        ));
+        // Headers
+        self.view.mount(
+            super::COMPONENT_TEXT_H1,
+            Box::new(Label::new(
+                LabelPropsBuilder::default()
+                    .bold()
+                    .italic()
+                    .with_text(String::from("$ termscp"))
+                    .build(),
+            )),
+        );
+        self.view.mount(
+            super::COMPONENT_TEXT_H2,
+            Box::new(Label::new(
+                LabelPropsBuilder::default()
+                    .bold()
+                    .italic()
+                    .with_text(format!("$ version {}", env!("CARGO_PKG_VERSION")))
+                    .build(),
+            )),
+        );
         // Footer
         self.view.mount(
             super::COMPONENT_TEXT_FOOTER,
@@ -169,7 +182,7 @@ impl AuthActivity {
                         .with_foreground(Color::Yellow)
                         .with_spans(
                             vec![
-                                TextSpan::from("TermSCP "),
+                                TextSpan::from("termscp "),
                                 TextSpanBuilder::new(version).underlined().bold().build(),
                                 TextSpan::from(" is now available! Download it from <https://github.com/veeso/termscp/releases/latest>")
                             ]
@@ -230,7 +243,8 @@ impl AuthActivity {
             let auth_chunks = Layout::default()
                 .constraints(
                     [
-                        Constraint::Length(6), // header
+                        Constraint::Length(1), // h1
+                        Constraint::Length(1), // h2
                         Constraint::Length(1), // Version
                         Constraint::Length(3), // host
                         Constraint::Length(3), // port
@@ -251,21 +265,23 @@ impl AuthActivity {
             // Render
             // Auth chunks
             self.view
-                .render(super::COMPONENT_TEXT_HEADER, f, auth_chunks[0]);
+                .render(super::COMPONENT_TEXT_H1, f, auth_chunks[0]);
             self.view
-                .render(super::COMPONENT_TEXT_NEW_VERSION, f, auth_chunks[1]);
+                .render(super::COMPONENT_TEXT_H2, f, auth_chunks[1]);
             self.view
-                .render(super::COMPONENT_INPUT_ADDR, f, auth_chunks[2]);
+                .render(super::COMPONENT_TEXT_NEW_VERSION, f, auth_chunks[2]);
             self.view
-                .render(super::COMPONENT_INPUT_PORT, f, auth_chunks[3]);
+                .render(super::COMPONENT_INPUT_ADDR, f, auth_chunks[3]);
             self.view
-                .render(super::COMPONENT_RADIO_PROTOCOL, f, auth_chunks[4]);
+                .render(super::COMPONENT_INPUT_PORT, f, auth_chunks[4]);
             self.view
-                .render(super::COMPONENT_INPUT_USERNAME, f, auth_chunks[5]);
+                .render(super::COMPONENT_RADIO_PROTOCOL, f, auth_chunks[5]);
             self.view
-                .render(super::COMPONENT_INPUT_PASSWORD, f, auth_chunks[6]);
+                .render(super::COMPONENT_INPUT_USERNAME, f, auth_chunks[6]);
             self.view
-                .render(super::COMPONENT_TEXT_FOOTER, f, auth_chunks[7]);
+                .render(super::COMPONENT_INPUT_PASSWORD, f, auth_chunks[7]);
+            self.view
+                .render(super::COMPONENT_TEXT_FOOTER, f, auth_chunks[8]);
             // Bookmark chunks
             self.view
                 .render(super::COMPONENT_BOOKMARKS_LIST, f, bookmark_chunks[0]);

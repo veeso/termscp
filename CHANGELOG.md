@@ -29,6 +29,7 @@ Released on FIXME: ??
   - Added the possibility to set different formatters for local and remote hosts
 - Enhancements
   - Added a status bar in the file explorer showing whether the sync browser is enabled and which file sorting mode is selected
+  - Removed the goold old figlet title
 - Bugfix:
   - Fixed wrong text wrap in log box
   - Fixed error message not being shown after an upload failure

@@ -46,7 +46,8 @@ use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use tuirealm::View;
 
 // -- components
-const COMPONENT_TEXT_HEADER: &str = "TEXT_HEADER";
+const COMPONENT_TEXT_H1: &str = "TEXT_H1";
+const COMPONENT_TEXT_H2: &str = "TEXT_H2";
 const COMPONENT_TEXT_NEW_VERSION: &str = "TEXT_NEW_VERSION";
 const COMPONENT_TEXT_FOOTER: &str = "TEXT_FOOTER";
 const COMPONENT_TEXT_HELP: &str = "TEXT_HELP";
