@@ -491,7 +491,7 @@ impl AuthActivity {
                     .with_borders(Borders::ALL, BorderType::Rounded, Color::Yellow)
                     .with_inverted_color(Color::Black)
                     .with_options(
-                        Some(String::from("Quit TermSCP?")),
+                        Some(String::from("Quit termscp?")),
                         vec![String::from("Yes"), String::from("No")],
                     )
                     .build(),
@@ -634,7 +634,7 @@ impl AuthActivity {
                                     .with_foreground(Color::Cyan)
                                     .build(),
                             )
-                            .add_col(TextSpan::from("           Quit TermSCP"))
+                            .add_col(TextSpan::from("           Quit termscp"))
                             .add_row()
                             .add_col(
                                 TextSpanBuilder::new("<TAB>")

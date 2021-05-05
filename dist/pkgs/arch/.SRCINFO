@@ -1,5 +1,5 @@
 pkgbase = termscp
-	pkgdesc = TermSCP is a SCP/SFTP/FTPS client for command line with an integrated UI to explore the remote file system. Basically WinSCP on a terminal.
+	pkgdesc = termscp is a SCP/SFTP/FTPS client for command line with an integrated UI to explore the remote file system. Basically WinSCP on a terminal.
 	pkgver = 0.5.0
 	pkgrel = 1
 	url = https://github.com/veeso/termscp

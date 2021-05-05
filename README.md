@@ -1,4 +1,4 @@
-# TermSCP
+# termscp
 
 <p align="center">
   <img src="/assets/images/termscp.svg" width="256" height="256" />
@@ -14,9 +14,9 @@ Current version: 0.5.0 FIXME: (13/04/2021)
 
 ---
 
-- [TermSCP](#termscp)
-  - [About TermSCP 🖥](#about-termscp-)
-    - [Why TermSCP 🤔](#why-termscp-)
+- [termscp](#termscp)
+  - [About termscp 🖥](#about-termscp-)
+    - [Why termscp 🤔](#why-termscp-)
   - [Features 🎁](#features-)
   - [Installation 🛠](#installation-)
     - [Cargo 🦀](#cargo-)
@@ -38,7 +38,7 @@ Current version: 0.5.0 FIXME: (13/04/2021)
 
 ---
 
-## About TermSCP 🖥
+## About termscp 🖥
 
 Termscp is a feature rich terminal file transfer and explorer, with support for SCP/SFTP/FTP. So basically is a terminal utility with an TUI to connect to a remote server to retrieve and upload files and to interact with the local file system. It is **Linux**, **MacOS**, **BSD** and **Windows** compatible and supports SFTP, SCP, FTP and FTPS.
 
@@ -46,7 +46,7 @@ Termscp is a feature rich terminal file transfer and explorer, with support for 
 
 ---
 
-### Why TermSCP 🤔
+### Why termscp 🤔
 
 It happens quite often to me, when using SCP at work to forget the path of a file on a remote machine, which forces me to connect through SSH, gather the file path and finally download it through SCP. I could use WinSCP, but I use Linux and I pratically use the terminal for everything, so I wanted something like WinSCP on my terminal. Yeah, I know there is midnight commander too, but actually I don't like it very much tbh (and hasn't a decent support for scp).
 
@@ -76,7 +76,7 @@ It happens quite often to me, when using SCP at work to forget the path of a fil
 
 ## Installation 🛠
 
-If you're considering to install TermSCP I want to thank you 💜 ! I hope you will enjoy TermSCP!  
+If you're considering to install termscp I want to thank you 💜 ! I hope you will enjoy termscp!  
 If you want to contribute to this project, don't forget to check out our contribute guide. [Read More](CONTRIBUTING.md)
 
 ### Cargo 🦀
@@ -127,7 +127,7 @@ yay -S termscp
 
 ### Chocolatey 🍫
 
-You can install TermSCP on Windows using [chocolatey](https://chocolatey.org/)
+You can install termscp on Windows using [chocolatey](https://chocolatey.org/)
 
 Start PowerShell as administrator and run
 
@@ -145,7 +145,7 @@ choco install termscp -s .
 
 ### Brew 🍻
 
-You can install TermSCP on MacOS using [brew](https://brew.sh/)
+You can install termscp on MacOS using [brew](https://brew.sh/)
 
 From your terminal run
 
@@ -207,13 +207,13 @@ Please follow [our contributing guidelines](CONTRIBUTING.md)
 
 ## Changelog ⏳
 
-View TermSCP's changelog [HERE](CHANGELOG.md)
+View termscp's changelog [HERE](CHANGELOG.md)
 
 ---
 
 ## Powered by 🚀
 
-TermSCP is powered by these aweseome projects:
+termscp is powered by these aweseome projects:
 
 - [bytesize](https://github.com/hyunsik/bytesize)
 - [crossterm](https://github.com/crossterm-rs/crossterm)

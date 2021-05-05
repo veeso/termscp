@@ -3,18 +3,18 @@
 Document audience: developers
 
 - [Developer Manual](#developer-manual)
-  - [How TermSCP works](#how-termscp-works)
+  - [How termscp works](#how-termscp-works)
   - [Activities](#activities)
     - [The Context](#the-context)
   - [Tests fails due to receivers](#tests-fails-due-to-receivers)
   - [Implementing File Transfers](#implementing-file-transfers)
 
-Welcome to the developer manual for TermSCP. This chapter DOESN'T contain the documentation for TermSCP modules, which can instead be found on Rust Docs at <https://docs.rs/termscp>
-This chapter describes how TermSCP works and the guide lines to implement stuff such as file transfers and add features to the user interface.
+Welcome to the developer manual for termscp. This chapter DOESN'T contain the documentation for termscp modules, which can instead be found on Rust Docs at <https://docs.rs/termscp>
+This chapter describes how termscp works and the guide lines to implement stuff such as file transfers and add features to the user interface.
 
-## How TermSCP works
+## How termscp works
 
-TermSCP is basically made up of 4 components:
+termscp is basically made up of 4 components:
 
 - the **filetransfer**: the filetransfer takes care of managing the remote file system; it provides function to establish a connection with the remote, operating on the remote server file system (e.g. remove files, make directories, rename files, ...), read files and write files. The FileTransfer, as we'll see later, is actually a trait, and for each protocol a FileTransfer must be implement the trait.
 - the **host**: the host module provides functions to interact with the local host file system.
@@ -70,7 +70,7 @@ Yes. This happens quite often and is related to the fact that I'm using public S
 
 ## Implementing File Transfers
 
-This chapter describes how to implement a file transfer in TermSCP. A file transfer is a module which implements the `FileTransfer` trait. The file transfer provides different modules to interact with a remote server, which in addition to the most obvious methods, used to download and upload files, provides also methods to list files, delete files, create directories etc.
+This chapter describes how to implement a file transfer in termscp. A file transfer is a module which implements the `FileTransfer` trait. The file transfer provides different modules to interact with a remote server, which in addition to the most obvious methods, used to download and upload files, provides also methods to list files, delete files, create directories etc.
 
 In the following steps I will describe how to implement a new file transfer, in this case I will be implementing the SCP file transfer (which I'm actually implementing the moment I'm writing this lines).
 
@@ -81,7 +81,7 @@ In the following steps I will describe how to implement a new file transfer, in 
     ```rs
     /// ## FileTransferProtocol
     ///
-    /// This enum defines the different transfer protocol available in TermSCP
+    /// This enum defines the different transfer protocol available in termscp
     #[derive(std::cmp::PartialEq, std::fmt::Debug, std::clone::Clone)]
     pub enum FileTransferProtocol {
         Sftp,

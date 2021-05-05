@@ -100,7 +100,7 @@ fn main() {
     // Version
     if matches.opt_present("v") {
         eprintln!(
-            "TermSCP - {} - Developed by {}",
+            "termscp - {} - Developed by {}",
             TERMSCP_VERSION, TERMSCP_AUTHORS,
         );
         std::process::exit(255);

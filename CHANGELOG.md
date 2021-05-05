@@ -115,7 +115,7 @@ Released on 28/02/2021
   - Added `EXTRA` and `LENGTH` parameters to format keys.
   - Now keys are provided with this syntax `{KEY_NAME[:LEN[:EXTRA]}`
 - **Check for updates**:
-  - TermSCP will now check for updates on startup and will show in the main page if there is a new version available
+  - termscp will now check for updates on startup and will show in the main page if there is a new version available
   - This feature may be disabled from setup (Check for updates => No)
 - Enhancements:
   - Default choice for deleting file set to "NO" (way too easy to delete files by mistake)

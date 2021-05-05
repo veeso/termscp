@@ -1,6 +1,6 @@
 //! ## Components
 //!
-//! `Components` is the module which contains the definitions for all the GUI components for TermSCP
+//! `Components` is the module which contains the definitions for all the GUI components for termscp
 
 /**
  * MIT License

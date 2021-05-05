@@ -17,7 +17,7 @@
 
 ## Usage ❓
 
-TermSCP can be started with the following options:
+termscp can be started with the following options:
 
 `termscp [options]... [protocol://user@address:port:wrkdir] [local-wrkdir]`
 
@@ -25,7 +25,7 @@ TermSCP can be started with the following options:
 - `-v, --version` Print version info
 - `-h, --help` Print help page
 
-TermSCP can be started in two different mode, if no extra arguments is provided, TermSCP will show the authentication form, where the user will be able to provide the parameters required to connect to the remote peer.
+termscp can be started in two different mode, if no extra arguments is provided, termscp will show the authentication form, where the user will be able to provide the parameters required to connect to the remote peer.
 
 Alternatively, the user can provide an address as argument to skip the authentication form and starting directly the connection to the remote server.
 
@@ -103,7 +103,7 @@ Password can be basically provided through 3 ways when address argument is provi
 | `<L>`         | Reload current directory's content                    | List        |
 | `<N>`         | Create new file with provided name                    | New         |
 | `<O>`         | Edit file; see [Text editor](#text-editor-)           | Open        |
-| `<Q>`         | Quit TermSCP                                          | Quit        |
+| `<Q>`         | Quit termscp                                          | Quit        |
 | `<R>`         | Rename file                                           | Rename      |
 | `<S>`         | Save file as...                                       | Save        |
 | `<U>`         | Go to parent directory                                | Upper       |
@@ -116,8 +116,8 @@ Password can be basically provided through 3 ways when address argument is provi
 
 ## Bookmarks ⭐
 
-In TermSCP it is possible to save favourites hosts, which can be then loaded quickly from the main layout of termscp.
-TermSCP will also save the last 16 hosts you connected to.
+In termscp it is possible to save favourites hosts, which can be then loaded quickly from the main layout of termscp.
+termscp will also save the last 16 hosts you connected to.
 This feature allows you to load all the parameters required to connect to a certain remote, simply selecting the bookmark in the tab under the authentication form.
 
 Bookmarks will be saved, if possible at:
@@ -162,7 +162,7 @@ Actually [keyring-rs](https://github.com/hwchen/keyring-rs), supports Linux, but
 
 ## Configuration ⚙️
 
-TermSCP supports some user defined parameters, which can be defined in the configuration.
+termscp supports some user defined parameters, which can be defined in the configuration.
 Underhood termscp has a TOML file and some other directories where all the parameters will be saved, but don't worry, you won't touch any of these files manually, since I made possible to configure termscp from its user interface entirely.
 
 termscp, like for bookmarks, just requires to have these paths accessible:
@@ -223,8 +223,8 @@ If left empty, the default formatter syntax will be used: `{NAME:24} {PEX} {USER
 
 ## Text Editor ✏
 
-TermSCP has, as you might have noticed, many features, one of these is the possibility to view and edit text file. It doesn't matter if the file is located on the local host or on the remote host, termscp provides the possibility to open a file in your favourite text editor.
-In case the file is located on remote host, the file will be first downloaded into your temporary file directory and then, **only** if changes were made to the file, re-uploaded to the remote host. TermSCP checks if you made changes to the file verifying the last modification time of the file.
+termscp has, as you might have noticed, many features, one of these is the possibility to view and edit text file. It doesn't matter if the file is located on the local host or on the remote host, termscp provides the possibility to open a file in your favourite text editor.
+In case the file is located on remote host, the file will be first downloaded into your temporary file directory and then, **only** if changes were made to the file, re-uploaded to the remote host. termscp checks if you made changes to the file verifying the last modification time of the file.
 
 Just a reminder: **you can edit only textual file**; binary files are not supported.
 
