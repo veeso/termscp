@@ -27,6 +27,7 @@
  */
 // Sub modules
 mod bookmarks;
+mod misc;
 mod update;
 mod view;
 

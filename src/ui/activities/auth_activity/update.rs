@@ -27,15 +27,16 @@
  */
 // locals
 use super::{
-    AuthActivity, FileTransferParams, COMPONENT_BOOKMARKS_LIST, COMPONENT_INPUT_ADDR,
-    COMPONENT_INPUT_BOOKMARK_NAME, COMPONENT_INPUT_PASSWORD, COMPONENT_INPUT_PORT,
-    COMPONENT_INPUT_USERNAME, COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK,
+    AuthActivity, FileTransferParams, FileTransferProtocol, COMPONENT_BOOKMARKS_LIST,
+    COMPONENT_INPUT_ADDR, COMPONENT_INPUT_BOOKMARK_NAME, COMPONENT_INPUT_PASSWORD,
+    COMPONENT_INPUT_PORT, COMPONENT_INPUT_USERNAME, COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK,
     COMPONENT_RADIO_BOOKMARK_DEL_RECENT, COMPONENT_RADIO_BOOKMARK_SAVE_PWD,
     COMPONENT_RADIO_PROTOCOL, COMPONENT_RADIO_QUIT, COMPONENT_RECENTS_LIST, COMPONENT_TEXT_ERROR,
     COMPONENT_TEXT_HELP,
 };
 use crate::ui::activities::keymap::*;
-use tuirealm::{Msg, Payload, Value};
+use tuirealm::components::InputPropsBuilder;
+use tuirealm::{Msg, Payload, PropsBuilder, Value};
 
 // -- update
 
@@ -51,17 +52,17 @@ impl AuthActivity {
             None => None, // Exit after None
             Some(msg) => match msg {
                 // Focus ( DOWN )
+                (COMPONENT_RADIO_PROTOCOL, &MSG_KEY_DOWN) => {
+                    // Give focus to port
+                    self.view.active(COMPONENT_INPUT_ADDR);
+                    None
+                }
                 (COMPONENT_INPUT_ADDR, &MSG_KEY_DOWN) => {
                     // Give focus to port
                     self.view.active(COMPONENT_INPUT_PORT);
                     None
                 }
                 (COMPONENT_INPUT_PORT, &MSG_KEY_DOWN) => {
-                    // Give focus to port
-                    self.view.active(COMPONENT_RADIO_PROTOCOL);
-                    None
-                }
-                (COMPONENT_RADIO_PROTOCOL, &MSG_KEY_DOWN) => {
                     // Give focus to port
                     self.view.active(COMPONENT_INPUT_USERNAME);
                     None
@@ -73,7 +74,7 @@ impl AuthActivity {
                 }
                 (COMPONENT_INPUT_PASSWORD, &MSG_KEY_DOWN) => {
                     // Give focus to port
-                    self.view.active(COMPONENT_INPUT_ADDR);
+                    self.view.active(COMPONENT_RADIO_PROTOCOL);
                     None
                 }
                 // Focus ( UP )
@@ -83,11 +84,6 @@ impl AuthActivity {
                     None
                 }
                 (COMPONENT_INPUT_USERNAME, &MSG_KEY_UP) => {
-                    // Give focus to port
-                    self.view.active(COMPONENT_RADIO_PROTOCOL);
-                    None
-                }
-                (COMPONENT_RADIO_PROTOCOL, &MSG_KEY_UP) => {
                     // Give focus to port
                     self.view.active(COMPONENT_INPUT_PORT);
                     None
@@ -99,8 +95,26 @@ impl AuthActivity {
                 }
                 (COMPONENT_INPUT_ADDR, &MSG_KEY_UP) => {
                     // Give focus to port
+                    self.view.active(COMPONENT_RADIO_PROTOCOL);
+                    None
+                }
+                (COMPONENT_RADIO_PROTOCOL, &MSG_KEY_UP) => {
+                    // Give focus to port
                     self.view.active(COMPONENT_INPUT_PASSWORD);
                     None
+                }
+                // Protocol - On Change
+                (COMPONENT_RADIO_PROTOCOL, Msg::OnChange(Payload::One(Value::Usize(protocol)))) => {
+                    // If port is standard, update the current port with default for selected protocol
+                    let protocol: FileTransferProtocol = Self::protocol_opt_to_enum(*protocol);
+                    // Get port
+                    let port: u16 = self.get_input_port();
+                    match Self::is_port_standard(port) {
+                        false => None, // Return None
+                        true => {
+                            self.update_input_port(Self::get_default_port_for_protocol(protocol))
+                        }
+                    }
                 }
                 // <TAB> bookmarks
                 (COMPONENT_BOOKMARKS_LIST, &MSG_KEY_TAB)
@@ -320,6 +334,18 @@ impl AuthActivity {
                 }
                 (_, _) => None, // Ignore other events
             },
+        }
+    }
+
+    fn update_input_port(&mut self, port: u16) -> Option<(String, Msg)> {
+        match self.view.get_props(COMPONENT_INPUT_PORT) {
+            None => None,
+            Some(props) => {
+                let props = InputPropsBuilder::from(props)
+                    .with_value(port.to_string())
+                    .build();
+                self.view.update(COMPONENT_INPUT_PORT, props)
+            }
         }
     }
 }

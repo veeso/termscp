@@ -99,42 +99,12 @@ impl AuthActivity {
                     .build(),
             )),
         );
-        // Address
-        self.view.mount(
-            super::COMPONENT_INPUT_ADDR,
-            Box::new(Input::new(
-                InputPropsBuilder::default()
-                    .with_foreground(Color::Yellow)
-                    .with_borders(Borders::ALL, BorderType::Rounded, Color::LightYellow)
-                    .with_label(String::from("Remote address"))
-                    .build(),
-            )),
-        );
         // Get default protocol
         let default_protocol: FileTransferProtocol =
             match self.context.as_ref().unwrap().config_client.as_ref() {
                 Some(cli) => cli.get_default_protocol(),
                 None => FileTransferProtocol::Sftp,
             };
-        // Calc default port
-        let default_port: String = String::from(match default_protocol {
-            FileTransferProtocol::Ftp(_) => "21",
-            FileTransferProtocol::Sftp | FileTransferProtocol::Scp => "22",
-        });
-        // Port
-        self.view.mount(
-            super::COMPONENT_INPUT_PORT,
-            Box::new(Input::new(
-                InputPropsBuilder::default()
-                    .with_foreground(Color::LightCyan)
-                    .with_borders(Borders::ALL, BorderType::Rounded, Color::LightCyan)
-                    .with_label(String::from("Port number"))
-                    .with_input(InputType::Number)
-                    .with_input_len(5)
-                    .with_value(default_port)
-                    .build(),
-            )),
-        );
         // Protocol
         self.view.mount(
             super::COMPONENT_RADIO_PROTOCOL,
@@ -153,6 +123,36 @@ impl AuthActivity {
                         ],
                     )
                     .with_value(Self::protocol_enum_to_opt(default_protocol))
+                    .build(),
+            )),
+        );
+        // Address
+        self.view.mount(
+            super::COMPONENT_INPUT_ADDR,
+            Box::new(Input::new(
+                InputPropsBuilder::default()
+                    .with_foreground(Color::Yellow)
+                    .with_borders(Borders::ALL, BorderType::Rounded, Color::LightYellow)
+                    .with_label(String::from("Remote address"))
+                    .build(),
+            )),
+        );
+        // Calc default port
+        let default_port: String = String::from(match default_protocol {
+            FileTransferProtocol::Ftp(_) => "21",
+            FileTransferProtocol::Sftp | FileTransferProtocol::Scp => "22",
+        });
+        // Port
+        self.view.mount(
+            super::COMPONENT_INPUT_PORT,
+            Box::new(Input::new(
+                InputPropsBuilder::default()
+                    .with_foreground(Color::LightCyan)
+                    .with_borders(Borders::ALL, BorderType::Rounded, Color::LightCyan)
+                    .with_label(String::from("Port number"))
+                    .with_input(InputType::Number)
+                    .with_input_len(5)
+                    .with_value(default_port)
                     .build(),
             )),
         );
@@ -229,8 +229,8 @@ impl AuthActivity {
             )),
         );
         let _ = self.view_recent_connections();
-        // Active address
-        self.view.active(super::COMPONENT_INPUT_ADDR);
+        // Active protocol
+        self.view.active(super::COMPONENT_RADIO_PROTOCOL);
     }
 
     /// ### view
@@ -258,9 +258,9 @@ impl AuthActivity {
                         Constraint::Length(1), // h1
                         Constraint::Length(1), // h2
                         Constraint::Length(1), // Version
+                        Constraint::Length(3), // protocol
                         Constraint::Length(3), // host
                         Constraint::Length(3), // port
-                        Constraint::Length(3), // protocol
                         Constraint::Length(3), // username
                         Constraint::Length(3), // password
                         Constraint::Length(3), // footer
@@ -283,11 +283,11 @@ impl AuthActivity {
             self.view
                 .render(super::COMPONENT_TEXT_NEW_VERSION, f, auth_chunks[2]);
             self.view
-                .render(super::COMPONENT_INPUT_ADDR, f, auth_chunks[3]);
+                .render(super::COMPONENT_RADIO_PROTOCOL, f, auth_chunks[3]);
             self.view
-                .render(super::COMPONENT_INPUT_PORT, f, auth_chunks[4]);
+                .render(super::COMPONENT_INPUT_ADDR, f, auth_chunks[4]);
             self.view
-                .render(super::COMPONENT_RADIO_PROTOCOL, f, auth_chunks[5]);
+                .render(super::COMPONENT_INPUT_PORT, f, auth_chunks[5]);
             self.view
                 .render(super::COMPONENT_INPUT_USERNAME, f, auth_chunks[6]);
             self.view
@@ -716,53 +716,46 @@ impl AuthActivity {
     ///
     /// Collect input values from view
     pub(super) fn get_input(&self) -> (String, u16, FileTransferProtocol, String, String) {
-        let addr: String = match self.view.get_state(super::COMPONENT_INPUT_ADDR) {
-            Some(Payload::One(Value::Str(a))) => a,
-            _ => String::new(),
-        };
-        let port: u16 = match self.view.get_state(super::COMPONENT_INPUT_PORT) {
-            Some(Payload::One(Value::Usize(p))) => p as u16,
-            _ => 0,
-        };
-        let protocol: FileTransferProtocol =
-            match self.view.get_state(super::COMPONENT_RADIO_PROTOCOL) {
-                Some(Payload::One(Value::Usize(p))) => Self::protocol_opt_to_enum(p),
-                _ => FileTransferProtocol::Sftp,
-            };
-        let username: String = match self.view.get_state(super::COMPONENT_INPUT_USERNAME) {
-            Some(Payload::One(Value::Str(a))) => a,
-            _ => String::new(),
-        };
-        let password: String = match self.view.get_state(super::COMPONENT_INPUT_PASSWORD) {
-            Some(Payload::One(Value::Str(a))) => a,
-            _ => String::new(),
-        };
+        let addr: String = self.get_input_addr();
+        let port: u16 = self.get_input_port();
+        let protocol: FileTransferProtocol = self.get_input_protocol();
+        let username: String = self.get_input_username();
+        let password: String = self.get_input_password();
         (addr, port, protocol, username, password)
     }
 
-    // -- utils
+    pub(super) fn get_input_addr(&self) -> String {
+        match self.view.get_state(super::COMPONENT_INPUT_ADDR) {
+            Some(Payload::One(Value::Str(x))) => x,
+            _ => String::new(),
+        }
+    }
 
-    /// ### protocol_opt_to_enum
-    ///
-    /// Convert radio index for protocol into a `FileTransferProtocol`
-    pub(crate) fn protocol_opt_to_enum(protocol: usize) -> FileTransferProtocol {
-        match protocol {
-            1 => FileTransferProtocol::Scp,
-            2 => FileTransferProtocol::Ftp(false),
-            3 => FileTransferProtocol::Ftp(true),
+    pub(super) fn get_input_port(&self) -> u16 {
+        match self.view.get_state(super::COMPONENT_INPUT_PORT) {
+            Some(Payload::One(Value::Usize(x))) => x as u16,
+            _ => Self::get_default_port_for_protocol(FileTransferProtocol::Sftp),
+        }
+    }
+
+    pub(super) fn get_input_protocol(&self) -> FileTransferProtocol {
+        match self.view.get_state(super::COMPONENT_RADIO_PROTOCOL) {
+            Some(Payload::One(Value::Usize(x))) => Self::protocol_opt_to_enum(x),
             _ => FileTransferProtocol::Sftp,
         }
     }
 
-    /// ### protocol_enum_to_opt
-    ///
-    /// Convert `FileTransferProtocol` enum into radio group index
-    pub(crate) fn protocol_enum_to_opt(protocol: FileTransferProtocol) -> usize {
-        match protocol {
-            FileTransferProtocol::Sftp => 0,
-            FileTransferProtocol::Scp => 1,
-            FileTransferProtocol::Ftp(false) => 2,
-            FileTransferProtocol::Ftp(true) => 3,
+    pub(super) fn get_input_username(&self) -> String {
+        match self.view.get_state(super::COMPONENT_INPUT_USERNAME) {
+            Some(Payload::One(Value::Str(x))) => x,
+            _ => String::new(),
+        }
+    }
+
+    pub(super) fn get_input_password(&self) -> String {
+        match self.view.get_state(super::COMPONENT_INPUT_PASSWORD) {
+            Some(Payload::One(Value::Str(x))) => x,
+            _ => String::new(),
         }
     }
 }
