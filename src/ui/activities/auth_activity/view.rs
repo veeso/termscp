@@ -137,11 +137,6 @@ impl AuthActivity {
                     .build(),
             )),
         );
-        // Calc default port
-        let default_port: String = String::from(match default_protocol {
-            FileTransferProtocol::Ftp(_) => "21",
-            FileTransferProtocol::Sftp | FileTransferProtocol::Scp => "22",
-        });
         // Port
         self.view.mount(
             super::COMPONENT_INPUT_PORT,
@@ -152,7 +147,7 @@ impl AuthActivity {
                     .with_label(String::from("Port number"))
                     .with_input(InputType::Number)
                     .with_input_len(5)
-                    .with_value(default_port)
+                    .with_value(Self::get_default_port_for_protocol(default_protocol).to_string())
                     .build(),
             )),
         );
