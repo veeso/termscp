@@ -117,6 +117,8 @@ mod tests {
 
     use super::*;
 
+    use pretty_assertions::assert_eq;
+
     #[test]
     fn test_fs_explorer_builder_new_default() {
         let explorer: FileExplorer = FileExplorerBuilder::new().build();

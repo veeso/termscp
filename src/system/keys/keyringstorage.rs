@@ -104,6 +104,7 @@ mod tests {
     extern crate whoami;
     use super::*;
 
+    use pretty_assertions::assert_eq;
     use whoami::username;
 
     #[test]

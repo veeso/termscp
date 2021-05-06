@@ -885,6 +885,7 @@ impl FileTransfer for ScpFileTransfer {
 mod tests {
 
     use super::*;
+    use pretty_assertions::assert_eq;
 
     #[test]
     fn test_filetransfer_scp_new() {

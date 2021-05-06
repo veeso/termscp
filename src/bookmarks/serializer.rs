@@ -91,6 +91,7 @@ mod tests {
     use super::super::Bookmark;
     use super::*;
 
+    use pretty_assertions::assert_eq;
     use std::collections::HashMap;
     use std::io::{Seek, SeekFrom};
 

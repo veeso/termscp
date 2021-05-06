@@ -47,6 +47,8 @@ mod tests {
 
     use super::*;
 
+    use pretty_assertions::assert_eq;
+
     #[test]
     fn test_utils_random_alphanumeric_with_len() {
         assert_eq!(random_alphanumeric_with_len(256).len(), 256);

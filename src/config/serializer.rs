@@ -90,6 +90,7 @@ mod tests {
 
     use super::*;
 
+    use pretty_assertions::assert_eq;
     use std::io::{Seek, SeekFrom};
     use std::path::PathBuf;
 

@@ -157,6 +157,8 @@ mod tests {
 
     use super::*;
 
+    use pretty_assertions::assert_eq;
+
     #[test]
     fn test_utils_fmt_pex() {
         assert_eq!(fmt_pex(7, 7, 7), String::from("rwxrwxrwx"));

@@ -210,6 +210,8 @@ impl Component for MsgBox {
 mod tests {
 
     use super::*;
+
+    use pretty_assertions::assert_eq;
     use tuirealm::event::{KeyCode, KeyEvent};
     use tuirealm::props::{TextSpan, TextSpanBuilder};
     use tuirealm::tui::style::Color;

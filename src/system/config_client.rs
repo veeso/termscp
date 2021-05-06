@@ -381,6 +381,7 @@ mod tests {
     use crate::config::UserConfig;
     use crate::utils::random::random_alphanumeric_with_len;
 
+    use pretty_assertions::assert_eq;
     use std::io::Read;
 
     #[test]

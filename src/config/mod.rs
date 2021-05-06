@@ -163,6 +163,7 @@ impl std::fmt::Display for SerializerError {
 mod tests {
 
     use super::*;
+    use pretty_assertions::assert_eq;
     use std::env;
 
     #[test]

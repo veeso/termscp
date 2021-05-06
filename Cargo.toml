@@ -50,6 +50,9 @@ tuirealm = { version = "0.2.2", features = [ "with-components" ] }
 whoami = "1.1.1"
 wildmatch = "2.0.0"
 
+[dev-dependencies]
+pretty_assertions = "0.7.2"
+
 [dependencies.ftp4]
 features = ["secure"]
 version = "^4.0.2"

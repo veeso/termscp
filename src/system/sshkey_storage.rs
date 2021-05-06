@@ -88,8 +88,9 @@ impl SshKeyStorage {
 mod tests {
 
     use super::*;
-
     use crate::system::config_client::ConfigClient;
+
+    use pretty_assertions::assert_eq;
     use std::path::Path;
 
     #[test]

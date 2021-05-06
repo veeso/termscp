@@ -233,6 +233,8 @@ mod tests {
     use super::*;
     use crate::utils::fmt::fmt_time;
 
+    use pretty_assertions::assert_eq;
+
     #[test]
     fn test_utils_parse_remote_opt() {
         // Base case

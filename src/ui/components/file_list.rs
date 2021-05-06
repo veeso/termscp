@@ -345,6 +345,8 @@ impl Component for FileList {
 mod tests {
 
     use super::*;
+
+    use pretty_assertions::assert_eq;
     use tuirealm::event::KeyEvent;
 
     #[test]

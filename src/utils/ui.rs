@@ -60,6 +60,8 @@ mod tests {
 
     use super::*;
 
+    use pretty_assertions::assert_eq;
+
     #[test]
     fn test_utils_ui_draw_area_in() {
         let area: Rect = Rect::new(0, 0, 1024, 512);

@@ -297,6 +297,8 @@ impl Component for LogBox {
 mod tests {
 
     use super::*;
+
+    use pretty_assertions::assert_eq;
     use tuirealm::event::{KeyCode, KeyEvent};
     use tuirealm::props::{TableBuilder, TextSpan};
     use tuirealm::tui::style::Color;

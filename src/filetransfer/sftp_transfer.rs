@@ -702,6 +702,8 @@ mod tests {
 
     use super::*;
 
+    use pretty_assertions::assert_eq;
+
     #[test]
     fn test_filetransfer_sftp_new() {
         let client: SftpFileTransfer = SftpFileTransfer::new(SshKeyStorage::empty());
