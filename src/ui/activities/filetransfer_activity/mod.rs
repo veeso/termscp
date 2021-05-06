@@ -46,6 +46,7 @@ use crate::filetransfer::sftp_transfer::SftpFileTransfer;
 use crate::filetransfer::{FileTransfer, FileTransferProtocol};
 use crate::fs::explorer::FileExplorer;
 use crate::fs::FsEntry;
+use crate::host::Localhost;
 use crate::system::config_client::ConfigClient;
 
 // Includes
@@ -234,6 +235,7 @@ pub struct FileTransferActivity {
     exit_reason: Option<ExitReason>,  // Exit reason
     context: Option<Context>,         // Context holder
     view: View,                       // View
+    host: Localhost,                  // Localhost
     client: Box<dyn FileTransfer>,    // File transfer client
     local: FileExplorer,              // Local File explorer state
     remote: FileExplorer,             // Remote File explorer state
@@ -249,13 +251,14 @@ impl FileTransferActivity {
     /// ### new
     ///
     /// Instantiates a new FileTransferActivity
-    pub fn new(protocol: FileTransferProtocol) -> FileTransferActivity {
+    pub fn new(host: Localhost, protocol: FileTransferProtocol) -> FileTransferActivity {
         // Get config client
         let config_client: Option<ConfigClient> = Self::init_config_client();
         FileTransferActivity {
             exit_reason: None,
             context: None,
             view: View::init(),
+            host,
             client: match protocol {
                 FileTransferProtocol::Sftp => Box::new(SftpFileTransfer::new(
                     Self::make_ssh_storage(config_client.as_ref()),
@@ -296,7 +299,7 @@ impl Activity for FileTransferActivity {
         // Put raw mode on enabled
         let _ = enable_raw_mode();
         // Set working directory
-        let pwd: PathBuf = self.context.as_ref().unwrap().local.pwd();
+        let pwd: PathBuf = self.host.pwd();
         // Get files at current wd
         self.local_scan(pwd.as_path());
         self.local.wrkdir = pwd;

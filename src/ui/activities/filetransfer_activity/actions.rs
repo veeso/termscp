@@ -191,32 +191,30 @@ impl FileTransferActivity {
         if let Some(idx) = self.get_local_file_idx() {
             let dest_path: PathBuf = PathBuf::from(input);
             let entry: FsEntry = self.local.get(idx).unwrap().clone();
-            if let Some(ctx) = self.context.as_mut() {
-                match ctx.local.copy(&entry, dest_path.as_path()) {
-                    Ok(_) => {
-                        self.log(
-                            LogLevel::Info,
-                            format!(
-                                "Copied \"{}\" to \"{}\"",
-                                entry.get_abs_path().display(),
-                                dest_path.display()
-                            )
-                            .as_str(),
-                        );
-                        // Reload entries
-                        let wrkdir: PathBuf = self.local.wrkdir.clone();
-                        self.local_scan(wrkdir.as_path());
-                    }
-                    Err(err) => self.log_and_alert(
-                        LogLevel::Error,
+            match self.host.copy(&entry, dest_path.as_path()) {
+                Ok(_) => {
+                    self.log(
+                        LogLevel::Info,
                         format!(
-                            "Could not copy \"{}\" to \"{}\": {}",
+                            "Copied \"{}\" to \"{}\"",
                             entry.get_abs_path().display(),
-                            dest_path.display(),
-                            err
-                        ),
-                    ),
+                            dest_path.display()
+                        )
+                        .as_str(),
+                    );
+                    // Reload entries
+                    let wrkdir: PathBuf = self.local.wrkdir.clone();
+                    self.local_scan(wrkdir.as_path());
                 }
+                Err(err) => self.log_and_alert(
+                    LogLevel::Error,
+                    format!(
+                        "Could not copy \"{}\" to \"{}\": {}",
+                        entry.get_abs_path().display(),
+                        dest_path.display(),
+                        err
+                    ),
+                ),
             }
         }
     }
@@ -255,13 +253,7 @@ impl FileTransferActivity {
     }
 
     pub(super) fn action_local_mkdir(&mut self, input: String) {
-        match self
-            .context
-            .as_mut()
-            .unwrap()
-            .local
-            .mkdir(PathBuf::from(input.as_str()).as_path())
-        {
+        match self.host.mkdir(PathBuf::from(input.as_str()).as_path()) {
             Ok(_) => {
                 // Reload files
                 self.log(
@@ -316,13 +308,7 @@ impl FileTransferActivity {
             }
             let full_path: PathBuf = entry.get_abs_path();
             // Rename file or directory and report status as popup
-            match self
-                .context
-                .as_mut()
-                .unwrap()
-                .local
-                .rename(&entry, dst_path.as_path())
-            {
+            match self.host.rename(&entry, dst_path.as_path()) {
                 Ok(_) => {
                     // Reload files
                     let path: PathBuf = self.local.wrkdir.clone();
@@ -386,7 +372,7 @@ impl FileTransferActivity {
         if let Some(entry) = entry {
             let full_path: PathBuf = entry.get_abs_path();
             // Delete file or directory and report status as popup
-            match self.context.as_mut().unwrap().local.remove(&entry) {
+            match self.host.remove(&entry) {
                 Ok(_) => {
                     // Reload files
                     let p: PathBuf = self.local.wrkdir.clone();
@@ -473,22 +459,20 @@ impl FileTransferActivity {
         }
         // Create file
         let file_path: PathBuf = PathBuf::from(input.as_str());
-        if let Some(ctx) = self.context.as_mut() {
-            if let Err(err) = ctx.local.open_file_write(file_path.as_path()) {
-                self.log_and_alert(
-                    LogLevel::Error,
-                    format!("Could not create file \"{}\": {}", file_path.display(), err),
-                );
-            } else {
-                self.log(
-                    LogLevel::Info,
-                    format!("Created file \"{}\"", file_path.display()).as_str(),
-                );
-            }
-            // Reload files
-            let path: PathBuf = self.local.wrkdir.clone();
-            self.local_scan(path.as_path());
+        if let Err(err) = self.host.open_file_write(file_path.as_path()) {
+            self.log_and_alert(
+                LogLevel::Error,
+                format!("Could not create file \"{}\": {}", file_path.display(), err),
+            );
+        } else {
+            self.log(
+                LogLevel::Info,
+                format!("Created file \"{}\"", file_path.display()).as_str(),
+            );
         }
+        // Reload files
+        let path: PathBuf = self.local.wrkdir.clone();
+        self.local_scan(path.as_path());
     }
 
     pub(super) fn action_remote_newfile(&mut self, input: String) {
@@ -516,46 +500,39 @@ impl FileTransferActivity {
             ),
             Ok(tfile) => {
                 // Stat tempfile
-                if let Some(ctx) = self.context.as_mut() {
-                    let local_file: FsEntry = match ctx.local.stat(tfile.path()) {
-                        Err(err) => {
-                            self.log_and_alert(
-                                LogLevel::Error,
-                                format!("Could not stat tempfile: {}", err),
-                            );
-                            return;
-                        }
-                        Ok(f) => f,
-                    };
-                    if let FsEntry::File(local_file) = local_file {
-                        // Create file
-                        match self.client.send_file(&local_file, file_path.as_path()) {
-                            Err(err) => self.log_and_alert(
-                                LogLevel::Error,
-                                format!(
-                                    "Could not create file \"{}\": {}",
-                                    file_path.display(),
-                                    err
-                                ),
-                            ),
-                            Ok(writer) => {
-                                // Finalize write
-                                if let Err(err) = self.client.on_sent(writer) {
-                                    self.log_and_alert(
-                                        LogLevel::Warn,
-                                        format!("Could not finalize file: {}", err),
-                                    );
-                                } else {
-                                    self.log(
-                                        LogLevel::Info,
-                                        format!("Created file \"{}\"", file_path.display())
-                                            .as_str(),
-                                    );
-                                }
-                                // Reload files
-                                let path: PathBuf = self.remote.wrkdir.clone();
-                                self.remote_scan(path.as_path());
+                let local_file: FsEntry = match self.host.stat(tfile.path()) {
+                    Err(err) => {
+                        self.log_and_alert(
+                            LogLevel::Error,
+                            format!("Could not stat tempfile: {}", err),
+                        );
+                        return;
+                    }
+                    Ok(f) => f,
+                };
+                if let FsEntry::File(local_file) = local_file {
+                    // Create file
+                    match self.client.send_file(&local_file, file_path.as_path()) {
+                        Err(err) => self.log_and_alert(
+                            LogLevel::Error,
+                            format!("Could not create file \"{}\": {}", file_path.display(), err),
+                        ),
+                        Ok(writer) => {
+                            // Finalize write
+                            if let Err(err) = self.client.on_sent(writer) {
+                                self.log_and_alert(
+                                    LogLevel::Warn,
+                                    format!("Could not finalize file: {}", err),
+                                );
+                            } else {
+                                self.log(
+                                    LogLevel::Info,
+                                    format!("Created file \"{}\"", file_path.display()).as_str(),
+                                );
                             }
+                            // Reload files
+                            let path: PathBuf = self.remote.wrkdir.clone();
+                            self.remote_scan(path.as_path());
                         }
                     }
                 }
@@ -564,7 +541,7 @@ impl FileTransferActivity {
     }
 
     pub(super) fn action_local_exec(&mut self, input: String) {
-        match self.context.as_mut().unwrap().local.exec(input.as_str()) {
+        match self.host.exec(input.as_str()) {
             Ok(output) => {
                 // Reload files
                 self.log(
@@ -605,7 +582,7 @@ impl FileTransferActivity {
     }
 
     pub(super) fn action_local_find(&mut self, input: String) -> Result<Vec<FsEntry>, String> {
-        match self.context.as_mut().unwrap().local.find(input.as_str()) {
+        match self.host.find(input.as_str()) {
             Ok(entries) => Ok(entries),
             Err(err) => Err(format!("Could not search for files: {}", err)),
         }
@@ -666,7 +643,7 @@ impl FileTransferActivity {
                 FileExplorerTab::FindLocal | FileExplorerTab::Local => {
                     let full_path: PathBuf = entry.get_abs_path();
                     // Delete file or directory and report status as popup
-                    match self.context.as_mut().unwrap().local.remove(&entry) {
+                    match self.host.remove(&entry) {
                         Ok(_) => {
                             // Reload files
                             let p: PathBuf = self.local.wrkdir.clone();
