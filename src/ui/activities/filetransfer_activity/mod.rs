@@ -60,7 +60,6 @@ use tuirealm::View;
 // -- Storage keys
 
 const STORAGE_EXPLORER_WIDTH: &str = "FILETRANSFER_EXPLORER_WIDTH";
-const STORAGE_LOGBOX_WIDTH: &str = "LOGBOX_WIDTH";
 
 // -- components
 

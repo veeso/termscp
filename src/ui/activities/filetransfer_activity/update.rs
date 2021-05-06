@@ -807,19 +807,9 @@ impl FileTransferActivity {
     pub(super) fn update_logbox(&mut self) -> Option<(String, Msg)> {
         match self.view.get_props(super::COMPONENT_LOG_BOX) {
             Some(props) => {
-                // Get width
-                let width: usize = self
-                    .context
-                    .as_ref()
-                    .unwrap()
-                    .store
-                    .get_unsigned(super::STORAGE_LOGBOX_WIDTH)
-                    .unwrap_or(256);
                 // Make log entries
                 let mut table: TableBuilder = TableBuilder::default();
                 for (idx, record) in self.log_records.iter().enumerate() {
-                    // Split rows by width  NOTE: -37 'cause log prefix -3 cause of log line cursor
-                    let record_rows = textwrap::wrap(record.msg.as_str(), (width as usize) - 40);
                     // Add row if not first row
                     if idx > 0 {
                         table.add_row();
@@ -829,42 +819,29 @@ impl FileTransferActivity {
                         LogLevel::Warn => Color::Yellow,
                         LogLevel::Info => Color::Green,
                     };
-                    for (idx, row) in record_rows.iter().enumerate() {
-                        match idx {
-                            0 => {
-                                // First row
-                                table
-                                    .add_col(TextSpan::from(format!(
-                                        "{}",
-                                        record.time.format("%Y-%m-%dT%H:%M:%S%Z")
-                                    )))
-                                    .add_col(TextSpan::from(" ["))
-                                    .add_col(
-                                        TextSpanBuilder::new(
-                                            format!(
-                                                "{:5}",
-                                                match record.level {
-                                                    LogLevel::Error => "ERROR",
-                                                    LogLevel::Warn => "WARN",
-                                                    LogLevel::Info => "INFO",
-                                                }
-                                            )
-                                            .as_str(),
-                                        )
-                                        .with_foreground(fg)
-                                        .build(),
-                                    )
-                                    .add_col(TextSpan::from("]: "))
-                                    .add_col(TextSpan::from(row.as_ref()));
-                            }
-                            _ => {
-                                table.add_col(TextSpan::from(textwrap::indent(
-                                    row.as_ref(),
-                                    "                                        ",
-                                )));
-                            }
-                        }
-                    }
+                    table
+                        .add_col(TextSpan::from(format!(
+                            "{}",
+                            record.time.format("%Y-%m-%dT%H:%M:%S%Z")
+                        )))
+                        .add_col(TextSpan::from(" ["))
+                        .add_col(
+                            TextSpanBuilder::new(
+                                format!(
+                                    "{:5}",
+                                    match record.level {
+                                        LogLevel::Error => "ERROR",
+                                        LogLevel::Warn => "WARN",
+                                        LogLevel::Info => "INFO",
+                                    }
+                                )
+                                .as_str(),
+                            )
+                            .with_foreground(fg)
+                            .build(),
+                        )
+                        .add_col(TextSpan::from("]: "))
+                        .add_col(TextSpan::from(record.msg.as_ref()));
                 }
                 let table = table.build();
                 let props = LogboxPropsBuilder::from(props)

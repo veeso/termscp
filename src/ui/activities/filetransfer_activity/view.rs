@@ -148,9 +148,6 @@ impl FileTransferActivity {
             if !store.isset(super::STORAGE_EXPLORER_WIDTH) {
                 store.set_unsigned(super::STORAGE_EXPLORER_WIDTH, tabs_chunks[0].width as usize);
             }
-            if !store.isset(super::STORAGE_LOGBOX_WIDTH) {
-                store.set_unsigned(super::STORAGE_LOGBOX_WIDTH, chunks[1].width as usize);
-            }
             // Draw explorers
             // @! Local explorer (Find or default)
             match self.tab {
