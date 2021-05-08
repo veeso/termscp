@@ -39,8 +39,8 @@ use super::{
 };
 use crate::fs::explorer::FileSorting;
 use crate::fs::FsEntry;
-use crate::ui::activities::keymap::*;
 use crate::ui::components::{file_list::FileListPropsBuilder, logbox::LogboxPropsBuilder};
+use crate::ui::keymap::*;
 // externals
 use bytesize::ByteSize;
 use std::path::{Path, PathBuf};

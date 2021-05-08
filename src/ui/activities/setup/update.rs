@@ -34,7 +34,7 @@ use super::{
     COMPONENT_RADIO_GROUP_DIRS, COMPONENT_RADIO_HIDDEN_FILES, COMPONENT_RADIO_QUIT,
     COMPONENT_RADIO_SAVE, COMPONENT_RADIO_UPDATES, COMPONENT_TEXT_ERROR, COMPONENT_TEXT_HELP,
 };
-use crate::ui::activities::keymap::*;
+use crate::ui::keymap::*;
 
 // ext
 use tuirealm::{Msg, Payload, Value};

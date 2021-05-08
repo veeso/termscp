@@ -34,7 +34,7 @@ use super::{
     COMPONENT_RADIO_PROTOCOL, COMPONENT_RADIO_QUIT, COMPONENT_RECENTS_LIST, COMPONENT_TEXT_ERROR,
     COMPONENT_TEXT_HELP,
 };
-use crate::ui::activities::keymap::*;
+use crate::ui::keymap::*;
 use tuirealm::components::InputPropsBuilder;
 use tuirealm::{Msg, Payload, PropsBuilder, Value};
 

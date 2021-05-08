@@ -31,8 +31,8 @@ use crate::host::{HostError, Localhost};
 use crate::system::config_client::ConfigClient;
 use crate::system::environment;
 use crate::ui::activities::{
-    auth_activity::AuthActivity, filetransfer_activity::FileTransferActivity,
-    setup_activity::SetupActivity, Activity, ExitReason,
+    auth::AuthActivity, filetransfer::FileTransferActivity, setup::SetupActivity, Activity,
+    ExitReason,
 };
 use crate::ui::context::{Context, FileTransferParams};
 
