@@ -27,6 +27,7 @@
  */
 // This module is split into files, cause it's just too big
 mod actions;
+mod browser;
 mod misc;
 mod session;
 mod update;
@@ -48,6 +49,7 @@ use crate::fs::explorer::FileExplorer;
 use crate::fs::FsEntry;
 use crate::host::Localhost;
 use crate::system::config_client::ConfigClient;
+use browser::Browser;
 
 // Includes
 use chrono::{DateTime, Local};
@@ -86,16 +88,6 @@ const COMPONENT_RADIO_QUIT: &str = "RADIO_QUIT";
 const COMPONENT_RADIO_SORTING: &str = "RADIO_SORTING";
 const COMPONENT_SPAN_STATUS_BAR: &str = "STATUS_BAR";
 const COMPONENT_LIST_FILEINFO: &str = "LIST_FILEINFO";
-
-/// ## FileExplorerTab
-///
-/// File explorer tab
-enum FileExplorerTab {
-    Local,
-    Remote,
-    FindLocal,  // Find result tab
-    FindRemote, // Find result tab
-}
 
 /// ## LogLevel
 ///
@@ -203,30 +195,6 @@ impl Default for TransferStates {
     }
 }
 
-/// ## Browser
-///
-/// Browser contains the browser options
-struct Browser {
-    pub sync_browsing: bool,
-}
-
-impl Default for Browser {
-    fn default() -> Self {
-        Self {
-            sync_browsing: false,
-        }
-    }
-}
-
-impl Browser {
-    /// ### toggle_sync_browsing
-    ///
-    /// Invert the current state for the sync browsing
-    pub fn toggle_sync_browsing(&mut self) {
-        self.sync_browsing = !self.sync_browsing;
-    }
-}
-
 /// ## FileTransferActivity
 ///
 /// FileTransferActivity is the data holder for the file transfer activity
@@ -236,14 +204,9 @@ pub struct FileTransferActivity {
     view: View,                       // View
     host: Localhost,                  // Localhost
     client: Box<dyn FileTransfer>,    // File transfer client
-    local: FileExplorer,              // Local File explorer state
-    remote: FileExplorer,             // Remote File explorer state
-    found: Option<FileExplorer>,      // File explorer for find result
-    tab: FileExplorerTab,             // Current selected tab
+    browser: Browser,                 // Browser
     log_records: VecDeque<LogRecord>, // Log records
-    log_size: usize,                  // Log records size (max)
     transfer: TransferStates,         // Transfer states
-    browser: Browser,                 // Browser states
 }
 
 impl FileTransferActivity {
@@ -267,15 +230,34 @@ impl FileTransferActivity {
                     Self::make_ssh_storage(config_client.as_ref()),
                 )),
             },
-            local: Self::build_local_explorer(config_client.as_ref()),
-            remote: Self::build_remote_explorer(config_client.as_ref()),
-            found: None,
-            tab: FileExplorerTab::Local,
+            browser: Browser::new(config_client.as_ref()),
             log_records: VecDeque::with_capacity(256), // 256 events is enough I guess
-            log_size: 256,                             // Must match with capacity
             transfer: TransferStates::default(),
-            browser: Browser::default(),
         }
+    }
+
+    pub(crate) fn local(&self) -> &FileExplorer {
+        self.browser.local()
+    }
+
+    pub(crate) fn local_mut(&mut self) -> &mut FileExplorer {
+        self.browser.local_mut()
+    }
+
+    pub(crate) fn remote(&self) -> &FileExplorer {
+        self.browser.remote()
+    }
+
+    pub(crate) fn remote_mut(&mut self) -> &mut FileExplorer {
+        self.browser.remote_mut()
+    }
+
+    pub(crate) fn found(&self) -> Option<&FileExplorer> {
+        self.browser.found()
+    }
+
+    pub(crate) fn found_mut(&mut self) -> Option<&mut FileExplorer> {
+        self.browser.found_mut()
     }
 }
 
@@ -301,7 +283,7 @@ impl Activity for FileTransferActivity {
         let pwd: PathBuf = self.host.pwd();
         // Get files at current wd
         self.local_scan(pwd.as_path());
-        self.local.wrkdir = pwd;
+        self.local_mut().wrkdir = pwd;
         // Configure text editor
         self.setup_text_editor();
         // init view

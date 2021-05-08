@@ -31,7 +31,7 @@ extern crate hostname;
 #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
 extern crate users;
 // locals
-use super::{Context, FileExplorerTab, FileTransferActivity};
+use super::{browser::FileExplorerTab, Context, FileTransferActivity};
 use crate::fs::explorer::FileSorting;
 use crate::fs::FsEntry;
 use crate::ui::components::{
@@ -150,7 +150,7 @@ impl FileTransferActivity {
             }
             // Draw explorers
             // @! Local explorer (Find or default)
-            match self.tab {
+            match self.browser.tab() {
                 FileExplorerTab::FindLocal => {
                     self.view
                         .render(super::COMPONENT_EXPLORER_FIND, f, tabs_chunks[0])
@@ -160,7 +160,7 @@ impl FileTransferActivity {
                     .render(super::COMPONENT_EXPLORER_LOCAL, f, tabs_chunks[0]),
             }
             // @! Remote explorer (Find or default)
-            match self.tab {
+            match self.browser.tab() {
                 FileExplorerTab::FindRemote => {
                     self.view
                         .render(super::COMPONENT_EXPLORER_FIND, f, tabs_chunks[1])
@@ -486,7 +486,7 @@ impl FileTransferActivity {
 
     pub(super) fn mount_find(&mut self, search: &str) {
         // Get color
-        let color: Color = match self.tab {
+        let color: Color = match self.browser.tab() {
             FileExplorerTab::Local | FileExplorerTab::FindLocal => Color::Yellow,
             FileExplorerTab::Remote | FileExplorerTab::FindRemote => Color::LightBlue,
         };
@@ -634,9 +634,9 @@ impl FileTransferActivity {
     }
 
     pub(super) fn mount_file_sorting(&mut self) {
-        let sorting: FileSorting = match self.tab {
-            FileExplorerTab::Local => self.local.get_file_sorting(),
-            FileExplorerTab::Remote => self.remote.get_file_sorting(),
+        let sorting: FileSorting = match self.browser.tab() {
+            FileExplorerTab::Local => self.local().get_file_sorting(),
+            FileExplorerTab::Remote => self.remote().get_file_sorting(),
             _ => panic!("You can't mount file sorting when in found result"),
         };
         let index: usize = match sorting {
@@ -821,14 +821,14 @@ impl FileTransferActivity {
             TextSpanBuilder::new(" Localhost file sorting: ")
                 .with_foreground(Color::LightYellow)
                 .build(),
-            TextSpanBuilder::new(Self::get_file_sorting_str(self.local.get_file_sorting()))
+            TextSpanBuilder::new(Self::get_file_sorting_str(self.local().get_file_sorting()))
                 .with_foreground(Color::LightYellow)
                 .reversed()
                 .build(),
             TextSpanBuilder::new(" Remote host file sorting: ")
                 .with_foreground(Color::LightBlue)
                 .build(),
-            TextSpanBuilder::new(Self::get_file_sorting_str(self.remote.get_file_sorting()))
+            TextSpanBuilder::new(Self::get_file_sorting_str(self.remote().get_file_sorting()))
                 .with_foreground(Color::LightBlue)
                 .reversed()
                 .build(),

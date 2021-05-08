@@ -23,12 +23,13 @@
  */
 // Locals
 use super::{ConfigClient, FileTransferActivity, LogLevel, LogRecord};
-use crate::fs::explorer::{builder::FileExplorerBuilder, FileExplorer, FileSorting, GroupDirs};
 use crate::system::environment;
 use crate::system::sshkey_storage::SshKeyStorage;
 // Ext
 use std::env;
 use std::path::{Path, PathBuf};
+
+const LOG_CAPACITY: usize = 256;
 
 impl FileTransferActivity {
     /// ### log
@@ -38,7 +39,7 @@ impl FileTransferActivity {
         // Create log record
         let record: LogRecord = LogRecord::new(level, msg);
         //Check if history overflows the size
-        if self.log_records.len() + 1 > self.log_size {
+        if self.log_records.len() + 1 > LOG_CAPACITY {
             self.log_records.pop_back(); // Start cleaning events from back
         }
         // Eventually push front the new record
@@ -91,64 +92,6 @@ impl FileTransferActivity {
         }
     }
 
-    /// ### build_explorer
-    ///
-    /// Build explorer reading configuration from `ConfigClient`
-    fn build_explorer(cli: Option<&ConfigClient>) -> FileExplorerBuilder {
-        let mut builder: FileExplorerBuilder = FileExplorerBuilder::new();
-        // Set common keys
-        builder
-            .with_file_sorting(FileSorting::ByName)
-            .with_stack_size(16);
-        match &cli {
-            Some(cli) => {
-                builder // Build according to current configuration
-                    .with_group_dirs(cli.get_group_dirs())
-                    .with_hidden_files(cli.get_show_hidden_files());
-            }
-            None => {
-                builder // Build default
-                    .with_group_dirs(Some(GroupDirs::First));
-            }
-        };
-        builder
-    }
-
-    /// ### build_local_explorer
-    ///
-    /// Build a file explorer with local host setup
-    pub(super) fn build_local_explorer(cli: Option<&ConfigClient>) -> FileExplorer {
-        let mut builder = Self::build_explorer(cli);
-        if let Some(cli) = cli {
-            builder.with_formatter(cli.get_local_file_fmt().as_deref());
-        }
-        builder.build()
-    }
-
-    /// ### build_remote_explorer
-    ///
-    /// Build a file explorer with remote host setup
-    pub(super) fn build_remote_explorer(cli: Option<&ConfigClient>) -> FileExplorer {
-        let mut builder = Self::build_explorer(cli);
-        if let Some(cli) = cli {
-            builder.with_formatter(cli.get_remote_file_fmt().as_deref());
-        }
-        builder.build()
-    }
-
-    /// ### build_found_explorer
-    ///
-    /// Build explorer reading from `ConfigClient`, for found result (has some differences)
-    pub(super) fn build_found_explorer() -> FileExplorer {
-        FileExplorerBuilder::new()
-            .with_file_sorting(FileSorting::ByName)
-            .with_group_dirs(Some(GroupDirs::First))
-            .with_hidden_files(true)
-            .with_stack_size(0)
-            .with_formatter(Some("{NAME} {SYMLINK}"))
-            .build()
-    }
-
     /// ### setup_text_editor
     ///
     /// Set text editor to use
@@ -182,7 +125,7 @@ impl FileTransferActivity {
     pub(super) fn local_to_abs_path(&self, path: &Path) -> PathBuf {
         match path.is_relative() {
             true => {
-                let mut d: PathBuf = self.local.wrkdir.clone();
+                let mut d: PathBuf = self.local().wrkdir.clone();
                 d.push(path);
                 d
             }
@@ -196,7 +139,7 @@ impl FileTransferActivity {
     pub(super) fn remote_to_abs_path(&self, path: &Path) -> PathBuf {
         match path.is_relative() {
             true => {
-                let mut wrkdir: PathBuf = self.remote.wrkdir.clone();
+                let mut wrkdir: PathBuf = self.remote().wrkdir.clone();
                 wrkdir.push(path);
                 wrkdir
             }

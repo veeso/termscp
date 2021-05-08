@@ -26,7 +26,7 @@
  * SOFTWARE.
  */
 // locals
-use super::{FileExplorerTab, FileTransferActivity, FsEntry, LogLevel};
+use super::{browser::FileExplorerTab, FileTransferActivity, FsEntry, LogLevel};
 use tuirealm::{Payload, Value};
 // externals
 use std::path::PathBuf;
@@ -130,7 +130,7 @@ impl FileTransferActivity {
     ///
     /// Go to previous directory from localhost
     pub(super) fn action_go_to_previous_local_dir(&mut self, block_sync: bool) {
-        if let Some(d) = self.local.popd() {
+        if let Some(d) = self.local_mut().popd() {
             self.local_changedir(d.as_path(), false);
             // Check whether to sync
             if self.browser.sync_browsing && !block_sync {
@@ -143,7 +143,7 @@ impl FileTransferActivity {
     ///
     /// Go to previous directory from remote host
     pub(super) fn action_go_to_previous_remote_dir(&mut self, block_sync: bool) {
-        if let Some(d) = self.remote.popd() {
+        if let Some(d) = self.remote_mut().popd() {
             self.remote_changedir(d.as_path(), false);
             // Check whether to sync
             if self.browser.sync_browsing && !block_sync {
@@ -157,7 +157,7 @@ impl FileTransferActivity {
     /// Go to upper directory on local host
     pub(super) fn action_go_to_local_upper_dir(&mut self, block_sync: bool) {
         // Get pwd
-        let path: PathBuf = self.local.wrkdir.clone();
+        let path: PathBuf = self.local().wrkdir.clone();
         // Go to parent directory
         if let Some(parent) = path.as_path().parent() {
             self.local_changedir(parent, true);
@@ -173,7 +173,7 @@ impl FileTransferActivity {
     /// Go to upper directory on remote host
     pub(super) fn action_go_to_remote_upper_dir(&mut self, block_sync: bool) {
         // Get pwd
-        let path: PathBuf = self.remote.wrkdir.clone();
+        let path: PathBuf = self.remote().wrkdir.clone();
         // Go to parent directory
         if let Some(parent) = path.as_path().parent() {
             self.remote_changedir(parent, true);
@@ -190,7 +190,7 @@ impl FileTransferActivity {
     pub(super) fn action_local_copy(&mut self, input: String) {
         if let Some(idx) = self.get_local_file_idx() {
             let dest_path: PathBuf = PathBuf::from(input);
-            let entry: FsEntry = self.local.get(idx).unwrap().clone();
+            let entry: FsEntry = self.local().get(idx).unwrap().clone();
             match self.host.copy(&entry, dest_path.as_path()) {
                 Ok(_) => {
                     self.log(
@@ -202,7 +202,7 @@ impl FileTransferActivity {
                         ),
                     );
                     // Reload entries
-                    let wrkdir: PathBuf = self.local.wrkdir.clone();
+                    let wrkdir: PathBuf = self.local().wrkdir.clone();
                     self.local_scan(wrkdir.as_path());
                 }
                 Err(err) => self.log_and_alert(
@@ -224,7 +224,7 @@ impl FileTransferActivity {
     pub(super) fn action_remote_copy(&mut self, input: String) {
         if let Some(idx) = self.get_remote_file_idx() {
             let dest_path: PathBuf = PathBuf::from(input);
-            let entry: FsEntry = self.remote.get(idx).unwrap().clone();
+            let entry: FsEntry = self.remote().get(idx).unwrap().clone();
             match self.client.as_mut().copy(&entry, dest_path.as_path()) {
                 Ok(_) => {
                     self.log(
@@ -255,7 +255,7 @@ impl FileTransferActivity {
             Ok(_) => {
                 // Reload files
                 self.log(LogLevel::Info, format!("Created directory \"{}\"", input));
-                let wrkdir: PathBuf = self.local.wrkdir.clone();
+                let wrkdir: PathBuf = self.local().wrkdir.clone();
                 self.local_scan(wrkdir.as_path());
             }
             Err(err) => {
@@ -294,7 +294,7 @@ impl FileTransferActivity {
             let mut dst_path: PathBuf = PathBuf::from(input);
             // Check if path is relative
             if dst_path.as_path().is_relative() {
-                let mut wrkdir: PathBuf = self.local.wrkdir.clone();
+                let mut wrkdir: PathBuf = self.local().wrkdir.clone();
                 wrkdir.push(dst_path);
                 dst_path = wrkdir;
             }
@@ -303,7 +303,7 @@ impl FileTransferActivity {
             match self.host.rename(&entry, dst_path.as_path()) {
                 Ok(_) => {
                     // Reload files
-                    let path: PathBuf = self.local.wrkdir.clone();
+                    let path: PathBuf = self.local().wrkdir.clone();
                     self.local_scan(path.as_path());
                     // Log
                     self.log(
@@ -327,14 +327,18 @@ impl FileTransferActivity {
 
     pub(super) fn action_remote_rename(&mut self, input: String) {
         if let Some(idx) = self.get_remote_file_idx() {
-            if let Some(entry) = self.remote.get(idx) {
+            let entry = match self.remote().get(idx) {
+                None => None,
+                Some(e) => Some(e.clone()),
+            };
+            if let Some(entry) = entry {
                 let dst_path: PathBuf = PathBuf::from(input);
                 let full_path: PathBuf = entry.get_abs_path();
                 // Rename file or directory and report status as popup
-                match self.client.as_mut().rename(entry, dst_path.as_path()) {
+                match self.client.as_mut().rename(&entry, dst_path.as_path()) {
                     Ok(_) => {
                         // Reload files
-                        let path: PathBuf = self.remote.wrkdir.clone();
+                        let path: PathBuf = self.remote().wrkdir.clone();
                         self.remote_scan(path.as_path());
                         // Log
                         self.log(
@@ -365,7 +369,7 @@ impl FileTransferActivity {
             match self.host.remove(&entry) {
                 Ok(_) => {
                     // Reload files
-                    let p: PathBuf = self.local.wrkdir.clone();
+                    let p: PathBuf = self.local().wrkdir.clone();
                     self.local_scan(p.as_path());
                     // Log
                     self.log(
@@ -386,10 +390,14 @@ impl FileTransferActivity {
     pub(super) fn action_remote_delete(&mut self) {
         if let Some(idx) = self.get_remote_file_idx() {
             // Check if file entry exists
-            if let Some(entry) = self.remote.get(idx) {
+            let entry = match self.remote().get(idx) {
+                None => None,
+                Some(e) => Some(e.clone()),
+            };
+            if let Some(entry) = entry {
                 let full_path: PathBuf = entry.get_abs_path();
                 // Delete file
-                match self.client.remove(entry) {
+                match self.client.remove(&entry) {
                     Ok(_) => {
                         self.reload_remote_dir();
                         self.log(
@@ -411,9 +419,9 @@ impl FileTransferActivity {
     pub(super) fn action_local_saveas(&mut self, input: String) {
         if let Some(idx) = self.get_local_file_idx() {
             // Get pwd
-            let wrkdir: PathBuf = self.remote.wrkdir.clone();
-            if self.local.get(idx).is_some() {
-                let file: FsEntry = self.local.get(idx).unwrap().clone();
+            let wrkdir: PathBuf = self.remote().wrkdir.clone();
+            if self.local().get(idx).is_some() {
+                let file: FsEntry = self.local().get(idx).unwrap().clone();
                 // Call upload; pass realfile, keep link name
                 self.filetransfer_send(&file.get_realfile(), wrkdir.as_path(), Some(input));
             }
@@ -423,9 +431,9 @@ impl FileTransferActivity {
     pub(super) fn action_remote_saveas(&mut self, input: String) {
         if let Some(idx) = self.get_remote_file_idx() {
             // Get pwd
-            let wrkdir: PathBuf = self.local.wrkdir.clone();
-            if self.remote.get(idx).is_some() {
-                let file: FsEntry = self.remote.get(idx).unwrap().clone();
+            let wrkdir: PathBuf = self.local().wrkdir.clone();
+            if self.remote().get(idx).is_some() {
+                let file: FsEntry = self.remote().get(idx).unwrap().clone();
                 // Call upload; pass realfile, keep link name
                 self.filetransfer_recv(&file.get_realfile(), wrkdir.as_path(), Some(input));
             }
@@ -435,7 +443,7 @@ impl FileTransferActivity {
     pub(super) fn action_local_newfile(&mut self, input: String) {
         // Check if file exists
         let mut file_exists: bool = false;
-        for file in self.local.iter_files_all() {
+        for file in self.local().iter_files_all() {
             if input == file.get_name() {
                 file_exists = true;
             }
@@ -461,14 +469,14 @@ impl FileTransferActivity {
             );
         }
         // Reload files
-        let path: PathBuf = self.local.wrkdir.clone();
+        let path: PathBuf = self.local().wrkdir.clone();
         self.local_scan(path.as_path());
     }
 
     pub(super) fn action_remote_newfile(&mut self, input: String) {
         // Check if file exists
         let mut file_exists: bool = false;
-        for file in self.remote.iter_files_all() {
+        for file in self.remote().iter_files_all() {
             if input == file.get_name() {
                 file_exists = true;
             }
@@ -521,7 +529,7 @@ impl FileTransferActivity {
                                 );
                             }
                             // Reload files
-                            let path: PathBuf = self.remote.wrkdir.clone();
+                            let path: PathBuf = self.remote().wrkdir.clone();
                             self.remote_scan(path.as_path());
                         }
                     }
@@ -535,7 +543,7 @@ impl FileTransferActivity {
             Ok(output) => {
                 // Reload files
                 self.log(LogLevel::Info, format!("\"{}\": {}", input, output));
-                let wrkdir: PathBuf = self.local.wrkdir.clone();
+                let wrkdir: PathBuf = self.local().wrkdir.clone();
                 self.local_scan(wrkdir.as_path());
             }
             Err(err) => {
@@ -581,7 +589,7 @@ impl FileTransferActivity {
 
     pub(super) fn action_find_changedir(&mut self, idx: usize) {
         // Match entry
-        if let Some(entry) = self.found.as_ref().unwrap().get(idx) {
+        if let Some(entry) = self.found().as_ref().unwrap().get(idx) {
             // Get path: if a directory, use directory path; if it is a File, get parent path
             let path: PathBuf = match entry {
                 FsEntry::Directory(dir) => dir.abs_path.clone(),
@@ -591,7 +599,7 @@ impl FileTransferActivity {
                 },
             };
             // Change directory
-            match self.tab {
+            match self.browser.tab() {
                 FileExplorerTab::FindLocal | FileExplorerTab::Local => {
                     self.local_changedir(path.as_path(), true)
                 }
@@ -603,16 +611,16 @@ impl FileTransferActivity {
     }
 
     pub(super) fn action_find_transfer(&mut self, idx: usize, name: Option<String>) {
-        let entry: Option<FsEntry> = self.found.as_ref().unwrap().get(idx).cloned();
+        let entry: Option<FsEntry> = self.found().as_ref().unwrap().get(idx).cloned();
         if let Some(entry) = entry {
             // Download file
-            match self.tab {
+            match self.browser.tab() {
                 FileExplorerTab::FindLocal | FileExplorerTab::Local => {
-                    let wrkdir: PathBuf = self.remote.wrkdir.clone();
+                    let wrkdir: PathBuf = self.remote().wrkdir.clone();
                     self.filetransfer_send(&entry.get_realfile(), wrkdir.as_path(), name);
                 }
                 FileExplorerTab::FindRemote | FileExplorerTab::Remote => {
-                    let wrkdir: PathBuf = self.local.wrkdir.clone();
+                    let wrkdir: PathBuf = self.local().wrkdir.clone();
                     self.filetransfer_recv(&entry.get_realfile(), wrkdir.as_path(), name);
                 }
             }
@@ -620,17 +628,17 @@ impl FileTransferActivity {
     }
 
     pub(super) fn action_find_delete(&mut self, idx: usize) {
-        let entry: Option<FsEntry> = self.found.as_ref().unwrap().get(idx).cloned();
+        let entry: Option<FsEntry> = self.found().as_ref().unwrap().get(idx).cloned();
         if let Some(entry) = entry {
             // Download file
-            match self.tab {
+            match self.browser.tab() {
                 FileExplorerTab::FindLocal | FileExplorerTab::Local => {
                     let full_path: PathBuf = entry.get_abs_path();
                     // Delete file or directory and report status as popup
                     match self.host.remove(&entry) {
                         Ok(_) => {
                             // Reload files
-                            let p: PathBuf = self.local.wrkdir.clone();
+                            let p: PathBuf = self.local().wrkdir.clone();
                             self.local_scan(p.as_path());
                             // Log
                             self.log(
@@ -690,7 +698,7 @@ impl FileTransferActivity {
                 match self.edit_local_file(fsentry.get_abs_path().as_path()) {
                     Ok(_) => {
                         // Reload directory
-                        let pwd: PathBuf = self.local.wrkdir.clone();
+                        let pwd: PathBuf = self.local().wrkdir.clone();
                         self.local_scan(pwd.as_path());
                     }
                     Err(err) => self.log_and_alert(LogLevel::Error, err),
@@ -712,7 +720,7 @@ impl FileTransferActivity {
                 match self.edit_remote_file(&file) {
                     Ok(_) => {
                         // Reload directory
-                        let pwd: PathBuf = self.remote.wrkdir.clone();
+                        let pwd: PathBuf = self.remote().wrkdir.clone();
                         self.remote_scan(pwd.as_path());
                     }
                     Err(err) => self.log_and_alert(LogLevel::Error, err),
@@ -727,7 +735,7 @@ impl FileTransferActivity {
     pub(super) fn get_local_file_entry(&self) -> Option<&FsEntry> {
         match self.get_local_file_idx() {
             None => None,
-            Some(idx) => self.local.get(idx),
+            Some(idx) => self.local().get(idx),
         }
     }
 
@@ -737,7 +745,7 @@ impl FileTransferActivity {
     pub(super) fn get_remote_file_entry(&self) -> Option<&FsEntry> {
         match self.get_remote_file_idx() {
             None => None,
-            Some(idx) => self.remote.get(idx),
+            Some(idx) => self.remote().get(idx),
         }
     }
 

@@ -141,7 +141,7 @@ impl FileTransferActivity {
         if let Ok(pwd) = self.client.pwd() {
             self.remote_scan(pwd.as_path());
             // Set wrkdir
-            self.remote.wrkdir = pwd;
+            self.remote_mut().wrkdir = pwd;
         }
     }
 
@@ -257,7 +257,7 @@ impl FileTransferActivity {
             }
         }
         // Scan dir on remote
-        let path: PathBuf = self.remote.wrkdir.clone();
+        let path: PathBuf = self.remote().wrkdir.clone();
         self.remote_scan(path.as_path());
         // If aborted; show popup
         if self.transfer.aborted {
@@ -664,7 +664,7 @@ impl FileTransferActivity {
         match self.host.scan_dir(path) {
             Ok(files) => {
                 // Set files and sort (sorting is implicit)
-                self.local.set_files(files);
+                self.local_mut().set_files(files);
             }
             Err(err) => {
                 self.log_and_alert(
@@ -682,7 +682,7 @@ impl FileTransferActivity {
         match self.client.list_dir(path) {
             Ok(files) => {
                 // Set files and sort (sorting is implicit)
-                self.remote.set_files(files);
+                self.remote_mut().set_files(files);
             }
             Err(err) => {
                 self.log_and_alert(
@@ -698,7 +698,7 @@ impl FileTransferActivity {
     /// Change directory for local
     pub(super) fn local_changedir(&mut self, path: &Path, push: bool) {
         // Get current directory
-        let prev_dir: PathBuf = self.local.wrkdir.clone();
+        let prev_dir: PathBuf = self.local().wrkdir.clone();
         // Change directory
         match self.host.change_wrkdir(path) {
             Ok(_) => {
@@ -709,10 +709,10 @@ impl FileTransferActivity {
                 // Reload files
                 self.local_scan(path);
                 // Set wrkdir
-                self.local.wrkdir = PathBuf::from(path);
+                self.local_mut().wrkdir = PathBuf::from(path);
                 // Push prev_dir to stack
                 if push {
-                    self.local.pushd(prev_dir.as_path())
+                    self.local_mut().pushd(prev_dir.as_path())
                 }
             }
             Err(err) => {
@@ -727,7 +727,7 @@ impl FileTransferActivity {
 
     pub(super) fn remote_changedir(&mut self, path: &Path, push: bool) {
         // Get current directory
-        let prev_dir: PathBuf = self.remote.wrkdir.clone();
+        let prev_dir: PathBuf = self.remote().wrkdir.clone();
         // Change directory
         match self.client.as_mut().change_dir(path) {
             Ok(_) => {
@@ -738,10 +738,10 @@ impl FileTransferActivity {
                 // Update files
                 self.remote_scan(path);
                 // Set wrkdir
-                self.remote.wrkdir = PathBuf::from(path);
+                self.remote_mut().wrkdir = PathBuf::from(path);
                 // Push prev_dir to stack
                 if push {
-                    self.remote.pushd(prev_dir.as_path())
+                    self.remote_mut().pushd(prev_dir.as_path())
                 }
             }
             Err(err) => {
