@@ -135,27 +135,7 @@ impl FileTransferActivity {
                     self.update_local_filelist()
                 }
                 (COMPONENT_EXPLORER_LOCAL, &MSG_KEY_CHAR_O) => {
-                    // Clone entry due to mutable stuff...
-                    if self.get_local_file_entry().is_some() {
-                        let fsentry: FsEntry = self.get_local_file_entry().unwrap().clone();
-                        // Check if file
-                        if fsentry.is_file() {
-                            self.log(
-                                LogLevel::Info,
-                                format!("Opening file \"{}\"...", fsentry.get_abs_path().display())
-                                    .as_str(),
-                            );
-                            // Edit file
-                            match self.edit_local_file(fsentry.get_abs_path().as_path()) {
-                                Ok(_) => {
-                                    // Reload directory
-                                    let pwd: PathBuf = self.local.wrkdir.clone();
-                                    self.local_scan(pwd.as_path());
-                                }
-                                Err(err) => self.log_and_alert(LogLevel::Error, err),
-                            }
-                        }
-                    }
+                    self.action_edit_local_file();
                     // Reload file list component
                     self.update_local_filelist()
                 }
@@ -238,27 +218,8 @@ impl FileTransferActivity {
                     self.update_remote_filelist()
                 }
                 (COMPONENT_EXPLORER_REMOTE, &MSG_KEY_CHAR_O) => {
-                    // Clone entry due to mutable stuff...
-                    if self.get_remote_file_entry().is_some() {
-                        let fsentry: FsEntry = self.get_remote_file_entry().unwrap().clone();
-                        // Check if file
-                        if let FsEntry::File(file) = fsentry.clone() {
-                            self.log(
-                                LogLevel::Info,
-                                format!("Opening file \"{}\"...", fsentry.get_abs_path().display())
-                                    .as_str(),
-                            );
-                            // Edit file
-                            match self.edit_remote_file(&file) {
-                                Ok(_) => {
-                                    // Reload directory
-                                    let pwd: PathBuf = self.remote.wrkdir.clone();
-                                    self.remote_scan(pwd.as_path());
-                                }
-                                Err(err) => self.log_and_alert(LogLevel::Error, err),
-                            }
-                        }
-                    }
+                    // Edit file
+                    self.action_edit_remote_file();
                     // Reload file list component
                     self.update_remote_filelist()
                 }

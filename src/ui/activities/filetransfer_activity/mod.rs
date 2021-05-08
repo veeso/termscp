@@ -119,11 +119,11 @@ impl LogRecord {
     /// ### new
     ///
     /// Instantiates a new LogRecord
-    pub fn new(level: LogLevel, msg: &str) -> LogRecord {
+    pub fn new(level: LogLevel, msg: String) -> LogRecord {
         LogRecord {
             time: Local::now(),
             level,
-            msg: String::from(msg),
+            msg,
         }
     }
 }

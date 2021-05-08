@@ -86,7 +86,7 @@ impl FileTransferActivity {
                     // Log welcome
                     self.log(
                         LogLevel::Info,
-                        format!("Established connection with '{}': \"{}\"", addr, banner).as_ref(),
+                        format!("Established connection with '{}': \"{}\"", addr, banner),
                     );
                 }
                 // Try to change directory to entry directory
@@ -192,8 +192,7 @@ impl FileTransferActivity {
                                     "Could not remove created file {}: {}",
                                     remote_path.display(),
                                     err
-                                )
-                                .as_str(),
+                                ),
                             ),
                             Ok(entry) => {
                                 if let Err(err) = self.client.remove(&entry) {
@@ -203,8 +202,7 @@ impl FileTransferActivity {
                                             "Could not remove created file {}: {}",
                                             remote_path.display(),
                                             err
-                                        )
-                                        .as_str(),
+                                        ),
                                     );
                                 }
                             }
@@ -218,7 +216,7 @@ impl FileTransferActivity {
                     Ok(_) => {
                         self.log(
                             LogLevel::Info,
-                            format!("Created directory \"{}\"", remote_path.display()).as_ref(),
+                            format!("Created directory \"{}\"", remote_path.display()),
                         );
                         // Get files in dir
                         match self.host.scan_dir(dir.abs_path.as_path()) {
@@ -324,8 +322,7 @@ impl FileTransferActivity {
                                     "Could not remove created file {}: {}",
                                     local_file_path.display(),
                                     err
-                                )
-                                .as_str(),
+                                ),
                             ),
                             Ok(entry) => {
                                 if let Err(err) = self.host.remove(&entry) {
@@ -335,8 +332,7 @@ impl FileTransferActivity {
                                             "Could not remove created file {}: {}",
                                             local_file_path.display(),
                                             err
-                                        )
-                                        .as_str(),
+                                        ),
                                     );
                                 }
                             }
@@ -365,14 +361,13 @@ impl FileTransferActivity {
                                         pex,
                                         local_dir_path.display(),
                                         err
-                                    )
-                                    .as_ref(),
+                                    ),
                                 );
                             }
                         }
                         self.log(
                             LogLevel::Info,
-                            format!("Created directory \"{}\"", local_dir_path.display()).as_ref(),
+                            format!("Created directory \"{}\"", local_dir_path.display()),
                         );
                         // Get files in dir
                         match self.client.list_dir(dir.abs_path.as_path()) {
@@ -407,8 +402,7 @@ impl FileTransferActivity {
                                 "Failed to create directory \"{}\": {}",
                                 local_dir_path.display(),
                                 err
-                            )
-                            .as_ref(),
+                            ),
                         );
                     }
                 }
@@ -519,7 +513,7 @@ impl FileTransferActivity {
                     if let Err(err) = self.client.on_sent(rhnd) {
                         self.log(
                             LogLevel::Warn,
-                            format!("Could not finalize remote stream: \"{}\"", err).as_str(),
+                            format!("Could not finalize remote stream: \"{}\"", err),
                         );
                     }
                     // if upload was abrupted, return error
@@ -534,8 +528,7 @@ impl FileTransferActivity {
                             remote.display(),
                             fmt_millis(self.transfer.started.elapsed()),
                             ByteSize(self.transfer.bytes_per_second()),
-                        )
-                        .as_ref(),
+                        ),
                     );
                 }
                 Err(err) => return Err(TransferErrorReason::FileTransferError(err)),
@@ -622,7 +615,7 @@ impl FileTransferActivity {
                         if let Err(err) = self.client.on_recv(rhnd) {
                             self.log(
                                 LogLevel::Warn,
-                                format!("Could not finalize remote stream: \"{}\"", err).as_str(),
+                                format!("Could not finalize remote stream: \"{}\"", err),
                             );
                         }
                         // If download was abrupted, return Error
@@ -640,8 +633,7 @@ impl FileTransferActivity {
                                         pex,
                                         local.display(),
                                         err
-                                    )
-                                    .as_ref(),
+                                    ),
                                 );
                             }
                         }
@@ -654,8 +646,7 @@ impl FileTransferActivity {
                                 local.display(),
                                 fmt_millis(self.transfer.started.elapsed()),
                                 ByteSize(self.transfer.bytes_per_second()),
-                            )
-                            .as_ref(),
+                            ),
                         );
                     }
                     Err(err) => return Err(TransferErrorReason::FileTransferError(err)),
@@ -713,7 +704,7 @@ impl FileTransferActivity {
             Ok(_) => {
                 self.log(
                     LogLevel::Info,
-                    format!("Changed directory on local: {}", path.display()).as_str(),
+                    format!("Changed directory on local: {}", path.display()),
                 );
                 // Reload files
                 self.local_scan(path);
@@ -742,7 +733,7 @@ impl FileTransferActivity {
             Ok(_) => {
                 self.log(
                     LogLevel::Info,
-                    format!("Changed directory on remote: {}", path.display()).as_str(),
+                    format!("Changed directory on remote: {}", path.display()),
                 );
                 // Update files
                 self.remote_scan(path);
@@ -800,8 +791,7 @@ impl FileTransferActivity {
                 format!(
                     "Changes performed through editor saved to \"{}\"!",
                     path.display()
-                )
-                .as_str(),
+                ),
             ),
             Err(err) => return Err(format!("Could not open editor: {}", err)),
         }
@@ -865,8 +855,7 @@ impl FileTransferActivity {
                     format!(
                         "File \"{}\" has changed; writing changes to remote",
                         file.abs_path.display()
-                    )
-                    .as_ref(),
+                    ),
                 );
                 // Get local fs entry
                 let tmpfile_entry: FsEntry = match self.host.stat(tmpfile.path()) {
@@ -900,7 +889,7 @@ impl FileTransferActivity {
             false => {
                 self.log(
                     LogLevel::Info,
-                    format!("File \"{}\" hasn't changed", file.abs_path.display()).as_ref(),
+                    format!("File \"{}\" hasn't changed", file.abs_path.display()),
                 );
             }
         }

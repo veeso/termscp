@@ -199,8 +199,7 @@ impl FileTransferActivity {
                             "Copied \"{}\" to \"{}\"",
                             entry.get_abs_path().display(),
                             dest_path.display()
-                        )
-                        .as_str(),
+                        ),
                     );
                     // Reload entries
                     let wrkdir: PathBuf = self.local.wrkdir.clone();
@@ -234,8 +233,7 @@ impl FileTransferActivity {
                             "Copied \"{}\" to \"{}\"",
                             entry.get_abs_path().display(),
                             dest_path.display()
-                        )
-                        .as_str(),
+                        ),
                     );
                     self.reload_remote_dir();
                 }
@@ -256,10 +254,7 @@ impl FileTransferActivity {
         match self.host.mkdir(PathBuf::from(input.as_str()).as_path()) {
             Ok(_) => {
                 // Reload files
-                self.log(
-                    LogLevel::Info,
-                    format!("Created directory \"{}\"", input).as_ref(),
-                );
+                self.log(LogLevel::Info, format!("Created directory \"{}\"", input));
                 let wrkdir: PathBuf = self.local.wrkdir.clone();
                 self.local_scan(wrkdir.as_path());
             }
@@ -280,10 +275,7 @@ impl FileTransferActivity {
         {
             Ok(_) => {
                 // Reload files
-                self.log(
-                    LogLevel::Info,
-                    format!("Created directory \"{}\"", input).as_ref(),
-                );
+                self.log(LogLevel::Info, format!("Created directory \"{}\"", input));
                 self.reload_remote_dir();
             }
             Err(err) => {
@@ -320,8 +312,7 @@ impl FileTransferActivity {
                             "Renamed file \"{}\" to \"{}\"",
                             full_path.display(),
                             dst_path.display()
-                        )
-                        .as_ref(),
+                        ),
                     );
                 }
                 Err(err) => {
@@ -352,8 +343,7 @@ impl FileTransferActivity {
                                 "Renamed file \"{}\" to \"{}\"",
                                 full_path.display(),
                                 dst_path.display()
-                            )
-                            .as_ref(),
+                            ),
                         );
                     }
                     Err(err) => {
@@ -380,7 +370,7 @@ impl FileTransferActivity {
                     // Log
                     self.log(
                         LogLevel::Info,
-                        format!("Removed file \"{}\"", full_path.display()).as_ref(),
+                        format!("Removed file \"{}\"", full_path.display()),
                     );
                 }
                 Err(err) => {
@@ -404,7 +394,7 @@ impl FileTransferActivity {
                         self.reload_remote_dir();
                         self.log(
                             LogLevel::Info,
-                            format!("Removed file \"{}\"", full_path.display()).as_ref(),
+                            format!("Removed file \"{}\"", full_path.display()),
                         );
                     }
                     Err(err) => {
@@ -467,7 +457,7 @@ impl FileTransferActivity {
         } else {
             self.log(
                 LogLevel::Info,
-                format!("Created file \"{}\"", file_path.display()).as_str(),
+                format!("Created file \"{}\"", file_path.display()),
             );
         }
         // Reload files
@@ -527,7 +517,7 @@ impl FileTransferActivity {
                             } else {
                                 self.log(
                                     LogLevel::Info,
-                                    format!("Created file \"{}\"", file_path.display()).as_str(),
+                                    format!("Created file \"{}\"", file_path.display()),
                                 );
                             }
                             // Reload files
@@ -544,10 +534,7 @@ impl FileTransferActivity {
         match self.host.exec(input.as_str()) {
             Ok(output) => {
                 // Reload files
-                self.log(
-                    LogLevel::Info,
-                    format!("\"{}\": {}", input, output).as_ref(),
-                );
+                self.log(LogLevel::Info, format!("\"{}\": {}", input, output));
                 let wrkdir: PathBuf = self.local.wrkdir.clone();
                 self.local_scan(wrkdir.as_path());
             }
@@ -565,10 +552,7 @@ impl FileTransferActivity {
         match self.client.as_mut().exec(input.as_str()) {
             Ok(output) => {
                 // Reload files
-                self.log(
-                    LogLevel::Info,
-                    format!("\"{}\": {}", input, output).as_ref(),
-                );
+                self.log(LogLevel::Info, format!("\"{}\": {}", input, output));
                 self.reload_remote_dir();
             }
             Err(err) => {
@@ -651,7 +635,7 @@ impl FileTransferActivity {
                             // Log
                             self.log(
                                 LogLevel::Info,
-                                format!("Removed file \"{}\"", full_path.display()).as_ref(),
+                                format!("Removed file \"{}\"", full_path.display()),
                             );
                         }
                         Err(err) => {
@@ -674,7 +658,7 @@ impl FileTransferActivity {
                             self.reload_remote_dir();
                             self.log(
                                 LogLevel::Info,
-                                format!("Removed file \"{}\"", full_path.display()).as_ref(),
+                                format!("Removed file \"{}\"", full_path.display()),
                             );
                         }
                         Err(err) => {
@@ -688,6 +672,50 @@ impl FileTransferActivity {
                             );
                         }
                     }
+                }
+            }
+        }
+    }
+
+    pub(super) fn action_edit_local_file(&mut self) {
+        if self.get_local_file_entry().is_some() {
+            let fsentry: FsEntry = self.get_local_file_entry().unwrap().clone();
+            // Check if file
+            if fsentry.is_file() {
+                self.log(
+                    LogLevel::Info,
+                    format!("Opening file \"{}\"...", fsentry.get_abs_path().display()),
+                );
+                // Edit file
+                match self.edit_local_file(fsentry.get_abs_path().as_path()) {
+                    Ok(_) => {
+                        // Reload directory
+                        let pwd: PathBuf = self.local.wrkdir.clone();
+                        self.local_scan(pwd.as_path());
+                    }
+                    Err(err) => self.log_and_alert(LogLevel::Error, err),
+                }
+            }
+        }
+    }
+
+    pub(super) fn action_edit_remote_file(&mut self) {
+        if self.get_remote_file_entry().is_some() {
+            let fsentry: FsEntry = self.get_remote_file_entry().unwrap().clone();
+            // Check if file
+            if let FsEntry::File(file) = fsentry.clone() {
+                self.log(
+                    LogLevel::Info,
+                    format!("Opening file \"{}\"...", fsentry.get_abs_path().display()),
+                );
+                // Edit file
+                match self.edit_remote_file(&file) {
+                    Ok(_) => {
+                        // Reload directory
+                        let pwd: PathBuf = self.remote.wrkdir.clone();
+                        self.remote_scan(pwd.as_path());
+                    }
+                    Err(err) => self.log_and_alert(LogLevel::Error, err),
                 }
             }
         }

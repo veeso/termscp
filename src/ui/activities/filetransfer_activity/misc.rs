@@ -34,7 +34,7 @@ impl FileTransferActivity {
     /// ### log
     ///
     /// Add message to log events
-    pub(super) fn log(&mut self, level: LogLevel, msg: &str) {
+    pub(super) fn log(&mut self, level: LogLevel, msg: String) {
         // Create log record
         let record: LogRecord = LogRecord::new(level, msg);
         //Check if history overflows the size
@@ -52,8 +52,8 @@ impl FileTransferActivity {
     ///
     /// Add message to log events and also display it as an alert
     pub(super) fn log_and_alert(&mut self, level: LogLevel, msg: String) {
-        self.log(level, msg.as_str());
         self.mount_error(msg.as_str());
+        self.log(level, msg);
         // Update log
         let msg = self.update_logbox();
         self.update(msg);
