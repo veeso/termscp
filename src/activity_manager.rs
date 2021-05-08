@@ -56,6 +56,7 @@ pub enum NextActivity {
 pub struct ActivityManager {
     context: Option<Context>,
     interval: Duration,
+    local_dir: PathBuf,
 }
 
 impl ActivityManager {
@@ -64,19 +65,16 @@ impl ActivityManager {
     /// Initializes a new Activity Manager
     pub fn new(local_dir: &Path, interval: Duration) -> Result<ActivityManager, HostError> {
         // Prepare Context
-        let host: Localhost = match Localhost::new(local_dir.to_path_buf()) {
-            Ok(h) => h,
-            Err(e) => return Err(e),
-        };
         // Initialize configuration client
         let (config_client, error): (Option<ConfigClient>, Option<String>) =
             match Self::init_config_client() {
                 Ok(cli) => (Some(cli), None),
                 Err(err) => (None, Some(err)),
             };
-        let ctx: Context = Context::new(host, config_client, error);
+        let ctx: Context = Context::new(config_client, error);
         Ok(ActivityManager {
             context: Some(ctx),
+            local_dir: local_dir.to_path_buf(),
             interval,
         })
     }
@@ -182,7 +180,7 @@ impl ActivityManager {
     /// Returns the next activity to run
     fn run_filetransfer(&mut self) -> Option<NextActivity> {
         // Get context
-        let ctx: Context = match self.context.take() {
+        let mut ctx: Context = match self.context.take() {
             Some(ctx) => ctx,
             None => return None,
         };
@@ -193,7 +191,15 @@ impl ActivityManager {
         };
         // Prepare activity
         let protocol: FileTransferProtocol = ft_params.protocol;
-        let mut activity: FileTransferActivity = FileTransferActivity::new(protocol);
+        let host: Localhost = match Localhost::new(self.local_dir.clone()) {
+            Ok(host) => host,
+            Err(err) => {
+                // Set error in context
+                ctx.set_error(format!("Could not initialize localhost: {}", err));
+                return None;
+            }
+        };
+        let mut activity: FileTransferActivity = FileTransferActivity::new(host, protocol);
         // Prepare result
         let result: Option<NextActivity>;
         // Create activity

@@ -202,12 +202,13 @@ impl Component for LogBox {
     #[cfg(not(tarpaulin_include))]
     fn render(&self, render: &mut Canvas, area: Rect) {
         if self.props.visible {
+            let width: usize = area.width as usize - 4;
             // Make list
             let list_items: Vec<ListItem> = match self.props.texts.table.as_ref() {
                 None => Vec::new(),
                 Some(table) => table
                     .iter()
-                    .map(|row| ListItem::new(wrap_spans(row, area.width.into(), &self.props)))
+                    .map(|row| ListItem::new(wrap_spans(row, width, &self.props)))
                     .collect(), // Make List item from TextSpan
             };
             let w = List::new(list_items)

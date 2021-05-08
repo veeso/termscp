@@ -29,7 +29,7 @@
 extern crate bytesize;
 // locals
 use super::{
-    FileExplorerTab, FileTransferActivity, LogLevel, COMPONENT_EXPLORER_FIND,
+    browser::FileExplorerTab, FileTransferActivity, LogLevel, COMPONENT_EXPLORER_FIND,
     COMPONENT_EXPLORER_LOCAL, COMPONENT_EXPLORER_REMOTE, COMPONENT_INPUT_COPY,
     COMPONENT_INPUT_EXEC, COMPONENT_INPUT_FIND, COMPONENT_INPUT_GOTO, COMPONENT_INPUT_MKDIR,
     COMPONENT_INPUT_NEWFILE, COMPONENT_INPUT_RENAME, COMPONENT_INPUT_SAVEAS,
@@ -68,7 +68,7 @@ impl FileTransferActivity {
                 (COMPONENT_EXPLORER_LOCAL, &MSG_KEY_RIGHT) => {
                     // Change tab
                     self.view.active(COMPONENT_EXPLORER_REMOTE);
-                    self.tab = FileExplorerTab::Remote;
+                    self.browser.change_tab(FileExplorerTab::Remote);
                     None
                 }
                 (COMPONENT_EXPLORER_LOCAL, &MSG_KEY_BACKSPACE) => {
@@ -83,7 +83,7 @@ impl FileTransferActivity {
                 (COMPONENT_EXPLORER_LOCAL, Msg::OnSubmit(Payload::One(Value::Usize(idx)))) => {
                     // Match selected file
                     let mut entry: Option<FsEntry> = None;
-                    if let Some(e) = self.local.get(*idx) {
+                    if let Some(e) = self.local().get(*idx) {
                         entry = Some(e.clone());
                     }
                     if let Some(entry) = entry {
@@ -102,7 +102,7 @@ impl FileTransferActivity {
                 }
                 (COMPONENT_EXPLORER_LOCAL, &MSG_KEY_SPACE) => {
                     // Get pwd
-                    let wrkdir: PathBuf = self.remote.wrkdir.clone();
+                    let wrkdir: PathBuf = self.remote().wrkdir.clone();
                     // Get file and clone (due to mutable / immutable stuff...)
                     if self.get_local_file_entry().is_some() {
                         let file: FsEntry = self.get_local_file_entry().unwrap().clone();
@@ -116,7 +116,7 @@ impl FileTransferActivity {
                 }
                 (COMPONENT_EXPLORER_LOCAL, &MSG_KEY_CHAR_A) => {
                     // Toggle hidden files
-                    self.local.toggle_hidden_files();
+                    self.local_mut().toggle_hidden_files();
                     // Reload file list component
                     self.update_local_filelist()
                 }
@@ -129,33 +129,13 @@ impl FileTransferActivity {
                 }
                 (COMPONENT_EXPLORER_LOCAL, &MSG_KEY_CHAR_L) => {
                     // Reload directory
-                    let pwd: PathBuf = self.local.wrkdir.clone();
+                    let pwd: PathBuf = self.local().wrkdir.clone();
                     self.local_scan(pwd.as_path());
                     // Reload file list component
                     self.update_local_filelist()
                 }
                 (COMPONENT_EXPLORER_LOCAL, &MSG_KEY_CHAR_O) => {
-                    // Clone entry due to mutable stuff...
-                    if self.get_local_file_entry().is_some() {
-                        let fsentry: FsEntry = self.get_local_file_entry().unwrap().clone();
-                        // Check if file
-                        if fsentry.is_file() {
-                            self.log(
-                                LogLevel::Info,
-                                format!("Opening file \"{}\"...", fsentry.get_abs_path().display())
-                                    .as_str(),
-                            );
-                            // Edit file
-                            match self.edit_local_file(fsentry.get_abs_path().as_path()) {
-                                Ok(_) => {
-                                    // Reload directory
-                                    let pwd: PathBuf = self.local.wrkdir.clone();
-                                    self.local_scan(pwd.as_path());
-                                }
-                                Err(err) => self.log_and_alert(LogLevel::Error, err),
-                            }
-                        }
-                    }
+                    self.action_edit_local_file();
                     // Reload file list component
                     self.update_local_filelist()
                 }
@@ -171,13 +151,13 @@ impl FileTransferActivity {
                 (COMPONENT_EXPLORER_REMOTE, &MSG_KEY_LEFT) => {
                     // Change tab
                     self.view.active(COMPONENT_EXPLORER_LOCAL);
-                    self.tab = FileExplorerTab::Local;
+                    self.browser.change_tab(FileExplorerTab::Local);
                     None
                 }
                 (COMPONENT_EXPLORER_REMOTE, Msg::OnSubmit(Payload::One(Value::Usize(idx)))) => {
                     // Match selected file
                     let mut entry: Option<FsEntry> = None;
-                    if let Some(e) = self.remote.get(*idx) {
+                    if let Some(e) = self.remote().get(*idx) {
                         entry = Some(e.clone());
                     }
                     if let Some(entry) = entry {
@@ -200,7 +180,7 @@ impl FileTransferActivity {
                         let file: FsEntry = self.get_remote_file_entry().unwrap().clone();
                         let name: String = file.get_name().to_string();
                         // Call upload; pass realfile, keep link name
-                        let wrkdir: PathBuf = self.local.wrkdir.clone();
+                        let wrkdir: PathBuf = self.local().wrkdir.clone();
                         self.filetransfer_recv(&file.get_realfile(), wrkdir.as_path(), Some(name));
                         self.update_local_filelist()
                     } else {
@@ -219,7 +199,7 @@ impl FileTransferActivity {
                 }
                 (COMPONENT_EXPLORER_REMOTE, &MSG_KEY_CHAR_A) => {
                     // Toggle hidden files
-                    self.remote.toggle_hidden_files();
+                    self.remote_mut().toggle_hidden_files();
                     // Reload file list component
                     self.update_remote_filelist()
                 }
@@ -232,33 +212,14 @@ impl FileTransferActivity {
                 }
                 (COMPONENT_EXPLORER_REMOTE, &MSG_KEY_CHAR_L) => {
                     // Reload directory
-                    let pwd: PathBuf = self.remote.wrkdir.clone();
+                    let pwd: PathBuf = self.remote().wrkdir.clone();
                     self.remote_scan(pwd.as_path());
                     // Reload file list component
                     self.update_remote_filelist()
                 }
                 (COMPONENT_EXPLORER_REMOTE, &MSG_KEY_CHAR_O) => {
-                    // Clone entry due to mutable stuff...
-                    if self.get_remote_file_entry().is_some() {
-                        let fsentry: FsEntry = self.get_remote_file_entry().unwrap().clone();
-                        // Check if file
-                        if let FsEntry::File(file) = fsentry.clone() {
-                            self.log(
-                                LogLevel::Info,
-                                format!("Opening file \"{}\"...", fsentry.get_abs_path().display())
-                                    .as_str(),
-                            );
-                            // Edit file
-                            match self.edit_remote_file(&file) {
-                                Ok(_) => {
-                                    // Reload directory
-                                    let pwd: PathBuf = self.remote.wrkdir.clone();
-                                    self.remote_scan(pwd.as_path());
-                                }
-                                Err(err) => self.log_and_alert(LogLevel::Error, err),
-                            }
-                        }
-                    }
+                    // Edit file
+                    self.action_edit_remote_file();
                     // Reload file list component
                     self.update_remote_filelist()
                 }
@@ -371,7 +332,7 @@ impl FileTransferActivity {
                     // Finalize find
                     self.finalize_find();
                     // Reload files
-                    match self.tab {
+                    match self.browser.tab() {
                         FileExplorerTab::Local => self.update_local_filelist(),
                         FileExplorerTab::Remote => self.update_remote_filelist(),
                         _ => None,
@@ -383,7 +344,7 @@ impl FileTransferActivity {
                         Some(Payload::One(Value::Usize(idx))) => {
                             self.action_find_transfer(idx, None);
                             // Reload files
-                            match self.tab {
+                            match self.browser.tab() {
                                 // NOTE: swapped by purpose
                                 FileExplorerTab::FindLocal => self.update_remote_filelist(),
                                 FileExplorerTab::FindRemote => self.update_local_filelist(),
@@ -411,14 +372,14 @@ impl FileTransferActivity {
                 }
                 (COMPONENT_INPUT_COPY, Msg::OnSubmit(Payload::One(Value::Str(input)))) => {
                     // Copy file
-                    match self.tab {
+                    match self.browser.tab() {
                         FileExplorerTab::Local => self.action_local_copy(input.to_string()),
                         FileExplorerTab::Remote => self.action_remote_copy(input.to_string()),
                         _ => panic!("Found tab doesn't support COPY"),
                     }
                     self.umount_copy();
                     // Reload files
-                    match self.tab {
+                    match self.browser.tab() {
                         FileExplorerTab::Local => self.update_local_filelist(),
                         FileExplorerTab::Remote => self.update_remote_filelist(),
                         _ => None,
@@ -431,14 +392,14 @@ impl FileTransferActivity {
                 }
                 (COMPONENT_INPUT_EXEC, Msg::OnSubmit(Payload::One(Value::Str(input)))) => {
                     // Exex command
-                    match self.tab {
+                    match self.browser.tab() {
                         FileExplorerTab::Local => self.action_local_exec(input.to_string()),
                         FileExplorerTab::Remote => self.action_remote_exec(input.to_string()),
                         _ => panic!("Found tab doesn't support EXEC"),
                     }
                     self.umount_exec();
                     // Reload files
-                    match self.tab {
+                    match self.browser.tab() {
                         FileExplorerTab::Local => self.update_local_filelist(),
                         FileExplorerTab::Remote => self.update_remote_filelist(),
                         _ => None,
@@ -452,7 +413,7 @@ impl FileTransferActivity {
                 (COMPONENT_INPUT_FIND, Msg::OnSubmit(Payload::One(Value::Str(input)))) => {
                     self.umount_find_input();
                     // Find
-                    let res: Result<Vec<FsEntry>, String> = match self.tab {
+                    let res: Result<Vec<FsEntry>, String> = match self.browser.tab() {
                         FileExplorerTab::Local => self.action_local_find(input.to_string()),
                         FileExplorerTab::Remote => self.action_remote_find(input.to_string()),
                         _ => panic!("Trying to search for files, while already in a find result"),
@@ -465,18 +426,16 @@ impl FileTransferActivity {
                         }
                         Ok(files) => {
                             // Create explorer and load files
-                            let mut explorer = Self::build_found_explorer();
-                            explorer.set_files(files);
-                            self.found = Some(explorer);
+                            self.browser.set_found(files);
                             // Mount result widget
                             self.mount_find(input);
                             self.update_find_list();
                             // Initialize tab
-                            self.tab = match self.tab {
+                            self.browser.change_tab(match self.browser.tab() {
                                 FileExplorerTab::Local => FileExplorerTab::FindLocal,
                                 FileExplorerTab::Remote => FileExplorerTab::FindRemote,
                                 _ => FileExplorerTab::FindLocal,
-                            };
+                            });
                         }
                     }
                     None
@@ -487,7 +446,7 @@ impl FileTransferActivity {
                     None
                 }
                 (COMPONENT_INPUT_GOTO, Msg::OnSubmit(Payload::One(Value::Str(input)))) => {
-                    match self.tab {
+                    match self.browser.tab() {
                         FileExplorerTab::Local => {
                             self.action_change_local_dir(input.to_string(), false)
                         }
@@ -500,14 +459,14 @@ impl FileTransferActivity {
                     self.umount_goto();
                     // Reload files if sync
                     if self.browser.sync_browsing {
-                        match self.tab {
+                        match self.browser.tab() {
                             FileExplorerTab::Remote => self.update_local_filelist(),
                             FileExplorerTab::Local => self.update_remote_filelist(),
                             _ => None,
                         };
                     }
                     // Reload files
-                    match self.tab {
+                    match self.browser.tab() {
                         FileExplorerTab::Local => self.update_local_filelist(),
                         FileExplorerTab::Remote => self.update_remote_filelist(),
                         _ => None,
@@ -519,14 +478,14 @@ impl FileTransferActivity {
                     None
                 }
                 (COMPONENT_INPUT_MKDIR, Msg::OnSubmit(Payload::One(Value::Str(input)))) => {
-                    match self.tab {
+                    match self.browser.tab() {
                         FileExplorerTab::Local => self.action_local_mkdir(input.to_string()),
                         FileExplorerTab::Remote => self.action_remote_mkdir(input.to_string()),
                         _ => panic!("Found tab doesn't support MKDIR"),
                     }
                     self.umount_mkdir();
                     // Reload files
-                    match self.tab {
+                    match self.browser.tab() {
                         FileExplorerTab::Local => self.update_local_filelist(),
                         FileExplorerTab::Remote => self.update_remote_filelist(),
                         _ => None,
@@ -538,14 +497,14 @@ impl FileTransferActivity {
                     None
                 }
                 (COMPONENT_INPUT_NEWFILE, Msg::OnSubmit(Payload::One(Value::Str(input)))) => {
-                    match self.tab {
+                    match self.browser.tab() {
                         FileExplorerTab::Local => self.action_local_newfile(input.to_string()),
                         FileExplorerTab::Remote => self.action_remote_newfile(input.to_string()),
                         _ => panic!("Found tab doesn't support NEWFILE"),
                     }
                     self.umount_newfile();
                     // Reload files
-                    match self.tab {
+                    match self.browser.tab() {
                         FileExplorerTab::Local => self.update_local_filelist(),
                         FileExplorerTab::Remote => self.update_remote_filelist(),
                         _ => None,
@@ -557,14 +516,14 @@ impl FileTransferActivity {
                     None
                 }
                 (COMPONENT_INPUT_RENAME, Msg::OnSubmit(Payload::One(Value::Str(input)))) => {
-                    match self.tab {
+                    match self.browser.tab() {
                         FileExplorerTab::Local => self.action_local_rename(input.to_string()),
                         FileExplorerTab::Remote => self.action_remote_rename(input.to_string()),
                         _ => panic!("Found tab doesn't support RENAME"),
                     }
                     self.umount_rename();
                     // Reload files
-                    match self.tab {
+                    match self.browser.tab() {
                         FileExplorerTab::Local => self.update_local_filelist(),
                         FileExplorerTab::Remote => self.update_remote_filelist(),
                         _ => None,
@@ -576,7 +535,7 @@ impl FileTransferActivity {
                     None
                 }
                 (COMPONENT_INPUT_SAVEAS, Msg::OnSubmit(Payload::One(Value::Str(input)))) => {
-                    match self.tab {
+                    match self.browser.tab() {
                         FileExplorerTab::Local => self.action_local_saveas(input.to_string()),
                         FileExplorerTab::Remote => self.action_remote_saveas(input.to_string()),
                         FileExplorerTab::FindLocal | FileExplorerTab::FindRemote => {
@@ -590,7 +549,7 @@ impl FileTransferActivity {
                     }
                     self.umount_saveas();
                     // Reload files
-                    match self.tab {
+                    match self.browser.tab() {
                         // NOTE: Swapped is intentional
                         FileExplorerTab::Local => self.update_remote_filelist(),
                         FileExplorerTab::Remote => self.update_local_filelist(),
@@ -612,7 +571,7 @@ impl FileTransferActivity {
                 }
                 (COMPONENT_RADIO_DELETE, Msg::OnSubmit(Payload::One(Value::Usize(0)))) => {
                     // Choice is 'YES'
-                    match self.tab {
+                    match self.browser.tab() {
                         FileExplorerTab::Local => self.action_local_delete(),
                         FileExplorerTab::Remote => self.action_remote_delete(),
                         FileExplorerTab::FindLocal | FileExplorerTab::FindRemote => {
@@ -622,14 +581,14 @@ impl FileTransferActivity {
                             {
                                 self.action_find_delete(idx);
                                 // Reload entries
-                                self.found.as_mut().unwrap().del_entry(idx);
+                                self.found_mut().unwrap().del_entry(idx);
                                 self.update_find_list();
                             }
                         }
                     }
                     self.umount_radio_delete();
                     // Reload files
-                    match self.tab {
+                    match self.browser.tab() {
                         FileExplorerTab::Local => self.update_local_filelist(),
                         FileExplorerTab::Remote => self.update_remote_filelist(),
                         FileExplorerTab::FindLocal => self.update_local_filelist(),
@@ -672,15 +631,15 @@ impl FileTransferActivity {
                         3 => FileSorting::BySize,
                         _ => FileSorting::ByName,
                     };
-                    match self.tab {
-                        FileExplorerTab::Local => self.local.sort_by(sorting),
-                        FileExplorerTab::Remote => self.remote.sort_by(sorting),
+                    match self.browser.tab() {
+                        FileExplorerTab::Local => self.local_mut().sort_by(sorting),
+                        FileExplorerTab::Remote => self.remote_mut().sort_by(sorting),
                         _ => panic!("Found result doesn't support SORTING"),
                     }
                     // Update status bar
                     self.refresh_status_bar();
                     // Reload files
-                    match self.tab {
+                    match self.browser.tab() {
                         FileExplorerTab::Local => self.update_local_filelist(),
                         FileExplorerTab::Remote => self.update_remote_filelist(),
                         _ => None,
@@ -739,16 +698,16 @@ impl FileTransferActivity {
                     "{}:{} ",
                     hostname,
                     FileTransferActivity::elide_wrkdir_path(
-                        self.local.wrkdir.as_path(),
+                        self.local().wrkdir.as_path(),
                         hostname.as_str(),
                         width
                     )
                     .display()
                 );
                 let files: Vec<String> = self
-                    .local
+                    .local()
                     .iter_files()
-                    .map(|x: &FsEntry| self.local.fmt_file(x))
+                    .map(|x: &FsEntry| self.local().fmt_file(x))
                     .collect();
                 // Update
                 let props = FileListPropsBuilder::from(props)
@@ -780,16 +739,16 @@ impl FileTransferActivity {
                     "{}:{} ",
                     params.address,
                     FileTransferActivity::elide_wrkdir_path(
-                        self.remote.wrkdir.as_path(),
+                        self.remote().wrkdir.as_path(),
                         params.address.as_str(),
                         width
                     )
                     .display()
                 );
                 let files: Vec<String> = self
-                    .remote
+                    .remote()
                     .iter_files()
-                    .map(|x: &FsEntry| self.remote.fmt_file(x))
+                    .map(|x: &FsEntry| self.remote().fmt_file(x))
                     .collect();
                 // Update
                 let props = FileListPropsBuilder::from(props)
@@ -807,19 +766,9 @@ impl FileTransferActivity {
     pub(super) fn update_logbox(&mut self) -> Option<(String, Msg)> {
         match self.view.get_props(super::COMPONENT_LOG_BOX) {
             Some(props) => {
-                // Get width
-                let width: usize = self
-                    .context
-                    .as_ref()
-                    .unwrap()
-                    .store
-                    .get_unsigned(super::STORAGE_LOGBOX_WIDTH)
-                    .unwrap_or(256);
                 // Make log entries
                 let mut table: TableBuilder = TableBuilder::default();
                 for (idx, record) in self.log_records.iter().enumerate() {
-                    // Split rows by width  NOTE: -37 'cause log prefix -3 cause of log line cursor
-                    let record_rows = textwrap::wrap(record.msg.as_str(), (width as usize) - 40);
                     // Add row if not first row
                     if idx > 0 {
                         table.add_row();
@@ -829,42 +778,29 @@ impl FileTransferActivity {
                         LogLevel::Warn => Color::Yellow,
                         LogLevel::Info => Color::Green,
                     };
-                    for (idx, row) in record_rows.iter().enumerate() {
-                        match idx {
-                            0 => {
-                                // First row
-                                table
-                                    .add_col(TextSpan::from(format!(
-                                        "{}",
-                                        record.time.format("%Y-%m-%dT%H:%M:%S%Z")
-                                    )))
-                                    .add_col(TextSpan::from(" ["))
-                                    .add_col(
-                                        TextSpanBuilder::new(
-                                            format!(
-                                                "{:5}",
-                                                match record.level {
-                                                    LogLevel::Error => "ERROR",
-                                                    LogLevel::Warn => "WARN",
-                                                    LogLevel::Info => "INFO",
-                                                }
-                                            )
-                                            .as_str(),
-                                        )
-                                        .with_foreground(fg)
-                                        .build(),
-                                    )
-                                    .add_col(TextSpan::from("]: "))
-                                    .add_col(TextSpan::from(row.as_ref()));
-                            }
-                            _ => {
-                                table.add_col(TextSpan::from(textwrap::indent(
-                                    row.as_ref(),
-                                    "                                        ",
-                                )));
-                            }
-                        }
-                    }
+                    table
+                        .add_col(TextSpan::from(format!(
+                            "{}",
+                            record.time.format("%Y-%m-%dT%H:%M:%S%Z")
+                        )))
+                        .add_col(TextSpan::from(" ["))
+                        .add_col(
+                            TextSpanBuilder::new(
+                                format!(
+                                    "{:5}",
+                                    match record.level {
+                                        LogLevel::Error => "ERROR",
+                                        LogLevel::Warn => "WARN",
+                                        LogLevel::Info => "INFO",
+                                    }
+                                )
+                                .as_str(),
+                            )
+                            .with_foreground(fg)
+                            .build(),
+                        )
+                        .add_col(TextSpan::from("]: "))
+                        .add_col(TextSpan::from(record.msg.as_ref()));
                 }
                 let table = table.build();
                 let props = LogboxPropsBuilder::from(props)
@@ -911,13 +847,13 @@ impl FileTransferActivity {
     /// Finalize find process
     fn finalize_find(&mut self) {
         // Set found to none
-        self.found = None;
+        self.browser.del_found();
         // Restore tab
-        self.tab = match self.tab {
+        self.browser.change_tab(match self.browser.tab() {
             FileExplorerTab::FindLocal => FileExplorerTab::Local,
             FileExplorerTab::FindRemote => FileExplorerTab::Remote,
             _ => FileExplorerTab::Local,
-        };
+        });
     }
 
     fn update_find_list(&mut self) -> Option<(String, Msg)> {
@@ -927,11 +863,10 @@ impl FileTransferActivity {
                 let title: String = props.texts.title.clone().unwrap_or_default();
                 // Prepare files
                 let files: Vec<String> = self
-                    .found
-                    .as_ref()
+                    .found()
                     .unwrap()
                     .iter_files()
-                    .map(|x: &FsEntry| self.found.as_ref().unwrap().fmt_file(x))
+                    .map(|x: &FsEntry| self.found().unwrap().fmt_file(x))
                     .collect();
                 let props = FileListPropsBuilder::from(props)
                     .with_files(Some(title), files)

@@ -185,9 +185,8 @@ impl FtpFileTransfer {
                     return Err(());
                 }
                 // Get symlink
-                let symlink: Option<Box<FsEntry>> = match symlink_path {
-                    None => None,
-                    Some(p) => Some(Box::new(match p.to_string_lossy().ends_with('/') {
+                let symlink: Option<Box<FsEntry>> = symlink_path.map(|p| {
+                    Box::new(match p.to_string_lossy().ends_with('/') {
                         true => {
                             // NOTE: is_dir becomes true
                             is_dir = true;
@@ -226,8 +225,8 @@ impl FtpFileTransfer {
                             group: gid,
                             unix_pex: Some(unix_pex),
                         }),
-                    })),
-                };
+                    })
+                });
                 let mut abs_path: PathBuf = PathBuf::from(path);
                 abs_path.push(file_name.as_str());
                 let abs_path: PathBuf = Self::resolve(abs_path.as_path());

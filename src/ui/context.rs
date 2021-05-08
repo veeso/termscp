@@ -33,7 +33,6 @@ extern crate tuirealm;
 use super::input::InputHandler;
 use super::store::Store;
 use crate::filetransfer::FileTransferProtocol;
-use crate::host::Localhost;
 use crate::system::config_client::ConfigClient;
 
 // Includes
@@ -49,7 +48,6 @@ use tuirealm::tui::Terminal;
 ///
 /// Context holds data structures used by the ui
 pub struct Context {
-    pub local: Localhost,
     pub ft_params: Option<FileTransferParams>,
     pub(crate) config_client: Option<ConfigClient>,
     pub(crate) store: Store,
@@ -74,16 +72,11 @@ impl Context {
     /// ### new
     ///
     /// Instantiates a new Context
-    pub fn new(
-        local: Localhost,
-        config_client: Option<ConfigClient>,
-        error: Option<String>,
-    ) -> Context {
+    pub fn new(config_client: Option<ConfigClient>, error: Option<String>) -> Context {
         // Create terminal
         let mut stdout = stdout();
         assert!(execute!(stdout, EnterAlternateScreen).is_ok());
         Context {
-            local,
             ft_params: None,
             config_client,
             store: Store::init(),
@@ -93,14 +86,12 @@ impl Context {
         }
     }
 
-    /* NOTE: in case is necessary
     /// ### set_error
     ///
     /// Set context error
     pub fn set_error(&mut self, err: String) {
         self.error = Some(err);
     }
-    */
 
     /// ### get_error
     ///
@@ -165,7 +156,6 @@ mod tests {
     use super::*;
 
     use pretty_assertions::assert_eq;
-    use std::path::PathBuf;
 
     #[test]
     fn test_ui_context_ft_params() {
@@ -181,15 +171,14 @@ mod tests {
     #[cfg(not(feature = "githubActions"))]
     fn test_ui_context() {
         // Prepare stuff
-        let wrkdir: PathBuf = std::env::current_dir().unwrap_or(PathBuf::from("/"));
-        let mut ctx: Context = Context::new(
-            Localhost::new(wrkdir).ok().unwrap(),
-            None,
-            Some(String::from("alles kaput")),
-        );
+        let mut ctx: Context = Context::new(None, Some(String::from("alles kaput")));
         assert!(ctx.error.is_some());
         assert_eq!(ctx.get_error().unwrap().as_str(), "alles kaput");
         assert!(ctx.error.is_none());
+        assert!(ctx.get_error().is_none());
+        ctx.set_error(String::from("err"));
+        assert!(ctx.error.is_some());
+        assert!(ctx.get_error().is_some());
         assert!(ctx.get_error().is_none());
         // Try other methods
         ctx.enter_alternate_screen();
