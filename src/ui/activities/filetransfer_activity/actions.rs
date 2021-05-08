@@ -327,10 +327,7 @@ impl FileTransferActivity {
 
     pub(super) fn action_remote_rename(&mut self, input: String) {
         if let Some(idx) = self.get_remote_file_idx() {
-            let entry = match self.remote().get(idx) {
-                None => None,
-                Some(e) => Some(e.clone()),
-            };
+            let entry = self.remote().get(idx).cloned();
             if let Some(entry) = entry {
                 let dst_path: PathBuf = PathBuf::from(input);
                 let full_path: PathBuf = entry.get_abs_path();
@@ -390,10 +387,7 @@ impl FileTransferActivity {
     pub(super) fn action_remote_delete(&mut self) {
         if let Some(idx) = self.get_remote_file_idx() {
             // Check if file entry exists
-            let entry = match self.remote().get(idx) {
-                None => None,
-                Some(e) => Some(e.clone()),
-            };
+            let entry = self.remote().get(idx).cloned();
             if let Some(entry) = entry {
                 let full_path: PathBuf = entry.get_abs_path();
                 // Delete file
