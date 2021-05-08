@@ -26,12 +26,12 @@
  * SOFTWARE.
  */
 // This module is split into files, cause it's just too big
-mod actions;
-mod browser;
-mod misc;
-mod session;
-mod update;
-mod view;
+pub(self) mod actions;
+pub(self) mod browser;
+pub(self) mod misc;
+pub(self) mod session;
+pub(self) mod update;
+pub(self) mod view;
 
 // Dependencies
 extern crate chrono;
