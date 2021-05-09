@@ -27,7 +27,7 @@
  */
 // ext
 use tuirealm::components::utils::get_block;
-use tuirealm::event::{Event, KeyCode};
+use tuirealm::event::{Event, KeyCode, KeyModifiers};
 use tuirealm::props::{BordersProps, Props, PropsBuilder, TextParts, TextSpan};
 use tuirealm::tui::{
     layout::{Corner, Rect},
@@ -133,33 +133,34 @@ impl FileListPropsBuilder {
 /// OwnStates contains states for this component
 #[derive(Clone)]
 struct OwnStates {
-    list_index: usize, // Index of selected element in list
-    list_len: usize,   // Length of file list
-    focus: bool,       // Has focus?
+    list_index: usize,    // Index of selected element in list
+    selected: Vec<usize>, // Selected files
+    focus: bool,          // Has focus?
 }
 
 impl Default for OwnStates {
     fn default() -> Self {
         OwnStates {
             list_index: 0,
-            list_len: 0,
+            selected: Vec::new(),
             focus: false,
         }
     }
 }
 
 impl OwnStates {
-    /// ### set_list_len
+    /// ### init_list_states
     ///
-    /// Set list length
-    pub fn set_list_len(&mut self, len: usize) {
-        self.list_len = len;
+    /// Initialize list states
+    pub fn init_list_states(&mut self, len: usize) {
+        self.selected = Vec::with_capacity(len);
+        self.fix_list_index();
     }
 
-    /// ### get_list_index
+    /// ### list_index
     ///
     /// Return current value for list index
-    pub fn get_list_index(&self) -> usize {
+    pub fn list_index(&self) -> usize {
         self.list_index
     }
 
@@ -168,7 +169,7 @@ impl OwnStates {
     /// Incremenet list index
     pub fn incr_list_index(&mut self) {
         // Check if index is at last element
-        if self.list_index + 1 < self.list_len {
+        if self.list_index + 1 < self.list_len() {
             self.list_index += 1;
         }
     }
@@ -183,14 +184,81 @@ impl OwnStates {
         }
     }
 
+    /// ### list_len
+    ///
+    /// Returns the length of the file list, which is actually the capacity of the selection vector
+    pub fn list_len(&self) -> usize {
+        self.selected.capacity()
+    }
+
+    /// ### is_selected
+    ///
+    /// Returns whether the file with index `entry` is selected
+    pub fn is_selected(&self, entry: usize) -> bool {
+        self.selected.contains(&entry)
+    }
+
+    /// ### is_selection_empty
+    ///
+    /// Returns whether the selection is currently empty
+    pub fn is_selection_empty(&self) -> bool {
+        self.selected.is_empty()
+    }
+
+    /// ### get_selection
+    ///
+    /// Returns current file selection
+    pub fn get_selection(&self) -> Vec<usize> {
+        self.selected.clone()
+    }
+
     /// ### fix_list_index
     ///
     /// Keep index if possible, otherwise set to lenght - 1
-    pub fn fix_list_index(&mut self) {
-        if self.list_index >= self.list_len && self.list_len > 0 {
-            self.list_index = self.list_len - 1;
-        } else if self.list_len == 0 {
+    fn fix_list_index(&mut self) {
+        if self.list_index >= self.list_len() && self.list_len() > 0 {
+            self.list_index = self.list_len() - 1;
+        } else if self.list_len() == 0 {
             self.list_index = 0;
+        }
+    }
+
+    // -- select manipulation
+
+    /// ### toggle_file
+    ///
+    /// Select or deselect file with provided entry index
+    pub fn toggle_file(&mut self, entry: usize) {
+        match self.is_selected(entry) {
+            true => self.deselect(entry),
+            false => self.select(entry),
+        }
+    }
+
+    /// ### select_all
+    ///
+    /// Select all files
+    pub fn select_all(&mut self) {
+        for i in 0..self.list_len() {
+            self.select(i);
+        }
+    }
+
+    /// ### select
+    ///
+    /// Select provided index if not selected yet
+    fn select(&mut self, entry: usize) {
+        if !self.is_selected(entry) {
+            self.selected.push(entry);
+        }
+    }
+
+    /// ### deselect
+    ///
+    /// Remove element file with associated index
+    fn deselect(&mut self, entry: usize) {
+        if self.is_selected(entry) {
+            self.selected.retain(|&x| x != entry);
         }
     }
 }
@@ -213,11 +281,8 @@ impl FileList {
     pub fn new(props: Props) -> Self {
         // Initialize states
         let mut states: OwnStates = OwnStates::default();
-        // Set list length
-        states.set_list_len(match &props.texts.spans {
-            Some(tokens) => tokens.len(),
-            None => 0,
-        });
+        // Init list states
+        states.init_list_states(props.texts.spans.as_ref().map(|x| x.len()).unwrap_or(0));
         FileList { props, states }
     }
 }
@@ -231,7 +296,14 @@ impl Component for FileList {
                 None => vec![],
                 Some(lines) => lines
                     .iter()
-                    .map(|line| ListItem::new(Span::from(line.content.to_string())))
+                    .enumerate()
+                    .map(|(num, line)| {
+                        let to_display: String = match self.states.is_selected(num) {
+                            true => format!("*{}", line.content),
+                            false => line.content.to_string(),
+                        };
+                        ListItem::new(Span::from(to_display))
+                    })
                     .collect(),
             };
             let (fg, bg): (Color, Color) = match self.states.focus {
@@ -263,13 +335,15 @@ impl Component for FileList {
 
     fn update(&mut self, props: Props) -> Msg {
         self.props = props;
-        // re-Set list length
-        self.states.set_list_len(match &self.props.texts.spans {
-            Some(tokens) => tokens.len(),
-            None => 0,
-        });
-        // Fix list index
-        self.states.fix_list_index();
+        // re-Set list states
+        self.states.init_list_states(
+            self.props
+                .texts
+                .spans
+                .as_ref()
+                .map(|x| x.len())
+                .unwrap_or(0),
+        );
         Msg::None
     }
 
@@ -305,6 +379,20 @@ impl Component for FileList {
                     }
                     Msg::None
                 }
+                KeyCode::Char('a') => match key.modifiers.intersects(KeyModifiers::CONTROL) {
+                    // CTRL+C
+                    true => {
+                        // Select all
+                        self.states.select_all();
+                        Msg::None
+                    }
+                    false => Msg::None,
+                },
+                KeyCode::Char('m') => {
+                    // Toggle current file in selection
+                    self.states.toggle_file(self.states.list_index());
+                    Msg::None
+                }
                 KeyCode::Enter => {
                     // Report event
                     Msg::OnSubmit(self.get_state())
@@ -320,8 +408,22 @@ impl Component for FileList {
         }
     }
 
+    /// ### get_state
+    ///
+    /// Get state returns for this component two different payloads based on the states:
+    /// - if the file selection is empty, returns the highlighted item as `One` of `Usize`
+    /// - if at least one item is selected, return the selected as a `Vec` of `Usize`
     fn get_state(&self) -> Payload {
-        Payload::One(Value::Usize(self.states.get_list_index()))
+        match self.states.is_selection_empty() {
+            true => Payload::One(Value::Usize(self.states.list_index())),
+            false => Payload::Vec(
+                self.states
+                    .get_selection()
+                    .into_iter()
+                    .map(Value::Usize)
+                    .collect(),
+            ),
+        }
     }
 
     // -- events
@@ -350,6 +452,72 @@ mod tests {
     use tuirealm::event::KeyEvent;
 
     #[test]
+    fn test_ui_components_file_list_states() {
+        let mut states: OwnStates = OwnStates::default();
+        assert_eq!(states.list_len(), 0);
+        assert_eq!(states.selected.len(), 0);
+        assert_eq!(states.focus, false);
+        // Init states
+        states.init_list_states(4);
+        assert_eq!(states.list_len(), 4);
+        assert_eq!(states.selected.len(), 0);
+        assert!(states.is_selection_empty());
+        // Select all files
+        states.select_all();
+        assert_eq!(states.list_len(), 4);
+        assert_eq!(states.selected.len(), 4);
+        assert_eq!(states.is_selection_empty(), false);
+        assert_eq!(states.get_selection(), vec![0, 1, 2, 3]);
+        // Verify reset
+        states.init_list_states(5);
+        assert_eq!(states.list_len(), 5);
+        assert_eq!(states.selected.len(), 0);
+        // Toggle file
+        states.toggle_file(2);
+        assert_eq!(states.list_len(), 5);
+        assert_eq!(states.selected.len(), 1);
+        assert_eq!(states.selected[0], 2);
+        states.toggle_file(4);
+        assert_eq!(states.list_len(), 5);
+        assert_eq!(states.selected.len(), 2);
+        assert_eq!(states.selected[1], 4);
+        states.toggle_file(2);
+        assert_eq!(states.list_len(), 5);
+        assert_eq!(states.selected.len(), 1);
+        assert_eq!(states.selected[0], 4);
+        // Select twice (nothing should change)
+        states.select(4);
+        assert_eq!(states.list_len(), 5);
+        assert_eq!(states.selected.len(), 1);
+        assert_eq!(states.selected[0], 4);
+        // Deselect not-selectd item
+        states.deselect(2);
+        assert_eq!(states.list_len(), 5);
+        assert_eq!(states.selected.len(), 1);
+        assert_eq!(states.selected[0], 4);
+        // Index
+        states.init_list_states(2);
+        states.incr_list_index();
+        assert_eq!(states.list_index(), 1);
+        states.incr_list_index();
+        assert_eq!(states.list_index(), 1);
+        states.decr_list_index();
+        assert_eq!(states.list_index(), 0);
+        states.decr_list_index();
+        assert_eq!(states.list_index(), 0);
+        // Try fixing index
+        states.init_list_states(5);
+        states.list_index = 4;
+        states.init_list_states(3);
+        assert_eq!(states.list_index(), 2);
+        states.init_list_states(6);
+        assert_eq!(states.list_index(), 2);
+        // Focus
+        states.focus = true;
+        assert_eq!(states.focus, true);
+    }
+
+    #[test]
     fn test_ui_components_file_list() {
         // Make component
         let mut component: FileList = FileList::new(
@@ -375,7 +543,9 @@ mod tests {
         assert_eq!(component.props.texts.spans.as_ref().unwrap().len(), 2);
         // Verify states
         assert_eq!(component.states.list_index, 0);
-        assert_eq!(component.states.list_len, 2);
+        assert_eq!(component.states.selected.len(), 0);
+        assert_eq!(component.states.list_len(), 2);
+        assert_eq!(component.states.selected.capacity(), 2);
         assert_eq!(component.states.focus, false);
         // Focus
         component.active();
@@ -408,7 +578,7 @@ mod tests {
         );
         // Verify states
         assert_eq!(component.states.list_index, 1); // Kept
-        assert_eq!(component.states.list_len, 3);
+        assert_eq!(component.states.list_len(), 3);
         // get value
         assert_eq!(component.get_state(), Payload::One(Value::Usize(1)));
         // Render
@@ -451,5 +621,85 @@ mod tests {
             component.on(Event::Key(KeyEvent::from(KeyCode::Backspace))),
             Msg::OnKey(KeyEvent::from(KeyCode::Backspace))
         );
+    }
+
+    #[test]
+    fn test_ui_components_file_list_selection() {
+        // Make component
+        let mut component: FileList = FileList::new(
+            FileListPropsBuilder::default()
+                .with_files(
+                    Some(String::from("files")),
+                    vec![
+                        String::from("file1"),
+                        String::from("file2"),
+                        String::from("file3"),
+                    ],
+                )
+                .build(),
+        );
+        // Get state
+        assert_eq!(component.get_state(), Payload::One(Value::Usize(0)));
+        // Select one
+        assert_eq!(
+            component.on(Event::Key(KeyEvent::from(KeyCode::Char('m')))),
+            Msg::None
+        );
+        // Now should be a vec
+        assert_eq!(component.get_state(), Payload::Vec(vec![Value::Usize(0)]));
+        // De-select
+        assert_eq!(
+            component.on(Event::Key(KeyEvent::from(KeyCode::Char('m')))),
+            Msg::None
+        );
+        assert_eq!(component.get_state(), Payload::One(Value::Usize(0)));
+        // Go down
+        assert_eq!(
+            component.on(Event::Key(KeyEvent::from(KeyCode::Down))),
+            Msg::None
+        );
+        // Select
+        assert_eq!(
+            component.on(Event::Key(KeyEvent::from(KeyCode::Char('m')))),
+            Msg::None
+        );
+        assert_eq!(component.get_state(), Payload::Vec(vec![Value::Usize(1)]));
+        // Go down and select
+        assert_eq!(
+            component.on(Event::Key(KeyEvent::from(KeyCode::Down))),
+            Msg::None
+        );
+        assert_eq!(
+            component.on(Event::Key(KeyEvent::from(KeyCode::Char('m')))),
+            Msg::None
+        );
+        assert_eq!(
+            component.get_state(),
+            Payload::Vec(vec![Value::Usize(1), Value::Usize(2)])
+        );
+        // Select all
+        assert_eq!(
+            component.on(Event::Key(KeyEvent {
+                code: KeyCode::Char('a'),
+                modifiers: KeyModifiers::CONTROL,
+            })),
+            Msg::None
+        );
+        // All selected
+        assert_eq!(
+            component.get_state(),
+            Payload::Vec(vec![Value::Usize(1), Value::Usize(2), Value::Usize(0)])
+        );
+        // Update files
+        component.update(
+            FileListPropsBuilder::from(component.get_props())
+                .with_files(
+                    Some(String::from("filelist")),
+                    vec![String::from("file1"), String::from("file2")],
+                )
+                .build(),
+        );
+        // Selection should now be empty
+        assert_eq!(component.get_state(), Payload::One(Value::Usize(1)));
     }
 }
