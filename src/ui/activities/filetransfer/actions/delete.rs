@@ -28,9 +28,21 @@
 // locals
 use super::{FileTransferActivity, FsEntry, LogLevel};
 use std::path::PathBuf;
+use tuirealm::{Payload, Value};
 
 impl FileTransferActivity {
     pub(crate) fn action_local_delete(&mut self) {
+        // Get selection
+        let selection: Vec<usize> = match self.get_local_file_state() {
+            Some(Payload::One(Value::Usize(idx))) => vec![idx],
+            Some(Payload::Vec(list)) => list.into_iter().map(|x| {
+                match x {
+                    Value::Usize(x) => x,
+                    _ => panic!("File selection contains non-usize value"),
+                }
+            }),
+
+        }
         let entry: Option<FsEntry> = self.get_local_file_entry().cloned();
         if let Some(entry) = entry {
             let full_path: PathBuf = entry.get_abs_path();
@@ -57,7 +69,7 @@ impl FileTransferActivity {
     }
 
     pub(crate) fn action_remote_delete(&mut self) {
-        if let Some(idx) = self.get_remote_file_idx() {
+        if let Some(idx) = self.get_remote_file_state() {
             // Check if file entry exists
             let entry = self.remote().get(idx).cloned();
             if let Some(entry) = entry {

@@ -45,9 +45,9 @@ impl FileTransferActivity {
     ///
     /// Get local file entry
     pub(crate) fn get_local_file_entry(&self) -> Option<&FsEntry> {
-        match self.get_local_file_idx() {
-            None => None,
-            Some(idx) => self.local().get(idx),
+        match self.get_local_file_state() {
+            Some(Payload::One(Value::Usize(idx))) => self.local().get(idx),
+            _ => None,
         }
     }
 
@@ -55,31 +55,25 @@ impl FileTransferActivity {
     ///
     /// Get remote file entry
     pub(crate) fn get_remote_file_entry(&self) -> Option<&FsEntry> {
-        match self.get_remote_file_idx() {
-            None => None,
-            Some(idx) => self.remote().get(idx),
+        match self.get_remote_file_state() {
+            Some(Payload::One(Value::Usize(idx))) => self.remote().get(idx),
+            _ => None,
         }
     }
 
     // -- private
 
-    /// ### get_local_file_idx
+    /// ### get_local_file_state
     ///
     /// Get index of selected file in the local tab
-    fn get_local_file_idx(&self) -> Option<usize> {
-        match self.view.get_state(super::COMPONENT_EXPLORER_LOCAL) {
-            Some(Payload::One(Value::Usize(idx))) => Some(idx),
-            _ => None,
-        }
+    fn get_local_file_state(&self) -> Option<Payload> {
+        self.view.get_state(super::COMPONENT_EXPLORER_LOCAL)
     }
 
-    /// ### get_remote_file_idx
+    /// ### get_remote_file_state
     ///
     /// Get index of selected file in the remote file
-    fn get_remote_file_idx(&self) -> Option<usize> {
-        match self.view.get_state(super::COMPONENT_EXPLORER_REMOTE) {
-            Some(Payload::One(Value::Usize(idx))) => Some(idx),
-            _ => None,
-        }
+    fn get_remote_file_state(&self) -> Option<Payload> {
+        self.view.get_state(super::COMPONENT_EXPLORER_REMOTE)
     }
 }

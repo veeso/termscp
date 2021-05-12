@@ -68,7 +68,7 @@ impl FileTransferActivity {
     }
 
     pub(crate) fn action_remote_rename(&mut self, input: String) {
-        if let Some(idx) = self.get_remote_file_idx() {
+        if let Some(idx) = self.get_remote_file_state() {
             let entry = self.remote().get(idx).cloned();
             if let Some(entry) = entry {
                 let dst_path: PathBuf = PathBuf::from(input);

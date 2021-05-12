@@ -380,7 +380,7 @@ impl Component for FileList {
                     Msg::None
                 }
                 KeyCode::Char('a') => match key.modifiers.intersects(KeyModifiers::CONTROL) {
-                    // CTRL+C
+                    // CTRL+A
                     true => {
                         // Select all
                         self.states.select_all();

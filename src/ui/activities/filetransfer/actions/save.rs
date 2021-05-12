@@ -31,7 +31,7 @@ use std::path::PathBuf;
 
 impl FileTransferActivity {
     pub(crate) fn action_local_saveas(&mut self, input: String) {
-        if let Some(idx) = self.get_local_file_idx() {
+        if let Some(idx) = self.get_local_file_state() {
             // Get pwd
             let wrkdir: PathBuf = self.remote().wrkdir.clone();
             if self.local().get(idx).is_some() {
@@ -43,7 +43,7 @@ impl FileTransferActivity {
     }
 
     pub(crate) fn action_remote_saveas(&mut self, input: String) {
-        if let Some(idx) = self.get_remote_file_idx() {
+        if let Some(idx) = self.get_remote_file_state() {
             // Get pwd
             let wrkdir: PathBuf = self.local().wrkdir.clone();
             if self.remote().get(idx).is_some() {
