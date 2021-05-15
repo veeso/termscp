@@ -26,51 +26,54 @@
  * SOFTWARE.
  */
 // locals
-use super::{FileTransferActivity, FsEntry, LogLevel};
-use std::path::PathBuf;
+use super::{FileTransferActivity, FsEntry, LogLevel, SelectedEntry};
 
 impl FileTransferActivity {
     pub(crate) fn action_edit_local_file(&mut self) {
-        if self.get_local_file_entry().is_some() {
-            let fsentry: FsEntry = self.get_local_file_entry().unwrap().clone();
+        let entries: Vec<FsEntry> = match self.get_local_selected_entries() {
+            SelectedEntry::One(entry) => vec![entry],
+            SelectedEntry::Many(entries) => entries,
+            SelectedEntry::None => vec![],
+        };
+        // Edit all entries
+        for entry in entries.iter() {
             // Check if file
-            if fsentry.is_file() {
+            if entry.is_file() {
                 self.log(
                     LogLevel::Info,
-                    format!("Opening file \"{}\"...", fsentry.get_abs_path().display()),
+                    format!("Opening file \"{}\"...", entry.get_abs_path().display()),
                 );
                 // Edit file
-                match self.edit_local_file(fsentry.get_abs_path().as_path()) {
-                    Ok(_) => {
-                        // Reload directory
-                        let pwd: PathBuf = self.local().wrkdir.clone();
-                        self.local_scan(pwd.as_path());
-                    }
-                    Err(err) => self.log_and_alert(LogLevel::Error, err),
+                if let Err(err) = self.edit_local_file(entry.get_abs_path().as_path()) {
+                    self.log_and_alert(LogLevel::Error, err);
                 }
             }
         }
+        // Reload entries
+        self.reload_local_dir();
     }
 
     pub(crate) fn action_edit_remote_file(&mut self) {
-        if self.get_remote_file_entry().is_some() {
-            let fsentry: FsEntry = self.get_remote_file_entry().unwrap().clone();
+        let entries: Vec<FsEntry> = match self.get_remote_selected_entries() {
+            SelectedEntry::One(entry) => vec![entry],
+            SelectedEntry::Many(entries) => entries,
+            SelectedEntry::None => vec![],
+        };
+        // Edit all entries
+        for entry in entries.iter() {
             // Check if file
-            if let FsEntry::File(file) = fsentry.clone() {
+            if let FsEntry::File(file) = entry {
                 self.log(
                     LogLevel::Info,
-                    format!("Opening file \"{}\"...", fsentry.get_abs_path().display()),
+                    format!("Opening file \"{}\"...", entry.get_abs_path().display()),
                 );
                 // Edit file
-                match self.edit_remote_file(&file) {
-                    Ok(_) => {
-                        // Reload directory
-                        let pwd: PathBuf = self.remote().wrkdir.clone();
-                        self.remote_scan(pwd.as_path());
-                    }
-                    Err(err) => self.log_and_alert(LogLevel::Error, err),
+                if let Err(err) = self.edit_remote_file(&file) {
+                    self.log_and_alert(LogLevel::Error, err);
                 }
             }
         }
+        // Reload entries
+        self.reload_remote_dir();
     }
 }

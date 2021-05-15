@@ -4,7 +4,10 @@
   - [Usage ❓](#usage-)
     - [Address argument 🌎](#address-argument-)
       - [How Password can be provided 🔐](#how-password-can-be-provided-)
-  - [Keybindings ⌨](#keybindings-)
+  - [File explorer 📂](#file-explorer-)
+    - [Keybindings ⌨](#keybindings-)
+    - [Work on multiple files 🥷](#work-on-multiple-files-)
+    - [Synchronized browsing ⏲️](#synchronized-browsing-️)
   - [Bookmarks ⭐](#bookmarks-)
     - [Are my passwords Safe 😈](#are-my-passwords-safe-)
   - [Configuration ⚙️](#configuration-️)
@@ -76,7 +79,18 @@ Password can be basically provided through 3 ways when address argument is provi
 
 ---
 
-## Keybindings ⌨
+## File explorer 📂
+
+When we refer to file explorers in termscp, we refer to the panels you can see after establishing a connection with the remote.
+These panels are basically 3 (yes, three actually):
+
+- Local explorer panel: it is displayed on the left of your screen and shows the current directory entries for localhost
+- Remote explorer panel: it is displayed on the right of your screen and shows the current directory entries for the remote host.
+- Find results panel: depending on where you're searching for files (local/remote) it will replace the local or the explorer panel. This panel shows the entries matching the search query you performed.
+
+In order to change panel you need to type `<LEFT>` to move the remote explorer panel and `<RIGHT>` to move back to the local explorer panel. Whenever you are in the find results panel, you need to press `<ESC>` to exit panel and go back to the previous panel.
+
+### Keybindings ⌨
 
 | Key           | Command                                               | Reminder    |
 |---------------|-------------------------------------------------------|-------------|
@@ -100,7 +114,8 @@ Password can be basically provided through 3 ways when address argument is provi
 | `<G>`         | Go to supplied path                                   | Go to       |
 | `<H>`         | Show help                                             | Help        |
 | `<I>`         | Show info about selected file or directory            | Info        |
-| `<L>`         | Reload current directory's content                    | List        |
+| `<L>`         | Reload current directory's content / Clear selection  | List        |
+| `<M>`         | Select a file                                         | Mark         |
 | `<N>`         | Create new file with provided name                    | New         |
 | `<O>`         | Edit file; see [Text editor](#text-editor-)           | Open        |
 | `<Q>`         | Quit termscp                                          | Quit        |
@@ -110,7 +125,27 @@ Password can be basically provided through 3 ways when address argument is provi
 | `<X>`         | Execute a command                                     | eXecute     |
 | `<Y>`         | Toggle synchronized browsing                          | sYnc        |
 | `<DEL>`       | Delete file                                           |             |
+| `<CTRL+A>`    | Select all files                                      |             |
 | `<CTRL+C>`    | Abort file transfer process                           |             |
+
+### Work on multiple files 🥷
+
+You can opt to work on multiple files, selecting them pressing `<M>`, in order to select the current file, or pressing `<CTRL+A>`, which will select all the files in the working directory.
+Once a file is marked for selection, it will be displayed with a `*` on the left.
+When working on selection, only selected file will be processed for actions, while the current highlighted item will be ignored.
+It is possible to work on multiple files also when in the find result panel.
+All the actions are available when working with multiple files, but be aware that some actions work in a slightly different way. Let's dive in:
+
+- *Copy*: whenever you copy a file, you'll be prompted to insert the destination name. When working with multiple file, this name refers to the destination directory where all these files will be copied.
+- *Rename*: same as copy, but will move files there.
+- *Save as*: same as copy, but will write them there.
+
+### Synchronized browsing ⏲️
+
+When enabled, synchronized browsing, will allow you to synchronize the navigation between the two panels.
+This means that whenever you'll change the working directory on one panel, the same action will be reproduced on the other panel. If you want to enable synchronized browsing just press `<Y>`; press twice to disable. While enabled, the synchronized browising state will be reported on the status bar on `ON`.
+
+*Warning*: at the moment, whenever you try to access an unexisting directory, you won't be prompted to create it. This might change in a future update.
 
 ---
 

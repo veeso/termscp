@@ -26,41 +26,34 @@
  * SOFTWARE.
  */
 // locals
-use super::{FileTransferActivity, FsEntry, LogLevel};
-use std::path::PathBuf;
+use super::{FileTransferActivity, FsEntry, LogLevel, SelectedEntry};
+use std::path::{Path, PathBuf};
 
 impl FileTransferActivity {
     /// ### action_local_copy
     ///
     /// Copy file on local
     pub(crate) fn action_local_copy(&mut self, input: String) {
-        if let Some(idx) = self.get_local_file_idx() {
-            let dest_path: PathBuf = PathBuf::from(input);
-            let entry: FsEntry = self.local().get(idx).unwrap().clone();
-            match self.host.copy(&entry, dest_path.as_path()) {
-                Ok(_) => {
-                    self.log(
-                        LogLevel::Info,
-                        format!(
-                            "Copied \"{}\" to \"{}\"",
-                            entry.get_abs_path().display(),
-                            dest_path.display()
-                        ),
-                    );
-                    // Reload entries
-                    let wrkdir: PathBuf = self.local().wrkdir.clone();
-                    self.local_scan(wrkdir.as_path());
-                }
-                Err(err) => self.log_and_alert(
-                    LogLevel::Error,
-                    format!(
-                        "Could not copy \"{}\" to \"{}\": {}",
-                        entry.get_abs_path().display(),
-                        dest_path.display(),
-                        err
-                    ),
-                ),
+        match self.get_local_selected_entries() {
+            SelectedEntry::One(entry) => {
+                let dest_path: PathBuf = PathBuf::from(input);
+                self.local_copy_file(&entry, dest_path.as_path());
+                // Reload entries
+                self.reload_local_dir();
             }
+            SelectedEntry::Many(entries) => {
+                // Try to copy each file to Input/{FILE_NAME}
+                let base_path: PathBuf = PathBuf::from(input);
+                // Iter files
+                for entry in entries.iter() {
+                    let mut dest_path: PathBuf = base_path.clone();
+                    dest_path.push(entry.get_name());
+                    self.local_copy_file(entry, dest_path.as_path());
+                }
+                // Reload entries
+                self.reload_local_dir();
+            }
+            SelectedEntry::None => {}
         }
     }
 
@@ -68,31 +61,74 @@ impl FileTransferActivity {
     ///
     /// Copy file on remote
     pub(crate) fn action_remote_copy(&mut self, input: String) {
-        if let Some(idx) = self.get_remote_file_idx() {
-            let dest_path: PathBuf = PathBuf::from(input);
-            let entry: FsEntry = self.remote().get(idx).unwrap().clone();
-            match self.client.as_mut().copy(&entry, dest_path.as_path()) {
-                Ok(_) => {
-                    self.log(
-                        LogLevel::Info,
-                        format!(
-                            "Copied \"{}\" to \"{}\"",
-                            entry.get_abs_path().display(),
-                            dest_path.display()
-                        ),
-                    );
-                    self.reload_remote_dir();
-                }
-                Err(err) => self.log_and_alert(
-                    LogLevel::Error,
-                    format!(
-                        "Could not copy \"{}\" to \"{}\": {}",
-                        entry.get_abs_path().display(),
-                        dest_path.display(),
-                        err
-                    ),
-                ),
+        match self.get_remote_selected_entries() {
+            SelectedEntry::One(entry) => {
+                let dest_path: PathBuf = PathBuf::from(input);
+                self.remote_copy_file(&entry, dest_path.as_path());
+                // Reload entries
+                self.reload_remote_dir();
             }
+            SelectedEntry::Many(entries) => {
+                // Try to copy each file to Input/{FILE_NAME}
+                let base_path: PathBuf = PathBuf::from(input);
+                // Iter files
+                for entry in entries.iter() {
+                    let mut dest_path: PathBuf = base_path.clone();
+                    dest_path.push(entry.get_name());
+                    self.remote_copy_file(entry, dest_path.as_path());
+                }
+                // Reload entries
+                self.reload_remote_dir();
+            }
+            SelectedEntry::None => {}
+        }
+    }
+
+    fn local_copy_file(&mut self, entry: &FsEntry, dest: &Path) {
+        match self.host.copy(entry, dest) {
+            Ok(_) => {
+                self.log(
+                    LogLevel::Info,
+                    format!(
+                        "Copied \"{}\" to \"{}\"",
+                        entry.get_abs_path().display(),
+                        dest.display()
+                    ),
+                );
+            }
+            Err(err) => self.log_and_alert(
+                LogLevel::Error,
+                format!(
+                    "Could not copy \"{}\" to \"{}\": {}",
+                    entry.get_abs_path().display(),
+                    dest.display(),
+                    err
+                ),
+            ),
+        }
+    }
+
+    fn remote_copy_file(&mut self, entry: &FsEntry, dest: &Path) {
+        match self.client.as_mut().copy(entry, dest) {
+            Ok(_) => {
+                self.log(
+                    LogLevel::Info,
+                    format!(
+                        "Copied \"{}\" to \"{}\"",
+                        entry.get_abs_path().display(),
+                        dest.display()
+                    ),
+                );
+            }
+            Err(err) => self.log_and_alert(
+                LogLevel::Error,
+                format!(
+                    "Could not copy \"{}\" to \"{}\": {}",
+                    entry.get_abs_path().display(),
+                    dest.display(),
+                    err
+                ),
+            ),
         }
     }
 }

@@ -145,6 +145,11 @@ impl FileTransferActivity {
         }
     }
 
+    pub(super) fn reload_local_dir(&mut self) {
+        let wrkdir: PathBuf = self.local().wrkdir.clone();
+        self.local_scan(wrkdir.as_path());
+    }
+
     /// ### filetransfer_send
     ///
     /// Send fs entry to remote.
@@ -257,8 +262,7 @@ impl FileTransferActivity {
             }
         }
         // Scan dir on remote
-        let path: PathBuf = self.remote().wrkdir.clone();
-        self.remote_scan(path.as_path());
+        self.reload_remote_dir();
         // If aborted; show popup
         if self.transfer.aborted {
             // Log abort

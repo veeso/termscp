@@ -59,8 +59,7 @@ impl FileTransferActivity {
             );
         }
         // Reload files
-        let path: PathBuf = self.local().wrkdir.clone();
-        self.local_scan(path.as_path());
+        self.reload_local_dir();
     }
 
     pub(crate) fn action_remote_newfile(&mut self, input: String) {
@@ -119,8 +118,7 @@ impl FileTransferActivity {
                                 );
                             }
                             // Reload files
-                            let path: PathBuf = self.remote().wrkdir.clone();
-                            self.remote_scan(path.as_path());
+                            self.reload_remote_dir();
                         }
                     }
                 }

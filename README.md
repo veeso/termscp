@@ -184,8 +184,6 @@ The developer documentation can be found on Rust Docs at <https://docs.rs/termsc
 
 - **Themes provider 🎨**: I'm still thinking about how I will implement this, but basically the idea is to have a configuration file where it will be possible
     to define the color schema for the entire application. I haven't planned this release yet
-- **Synchronized browsing of local and remote directories ⌚**: See [Issue 8](https://github.com/veeso/termscp/issues/8)
-- **Group file select 🤩**: Possibility to select a group of files in explorers to operate on
 
 No other new feature is planned at the moment. I actually think that termscp is getting mature and now I should focus upcoming updates more on bug fixing and code/performance improvements than on new features.
 Anyway there are some ideas which I'd like to implement. If you want to start working on them, feel free to open a PR:

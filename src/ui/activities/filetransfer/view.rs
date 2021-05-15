@@ -976,6 +976,14 @@ impl FileTransferActivity {
                             .add_col(TextSpan::from("             Reload directory content"))
                             .add_row()
                             .add_col(
+                                TextSpanBuilder::new("<M>")
+                                    .bold()
+                                    .with_foreground(Color::Cyan)
+                                    .build(),
+                            )
+                            .add_col(TextSpan::from("             Select file"))
+                            .add_row()
+                            .add_col(
                                 TextSpanBuilder::new("<N>")
                                     .bold()
                                     .with_foreground(Color::Cyan)
@@ -1046,6 +1054,14 @@ impl FileTransferActivity {
                                     .build(),
                             )
                             .add_col(TextSpan::from("         Delete selected file"))
+                            .add_row()
+                            .add_col(
+                                TextSpanBuilder::new("<CTRL+A>")
+                                    .bold()
+                                    .with_foreground(Color::Cyan)
+                                    .build(),
+                            )
+                            .add_col(TextSpan::from("        Select all files"))
                             .add_row()
                             .add_col(
                                 TextSpanBuilder::new("<CTRL+C>")
