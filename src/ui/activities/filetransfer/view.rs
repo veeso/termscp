@@ -456,7 +456,7 @@ impl FileTransferActivity {
             Box::new(Input::new(
                 InputPropsBuilder::default()
                     .with_borders(Borders::ALL, BorderType::Rounded, Color::White)
-                    .with_label(String::from("Insert destination name"))
+                    .with_label(String::from("Copy file(s) to..."))
                     .build(),
             )),
         );
@@ -586,7 +586,7 @@ impl FileTransferActivity {
             Box::new(Input::new(
                 InputPropsBuilder::default()
                     .with_borders(Borders::ALL, BorderType::Rounded, Color::White)
-                    .with_label(String::from("Insert new name"))
+                    .with_label(String::from("Move file(s) to..."))
                     .build(),
             )),
         );

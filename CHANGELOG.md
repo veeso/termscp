@@ -33,13 +33,17 @@ Released on FIXME: ??
   - Select a file with `<M>`, the file when selected will have a `*` prepended to its name
   - Select all files in the current directory with `<CTRL+A>`
   - Read more on manual: [Work on multiple files](docs/man.md#Work-on-multiple-files-)
+- **File transfer changes**
+  - *SFTP*
+    - Added **COPY** command to SFTP (Please note that Copy command is not supported by SFTP natively, so here it just uses the `cp` shell command as it does in SCP).
+  - *FTP*
+    - Added support for file copy (achieved through *tricky-copy*: the file is first downloaded, then uploaded with a different file name)
 - Enhancements
   - Added a status bar in the file explorer showing whether the sync browser is enabled and which file sorting mode is selected
   - Removed the goold old figlet title
   - Protocol input as first field in UI
   - Port is now updated to standard for selected protocol
     - when you change the protocol in the authentication form and the current port is standard (`< 1024`), the port will be automatically changed to default value for the selected protocol (e.g. current port: `123`, protocol is changes to `FTP`, port becomes `21`)
-    - Added **COPY** command to SFTP (Please note that Copy command is not supported by SFTP natively, so here it just uses the `cp` shell command as it does in SCP).
 - Bugfix:
   - Fixed wrong text wrap in log box
   - Fixed error message not being shown after an upload failure

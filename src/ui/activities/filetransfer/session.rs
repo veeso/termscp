@@ -899,4 +899,110 @@ impl FileTransferActivity {
         }
         Ok(())
     }
+
+    /// ### tricky_copy
+    ///
+    /// Tricky copy will be used whenever copy command is not available on remote host
+    pub(super) fn tricky_copy(&mut self, entry: &FsEntry, dest: &Path) {
+        // match entry
+        match entry {
+            FsEntry::File(entry) => {
+                // Create tempfile
+                let tmpfile: tempfile::NamedTempFile = match tempfile::NamedTempFile::new() {
+                    Ok(f) => f,
+                    Err(err) => {
+                        self.log_and_alert(
+                            LogLevel::Error,
+                            format!("Copy failed: could not create temporary file: {}", err),
+                        );
+                        return;
+                    }
+                };
+                // Download file
+                if let Err(err) =
+                    self.filetransfer_recv_file(tmpfile.path(), entry, entry.name.clone())
+                {
+                    self.log_and_alert(
+                        LogLevel::Error,
+                        format!("Copy failed: could not download to temporary file: {}", err),
+                    );
+                    return;
+                }
+                // Get local fs entry
+                let tmpfile_entry: FsEntry = match self.host.stat(tmpfile.path()) {
+                    Ok(e) => e,
+                    Err(err) => {
+                        self.log_and_alert(
+                            LogLevel::Error,
+                            format!(
+                                "Copy failed: could not stat \"{}\": {}",
+                                tmpfile.path().display(),
+                                err
+                            ),
+                        );
+                        return;
+                    }
+                };
+                let tmpfile_entry = match &tmpfile_entry {
+                    FsEntry::Directory(_) => panic!("tempfile is a directory for some reason"),
+                    FsEntry::File(f) => f,
+                };
+                // Upload file to destination
+                if let Err(err) = self.filetransfer_send_file(
+                    tmpfile_entry,
+                    dest,
+                    String::from(dest.to_string_lossy()),
+                ) {
+                    self.log_and_alert(
+                        LogLevel::Error,
+                        format!(
+                            "Copy failed: could not write file {}: {}",
+                            entry.abs_path.display(),
+                            err
+                        ),
+                    );
+                    return;
+                }
+            }
+            FsEntry::Directory(_) => {
+                let tempdir: tempfile::TempDir = match tempfile::TempDir::new() {
+                    Ok(d) => d,
+                    Err(err) => {
+                        self.log_and_alert(
+                            LogLevel::Error,
+                            format!("Copy failed: could not create temporary directory: {}", err),
+                        );
+                        return;
+                    }
+                };
+                // Download file
+                self.filetransfer_recv(entry, tempdir.path(), None);
+                // Get path of dest
+                let mut tempdir_path: PathBuf = tempdir.path().to_path_buf();
+                tempdir_path.push(entry.get_name());
+                // Stat dir
+                let tempdir_entry: FsEntry = match self.host.stat(tempdir_path.as_path()) {
+                    Ok(e) => e,
+                    Err(err) => {
+                        self.log_and_alert(
+                            LogLevel::Error,
+                            format!(
+                                "Copy failed: could not stat \"{}\": {}",
+                                tempdir.path().display(),
+                                err
+                            ),
+                        );
+                        return;
+                    }
+                };
+                // Upload to destination
+                let wrkdir: PathBuf = self.remote().wrkdir.clone();
+                self.filetransfer_send(
+                    &tempdir_entry,
+                    wrkdir.as_path(),
+                    Some(String::from(dest.to_string_lossy())),
+                );
+            }
+        }
+    }
 }

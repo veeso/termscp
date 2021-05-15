@@ -59,11 +59,19 @@ pub struct FileTransferError {
     msg: Option<String>,
 }
 
+impl FileTransferError {
+    /// ### kind
+    ///
+    /// Returns the error kind
+    pub fn kind(&self) -> FileTransferErrorType {
+        self.code
+    }
+}
+
 /// ## FileTransferErrorType
 ///
 /// FileTransferErrorType defines the possible errors available for a file transfer
-#[allow(dead_code)]
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Clone, Copy, PartialEq)]
 pub enum FileTransferErrorType {
     #[error("Authentication failed")]
     AuthenticationFailed,
@@ -77,8 +85,6 @@ pub enum FileTransferErrorType {
     DirStatFailed,
     #[error("Failed to create file")]
     FileCreateDenied,
-    #[error("IO error: {0}")]
-    IoErr(std::io::Error),
     #[error("No such file or directory")]
     NoSuchFileOrDirectory,
     #[error("Not enough permissions")]
@@ -397,13 +403,13 @@ mod tests {
     #[test]
     fn test_filetransfer_mod_error() {
         let err: FileTransferError = FileTransferError::new_ex(
-            FileTransferErrorType::IoErr(std::io::Error::from(std::io::ErrorKind::AddrInUse)),
+            FileTransferErrorType::NoSuchFileOrDirectory,
             String::from("non va una mazza"),
         );
         assert_eq!(*err.msg.as_ref().unwrap(), String::from("non va una mazza"));
         assert_eq!(
             format!("{}", err),
-            String::from("IO error: address in use (non va una mazza)")
+            String::from("No such file or directory (non va una mazza)")
         );
         assert_eq!(
             format!(
@@ -482,5 +488,7 @@ mod tests {
             ),
             String::from("Unsupported feature")
         );
+        let err = FileTransferError::new(FileTransferErrorType::UnsupportedFeature);
+        assert_eq!(err.kind(), FileTransferErrorType::UnsupportedFeature);
     }
 }

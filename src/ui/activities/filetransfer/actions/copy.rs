@@ -25,8 +25,10 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+extern crate tempfile;
 // locals
 use super::{FileTransferActivity, FsEntry, LogLevel, SelectedEntry};
+use crate::filetransfer::FileTransferErrorType;
 use std::path::{Path, PathBuf};
 
 impl FileTransferActivity {
@@ -120,15 +122,21 @@ impl FileTransferActivity {
                     ),
                 );
             }
-            Err(err) => self.log_and_alert(
-                LogLevel::Error,
-                format!(
-                    "Could not copy \"{}\" to \"{}\": {}",
-                    entry.get_abs_path().display(),
-                    dest.display(),
-                    err
+            Err(err) => match err.kind() {
+                FileTransferErrorType::UnsupportedFeature => {
+                    // If copy is not supported, perform the tricky copy
+                    self.tricky_copy(entry, dest);
+                }
+                _ => self.log_and_alert(
+                    LogLevel::Error,
+                    format!(
+                        "Could not copy \"{}\" to \"{}\": {}",
+                        entry.get_abs_path().display(),
+                        dest.display(),
+                        err
+                    ),
                 ),
-            ),
+            },
         }
     }
 }
