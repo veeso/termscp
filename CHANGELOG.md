@@ -25,8 +25,14 @@ Released on FIXME: ??
   - Added the possibility to enabled the synchronized brower navigation
     - when you enter a directory, the same directory will be entered on the other tab
     - Enable sync browser with `<Y>`
+    - Read more on manual: [Synchronized browsing](docs/man.md#Synchronized-browsing-)
 - **Remote and Local hosts file formatter**:
   - Added the possibility to set different formatters for local and remote hosts
+- **Work on multiple files**:
+  - Added the possibility to work on **multiple files simultaneously**
+  - Select a file with `<M>`, the file when selected will have a `*` prepended to its name
+  - Select all files in the current directory with `<CTRL+A>`
+  - Read more on manual: [Work on multiple files](docs/man.md#Work-on-multiple-files-)
 - Enhancements
   - Added a status bar in the file explorer showing whether the sync browser is enabled and which file sorting mode is selected
   - Removed the goold old figlet title
