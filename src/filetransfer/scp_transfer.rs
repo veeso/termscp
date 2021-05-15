@@ -729,7 +729,7 @@ impl FileTransfer for ScpFileTransfer {
                             Some(p) => PathBuf::from(p),
                             None => {
                                 return Err(FileTransferError::new_ex(
-                                    FileTransferErrorType::UnsupportedFeature,
+                                    FileTransferErrorType::DirStatFailed,
                                     String::from("Path has no parent"),
                                 ))
                             }

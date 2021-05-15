@@ -437,11 +437,42 @@ impl FileTransfer for SftpFileTransfer {
     /// ### copy
     ///
     /// Copy file to destination
-    fn copy(&mut self, _src: &FsEntry, _dst: &Path) -> Result<(), FileTransferError> {
-        // SFTP doesn't support file copy
-        Err(FileTransferError::new(
-            FileTransferErrorType::UnsupportedFeature,
-        ))
+    fn copy(&mut self, src: &FsEntry, dst: &Path) -> Result<(), FileTransferError> {
+        // NOTE: use SCP command to perform copy (UNSAFE)
+        match self.is_connected() {
+            true => {
+                let dst: PathBuf = self.get_abs_path(dst);
+                // Run `cp -rf`
+                match self.perform_shell_cmd_with_path(
+                    format!(
+                        "cp -rf \"{}\" \"{}\"; echo $?",
+                        src.get_abs_path().display(),
+                        dst.display()
+                    )
+                    .as_str(),
+                ) {
+                    Ok(output) =>
+                    // Check if output is 0
+                    {
+                        match output.as_str().trim() == "0" {
+                            true => Ok(()), // File copied
+                            false => Err(FileTransferError::new_ex(
+                                // Could not copy file
+                                FileTransferErrorType::FileCreateDenied,
+                                format!("\"{}\"", dst.display()),
+                            )),
+                        }
+                    }
+                    Err(err) => Err(FileTransferError::new_ex(
+                        FileTransferErrorType::ProtocolError,
+                        err.to_string(),
+                    )),
+                }
+            }
+            false => Err(FileTransferError::new(
+                FileTransferErrorType::UninitializedSession,
+            )),
+        }
     }
 
     /// ### list_dir

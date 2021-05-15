@@ -39,6 +39,7 @@ Released on FIXME: ??
   - Protocol input as first field in UI
   - Port is now updated to standard for selected protocol
     - when you change the protocol in the authentication form and the current port is standard (`< 1024`), the port will be automatically changed to default value for the selected protocol (e.g. current port: `123`, protocol is changes to `FTP`, port becomes `21`)
+    - Added **COPY** command to SFTP (Please note that Copy command is not supported by SFTP natively, so here it just uses the `cp` shell command as it does in SCP).
 - Bugfix:
   - Fixed wrong text wrap in log box
   - Fixed error message not being shown after an upload failure
