@@ -32,7 +32,7 @@ impl FileTransferActivity {
     pub(crate) fn action_edit_local_file(&mut self) {
         let entries: Vec<FsEntry> = match self.get_local_selected_entries() {
             SelectedEntry::One(entry) => vec![entry],
-            SelectedEntry::Multi(entries) => entries,
+            SelectedEntry::Many(entries) => entries,
             SelectedEntry::None => vec![],
         };
         // Edit all entries
@@ -56,7 +56,7 @@ impl FileTransferActivity {
     pub(crate) fn action_edit_remote_file(&mut self) {
         let entries: Vec<FsEntry> = match self.get_remote_selected_entries() {
             SelectedEntry::One(entry) => vec![entry],
-            SelectedEntry::Multi(entries) => entries,
+            SelectedEntry::Many(entries) => entries,
             SelectedEntry::None => vec![],
         };
         // Edit all entries

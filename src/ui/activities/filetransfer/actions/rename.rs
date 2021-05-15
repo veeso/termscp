@@ -38,7 +38,7 @@ impl FileTransferActivity {
                 // Reload entries
                 self.reload_local_dir();
             }
-            SelectedEntry::Multi(entries) => {
+            SelectedEntry::Many(entries) => {
                 // Try to copy each file to Input/{FILE_NAME}
                 let base_path: PathBuf = PathBuf::from(input);
                 // Iter files
@@ -62,7 +62,7 @@ impl FileTransferActivity {
                 // Reload entries
                 self.reload_remote_dir();
             }
-            SelectedEntry::Multi(entries) => {
+            SelectedEntry::Many(entries) => {
                 // Try to copy each file to Input/{FILE_NAME}
                 let base_path: PathBuf = PathBuf::from(input);
                 // Iter files

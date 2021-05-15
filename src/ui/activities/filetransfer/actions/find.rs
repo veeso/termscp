@@ -83,7 +83,7 @@ impl FileTransferActivity {
                     self.filetransfer_recv(&entry.get_realfile(), wrkdir.as_path(), save_as);
                 }
             },
-            SelectedEntry::Multi(entries) => {
+            SelectedEntry::Many(entries) => {
                 // In case of selection: save multiple files in wrkdir/input
                 let mut dest_path: PathBuf = wrkdir;
                 if let Some(save_as) = save_as {
@@ -119,7 +119,7 @@ impl FileTransferActivity {
                 // Delete file
                 self.remove_found_file(&entry);
             }
-            SelectedEntry::Multi(entries) => {
+            SelectedEntry::Many(entries) => {
                 // Iter files
                 for entry in entries.iter() {
                     // Delete file

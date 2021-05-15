@@ -42,13 +42,13 @@ pub(crate) mod save;
 
 pub(crate) enum SelectedEntry {
     One(FsEntry),
-    Multi(Vec<FsEntry>),
+    Many(Vec<FsEntry>),
     None,
 }
 
 enum SelectedEntryIndex {
     One(usize),
-    Multi(Vec<usize>),
+    Many(Vec<usize>),
     None,
 }
 
@@ -63,7 +63,7 @@ impl From<Option<&FsEntry>> for SelectedEntry {
 
 impl From<Vec<&FsEntry>> for SelectedEntry {
     fn from(files: Vec<&FsEntry>) -> Self {
-        SelectedEntry::Multi(files.into_iter().cloned().collect())
+        SelectedEntry::Many(files.into_iter().cloned().collect())
     }
 }
 
@@ -74,7 +74,7 @@ impl FileTransferActivity {
     pub(crate) fn get_local_selected_entries(&self) -> SelectedEntry {
         match self.get_selected_index(super::COMPONENT_EXPLORER_LOCAL) {
             SelectedEntryIndex::One(idx) => SelectedEntry::from(self.local().get(idx)),
-            SelectedEntryIndex::Multi(files) => {
+            SelectedEntryIndex::Many(files) => {
                 let files: Vec<&FsEntry> = files
                     .iter()
                     .map(|x| self.local().get(*x)) // Usize to Option<FsEntry>
@@ -93,7 +93,7 @@ impl FileTransferActivity {
     pub(crate) fn get_remote_selected_entries(&self) -> SelectedEntry {
         match self.get_selected_index(super::COMPONENT_EXPLORER_REMOTE) {
             SelectedEntryIndex::One(idx) => SelectedEntry::from(self.remote().get(idx)),
-            SelectedEntryIndex::Multi(files) => {
+            SelectedEntryIndex::Many(files) => {
                 let files: Vec<&FsEntry> = files
                     .iter()
                     .map(|x| self.remote().get(*x)) // Usize to Option<FsEntry>
@@ -114,7 +114,7 @@ impl FileTransferActivity {
             SelectedEntryIndex::One(idx) => {
                 SelectedEntry::from(self.found().as_ref().unwrap().get(idx))
             }
-            SelectedEntryIndex::Multi(files) => {
+            SelectedEntryIndex::Many(files) => {
                 let files: Vec<&FsEntry> = files
                     .iter()
                     .map(|x| self.found().as_ref().unwrap().get(*x)) // Usize to Option<FsEntry>
@@ -140,7 +140,7 @@ impl FileTransferActivity {
                         _ => 0,
                     })
                     .collect();
-                SelectedEntryIndex::Multi(list)
+                SelectedEntryIndex::Many(list)
             }
             _ => SelectedEntryIndex::None,
         }

@@ -37,7 +37,7 @@ impl FileTransferActivity {
                 // Reload
                 self.reload_local_dir();
             }
-            SelectedEntry::Multi(entries) => {
+            SelectedEntry::Many(entries) => {
                 // Iter files
                 for entry in entries.iter() {
                     // Delete file
@@ -58,7 +58,7 @@ impl FileTransferActivity {
                 // Reload
                 self.reload_remote_dir();
             }
-            SelectedEntry::Multi(entries) => {
+            SelectedEntry::Many(entries) => {
                 // Iter files
                 for entry in entries.iter() {
                     // Delete file

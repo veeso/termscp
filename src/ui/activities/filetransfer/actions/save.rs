@@ -52,7 +52,7 @@ impl FileTransferActivity {
             SelectedEntry::One(entry) => {
                 self.filetransfer_send(&entry.get_realfile(), wrkdir.as_path(), save_as);
             }
-            SelectedEntry::Multi(entries) => {
+            SelectedEntry::Many(entries) => {
                 // In case of selection: save multiple files in wrkdir/input
                 let mut dest_path: PathBuf = wrkdir;
                 if let Some(save_as) = save_as {
@@ -73,7 +73,7 @@ impl FileTransferActivity {
             SelectedEntry::One(entry) => {
                 self.filetransfer_recv(&entry.get_realfile(), wrkdir.as_path(), save_as);
             }
-            SelectedEntry::Multi(entries) => {
+            SelectedEntry::Many(entries) => {
                 // In case of selection: save multiple files in wrkdir/input
                 let mut dest_path: PathBuf = wrkdir;
                 if let Some(save_as) = save_as {
