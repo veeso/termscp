@@ -40,40 +40,114 @@ pub(crate) mod newfile;
 pub(crate) mod rename;
 pub(crate) mod save;
 
+pub(crate) enum SelectedEntry {
+    One(FsEntry),
+    Multi(Vec<FsEntry>),
+    None,
+}
+
+enum SelectedEntryIndex {
+    One(usize),
+    Multi(Vec<usize>),
+    None,
+}
+
+impl From<Option<&FsEntry>> for SelectedEntry {
+    fn from(opt: Option<&FsEntry>) -> Self {
+        match opt {
+            Some(e) => SelectedEntry::One(e.clone()),
+            None => SelectedEntry::None,
+        }
+    }
+}
+
+impl From<Vec<&FsEntry>> for SelectedEntry {
+    fn from(files: Vec<&FsEntry>) -> Self {
+        SelectedEntry::Multi(files.into_iter().cloned().collect())
+    }
+}
+
 impl FileTransferActivity {
-    /// ### get_local_file_entry
+    /// ### get_local_selected_entries
     ///
     /// Get local file entry
-    pub(crate) fn get_local_file_entry(&self) -> Option<&FsEntry> {
-        match self.get_local_file_state() {
-            Some(Payload::One(Value::Usize(idx))) => self.local().get(idx),
-            _ => None,
+    pub(crate) fn get_local_selected_entries(&self) -> SelectedEntry {
+        match self.get_selected_index(super::COMPONENT_EXPLORER_LOCAL) {
+            SelectedEntryIndex::One(idx) => SelectedEntry::from(self.local().get(idx)),
+            SelectedEntryIndex::Multi(files) => {
+                let files: Vec<&FsEntry> = files
+                    .iter()
+                    .map(|x| self.local().get(*x)) // Usize to Option<FsEntry>
+                    .filter(|x| x.is_some()) // Get only some values
+                    .map(|x| x.unwrap()) // Option to FsEntry
+                    .collect();
+                SelectedEntry::from(files)
+            }
+            SelectedEntryIndex::None => SelectedEntry::None,
         }
     }
 
-    /// ### get_remote_file_entry
+    /// ### get_remote_selected_entries
     ///
     /// Get remote file entry
-    pub(crate) fn get_remote_file_entry(&self) -> Option<&FsEntry> {
-        match self.get_remote_file_state() {
-            Some(Payload::One(Value::Usize(idx))) => self.remote().get(idx),
-            _ => None,
+    pub(crate) fn get_remote_selected_entries(&self) -> SelectedEntry {
+        match self.get_selected_index(super::COMPONENT_EXPLORER_REMOTE) {
+            SelectedEntryIndex::One(idx) => SelectedEntry::from(self.remote().get(idx)),
+            SelectedEntryIndex::Multi(files) => {
+                let files: Vec<&FsEntry> = files
+                    .iter()
+                    .map(|x| self.remote().get(*x)) // Usize to Option<FsEntry>
+                    .filter(|x| x.is_some()) // Get only some values
+                    .map(|x| x.unwrap()) // Option to FsEntry
+                    .collect();
+                SelectedEntry::from(files)
+            }
+            SelectedEntryIndex::None => SelectedEntry::None,
+        }
+    }
+
+    /// ### get_remote_selected_entries
+    ///
+    /// Get remote file entry
+    pub(crate) fn get_found_selected_entries(&self) -> SelectedEntry {
+        match self.get_selected_index(super::COMPONENT_EXPLORER_FIND) {
+            SelectedEntryIndex::One(idx) => {
+                SelectedEntry::from(self.found().as_ref().unwrap().get(idx))
+            }
+            SelectedEntryIndex::Multi(files) => {
+                let files: Vec<&FsEntry> = files
+                    .iter()
+                    .map(|x| self.found().as_ref().unwrap().get(*x)) // Usize to Option<FsEntry>
+                    .filter(|x| x.is_some()) // Get only some values
+                    .map(|x| x.unwrap()) // Option to FsEntry
+                    .collect();
+                SelectedEntry::from(files)
+            }
+            SelectedEntryIndex::None => SelectedEntry::None,
         }
     }
 
     // -- private
 
-    /// ### get_local_file_state
-    ///
-    /// Get index of selected file in the local tab
-    fn get_local_file_state(&self) -> Option<Payload> {
-        self.view.get_state(super::COMPONENT_EXPLORER_LOCAL)
-    }
-
-    /// ### get_remote_file_state
-    ///
-    /// Get index of selected file in the remote file
-    fn get_remote_file_state(&self) -> Option<Payload> {
-        self.view.get_state(super::COMPONENT_EXPLORER_REMOTE)
+    fn get_selected_index(&self, component: &str) -> SelectedEntryIndex {
+        eprintln!(
+            "INDEX FOR {}: {:?}",
+            component,
+            self.view.get_state(component)
+        );
+        match self.view.get_state(component) {
+            Some(Payload::One(Value::Usize(idx))) => SelectedEntryIndex::One(idx),
+            Some(Payload::Vec(files)) => {
+                let list: Vec<usize> = files
+                    .iter()
+                    .map(|x| match x {
+                        Value::Usize(v) => *v,
+                        _ => 0,
+                    })
+                    .collect();
+                SelectedEntryIndex::Multi(list)
+            }
+            _ => SelectedEntryIndex::None,
+        }
     }
 }

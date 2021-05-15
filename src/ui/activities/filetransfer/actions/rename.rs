@@ -26,77 +26,103 @@
  * SOFTWARE.
  */
 // locals
-use super::{FileTransferActivity, FsEntry, LogLevel};
-use std::path::PathBuf;
+use super::{FileTransferActivity, FsEntry, LogLevel, SelectedEntry};
+use std::path::{Path, PathBuf};
 
 impl FileTransferActivity {
     pub(crate) fn action_local_rename(&mut self, input: String) {
-        let entry: Option<FsEntry> = self.get_local_file_entry().cloned();
-        if let Some(entry) = entry {
-            let mut dst_path: PathBuf = PathBuf::from(input);
-            // Check if path is relative
-            if dst_path.as_path().is_relative() {
-                let mut wrkdir: PathBuf = self.local().wrkdir.clone();
-                wrkdir.push(dst_path);
-                dst_path = wrkdir;
+        match self.get_local_selected_entries() {
+            SelectedEntry::One(entry) => {
+                let dest_path: PathBuf = PathBuf::from(input);
+                self.local_rename_file(&entry, dest_path.as_path());
+                // Reload entries
+                self.reload_local_dir();
             }
-            let full_path: PathBuf = entry.get_abs_path();
-            // Rename file or directory and report status as popup
-            match self.host.rename(&entry, dst_path.as_path()) {
-                Ok(_) => {
-                    // Reload files
-                    let path: PathBuf = self.local().wrkdir.clone();
-                    self.local_scan(path.as_path());
-                    // Log
-                    self.log(
-                        LogLevel::Info,
-                        format!(
-                            "Renamed file \"{}\" to \"{}\"",
-                            full_path.display(),
-                            dst_path.display()
-                        ),
-                    );
+            SelectedEntry::Multi(entries) => {
+                // Try to copy each file to Input/{FILE_NAME}
+                let base_path: PathBuf = PathBuf::from(input);
+                // Iter files
+                for entry in entries.iter() {
+                    let mut dest_path: PathBuf = base_path.clone();
+                    dest_path.push(entry.get_name());
+                    self.local_rename_file(entry, dest_path.as_path());
                 }
-                Err(err) => {
-                    self.log_and_alert(
-                        LogLevel::Error,
-                        format!("Could not rename file \"{}\": {}", full_path.display(), err),
-                    );
-                }
+                // Reload entries
+                self.reload_local_dir();
             }
+            SelectedEntry::None => {}
         }
     }
 
     pub(crate) fn action_remote_rename(&mut self, input: String) {
-        if let Some(idx) = self.get_remote_file_state() {
-            let entry = self.remote().get(idx).cloned();
-            if let Some(entry) = entry {
-                let dst_path: PathBuf = PathBuf::from(input);
-                let full_path: PathBuf = entry.get_abs_path();
-                // Rename file or directory and report status as popup
-                match self.client.as_mut().rename(&entry, dst_path.as_path()) {
-                    Ok(_) => {
-                        // Reload files
-                        let path: PathBuf = self.remote().wrkdir.clone();
-                        self.remote_scan(path.as_path());
-                        // Log
-                        self.log(
-                            LogLevel::Info,
-                            format!(
-                                "Renamed file \"{}\" to \"{}\"",
-                                full_path.display(),
-                                dst_path.display()
-                            ),
-                        );
-                    }
-                    Err(err) => {
-                        self.log_and_alert(
-                            LogLevel::Error,
-                            format!("Could not rename file \"{}\": {}", full_path.display(), err),
-                        );
-                    }
-                }
+        match self.get_remote_selected_entries() {
+            SelectedEntry::One(entry) => {
+                let dest_path: PathBuf = PathBuf::from(input);
+                self.remote_rename_file(&entry, dest_path.as_path());
+                // Reload entries
+                self.reload_remote_dir();
             }
+            SelectedEntry::Multi(entries) => {
+                // Try to copy each file to Input/{FILE_NAME}
+                let base_path: PathBuf = PathBuf::from(input);
+                // Iter files
+                for entry in entries.iter() {
+                    let mut dest_path: PathBuf = base_path.clone();
+                    dest_path.push(entry.get_name());
+                    self.remote_rename_file(entry, dest_path.as_path());
+                }
+                // Reload entries
+                self.reload_remote_dir();
+            }
+            SelectedEntry::None => {}
+        }
+    }
+
+    fn local_rename_file(&mut self, entry: &FsEntry, dest: &Path) {
+        match self.host.rename(entry, dest) {
+            Ok(_) => {
+                self.log(
+                    LogLevel::Info,
+                    format!(
+                        "Moved \"{}\" to \"{}\"",
+                        entry.get_abs_path().display(),
+                        dest.display()
+                    ),
+                );
+            }
+            Err(err) => self.log_and_alert(
+                LogLevel::Error,
+                format!(
+                    "Could not move \"{}\" to \"{}\": {}",
+                    entry.get_abs_path().display(),
+                    dest.display(),
+                    err
+                ),
+            ),
+        }
+    }
+
+    fn remote_rename_file(&mut self, entry: &FsEntry, dest: &Path) {
+        match self.client.as_mut().rename(entry, dest) {
+            Ok(_) => {
+                self.log(
+                    LogLevel::Info,
+                    format!(
+                        "Moved \"{}\" to \"{}\"",
+                        entry.get_abs_path().display(),
+                        dest.display()
+                    ),
+                );
+            }
+            Err(err) => self.log_and_alert(
+                LogLevel::Error,
+                format!(
+                    "Could not move \"{}\" to \"{}\": {}",
+                    entry.get_abs_path().display(),
+                    dest.display(),
+                    err
+                ),
+            ),
         }
     }
 }

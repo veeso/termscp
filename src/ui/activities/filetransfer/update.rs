@@ -29,10 +29,10 @@
 extern crate bytesize;
 // locals
 use super::{
-    browser::FileExplorerTab, FileTransferActivity, LogLevel, COMPONENT_EXPLORER_FIND,
-    COMPONENT_EXPLORER_LOCAL, COMPONENT_EXPLORER_REMOTE, COMPONENT_INPUT_COPY,
-    COMPONENT_INPUT_EXEC, COMPONENT_INPUT_FIND, COMPONENT_INPUT_GOTO, COMPONENT_INPUT_MKDIR,
-    COMPONENT_INPUT_NEWFILE, COMPONENT_INPUT_RENAME, COMPONENT_INPUT_SAVEAS,
+    actions::SelectedEntry, browser::FileExplorerTab, FileTransferActivity, LogLevel,
+    COMPONENT_EXPLORER_FIND, COMPONENT_EXPLORER_LOCAL, COMPONENT_EXPLORER_REMOTE,
+    COMPONENT_INPUT_COPY, COMPONENT_INPUT_EXEC, COMPONENT_INPUT_FIND, COMPONENT_INPUT_GOTO,
+    COMPONENT_INPUT_MKDIR, COMPONENT_INPUT_NEWFILE, COMPONENT_INPUT_RENAME, COMPONENT_INPUT_SAVEAS,
     COMPONENT_LIST_FILEINFO, COMPONENT_LOG_BOX, COMPONENT_PROGRESS_BAR, COMPONENT_RADIO_DELETE,
     COMPONENT_RADIO_DISCONNECT, COMPONENT_RADIO_QUIT, COMPONENT_RADIO_SORTING,
     COMPONENT_TEXT_ERROR, COMPONENT_TEXT_FATAL, COMPONENT_TEXT_HELP,
@@ -101,18 +101,8 @@ impl FileTransferActivity {
                     }
                 }
                 (COMPONENT_EXPLORER_LOCAL, &MSG_KEY_SPACE) => {
-                    // Get pwd
-                    let wrkdir: PathBuf = self.remote().wrkdir.clone();
-                    // Get file and clone (due to mutable / immutable stuff...)
-                    if self.get_local_file_entry().is_some() {
-                        let file: FsEntry = self.get_local_file_entry().unwrap().clone();
-                        let name: String = file.get_name().to_string();
-                        // Call upload; pass realfile, keep link name
-                        self.filetransfer_send(&file.get_realfile(), wrkdir.as_path(), Some(name));
-                        self.update_remote_filelist()
-                    } else {
-                        None
-                    }
+                    self.action_local_send();
+                    self.update_remote_filelist()
                 }
                 (COMPONENT_EXPLORER_LOCAL, &MSG_KEY_CHAR_A) => {
                     // Toggle hidden files
@@ -121,8 +111,7 @@ impl FileTransferActivity {
                     self.update_local_filelist()
                 }
                 (COMPONENT_EXPLORER_LOCAL, &MSG_KEY_CHAR_I) => {
-                    let file: Option<FsEntry> = self.get_local_file_entry().cloned();
-                    if let Some(file) = file {
+                    if let SelectedEntry::One(file) = self.get_local_selected_entries() {
                         self.mount_file_info(&file);
                     }
                     None
@@ -175,17 +164,8 @@ impl FileTransferActivity {
                     }
                 }
                 (COMPONENT_EXPLORER_REMOTE, &MSG_KEY_SPACE) => {
-                    // Get file and clone (due to mutable / immutable stuff...)
-                    if self.get_remote_file_entry().is_some() {
-                        let file: FsEntry = self.get_remote_file_entry().unwrap().clone();
-                        let name: String = file.get_name().to_string();
-                        // Call upload; pass realfile, keep link name
-                        let wrkdir: PathBuf = self.local().wrkdir.clone();
-                        self.filetransfer_recv(&file.get_realfile(), wrkdir.as_path(), Some(name));
-                        self.update_local_filelist()
-                    } else {
-                        None
-                    }
+                    self.action_remote_recv();
+                    self.update_local_filelist()
                 }
                 (COMPONENT_EXPLORER_REMOTE, &MSG_KEY_BACKSPACE) => {
                     // Go to previous directory
@@ -204,8 +184,7 @@ impl FileTransferActivity {
                     self.update_remote_filelist()
                 }
                 (COMPONENT_EXPLORER_REMOTE, &MSG_KEY_CHAR_I) => {
-                    let file: Option<FsEntry> = self.get_remote_file_entry().cloned();
-                    if let Some(file) = file {
+                    if let SelectedEntry::One(file) = self.get_remote_selected_entries() {
                         self.mount_file_info(&file);
                     }
                     None
@@ -324,9 +303,9 @@ impl FileTransferActivity {
                     self.finalize_find();
                     None
                 }
-                (COMPONENT_EXPLORER_FIND, Msg::OnSubmit(Payload::One(Value::Usize(idx)))) => {
+                (COMPONENT_EXPLORER_FIND, Msg::OnSubmit(_)) => {
                     // Find changedir
-                    self.action_find_changedir(*idx);
+                    self.action_find_changedir();
                     // Umount find
                     self.umount_find();
                     // Finalize find
@@ -340,17 +319,12 @@ impl FileTransferActivity {
                 }
                 (COMPONENT_EXPLORER_FIND, &MSG_KEY_SPACE) => {
                     // Get entry
-                    match self.view.get_state(COMPONENT_EXPLORER_FIND) {
-                        Some(Payload::One(Value::Usize(idx))) => {
-                            self.action_find_transfer(idx, None);
-                            // Reload files
-                            match self.browser.tab() {
-                                // NOTE: swapped by purpose
-                                FileExplorerTab::FindLocal => self.update_remote_filelist(),
-                                FileExplorerTab::FindRemote => self.update_local_filelist(),
-                                _ => None,
-                            }
-                        }
+                    self.action_find_transfer(None);
+                    // Reload files
+                    match self.browser.tab() {
+                        // NOTE: swapped by purpose
+                        FileExplorerTab::FindLocal => self.update_remote_filelist(),
+                        FileExplorerTab::FindRemote => self.update_local_filelist(),
                         _ => None,
                     }
                 }
@@ -540,11 +514,7 @@ impl FileTransferActivity {
                         FileExplorerTab::Remote => self.action_remote_saveas(input.to_string()),
                         FileExplorerTab::FindLocal | FileExplorerTab::FindRemote => {
                             // Get entry
-                            if let Some(Payload::One(Value::Usize(idx))) =
-                                self.view.get_state(COMPONENT_EXPLORER_FIND)
-                            {
-                                self.action_find_transfer(idx, Some(input.to_string()));
-                            }
+                            self.action_find_transfer(Some(input.to_string()));
                         }
                     }
                     self.umount_saveas();
@@ -579,7 +549,7 @@ impl FileTransferActivity {
                             if let Some(Payload::One(Value::Usize(idx))) =
                                 self.view.get_state(COMPONENT_EXPLORER_FIND)
                             {
-                                self.action_find_delete(idx);
+                                self.action_find_delete();
                                 // Reload entries
                                 self.found_mut().unwrap().del_entry(idx);
                                 self.update_find_list();

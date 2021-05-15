@@ -26,70 +26,90 @@
  * SOFTWARE.
  */
 // locals
-use super::{FileTransferActivity, FsEntry, LogLevel};
-use std::path::PathBuf;
-use tuirealm::{Payload, Value};
+use super::{FileTransferActivity, FsEntry, LogLevel, SelectedEntry};
 
 impl FileTransferActivity {
     pub(crate) fn action_local_delete(&mut self) {
-        // Get selection
-        let selection: Vec<usize> = match self.get_local_file_state() {
-            Some(Payload::One(Value::Usize(idx))) => vec![idx],
-            Some(Payload::Vec(list)) => list.into_iter().map(|x| {
-                match x {
-                    Value::Usize(x) => x,
-                    _ => panic!("File selection contains non-usize value"),
-                }
-            }),
-
-        }
-        let entry: Option<FsEntry> = self.get_local_file_entry().cloned();
-        if let Some(entry) = entry {
-            let full_path: PathBuf = entry.get_abs_path();
-            // Delete file or directory and report status as popup
-            match self.host.remove(&entry) {
-                Ok(_) => {
-                    // Reload files
-                    let p: PathBuf = self.local().wrkdir.clone();
-                    self.local_scan(p.as_path());
-                    // Log
-                    self.log(
-                        LogLevel::Info,
-                        format!("Removed file \"{}\"", full_path.display()),
-                    );
-                }
-                Err(err) => {
-                    self.log_and_alert(
-                        LogLevel::Error,
-                        format!("Could not delete file \"{}\": {}", full_path.display(), err),
-                    );
-                }
+        match self.get_local_selected_entries() {
+            SelectedEntry::One(entry) => {
+                // Delete file
+                self.local_remove_file(&entry);
+                // Reload
+                self.reload_local_dir();
             }
+            SelectedEntry::Multi(entries) => {
+                // Iter files
+                for entry in entries.iter() {
+                    // Delete file
+                    self.local_remove_file(entry);
+                }
+                // Reload entries
+                self.reload_local_dir();
+            }
+            SelectedEntry::None => {}
         }
     }
 
     pub(crate) fn action_remote_delete(&mut self) {
-        if let Some(idx) = self.get_remote_file_state() {
-            // Check if file entry exists
-            let entry = self.remote().get(idx).cloned();
-            if let Some(entry) = entry {
-                let full_path: PathBuf = entry.get_abs_path();
+        match self.get_remote_selected_entries() {
+            SelectedEntry::One(entry) => {
                 // Delete file
-                match self.client.remove(&entry) {
-                    Ok(_) => {
-                        self.reload_remote_dir();
-                        self.log(
-                            LogLevel::Info,
-                            format!("Removed file \"{}\"", full_path.display()),
-                        );
-                    }
-                    Err(err) => {
-                        self.log_and_alert(
-                            LogLevel::Error,
-                            format!("Could not delete file \"{}\": {}", full_path.display(), err),
-                        );
-                    }
+                self.remote_remove_file(&entry);
+                // Reload
+                self.reload_remote_dir();
+            }
+            SelectedEntry::Multi(entries) => {
+                // Iter files
+                for entry in entries.iter() {
+                    // Delete file
+                    self.remote_remove_file(entry);
                 }
+                // Reload entries
+                self.reload_remote_dir();
+            }
+            SelectedEntry::None => {}
+        }
+    }
+
+    pub(crate) fn local_remove_file(&mut self, entry: &FsEntry) {
+        match self.host.remove(&entry) {
+            Ok(_) => {
+                // Log
+                self.log(
+                    LogLevel::Info,
+                    format!("Removed file \"{}\"", entry.get_abs_path().display()),
+                );
+            }
+            Err(err) => {
+                self.log_and_alert(
+                    LogLevel::Error,
+                    format!(
+                        "Could not delete file \"{}\": {}",
+                        entry.get_abs_path().display(),
+                        err
+                    ),
+                );
+            }
+        }
+    }
+
+    pub(crate) fn remote_remove_file(&mut self, entry: &FsEntry) {
+        match self.client.remove(&entry) {
+            Ok(_) => {
+                self.log(
+                    LogLevel::Info,
+                    format!("Removed file \"{}\"", entry.get_abs_path().display()),
+                );
+            }
+            Err(err) => {
+                self.log_and_alert(
+                    LogLevel::Error,
+                    format!(
+                        "Could not delete file \"{}\": {}",
+                        entry.get_abs_path().display(),
+                        err
+                    ),
+                );
             }
         }
     }

@@ -27,7 +27,6 @@
  */
 // locals
 use super::{FileTransferActivity, LogLevel};
-use std::path::PathBuf;
 
 impl FileTransferActivity {
     pub(crate) fn action_local_exec(&mut self, input: String) {
@@ -35,8 +34,8 @@ impl FileTransferActivity {
             Ok(output) => {
                 // Reload files
                 self.log(LogLevel::Info, format!("\"{}\": {}", input, output));
-                let wrkdir: PathBuf = self.local().wrkdir.clone();
-                self.local_scan(wrkdir.as_path());
+                // Reload entries
+                self.reload_local_dir();
             }
             Err(err) => {
                 // Report err

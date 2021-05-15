@@ -35,8 +35,8 @@ impl FileTransferActivity {
             Ok(_) => {
                 // Reload files
                 self.log(LogLevel::Info, format!("Created directory \"{}\"", input));
-                let wrkdir: PathBuf = self.local().wrkdir.clone();
-                self.local_scan(wrkdir.as_path());
+                // Reload entries
+                self.reload_local_dir();
             }
             Err(err) => {
                 // Report err

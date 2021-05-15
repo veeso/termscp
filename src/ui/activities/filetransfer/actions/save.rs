@@ -26,31 +26,65 @@
  * SOFTWARE.
  */
 // locals
-use super::{FileTransferActivity, FsEntry};
+use super::{FileTransferActivity, SelectedEntry};
 use std::path::PathBuf;
 
 impl FileTransferActivity {
     pub(crate) fn action_local_saveas(&mut self, input: String) {
-        if let Some(idx) = self.get_local_file_state() {
-            // Get pwd
-            let wrkdir: PathBuf = self.remote().wrkdir.clone();
-            if self.local().get(idx).is_some() {
-                let file: FsEntry = self.local().get(idx).unwrap().clone();
-                // Call upload; pass realfile, keep link name
-                self.filetransfer_send(&file.get_realfile(), wrkdir.as_path(), Some(input));
-            }
-        }
+        self.action_local_send_file(Some(input));
     }
 
     pub(crate) fn action_remote_saveas(&mut self, input: String) {
-        if let Some(idx) = self.get_remote_file_state() {
-            // Get pwd
-            let wrkdir: PathBuf = self.local().wrkdir.clone();
-            if self.remote().get(idx).is_some() {
-                let file: FsEntry = self.remote().get(idx).unwrap().clone();
-                // Call upload; pass realfile, keep link name
-                self.filetransfer_recv(&file.get_realfile(), wrkdir.as_path(), Some(input));
+        self.action_remote_recv_file(Some(input));
+    }
+
+    pub(crate) fn action_local_send(&mut self) {
+        self.action_local_send_file(None);
+    }
+
+    pub(crate) fn action_remote_recv(&mut self) {
+        self.action_remote_recv_file(None);
+    }
+
+    fn action_local_send_file(&mut self, save_as: Option<String>) {
+        let wrkdir: PathBuf = self.remote().wrkdir.clone();
+        match self.get_local_selected_entries() {
+            SelectedEntry::One(entry) => {
+                self.filetransfer_send(&entry.get_realfile(), wrkdir.as_path(), save_as);
             }
+            SelectedEntry::Multi(entries) => {
+                // In case of selection: save multiple files in wrkdir/input
+                let mut dest_path: PathBuf = wrkdir;
+                if let Some(save_as) = save_as {
+                    dest_path.push(save_as);
+                }
+                // Iter files
+                for entry in entries.iter() {
+                    self.filetransfer_send(&entry.get_realfile(), dest_path.as_path(), None);
+                }
+            }
+            SelectedEntry::None => {}
+        }
+    }
+
+    fn action_remote_recv_file(&mut self, save_as: Option<String>) {
+        let wrkdir: PathBuf = self.local().wrkdir.clone();
+        match self.get_remote_selected_entries() {
+            SelectedEntry::One(entry) => {
+                self.filetransfer_recv(&entry.get_realfile(), wrkdir.as_path(), save_as);
+            }
+            SelectedEntry::Multi(entries) => {
+                // In case of selection: save multiple files in wrkdir/input
+                let mut dest_path: PathBuf = wrkdir;
+                if let Some(save_as) = save_as {
+                    dest_path.push(save_as);
+                }
+                // Iter files
+                for entry in entries.iter() {
+                    self.filetransfer_recv(&entry.get_realfile(), dest_path.as_path(), None);
+                }
+            }
+            SelectedEntry::None => {}
         }
     }
 }
