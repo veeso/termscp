@@ -546,14 +546,25 @@ impl FileTransferActivity {
                         FileExplorerTab::Remote => self.action_remote_delete(),
                         FileExplorerTab::FindLocal | FileExplorerTab::FindRemote => {
                             // Get entry
-                            if let Some(Payload::One(Value::Usize(idx))) =
-                                self.view.get_state(COMPONENT_EXPLORER_FIND)
-                            {
-                                self.action_find_delete();
-                                // Reload entries
-                                self.found_mut().unwrap().del_entry(idx);
-                                self.update_find_list();
+                            self.action_find_delete();
+                            // Delete entries
+                            match self.view.get_state(COMPONENT_EXPLORER_FIND) {
+                                Some(Payload::One(Value::Usize(idx))) => {
+                                    // Reload entries
+                                    self.found_mut().unwrap().del_entry(idx);
+                                }
+                                Some(Payload::Vec(values)) => {
+                                    values
+                                        .iter()
+                                        .map(|x| match x {
+                                            Value::Usize(v) => *v,
+                                            _ => 0,
+                                        })
+                                        .for_each(|x| self.found_mut().unwrap().del_entry(x));
+                                }
+                                _ => {}
                             }
+                            self.update_find_list();
                         }
                     }
                     self.umount_radio_delete();

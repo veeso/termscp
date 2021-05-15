@@ -130,11 +130,6 @@ impl FileTransferActivity {
     // -- private
 
     fn get_selected_index(&self, component: &str) -> SelectedEntryIndex {
-        eprintln!(
-            "INDEX FOR {}: {:?}",
-            component,
-            self.view.get_state(component)
-        );
         match self.view.get_state(component) {
             Some(Payload::One(Value::Usize(idx))) => SelectedEntryIndex::One(idx),
             Some(Payload::Vec(files)) => {

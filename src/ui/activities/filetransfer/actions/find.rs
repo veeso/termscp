@@ -91,7 +91,22 @@ impl FileTransferActivity {
                 }
                 // Iter files
                 for entry in entries.iter() {
-                    self.filetransfer_recv(&entry.get_realfile(), dest_path.as_path(), None);
+                    match self.browser.tab() {
+                        FileExplorerTab::FindLocal | FileExplorerTab::Local => {
+                            self.filetransfer_send(
+                                &entry.get_realfile(),
+                                dest_path.as_path(),
+                                None,
+                            );
+                        }
+                        FileExplorerTab::FindRemote | FileExplorerTab::Remote => {
+                            self.filetransfer_recv(
+                                &entry.get_realfile(),
+                                dest_path.as_path(),
+                                None,
+                            );
+                        }
+                    }
                 }
             }
             SelectedEntry::None => {}
