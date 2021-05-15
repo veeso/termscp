@@ -386,7 +386,7 @@ impl Component for FileList {
                         self.states.select_all();
                         Msg::None
                     }
-                    false => Msg::None,
+                    false => Msg::OnKey(key),
                 },
                 KeyCode::Char('m') => {
                     // Toggle current file in selection
@@ -620,6 +620,11 @@ mod tests {
         assert_eq!(
             component.on(Event::Key(KeyEvent::from(KeyCode::Backspace))),
             Msg::OnKey(KeyEvent::from(KeyCode::Backspace))
+        );
+        // Verify 'A' still works
+        assert_eq!(
+            component.on(Event::Key(KeyEvent::from(KeyCode::Char('a')))),
+            Msg::OnKey(KeyEvent::from(KeyCode::Char('a')))
         );
     }
 
