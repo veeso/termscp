@@ -45,9 +45,9 @@ Released on FIXME: ??
   - Fixed default protocol not being loaded from config
   - [Issue 23](https://github.com/veeso/termscp/issues/23): Remove created file if transfer failed or was abrupted
 - Dependencies:
-  - Added `tui-realm 0.2.2`
+  - Added `tui-realm 0.3.0`
   - Removed `tui` (as direct dependency)
-  - Updated `regex` to `1.5.3`
+  - Updated `regex` to `1.5.4`
 
 ## 0.4.2
 
