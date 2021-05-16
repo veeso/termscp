@@ -34,6 +34,7 @@ extern crate regex;
 
 use super::{FileTransfer, FileTransferError, FileTransferErrorType};
 use crate::fs::{FsDirectory, FsEntry, FsFile};
+use crate::utils::fmt::{fmt_time, shadow_password};
 use crate::utils::parser::{parse_datetime, parse_lstime};
 
 // Includes
@@ -105,6 +106,7 @@ impl FtpFileTransfer {
         lazy_static! {
             static ref LS_RE: Regex = Regex::new(r#"^([\-ld])([\-rwxs]{9})\s+(\d+)\s+(\w+)\s+(\w+)\s+(\d+)\s+(\w{3}\s+\d{1,2}\s+(?:\d{1,2}:\d{1,2}|\d{4}))\s+(.+)$"#).unwrap();
         }
+        debug!("Parsing LIST (UNIX) line: '{}'", line);
         // Apply regex to result
         match LS_RE.captures(line) {
             // String matches regex
@@ -182,6 +184,7 @@ impl FtpFileTransfer {
                 };
                 // Check if file_name is '.' or '..'
                 if file_name.as_str() == "." || file_name.as_str() == ".." {
+                    debug!("File name is {}; ignoring entry", file_name);
                     return Err(());
                 }
                 // Get symlink
@@ -236,6 +239,19 @@ impl FtpFileTransfer {
                     .extension()
                     .map(|s| String::from(s.to_string_lossy()));
                 // Return
+                debug!("Follows LIST line '{}' attributes", line);
+                debug!("Is directory? {}", is_dir);
+                debug!("Is symlink? {}", is_symlink);
+                debug!("name: {}", file_name);
+                debug!("abs_path: {}", abs_path.display());
+                debug!("last_change_time: {}", fmt_time(mtime, "%Y-%m-%dT%H:%M:%S"));
+                debug!("last_access_time: {}", fmt_time(mtime, "%Y-%m-%dT%H:%M:%S"));
+                debug!("creation_time: {}", fmt_time(mtime, "%Y-%m-%dT%H:%M:%S"));
+                debug!("symlink: {:?}", symlink);
+                debug!("user: {:?}", uid);
+                debug!("group: {:?}", gid);
+                debug!("unix_pex: {:?}", unix_pex);
+                debug!("---------------------------------------");
                 // Push to entries
                 Ok(match is_dir {
                     true => FsEntry::Directory(FsDirectory {
@@ -287,6 +303,7 @@ impl FtpFileTransfer {
             )
             .unwrap();
         }
+        debug!("Parsing LIST (DOS) line: '{}'", line);
         // Apply regex to result
         match DOS_RE.captures(line) {
             // String matches regex
@@ -324,6 +341,14 @@ impl FtpFileTransfer {
                     .as_path()
                     .extension()
                     .map(|s| String::from(s.to_string_lossy()));
+                debug!("Follows LIST line '{}' attributes", line);
+                debug!("Is directory? {}", is_dir);
+                debug!("name: {}", file_name);
+                debug!("abs_path: {}", abs_path.display());
+                debug!("last_change_time: {}", fmt_time(time, "%Y-%m-%dT%H:%M:%S"));
+                debug!("last_access_time: {}", fmt_time(time, "%Y-%m-%dT%H:%M:%S"));
+                debug!("creation_time: {}", fmt_time(time, "%Y-%m-%dT%H:%M:%S"));
+                debug!("---------------------------------------");
                 // Return entry
                 Ok(match is_dir {
                     true => FsEntry::Directory(FsDirectory {
@@ -382,17 +407,20 @@ impl FileTransfer for FtpFileTransfer {
         password: Option<String>,
     ) -> Result<Option<String>, FileTransferError> {
         // Get stream
+        info!("Connecting to {}:{}", address, port);
         let mut stream: FtpStream = match FtpStream::connect(format!("{}:{}", address, port)) {
             Ok(stream) => stream,
             Err(err) => {
+                error!("Failed to connect: {}", err);
                 return Err(FileTransferError::new_ex(
                     FileTransferErrorType::ConnectionError,
                     err.to_string(),
-                ))
+                ));
             }
         };
         // If SSL, open secure session
         if self.ftps {
+            info!("Setting up TLS stream...");
             let ctx = match TlsConnector::builder()
                 .danger_accept_invalid_certs(true)
                 .danger_accept_invalid_hostnames(true)
@@ -400,19 +428,21 @@ impl FileTransfer for FtpFileTransfer {
             {
                 Ok(tls) => tls,
                 Err(err) => {
+                    error!("Failed to setup TLS stream: {}", err);
                     return Err(FileTransferError::new_ex(
                         FileTransferErrorType::SslError,
                         err.to_string(),
-                    ))
+                    ));
                 }
             };
             stream = match stream.into_secure(ctx, address.as_str()) {
                 Ok(s) => s,
                 Err(err) => {
+                    error!("Failed to setup TLS stream: {}", err);
                     return Err(FileTransferError::new_ex(
                         FileTransferErrorType::SslError,
                         err.to_string(),
-                    ))
+                    ));
                 }
             };
         }
@@ -425,14 +455,22 @@ impl FileTransfer for FtpFileTransfer {
             Some(pwd) => pwd,
             None => String::new(),
         };
+        info!(
+            "Signin in with username: {}, password: {}",
+            username,
+            shadow_password(password.as_str())
+        );
         if let Err(err) = stream.login(username.as_str(), password.as_str()) {
+            error!("Login failed: {}", err);
             return Err(FileTransferError::new_ex(
                 FileTransferErrorType::AuthenticationFailed,
                 err.to_string(),
             ));
         }
+        debug!("Setting transfer type to Binary");
         // Initialize file type
         if let Err(err) = stream.transfer_type(FileType::Binary) {
+            error!("Failed to set transfer type to binary: {}", err);
             return Err(FileTransferError::new_ex(
                 FileTransferErrorType::ProtocolError,
                 err.to_string(),
@@ -440,6 +478,7 @@ impl FileTransfer for FtpFileTransfer {
         }
         // Set stream
         self.stream = Some(stream);
+        info!("Connection successfully established");
         // Return OK
         Ok(self.stream.as_ref().unwrap().get_welcome_msg())
     }
@@ -449,6 +488,7 @@ impl FileTransfer for FtpFileTransfer {
     /// Disconnect from the remote server
 
     fn disconnect(&mut self) -> Result<(), FileTransferError> {
+        info!("Disconnecting from FTP server...");
         match &mut self.stream {
             Some(stream) => match stream.quit() {
                 Ok(_) => Ok(()),
@@ -475,6 +515,7 @@ impl FileTransfer for FtpFileTransfer {
     /// Print working directory
 
     fn pwd(&mut self) -> Result<PathBuf, FileTransferError> {
+        info!("PWD");
         match &mut self.stream {
             Some(stream) => match stream.pwd() {
                 Ok(path) => Ok(PathBuf::from(path.as_str())),
@@ -495,6 +536,7 @@ impl FileTransfer for FtpFileTransfer {
 
     fn change_dir(&mut self, dir: &Path) -> Result<PathBuf, FileTransferError> {
         let dir: PathBuf = Self::resolve(dir);
+        info!("Changing directory to {}", dir.display());
         match &mut self.stream {
             Some(stream) => match stream.cwd(&dir.as_path().to_string_lossy()) {
                 Ok(_) => Ok(dir),
@@ -514,6 +556,7 @@ impl FileTransfer for FtpFileTransfer {
     /// Copy file to destination
     fn copy(&mut self, _src: &FsEntry, _dst: &Path) -> Result<(), FileTransferError> {
         // FTP doesn't support file copy
+        debug!("COPY issues (will fail, since unsupported)");
         Err(FileTransferError::new(
             FileTransferErrorType::UnsupportedFeature,
         ))
@@ -525,9 +568,11 @@ impl FileTransfer for FtpFileTransfer {
 
     fn list_dir(&mut self, path: &Path) -> Result<Vec<FsEntry>, FileTransferError> {
         let dir: PathBuf = Self::resolve(path);
+        info!("LIST dir {}", dir.display());
         match &mut self.stream {
             Some(stream) => match stream.list(Some(&dir.as_path().to_string_lossy())) {
                 Ok(entries) => {
+                    debug!("Got {} lines in LIST result", entries.len());
                     // Prepare result
                     let mut result: Vec<FsEntry> = Vec::with_capacity(entries.len());
                     // Iterate over entries
@@ -536,6 +581,11 @@ impl FileTransfer for FtpFileTransfer {
                             result.push(file);
                         }
                     }
+                    debug!(
+                        "{} out of {} were valid entries",
+                        result.len(),
+                        entries.len()
+                    );
                     Ok(result)
                 }
                 Err(err) => Err(FileTransferError::new_ex(
@@ -554,6 +604,7 @@ impl FileTransfer for FtpFileTransfer {
     /// Make directory
     fn mkdir(&mut self, dir: &Path) -> Result<(), FileTransferError> {
         let dir: PathBuf = Self::resolve(dir);
+        info!("MKDIR {}", dir.display());
         match &mut self.stream {
             Some(stream) => match stream.mkdir(&dir.as_path().to_string_lossy()) {
                 Ok(_) => Ok(()),
@@ -577,9 +628,11 @@ impl FileTransfer for FtpFileTransfer {
                 FileTransferErrorType::UninitializedSession,
             ));
         }
+        info!("Removing entry {}", fsentry.get_abs_path().display());
         match fsentry {
             // Match fs entry...
             FsEntry::File(file) => {
+                debug!("entry is a file; removing file");
                 // Remove file directly
                 match self.stream.as_mut().unwrap().rm(file.name.as_ref()) {
                     Ok(_) => Ok(()),
@@ -591,9 +644,11 @@ impl FileTransfer for FtpFileTransfer {
             }
             FsEntry::Directory(dir) => {
                 // Get directory files
+                debug!("Entry is a directory; iterating directory entries");
                 match self.list_dir(dir.abs_path.as_path()) {
                     Ok(files) => {
                         // Remove recursively files
+                        debug!("Removing {} entries from directory...", files.len());
                         for file in files.iter() {
                             if let Err(err) = self.remove(&file) {
                                 return Err(FileTransferError::new_ex(
@@ -603,6 +658,7 @@ impl FileTransfer for FtpFileTransfer {
                             }
                         }
                         // Once all files in directory have been deleted, remove directory
+                        debug!("Finally removing directory {}", dir.name);
                         match self.stream.as_mut().unwrap().rmdir(dir.name.as_str()) {
                             Ok(_) => Ok(()),
                             Err(err) => Err(FileTransferError::new_ex(
@@ -625,6 +681,11 @@ impl FileTransfer for FtpFileTransfer {
     /// Rename file or a directory
     fn rename(&mut self, file: &FsEntry, dst: &Path) -> Result<(), FileTransferError> {
         let dst: PathBuf = Self::resolve(dst);
+        info!(
+            "Renaming {} to {}",
+            file.get_abs_path().display(),
+            dst.display()
+        );
         match &mut self.stream {
             Some(stream) => {
                 // Get name
@@ -691,6 +752,7 @@ impl FileTransfer for FtpFileTransfer {
         file_name: &Path,
     ) -> Result<Box<dyn Write>, FileTransferError> {
         let file_name: PathBuf = Self::resolve(file_name);
+        info!("Sending file {}", file_name.display());
         match &mut self.stream {
             Some(stream) => match stream.put_with_stream(&file_name.as_path().to_string_lossy()) {
                 Ok(writer) => Ok(Box::new(writer)), // NOTE: don't use BufWriter here, since already returned by the library
@@ -710,6 +772,7 @@ impl FileTransfer for FtpFileTransfer {
     /// Receive file from remote with provided name
     /// Returns file and its size
     fn recv_file(&mut self, file: &FsFile) -> Result<Box<dyn Read>, FileTransferError> {
+        info!("Receiving file {}", file.abs_path.display());
         match &mut self.stream {
             Some(stream) => match stream.get(&file.abs_path.as_path().to_string_lossy()) {
                 Ok(reader) => Ok(Box::new(reader)), // NOTE: don't use BufReader here, since already returned by the library
@@ -732,6 +795,7 @@ impl FileTransfer for FtpFileTransfer {
     /// This is necessary for some protocols such as FTP.
     /// You must call this method each time you want to finalize the write of the remote file.
     fn on_sent(&mut self, writable: Box<dyn Write>) -> Result<(), FileTransferError> {
+        info!("Finalizing put stream");
         match &mut self.stream {
             Some(stream) => match stream.finalize_put_stream(writable) {
                 Ok(_) => Ok(()),
@@ -754,6 +818,7 @@ impl FileTransfer for FtpFileTransfer {
     /// This mighe be necessary for some protocols.
     /// You must call this method each time you want to finalize the read of the remote file.
     fn on_recv(&mut self, readable: Box<dyn Read>) -> Result<(), FileTransferError> {
+        info!("Finalizing get");
         match &mut self.stream {
             Some(stream) => match stream.finalize_get(readable) {
                 Ok(_) => Ok(()),

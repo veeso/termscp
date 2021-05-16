@@ -35,6 +35,7 @@ extern crate ssh2;
 use super::{FileTransfer, FileTransferError, FileTransferErrorType};
 use crate::fs::{FsDirectory, FsEntry, FsFile};
 use crate::system::sshkey_storage::SshKeyStorage;
+use crate::utils::fmt::{fmt_time, shadow_password};
 use crate::utils::parser::parse_lstime;
 
 // Includes
@@ -90,6 +91,7 @@ impl ScpFileTransfer {
         lazy_static! {
             static ref LS_RE: Regex = Regex::new(r#"^([\-ld])([\-rwxs]{9})\s+(\d+)\s+(\w+)\s+(\w+)\s+(\d+)\s+(\w{3}\s+\d{1,2}\s+(?:\d{1,2}:\d{1,2}|\d{4}))\s+(.+)$"#).unwrap();
         }
+        debug!("Parsing LS line: '{}'", line);
         // Apply regex to result
         match LS_RE.captures(line) {
             // String matches regex
@@ -167,6 +169,7 @@ impl ScpFileTransfer {
                 };
                 // Check if file_name is '.' or '..'
                 if file_name.as_str() == "." || file_name.as_str() == ".." {
+                    debug!("File name is {}; ignoring entry", file_name);
                     return Err(());
                 }
                 // Get symlink; PATH mustn't be equal to filename
@@ -200,6 +203,19 @@ impl ScpFileTransfer {
                     .extension()
                     .map(|s| String::from(s.to_string_lossy()));
                 // Return
+                debug!("Follows LS line '{}' attributes", line);
+                debug!("Is directory? {}", is_dir);
+                debug!("Is symlink? {}", is_symlink);
+                debug!("name: {}", file_name);
+                debug!("abs_path: {}", abs_path.display());
+                debug!("last_change_time: {}", fmt_time(mtime, "%Y-%m-%dT%H:%M:%S"));
+                debug!("last_access_time: {}", fmt_time(mtime, "%Y-%m-%dT%H:%M:%S"));
+                debug!("creation_time: {}", fmt_time(mtime, "%Y-%m-%dT%H:%M:%S"));
+                debug!("symlink: {:?}", symlink);
+                debug!("user: {:?}", uid);
+                debug!("group: {:?}", gid);
+                debug!("unix_pex: {:?}", unix_pex);
+                debug!("---------------------------------------");
                 // Push to entries
                 Ok(match is_dir {
                     true => FsEntry::Directory(FsDirectory {
@@ -262,6 +278,7 @@ impl ScpFileTransfer {
     fn perform_shell_cmd(&mut self, cmd: &str) -> Result<String, FileTransferError> {
         match self.session.as_mut() {
             Some(session) => {
+                debug!("Running command: {}", cmd);
                 // Create channel
                 let mut channel: Channel = match session.channel_session() {
                     Ok(ch) => ch,
@@ -285,6 +302,7 @@ impl ScpFileTransfer {
                     Ok(_) => {
                         // Wait close
                         let _ = channel.wait_close();
+                        debug!("Command output: {}", output);
                         Ok(output)
                     }
                     Err(err) => Err(FileTransferError::new_ex(
@@ -312,6 +330,7 @@ impl FileTransfer for ScpFileTransfer {
         password: Option<String>,
     ) -> Result<Option<String>, FileTransferError> {
         // Setup tcp stream
+        info!("Connecting to {}:{}", address, port);
         let socket_addresses: Vec<SocketAddr> =
             match format!("{}:{}", address, port).to_socket_addrs() {
                 Ok(s) => s.collect(),
@@ -325,8 +344,10 @@ impl FileTransfer for ScpFileTransfer {
         let mut tcp: Option<TcpStream> = None;
         // Try addresses
         for socket_addr in socket_addresses.iter() {
+            debug!("Trying socket address {}", socket_addr);
             match TcpStream::connect_timeout(&socket_addr, Duration::from_secs(30)) {
                 Ok(stream) => {
+                    debug!("{} succeded", socket_addr);
                     tcp = Some(stream);
                     break;
                 }
@@ -337,26 +358,30 @@ impl FileTransfer for ScpFileTransfer {
         let tcp: TcpStream = match tcp {
             Some(t) => t,
             None => {
+                error!("No suitable socket address found; connection timeout");
                 return Err(FileTransferError::new_ex(
                     FileTransferErrorType::ConnectionError,
                     String::from("Connection timeout"),
-                ))
+                ));
             }
         };
         // Create session
         let mut session: Session = match Session::new() {
             Ok(s) => s,
             Err(err) => {
+                error!("Could not create session: {}", err);
                 return Err(FileTransferError::new_ex(
                     FileTransferErrorType::ConnectionError,
                     err.to_string(),
-                ))
+                ));
             }
         };
         // Set TCP stream
         session.set_tcp_stream(tcp);
         // Open connection
+        debug!("Initializing handshake");
         if let Err(err) = session.handshake() {
+            error!("Handshake failed: {}", err);
             return Err(FileTransferError::new_ex(
                 FileTransferErrorType::ConnectionError,
                 err.to_string(),
@@ -372,6 +397,11 @@ impl FileTransfer for ScpFileTransfer {
             .resolve(address.as_str(), username.as_str())
         {
             Some(rsa_key) => {
+                debug!(
+                    "Authenticating with user {} and RSA key {}",
+                    username,
+                    rsa_key.display()
+                );
                 // Authenticate with RSA key
                 if let Err(err) = session.userauth_pubkey_file(
                     username.as_str(),
@@ -379,6 +409,7 @@ impl FileTransfer for ScpFileTransfer {
                     rsa_key.as_path(),
                     password.as_deref(),
                 ) {
+                    error!("Authentication failed: {}", err);
                     return Err(FileTransferError::new_ex(
                         FileTransferErrorType::AuthenticationFailed,
                         err.to_string(),
@@ -387,10 +418,16 @@ impl FileTransfer for ScpFileTransfer {
             }
             None => {
                 // Proceeed with username/password authentication
+                debug!(
+                    "Authenticating with username {} and password {}",
+                    username,
+                    shadow_password(password.as_deref().unwrap_or(""))
+                );
                 if let Err(err) = session.userauth_password(
                     username.as_str(),
                     password.unwrap_or_else(|| String::from("")).as_str(),
                 ) {
+                    error!("Authentication failed: {}", err);
                     return Err(FileTransferError::new_ex(
                         FileTransferErrorType::AuthenticationFailed,
                         err.to_string(),
@@ -400,13 +437,22 @@ impl FileTransfer for ScpFileTransfer {
         }
         // Get banner
         let banner: Option<String> = session.banner().map(String::from);
+        debug!(
+            "Connection established: {}",
+            banner.as_deref().unwrap_or("")
+        );
         // Set session
         self.session = Some(session);
         // Get working directory
+        debug!("Getting working directory...");
         match self.perform_shell_cmd("pwd") {
             Ok(output) => self.wrkdir = PathBuf::from(output.as_str().trim()),
             Err(err) => return Err(err),
         }
+        info!(
+            "Connection established; working directory: {}",
+            self.wrkdir.display()
+        );
         Ok(banner)
     }
 
@@ -414,6 +460,7 @@ impl FileTransfer for ScpFileTransfer {
     ///
     /// Disconnect from the remote server
     fn disconnect(&mut self) -> Result<(), FileTransferError> {
+        info!("Disconnecting from remote...");
         match self.session.as_ref() {
             Some(session) => {
                 // Disconnect (greet server with 'Mandi' as they do in Friuli)
@@ -447,6 +494,7 @@ impl FileTransfer for ScpFileTransfer {
     /// Print working directory
 
     fn pwd(&mut self) -> Result<PathBuf, FileTransferError> {
+        info!("PWD: {}", self.wrkdir.display());
         match self.is_connected() {
             true => Ok(self.wrkdir.clone()),
             false => Err(FileTransferError::new(
@@ -471,6 +519,7 @@ impl FileTransfer for ScpFileTransfer {
                         Self::resolve(p.as_path())
                     }
                 };
+                info!("Changing working directory to {}", remote_path.display());
                 // Change directory
                 match self.perform_shell_cmd_with_path(
                     p.as_path(),
@@ -484,6 +533,7 @@ impl FileTransfer for ScpFileTransfer {
                             true => {
                                 // Set working directory
                                 self.wrkdir = PathBuf::from(&output.as_str()[1..].trim());
+                                info!("Changed working directory to {}", self.wrkdir.display());
                                 Ok(self.wrkdir.clone())
                             }
                             false => Err(FileTransferError::new_ex(
@@ -512,6 +562,11 @@ impl FileTransfer for ScpFileTransfer {
         match self.is_connected() {
             true => {
                 let dst: PathBuf = Self::resolve(dst);
+                info!(
+                    "Copying {} to {}",
+                    src.get_abs_path().display(),
+                    dst.display()
+                );
                 // Run `cp -rf`
                 let p: PathBuf = self.wrkdir.clone();
                 match self.perform_shell_cmd_with_path(
@@ -555,6 +610,7 @@ impl FileTransfer for ScpFileTransfer {
         match self.is_connected() {
             true => {
                 // Send ls -l to path
+                info!("Getting file entries in {}", path.display());
                 let path: PathBuf = Self::resolve(path);
                 let p: PathBuf = self.wrkdir.clone();
                 match self.perform_shell_cmd_with_path(
@@ -572,6 +628,11 @@ impl FileTransfer for ScpFileTransfer {
                                 entries.push(entry);
                             }
                         }
+                        info!(
+                            "Found {} out of {} valid file entries",
+                            entries.len(),
+                            lines.len()
+                        );
                         Ok(entries)
                     }
                     Err(err) => Err(FileTransferError::new_ex(
@@ -594,6 +655,7 @@ impl FileTransfer for ScpFileTransfer {
         match self.is_connected() {
             true => {
                 let dir: PathBuf = Self::resolve(dir);
+                info!("Making directory {}", dir.display());
                 let p: PathBuf = self.wrkdir.clone();
                 // Mkdir dir && echo 0
                 match self.perform_shell_cmd_with_path(
@@ -632,6 +694,7 @@ impl FileTransfer for ScpFileTransfer {
             true => {
                 // Get path
                 let path: PathBuf = file.get_abs_path();
+                info!("Removing file {}", path.display());
                 let p: PathBuf = self.wrkdir.clone();
                 match self.perform_shell_cmd_with_path(
                     p.as_path(),
@@ -669,6 +732,7 @@ impl FileTransfer for ScpFileTransfer {
                 // Get path
                 let dst: PathBuf = Self::resolve(dst);
                 let path: PathBuf = file.get_abs_path();
+                info!("Renaming {} to {}", path.display(), dst.display());
                 let p: PathBuf = self.wrkdir.clone();
                 match self.perform_shell_cmd_with_path(
                     p.as_path(),
@@ -717,6 +781,7 @@ impl FileTransfer for ScpFileTransfer {
         match self.is_connected() {
             true => {
                 let p: PathBuf = self.wrkdir.clone();
+                info!("Stat {}", path.display());
                 // make command; Directories require `-d` option
                 let cmd: String = match path.to_string_lossy().ends_with('/') {
                     true => format!("ls -ld \"{}\"", path.display()),
@@ -760,6 +825,7 @@ impl FileTransfer for ScpFileTransfer {
         match self.is_connected() {
             true => {
                 let p: PathBuf = self.wrkdir.clone();
+                info!("Executing command {}", cmd);
                 match self.perform_shell_cmd_with_path(p.as_path(), cmd) {
                     Ok(output) => Ok(output),
                     Err(err) => Err(FileTransferError::new_ex(
@@ -788,7 +854,13 @@ impl FileTransfer for ScpFileTransfer {
         match self.session.as_ref() {
             Some(session) => {
                 let file_name: PathBuf = Self::resolve(file_name);
+                info!(
+                    "Sending file {} to {}",
+                    local.abs_path.display(),
+                    file_name.display()
+                );
                 // Set blocking to true
+                debug!("blocking channel...");
                 session.set_blocking(true);
                 // Calculate file mode
                 let mode: i32 = match local.unix_pex {
@@ -818,6 +890,10 @@ impl FileTransfer for ScpFileTransfer {
                     Ok(metadata) => metadata.len(),
                     Err(_) => local.size as u64, // NOTE: fallback to fsentry size
                 };
+                debug!(
+                    "File mode {:?}; mtime: {}, atime: {}; file size: {}",
+                    mode, times.0, times.1, file_size
+                );
                 // Send file
                 match session.scp_send(file_name.as_path(), mode, file_size, Some(times)) {
                     Ok(channel) => Ok(Box::new(BufWriter::with_capacity(65536, channel))),
@@ -840,7 +916,9 @@ impl FileTransfer for ScpFileTransfer {
     fn recv_file(&mut self, file: &FsFile) -> Result<Box<dyn Read>, FileTransferError> {
         match self.session.as_ref() {
             Some(session) => {
+                info!("Receiving file {}", file.abs_path.display());
                 // Set blocking to true
+                debug!("Set blocking...");
                 session.set_blocking(true);
                 match session.scp_recv(file.abs_path.as_path()) {
                     Ok(reader) => Ok(Box::new(BufReader::with_capacity(65536, reader.0))),

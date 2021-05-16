@@ -69,7 +69,10 @@ impl ActivityManager {
         let (config_client, error): (Option<ConfigClient>, Option<String>) =
             match Self::init_config_client() {
                 Ok(cli) => (Some(cli), None),
-                Err(err) => (None, Some(err)),
+                Err(err) => {
+                    error!("Failed to initialize config client: {}", err);
+                    (None, Some(err))
+                }
             };
         let ctx: Context = Context::new(config_client, error);
         Ok(ActivityManager {
@@ -131,6 +134,7 @@ impl ActivityManager {
     /// Returns when activity terminates.
     /// Returns the next activity to run
     fn run_authentication(&mut self) -> Option<NextActivity> {
+        info!("Starting AuthActivity...");
         // Prepare activity
         let mut activity: AuthActivity = AuthActivity::default();
         // Prepare result
@@ -138,7 +142,10 @@ impl ActivityManager {
         // Get context
         let ctx: Context = match self.context.take() {
             Some(ctx) => ctx,
-            None => return None,
+            None => {
+                error!("Failed to start AuthActivity: context is None");
+                return None;
+            }
         };
         // Create activity
         activity.on_create(ctx);
@@ -149,16 +156,19 @@ impl ActivityManager {
             if let Some(exit_reason) = activity.will_umount() {
                 match exit_reason {
                     ExitReason::Quit => {
+                        info!("AuthActivity terminated due to 'Quit'");
                         result = None;
                         break;
                     }
                     ExitReason::EnterSetup => {
                         // User requested activity
+                        info!("AuthActivity terminated due to 'EnterSetup'");
                         result = Some(NextActivity::SetupActivity);
                         break;
                     }
                     ExitReason::Connect => {
                         // User submitted, set next activity
+                        info!("AuthActivity terminated due to 'Connect'");
                         result = Some(NextActivity::FileTransfer);
                         break;
                     }
@@ -170,6 +180,7 @@ impl ActivityManager {
         }
         // Destroy activity
         self.context = activity.on_destroy();
+        info!("AuthActivity destroyed");
         result
     }
 
@@ -179,15 +190,22 @@ impl ActivityManager {
     /// Returns when activity terminates.
     /// Returns the next activity to run
     fn run_filetransfer(&mut self) -> Option<NextActivity> {
+        info!("Starting FileTransferActivity");
         // Get context
         let mut ctx: Context = match self.context.take() {
             Some(ctx) => ctx,
-            None => return None,
+            None => {
+                error!("Failed to start FileTransferActivity: context is None");
+                return None;
+            }
         };
         // If ft params is None, return None
         let ft_params: &FileTransferParams = match ctx.ft_params.as_ref() {
             Some(ft_params) => &ft_params,
-            None => return None,
+            None => {
+                error!("Failed to start FileTransferActivity: file transfer params is None");
+                return None;
+            }
         };
         // Prepare activity
         let protocol: FileTransferProtocol = ft_params.protocol;
@@ -195,6 +213,7 @@ impl ActivityManager {
             Ok(host) => host,
             Err(err) => {
                 // Set error in context
+                error!("Failed to initialize localhost: {}", err);
                 ctx.set_error(format!("Could not initialize localhost: {}", err));
                 return None;
             }
@@ -211,11 +230,13 @@ impl ActivityManager {
             if let Some(exit_reason) = activity.will_umount() {
                 match exit_reason {
                     ExitReason::Quit => {
+                        info!("FileTransferActivity terminated due to 'Quit'");
                         result = None;
                         break;
                     }
                     ExitReason::Disconnect => {
                         // User disconnected, set next activity to authentication
+                        info!("FileTransferActivity terminated due to 'Authentication'");
                         result = Some(NextActivity::Authentication);
                         break;
                     }
@@ -241,7 +262,10 @@ impl ActivityManager {
         // Get context
         let ctx: Context = match self.context.take() {
             Some(ctx) => ctx,
-            None => return None,
+            None => {
+                error!("Failed to start SetupActivity: context is None");
+                return None;
+            }
         };
         // Create activity
         activity.on_create(ctx);
@@ -250,6 +274,7 @@ impl ActivityManager {
             activity.on_draw();
             // Check if activity has terminated
             if let Some(ExitReason::Quit) = activity.will_umount() {
+                info!("SetupActivity terminated due to 'Quit'");
                 break;
             }
             // Sleep for ticks

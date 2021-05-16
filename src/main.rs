@@ -32,6 +32,8 @@ extern crate bitflags;
 #[macro_use]
 extern crate lazy_static;
 #[macro_use]
+extern crate log;
+#[macro_use]
 extern crate magic_crypt;
 extern crate rpassword;
 
@@ -55,6 +57,7 @@ mod utils;
 // namespaces
 use activity_manager::{ActivityManager, NextActivity};
 use filetransfer::FileTransferProtocol;
+use system::logging;
 
 /// ### print_usage
 ///
@@ -79,10 +82,13 @@ fn main() {
     let mut remote_wrkdir: Option<PathBuf> = None;
     let mut protocol: FileTransferProtocol = FileTransferProtocol::Sftp; // Default protocol
     let mut ticks: Duration = Duration::from_millis(10);
+    let mut log_level: Option<logging::LevelFilter> = Some(logging::LevelFilter::Info);
     //Process options
     let mut opts = Options::new();
     opts.optopt("P", "password", "Provide password from CLI", "<password>");
     opts.optopt("T", "ticks", "Set UI ticks; default 10ms", "<ms>");
+    opts.optflag("D", "debug", "Enable debug log level");
+    opts.optflag("q", "quiet", "Disable logging");
     opts.optflag("v", "version", "");
     opts.optflag("h", "help", "Print this menu");
     let matches = match opts.parse(&args[1..]) {
@@ -104,6 +110,13 @@ fn main() {
             TERMSCP_VERSION, TERMSCP_AUTHORS,
         );
         std::process::exit(255);
+    }
+    // Logging
+    if matches.opt_present("q") {
+        log_level = None;
+    }
+    if matches.opt_present("D") {
+        log_level = Some(logging::LevelFilter::Trace);
     }
     // Match password
     if let Some(passwd) = matches.opt_str("P") {
@@ -155,9 +168,17 @@ fn main() {
         Ok(dir) => dir,
         Err(_) => PathBuf::from("/"),
     };
+    // Setup logging
+    if let Some(log_level) = log_level {
+        if let Err(err) = logging::init(log_level) {
+            eprintln!("Failed to initialize logging: {}", err);
+        }
+    }
+    info!("termscp {} started!", TERMSCP_VERSION);
     // Initialize client if necessary
     let mut start_activity: NextActivity = NextActivity::Authentication;
     if address.is_some() {
+        debug!("User has specified remote options: address: {:?}, port: {:?}, protocol: {:?}, user: {:?}, password: {}", address, port, protocol, username, utils::fmt::shadow_password(password.as_deref().unwrap_or("")));
         if password.is_none() {
             // Ask password if unspecified
             password = match rpassword::read_password_from_tty(Some("Password: ")) {
@@ -173,6 +194,10 @@ fn main() {
                     std::process::exit(255);
                 }
             };
+            debug!(
+                "Read password from tty: {}",
+                utils::fmt::shadow_password(password.as_deref().unwrap_or(""))
+            );
         }
         // In this case the first activity will be FileTransfer
         start_activity = NextActivity::FileTransfer;
@@ -190,7 +215,9 @@ fn main() {
         manager.set_filetransfer_params(address, port, protocol, username, password, remote_wrkdir);
     }
     // Run
+    info!("Starting activity manager...");
     manager.run(start_activity);
+    info!("termscp terminated");
     // Then return
     std::process::exit(0);
 }
