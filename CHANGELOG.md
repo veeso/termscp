@@ -46,6 +46,7 @@ Released on FIXME: ??
     - when you change the protocol in the authentication form and the current port is standard (`< 1024`), the port will be automatically changed to default value for the selected protocol (e.g. current port: `123`, protocol is changes to `FTP`, port becomes `21`)
 - Bugfix:
   - Fixed wrong text wrap in log box
+  - Fixed empty bookmark name causing termscp to crash
   - Fixed error message not being shown after an upload failure
   - Fixed default protocol not being loaded from config
   - [Issue 23](https://github.com/veeso/termscp/issues/23): Remove created file if transfer failed or was abrupted

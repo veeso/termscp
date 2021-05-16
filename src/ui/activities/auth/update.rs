@@ -271,7 +271,9 @@ impl AuthActivity {
                         Some(Payload::One(Value::Usize(0)))
                     );
                     // Save bookmark
-                    self.save_bookmark(bookmark_name, save_pwd);
+                    if !bookmark_name.is_empty() {
+                        self.save_bookmark(bookmark_name, save_pwd);
+                    }
                     // Umount popup
                     self.umount_bookmark_save_dialog();
                     // Reload bookmarks
