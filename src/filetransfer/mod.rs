@@ -319,14 +319,14 @@ impl std::string::ToString for FileTransferProtocol {
 }
 
 impl std::str::FromStr for FileTransferProtocol {
-    type Err = ();
+    type Err = String;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_ascii_uppercase().as_str() {
             "FTP" => Ok(FileTransferProtocol::Ftp(false)),
             "FTPS" => Ok(FileTransferProtocol::Ftp(true)),
             "SCP" => Ok(FileTransferProtocol::Scp),
             "SFTP" => Ok(FileTransferProtocol::Sftp),
-            _ => Err(()),
+            _ => Err(s.to_string()),
         }
     }
 }

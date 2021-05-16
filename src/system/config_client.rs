@@ -58,6 +58,11 @@ impl ConfigClient {
     pub fn new(config_path: &Path, ssh_key_dir: &Path) -> Result<ConfigClient, SerializerError> {
         // Initialize a default configuration
         let default_config: UserConfig = UserConfig::default();
+        info!(
+            "Setting up config client with config path {} and SSH key directory {}",
+            config_path.display(),
+            ssh_key_dir.display()
+        );
         // Create client
         let mut client: ConfigClient = ConfigClient {
             config: default_config,
@@ -67,6 +72,7 @@ impl ConfigClient {
         // If ssh key directory doesn't exist, create it
         if !ssh_key_dir.exists() {
             if let Err(err) = create_dir(ssh_key_dir) {
+                error!("Failed to create SSH key dir: {}", err);
                 return Err(SerializerError::new_ex(
                     SerializerErrorKind::IoError,
                     format!(
@@ -76,17 +82,22 @@ impl ConfigClient {
                     ),
                 ));
             }
+            debug!("Created SSH key directory");
         }
         // If Config file doesn't exist, create it
         if !config_path.exists() {
             if let Err(err) = client.write_config() {
+                error!("Couldn't create configuration file: {}", err);
                 return Err(err);
             }
+            debug!("Config file didn't exist; created file");
         } else {
             // otherwise Load configuration from file
             if let Err(err) = client.read_config() {
+                error!("Couldn't read configuration file: {}", err);
                 return Err(err);
             }
+            debug!("Read configuration file");
         }
         Ok(client)
     }
@@ -230,12 +241,18 @@ impl ConfigClient {
             p.push(format!("{}.key", host_name));
             p
         };
+        info!(
+            "Writing SSH file to {} for host {}",
+            ssh_key_path.display(),
+            host_name
+        );
         // Write key to file
         let mut f: File = match File::create(ssh_key_path.as_path()) {
             Ok(f) => f,
             Err(err) => return Self::make_io_err(err),
         };
         if let Err(err) = f.write_all(ssh_key.as_bytes()) {
+            error!("Failed to write SSH key to file: {}", err);
             return Self::make_io_err(err);
         }
         // Add host to keys
@@ -251,6 +268,7 @@ impl ConfigClient {
     /// and also commits changes to configuration, to prevent incoerent data
     pub fn del_ssh_key(&mut self, host: &str, username: &str) -> Result<(), SerializerError> {
         // Remove key from configuration and get key path
+        info!("Removing key for {}@{}", host, username);
         let key_path: PathBuf = match self
             .config
             .remote
@@ -262,6 +280,7 @@ impl ConfigClient {
         };
         // Remove file
         if let Err(err) = remove_file(key_path.as_path()) {
+            error!("Failed to remove key file {}: {}", key_path.display(), err);
             return Self::make_io_err(err);
         }
         // Commit changes to configuration
@@ -310,10 +329,13 @@ impl ConfigClient {
                 let serializer: ConfigSerializer = ConfigSerializer {};
                 serializer.serialize(Box::new(writer), &self.config)
             }
-            Err(err) => Err(SerializerError::new_ex(
-                SerializerErrorKind::IoError,
-                err.to_string(),
-            )),
+            Err(err) => {
+                error!("Failed to write configuration file: {}", err);
+                Err(SerializerError::new_ex(
+                    SerializerErrorKind::IoError,
+                    err.to_string(),
+                ))
+            }
         }
     }
 
@@ -337,10 +359,13 @@ impl ConfigClient {
                     Err(err) => Err(err),
                 }
             }
-            Err(err) => Err(SerializerError::new_ex(
-                SerializerErrorKind::IoError,
-                err.to_string(),
-            )),
+            Err(err) => {
+                error!("Failed to read configuration: {}", err);
+                Err(SerializerError::new_ex(
+                    SerializerErrorKind::IoError,
+                    err.to_string(),
+                ))
+            }
         }
     }
 
