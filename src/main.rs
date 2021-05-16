@@ -82,12 +82,11 @@ fn main() {
     let mut remote_wrkdir: Option<PathBuf> = None;
     let mut protocol: FileTransferProtocol = FileTransferProtocol::Sftp; // Default protocol
     let mut ticks: Duration = Duration::from_millis(10);
-    let mut log_level: Option<logging::LevelFilter> = Some(logging::LevelFilter::Info);
+    let mut log_enabled: bool = true;
     //Process options
     let mut opts = Options::new();
     opts.optopt("P", "password", "Provide password from CLI", "<password>");
     opts.optopt("T", "ticks", "Set UI ticks; default 10ms", "<ms>");
-    opts.optflag("D", "debug", "Enable debug log level");
     opts.optflag("q", "quiet", "Disable logging");
     opts.optflag("v", "version", "");
     opts.optflag("h", "help", "Print this menu");
@@ -113,10 +112,7 @@ fn main() {
     }
     // Logging
     if matches.opt_present("q") {
-        log_level = None;
-    }
-    if matches.opt_present("D") {
-        log_level = Some(logging::LevelFilter::Trace);
+        log_enabled = false;
     }
     // Match password
     if let Some(passwd) = matches.opt_str("P") {
@@ -169,8 +165,8 @@ fn main() {
         Err(_) => PathBuf::from("/"),
     };
     // Setup logging
-    if let Some(log_level) = log_level {
-        if let Err(err) = logging::init(log_level) {
+    if log_enabled {
+        if let Err(err) = logging::init() {
             eprintln!("Failed to initialize logging: {}", err);
         }
     }
