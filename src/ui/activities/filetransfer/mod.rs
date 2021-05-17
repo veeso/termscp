@@ -273,25 +273,33 @@ impl Activity for FileTransferActivity {
     /// `on_create` is the function which must be called to initialize the activity.
     /// `on_create` must initialize all the data structures used by the activity
     fn on_create(&mut self, context: Context) {
+        debug!("Initializing activity...");
         // Set context
         self.context = Some(context);
         // Clear terminal
         self.context.as_mut().unwrap().clear_screen();
         // Put raw mode on enabled
-        let _ = enable_raw_mode();
+        if let Err(err) = enable_raw_mode() {
+            error!("Failed to enter raw mode: {}", err);
+        }
         // Set working directory
         let pwd: PathBuf = self.host.pwd();
         // Get files at current wd
         self.local_scan(pwd.as_path());
         self.local_mut().wrkdir = pwd;
+        debug!("Read working directory");
         // Configure text editor
         self.setup_text_editor();
+        debug!("Setup text editor");
         // init view
         self.init();
+        debug!("Initialized view");
         // Verify error state from context
         if let Some(err) = self.context.as_mut().unwrap().get_error() {
+            error!("Fatal error on create: {}", err);
             self.mount_fatal(&err);
         }
+        info!("Created FileTransferActivity");
     }
 
     /// ### on_draw
@@ -308,6 +316,10 @@ impl Activity for FileTransferActivity {
         // Check if connected (popup must be None, otherwise would try reconnecting in loop in case of error)
         if !self.client.is_connected() && self.view.get_props(COMPONENT_TEXT_FATAL).is_none() {
             let params = self.context.as_ref().unwrap().ft_params.as_ref().unwrap();
+            info!(
+                "Client is not connected to remote; connecting to {}:{}",
+                params.address, params.port
+            );
             let msg: String = format!("Connecting to {}:{}...", params.address, params.port);
             // Set init state to connecting popup
             self.mount_wait(msg.as_str());
@@ -341,7 +353,9 @@ impl Activity for FileTransferActivity {
     /// This function must be called once before terminating the activity.
     fn on_destroy(&mut self) -> Option<Context> {
         // Disable raw mode
-        let _ = disable_raw_mode();
+        if let Err(err) = disable_raw_mode() {
+            error!("Failed to disable raw mode: {}", err);
+        }
         // Disconnect client
         if self.client.is_connected() {
             let _ = self.client.disconnect();

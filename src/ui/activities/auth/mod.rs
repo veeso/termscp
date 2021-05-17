@@ -108,17 +108,24 @@ impl AuthActivity {
     ///
     /// If enabled in configuration, check for updates from Github
     fn check_for_updates(&mut self) {
+        debug!("Check for updates...");
         // Check version only if unset in the store
         let ctx: &Context = self.context.as_ref().unwrap();
         if !ctx.store.isset(STORE_KEY_LATEST_VERSION) {
+            debug!("Version is not set in storage");
             let mut new_version: Option<String> = match ctx.config_client.as_ref() {
                 Some(client) => {
                     if client.get_check_for_updates() {
+                        debug!("Check for updates is enabled");
                         // Send request
                         match git::check_for_updates(env!("CARGO_PKG_VERSION")) {
-                            Ok(version) => version,
+                            Ok(version) => {
+                                info!("Latest version is: {:?}", version);
+                                version
+                            }
                             Err(err) => {
                                 // Report error
+                                error!("Failed to get latest version: {}", err);
                                 self.mount_error(
                                     format!("Could not check for new updates: {}", err).as_str(),
                                 );
@@ -127,6 +134,7 @@ impl AuthActivity {
                             }
                         }
                     } else {
+                        info!("Check for updates is disabled");
                         None
                     }
                 }
@@ -149,6 +157,7 @@ impl Activity for AuthActivity {
     /// `on_create` must initialize all the data structures used by the activity
     /// Context is taken from activity manager and will be released only when activity is destroyed
     fn on_create(&mut self, mut context: Context) {
+        debug!("Initializing activity");
         // Initialize file transfer params
         context.ft_params = Some(FileTransferParams::default());
         // Set context
@@ -156,7 +165,9 @@ impl Activity for AuthActivity {
         // Clear terminal
         self.context.as_mut().unwrap().clear_screen();
         // Put raw mode on enabled
-        let _ = enable_raw_mode();
+        if let Err(err) = enable_raw_mode() {
+            error!("Failed to enter raw mode: {}", err);
+        }
         // Init bookmarks client
         if self.bookmarks_client.is_none() {
             self.init_bookmarks_client();
@@ -169,6 +180,7 @@ impl Activity for AuthActivity {
         self.check_for_updates();
         // Initialize view
         self.init();
+        info!("Activity initialized");
     }
 
     /// ### on_draw
@@ -213,7 +225,9 @@ impl Activity for AuthActivity {
     /// This function finally releases the context
     fn on_destroy(&mut self) -> Option<Context> {
         // Disable raw mode
-        let _ = disable_raw_mode();
+        if let Err(err) = disable_raw_mode() {
+            error!("Failed to disable raw mode: {}", err);
+        }
         self.context.as_ref()?;
         // Clear terminal and return
         match self.context.take() {

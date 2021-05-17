@@ -88,7 +88,9 @@ impl SetupActivity {
                     env::set_var("EDITOR", config_cli.get_text_editor());
                 }
                 // Prepare terminal
-                let _ = disable_raw_mode();
+                if let Err(err) = disable_raw_mode() {
+                    error!("Failed to disable raw mode: {}", err);
+                }
                 // Leave alternate mode
                 ctx.leave_alternate_screen();
                 // Get result
@@ -121,7 +123,9 @@ impl SetupActivity {
                 // Enter alternate mode
                 ctx.enter_alternate_screen();
                 // Re-enable raw mode
-                let _ = enable_raw_mode();
+                if let Err(err) = enable_raw_mode() {
+                    error!("Failed to enter raw mode: {}", err);
+                }
                 // Return result
                 result
             }

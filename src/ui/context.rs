@@ -104,29 +104,38 @@ impl Context {
     ///
     /// Enter alternate screen (gui window)
     pub fn enter_alternate_screen(&mut self) {
-        let _ = execute!(
+        match execute!(
             self.terminal.backend_mut(),
             EnterAlternateScreen,
             DisableMouseCapture
-        );
+        ) {
+            Err(err) => error!("Failed to enter alternate screen: {}", err),
+            Ok(_) => info!("Entered alternate screen"),
+        }
     }
 
     /// ### leave_alternate_screen
     ///
     /// Go back to normal screen (gui window)
     pub fn leave_alternate_screen(&mut self) {
-        let _ = execute!(
+        match execute!(
             self.terminal.backend_mut(),
             LeaveAlternateScreen,
             DisableMouseCapture
-        );
+        ) {
+            Err(err) => error!("Failed to leave alternate screen: {}", err),
+            Ok(_) => info!("Left alternate screen"),
+        }
     }
 
     /// ### clear_screen
     ///
     /// Clear terminal screen
     pub fn clear_screen(&mut self) {
-        let _ = self.terminal.clear();
+        match self.terminal.clear() {
+            Err(err) => error!("Failed to clear screen: {}", err),
+            Ok(_) => info!("Cleared screen"),
+        }
     }
 }
 
