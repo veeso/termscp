@@ -61,6 +61,7 @@ Don't set other labels to your issue, not even priority.
 
 When you open a bug try to be the most precise as possible in describing your issue. I'm not saying you should always be that precise, since sometimes it's very easy for maintainers to understand what you're talking about. Just try to be reasonable to understand sometimes we might not know what you're talking about or we just don't have the technical knowledge you might think.
 Please always provide the environment you're working on and consider that we don't provide any support for older version of termscp, at least for those not classified as LTS (if we'll ever have them).
+If you can, provide the log file or the snippet involving your issue. You can find in the [user manual](docs/man.md) the location of the log file.
 Last but not least: the template I've written must be used. Full stop.
 
 Maintainers will may add additional labels to your issue:
@@ -68,7 +69,7 @@ Maintainers will may add additional labels to your issue:
 - **duplicate**: the issue is duplicated; the reference to the related issue will be added to your description. Your issue will be closed.
 - **priority**: this must be fixed asap
 - **sorcery**: it is not possible to find out what's causing your bug, nor is reproducible on our test environments.
-- **wontfix**: your bug has a very high ratio between the probability to encounter it and the difficult to fix it, or it just isn't a bug, but a feature.
+- **wontfix**: your bug has a very high ratio between the difficulty to fix it and the probability to encounter it, or it just isn't a bug, but a feature.
 
 ### Feature requests
 

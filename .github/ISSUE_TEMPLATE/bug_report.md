@@ -28,6 +28,11 @@ A clear and concise description of what you expected to happen.
 - Protocol used
 - Remote server version and name
 
+## Log
+
+Report the snippet of the log file containing the unexpected behaviour.
+If there is any information you consider to be confidential, shadow it.
+
 ## Additional information
 
 Add any other context about the problem here.

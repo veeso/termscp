@@ -33,6 +33,9 @@ Released on FIXME: ??
   - Select a file with `<M>`, the file when selected will have a `*` prepended to its name
   - Select all files in the current directory with `<CTRL+A>`
   - Read more on manual: [Work on multiple files](docs/man.md#Work-on-multiple-files-)
+- **Logging**:
+  - termscp now writes a log file, useful to debug and to contribute to fix issues.
+  - Read more on [manual](docs/man.md)
 - **File transfer changes**
   - *SFTP*
     - Added **COPY** command to SFTP (Please note that Copy command is not supported by SFTP natively, so here it just uses the `cp` shell command as it does in SCP).

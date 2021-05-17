@@ -15,6 +15,7 @@
     - [File Explorer Format](#file-explorer-format)
   - [Text Editor ✏](#text-editor-)
     - [How do I configure the text editor 🦥](#how-do-i-configure-the-text-editor-)
+  - [Logging 🩺](#logging-)
 
 ---
 
@@ -25,6 +26,7 @@ termscp can be started with the following options:
 `termscp [options]... [protocol://user@address:port:wrkdir] [local-wrkdir]`
 
 - `-P, --password <password>` if address is provided, password will be this argument
+- `-q, --quiet` Disable logging
 - `-v, --version` Print version info
 - `-h, --help` Print help page
 
@@ -266,3 +268,33 @@ Just a reminder: **you can edit only textual file**; binary files are not suppor
 ### How do I configure the text editor 🦥
 
 Text editor is automatically found using this [awesome crate](https://github.com/milkey-mouse/edit), if you want to change the text editor to use, change it in termscp configuration. [Read more](#configuration-️)
+
+---
+
+## Logging 🩺
+
+termscp writes a log file for each session, which is written at
+
+- `$HOME/.config/termscp/termscp.log` on Linux/BSD
+- `$HOME/Library/Application Support/termscp/termscp.log` on MacOs
+- `FOLDERID_RoamingAppData\termscp\termscp.log` on Windows
+
+the log won't be rotated, but will just be truncated after each launch of termscp, so if you want to report an issue and you want to attach your log file, keep in mind to save the log file in a safe place before using termscp again.
+The log file always reports in *trace* level, so it is kinda verbose.
+I know you might have some questions regarding log files, so I made a kind of a Q/A:
+
+> Is it possible to reduce verbosity?
+
+No. The reason is quite simple: when an issue happens, you must be able to know what's causing it and the only way to do that, is to have the log file with the maximum verbosity level set.
+
+> If trace level is set for logging, is the file going to reach a huge size?
+
+Probably not, unless you never quit termscp, but I think that's likely to happne. A long session may produce up to 10MB of log files (I said a long session), but I think a normal session won't exceed 2MB.
+
+> I don't want logging, can I turn it off?
+
+Yes, you can. Just start termscp with `-q or --quiet` option. You can alias termscp to make it persistent. Remember that logging is used to diagnose issues, so since behind every open source project, there should always be this kind of mutual help, keeping log files might be your way to support the project 😉. I don't want you to feel guilty, but just to say.
+
+> Is logging safe?
+
+If you're concerned about security, the log file doesn't contain any plain password, so don't worry and exposes the same information the sibling file `bookmarks` reports.
