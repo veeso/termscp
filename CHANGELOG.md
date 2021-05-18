@@ -33,6 +33,9 @@ Released on FIXME: ??
   - Select a file with `<M>`, the file when selected will have a `*` prepended to its name
   - Select all files in the current directory with `<CTRL+A>`
   - Read more on manual: [Work on multiple files](docs/man.md#Work-on-multiple-files-)
+- **Logging**:
+  - termscp now writes a log file, useful to debug and to contribute to fix issues.
+  - Read more on [manual](docs/man.md)
 - **File transfer changes**
   - *SFTP*
     - Added **COPY** command to SFTP (Please note that Copy command is not supported by SFTP natively, so here it just uses the `cp` shell command as it does in SCP).
@@ -46,6 +49,7 @@ Released on FIXME: ??
     - when you change the protocol in the authentication form and the current port is standard (`< 1024`), the port will be automatically changed to default value for the selected protocol (e.g. current port: `123`, protocol is changes to `FTP`, port becomes `21`)
 - Bugfix:
   - Fixed wrong text wrap in log box
+  - Fixed empty bookmark name causing termscp to crash
   - Fixed error message not being shown after an upload failure
   - Fixed default protocol not being loaded from config
   - [Issue 23](https://github.com/veeso/termscp/issues/23): Remove created file if transfer failed or was abrupted

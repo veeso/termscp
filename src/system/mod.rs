@@ -30,4 +30,5 @@ pub mod bookmarks_client;
 pub mod config_client;
 pub mod environment;
 pub(crate) mod keys;
+pub mod logging;
 pub mod sshkey_storage;

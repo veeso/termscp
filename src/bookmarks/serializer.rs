@@ -50,6 +50,7 @@ impl BookmarkSerializer {
                 ))
             }
         };
+        trace!("Serialized new bookmarks data: {}", data);
         // Write file
         match writable.write_all(data.as_bytes()) {
             Ok(_) => Ok(()),
@@ -72,9 +73,13 @@ impl BookmarkSerializer {
                 err.to_string(),
             ));
         }
+        trace!("Read bookmarks from file: {}", data);
         // Deserialize
         match toml::de::from_str(data.as_str()) {
-            Ok(hosts) => Ok(hosts),
+            Ok(bookmarks) => {
+                debug!("Read bookmarks from file {:?}", bookmarks);
+                Ok(bookmarks)
+            }
             Err(err) => Err(SerializerError::new_ex(
                 SerializerErrorKind::SyntaxError,
                 err.to_string(),

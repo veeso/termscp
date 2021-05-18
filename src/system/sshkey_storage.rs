@@ -42,6 +42,7 @@ impl SshKeyStorage {
     pub fn storage_from_config(cfg_client: &ConfigClient) -> Self {
         let mut hosts: HashMap<String, PathBuf> =
             HashMap::with_capacity(cfg_client.iter_ssh_keys().count());
+        debug!("Setting up SSH key storage");
         // Iterate over keys
         for key in cfg_client.iter_ssh_keys() {
             match cfg_client.get_ssh_key(key) {
@@ -52,8 +53,12 @@ impl SshKeyStorage {
                     }
                     None => continue,
                 },
-                Err(_) => continue,
+                Err(err) => {
+                    error!("Failed to get SSH key for {}: {}", key, err);
+                    continue;
+                }
             }
+            info!("Got SSH key for {}", key);
         }
         // Return storage
         SshKeyStorage { hosts }

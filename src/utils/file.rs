@@ -1,10 +1,6 @@
-#![doc(html_playground_url = "https://play.rust-lang.org")]
-#![doc(
-    html_favicon_url = "https://raw.githubusercontent.com/veeso/termscp/main/assets/images/termscp-128.png"
-)]
-#![doc(
-    html_logo_url = "https://raw.githubusercontent.com/veeso/termscp/main/assets/images/termscp-512.png"
-)]
+//! ## File
+//!
+//! `file` is the module which exposes file related utilities
 
 /**
  * MIT License
@@ -29,22 +25,33 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+use std::fs::File;
+use std::fs::OpenOptions;
+use std::io;
+use std::path::Path;
 
-#[macro_use]
-extern crate bitflags;
-#[macro_use]
-extern crate lazy_static;
-#[macro_use]
-extern crate log;
-#[macro_use]
-extern crate magic_crypt;
+/// ### open_file
+///
+/// Open file provided as parameter
+pub fn open_file<P>(filename: P, create: bool, write: bool, append: bool) -> io::Result<File>
+where
+    P: AsRef<Path>,
+{
+    OpenOptions::new()
+        .create(create)
+        .write(write)
+        .append(append)
+        .truncate(!append)
+        .open(filename)
+}
 
-pub mod activity_manager;
-pub mod bookmarks;
-pub mod config;
-pub mod filetransfer;
-pub mod fs;
-pub mod host;
-pub mod system;
-pub mod ui;
-pub mod utils;
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_utils_file_open() {
+        let tmpfile: tempfile::NamedTempFile = tempfile::NamedTempFile::new().unwrap();
+        assert!(open_file(tmpfile.path(), true, true, true).is_ok());
+    }
+}

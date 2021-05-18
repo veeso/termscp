@@ -110,7 +110,9 @@ impl Activity for SetupActivity {
         // Clear terminal
         self.context.as_mut().unwrap().clear_screen();
         // Put raw mode on enabled
-        let _ = enable_raw_mode();
+        if let Err(err) = enable_raw_mode() {
+            error!("Failed to enter raw mode: {}", err);
+        }
         // Init view
         self.init_setup();
         // Verify error state from context
@@ -161,7 +163,9 @@ impl Activity for SetupActivity {
     /// This function finally releases the context
     fn on_destroy(&mut self) -> Option<Context> {
         // Disable raw mode
-        let _ = disable_raw_mode();
+        if let Err(err) = disable_raw_mode() {
+            error!("Failed to disable raw mode: {}", err);
+        }
         self.context.as_ref()?;
         // Clear terminal and return
         match self.context.take() {

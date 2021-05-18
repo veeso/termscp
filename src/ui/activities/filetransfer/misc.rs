@@ -36,6 +36,12 @@ impl FileTransferActivity {
     ///
     /// Add message to log events
     pub(super) fn log(&mut self, level: LogLevel, msg: String) {
+        // Log to file
+        match level {
+            LogLevel::Error => error!("{}", msg),
+            LogLevel::Info => info!("{}", msg),
+            LogLevel::Warn => warn!("{}", msg),
+        }
         // Create log record
         let record: LogRecord = LogRecord::new(level, msg);
         //Check if history overflows the size

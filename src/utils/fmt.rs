@@ -152,6 +152,13 @@ pub fn fmt_path_elide(p: &Path, width: usize) -> String {
     }
 }
 
+/// ### shadow_password
+///
+/// Return a string with the same length of input string, but each character is replaced by '*'
+pub fn shadow_password(s: &str) -> String {
+    (0..s.len()).map(|_| '*').collect()
+}
+
 #[cfg(test)]
 mod tests {
 
@@ -218,5 +225,10 @@ mod tests {
         assert_eq!(fmt_path_elide(p, 8), String::from("/develop/pippo"));
         let p: &Path = &Path::new("/develop/pippo/foo/bar");
         assert_eq!(fmt_path_elide(p, 16), String::from("/develop/.../foo/bar"));
+    }
+
+    #[test]
+    fn test_utils_fmt_shadow_password() {
+        assert_eq!(shadow_password("foobar"), String::from("******"));
     }
 }

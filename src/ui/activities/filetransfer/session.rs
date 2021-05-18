@@ -783,7 +783,9 @@ impl FileTransferActivity {
             }
         }
         // Put input mode back to normal
-        let _ = disable_raw_mode();
+        if let Err(err) = disable_raw_mode() {
+            error!("Failed to disable raw mode: {}", err);
+        }
         // Leave alternate mode
         if let Some(ctx) = self.context.as_mut() {
             ctx.leave_alternate_screen();

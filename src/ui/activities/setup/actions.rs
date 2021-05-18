@@ -111,13 +111,17 @@ impl SetupActivity {
             env::set_var("EDITOR", cli.get_text_editor());
             let placeholder: String = format!("# Type private SSH key for {}@{}\n", username, host);
             // Put input mode back to normal
-            let _ = disable_raw_mode();
+            if let Err(err) = disable_raw_mode() {
+                error!("Failed to disable raw mode: {}", err);
+            }
             // Leave alternate mode
             if let Some(ctx) = self.context.as_mut() {
                 ctx.leave_alternate_screen();
             }
             // Re-enable raw mode
-            let _ = enable_raw_mode();
+            if let Err(err) = enable_raw_mode() {
+                error!("Failed to enter raw mode: {}", err);
+            }
             // Write key to file
             match edit::edit(placeholder.as_bytes()) {
                 Ok(rsa_key) => {
