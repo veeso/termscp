@@ -42,7 +42,6 @@ use crate::fs::FsEntry;
 use crate::ui::components::{file_list::FileListPropsBuilder, logbox::LogboxPropsBuilder};
 use crate::ui::keymap::*;
 // externals
-use bytesize::ByteSize;
 use std::path::{Path, PathBuf};
 use tuirealm::{
     components::progress_bar::ProgressBarPropsBuilder,
@@ -644,7 +643,7 @@ impl FileTransferActivity {
                 // -- progress bar
                 (COMPONENT_PROGRESS_BAR, &MSG_KEY_CTRL_C) => {
                     // Set transfer aborted to True
-                    self.transfer.aborted = true;
+                    self.transfer.abort();
                     None
                 }
                 // -- fallback
@@ -796,26 +795,9 @@ impl FileTransferActivity {
     pub(super) fn update_progress_bar(&mut self, text: String) -> Option<(String, Msg)> {
         match self.view.get_props(COMPONENT_PROGRESS_BAR) {
             Some(props) => {
-                // Calculate ETA
-                let elapsed_secs: u64 = self.transfer.started.elapsed().as_secs();
-                let eta: String = match self.transfer.progress as u64 {
-                    0 => String::from("--:--"), // NOTE: would divide by 0 :D
-                    _ => {
-                        let eta: u64 =
-                            ((elapsed_secs * 100) / (self.transfer.progress as u64)) - elapsed_secs;
-                        format!("{:0width$}:{:0width$}", (eta / 60), (eta % 60), width = 2)
-                    }
-                };
-                // Calculate bytes/s
-                let label = format!(
-                    "{:.2}% - ETA {} ({}/s)",
-                    self.transfer.progress,
-                    eta,
-                    ByteSize(self.transfer.bytes_per_second())
-                );
                 let props = ProgressBarPropsBuilder::from(props)
-                    .with_texts(Some(text), label)
-                    .with_progress(self.transfer.progress / 100.0)
+                    .with_texts(Some(text), self.transfer.partial.to_string())
+                    .with_progress(self.transfer.partial.calc_progress())
                     .build();
                 self.view.update(COMPONENT_PROGRESS_BAR, props)
             }

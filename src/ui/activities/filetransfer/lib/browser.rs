@@ -33,7 +33,7 @@ use crate::system::config_client::ConfigClient;
 ///
 /// File explorer tab
 #[derive(Clone, Copy)]
-pub(super) enum FileExplorerTab {
+pub enum FileExplorerTab {
     Local,
     Remote,
     FindLocal,  // Find result tab
@@ -43,7 +43,7 @@ pub(super) enum FileExplorerTab {
 /// ## Browser
 ///
 /// Browser contains the browser options
-pub(super) struct Browser {
+pub struct Browser {
     local: FileExplorer,         // Local File explorer state
     remote: FileExplorer,        // Remote File explorer state
     found: Option<FileExplorer>, // File explorer for find result
@@ -55,7 +55,7 @@ impl Browser {
     /// ### new
     ///
     /// Build a new `Browser` struct
-    pub(super) fn new(cli: Option<&ConfigClient>) -> Self {
+    pub fn new(cli: Option<&ConfigClient>) -> Self {
         Self {
             local: Self::build_local_explorer(cli),
             remote: Self::build_remote_explorer(cli),
@@ -99,14 +99,14 @@ impl Browser {
         self.found = None;
     }
 
-    pub(super) fn tab(&self) -> FileExplorerTab {
+    pub fn tab(&self) -> FileExplorerTab {
         self.tab
     }
 
     /// ### change_tab
     ///
     /// Update tab value
-    pub(super) fn change_tab(&mut self, tab: FileExplorerTab) {
+    pub fn change_tab(&mut self, tab: FileExplorerTab) {
         self.tab = tab;
     }
 
