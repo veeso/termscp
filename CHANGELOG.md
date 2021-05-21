@@ -21,6 +21,8 @@
 
 Released on FIXME: ??
 
+🌸 The Spring Update 🌷
+
 - **Synchronized browsing**:
   - Added the possibility to enabled the synchronized brower navigation
     - when you enter a directory, the same directory will be entered on the other tab
@@ -41,6 +43,11 @@ Released on FIXME: ??
     - Added **COPY** command to SFTP (Please note that Copy command is not supported by SFTP natively, so here it just uses the `cp` shell command as it does in SCP).
   - *FTP*
     - Added support for file copy (achieved through *tricky-copy*: the file is first downloaded, then uploaded with a different file name)
+- **Double progress bar**:
+  - From now one two progress bar will be displayed:
+    - the first, on top, displays the full transfer state (e.g. when downloading a directory of 10 files, the progress of the entire transfer)
+    - the second, on bottom, displays the transfer of the individual file being written (as happened for the old versions)
+    - changed the progress bar colour from `LightGreen` to `Green`
 - Enhancements
   - Added a status bar in the file explorer showing whether the sync browser is enabled and which file sorting mode is selected
   - Removed the goold old figlet title
