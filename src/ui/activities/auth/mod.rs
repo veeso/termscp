@@ -168,18 +168,18 @@ impl Activity for AuthActivity {
         if let Err(err) = enable_raw_mode() {
             error!("Failed to enter raw mode: {}", err);
         }
+        // Initialize view
+        self.init();
         // Init bookmarks client
         if self.bookmarks_client.is_none() {
             self.init_bookmarks_client();
         }
+        // If check for updates is enabled, check for updates
+        self.check_for_updates();
         // Verify error state from context
         if let Some(err) = self.context.as_mut().unwrap().get_error() {
             self.mount_error(err.as_str());
         }
-        // If check for updates is enabled, check for updates
-        self.check_for_updates();
-        // Initialize view
-        self.init();
         info!("Activity initialized");
     }
 

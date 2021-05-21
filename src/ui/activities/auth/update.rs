@@ -223,6 +223,13 @@ impl AuthActivity {
                     self.umount_bookmark_del_dialog();
                     None
                 }
+                // Error message
+                (COMPONENT_TEXT_ERROR, &MSG_KEY_ENTER) | (COMPONENT_TEXT_ERROR, &MSG_KEY_ESC) => {
+                    // Umount text error
+                    self.umount_error();
+                    None
+                }
+                (COMPONENT_TEXT_ERROR, _) => None,
                 // Help
                 (_, &MSG_KEY_CTRL_H) => {
                     // Show help
@@ -284,12 +291,6 @@ impl AuthActivity {
                 | (COMPONENT_RADIO_BOOKMARK_SAVE_PWD, &MSG_KEY_ESC) => {
                     // Umount popup
                     self.umount_bookmark_save_dialog();
-                    None
-                }
-                // Error message
-                (COMPONENT_TEXT_ERROR, &MSG_KEY_ENTER) => {
-                    // Umount text error
-                    self.umount_error();
                     None
                 }
                 // Quit dialog
