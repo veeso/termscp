@@ -21,7 +21,7 @@
 
 Released on FIXME: ??
 
-🌸 The Spring Update 🌷
+> 🌸 Spring Update 2021 🌷
 
 - **Synchronized browsing**:
   - Added the possibility to enabled the synchronized brower navigation
