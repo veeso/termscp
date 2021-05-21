@@ -33,9 +33,10 @@ use super::{
     COMPONENT_EXPLORER_FIND, COMPONENT_EXPLORER_LOCAL, COMPONENT_EXPLORER_REMOTE,
     COMPONENT_INPUT_COPY, COMPONENT_INPUT_EXEC, COMPONENT_INPUT_FIND, COMPONENT_INPUT_GOTO,
     COMPONENT_INPUT_MKDIR, COMPONENT_INPUT_NEWFILE, COMPONENT_INPUT_RENAME, COMPONENT_INPUT_SAVEAS,
-    COMPONENT_LIST_FILEINFO, COMPONENT_LOG_BOX, COMPONENT_PROGRESS_BAR, COMPONENT_RADIO_DELETE,
-    COMPONENT_RADIO_DISCONNECT, COMPONENT_RADIO_QUIT, COMPONENT_RADIO_SORTING,
-    COMPONENT_TEXT_ERROR, COMPONENT_TEXT_FATAL, COMPONENT_TEXT_HELP,
+    COMPONENT_LIST_FILEINFO, COMPONENT_LOG_BOX, COMPONENT_PROGRESS_BAR_FULL,
+    COMPONENT_PROGRESS_BAR_PARTIAL, COMPONENT_RADIO_DELETE, COMPONENT_RADIO_DISCONNECT,
+    COMPONENT_RADIO_QUIT, COMPONENT_RADIO_SORTING, COMPONENT_TEXT_ERROR, COMPONENT_TEXT_FATAL,
+    COMPONENT_TEXT_HELP,
 };
 use crate::fs::explorer::FileSorting;
 use crate::fs::FsEntry;
@@ -641,7 +642,7 @@ impl FileTransferActivity {
                     None
                 }
                 // -- progress bar
-                (COMPONENT_PROGRESS_BAR, &MSG_KEY_CTRL_C) => {
+                (COMPONENT_PROGRESS_BAR_PARTIAL, &MSG_KEY_CTRL_C) => {
                     // Set transfer aborted to True
                     self.transfer.abort();
                     None
@@ -792,14 +793,22 @@ impl FileTransferActivity {
         }
     }
 
-    pub(super) fn update_progress_bar(&mut self, text: String) -> Option<(String, Msg)> {
-        match self.view.get_props(COMPONENT_PROGRESS_BAR) {
+    pub(super) fn update_progress_bar(&mut self, filename: String) -> Option<(String, Msg)> {
+        if let Some(props) = self.view.get_props(COMPONENT_PROGRESS_BAR_FULL) {
+            let root_name: String = props.texts.title.as_deref().unwrap_or("").to_string();
+            let props = ProgressBarPropsBuilder::from(props)
+                .with_texts(Some(root_name), self.transfer.full.to_string())
+                .with_progress(self.transfer.full.calc_progress())
+                .build();
+            let _ = self.view.update(COMPONENT_PROGRESS_BAR_FULL, props);
+        }
+        match self.view.get_props(COMPONENT_PROGRESS_BAR_PARTIAL) {
             Some(props) => {
                 let props = ProgressBarPropsBuilder::from(props)
-                    .with_texts(Some(text), self.transfer.partial.to_string())
+                    .with_texts(Some(filename), self.transfer.partial.to_string())
                     .with_progress(self.transfer.partial.calc_progress())
                     .build();
-                self.view.update(COMPONENT_PROGRESS_BAR, props)
+                self.view.update(COMPONENT_PROGRESS_BAR_PARTIAL, props)
             }
             None => None,
         }
