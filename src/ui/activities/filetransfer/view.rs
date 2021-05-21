@@ -247,12 +247,25 @@ impl FileTransferActivity {
                     self.view.render(super::COMPONENT_LIST_FILEINFO, f, popup);
                 }
             }
-            if let Some(props) = self.view.get_props(super::COMPONENT_PROGRESS_BAR) {
+            if let Some(props) = self.view.get_props(super::COMPONENT_PROGRESS_BAR_PARTIAL) {
                 if props.visible {
-                    let popup = draw_area_in(f.size(), 40, 10);
+                    let popup = draw_area_in(f.size(), 50, 20);
                     f.render_widget(Clear, popup);
                     // make popup
-                    self.view.render(super::COMPONENT_PROGRESS_BAR, f, popup);
+                    let popup_chunks = Layout::default()
+                        .direction(Direction::Vertical)
+                        .constraints(
+                            [
+                                Constraint::Percentage(50), // Full
+                                Constraint::Percentage(50), // Partial
+                            ]
+                            .as_ref(),
+                        )
+                        .split(popup);
+                    self.view
+                        .render(super::COMPONENT_PROGRESS_BAR_FULL, f, popup_chunks[0]);
+                    self.view
+                        .render(super::COMPONENT_PROGRESS_BAR_PARTIAL, f, popup_chunks[1]);
                 }
             }
             if let Some(props) = self.view.get_props(super::COMPONENT_RADIO_DELETE) {
@@ -614,23 +627,43 @@ impl FileTransferActivity {
         self.view.umount(super::COMPONENT_INPUT_SAVEAS);
     }
 
-    pub(super) fn mount_progress_bar(&mut self) {
+    pub(super) fn mount_progress_bar(&mut self, root_name: String) {
         self.view.mount(
-            super::COMPONENT_PROGRESS_BAR,
+            super::COMPONENT_PROGRESS_BAR_FULL,
             Box::new(ProgressBar::new(
                 ProgressBarPropsBuilder::default()
-                    .with_progbar_color(Color::LightGreen)
+                    .with_progbar_color(Color::Green)
                     .with_background(Color::Black)
-                    .with_borders(Borders::ALL, BorderType::Rounded, Color::LightGreen)
+                    .with_borders(
+                        Borders::TOP | Borders::RIGHT | Borders::LEFT,
+                        BorderType::Rounded,
+                        Color::Reset,
+                    )
+                    .with_texts(Some(root_name), String::new())
+                    .build(),
+            )),
+        );
+        self.view.mount(
+            super::COMPONENT_PROGRESS_BAR_PARTIAL,
+            Box::new(ProgressBar::new(
+                ProgressBarPropsBuilder::default()
+                    .with_progbar_color(Color::Green)
+                    .with_background(Color::Black)
+                    .with_borders(
+                        Borders::BOTTOM | Borders::RIGHT | Borders::LEFT,
+                        BorderType::Rounded,
+                        Color::Reset,
+                    )
                     .with_texts(Some(String::from("Please wait")), String::new())
                     .build(),
             )),
         );
-        self.view.active(super::COMPONENT_PROGRESS_BAR);
+        self.view.active(super::COMPONENT_PROGRESS_BAR_PARTIAL);
     }
 
     pub(super) fn umount_progress_bar(&mut self) {
-        self.view.umount(super::COMPONENT_PROGRESS_BAR);
+        self.view.umount(super::COMPONENT_PROGRESS_BAR_PARTIAL);
+        self.view.umount(super::COMPONENT_PROGRESS_BAR_FULL);
     }
 
     pub(super) fn mount_file_sorting(&mut self) {

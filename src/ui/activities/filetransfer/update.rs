@@ -33,16 +33,16 @@ use super::{
     COMPONENT_EXPLORER_FIND, COMPONENT_EXPLORER_LOCAL, COMPONENT_EXPLORER_REMOTE,
     COMPONENT_INPUT_COPY, COMPONENT_INPUT_EXEC, COMPONENT_INPUT_FIND, COMPONENT_INPUT_GOTO,
     COMPONENT_INPUT_MKDIR, COMPONENT_INPUT_NEWFILE, COMPONENT_INPUT_RENAME, COMPONENT_INPUT_SAVEAS,
-    COMPONENT_LIST_FILEINFO, COMPONENT_LOG_BOX, COMPONENT_PROGRESS_BAR, COMPONENT_RADIO_DELETE,
-    COMPONENT_RADIO_DISCONNECT, COMPONENT_RADIO_QUIT, COMPONENT_RADIO_SORTING,
-    COMPONENT_TEXT_ERROR, COMPONENT_TEXT_FATAL, COMPONENT_TEXT_HELP,
+    COMPONENT_LIST_FILEINFO, COMPONENT_LOG_BOX, COMPONENT_PROGRESS_BAR_FULL,
+    COMPONENT_PROGRESS_BAR_PARTIAL, COMPONENT_RADIO_DELETE, COMPONENT_RADIO_DISCONNECT,
+    COMPONENT_RADIO_QUIT, COMPONENT_RADIO_SORTING, COMPONENT_TEXT_ERROR, COMPONENT_TEXT_FATAL,
+    COMPONENT_TEXT_HELP,
 };
 use crate::fs::explorer::FileSorting;
 use crate::fs::FsEntry;
 use crate::ui::components::{file_list::FileListPropsBuilder, logbox::LogboxPropsBuilder};
 use crate::ui::keymap::*;
 // externals
-use bytesize::ByteSize;
 use std::path::{Path, PathBuf};
 use tuirealm::{
     components::progress_bar::ProgressBarPropsBuilder,
@@ -642,9 +642,9 @@ impl FileTransferActivity {
                     None
                 }
                 // -- progress bar
-                (COMPONENT_PROGRESS_BAR, &MSG_KEY_CTRL_C) => {
+                (COMPONENT_PROGRESS_BAR_PARTIAL, &MSG_KEY_CTRL_C) => {
                     // Set transfer aborted to True
-                    self.transfer.aborted = true;
+                    self.transfer.abort();
                     None
                 }
                 // -- fallback
@@ -793,31 +793,22 @@ impl FileTransferActivity {
         }
     }
 
-    pub(super) fn update_progress_bar(&mut self, text: String) -> Option<(String, Msg)> {
-        match self.view.get_props(COMPONENT_PROGRESS_BAR) {
+    pub(super) fn update_progress_bar(&mut self, filename: String) -> Option<(String, Msg)> {
+        if let Some(props) = self.view.get_props(COMPONENT_PROGRESS_BAR_FULL) {
+            let root_name: String = props.texts.title.as_deref().unwrap_or("").to_string();
+            let props = ProgressBarPropsBuilder::from(props)
+                .with_texts(Some(root_name), self.transfer.full.to_string())
+                .with_progress(self.transfer.full.calc_progress())
+                .build();
+            let _ = self.view.update(COMPONENT_PROGRESS_BAR_FULL, props);
+        }
+        match self.view.get_props(COMPONENT_PROGRESS_BAR_PARTIAL) {
             Some(props) => {
-                // Calculate ETA
-                let elapsed_secs: u64 = self.transfer.started.elapsed().as_secs();
-                let eta: String = match self.transfer.progress as u64 {
-                    0 => String::from("--:--"), // NOTE: would divide by 0 :D
-                    _ => {
-                        let eta: u64 =
-                            ((elapsed_secs * 100) / (self.transfer.progress as u64)) - elapsed_secs;
-                        format!("{:0width$}:{:0width$}", (eta / 60), (eta % 60), width = 2)
-                    }
-                };
-                // Calculate bytes/s
-                let label = format!(
-                    "{:.2}% - ETA {} ({}/s)",
-                    self.transfer.progress,
-                    eta,
-                    ByteSize(self.transfer.bytes_per_second())
-                );
                 let props = ProgressBarPropsBuilder::from(props)
-                    .with_texts(Some(text), label)
-                    .with_progress(self.transfer.progress / 100.0)
+                    .with_texts(Some(filename), self.transfer.partial.to_string())
+                    .with_progress(self.transfer.partial.calc_progress())
                     .build();
-                self.view.update(COMPONENT_PROGRESS_BAR, props)
+                self.view.update(COMPONENT_PROGRESS_BAR_PARTIAL, props)
             }
             None => None,
         }

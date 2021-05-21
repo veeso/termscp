@@ -27,7 +27,7 @@
  */
 // This module is split into files, cause it's just too big
 pub(self) mod actions;
-pub(self) mod browser;
+pub(self) mod lib;
 pub(self) mod misc;
 pub(self) mod session;
 pub(self) mod update;
@@ -49,14 +49,15 @@ use crate::fs::explorer::FileExplorer;
 use crate::fs::FsEntry;
 use crate::host::Localhost;
 use crate::system::config_client::ConfigClient;
-use browser::Browser;
+pub(crate) use lib::browser;
+use lib::browser::Browser;
+use lib::transfer::TransferStates;
 
 // Includes
 use chrono::{DateTime, Local};
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use std::collections::VecDeque;
 use std::path::PathBuf;
-use std::time::Instant;
 use tuirealm::View;
 
 // -- Storage keys
@@ -69,7 +70,8 @@ const COMPONENT_EXPLORER_LOCAL: &str = "EXPLORER_LOCAL";
 const COMPONENT_EXPLORER_REMOTE: &str = "EXPLORER_REMOTE";
 const COMPONENT_EXPLORER_FIND: &str = "EXPLORER_FIND";
 const COMPONENT_LOG_BOX: &str = "LOG_BOX";
-const COMPONENT_PROGRESS_BAR: &str = "PROGRESS_BAR";
+const COMPONENT_PROGRESS_BAR_FULL: &str = "PROGRESS_BAR_FULL";
+const COMPONENT_PROGRESS_BAR_PARTIAL: &str = "PROGRESS_BAR_PARTIAL";
 const COMPONENT_TEXT_ERROR: &str = "TEXT_ERROR";
 const COMPONENT_TEXT_FATAL: &str = "TEXT_FATAL";
 const COMPONENT_TEXT_HELP: &str = "TEXT_HELP";
@@ -117,81 +119,6 @@ impl LogRecord {
             level,
             msg,
         }
-    }
-}
-
-/// ### TransferStates
-///
-/// TransferStates contains the states related to the transfer process
-struct TransferStates {
-    pub progress: f64,        // Current read/write progress (percentage)
-    pub started: Instant,     // Instant the transfer process started
-    pub aborted: bool,        // Describes whether the transfer process has been aborted
-    pub bytes_written: usize, // Bytes written during transfer
-    pub bytes_total: usize,   // Total bytes to write
-}
-
-impl TransferStates {
-    /// ### new
-    ///
-    /// Instantiates a new transfer states
-    pub fn new() -> TransferStates {
-        TransferStates {
-            progress: 0.0,
-            started: Instant::now(),
-            aborted: false,
-            bytes_written: 0,
-            bytes_total: 0,
-        }
-    }
-
-    /// ### reset
-    ///
-    /// Re-intiialize transfer states
-    pub fn reset(&mut self) {
-        self.progress = 0.0;
-        self.started = Instant::now();
-        self.aborted = false;
-        self.bytes_written = 0;
-        self.bytes_total = 0;
-    }
-
-    /// ### set_progress
-    ///
-    /// Calculate progress percentage based on current progress
-    pub fn set_progress(&mut self, w: usize, sz: usize) {
-        self.bytes_written = w;
-        self.bytes_total = sz;
-        let mut prog: f64 = ((self.bytes_written as f64) * 100.0) / (self.bytes_total as f64);
-        // Check value
-        if prog > 100.0 {
-            prog = 100.0;
-        } else if prog < 0.0 {
-            prog = 0.0;
-        }
-        self.progress = prog;
-    }
-
-    /// ### byte_per_second
-    ///
-    /// Calculate bytes per second
-    pub fn bytes_per_second(&self) -> u64 {
-        // bytes_written : elapsed_secs = x : 1
-        let elapsed_secs: u64 = self.started.elapsed().as_secs();
-        match elapsed_secs {
-            0 => match self.bytes_written == self.bytes_total {
-                // NOTE: would divide by 0 :D
-                true => self.bytes_total as u64, // Download completed in less than 1 second
-                false => 0,                      // 0 B/S
-            },
-            _ => self.bytes_written as u64 / elapsed_secs,
-        }
-    }
-}
-
-impl Default for TransferStates {
-    fn default() -> Self {
-        Self::new()
     }
 }
 

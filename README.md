@@ -182,15 +182,15 @@ The developer documentation can be found on Rust Docs at <https://docs.rs/termsc
 
 ## Upcoming Features 🧪
 
-- **Themes provider 🎨**: I'm still thinking about how I will implement this, but basically the idea is to have a configuration file where it will be possible
-    to define the color schema for the entire application. I haven't planned this release yet
+Major termscp updates will now be seasonal, so expect 4 major updates during the year.
 
-No other new feature is planned at the moment. I actually think that termscp is getting mature and now I should focus upcoming updates more on bug fixing and code/performance improvements than on new features.
-Anyway there are some ideas which I'd like to implement. If you want to start working on them, feel free to open a PR:
+- **Keyring-rs on Linux 🔐**: Planned for the *summer update*, check for updates in [this issue](https://github.com/veeso/termscp/issues/2)
+- **Samba Support 🎉**: This will require a long time to be implemented, since I'm thinking of implementing a Rust native samba library from scratch, since I don't want to add new C-bindings. It'll maybe included in the *summer update*.
+- **Themes provider 🎨**: I'm still thinking about how I will implement this, but basically the idea is to have a configuration file where it will be possible to define the color schema for the entire application. I haven't planned this release yet
+- **Configuration profile for bookmarks 📚**: I would like to, but I still have to analyze it.
+- **AWS S3 support 🪣**: There is already a library for AWS S3, but this is really on bottom of my implementation list at the moment, due to interest and I don't really have a system where to test it.
 
-- Amazon S3 support
-- Samba support
-- Themes provider
+Along to new features, termscp developments is now focused on UI and performance improvements, so if you have any suggestion, feel free to open an issue.
 
 ---
 

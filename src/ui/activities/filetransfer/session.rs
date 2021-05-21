@@ -161,6 +161,25 @@ impl FileTransferActivity {
         curr_remote_path: &Path,
         dst_name: Option<String>,
     ) {
+        // Reset states
+        self.transfer.reset();
+        // Calculate total size of transfer
+        let total_transfer_size: usize = self.get_total_transfer_size_local(entry);
+        self.transfer.full.init(total_transfer_size);
+        // Mount progress bar
+        self.mount_progress_bar(format!("Uploading {}...", entry.get_abs_path().display()));
+        // Send recurse
+        self.filetransfer_send_recurse(entry, curr_remote_path, dst_name);
+        // Umount progress bar
+        self.umount_progress_bar();
+    }
+
+    fn filetransfer_send_recurse(
+        &mut self,
+        entry: &FsEntry,
+        curr_remote_path: &Path,
+        dst_name: Option<String>,
+    ) {
         // Write popup
         let file_name: String = match entry {
             FsEntry::Directory(dir) => dir.name.clone(),
@@ -229,11 +248,15 @@ impl FileTransferActivity {
                                 // Iterate over files
                                 for entry in entries.iter() {
                                     // If aborted; break
-                                    if self.transfer.aborted {
+                                    if self.transfer.aborted() {
                                         break;
                                     }
                                     // Send entry; name is always None after first call
-                                    self.filetransfer_send(&entry, remote_path.as_path(), None);
+                                    self.filetransfer_send_recurse(
+                                        &entry,
+                                        remote_path.as_path(),
+                                        None,
+                                    );
                                 }
                             }
                             Err(err) => {
@@ -264,19 +287,119 @@ impl FileTransferActivity {
         // Scan dir on remote
         self.reload_remote_dir();
         // If aborted; show popup
-        if self.transfer.aborted {
+        if self.transfer.aborted() {
             // Log abort
             self.log_and_alert(
                 LogLevel::Warn,
                 format!("Upload aborted for \"{}\"!", entry.get_abs_path().display()),
             );
-            // Set aborted to false
-            self.transfer.aborted = false;
-        } else {
-            // @! Successful
-            // Eventually, Remove progress bar
-            self.umount_progress_bar();
         }
+    }
+
+    /// ### filetransfer_send_file
+    ///
+    /// Send local file and write it to remote path
+    fn filetransfer_send_file(
+        &mut self,
+        local: &FsFile,
+        remote: &Path,
+        file_name: String,
+    ) -> Result<(), TransferErrorReason> {
+        // Upload file
+        // Try to open local file
+        match self.host.open_file_read(local.abs_path.as_path()) {
+            Ok(mut fhnd) => match self.client.send_file(local, remote) {
+                Ok(mut rhnd) => {
+                    // Write file
+                    let file_size: usize =
+                        fhnd.seek(std::io::SeekFrom::End(0)).unwrap_or(0) as usize;
+                    // Init transfer
+                    self.transfer.partial.init(file_size);
+                    // rewind
+                    if let Err(err) = fhnd.seek(std::io::SeekFrom::Start(0)) {
+                        return Err(TransferErrorReason::CouldNotRewind(err));
+                    }
+                    // Write remote file
+                    let mut total_bytes_written: usize = 0;
+                    let mut last_progress_val: f64 = 0.0;
+                    let mut last_input_event_fetch: Instant = Instant::now();
+                    // While the entire file hasn't been completely written,
+                    // Or filetransfer has been aborted
+                    while total_bytes_written < file_size && !self.transfer.aborted() {
+                        // Handle input events (each 500ms)
+                        if last_input_event_fetch.elapsed().as_millis() >= 500 {
+                            // Read events
+                            self.read_input_event();
+                            // Reset instant
+                            last_input_event_fetch = Instant::now();
+                        }
+                        // Read till you can
+                        let mut buffer: [u8; 65536] = [0; 65536];
+                        let delta: usize = match fhnd.read(&mut buffer) {
+                            Ok(bytes_read) => {
+                                total_bytes_written += bytes_read;
+                                if bytes_read == 0 {
+                                    continue;
+                                } else {
+                                    let mut delta: usize = 0;
+                                    while delta < bytes_read {
+                                        // Write bytes
+                                        match rhnd.write(&buffer[delta..bytes_read]) {
+                                            Ok(bytes) => {
+                                                delta += bytes;
+                                            }
+                                            Err(err) => {
+                                                return Err(TransferErrorReason::RemoteIoError(
+                                                    err,
+                                                ));
+                                            }
+                                        }
+                                    }
+                                    delta
+                                }
+                            }
+                            Err(err) => {
+                                return Err(TransferErrorReason::LocalIoError(err));
+                            }
+                        };
+                        // Increase progress
+                        self.transfer.partial.update_progress(delta);
+                        self.transfer.full.update_progress(delta);
+                        // Draw only if a significant progress has been made (performance improvement)
+                        if last_progress_val < self.transfer.partial.calc_progress() - 0.01 {
+                            // Draw
+                            self.update_progress_bar(format!("Uploading \"{}\"...", file_name));
+                            self.view();
+                            last_progress_val = self.transfer.partial.calc_progress();
+                        }
+                    }
+                    // Finalize stream
+                    if let Err(err) = self.client.on_sent(rhnd) {
+                        self.log(
+                            LogLevel::Warn,
+                            format!("Could not finalize remote stream: \"{}\"", err),
+                        );
+                    }
+                    // if upload was abrupted, return error
+                    if self.transfer.aborted() {
+                        return Err(TransferErrorReason::Abrupted);
+                    }
+                    self.log(
+                        LogLevel::Info,
+                        format!(
+                            "Saved file \"{}\" to \"{}\" (took {} seconds; at {}/s)",
+                            local.abs_path.display(),
+                            remote.display(),
+                            fmt_millis(self.transfer.partial.started().elapsed()),
+                            ByteSize(self.transfer.partial.calc_bytes_per_second()),
+                        ),
+                    );
+                }
+                Err(err) => return Err(TransferErrorReason::FileTransferError(err)),
+            },
+            Err(err) => return Err(TransferErrorReason::HostError(err)),
+        }
+        Ok(())
     }
 
     /// ### filetransfer_recv
@@ -285,6 +408,25 @@ impl FileTransferActivity {
     /// If dst_name is Some, entry will be saved with a different name.
     /// If entry is a directory, this applies to directory only
     pub(super) fn filetransfer_recv(
+        &mut self,
+        entry: &FsEntry,
+        local_path: &Path,
+        dst_name: Option<String>,
+    ) {
+        // Reset states
+        self.transfer.reset();
+        // Calculate total transfer size
+        let total_transfer_size: usize = self.get_total_transfer_size_remote(entry);
+        self.transfer.full.init(total_transfer_size);
+        // Mount progress bar
+        self.mount_progress_bar(format!("Downloading {}...", entry.get_abs_path().display()));
+        // Receive
+        self.filetransfer_recv_recurse(entry, local_path, dst_name);
+        // Umount progress bar
+        self.umount_progress_bar();
+    }
+
+    fn filetransfer_recv_recurse(
         &mut self,
         entry: &FsEntry,
         local_path: &Path,
@@ -379,12 +521,16 @@ impl FileTransferActivity {
                                 // Iterate over files
                                 for entry in entries.iter() {
                                     // If transfer has been aborted; break
-                                    if self.transfer.aborted {
+                                    if self.transfer.aborted() {
                                         break;
                                     }
                                     // Receive entry; name is always None after first call
                                     // Local path becomes local_dir_path
-                                    self.filetransfer_recv(&entry, local_dir_path.as_path(), None);
+                                    self.filetransfer_recv_recurse(
+                                        &entry,
+                                        local_dir_path.as_path(),
+                                        None,
+                                    );
                                 }
                             }
                             Err(err) => {
@@ -415,7 +561,7 @@ impl FileTransferActivity {
         // Reload directory on local
         self.local_scan(local_path);
         // if aborted; show alert
-        if self.transfer.aborted {
+        if self.transfer.aborted() {
             // Log abort
             self.log_and_alert(
                 LogLevel::Warn,
@@ -424,122 +570,7 @@ impl FileTransferActivity {
                     entry.get_abs_path().display()
                 ),
             );
-            // Reset aborted to false
-            self.transfer.aborted = false;
-        } else {
-            // Eventually, Reset input mode to explorer
-            self.umount_progress_bar();
         }
-    }
-
-    /// ### filetransfer_send_file
-    ///
-    /// Send local file and write it to remote path
-    fn filetransfer_send_file(
-        &mut self,
-        local: &FsFile,
-        remote: &Path,
-        file_name: String,
-    ) -> Result<(), TransferErrorReason> {
-        // Upload file
-        // Try to open local file
-        match self.host.open_file_read(local.abs_path.as_path()) {
-            Ok(mut fhnd) => match self.client.send_file(local, remote) {
-                Ok(mut rhnd) => {
-                    // Write file
-                    let file_size: usize =
-                        fhnd.seek(std::io::SeekFrom::End(0)).unwrap_or(0) as usize;
-                    // rewind
-                    if let Err(err) = fhnd.seek(std::io::SeekFrom::Start(0)) {
-                        return Err(TransferErrorReason::CouldNotRewind(err));
-                    }
-                    // Write remote file
-                    let mut total_bytes_written: usize = 0;
-                    // Reset transfer states
-                    self.transfer.reset();
-                    let mut last_progress_val: f64 = 0.0;
-                    let mut last_input_event_fetch: Instant = Instant::now();
-                    // Mount progress bar
-                    self.mount_progress_bar();
-                    // While the entire file hasn't been completely written,
-                    // Or filetransfer has been aborted
-                    while total_bytes_written < file_size && !self.transfer.aborted {
-                        // Handle input events (each 500ms)
-                        if last_input_event_fetch.elapsed().as_millis() >= 500 {
-                            // Read events
-                            self.read_input_event();
-                            // Reset instant
-                            last_input_event_fetch = Instant::now();
-                        }
-                        // Read till you can
-                        let mut buffer: [u8; 65536] = [0; 65536];
-                        match fhnd.read(&mut buffer) {
-                            Ok(bytes_read) => {
-                                total_bytes_written += bytes_read;
-                                if bytes_read == 0 {
-                                    continue;
-                                } else {
-                                    let mut buf_start: usize = 0;
-                                    while buf_start < bytes_read {
-                                        // Write bytes
-                                        match rhnd.write(&buffer[buf_start..bytes_read]) {
-                                            Ok(bytes) => {
-                                                buf_start += bytes;
-                                            }
-                                            Err(err) => {
-                                                self.umount_progress_bar();
-                                                return Err(TransferErrorReason::RemoteIoError(
-                                                    err,
-                                                ));
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            Err(err) => {
-                                self.umount_progress_bar();
-                                return Err(TransferErrorReason::LocalIoError(err));
-                            }
-                        }
-                        // Increase progress
-                        self.transfer.set_progress(total_bytes_written, file_size);
-                        // Draw only if a significant progress has been made (performance improvement)
-                        if last_progress_val < self.transfer.progress - 1.0 {
-                            // Draw
-                            self.update_progress_bar(format!("Uploading \"{}\"...", file_name));
-                            self.view();
-                            last_progress_val = self.transfer.progress;
-                        }
-                    }
-                    // Umount progress bar
-                    self.umount_progress_bar();
-                    // Finalize stream
-                    if let Err(err) = self.client.on_sent(rhnd) {
-                        self.log(
-                            LogLevel::Warn,
-                            format!("Could not finalize remote stream: \"{}\"", err),
-                        );
-                    }
-                    // if upload was abrupted, return error
-                    if self.transfer.aborted {
-                        return Err(TransferErrorReason::Abrupted);
-                    }
-                    self.log(
-                        LogLevel::Info,
-                        format!(
-                            "Saved file \"{}\" to \"{}\" (took {} seconds; at {}/s)",
-                            local.abs_path.display(),
-                            remote.display(),
-                            fmt_millis(self.transfer.started.elapsed()),
-                            ByteSize(self.transfer.bytes_per_second()),
-                        ),
-                    );
-                }
-                Err(err) => return Err(TransferErrorReason::FileTransferError(err)),
-            },
-            Err(err) => return Err(TransferErrorReason::HostError(err)),
-        }
-        Ok(())
     }
 
     /// ### filetransfer_recv_file
@@ -558,16 +589,14 @@ impl FileTransferActivity {
                 match self.client.recv_file(remote) {
                     Ok(mut rhnd) => {
                         let mut total_bytes_written: usize = 0;
-                        // Reset transfer states
-                        self.transfer.reset();
+                        // Init transfer
+                        self.transfer.partial.init(remote.size);
                         // Write local file
                         let mut last_progress_val: f64 = 0.0;
                         let mut last_input_event_fetch: Instant = Instant::now();
-                        // Mount progress bar
-                        self.mount_progress_bar();
                         // While the entire file hasn't been completely read,
                         // Or filetransfer has been aborted
-                        while total_bytes_written < remote.size && !self.transfer.aborted {
+                        while total_bytes_written < remote.size && !self.transfer.aborted() {
                             // Handle input events (each 500 ms)
                             if last_input_event_fetch.elapsed().as_millis() >= 500 {
                                 // Read events
@@ -577,44 +606,42 @@ impl FileTransferActivity {
                             }
                             // Read till you can
                             let mut buffer: [u8; 65536] = [0; 65536];
-                            match rhnd.read(&mut buffer) {
+                            let delta: usize = match rhnd.read(&mut buffer) {
                                 Ok(bytes_read) => {
                                     total_bytes_written += bytes_read;
                                     if bytes_read == 0 {
                                         continue;
                                     } else {
-                                        let mut buf_start: usize = 0;
-                                        while buf_start < bytes_read {
+                                        let mut delta: usize = 0;
+                                        while delta < bytes_read {
                                             // Write bytes
-                                            match local_file.write(&buffer[buf_start..bytes_read]) {
-                                                Ok(bytes) => buf_start += bytes,
+                                            match local_file.write(&buffer[delta..bytes_read]) {
+                                                Ok(bytes) => delta += bytes,
                                                 Err(err) => {
-                                                    self.umount_progress_bar();
                                                     return Err(TransferErrorReason::LocalIoError(
                                                         err,
                                                     ));
                                                 }
                                             }
                                         }
+                                        delta
                                     }
                                 }
                                 Err(err) => {
-                                    self.umount_progress_bar();
                                     return Err(TransferErrorReason::RemoteIoError(err));
                                 }
-                            }
+                            };
                             // Set progress
-                            self.transfer.set_progress(total_bytes_written, remote.size);
+                            self.transfer.partial.update_progress(delta);
+                            self.transfer.full.update_progress(delta);
                             // Draw only if a significant progress has been made (performance improvement)
-                            if last_progress_val < self.transfer.progress - 1.0 {
+                            if last_progress_val < self.transfer.partial.calc_progress() - 0.01 {
                                 // Draw
                                 self.update_progress_bar(format!("Downloading \"{}\"", file_name));
                                 self.view();
-                                last_progress_val = self.transfer.progress;
+                                last_progress_val = self.transfer.partial.calc_progress();
                             }
                         }
-                        // Umount progress bar
-                        self.umount_progress_bar();
                         // Finalize stream
                         if let Err(err) = self.client.on_recv(rhnd) {
                             self.log(
@@ -623,7 +650,7 @@ impl FileTransferActivity {
                             );
                         }
                         // If download was abrupted, return Error
-                        if self.transfer.aborted {
+                        if self.transfer.aborted() {
                             return Err(TransferErrorReason::Abrupted);
                         }
                         // Apply file mode to file
@@ -648,8 +675,8 @@ impl FileTransferActivity {
                                 "Saved file \"{}\" to \"{}\" (took {} seconds; at {}/s)",
                                 remote.abs_path.display(),
                                 local.display(),
-                                fmt_millis(self.transfer.started.elapsed()),
-                                ByteSize(self.transfer.bytes_per_second()),
+                                fmt_millis(self.transfer.partial.started().elapsed()),
+                                ByteSize(self.transfer.partial.calc_bytes_per_second()),
                             ),
                         );
                     }
@@ -1004,6 +1031,66 @@ impl FileTransferActivity {
                     wrkdir.as_path(),
                     Some(String::from(dest.to_string_lossy())),
                 );
+            }
+        }
+    }
+
+    // -- transfer sizes
+
+    /// ### get_total_transfer_size_local
+    ///
+    /// Get total size of transfer for localhost
+    fn get_total_transfer_size_local(&mut self, entry: &FsEntry) -> usize {
+        match entry {
+            FsEntry::File(file) => file.size,
+            FsEntry::Directory(dir) => {
+                // List dir
+                match self.host.scan_dir(dir.abs_path.as_path()) {
+                    Ok(files) => files
+                        .iter()
+                        .map(|x| self.get_total_transfer_size_local(x))
+                        .sum(),
+                    Err(err) => {
+                        self.log(
+                            LogLevel::Error,
+                            format!(
+                                "Could not list directory {}: {}",
+                                dir.abs_path.display(),
+                                err
+                            ),
+                        );
+                        0
+                    }
+                }
+            }
+        }
+    }
+
+    /// ### get_total_transfer_size_remote
+    ///
+    /// Get total size of transfer for remote host
+    fn get_total_transfer_size_remote(&mut self, entry: &FsEntry) -> usize {
+        match entry {
+            FsEntry::File(file) => file.size,
+            FsEntry::Directory(dir) => {
+                // List directory
+                match self.client.list_dir(dir.abs_path.as_path()) {
+                    Ok(files) => files
+                        .iter()
+                        .map(|x| self.get_total_transfer_size_remote(x))
+                        .sum(),
+                    Err(err) => {
+                        self.log(
+                            LogLevel::Error,
+                            format!(
+                                "Could not list directory {}: {}",
+                                dir.abs_path.display(),
+                                err
+                            ),
+                        );
+                        0
+                    }
+                }
             }
         }
     }
