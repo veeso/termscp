@@ -16,9 +16,8 @@ Current version: 0.5.0 FIXME: (13/04/2021)
 
 - [termscp](#termscp)
   - [About termscp 🖥](#about-termscp-)
-    - [Why termscp 🤔](#why-termscp-)
   - [Features 🎁](#features-)
-  - [Installation 🛠](#installation-)
+  - [Get started 🏁](#get-started-)
     - [Cargo 🦀](#cargo-)
     - [Deb package 📦](#deb-package-)
     - [RPM package 📦](#rpm-package-)
@@ -46,38 +45,36 @@ Termscp is a feature rich terminal file transfer and explorer, with support for 
 
 ---
 
-### Why termscp 🤔
-
-It happens quite often to me, when using SCP at work to forget the path of a file on a remote machine, which forces me to connect through SSH, gather the file path and finally download it through SCP. I could use WinSCP, but I use Linux and I pratically use the terminal for everything, so I wanted something like WinSCP on my terminal. Yeah, I know there is midnight commander too, but actually I don't like it very much tbh (and hasn't a decent support for scp).
-
 ## Features 🎁
 
-- 📁 Different communication protocols support
+- 📁  Different communication protocols support
   - SFTP
   - SCP
   - FTP and FTPS
-- 🐧 Compatible with Windows, Linux, BSD and MacOS
-- 🖥 Handy user interface to explore and operate on the remote and on the local machine file system
+- 🖥  Explore and operate on the remote and on the local machine file system with a handy UI
   - Create, remove, rename, search, view and edit files
-- ⭐ Bookmarks and recent connections can be saved to access quickly to your favourite hosts
-- 📝 Supports text editors to view and edit text files
-- 💁 Supports both SFTP/SCP authentication through SSH keys and username/password
-- ✏ Customizations
+- ⭐  Connect to your favourite hosts through built-in bookmarks and recent connections
+- 📝  View and edit text files with your favourite text editor
+- 💁  SFTP/SCP authentication through SSH keys and username/password
+- 🐧  Compatible with Windows, Linux, BSD and MacOS
+- ✏  Customizable
   - Custom file explorer format
   - Customizable text editor
   - Customizable file sorting
-- 🔐 SSH key storage
-- 🦀 Written in Rust
-- 🤝 Easy to extend with new file transfers protocols
-- 👀 Developed keeping an eye on performance
-- 🦄 Frequent awesome updates
+- 🔐  Save your password in your operating system key vault
+- 🦀  Rust-powered
+- 🤝  Easy to extend with new file transfers protocols
+- 👀  Developed keeping an eye on performance
+- 🦄  Frequent awesome updates
 
 ---
 
-## Installation 🛠
+## Get started 🏁
 
 If you're considering to install termscp I want to thank you 💜 ! I hope you will enjoy termscp!  
 If you want to contribute to this project, don't forget to check out our contribute guide. [Read More](CONTRIBUTING.md)
+
+You can opt for any of these methods, according to your systems and preferences:
 
 ### Cargo 🦀
 
@@ -127,7 +124,7 @@ yay -S termscp
 
 ### Chocolatey 🍫
 
-You can install termscp on Windows using [chocolatey](https://chocolatey.org/)
+You can install termscp on Windows via [chocolatey](https://community.chocolatey.org/packages/termscp)
 
 Start PowerShell as administrator and run
 
@@ -176,7 +173,7 @@ The developer documentation can be found on Rust Docs at <https://docs.rs/termsc
 
 ## Known issues 🧻
 
-- `NoSuchFileOrDirectory` on connect (WSL): I know about this issue and it's a glitch of WSL I guess. Don't worry about it, just move the termscp executable into another PATH location, such as `/usr/bin`, or install it through the appropriate package format (e.g. deb).
+- `NoSuchFileOrDirectory` on connect (WSL1): I know about this issue and it's a glitch of WSL I guess. Don't worry about it, just move the termscp executable into another PATH location, such as `/usr/bin`, or install it through the appropriate package format (e.g. deb).
 
 ---
 
@@ -224,6 +221,7 @@ termscp is powered by these aweseome projects:
 - [tui-rs](https://github.com/fdehau/tui-rs)
 - [tui-realm](https://github.com/veeso/tui-realm)
 - [whoami](https://github.com/libcala/whoami)
+- [wildmatch](https://github.com/becheran/wildmatch)
 
 ---
 

@@ -53,7 +53,7 @@ Released on FIXME: ??
   - Removed the goold old figlet title
   - Protocol input as first field in UI
   - Port is now updated to standard for selected protocol
-    - when you change the protocol in the authentication form and the current port is standard (`< 1024`), the port will be automatically changed to default value for the selected protocol (e.g. current port: `123`, protocol is changes to `FTP`, port becomes `21`)
+    - when you change the protocol in the authentication form and the current port is standard (`< 1024`), the port will be automatically changed to default value for the selected protocol (e.g. current port: `123`, protocol changed to `FTP`, port becomes `21`)
 - Bugfix:
   - Fixed wrong text wrap in log box
   - Fixed empty bookmark name causing termscp to crash
