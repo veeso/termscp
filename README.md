@@ -10,15 +10,15 @@
 
 <p align="center">~ A feature rich terminal file transfer ~</p>
 <p align="center">
-  <a href="https://veeso.github.io/termscp/">Website</a>
+  <a href="https://veeso.github.io/termscp/" target="_blank">Website</a>
   ·
-  <a href="https://veeso.github.io/termscp/#get-started">Installation</a>
+  <a href="https://veeso.github.io/termscp/#get-started" target="_blank">Installation</a>
   ·
-  <a href="https://veeso.github.io/termscp/#user-manual">User manual</a>
+  <a href="https://veeso.github.io/termscp/#user-manual" target="_blank">User manual</a>
 </p>
 
-Developed by Christian Visintin  
-Current version: 0.5.0 FIXME: (13/04/2021)
+<p align="center">Developed by Christian Visintin</p>
+<p align="center">Current version: 0.5.0 FIXME: (13/04/2021)</p>
 
 ---
 
