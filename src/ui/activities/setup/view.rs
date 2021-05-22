@@ -471,7 +471,7 @@ impl SetupActivity {
                 InputPropsBuilder::default()
                     .with_label(String::from("Username"))
                     .with_borders(
-                        Borders::ALL | Borders::RIGHT | Borders::LEFT,
+                        Borders::BOTTOM | Borders::RIGHT | Borders::LEFT,
                         BorderType::Plain,
                         Color::Reset,
                     )
