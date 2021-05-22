@@ -1,24 +1,5 @@
 # User manual 🎓
 
-- [User manual 🎓](#user-manual-)
-  - [Usage ❓](#usage-)
-    - [Address argument 🌎](#address-argument-)
-      - [How Password can be provided 🔐](#how-password-can-be-provided-)
-  - [File explorer 📂](#file-explorer-)
-    - [Keybindings ⌨](#keybindings-)
-    - [Work on multiple files 🥷](#work-on-multiple-files-)
-    - [Synchronized browsing ⏲️](#synchronized-browsing-️)
-  - [Bookmarks ⭐](#bookmarks-)
-    - [Are my passwords Safe 😈](#are-my-passwords-safe-)
-  - [Configuration ⚙️](#configuration-️)
-    - [SSH Key Storage 🔐](#ssh-key-storage-)
-    - [File Explorer Format](#file-explorer-format)
-  - [Text Editor ✏](#text-editor-)
-    - [How do I configure the text editor 🦥](#how-do-i-configure-the-text-editor-)
-  - [Logging 🩺](#logging-)
-
----
-
 ## Usage ❓
 
 termscp can be started with the following options:
@@ -119,7 +100,7 @@ In order to change panel you need to type `<LEFT>` to move the remote explorer p
 | `<L>`         | Reload current directory's content / Clear selection  | List        |
 | `<M>`         | Select a file                                         | Mark         |
 | `<N>`         | Create new file with provided name                    | New         |
-| `<O>`         | Edit file; see [Text editor](#text-editor-)           | Open        |
+| `<O>`         | Edit file; see  Text editor                           | Open        |
 | `<Q>`         | Quit termscp                                          | Quit        |
 | `<R>`         | Rename file                                           | Rename      |
 | `<S>`         | Save file as...                                       | Save        |
@@ -183,7 +164,7 @@ In order to create a new bookmark, just follow these steps:
 
 whenever you want to use the previously saved connection, just press `<TAB>` to navigate to the bookmarks list and load the bookmark parameters into the form pressing `<ENTER>`.
 
-![Bookmarks](assets/images/bookmarks.gif)
+![Bookmarks](https://github.com/veeso/termscp/blob/main/assets/images/bookmarks.gif?raw=true)
 
 ### Are my passwords Safe 😈
 

@@ -8,32 +8,17 @@
 
 [![Build](https://github.com/veeso/termscp/workflows/Linux/badge.svg)](https://github.com/veeso/termscp/actions) [![Build](https://github.com/veeso/termscp/workflows/MacOS/badge.svg)](https://github.com/veeso/termscp/actions) [![Build](https://github.com/veeso/termscp/workflows/Windows/badge.svg)](https://github.com/veeso/termscp/actions) [![Coverage Status](https://coveralls.io/repos/github/veeso/termscp/badge.svg)](https://coveralls.io/github/veeso/termscp)
 
-~ A feature rich terminal file transfer ~  
+<p align="center">~ A feature rich terminal file transfer ~</p>
+<p align="center">
+  <a href="https://veeso.github.io/termscp/">Website</a>
+  ·
+  <a href="https://veeso.github.io/termscp/#get-started">Installation</a>
+  ·
+  <a href="https://veeso.github.io/termscp/#user-manual">User manual</a>
+</p>
+
 Developed by Christian Visintin  
 Current version: 0.5.0 FIXME: (13/04/2021)
-
----
-
-- [termscp](#termscp)
-  - [About termscp 🖥](#about-termscp-)
-  - [Features 🎁](#features-)
-  - [Get started 🏁](#get-started-)
-    - [Cargo 🦀](#cargo-)
-    - [Deb package 📦](#deb-package-)
-    - [RPM package 📦](#rpm-package-)
-    - [AUR Package 🔼](#aur-package-)
-    - [Chocolatey 🍫](#chocolatey-)
-    - [Brew 🍻](#brew-)
-  - [User Manual 🎓](#user-manual-)
-  - [Documentation 📚](#documentation-)
-  - [Known issues 🧻](#known-issues-)
-  - [Upcoming Features 🧪](#upcoming-features-)
-  - [Contributing and issues 🤝🏻](#contributing-and-issues-)
-  - [Changelog ⏳](#changelog-)
-  - [Powered by 🚀](#powered-by-)
-  - [Gallery 🎬](#gallery-)
-  - [Buy me a coffee ☕](#buy-me-a-coffee-)
-  - [License 📃](#license-)
 
 ---
 
@@ -69,99 +54,20 @@ Termscp is a feature rich terminal file transfer and explorer, with support for 
 
 ---
 
-## Get started 🏁
+## Get started 🚀
 
 If you're considering to install termscp I want to thank you 💜 ! I hope you will enjoy termscp!  
 If you want to contribute to this project, don't forget to check out our contribute guide. [Read More](CONTRIBUTING.md)
 
-You can opt for any of these methods, according to your systems and preferences:
-
-### Cargo 🦀
-
-```sh
-# Install termscp via cargo
-cargo install termscp
-```
-
-Requirements:
-
-- Linux
-  - pkg-config
-  - libssh2
-  - openssl
-
-### Deb package 📦
-
-Get `deb` package from [HERE](https://github.com/veeso/termscp/releases/latest/download/termscp_0.5.0_amd64.deb)
-or run `wget https://github.com/veeso/termscp/releases/latest/download/termscp_0.5.0_amd64.deb`
-
-then install via dpkg:
-
-```sh
-dpkg -i termscp_*.deb
-# Or even better with gdebi
-gdebi termscp_*.deb
-```
-
-### RPM package 📦
-
-Get `rpm` package from [HERE](https://github.com/veeso/termscp/releases/latest/download/termscp-0.5.0-1.x86_64.rpm)
-or run `wget https://github.com/veeso/termscp/releases/latest/download/termscp-0.5.0-1.x86_64.rpm`
-
-then install via rpm:
-
-```sh
-rpm -U termscp_*.rpm
-```
-
-### AUR Package 🔼
-
-On Arch Linux based distribution, you can install termscp using for istance [yay](https://github.com/Jguer/yay), which I recommend to install AUR packages.
-
-```sh
-yay -S termscp
-```
-
-### Chocolatey 🍫
-
-You can install termscp on Windows via [chocolatey](https://community.chocolatey.org/packages/termscp)
-
-Start PowerShell as administrator and run
-
-```ps
-choco install termscp
-```
-
-Alternatively you can download the ZIP file from [HERE](https://github.com/veeso/termscp/releases/latest/download/termscp.0.5.0.nupkg)
-
-and then with PowerShell started with administrator previleges, run:
-
-```ps
-choco install termscp -s .
-```
-
-### Brew 🍻
-
-You can install termscp on MacOS using [brew](https://brew.sh/)
-
-From your terminal run
-
-```sh
-brew install veeso/termscp/termscp
-```
+Visit [termscp website](https://veeso.github.io/termscp/#get-started) to get started with termscp.
 
 ---
 
-## User Manual 🎓
+## Buy me a coffee ☕
 
-[Click here](docs/man.md) to read the user manual!
+If you like termscp and you'd love to see the project to grow, please consider a little donation 🥳
 
-What you will find:
-
-- CLI options
-- Keybindings
-- Bookmarks
-- Configuration
+[![Buy-me-a-coffee](https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20coffee&emoji=&slug=veeso&button_colour=404040&font_colour=ffffff&font_family=Comic&outline_colour=ffffff&coffee_colour=FFDD00)](https://www.buymeacoffee.com/veeso)
 
 ---
 
@@ -206,7 +112,7 @@ View termscp's changelog [HERE](CHANGELOG.md)
 
 ---
 
-## Powered by 🚀
+## Powered by 💪
 
 termscp is powered by these aweseome projects:
 
@@ -242,14 +148,6 @@ termscp is powered by these aweseome projects:
 > Text editor
 
 ![TextEditor](assets/images/text-editor.gif)
-
----
-
-## Buy me a coffee ☕
-
-If you like termscp and you'd love to see the project to grow, please consider a little donation 🥳
-
-[![Buy-me-a-coffee](https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20coffee&emoji=&slug=veeso&button_colour=404040&font_colour=ffffff&font_family=Comic&outline_colour=ffffff&coffee_colour=FFDD00)](https://www.buymeacoffee.com/veeso)
 
 ---
 
