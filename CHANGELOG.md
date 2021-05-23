@@ -19,7 +19,7 @@
 
 ## 0.5.0
 
-Released on FIXME: ??
+Released on 23/05/2021
 
 > 🌸 Spring Update 2021 🌷
 

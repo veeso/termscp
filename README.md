@@ -18,7 +18,7 @@
 </p>
 
 <p align="center">Developed by Christian Visintin</p>
-<p align="center">Current version: 0.5.0 FIXME: (13/04/2021)</p>
+<p align="center">Current version: 0.5.0 (23/05/2021)</p>
 
 ---
 
@@ -62,7 +62,7 @@ If you want to contribute to this project, don't forget to check out our contrib
 If you are a Linux or a MacOS user this simple shell script will install termscp on your system with a single command:
 
 ```sh
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/veeso/termscp/main/install.sh)"
+curl --proto '=https' --tlsv1.2 -sSf "https://raw.githubusercontent.com/veeso/termscp/main/install.sh" | sh
 ```
 
 while if you're a Windows user, you can install termscp with [Chocolatey](https://chocolatey.org/).
