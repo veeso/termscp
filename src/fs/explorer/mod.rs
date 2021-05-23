@@ -361,6 +361,7 @@ mod tests {
     use crate::fs::{FsDirectory, FsFile};
     use crate::utils::fmt::fmt_time;
 
+    use pretty_assertions::assert_eq;
     use std::thread::sleep;
     use std::time::{Duration, SystemTime};
 

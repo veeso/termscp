@@ -8,7 +8,7 @@
 #   -f, -y, --force, --yes
 #     Skip the confirmation prompt during installation
 
-TERMSCP_VERSION="0.4.2"
+TERMSCP_VERSION="0.5.0"
 GITHUB_URL="https://github.com/veeso/termscp/releases/download/v${TERMSCP_VERSION}"
 DEB_URL="${GITHUB_URL}/termscp_${TERMSCP_VERSION}_amd64.deb"
 RPM_URL="${GITHUB_URL}/termscp-${TERMSCP_VERSION}-1.x86_64.rpm"
@@ -177,7 +177,7 @@ install_on_linux() {
     local msg
     local sudo
     local archive
-    if "${ARCH}" != "x86_64"; then
+    if [ "${ARCH}" != "x86_64" ]; then
         try_with_cargo "we don't distribute packages for ${ARCH} at the moment"
     elif has yay; then
         info "Detected yay on your system"
@@ -246,7 +246,8 @@ install_on_macos() {
     if has brew; then
         if has termscp; then
             info "Upgrading termscp..."
-            brew update && brew upgrade termscp
+            # The OR is used since someone could have installed via cargo previously
+            brew update && brew upgrade termscp || brew install veeso/termscp/termscp
         else
             info "Installing termscp..."
             brew install veeso/termscp/termscp

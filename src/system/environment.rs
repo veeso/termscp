@@ -87,11 +87,21 @@ pub fn get_config_paths(config_dir: &Path) -> (PathBuf, PathBuf) {
     (bookmarks_file, keys_dir)
 }
 
+/// ### get_log_paths
+///
+/// Returns the path for the supposed log file
+pub fn get_log_paths(config_dir: &Path) -> PathBuf {
+    let mut log_file: PathBuf = PathBuf::from(config_dir);
+    log_file.push("termscp.log");
+    log_file
+}
+
 #[cfg(test)]
 mod tests {
 
     use super::*;
 
+    use pretty_assertions::assert_eq;
     use std::fs::{File, OpenOptions};
     use std::io::Write;
 
@@ -140,6 +150,14 @@ mod tests {
                 PathBuf::from("/home/omar/.config/termscp/config.toml"),
                 PathBuf::from("/home/omar/.config/termscp/.ssh/")
             )
+        );
+    }
+
+    #[test]
+    fn test_system_environment_get_log_paths() {
+        assert_eq!(
+            get_log_paths(&Path::new("/home/omar/.config/termscp/")),
+            PathBuf::from("/home/omar/.config/termscp/termscp.log"),
         );
     }
 }

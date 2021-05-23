@@ -1,44 +1,28 @@
-# TermSCP
+# termscp
 
 <p align="center">
   <img src="/assets/images/termscp.svg" width="256" height="256" />
 </p>
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-teal.svg)](https://opensource.org/licenses/MIT) [![Stars](https://img.shields.io/github/stars/veeso/termscp.svg)](https://github.com/veeso/termscp) [![Downloads](https://img.shields.io/crates/d/termscp.svg)](https://crates.io/crates/termscp) [![Crates.io](https://img.shields.io/badge/crates.io-v0.4.2-orange.svg)](https://crates.io/crates/termscp) [![Docs](https://docs.rs/termscp/badge.svg)](https://docs.rs/termscp)  
+[![License: MIT](https://img.shields.io/badge/License-MIT-teal.svg)](https://opensource.org/licenses/MIT) [![Stars](https://img.shields.io/github/stars/veeso/termscp.svg)](https://github.com/veeso/termscp) [![Downloads](https://img.shields.io/crates/d/termscp.svg)](https://crates.io/crates/termscp) [![Crates.io](https://img.shields.io/badge/crates.io-v0.5.0-orange.svg)](https://crates.io/crates/termscp) [![Docs](https://docs.rs/termscp/badge.svg)](https://docs.rs/termscp)  
 
-[![Build](https://github.com/veeso/termscp/workflows/Linux/badge.svg)](https://github.com/veeso/termscp/actions) [![Build](https://github.com/veeso/termscp/workflows/MacOS/badge.svg)](https://github.com/veeso/termscp/actions) [![Build](https://github.com/veeso/termscp/workflows/Windows/badge.svg)](https://github.com/veeso/termscp/actions)
+[![Build](https://github.com/veeso/termscp/workflows/Linux/badge.svg)](https://github.com/veeso/termscp/actions) [![Build](https://github.com/veeso/termscp/workflows/MacOS/badge.svg)](https://github.com/veeso/termscp/actions) [![Build](https://github.com/veeso/termscp/workflows/Windows/badge.svg)](https://github.com/veeso/termscp/actions) [![Coverage Status](https://coveralls.io/repos/github/veeso/termscp/badge.svg)](https://coveralls.io/github/veeso/termscp)
 
-~ A feature rich terminal file transfer ~  
-Developed by Christian Visintin  
-Current version: 0.4.2 (13/04/2021)
+<p align="center">~ A feature rich terminal file transfer ~</p>
+<p align="center">
+  <a href="https://veeso.github.io/termscp/" target="_blank">Website</a>
+  ·
+  <a href="https://veeso.github.io/termscp/#get-started" target="_blank">Installation</a>
+  ·
+  <a href="https://veeso.github.io/termscp/#user-manual" target="_blank">User manual</a>
+</p>
 
----
-
-- [TermSCP](#termscp)
-  - [About TermSCP 🖥](#about-termscp-)
-    - [Why TermSCP 🤔](#why-termscp-)
-  - [Features 🎁](#features-)
-  - [Installation 🛠](#installation-)
-    - [Cargo 🦀](#cargo-)
-    - [Deb package 📦](#deb-package-)
-    - [RPM package 📦](#rpm-package-)
-    - [AUR Package 🔼](#aur-package-)
-    - [Chocolatey 🍫](#chocolatey-)
-    - [Brew 🍻](#brew-)
-  - [User Manual 🎓](#user-manual-)
-  - [Documentation 📚](#documentation-)
-  - [Known issues 🧻](#known-issues-)
-  - [Upcoming Features 🧪](#upcoming-features-)
-  - [Contributing and issues 🤝🏻](#contributing-and-issues-)
-  - [Changelog ⏳](#changelog-)
-  - [Powered by 🚀](#powered-by-)
-  - [Gallery 🎬](#gallery-)
-  - [Buy me a coffee ☕](#buy-me-a-coffee-)
-  - [License 📃](#license-)
+<p align="center">Developed by Christian Visintin</p>
+<p align="center">Current version: 0.5.0 (23/05/2021)</p>
 
 ---
 
-## About TermSCP 🖥
+## About termscp 🖥
 
 Termscp is a feature rich terminal file transfer and explorer, with support for SCP/SFTP/FTP. So basically is a terminal utility with an TUI to connect to a remote server to retrieve and upload files and to interact with the local file system. It is **Linux**, **MacOS**, **BSD** and **Windows** compatible and supports SFTP, SCP, FTP and FTPS.
 
@@ -46,125 +30,52 @@ Termscp is a feature rich terminal file transfer and explorer, with support for 
 
 ---
 
-### Why TermSCP 🤔
-
-It happens quite often to me, when using SCP at work to forget the path of a file on a remote machine, which forces me to connect through SSH, gather the file path and finally download it through SCP. I could use WinSCP, but I use Linux and I pratically use the terminal for everything, so I wanted something like WinSCP on my terminal. Yeah, I know there is midnight commander too, but actually I don't like it very much tbh (and hasn't a decent support for scp).
-
 ## Features 🎁
 
-- 📁 Different communication protocols support
+- 📁  Different communication protocols support
   - SFTP
   - SCP
   - FTP and FTPS
-- 🐧 Compatible with Windows, Linux, BSD and MacOS
-- 🖥 Handy user interface to explore and operate on the remote and on the local machine file system
+- 🖥  Explore and operate on the remote and on the local machine file system with a handy UI
   - Create, remove, rename, search, view and edit files
-- ⭐ Bookmarks and recent connections can be saved to access quickly to your favourite hosts
-- 📝 Supports text editors to view and edit text files
-- 💁 Supports both SFTP/SCP authentication through SSH keys and username/password
-- ✏ Customizations
+- ⭐  Connect to your favourite hosts through built-in bookmarks and recent connections
+- 📝  View and edit text files with your favourite text editor
+- 💁  SFTP/SCP authentication through SSH keys and username/password
+- 🐧  Compatible with Windows, Linux, BSD and MacOS
+- ✏  Customizable
   - Custom file explorer format
   - Customizable text editor
   - Customizable file sorting
-- 🔐 SSH key storage
-- 🦀 Written in Rust
-- 🤝 Easy to extend with new file transfers protocols
-- 👀 Developed keeping an eye on performance
-- 🦄 Frequent awesome updates
+- 🔐  Save your password in your operating system key vault
+- 🦀  Rust-powered
+- 🤝  Easy to extend with new file transfers protocols
+- 👀  Developed keeping an eye on performance
+- 🦄  Frequent awesome updates
 
 ---
 
-## Installation 🛠
+## Get started 🚀
 
-If you're considering to install TermSCP I want to thank you 💜 ! I hope you will enjoy TermSCP!  
+If you're considering to install termscp I want to thank you 💜 ! I hope you will enjoy termscp!  
 If you want to contribute to this project, don't forget to check out our contribute guide. [Read More](CONTRIBUTING.md)
 
-### Cargo 🦀
+If you are a Linux or a MacOS user this simple shell script will install termscp on your system with a single command:
 
 ```sh
-# Install termscp through cargo
-cargo install termscp
+curl --proto '=https' --tlsv1.2 -sSf "https://raw.githubusercontent.com/veeso/termscp/main/install.sh" | sh
 ```
 
-Requirements:
+while if you're a Windows user, you can install termscp with [Chocolatey](https://chocolatey.org/).
 
-- Linux
-  - pkg-config
-  - libssh2
-  - openssl
-
-### Deb package 📦
-
-Get `deb` package from [HERE](https://github.com/veeso/termscp/releases/latest/download/termscp_0.4.2_amd64.deb)
-or run `wget https://github.com/veeso/termscp/releases/latest/download/termscp_0.4.2_amd64.deb`
-
-then install through dpkg:
-
-```sh
-dpkg -i termscp_*.deb
-# Or even better with gdebi
-gdebi termscp_*.deb
-```
-
-### RPM package 📦
-
-Get `rpm` package from [HERE](https://github.com/veeso/termscp/releases/latest/download/termscp-0.4.2-1.x86_64.rpm)
-or run `wget https://github.com/veeso/termscp/releases/latest/download/termscp-0.4.2-1.x86_64.rpm`
-
-then install through rpm:
-
-```sh
-rpm -U termscp_*.rpm
-```
-
-### AUR Package 🔼
-
-On Arch Linux based distribution, you can install termscp using for istance [yay](https://github.com/Jguer/yay), which I recommend to install AUR packages.
-
-```sh
-yay -S termscp
-```
-
-### Chocolatey 🍫
-
-You can install TermSCP on Windows using [chocolatey](https://chocolatey.org/)
-
-Start PowerShell as administrator and run
-
-```ps
-choco install termscp
-```
-
-Alternatively you can download the ZIP file from [HERE](https://github.com/veeso/termscp/releases/latest/download/termscp.0.4.2.nupkg)
-
-and then with PowerShell started with administrator previleges, run:
-
-```ps
-choco install termscp -s .
-```
-
-### Brew 🍻
-
-You can install TermSCP on MacOS using [brew](https://brew.sh/)
-
-From your terminal run
-
-```sh
-brew install veeso/termscp/termscp
-```
+For more information or other platforms, please visit [veeso.github.io](https://veeso.github.io/termscp/#get-started) to view all installation methods.
 
 ---
 
-## User Manual 🎓
+## Buy me a coffee ☕
 
-[Click here](docs/man.md) to read the user manual!
+If you like termscp and you'd love to see the project to grow, please consider a little donation 🥳
 
-What you will find:
-
-- CLI options
-- Keybindings
-- Bookmarks
-- Configuration
+[![Buy-me-a-coffee](https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20coffee&emoji=&slug=veeso&button_colour=404040&font_colour=ffffff&font_family=Comic&outline_colour=ffffff&coffee_colour=FFDD00)](https://www.buymeacoffee.com/veeso)
 
 ---
 
@@ -176,25 +87,21 @@ The developer documentation can be found on Rust Docs at <https://docs.rs/termsc
 
 ## Known issues 🧻
 
-- `NoSuchFileOrDirectory` on connect (WSL): I know about this issue and it's a glitch of WSL I guess. Don't worry about it, just move the termscp executable into another PATH location, such as `/usr/bin`, or install it through the appropriate package format (e.g. deb).
+- `NoSuchFileOrDirectory` on connect (WSL1): I know about this issue and it's a glitch of WSL I guess. Don't worry about it, just move the termscp executable into another PATH location, such as `/usr/bin`, or install it through the appropriate package format (e.g. deb).
 
 ---
 
 ## Upcoming Features 🧪
 
-- **Themes provider 🎨**: I'm still thinking about how I will implement this, but basically the idea is to have a configuration file where it will be possible
-    to define the color schema for the entire application. I haven't planned this release yet
-- **Local and remote file explorer format 🃏**: From 0.5.0 you will be able to customize the file format for both local and remote hosts.
-- **Synchronized browsing of local and remote directories ⌚**: See [Issue 8](https://github.com/veeso/termscp/issues/8)
-- **Group file select 🤩**: Possibility to select a group of files in explorers to operate on
+Major termscp updates will now be seasonal, so expect 4 major updates during the year.
 
-No other new feature is planned at the moment. I actually think that termscp is getting mature and now I should focus upcoming updates more on bug fixing and
-code/performance improvements than on new features.
-Anyway there are some ideas which I'd like to implement. If you want to start working on them, feel free to open a PR:
+- **Keyring-rs on Linux 🔐**: Planned for the *summer update*, check for updates in [this issue](https://github.com/veeso/termscp/issues/2)
+- **Samba Support 🎉**: This will require a long time to be implemented, since I'm thinking of implementing a Rust native samba library from scratch, since I don't want to add new C-bindings. It'll maybe included in the *summer update*.
+- **Themes provider 🎨**: I'm still thinking about how I will implement this, but basically the idea is to have a configuration file where it will be possible to define the color schema for the entire application. I haven't planned this release yet
+- **Configuration profile for bookmarks 📚**: I would like to, but I still have to analyze it.
+- **AWS S3 support 🪣**: There is already a library for AWS S3, but this is really on bottom of my implementation list at the moment, due to interest and I don't really have a system where to test it.
 
-- Amazon S3 support
-- Samba support
-- Themes provider
+Along to new features, termscp developments is now focused on UI and performance improvements, so if you have any suggestion, feel free to open an issue.
 
 ---
 
@@ -209,13 +116,13 @@ Please follow [our contributing guidelines](CONTRIBUTING.md)
 
 ## Changelog ⏳
 
-View TermSCP's changelog [HERE](CHANGELOG.md)
+View termscp's changelog [HERE](CHANGELOG.md)
 
 ---
 
-## Powered by 🚀
+## Powered by 💪
 
-TermSCP is powered by these aweseome projects:
+termscp is powered by these aweseome projects:
 
 - [bytesize](https://github.com/hyunsik/bytesize)
 - [crossterm](https://github.com/crossterm-rs/crossterm)
@@ -226,7 +133,9 @@ TermSCP is powered by these aweseome projects:
 - [ssh2-rs](https://github.com/alexcrichton/ssh2-rs)
 - [textwrap](https://github.com/mgeisler/textwrap)
 - [tui-rs](https://github.com/fdehau/tui-rs)
+- [tui-realm](https://github.com/veeso/tui-realm)
 - [whoami](https://github.com/libcala/whoami)
+- [wildmatch](https://github.com/becheran/wildmatch)
 
 ---
 
@@ -247,14 +156,6 @@ TermSCP is powered by these aweseome projects:
 > Text editor
 
 ![TextEditor](assets/images/text-editor.gif)
-
----
-
-## Buy me a coffee ☕
-
-If you like termscp and you'd love to see the project to grow, please consider a little donation 🥳
-
-[![Buy-me-a-coffee](https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20coffee&emoji=&slug=veeso&button_colour=404040&font_colour=ffffff&font_family=Comic&outline_colour=ffffff&coffee_colour=FFDD00)](https://www.buymeacoffee.com/veeso)
 
 ---
 

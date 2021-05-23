@@ -28,12 +28,10 @@
  */
 // Locals
 use super::context::Context;
-// keymap
-pub(crate) mod keymap;
 // Activities
-pub mod auth_activity;
-pub mod filetransfer_activity;
-pub mod setup_activity;
+pub mod auth;
+pub mod filetransfer;
+pub mod setup;
 
 // -- Exit reason
 

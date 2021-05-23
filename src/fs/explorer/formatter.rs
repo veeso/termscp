@@ -539,6 +539,8 @@ mod tests {
 
     use super::*;
     use crate::fs::{FsDirectory, FsFile};
+
+    use pretty_assertions::assert_eq;
     use std::path::PathBuf;
     use std::time::SystemTime;
 

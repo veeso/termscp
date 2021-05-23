@@ -232,6 +232,7 @@ impl FsEntry {
 mod tests {
 
     use super::*;
+    use pretty_assertions::assert_eq;
 
     #[test]
     fn test_fs_fsentry_dir() {

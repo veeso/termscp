@@ -19,16 +19,16 @@ Please note we have a [code of conduct](CODE_OF_CONDUCT.md), please follow it in
 
 ## Project mission
 
-TermSCP was born because, as a terminal lover and Linux user, I wanted something like WinSCP on Linux and on terminal. I my previous job I used SFTP/SCP pratically everyday and that made me to desire an application like termscp so much, that eventually I started to work on it in the spare time. I saw there was a very cool library to create terminal user interface (`tui-rs`), so I started to code it. I wrote termscp as an experiment, I designed kinda nothing at the time. I just said
+termscp was born because, as a terminal lover and Linux user, I wanted something like WinSCP on Linux and on terminal. I my previous job I used SFTP/SCP pratically everyday and that made me to desire an application like termscp so much, that eventually I started to work on it in the spare time. I saw there was a very cool library to create terminal user interface (`tui-rs`), so I started to code it. I wrote termscp as an experiment, I designed kinda nothing at the time. I just said
 
 > Ok, there must be a `FileTransfer` trait somehow, I'll have more views, so I'll use something like Android activities, and there must be a module to interact with the local host".
 
 And so in december 2020 I had the first version of termscp running and it worked, but was very simple, raw and minimal.
 A lot of things have changed since them, both the features the project provides and my personal view of this project.
 
-Today I don't see TermSCP as a WinSCP clone anymore. I've also thought about changing the name as the time passed by, but I liked it and it would be hard to change the name on the registries, etc.
+Today I don't see termscp as a WinSCP clone anymore. I've also thought about changing the name as the time passed by, but I liked it and it would be hard to change the name on the registries, etc.
 
-Right now I see TermSCP as a **rich-featured file transfer client for terminals**. All I want is to provide all the features users need to use it correctly, I want it to be **safe and reliable** and eventually I want people to consider termscp **the first choice as a file transfer client**.
+Right now I see termscp as a **rich-featured file transfer client for terminals**. All I want is to provide all the features users need to use it correctly, I want it to be **safe and reliable** and eventually I want people to consider termscp **the first choice as a file transfer client**.
 
 ### Project goals
 
@@ -61,6 +61,7 @@ Don't set other labels to your issue, not even priority.
 
 When you open a bug try to be the most precise as possible in describing your issue. I'm not saying you should always be that precise, since sometimes it's very easy for maintainers to understand what you're talking about. Just try to be reasonable to understand sometimes we might not know what you're talking about or we just don't have the technical knowledge you might think.
 Please always provide the environment you're working on and consider that we don't provide any support for older version of termscp, at least for those not classified as LTS (if we'll ever have them).
+If you can, provide the log file or the snippet involving your issue. You can find in the [user manual](docs/man.md) the location of the log file.
 Last but not least: the template I've written must be used. Full stop.
 
 Maintainers will may add additional labels to your issue:
@@ -68,7 +69,7 @@ Maintainers will may add additional labels to your issue:
 - **duplicate**: the issue is duplicated; the reference to the related issue will be added to your description. Your issue will be closed.
 - **priority**: this must be fixed asap
 - **sorcery**: it is not possible to find out what's causing your bug, nor is reproducible on our test environments.
-- **wontfix**: your bug has a very high ratio between the probability to encounter it and the difficult to fix it, or it just isn't a bug, but a feature.
+- **wontfix**: your bug has a very high ratio between the difficulty to fix it and the probability to encounter it, or it just isn't a bug, but a feature.
 
 ### Feature requests
 

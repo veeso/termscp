@@ -50,6 +50,7 @@ impl ConfigSerializer {
                 ))
             }
         };
+        trace!("Serialized new configuration data: {}", data);
         // Write file
         match writable.write_all(data.as_bytes()) {
             Ok(_) => Ok(()),
@@ -72,9 +73,13 @@ impl ConfigSerializer {
                 err.to_string(),
             ));
         }
+        trace!("Read configuration from file: {}", data);
         // Deserialize
         match toml::de::from_str(data.as_str()) {
-            Ok(hosts) => Ok(hosts),
+            Ok(config) => {
+                debug!("Read config from file {:?}", config);
+                Ok(config)
+            }
             Err(err) => Err(SerializerError::new_ex(
                 SerializerErrorKind::SyntaxError,
                 err.to_string(),
@@ -90,6 +95,7 @@ mod tests {
 
     use super::*;
 
+    use pretty_assertions::assert_eq;
     use std::io::{Seek, SeekFrom};
     use std::path::PathBuf;
 
@@ -113,6 +119,10 @@ mod tests {
         assert_eq!(
             cfg.user_interface.file_fmt,
             Some(String::from("{NAME} {PEX}"))
+        );
+        assert_eq!(
+            cfg.user_interface.remote_file_fmt,
+            Some(String::from("{NAME} {USER}")),
         );
         // Verify keys
         assert_eq!(
@@ -149,7 +159,8 @@ mod tests {
         assert_eq!(cfg.user_interface.show_hidden_files, true);
         assert_eq!(cfg.user_interface.group_dirs, None);
         assert!(cfg.user_interface.check_for_updates.is_none());
-        assert_eq!(cfg.user_interface.file_fmt, None);
+        assert!(cfg.user_interface.file_fmt.is_none());
+        assert!(cfg.user_interface.remote_file_fmt.is_none());
         // Verify keys
         assert_eq!(
             *cfg.remote
@@ -208,6 +219,7 @@ mod tests {
         check_for_updates = true
         group_dirs = "last"
         file_fmt = "{NAME} {PEX}"
+        remote_file_fmt = "{NAME} {USER}"
 
         [remote.ssh_keys]
         "192.168.1.31" = "/home/omar/.ssh/raspberry.key"

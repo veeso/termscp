@@ -68,7 +68,7 @@ pub enum HostErrorType {
 /// ### HostError
 ///
 /// HostError is a wrapper for the error type and the exact io error
-
+#[derive(Debug)]
 pub struct HostError {
     pub error: HostErrorType,
     ioerr: Option<std::io::Error>,
@@ -125,12 +125,17 @@ impl Localhost {
     ///
     /// Instantiates a new Localhost struct
     pub fn new(wrkdir: PathBuf) -> Result<Localhost, HostError> {
+        debug!("Initializing localhost at {}", wrkdir.display());
         let mut host: Localhost = Localhost {
             wrkdir,
             files: Vec::new(),
         };
         // Check if dir exists
         if !host.file_exists(host.wrkdir.as_path()) {
+            error!(
+                "Failed to initialize localhost: {} doesn't exist",
+                host.wrkdir.display()
+            );
             return Err(HostError::new(
                 HostErrorType::NoSuchFileOrDirectory,
                 None,
@@ -140,8 +145,15 @@ impl Localhost {
         // Retrieve files for provided path
         host.files = match host.scan_dir(host.wrkdir.as_path()) {
             Ok(files) => files,
-            Err(err) => return Err(err),
+            Err(err) => {
+                error!(
+                    "Failed to initialize localhost: could not scan wrkdir: {}",
+                    err
+                );
+                return Err(err);
+            }
         };
+        info!("Localhost initialized with success");
         Ok(host)
     }
 
@@ -165,8 +177,10 @@ impl Localhost {
     /// Change working directory with the new provided directory
     pub fn change_wrkdir(&mut self, new_dir: &Path) -> Result<PathBuf, HostError> {
         let new_dir: PathBuf = self.to_abs_path(new_dir);
+        info!("Changing localhost directory to {}...", new_dir.display());
         // Check whether directory exists
         if !self.file_exists(new_dir.as_path()) {
+            error!("Could not change directory: No such file or directory");
             return Err(HostError::new(
                 HostErrorType::NoSuchFileOrDirectory,
                 None,
@@ -174,10 +188,11 @@ impl Localhost {
             ));
         }
         // Change directory
-        if std::env::set_current_dir(new_dir.as_path()).is_err() {
+        if let Err(err) = std::env::set_current_dir(new_dir.as_path()) {
+            error!("Could not enter directory: {}", err);
             return Err(HostError::new(
                 HostErrorType::NoSuchFileOrDirectory,
-                None,
+                Some(err),
                 new_dir.as_path(),
             ));
         }
@@ -189,11 +204,13 @@ impl Localhost {
         self.files = match self.scan_dir(self.wrkdir.as_path()) {
             Ok(files) => files,
             Err(err) => {
+                error!("Could not scan new directory: {}", err);
                 // Restore directory
                 self.wrkdir = prev_dir;
                 return Err(err);
             }
         };
+        debug!("Changed directory to {}", self.wrkdir.display());
         Ok(self.wrkdir.clone())
     }
 
@@ -210,6 +227,7 @@ impl Localhost {
     /// ignex: don't report error if directory already exists
     pub fn mkdir_ex(&mut self, dir_name: &Path, ignex: bool) -> Result<(), HostError> {
         let dir_path: PathBuf = self.to_abs_path(dir_name);
+        info!("Making directory {}", dir_path.display());
         // If dir already exists, return Error
         if dir_path.exists() {
             match ignex {
@@ -229,13 +247,17 @@ impl Localhost {
                 if dir_name.is_relative() {
                     self.files = self.scan_dir(self.wrkdir.as_path())?;
                 }
+                info!("Created directory {}", dir_path.display());
                 Ok(())
             }
-            Err(err) => Err(HostError::new(
-                HostErrorType::CouldNotCreateFile,
-                Some(err),
-                dir_path.as_path(),
-            )),
+            Err(err) => {
+                error!("Could not make directory: {}", err);
+                Err(HostError::new(
+                    HostErrorType::CouldNotCreateFile,
+                    Some(err),
+                    dir_path.as_path(),
+                ))
+            }
         }
     }
 
@@ -246,7 +268,9 @@ impl Localhost {
         match entry {
             FsEntry::Directory(dir) => {
                 // If file doesn't exist; return error
+                debug!("Removing directory {}", dir.abs_path.display());
                 if !dir.abs_path.as_path().exists() {
+                    error!("Directory doesn't exist");
                     return Err(HostError::new(
                         HostErrorType::NoSuchFileOrDirectory,
                         None,
@@ -258,18 +282,24 @@ impl Localhost {
                     Ok(_) => {
                         // Update dir
                         self.files = self.scan_dir(self.wrkdir.as_path())?;
+                        info!("Removed directory {}", dir.abs_path.display());
                         Ok(())
                     }
-                    Err(err) => Err(HostError::new(
-                        HostErrorType::DeleteFailed,
-                        Some(err),
-                        dir.abs_path.as_path(),
-                    )),
+                    Err(err) => {
+                        error!("Could not remove directory: {}", err);
+                        Err(HostError::new(
+                            HostErrorType::DeleteFailed,
+                            Some(err),
+                            dir.abs_path.as_path(),
+                        ))
+                    }
                 }
             }
             FsEntry::File(file) => {
                 // If file doesn't exist; return error
+                debug!("Removing file {}", file.abs_path.display());
                 if !file.abs_path.as_path().exists() {
+                    error!("File doesn't exist");
                     return Err(HostError::new(
                         HostErrorType::NoSuchFileOrDirectory,
                         None,
@@ -281,13 +311,17 @@ impl Localhost {
                     Ok(_) => {
                         // Update dir
                         self.files = self.scan_dir(self.wrkdir.as_path())?;
+                        info!("Removed file {}", file.abs_path.display());
                         Ok(())
                     }
-                    Err(err) => Err(HostError::new(
-                        HostErrorType::DeleteFailed,
-                        Some(err),
-                        file.abs_path.as_path(),
-                    )),
+                    Err(err) => {
+                        error!("Could not remove file: {}", err);
+                        Err(HostError::new(
+                            HostErrorType::DeleteFailed,
+                            Some(err),
+                            file.abs_path.as_path(),
+                        ))
+                    }
                 }
             }
         }
@@ -302,13 +336,26 @@ impl Localhost {
             Ok(_) => {
                 // Scan dir
                 self.files = self.scan_dir(self.wrkdir.as_path())?;
+                debug!(
+                    "Moved file {} to {}",
+                    entry.get_abs_path().display(),
+                    dst_path.display()
+                );
                 Ok(())
             }
-            Err(err) => Err(HostError::new(
-                HostErrorType::CouldNotCreateFile,
-                Some(err),
-                abs_path.as_path(),
-            )),
+            Err(err) => {
+                error!(
+                    "Failed to move {} to {}: {}",
+                    entry.get_abs_path().display(),
+                    dst_path.display(),
+                    err
+                );
+                Err(HostError::new(
+                    HostErrorType::CouldNotCreateFile,
+                    Some(err),
+                    abs_path.as_path(),
+                ))
+            }
         }
     }
 
@@ -318,6 +365,11 @@ impl Localhost {
     pub fn copy(&mut self, entry: &FsEntry, dst: &Path) -> Result<(), HostError> {
         // Get absolute path of dest
         let dst: PathBuf = self.to_abs_path(dst);
+        info!(
+            "Copying file {} to {}",
+            entry.get_abs_path().display(),
+            dst.display()
+        );
         // Match entry
         match entry {
             FsEntry::File(file) => {
@@ -333,16 +385,19 @@ impl Localhost {
                 };
                 // Copy entry path to dst path
                 if let Err(err) = std::fs::copy(file.abs_path.as_path(), dst.as_path()) {
+                    error!("Failed to copy file: {}", err);
                     return Err(HostError::new(
                         HostErrorType::CouldNotCreateFile,
                         Some(err),
                         file.abs_path.as_path(),
                     ));
                 }
+                info!("File copied");
             }
             FsEntry::Directory(dir) => {
                 // If destination path doesn't exist, create destination
                 if !dst.exists() {
+                    debug!("Directory {} doesn't exist; creating it", dst.display());
                     self.mkdir(dst.as_path())?;
                 }
                 // Scan dir
@@ -386,15 +441,17 @@ impl Localhost {
     /// Stat file and create a FsEntry
     #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
     pub fn stat(&self, path: &Path) -> Result<FsEntry, HostError> {
+        info!("Stating file {}", path.display());
         let path: PathBuf = self.to_abs_path(path);
         let attr: Metadata = match fs::metadata(path.as_path()) {
             Ok(metadata) => metadata,
             Err(err) => {
+                error!("Could not read file metadata: {}", err);
                 return Err(HostError::new(
                     HostErrorType::FileNotAccessible,
                     Some(err),
                     path.as_path(),
-                ))
+                ));
             }
         };
         let file_name: String = String::from(path.file_name().unwrap().to_str().unwrap_or(""));
@@ -454,14 +511,16 @@ impl Localhost {
     #[cfg(not(tarpaulin_include))]
     pub fn stat(&self, path: &Path) -> Result<FsEntry, HostError> {
         let path: PathBuf = self.to_abs_path(path);
+        info!("Stating file {}", path.display());
         let attr: Metadata = match fs::metadata(path.as_path()) {
             Ok(metadata) => metadata,
             Err(err) => {
+                error!("Could not read file metadata: {}", err);
                 return Err(HostError::new(
                     HostErrorType::FileNotAccessible,
                     Some(err),
                     path.as_path(),
-                ))
+                ));
             }
         };
         let file_name: String = String::from(path.file_name().unwrap().to_str().unwrap_or(""));
@@ -523,16 +582,23 @@ impl Localhost {
         let args: Vec<&str> = cmd.split(' ').collect();
         let cmd: &str = args.first().unwrap();
         let argv: &[&str] = &args[1..];
+        info!("Executing command: {} {:?}", cmd, argv);
         match std::process::Command::new(cmd).args(argv).output() {
             Ok(output) => match std::str::from_utf8(&output.stdout) {
-                Ok(s) => Ok(s.to_string()),
+                Ok(s) => {
+                    info!("Command output: {}", s);
+                    Ok(s.to_string())
+                }
                 Err(_) => Ok(String::new()),
             },
-            Err(err) => Err(HostError::new(
-                HostErrorType::ExecutionFailed,
-                Some(err),
-                self.wrkdir.as_path(),
-            )),
+            Err(err) => {
+                error!("Failed to run command: {}", err);
+                Err(HostError::new(
+                    HostErrorType::ExecutionFailed,
+                    Some(err),
+                    self.wrkdir.as_path(),
+                ))
+            }
         }
     }
 
@@ -548,19 +614,32 @@ impl Localhost {
                 let mut mpex = metadata.permissions();
                 mpex.set_mode(self.mode_to_u32(pex));
                 match set_permissions(path.as_path(), mpex) {
-                    Ok(_) => Ok(()),
-                    Err(err) => Err(HostError::new(
-                        HostErrorType::FileNotAccessible,
-                        Some(err),
-                        path.as_path(),
-                    )),
+                    Ok(_) => {
+                        info!("Changed mode for {} to {:?}", path.display(), pex);
+                        Ok(())
+                    }
+                    Err(err) => {
+                        error!("Could not change mode for file {}: {}", path.display(), err);
+                        Err(HostError::new(
+                            HostErrorType::FileNotAccessible,
+                            Some(err),
+                            path.as_path(),
+                        ))
+                    }
                 }
             }
-            Err(err) => Err(HostError::new(
-                HostErrorType::FileNotAccessible,
-                Some(err),
-                path.as_path(),
-            )),
+            Err(err) => {
+                error!(
+                    "Chmod failed; could not read metadata for file {}: {}",
+                    path.display(),
+                    err
+                );
+                Err(HostError::new(
+                    HostErrorType::FileNotAccessible,
+                    Some(err),
+                    path.as_path(),
+                ))
+            }
         }
     }
 
@@ -569,7 +648,9 @@ impl Localhost {
     /// Open file for read
     pub fn open_file_read(&self, file: &Path) -> Result<File, HostError> {
         let file: PathBuf = self.to_abs_path(file);
+        info!("Opening file {} for read", file.display());
         if !self.file_exists(file.as_path()) {
+            error!("File doesn't exist!");
             return Err(HostError::new(
                 HostErrorType::NoSuchFileOrDirectory,
                 None,
@@ -583,11 +664,14 @@ impl Localhost {
             .open(file.as_path())
         {
             Ok(f) => Ok(f),
-            Err(err) => Err(HostError::new(
-                HostErrorType::FileNotAccessible,
-                Some(err),
-                file.as_path(),
-            )),
+            Err(err) => {
+                error!("Could not open file for read: {}", err);
+                Err(HostError::new(
+                    HostErrorType::FileNotAccessible,
+                    Some(err),
+                    file.as_path(),
+                ))
+            }
         }
     }
 
@@ -596,6 +680,7 @@ impl Localhost {
     /// Open file for write
     pub fn open_file_write(&self, file: &Path) -> Result<File, HostError> {
         let file: PathBuf = self.to_abs_path(file);
+        info!("Opening file {} for write", file.display());
         match OpenOptions::new()
             .create(true)
             .write(true)
@@ -603,18 +688,21 @@ impl Localhost {
             .open(file.as_path())
         {
             Ok(f) => Ok(f),
-            Err(err) => match self.file_exists(file.as_path()) {
-                true => Err(HostError::new(
-                    HostErrorType::ReadonlyFile,
-                    Some(err),
-                    file.as_path(),
-                )),
-                false => Err(HostError::new(
-                    HostErrorType::FileNotAccessible,
-                    Some(err),
-                    file.as_path(),
-                )),
-            },
+            Err(err) => {
+                error!("Failed to open file: {}", err);
+                match self.file_exists(file.as_path()) {
+                    true => Err(HostError::new(
+                        HostErrorType::ReadonlyFile,
+                        Some(err),
+                        file.as_path(),
+                    )),
+                    false => Err(HostError::new(
+                        HostErrorType::FileNotAccessible,
+                        Some(err),
+                        file.as_path(),
+                    )),
+                }
+            }
         }
     }
 
@@ -629,13 +717,15 @@ impl Localhost {
     ///
     /// Get content of the current directory as a list of fs entry
     pub fn scan_dir(&self, dir: &Path) -> Result<Vec<FsEntry>, HostError> {
+        info!("Reading directory {}", dir.display());
         match std::fs::read_dir(dir) {
             Ok(e) => {
                 let mut fs_entries: Vec<FsEntry> = Vec::new();
                 for entry in e.flatten() {
                     // NOTE: 0.4.1, don't fail if stat for one file fails
-                    if let Ok(entry) = self.stat(entry.path().as_path()) {
-                        fs_entries.push(entry);
+                    match self.stat(entry.path().as_path()) {
+                        Ok(entry) => fs_entries.push(entry),
+                        Err(e) => error!("Failed to stat {}: {}", entry.path().display(), e),
                     }
                 }
                 Ok(fs_entries)
@@ -739,6 +829,8 @@ impl Localhost {
 mod tests {
 
     use super::*;
+
+    use pretty_assertions::assert_eq;
     use std::fs::File;
     use std::io::Write;
 

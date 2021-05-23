@@ -1,6 +1,7 @@
 # Changelog
 
 - [Changelog](#changelog)
+  - [0.5.0](#050)
   - [0.4.2](#042)
   - [0.4.1](#041)
   - [0.4.0](#040)
@@ -15,6 +16,54 @@
   - [0.1.0](#010)
 
 ---
+
+## 0.5.0
+
+Released on 23/05/2021
+
+> 🌸 Spring Update 2021 🌷
+
+- **Synchronized browsing**:
+  - Added the possibility to enabled the synchronized brower navigation
+    - when you enter a directory, the same directory will be entered on the other tab
+    - Enable sync browser with `<Y>`
+    - Read more on manual: [Synchronized browsing](docs/man.md#Synchronized-browsing-)
+- **Remote and Local hosts file formatter**:
+  - Added the possibility to set different formatters for local and remote hosts
+- **Work on multiple files**:
+  - Added the possibility to work on **multiple files simultaneously**
+  - Select a file with `<M>`, the file when selected will have a `*` prepended to its name
+  - Select all files in the current directory with `<CTRL+A>`
+  - Read more on manual: [Work on multiple files](docs/man.md#Work-on-multiple-files-)
+- **Logging**:
+  - termscp now writes a log file, useful to debug and to contribute to fix issues.
+  - Read more on [manual](docs/man.md)
+- **File transfer changes**
+  - *SFTP*
+    - Added **COPY** command to SFTP (Please note that Copy command is not supported by SFTP natively, so here it just uses the `cp` shell command as it does in SCP).
+  - *FTP*
+    - Added support for file copy (achieved through *tricky-copy*: the file is first downloaded, then uploaded with a different file name)
+- **Double progress bar**:
+  - From now one two progress bar will be displayed:
+    - the first, on top, displays the full transfer state (e.g. when downloading a directory of 10 files, the progress of the entire transfer)
+    - the second, on bottom, displays the transfer of the individual file being written (as happened for the old versions)
+    - changed the progress bar colour from `LightGreen` to `Green`
+- Enhancements
+  - Added a status bar in the file explorer showing whether the sync browser is enabled and which file sorting mode is selected
+  - Removed the goold old figlet title
+  - Protocol input as first field in UI
+  - Port is now updated to standard for selected protocol
+    - when you change the protocol in the authentication form and the current port is standard (`< 1024`), the port will be automatically changed to default value for the selected protocol (e.g. current port: `123`, protocol changed to `FTP`, port becomes `21`)
+- Bugfix:
+  - Fixed wrong text wrap in log box
+  - Fixed empty bookmark name causing termscp to crash
+  - Fixed error message not being shown after an upload failure
+  - Fixed default protocol not being loaded from config
+  - [Issue 23](https://github.com/veeso/termscp/issues/23): Remove created file if transfer failed or was abrupted
+- Dependencies:
+  - Added `tui-realm 0.3.0`
+  - Removed `tui` (as direct dependency)
+  - Updated `regex` to `1.5.4`
 
 ## 0.4.2
 
@@ -88,7 +137,7 @@ Released on 28/02/2021
   - Added `EXTRA` and `LENGTH` parameters to format keys.
   - Now keys are provided with this syntax `{KEY_NAME[:LEN[:EXTRA]}`
 - **Check for updates**:
-  - TermSCP will now check for updates on startup and will show in the main page if there is a new version available
+  - termscp will now check for updates on startup and will show in the main page if there is a new version available
   - This feature may be disabled from setup (Check for updates => No)
 - Enhancements:
   - Default choice for deleting file set to "NO" (way too easy to delete files by mistake)

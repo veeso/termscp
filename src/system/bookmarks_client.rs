@@ -68,9 +68,11 @@ impl BookmarksClient {
     ) -> Result<BookmarksClient, SerializerError> {
         // Create default hosts
         let default_hosts: UserHosts = Default::default();
+        debug!("Setting up bookmarks client...");
         // Make a key storage (windows / macos)
         #[cfg(any(target_os = "windows", target_os = "macos"))]
         let (key_storage, service_id): (Box<dyn KeyStorage>, &str) = {
+            debug!("Setting up KeyStorage");
             let username: String = whoami::username();
             let storage: KeyringStorage = KeyringStorage::new(username.as_str());
             // Check if keyring storage is supported
@@ -79,8 +81,14 @@ impl BookmarksClient {
             #[cfg(test)] // NOTE: when running test, add -test
             let app_name: &str = "termscp-test";
             match storage.is_supported() {
-                true => (Box::new(storage), app_name),
-                false => (Box::new(FileStorage::new(storage_path)), "bookmarks"),
+                true => {
+                    debug!("Using KeyringStorage");
+                    (Box::new(storage), app_name)
+                }
+                false => {
+                    warn!("KeyringStorage is not supported; using FileStorage");
+                    (Box::new(FileStorage::new(storage_path)), "bookmarks")
+                }
             }
         };
         // Make a key storage (linux / unix)
@@ -90,16 +98,22 @@ impl BookmarksClient {
             let app_name: &str = "bookmarks";
             #[cfg(test)] // NOTE: when running test, add -test
             let app_name: &str = "bookmarks-test";
+            debug!("Using FileStorage");
             (Box::new(FileStorage::new(storage_path)), app_name)
         };
         // Load key
         let key: String = match key_storage.get_key(service_id) {
-            Ok(k) => k,
+            Ok(k) => {
+                debug!("Key loaded with success");
+                k
+            }
             Err(e) => match e {
                 KeyStorageError::NoSuchKey => {
                     // If no such key, generate key and set it into the storage
                     let key: String = Self::generate_key();
+                    debug!("Key doesn't exist yet or could not be loaded; generated a new key");
                     if let Err(e) = key_storage.set_key(service_id, key.as_str()) {
+                        error!("Failed to set new key into storage: {}", e);
                         return Err(SerializerError::new_ex(
                             SerializerErrorKind::IoError,
                             format!("Could not write key to storage: {}", e),
@@ -109,10 +123,11 @@ impl BookmarksClient {
                     key
                 }
                 _ => {
+                    error!("Failed to get key from storage: {}", e);
                     return Err(SerializerError::new_ex(
                         SerializerErrorKind::IoError,
                         format!("Could not get key from storage: {}", e),
-                    ))
+                    ));
                 }
             },
         };
@@ -124,15 +139,19 @@ impl BookmarksClient {
         };
         // If bookmark file doesn't exist, initialize it
         if !bookmarks_file.exists() {
+            info!("Bookmarks file doesn't exist yet; creating it...");
             if let Err(err) = client.write_bookmarks() {
+                error!("Failed to create bookmarks file: {}", err);
                 return Err(err);
             }
         } else {
             // Load bookmarks from file
             if let Err(err) = client.read_bookmarks() {
+                error!("Failed to load bookmarks: {}", err);
                 return Err(err);
             }
         }
+        info!("Bookmarks client initialized");
         // Load key
         Ok(client)
     }
@@ -152,19 +171,29 @@ impl BookmarksClient {
         key: &str,
     ) -> Option<(String, u16, FileTransferProtocol, String, Option<String>)> {
         let entry: &Bookmark = self.hosts.bookmarks.get(key)?;
+        debug!("Getting bookmark {}", key);
         Some((
             entry.address.clone(),
             entry.port,
             match FileTransferProtocol::from_str(entry.protocol.as_str()) {
                 Ok(proto) => proto,
-                Err(_) => FileTransferProtocol::Sftp, // Default
+                Err(err) => {
+                    error!(
+                        "Found invalid protocol in bookmarks: {}; defaulting to SFTP",
+                        err
+                    );
+                    FileTransferProtocol::Sftp // Default
+                }
             },
             entry.username.clone(),
             match &entry.password {
                 // Decrypted password if Some; if decryption fails return None
                 Some(pwd) => match self.decrypt_str(pwd.as_str()) {
                     Ok(decrypted_pwd) => Some(decrypted_pwd),
-                    Err(_) => None,
+                    Err(err) => {
+                        error!("Failed to decrypt password for bookmark: {}", err);
+                        None
+                    }
                 },
                 None => None,
             },
@@ -184,9 +213,11 @@ impl BookmarksClient {
         password: Option<String>,
     ) {
         if name.is_empty() {
+            error!("Fatal error; bookmark name is empty");
             panic!("Bookmark name can't be empty");
         }
         // Make bookmark
+        info!("Added bookmark {} with address {}", name, addr);
         let host: Bookmark = self.make_bookmark(addr, port, protocol, username, password);
         self.hosts.bookmarks.insert(name, host);
     }
@@ -196,6 +227,7 @@ impl BookmarksClient {
     /// Delete entry from bookmarks
     pub fn del_bookmark(&mut self, name: &str) {
         let _ = self.hosts.bookmarks.remove(name);
+        info!("Removed bookmark {}", name);
     }
     /// ### iter_recents
     ///
@@ -209,13 +241,20 @@ impl BookmarksClient {
     /// Get recent associated to key
     pub fn get_recent(&self, key: &str) -> Option<(String, u16, FileTransferProtocol, String)> {
         // NOTE: password is not decrypted; recents will never have password
+        info!("Getting bookmark {}", key);
         let entry: &Bookmark = self.hosts.recents.get(key)?;
         Some((
             entry.address.clone(),
             entry.port,
             match FileTransferProtocol::from_str(entry.protocol.as_str()) {
                 Ok(proto) => proto,
-                Err(_) => FileTransferProtocol::Sftp, // Default
+                Err(err) => {
+                    error!(
+                        "Found invalid protocol in bookmarks: {}; defaulting to SFTP",
+                        err
+                    );
+                    FileTransferProtocol::Sftp // Default
+                }
             },
             entry.username.clone(),
         ))
@@ -236,6 +275,7 @@ impl BookmarksClient {
         // Check if duplicated
         for recent_host in self.hosts.recents.values() {
             if *recent_host == host {
+                debug!("Discarding recent since duplicated ({})", host.address);
                 // Don't save duplicates
                 return;
             }
@@ -252,6 +292,7 @@ impl BookmarksClient {
             // Delete keys starting from the last one
             for key in keys.iter() {
                 let _ = self.hosts.recents.remove(key);
+                debug!("Removed recent bookmark {}", key);
                 // If length is < self.recents_size; break
                 if self.hosts.recents.len() < self.recents_size {
                     break;
@@ -259,6 +300,7 @@ impl BookmarksClient {
             }
         }
         let name: String = fmt_time(SystemTime::now(), "ISO%Y%m%dT%H%M%S");
+        info!("Saved recent host {} ({})", name, host.address);
         self.hosts.recents.insert(name, host);
     }
 
@@ -267,6 +309,7 @@ impl BookmarksClient {
     /// Delete entry from recents
     pub fn del_recent(&mut self, name: &str) {
         let _ = self.hosts.recents.remove(name);
+        info!("Removed recent host {}", name);
     }
 
     /// ### write_bookmarks
@@ -274,6 +317,7 @@ impl BookmarksClient {
     /// Write bookmarks to file
     pub fn write_bookmarks(&self) -> Result<(), SerializerError> {
         // Open file
+        debug!("Writing bookmarks");
         match OpenOptions::new()
             .create(true)
             .write(true)
@@ -284,10 +328,13 @@ impl BookmarksClient {
                 let serializer: BookmarkSerializer = BookmarkSerializer {};
                 serializer.serialize(Box::new(writer), &self.hosts)
             }
-            Err(err) => Err(SerializerError::new_ex(
-                SerializerErrorKind::IoError,
-                err.to_string(),
-            )),
+            Err(err) => {
+                error!("Failed to write bookmarks: {}", err);
+                Err(SerializerError::new_ex(
+                    SerializerErrorKind::IoError,
+                    err.to_string(),
+                ))
+            }
         }
     }
 
@@ -296,6 +343,7 @@ impl BookmarksClient {
     /// Read bookmarks from file
     fn read_bookmarks(&mut self) -> Result<(), SerializerError> {
         // Open bookmarks file for read
+        debug!("Reading bookmarks");
         match OpenOptions::new()
             .read(true)
             .open(self.bookmarks_file.as_path())
@@ -311,10 +359,13 @@ impl BookmarksClient {
                     Err(err) => Err(err),
                 }
             }
-            Err(err) => Err(SerializerError::new_ex(
-                SerializerErrorKind::IoError,
-                err.to_string(),
-            )),
+            Err(err) => {
+                error!("Failed to read bookmarks: {}", err);
+                Err(SerializerError::new_ex(
+                    SerializerErrorKind::IoError,
+                    err.to_string(),
+                ))
+            }
         }
     }
 
@@ -372,6 +423,8 @@ impl BookmarksClient {
 mod tests {
 
     use super::*;
+
+    use pretty_assertions::assert_eq;
     use std::thread::sleep;
     use std::time::Duration;
 

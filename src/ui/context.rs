@@ -27,13 +27,12 @@
  */
 // Dependencies
 extern crate crossterm;
-extern crate tui;
+extern crate tuirealm;
 
 // Locals
 use super::input::InputHandler;
 use super::store::Store;
 use crate::filetransfer::FileTransferProtocol;
-use crate::host::Localhost;
 use crate::system::config_client::ConfigClient;
 
 // Includes
@@ -42,14 +41,13 @@ use crossterm::execute;
 use crossterm::terminal::{EnterAlternateScreen, LeaveAlternateScreen};
 use std::io::{stdout, Stdout};
 use std::path::PathBuf;
-use tui::backend::CrosstermBackend;
-use tui::Terminal;
+use tuirealm::tui::backend::CrosstermBackend;
+use tuirealm::tui::Terminal;
 
 /// ## Context
 ///
 /// Context holds data structures used by the ui
 pub struct Context {
-    pub local: Localhost,
     pub ft_params: Option<FileTransferParams>,
     pub(crate) config_client: Option<ConfigClient>,
     pub(crate) store: Store,
@@ -74,16 +72,11 @@ impl Context {
     /// ### new
     ///
     /// Instantiates a new Context
-    pub fn new(
-        local: Localhost,
-        config_client: Option<ConfigClient>,
-        error: Option<String>,
-    ) -> Context {
+    pub fn new(config_client: Option<ConfigClient>, error: Option<String>) -> Context {
         // Create terminal
         let mut stdout = stdout();
         assert!(execute!(stdout, EnterAlternateScreen).is_ok());
         Context {
-            local,
             ft_params: None,
             config_client,
             store: Store::init(),
@@ -93,14 +86,12 @@ impl Context {
         }
     }
 
-    /* NOTE: in case is necessary
     /// ### set_error
     ///
     /// Set context error
     pub fn set_error(&mut self, err: String) {
         self.error = Some(err);
     }
-    */
 
     /// ### get_error
     ///
@@ -113,40 +104,45 @@ impl Context {
     ///
     /// Enter alternate screen (gui window)
     pub fn enter_alternate_screen(&mut self) {
-        let _ = execute!(
+        match execute!(
             self.terminal.backend_mut(),
             EnterAlternateScreen,
             DisableMouseCapture
-        );
+        ) {
+            Err(err) => error!("Failed to enter alternate screen: {}", err),
+            Ok(_) => info!("Entered alternate screen"),
+        }
     }
 
     /// ### leave_alternate_screen
     ///
     /// Go back to normal screen (gui window)
     pub fn leave_alternate_screen(&mut self) {
-        let _ = execute!(
+        match execute!(
             self.terminal.backend_mut(),
             LeaveAlternateScreen,
             DisableMouseCapture
-        );
+        ) {
+            Err(err) => error!("Failed to leave alternate screen: {}", err),
+            Ok(_) => info!("Left alternate screen"),
+        }
     }
 
     /// ### clear_screen
     ///
     /// Clear terminal screen
     pub fn clear_screen(&mut self) {
-        let _ = self.terminal.clear();
+        match self.terminal.clear() {
+            Err(err) => error!("Failed to clear screen: {}", err),
+            Ok(_) => info!("Cleared screen"),
+        }
     }
 }
 
 impl Drop for Context {
     fn drop(&mut self) {
         // Re-enable terminal stuff
-        let _ = execute!(
-            self.terminal.backend_mut(),
-            LeaveAlternateScreen,
-            DisableMouseCapture
-        );
+        self.leave_alternate_screen();
     }
 }
 
@@ -168,6 +164,8 @@ mod tests {
 
     use super::*;
 
+    use pretty_assertions::assert_eq;
+
     #[test]
     fn test_ui_context_ft_params() {
         let params: FileTransferParams = FileTransferParams::default();
@@ -178,31 +176,23 @@ mod tests {
         assert!(params.password.is_none());
     }
 
-    //use crate::filetransfer::sftp_transfer::SftpFileTransfer;
-    //use std::path::PathBuf;
-
-    /*
     #[test]
-    fn test_ui_context_new() {
+    #[cfg(not(feature = "githubActions"))]
+    fn test_ui_context() {
         // Prepare stuff
-        Context::new(
-            build_sftp_client(),
-            Localhost::new(PathBuf::from("/")).ok().unwrap(),
-        );
+        let mut ctx: Context = Context::new(None, Some(String::from("alles kaput")));
+        assert!(ctx.error.is_some());
+        assert_eq!(ctx.get_error().unwrap().as_str(), "alles kaput");
+        assert!(ctx.error.is_none());
+        assert!(ctx.get_error().is_none());
+        ctx.set_error(String::from("err"));
+        assert!(ctx.error.is_some());
+        assert!(ctx.get_error().is_some());
+        assert!(ctx.get_error().is_none());
+        // Try other methods
+        ctx.enter_alternate_screen();
+        ctx.clear_screen();
+        ctx.leave_alternate_screen();
+        drop(ctx);
     }
-
-    fn build_sftp_client() -> Box<dyn FileTransfer> {
-        let mut sftp_client: SftpFileTransfer = SftpFileTransfer::new();
-        // Connect to remote
-        assert!(sftp_client
-            .connect(
-                String::from("test.rebex.net"),
-                22,
-                Some(String::from("demo")),
-                Some(String::from("password"))
-            )
-            .is_ok());
-        Box::new(sftp_client)
-    }
-    */
 }

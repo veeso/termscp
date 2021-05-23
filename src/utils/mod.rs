@@ -27,7 +27,9 @@
  */
 // modules
 pub mod crypto;
+pub mod file;
 pub mod fmt;
 pub mod git;
 pub mod parser;
 pub mod random;
+pub mod ui;

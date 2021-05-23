@@ -27,7 +27,8 @@
  */
 // Modules
 pub mod activities;
+pub(crate) mod components;
 pub mod context;
 pub(crate) mod input;
-pub(crate) mod layout;
+pub(crate) mod keymap;
 pub(crate) mod store;
