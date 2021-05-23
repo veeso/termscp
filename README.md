@@ -59,7 +59,15 @@ Termscp is a feature rich terminal file transfer and explorer, with support for 
 If you're considering to install termscp I want to thank you 💜 ! I hope you will enjoy termscp!  
 If you want to contribute to this project, don't forget to check out our contribute guide. [Read More](CONTRIBUTING.md)
 
-Visit [termscp website](https://veeso.github.io/termscp/#get-started) to get started with termscp.
+If you are a Linux or a MacOS user this simple shell script will install termscp on your system with a single command:
+
+```sh
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/veeso/termscp/main/install.sh)"
+```
+
+while if you're a Windows user, you can install termscp with [Chocolatey](https://chocolatey.org/).
+
+For more information or other platforms, please visit [veeso.github.io](https://veeso.github.io/termscp/#get-started) to view all installation methods.
 
 ---
 
