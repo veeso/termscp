@@ -9,7 +9,7 @@ arch=("x86_64")
 provides=("termscp")
 options=("strip")
 source=("https://github.com/veeso/termscp/releases/download/v$pkgver/termscp-$pkgver-x86_64.tar.gz")
-sha256sums=("c72f78a4707402f7f970a883899f4f1583fd9eca6166cb7f7616be97cabf768a")
+sha256sums=("279b4cab7da68c6db0efc054ddf72e36de85910110721b66d5cdc55833c99ccf")
 
 package() {
     install -Dm755 termscp -t "$pkgdir/usr/bin/"
