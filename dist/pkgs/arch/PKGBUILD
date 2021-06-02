@@ -1,6 +1,6 @@
 # Maintainer: Christian Visintin
 pkgname=termscp
-pkgver=0.5.0
+pkgver=0.6.0
 pkgrel=1
 pkgdesc="termscp is a SCP/SFTP/FTPS client for command line with an integrated UI to explore the remote file system. Basically WinSCP on a terminal."
 url="https://github.com/veeso/termscp"
