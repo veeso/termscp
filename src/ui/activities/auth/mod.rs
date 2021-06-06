@@ -44,7 +44,7 @@ use crate::utils::git;
 
 // Includes
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
-use tuirealm::View;
+use tuirealm::{Update, View};
 
 // -- components
 const COMPONENT_TEXT_H1: &str = "TEXT_H1";

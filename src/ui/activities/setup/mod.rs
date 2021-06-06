@@ -40,7 +40,7 @@ extern crate tuirealm;
 use super::{Activity, Context, ExitReason};
 // Ext
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
-use tuirealm::View;
+use tuirealm::{Update, View};
 
 // -- components
 const COMPONENT_TEXT_HELP: &str = "TEXT_HELP";

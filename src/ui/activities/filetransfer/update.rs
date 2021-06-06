@@ -48,17 +48,17 @@ use tuirealm::{
     components::progress_bar::ProgressBarPropsBuilder,
     props::{PropsBuilder, TableBuilder, TextSpan, TextSpanBuilder},
     tui::style::Color,
-    Msg, Payload, Value,
+    Msg, Payload, Update, Value,
 };
 
-impl FileTransferActivity {
+impl Update for FileTransferActivity {
     // -- update
 
     /// ### update
     ///
     /// Update auth activity model based on msg
     /// The function exits when returns None
-    pub(super) fn update(&mut self, msg: Option<(String, Msg)>) -> Option<(String, Msg)> {
+    fn update(&mut self, msg: Option<(String, Msg)>) -> Option<(String, Msg)> {
         let ref_msg: Option<(&str, &Msg)> = msg.as_ref().map(|(s, msg)| (s.as_str(), msg));
         // Match msg
         match ref_msg {
@@ -652,7 +652,9 @@ impl FileTransferActivity {
             },
         }
     }
+}
 
+impl FileTransferActivity {
     /// ### update_local_filelist
     ///
     /// Update local file list

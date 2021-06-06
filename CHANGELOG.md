@@ -1,6 +1,7 @@
 # Changelog
 
 - [Changelog](#changelog)
+  - [0.5.1](#051)
   - [0.5.0](#050)
   - [0.4.2](#042)
   - [0.4.1](#041)
@@ -16,6 +17,15 @@
   - [0.1.0](#010)
 
 ---
+
+## 0.5.1
+
+Released on FIXME: ??
+
+- Bugfix:
+  - Fixed broken input cursor when typing UTF8 characters (tui-realm 0.3.2)
+- Dependencies:
+  - Updated `tui-realm` to `0.3.2`
 
 ## 0.5.0
 
