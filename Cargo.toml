@@ -48,7 +48,7 @@ tempfile = "3.1.0"
 textwrap = "0.13.4"
 thiserror = "^1.0.0"
 toml = "0.5.8"
-tuirealm = { version = "0.3.0", features = [ "with-components" ] }
+tuirealm = { version = "0.3.2", features = [ "with-components" ] }
 whoami = "1.1.1"
 wildmatch = "2.0.0"
 

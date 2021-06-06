@@ -24,6 +24,11 @@ Released on FIXME: ??
 
 > 🏄 Summer update 2021🌴
 
+- Bugfix:
+  - Fixed broken input cursor when typing UTF8 characters (tui-realm 0.3.2)
+- Dependencies:
+  - Updated `tui-realm` to `0.3.2`
+
 ## 0.5.0
 
 Released on 23/05/2021
