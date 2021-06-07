@@ -25,7 +25,8 @@ Released on FIXME: ??
 - Bugfix:
   - Fixed broken input cursor when typing UTF8 characters (tui-realm 0.3.2)
 - Dependencies:
-  - Updated `tui-realm` to `0.3.2`
+  - Updated `textwrap` to `0.14.0`
+  - Updated `tui-realm` to `0.4.1`
 
 ## 0.5.0
 
