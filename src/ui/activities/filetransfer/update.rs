@@ -32,11 +32,11 @@ use super::{
     actions::SelectedEntry, browser::FileExplorerTab, FileTransferActivity, LogLevel,
     COMPONENT_EXPLORER_FIND, COMPONENT_EXPLORER_LOCAL, COMPONENT_EXPLORER_REMOTE,
     COMPONENT_INPUT_COPY, COMPONENT_INPUT_EXEC, COMPONENT_INPUT_FIND, COMPONENT_INPUT_GOTO,
-    COMPONENT_INPUT_MKDIR, COMPONENT_INPUT_NEWFILE, COMPONENT_INPUT_RENAME, COMPONENT_INPUT_SAVEAS,
-    COMPONENT_LIST_FILEINFO, COMPONENT_LOG_BOX, COMPONENT_PROGRESS_BAR_FULL,
-    COMPONENT_PROGRESS_BAR_PARTIAL, COMPONENT_RADIO_DELETE, COMPONENT_RADIO_DISCONNECT,
-    COMPONENT_RADIO_QUIT, COMPONENT_RADIO_SORTING, COMPONENT_TEXT_ERROR, COMPONENT_TEXT_FATAL,
-    COMPONENT_TEXT_HELP,
+    COMPONENT_INPUT_MKDIR, COMPONENT_INPUT_NEWFILE, COMPONENT_INPUT_OPEN_WITH,
+    COMPONENT_INPUT_RENAME, COMPONENT_INPUT_SAVEAS, COMPONENT_LIST_FILEINFO, COMPONENT_LOG_BOX,
+    COMPONENT_PROGRESS_BAR_FULL, COMPONENT_PROGRESS_BAR_PARTIAL, COMPONENT_RADIO_DELETE,
+    COMPONENT_RADIO_DISCONNECT, COMPONENT_RADIO_QUIT, COMPONENT_RADIO_SORTING,
+    COMPONENT_TEXT_ERROR, COMPONENT_TEXT_FATAL, COMPONENT_TEXT_HELP,
 };
 use crate::fs::explorer::FileSorting;
 use crate::fs::FsEntry;
@@ -266,6 +266,12 @@ impl Update for FileTransferActivity {
                     self.mount_saveas();
                     None
                 }
+                (COMPONENT_EXPLORER_LOCAL, &MSG_KEY_CHAR_W)
+                | (COMPONENT_EXPLORER_REMOTE, &MSG_KEY_CHAR_W)
+                | (COMPONENT_EXPLORER_FIND, &MSG_KEY_CHAR_W) => {
+                    self.mount_openwith();
+                    None
+                }
                 (COMPONENT_EXPLORER_LOCAL, &MSG_KEY_CHAR_X)
                 | (COMPONENT_EXPLORER_REMOTE, &MSG_KEY_CHAR_X) => {
                     // Mount exec
@@ -483,6 +489,22 @@ impl Update for FileTransferActivity {
                         FileExplorerTab::Remote => self.update_remote_filelist(),
                         _ => None,
                     }
+                }
+                // -- open with
+                (COMPONENT_INPUT_OPEN_WITH, &MSG_KEY_ESC) => {
+                    self.umount_openwith();
+                    None
+                }
+                (COMPONENT_INPUT_OPEN_WITH, Msg::OnSubmit(Payload::One(Value::Str(input)))) => {
+                    match self.browser.tab() {
+                        FileExplorerTab::Local => self.action_local_open_with(input),
+                        FileExplorerTab::Remote => self.action_remote_open_with(input),
+                        FileExplorerTab::FindLocal | FileExplorerTab::FindRemote => {
+                            self.action_find_open_with(input)
+                        }
+                    }
+                    self.umount_openwith();
+                    None
                 }
                 // -- rename
                 (COMPONENT_INPUT_RENAME, &MSG_KEY_ESC) => {

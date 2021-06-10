@@ -28,13 +28,13 @@
 // deps
 extern crate open;
 // locals
-use super::{FileTransferActivity, FsEntry, LogLevel};
+use super::{FileTransferActivity, FsEntry, LogLevel, SelectedEntry};
 
 impl FileTransferActivity {
     /// ### action_open_local
     ///
     /// Open local file
-    pub(crate) fn action_open_local(&mut self, entry: FsEntry, open_with: Option<String>) {
+    pub(crate) fn action_open_local(&mut self, entry: &FsEntry, open_with: Option<&str>) {
         let real_entry: FsEntry = entry.get_realfile();
         if let FsEntry::File(file) = real_entry {
             // Open file
@@ -63,7 +63,7 @@ impl FileTransferActivity {
     /// ### action_open_local
     ///
     /// Open remote file. The file is first downloaded to a temporary directory on localhost
-    pub(crate) fn action_open_remote(&mut self, entry: FsEntry, open_with: Option<String>) {
+    pub(crate) fn action_open_remote(&mut self, entry: &FsEntry, open_with: Option<&str>) {
         let real_entry: FsEntry = entry.get_realfile();
         if let FsEntry::File(file) = real_entry {
             // Download file
@@ -97,6 +97,36 @@ impl FileTransferActivity {
                     ),
                 ),
             }
+        }
+    }
+
+    /// ### action_local_open_with
+    ///
+    /// Open selected file with provided application
+    pub(crate) fn action_local_open_with(&mut self, with: &str) {
+        let entries: Vec<FsEntry> = match self.get_local_selected_entries() {
+            SelectedEntry::One(entry) => vec![entry],
+            SelectedEntry::Many(entries) => entries,
+            SelectedEntry::None => vec![],
+        };
+        // Open all entries
+        for entry in entries.iter() {
+            self.action_open_local(entry, Some(with));
+        }
+    }
+
+    /// ### action_remote_open_with
+    ///
+    /// Open selected file with provided application
+    pub(crate) fn action_remote_open_with(&mut self, with: &str) {
+        let entries: Vec<FsEntry> = match self.get_remote_selected_entries() {
+            SelectedEntry::One(entry) => vec![entry],
+            SelectedEntry::Many(entries) => entries,
+            SelectedEntry::None => vec![],
+        };
+        // Open all entries
+        for entry in entries.iter() {
+            self.action_open_remote(entry, Some(with));
         }
     }
 }

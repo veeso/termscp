@@ -215,6 +215,14 @@ impl FileTransferActivity {
                     self.view.render(super::COMPONENT_INPUT_NEWFILE, f, popup);
                 }
             }
+            if let Some(props) = self.view.get_props(super::COMPONENT_INPUT_OPEN_WITH) {
+                if props.visible {
+                    let popup = draw_area_in(f.size(), 40, 10);
+                    f.render_widget(Clear, popup);
+                    // make popup
+                    self.view.render(super::COMPONENT_INPUT_OPEN_WITH, f, popup);
+                }
+            }
             if let Some(props) = self.view.get_props(super::COMPONENT_INPUT_RENAME) {
                 if props.visible {
                     let popup = draw_area_in(f.size(), 40, 10);
@@ -591,6 +599,23 @@ impl FileTransferActivity {
 
     pub(super) fn umount_newfile(&mut self) {
         self.view.umount(super::COMPONENT_INPUT_NEWFILE);
+    }
+
+    pub(super) fn mount_openwith(&mut self) {
+        self.view.mount(
+            super::COMPONENT_INPUT_OPEN_WITH,
+            Box::new(Input::new(
+                InputPropsBuilder::default()
+                    .with_borders(Borders::ALL, BorderType::Rounded, Color::White)
+                    .with_label(String::from("Open file with..."))
+                    .build(),
+            )),
+        );
+        self.view.active(super::COMPONENT_INPUT_OPEN_WITH);
+    }
+
+    pub(super) fn umount_openwith(&mut self) {
+        self.view.umount(super::COMPONENT_INPUT_OPEN_WITH);
     }
 
     pub(super) fn mount_rename(&mut self) {

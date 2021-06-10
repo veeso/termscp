@@ -57,7 +57,7 @@ impl FileTransferActivity {
         match action {
             SubmitAction::ChangeDir => self.action_enter_local_dir(entry, false),
             SubmitAction::OpenFile => {
-                self.action_open_local(entry, None);
+                self.action_open_local(&entry, None);
                 false
             }
         }
@@ -86,7 +86,7 @@ impl FileTransferActivity {
         match action {
             SubmitAction::ChangeDir => self.action_enter_remote_dir(entry, false),
             SubmitAction::OpenFile => {
-                self.action_open_remote(entry, None);
+                self.action_open_remote(&entry, None);
                 false
             }
         }
