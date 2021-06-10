@@ -171,7 +171,7 @@ impl Browser {
             .with_group_dirs(Some(GroupDirs::First))
             .with_hidden_files(true)
             .with_stack_size(0)
-            .with_formatter(Some("{NAME} {SYMLINK}"))
+            .with_formatter(Some("{NAME:32} {SYMLINK}"))
             .build()
     }
 }
