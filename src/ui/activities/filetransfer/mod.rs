@@ -58,6 +58,7 @@ use chrono::{DateTime, Local};
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use std::collections::VecDeque;
 use std::path::PathBuf;
+use tempfile::TempDir;
 use tuirealm::View;
 
 // -- Storage keys
@@ -134,6 +135,7 @@ pub struct FileTransferActivity {
     browser: Browser,                 // Browser
     log_records: VecDeque<LogRecord>, // Log records
     transfer: TransferStates,         // Transfer states
+    cache: Option<TempDir>,           // Temporary directory where to store stuff
 }
 
 impl FileTransferActivity {
@@ -160,6 +162,10 @@ impl FileTransferActivity {
             browser: Browser::new(config_client.as_ref()),
             log_records: VecDeque::with_capacity(256), // 256 events is enough I guess
             transfer: TransferStates::default(),
+            cache: match TempDir::new() {
+                Ok(d) => Some(d),
+                Err(_) => None,
+            },
         }
     }
 
@@ -279,6 +285,12 @@ impl Activity for FileTransferActivity {
     /// `on_destroy` is the function which cleans up runtime variables and data before terminating the activity.
     /// This function must be called once before terminating the activity.
     fn on_destroy(&mut self) -> Option<Context> {
+        // Destroy cache
+        if let Some(cache) = self.cache.take() {
+            if let Err(err) = cache.close() {
+                error!("Failed to delete cache: {}", err);
+            }
+        }
         // Disable raw mode
         if let Err(err) = disable_raw_mode() {
             error!("Failed to disable raw mode: {}", err);

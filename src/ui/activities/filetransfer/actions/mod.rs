@@ -37,8 +37,10 @@ pub(crate) mod exec;
 pub(crate) mod find;
 pub(crate) mod mkdir;
 pub(crate) mod newfile;
+pub(crate) mod open;
 pub(crate) mod rename;
 pub(crate) mod save;
+pub(crate) mod submit;
 
 pub(crate) enum SelectedEntry {
     One(FsEntry),

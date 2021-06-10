@@ -87,7 +87,7 @@ impl Update for FileTransferActivity {
                         entry = Some(e.clone());
                     }
                     if let Some(entry) = entry {
-                        if self.action_enter_local_dir(entry, false) {
+                        if self.action_submit_local(entry) {
                             // Update file list if sync
                             if self.browser.sync_browsing {
                                 let _ = self.update_remote_filelist();
@@ -150,7 +150,7 @@ impl Update for FileTransferActivity {
                         entry = Some(e.clone());
                     }
                     if let Some(entry) = entry {
-                        if self.action_enter_remote_dir(entry, false) {
+                        if self.action_submit_remote(entry) {
                             // Update file list if sync
                             if self.browser.sync_browsing {
                                 let _ = self.update_local_filelist();

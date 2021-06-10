@@ -934,7 +934,7 @@ impl FileTransferActivity {
                                     .with_foreground(Color::Cyan)
                                     .build(),
                             )
-                            .add_col(TextSpan::from("         Enter directory"))
+                            .add_col(TextSpan::from("         Enter directory / Open file"))
                             .add_row()
                             .add_col(
                                 TextSpanBuilder::new("<SPACE>")
@@ -1030,7 +1030,9 @@ impl FileTransferActivity {
                                     .with_foreground(Color::Cyan)
                                     .build(),
                             )
-                            .add_col(TextSpan::from("             Open text file"))
+                            .add_col(TextSpan::from(
+                                "             Open text file with preferred editor",
+                            ))
                             .add_row()
                             .add_col(
                                 TextSpanBuilder::new("<Q>")

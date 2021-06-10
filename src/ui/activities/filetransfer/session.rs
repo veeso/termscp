@@ -844,38 +844,32 @@ impl FileTransferActivity {
     /// Edit file on remote host
     pub(super) fn edit_remote_file(&mut self, file: &FsFile) -> Result<(), String> {
         // Create temp file
-        let tmpfile: tempfile::NamedTempFile = match tempfile::NamedTempFile::new() {
-            Ok(f) => f,
-            Err(err) => {
-                return Err(format!("Could not create temporary file: {}", err));
-            }
+        let tmpfile: PathBuf = match self.download_file_as_temp(file) {
+            Ok(p) => p,
+            Err(err) => return Err(err),
         };
-        // Download file
-        if let Err(err) = self.filetransfer_recv_file(tmpfile.path(), file, file.name.clone()) {
-            return Err(format!("Could not open file {}: {}", file.name, err));
-        }
         // Get current file modification time
-        let prev_mtime: SystemTime = match self.host.stat(tmpfile.path()) {
+        let prev_mtime: SystemTime = match self.host.stat(tmpfile.as_path()) {
             Ok(e) => e.get_last_change_time(),
             Err(err) => {
                 return Err(format!(
                     "Could not stat \"{}\": {}",
-                    tmpfile.path().display(),
+                    tmpfile.as_path().display(),
                     err
                 ))
             }
         };
         // Edit file
-        if let Err(err) = self.edit_local_file(tmpfile.path()) {
+        if let Err(err) = self.edit_local_file(tmpfile.as_path()) {
             return Err(err);
         }
         // Get local fs entry
-        let tmpfile_entry: FsEntry = match self.host.stat(tmpfile.path()) {
+        let tmpfile_entry: FsEntry = match self.host.stat(tmpfile.as_path()) {
             Ok(e) => e,
             Err(err) => {
                 return Err(format!(
                     "Could not stat \"{}\": {}",
-                    tmpfile.path().display(),
+                    tmpfile.as_path().display(),
                     err
                 ))
             }
@@ -891,12 +885,12 @@ impl FileTransferActivity {
                     ),
                 );
                 // Get local fs entry
-                let tmpfile_entry: FsEntry = match self.host.stat(tmpfile.path()) {
+                let tmpfile_entry: FsEntry = match self.host.stat(tmpfile.as_path()) {
                     Ok(e) => e,
                     Err(err) => {
                         return Err(format!(
                             "Could not stat \"{}\": {}",
-                            tmpfile.path().display(),
+                            tmpfile.as_path().display(),
                             err
                         ))
                     }
@@ -1032,6 +1026,33 @@ impl FileTransferActivity {
                     Some(String::from(dest.to_string_lossy())),
                 );
             }
+        }
+    }
+
+    /// ### download_file_as_temp
+    ///
+    /// Download provided file as a temporary file
+    pub(super) fn download_file_as_temp(&mut self, file: &FsFile) -> Result<PathBuf, String> {
+        let tmpfile: PathBuf = match self.cache.as_ref() {
+            Some(cache) => {
+                let mut p: PathBuf = cache.path().to_path_buf();
+                p.push(file.name.as_str());
+                p
+            }
+            None => {
+                return Err(String::from(
+                    "Could not create tempfile: cache not available",
+                ))
+            }
+        };
+        // Download file
+        match self.filetransfer_recv_file(tmpfile.as_path(), file, file.name.clone()) {
+            Err(err) => Err(format!(
+                "Could not download {} to temporary file: {}",
+                file.abs_path.display(),
+                err
+            )),
+            Ok(()) => Ok(tmpfile),
         }
     }
 
