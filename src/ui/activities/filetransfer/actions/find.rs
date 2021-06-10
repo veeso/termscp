@@ -178,10 +178,10 @@ impl FileTransferActivity {
     fn open_found_file(&mut self, entry: &FsEntry, with: Option<&str>) {
         match self.browser.tab() {
             FileExplorerTab::FindLocal | FileExplorerTab::Local => {
-                self.action_open_local(entry, with);
+                self.action_open_local_file(entry, with);
             }
             FileExplorerTab::FindRemote | FileExplorerTab::Remote => {
-                self.action_open_remote(entry, with);
+                self.action_open_remote_file(entry, with);
             }
         }
     }

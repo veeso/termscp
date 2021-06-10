@@ -30,7 +30,7 @@ use super::{FileTransferActivity, FsEntry};
 
 enum SubmitAction {
     ChangeDir,
-    OpenFile,
+    None,
 }
 
 impl FileTransferActivity {
@@ -47,19 +47,16 @@ impl FileTransferActivity {
                         // If symlink and is directory, point to symlink
                         match &**symlink_entry {
                             FsEntry::Directory(_) => SubmitAction::ChangeDir,
-                            _ => SubmitAction::OpenFile,
+                            _ => SubmitAction::None,
                         }
                     }
-                    None => SubmitAction::OpenFile,
+                    None => SubmitAction::None,
                 }
             }
         };
         match action {
             SubmitAction::ChangeDir => self.action_enter_local_dir(entry, false),
-            SubmitAction::OpenFile => {
-                self.action_open_local(&entry, None);
-                false
-            }
+            SubmitAction::None => false,
         }
     }
 
@@ -76,19 +73,16 @@ impl FileTransferActivity {
                         // If symlink and is directory, point to symlink
                         match &**symlink_entry {
                             FsEntry::Directory(_) => SubmitAction::ChangeDir,
-                            _ => SubmitAction::OpenFile,
+                            _ => SubmitAction::None,
                         }
                     }
-                    None => SubmitAction::OpenFile,
+                    None => SubmitAction::None,
                 }
             }
         };
         match action {
             SubmitAction::ChangeDir => self.action_enter_remote_dir(entry, false),
-            SubmitAction::OpenFile => {
-                self.action_open_remote(&entry, None);
-                false
-            }
+            SubmitAction::None => false,
         }
     }
 }

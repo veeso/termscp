@@ -193,6 +193,22 @@ impl FileTransferActivity {
     pub(crate) fn found_mut(&mut self) -> Option<&mut FileExplorer> {
         self.browser.found_mut()
     }
+
+    /// ### get_cache_tmp_name
+    ///
+    /// Get file name for a file in cache
+    pub(crate) fn get_cache_tmp_name(&self, name: &str) -> Option<String> {
+        self.cache.as_ref().map(|_| {
+            format!(
+                "{}-{}",
+                name,
+                std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_millis()
+            )
+        })
+    }
 }
 
 /**
