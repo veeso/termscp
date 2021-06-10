@@ -393,10 +393,10 @@ impl Component for FileList {
                     self.states.toggle_file(self.states.list_index());
                     Msg::None
                 }
-                KeyCode::Enter => {
-                    // Report event
-                    Msg::OnSubmit(self.get_state())
-                }
+                KeyCode::Enter => match key.modifiers.intersects(KeyModifiers::SHIFT) {
+                    false => Msg::OnSubmit(self.get_state()),
+                    true => Msg::OnKey(key),
+                },
                 _ => {
                     // Return key event to activity
                     Msg::OnKey(key)
@@ -449,7 +449,7 @@ mod tests {
     use super::*;
 
     use pretty_assertions::assert_eq;
-    use tuirealm::event::KeyEvent;
+    use tuirealm::event::{KeyEvent, KeyModifiers};
 
     #[test]
     fn test_ui_components_file_list_states() {
@@ -616,6 +616,14 @@ mod tests {
             component.on(Event::Key(KeyEvent::from(KeyCode::Enter))),
             Msg::OnSubmit(Payload::One(Value::Usize(0)))
         );
+        // Enter shift
+        assert_eq!(
+            component.on(Event::Key(KeyEvent::new(
+                KeyCode::Enter,
+                KeyModifiers::SHIFT
+            ))),
+            Msg::OnKey(KeyEvent::new(KeyCode::Enter, KeyModifiers::SHIFT))
+        );
         // On key
         assert_eq!(
             component.on(Event::Key(KeyEvent::from(KeyCode::Backspace))),
@@ -626,6 +634,15 @@ mod tests {
             component.on(Event::Key(KeyEvent::from(KeyCode::Char('a')))),
             Msg::OnKey(KeyEvent::from(KeyCode::Char('a')))
         );
+        // Ctrl + a
+        assert_eq!(
+            component.on(Event::Key(KeyEvent::new(
+                KeyCode::Char('a'),
+                KeyModifiers::CONTROL
+            ))),
+            Msg::None
+        );
+        assert_eq!(component.states.selected.len(), component.states.list_len());
     }
 
     #[test]

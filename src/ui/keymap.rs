@@ -34,6 +34,10 @@ pub const MSG_KEY_ENTER: Msg = Msg::OnKey(KeyEvent {
     code: KeyCode::Enter,
     modifiers: KeyModifiers::NONE,
 });
+pub const MSG_KEY_SHIFT_ENTER: Msg = Msg::OnKey(KeyEvent {
+    code: KeyCode::Enter,
+    modifiers: KeyModifiers::SHIFT,
+});
 pub const MSG_KEY_ESC: Msg = Msg::OnKey(KeyEvent {
     code: KeyCode::Esc,
     modifiers: KeyModifiers::NONE,
