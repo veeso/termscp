@@ -105,6 +105,8 @@ In order to change panel you need to type `<LEFT>` to move the remote explorer p
 | `<R>`         | Rename file                                           | Rename      |
 | `<S>`         | Save file as...                                       | Save        |
 | `<U>`         | Go to parent directory                                | Upper       |
+| `<V>`         | Open file with default program for filetype           | View        |
+| `<W>`         | Open file with provided program                       | With        |
 | `<X>`         | Execute a command                                     | eXecute     |
 | `<Y>`         | Toggle synchronized browsing                          | sYnc        |
 | `<DEL>`       | Delete file                                           |             |
@@ -129,6 +131,20 @@ When enabled, synchronized browsing, will allow you to synchronize the navigatio
 This means that whenever you'll change the working directory on one panel, the same action will be reproduced on the other panel. If you want to enable synchronized browsing just press `<Y>`; press twice to disable. While enabled, the synchronized browising state will be reported on the status bar on `ON`.
 
 *Warning*: at the moment, whenever you try to access an unexisting directory, you won't be prompted to create it. This might change in a future update.
+
+### Open and Open With 🚪
+
+Open and open with commands are powered by [open-rs](https://docs.rs/crate/open/1.7.0).
+When opening files with View command (`<V>`), the system default application for the file type will be used. To do so, the default operting system service will be used, so be sure to have at least one of these installed on your system:
+
+- **Windows** users: you don't have to worry about it, since the crate will use the `start` command.
+- **MacOS** users: you don't have to worry either, since the crate will use `open`, which is already installed on your system.
+- **Linux** users: one of these should be installed
+  - *xdg-open*
+  - *gio*
+  - *gnome-open*
+  - *kde-open*
+- **WSL** users: *wslview* is required, you must install [wslu](https://github.com/wslutilities/wslu).
 
 ---
 
