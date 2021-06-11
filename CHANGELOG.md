@@ -24,6 +24,9 @@ Released on FIXME: ??
 
 > 🏄 Summer update 2021🌴
 
+- **Open any file** in explorer:
+  - Open file with default program for file type with `<V>`
+  - Open file with a specific program with `<W>`
 - Bugfix:
   - Fixed broken input cursor when typing UTF8 characters (tui-realm 0.3.2)
 - Dependencies:
