@@ -34,10 +34,6 @@ pub const MSG_KEY_ENTER: Msg = Msg::OnKey(KeyEvent {
     code: KeyCode::Enter,
     modifiers: KeyModifiers::NONE,
 });
-pub const MSG_KEY_SHIFT_ENTER: Msg = Msg::OnKey(KeyEvent {
-    code: KeyCode::Enter,
-    modifiers: KeyModifiers::SHIFT,
-});
 pub const MSG_KEY_ESC: Msg = Msg::OnKey(KeyEvent {
     code: KeyCode::Esc,
     modifiers: KeyModifiers::NONE,
@@ -128,7 +124,7 @@ pub const MSG_KEY_CHAR_L: Msg = Msg::OnKey(KeyEvent {
     modifiers: KeyModifiers::NONE,
 });
 /*
-pub const MSG_KEY_CHAR_M: Msg = Msg::OnKey(KeyEvent {
+pub const MSG_KEY_CHAR_M: Msg = Msg::OnKey(KeyEvent { NOTE: used for mark
     code: KeyCode::Char('m'),
     modifiers: KeyModifiers::NONE,
 });
@@ -169,12 +165,10 @@ pub const MSG_KEY_CHAR_U: Msg = Msg::OnKey(KeyEvent {
     code: KeyCode::Char('u'),
     modifiers: KeyModifiers::NONE,
 });
-/*
 pub const MSG_KEY_CHAR_V: Msg = Msg::OnKey(KeyEvent {
     code: KeyCode::Char('v'),
     modifiers: KeyModifiers::NONE,
 });
-*/
 pub const MSG_KEY_CHAR_W: Msg = Msg::OnKey(KeyEvent {
     code: KeyCode::Char('w'),
     modifiers: KeyModifiers::NONE,

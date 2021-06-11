@@ -94,13 +94,14 @@ impl FileTransferActivity {
     pub(crate) fn action_open_remote_file(&mut self, entry: &FsEntry, open_with: Option<&str>) {
         let entry: FsEntry = entry.get_realfile();
         // Download file
-        let tmpfile: String = match self.get_cache_tmp_name(entry.get_name()) {
-            None => {
-                self.log(LogLevel::Error, String::from("Could not create tempdir"));
-                return;
-            }
-            Some(p) => p,
-        };
+        let tmpfile: String =
+            match self.get_cache_tmp_name(entry.get_name(), entry.get_ftype().as_deref()) {
+                None => {
+                    self.log(LogLevel::Error, String::from("Could not create tempdir"));
+                    return;
+                }
+                Some(p) => p,
+            };
         let cache: PathBuf = match self.cache.as_ref() {
             None => {
                 self.log(LogLevel::Error, String::from("Could not create tempdir"));
@@ -108,7 +109,7 @@ impl FileTransferActivity {
             }
             Some(p) => p.path().to_path_buf(),
         };
-        self.filetransfer_recv(entry, cache.as_path(), Some(tmpfile.clone()));
+        self.filetransfer_recv(&entry, cache.as_path(), Some(tmpfile.clone()));
         // Make file and open if file exists
         let mut tmp: PathBuf = cache;
         tmp.push(tmpfile.as_str());
@@ -120,17 +121,10 @@ impl FileTransferActivity {
             };
             // Log result
             match result {
-                Ok(_) => self.log(
-                    LogLevel::Info,
-                    format!("Opened file `{}`", entry.get_abs_path().display()),
-                ),
+                Ok(_) => self.log(LogLevel::Info, format!("Opened file `{}`", tmp.display())),
                 Err(err) => self.log(
                     LogLevel::Error,
-                    format!(
-                        "Failed to open filoe `{}`: {}",
-                        entry.get_abs_path().display(),
-                        err
-                    ),
+                    format!("Failed to open filoe `{}`: {}", tmp.display(), err),
                 ),
             }
         }

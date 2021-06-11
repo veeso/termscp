@@ -393,10 +393,7 @@ impl Component for FileList {
                     self.states.toggle_file(self.states.list_index());
                     Msg::None
                 }
-                KeyCode::Enter => match key.modifiers.intersects(KeyModifiers::SHIFT) {
-                    false => Msg::OnSubmit(self.get_state()),
-                    true => Msg::OnKey(key),
-                },
+                KeyCode::Enter => Msg::OnSubmit(self.get_state()),
                 _ => {
                     // Return key event to activity
                     Msg::OnKey(key)
@@ -615,14 +612,6 @@ mod tests {
         assert_eq!(
             component.on(Event::Key(KeyEvent::from(KeyCode::Enter))),
             Msg::OnSubmit(Payload::One(Value::Usize(0)))
-        );
-        // Enter shift
-        assert_eq!(
-            component.on(Event::Key(KeyEvent::new(
-                KeyCode::Enter,
-                KeyModifiers::SHIFT
-            ))),
-            Msg::OnKey(KeyEvent::new(KeyCode::Enter, KeyModifiers::SHIFT))
         );
         // On key
         assert_eq!(

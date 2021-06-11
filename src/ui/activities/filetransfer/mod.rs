@@ -197,16 +197,20 @@ impl FileTransferActivity {
     /// ### get_cache_tmp_name
     ///
     /// Get file name for a file in cache
-    pub(crate) fn get_cache_tmp_name(&self, name: &str) -> Option<String> {
+    pub(crate) fn get_cache_tmp_name(&self, name: &str, file_type: Option<&str>) -> Option<String> {
         self.cache.as_ref().map(|_| {
-            format!(
+            let base: String = format!(
                 "{}-{}",
                 name,
                 std::time::SystemTime::now()
                     .duration_since(std::time::UNIX_EPOCH)
                     .unwrap()
                     .as_millis()
-            )
+            );
+            match file_type {
+                None => base,
+                Some(file_type) => format!("{}.{}", base, file_type),
+            }
         })
     }
 }

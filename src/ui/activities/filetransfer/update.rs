@@ -211,18 +211,6 @@ impl Update for FileTransferActivity {
                     self.update_remote_filelist()
                 }
                 // -- common explorer keys
-                (COMPONENT_EXPLORER_LOCAL, &MSG_KEY_SHIFT_ENTER)
-                | (COMPONENT_EXPLORER_REMOTE, &MSG_KEY_SHIFT_ENTER)
-                | (COMPONENT_EXPLORER_FIND, &MSG_KEY_SHIFT_ENTER) => {
-                    match self.browser.tab() {
-                        FileExplorerTab::Local => self.action_open_local(),
-                        FileExplorerTab::Remote => self.action_open_remote(),
-                        FileExplorerTab::FindLocal | FileExplorerTab::FindRemote => {
-                            self.action_find_open()
-                        }
-                    }
-                    None
-                }
                 (COMPONENT_EXPLORER_LOCAL, &MSG_KEY_CHAR_B)
                 | (COMPONENT_EXPLORER_REMOTE, &MSG_KEY_CHAR_B) => {
                     // Show sorting file
@@ -278,9 +266,23 @@ impl Update for FileTransferActivity {
                     self.mount_saveas();
                     None
                 }
+                (COMPONENT_EXPLORER_LOCAL, &MSG_KEY_CHAR_V)
+                | (COMPONENT_EXPLORER_REMOTE, &MSG_KEY_CHAR_V)
+                | (COMPONENT_EXPLORER_FIND, &MSG_KEY_CHAR_V) => {
+                    // View
+                    match self.browser.tab() {
+                        FileExplorerTab::Local => self.action_open_local(),
+                        FileExplorerTab::Remote => self.action_open_remote(),
+                        FileExplorerTab::FindLocal | FileExplorerTab::FindRemote => {
+                            self.action_find_open()
+                        }
+                    }
+                    None
+                }
                 (COMPONENT_EXPLORER_LOCAL, &MSG_KEY_CHAR_W)
                 | (COMPONENT_EXPLORER_REMOTE, &MSG_KEY_CHAR_W)
                 | (COMPONENT_EXPLORER_FIND, &MSG_KEY_CHAR_W) => {
+                    // Open with
                     self.mount_openwith();
                     None
                 }

@@ -959,7 +959,7 @@ impl FileTransferActivity {
                                     .with_foreground(Color::Cyan)
                                     .build(),
                             )
-                            .add_col(TextSpan::from("         Enter directory / Open file"))
+                            .add_col(TextSpan::from("         Enter directory"))
                             .add_row()
                             .add_col(
                                 TextSpanBuilder::new("<SPACE>")
@@ -1090,6 +1090,26 @@ impl FileTransferActivity {
                                     .build(),
                             )
                             .add_col(TextSpan::from("             Go to parent directory"))
+                            .add_row()
+                            .add_col(
+                                TextSpanBuilder::new("<V>")
+                                    .bold()
+                                    .with_foreground(Color::Cyan)
+                                    .build(),
+                            )
+                            .add_col(TextSpan::from(
+                                "             Open file with default application for file type",
+                            ))
+                            .add_row()
+                            .add_col(
+                                TextSpanBuilder::new("<W>")
+                                    .bold()
+                                    .with_foreground(Color::Cyan)
+                                    .build(),
+                            )
+                            .add_col(TextSpan::from(
+                                "             Open file with specified application",
+                            ))
                             .add_row()
                             .add_col(
                                 TextSpanBuilder::new("<X>")
