@@ -1440,9 +1440,9 @@ dependencies = [
 
 [[package]]
 name = "tuirealm"
-version = "0.4.0"
+version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "684b01c57e5bccf6e48f3ace3433a07e6267fb9c59fedd3074567d3e417b5568"
+checksum = "6bee2a1c050878fac02ba3a6c2e93aa92a1de56849d5deec00d4ab4bc7928c0a"
 dependencies = [
  "crossterm",
  "textwrap",
