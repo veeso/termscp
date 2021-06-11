@@ -30,7 +30,7 @@ extern crate open;
 // locals
 use super::{FileTransferActivity, FsEntry, LogLevel, SelectedEntry};
 // ext
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 impl FileTransferActivity {
     /// ### action_open_local
@@ -66,26 +66,7 @@ impl FileTransferActivity {
     /// Perform open lopcal file
     pub(crate) fn action_open_local_file(&mut self, entry: &FsEntry, open_with: Option<&str>) {
         let entry: FsEntry = entry.get_realfile();
-        // Open file
-        let result = match open_with {
-            None => open::that(entry.get_abs_path().as_path()),
-            Some(with) => open::with(entry.get_abs_path().as_path(), with),
-        };
-        // Log result
-        match result {
-            Ok(_) => self.log(
-                LogLevel::Info,
-                format!("Opened file `{}`", entry.get_abs_path().display(),),
-            ),
-            Err(err) => self.log(
-                LogLevel::Error,
-                format!(
-                    "Failed to open filoe `{}`: {}",
-                    entry.get_abs_path().display(),
-                    err
-                ),
-            ),
-        }
+        self.open_path_with(entry.get_abs_path().as_path(), open_with);
     }
 
     /// ### action_open_local
@@ -114,19 +95,7 @@ impl FileTransferActivity {
         let mut tmp: PathBuf = cache;
         tmp.push(tmpfile.as_str());
         if tmp.exists() {
-            // Open file
-            let result = match open_with {
-                None => open::that(tmp.as_path()),
-                Some(with) => open::with(tmp.as_path(), with),
-            };
-            // Log result
-            match result {
-                Ok(_) => self.log(LogLevel::Info, format!("Opened file `{}`", tmp.display())),
-                Err(err) => self.log(
-                    LogLevel::Error,
-                    format!("Failed to open filoe `{}`: {}", tmp.display(), err),
-                ),
-            }
+            self.open_path_with(tmp.as_path(), open_with);
         }
     }
 
@@ -158,5 +127,29 @@ impl FileTransferActivity {
         entries
             .iter()
             .for_each(|x| self.action_open_remote_file(x, Some(with)));
+    }
+
+    /// ### open_path_with
+    ///
+    /// Common function which opens a path with default or specified program.
+    fn open_path_with(&mut self, p: &Path, with: Option<&str>) {
+        // Open file
+        let result = match with {
+            None => open::that(p),
+            Some(with) => open::with(p, with),
+        };
+        // Log result
+        match result {
+            Ok(_) => self.log(LogLevel::Info, format!("Opened file `{}`", p.display())),
+            Err(err) => self.log(
+                LogLevel::Error,
+                format!("Failed to open filoe `{}`: {}", p.display(), err),
+            ),
+        }
+        // NOTE: clear screen in order to prevent crap on stderr
+        if let Some(ctx) = self.context.as_mut() {
+            // Clear screen
+            ctx.clear_screen();
+        }
     }
 }
