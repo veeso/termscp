@@ -146,6 +146,9 @@ When opening files with View command (`<V>`), the system default application for
   - *kde-open*
 - **WSL** users: *wslview* is required, you must install [wslu](https://github.com/wslutilities/wslu).
 
+> Q: Can I edit remote files using the view command?  
+> A: No, at least not directly from the "remote panel". You have to download it to a local directory first, that's due to the fact that when you open a remote file, the file is downloaded into a temporary directory, but there's no way to create a watcher for the file to check when the program you used to open it was closed, so termscp is not able to know when you're done editing the file.
+
 ---
 
 ## Bookmarks ⭐
