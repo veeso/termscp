@@ -40,11 +40,9 @@ use crate::utils::fmt::fmt_millis;
 
 // Ext
 use bytesize::ByteSize;
-use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
-use std::fs::OpenOptions;
 use std::io::{Read, Seek, Write};
 use std::path::{Path, PathBuf};
-use std::time::{Instant, SystemTime};
+use std::time::Instant;
 use thiserror::Error;
 
 /// ## TransferErrorReason
@@ -172,6 +170,38 @@ impl FileTransferActivity {
         self.filetransfer_send_recurse(entry, curr_remote_path, dst_name);
         // Umount progress bar
         self.umount_progress_bar();
+    }
+
+    /// ### filetransfer_send_one
+    ///
+    /// Send one file to remote at specified path.
+    pub(super) fn filetransfer_send_one(
+        &mut self,
+        file: &FsFile,
+        curr_remote_path: &Path,
+        dst_name: Option<String>,
+    ) -> Result<(), String> {
+        // Reset states
+        self.transfer.reset();
+        // Calculate total size of transfer
+        let total_transfer_size: usize = file.size;
+        self.transfer.full.init(total_transfer_size);
+        // Mount progress bar
+        self.mount_progress_bar(format!("Uploading {}...", file.abs_path.display()));
+        // Get remote path
+        let file_name: String = file.name.clone();
+        let mut remote_path: PathBuf = PathBuf::from(curr_remote_path);
+        let remote_file_name: PathBuf = match dst_name {
+            Some(s) => PathBuf::from(s.as_str()),
+            None => PathBuf::from(file_name.as_str()),
+        };
+        remote_path.push(remote_file_name);
+        // Send
+        let result = self.filetransfer_send_file(file, remote_path.as_path(), file_name);
+        // Umount progress bar
+        self.umount_progress_bar();
+        // Return result
+        result.map_err(|x| x.to_string())
     }
 
     fn filetransfer_send_recurse(
@@ -424,6 +454,31 @@ impl FileTransferActivity {
         self.filetransfer_recv_recurse(entry, local_path, dst_name);
         // Umount progress bar
         self.umount_progress_bar();
+    }
+
+    /// ### filetransfer_recv_one
+    ///
+    /// Receive a single file from remote.
+    /// Use this function instead of `filetransfer_recv_file` from external files
+    pub(super) fn filetransfer_recv_one(
+        &mut self,
+        entry: &FsFile,
+        local_path: &Path,
+        dst_name: String,
+    ) -> Result<(), String> {
+        // Reset states
+        self.transfer.reset();
+        // Calculate total transfer size
+        let total_transfer_size: usize = entry.size;
+        self.transfer.full.init(total_transfer_size);
+        // Mount progress bar
+        self.mount_progress_bar(format!("Downloading {}...", entry.abs_path.display()));
+        // Receive
+        let result = self.filetransfer_recv_file(local_path, entry, dst_name);
+        // Umount progress bar
+        self.umount_progress_bar();
+        // Return result
+        result.map_err(|x| x.to_string())
     }
 
     fn filetransfer_recv_recurse(
@@ -780,256 +835,6 @@ impl FileTransferActivity {
                 self.log_and_alert(
                     LogLevel::Error,
                     format!("Could not change working directory: {}", err),
-                );
-            }
-        }
-    }
-
-    /// ### edit_local_file
-    ///
-    /// Edit a file on localhost
-    pub(super) fn edit_local_file(&mut self, path: &Path) -> Result<(), String> {
-        // Read first 2048 bytes or less from file to check if it is textual
-        match OpenOptions::new().read(true).open(path) {
-            Ok(mut f) => {
-                // Read
-                let mut buff: [u8; 2048] = [0; 2048];
-                match f.read(&mut buff) {
-                    Ok(size) => {
-                        if content_inspector::inspect(&buff[0..size]).is_binary() {
-                            return Err("Could not open file in editor: file is binary".to_string());
-                        }
-                    }
-                    Err(err) => {
-                        return Err(format!("Could not read file: {}", err));
-                    }
-                }
-            }
-            Err(err) => {
-                return Err(format!("Could not read file: {}", err));
-            }
-        }
-        // Put input mode back to normal
-        if let Err(err) = disable_raw_mode() {
-            error!("Failed to disable raw mode: {}", err);
-        }
-        // Leave alternate mode
-        if let Some(ctx) = self.context.as_mut() {
-            ctx.leave_alternate_screen();
-        }
-        // Open editor
-        match edit::edit_file(path) {
-            Ok(_) => self.log(
-                LogLevel::Info,
-                format!(
-                    "Changes performed through editor saved to \"{}\"!",
-                    path.display()
-                ),
-            ),
-            Err(err) => return Err(format!("Could not open editor: {}", err)),
-        }
-        if let Some(ctx) = self.context.as_mut() {
-            // Clear screen
-            ctx.clear_screen();
-            // Enter alternate mode
-            ctx.enter_alternate_screen();
-        }
-        // Re-enable raw mode
-        let _ = enable_raw_mode();
-        Ok(())
-    }
-
-    /// ### edit_remote_file
-    ///
-    /// Edit file on remote host
-    pub(super) fn edit_remote_file(&mut self, file: &FsFile) -> Result<(), String> {
-        // Create temp file
-        let tmpfile: tempfile::NamedTempFile = match tempfile::NamedTempFile::new() {
-            Ok(f) => f,
-            Err(err) => {
-                return Err(format!("Could not create temporary file: {}", err));
-            }
-        };
-        // Download file
-        if let Err(err) = self.filetransfer_recv_file(tmpfile.path(), file, file.name.clone()) {
-            return Err(format!("Could not open file {}: {}", file.name, err));
-        }
-        // Get current file modification time
-        let prev_mtime: SystemTime = match self.host.stat(tmpfile.path()) {
-            Ok(e) => e.get_last_change_time(),
-            Err(err) => {
-                return Err(format!(
-                    "Could not stat \"{}\": {}",
-                    tmpfile.path().display(),
-                    err
-                ))
-            }
-        };
-        // Edit file
-        if let Err(err) = self.edit_local_file(tmpfile.path()) {
-            return Err(err);
-        }
-        // Get local fs entry
-        let tmpfile_entry: FsEntry = match self.host.stat(tmpfile.path()) {
-            Ok(e) => e,
-            Err(err) => {
-                return Err(format!(
-                    "Could not stat \"{}\": {}",
-                    tmpfile.path().display(),
-                    err
-                ))
-            }
-        };
-        // Check if file has changed
-        match prev_mtime != tmpfile_entry.get_last_change_time() {
-            true => {
-                self.log(
-                    LogLevel::Info,
-                    format!(
-                        "File \"{}\" has changed; writing changes to remote",
-                        file.abs_path.display()
-                    ),
-                );
-                // Get local fs entry
-                let tmpfile_entry: FsEntry = match self.host.stat(tmpfile.path()) {
-                    Ok(e) => e,
-                    Err(err) => {
-                        return Err(format!(
-                            "Could not stat \"{}\": {}",
-                            tmpfile.path().display(),
-                            err
-                        ))
-                    }
-                };
-                // Write file
-                let tmpfile_entry: &FsFile = match &tmpfile_entry {
-                    FsEntry::Directory(_) => panic!("tempfile is a directory for some reason"),
-                    FsEntry::File(f) => f,
-                };
-                // Send file
-                if let Err(err) = self.filetransfer_send_file(
-                    tmpfile_entry,
-                    file.abs_path.as_path(),
-                    file.name.clone(),
-                ) {
-                    return Err(format!(
-                        "Could not write file {}: {}",
-                        file.abs_path.display(),
-                        err
-                    ));
-                }
-            }
-            false => {
-                self.log(
-                    LogLevel::Info,
-                    format!("File \"{}\" hasn't changed", file.abs_path.display()),
-                );
-            }
-        }
-        Ok(())
-    }
-
-    /// ### tricky_copy
-    ///
-    /// Tricky copy will be used whenever copy command is not available on remote host
-    pub(super) fn tricky_copy(&mut self, entry: &FsEntry, dest: &Path) {
-        // match entry
-        match entry {
-            FsEntry::File(entry) => {
-                // Create tempfile
-                let tmpfile: tempfile::NamedTempFile = match tempfile::NamedTempFile::new() {
-                    Ok(f) => f,
-                    Err(err) => {
-                        self.log_and_alert(
-                            LogLevel::Error,
-                            format!("Copy failed: could not create temporary file: {}", err),
-                        );
-                        return;
-                    }
-                };
-                // Download file
-                if let Err(err) =
-                    self.filetransfer_recv_file(tmpfile.path(), entry, entry.name.clone())
-                {
-                    self.log_and_alert(
-                        LogLevel::Error,
-                        format!("Copy failed: could not download to temporary file: {}", err),
-                    );
-                    return;
-                }
-                // Get local fs entry
-                let tmpfile_entry: FsEntry = match self.host.stat(tmpfile.path()) {
-                    Ok(e) => e,
-                    Err(err) => {
-                        self.log_and_alert(
-                            LogLevel::Error,
-                            format!(
-                                "Copy failed: could not stat \"{}\": {}",
-                                tmpfile.path().display(),
-                                err
-                            ),
-                        );
-                        return;
-                    }
-                };
-                let tmpfile_entry = match &tmpfile_entry {
-                    FsEntry::Directory(_) => panic!("tempfile is a directory for some reason"),
-                    FsEntry::File(f) => f,
-                };
-                // Upload file to destination
-                if let Err(err) = self.filetransfer_send_file(
-                    tmpfile_entry,
-                    dest,
-                    String::from(dest.to_string_lossy()),
-                ) {
-                    self.log_and_alert(
-                        LogLevel::Error,
-                        format!(
-                            "Copy failed: could not write file {}: {}",
-                            entry.abs_path.display(),
-                            err
-                        ),
-                    );
-                    return;
-                }
-            }
-            FsEntry::Directory(_) => {
-                let tempdir: tempfile::TempDir = match tempfile::TempDir::new() {
-                    Ok(d) => d,
-                    Err(err) => {
-                        self.log_and_alert(
-                            LogLevel::Error,
-                            format!("Copy failed: could not create temporary directory: {}", err),
-                        );
-                        return;
-                    }
-                };
-                // Download file
-                self.filetransfer_recv(entry, tempdir.path(), None);
-                // Get path of dest
-                let mut tempdir_path: PathBuf = tempdir.path().to_path_buf();
-                tempdir_path.push(entry.get_name());
-                // Stat dir
-                let tempdir_entry: FsEntry = match self.host.stat(tempdir_path.as_path()) {
-                    Ok(e) => e,
-                    Err(err) => {
-                        self.log_and_alert(
-                            LogLevel::Error,
-                            format!(
-                                "Copy failed: could not stat \"{}\": {}",
-                                tempdir.path().display(),
-                                err
-                            ),
-                        );
-                        return;
-                    }
-                };
-                // Upload to destination
-                let wrkdir: PathBuf = self.remote().wrkdir.clone();
-                self.filetransfer_send(
-                    &tempdir_entry,
-                    wrkdir.as_path(),
-                    Some(String::from(dest.to_string_lossy())),
                 );
             }
         }
