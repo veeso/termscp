@@ -226,6 +226,28 @@ impl FsEntry {
             },
         }
     }
+
+    #[cfg(test)]
+    /// ### unwrap_file
+    ///
+    /// Unwrap FsEntry as FsFile
+    pub fn unwrap_file(self) -> FsFile {
+        match self {
+            FsEntry::File(file) => file,
+            _ => panic!("unwrap_file: not a file"),
+        }
+    }
+
+    #[cfg(test)]
+    /// ### unwrap_dir
+    ///
+    /// Unwrap FsEntry as FsDirectory
+    pub fn unwrap_dir(self) -> FsDirectory {
+        match self {
+            FsEntry::Directory(dir) => dir,
+            _ => panic!("unwrap_dir: not a directory"),
+        }
+    }
 }
 
 #[cfg(test)]
@@ -262,6 +284,7 @@ mod tests {
         assert_eq!(entry.is_dir(), true);
         assert_eq!(entry.is_file(), false);
         assert_eq!(entry.get_unix_pex(), Some((7, 5, 5)));
+        assert_eq!(entry.unwrap_dir().abs_path, PathBuf::from("/foo"));
     }
 
     #[test]
@@ -294,6 +317,47 @@ mod tests {
         assert_eq!(entry.is_symlink(), false);
         assert_eq!(entry.is_dir(), false);
         assert_eq!(entry.is_file(), true);
+        assert_eq!(entry.unwrap_file().abs_path, PathBuf::from("/bar.txt"));
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_fs_fsentry_file_unwrap_bad() {
+        let t_now: SystemTime = SystemTime::now();
+        let entry: FsEntry = FsEntry::File(FsFile {
+            name: String::from("bar.txt"),
+            abs_path: PathBuf::from("/bar.txt"),
+            last_change_time: t_now,
+            last_access_time: t_now,
+            creation_time: t_now,
+            size: 8192,
+            readonly: false,
+            ftype: Some(String::from("txt")),
+            symlink: None,             // UNIX only
+            user: Some(0),             // UNIX only
+            group: Some(0),            // UNIX only
+            unix_pex: Some((6, 4, 4)), // UNIX only
+        });
+        entry.unwrap_dir();
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_fs_fsentry_dir_unwrap_bad() {
+        let t_now: SystemTime = SystemTime::now();
+        let entry: FsEntry = FsEntry::Directory(FsDirectory {
+            name: String::from("foo"),
+            abs_path: PathBuf::from("/foo"),
+            last_change_time: t_now,
+            last_access_time: t_now,
+            creation_time: t_now,
+            readonly: false,
+            symlink: None,             // UNIX only
+            user: Some(0),             // UNIX only
+            group: Some(0),            // UNIX only
+            unix_pex: Some((7, 5, 5)), // UNIX only
+        });
+        entry.unwrap_file();
     }
 
     #[test]
