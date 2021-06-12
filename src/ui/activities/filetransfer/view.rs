@@ -49,6 +49,7 @@ use tuirealm::components::{
     input::{Input, InputPropsBuilder},
     progress_bar::{ProgressBar, ProgressBarPropsBuilder},
     radio::{Radio, RadioPropsBuilder},
+    scrolltable::{ScrollTablePropsBuilder, Scrolltable},
     span::{Span, SpanPropsBuilder},
     table::{Table, TablePropsBuilder},
 };
@@ -880,9 +881,12 @@ impl FileTransferActivity {
     pub(super) fn mount_help(&mut self) {
         self.view.mount(
             super::COMPONENT_TEXT_HELP,
-            Box::new(Table::new(
-                TablePropsBuilder::default()
+            Box::new(Scrolltable::new(
+                ScrollTablePropsBuilder::default()
                     .with_borders(Borders::ALL, BorderType::Rounded, Color::White)
+                    .with_highlighted_str(Some("?"))
+                    .with_max_scroll_step(8)
+                    .bold()
                     .with_table(
                         Some(String::from("Help")),
                         TableBuilder::default()

@@ -24,9 +24,10 @@ Released on FIXME: ??
 
 - Bugfix:
   - Fixed broken input cursor when typing UTF8 characters (tui-realm 0.3.2)
+  - Help panels as `ScrollTable` to allow displaying entire content on small screens
 - Dependencies:
   - Updated `textwrap` to `0.14.0`
-  - Updated `tui-realm` to `0.4.1`
+  - Updated `tui-realm` to `0.4.2`
 
 ## 0.5.0
 
