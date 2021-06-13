@@ -24,6 +24,7 @@ Released on FIXME: ??
 
 - Bugfix:
   - Fixed broken input cursor when typing UTF8 characters (tui-realm 0.3.2)
+  - Fixed [Issue 43](https://github.com/veeso/termscp/issues/43): Could not remove non-empty directories in FTP
   - Fixed [Issue 39](https://github.com/veeso/termscp/issues/39): Help panels as `ScrollTable` to allow displaying entire content on small screens
   - Fixed [Issue 37](https://github.com/veeso/termscp/issues/37): progress bar not visible when editing remote files
 - Dependencies:

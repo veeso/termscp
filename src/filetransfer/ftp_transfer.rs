@@ -629,23 +629,36 @@ impl FileTransfer for FtpFileTransfer {
             ));
         }
         info!("Removing entry {}", fsentry.get_abs_path().display());
+        let wrkdir: PathBuf = self.pwd()?;
         match fsentry {
             // Match fs entry...
             FsEntry::File(file) => {
-                debug!("entry is a file; removing file");
+                // Go to parent directory
+                if let Some(parent_dir) = file.abs_path.parent() {
+                    debug!("Changing wrkdir to {}", parent_dir.display());
+                    self.change_dir(parent_dir)?;
+                }
+                debug!("entry is a file; removing file {}", file.abs_path.display());
                 // Remove file directly
-                match self.stream.as_mut().unwrap().rm(file.name.as_ref()) {
-                    Ok(_) => Ok(()),
-                    Err(err) => Err(FileTransferError::new_ex(
-                        FileTransferErrorType::PexError,
-                        err.to_string(),
-                    )),
+                let result = self
+                    .stream
+                    .as_mut()
+                    .unwrap()
+                    .rm(file.name.as_ref())
+                    .map(|_| ())
+                    .map_err(|e| {
+                        FileTransferError::new_ex(FileTransferErrorType::PexError, e.to_string())
+                    });
+                // Go to source directory
+                match self.change_dir(wrkdir.as_path()) {
+                    Err(err) => Err(err),
+                    Ok(_) => result,
                 }
             }
             FsEntry::Directory(dir) => {
                 // Get directory files
                 debug!("Entry is a directory; iterating directory entries");
-                match self.list_dir(dir.abs_path.as_path()) {
+                let result = match self.list_dir(dir.abs_path.as_path()) {
                     Ok(files) => {
                         // Remove recursively files
                         debug!("Removing {} entries from directory...", files.len());
@@ -658,9 +671,21 @@ impl FileTransfer for FtpFileTransfer {
                             }
                         }
                         // Once all files in directory have been deleted, remove directory
-                        debug!("Finally removing directory {}", dir.name);
+                        debug!("Finally removing directory {}...", dir.name);
+                        // Enter parent directory
+                        if let Some(parent_dir) = dir.abs_path.parent() {
+                            debug!(
+                                "Changing wrkdir to {} to delete directory {}",
+                                parent_dir.display(),
+                                dir.name
+                            );
+                            self.change_dir(parent_dir)?;
+                        }
                         match self.stream.as_mut().unwrap().rmdir(dir.name.as_str()) {
-                            Ok(_) => Ok(()),
+                            Ok(_) => {
+                                debug!("Removed {}", dir.abs_path.display());
+                                Ok(())
+                            }
                             Err(err) => Err(FileTransferError::new_ex(
                                 FileTransferErrorType::PexError,
                                 err.to_string(),
@@ -671,6 +696,11 @@ impl FileTransfer for FtpFileTransfer {
                         FileTransferErrorType::DirStatFailed,
                         err.to_string(),
                     )),
+                };
+                // Restore directory
+                match self.change_dir(wrkdir.as_path()) {
+                    Err(err) => Err(err),
+                    Ok(_) => result,
                 }
             }
         }
