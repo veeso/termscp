@@ -723,17 +723,8 @@ impl FileTransfer for FtpFileTransfer {
                     FsEntry::Directory(dir) => dir.name.clone(),
                     FsEntry::File(file) => file.name.clone(),
                 };
-                let dst_name: PathBuf = match dst.file_name() {
-                    Some(p) => PathBuf::from(p),
-                    None => {
-                        return Err(FileTransferError::new_ex(
-                            FileTransferErrorType::FileCreateDenied,
-                            String::from("Invalid destination name"),
-                        ))
-                    }
-                };
                 // Only names are supported
-                match stream.rename(src_name.as_str(), &dst_name.as_path().to_string_lossy()) {
+                match stream.rename(src_name.as_str(), &dst.as_path().to_string_lossy()) {
                     Ok(_) => Ok(()),
                     Err(err) => Err(FileTransferError::new_ex(
                         FileTransferErrorType::FileCreateDenied,
