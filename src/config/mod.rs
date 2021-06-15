@@ -183,6 +183,12 @@ mod tests {
             file_fmt: Some(String::from("{NAME}")),
             remote_file_fmt: Some(String::from("{USER}")),
         };
+        assert_eq!(ui.default_protocol, String::from("SFTP"));
+        assert_eq!(ui.text_editor, PathBuf::from("nano"));
+        assert_eq!(ui.show_hidden_files, true);
+        assert_eq!(ui.check_for_updates, Some(true));
+        assert_eq!(ui.group_dirs, Some(String::from("first")));
+        assert_eq!(ui.file_fmt, Some(String::from("{NAME}")));
         let cfg: UserConfig = UserConfig {
             user_interface: ui,
             remote: remote,

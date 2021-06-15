@@ -208,6 +208,25 @@ mod tests {
         assert!(serializer.deserialize(Box::new(toml_file)).is_ok());
     }
 
+    #[test]
+    fn test_config_serializer_fail_write() {
+        let toml_file: tempfile::NamedTempFile = tempfile::NamedTempFile::new().ok().unwrap();
+        let writer: Box<dyn Write> = Box::new(std::fs::File::open(toml_file.path()).unwrap());
+        // Try to write unexisting file
+        let serializer: ConfigSerializer = ConfigSerializer {};
+        let cfg: UserConfig = UserConfig::default();
+        assert!(serializer.serialize(writer, &cfg).is_err());
+    }
+
+    #[test]
+    fn test_config_serializer_fail_read() {
+        let toml_file: tempfile::NamedTempFile = tempfile::NamedTempFile::new().ok().unwrap();
+        let reader: Box<dyn Read> = Box::new(std::fs::File::open(toml_file.path()).unwrap());
+        // Try to write unexisting file
+        let serializer: ConfigSerializer = ConfigSerializer {};
+        assert!(serializer.deserialize(reader).is_err());
+    }
+
     fn create_good_toml() -> tempfile::NamedTempFile {
         // Write
         let mut tmpfile: tempfile::NamedTempFile = tempfile::NamedTempFile::new().unwrap();

@@ -3,14 +3,25 @@
 Document audience: developers
 
 - [Developer Manual](#developer-manual)
+  - [How to test](#how-to-test)
   - [How termscp works](#how-termscp-works)
   - [Activities](#activities)
     - [The Context](#the-context)
-  - [Tests fails due to receivers](#tests-fails-due-to-receivers)
   - [Implementing File Transfers](#implementing-file-transfers)
 
 Welcome to the developer manual for termscp. This chapter DOESN'T contain the documentation for termscp modules, which can instead be found on Rust Docs at <https://docs.rs/termscp>
 This chapter describes how termscp works and the guide lines to implement stuff such as file transfers and add features to the user interface.
+
+## How to test
+
+First an introduction to tests.
+
+Usually it's enough to run `cargo test`, but please note that whenever you're working on file transfer you'll need one more step.
+In order to run tests with file transfers, you need to start the file transfer server containers, which can be started via `docker`.
+
+To run all tests with file transfers just run: `./tests/test.sh`
+
+---
 
 ## How termscp works
 
@@ -59,12 +70,6 @@ The context basically holds the following data:
 - The **Store**: the store is a key-value storage which can hold any kind of data. This can be used to store states to share between activities or to keep persistence for heavy/slow tasks (such as checking for updates).
 - The **Input handler**: the input handler is used to read input events from the keyboard
 - The **Terminal**: the terminal is used to view the tui on the terminal
-
----
-
-## Tests fails due to receivers
-
-Yes. This happens quite often and is related to the fact that I'm using public SSH/SFTP/FTP server to test file receivers and sometimes this server go down for even a day or more. If your tests don't pass due to this, don't worry, submit the pull request and I'll take care of testing them by myself.
 
 ---
 

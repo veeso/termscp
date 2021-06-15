@@ -408,10 +408,11 @@ mod tests {
 
     use pretty_assertions::assert_eq;
     use std::io::Read;
+    use tempfile::TempDir;
 
     #[test]
     fn test_system_config_new() {
-        let tmp_dir: tempfile::TempDir = create_tmp_dir();
+        let tmp_dir: TempDir = TempDir::new().ok().unwrap();
         let (cfg_path, ssh_keys_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
         let client: ConfigClient = ConfigClient::new(cfg_path.as_path(), ssh_keys_path.as_path())
             .ok()
@@ -437,14 +438,14 @@ mod tests {
             ConfigClient::new(Path::new("/tmp/oifoif/omar"), Path::new("/tmp/efnnu/omar"),)
                 .is_err()
         );
-        let tmp_dir: tempfile::TempDir = create_tmp_dir();
+        let tmp_dir: TempDir = TempDir::new().ok().unwrap();
         let (cfg_path, _): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
         assert!(ConfigClient::new(cfg_path.as_path(), Path::new("/tmp/efnnu/omar")).is_err());
     }
 
     #[test]
     fn test_system_config_from_existing() {
-        let tmp_dir: tempfile::TempDir = create_tmp_dir();
+        let tmp_dir: TempDir = TempDir::new().ok().unwrap();
         let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
         let mut client: ConfigClient = ConfigClient::new(cfg_path.as_path(), key_path.as_path())
             .ok()
@@ -477,7 +478,7 @@ mod tests {
 
     #[test]
     fn test_system_config_text_editor() {
-        let tmp_dir: tempfile::TempDir = create_tmp_dir();
+        let tmp_dir: TempDir = TempDir::new().ok().unwrap();
         let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
         let mut client: ConfigClient = ConfigClient::new(cfg_path.as_path(), key_path.as_path())
             .ok()
@@ -488,7 +489,7 @@ mod tests {
 
     #[test]
     fn test_system_config_default_protocol() {
-        let tmp_dir: tempfile::TempDir = create_tmp_dir();
+        let tmp_dir: TempDir = TempDir::new().ok().unwrap();
         let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
         let mut client: ConfigClient = ConfigClient::new(cfg_path.as_path(), key_path.as_path())
             .ok()
@@ -502,7 +503,7 @@ mod tests {
 
     #[test]
     fn test_system_config_show_hidden_files() {
-        let tmp_dir: tempfile::TempDir = create_tmp_dir();
+        let tmp_dir: TempDir = TempDir::new().ok().unwrap();
         let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
         let mut client: ConfigClient = ConfigClient::new(cfg_path.as_path(), key_path.as_path())
             .ok()
@@ -513,7 +514,7 @@ mod tests {
 
     #[test]
     fn test_system_config_check_for_updates() {
-        let tmp_dir: tempfile::TempDir = create_tmp_dir();
+        let tmp_dir: TempDir = TempDir::new().ok().unwrap();
         let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
         let mut client: ConfigClient = ConfigClient::new(cfg_path.as_path(), key_path.as_path())
             .ok()
@@ -527,7 +528,7 @@ mod tests {
 
     #[test]
     fn test_system_config_group_dirs() {
-        let tmp_dir: tempfile::TempDir = create_tmp_dir();
+        let tmp_dir: TempDir = TempDir::new().ok().unwrap();
         let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
         let mut client: ConfigClient = ConfigClient::new(cfg_path.as_path(), key_path.as_path())
             .ok()
@@ -540,7 +541,7 @@ mod tests {
 
     #[test]
     fn test_system_config_local_file_fmt() {
-        let tmp_dir: tempfile::TempDir = create_tmp_dir();
+        let tmp_dir: TempDir = TempDir::new().ok().unwrap();
         let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
         let mut client: ConfigClient = ConfigClient::new(cfg_path.as_path(), key_path.as_path())
             .ok()
@@ -555,7 +556,7 @@ mod tests {
 
     #[test]
     fn test_system_config_remote_file_fmt() {
-        let tmp_dir: tempfile::TempDir = create_tmp_dir();
+        let tmp_dir: TempDir = TempDir::new().ok().unwrap();
         let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
         let mut client: ConfigClient = ConfigClient::new(cfg_path.as_path(), key_path.as_path())
             .ok()
@@ -573,7 +574,7 @@ mod tests {
 
     #[test]
     fn test_system_config_ssh_keys() {
-        let tmp_dir: tempfile::TempDir = create_tmp_dir();
+        let tmp_dir: TempDir = TempDir::new().ok().unwrap();
         let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
         let mut client: ConfigClient = ConfigClient::new(cfg_path.as_path(), key_path.as_path())
             .ok()
@@ -635,13 +636,6 @@ mod tests {
         k.push("ssh-keys/");
         c.push("config.toml");
         (c, k)
-    }
-
-    /// ### create_tmp_dir
-    ///
-    /// Create temporary directory
-    fn create_tmp_dir() -> tempfile::TempDir {
-        tempfile::TempDir::new().ok().unwrap()
     }
 
     fn get_sample_rsa_key() -> String {

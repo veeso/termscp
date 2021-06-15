@@ -773,10 +773,7 @@ impl Localhost {
                             if filter.matches(dir.name.as_str()) {
                                 drained.push(FsEntry::Directory(dir.clone()));
                             }
-                            match self.iter_search(dir.abs_path.as_path(), filter) {
-                                Ok(mut filtered) => drained.append(&mut filtered),
-                                Err(err) => return Err(err),
-                            }
+                            drained.append(&mut self.iter_search(dir.abs_path.as_path(), filter)?);
                         }
                         FsEntry::File(file) => {
                             if filter.matches(file.name.as_str()) {
@@ -829,6 +826,9 @@ impl Localhost {
 mod tests {
 
     use super::*;
+    #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
+    use crate::utils::test_helpers::{create_sample_file, make_fsentry};
+    use crate::utils::test_helpers::{make_dir_at, make_file_at};
 
     use pretty_assertions::assert_eq;
     use std::fs::File;
@@ -975,6 +975,7 @@ mod tests {
         //fs::set_permissions(file.path(), perms)?;
         assert!(host.open_file_write(file.path()).is_err());
     }
+
     #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
     #[test]
     fn test_host_localhost_symlinks() {
@@ -1038,6 +1039,13 @@ mod tests {
         assert!(host
             .mkdir_ex(PathBuf::from("/tmp/test_dir_123456789").as_path(), true)
             .is_ok());
+        // Fail
+        assert!(host
+            .mkdir_ex(
+                PathBuf::from("/aaaa/oooooo/tmp/test_dir_123456789").as_path(),
+                true
+            )
+            .is_err());
     }
 
     #[test]
@@ -1060,6 +1068,13 @@ mod tests {
         let files: Vec<FsEntry> = host.list_dir();
         assert_eq!(files.len(), 1); // There should be 1 file now
         assert!(host.remove(files.get(0).unwrap()).is_ok());
+        // Remove unexisting directory
+        assert!(host
+            .remove(&make_fsentry(PathBuf::from("/a/b/c/d"), true))
+            .is_err());
+        assert!(host
+            .remove(&make_fsentry(PathBuf::from("/aaaaaaa"), false))
+            .is_err());
     }
 
     #[test]
@@ -1073,7 +1088,7 @@ mod tests {
         let mut host: Localhost = Localhost::new(PathBuf::from(tmpdir.path())).ok().unwrap();
         let files: Vec<FsEntry> = host.list_dir();
         assert_eq!(files.len(), 1); // There should be 1 file now
-        assert_eq!(get_filename(files.get(0).unwrap()), String::from("foo.txt"));
+        assert_eq!(files.get(0).unwrap().get_name(), "foo.txt");
         // Rename file
         let dst_path: PathBuf =
             PathBuf::from(format!("{}/bar.txt", tmpdir.path().display()).as_str());
@@ -1083,7 +1098,7 @@ mod tests {
         // There should be still 1 file now, but named bar.txt
         let files: Vec<FsEntry> = host.list_dir();
         assert_eq!(files.len(), 1); // There should be 0 files now
-        assert_eq!(get_filename(files.get(0).unwrap()), String::from("bar.txt"));
+        assert_eq!(files.get(0).unwrap().get_name(), "bar.txt");
         // Fail
         let bad_path: PathBuf = PathBuf::from("/asdailsjoidoewojdijow/ashdiuahu");
         assert!(host
@@ -1131,6 +1146,13 @@ mod tests {
         assert!(host.copy(&file1_entry, file2_path.as_path()).is_ok());
         // Verify host has two files
         assert_eq!(host.files.len(), 2);
+        // Fail copy
+        assert!(host
+            .copy(
+                &make_fsentry(PathBuf::from("/a/a7/a/a7a"), false),
+                PathBuf::from("571k422i").as_path()
+            )
+            .is_err());
     }
 
     #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
@@ -1232,16 +1254,16 @@ mod tests {
         let tmpdir: tempfile::TempDir = tempfile::TempDir::new().unwrap();
         let dir_path: &Path = tmpdir.path();
         // Make files
-        assert!(make_sample_file(dir_path, "pippo.txt").is_ok());
-        assert!(make_sample_file(dir_path, "foo.jpg").is_ok());
+        assert!(make_file_at(dir_path, "pippo.txt").is_ok());
+        assert!(make_file_at(dir_path, "foo.jpg").is_ok());
         // Make nested struct
-        assert!(make_dir(dir_path, "examples").is_ok());
+        assert!(make_dir_at(dir_path, "examples").is_ok());
         let mut subdir: PathBuf = PathBuf::from(dir_path);
         subdir.push("examples/");
-        assert!(make_sample_file(subdir.as_path(), "omar.txt").is_ok());
-        assert!(make_sample_file(subdir.as_path(), "errors.txt").is_ok());
-        assert!(make_sample_file(subdir.as_path(), "screenshot.png").is_ok());
-        assert!(make_sample_file(subdir.as_path(), "examples.csv").is_ok());
+        assert!(make_file_at(subdir.as_path(), "omar.txt").is_ok());
+        assert!(make_file_at(subdir.as_path(), "errors.txt").is_ok());
+        assert!(make_file_at(subdir.as_path(), "screenshot.png").is_ok());
+        assert!(make_file_at(subdir.as_path(), "examples.csv").is_ok());
         let host: Localhost = Localhost::new(PathBuf::from(dir_path)).ok().unwrap();
         // Find txt files
         let mut result: Vec<FsEntry> = host.find("*.txt").ok().unwrap();
@@ -1299,51 +1321,5 @@ mod tests {
             format!("{}", HostError::from(HostErrorType::FileAlreadyExists)),
             String::from("File already exists")
         );
-    }
-
-    /// ### make_sample_file
-    ///
-    /// Make a file with `name` in the current directory
-    fn make_sample_file(dir: &Path, filename: &str) -> std::io::Result<()> {
-        let mut p: PathBuf = PathBuf::from(dir);
-        p.push(filename);
-        let mut file: File = File::create(p.as_path())?;
-        write!(
-            file,
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit.\nMauris ultricies consequat eros,\nnec scelerisque magna imperdiet metus.\n"
-        )?;
-        Ok(())
-    }
-
-    /// ### make_dir
-    ///
-    /// Make a directory in `dir`
-    fn make_dir(dir: &Path, dirname: &str) -> std::io::Result<()> {
-        let mut p: PathBuf = PathBuf::from(dir);
-        p.push(dirname);
-        std::fs::create_dir(p.as_path())
-    }
-
-    /// ### create_sample_file
-    ///
-    /// Create a sample file
-    #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
-    fn create_sample_file() -> tempfile::NamedTempFile {
-        // Write
-        let mut tmpfile: tempfile::NamedTempFile = tempfile::NamedTempFile::new().unwrap();
-        write!(
-            tmpfile,
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit.\nMauris ultricies consequat eros,\nnec scelerisque magna imperdiet metus.\n"
-        )
-        .unwrap();
-        tmpfile
-    }
-
-    #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
-    fn get_filename(entry: &FsEntry) -> String {
-        match entry {
-            FsEntry::Directory(d) => d.name.clone(),
-            FsEntry::File(f) => f.name.clone(),
-        }
     }
 }

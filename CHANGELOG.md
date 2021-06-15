@@ -22,6 +22,12 @@
 
 Released on FIXME: ??
 
+- Enhancements:
+  - **CI now uses containers to test file transfers (SSH/FTP)**
+    - Improved coverage
+    - Found many bugs which has now been fixed
+    - Build in CI won't fail due to test servers not responding
+    - We're now able to test all the functionalities of the file transfers
 - Bugfix:
   - Fixed broken input cursor when typing UTF8 characters (tui-realm 0.3.2)
   - Fixed [Issue 44](https://github.com/veeso/termscp/issues/44): Could not move files to other paths in FTP

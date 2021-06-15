@@ -177,7 +177,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(not(feature = "githubActions"))]
+    #[cfg(not(feature = "github-actions"))]
     fn test_ui_context() {
         // Prepare stuff
         let mut ctx: Context = Context::new(None, Some(String::from("alles kaput")));
