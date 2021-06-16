@@ -43,6 +43,7 @@ use crate::ui::context::FileTransferParams;
 use crate::utils::git;
 
 // Includes
+use crossterm::event::Event;
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use tuirealm::{Update, View};
 
@@ -53,6 +54,7 @@ const COMPONENT_TEXT_NEW_VERSION: &str = "TEXT_NEW_VERSION";
 const COMPONENT_TEXT_FOOTER: &str = "TEXT_FOOTER";
 const COMPONENT_TEXT_HELP: &str = "TEXT_HELP";
 const COMPONENT_TEXT_ERROR: &str = "TEXT_ERROR";
+const COMPONENT_TEXT_SIZE_ERR: &str = "TEXT_SIZE_ERR";
 const COMPONENT_INPUT_ADDR: &str = "INPUT_ADDRESS";
 const COMPONENT_INPUT_PORT: &str = "INPUT_PORT";
 const COMPONENT_INPUT_USERNAME: &str = "INPUT_USERNAME";
@@ -199,6 +201,10 @@ impl Activity for AuthActivity {
         if let Ok(Some(event)) = self.context.as_ref().unwrap().input_hnd.read_event() {
             // Set redraw to true
             self.redraw = true;
+            // Handle on resize
+            if let Event::Resize(_, h) = event {
+                self.check_minimum_window_size(h);
+            }
             // Handle event on view and update
             let msg = self.view.on(event);
             self.update(msg);

@@ -831,7 +831,9 @@ mod tests {
     use crate::utils::test_helpers::{make_dir_at, make_file_at};
 
     use pretty_assertions::assert_eq;
+    #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
     use std::fs::File;
+    #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
     use std::io::Write;
 
     #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]

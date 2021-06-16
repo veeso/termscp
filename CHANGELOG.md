@@ -31,6 +31,9 @@ Released on FIXME: ??
   - **Status bar improvements**
     - "Show hidden files" in status bar
     - Status bar has now been splitted into two, one for each explorer tab
+  - **Error message if terminal window is too small**
+    - If the terminal window has less than 24 lines, then an error message is displayed in the auth activity
+    - Changed auth layout to absolute sizes
 - Bugfix:
   - Fixed broken input cursor when typing UTF8 characters (tui-realm 0.3.2)
   - Fixed [Issue 44](https://github.com/veeso/termscp/issues/44): Could not move files to other paths in FTP

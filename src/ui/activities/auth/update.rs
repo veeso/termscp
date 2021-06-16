@@ -32,7 +32,7 @@ use super::{
     COMPONENT_INPUT_PORT, COMPONENT_INPUT_USERNAME, COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK,
     COMPONENT_RADIO_BOOKMARK_DEL_RECENT, COMPONENT_RADIO_BOOKMARK_SAVE_PWD,
     COMPONENT_RADIO_PROTOCOL, COMPONENT_RADIO_QUIT, COMPONENT_RECENTS_LIST, COMPONENT_TEXT_ERROR,
-    COMPONENT_TEXT_HELP,
+    COMPONENT_TEXT_HELP, COMPONENT_TEXT_SIZE_ERR,
 };
 use crate::ui::keymap::*;
 use tuirealm::components::InputPropsBuilder;
@@ -306,6 +306,8 @@ impl Update for AuthActivity {
                     self.umount_quit();
                     None
                 }
+                // -- text size error; block everything
+                (COMPONENT_TEXT_SIZE_ERR, _) => None,
                 // On submit on any unhandled (connect)
                 (_, Msg::OnSubmit(_)) | (_, &MSG_KEY_ENTER) => {
                     // Match <ENTER> key for all other components

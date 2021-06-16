@@ -68,4 +68,16 @@ impl AuthActivity {
     pub(super) fn is_port_standard(port: u16) -> bool {
         port < 1024
     }
+
+    /// ### check_minimum_window_size
+    ///
+    /// Check minimum window size window
+    pub(super) fn check_minimum_window_size(&mut self, height: u16) {
+        if height < 24 {
+            // Mount window error
+            self.mount_size_err();
+        } else {
+            self.umount_size_err();
+        }
+    }
 }
