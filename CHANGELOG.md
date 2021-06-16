@@ -30,7 +30,7 @@ Released on FIXME: ??
     - We're now able to test all the functionalities of the file transfers
   - **Status bar improvements**
     - "Show hidden files" in status bar
-    - Status bar is has now been splitted into two, one for each explorer tab
+    - Status bar has now been splitted into two, one for each explorer tab
 - Bugfix:
   - Fixed broken input cursor when typing UTF8 characters (tui-realm 0.3.2)
   - Fixed [Issue 44](https://github.com/veeso/termscp/issues/44): Could not move files to other paths in FTP
