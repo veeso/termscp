@@ -100,13 +100,18 @@ impl FileTransferActivity {
                     .build(),
             )),
         );
-        // Mount status bar
+        // Mount status bars
         self.view.mount(
-            super::COMPONENT_SPAN_STATUS_BAR,
+            super::COMPONENT_SPAN_STATUS_BAR_LOCAL,
+            Box::new(Span::new(SpanPropsBuilder::default().build())),
+        );
+        self.view.mount(
+            super::COMPONENT_SPAN_STATUS_BAR_REMOTE,
             Box::new(Span::new(SpanPropsBuilder::default().build())),
         );
         // Load process bar
-        self.refresh_status_bar();
+        self.refresh_local_status_bar();
+        self.refresh_remote_status_bar();
         // Update components
         let _ = self.update_local_filelist();
         let _ = self.update_remote_filelist();
@@ -145,6 +150,12 @@ impl FileTransferActivity {
                 .constraints([Constraint::Length(1), Constraint::Length(10)].as_ref())
                 .direction(Direction::Vertical)
                 .split(chunks[1]);
+            // Create status bar chunks
+            let status_bar_chunks = Layout::default()
+                .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
+                .direction(Direction::Horizontal)
+                .horizontal_margin(1)
+                .split(bottom_chunks[0]);
             // If width is unset in the storage, set width
             if !store.isset(super::STORAGE_EXPLORER_WIDTH) {
                 store.set_unsigned(super::STORAGE_EXPLORER_WIDTH, tabs_chunks[0].width as usize);
@@ -170,11 +181,20 @@ impl FileTransferActivity {
                     .view
                     .render(super::COMPONENT_EXPLORER_REMOTE, f, tabs_chunks[1]),
             }
-            // Draw log box and status bar
+            // Draw log box
             self.view
                 .render(super::COMPONENT_LOG_BOX, f, bottom_chunks[1]);
-            self.view
-                .render(super::COMPONENT_SPAN_STATUS_BAR, f, bottom_chunks[0]);
+            // Draw status bar
+            self.view.render(
+                super::COMPONENT_SPAN_STATUS_BAR_LOCAL,
+                f,
+                status_bar_chunks[0],
+            );
+            self.view.render(
+                super::COMPONENT_SPAN_STATUS_BAR_REMOTE,
+                f,
+                status_bar_chunks[1],
+            );
             // @! Draw popups
             if let Some(props) = self.view.get_props(super::COMPONENT_INPUT_COPY) {
                 if props.visible {
@@ -840,9 +860,54 @@ impl FileTransferActivity {
         self.view.umount(super::COMPONENT_LIST_FILEINFO);
     }
 
-    pub(super) fn refresh_status_bar(&mut self) {
-        let bar_spans: Vec<TextSpan> = vec![
-            TextSpanBuilder::new("Synchronized Browsing: ")
+    pub(super) fn refresh_local_status_bar(&mut self) {
+        let local_bar_spans: Vec<TextSpan> = vec![
+            TextSpanBuilder::new("File sorting: ")
+                .with_foreground(Color::LightYellow)
+                .build(),
+            TextSpanBuilder::new(Self::get_file_sorting_str(self.local().get_file_sorting()))
+                .with_foreground(Color::LightYellow)
+                .reversed()
+                .build(),
+            TextSpanBuilder::new(" Hidden files: ")
+                .with_foreground(Color::LightBlue)
+                .build(),
+            TextSpanBuilder::new(Self::get_hidden_files_str(
+                self.local().hidden_files_visible(),
+            ))
+            .with_foreground(Color::LightBlue)
+            .reversed()
+            .build(),
+        ];
+        if let Some(props) = self.view.get_props(super::COMPONENT_SPAN_STATUS_BAR_LOCAL) {
+            self.view.update(
+                super::COMPONENT_SPAN_STATUS_BAR_LOCAL,
+                SpanPropsBuilder::from(props)
+                    .with_spans(local_bar_spans)
+                    .build(),
+            );
+        }
+    }
+
+    pub(super) fn refresh_remote_status_bar(&mut self) {
+        let remote_bar_spans: Vec<TextSpan> = vec![
+            TextSpanBuilder::new("File sorting: ")
+                .with_foreground(Color::LightYellow)
+                .build(),
+            TextSpanBuilder::new(Self::get_file_sorting_str(self.remote().get_file_sorting()))
+                .with_foreground(Color::LightYellow)
+                .reversed()
+                .build(),
+            TextSpanBuilder::new(" Hidden files: ")
+                .with_foreground(Color::LightBlue)
+                .build(),
+            TextSpanBuilder::new(Self::get_hidden_files_str(
+                self.remote().hidden_files_visible(),
+            ))
+            .with_foreground(Color::LightBlue)
+            .reversed()
+            .build(),
+            TextSpanBuilder::new(" Sync Browsing: ")
                 .with_foreground(Color::LightGreen)
                 .build(),
             TextSpanBuilder::new(match self.browser.sync_browsing {
@@ -852,25 +917,13 @@ impl FileTransferActivity {
             .with_foreground(Color::LightGreen)
             .reversed()
             .build(),
-            TextSpanBuilder::new(" Localhost file sorting: ")
-                .with_foreground(Color::LightYellow)
-                .build(),
-            TextSpanBuilder::new(Self::get_file_sorting_str(self.local().get_file_sorting()))
-                .with_foreground(Color::LightYellow)
-                .reversed()
-                .build(),
-            TextSpanBuilder::new(" Remote host file sorting: ")
-                .with_foreground(Color::LightBlue)
-                .build(),
-            TextSpanBuilder::new(Self::get_file_sorting_str(self.remote().get_file_sorting()))
-                .with_foreground(Color::LightBlue)
-                .reversed()
-                .build(),
         ];
-        if let Some(props) = self.view.get_props(super::COMPONENT_SPAN_STATUS_BAR) {
+        if let Some(props) = self.view.get_props(super::COMPONENT_SPAN_STATUS_BAR_REMOTE) {
             self.view.update(
-                super::COMPONENT_SPAN_STATUS_BAR,
-                SpanPropsBuilder::from(props).with_spans(bar_spans).build(),
+                super::COMPONENT_SPAN_STATUS_BAR_REMOTE,
+                SpanPropsBuilder::from(props)
+                    .with_spans(remote_bar_spans)
+                    .build(),
             );
         }
     }
@@ -1126,6 +1179,13 @@ impl FileTransferActivity {
             FileSorting::ByCreationTime => "By creation time",
             FileSorting::ByModifyTime => "By modify time",
             FileSorting::BySize => "By size",
+        }
+    }
+
+    fn get_hidden_files_str(show: bool) -> &'static str {
+        match show {
+            true => "Show",
+            false => "Hide",
         }
     }
 }
