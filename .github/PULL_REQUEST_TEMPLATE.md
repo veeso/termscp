@@ -32,3 +32,9 @@ Please select relevant options.
 - [ ] I have introduced no new *C-bindings*
 - [ ] The changes I've made are Windows, MacOS, UNIX, Linux compatible (or I've handled them using `cfg target_os`)
 - [ ] I increased or maintained the code coverage for the project, compared to the previous commit
+
+## Acceptance tests
+
+wait for a *project maintainer* to fulfill this section...
+
+- [ ] regression test: ...
