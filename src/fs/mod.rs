@@ -227,7 +227,6 @@ impl FsEntry {
         }
     }
 
-    #[cfg(test)]
     /// ### unwrap_file
     ///
     /// Unwrap FsEntry as FsFile

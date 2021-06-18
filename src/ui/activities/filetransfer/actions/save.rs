@@ -26,7 +26,7 @@
  * SOFTWARE.
  */
 // locals
-use super::{FileTransferActivity, SelectedEntry};
+use super::{FileTransferActivity, LogLevel, SelectedEntry, TransferPayload};
 use std::path::PathBuf;
 
 impl FileTransferActivity {
@@ -50,7 +50,19 @@ impl FileTransferActivity {
         let wrkdir: PathBuf = self.remote().wrkdir.clone();
         match self.get_local_selected_entries() {
             SelectedEntry::One(entry) => {
-                self.filetransfer_send(&entry.get_realfile(), wrkdir.as_path(), save_as);
+                if let Err(err) = self.filetransfer_send(
+                    TransferPayload::Any(entry.get_realfile()),
+                    wrkdir.as_path(),
+                    save_as,
+                ) {
+                    {
+                        self.log_and_alert(
+                            LogLevel::Error,
+                            format!("Could not upload file: {}", err),
+                        );
+                        return;
+                    }
+                }
             }
             SelectedEntry::Many(entries) => {
                 // In case of selection: save multiple files in wrkdir/input
@@ -59,8 +71,19 @@ impl FileTransferActivity {
                     dest_path.push(save_as);
                 }
                 // Iter files
-                for entry in entries.iter() {
-                    self.filetransfer_send(&entry.get_realfile(), dest_path.as_path(), None);
+                let entries = entries.iter().map(|x| x.get_realfile()).collect();
+                if let Err(err) = self.filetransfer_send(
+                    TransferPayload::Many(entries),
+                    dest_path.as_path(),
+                    None,
+                ) {
+                    {
+                        self.log_and_alert(
+                            LogLevel::Error,
+                            format!("Could not upload file: {}", err),
+                        );
+                        return;
+                    }
                 }
             }
             SelectedEntry::None => {}
@@ -71,7 +94,19 @@ impl FileTransferActivity {
         let wrkdir: PathBuf = self.local().wrkdir.clone();
         match self.get_remote_selected_entries() {
             SelectedEntry::One(entry) => {
-                self.filetransfer_recv(&entry.get_realfile(), wrkdir.as_path(), save_as);
+                if let Err(err) = self.filetransfer_recv(
+                    TransferPayload::Any(entry.get_realfile()),
+                    wrkdir.as_path(),
+                    save_as,
+                ) {
+                    {
+                        self.log_and_alert(
+                            LogLevel::Error,
+                            format!("Could not download file: {}", err),
+                        );
+                        return;
+                    }
+                }
             }
             SelectedEntry::Many(entries) => {
                 // In case of selection: save multiple files in wrkdir/input
@@ -80,8 +115,19 @@ impl FileTransferActivity {
                     dest_path.push(save_as);
                 }
                 // Iter files
-                for entry in entries.iter() {
-                    self.filetransfer_recv(&entry.get_realfile(), dest_path.as_path(), None);
+                let entries = entries.iter().map(|x| x.get_realfile()).collect();
+                if let Err(err) = self.filetransfer_recv(
+                    TransferPayload::Many(entries),
+                    dest_path.as_path(),
+                    None,
+                ) {
+                    {
+                        self.log_and_alert(
+                            LogLevel::Error,
+                            format!("Could not download file: {}", err),
+                        );
+                        return;
+                    }
                 }
             }
             SelectedEntry::None => {}

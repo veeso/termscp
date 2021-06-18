@@ -49,9 +49,10 @@ use crate::fs::explorer::FileExplorer;
 use crate::fs::FsEntry;
 use crate::host::Localhost;
 use crate::system::config_client::ConfigClient;
-pub(crate) use lib::browser;
+pub(self) use lib::browser;
 use lib::browser::Browser;
 use lib::transfer::TransferStates;
+pub(self) use session::TransferPayload;
 
 // Includes
 use chrono::{DateTime, Local};
