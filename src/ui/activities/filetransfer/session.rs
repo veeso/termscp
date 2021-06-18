@@ -252,18 +252,17 @@ impl FileTransferActivity {
         // Reset states
         self.transfer.reset();
         // Calculate total size of transfer
-        let mut total_transfer_size: usize = 0;
-        for entry in entries.iter() {
-            total_transfer_size += self.get_total_transfer_size_local(entry);
-        }
+        let total_transfer_size: usize = entries
+            .iter()
+            .map(|x| self.get_total_transfer_size_local(x))
+            .sum();
         self.transfer.full.init(total_transfer_size);
         // Mount progress bar
         self.mount_progress_bar(format!("Uploading {} entries...", entries.len()));
         // Send recurse
-        for entry in entries.iter() {
-            // Send
-            self.filetransfer_send_recurse(entry, curr_remote_path, None);
-        }
+        entries
+            .iter()
+            .for_each(|x| self.filetransfer_send_recurse(x, curr_remote_path, None));
         // Umount progress bar
         self.umount_progress_bar();
         Ok(())
@@ -569,18 +568,17 @@ impl FileTransferActivity {
         // Reset states
         self.transfer.reset();
         // Calculate total size of transfer
-        let mut total_transfer_size: usize = 0;
-        for entry in entries.iter() {
-            total_transfer_size += self.get_total_transfer_size_remote(entry);
-        }
+        let total_transfer_size: usize = entries
+            .iter()
+            .map(|x| self.get_total_transfer_size_remote(x))
+            .sum();
         self.transfer.full.init(total_transfer_size);
         // Mount progress bar
-        self.mount_progress_bar(format!("Uploading {} entries...", entries.len()));
+        self.mount_progress_bar(format!("Downloading {} entries...", entries.len()));
         // Send recurse
-        for entry in entries.iter() {
-            // Send
-            self.filetransfer_recv_recurse(entry, curr_remote_path, None);
-        }
+        entries
+            .iter()
+            .for_each(|x| self.filetransfer_recv_recurse(x, curr_remote_path, None));
         // Umount progress bar
         self.umount_progress_bar();
         Ok(())

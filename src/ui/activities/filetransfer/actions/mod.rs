@@ -78,8 +78,7 @@ impl FileTransferActivity {
                 let files: Vec<&FsEntry> = files
                     .iter()
                     .map(|x| self.local().get(*x)) // Usize to Option<FsEntry>
-                    .filter(|x| x.is_some()) // Get only some values
-                    .map(|x| x.unwrap()) // Option to FsEntry
+                    .flatten()
                     .collect();
                 SelectedEntry::from(files)
             }
@@ -97,8 +96,7 @@ impl FileTransferActivity {
                 let files: Vec<&FsEntry> = files
                     .iter()
                     .map(|x| self.remote().get(*x)) // Usize to Option<FsEntry>
-                    .filter(|x| x.is_some()) // Get only some values
-                    .map(|x| x.unwrap()) // Option to FsEntry
+                    .flatten()
                     .collect();
                 SelectedEntry::from(files)
             }
@@ -118,8 +116,7 @@ impl FileTransferActivity {
                 let files: Vec<&FsEntry> = files
                     .iter()
                     .map(|x| self.found().as_ref().unwrap().get(*x)) // Usize to Option<FsEntry>
-                    .filter(|x| x.is_some()) // Get only some values
-                    .map(|x| x.unwrap()) // Option to FsEntry
+                    .flatten()
                     .collect();
                 SelectedEntry::from(files)
             }
