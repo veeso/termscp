@@ -39,6 +39,7 @@ Released on FIXME: ??
   - Fixed [Issue 44](https://github.com/veeso/termscp/issues/44): Could not move files to other paths in FTP
   - Fixed [Issue 43](https://github.com/veeso/termscp/issues/43): Could not remove non-empty directories in FTP
   - Fixed [Issue 39](https://github.com/veeso/termscp/issues/39): Help panels as `ScrollTable` to allow displaying entire content on small screens
+  - Fixed [Issue 38](https://github.com/veeso/termscp/issues/38): Transfer size was wrong when transferring "selected" files (with mark)
   - Fixed [Issue 37](https://github.com/veeso/termscp/issues/37): progress bar not visible when editing remote files
 - Dependencies:
   - Updated `textwrap` to `0.14.0`

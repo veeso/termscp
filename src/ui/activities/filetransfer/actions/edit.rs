@@ -26,7 +26,7 @@
  * SOFTWARE.
  */
 // locals
-use super::{FileTransferActivity, FsEntry, LogLevel, SelectedEntry};
+use super::{FileTransferActivity, FsEntry, LogLevel, SelectedEntry, TransferPayload};
 use crate::fs::FsFile;
 // ext
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
@@ -67,15 +67,15 @@ impl FileTransferActivity {
             SelectedEntry::None => vec![],
         };
         // Edit all entries
-        for entry in entries.iter() {
+        for entry in entries.into_iter() {
             // Check if file
             if let FsEntry::File(file) = entry {
                 self.log(
                     LogLevel::Info,
-                    format!("Opening file \"{}\"...", entry.get_abs_path().display()),
+                    format!("Opening file \"{}\"...", file.abs_path.display()),
                 );
                 // Edit file
-                if let Err(err) = self.edit_remote_file(&file) {
+                if let Err(err) = self.edit_remote_file(file) {
                     self.log_and_alert(LogLevel::Error, err);
                 }
             }
@@ -141,7 +141,7 @@ impl FileTransferActivity {
     /// ### edit_remote_file
     ///
     /// Edit file on remote host
-    fn edit_remote_file(&mut self, file: &FsFile) -> Result<(), String> {
+    fn edit_remote_file(&mut self, file: FsFile) -> Result<(), String> {
         // Create temp file
         let tmpfile: tempfile::NamedTempFile = match tempfile::NamedTempFile::new() {
             Ok(f) => f,
@@ -150,8 +150,14 @@ impl FileTransferActivity {
             }
         };
         // Download file
-        if let Err(err) = self.filetransfer_recv_one(file, tmpfile.path(), file.name.clone()) {
-            return Err(format!("Could not open file {}: {}", file.name, err));
+        let file_name = file.name.clone();
+        let file_path = file.abs_path.clone();
+        if let Err(err) = self.filetransfer_recv(
+            TransferPayload::File(file),
+            tmpfile.path(),
+            Some(file_name.clone()),
+        ) {
+            return Err(format!("Could not open file {}: {}", file_name, err));
         }
         // Get current file modification time
         let prev_mtime: SystemTime = match self.host.stat(tmpfile.path()) {
@@ -186,12 +192,12 @@ impl FileTransferActivity {
                     LogLevel::Info,
                     format!(
                         "File \"{}\" has changed; writing changes to remote",
-                        file.abs_path.display()
+                        file_path.display()
                     ),
                 );
                 // Get local fs entry
-                let tmpfile_entry: FsEntry = match self.host.stat(tmpfile.path()) {
-                    Ok(e) => e,
+                let tmpfile_entry: FsFile = match self.host.stat(tmpfile.path()) {
+                    Ok(e) => e.unwrap_file(),
                     Err(err) => {
                         return Err(format!(
                             "Could not stat \"{}\": {}",
@@ -200,21 +206,16 @@ impl FileTransferActivity {
                         ))
                     }
                 };
-                // Write file
-                let tmpfile_entry: &FsFile = match &tmpfile_entry {
-                    FsEntry::Directory(_) => panic!("tempfile is a directory for some reason"),
-                    FsEntry::File(f) => f,
-                };
                 // Send file
                 let wrkdir = self.remote().wrkdir.clone();
-                if let Err(err) = self.filetransfer_send_one(
-                    tmpfile_entry,
+                if let Err(err) = self.filetransfer_send(
+                    TransferPayload::File(tmpfile_entry),
                     wrkdir.as_path(),
-                    Some(file.name.clone()),
+                    Some(file_name),
                 ) {
                     return Err(format!(
                         "Could not write file {}: {}",
-                        file.abs_path.display(),
+                        file_path.display(),
                         err
                     ));
                 }
@@ -222,7 +223,7 @@ impl FileTransferActivity {
             false => {
                 self.log(
                     LogLevel::Info,
-                    format!("File \"{}\" hasn't changed", file.abs_path.display()),
+                    format!("File \"{}\" hasn't changed", file_path.display()),
                 );
             }
         }

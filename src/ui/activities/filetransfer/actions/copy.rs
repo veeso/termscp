@@ -27,8 +27,9 @@
  */
 extern crate tempfile;
 // locals
-use super::{FileTransferActivity, FsEntry, LogLevel, SelectedEntry};
+use super::{FileTransferActivity, FsEntry, LogLevel, SelectedEntry, TransferPayload};
 use crate::filetransfer::FileTransferErrorType;
+use crate::fs::FsFile;
 use std::path::{Path, PathBuf};
 
 impl FileTransferActivity {
@@ -66,7 +67,7 @@ impl FileTransferActivity {
         match self.get_remote_selected_entries() {
             SelectedEntry::One(entry) => {
                 let dest_path: PathBuf = PathBuf::from(input);
-                self.remote_copy_file(&entry, dest_path.as_path());
+                self.remote_copy_file(entry, dest_path.as_path());
                 // Reload entries
                 self.reload_remote_dir();
             }
@@ -74,7 +75,7 @@ impl FileTransferActivity {
                 // Try to copy each file to Input/{FILE_NAME}
                 let base_path: PathBuf = PathBuf::from(input);
                 // Iter files
-                for entry in entries.iter() {
+                for entry in entries.into_iter() {
                     let mut dest_path: PathBuf = base_path.clone();
                     dest_path.push(entry.get_name());
                     self.remote_copy_file(entry, dest_path.as_path());
@@ -110,8 +111,8 @@ impl FileTransferActivity {
         }
     }
 
-    fn remote_copy_file(&mut self, entry: &FsEntry, dest: &Path) {
-        match self.client.as_mut().copy(entry, dest) {
+    fn remote_copy_file(&mut self, entry: FsEntry, dest: &Path) {
+        match self.client.as_mut().copy(&entry, dest) {
             Ok(_) => {
                 self.log(
                     LogLevel::Info,
@@ -143,7 +144,7 @@ impl FileTransferActivity {
     /// ### tricky_copy
     ///
     /// Tricky copy will be used whenever copy command is not available on remote host
-    fn tricky_copy(&mut self, entry: &FsEntry, dest: &Path) {
+    fn tricky_copy(&mut self, entry: FsEntry, dest: &Path) {
         // match entry
         match entry {
             FsEntry::File(entry) => {
@@ -159,8 +160,10 @@ impl FileTransferActivity {
                     }
                 };
                 // Download file
+                let name = entry.name.clone();
+                let entry_path = entry.abs_path.clone();
                 if let Err(err) =
-                    self.filetransfer_recv_one(entry, tmpfile.path(), entry.name.clone())
+                    self.filetransfer_recv(TransferPayload::File(entry), tmpfile.path(), Some(name))
                 {
                     self.log_and_alert(
                         LogLevel::Error,
@@ -169,8 +172,8 @@ impl FileTransferActivity {
                     return;
                 }
                 // Get local fs entry
-                let tmpfile_entry: FsEntry = match self.host.stat(tmpfile.path()) {
-                    Ok(e) => e,
+                let tmpfile_entry: FsFile = match self.host.stat(tmpfile.path()) {
+                    Ok(e) => e.unwrap_file(),
                     Err(err) => {
                         self.log_and_alert(
                             LogLevel::Error,
@@ -183,14 +186,10 @@ impl FileTransferActivity {
                         return;
                     }
                 };
-                let tmpfile_entry = match &tmpfile_entry {
-                    FsEntry::Directory(_) => panic!("tempfile is a directory for some reason"),
-                    FsEntry::File(f) => f,
-                };
                 // Upload file to destination
                 let wrkdir = self.remote().wrkdir.clone();
-                if let Err(err) = self.filetransfer_send_one(
-                    tmpfile_entry,
+                if let Err(err) = self.filetransfer_send(
+                    TransferPayload::File(tmpfile_entry),
                     wrkdir.as_path(),
                     Some(String::from(dest.to_string_lossy())),
                 ) {
@@ -198,7 +197,7 @@ impl FileTransferActivity {
                         LogLevel::Error,
                         format!(
                             "Copy failed: could not write file {}: {}",
-                            entry.abs_path.display(),
+                            entry_path.display(),
                             err
                         ),
                     );
@@ -216,11 +215,19 @@ impl FileTransferActivity {
                         return;
                     }
                 };
-                // Download file
-                self.filetransfer_recv(entry, tempdir.path(), None);
                 // Get path of dest
                 let mut tempdir_path: PathBuf = tempdir.path().to_path_buf();
                 tempdir_path.push(entry.get_name());
+                // Download file
+                if let Err(err) =
+                    self.filetransfer_recv(TransferPayload::Any(entry), tempdir.path(), None)
+                {
+                    self.log_and_alert(
+                        LogLevel::Error,
+                        format!("Copy failed: failed to download file: {}", err),
+                    );
+                    return;
+                }
                 // Stat dir
                 let tempdir_entry: FsEntry = match self.host.stat(tempdir_path.as_path()) {
                     Ok(e) => e,
@@ -238,11 +245,17 @@ impl FileTransferActivity {
                 };
                 // Upload to destination
                 let wrkdir: PathBuf = self.remote().wrkdir.clone();
-                self.filetransfer_send(
-                    &tempdir_entry,
+                if let Err(err) = self.filetransfer_send(
+                    TransferPayload::Any(tempdir_entry),
                     wrkdir.as_path(),
                     Some(String::from(dest.to_string_lossy())),
-                );
+                ) {
+                    self.log_and_alert(
+                        LogLevel::Error,
+                        format!("Copy failed: failed to send file: {}", err),
+                    );
+                    return;
+                }
             }
         }
     }

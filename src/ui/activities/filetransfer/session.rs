@@ -64,6 +64,19 @@ enum TransferErrorReason {
     FileTransferError(FileTransferError),
 }
 
+/// ## TransferPayload
+///
+/// Represents the entity to send or receive during a transfer.
+/// - File: describes an individual `FsFile` to send
+/// - Any: Can be any kind of `FsEntry`, but just one
+/// - Many: a list of `FsEntry`
+#[derive(Debug)]
+pub(super) enum TransferPayload {
+    File(FsFile),
+    Any(FsEntry),
+    Many(Vec<FsEntry>),
+}
+
 impl FileTransferActivity {
     /// ### connect
     ///
@@ -155,27 +168,28 @@ impl FileTransferActivity {
     /// If entry is a directory, this applies to directory only
     pub(super) fn filetransfer_send(
         &mut self,
-        entry: &FsEntry,
+        payload: TransferPayload,
         curr_remote_path: &Path,
         dst_name: Option<String>,
-    ) {
-        // Reset states
-        self.transfer.reset();
-        // Calculate total size of transfer
-        let total_transfer_size: usize = self.get_total_transfer_size_local(entry);
-        self.transfer.full.init(total_transfer_size);
-        // Mount progress bar
-        self.mount_progress_bar(format!("Uploading {}...", entry.get_abs_path().display()));
-        // Send recurse
-        self.filetransfer_send_recurse(entry, curr_remote_path, dst_name);
-        // Umount progress bar
-        self.umount_progress_bar();
+    ) -> Result<(), String> {
+        // Use different method based on payload
+        match payload {
+            TransferPayload::Any(entry) => {
+                self.filetransfer_send_any(&entry, curr_remote_path, dst_name)
+            }
+            TransferPayload::File(file) => {
+                self.filetransfer_send_file(&file, curr_remote_path, dst_name)
+            }
+            TransferPayload::Many(entries) => {
+                self.filetransfer_send_many(entries, curr_remote_path)
+            }
+        }
     }
 
-    /// ### filetransfer_send_one
+    /// ### filetransfer_send_file
     ///
     /// Send one file to remote at specified path.
-    pub(super) fn filetransfer_send_one(
+    fn filetransfer_send_file(
         &mut self,
         file: &FsFile,
         curr_remote_path: &Path,
@@ -197,11 +211,62 @@ impl FileTransferActivity {
         };
         remote_path.push(remote_file_name);
         // Send
-        let result = self.filetransfer_send_file(file, remote_path.as_path(), file_name);
+        let result = self.filetransfer_send_one(file, remote_path.as_path(), file_name);
         // Umount progress bar
         self.umount_progress_bar();
         // Return result
         result.map_err(|x| x.to_string())
+    }
+
+    /// ### filetransfer_send_any
+    ///
+    /// Send a `TransferPayload` of type `Any`
+    fn filetransfer_send_any(
+        &mut self,
+        entry: &FsEntry,
+        curr_remote_path: &Path,
+        dst_name: Option<String>,
+    ) -> Result<(), String> {
+        // Reset states
+        self.transfer.reset();
+        // Calculate total size of transfer
+        let total_transfer_size: usize = self.get_total_transfer_size_local(entry);
+        self.transfer.full.init(total_transfer_size);
+        // Mount progress bar
+        self.mount_progress_bar(format!("Uploading {}...", entry.get_abs_path().display()));
+        // Send recurse
+        self.filetransfer_send_recurse(entry, curr_remote_path, dst_name);
+        // Umount progress bar
+        self.umount_progress_bar();
+        Ok(())
+    }
+
+    /// ### filetransfer_send_many
+    ///
+    /// Send many entries to remote
+    fn filetransfer_send_many(
+        &mut self,
+        entries: Vec<FsEntry>,
+        curr_remote_path: &Path,
+    ) -> Result<(), String> {
+        // Reset states
+        self.transfer.reset();
+        // Calculate total size of transfer
+        let mut total_transfer_size: usize = 0;
+        for entry in entries.iter() {
+            total_transfer_size += self.get_total_transfer_size_local(entry);
+        }
+        self.transfer.full.init(total_transfer_size);
+        // Mount progress bar
+        self.mount_progress_bar(format!("Uploading {} entries...", entries.len()));
+        // Send recurse
+        for entry in entries.iter() {
+            // Send
+            self.filetransfer_send_recurse(entry, curr_remote_path, None);
+        }
+        // Umount progress bar
+        self.umount_progress_bar();
+        Ok(())
     }
 
     fn filetransfer_send_recurse(
@@ -225,8 +290,7 @@ impl FileTransferActivity {
         // Match entry
         match entry {
             FsEntry::File(file) => {
-                if let Err(err) =
-                    self.filetransfer_send_file(file, remote_path.as_path(), file_name)
+                if let Err(err) = self.filetransfer_send_one(file, remote_path.as_path(), file_name)
                 {
                     // Log error
                     self.log_and_alert(
@@ -329,7 +393,7 @@ impl FileTransferActivity {
     /// ### filetransfer_send_file
     ///
     /// Send local file and write it to remote path
-    fn filetransfer_send_file(
+    fn filetransfer_send_one(
         &mut self,
         local: &FsFile,
         remote: &Path,
@@ -439,10 +503,28 @@ impl FileTransferActivity {
     /// If entry is a directory, this applies to directory only
     pub(super) fn filetransfer_recv(
         &mut self,
+        payload: TransferPayload,
+        local_path: &Path,
+        dst_name: Option<String>,
+    ) -> Result<(), String> {
+        match payload {
+            TransferPayload::Any(entry) => self.filetransfer_recv_any(&entry, local_path, dst_name),
+            TransferPayload::File(file) => self.filetransfer_recv_file(&file, local_path),
+            TransferPayload::Many(entries) => self.filetransfer_recv_many(entries, local_path),
+        }
+    }
+
+    /// ### filetransfer_recv_any
+    ///
+    /// Recv fs entry from remote.
+    /// If dst_name is Some, entry will be saved with a different name.
+    /// If entry is a directory, this applies to directory only
+    fn filetransfer_recv_any(
+        &mut self,
         entry: &FsEntry,
         local_path: &Path,
         dst_name: Option<String>,
-    ) {
+    ) -> Result<(), String> {
         // Reset states
         self.transfer.reset();
         // Calculate total transfer size
@@ -454,18 +536,13 @@ impl FileTransferActivity {
         self.filetransfer_recv_recurse(entry, local_path, dst_name);
         // Umount progress bar
         self.umount_progress_bar();
+        Ok(())
     }
 
-    /// ### filetransfer_recv_one
+    /// ### filetransfer_recv_file
     ///
     /// Receive a single file from remote.
-    /// Use this function instead of `filetransfer_recv_file` from external files
-    pub(super) fn filetransfer_recv_one(
-        &mut self,
-        entry: &FsFile,
-        local_path: &Path,
-        dst_name: String,
-    ) -> Result<(), String> {
+    fn filetransfer_recv_file(&mut self, entry: &FsFile, local_path: &Path) -> Result<(), String> {
         // Reset states
         self.transfer.reset();
         // Calculate total transfer size
@@ -474,11 +551,39 @@ impl FileTransferActivity {
         // Mount progress bar
         self.mount_progress_bar(format!("Downloading {}...", entry.abs_path.display()));
         // Receive
-        let result = self.filetransfer_recv_file(local_path, entry, dst_name);
+        let result = self.filetransfer_recv_one(local_path, entry, entry.name.clone());
         // Umount progress bar
         self.umount_progress_bar();
         // Return result
         result.map_err(|x| x.to_string())
+    }
+
+    /// ### filetransfer_send_many
+    ///
+    /// Send many entries to remote
+    fn filetransfer_recv_many(
+        &mut self,
+        entries: Vec<FsEntry>,
+        curr_remote_path: &Path,
+    ) -> Result<(), String> {
+        // Reset states
+        self.transfer.reset();
+        // Calculate total size of transfer
+        let mut total_transfer_size: usize = 0;
+        for entry in entries.iter() {
+            total_transfer_size += self.get_total_transfer_size_remote(entry);
+        }
+        self.transfer.full.init(total_transfer_size);
+        // Mount progress bar
+        self.mount_progress_bar(format!("Uploading {} entries...", entries.len()));
+        // Send recurse
+        for entry in entries.iter() {
+            // Send
+            self.filetransfer_recv_recurse(entry, curr_remote_path, None);
+        }
+        // Umount progress bar
+        self.umount_progress_bar();
+        Ok(())
     }
 
     fn filetransfer_recv_recurse(
@@ -504,7 +609,7 @@ impl FileTransferActivity {
                 local_file_path.push(local_file_name.as_str());
                 // Download file
                 if let Err(err) =
-                    self.filetransfer_recv_file(local_file_path.as_path(), file, file_name)
+                    self.filetransfer_recv_one(local_file_path.as_path(), file, file_name)
                 {
                     self.log_and_alert(
                         LogLevel::Error,
@@ -628,10 +733,10 @@ impl FileTransferActivity {
         }
     }
 
-    /// ### filetransfer_recv_file
+    /// ### filetransfer_recv_one
     ///
     /// Receive file from remote and write it to local path
-    fn filetransfer_recv_file(
+    fn filetransfer_recv_one(
         &mut self,
         local: &Path,
         remote: &FsFile,
