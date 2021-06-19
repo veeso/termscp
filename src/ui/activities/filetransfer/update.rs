@@ -118,8 +118,7 @@ impl Update for FileTransferActivity {
                 }
                 (COMPONENT_EXPLORER_LOCAL, &MSG_KEY_CHAR_L) => {
                     // Reload directory
-                    let pwd: PathBuf = self.local().wrkdir.clone();
-                    self.local_scan(pwd.as_path());
+                    self.reload_local_dir();
                     // Reload file list component
                     self.update_local_filelist()
                 }
@@ -191,8 +190,7 @@ impl Update for FileTransferActivity {
                 }
                 (COMPONENT_EXPLORER_REMOTE, &MSG_KEY_CHAR_L) => {
                     // Reload directory
-                    let pwd: PathBuf = self.remote().wrkdir.clone();
-                    self.remote_scan(pwd.as_path());
+                    self.reload_remote_dir();
                     // Reload file list component
                     self.update_remote_filelist()
                 }

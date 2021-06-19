@@ -42,12 +42,14 @@ pub(crate) mod rename;
 pub(crate) mod save;
 pub(crate) mod submit;
 
+#[derive(Debug)]
 pub(crate) enum SelectedEntry {
     One(FsEntry),
     Many(Vec<FsEntry>),
     None,
 }
 
+#[derive(Debug)]
 enum SelectedEntryIndex {
     One(usize),
     Many(Vec<usize>),

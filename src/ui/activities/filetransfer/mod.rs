@@ -57,7 +57,6 @@ use lib::transfer::TransferStates;
 use chrono::{DateTime, Local};
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use std::collections::VecDeque;
-use std::path::PathBuf;
 use tempfile::TempDir;
 use tuirealm::View;
 
@@ -236,11 +235,8 @@ impl Activity for FileTransferActivity {
         if let Err(err) = enable_raw_mode() {
             error!("Failed to enter raw mode: {}", err);
         }
-        // Set working directory
-        let pwd: PathBuf = self.host.pwd();
-        // Get files at current wd
-        self.local_scan(pwd.as_path());
-        self.local_mut().wrkdir = pwd;
+        // Get files at current pwd
+        self.reload_local_dir();
         debug!("Read working directory");
         // Configure text editor
         self.setup_text_editor();

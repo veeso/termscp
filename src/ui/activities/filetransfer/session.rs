@@ -135,19 +135,59 @@ impl FileTransferActivity {
 
     /// ### reload_remote_dir
     ///
-    /// Reload remote directory entries
+    /// Reload remote directory entries and update browser
     pub(super) fn reload_remote_dir(&mut self) {
         // Get current entries
-        if let Ok(pwd) = self.client.pwd() {
-            self.remote_scan(pwd.as_path());
+        if let Ok(wrkdir) = self.client.pwd() {
+            self.remote_scan(wrkdir.as_path());
             // Set wrkdir
-            self.remote_mut().wrkdir = pwd;
+            self.remote_mut().wrkdir = wrkdir;
         }
     }
 
+    /// ### reload_local_dir
+    ///
+    /// Reload local directory entries and update browser
     pub(super) fn reload_local_dir(&mut self) {
-        let wrkdir: PathBuf = self.local().wrkdir.clone();
+        let wrkdir: PathBuf = self.host.pwd();
         self.local_scan(wrkdir.as_path());
+        self.local_mut().wrkdir = wrkdir;
+    }
+
+    /// ### local_scan
+    ///
+    /// Scan current local directory
+    fn local_scan(&mut self, path: &Path) {
+        match self.host.scan_dir(path) {
+            Ok(files) => {
+                // Set files and sort (sorting is implicit)
+                self.local_mut().set_files(files);
+            }
+            Err(err) => {
+                self.log_and_alert(
+                    LogLevel::Error,
+                    format!("Could not scan current directory: {}", err),
+                );
+            }
+        }
+    }
+
+    /// ### remote_scan
+    ///
+    /// Scan current remote directory
+    fn remote_scan(&mut self, path: &Path) {
+        match self.client.list_dir(path) {
+            Ok(files) => {
+                // Set files and sort (sorting is implicit)
+                self.remote_mut().set_files(files);
+            }
+            Err(err) => {
+                self.log_and_alert(
+                    LogLevel::Error,
+                    format!("Could not scan current directory: {}", err),
+                );
+            }
+        }
     }
 
     /// ### filetransfer_send
@@ -559,7 +599,7 @@ impl FileTransferActivity {
             }
         }
         // Reload directory on local
-        self.local_scan(local_path);
+        self.reload_local_dir();
         // if aborted; show alert
         if self.transfer.aborted() {
             // Log abort
@@ -688,42 +728,6 @@ impl FileTransferActivity {
         Ok(())
     }
 
-    /// ### local_scan
-    ///
-    /// Scan current local directory
-    pub(super) fn local_scan(&mut self, path: &Path) {
-        match self.host.scan_dir(path) {
-            Ok(files) => {
-                // Set files and sort (sorting is implicit)
-                self.local_mut().set_files(files);
-            }
-            Err(err) => {
-                self.log_and_alert(
-                    LogLevel::Error,
-                    format!("Could not scan current directory: {}", err),
-                );
-            }
-        }
-    }
-
-    /// ### remote_scan
-    ///
-    /// Scan current remote directory
-    pub(super) fn remote_scan(&mut self, path: &Path) {
-        match self.client.list_dir(path) {
-            Ok(files) => {
-                // Set files and sort (sorting is implicit)
-                self.remote_mut().set_files(files);
-            }
-            Err(err) => {
-                self.log_and_alert(
-                    LogLevel::Error,
-                    format!("Could not scan current directory: {}", err),
-                );
-            }
-        }
-    }
-
     /// ### local_changedir
     ///
     /// Change directory for local
@@ -738,9 +742,7 @@ impl FileTransferActivity {
                     format!("Changed directory on local: {}", path.display()),
                 );
                 // Reload files
-                self.local_scan(path);
-                // Set wrkdir
-                self.local_mut().wrkdir = PathBuf::from(path);
+                self.reload_local_dir();
                 // Push prev_dir to stack
                 if push {
                     self.local_mut().pushd(prev_dir.as_path())
@@ -767,9 +769,7 @@ impl FileTransferActivity {
                     format!("Changed directory on remote: {}", path.display()),
                 );
                 // Update files
-                self.remote_scan(path);
-                // Set wrkdir
-                self.remote_mut().wrkdir = PathBuf::from(path);
+                self.reload_remote_dir();
                 // Push prev_dir to stack
                 if push {
                     self.remote_mut().pushd(prev_dir.as_path())
@@ -809,6 +809,7 @@ impl FileTransferActivity {
                 return Err(format!("Could not read file: {}", err));
             }
         }
+        debug!("Ok, file {} is textual; opening file...", path.display());
         // Put input mode back to normal
         if let Err(err) = disable_raw_mode() {
             error!("Failed to disable raw mode: {}", err);
