@@ -20,7 +20,7 @@
 
 ## 0.5.1
 
-Released on FIXME: ??
+Released on 21/06/2021
 
 - Enhancements:
   - **CI now uses containers to test file transfers (SSH/FTP)**
