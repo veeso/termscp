@@ -35,6 +35,7 @@ Released on 21/06/2021
     - If the terminal window has less than 24 lines, then an error message is displayed in the auth activity
     - Changed auth layout to absolute sizes
 - Bugfix:
+  - Fixed termscp on Windows dying whenever opening a file with text editor
   - Fixed broken input cursor when typing UTF8 characters (tui-realm 0.3.2)
   - Fixed [Issue 44](https://github.com/veeso/termscp/issues/44): Could not move files to other paths in FTP
   - Fixed [Issue 43](https://github.com/veeso/termscp/issues/43): Could not remove non-empty directories in FTP
