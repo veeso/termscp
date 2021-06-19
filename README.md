@@ -69,6 +69,20 @@ while if you're a Windows user, you can install termscp with [Chocolatey](https:
 
 For more information or other platforms, please visit [veeso.github.io](https://veeso.github.io/termscp/#get-started) to view all installation methods.
 
+### Soft Requirements ✔️
+
+These requirements are not forcely required to run termscp, but to enjoy all of its features
+
+- **Linux** users
+  - To **open** files via `V` (at least one of these)
+    - *xdg-open*
+    - *gio*
+    - *gnome-open*
+    - *kde-open*
+- **WSL** users
+  - To **open** files via `V` (at least one of these)
+    - [wslu](https://github.com/wslutilities/wslu)
+
 ---
 
 ## Buy me a coffee ☕
@@ -134,6 +148,7 @@ termscp is powered by these aweseome projects:
 - [crossterm](https://github.com/crossterm-rs/crossterm)
 - [edit](https://github.com/milkey-mouse/edit)
 - [keyring-rs](https://github.com/hwchen/keyring-rs)
+- [open-rs](https://github.com/Byron/open-rs)
 - [rpassword](https://github.com/conradkleinespel/rpassword)
 - [rust-ftp](https://github.com/mattnenterprise/rust-ftp)
 - [ssh2-rs](https://github.com/alexcrichton/ssh2-rs)

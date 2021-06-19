@@ -215,6 +215,14 @@ impl FileTransferActivity {
                     self.view.render(super::COMPONENT_INPUT_NEWFILE, f, popup);
                 }
             }
+            if let Some(props) = self.view.get_props(super::COMPONENT_INPUT_OPEN_WITH) {
+                if props.visible {
+                    let popup = draw_area_in(f.size(), 40, 10);
+                    f.render_widget(Clear, popup);
+                    // make popup
+                    self.view.render(super::COMPONENT_INPUT_OPEN_WITH, f, popup);
+                }
+            }
             if let Some(props) = self.view.get_props(super::COMPONENT_INPUT_RENAME) {
                 if props.visible {
                     let popup = draw_area_in(f.size(), 40, 10);
@@ -591,6 +599,23 @@ impl FileTransferActivity {
 
     pub(super) fn umount_newfile(&mut self) {
         self.view.umount(super::COMPONENT_INPUT_NEWFILE);
+    }
+
+    pub(super) fn mount_openwith(&mut self) {
+        self.view.mount(
+            super::COMPONENT_INPUT_OPEN_WITH,
+            Box::new(Input::new(
+                InputPropsBuilder::default()
+                    .with_borders(Borders::ALL, BorderType::Rounded, Color::White)
+                    .with_label(String::from("Open file with..."))
+                    .build(),
+            )),
+        );
+        self.view.active(super::COMPONENT_INPUT_OPEN_WITH);
+    }
+
+    pub(super) fn umount_openwith(&mut self) {
+        self.view.umount(super::COMPONENT_INPUT_OPEN_WITH);
     }
 
     pub(super) fn mount_rename(&mut self) {
@@ -1030,7 +1055,9 @@ impl FileTransferActivity {
                                     .with_foreground(Color::Cyan)
                                     .build(),
                             )
-                            .add_col(TextSpan::from("             Open text file"))
+                            .add_col(TextSpan::from(
+                                "             Open text file with preferred editor",
+                            ))
                             .add_row()
                             .add_col(
                                 TextSpanBuilder::new("<Q>")
@@ -1063,6 +1090,26 @@ impl FileTransferActivity {
                                     .build(),
                             )
                             .add_col(TextSpan::from("             Go to parent directory"))
+                            .add_row()
+                            .add_col(
+                                TextSpanBuilder::new("<V>")
+                                    .bold()
+                                    .with_foreground(Color::Cyan)
+                                    .build(),
+                            )
+                            .add_col(TextSpan::from(
+                                "             Open file with default application for file type",
+                            ))
+                            .add_row()
+                            .add_col(
+                                TextSpanBuilder::new("<W>")
+                                    .bold()
+                                    .with_foreground(Color::Cyan)
+                                    .build(),
+                            )
+                            .add_col(TextSpan::from(
+                                "             Open file with specified application",
+                            ))
                             .add_row()
                             .add_col(
                                 TextSpanBuilder::new("<X>")

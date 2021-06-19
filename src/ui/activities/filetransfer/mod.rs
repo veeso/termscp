@@ -57,7 +57,7 @@ use lib::transfer::TransferStates;
 use chrono::{DateTime, Local};
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use std::collections::VecDeque;
-use std::path::PathBuf;
+use tempfile::TempDir;
 use tuirealm::View;
 
 // -- Storage keys
@@ -82,6 +82,7 @@ const COMPONENT_INPUT_FIND: &str = "INPUT_FIND";
 const COMPONENT_INPUT_GOTO: &str = "INPUT_GOTO";
 const COMPONENT_INPUT_MKDIR: &str = "INPUT_MKDIR";
 const COMPONENT_INPUT_NEWFILE: &str = "INPUT_NEWFILE";
+const COMPONENT_INPUT_OPEN_WITH: &str = "INPUT_OPEN_WITH";
 const COMPONENT_INPUT_RENAME: &str = "INPUT_RENAME";
 const COMPONENT_INPUT_SAVEAS: &str = "INPUT_SAVEAS";
 const COMPONENT_RADIO_DELETE: &str = "RADIO_DELETE";
@@ -134,6 +135,7 @@ pub struct FileTransferActivity {
     browser: Browser,                 // Browser
     log_records: VecDeque<LogRecord>, // Log records
     transfer: TransferStates,         // Transfer states
+    cache: Option<TempDir>,           // Temporary directory where to store stuff
 }
 
 impl FileTransferActivity {
@@ -160,6 +162,10 @@ impl FileTransferActivity {
             browser: Browser::new(config_client.as_ref()),
             log_records: VecDeque::with_capacity(256), // 256 events is enough I guess
             transfer: TransferStates::default(),
+            cache: match TempDir::new() {
+                Ok(d) => Some(d),
+                Err(_) => None,
+            },
         }
     }
 
@@ -186,6 +192,26 @@ impl FileTransferActivity {
     pub(crate) fn found_mut(&mut self) -> Option<&mut FileExplorer> {
         self.browser.found_mut()
     }
+
+    /// ### get_cache_tmp_name
+    ///
+    /// Get file name for a file in cache
+    pub(crate) fn get_cache_tmp_name(&self, name: &str, file_type: Option<&str>) -> Option<String> {
+        self.cache.as_ref().map(|_| {
+            let base: String = format!(
+                "{}-{}",
+                name,
+                std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_millis()
+            );
+            match file_type {
+                None => base,
+                Some(file_type) => format!("{}.{}", base, file_type),
+            }
+        })
+    }
 }
 
 /**
@@ -209,11 +235,8 @@ impl Activity for FileTransferActivity {
         if let Err(err) = enable_raw_mode() {
             error!("Failed to enter raw mode: {}", err);
         }
-        // Set working directory
-        let pwd: PathBuf = self.host.pwd();
-        // Get files at current wd
-        self.local_scan(pwd.as_path());
-        self.local_mut().wrkdir = pwd;
+        // Get files at current pwd
+        self.reload_local_dir();
         debug!("Read working directory");
         // Configure text editor
         self.setup_text_editor();
@@ -279,6 +302,12 @@ impl Activity for FileTransferActivity {
     /// `on_destroy` is the function which cleans up runtime variables and data before terminating the activity.
     /// This function must be called once before terminating the activity.
     fn on_destroy(&mut self) -> Option<Context> {
+        // Destroy cache
+        if let Some(cache) = self.cache.take() {
+            if let Err(err) = cache.close() {
+                error!("Failed to delete cache: {}", err);
+            }
+        }
         // Disable raw mode
         if let Err(err) = disable_raw_mode() {
             error!("Failed to disable raw mode: {}", err);

@@ -393,10 +393,7 @@ impl Component for FileList {
                     self.states.toggle_file(self.states.list_index());
                     Msg::None
                 }
-                KeyCode::Enter => {
-                    // Report event
-                    Msg::OnSubmit(self.get_state())
-                }
+                KeyCode::Enter => Msg::OnSubmit(self.get_state()),
                 _ => {
                     // Return key event to activity
                     Msg::OnKey(key)
@@ -449,7 +446,7 @@ mod tests {
     use super::*;
 
     use pretty_assertions::assert_eq;
-    use tuirealm::event::KeyEvent;
+    use tuirealm::event::{KeyEvent, KeyModifiers};
 
     #[test]
     fn test_ui_components_file_list_states() {
@@ -626,6 +623,15 @@ mod tests {
             component.on(Event::Key(KeyEvent::from(KeyCode::Char('a')))),
             Msg::OnKey(KeyEvent::from(KeyCode::Char('a')))
         );
+        // Ctrl + a
+        assert_eq!(
+            component.on(Event::Key(KeyEvent::new(
+                KeyCode::Char('a'),
+                KeyModifiers::CONTROL
+            ))),
+            Msg::None
+        );
+        assert_eq!(component.states.selected.len(), component.states.list_len());
     }
 
     #[test]

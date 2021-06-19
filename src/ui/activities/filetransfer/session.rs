@@ -135,19 +135,59 @@ impl FileTransferActivity {
 
     /// ### reload_remote_dir
     ///
-    /// Reload remote directory entries
+    /// Reload remote directory entries and update browser
     pub(super) fn reload_remote_dir(&mut self) {
         // Get current entries
-        if let Ok(pwd) = self.client.pwd() {
-            self.remote_scan(pwd.as_path());
+        if let Ok(wrkdir) = self.client.pwd() {
+            self.remote_scan(wrkdir.as_path());
             // Set wrkdir
-            self.remote_mut().wrkdir = pwd;
+            self.remote_mut().wrkdir = wrkdir;
         }
     }
 
+    /// ### reload_local_dir
+    ///
+    /// Reload local directory entries and update browser
     pub(super) fn reload_local_dir(&mut self) {
-        let wrkdir: PathBuf = self.local().wrkdir.clone();
+        let wrkdir: PathBuf = self.host.pwd();
         self.local_scan(wrkdir.as_path());
+        self.local_mut().wrkdir = wrkdir;
+    }
+
+    /// ### local_scan
+    ///
+    /// Scan current local directory
+    fn local_scan(&mut self, path: &Path) {
+        match self.host.scan_dir(path) {
+            Ok(files) => {
+                // Set files and sort (sorting is implicit)
+                self.local_mut().set_files(files);
+            }
+            Err(err) => {
+                self.log_and_alert(
+                    LogLevel::Error,
+                    format!("Could not scan current directory: {}", err),
+                );
+            }
+        }
+    }
+
+    /// ### remote_scan
+    ///
+    /// Scan current remote directory
+    fn remote_scan(&mut self, path: &Path) {
+        match self.client.list_dir(path) {
+            Ok(files) => {
+                // Set files and sort (sorting is implicit)
+                self.remote_mut().set_files(files);
+            }
+            Err(err) => {
+                self.log_and_alert(
+                    LogLevel::Error,
+                    format!("Could not scan current directory: {}", err),
+                );
+            }
+        }
     }
 
     /// ### filetransfer_send
@@ -559,7 +599,7 @@ impl FileTransferActivity {
             }
         }
         // Reload directory on local
-        self.local_scan(local_path);
+        self.reload_local_dir();
         // if aborted; show alert
         if self.transfer.aborted() {
             // Log abort
@@ -688,42 +728,6 @@ impl FileTransferActivity {
         Ok(())
     }
 
-    /// ### local_scan
-    ///
-    /// Scan current local directory
-    pub(super) fn local_scan(&mut self, path: &Path) {
-        match self.host.scan_dir(path) {
-            Ok(files) => {
-                // Set files and sort (sorting is implicit)
-                self.local_mut().set_files(files);
-            }
-            Err(err) => {
-                self.log_and_alert(
-                    LogLevel::Error,
-                    format!("Could not scan current directory: {}", err),
-                );
-            }
-        }
-    }
-
-    /// ### remote_scan
-    ///
-    /// Scan current remote directory
-    pub(super) fn remote_scan(&mut self, path: &Path) {
-        match self.client.list_dir(path) {
-            Ok(files) => {
-                // Set files and sort (sorting is implicit)
-                self.remote_mut().set_files(files);
-            }
-            Err(err) => {
-                self.log_and_alert(
-                    LogLevel::Error,
-                    format!("Could not scan current directory: {}", err),
-                );
-            }
-        }
-    }
-
     /// ### local_changedir
     ///
     /// Change directory for local
@@ -738,9 +742,7 @@ impl FileTransferActivity {
                     format!("Changed directory on local: {}", path.display()),
                 );
                 // Reload files
-                self.local_scan(path);
-                // Set wrkdir
-                self.local_mut().wrkdir = PathBuf::from(path);
+                self.reload_local_dir();
                 // Push prev_dir to stack
                 if push {
                     self.local_mut().pushd(prev_dir.as_path())
@@ -767,9 +769,7 @@ impl FileTransferActivity {
                     format!("Changed directory on remote: {}", path.display()),
                 );
                 // Update files
-                self.remote_scan(path);
-                // Set wrkdir
-                self.remote_mut().wrkdir = PathBuf::from(path);
+                self.reload_remote_dir();
                 // Push prev_dir to stack
                 if push {
                     self.remote_mut().pushd(prev_dir.as_path())
@@ -809,6 +809,7 @@ impl FileTransferActivity {
                 return Err(format!("Could not read file: {}", err));
             }
         }
+        debug!("Ok, file {} is textual; opening file...", path.display());
         // Put input mode back to normal
         if let Err(err) = disable_raw_mode() {
             error!("Failed to disable raw mode: {}", err);
@@ -844,38 +845,32 @@ impl FileTransferActivity {
     /// Edit file on remote host
     pub(super) fn edit_remote_file(&mut self, file: &FsFile) -> Result<(), String> {
         // Create temp file
-        let tmpfile: tempfile::NamedTempFile = match tempfile::NamedTempFile::new() {
-            Ok(f) => f,
-            Err(err) => {
-                return Err(format!("Could not create temporary file: {}", err));
-            }
+        let tmpfile: PathBuf = match self.download_file_as_temp(file) {
+            Ok(p) => p,
+            Err(err) => return Err(err),
         };
-        // Download file
-        if let Err(err) = self.filetransfer_recv_file(tmpfile.path(), file, file.name.clone()) {
-            return Err(format!("Could not open file {}: {}", file.name, err));
-        }
         // Get current file modification time
-        let prev_mtime: SystemTime = match self.host.stat(tmpfile.path()) {
+        let prev_mtime: SystemTime = match self.host.stat(tmpfile.as_path()) {
             Ok(e) => e.get_last_change_time(),
             Err(err) => {
                 return Err(format!(
                     "Could not stat \"{}\": {}",
-                    tmpfile.path().display(),
+                    tmpfile.as_path().display(),
                     err
                 ))
             }
         };
         // Edit file
-        if let Err(err) = self.edit_local_file(tmpfile.path()) {
+        if let Err(err) = self.edit_local_file(tmpfile.as_path()) {
             return Err(err);
         }
         // Get local fs entry
-        let tmpfile_entry: FsEntry = match self.host.stat(tmpfile.path()) {
+        let tmpfile_entry: FsEntry = match self.host.stat(tmpfile.as_path()) {
             Ok(e) => e,
             Err(err) => {
                 return Err(format!(
                     "Could not stat \"{}\": {}",
-                    tmpfile.path().display(),
+                    tmpfile.as_path().display(),
                     err
                 ))
             }
@@ -891,12 +886,12 @@ impl FileTransferActivity {
                     ),
                 );
                 // Get local fs entry
-                let tmpfile_entry: FsEntry = match self.host.stat(tmpfile.path()) {
+                let tmpfile_entry: FsEntry = match self.host.stat(tmpfile.as_path()) {
                     Ok(e) => e,
                     Err(err) => {
                         return Err(format!(
                             "Could not stat \"{}\": {}",
-                            tmpfile.path().display(),
+                            tmpfile.as_path().display(),
                             err
                         ))
                     }
@@ -1032,6 +1027,33 @@ impl FileTransferActivity {
                     Some(String::from(dest.to_string_lossy())),
                 );
             }
+        }
+    }
+
+    /// ### download_file_as_temp
+    ///
+    /// Download provided file as a temporary file
+    pub(super) fn download_file_as_temp(&mut self, file: &FsFile) -> Result<PathBuf, String> {
+        let tmpfile: PathBuf = match self.cache.as_ref() {
+            Some(cache) => {
+                let mut p: PathBuf = cache.path().to_path_buf();
+                p.push(file.name.as_str());
+                p
+            }
+            None => {
+                return Err(String::from(
+                    "Could not create tempfile: cache not available",
+                ))
+            }
+        };
+        // Download file
+        match self.filetransfer_recv_file(tmpfile.as_path(), file, file.name.clone()) {
+            Err(err) => Err(format!(
+                "Could not download {} to temporary file: {}",
+                file.abs_path.display(),
+                err
+            )),
+            Ok(()) => Ok(tmpfile),
         }
     }
 
