@@ -29,26 +29,20 @@
 pub mod filestorage;
 #[cfg(any(target_os = "windows", target_os = "macos"))]
 pub mod keyringstorage;
+// ext
+use thiserror::Error;
 
 /// ## KeyStorageError
 ///
 /// defines the error type for the `KeyStorage`
-#[derive(PartialEq, std::fmt::Debug)]
+#[derive(Debug, Error, PartialEq)]
 pub enum KeyStorageError {
-    //BadKey,
+    #[error("Key has a bad syntax")]
+    BadSytax,
+    #[error("Provider service error")]
     ProviderError,
+    #[error("No such key")]
     NoSuchKey,
-}
-
-impl std::fmt::Display for KeyStorageError {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        let err: String = String::from(match &self {
-            //KeyStorageError::BadKey => "Bad key syntax",
-            KeyStorageError::ProviderError => "Provider service error",
-            KeyStorageError::NoSuchKey => "No such key",
-        });
-        write!(f, "{}", err)
-    }
 }
 
 /// ## KeyStorage
@@ -83,11 +77,15 @@ mod tests {
     #[test]
     fn test_system_keys_mod_errors() {
         assert_eq!(
-            format!("{}", KeyStorageError::ProviderError),
+            KeyStorageError::BadSytax.to_string(),
+            String::from("Key has a bad syntax")
+        );
+        assert_eq!(
+            KeyStorageError::ProviderError.to_string(),
             String::from("Provider service error")
         );
         assert_eq!(
-            format!("{}", KeyStorageError::NoSuchKey),
+            KeyStorageError::NoSuchKey.to_string(),
             String::from("No such key")
         );
     }
