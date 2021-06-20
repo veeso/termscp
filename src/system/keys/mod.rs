@@ -77,6 +77,7 @@ mod tests {
 
     #[test]
     fn test_system_keys_mod_errors() {
+        #[cfg(feature = "with-keyring")]
         assert_eq!(
             KeyStorageError::BadSytax.to_string(),
             String::from("Key has a bad syntax")
