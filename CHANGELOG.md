@@ -34,11 +34,11 @@ Released on FIXME: ??
   - libdbus is now a dependency
   - added `with-keyring` feature
   - **❗ BREAKING CHANGE ❗**: if you start using keyring on Linux, all the saved password will be lost
-- **Installation script**:
-  - From now on, in case cargo is used to install termscp, all the cargo dependencies will be installed
 - **In-app release notes**
   - Possibility to see the release note of the new available release whenever a new version is available
   - Just press `<CTRL+R>` when a new version is available from the auth activity to read the release notes
+- **Installation script**:
+  - From now on, in case cargo is used to install termscp, all the cargo dependencies will be installed
 - Bugfix:
   - Fixed broken input cursor when typing UTF8 characters (tui-realm 0.3.2)
 - Dependencies:
