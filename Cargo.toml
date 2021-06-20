@@ -70,6 +70,7 @@ features = ["json"]
 version = "2.1.0"
 
 [features]
+default = [ "with-keyring" ]
 githubActions = []
 with-containers = []
 with-keyring = [ "keyring" ]
@@ -77,10 +78,6 @@ with-keyring = [ "keyring" ]
 [target."cfg(any(target_os = \"unix\", target_os = \"macos\", target_os = \"linux\"))"]
 [target."cfg(any(target_os = \"unix\", target_os = \"macos\", target_os = \"linux\"))".dependencies]
 users = "0.11.0"
-
-[target."cfg(any(target_os = \"windows\", target_os = \"macos\", target_os = \"linux\"))"]
-[target."cfg(any(target_os = \"windows\", target_os = \"macos\", target_os = \"linux\"))".features]
-default = [ "keyring" ]
 
 [target."cfg(target_os = \"windows\")"]
 [target."cfg(target_os = \"windows\")".dependencies]

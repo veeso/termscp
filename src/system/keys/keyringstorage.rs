@@ -67,7 +67,7 @@ impl KeyStorage for KeyringStorage {
                 #[cfg(target_os = "macos")]
                 KeyringError::MacOsKeychainError(_) => Err(KeyStorageError::NoSuchKey),
                 #[cfg(target_os = "linux")]
-                KeyringError::SecretServiceError(SsError) => Err(KeyStorageError::ProviderError),
+                KeyringError::SecretServiceError(_) => Err(KeyStorageError::ProviderError),
                 KeyringError::Parse(_) => Err(KeyStorageError::BadSytax),
                 _ => Err(KeyStorageError::ProviderError),
             },
@@ -94,7 +94,13 @@ impl KeyStorage for KeyringStorage {
         // Check what kind of error is returned
         match storage.get_password() {
             Ok(_) => true,
+            #[cfg(not(target_os = "linux"))]
             Err(err) => !matches!(err, KeyringError::NoBackendFound),
+            #[cfg(target_os = "linux")]
+            Err(err) => !matches!(
+                err,
+                KeyringError::NoBackendFound | KeyringError::SecretServiceError(_)
+            ),
         }
     }
 }

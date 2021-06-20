@@ -28,7 +28,7 @@
 // Deps
 extern crate whoami;
 // Crate
-#[cfg(any(target_os = "windows", target_os = "macos"))]
+#[cfg(feature = "with-keyring")]
 use super::keys::keyringstorage::KeyringStorage;
 use super::keys::{filestorage::FileStorage, KeyStorage, KeyStorageError};
 // Local
@@ -69,8 +69,8 @@ impl BookmarksClient {
         // Create default hosts
         let default_hosts: UserHosts = Default::default();
         debug!("Setting up bookmarks client...");
-        // Make a key storage (windows / macos)
-        #[cfg(any(target_os = "windows", target_os = "macos"))]
+        // Make a key storage (with-keyring)
+        #[cfg(feature = "with-keyring")]
         let (key_storage, service_id): (Box<dyn KeyStorage>, &str) = {
             debug!("Setting up KeyStorage");
             let username: String = whoami::username();
@@ -91,8 +91,8 @@ impl BookmarksClient {
                 }
             }
         };
-        // Make a key storage (linux / unix)
-        #[cfg(any(target_os = "linux", target_os = "unix"))]
+        // Make a key storage (wno-keyring)
+        #[cfg(not(feature = "with-keyring"))]
         let (key_storage, service_id): (Box<dyn KeyStorage>, &str) = {
             #[cfg(not(test))]
             let app_name: &str = "bookmarks";

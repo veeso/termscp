@@ -27,7 +27,7 @@
  */
 // Storages
 pub mod filestorage;
-#[cfg(any(target_os = "windows", target_os = "macos"))]
+#[cfg(feature = "with-keyring")]
 pub mod keyringstorage;
 // ext
 use thiserror::Error;
