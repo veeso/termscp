@@ -59,7 +59,7 @@ Termscp is a feature rich terminal file transfer and explorer, with support for 
 If you're considering to install termscp I want to thank you 💜 ! I hope you will enjoy termscp!  
 If you want to contribute to this project, don't forget to check out our contribute guide. [Read More](CONTRIBUTING.md)
 
-If you are a Linux or a MacOS user this simple shell script will install termscp on your system with a single command:
+If you are a Linux, a FreeBSD or a MacOS user this simple shell script will install termscp on your system with a single command:
 
 ```sh
 curl --proto '=https' --tlsv1.2 -sSf "https://raw.githubusercontent.com/veeso/termscp/main/install.sh" | sh

@@ -13,5 +13,5 @@ deps: {
   libssh: {origin: security/libssh, version: 0.9.5}
 }
 files: {
-  /usr/local/bin/termscp: "SHA256 HERE"
+  /usr/local/bin/termscp: "87543d13b11b6e601ba8cdde9d704c80dc3515f1681fbf71fd0b31d7206efc09"
 }
