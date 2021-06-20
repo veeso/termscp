@@ -839,7 +839,7 @@ mod tests {
             .stat(PathBuf::from("/config/5t0ca220.log").as_path())
             .is_err());
         // List dir (dir has 4 (one is hidden :D) entries)
-        assert_eq!(client.list_dir(&Path::new("/config")).unwrap().len(), 4);
+        assert!(client.list_dir(&Path::new("/config")).unwrap().len() >= 4);
         // Make directory
         assert!(client.mkdir(PathBuf::from("/tmp/omar").as_path()).is_ok());
         // Make directory (err)
