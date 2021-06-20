@@ -7,6 +7,7 @@ RUN pacman -Syu --noconfirm \
     gcc \
     openssl \
     pkg-config \
+    dbus \
     sudo
 # Install rust
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > /tmp/rust.sh && \
