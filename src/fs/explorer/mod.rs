@@ -595,7 +595,7 @@ mod tests {
             group: Some(0),            // UNIX only
             unix_pex: Some((6, 4, 4)), // UNIX only
         });
-        #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
+        #[cfg(any(target_family = "unix", target_os = "macos", target_os = "linux"))]
         assert_eq!(
             explorer.fmt_file(&entry),
             format!(

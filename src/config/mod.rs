@@ -225,7 +225,7 @@ mod tests {
             PathBuf::from(cfg.user_interface.text_editor.file_name().unwrap()), // NOTE: since edit 0.1.3 real path is used
             PathBuf::from("vim.EXE")
         );
-        #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
+        #[cfg(any(target_family = "unix", target_os = "macos", target_os = "linux"))]
         assert_eq!(
             PathBuf::from(cfg.user_interface.text_editor.file_name().unwrap()), // NOTE: since edit 0.1.3 real path is used
             PathBuf::from("vim")

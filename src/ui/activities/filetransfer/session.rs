@@ -656,7 +656,11 @@ impl FileTransferActivity {
                 match self.host.mkdir_ex(local_dir_path.as_path(), true) {
                     Ok(_) => {
                         // Apply file mode to directory
-                        #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
+                        #[cfg(any(
+                            target_family = "unix",
+                            target_os = "macos",
+                            target_os = "linux"
+                        ))]
                         if let Some(pex) = dir.unix_pex {
                             if let Err(err) = self.host.chmod(local_dir_path.as_path(), pex) {
                                 self.log(
@@ -813,7 +817,11 @@ impl FileTransferActivity {
                             return Err(TransferErrorReason::Abrupted);
                         }
                         // Apply file mode to file
-                        #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
+                        #[cfg(any(
+                            target_family = "unix",
+                            target_os = "macos",
+                            target_os = "linux"
+                        ))]
                         if let Some(pex) = remote.unix_pex {
                             if let Err(err) = self.host.chmod(local, pex) {
                                 self.log(

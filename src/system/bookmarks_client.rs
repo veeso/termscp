@@ -92,7 +92,7 @@ impl BookmarksClient {
             }
         };
         // Make a key storage (linux / unix)
-        #[cfg(any(target_os = "linux", target_os = "unix"))]
+        #[cfg(any(target_os = "linux", target_family = "unix"))]
         let (key_storage, service_id): (Box<dyn KeyStorage>, &str) = {
             #[cfg(not(test))]
             let app_name: &str = "bookmarks";
@@ -446,7 +446,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(any(target_os = "unix", target_os = "linux"))]
+    #[cfg(any(target_family = "unix", target_os = "linux"))]
     fn test_system_bookmarks_new_err() {
         assert!(BookmarksClient::new(
             Path::new("/tmp/oifoif/omar"),

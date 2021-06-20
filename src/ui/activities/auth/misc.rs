@@ -73,7 +73,7 @@ impl AuthActivity {
     ///
     /// Check minimum window size window
     pub(super) fn check_minimum_window_size(&mut self, height: u16) {
-        if height < 24 {
+        if height < 25 {
             // Mount window error
             self.mount_size_err();
         } else {
