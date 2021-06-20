@@ -117,6 +117,7 @@ impl FileTransferActivity {
             }
             Err(err) => {
                 // Set popup fatal error
+                self.umount_wait();
                 self.mount_fatal(&err.to_string());
             }
         }
