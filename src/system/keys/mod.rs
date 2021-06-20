@@ -37,6 +37,7 @@ use thiserror::Error;
 /// defines the error type for the `KeyStorage`
 #[derive(Debug, Error, PartialEq)]
 pub enum KeyStorageError {
+    #[cfg(feature = "with-keyring")]
     #[error("Key has a bad syntax")]
     BadSytax,
     #[error("Provider service error")]
