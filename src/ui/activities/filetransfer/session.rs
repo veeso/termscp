@@ -40,11 +40,9 @@ use crate::utils::fmt::fmt_millis;
 
 // Ext
 use bytesize::ByteSize;
-use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
-use std::fs::OpenOptions;
 use std::io::{Read, Seek, Write};
 use std::path::{Path, PathBuf};
-use std::time::{Instant, SystemTime};
+use std::time::Instant;
 use thiserror::Error;
 
 /// ## TransferErrorReason
@@ -64,6 +62,19 @@ enum TransferErrorReason {
     RemoteIoError(std::io::Error),
     #[error("File transfer error: {0}")]
     FileTransferError(FileTransferError),
+}
+
+/// ## TransferPayload
+///
+/// Represents the entity to send or receive during a transfer.
+/// - File: describes an individual `FsFile` to send
+/// - Any: Can be any kind of `FsEntry`, but just one
+/// - Many: a list of `FsEntry`
+#[derive(Debug)]
+pub(super) enum TransferPayload {
+    File(FsFile),
+    Any(FsEntry),
+    Many(Vec<FsEntry>),
 }
 
 impl FileTransferActivity {
@@ -106,6 +117,7 @@ impl FileTransferActivity {
             }
             Err(err) => {
                 // Set popup fatal error
+                self.umount_wait();
                 self.mount_fatal(&err.to_string());
             }
         }
@@ -197,10 +209,65 @@ impl FileTransferActivity {
     /// If entry is a directory, this applies to directory only
     pub(super) fn filetransfer_send(
         &mut self,
+        payload: TransferPayload,
+        curr_remote_path: &Path,
+        dst_name: Option<String>,
+    ) -> Result<(), String> {
+        // Use different method based on payload
+        match payload {
+            TransferPayload::Any(entry) => {
+                self.filetransfer_send_any(&entry, curr_remote_path, dst_name)
+            }
+            TransferPayload::File(file) => {
+                self.filetransfer_send_file(&file, curr_remote_path, dst_name)
+            }
+            TransferPayload::Many(entries) => {
+                self.filetransfer_send_many(entries, curr_remote_path)
+            }
+        }
+    }
+
+    /// ### filetransfer_send_file
+    ///
+    /// Send one file to remote at specified path.
+    fn filetransfer_send_file(
+        &mut self,
+        file: &FsFile,
+        curr_remote_path: &Path,
+        dst_name: Option<String>,
+    ) -> Result<(), String> {
+        // Reset states
+        self.transfer.reset();
+        // Calculate total size of transfer
+        let total_transfer_size: usize = file.size;
+        self.transfer.full.init(total_transfer_size);
+        // Mount progress bar
+        self.mount_progress_bar(format!("Uploading {}...", file.abs_path.display()));
+        // Get remote path
+        let file_name: String = file.name.clone();
+        let mut remote_path: PathBuf = PathBuf::from(curr_remote_path);
+        let remote_file_name: PathBuf = match dst_name {
+            Some(s) => PathBuf::from(s.as_str()),
+            None => PathBuf::from(file_name.as_str()),
+        };
+        remote_path.push(remote_file_name);
+        // Send
+        let result = self.filetransfer_send_one(file, remote_path.as_path(), file_name);
+        // Umount progress bar
+        self.umount_progress_bar();
+        // Return result
+        result.map_err(|x| x.to_string())
+    }
+
+    /// ### filetransfer_send_any
+    ///
+    /// Send a `TransferPayload` of type `Any`
+    fn filetransfer_send_any(
+        &mut self,
         entry: &FsEntry,
         curr_remote_path: &Path,
         dst_name: Option<String>,
-    ) {
+    ) -> Result<(), String> {
         // Reset states
         self.transfer.reset();
         // Calculate total size of transfer
@@ -212,6 +279,34 @@ impl FileTransferActivity {
         self.filetransfer_send_recurse(entry, curr_remote_path, dst_name);
         // Umount progress bar
         self.umount_progress_bar();
+        Ok(())
+    }
+
+    /// ### filetransfer_send_many
+    ///
+    /// Send many entries to remote
+    fn filetransfer_send_many(
+        &mut self,
+        entries: Vec<FsEntry>,
+        curr_remote_path: &Path,
+    ) -> Result<(), String> {
+        // Reset states
+        self.transfer.reset();
+        // Calculate total size of transfer
+        let total_transfer_size: usize = entries
+            .iter()
+            .map(|x| self.get_total_transfer_size_local(x))
+            .sum();
+        self.transfer.full.init(total_transfer_size);
+        // Mount progress bar
+        self.mount_progress_bar(format!("Uploading {} entries...", entries.len()));
+        // Send recurse
+        entries
+            .iter()
+            .for_each(|x| self.filetransfer_send_recurse(x, curr_remote_path, None));
+        // Umount progress bar
+        self.umount_progress_bar();
+        Ok(())
     }
 
     fn filetransfer_send_recurse(
@@ -235,8 +330,7 @@ impl FileTransferActivity {
         // Match entry
         match entry {
             FsEntry::File(file) => {
-                if let Err(err) =
-                    self.filetransfer_send_file(file, remote_path.as_path(), file_name)
+                if let Err(err) = self.filetransfer_send_one(file, remote_path.as_path(), file_name)
                 {
                     // Log error
                     self.log_and_alert(
@@ -339,7 +433,7 @@ impl FileTransferActivity {
     /// ### filetransfer_send_file
     ///
     /// Send local file and write it to remote path
-    fn filetransfer_send_file(
+    fn filetransfer_send_one(
         &mut self,
         local: &FsFile,
         remote: &Path,
@@ -449,10 +543,28 @@ impl FileTransferActivity {
     /// If entry is a directory, this applies to directory only
     pub(super) fn filetransfer_recv(
         &mut self,
+        payload: TransferPayload,
+        local_path: &Path,
+        dst_name: Option<String>,
+    ) -> Result<(), String> {
+        match payload {
+            TransferPayload::Any(entry) => self.filetransfer_recv_any(&entry, local_path, dst_name),
+            TransferPayload::File(file) => self.filetransfer_recv_file(&file, local_path),
+            TransferPayload::Many(entries) => self.filetransfer_recv_many(entries, local_path),
+        }
+    }
+
+    /// ### filetransfer_recv_any
+    ///
+    /// Recv fs entry from remote.
+    /// If dst_name is Some, entry will be saved with a different name.
+    /// If entry is a directory, this applies to directory only
+    fn filetransfer_recv_any(
+        &mut self,
         entry: &FsEntry,
         local_path: &Path,
         dst_name: Option<String>,
-    ) {
+    ) -> Result<(), String> {
         // Reset states
         self.transfer.reset();
         // Calculate total transfer size
@@ -464,6 +576,53 @@ impl FileTransferActivity {
         self.filetransfer_recv_recurse(entry, local_path, dst_name);
         // Umount progress bar
         self.umount_progress_bar();
+        Ok(())
+    }
+
+    /// ### filetransfer_recv_file
+    ///
+    /// Receive a single file from remote.
+    fn filetransfer_recv_file(&mut self, entry: &FsFile, local_path: &Path) -> Result<(), String> {
+        // Reset states
+        self.transfer.reset();
+        // Calculate total transfer size
+        let total_transfer_size: usize = entry.size;
+        self.transfer.full.init(total_transfer_size);
+        // Mount progress bar
+        self.mount_progress_bar(format!("Downloading {}...", entry.abs_path.display()));
+        // Receive
+        let result = self.filetransfer_recv_one(local_path, entry, entry.name.clone());
+        // Umount progress bar
+        self.umount_progress_bar();
+        // Return result
+        result.map_err(|x| x.to_string())
+    }
+
+    /// ### filetransfer_send_many
+    ///
+    /// Send many entries to remote
+    fn filetransfer_recv_many(
+        &mut self,
+        entries: Vec<FsEntry>,
+        curr_remote_path: &Path,
+    ) -> Result<(), String> {
+        // Reset states
+        self.transfer.reset();
+        // Calculate total size of transfer
+        let total_transfer_size: usize = entries
+            .iter()
+            .map(|x| self.get_total_transfer_size_remote(x))
+            .sum();
+        self.transfer.full.init(total_transfer_size);
+        // Mount progress bar
+        self.mount_progress_bar(format!("Downloading {} entries...", entries.len()));
+        // Send recurse
+        entries
+            .iter()
+            .for_each(|x| self.filetransfer_recv_recurse(x, curr_remote_path, None));
+        // Umount progress bar
+        self.umount_progress_bar();
+        Ok(())
     }
 
     fn filetransfer_recv_recurse(
@@ -489,7 +648,7 @@ impl FileTransferActivity {
                 local_file_path.push(local_file_name.as_str());
                 // Download file
                 if let Err(err) =
-                    self.filetransfer_recv_file(local_file_path.as_path(), file, file_name)
+                    self.filetransfer_recv_one(local_file_path.as_path(), file, file_name)
                 {
                     self.log_and_alert(
                         LogLevel::Error,
@@ -537,7 +696,11 @@ impl FileTransferActivity {
                 match self.host.mkdir_ex(local_dir_path.as_path(), true) {
                     Ok(_) => {
                         // Apply file mode to directory
-                        #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
+                        #[cfg(any(
+                            target_family = "unix",
+                            target_os = "macos",
+                            target_os = "linux"
+                        ))]
                         if let Some(pex) = dir.unix_pex {
                             if let Err(err) = self.host.chmod(local_dir_path.as_path(), pex) {
                                 self.log(
@@ -613,10 +776,10 @@ impl FileTransferActivity {
         }
     }
 
-    /// ### filetransfer_recv_file
+    /// ### filetransfer_recv_one
     ///
     /// Receive file from remote and write it to local path
-    fn filetransfer_recv_file(
+    fn filetransfer_recv_one(
         &mut self,
         local: &Path,
         remote: &FsFile,
@@ -694,7 +857,11 @@ impl FileTransferActivity {
                             return Err(TransferErrorReason::Abrupted);
                         }
                         // Apply file mode to file
-                        #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
+                        #[cfg(any(
+                            target_family = "unix",
+                            target_os = "macos",
+                            target_os = "linux"
+                        ))]
                         if let Some(pex) = remote.unix_pex {
                             if let Err(err) = self.host.chmod(local, pex) {
                                 self.log(
@@ -785,251 +952,6 @@ impl FileTransferActivity {
         }
     }
 
-    /// ### edit_local_file
-    ///
-    /// Edit a file on localhost
-    pub(super) fn edit_local_file(&mut self, path: &Path) -> Result<(), String> {
-        // Read first 2048 bytes or less from file to check if it is textual
-        match OpenOptions::new().read(true).open(path) {
-            Ok(mut f) => {
-                // Read
-                let mut buff: [u8; 2048] = [0; 2048];
-                match f.read(&mut buff) {
-                    Ok(size) => {
-                        if content_inspector::inspect(&buff[0..size]).is_binary() {
-                            return Err("Could not open file in editor: file is binary".to_string());
-                        }
-                    }
-                    Err(err) => {
-                        return Err(format!("Could not read file: {}", err));
-                    }
-                }
-            }
-            Err(err) => {
-                return Err(format!("Could not read file: {}", err));
-            }
-        }
-        debug!("Ok, file {} is textual; opening file...", path.display());
-        // Put input mode back to normal
-        if let Err(err) = disable_raw_mode() {
-            error!("Failed to disable raw mode: {}", err);
-        }
-        // Leave alternate mode
-        if let Some(ctx) = self.context.as_mut() {
-            ctx.leave_alternate_screen();
-        }
-        // Open editor
-        match edit::edit_file(path) {
-            Ok(_) => self.log(
-                LogLevel::Info,
-                format!(
-                    "Changes performed through editor saved to \"{}\"!",
-                    path.display()
-                ),
-            ),
-            Err(err) => return Err(format!("Could not open editor: {}", err)),
-        }
-        if let Some(ctx) = self.context.as_mut() {
-            // Clear screen
-            ctx.clear_screen();
-            // Enter alternate mode
-            ctx.enter_alternate_screen();
-        }
-        // Re-enable raw mode
-        let _ = enable_raw_mode();
-        Ok(())
-    }
-
-    /// ### edit_remote_file
-    ///
-    /// Edit file on remote host
-    pub(super) fn edit_remote_file(&mut self, file: &FsFile) -> Result<(), String> {
-        // Create temp file
-        let tmpfile: PathBuf = match self.download_file_as_temp(file) {
-            Ok(p) => p,
-            Err(err) => return Err(err),
-        };
-        // Get current file modification time
-        let prev_mtime: SystemTime = match self.host.stat(tmpfile.as_path()) {
-            Ok(e) => e.get_last_change_time(),
-            Err(err) => {
-                return Err(format!(
-                    "Could not stat \"{}\": {}",
-                    tmpfile.as_path().display(),
-                    err
-                ))
-            }
-        };
-        // Edit file
-        if let Err(err) = self.edit_local_file(tmpfile.as_path()) {
-            return Err(err);
-        }
-        // Get local fs entry
-        let tmpfile_entry: FsEntry = match self.host.stat(tmpfile.as_path()) {
-            Ok(e) => e,
-            Err(err) => {
-                return Err(format!(
-                    "Could not stat \"{}\": {}",
-                    tmpfile.as_path().display(),
-                    err
-                ))
-            }
-        };
-        // Check if file has changed
-        match prev_mtime != tmpfile_entry.get_last_change_time() {
-            true => {
-                self.log(
-                    LogLevel::Info,
-                    format!(
-                        "File \"{}\" has changed; writing changes to remote",
-                        file.abs_path.display()
-                    ),
-                );
-                // Get local fs entry
-                let tmpfile_entry: FsEntry = match self.host.stat(tmpfile.as_path()) {
-                    Ok(e) => e,
-                    Err(err) => {
-                        return Err(format!(
-                            "Could not stat \"{}\": {}",
-                            tmpfile.as_path().display(),
-                            err
-                        ))
-                    }
-                };
-                // Write file
-                let tmpfile_entry: &FsFile = match &tmpfile_entry {
-                    FsEntry::Directory(_) => panic!("tempfile is a directory for some reason"),
-                    FsEntry::File(f) => f,
-                };
-                // Send file
-                if let Err(err) = self.filetransfer_send_file(
-                    tmpfile_entry,
-                    file.abs_path.as_path(),
-                    file.name.clone(),
-                ) {
-                    return Err(format!(
-                        "Could not write file {}: {}",
-                        file.abs_path.display(),
-                        err
-                    ));
-                }
-            }
-            false => {
-                self.log(
-                    LogLevel::Info,
-                    format!("File \"{}\" hasn't changed", file.abs_path.display()),
-                );
-            }
-        }
-        Ok(())
-    }
-
-    /// ### tricky_copy
-    ///
-    /// Tricky copy will be used whenever copy command is not available on remote host
-    pub(super) fn tricky_copy(&mut self, entry: &FsEntry, dest: &Path) {
-        // match entry
-        match entry {
-            FsEntry::File(entry) => {
-                // Create tempfile
-                let tmpfile: tempfile::NamedTempFile = match tempfile::NamedTempFile::new() {
-                    Ok(f) => f,
-                    Err(err) => {
-                        self.log_and_alert(
-                            LogLevel::Error,
-                            format!("Copy failed: could not create temporary file: {}", err),
-                        );
-                        return;
-                    }
-                };
-                // Download file
-                if let Err(err) =
-                    self.filetransfer_recv_file(tmpfile.path(), entry, entry.name.clone())
-                {
-                    self.log_and_alert(
-                        LogLevel::Error,
-                        format!("Copy failed: could not download to temporary file: {}", err),
-                    );
-                    return;
-                }
-                // Get local fs entry
-                let tmpfile_entry: FsEntry = match self.host.stat(tmpfile.path()) {
-                    Ok(e) => e,
-                    Err(err) => {
-                        self.log_and_alert(
-                            LogLevel::Error,
-                            format!(
-                                "Copy failed: could not stat \"{}\": {}",
-                                tmpfile.path().display(),
-                                err
-                            ),
-                        );
-                        return;
-                    }
-                };
-                let tmpfile_entry = match &tmpfile_entry {
-                    FsEntry::Directory(_) => panic!("tempfile is a directory for some reason"),
-                    FsEntry::File(f) => f,
-                };
-                // Upload file to destination
-                if let Err(err) = self.filetransfer_send_file(
-                    tmpfile_entry,
-                    dest,
-                    String::from(dest.to_string_lossy()),
-                ) {
-                    self.log_and_alert(
-                        LogLevel::Error,
-                        format!(
-                            "Copy failed: could not write file {}: {}",
-                            entry.abs_path.display(),
-                            err
-                        ),
-                    );
-                    return;
-                }
-            }
-            FsEntry::Directory(_) => {
-                let tempdir: tempfile::TempDir = match tempfile::TempDir::new() {
-                    Ok(d) => d,
-                    Err(err) => {
-                        self.log_and_alert(
-                            LogLevel::Error,
-                            format!("Copy failed: could not create temporary directory: {}", err),
-                        );
-                        return;
-                    }
-                };
-                // Download file
-                self.filetransfer_recv(entry, tempdir.path(), None);
-                // Get path of dest
-                let mut tempdir_path: PathBuf = tempdir.path().to_path_buf();
-                tempdir_path.push(entry.get_name());
-                // Stat dir
-                let tempdir_entry: FsEntry = match self.host.stat(tempdir_path.as_path()) {
-                    Ok(e) => e,
-                    Err(err) => {
-                        self.log_and_alert(
-                            LogLevel::Error,
-                            format!(
-                                "Copy failed: could not stat \"{}\": {}",
-                                tempdir.path().display(),
-                                err
-                            ),
-                        );
-                        return;
-                    }
-                };
-                // Upload to destination
-                let wrkdir: PathBuf = self.remote().wrkdir.clone();
-                self.filetransfer_send(
-                    &tempdir_entry,
-                    wrkdir.as_path(),
-                    Some(String::from(dest.to_string_lossy())),
-                );
-            }
-        }
-    }
-
     /// ### download_file_as_temp
     ///
     /// Download provided file as a temporary file
@@ -1047,7 +969,11 @@ impl FileTransferActivity {
             }
         };
         // Download file
-        match self.filetransfer_recv_file(tmpfile.as_path(), file, file.name.clone()) {
+        match self.filetransfer_recv(
+            TransferPayload::File(file.clone()),
+            tmpfile.as_path(),
+            Some(file.name.clone()),
+        ) {
             Err(err) => Err(format!(
                 "Could not download {} to temporary file: {}",
                 file.abs_path.display(),

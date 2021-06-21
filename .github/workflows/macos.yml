@@ -12,8 +12,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Build
-        run: cargo build --verbose
+        run: cargo build
       - name: Run tests
-        run: cargo test --verbose --features githubActions -- --test-threads 1
+        run: cargo test --verbose --lib --features github-actions -- --test-threads 1
       - name: Clippy
         run: cargo clippy

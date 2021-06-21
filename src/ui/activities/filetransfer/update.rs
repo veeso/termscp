@@ -107,6 +107,8 @@ impl Update for FileTransferActivity {
                 (COMPONENT_EXPLORER_LOCAL, &MSG_KEY_CHAR_A) => {
                     // Toggle hidden files
                     self.local_mut().toggle_hidden_files();
+                    // Update status bar
+                    self.refresh_local_status_bar();
                     // Reload file list component
                     self.update_local_filelist()
                 }
@@ -179,6 +181,8 @@ impl Update for FileTransferActivity {
                 (COMPONENT_EXPLORER_REMOTE, &MSG_KEY_CHAR_A) => {
                     // Toggle hidden files
                     self.remote_mut().toggle_hidden_files();
+                    // Update status bar
+                    self.refresh_remote_status_bar();
                     // Reload file list component
                     self.update_remote_filelist()
                 }
@@ -295,7 +299,7 @@ impl Update for FileTransferActivity {
                     // Toggle browser sync
                     self.browser.toggle_sync_browsing();
                     // Update status bar
-                    self.refresh_status_bar();
+                    self.refresh_remote_status_bar();
                     None
                 }
                 (COMPONENT_EXPLORER_LOCAL, &MSG_KEY_ESC)
@@ -652,7 +656,11 @@ impl Update for FileTransferActivity {
                         _ => panic!("Found result doesn't support SORTING"),
                     }
                     // Update status bar
-                    self.refresh_status_bar();
+                    match self.browser.tab() {
+                        FileExplorerTab::Local => self.refresh_local_status_bar(),
+                        FileExplorerTab::Remote => self.refresh_remote_status_bar(),
+                        _ => panic!("Found result doesn't support SORTING"),
+                    };
                     // Reload files
                     match self.browser.tab() {
                         FileExplorerTab::Local => self.update_local_filelist(),

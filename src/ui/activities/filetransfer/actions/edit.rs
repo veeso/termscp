@@ -26,7 +26,14 @@
  * SOFTWARE.
  */
 // locals
-use super::{FileTransferActivity, FsEntry, LogLevel, SelectedEntry};
+use super::{FileTransferActivity, FsEntry, LogLevel, SelectedEntry, TransferPayload};
+use crate::fs::FsFile;
+// ext
+use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
+use std::fs::OpenOptions;
+use std::io::Read;
+use std::path::{Path, PathBuf};
+use std::time::SystemTime;
 
 impl FileTransferActivity {
     pub(crate) fn action_edit_local_file(&mut self) {
@@ -60,20 +67,166 @@ impl FileTransferActivity {
             SelectedEntry::None => vec![],
         };
         // Edit all entries
-        for entry in entries.iter() {
+        for entry in entries.into_iter() {
             // Check if file
             if let FsEntry::File(file) = entry {
                 self.log(
                     LogLevel::Info,
-                    format!("Opening file \"{}\"...", entry.get_abs_path().display()),
+                    format!("Opening file \"{}\"...", file.abs_path.display()),
                 );
                 // Edit file
-                if let Err(err) = self.edit_remote_file(&file) {
+                if let Err(err) = self.edit_remote_file(file) {
                     self.log_and_alert(LogLevel::Error, err);
                 }
             }
         }
         // Reload entries
         self.reload_remote_dir();
+    }
+
+    /// ### edit_local_file
+    ///
+    /// Edit a file on localhost
+    fn edit_local_file(&mut self, path: &Path) -> Result<(), String> {
+        // Read first 2048 bytes or less from file to check if it is textual
+        match OpenOptions::new().read(true).open(path) {
+            Ok(mut f) => {
+                // Read
+                let mut buff: [u8; 2048] = [0; 2048];
+                match f.read(&mut buff) {
+                    Ok(size) => {
+                        if content_inspector::inspect(&buff[0..size]).is_binary() {
+                            return Err("Could not open file in editor: file is binary".to_string());
+                        }
+                    }
+                    Err(err) => {
+                        return Err(format!("Could not read file: {}", err));
+                    }
+                }
+            }
+            Err(err) => {
+                return Err(format!("Could not read file: {}", err));
+            }
+        }
+        // Put input mode back to normal
+        if let Err(err) = disable_raw_mode() {
+            error!("Failed to disable raw mode: {}", err);
+        }
+        // Leave alternate mode
+        #[cfg(not(target_os = "windows"))]
+        if let Some(ctx) = self.context.as_mut() {
+            ctx.leave_alternate_screen();
+        }
+        // Open editor
+        match edit::edit_file(path) {
+            Ok(_) => self.log(
+                LogLevel::Info,
+                format!(
+                    "Changes performed through editor saved to \"{}\"!",
+                    path.display()
+                ),
+            ),
+            Err(err) => return Err(format!("Could not open editor: {}", err)),
+        }
+        #[cfg(not(target_os = "windows"))]
+        if let Some(ctx) = self.context.as_mut() {
+            // Clear screen
+            ctx.clear_screen();
+            // Enter alternate mode
+            ctx.enter_alternate_screen();
+        }
+        // Re-enable raw mode
+        let _ = enable_raw_mode();
+        Ok(())
+    }
+
+    /// ### edit_remote_file
+    ///
+    /// Edit file on remote host
+    fn edit_remote_file(&mut self, file: FsFile) -> Result<(), String> {
+        // Create temp file
+        let tmpfile: PathBuf = match self.download_file_as_temp(&file) {
+            Ok(p) => p,
+            Err(err) => return Err(err),
+        };
+        // Download file
+        let file_name = file.name.clone();
+        let file_path = file.abs_path.clone();
+        if let Err(err) = self.filetransfer_recv(
+            TransferPayload::File(file),
+            tmpfile.as_path(),
+            Some(file_name.clone()),
+        ) {
+            return Err(format!("Could not open file {}: {}", file_name, err));
+        }
+        // Get current file modification time
+        let prev_mtime: SystemTime = match self.host.stat(tmpfile.as_path()) {
+            Ok(e) => e.get_last_change_time(),
+            Err(err) => {
+                return Err(format!(
+                    "Could not stat \"{}\": {}",
+                    tmpfile.as_path().display(),
+                    err
+                ))
+            }
+        };
+        // Edit file
+        if let Err(err) = self.edit_local_file(tmpfile.as_path()) {
+            return Err(err);
+        }
+        // Get local fs entry
+        let tmpfile_entry: FsEntry = match self.host.stat(tmpfile.as_path()) {
+            Ok(e) => e,
+            Err(err) => {
+                return Err(format!(
+                    "Could not stat \"{}\": {}",
+                    tmpfile.as_path().display(),
+                    err
+                ))
+            }
+        };
+        // Check if file has changed
+        match prev_mtime != tmpfile_entry.get_last_change_time() {
+            true => {
+                self.log(
+                    LogLevel::Info,
+                    format!(
+                        "File \"{}\" has changed; writing changes to remote",
+                        file_path.display()
+                    ),
+                );
+                // Get local fs entry
+                let tmpfile_entry: FsFile = match self.host.stat(tmpfile.as_path()) {
+                    Ok(e) => e.unwrap_file(),
+                    Err(err) => {
+                        return Err(format!(
+                            "Could not stat \"{}\": {}",
+                            tmpfile.as_path().display(),
+                            err
+                        ))
+                    }
+                };
+                // Send file
+                let wrkdir = self.remote().wrkdir.clone();
+                if let Err(err) = self.filetransfer_send(
+                    TransferPayload::File(tmpfile_entry),
+                    wrkdir.as_path(),
+                    Some(file_name),
+                ) {
+                    return Err(format!(
+                        "Could not write file {}: {}",
+                        file_path.display(),
+                        err
+                    ));
+                }
+            }
+            false => {
+                self.log(
+                    LogLevel::Info,
+                    format!("File \"{}\" hasn't changed", file_path.display()),
+                );
+            }
+        }
+        Ok(())
     }
 }

@@ -27,7 +27,7 @@
  */
 // locals
 use super::super::browser::FileExplorerTab;
-use super::{FileTransferActivity, FsEntry, SelectedEntry};
+use super::{FileTransferActivity, FsEntry, LogLevel, SelectedEntry, TransferPayload};
 
 use std::path::PathBuf;
 
@@ -77,10 +77,30 @@ impl FileTransferActivity {
         match self.get_found_selected_entries() {
             SelectedEntry::One(entry) => match self.browser.tab() {
                 FileExplorerTab::FindLocal | FileExplorerTab::Local => {
-                    self.filetransfer_send(&entry.get_realfile(), wrkdir.as_path(), save_as);
+                    if let Err(err) = self.filetransfer_send(
+                        TransferPayload::Any(entry.get_realfile()),
+                        wrkdir.as_path(),
+                        save_as,
+                    ) {
+                        self.log_and_alert(
+                            LogLevel::Error,
+                            format!("Could not upload file: {}", err),
+                        );
+                        return;
+                    }
                 }
                 FileExplorerTab::FindRemote | FileExplorerTab::Remote => {
-                    self.filetransfer_recv(&entry.get_realfile(), wrkdir.as_path(), save_as);
+                    if let Err(err) = self.filetransfer_recv(
+                        TransferPayload::Any(entry.get_realfile()),
+                        wrkdir.as_path(),
+                        save_as,
+                    ) {
+                        self.log_and_alert(
+                            LogLevel::Error,
+                            format!("Could not download file: {}", err),
+                        );
+                        return;
+                    }
                 }
             },
             SelectedEntry::Many(entries) => {
@@ -90,21 +110,34 @@ impl FileTransferActivity {
                     dest_path.push(save_as);
                 }
                 // Iter files
-                for entry in entries.iter() {
-                    match self.browser.tab() {
-                        FileExplorerTab::FindLocal | FileExplorerTab::Local => {
-                            self.filetransfer_send(
-                                &entry.get_realfile(),
-                                dest_path.as_path(),
-                                None,
-                            );
+                let entries = entries.iter().map(|x| x.get_realfile()).collect();
+                match self.browser.tab() {
+                    FileExplorerTab::FindLocal | FileExplorerTab::Local => {
+                        if let Err(err) = self.filetransfer_send(
+                            TransferPayload::Many(entries),
+                            dest_path.as_path(),
+                            None,
+                        ) {
+                            {
+                                self.log_and_alert(
+                                    LogLevel::Error,
+                                    format!("Could not upload file: {}", err),
+                                );
+                                return;
+                            }
                         }
-                        FileExplorerTab::FindRemote | FileExplorerTab::Remote => {
-                            self.filetransfer_recv(
-                                &entry.get_realfile(),
-                                dest_path.as_path(),
-                                None,
+                    }
+                    FileExplorerTab::FindRemote | FileExplorerTab::Remote => {
+                        if let Err(err) = self.filetransfer_recv(
+                            TransferPayload::Many(entries),
+                            dest_path.as_path(),
+                            None,
+                        ) {
+                            self.log_and_alert(
+                                LogLevel::Error,
+                                format!("Could not download file: {}", err),
                             );
+                            return;
                         }
                     }
                 }

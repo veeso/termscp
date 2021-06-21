@@ -2,6 +2,7 @@
 
 - [Changelog](#changelog)
   - [0.6.0](#060)
+  - [0.5.1](#051)
   - [0.5.0](#050)
   - [0.4.2](#042)
   - [0.4.1](#041)
@@ -39,6 +40,35 @@ Released on FIXME: ??
   - Added `open 1.7.0`
   - Updated `textwrap` to `0.14.0`
   - Updated `tui-realm` to `0.4.1`
+
+## 0.5.1
+
+Released on 21/06/2021
+
+- Enhancements:
+  - **CI now uses containers to test file transfers (SSH/FTP)**
+    - Improved coverage
+    - Found many bugs which has now been fixed
+    - Build in CI won't fail due to test servers not responding
+    - We're now able to test all the functionalities of the file transfers
+  - **Status bar improvements**
+    - "Show hidden files" in status bar
+    - Status bar has now been splitted into two, one for each explorer tab
+  - **Error message if terminal window is too small**
+    - If the terminal window has less than 24 lines, then an error message is displayed in the auth activity
+    - Changed auth layout to absolute sizes
+- Bugfix:
+  - Fixed UI not showing connection errors
+  - Fixed termscp on Windows dying whenever opening a file with text editor
+  - Fixed broken input cursor when typing UTF8 characters (tui-realm 0.3.2)
+  - Fixed [Issue 44](https://github.com/veeso/termscp/issues/44): Could not move files to other paths in FTP
+  - Fixed [Issue 43](https://github.com/veeso/termscp/issues/43): Could not remove non-empty directories in FTP
+  - Fixed [Issue 39](https://github.com/veeso/termscp/issues/39): Help panels as `ScrollTable` to allow displaying entire content on small screens
+  - Fixed [Issue 38](https://github.com/veeso/termscp/issues/38): Transfer size was wrong when transferring "selected" files (with mark)
+  - Fixed [Issue 37](https://github.com/veeso/termscp/issues/37): progress bar not visible when editing remote files
+- Dependencies:
+  - Updated `textwrap` to `0.14.0`
+  - Updated `tui-realm` to `0.4.2`
 
 ## 0.5.0
 

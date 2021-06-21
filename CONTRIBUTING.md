@@ -115,7 +115,9 @@ Let's make it simple and clear:
 6. Report changes to the PR you opened, writing a report of what you changed and what you have introduced.
 7. Update the `CHANGELOG.md` file with details of changes to the application. In changelog report changes under a chapter called `PR{PULL_REQUEST_NUMBER}` (e.g. PR12).
 8. Assign a maintainer to the reviewers.
-9. Request maintainers to merge your changes.
+9. Wait for a maintainer to fullfil the acceptance tests
+10. Wait for a maintainer to complete the acceptance tests
+11. Request maintainers to merge your changes.
 
 ### Software guidelines
 

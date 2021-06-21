@@ -49,9 +49,10 @@ use crate::fs::explorer::FileExplorer;
 use crate::fs::FsEntry;
 use crate::host::Localhost;
 use crate::system::config_client::ConfigClient;
-pub(crate) use lib::browser;
+pub(self) use lib::browser;
 use lib::browser::Browser;
 use lib::transfer::TransferStates;
+pub(self) use session::TransferPayload;
 
 // Includes
 use chrono::{DateTime, Local};
@@ -89,7 +90,8 @@ const COMPONENT_RADIO_DELETE: &str = "RADIO_DELETE";
 const COMPONENT_RADIO_DISCONNECT: &str = "RADIO_DISCONNECT";
 const COMPONENT_RADIO_QUIT: &str = "RADIO_QUIT";
 const COMPONENT_RADIO_SORTING: &str = "RADIO_SORTING";
-const COMPONENT_SPAN_STATUS_BAR: &str = "STATUS_BAR";
+const COMPONENT_SPAN_STATUS_BAR_LOCAL: &str = "STATUS_BAR_LOCAL";
+const COMPONENT_SPAN_STATUS_BAR_REMOTE: &str = "STATUS_BAR_REMOTE";
 const COMPONENT_LIST_FILEINFO: &str = "LIST_FILEINFO";
 
 /// ## LogLevel

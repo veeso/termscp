@@ -1,0 +1,22 @@
+name: FreeBSD
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: FreeBSD build
+        id: test
+        uses: vmactions/freebsd-vm@v0.1.4
+        with:
+          usesh: true
+          prepare: pkg install -y curl wget libssh gcc vim
+          run: |
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > /tmp/rustup.sh && \
+            chmod +x /tmp/rustup.sh && \
+            /tmp/rustup.sh -y
+            . $HOME/.cargo/env
+            cargo build --no-default-features
+            cargo test --no-default-features --verbose --lib --features github-actions -- --test-threads 1

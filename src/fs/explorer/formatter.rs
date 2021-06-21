@@ -28,7 +28,7 @@
 // Deps
 extern crate bytesize;
 extern crate regex;
-#[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
+#[cfg(target_family = "unix")]
 extern crate users;
 // Locals
 use super::FsEntry;
@@ -36,7 +36,7 @@ use crate::utils::fmt::{fmt_path_elide, fmt_pex, fmt_time};
 // Ext
 use bytesize::ByteSize;
 use regex::Regex;
-#[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
+#[cfg(target_family = "unix")]
 use users::{get_group_by_gid, get_user_by_uid};
 // Types
 // FmtCallback: Formatter, fsentry: &FsEntry, cur_str, prefix, length, extra
@@ -251,7 +251,7 @@ impl Formatter {
         _fmt_extra: Option<&String>,
     ) -> String {
         // Get username
-        #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
+        #[cfg(target_family = "unix")]
         let group: String = match fsentry.get_group() {
             Some(gid) => match get_group_by_gid(gid) {
                 Some(user) => user.name().to_string_lossy().to_string(),
@@ -431,7 +431,7 @@ impl Formatter {
         _fmt_extra: Option<&String>,
     ) -> String {
         // Get username
-        #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
+        #[cfg(target_family = "unix")]
         let username: String = match fsentry.get_user() {
             Some(uid) => match get_user_by_uid(uid) {
                 Some(user) => user.name().to_string_lossy().to_string(),
@@ -605,7 +605,7 @@ mod tests {
             group: Some(0),            // UNIX only
             unix_pex: Some((6, 4, 4)), // UNIX only
         });
-        #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
+        #[cfg(target_family = "unix")]
         assert_eq!(
             formatter.fmt(&entry),
             format!(
@@ -636,7 +636,7 @@ mod tests {
             group: Some(0),            // UNIX only
             unix_pex: Some((6, 4, 4)), // UNIX only
         });
-        #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
+        #[cfg(target_family = "unix")]
         assert_eq!(
             formatter.fmt(&entry),
             format!(
@@ -667,7 +667,7 @@ mod tests {
             group: Some(0), // UNIX only
             unix_pex: None, // UNIX only
         });
-        #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
+        #[cfg(target_family = "unix")]
         assert_eq!(
             formatter.fmt(&entry),
             format!(
@@ -698,7 +698,7 @@ mod tests {
             group: Some(0), // UNIX only
             unix_pex: None, // UNIX only
         });
-        #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
+        #[cfg(target_family = "unix")]
         assert_eq!(
             formatter.fmt(&entry),
             format!(
@@ -734,7 +734,7 @@ mod tests {
             group: Some(0),            // UNIX only
             unix_pex: Some((7, 5, 5)), // UNIX only
         });
-        #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
+        #[cfg(target_family = "unix")]
         assert_eq!(
             formatter.fmt(&entry),
             format!(
@@ -763,7 +763,7 @@ mod tests {
             group: Some(0), // UNIX only
             unix_pex: None, // UNIX only
         });
-        #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
+        #[cfg(target_family = "unix")]
         assert_eq!(
             formatter.fmt(&entry),
             format!(

@@ -1,4 +1,4 @@
-name: coverage
+name: Coverage
 
 on: [push, pull_request]
 
@@ -6,22 +6,23 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  coverage:
-    name: Generate coverage
+  build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-      - name: Setup rust toolchain
+      - uses: actions/checkout@v2
+      - name: Setup containers
+        run: docker-compose -f "tests/docker-compose.yml" up -d --build
+      - name: Setup nightly toolchain
         uses: actions-rs/toolchain@v1
         with:
           toolchain: nightly
           override: true
-      - name: Run tests
+      - name: Run tests (nightly)
         uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --no-default-features --features githubActions --features with-containers --no-fail-fast
+          args: --no-default-features --features github-actions --features with-containers --no-fail-fast
         env:
           CARGO_INCREMENTAL: "0"
           RUSTFLAGS: "-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests"

@@ -186,13 +186,10 @@ pub fn parse_lstime(tm: &str, fmt_year: &str, fmt_hours: &str) -> Result<SystemT
             let this_year: i32 = Utc::now().year();
             let date_time_str: String = format!("{} {}", tm, this_year);
             // Now parse
-            match NaiveDateTime::parse_from_str(
+            NaiveDateTime::parse_from_str(
                 date_time_str.as_ref(),
                 format!("{} %Y", fmt_hours).as_ref(),
-            ) {
-                Ok(dt) => dt,
-                Err(err) => return Err(err),
-            }
+            )?
         }
     };
     // Convert datetime to system time

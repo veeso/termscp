@@ -427,11 +427,12 @@ mod tests {
     use pretty_assertions::assert_eq;
     use std::thread::sleep;
     use std::time::Duration;
+    use tempfile::TempDir;
 
     #[test]
 
     fn test_system_bookmarks_new() {
-        let tmp_dir: tempfile::TempDir = create_tmp_dir();
+        let tmp_dir: tempfile::TempDir = TempDir::new().ok().unwrap();
         let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
         // Initialize a new bookmarks client
         let client: BookmarksClient =
@@ -445,7 +446,12 @@ mod tests {
     }
 
     #[test]
-    #[cfg(any(target_os = "unix", target_os = "linux"))]
+    #[cfg(any(
+        target_os = "linux",
+        target_os = "freebsd",
+        target_os = "netbsd",
+        target_os = "netbsd"
+    ))]
     fn test_system_bookmarks_new_err() {
         assert!(BookmarksClient::new(
             Path::new("/tmp/oifoif/omar"),
@@ -454,7 +460,7 @@ mod tests {
         )
         .is_err());
 
-        let tmp_dir: tempfile::TempDir = create_tmp_dir();
+        let tmp_dir: tempfile::TempDir = TempDir::new().ok().unwrap();
         let (cfg_path, _): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
         assert!(
             BookmarksClient::new(cfg_path.as_path(), Path::new("/tmp/efnnu/omar"), 16).is_err()
@@ -464,7 +470,7 @@ mod tests {
     #[test]
 
     fn test_system_bookmarks_new_from_existing() {
-        let tmp_dir: tempfile::TempDir = create_tmp_dir();
+        let tmp_dir: tempfile::TempDir = TempDir::new().ok().unwrap();
         let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
         // Initialize a new bookmarks client
         let mut client: BookmarksClient =
@@ -510,7 +516,7 @@ mod tests {
     #[test]
 
     fn test_system_bookmarks_manipulate_bookmarks() {
-        let tmp_dir: tempfile::TempDir = create_tmp_dir();
+        let tmp_dir: tempfile::TempDir = TempDir::new().ok().unwrap();
         let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
         // Initialize a new bookmarks client
         let mut client: BookmarksClient =
@@ -556,7 +562,7 @@ mod tests {
     #[should_panic]
 
     fn test_system_bookmarks_bad_bookmark_name() {
-        let tmp_dir: tempfile::TempDir = create_tmp_dir();
+        let tmp_dir: tempfile::TempDir = TempDir::new().ok().unwrap();
         let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
         // Initialize a new bookmarks client
         let mut client: BookmarksClient =
@@ -575,7 +581,7 @@ mod tests {
     #[test]
 
     fn test_system_bookmarks_manipulate_recents() {
-        let tmp_dir: tempfile::TempDir = create_tmp_dir();
+        let tmp_dir: tempfile::TempDir = TempDir::new().ok().unwrap();
         let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
         // Initialize a new bookmarks client
         let mut client: BookmarksClient =
@@ -610,7 +616,7 @@ mod tests {
     #[test]
 
     fn test_system_bookmarks_dup_recent() {
-        let tmp_dir: tempfile::TempDir = create_tmp_dir();
+        let tmp_dir: tempfile::TempDir = TempDir::new().ok().unwrap();
         let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
         // Initialize a new bookmarks client
         let mut client: BookmarksClient =
@@ -635,7 +641,7 @@ mod tests {
     #[test]
 
     fn test_system_bookmarks_recents_more_than_limit() {
-        let tmp_dir: tempfile::TempDir = create_tmp_dir();
+        let tmp_dir: tempfile::TempDir = TempDir::new().ok().unwrap();
         let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
         // Initialize a new bookmarks client
         let mut client: BookmarksClient =
@@ -681,9 +687,8 @@ mod tests {
 
     #[test]
     #[should_panic]
-
     fn test_system_bookmarks_add_bookmark_empty() {
-        let tmp_dir: tempfile::TempDir = create_tmp_dir();
+        let tmp_dir: tempfile::TempDir = TempDir::new().ok().unwrap();
         let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
         // Initialize a new bookmarks client
         let mut client: BookmarksClient =
@@ -702,19 +707,10 @@ mod tests {
     /// ### get_paths
     ///
     /// Get paths for configuration and key for bookmarks
-
     fn get_paths(dir: &Path) -> (PathBuf, PathBuf) {
         let k: PathBuf = PathBuf::from(dir);
         let mut c: PathBuf = k.clone();
         c.push("bookmarks.toml");
         (c, k)
-    }
-
-    /// ### create_tmp_dir
-    ///
-    /// Create temporary directory
-
-    fn create_tmp_dir() -> tempfile::TempDir {
-        tempfile::TempDir::new().ok().unwrap()
     }
 }

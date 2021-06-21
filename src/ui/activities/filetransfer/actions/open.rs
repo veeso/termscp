@@ -28,7 +28,7 @@
 // deps
 extern crate open;
 // locals
-use super::{FileTransferActivity, FsEntry, LogLevel, SelectedEntry};
+use super::{FileTransferActivity, FsEntry, LogLevel, SelectedEntry, TransferPayload};
 // ext
 use std::path::{Path, PathBuf};
 
@@ -90,12 +90,25 @@ impl FileTransferActivity {
             }
             Some(p) => p.path().to_path_buf(),
         };
-        self.filetransfer_recv(&entry, cache.as_path(), Some(tmpfile.clone()));
-        // Make file and open if file exists
-        let mut tmp: PathBuf = cache;
-        tmp.push(tmpfile.as_str());
-        if tmp.exists() {
-            self.open_path_with(tmp.as_path(), open_with);
+        match self.filetransfer_recv(
+            TransferPayload::Any(entry),
+            cache.as_path(),
+            Some(tmpfile.clone()),
+        ) {
+            Ok(_) => {
+                // Make file and open if file exists
+                let mut tmp: PathBuf = cache;
+                tmp.push(tmpfile.as_str());
+                if tmp.exists() {
+                    self.open_path_with(tmp.as_path(), open_with);
+                }
+            }
+            Err(err) => {
+                self.log(
+                    LogLevel::Error,
+                    format!("Failed to download remote entry: {}", err),
+                );
+            }
         }
     }
 
