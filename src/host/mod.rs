@@ -34,9 +34,9 @@ use std::time::SystemTime;
 use thiserror::Error;
 use wildmatch::WildMatch;
 // Metadata ext
-#[cfg(any(target_family = "unix", target_os = "macos", target_os = "linux"))]
+#[cfg(target_family = "unix")]
 use std::fs::set_permissions;
-#[cfg(any(target_family = "unix", target_os = "macos", target_os = "linux"))]
+#[cfg(target_family = "unix")]
 use std::os::unix::fs::{MetadataExt, PermissionsExt};
 
 // Locals
@@ -439,7 +439,7 @@ impl Localhost {
     /// ### stat
     ///
     /// Stat file and create a FsEntry
-    #[cfg(any(target_family = "unix", target_os = "macos", target_os = "linux"))]
+    #[cfg(target_family = "unix")]
     pub fn stat(&self, path: &Path) -> Result<FsEntry, HostError> {
         info!("Stating file {}", path.display());
         let path: PathBuf = self.to_abs_path(path);
@@ -605,7 +605,7 @@ impl Localhost {
     /// ### chmod
     ///
     /// Change file mode to file, according to UNIX permissions
-    #[cfg(any(target_family = "unix", target_os = "macos", target_os = "linux"))]
+    #[cfg(target_family = "unix")]
     pub fn chmod(&self, path: &Path, pex: (u8, u8, u8)) -> Result<(), HostError> {
         let path: PathBuf = self.to_abs_path(path);
         // Get metadta
@@ -790,7 +790,7 @@ impl Localhost {
     /// ### u32_to_mode
     ///
     /// Return string with format xxxxxx to tuple of permissions (user, group, others)
-    #[cfg(any(target_family = "unix", target_os = "macos", target_os = "linux"))]
+    #[cfg(target_family = "unix")]
     fn u32_to_mode(&self, mode: u32) -> (u8, u8, u8) {
         let user: u8 = ((mode >> 6) & 0x7) as u8;
         let group: u8 = ((mode >> 3) & 0x7) as u8;
@@ -801,7 +801,7 @@ impl Localhost {
     /// mode_to_u32
     ///
     /// Convert owner,group,others to u32
-    #[cfg(any(target_family = "unix", target_os = "macos", target_os = "linux"))]
+    #[cfg(target_family = "unix")]
     fn mode_to_u32(&self, mode: (u8, u8, u8)) -> u32 {
         ((mode.0 as u32) << 6) + ((mode.1 as u32) << 3) + mode.2 as u32
     }
@@ -826,17 +826,17 @@ impl Localhost {
 mod tests {
 
     use super::*;
-    #[cfg(any(target_family = "unix", target_os = "macos", target_os = "linux"))]
+    #[cfg(target_family = "unix")]
     use crate::utils::test_helpers::{create_sample_file, make_fsentry};
     use crate::utils::test_helpers::{make_dir_at, make_file_at};
 
     use pretty_assertions::assert_eq;
-    #[cfg(any(target_family = "unix", target_os = "macos", target_os = "linux"))]
+    #[cfg(target_family = "unix")]
     use std::fs::File;
-    #[cfg(any(target_family = "unix", target_os = "macos", target_os = "linux"))]
+    #[cfg(target_family = "unix")]
     use std::io::Write;
 
-    #[cfg(any(target_family = "unix", target_os = "macos", target_os = "linux"))]
+    #[cfg(target_family = "unix")]
     use std::os::unix::fs::{symlink, PermissionsExt};
 
     #[test]
@@ -848,7 +848,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(any(target_family = "unix", target_os = "macos", target_os = "linux"))]
+    #[cfg(target_family = "unix")]
     fn test_host_localhost_new() {
         let host: Localhost = Localhost::new(PathBuf::from("/dev")).ok().unwrap();
         assert_eq!(host.wrkdir, PathBuf::from("/dev"));
@@ -884,14 +884,14 @@ mod tests {
     }
 
     #[test]
-    #[cfg(any(target_family = "unix", target_os = "macos", target_os = "linux"))]
+    #[cfg(target_family = "unix")]
     fn test_host_localhost_pwd() {
         let host: Localhost = Localhost::new(PathBuf::from("/dev")).ok().unwrap();
         assert_eq!(host.pwd(), PathBuf::from("/dev"));
     }
 
     #[test]
-    #[cfg(any(target_family = "unix", target_os = "macos", target_os = "linux"))]
+    #[cfg(target_family = "unix")]
     fn test_host_localhost_list_files() {
         let host: Localhost = Localhost::new(PathBuf::from("/dev")).ok().unwrap();
         // Scan dir
@@ -904,7 +904,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(any(target_family = "unix", target_os = "macos", target_os = "linux"))]
+    #[cfg(target_family = "unix")]
     fn test_host_localhost_change_dir() {
         let mut host: Localhost = Localhost::new(PathBuf::from("/dev")).ok().unwrap();
         let new_dir: PathBuf = PathBuf::from("/dev");
@@ -920,7 +920,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(any(target_family = "unix", target_os = "macos", target_os = "linux"))]
+    #[cfg(target_family = "unix")]
     #[should_panic]
     fn test_host_localhost_change_dir_failed() {
         let mut host: Localhost = Localhost::new(PathBuf::from("/dev")).ok().unwrap();
@@ -929,7 +929,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(any(target_family = "unix", target_os = "macos", target_os = "linux"))]
+    #[cfg(target_family = "unix")]
     fn test_host_localhost_open_read() {
         let host: Localhost = Localhost::new(PathBuf::from("/dev")).ok().unwrap();
         // Create temp file
@@ -938,7 +938,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(any(target_family = "unix", target_os = "macos", target_os = "linux"))]
+    #[cfg(target_family = "unix")]
     #[should_panic]
     fn test_host_localhost_open_read_err_no_such_file() {
         let host: Localhost = Localhost::new(PathBuf::from("/dev")).ok().unwrap();
@@ -959,7 +959,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(any(target_family = "unix", target_os = "macos", target_os = "linux"))]
+    #[cfg(target_family = "unix")]
     fn test_host_localhost_open_write() {
         let host: Localhost = Localhost::new(PathBuf::from("/dev")).ok().unwrap();
         // Create temp file
@@ -978,7 +978,7 @@ mod tests {
         assert!(host.open_file_write(file.path()).is_err());
     }
 
-    #[cfg(any(target_family = "unix", target_os = "macos", target_os = "linux"))]
+    #[cfg(target_family = "unix")]
     #[test]
     fn test_host_localhost_symlinks() {
         let tmpdir: tempfile::TempDir = tempfile::TempDir::new().unwrap();
@@ -1026,7 +1026,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(any(target_family = "unix", target_os = "macos", target_os = "linux"))]
+    #[cfg(target_family = "unix")]
     fn test_host_localhost_mkdir() {
         let tmpdir: tempfile::TempDir = tempfile::TempDir::new().unwrap();
         let mut host: Localhost = Localhost::new(PathBuf::from(tmpdir.path())).ok().unwrap();
@@ -1051,7 +1051,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(any(target_family = "unix", target_os = "macos", target_os = "linux"))]
+    #[cfg(target_family = "unix")]
     fn test_host_localhost_remove() {
         let tmpdir: tempfile::TempDir = tempfile::TempDir::new().unwrap();
         // Create sample file
@@ -1080,7 +1080,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(any(target_family = "unix", target_os = "macos", target_os = "linux"))]
+    #[cfg(target_family = "unix")]
     fn test_host_localhost_rename() {
         let tmpdir: tempfile::TempDir = tempfile::TempDir::new().unwrap();
         // Create sample file
@@ -1108,7 +1108,7 @@ mod tests {
             .is_err());
     }
 
-    #[cfg(any(target_family = "unix", target_os = "macos", target_os = "linux"))]
+    #[cfg(target_family = "unix")]
     #[test]
     fn test_host_chmod() {
         let tmpdir: tempfile::TempDir = tempfile::TempDir::new().unwrap();
@@ -1127,7 +1127,7 @@ mod tests {
             .is_err());
     }
 
-    #[cfg(any(target_family = "unix", target_os = "macos", target_os = "linux"))]
+    #[cfg(target_family = "unix")]
     #[test]
     fn test_host_copy_file_absolute() {
         let tmpdir: tempfile::TempDir = tempfile::TempDir::new().unwrap();
@@ -1157,7 +1157,7 @@ mod tests {
             .is_err());
     }
 
-    #[cfg(any(target_family = "unix", target_os = "macos", target_os = "linux"))]
+    #[cfg(target_family = "unix")]
     #[test]
     fn test_host_copy_file_relative() {
         let tmpdir: tempfile::TempDir = tempfile::TempDir::new().unwrap();
@@ -1179,7 +1179,7 @@ mod tests {
         assert_eq!(host.files.len(), 2);
     }
 
-    #[cfg(any(target_family = "unix", target_os = "macos", target_os = "linux"))]
+    #[cfg(target_family = "unix")]
     #[test]
     fn test_host_copy_directory_absolute() {
         let tmpdir: tempfile::TempDir = tempfile::TempDir::new().unwrap();
@@ -1210,7 +1210,7 @@ mod tests {
         assert!(host.stat(test_file_path.as_path()).is_ok());
     }
 
-    #[cfg(any(target_family = "unix", target_os = "macos", target_os = "linux"))]
+    #[cfg(target_family = "unix")]
     #[test]
     fn test_host_copy_directory_relative() {
         let tmpdir: tempfile::TempDir = tempfile::TempDir::new().unwrap();
@@ -1245,7 +1245,7 @@ mod tests {
         let tmpdir: tempfile::TempDir = tempfile::TempDir::new().unwrap();
         let host: Localhost = Localhost::new(PathBuf::from(tmpdir.path())).ok().unwrap();
         // Execute
-        #[cfg(any(target_family = "unix", target_os = "macos", target_os = "linux"))]
+        #[cfg(target_family = "unix")]
         assert_eq!(host.exec("echo 5").ok().unwrap().as_str(), "5\n");
         #[cfg(target_os = "windows")]
         assert_eq!(host.exec("echo 5").ok().unwrap().as_str(), "5\r\n");

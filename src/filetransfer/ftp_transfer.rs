@@ -73,7 +73,7 @@ impl FtpFileTransfer {
         PathBuf::from(path_slash::PathExt::to_slash_lossy(p).as_str())
     }
 
-    #[cfg(any(target_family = "unix", target_os = "macos", target_os = "linux"))]
+    #[cfg(target_family = "unix")]
     fn resolve(p: &Path) -> PathBuf {
         p.to_path_buf()
     }

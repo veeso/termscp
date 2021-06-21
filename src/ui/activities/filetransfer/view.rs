@@ -28,7 +28,7 @@
 // Deps
 extern crate bytesize;
 extern crate hostname;
-#[cfg(any(target_family = "unix", target_os = "macos", target_os = "linux"))]
+#[cfg(target_family = "unix")]
 extern crate users;
 // locals
 use super::{browser::FileExplorerTab, Context, FileTransferActivity};
@@ -59,7 +59,7 @@ use tuirealm::tui::{
     style::Color,
     widgets::{BorderType, Borders, Clear},
 };
-#[cfg(any(target_family = "unix", target_os = "macos", target_os = "linux"))]
+#[cfg(target_family = "unix")]
 use users::{get_group_by_gid, get_user_by_uid};
 
 impl FileTransferActivity {
@@ -813,7 +813,7 @@ impl FileTransferActivity {
                     .build(),
             );
         // User
-        #[cfg(any(target_family = "unix", target_os = "macos", target_os = "linux"))]
+        #[cfg(target_family = "unix")]
         let username: String = match file.get_user() {
             Some(uid) => match get_user_by_uid(uid) {
                 Some(user) => user.name().to_string_lossy().to_string(),
@@ -824,7 +824,7 @@ impl FileTransferActivity {
         #[cfg(target_os = "windows")]
         let username: String = format!("{}", file.get_user().unwrap_or(0));
         // Group
-        #[cfg(any(target_family = "unix", target_os = "macos", target_os = "linux"))]
+        #[cfg(target_family = "unix")]
         let group: String = match file.get_group() {
             Some(gid) => match get_group_by_gid(gid) {
                 Some(group) => group.name().to_string_lossy().to_string(),
