@@ -63,8 +63,8 @@ pretty_assertions = "0.7.2"
 github-actions = []
 with-containers = []
 
-[target."cfg(any(target_family = \"unix\", target_os = \"macos\", target_os = \"linux\"))"]
-[target."cfg(any(target_family = \"unix\", target_os = \"macos\", target_os = \"linux\"))".dependencies]
+[target."cfg(target_family = \"unix\")"]
+[target."cfg(target_family = \"unix\")".dependencies]
 users = "0.11.0"
 
 [target."cfg(any(target_os = \"windows\", target_os = \"macos\"))"]
