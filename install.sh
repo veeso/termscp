@@ -185,7 +185,7 @@ install_on_bsd() {
         msg="Installing termscp as root, please wait…"
     fi
     info "$msg"
-    $sudo pkg install "${archive}"
+    $sudo pkg install -y "${archive}"
 }
 
 install_on_linux() {
