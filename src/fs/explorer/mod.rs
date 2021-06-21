@@ -306,6 +306,13 @@ impl FileExplorer {
     pub fn toggle_hidden_files(&mut self) {
         self.opts.toggle(ExplorerOpts::SHOW_HIDDEN_FILES);
     }
+
+    /// ### hidden_files_visible
+    ///
+    /// Returns whether hidden files are visible
+    pub fn hidden_files_visible(&self) -> bool {
+        self.opts.intersects(ExplorerOpts::SHOW_HIDDEN_FILES)
+    }
 }
 
 // Traits
@@ -411,6 +418,7 @@ mod tests {
         let mut explorer: FileExplorer = FileExplorer::default();
         // Don't show hidden files
         explorer.opts.remove(ExplorerOpts::SHOW_HIDDEN_FILES);
+        assert_eq!(explorer.hidden_files_visible(), false);
         // Create files
         explorer.set_files(vec![
             make_fs_entry("README.md", false),
@@ -434,6 +442,7 @@ mod tests {
         assert_eq!(explorer.iter_files().count(), 4);
         // Toggle hidden
         explorer.toggle_hidden_files();
+        assert_eq!(explorer.hidden_files_visible(), true);
         assert_eq!(explorer.iter_files().count(), 6); // All files are returned now
     }
 
@@ -586,7 +595,7 @@ mod tests {
             group: Some(0),            // UNIX only
             unix_pex: Some((6, 4, 4)), // UNIX only
         });
-        #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
+        #[cfg(any(target_family = "unix", target_os = "macos", target_os = "linux"))]
         assert_eq!(
             explorer.fmt_file(&entry),
             format!(

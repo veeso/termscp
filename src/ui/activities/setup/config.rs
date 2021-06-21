@@ -92,6 +92,7 @@ impl SetupActivity {
                     error!("Failed to disable raw mode: {}", err);
                 }
                 // Leave alternate mode
+                #[cfg(not(target_os = "windows"))]
                 ctx.leave_alternate_screen();
                 // Get result
                 let result: Result<(), String> = match ctx.config_client.as_ref() {
@@ -121,6 +122,7 @@ impl SetupActivity {
                 // Clear screen
                 ctx.clear_screen();
                 // Enter alternate mode
+                #[cfg(not(target_os = "windows"))]
                 ctx.enter_alternate_screen();
                 // Re-enable raw mode
                 if let Err(err) = enable_raw_mode() {

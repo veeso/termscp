@@ -37,8 +37,8 @@ use tuirealm::components::{
     input::{Input, InputPropsBuilder},
     label::{Label, LabelPropsBuilder},
     radio::{Radio, RadioPropsBuilder},
+    scrolltable::{ScrollTablePropsBuilder, Scrolltable},
     span::{Span, SpanPropsBuilder},
-    table::{Table, TablePropsBuilder},
 };
 use tuirealm::tui::{
     layout::{Constraint, Direction, Layout},
@@ -234,14 +234,17 @@ impl AuthActivity {
     pub(super) fn view(&mut self) {
         let mut ctx: Context = self.context.take().unwrap();
         let _ = ctx.terminal.draw(|f| {
+            // Check window size
+            let height: u16 = f.size().height;
+            self.check_minimum_window_size(height);
             // Prepare chunks
             let chunks = Layout::default()
                 .direction(Direction::Vertical)
                 .margin(1)
                 .constraints(
                     [
-                        Constraint::Percentage(70), // Auth Form
-                        Constraint::Percentage(30), // Bookmarks
+                        Constraint::Length(21), // Auth Form
+                        Constraint::Min(3),     // Bookmarks
                     ]
                     .as_ref(),
                 )
@@ -301,6 +304,14 @@ impl AuthActivity {
                     f.render_widget(Clear, popup);
                     // make popup
                     self.view.render(super::COMPONENT_TEXT_ERROR, f, popup);
+                }
+            }
+            if let Some(props) = self.view.get_props(super::COMPONENT_TEXT_SIZE_ERR) {
+                if props.visible {
+                    let popup = draw_area_in(f.size(), 80, 20);
+                    f.render_widget(Clear, popup);
+                    // make popup
+                    self.view.render(super::COMPONENT_TEXT_SIZE_ERR, f, popup);
                 }
             }
             if let Some(props) = self.view.get_props(super::COMPONENT_RADIO_QUIT) {
@@ -478,6 +489,38 @@ impl AuthActivity {
         self.view.umount(super::COMPONENT_TEXT_ERROR);
     }
 
+    /// ### mount_size_err
+    ///
+    /// Mount size error
+    pub(super) fn mount_size_err(&mut self) {
+        // Mount
+        self.view.mount(
+            super::COMPONENT_TEXT_SIZE_ERR,
+            Box::new(MsgBox::new(
+                MsgBoxPropsBuilder::default()
+                    .with_foreground(Color::Red)
+                    .with_borders(Borders::ALL, BorderType::Thick, Color::Red)
+                    .bold()
+                    .with_texts(
+                        None,
+                        vec![TextSpan::from(
+                            "termscp requires at least 24 lines of height to run",
+                        )],
+                    )
+                    .build(),
+            )),
+        );
+        // Give focus to error
+        self.view.active(super::COMPONENT_TEXT_SIZE_ERR);
+    }
+
+    /// ### umount_size_err
+    ///
+    /// Umount error size error
+    pub(super) fn umount_size_err(&mut self) {
+        self.view.umount(super::COMPONENT_TEXT_SIZE_ERR);
+    }
+
     /// ### mount_quit
     ///
     /// Mount quit popup
@@ -622,9 +665,12 @@ impl AuthActivity {
     pub(super) fn mount_help(&mut self) {
         self.view.mount(
             super::COMPONENT_TEXT_HELP,
-            Box::new(Table::new(
-                TablePropsBuilder::default()
+            Box::new(Scrolltable::new(
+                ScrollTablePropsBuilder::default()
                     .with_borders(Borders::ALL, BorderType::Rounded, Color::White)
+                    .with_highlighted_str(Some("?"))
+                    .with_max_scroll_step(8)
+                    .bold()
                     .with_table(
                         Some(String::from("Help")),
                         TableBuilder::default()

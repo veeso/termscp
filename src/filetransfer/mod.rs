@@ -284,10 +284,7 @@ pub trait FileTransfer {
                             if filter.matches(dir.name.as_str()) {
                                 drained.push(FsEntry::Directory(dir.clone()));
                             }
-                            match self.iter_search(dir.abs_path.as_path(), filter) {
-                                Ok(mut filtered) => drained.append(&mut filtered),
-                                Err(err) => return Err(err),
-                            }
+                            drained.append(&mut self.iter_search(dir.abs_path.as_path(), filter)?);
                         }
                         FsEntry::File(file) => {
                             if filter.matches(file.name.as_str()) {

@@ -183,6 +183,12 @@ mod tests {
             file_fmt: Some(String::from("{NAME}")),
             remote_file_fmt: Some(String::from("{USER}")),
         };
+        assert_eq!(ui.default_protocol, String::from("SFTP"));
+        assert_eq!(ui.text_editor, PathBuf::from("nano"));
+        assert_eq!(ui.show_hidden_files, true);
+        assert_eq!(ui.check_for_updates, Some(true));
+        assert_eq!(ui.group_dirs, Some(String::from("first")));
+        assert_eq!(ui.file_fmt, Some(String::from("{NAME}")));
         let cfg: UserConfig = UserConfig {
             user_interface: ui,
             remote: remote,
@@ -219,7 +225,7 @@ mod tests {
             PathBuf::from(cfg.user_interface.text_editor.file_name().unwrap()), // NOTE: since edit 0.1.3 real path is used
             PathBuf::from("vim.EXE")
         );
-        #[cfg(any(target_os = "unix", target_os = "macos", target_os = "linux"))]
+        #[cfg(any(target_family = "unix", target_os = "macos", target_os = "linux"))]
         assert_eq!(
             PathBuf::from(cfg.user_interface.text_editor.file_name().unwrap()), // NOTE: since edit 0.1.3 real path is used
             PathBuf::from("vim")

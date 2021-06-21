@@ -11,6 +11,7 @@
 TERMSCP_VERSION="0.6.0"
 GITHUB_URL="https://github.com/veeso/termscp/releases/download/v${TERMSCP_VERSION}"
 DEB_URL="${GITHUB_URL}/termscp_${TERMSCP_VERSION}_amd64.deb"
+FREEBSD_URL="${GITHUB_URL}/termscp-${TERMSCP_VERSION}.txz"
 RPM_URL="${GITHUB_URL}/termscp-${TERMSCP_VERSION}-1.x86_64.rpm"
 
 set -eu
@@ -170,7 +171,21 @@ confirm() {
 # Installers
 
 install_on_bsd() {
-    try_with_cargo "we currently don't distribute any pre-built package for BSD"
+    info "Installing termscp via FreeBSD pkg"
+    archive=$(get_tmpfile "txz")
+    download "${archive}" "${FREEBSD_URL}"
+    info "Downloaded FreeBSD package to ${archive}"
+    if test_writeable "/usr/local/bin"; then
+        sudo=""
+        msg="Installing termscp, please wait…"
+    else
+        warn "Root permissions are required to install termscp…"
+        elevate_priv
+        sudo="sudo"
+        msg="Installing termscp as root, please wait…"
+    fi
+    info "$msg"
+    $sudo pkg install "${archive}"
 }
 
 install_on_linux() {

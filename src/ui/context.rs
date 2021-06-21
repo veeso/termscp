@@ -103,6 +103,7 @@ impl Context {
     /// ### enter_alternate_screen
     ///
     /// Enter alternate screen (gui window)
+    #[cfg(not(target_os = "windows"))]
     pub fn enter_alternate_screen(&mut self) {
         match execute!(
             self.terminal.backend_mut(),
@@ -177,7 +178,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(not(feature = "githubActions"))]
+    #[cfg(not(feature = "github-actions"))]
     fn test_ui_context() {
         // Prepare stuff
         let mut ctx: Context = Context::new(None, Some(String::from("alles kaput")));
@@ -190,9 +191,12 @@ mod tests {
         assert!(ctx.get_error().is_some());
         assert!(ctx.get_error().is_none());
         // Try other methods
-        ctx.enter_alternate_screen();
-        ctx.clear_screen();
-        ctx.leave_alternate_screen();
+        #[cfg(not(target_os = "windows"))]
+        {
+            ctx.enter_alternate_screen();
+            ctx.clear_screen();
+            ctx.leave_alternate_screen();
+        }
         drop(ctx);
     }
 }

@@ -33,3 +33,7 @@ pub mod git;
 pub mod parser;
 pub mod random;
 pub mod ui;
+
+#[cfg(test)]
+#[allow(dead_code)]
+pub mod test_helpers;

@@ -466,10 +466,7 @@ impl FileTransfer for SftpFileTransfer {
         match self.sftp.as_ref() {
             Some(_) => {
                 // Change working directory
-                self.wrkdir = match self.get_remote_path(dir) {
-                    Ok(p) => p,
-                    Err(err) => return Err(err),
-                };
+                self.wrkdir = self.get_remote_path(dir)?;
                 info!("Changed working directory to {}", self.wrkdir.display());
                 Ok(self.wrkdir.clone())
             }
@@ -532,10 +529,7 @@ impl FileTransfer for SftpFileTransfer {
         match self.sftp.as_ref() {
             Some(sftp) => {
                 // Get path
-                let dir: PathBuf = match self.get_remote_path(path) {
-                    Ok(p) => p,
-                    Err(err) => return Err(err),
-                };
+                let dir: PathBuf = self.get_remote_path(path)?;
                 info!("Getting file entries in {}", path.display());
                 // Get files
                 match sftp.readdir(dir.as_path()) {
@@ -609,10 +603,7 @@ impl FileTransfer for SftpFileTransfer {
                 // Remove recursively
                 debug!("{} is a directory; removing all directory entries", d.name);
                 // Get directory files
-                let directory_content: Vec<FsEntry> = match self.list_dir(d.abs_path.as_path()) {
-                    Ok(entries) => entries,
-                    Err(err) => return Err(err),
-                };
+                let directory_content: Vec<FsEntry> = self.list_dir(d.abs_path.as_path())?;
                 for entry in directory_content.iter() {
                     if let Err(err) = self.remove(&entry) {
                         return Err(err);
@@ -666,10 +657,7 @@ impl FileTransfer for SftpFileTransfer {
         match self.sftp.as_ref() {
             Some(sftp) => {
                 // Get path
-                let dir: PathBuf = match self.get_remote_path(path) {
-                    Ok(p) => p,
-                    Err(err) => return Err(err),
-                };
+                let dir: PathBuf = self.get_remote_path(path)?;
                 info!("Stat file {}", dir.display());
                 // Get file
                 match sftp.stat(dir.as_path()) {
@@ -758,10 +746,7 @@ impl FileTransfer for SftpFileTransfer {
             )),
             Some(sftp) => {
                 // Get remote file name
-                let remote_path: PathBuf = match self.get_remote_path(file.abs_path.as_path()) {
-                    Ok(p) => p,
-                    Err(err) => return Err(err),
-                };
+                let remote_path: PathBuf = self.get_remote_path(file.abs_path.as_path())?;
                 info!("Receiving file {}", remote_path.display());
                 // Open remote file
                 match sftp.open(remote_path.as_path()) {
@@ -800,7 +785,9 @@ impl FileTransfer for SftpFileTransfer {
 mod tests {
 
     use super::*;
-
+    use crate::utils::test_helpers::make_fsentry;
+    #[cfg(feature = "with-containers")]
+    use crate::utils::test_helpers::{create_sample_file_entry, write_file, write_ssh_key};
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -813,25 +800,179 @@ mod tests {
     }
 
     #[test]
-    fn test_filetransfer_sftp_connect() {
+    #[cfg(feature = "with-containers")]
+    fn test_filetransfer_sftp_server() {
         let mut client: SftpFileTransfer = SftpFileTransfer::new(SshKeyStorage::empty());
-        assert_eq!(client.is_connected(), false);
+        // Sample file
+        let (entry, file): (FsFile, tempfile::NamedTempFile) = create_sample_file_entry();
+        // Connect
         assert!(client
             .connect(
-                String::from("test.rebex.net"),
-                22,
-                Some(String::from("demo")),
+                String::from("127.0.0.1"),
+                10022,
+                Some(String::from("sftp")),
                 Some(String::from("password"))
             )
             .is_ok());
         // Check session and sftp
         assert!(client.session.is_some());
         assert!(client.sftp.is_some());
-        assert_eq!(client.wrkdir, PathBuf::from("/"));
+        assert_eq!(client.wrkdir, PathBuf::from("/config"));
         assert_eq!(client.is_connected(), true);
+        // Pwd
+        assert_eq!(client.wrkdir.clone(), client.pwd().ok().unwrap());
+        // Stat
+        let stat: FsFile = client
+            .stat(PathBuf::from("/config/sshd.pid").as_path())
+            .ok()
+            .unwrap()
+            .unwrap_file();
+        assert_eq!(stat.name.as_str(), "sshd.pid");
+        let stat: FsDirectory = client
+            .stat(PathBuf::from("/config").as_path())
+            .ok()
+            .unwrap()
+            .unwrap_dir();
+        assert_eq!(stat.name.as_str(), "config");
+        // Stat (err)
+        assert!(client
+            .stat(PathBuf::from("/config/5t0ca220.log").as_path())
+            .is_err());
+        // List dir (dir has 4 (one is hidden :D) entries)
+        assert!(client.list_dir(&Path::new("/config")).unwrap().len() >= 4);
+        // Make directory
+        assert!(client.mkdir(PathBuf::from("/tmp/omar").as_path()).is_ok());
+        // Make directory (err)
+        assert!(client
+            .mkdir(PathBuf::from("/root/aaaaa/pommlar").as_path())
+            .is_err());
+        // Change directory
+        assert!(client
+            .change_dir(PathBuf::from("/tmp/omar").as_path())
+            .is_ok());
+        // Change directory (err)
+        assert!(client
+            .change_dir(PathBuf::from("/tmp/oooo/aaaa/eee").as_path())
+            .is_err());
+        // Copy (not supported)
+        assert!(client
+            .copy(&FsEntry::File(entry.clone()), PathBuf::from("/").as_path())
+            .is_err());
+        // Exec
+        assert_eq!(client.exec("echo 5").ok().unwrap().as_str(), "5\n");
+        // Upload 2 files
+        let mut writable = client
+            .send_file(&entry, PathBuf::from("omar.txt").as_path())
+            .ok()
+            .unwrap();
+        write_file(&file, &mut writable);
+        assert!(client.on_sent(writable).is_ok());
+        let mut writable = client
+            .send_file(&entry, PathBuf::from("README.md").as_path())
+            .ok()
+            .unwrap();
+        write_file(&file, &mut writable);
+        assert!(client.on_sent(writable).is_ok());
+        // Upload file (err)
+        assert!(client
+            .send_file(&entry, PathBuf::from("/ommlar/omarone").as_path())
+            .is_err());
+        // List dir
+        let list: Vec<FsEntry> = client
+            .list_dir(PathBuf::from("/tmp/omar").as_path())
+            .ok()
+            .unwrap();
+        assert_eq!(list.len(), 2);
+        // Find
+        assert_eq!(client.find("*.txt").ok().unwrap().len(), 1);
+        assert_eq!(client.find("*.md").ok().unwrap().len(), 1);
+        assert_eq!(client.find("*.jpeg").ok().unwrap().len(), 0);
+        // Rename
+        assert!(client
+            .mkdir(PathBuf::from("/tmp/uploads").as_path())
+            .is_ok());
+        assert!(client
+            .rename(
+                list.get(0).unwrap(),
+                PathBuf::from("/tmp/uploads/README.txt").as_path()
+            )
+            .is_ok());
+        // Rename (err)
+        assert!(client
+            .rename(list.get(0).unwrap(), PathBuf::from("OMARONE").as_path())
+            .is_err());
+        let dummy: FsEntry = FsEntry::File(FsFile {
+            name: String::from("cucumber.txt"),
+            abs_path: PathBuf::from("/cucumber.txt"),
+            last_change_time: SystemTime::UNIX_EPOCH,
+            last_access_time: SystemTime::UNIX_EPOCH,
+            creation_time: SystemTime::UNIX_EPOCH,
+            size: 0,
+            ftype: Some(String::from("txt")), // File type
+            readonly: true,
+            symlink: None,             // UNIX only
+            user: Some(0),             // UNIX only
+            group: Some(0),            // UNIX only
+            unix_pex: Some((6, 4, 4)), // UNIX only
+        });
+        assert!(client
+            .rename(&dummy, PathBuf::from("/a/b/c").as_path())
+            .is_err());
+        // Remove
+        assert!(client.remove(list.get(1).unwrap()).is_ok());
+        assert!(client.remove(list.get(1).unwrap()).is_err());
+        // Receive file
+        let mut writable = client
+            .send_file(&entry, PathBuf::from("/tmp/uploads/README.txt").as_path())
+            .ok()
+            .unwrap();
+        write_file(&file, &mut writable);
+        assert!(client.on_sent(writable).is_ok());
+        let file: FsFile = client
+            .list_dir(PathBuf::from("/tmp/uploads").as_path())
+            .ok()
+            .unwrap()
+            .get(0)
+            .unwrap()
+            .clone()
+            .unwrap_file();
+        let mut readable = client.recv_file(&file).ok().unwrap();
+        let mut data: Vec<u8> = vec![0; 1024];
+        assert!(readable.read(&mut data).is_ok());
+        assert!(client.on_recv(readable).is_ok());
+        // Receive file (err)
+        assert!(client.recv_file(&entry).is_err());
+        // Cleanup
+        assert!(client.change_dir(PathBuf::from("/").as_path()).is_ok());
+        assert!(client
+            .remove(&make_fsentry(PathBuf::from("/tmp/omar"), true))
+            .is_ok());
+        assert!(client
+            .remove(&make_fsentry(PathBuf::from("/tmp/uploads"), true))
+            .is_ok());
         // Disconnect
         assert!(client.disconnect().is_ok());
         assert_eq!(client.is_connected(), false);
+    }
+
+    #[test]
+    #[cfg(feature = "with-containers")]
+    fn test_filetransfer_sftp_ssh_storage() {
+        let mut storage: SshKeyStorage = SshKeyStorage::empty();
+        let key_file: tempfile::NamedTempFile = write_ssh_key();
+        storage.add_key("127.0.0.1", "sftp", key_file.path().to_path_buf());
+        let mut client: SftpFileTransfer = SftpFileTransfer::new(storage);
+        // Connect
+        assert!(client
+            .connect(
+                String::from("127.0.0.1"),
+                10022,
+                Some(String::from("sftp")),
+                None,
+            )
+            .is_ok());
+        assert_eq!(client.is_connected(), true);
+        assert!(client.disconnect().is_ok());
     }
 
     #[test]
@@ -839,8 +980,8 @@ mod tests {
         let mut client: SftpFileTransfer = SftpFileTransfer::new(SshKeyStorage::empty());
         assert!(client
             .connect(
-                String::from("test.rebex.net"),
-                22,
+                String::from("127.0.0.1"),
+                10022,
                 Some(String::from("demo")),
                 Some(String::from("badpassword"))
             )
@@ -848,11 +989,50 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "with-containers")]
     fn test_filetransfer_sftp_no_credentials() {
         let mut client: SftpFileTransfer = SftpFileTransfer::new(SshKeyStorage::empty());
         assert!(client
-            .connect(String::from("test.rebex.net"), 22, None, None)
+            .connect(String::from("127.0.0.1"), 10022, None, None)
             .is_err());
+    }
+
+    #[test]
+    #[cfg(feature = "with-containers")]
+    fn test_filetransfer_sftp_get_remote_path() {
+        let mut client: SftpFileTransfer = SftpFileTransfer::new(SshKeyStorage::empty());
+        // Connect
+        assert!(client
+            .connect(
+                String::from("127.0.0.1"),
+                10022,
+                Some(String::from("sftp")),
+                Some(String::from("password"))
+            )
+            .is_ok());
+        // get realpath
+        assert!(client
+            .change_dir(PathBuf::from("/config").as_path())
+            .is_ok());
+        assert_eq!(
+            client
+                .get_remote_path(PathBuf::from("sshd.pid").as_path())
+                .ok()
+                .unwrap(),
+            PathBuf::from("/config/sshd.pid")
+        );
+        // No such file
+        assert!(client
+            .get_remote_path(PathBuf::from("omarone.txt").as_path())
+            .is_err());
+        // Ok abs path
+        assert_eq!(
+            client
+                .get_remote_path(PathBuf::from("/config/sshd.pid").as_path())
+                .ok()
+                .unwrap(),
+            PathBuf::from("/config/sshd.pid")
+        );
     }
 
     #[test]
@@ -867,302 +1047,6 @@ mod tests {
             )
             .is_err());
     }
-
-    #[test]
-    fn test_filetransfer_sftp_pwd() {
-        let mut client: SftpFileTransfer = SftpFileTransfer::new(SshKeyStorage::empty());
-        assert!(client
-            .connect(
-                String::from("test.rebex.net"),
-                22,
-                Some(String::from("demo")),
-                Some(String::from("password"))
-            )
-            .is_ok());
-        // Check session and sftp
-        assert!(client.session.is_some());
-        assert!(client.sftp.is_some());
-        assert_eq!(client.wrkdir, PathBuf::from("/"));
-        // Pwd
-        assert_eq!(client.wrkdir.clone(), client.pwd().ok().unwrap());
-        // Disconnect
-        assert!(client.disconnect().is_ok());
-    }
-
-    #[test]
-    fn test_filetransfer_sftp_cwd() {
-        let mut client: SftpFileTransfer = SftpFileTransfer::new(SshKeyStorage::empty());
-        assert!(client
-            .connect(
-                String::from("test.rebex.net"),
-                22,
-                Some(String::from("demo")),
-                Some(String::from("password"))
-            )
-            .is_ok());
-        // Check session and sftp
-        assert!(client.session.is_some());
-        assert!(client.sftp.is_some());
-        assert_eq!(client.wrkdir, PathBuf::from("/"));
-        // Pwd
-        assert_eq!(client.wrkdir.clone(), client.pwd().ok().unwrap());
-        // Cwd (relative)
-        assert!(client.change_dir(PathBuf::from("pub/").as_path()).is_ok());
-        assert_eq!(client.wrkdir, PathBuf::from("/pub"));
-        // Cwd (absolute)
-        assert!(client.change_dir(PathBuf::from("/").as_path()).is_ok());
-        assert_eq!(client.wrkdir, PathBuf::from("/"));
-        // Disconnect
-        assert!(client.disconnect().is_ok());
-    }
-
-    #[test]
-    fn test_filetransfer_sftp_copy() {
-        let mut client: SftpFileTransfer = SftpFileTransfer::new(SshKeyStorage::empty());
-        assert!(client
-            .connect(
-                String::from("test.rebex.net"),
-                22,
-                Some(String::from("demo")),
-                Some(String::from("password"))
-            )
-            .is_ok());
-        // Check session and sftp
-        assert!(client.session.is_some());
-        assert!(client.sftp.is_some());
-        assert_eq!(client.wrkdir, PathBuf::from("/"));
-        // Copy
-        let file: FsFile = FsFile {
-            name: String::from("readme.txt"),
-            abs_path: PathBuf::from("/readme.txt"),
-            last_change_time: SystemTime::UNIX_EPOCH,
-            last_access_time: SystemTime::UNIX_EPOCH,
-            creation_time: SystemTime::UNIX_EPOCH,
-            size: 0,
-            ftype: Some(String::from("txt")), // File type
-            readonly: true,
-            symlink: None,             // UNIX only
-            user: Some(0),             // UNIX only
-            group: Some(0),            // UNIX only
-            unix_pex: Some((6, 4, 4)), // UNIX only
-        };
-        assert!(client
-            .copy(&FsEntry::File(file), &Path::new("/tmp/dest.txt"))
-            .is_err());
-    }
-
-    #[test]
-    fn test_filetransfer_sftp_cwd_error() {
-        let mut client: SftpFileTransfer = SftpFileTransfer::new(SshKeyStorage::empty());
-        assert!(client
-            .connect(
-                String::from("test.rebex.net"),
-                22,
-                Some(String::from("demo")),
-                Some(String::from("password"))
-            )
-            .is_ok());
-        // Cwd (abs)
-        assert!(client
-            .change_dir(PathBuf::from("/omar/gabber").as_path())
-            .is_err());
-        // Cwd (rel)
-        assert!(client
-            .change_dir(PathBuf::from("gomar/pett").as_path())
-            .is_err());
-        // Disconnect
-        assert!(client.disconnect().is_ok());
-        assert!(client
-            .change_dir(PathBuf::from("gomar/pett").as_path())
-            .is_err());
-    }
-
-    #[test]
-    fn test_filetransfer_sftp_ls() {
-        let mut client: SftpFileTransfer = SftpFileTransfer::new(SshKeyStorage::empty());
-        assert!(client
-            .connect(
-                String::from("test.rebex.net"),
-                22,
-                Some(String::from("demo")),
-                Some(String::from("password"))
-            )
-            .is_ok());
-        // Check session and sftp
-        assert!(client.session.is_some());
-        assert!(client.sftp.is_some());
-        assert_eq!(client.wrkdir, PathBuf::from("/"));
-        // List dir
-        let pwd: PathBuf = client.pwd().ok().unwrap();
-        let files: Vec<FsEntry> = client.list_dir(pwd.as_path()).ok().unwrap();
-        assert_eq!(files.len(), 3); // There are 3 files
-                                    // Disconnect
-        assert!(client.disconnect().is_ok());
-        // Verify err
-        assert!(client.list_dir(pwd.as_path()).is_err());
-    }
-
-    #[test]
-    fn test_filetransfer_sftp_stat() {
-        let mut client: SftpFileTransfer = SftpFileTransfer::new(SshKeyStorage::empty());
-        assert!(client
-            .connect(
-                String::from("test.rebex.net"),
-                22,
-                Some(String::from("demo")),
-                Some(String::from("password"))
-            )
-            .is_ok());
-        // Check session and sftp
-        assert!(client.session.is_some());
-        assert!(client.sftp.is_some());
-        assert_eq!(client.wrkdir, PathBuf::from("/"));
-        let file: FsEntry = client
-            .stat(PathBuf::from("readme.txt").as_path())
-            .ok()
-            .unwrap();
-        if let FsEntry::File(file) = file {
-            assert_eq!(file.abs_path, PathBuf::from("/readme.txt"));
-        } else {
-            panic!("Expected readme.txt to be a file");
-        }
-    }
-
-    #[test]
-    fn test_filetransfer_sftp_exec() {
-        let mut client: SftpFileTransfer = SftpFileTransfer::new(SshKeyStorage::empty());
-        assert!(client
-            .connect(
-                String::from("test.rebex.net"),
-                22,
-                Some(String::from("demo")),
-                Some(String::from("password"))
-            )
-            .is_ok());
-        // Check session and scp
-        assert!(client.session.is_some());
-        // Exec
-        assert_eq!(client.exec("echo 5").ok().unwrap().as_str(), "5\n");
-        // Disconnect
-        assert!(client.disconnect().is_ok());
-        // Verify err
-        assert!(client.exec("echo 1").is_err());
-    }
-
-    #[test]
-    fn test_filetransfer_sftp_find() {
-        let mut client: SftpFileTransfer = SftpFileTransfer::new(SshKeyStorage::empty());
-        assert!(client
-            .connect(
-                String::from("test.rebex.net"),
-                22,
-                Some(String::from("demo")),
-                Some(String::from("password"))
-            )
-            .is_ok());
-        // Check session and scp
-        assert!(client.session.is_some());
-        // Search for file (let's search for pop3-*.png); there should be 2
-        let search_res: Vec<FsEntry> = client.find("pop3-*.png").ok().unwrap();
-        assert_eq!(search_res.len(), 2);
-        // verify names
-        assert_eq!(search_res[0].get_name(), "pop3-browser.png");
-        assert_eq!(search_res[1].get_name(), "pop3-console-client.png");
-        // Search directory
-        let search_res: Vec<FsEntry> = client.find("pub").ok().unwrap();
-        assert_eq!(search_res.len(), 1);
-        // Disconnect
-        assert!(client.disconnect().is_ok());
-        // Verify err
-        assert!(client.find("pippo").is_err());
-    }
-
-    #[test]
-    fn test_filetransfer_sftp_recv() {
-        let mut client: SftpFileTransfer = SftpFileTransfer::new(SshKeyStorage::empty());
-        assert!(client
-            .connect(
-                String::from("test.rebex.net"),
-                22,
-                Some(String::from("demo")),
-                Some(String::from("password"))
-            )
-            .is_ok());
-        // Check session and sftp
-        assert!(client.session.is_some());
-        assert!(client.sftp.is_some());
-        assert_eq!(client.wrkdir, PathBuf::from("/"));
-        let file: FsFile = FsFile {
-            name: String::from("readme.txt"),
-            abs_path: PathBuf::from("/readme.txt"),
-            last_change_time: SystemTime::UNIX_EPOCH,
-            last_access_time: SystemTime::UNIX_EPOCH,
-            creation_time: SystemTime::UNIX_EPOCH,
-            size: 0,
-            ftype: Some(String::from("txt")), // File type
-            readonly: true,
-            symlink: None,             // UNIX only
-            user: Some(0),             // UNIX only
-            group: Some(0),            // UNIX only
-            unix_pex: Some((6, 4, 4)), // UNIX only
-        };
-        // Receive file
-        assert!(client.recv_file(&file).is_ok());
-        // Disconnect
-        assert!(client.disconnect().is_ok());
-    }
-    #[test]
-    fn test_filetransfer_sftp_recv_failed_nosuchfile() {
-        let mut client: SftpFileTransfer = SftpFileTransfer::new(SshKeyStorage::empty());
-        assert!(client
-            .connect(
-                String::from("test.rebex.net"),
-                22,
-                Some(String::from("demo")),
-                Some(String::from("password"))
-            )
-            .is_ok());
-        // Check session and sftp
-        assert!(client.session.is_some());
-        assert!(client.sftp.is_some());
-        assert_eq!(client.wrkdir, PathBuf::from("/"));
-        // Receive file
-        let file: FsFile = FsFile {
-            name: String::from("omar.txt"),
-            abs_path: PathBuf::from("/omar.txt"),
-            last_change_time: SystemTime::UNIX_EPOCH,
-            last_access_time: SystemTime::UNIX_EPOCH,
-            creation_time: SystemTime::UNIX_EPOCH,
-            size: 0,
-            ftype: Some(String::from("txt")), // File type
-            readonly: true,
-            symlink: None,             // UNIX only
-            user: Some(0),             // UNIX only
-            group: Some(0),            // UNIX only
-            unix_pex: Some((6, 4, 4)), // UNIX only
-        };
-        assert!(client.recv_file(&file).is_err());
-        // Disconnect
-        assert!(client.disconnect().is_ok());
-    }
-
-    // NOTE: other functions doesn't work with this test SFTP server
-
-    /* NOTE: the server doesn't allow you to create directories
-    #[test]
-    fn test_filetransfer_sftp_mkdir() {
-        let mut client: SftpFileTransfer = SftpFileTransfer::new(SshKeyStorage::empty());
-        assert!(client.connect(String::from("test.rebex.net"), 22, Some(String::from("demo")), Some(String::from("password"))).is_ok());
-        let dir: String = String::from("foo");
-        // Mkdir
-        assert!(client.mkdir(dir).is_ok());
-        // cwd
-        assert!(client.change_dir(PathBuf::from("foo/").as_path()).is_ok());
-        assert_eq!(client.wrkdir, PathBuf::from("/foo"));
-        // Disconnect
-        assert!(client.disconnect().is_ok());
-    }
-    */
 
     #[test]
     fn test_filetransfer_sftp_uninitialized() {
@@ -1182,10 +1066,26 @@ mod tests {
         };
         let mut sftp: SftpFileTransfer = SftpFileTransfer::new(SshKeyStorage::empty());
         assert!(sftp.change_dir(Path::new("/tmp")).is_err());
+        assert!(sftp
+            .copy(
+                &make_fsentry(PathBuf::from("/nowhere"), false),
+                PathBuf::from("/culonia").as_path()
+            )
+            .is_err());
+        assert!(sftp.exec("echo 5").is_err());
         assert!(sftp.disconnect().is_err());
         assert!(sftp.list_dir(Path::new("/tmp")).is_err());
         assert!(sftp.mkdir(Path::new("/tmp")).is_err());
         assert!(sftp.pwd().is_err());
+        assert!(sftp
+            .remove(&make_fsentry(PathBuf::from("/nowhere"), false))
+            .is_err());
+        assert!(sftp
+            .rename(
+                &make_fsentry(PathBuf::from("/nowhere"), false),
+                PathBuf::from("/culonia").as_path()
+            )
+            .is_err());
         assert!(sftp.stat(Path::new("/tmp")).is_err());
         assert!(sftp.recv_file(&file).is_err());
         assert!(sftp.send_file(&file, Path::new("/tmp/omar.txt")).is_err());
