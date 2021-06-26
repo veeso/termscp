@@ -47,6 +47,7 @@ use tuirealm::{Update, View};
 const COMPONENT_TEXT_H1: &str = "TEXT_H1";
 const COMPONENT_TEXT_H2: &str = "TEXT_H2";
 const COMPONENT_TEXT_NEW_VERSION: &str = "TEXT_NEW_VERSION";
+const COMPONENT_TEXT_NEW_VERSION_NOTES: &str = "TEXTAREA_NEW_VERSION";
 const COMPONENT_TEXT_FOOTER: &str = "TEXT_FOOTER";
 const COMPONENT_TEXT_HELP: &str = "TEXT_HELP";
 const COMPONENT_TEXT_ERROR: &str = "TEXT_ERROR";
@@ -66,6 +67,7 @@ const COMPONENT_RECENTS_LIST: &str = "RECENTS_LIST";
 
 // Store keys
 const STORE_KEY_LATEST_VERSION: &str = "AUTH_LATEST_VERSION";
+const STORE_KEY_RELEASE_NOTES: &str = "AUTH_RELEASE_NOTES";
 
 /// ### AuthActivity
 ///
@@ -111,16 +113,13 @@ impl AuthActivity {
         let ctx: &Context = self.context.as_ref().unwrap();
         if !ctx.store.isset(STORE_KEY_LATEST_VERSION) {
             debug!("Version is not set in storage");
-            let mut new_version: Option<String> = match ctx.config_client.as_ref() {
+            let mut github_tag: Option<git::GithubTag> = match ctx.config_client.as_ref() {
                 Some(client) => {
                     if client.get_check_for_updates() {
                         debug!("Check for updates is enabled");
                         // Send request
                         match git::check_for_updates(env!("CARGO_PKG_VERSION")) {
-                            Ok(version) => {
-                                info!("Latest version is: {:?}", version);
-                                version
-                            }
+                            Ok(github_tag) => github_tag,
                             Err(err) => {
                                 // Report error
                                 error!("Failed to get latest version: {}", err);
@@ -140,9 +139,18 @@ impl AuthActivity {
             };
             let ctx: &mut Context = self.context.as_mut().unwrap();
             // Set version into the store (or just a flag)
-            match new_version.take() {
-                Some(new_version) => ctx.store.set_string(STORE_KEY_LATEST_VERSION, new_version), // If Some, set String
-                None => ctx.store.set(STORE_KEY_LATEST_VERSION), // If None, just set flag
+            match github_tag.take() {
+                Some(git::GithubTag { tag_name, body }) => {
+                    // If some store version and release notes
+                    info!("Latest version is: {}", tag_name);
+                    ctx.store.set_string(STORE_KEY_LATEST_VERSION, tag_name);
+                    ctx.store.set_string(STORE_KEY_RELEASE_NOTES, body);
+                }
+                None => {
+                    info!("Latest version is: {} (current)", env!("CARGO_PKG_VERSION"));
+                    // Just set flag as check
+                    ctx.store.set(STORE_KEY_LATEST_VERSION);
+                }
             }
         }
     }
