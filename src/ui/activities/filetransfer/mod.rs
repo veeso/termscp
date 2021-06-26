@@ -33,12 +33,6 @@ pub(self) mod session;
 pub(self) mod update;
 pub(self) mod view;
 
-// Dependencies
-extern crate chrono;
-extern crate crossterm;
-extern crate textwrap;
-extern crate tuirealm;
-
 // locals
 use super::{Activity, Context, ExitReason};
 use crate::filetransfer::ftp_transfer::FtpFileTransfer;

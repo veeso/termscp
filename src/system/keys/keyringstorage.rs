@@ -25,8 +25,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-// Deps
-extern crate keyring;
 // Local
 use super::{KeyStorage, KeyStorageError};
 // Ext
@@ -100,8 +98,6 @@ impl KeyStorage for KeyringStorage {
 
 #[cfg(test)]
 mod tests {
-
-    extern crate whoami;
     use super::*;
 
     use pretty_assertions::assert_eq;

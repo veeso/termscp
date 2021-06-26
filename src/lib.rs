@@ -32,12 +32,36 @@
 
 #[macro_use]
 extern crate bitflags;
+extern crate bytesize;
+extern crate chrono;
+extern crate content_inspector;
+extern crate crossterm;
+extern crate dirs;
+extern crate edit;
+extern crate ftp4;
+extern crate hostname;
+#[cfg(feature = "with-keyring")]
+extern crate keyring;
 #[macro_use]
 extern crate lazy_static;
 #[macro_use]
 extern crate log;
 #[macro_use]
 extern crate magic_crypt;
+extern crate open;
+#[cfg(target_os = "windows")]
+extern crate path_slash;
+extern crate rand;
+extern crate regex;
+extern crate ssh2;
+extern crate tempfile;
+extern crate textwrap;
+extern crate tuirealm;
+extern crate ureq;
+#[cfg(target_family = "unix")]
+extern crate users;
+extern crate whoami;
+extern crate wildmatch;
 
 pub mod activity_manager;
 pub mod bookmarks;

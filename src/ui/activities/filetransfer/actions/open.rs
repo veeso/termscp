@@ -25,8 +25,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-// deps
-extern crate open;
 // locals
 use super::{FileTransferActivity, FsEntry, LogLevel, SelectedEntry, TransferPayload};
 // ext

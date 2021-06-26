@@ -25,11 +25,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-// Dependencies
-extern crate chrono;
-extern crate regex;
-extern crate whoami;
-
 // Locals
 use crate::filetransfer::FileTransferProtocol;
 #[cfg(not(test))] // NOTE: don't use configuration during tests

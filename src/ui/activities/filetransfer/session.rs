@@ -25,12 +25,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-// Deps
-extern crate bytesize;
-extern crate content_inspector;
-extern crate crossterm;
-extern crate tempfile;
-
 // Locals
 use super::{FileTransferActivity, LogLevel};
 use crate::filetransfer::FileTransferError;

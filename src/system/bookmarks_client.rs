@@ -25,8 +25,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-// Deps
-extern crate whoami;
 // Crate
 #[cfg(any(target_os = "windows", target_os = "macos"))]
 use super::keys::keyringstorage::KeyringStorage;

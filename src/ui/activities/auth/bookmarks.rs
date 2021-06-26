@@ -25,9 +25,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-// Dependencies
-extern crate dirs;
-
 // Locals
 use super::{AuthActivity, FileTransferProtocol};
 use crate::system::bookmarks_client::BookmarksClient;

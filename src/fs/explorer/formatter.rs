@@ -25,11 +25,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-// Deps
-extern crate bytesize;
-extern crate regex;
-#[cfg(target_family = "unix")]
-extern crate users;
 // Locals
 use super::FsEntry;
 use crate::utils::fmt::{fmt_path_elide, fmt_pex, fmt_time};
