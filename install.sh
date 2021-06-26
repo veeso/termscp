@@ -188,70 +188,73 @@ install_on_bsd() {
     $sudo pkg install -y "${archive}"
 }
 
+install_on_arch_linux() {
+    pkg="$1"
+    info "Detected ${YELLOW}${pkg}${NO_COLOR} on your system"
+    confirm "${YELLOW}rust${NO_COLOR} is required to install ${GREEN}termscp${NO_COLOR}; would you like to proceed?"
+    $pkg -S rust
+    info "Installing ${GREEN}termscp${NO_COLOR} AUR package…"
+    $pkg -S termscp
+}
+
 install_on_linux() {
     local msg
     local sudo
     local archive
-    if [ "${ARCH}" != "x86_64" ]; then
-        try_with_cargo "we don't distribute packages for ${ARCH} at the moment"
-    elif has yay; then
-        info "Detected yay on your system"
-        info "Installing termscp AUR package"
-        yay -S termscp
+    if has yay; then
+        install_on_arch_linux yay
     elif has pakku; then
-        info "Detected pakku on your system"
-        info "Installing termscp AUR package"
-        pakku -S termscp
+        install_on_arch_linux pakku
     elif has paru; then
-        info "Detected paru on your system"
-        info "Installing termscp AUR package"
-        paru -S termscp
+        install_on_arch_linux paru
     elif has aurutils; then
-        info "Detected aurutils on your system"
-        info "Installing termscp AUR package"
-        aurutils -S termscp
+        install_on_arch_linux aurutils
     elif has pamac; then
-        info "Detected pamac on your system"
-        info "Installing termscp AUR package"
-        pamac -S termscp
+        install_on_arch_linux pamac
     elif has pikaur; then
-        info "Detected pikaur on your system"
-        info "Installing termscp AUR package"
-        pikaur -S termscp
+        install_on_arch_linux pikaur
     elif has dpkg; then
-        info "Detected dpkg on your system"
-        info "Installing termscp via Debian package"
-        archive=$(get_tmpfile "deb")
-        download "${archive}" "${DEB_URL}"
-        info "Downloaded debian package to ${archive}"
-        if test_writeable "/usr/bin"; then
-            sudo=""
-            msg="Installing termscp, please wait…"
+        if [ "${ARCH}" != "x86_64" ]; then # It's okay on AUR; not on other distros
+            try_with_cargo "we don't distribute packages for ${ARCH} at the moment"
         else
-            warn "Root permissions are required to install termscp…"
-            elevate_priv
-            sudo="sudo"
-            msg="Installing termscp as root, please wait…"
+            info "Detected dpkg on your system"
+            info "Installing ${GREEN}termscp${NO_COLOR} via Debian package"
+            archive=$(get_tmpfile "deb")
+            download "${archive}" "${DEB_URL}"
+            info "Downloaded debian package to ${archive}"
+            if test_writeable "/usr/bin"; then
+                sudo=""
+                msg="Installing ${GREEN}termscp${NO_COLOR}, please wait…"
+            else
+                warn "Root permissions are required to install ${GREEN}termscp${NO_COLOR}…"
+                elevate_priv
+                sudo="sudo"
+                msg="Installing ${GREEN}termscp${NO_COLOR} as root, please wait…"
+            fi
+            info "$msg"
+            $sudo dpkg -i "${archive}"
         fi
-        info "$msg"
-        $sudo dpkg -i "${archive}"
     elif has rpm; then
-        info "Detected rpm on your system"
-        info "Installing termscp via RPM package"
-        archive=$(get_tempfile "rpm")
-        download "${archive}" "${RPM_URL}"
-        info "Downloaded rpm package to ${archive}"
-        if test_writeable "/usr/bin"; then
-            sudo=""
-            msg="Installing termscp, please wait…"
+        if [ "${ARCH}" != "x86_64" ]; then # It's okay on AUR; not on other distros
+            try_with_cargo "we don't distribute packages for ${ARCH} at the moment"
         else
-            warn "Root permissions are required to install termscp…"
-            elevate_priv
-            sudo="sudo"
-            msg="Installing termscp as root, please wait…"
+            info "Detected rpm on your system"
+            info "Installing ${GREEN}termscp${NO_COLOR} via RPM package"
+            archive=$(get_tmpfile "rpm")
+            download "${archive}" "${RPM_URL}"
+            info "Downloaded rpm package to ${archive}"
+            if test_writeable "/usr/bin"; then
+                sudo=""
+                msg="Installing ${GREEN}termscp${NO_COLOR}, please wait…"
+            else
+                warn "Root permissions are required to install ${GREEN}termscp${NO_COLOR}…"
+                elevate_priv
+                sudo="sudo"
+                msg="Installing ${GREEN}termscp${NO_COLOR} as root, please wait…"
+            fi
+            info "$msg"
+            $sudo rpm -U "${archive}"
         fi
-        info "$msg"
-        $sudo rpm -U "${archive}"
     else
         try_with_cargo "No suitable installation method found for your Linux distribution; if you're running on Arch linux, please install an AUR package manager (such as yay). Currently only Arch, Debian based and Red Hat based distros are supported"
     fi
@@ -260,11 +263,11 @@ install_on_linux() {
 install_on_macos() {
     if has brew; then
         if has termscp; then
-            info "Upgrading termscp..."
+            info "Upgrading ${GREEN}termscp${NO_COLOR}…"
             # The OR is used since someone could have installed via cargo previously
             brew update && brew upgrade termscp || brew install veeso/termscp/termscp
         else
-            info "Installing termscp..."
+            info "Installing ${GREEN}termscp${NO_COLOR}…"
             brew install veeso/termscp/termscp
         fi
     else
@@ -275,7 +278,7 @@ install_on_macos() {
 try_with_cargo() {
     err="$1"
     if has cargo; then
-        info "Installing termscp via Cargo..."
+        info "Installing ${GREEN}termscp${NO_COLOR} via Cargo…"
         cargo install termscp
     else
         error "$err"
