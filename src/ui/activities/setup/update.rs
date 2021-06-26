@@ -114,6 +114,7 @@ impl Update for SetupActivity {
                     self.umount_error();
                     None
                 }
+                (COMPONENT_TEXT_ERROR, _) => None,
                 // Exit
                 (COMPONENT_RADIO_QUIT, Msg::OnSubmit(Payload::One(Value::Usize(0)))) => {
                     // Save changes
@@ -135,12 +136,14 @@ impl Update for SetupActivity {
                     self.umount_quit();
                     None
                 }
+                (COMPONENT_RADIO_QUIT, _) => None,
                 // Close help
                 (COMPONENT_TEXT_HELP, &MSG_KEY_ENTER) | (COMPONENT_TEXT_HELP, &MSG_KEY_ESC) => {
                     // Umount help
                     self.umount_help();
                     None
                 }
+                (COMPONENT_TEXT_HELP, _) => None,
                 // Delete key
                 (COMPONENT_RADIO_DEL_SSH_KEY, Msg::OnSubmit(Payload::One(Value::Usize(0)))) => {
                     // Delete key
@@ -156,6 +159,7 @@ impl Update for SetupActivity {
                     self.umount_del_ssh_key();
                     None
                 }
+                (COMPONENT_RADIO_DEL_SSH_KEY, _) => None,
                 // Save popup
                 (COMPONENT_RADIO_SAVE, Msg::OnSubmit(Payload::One(Value::Usize(0)))) => {
                     // Save config
@@ -170,6 +174,7 @@ impl Update for SetupActivity {
                     self.umount_save_popup();
                     None
                 }
+                (COMPONENT_RADIO_SAVE, _) => None,
                 // Edit SSH Key
                 // <TAB> Change view
                 (COMPONENT_LIST_SSH_KEYS, &MSG_KEY_TAB) => {

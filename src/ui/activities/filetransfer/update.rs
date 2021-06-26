@@ -379,6 +379,7 @@ impl Update for FileTransferActivity {
                         _ => None,
                     }
                 }
+                (COMPONENT_INPUT_COPY, _) => None,
                 // -- exec popup
                 (COMPONENT_INPUT_EXEC, &MSG_KEY_ESC) => {
                     self.umount_exec();
@@ -399,6 +400,7 @@ impl Update for FileTransferActivity {
                         _ => None,
                     }
                 }
+                (COMPONENT_INPUT_EXEC, _) => None,
                 // -- find popup
                 (COMPONENT_INPUT_FIND, &MSG_KEY_ESC) => {
                     self.umount_find_input();
@@ -466,6 +468,7 @@ impl Update for FileTransferActivity {
                         _ => None,
                     }
                 }
+                (COMPONENT_INPUT_GOTO, _) => None,
                 // -- make directory
                 (COMPONENT_INPUT_MKDIR, &MSG_KEY_ESC) => {
                     self.umount_mkdir();
@@ -485,6 +488,7 @@ impl Update for FileTransferActivity {
                         _ => None,
                     }
                 }
+                (COMPONENT_INPUT_MKDIR, _) => None,
                 // -- new file
                 (COMPONENT_INPUT_NEWFILE, &MSG_KEY_ESC) => {
                     self.umount_newfile();
@@ -504,6 +508,7 @@ impl Update for FileTransferActivity {
                         _ => None,
                     }
                 }
+                (COMPONENT_INPUT_NEWFILE, _) => None,
                 // -- open with
                 (COMPONENT_INPUT_OPEN_WITH, &MSG_KEY_ESC) => {
                     self.umount_openwith();
@@ -520,6 +525,7 @@ impl Update for FileTransferActivity {
                     self.umount_openwith();
                     None
                 }
+                (COMPONENT_INPUT_OPEN_WITH, _) => None,
                 // -- rename
                 (COMPONENT_INPUT_RENAME, &MSG_KEY_ESC) => {
                     self.umount_rename();
@@ -539,6 +545,7 @@ impl Update for FileTransferActivity {
                         _ => None,
                     }
                 }
+                (COMPONENT_INPUT_RENAME, _) => None,
                 // -- save as
                 (COMPONENT_INPUT_SAVEAS, &MSG_KEY_ESC) => {
                     self.umount_saveas();
@@ -563,12 +570,14 @@ impl Update for FileTransferActivity {
                         FileExplorerTab::FindRemote => self.update_local_filelist(),
                     }
                 }
+                (COMPONENT_INPUT_SAVEAS, _) => None,
                 // -- fileinfo
                 (COMPONENT_LIST_FILEINFO, &MSG_KEY_ENTER)
                 | (COMPONENT_LIST_FILEINFO, &MSG_KEY_ESC) => {
                     self.umount_file_info();
                     None
                 }
+                (COMPONENT_LIST_FILEINFO, _) => None,
                 // -- delete
                 (COMPONENT_RADIO_DELETE, &MSG_KEY_ESC)
                 | (COMPONENT_RADIO_DELETE, Msg::OnSubmit(Payload::One(Value::Usize(1)))) => {
@@ -612,6 +621,7 @@ impl Update for FileTransferActivity {
                         FileExplorerTab::FindRemote => self.update_remote_filelist(),
                     }
                 }
+                (COMPONENT_RADIO_DELETE, _) => None,
                 // -- disconnect
                 (COMPONENT_RADIO_DISCONNECT, &MSG_KEY_ESC)
                 | (COMPONENT_RADIO_DISCONNECT, Msg::OnSubmit(Payload::One(Value::Usize(1)))) => {
@@ -623,6 +633,7 @@ impl Update for FileTransferActivity {
                     self.umount_disconnect();
                     None
                 }
+                (COMPONENT_RADIO_DISCONNECT, _) => None,
                 // -- quit
                 (COMPONENT_RADIO_QUIT, &MSG_KEY_ESC)
                 | (COMPONENT_RADIO_QUIT, Msg::OnSubmit(Payload::One(Value::Usize(1)))) => {
@@ -634,6 +645,7 @@ impl Update for FileTransferActivity {
                     self.umount_quit();
                     None
                 }
+                (COMPONENT_RADIO_QUIT, _) => None,
                 // -- sorting
                 (COMPONENT_RADIO_SORTING, &MSG_KEY_ESC)
                 | (COMPONENT_RADIO_SORTING, Msg::OnSubmit(_)) => {
@@ -666,27 +678,32 @@ impl Update for FileTransferActivity {
                         _ => None,
                     }
                 }
+                (COMPONENT_RADIO_SORTING, _) => None,
                 // -- error
                 (COMPONENT_TEXT_ERROR, &MSG_KEY_ESC) | (COMPONENT_TEXT_ERROR, &MSG_KEY_ENTER) => {
                     self.umount_error();
                     None
                 }
+                (COMPONENT_TEXT_ERROR, _) => None,
                 // -- fatal
                 (COMPONENT_TEXT_FATAL, &MSG_KEY_ESC) | (COMPONENT_TEXT_FATAL, &MSG_KEY_ENTER) => {
                     self.exit_reason = Some(super::ExitReason::Disconnect);
                     None
                 }
+                (COMPONENT_TEXT_FATAL, _) => None,
                 // -- help
                 (COMPONENT_TEXT_HELP, &MSG_KEY_ESC) | (COMPONENT_TEXT_HELP, &MSG_KEY_ENTER) => {
                     self.umount_help();
                     None
                 }
+                (COMPONENT_TEXT_HELP, _) => None,
                 // -- progress bar
                 (COMPONENT_PROGRESS_BAR_PARTIAL, &MSG_KEY_CTRL_C) => {
                     // Set transfer aborted to True
                     self.transfer.abort();
                     None
                 }
+                (COMPONENT_PROGRESS_BAR_PARTIAL, _) => None,
                 // -- fallback
                 (_, _) => None, // Nothing to do
             },

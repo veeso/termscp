@@ -39,6 +39,7 @@ use tuirealm::components::{
     radio::{Radio, RadioPropsBuilder},
     scrolltable::{ScrollTablePropsBuilder, Scrolltable},
     span::{Span, SpanPropsBuilder},
+    textarea::{Textarea, TextareaPropsBuilder},
 };
 use tuirealm::tui::{
     layout::{Constraint, Direction, Layout},
@@ -185,17 +186,15 @@ impl AuthActivity {
             self.view.mount(
                 super::COMPONENT_TEXT_NEW_VERSION,
                 Box::new(Span::new(
-                        SpanPropsBuilder::default()
+                    SpanPropsBuilder::default()
                         .with_foreground(Color::Yellow)
-                        .with_spans(
-                            vec![
-                                TextSpan::from("termscp "),
-                                TextSpanBuilder::new(version).underlined().bold().build(),
-                                TextSpan::from(" is now available! Download it from <https://github.com/veeso/termscp/releases/latest>")
-                            ]
-                        )
-                        .build()
-                ))
+                        .with_spans(vec![
+                            TextSpan::from("termscp "),
+                            TextSpanBuilder::new(version).underlined().bold().build(),
+                            TextSpan::from(" is now available! View release notes with <CTRL+R>"),
+                        ])
+                        .build(),
+                )),
             );
         }
         // Bookmarks
@@ -344,6 +343,15 @@ impl AuthActivity {
                     f.render_widget(Clear, popup);
                     self.view
                         .render(super::COMPONENT_RADIO_BOOKMARK_DEL_RECENT, f, popup);
+                }
+            }
+            if let Some(props) = self.view.get_props(super::COMPONENT_TEXT_NEW_VERSION_NOTES) {
+                if props.visible {
+                    // make popup
+                    let popup = draw_area_in(f.size(), 90, 90);
+                    f.render_widget(Clear, popup);
+                    self.view
+                        .render(super::COMPONENT_TEXT_NEW_VERSION_NOTES, f, popup);
                 }
             }
             if let Some(props) = self.view.get_props(super::COMPONENT_TEXT_HELP) {
@@ -751,6 +759,35 @@ impl AuthActivity {
     /// Umount help
     pub(super) fn umount_help(&mut self) {
         self.view.umount(super::COMPONENT_TEXT_HELP);
+    }
+
+    /// ### mount_release_notes
+    ///
+    /// mount release notes text area
+    pub(super) fn mount_release_notes(&mut self) {
+        if let Some(ctx) = self.context.as_ref() {
+            if let Some(release_notes) = ctx.store.get_string(super::STORE_KEY_RELEASE_NOTES) {
+                // make spans
+                let spans: Vec<TextSpan> = release_notes.lines().map(TextSpan::from).collect();
+                self.view.mount(
+                    super::COMPONENT_TEXT_NEW_VERSION_NOTES,
+                    Box::new(Textarea::new(
+                        TextareaPropsBuilder::default()
+                            .with_borders(Borders::ALL, BorderType::Rounded, Color::LightYellow)
+                            .with_texts(Some(String::from("Release notes")), spans)
+                            .build(),
+                    )),
+                );
+                self.view.active(super::COMPONENT_TEXT_NEW_VERSION_NOTES);
+            }
+        }
+    }
+
+    /// ### umount_release_notes
+    ///
+    /// Umount release notes text area
+    pub(super) fn umount_release_notes(&mut self) {
+        self.view.umount(super::COMPONENT_TEXT_NEW_VERSION_NOTES);
     }
 
     /// ### get_input
