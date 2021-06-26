@@ -25,11 +25,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-// Deps
-extern crate bytesize;
-extern crate hostname;
-#[cfg(target_family = "unix")]
-extern crate users;
 // locals
 use super::{browser::FileExplorerTab, Context, FileTransferActivity};
 use crate::fs::explorer::FileSorting;

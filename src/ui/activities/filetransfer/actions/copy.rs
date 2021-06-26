@@ -25,7 +25,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-extern crate tempfile;
 // locals
 use super::{FileTransferActivity, FsEntry, LogLevel, SelectedEntry, TransferPayload};
 use crate::filetransfer::FileTransferErrorType;

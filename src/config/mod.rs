@@ -28,9 +28,6 @@
 // Modules
 pub mod serializer;
 
-// Deps
-extern crate edit;
-
 // Locals
 use crate::filetransfer::FileTransferProtocol;
 

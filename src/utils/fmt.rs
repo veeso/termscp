@@ -25,9 +25,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-extern crate chrono;
-extern crate textwrap;
-
 use chrono::prelude::*;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime};

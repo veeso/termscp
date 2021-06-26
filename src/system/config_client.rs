@@ -25,8 +25,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-// Deps
-extern crate rand;
 // Locals
 use crate::config::serializer::ConfigSerializer;
 use crate::config::{SerializerError, SerializerErrorKind, UserConfig};

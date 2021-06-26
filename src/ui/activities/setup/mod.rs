@@ -32,10 +32,6 @@ mod config;
 mod update;
 mod view;
 
-// Deps
-extern crate crossterm;
-extern crate tuirealm;
-
 // Locals
 use super::{Activity, Context, ExitReason};
 // Ext

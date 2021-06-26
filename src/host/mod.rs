@@ -25,8 +25,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-// dependencies
-extern crate wildmatch;
 // ext
 use std::fs::{self, File, Metadata, OpenOptions};
 use std::path::{Path, PathBuf};

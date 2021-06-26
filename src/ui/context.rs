@@ -25,10 +25,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-// Dependencies
-extern crate crossterm;
-extern crate tuirealm;
-
 // Locals
 use super::input::InputHandler;
 use super::store::Store;

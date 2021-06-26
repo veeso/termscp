@@ -31,10 +31,6 @@ mod misc;
 mod update;
 mod view;
 
-// Dependencies
-extern crate crossterm;
-extern crate tuirealm;
-
 // locals
 use super::{Activity, Context, ExitReason};
 use crate::filetransfer::FileTransferProtocol;
