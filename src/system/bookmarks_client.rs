@@ -704,6 +704,22 @@ mod tests {
         );
     }
 
+    #[test]
+    fn test_system_bookmarks_decrypt_str() {
+        let tmp_dir: tempfile::TempDir = TempDir::new().ok().unwrap();
+        let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
+        // Initialize a new bookmarks client
+        let mut client: BookmarksClient =
+            BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16).unwrap();
+        client.key = "MYSUPERSECRETKEY".to_string();
+        let input: &str = "Hello world!";
+        assert_eq!(
+            client.decrypt_str("z4Z6LpcpYqBW4+bkIok+5A==").ok().unwrap(),
+            "Hello world!"
+        );
+        assert!(client.decrypt_str("bidoof").is_err());
+    }
+
     /// ### get_paths
     ///
     /// Get paths for configuration and key for bookmarks
