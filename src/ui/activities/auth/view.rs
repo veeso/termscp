@@ -191,7 +191,7 @@ impl AuthActivity {
                         .with_spans(vec![
                             TextSpan::from("termscp "),
                             TextSpanBuilder::new(version).underlined().bold().build(),
-                            TextSpan::from(" is now available! View release notes with <CTRL+R>"),
+                            TextSpan::from(" is NOW available! Get it from <https://veeso.github.io/termscp/>; view release notes with <CTRL+R>"),
                         ])
                         .build(),
                 )),

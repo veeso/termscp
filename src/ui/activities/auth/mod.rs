@@ -118,7 +118,7 @@ impl AuthActivity {
                     if client.get_check_for_updates() {
                         debug!("Check for updates is enabled");
                         // Send request
-                        match git::check_for_updates("0.5.0") {
+                        match git::check_for_updates(env!("CARGO_PKG_VERSION")) {
                             Ok(github_tag) => github_tag,
                             Err(err) => {
                                 // Report error
