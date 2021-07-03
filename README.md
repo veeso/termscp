@@ -69,16 +69,23 @@ while if you're a Windows user, you can install termscp with [Chocolatey](https:
 
 For more information or other platforms, please visit [veeso.github.io](https://veeso.github.io/termscp/#get-started) to view all installation methods.
 
+### Requirements ❗
+
+- **Linux/BSD** users:
+  - libssh
+  - libdbus-1
+
 ### Soft Requirements ✔️
 
 These requirements are not forcely required to run termscp, but to enjoy all of its features
 
-- **Linux** users
+- **Linux/BSD** users:
   - To **open** files via `V` (at least one of these)
     - *xdg-open*
     - *gio*
     - *gnome-open*
     - *kde-open*
+  - A keyring manager: read more in the [User manual](docs/man.md#linux-keyring)
 - **WSL** users
   - To **open** files via `V` (at least one of these)
     - [wslu](https://github.com/wslutilities/wslu)

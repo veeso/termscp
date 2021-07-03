@@ -18,5 +18,5 @@ jobs:
             chmod +x /tmp/rustup.sh && \
             /tmp/rustup.sh -y
             . $HOME/.cargo/env
-            cargo build
-            cargo test --verbose --lib --features github-actions -- --test-threads 1
+            cargo build --no-default-features
+            cargo test --no-default-features --verbose --lib --features github-actions -- --test-threads 1

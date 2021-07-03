@@ -28,9 +28,17 @@ Released on FIXME: ??
 - **Open any file** in explorer:
   - Open file with default program for file type with `<V>`
   - Open file with a specific program with `<W>`
+- **Keyring support for Linux**
+  - From now on keyring will be available for Linux only
+  - Read the manual to find out if your system supports the keyring and how you can enable it
+  - libdbus is now a dependency
+  - added `with-keyring` feature
+  - **❗ BREAKING CHANGE ❗**: if you start using keyring on Linux, all the saved password will be lost
 - **In-app release notes**
   - Possibility to see the release note of the new available release whenever a new version is available
   - Just press `<CTRL+R>` when a new version is available from the auth activity to read the release notes
+- **Installation script**:
+  - From now on, in case cargo is used to install termscp, all the cargo dependencies will be installed
 - Bugfix:
   - Fixed broken input cursor when typing UTF8 characters (tui-realm 0.3.2)
 - Dependencies:

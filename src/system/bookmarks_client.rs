@@ -26,7 +26,7 @@
  * SOFTWARE.
  */
 // Crate
-#[cfg(any(target_os = "windows", target_os = "macos"))]
+#[cfg(feature = "with-keyring")]
 use super::keys::keyringstorage::KeyringStorage;
 use super::keys::{filestorage::FileStorage, KeyStorage, KeyStorageError};
 // Local
@@ -67,8 +67,8 @@ impl BookmarksClient {
         // Create default hosts
         let default_hosts: UserHosts = Default::default();
         debug!("Setting up bookmarks client...");
-        // Make a key storage (windows / macos)
-        #[cfg(any(target_os = "windows", target_os = "macos"))]
+        // Make a key storage (with-keyring)
+        #[cfg(feature = "with-keyring")]
         let (key_storage, service_id): (Box<dyn KeyStorage>, &str) = {
             debug!("Setting up KeyStorage");
             let username: String = whoami::username();
@@ -89,13 +89,8 @@ impl BookmarksClient {
                 }
             }
         };
-        // Make a key storage (linux / unix)
-        #[cfg(any(
-            target_os = "linux",
-            target_os = "freebsd",
-            target_os = "netbsd",
-            target_os = "netbsd"
-        ))]
+        // Make a key storage (wno-keyring)
+        #[cfg(not(feature = "with-keyring"))]
         let (key_storage, service_id): (Box<dyn KeyStorage>, &str) = {
             #[cfg(not(test))]
             let app_name: &str = "bookmarks";
@@ -705,6 +700,22 @@ mod tests {
             String::from("pi"),
             Some(String::from("mypassword")),
         );
+    }
+
+    #[test]
+    fn test_system_bookmarks_decrypt_str() {
+        let tmp_dir: tempfile::TempDir = TempDir::new().ok().unwrap();
+        let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
+        // Initialize a new bookmarks client
+        let mut client: BookmarksClient =
+            BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16).unwrap();
+        client.key = "MYSUPERSECRETKEY".to_string();
+        let input: &str = "Hello world!";
+        assert_eq!(
+            client.decrypt_str("z4Z6LpcpYqBW4+bkIok+5A==").ok().unwrap(),
+            "Hello world!"
+        );
+        assert!(client.decrypt_str("bidoof").is_err());
     }
 
     /// ### get_paths

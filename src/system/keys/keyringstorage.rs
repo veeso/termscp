@@ -37,7 +37,6 @@ pub struct KeyringStorage {
     username: String,
 }
 
-#[cfg(not(tarpaulin_include))]
 impl KeyringStorage {
     /// ### new
     ///
@@ -49,7 +48,6 @@ impl KeyringStorage {
     }
 }
 
-#[cfg(not(tarpaulin_include))]
 impl KeyStorage for KeyringStorage {
     /// ### get_key
     ///
@@ -66,7 +64,10 @@ impl KeyStorage for KeyringStorage {
                 KeyringError::WindowsVaultError => Err(KeyStorageError::NoSuchKey),
                 #[cfg(target_os = "macos")]
                 KeyringError::MacOsKeychainError(_) => Err(KeyStorageError::NoSuchKey),
-                _ => panic!("{}", e),
+                #[cfg(target_os = "linux")]
+                KeyringError::SecretServiceError(_) => Err(KeyStorageError::ProviderError),
+                KeyringError::Parse(_) => Err(KeyStorageError::BadSytax),
+                _ => Err(KeyStorageError::ProviderError),
             },
         }
     }
@@ -91,7 +92,13 @@ impl KeyStorage for KeyringStorage {
         // Check what kind of error is returned
         match storage.get_password() {
             Ok(_) => true,
+            #[cfg(not(target_os = "linux"))]
             Err(err) => !matches!(err, KeyringError::NoBackendFound),
+            #[cfg(target_os = "linux")]
+            Err(err) => !matches!(
+                err,
+                KeyringError::NoBackendFound | KeyringError::SecretServiceError(_)
+            ),
         }
     }
 }
