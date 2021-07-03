@@ -43,7 +43,8 @@ Released on FIXME: ??
   - Fixed broken input cursor when typing UTF8 characters (tui-realm 0.3.2)
 - Dependencies:
   - Added `open 1.7.0`
-  - Updated `textwrap` to `0.14.0`
+  - Updated `rand` to `0.8.4`
+  - Updated `textwrap` to `0.14.2`
   - Updated `tui-realm` to `0.4.3`
 
 ## 0.5.1
