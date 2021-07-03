@@ -32,7 +32,7 @@ use super::{
     COMPONENT_INPUT_PORT, COMPONENT_INPUT_USERNAME, COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK,
     COMPONENT_RADIO_BOOKMARK_DEL_RECENT, COMPONENT_RADIO_BOOKMARK_SAVE_PWD,
     COMPONENT_RADIO_PROTOCOL, COMPONENT_RADIO_QUIT, COMPONENT_RECENTS_LIST, COMPONENT_TEXT_ERROR,
-    COMPONENT_TEXT_HELP, COMPONENT_TEXT_SIZE_ERR,
+    COMPONENT_TEXT_HELP, COMPONENT_TEXT_NEW_VERSION_NOTES, COMPONENT_TEXT_SIZE_ERR,
 };
 use crate::ui::keymap::*;
 use tuirealm::components::InputPropsBuilder;
@@ -115,18 +115,6 @@ impl Update for AuthActivity {
                             self.update_input_port(Self::get_default_port_for_protocol(protocol))
                         }
                     }
-                }
-                // <TAB> bookmarks
-                (COMPONENT_BOOKMARKS_LIST, &MSG_KEY_TAB)
-                | (COMPONENT_RECENTS_LIST, &MSG_KEY_TAB) => {
-                    // Give focus to address
-                    self.view.active(COMPONENT_INPUT_ADDR);
-                    None
-                }
-                // Any <TAB>, go to bookmarks
-                (_, &MSG_KEY_TAB) => {
-                    self.view.active(COMPONENT_BOOKMARKS_LIST);
-                    None
                 }
                 // Bookmarks commands
                 // <RIGHT> / <LEFT>
@@ -219,10 +207,12 @@ impl Update for AuthActivity {
                     self.umount_recent_del_dialog();
                     None
                 }
+                (COMPONENT_RADIO_BOOKMARK_DEL_RECENT, _) => None,
                 (COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK, &MSG_KEY_ESC) => {
                     self.umount_bookmark_del_dialog();
                     None
                 }
+                (COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK, _) => None,
                 // Error message
                 (COMPONENT_TEXT_ERROR, &MSG_KEY_ENTER) | (COMPONENT_TEXT_ERROR, &MSG_KEY_ESC) => {
                     // Umount text error
@@ -230,10 +220,23 @@ impl Update for AuthActivity {
                     None
                 }
                 (COMPONENT_TEXT_ERROR, _) => None,
+                (COMPONENT_TEXT_NEW_VERSION_NOTES, &MSG_KEY_ESC)
+                | (COMPONENT_TEXT_NEW_VERSION_NOTES, &MSG_KEY_ENTER) => {
+                    // Umount release notes
+                    self.umount_release_notes();
+                    None
+                }
+                (COMPONENT_TEXT_NEW_VERSION_NOTES, _) => None,
                 // Help
                 (_, &MSG_KEY_CTRL_H) => {
                     // Show help
                     self.mount_help();
+                    None
+                }
+                // Release notes
+                (_, &MSG_KEY_CTRL_R) => {
+                    // Show release notes
+                    self.mount_release_notes();
                     None
                 }
                 (COMPONENT_TEXT_HELP, &MSG_KEY_ENTER) | (COMPONENT_TEXT_HELP, &MSG_KEY_ESC) => {
@@ -241,6 +244,7 @@ impl Update for AuthActivity {
                     self.umount_help();
                     None
                 }
+                (COMPONENT_TEXT_HELP, _) => None,
                 // Enter setup
                 (_, &MSG_KEY_CTRL_C) => {
                     self.exit_reason = Some(super::ExitReason::EnterSetup);
@@ -308,6 +312,18 @@ impl Update for AuthActivity {
                 }
                 // -- text size error; block everything
                 (COMPONENT_TEXT_SIZE_ERR, _) => None,
+                // <TAB> bookmarks
+                (COMPONENT_BOOKMARKS_LIST, &MSG_KEY_TAB)
+                | (COMPONENT_RECENTS_LIST, &MSG_KEY_TAB) => {
+                    // Give focus to address
+                    self.view.active(COMPONENT_INPUT_ADDR);
+                    None
+                }
+                // Any <TAB>, go to bookmarks
+                (_, &MSG_KEY_TAB) => {
+                    self.view.active(COMPONENT_BOOKMARKS_LIST);
+                    None
+                }
                 // On submit on any unhandled (connect)
                 (_, Msg::OnSubmit(_)) | (_, &MSG_KEY_ENTER) => {
                     // Match <ENTER> key for all other components

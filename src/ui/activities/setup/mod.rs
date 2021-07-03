@@ -79,11 +79,6 @@ pub struct SetupActivity {
 
 impl Default for SetupActivity {
     fn default() -> Self {
-        // Initialize user input
-        let mut user_input_buffer: Vec<String> = Vec::with_capacity(16);
-        for _ in 0..16 {
-            user_input_buffer.push(String::new());
-        }
         SetupActivity {
             exit_reason: None,
             context: None,
