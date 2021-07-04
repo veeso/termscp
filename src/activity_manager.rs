@@ -30,6 +30,7 @@ use crate::filetransfer::FileTransferProtocol;
 use crate::host::{HostError, Localhost};
 use crate::system::config_client::ConfigClient;
 use crate::system::environment;
+use crate::system::theme_provider::ThemeProvider;
 use crate::ui::activities::{
     auth::AuthActivity, filetransfer::FileTransferActivity, setup::SetupActivity, Activity,
     ExitReason,
@@ -74,7 +75,8 @@ impl ActivityManager {
                     (None, Some(err))
                 }
             };
-        let ctx: Context = Context::new(config_client, error);
+        let theme_provider: ThemeProvider = Self::init_theme_provider();
+        let ctx: Context = Context::new(config_client, theme_provider, error);
         Ok(ActivityManager {
             context: Some(ctx),
             local_dir: local_dir.to_path_buf(),
@@ -306,7 +308,7 @@ impl ActivityManager {
                         }
                     }
                     None => Err(String::from(
-                        "Your system doesn't support configuration paths",
+                        "Your system doesn't provide a configuration directory",
                     )),
                 }
             }
@@ -314,6 +316,34 @@ impl ActivityManager {
                 "Could not initialize configuration directory: {}",
                 err
             )),
+        }
+    }
+
+    fn init_theme_provider() -> ThemeProvider {
+        match environment::init_config_dir() {
+            Ok(config_dir) => {
+                match config_dir {
+                    Some(config_dir) => {
+                        // Get config client paths
+                        let theme_path: PathBuf = environment::get_theme_path(config_dir.as_path());
+                        match ThemeProvider::new(theme_path.as_path()) {
+                            Ok(provider) => provider,
+                            Err(err) => {
+                                error!("Could not initialize theme provider with file '{}': {}; using theme provider in degraded mode", theme_path.display(), err);
+                                ThemeProvider::degraded()
+                            }
+                        }
+                    }
+                    None => {
+                        error!("This system doesn't provide a configuration directory; using theme provider in degraded mode");
+                        ThemeProvider::degraded()
+                    }
+                }
+            }
+            Err(err) => {
+                error!("Could not initialize configuration directory: {}; using theme provider in degraded mode", err);
+                ThemeProvider::degraded()
+            }
         }
     }
 }

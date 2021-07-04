@@ -28,6 +28,11 @@ Released on FIXME: ??
 - **Open any file** in explorer:
   - Open file with default program for file type with `<V>`
   - Open file with a specific program with `<W>`
+- **Themes**:
+  - You can now set colors for 25 elements in the application
+  - Colors can be any RGB, also supports **CSS colors** syntax
+  - Configure theme from settings or import from CLI using the `-t <theme file>` argument
+  - You can find several themes in the `themes/` directory
 - **Keyring support for Linux**
   - From now on keyring will be available for Linux only
   - Read the manual to find out if your system supports the keyring and how you can enable it
@@ -39,6 +44,7 @@ Released on FIXME: ??
   - Just press `<CTRL+R>` when a new version is available from the auth activity to read the release notes
 - **Installation script**:
   - From now on, in case cargo is used to install termscp, all the cargo dependencies will be installed
+- **Start termscp from configuration**: Start termscp with `-c` or `--config` to start termscp from configuration page
 - Bugfix:
   - Fixed broken input cursor when typing UTF8 characters (tui-realm 0.3.2)
 - Dependencies:

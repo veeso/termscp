@@ -43,6 +43,7 @@ Termscp is a feature rich terminal file transfer and explorer, with support for 
 - 💁  SFTP/SCP authentication through SSH keys and username/password
 - 🐧  Compatible with Windows, Linux, BSD and MacOS
 - ✏  Customizable
+  - Themes
   - Custom file explorer format
   - Customizable text editor
   - Customizable file sorting

@@ -40,16 +40,16 @@ extern crate rpassword;
 // External libs
 use getopts::Options;
 use std::env;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 // Include
 mod activity_manager;
-mod bookmarks;
 mod config;
 mod filetransfer;
 mod fs;
 mod host;
+mod support;
 mod system;
 mod ui;
 mod utils;
@@ -83,11 +83,14 @@ fn main() {
     let mut protocol: FileTransferProtocol = FileTransferProtocol::Sftp; // Default protocol
     let mut ticks: Duration = Duration::from_millis(10);
     let mut log_enabled: bool = true;
+    let mut start_activity: NextActivity = NextActivity::Authentication;
     //Process options
     let mut opts = Options::new();
+    opts.optflag("c", "config", "Open termscp configuration");
+    opts.optflag("q", "quiet", "Disable logging");
+    opts.optopt("t", "theme", "Import specified theme", "<path>");
     opts.optopt("P", "password", "Provide password from CLI", "<password>");
     opts.optopt("T", "ticks", "Set UI ticks; default 10ms", "<ms>");
-    opts.optflag("q", "quiet", "Disable logging");
     opts.optflag("v", "version", "");
     opts.optflag("h", "help", "Print this menu");
     let matches = match opts.parse(&args[1..]) {
@@ -110,6 +113,10 @@ fn main() {
         );
         std::process::exit(255);
     }
+    // Setup activity?
+    if matches.opt_present("c") {
+        start_activity = NextActivity::SetupActivity;
+    }
     // Logging
     if matches.opt_present("q") {
         log_enabled = false;
@@ -129,6 +136,20 @@ fn main() {
             }
         }
     }
+    // @! extra modes
+    if let Some(theme) = matches.opt_str("t") {
+        match support::import_theme(Path::new(theme.as_str())) {
+            Ok(_) => {
+                println!("Theme has been successfully imported!");
+                std::process::exit(0)
+            }
+            Err(err) => {
+                eprintln!("{}", err);
+                std::process::exit(1);
+            }
+        }
+    }
+    // @! Ordinary mode
     // Check free args
     let extra_args: Vec<String> = matches.free;
     // Remote argument
@@ -172,7 +193,6 @@ fn main() {
     }
     info!("termscp {} started!", TERMSCP_VERSION);
     // Initialize client if necessary
-    let mut start_activity: NextActivity = NextActivity::Authentication;
     if address.is_some() {
         debug!("User has specified remote options: address: {:?}, port: {:?}, protocol: {:?}, user: {:?}, password: {}", address, port, protocol, username, utils::fmt::shadow_password(password.as_deref().unwrap_or("")));
         if password.is_none() {

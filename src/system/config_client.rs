@@ -26,8 +26,10 @@
  * SOFTWARE.
  */
 // Locals
-use crate::config::serializer::ConfigSerializer;
-use crate::config::{SerializerError, SerializerErrorKind, UserConfig};
+use crate::config::{
+    params::UserConfig,
+    serialization::{deserialize, serialize, SerializerError, SerializerErrorKind},
+};
 use crate::filetransfer::FileTransferProtocol;
 use crate::fs::explorer::GroupDirs;
 // Ext
@@ -323,10 +325,7 @@ impl ConfigClient {
             .truncate(true)
             .open(self.config_path.as_path())
         {
-            Ok(writer) => {
-                let serializer: ConfigSerializer = ConfigSerializer {};
-                serializer.serialize(Box::new(writer), &self.config)
-            }
+            Ok(writer) => serialize(&self.config, Box::new(writer)),
             Err(err) => {
                 error!("Failed to write configuration file: {}", err);
                 Err(SerializerError::new_ex(
@@ -348,8 +347,7 @@ impl ConfigClient {
         {
             Ok(reader) => {
                 // Deserialize
-                let deserializer: ConfigSerializer = ConfigSerializer {};
-                match deserializer.deserialize(Box::new(reader)) {
+                match deserialize(Box::new(reader)) {
                     Ok(config) => {
                         self.config = config;
                         Ok(())

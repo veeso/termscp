@@ -25,11 +25,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-pub mod serializer;
-
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use thiserror::Error;
 
 #[derive(Deserialize, Serialize, std::fmt::Debug)]
 /// ## UserHosts
@@ -53,62 +50,11 @@ pub struct Bookmark {
     pub password: Option<String>, // Password is optional; base64, aes-128 encrypted password
 }
 
-// Errors
-
-/// ## SerializerError
-///
-/// Contains the error for serializer/deserializer
-#[derive(std::fmt::Debug)]
-pub struct SerializerError {
-    kind: SerializerErrorKind,
-    msg: Option<String>,
-}
-
-/// ## SerializerErrorKind
-///
-/// Describes the kind of error for the serializer/deserializer
-#[derive(Error, Debug)]
-pub enum SerializerErrorKind {
-    #[error("IO error")]
-    IoError,
-    #[error("Serialization error")]
-    SerializationError,
-    #[error("Syntax error")]
-    SyntaxError,
-}
-
 impl Default for UserHosts {
     fn default() -> Self {
-        UserHosts {
+        Self {
             bookmarks: HashMap::new(),
             recents: HashMap::new(),
-        }
-    }
-}
-
-impl SerializerError {
-    /// ### new
-    ///
-    /// Instantiate a new `SerializerError`
-    pub fn new(kind: SerializerErrorKind) -> SerializerError {
-        SerializerError { kind, msg: None }
-    }
-
-    /// ### new_ex
-    ///
-    /// Instantiates a new `SerializerError` with description message
-    pub fn new_ex(kind: SerializerErrorKind, msg: String) -> SerializerError {
-        let mut err: SerializerError = SerializerError::new(kind);
-        err.msg = Some(msg);
-        err
-    }
-}
-
-impl std::fmt::Display for SerializerError {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        match &self.msg {
-            Some(msg) => write!(f, "{} ({})", self.kind, msg),
-            None => write!(f, "{}", self.kind),
         }
     }
 }
@@ -120,6 +66,13 @@ mod tests {
 
     use super::*;
     use pretty_assertions::assert_eq;
+
+    #[test]
+    fn test_bookmarks_default() {
+        let bookmarks: UserHosts = UserHosts::default();
+        assert_eq!(bookmarks.bookmarks.len(), 0);
+        assert_eq!(bookmarks.recents.len(), 0);
+    }
 
     #[test]
     fn test_bookmarks_bookmark_new() {
@@ -166,32 +119,6 @@ mod tests {
         assert_eq!(
             *bookmark.password.as_ref().unwrap(),
             String::from("password")
-        );
-    }
-
-    #[test]
-    fn test_bookmarks_bookmark_errors() {
-        let error: SerializerError = SerializerError::new(SerializerErrorKind::SyntaxError);
-        assert!(error.msg.is_none());
-        assert_eq!(format!("{}", error), String::from("Syntax error"));
-        let error: SerializerError =
-            SerializerError::new_ex(SerializerErrorKind::SyntaxError, String::from("bad syntax"));
-        assert!(error.msg.is_some());
-        assert_eq!(
-            format!("{}", error),
-            String::from("Syntax error (bad syntax)")
-        );
-        // Fmt
-        assert_eq!(
-            format!("{}", SerializerError::new(SerializerErrorKind::IoError)),
-            String::from("IO error")
-        );
-        assert_eq!(
-            format!(
-                "{}",
-                SerializerError::new(SerializerErrorKind::SerializationError)
-            ),
-            String::from("Serialization error")
         );
     }
 }
