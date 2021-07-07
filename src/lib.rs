@@ -64,11 +64,11 @@ extern crate whoami;
 extern crate wildmatch;
 
 pub mod activity_manager;
-pub mod bookmarks;
 pub mod config;
 pub mod filetransfer;
 pub mod fs;
 pub mod host;
+pub mod support;
 pub mod system;
 pub mod ui;
 pub mod utils;

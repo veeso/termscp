@@ -33,6 +33,7 @@ mod view;
 
 // locals
 use super::{Activity, Context, ExitReason};
+use crate::config::themes::Theme;
 use crate::filetransfer::FileTransferProtocol;
 use crate::system::bookmarks_client::BookmarksClient;
 use crate::ui::context::FileTransferParams;
@@ -153,6 +154,13 @@ impl AuthActivity {
                 }
             }
         }
+    }
+
+    /// ### theme
+    ///
+    /// Returns a reference to theme
+    fn theme(&self) -> &Theme {
+        self.context.as_ref().unwrap().theme_provider.theme()
     }
 }
 

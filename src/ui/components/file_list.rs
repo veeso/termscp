@@ -28,7 +28,9 @@
 // ext
 use tuirealm::components::utils::get_block;
 use tuirealm::event::{Event, KeyCode, KeyModifiers};
-use tuirealm::props::{BordersProps, Props, PropsBuilder, TextParts, TextSpan};
+use tuirealm::props::{
+    BordersProps, PropPayload, PropValue, Props, PropsBuilder, TextParts, TextSpan,
+};
 use tuirealm::tui::{
     layout::{Corner, Rect},
     style::{Color, Style},
@@ -38,6 +40,8 @@ use tuirealm::tui::{
 use tuirealm::{Canvas, Component, Msg, Payload, Value};
 
 // -- props
+
+const PROP_HIGHLIGHT_COLOR: &str = "props-highlight-color";
 
 pub struct FileListPropsBuilder {
     props: Option<Props>,
@@ -94,6 +98,19 @@ impl FileListPropsBuilder {
     pub fn with_background(&mut self, color: Color) -> &mut Self {
         if let Some(props) = self.props.as_mut() {
             props.background = color;
+        }
+        self
+    }
+
+    /// ### with_highlight_color
+    ///
+    /// Set highlighted color
+    pub fn with_highlight_color(&mut self, color: Color) -> &mut Self {
+        if let Some(props) = self.props.as_mut() {
+            props.own.insert(
+                PROP_HIGHLIGHT_COLOR,
+                PropPayload::One(PropValue::Color(color)),
+            );
         }
         self
     }
@@ -306,9 +323,13 @@ impl Component for FileList {
                     })
                     .collect(),
             };
-            let (fg, bg): (Color, Color) = match self.states.focus {
-                true => (Color::Black, self.props.background),
-                false => (self.props.foreground, Color::Reset),
+            let highlighted_color: Color = match self.props.own.get(PROP_HIGHLIGHT_COLOR) {
+                Some(PropPayload::One(PropValue::Color(c))) => *c,
+                _ => Color::Reset,
+            };
+            let (h_fg, h_bg): (Color, Color) = match self.states.focus {
+                true => (Color::Black, highlighted_color),
+                false => (highlighted_color, self.props.background),
             };
             // Render
             let mut state: ListState = ListState::default();
@@ -321,10 +342,15 @@ impl Component for FileList {
                         self.states.focus,
                     ))
                     .start_corner(Corner::TopLeft)
+                    .style(
+                        Style::default()
+                            .fg(self.props.foreground)
+                            .bg(self.props.background),
+                    )
                     .highlight_style(
                         Style::default()
-                            .bg(bg)
-                            .fg(fg)
+                            .bg(h_bg)
+                            .fg(h_fg)
                             .add_modifier(self.props.modifiers),
                     ),
                 area,
@@ -523,12 +549,17 @@ mod tests {
                 .visible()
                 .with_foreground(Color::Red)
                 .with_background(Color::Blue)
+                .with_highlight_color(Color::LightRed)
                 .with_borders(Borders::ALL, BorderType::Double, Color::Red)
                 .with_files(
                     Some(String::from("files")),
                     vec![String::from("file1"), String::from("file2")],
                 )
                 .build(),
+        );
+        assert_eq!(
+            *component.props.own.get(PROP_HIGHLIGHT_COLOR).unwrap(),
+            PropPayload::One(PropValue::Color(Color::LightRed))
         );
         assert_eq!(component.props.foreground, Color::Red);
         assert_eq!(component.props.background, Color::Blue);

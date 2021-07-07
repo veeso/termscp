@@ -60,6 +60,24 @@ impl SetupActivity {
         }
     }
 
+    /// ### save_theme
+    ///
+    /// Save theme to file
+    pub(super) fn save_theme(&mut self) -> Result<(), String> {
+        self.theme_provider()
+            .save()
+            .map_err(|e| format!("Could not save theme: {}", e))
+    }
+
+    /// ### reset_theme_changes
+    ///
+    /// Reset changes committed to theme
+    pub(super) fn reset_theme_changes(&mut self) -> Result<(), String> {
+        self.theme_provider()
+            .load()
+            .map_err(|e| format!("Could not restore theme: {}", e))
+    }
+
     /// ### delete_ssh_key
     ///
     /// Delete ssh key from config cli

@@ -30,6 +30,7 @@ use super::input::InputHandler;
 use super::store::Store;
 use crate::filetransfer::FileTransferProtocol;
 use crate::system::config_client::ConfigClient;
+use crate::system::theme_provider::ThemeProvider;
 
 // Includes
 use crossterm::event::DisableMouseCapture;
@@ -49,6 +50,7 @@ pub struct Context {
     pub(crate) store: Store,
     pub(crate) input_hnd: InputHandler,
     pub(crate) terminal: Terminal<CrosstermBackend<Stdout>>,
+    pub(crate) theme_provider: ThemeProvider,
     error: Option<String>,
 }
 
@@ -68,7 +70,11 @@ impl Context {
     /// ### new
     ///
     /// Instantiates a new Context
-    pub fn new(config_client: Option<ConfigClient>, error: Option<String>) -> Context {
+    pub fn new(
+        config_client: Option<ConfigClient>,
+        theme_provider: ThemeProvider,
+        error: Option<String>,
+    ) -> Context {
         // Create terminal
         let mut stdout = stdout();
         assert!(execute!(stdout, EnterAlternateScreen).is_ok());
@@ -78,6 +84,7 @@ impl Context {
             store: Store::init(),
             input_hnd: InputHandler::new(),
             terminal: Terminal::new(CrosstermBackend::new(stdout)).unwrap(),
+            theme_provider,
             error,
         }
     }
@@ -171,28 +178,5 @@ mod tests {
         assert_eq!(params.protocol, FileTransferProtocol::Sftp);
         assert!(params.username.is_none());
         assert!(params.password.is_none());
-    }
-
-    #[test]
-    #[cfg(not(feature = "github-actions"))]
-    fn test_ui_context() {
-        // Prepare stuff
-        let mut ctx: Context = Context::new(None, Some(String::from("alles kaput")));
-        assert!(ctx.error.is_some());
-        assert_eq!(ctx.get_error().unwrap().as_str(), "alles kaput");
-        assert!(ctx.error.is_none());
-        assert!(ctx.get_error().is_none());
-        ctx.set_error(String::from("err"));
-        assert!(ctx.error.is_some());
-        assert!(ctx.get_error().is_some());
-        assert!(ctx.get_error().is_none());
-        // Try other methods
-        #[cfg(not(target_os = "windows"))]
-        {
-            ctx.enter_alternate_screen();
-            ctx.clear_screen();
-            ctx.leave_alternate_screen();
-        }
-        drop(ctx);
     }
 }

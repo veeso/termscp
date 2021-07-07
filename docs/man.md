@@ -1,5 +1,30 @@
 # User manual 🎓
 
+- [User manual 🎓](#user-manual-)
+  - [Usage ❓](#usage-)
+    - [Address argument 🌎](#address-argument-)
+      - [How Password can be provided 🔐](#how-password-can-be-provided-)
+  - [File explorer 📂](#file-explorer-)
+    - [Keybindings ⌨](#keybindings-)
+    - [Work on multiple files 🥷](#work-on-multiple-files-)
+    - [Synchronized browsing ⏲️](#synchronized-browsing-️)
+    - [Open and Open With 🚪](#open-and-open-with-)
+  - [Bookmarks ⭐](#bookmarks-)
+    - [Are my passwords Safe 😈](#are-my-passwords-safe-)
+      - [Linux Keyring](#linux-keyring)
+        - [KeepassXC setup for termscp](#keepassxc-setup-for-termscp)
+  - [Configuration ⚙️](#configuration-️)
+    - [SSH Key Storage 🔐](#ssh-key-storage-)
+    - [File Explorer Format](#file-explorer-format)
+  - [Themes 🎨](#themes-)
+    - [Styles 💈](#styles-)
+      - [Authentication page](#authentication-page)
+      - [Transfer page](#transfer-page)
+      - [Misc](#misc)
+  - [Text Editor ✏](#text-editor-)
+    - [How do I configure the text editor 🦥](#how-do-i-configure-the-text-editor-)
+  - [Logging 🩺](#logging-)
+
 ## Usage ❓
 
 termscp can be started with the following options:
@@ -7,7 +32,9 @@ termscp can be started with the following options:
 `termscp [options]... [protocol://user@address:port:wrkdir] [local-wrkdir]`
 
 - `-P, --password <password>` if address is provided, password will be this argument
+- `-c, --config` Open termscp starting from the configuration page
 - `-q, --quiet` Disable logging
+- `-t, --theme <path>` Import specified theme
 - `-v, --version` Print version info
 - `-h, --help` Print help page
 
@@ -278,6 +305,73 @@ These are the keys supported by the formatter:
 - `USER`: Owner user
 
 If left empty, the default formatter syntax will be used: `{NAME:24} {PEX} {USER} {SIZE} {MTIME:17:%b %d %Y %H:%M}`
+
+---
+
+## Themes 🎨
+
+Termscp provides you with an awesome feature: the possibility to set the colors for several components in the application.
+If you want to customize termscp there are two available ways to do so:
+
+- From the **configuration menu**
+- Importing a **theme file**
+
+In order to create your own customization from termscp, all you have to do so is to enter the configuration from the auth activity, pressing `<CTRL+C>` and then `<TAB>` twice. You should have now moved to the `themes` panel.
+
+Here you can move with `<UP>` and `<DOWN>` to change the style you want to change, as shown in the gif below:
+
+![Themes](../assets/images/themes.gif)
+
+termscp supports both the traditional explicit hex (`#rrggbb`) and rgb `rgb(r, g, b)` syntax to provide colors, but also **[css colors](https://www.w3schools.com/cssref/css_colors.asp)** (such as `crimson`) are accepted 😉. There is also a special keywork which is `Default`. Default means that the color used will be the default foreground or background color based on the situation (foreground for texts and lines, background for well, guess what).
+
+As said before, you can also import theme files. You can take inspiration from or directly use one of the themes provided along with termscp, located in the `themes/` directory of this repository and import them running termscp as `termscp -t <theme_file>`. If everything was fine, it should tell you the theme has successfully been imported.
+
+### Styles 💈
+
+You can find in the table below, the description for each style field.
+Please, notice that **styles won't apply to configuration page**, in order to make it always accessible in case you mess everything up
+
+#### Authentication page
+
+| Key            | Description                              |
+|----------------|------------------------------------------|
+| auth_address   | Color of the input field for IP address  |
+| auth_bookmarks | Color of the bookmarks panel             |
+| auth_password  | Color of the input field for password    |
+| auth_port      | Color of the input field for port number |
+| auth_protocol  | Color of the radio group for protocol    |
+| auth_recents   | Color of the recents panel               |
+| auth_username  | Color of the input field for username    |
+
+#### Transfer page
+
+| Key                                  | Description                                                               |
+|--------------------------------------|---------------------------------------------------------------------------|
+| transfer_local_explorer_background   | Background color of localhost explorer                                    |
+| transfer_local_explorer_foreground   | Foreground coloor of localhost explorer                                   |
+| transfer_local_explorer_highlighted  | Border and highlighted color for localhost explorer                       |
+| transfer_remote_explorer_background  | Background color of remote explorer                                       |
+| transfer_remote_explorer_foreground  | Foreground coloor of remote explorer                                      |
+| transfer_remote_explorer_highlighted | Border and highlighted color for remote explorer                          |
+| transfer_log_background              | Background color for log panel                                            |
+| transfer_log_window                  | Window color for log panel                                                |
+| transfer_progress_bar                | Progress bar color                                                        |
+| transfer_status_hidden               | Color for status bar "hidden" label                                       |
+| transfer_status_sorting              | Color for status bar "sorting" label; applies also to file sorting dialog |
+| transfer_status_sync_browsing        | Color for status bar "sync browsing" label                                |
+
+#### Misc
+
+These styles applie to different part of the application.
+
+| Key               | Description                                 |
+|-------------------|---------------------------------------------|
+| misc_error_dialog | Color for error messages                    |
+| misc_input_dialog | Color for input dialogs (such as copy file) |
+| misc_keys         | Color of text for key strokes               |
+| misc_quit_dialog  | Color for quit dialogs                      |
+| misc_save_dialog  | Color for save dialogs                      |
+| misc_warn_dialog  | Color for warn dialogs                      |
 
 ---
 

@@ -185,6 +185,13 @@ pub fn make_fsentry(path: PathBuf, is_dir: bool) -> FsEntry {
     }
 }
 
+/// ### create_file_ioers
+///
+/// Open a file with two handlers, the first is to read, the second is to write
+pub fn create_file_ioers(p: &Path) -> (File, File) {
+    (File::open(p).ok().unwrap(), File::create(p).ok().unwrap())
+}
+
 mod test {
     use super::*;
 
@@ -244,5 +251,11 @@ mod test {
         assert!(make_file_at(PathBuf::from("/aaaaa/bbbbb/cccc").as_path(), "readme.txt").is_err());
         assert!(make_dir_at(tmpdir.path(), "docs").is_ok());
         assert!(make_dir_at(PathBuf::from("/aaaaa/bbbbb/cccc").as_path(), "docs").is_err());
+    }
+
+    #[test]
+    fn test_utils_test_helpers_create_file_ioers() {
+        let (_, tmp) = create_sample_file_entry();
+        let _ = create_file_ioers(tmp.path());
     }
 }

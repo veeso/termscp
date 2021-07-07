@@ -29,18 +29,24 @@
 // Locals
 use super::SetupActivity;
 // Ext
+use crate::config::themes::Theme;
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use std::env;
+use tuirealm::tui::style::Color;
 use tuirealm::{Payload, Value};
 
 impl SetupActivity {
     /// ### action_save_config
     ///
     /// Save configuration
-    pub(super) fn action_save_config(&mut self) -> Result<(), String> {
+    pub(super) fn action_save_all(&mut self) -> Result<(), String> {
         // Collect input values
         self.collect_input_values();
-        self.save_config()
+        self.save_config()?;
+        // save theme
+        self.collect_styles()
+            .map_err(|e| format!("'{}' has an invalid color", e))?;
+        self.save_theme()
     }
 
     /// ### action_reset_config
@@ -51,6 +57,19 @@ impl SetupActivity {
             Err(err) => Err(err),
             Ok(_) => {
                 self.load_input_values();
+                Ok(())
+            }
+        }
+    }
+
+    /// ### action_reset_theme
+    ///
+    /// Reset configuration input fields
+    pub(super) fn action_reset_theme(&mut self) -> Result<(), String> {
+        match self.reset_theme_changes() {
+            Err(err) => Err(err),
+            Ok(_) => {
+                self.load_styles();
                 Ok(())
             }
         }
@@ -157,6 +176,91 @@ impl SetupActivity {
                 // Enter alternate mode
                 ctx.enter_alternate_screen();
             }
+        }
+    }
+
+    /// ### set_color
+    ///
+    /// Given a component and a color, save the color into the theme
+    pub(super) fn action_save_color(&mut self, component: &str, color: Color) {
+        let theme: &mut Theme = self.theme_mut();
+        match component {
+            super::COMPONENT_COLOR_AUTH_ADDR => {
+                theme.auth_address = color;
+            }
+            super::COMPONENT_COLOR_AUTH_BOOKMARKS => {
+                theme.auth_bookmarks = color;
+            }
+            super::COMPONENT_COLOR_AUTH_PASSWORD => {
+                theme.auth_password = color;
+            }
+            super::COMPONENT_COLOR_AUTH_PORT => {
+                theme.auth_port = color;
+            }
+            super::COMPONENT_COLOR_AUTH_PROTOCOL => {
+                theme.auth_protocol = color;
+            }
+            super::COMPONENT_COLOR_AUTH_RECENTS => {
+                theme.auth_recents = color;
+            }
+            super::COMPONENT_COLOR_AUTH_USERNAME => {
+                theme.auth_username = color;
+            }
+            super::COMPONENT_COLOR_MISC_ERROR => {
+                theme.misc_error_dialog = color;
+            }
+            super::COMPONENT_COLOR_MISC_INPUT => {
+                theme.misc_input_dialog = color;
+            }
+            super::COMPONENT_COLOR_MISC_KEYS => {
+                theme.misc_keys = color;
+            }
+            super::COMPONENT_COLOR_MISC_QUIT => {
+                theme.misc_quit_dialog = color;
+            }
+            super::COMPONENT_COLOR_MISC_SAVE => {
+                theme.misc_save_dialog = color;
+            }
+            super::COMPONENT_COLOR_MISC_WARN => {
+                theme.misc_warn_dialog = color;
+            }
+            super::COMPONENT_COLOR_TRANSFER_EXPLORER_LOCAL_BG => {
+                theme.transfer_local_explorer_background = color;
+            }
+            super::COMPONENT_COLOR_TRANSFER_EXPLORER_LOCAL_FG => {
+                theme.transfer_local_explorer_foreground = color;
+            }
+            super::COMPONENT_COLOR_TRANSFER_EXPLORER_LOCAL_HG => {
+                theme.transfer_local_explorer_highlighted = color;
+            }
+            super::COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_BG => {
+                theme.transfer_remote_explorer_background = color;
+            }
+            super::COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_FG => {
+                theme.transfer_remote_explorer_foreground = color;
+            }
+            super::COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_HG => {
+                theme.transfer_remote_explorer_highlighted = color;
+            }
+            super::COMPONENT_COLOR_TRANSFER_LOG_BG => {
+                theme.transfer_log_background = color;
+            }
+            super::COMPONENT_COLOR_TRANSFER_LOG_WIN => {
+                theme.transfer_log_window = color;
+            }
+            super::COMPONENT_COLOR_TRANSFER_PROG_BAR => {
+                theme.transfer_progress_bar = color;
+            }
+            super::COMPONENT_COLOR_TRANSFER_STATUS_HIDDEN => {
+                theme.transfer_status_hidden = color;
+            }
+            super::COMPONENT_COLOR_TRANSFER_STATUS_SORTING => {
+                theme.transfer_status_sorting = color;
+            }
+            super::COMPONENT_COLOR_TRANSFER_STATUS_SYNC => {
+                theme.transfer_status_sync_browsing = color;
+            }
+            _ => {}
         }
     }
 }

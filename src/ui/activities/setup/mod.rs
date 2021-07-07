@@ -34,16 +34,21 @@ mod view;
 
 // Locals
 use super::{Activity, Context, ExitReason};
+use crate::config::themes::Theme;
+use crate::system::theme_provider::ThemeProvider;
 // Ext
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use tuirealm::{Update, View};
 
 // -- components
+// -- common
 const COMPONENT_TEXT_HELP: &str = "TEXT_HELP";
 const COMPONENT_TEXT_FOOTER: &str = "TEXT_FOOTER";
 const COMPONENT_TEXT_ERROR: &str = "TEXT_ERROR";
 const COMPONENT_RADIO_QUIT: &str = "RADIO_QUIT";
 const COMPONENT_RADIO_SAVE: &str = "RADIO_SAVE";
+const COMPONENT_RADIO_TAB: &str = "RADIO_TAB";
+// -- config
 const COMPONENT_INPUT_TEXT_EDITOR: &str = "INPUT_TEXT_EDITOR";
 const COMPONENT_RADIO_DEFAULT_PROTOCOL: &str = "RADIO_DEFAULT_PROTOCOL";
 const COMPONENT_RADIO_HIDDEN_FILES: &str = "RADIO_HIDDEN_FILES";
@@ -51,11 +56,47 @@ const COMPONENT_RADIO_UPDATES: &str = "RADIO_CHECK_UPDATES";
 const COMPONENT_RADIO_GROUP_DIRS: &str = "RADIO_GROUP_DIRS";
 const COMPONENT_INPUT_LOCAL_FILE_FMT: &str = "INPUT_LOCAL_FILE_FMT";
 const COMPONENT_INPUT_REMOTE_FILE_FMT: &str = "INPUT_REMOTE_FILE_FMT";
-const COMPONENT_RADIO_TAB: &str = "RADIO_TAB";
+// -- ssh keys
 const COMPONENT_LIST_SSH_KEYS: &str = "LIST_SSH_KEYS";
 const COMPONENT_INPUT_SSH_HOST: &str = "INPUT_SSH_HOST";
 const COMPONENT_INPUT_SSH_USERNAME: &str = "INPUT_SSH_USERNAME";
 const COMPONENT_RADIO_DEL_SSH_KEY: &str = "RADIO_DEL_SSH_KEY";
+// -- theme
+const COMPONENT_COLOR_AUTH_TITLE: &str = "COMPONENT_COLOR_AUTH_TITLE";
+const COMPONENT_COLOR_MISC_TITLE: &str = "COMPONENT_COLOR_MISC_TITLE";
+const COMPONENT_COLOR_TRANSFER_TITLE: &str = "COMPONENT_COLOR_TRANSFER_TITLE";
+const COMPONENT_COLOR_TRANSFER_TITLE_2: &str = "COMPONENT_COLOR_TRANSFER_TITLE_2";
+const COMPONENT_COLOR_AUTH_ADDR: &str = "COMPONENT_COLOR_AUTH_ADDR";
+const COMPONENT_COLOR_AUTH_BOOKMARKS: &str = "COMPONENT_COLOR_AUTH_BOOKMARKS";
+const COMPONENT_COLOR_AUTH_PASSWORD: &str = "COMPONENT_COLOR_AUTH_PASSWORD";
+const COMPONENT_COLOR_AUTH_PORT: &str = "COMPONENT_COLOR_AUTH_PORT";
+const COMPONENT_COLOR_AUTH_PROTOCOL: &str = "COMPONENT_COLOR_AUTH_PROTOCOL";
+const COMPONENT_COLOR_AUTH_RECENTS: &str = "COMPONENT_COLOR_AUTH_RECENTS";
+const COMPONENT_COLOR_AUTH_USERNAME: &str = "COMPONENT_COLOR_AUTH_USERNAME";
+const COMPONENT_COLOR_MISC_ERROR: &str = "COMPONENT_COLOR_MISC_ERROR";
+const COMPONENT_COLOR_MISC_INPUT: &str = "COMPONENT_COLOR_MISC_INPUT";
+const COMPONENT_COLOR_MISC_KEYS: &str = "COMPONENT_COLOR_MISC_KEYS";
+const COMPONENT_COLOR_MISC_QUIT: &str = "COMPONENT_COLOR_MISC_QUIT";
+const COMPONENT_COLOR_MISC_SAVE: &str = "COMPONENT_COLOR_MISC_SAVE";
+const COMPONENT_COLOR_MISC_WARN: &str = "COMPONENT_COLOR_MISC_WARN";
+const COMPONENT_COLOR_TRANSFER_EXPLORER_LOCAL_BG: &str =
+    "COMPONENT_COLOR_TRANSFER_EXPLORER_LOCAL_BG";
+const COMPONENT_COLOR_TRANSFER_EXPLORER_LOCAL_FG: &str =
+    "COMPONENT_COLOR_TRANSFER_EXPLORER_LOCAL_FG";
+const COMPONENT_COLOR_TRANSFER_EXPLORER_LOCAL_HG: &str =
+    "COMPONENT_COLOR_TRANSFER_EXPLORER_LOCAL_HG";
+const COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_BG: &str =
+    "COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_BG";
+const COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_FG: &str =
+    "COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_FG";
+const COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_HG: &str =
+    "COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_HG";
+const COMPONENT_COLOR_TRANSFER_PROG_BAR: &str = "COMPONENT_COLOR_TRANSFER_PROG_BAR";
+const COMPONENT_COLOR_TRANSFER_LOG_BG: &str = "COMPONENT_COLOR_TRANSFER_LOG_BG";
+const COMPONENT_COLOR_TRANSFER_LOG_WIN: &str = "COMPONENT_COLOR_TRANSFER_LOG_WIN";
+const COMPONENT_COLOR_TRANSFER_STATUS_SORTING: &str = "COMPONENT_COLOR_TRANSFER_STATUS_SORTING";
+const COMPONENT_COLOR_TRANSFER_STATUS_HIDDEN: &str = "COMPONENT_COLOR_TRANSFER_STATUS_HIDDEN";
+const COMPONENT_COLOR_TRANSFER_STATUS_SYNC: &str = "COMPONENT_COLOR_TRANSFER_STATUS_SYNC";
 
 /// ### ViewLayout
 ///
@@ -64,6 +105,7 @@ const COMPONENT_RADIO_DEL_SSH_KEY: &str = "RADIO_DEL_SSH_KEY";
 enum ViewLayout {
     SetupForm,
     SshKeys,
+    Theme,
 }
 
 /// ## SetupActivity
@@ -89,6 +131,20 @@ impl Default for SetupActivity {
     }
 }
 
+impl SetupActivity {
+    fn theme(&self) -> &Theme {
+        self.context.as_ref().unwrap().theme_provider.theme()
+    }
+
+    fn theme_mut(&mut self) -> &mut Theme {
+        self.context.as_mut().unwrap().theme_provider.theme_mut()
+    }
+
+    fn theme_provider(&mut self) -> &mut ThemeProvider {
+        &mut self.context.as_mut().unwrap().theme_provider
+    }
+}
+
 impl Activity for SetupActivity {
     /// ### on_create
     ///
@@ -105,7 +161,7 @@ impl Activity for SetupActivity {
             error!("Failed to enter raw mode: {}", err);
         }
         // Init view
-        self.init_setup();
+        self.init(ViewLayout::SetupForm);
         // Verify error state from context
         if let Some(err) = self.context.as_mut().unwrap().get_error() {
             self.mount_error(err.as_str());

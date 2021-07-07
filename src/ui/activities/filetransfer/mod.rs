@@ -35,6 +35,7 @@ pub(self) mod view;
 
 // locals
 use super::{Activity, Context, ExitReason};
+use crate::config::themes::Theme;
 use crate::filetransfer::ftp_transfer::FtpFileTransfer;
 use crate::filetransfer::scp_transfer::ScpFileTransfer;
 use crate::filetransfer::sftp_transfer::SftpFileTransfer;
@@ -165,34 +166,34 @@ impl FileTransferActivity {
         }
     }
 
-    pub(crate) fn local(&self) -> &FileExplorer {
+    fn local(&self) -> &FileExplorer {
         self.browser.local()
     }
 
-    pub(crate) fn local_mut(&mut self) -> &mut FileExplorer {
+    fn local_mut(&mut self) -> &mut FileExplorer {
         self.browser.local_mut()
     }
 
-    pub(crate) fn remote(&self) -> &FileExplorer {
+    fn remote(&self) -> &FileExplorer {
         self.browser.remote()
     }
 
-    pub(crate) fn remote_mut(&mut self) -> &mut FileExplorer {
+    fn remote_mut(&mut self) -> &mut FileExplorer {
         self.browser.remote_mut()
     }
 
-    pub(crate) fn found(&self) -> Option<&FileExplorer> {
+    fn found(&self) -> Option<&FileExplorer> {
         self.browser.found()
     }
 
-    pub(crate) fn found_mut(&mut self) -> Option<&mut FileExplorer> {
+    fn found_mut(&mut self) -> Option<&mut FileExplorer> {
         self.browser.found_mut()
     }
 
     /// ### get_cache_tmp_name
     ///
     /// Get file name for a file in cache
-    pub(crate) fn get_cache_tmp_name(&self, name: &str, file_type: Option<&str>) -> Option<String> {
+    fn get_cache_tmp_name(&self, name: &str, file_type: Option<&str>) -> Option<String> {
         self.cache.as_ref().map(|_| {
             let base: String = format!(
                 "{}-{}",
@@ -207,6 +208,13 @@ impl FileTransferActivity {
                 Some(file_type) => format!("{}.{}", base, file_type),
             }
         })
+    }
+
+    /// ### theme
+    ///
+    /// Get a reference to `Theme`
+    fn theme(&self) -> &Theme {
+        self.context.as_ref().unwrap().theme_provider.theme()
     }
 }
 
