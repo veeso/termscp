@@ -47,6 +47,7 @@ Released on FIXME: ??
 - **Start termscp from configuration**: Start termscp with `-c` or `--config` to start termscp from configuration page
 - Bugfix:
   - Fixed broken input cursor when typing UTF8 characters (tui-realm 0.3.2)
+  - Fixed save bookmark dialog: you could switch out from dialog with `<TAB>`
 - Dependencies:
   - Added `open 1.7.0`
   - Updated `rand` to `0.8.4`

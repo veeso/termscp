@@ -297,6 +297,7 @@ impl Update for AuthActivity {
                     self.umount_bookmark_save_dialog();
                     None
                 }
+                (COMPONENT_INPUT_BOOKMARK_NAME, _) | (COMPONENT_RADIO_BOOKMARK_SAVE_PWD, _) => None,
                 // Quit dialog
                 (COMPONENT_RADIO_QUIT, Msg::OnSubmit(Payload::One(Value::Usize(choice)))) => {
                     // If choice is 0, quit termscp
