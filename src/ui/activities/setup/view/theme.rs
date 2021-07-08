@@ -137,7 +137,14 @@ impl SetupActivity {
             super::COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_HG,
             "Remote explorer highlighted",
         );
-        self.mount_color_picker(super::COMPONENT_COLOR_TRANSFER_PROG_BAR, "Progress bar");
+        self.mount_color_picker(
+            super::COMPONENT_COLOR_TRANSFER_PROG_BAR_FULL,
+            "'Full transfer' Progress bar",
+        );
+        self.mount_color_picker(
+            super::COMPONENT_COLOR_TRANSFER_PROG_BAR_PARTIAL,
+            "'Partial transfer' Progress bar",
+        );
         // Transfer (2)
         self.mount_title(
             super::COMPONENT_COLOR_TRANSFER_TITLE_2,
@@ -287,7 +294,7 @@ impl SetupActivity {
                         Constraint::Length(3), // remote explorer bg
                         Constraint::Length(3), // remote explorer fg
                         Constraint::Length(3), // remote explorer hg
-                        Constraint::Length(3), // prog bar
+                        Constraint::Length(3), // empty
                     ]
                     .as_ref(),
                 )
@@ -327,56 +334,61 @@ impl SetupActivity {
                 f,
                 transfer_colors_layout_col1[6],
             );
-            self.view.render(
-                super::COMPONENT_COLOR_TRANSFER_PROG_BAR,
-                f,
-                transfer_colors_layout_col1[7],
-            );
             let transfer_colors_layout_col2 = Layout::default()
                 .direction(Direction::Vertical)
                 .constraints(
                     [
                         Constraint::Length(1), // Title
+                        Constraint::Length(3), // Full prog bar
+                        Constraint::Length(3), // Partial prog bar
                         Constraint::Length(3), // log bg
                         Constraint::Length(3), // log window
                         Constraint::Length(3), // status sorting
                         Constraint::Length(3), // status hidden
                         Constraint::Length(3), // sync browsing
-                        Constraint::Length(3), // Empty
-                        Constraint::Length(3), // Empty
                     ]
                     .as_ref(),
                 )
                 .split(colors_layout[3]);
             self.view.render(
-                super::COMPONENT_COLOR_TRANSFER_TITLE_2,
+                super::COMPONENT_COLOR_TRANSFER_PROG_BAR_FULL,
                 f,
                 transfer_colors_layout_col2[0],
             );
             self.view.render(
-                super::COMPONENT_COLOR_TRANSFER_LOG_BG,
+                super::COMPONENT_COLOR_TRANSFER_PROG_BAR_PARTIAL,
                 f,
                 transfer_colors_layout_col2[1],
             );
             self.view.render(
-                super::COMPONENT_COLOR_TRANSFER_LOG_WIN,
+                super::COMPONENT_COLOR_TRANSFER_TITLE_2,
                 f,
                 transfer_colors_layout_col2[2],
             );
             self.view.render(
-                super::COMPONENT_COLOR_TRANSFER_STATUS_SORTING,
+                super::COMPONENT_COLOR_TRANSFER_LOG_BG,
                 f,
                 transfer_colors_layout_col2[3],
             );
             self.view.render(
-                super::COMPONENT_COLOR_TRANSFER_STATUS_HIDDEN,
+                super::COMPONENT_COLOR_TRANSFER_LOG_WIN,
                 f,
                 transfer_colors_layout_col2[4],
             );
             self.view.render(
-                super::COMPONENT_COLOR_TRANSFER_STATUS_SYNC,
+                super::COMPONENT_COLOR_TRANSFER_STATUS_SORTING,
                 f,
                 transfer_colors_layout_col2[5],
+            );
+            self.view.render(
+                super::COMPONENT_COLOR_TRANSFER_STATUS_HIDDEN,
+                f,
+                transfer_colors_layout_col2[6],
+            );
+            self.view.render(
+                super::COMPONENT_COLOR_TRANSFER_STATUS_SYNC,
+                f,
+                transfer_colors_layout_col2[7],
             );
             // Popups
             if let Some(props) = self.view.get_props(super::COMPONENT_TEXT_ERROR) {
@@ -459,8 +471,12 @@ impl SetupActivity {
             theme.transfer_remote_explorer_highlighted,
         );
         self.update_color(
-            super::COMPONENT_COLOR_TRANSFER_PROG_BAR,
-            theme.transfer_progress_bar,
+            super::COMPONENT_COLOR_TRANSFER_PROG_BAR_FULL,
+            theme.transfer_progress_bar_full,
+        );
+        self.update_color(
+            super::COMPONENT_COLOR_TRANSFER_PROG_BAR_PARTIAL,
+            theme.transfer_progress_bar_partial,
         );
         self.update_color(
             super::COMPONENT_COLOR_TRANSFER_LOG_BG,
@@ -555,9 +571,12 @@ impl SetupActivity {
         let transfer_log_window: Color = self
             .get_color(super::COMPONENT_COLOR_TRANSFER_LOG_WIN)
             .map_err(|_| super::COMPONENT_COLOR_TRANSFER_LOG_WIN)?;
-        let transfer_progress_bar: Color = self
-            .get_color(super::COMPONENT_COLOR_TRANSFER_PROG_BAR)
-            .map_err(|_| super::COMPONENT_COLOR_TRANSFER_PROG_BAR)?;
+        let transfer_progress_bar_full: Color = self
+            .get_color(super::COMPONENT_COLOR_TRANSFER_PROG_BAR_FULL)
+            .map_err(|_| super::COMPONENT_COLOR_TRANSFER_PROG_BAR_FULL)?;
+        let transfer_progress_bar_partial: Color = self
+            .get_color(super::COMPONENT_COLOR_TRANSFER_PROG_BAR_PARTIAL)
+            .map_err(|_| super::COMPONENT_COLOR_TRANSFER_PROG_BAR_PARTIAL)?;
         let transfer_status_hidden: Color = self
             .get_color(super::COMPONENT_COLOR_TRANSFER_STATUS_HIDDEN)
             .map_err(|_| super::COMPONENT_COLOR_TRANSFER_STATUS_HIDDEN)?;
@@ -590,7 +609,8 @@ impl SetupActivity {
         theme.transfer_remote_explorer_highlighted = transfer_remote_explorer_highlighted;
         theme.transfer_log_background = transfer_log_background;
         theme.transfer_log_window = transfer_log_window;
-        theme.transfer_progress_bar = transfer_progress_bar;
+        theme.transfer_progress_bar_full = transfer_progress_bar_full;
+        theme.transfer_progress_bar_partial = transfer_progress_bar_partial;
         theme.transfer_status_hidden = transfer_status_hidden;
         theme.transfer_status_sorting = transfer_status_sorting;
         theme.transfer_status_sync_browsing = transfer_status_sync_browsing;

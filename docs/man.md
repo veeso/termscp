@@ -355,7 +355,8 @@ Please, notice that **styles won't apply to configuration page**, in order to ma
 | transfer_remote_explorer_highlighted | Border and highlighted color for remote explorer                          |
 | transfer_log_background              | Background color for log panel                                            |
 | transfer_log_window                  | Window color for log panel                                                |
-| transfer_progress_bar                | Progress bar color                                                        |
+| transfer_progress_bar_partial        | Partial progress bar color                                                |
+| transfer_progress_bar_total          | Total progress bar color                                                  |
 | transfer_status_hidden               | Color for status bar "hidden" label                                       |
 | transfer_status_sorting              | Color for status bar "sorting" label; applies also to file sorting dialog |
 | transfer_status_sync_browsing        | Color for status bar "sync browsing" label                                |

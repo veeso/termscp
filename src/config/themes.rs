@@ -134,7 +134,12 @@ pub struct Theme {
         deserialize_with = "deserialize_color",
         serialize_with = "serialize_color"
     )]
-    pub transfer_progress_bar: Color,
+    pub transfer_progress_bar_full: Color,
+    #[serde(
+        deserialize_with = "deserialize_color",
+        serialize_with = "serialize_color"
+    )]
+    pub transfer_progress_bar_partial: Color,
     #[serde(
         deserialize_with = "deserialize_color",
         serialize_with = "serialize_color"
@@ -188,7 +193,8 @@ impl Default for Theme {
             transfer_local_explorer_highlighted: Color::Yellow,
             transfer_log_background: Color::Reset,
             transfer_log_window: Color::LightGreen,
-            transfer_progress_bar: Color::Green,
+            transfer_progress_bar_partial: Color::Green,
+            transfer_progress_bar_full: Color::Green,
             transfer_remote_explorer_background: Color::Reset,
             transfer_remote_explorer_foreground: Color::Reset,
             transfer_remote_explorer_highlighted: Color::LightBlue,
@@ -249,7 +255,8 @@ mod test {
         assert_eq!(theme.transfer_local_explorer_highlighted, Color::Yellow);
         assert_eq!(theme.transfer_log_background, Color::Reset);
         assert_eq!(theme.transfer_log_window, Color::LightGreen);
-        assert_eq!(theme.transfer_progress_bar, Color::Green);
+        assert_eq!(theme.transfer_progress_bar_full, Color::Green);
+        assert_eq!(theme.transfer_progress_bar_partial, Color::Green);
         assert_eq!(theme.transfer_remote_explorer_background, Color::Reset);
         assert_eq!(theme.transfer_remote_explorer_foreground, Color::Reset);
         assert_eq!(theme.transfer_remote_explorer_highlighted, Color::LightBlue);

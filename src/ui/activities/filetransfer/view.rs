@@ -711,12 +711,13 @@ impl FileTransferActivity {
     }
 
     pub(super) fn mount_progress_bar(&mut self, root_name: String) {
-        let prog_color = self.theme().transfer_progress_bar;
+        let prog_color_full = self.theme().transfer_progress_bar_full;
+        let prog_color_partial = self.theme().transfer_progress_bar_partial;
         self.view.mount(
             super::COMPONENT_PROGRESS_BAR_FULL,
             Box::new(ProgressBar::new(
                 ProgressBarPropsBuilder::default()
-                    .with_progbar_color(prog_color)
+                    .with_progbar_color(prog_color_full)
                     .with_background(Color::Black)
                     .with_borders(
                         Borders::TOP | Borders::RIGHT | Borders::LEFT,
@@ -731,7 +732,7 @@ impl FileTransferActivity {
             super::COMPONENT_PROGRESS_BAR_PARTIAL,
             Box::new(ProgressBar::new(
                 ProgressBarPropsBuilder::default()
-                    .with_progbar_color(prog_color)
+                    .with_progbar_color(prog_color_partial)
                     .with_background(Color::Black)
                     .with_borders(
                         Borders::BOTTOM | Borders::RIGHT | Borders::LEFT,

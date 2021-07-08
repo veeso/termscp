@@ -248,8 +248,11 @@ impl SetupActivity {
             super::COMPONENT_COLOR_TRANSFER_LOG_WIN => {
                 theme.transfer_log_window = color;
             }
-            super::COMPONENT_COLOR_TRANSFER_PROG_BAR => {
-                theme.transfer_progress_bar = color;
+            super::COMPONENT_COLOR_TRANSFER_PROG_BAR_FULL => {
+                theme.transfer_progress_bar_full = color;
+            }
+            super::COMPONENT_COLOR_TRANSFER_PROG_BAR_PARTIAL => {
+                theme.transfer_progress_bar_partial = color;
             }
             super::COMPONENT_COLOR_TRANSFER_STATUS_HIDDEN => {
                 theme.transfer_status_hidden = color;
