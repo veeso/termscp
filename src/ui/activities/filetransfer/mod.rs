@@ -210,18 +210,32 @@ impl FileTransferActivity {
         })
     }
 
+    /// ### context
+    ///
+    /// Returns a reference to context
+    fn context(&self) -> &Context {
+        self.context.as_ref().unwrap()
+    }
+
+    /// ### context_mut
+    ///
+    /// Returns a mutable reference to context
+    fn context_mut(&mut self) -> &mut Context {
+        self.context.as_mut().unwrap()
+    }
+
     /// ### config
     ///
     /// Returns config client reference
     fn config(&self) -> &ConfigClient {
-        &self.context.as_ref().unwrap().config_client
+        &self.context().config()
     }
 
     /// ### theme
     ///
     /// Get a reference to `Theme`
     fn theme(&self) -> &Theme {
-        self.context.as_ref().unwrap().theme_provider.theme()
+        self.context().theme_provider().theme()
     }
 }
 
@@ -241,7 +255,7 @@ impl Activity for FileTransferActivity {
         // Set context
         self.context = Some(context);
         // Clear terminal
-        self.context.as_mut().unwrap().clear_screen();
+        self.context_mut().clear_screen();
         // Put raw mode on enabled
         if let Err(err) = enable_raw_mode() {
             error!("Failed to enter raw mode: {}", err);
@@ -276,7 +290,7 @@ impl Activity for FileTransferActivity {
         }
         // Check if connected (popup must be None, otherwise would try reconnecting in loop in case of error)
         if !self.client.is_connected() && self.view.get_props(COMPONENT_TEXT_FATAL).is_none() {
-            let params = self.context.as_ref().unwrap().ft_params.as_ref().unwrap();
+            let params = self.context().ft_params().unwrap();
             info!(
                 "Client is not connected to remote; connecting to {}:{}",
                 params.address, params.port

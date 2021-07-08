@@ -41,22 +41,25 @@ use std::path::PathBuf;
 use tuirealm::tui::backend::CrosstermBackend;
 use tuirealm::tui::Terminal;
 
+type TuiTerminal = Terminal<CrosstermBackend<Stdout>>;
+
 /// ## Context
 ///
 /// Context holds data structures used by the ui
 pub struct Context {
-    pub ft_params: Option<FileTransferParams>,
-    pub(crate) config_client: ConfigClient,
+    ft_params: Option<FileTransferParams>,
+    config_client: ConfigClient,
     pub(crate) store: Store,
-    pub(crate) input_hnd: InputHandler,
-    pub(crate) terminal: Terminal<CrosstermBackend<Stdout>>,
-    pub(crate) theme_provider: ThemeProvider,
+    input_hnd: InputHandler,
+    pub(crate) terminal: TuiTerminal,
+    theme_provider: ThemeProvider,
     error: Option<String>,
 }
 
 /// ### FileTransferParams
 ///
 /// Holds connection parameters for file transfers
+#[derive(Clone)]
 pub struct FileTransferParams {
     pub address: String,
     pub port: u16,
@@ -88,6 +91,52 @@ impl Context {
             error,
         }
     }
+
+    // -- getters
+
+    pub fn ft_params(&self) -> Option<&FileTransferParams> {
+        self.ft_params.as_ref()
+    }
+
+    pub fn config(&self) -> &ConfigClient {
+        &self.config_client
+    }
+
+    pub fn config_mut(&mut self) -> &mut ConfigClient {
+        &mut self.config_client
+    }
+
+    pub(crate) fn input_hnd(&self) -> &InputHandler {
+        &self.input_hnd
+    }
+
+    pub(crate) fn store(&self) -> &Store {
+        &self.store
+    }
+
+    pub(crate) fn store_mut(&mut self) -> &mut Store {
+        &mut self.store
+    }
+
+    pub fn theme_provider(&self) -> &ThemeProvider {
+        &self.theme_provider
+    }
+
+    pub fn theme_provider_mut(&mut self) -> &mut ThemeProvider {
+        &mut self.theme_provider
+    }
+
+    pub fn terminal(&mut self) -> &mut TuiTerminal {
+        &mut self.terminal
+    }
+
+    // -- setter
+
+    pub fn set_ftparams(&mut self, params: FileTransferParams) {
+        self.ft_params = Some(params);
+    }
+
+    // -- error
 
     /// ### set_error
     ///

@@ -92,7 +92,7 @@ impl SetupActivity {
             None => Ok(()),
             Some(ctx) => {
                 // Set editor if config client exists
-                env::set_var("EDITOR", ctx.config_client.get_text_editor());
+                env::set_var("EDITOR", ctx.config().get_text_editor());
                 // Prepare terminal
                 if let Err(err) = disable_raw_mode() {
                     error!("Failed to disable raw mode: {}", err);
@@ -101,10 +101,10 @@ impl SetupActivity {
                 #[cfg(not(target_os = "windows"))]
                 ctx.leave_alternate_screen();
                 // Get result
-                let result: Result<(), String> = match ctx.config_client.iter_ssh_keys().nth(idx) {
+                let result: Result<(), String> = match ctx.config().iter_ssh_keys().nth(idx) {
                     Some(key) => {
                         // Get key path
-                        match ctx.config_client.get_ssh_key(key) {
+                        match ctx.config().get_ssh_key(key) {
                             Ok(ssh_key) => match ssh_key {
                                 None => Ok(()),
                                 Some((_, _, key_path)) => {

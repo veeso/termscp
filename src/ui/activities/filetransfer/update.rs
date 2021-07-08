@@ -720,10 +720,8 @@ impl FileTransferActivity {
             Some(props) => {
                 // Get width
                 let width: usize = self
-                    .context
-                    .as_ref()
-                    .unwrap()
-                    .store
+                    .context()
+                    .store()
                     .get_unsigned(super::STORAGE_EXPLORER_WIDTH)
                     .unwrap_or(256);
                 let hostname: String = match hostname::get() {
@@ -768,13 +766,11 @@ impl FileTransferActivity {
             Some(props) => {
                 // Get width
                 let width: usize = self
-                    .context
-                    .as_ref()
-                    .unwrap()
-                    .store
+                    .context()
+                    .store()
                     .get_unsigned(super::STORAGE_EXPLORER_WIDTH)
                     .unwrap_or(256);
-                let params = self.context.as_ref().unwrap().ft_params.as_ref().unwrap();
+                let params = self.context().ft_params().unwrap();
                 let hostname: String = format!(
                     "{}:{} ",
                     params.address,

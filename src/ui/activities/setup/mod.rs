@@ -134,24 +134,38 @@ impl Default for SetupActivity {
 }
 
 impl SetupActivity {
+    /// ### context
+    ///
+    /// Returns a reference to context
+    fn context(&self) -> &Context {
+        self.context.as_ref().unwrap()
+    }
+
+    /// ### context_mut
+    ///
+    /// Returns a mutable reference to context
+    fn context_mut(&mut self) -> &mut Context {
+        self.context.as_mut().unwrap()
+    }
+
     fn config(&self) -> &ConfigClient {
-        &self.context.as_ref().unwrap().config_client
+        &self.context().config()
     }
 
     fn config_mut(&mut self) -> &mut ConfigClient {
-        &mut self.context.as_mut().unwrap().config_client
+        self.context_mut().config_mut()
     }
 
     fn theme(&self) -> &Theme {
-        self.context.as_ref().unwrap().theme_provider.theme()
+        self.context().theme_provider().theme()
     }
 
     fn theme_mut(&mut self) -> &mut Theme {
-        self.context.as_mut().unwrap().theme_provider.theme_mut()
+        self.context_mut().theme_provider_mut().theme_mut()
     }
 
     fn theme_provider(&mut self) -> &mut ThemeProvider {
-        &mut self.context.as_mut().unwrap().theme_provider
+        self.context_mut().theme_provider_mut()
     }
 }
 
@@ -188,7 +202,7 @@ impl Activity for SetupActivity {
             return;
         }
         // Read one event
-        if let Ok(Some(event)) = self.context.as_ref().unwrap().input_hnd.read_event() {
+        if let Ok(Some(event)) = self.context().input_hnd().read_event() {
             // Set redraw to true
             self.redraw = true;
             // Handle event

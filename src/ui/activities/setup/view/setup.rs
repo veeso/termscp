@@ -197,7 +197,7 @@ impl SetupActivity {
 
     pub(super) fn view_setup(&mut self) {
         let mut ctx: Context = self.context.take().unwrap();
-        let _ = ctx.terminal.draw(|f| {
+        let _ = ctx.terminal().draw(|f| {
             // Prepare main chunks
             let chunks = Layout::default()
                 .direction(Direction::Vertical)

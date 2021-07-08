@@ -111,7 +111,7 @@ impl FileTransferActivity {
     /// Read one event.
     /// Returns whether at least one event has been handled
     pub(super) fn read_input_event(&mut self) -> bool {
-        if let Ok(Some(event)) = self.context.as_ref().unwrap().input_hnd.read_event() {
+        if let Ok(Some(event)) = self.context().input_hnd().read_event() {
             // Handle event
             let msg = self.view.on(event);
             self.update(msg);

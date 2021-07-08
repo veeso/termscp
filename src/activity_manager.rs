@@ -97,14 +97,17 @@ impl ActivityManager {
         entry_directory: Option<PathBuf>,
     ) {
         // Put params into the context
-        self.context.as_mut().unwrap().ft_params = Some(FileTransferParams {
-            address,
-            port,
-            protocol,
-            username,
-            password,
-            entry_directory,
-        });
+        self.context
+            .as_mut()
+            .unwrap()
+            .set_ftparams(FileTransferParams {
+                address,
+                port,
+                protocol,
+                username,
+                password,
+                entry_directory,
+            });
     }
 
     /// ### run
@@ -202,7 +205,7 @@ impl ActivityManager {
             }
         };
         // If ft params is None, return None
-        let ft_params: &FileTransferParams = match ctx.ft_params.as_ref() {
+        let ft_params: &FileTransferParams = match ctx.ft_params() {
             Some(ft_params) => &ft_params,
             None => {
                 error!("Failed to start FileTransferActivity: file transfer params is None");

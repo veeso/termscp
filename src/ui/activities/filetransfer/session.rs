@@ -76,15 +76,15 @@ impl FileTransferActivity {
     ///
     /// Connect to remote
     pub(super) fn connect(&mut self) {
-        let params = self.context.as_ref().unwrap().ft_params.as_ref().unwrap();
+        let params = self.context().ft_params().unwrap().clone();
         let addr: String = params.address.clone();
         let entry_dir: Option<PathBuf> = params.entry_directory.clone();
         // Connect to remote
         match self.client.connect(
-            params.address.clone(),
+            params.address,
             params.port,
-            params.username.clone(),
-            params.password.clone(),
+            params.username,
+            params.password,
         ) {
             Ok(welcome) => {
                 if let Some(banner) = welcome {
@@ -121,7 +121,7 @@ impl FileTransferActivity {
     ///
     /// disconnect from remote
     pub(super) fn disconnect(&mut self) {
-        let params = self.context.as_ref().unwrap().ft_params.as_ref().unwrap();
+        let params = self.context().ft_params().unwrap();
         let msg: String = format!("Disconnecting from {}...", params.address);
         // Show popup disconnecting
         self.mount_wait(msg.as_str());

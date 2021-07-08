@@ -111,23 +111,24 @@ impl AuthActivity {
     fn check_for_updates(&mut self) {
         debug!("Check for updates...");
         // Check version only if unset in the store
-        let ctx: &mut Context = self.context.as_mut().unwrap();
-        if !ctx.store.isset(STORE_KEY_LATEST_VERSION) {
+        let ctx: &mut Context = self.context_mut();
+        if !ctx.store().isset(STORE_KEY_LATEST_VERSION) {
             debug!("Version is not set in storage");
-            if ctx.config_client.get_check_for_updates() {
+            if ctx.config().get_check_for_updates() {
                 debug!("Check for updates is enabled");
                 // Send request
                 match git::check_for_updates(env!("CARGO_PKG_VERSION")) {
                     Ok(Some(git::GithubTag { tag_name, body })) => {
                         // If some, store version and release notes
                         info!("Latest version is: {}", tag_name);
-                        ctx.store.set_string(STORE_KEY_LATEST_VERSION, tag_name);
-                        ctx.store.set_string(STORE_KEY_RELEASE_NOTES, body);
+                        ctx.store_mut()
+                            .set_string(STORE_KEY_LATEST_VERSION, tag_name);
+                        ctx.store_mut().set_string(STORE_KEY_RELEASE_NOTES, body);
                     }
                     Ok(None) => {
                         info!("Latest version is: {} (current)", env!("CARGO_PKG_VERSION"));
                         // Just set flag as check
-                        ctx.store.set(STORE_KEY_LATEST_VERSION);
+                        ctx.store_mut().set(STORE_KEY_LATEST_VERSION);
                     }
                     Err(err) => {
                         // Report error
@@ -140,30 +141,28 @@ impl AuthActivity {
             } else {
                 info!("Check for updates is disabled");
             }
-            /*
-            let ctx: &mut Context = self.context.as_mut().unwrap();
-            // Set version into the store (or just a flag)
-            match github_tag.take() {
-                Some(git::GithubTag { tag_name, body }) => {
-                    // If some store version and release notes
-                    info!("Latest version is: {}", tag_name);
-                    ctx.store.set_string(STORE_KEY_LATEST_VERSION, tag_name);
-                    ctx.store.set_string(STORE_KEY_RELEASE_NOTES, body);
-                }
-                None => {
-                    info!("Latest version is: {} (current)", env!("CARGO_PKG_VERSION"));
-                    // Just set flag as check
-                    ctx.store.set(STORE_KEY_LATEST_VERSION);
-                }
-            }*/
         }
+    }
+
+    /// ### context
+    ///
+    /// Returns a reference to context
+    fn context(&self) -> &Context {
+        self.context.as_ref().unwrap()
+    }
+
+    /// ### context_mut
+    ///
+    /// Returns a mutable reference to context
+    fn context_mut(&mut self) -> &mut Context {
+        self.context.as_mut().unwrap()
     }
 
     /// ### theme
     ///
     /// Returns a reference to theme
     fn theme(&self) -> &Theme {
-        self.context.as_ref().unwrap().theme_provider.theme()
+        self.context().theme_provider().theme()
     }
 }
 
@@ -176,11 +175,11 @@ impl Activity for AuthActivity {
     fn on_create(&mut self, mut context: Context) {
         debug!("Initializing activity");
         // Initialize file transfer params
-        context.ft_params = Some(FileTransferParams::default());
+        context.set_ftparams(FileTransferParams::default());
         // Set context
         self.context = Some(context);
         // Clear terminal
-        self.context.as_mut().unwrap().clear_screen();
+        self.context_mut().clear_screen();
         // Put raw mode on enabled
         if let Err(err) = enable_raw_mode() {
             error!("Failed to enter raw mode: {}", err);
@@ -197,7 +196,7 @@ impl Activity for AuthActivity {
             self.view_recent_connections();
         }
         // Verify error state from context
-        if let Some(err) = self.context.as_mut().unwrap().error() {
+        if let Some(err) = self.context_mut().error() {
             self.mount_error(err.as_str());
         }
         info!("Activity initialized");
@@ -213,7 +212,7 @@ impl Activity for AuthActivity {
             return;
         }
         // Read one event
-        if let Ok(Some(event)) = self.context.as_ref().unwrap().input_hnd.read_event() {
+        if let Ok(Some(event)) = self.context().input_hnd().read_event() {
             // Set redraw to true
             self.redraw = true;
             // Handle on resize

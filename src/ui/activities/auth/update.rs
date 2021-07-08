@@ -331,19 +331,21 @@ impl Update for AuthActivity {
                     self.save_recent();
                     let (address, port, protocol, username, password) = self.get_input();
                     // Set file transfer params to context
-                    let mut ft_params: &mut FileTransferParams =
-                        &mut self.context.as_mut().unwrap().ft_params.as_mut().unwrap();
-                    ft_params.address = address;
-                    ft_params.port = port;
-                    ft_params.protocol = protocol;
-                    ft_params.username = match username.is_empty() {
-                        true => None,
-                        false => Some(username),
+                    let params: FileTransferParams = FileTransferParams {
+                        address,
+                        port,
+                        protocol,
+                        username: match username.is_empty() {
+                            true => None,
+                            false => Some(username),
+                        },
+                        password: match password.is_empty() {
+                            true => None,
+                            false => Some(password),
+                        },
+                        entry_directory: None,
                     };
-                    ft_params.password = match password.is_empty() {
-                        true => None,
-                        false => Some(password),
-                    };
+                    self.context_mut().set_ftparams(params);
                     // Set exit reason
                     self.exit_reason = Some(super::ExitReason::Connect);
                     // Return None

@@ -109,12 +109,7 @@ impl AuthActivity {
             )),
         );
         // Get default protocol
-        let default_protocol: FileTransferProtocol = self
-            .context
-            .as_ref()
-            .unwrap()
-            .config_client
-            .get_default_protocol();
+        let default_protocol: FileTransferProtocol = self.context().config().get_default_protocol();
         // Protocol
         self.view.mount(
             super::COMPONENT_RADIO_PROTOCOL,
@@ -186,12 +181,11 @@ impl AuthActivity {
         );
         // Version notice
         if let Some(version) = self
-            .context
-            .as_ref()
-            .unwrap()
-            .store
+            .context()
+            .store()
             .get_string(super::STORE_KEY_LATEST_VERSION)
         {
+            let version: String = version.to_string();
             self.view.mount(
                 super::COMPONENT_TEXT_NEW_VERSION,
                 Box::new(Span::new(
@@ -199,7 +193,7 @@ impl AuthActivity {
                         .with_foreground(Color::Yellow)
                         .with_spans(vec![
                             TextSpan::from("termscp "),
-                            TextSpanBuilder::new(version).underlined().bold().build(),
+                            TextSpanBuilder::new(version.as_str()).underlined().bold().build(),
                             TextSpan::from(" is NOW available! Get it from <https://veeso.github.io/termscp/>; view release notes with <CTRL+R>"),
                         ])
                         .build(),
@@ -242,7 +236,7 @@ impl AuthActivity {
     /// Display view on canvas
     pub(super) fn view(&mut self) {
         let mut ctx: Context = self.context.take().unwrap();
-        let _ = ctx.terminal.draw(|f| {
+        let _ = ctx.terminal().draw(|f| {
             // Check window size
             let height: u16 = f.size().height;
             self.check_minimum_window_size(height);
@@ -784,7 +778,7 @@ impl AuthActivity {
     /// mount release notes text area
     pub(super) fn mount_release_notes(&mut self) {
         if let Some(ctx) = self.context.as_ref() {
-            if let Some(release_notes) = ctx.store.get_string(super::STORE_KEY_RELEASE_NOTES) {
+            if let Some(release_notes) = ctx.store().get_string(super::STORE_KEY_RELEASE_NOTES) {
                 // make spans
                 let spans: Vec<TextSpan> = release_notes.lines().map(TextSpan::from).collect();
                 self.view.mount(
