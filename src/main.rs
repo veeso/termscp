@@ -38,9 +38,9 @@ extern crate magic_crypt;
 extern crate rpassword;
 
 // External libs
-use getopts::Options;
+use getopts::{Matches, Options};
 use std::env;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::time::Duration;
 
 // Include
@@ -59,31 +59,43 @@ use activity_manager::{ActivityManager, NextActivity};
 use filetransfer::FileTransferProtocol;
 use system::logging;
 
-/// ### print_usage
-///
-/// Print usage
+enum Task {
+    Activity(NextActivity),
+    ImportTheme(PathBuf),
+}
 
-fn print_usage(opts: Options) {
-    let brief = String::from(
-        "Usage: termscp [options]... [protocol://user@address:port:wrkdir] [local-wrkdir]",
-    );
-    print!("{}", opts.usage(&brief));
-    println!("\nPlease, report issues to <https://github.com/veeso/termscp>");
-    println!("Please, consider supporting the author <https://www.buymeacoffee.com/veeso>")
+struct RunOpts {
+    address: Option<String>,
+    port: u16,
+    username: Option<String>,
+    password: Option<String>,
+    remote_wrkdir: Option<PathBuf>,
+    protocol: FileTransferProtocol,
+    ticks: Duration,
+    log_enabled: bool,
+    task: Task,
+}
+
+impl Default for RunOpts {
+    fn default() -> Self {
+        Self {
+            address: None,
+            port: 22,
+            username: None,
+            password: None,
+            remote_wrkdir: None,
+            protocol: FileTransferProtocol::Sftp,
+            ticks: Duration::from_millis(10),
+            log_enabled: true,
+            task: Task::Activity(NextActivity::Authentication),
+        }
+    }
 }
 
 fn main() {
     let args: Vec<String> = env::args().collect();
     //Program CLI options
-    let mut address: Option<String> = None; // None
-    let mut port: u16 = 22; // Default port
-    let mut username: Option<String> = None; // Default username
-    let mut password: Option<String> = None; // Default password
-    let mut remote_wrkdir: Option<PathBuf> = None;
-    let mut protocol: FileTransferProtocol = FileTransferProtocol::Sftp; // Default protocol
-    let mut ticks: Duration = Duration::from_millis(10);
-    let mut log_enabled: bool = true;
-    let mut start_activity: NextActivity = NextActivity::Authentication;
+    let mut run_opts: RunOpts = RunOpts::default();
     //Process options
     let mut opts = Options::new();
     opts.optflag("c", "config", "Open termscp configuration");
@@ -93,81 +105,113 @@ fn main() {
     opts.optopt("T", "ticks", "Set UI ticks; default 10ms", "<ms>");
     opts.optflag("v", "version", "");
     opts.optflag("h", "help", "Print this menu");
-    let matches = match opts.parse(&args[1..]) {
+    let matches: Matches = match opts.parse(&args[1..]) {
         Ok(m) => m,
         Err(f) => {
             println!("{}", f.to_string());
             std::process::exit(255);
         }
     };
-    // Help
-    if matches.opt_present("h") {
-        print_usage(opts);
+    // Parse args
+    if let Err(err) = parse_run_opts(&mut run_opts, matches) {
+        if let Some(err) = err {
+            eprintln!("{}", err);
+        } else {
+            print_usage(opts);
+        }
         std::process::exit(255);
+    }
+    // Setup logging
+    if run_opts.log_enabled {
+        if let Err(err) = logging::init() {
+            eprintln!("Failed to initialize logging: {}", err);
+        }
+    }
+    // Read password from remote
+    if let Err(err) = read_password(&mut run_opts) {
+        eprintln!("{}", err);
+        std::process::exit(255);
+    }
+    info!("termscp {} started!", TERMSCP_VERSION);
+    // Run
+    info!("Starting activity manager...");
+    let rc: i32 = run(run_opts);
+    info!("termscp terminated");
+    // Then return
+    std::process::exit(rc);
+}
+
+/// ### print_usage
+///
+/// Print usage
+fn print_usage(opts: Options) {
+    let brief = String::from(
+        "Usage: termscp [options]... [protocol://user@address:port:wrkdir] [local-wrkdir]",
+    );
+    print!("{}", opts.usage(&brief));
+    println!("\nPlease, report issues to <https://github.com/veeso/termscp>");
+    println!("Please, consider supporting the author <https://www.buymeacoffee.com/veeso>")
+}
+
+/// ### parse_run_opts
+///
+/// Parse run options; in case something is wrong returns the error message
+fn parse_run_opts(run_opts: &mut RunOpts, opts: Matches) -> Result<(), Option<String>> {
+    // Help
+    if opts.opt_present("h") {
+        return Err(None);
     }
     // Version
-    if matches.opt_present("v") {
-        eprintln!(
+    if opts.opt_present("v") {
+        return Err(Some(format!(
             "termscp - {} - Developed by {}",
             TERMSCP_VERSION, TERMSCP_AUTHORS,
-        );
-        std::process::exit(255);
+        )));
     }
     // Setup activity?
-    if matches.opt_present("c") {
-        start_activity = NextActivity::SetupActivity;
+    if opts.opt_present("c") {
+        run_opts.task = Task::Activity(NextActivity::SetupActivity);
     }
     // Logging
-    if matches.opt_present("q") {
-        log_enabled = false;
+    if opts.opt_present("q") {
+        run_opts.log_enabled = false;
     }
     // Match password
-    if let Some(passwd) = matches.opt_str("P") {
-        password = Some(passwd);
+    if let Some(passwd) = opts.opt_str("P") {
+        run_opts.password = Some(passwd);
     }
     // Match ticks
-    if let Some(val) = matches.opt_str("T") {
+    if let Some(val) = opts.opt_str("T") {
         match val.parse::<usize>() {
-            Ok(val) => ticks = Duration::from_millis(val as u64),
+            Ok(val) => run_opts.ticks = Duration::from_millis(val as u64),
             Err(_) => {
-                eprintln!("Ticks is not a number '{}'", val);
-                print_usage(opts);
-                std::process::exit(255);
+                return Err(Some(format!("Ticks is not a number: '{}'", val)));
             }
         }
     }
     // @! extra modes
-    if let Some(theme) = matches.opt_str("t") {
-        match support::import_theme(Path::new(theme.as_str())) {
-            Ok(_) => {
-                println!("Theme has been successfully imported!");
-                std::process::exit(0)
-            }
-            Err(err) => {
-                eprintln!("{}", err);
-                std::process::exit(1);
-            }
-        }
+    if let Some(theme) = opts.opt_str("t") {
+        run_opts.task = Task::ImportTheme(PathBuf::from(theme));
     }
     // @! Ordinary mode
     // Check free args
-    let extra_args: Vec<String> = matches.free;
+    let extra_args: Vec<String> = opts.free;
     // Remote argument
     if let Some(remote) = extra_args.get(0) {
         // Parse address
         match utils::parser::parse_remote_opt(remote) {
             Ok(host_opts) => {
                 // Set params
-                address = Some(host_opts.hostname);
-                port = host_opts.port;
-                protocol = host_opts.protocol;
-                username = host_opts.username;
-                remote_wrkdir = host_opts.wrkdir;
+                run_opts.address = Some(host_opts.hostname);
+                run_opts.port = host_opts.port;
+                run_opts.protocol = host_opts.protocol;
+                run_opts.username = host_opts.username;
+                run_opts.remote_wrkdir = host_opts.wrkdir;
+                // In this case the first activity will be FileTransfer
+                run_opts.task = Task::Activity(NextActivity::FileTransfer);
             }
             Err(err) => {
-                eprintln!("Bad address option: {}", err);
-                print_usage(opts);
-                std::process::exit(255);
+                return Err(Some(format!("Bad address option: {}", err)));
             }
         }
     }
@@ -176,64 +220,85 @@ fn main() {
         // Change working directory if local dir is set
         let localdir: PathBuf = PathBuf::from(localdir);
         if let Err(err) = env::set_current_dir(localdir.as_path()) {
-            eprintln!("Bad working directory argument: {}", err);
-            std::process::exit(255);
+            return Err(Some(format!("Bad working directory argument: {}", err)));
         }
     }
-    // Get working directory
-    let wrkdir: PathBuf = match env::current_dir() {
-        Ok(dir) => dir,
-        Err(_) => PathBuf::from("/"),
-    };
-    // Setup logging
-    if log_enabled {
-        if let Err(err) = logging::init() {
-            eprintln!("Failed to initialize logging: {}", err);
-        }
-    }
-    info!("termscp {} started!", TERMSCP_VERSION);
+    Ok(())
+}
+
+/// ### read_password
+///
+/// Read password from tty if address is specified
+fn read_password(run_opts: &mut RunOpts) -> Result<(), String> {
     // Initialize client if necessary
-    if address.is_some() {
-        debug!("User has specified remote options: address: {:?}, port: {:?}, protocol: {:?}, user: {:?}, password: {}", address, port, protocol, username, utils::fmt::shadow_password(password.as_deref().unwrap_or("")));
-        if password.is_none() {
+    if run_opts.address.is_some() {
+        debug!("User has specified remote options: address: {:?}, port: {:?}, protocol: {:?}, user: {:?}, password: {}", run_opts.address, run_opts.port, run_opts.protocol, run_opts.username, utils::fmt::shadow_password(run_opts.password.as_deref().unwrap_or("")));
+        if run_opts.password.is_none() {
             // Ask password if unspecified
-            password = match rpassword::read_password_from_tty(Some("Password: ")) {
+            run_opts.password = match rpassword::read_password_from_tty(Some("Password: ")) {
                 Ok(p) => {
                     if p.is_empty() {
                         None
                     } else {
+                        debug!(
+                            "Read password from tty: {}",
+                            utils::fmt::shadow_password(p.as_str())
+                        );
                         Some(p)
                     }
                 }
                 Err(_) => {
-                    eprintln!("Could not read password from prompt");
-                    std::process::exit(255);
+                    return Err("Could not read password from prompt".to_string());
                 }
             };
-            debug!(
-                "Read password from tty: {}",
-                utils::fmt::shadow_password(password.as_deref().unwrap_or(""))
-            );
         }
-        // In this case the first activity will be FileTransfer
-        start_activity = NextActivity::FileTransfer;
     }
-    // Create activity manager (and context too)
-    let mut manager: ActivityManager = match ActivityManager::new(&wrkdir, ticks) {
-        Ok(m) => m,
-        Err(err) => {
-            eprintln!("Could not start activity manager: {}", err);
-            std::process::exit(255);
+    Ok(())
+}
+
+/// ### run
+///
+/// Run task and return rc
+fn run(mut run_opts: RunOpts) -> i32 {
+    match run_opts.task {
+        Task::ImportTheme(theme) => match support::import_theme(theme.as_path()) {
+            Ok(_) => {
+                println!("Theme has been successfully imported!");
+                0
+            }
+            Err(err) => {
+                eprintln!("{}", err);
+                1
+            }
+        },
+        Task::Activity(activity) => {
+            // Get working directory
+            let wrkdir: PathBuf = match env::current_dir() {
+                Ok(dir) => dir,
+                Err(_) => PathBuf::from("/"),
+            };
+            // Create activity manager (and context too)
+            let mut manager: ActivityManager =
+                match ActivityManager::new(wrkdir.as_path(), run_opts.ticks) {
+                    Ok(m) => m,
+                    Err(err) => {
+                        eprintln!("Could not start activity manager: {}", err);
+                        return 1;
+                    }
+                };
+            // Set file transfer params if set
+            if let Some(address) = run_opts.address.take() {
+                manager.set_filetransfer_params(
+                    address,
+                    run_opts.port,
+                    run_opts.protocol,
+                    run_opts.username,
+                    run_opts.password,
+                    run_opts.remote_wrkdir,
+                );
+            }
+            manager.run(activity);
+            0
         }
-    };
-    // Set file transfer params if set
-    if let Some(address) = address {
-        manager.set_filetransfer_params(address, port, protocol, username, password, remote_wrkdir);
     }
-    // Run
-    info!("Starting activity manager...");
-    manager.run(start_activity);
-    info!("termscp terminated");
-    // Then return
-    std::process::exit(0);
 }
