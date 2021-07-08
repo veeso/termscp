@@ -286,73 +286,71 @@ impl SetupActivity {
     ///
     /// Load values from configuration into input fields
     pub(crate) fn load_input_values(&mut self) {
-        if let Some(cli) = self.context.as_mut().unwrap().config_client.as_mut() {
-            // Text editor
-            if let Some(props) = self.view.get_props(super::COMPONENT_INPUT_TEXT_EDITOR) {
-                let text_editor: String =
-                    String::from(cli.get_text_editor().as_path().to_string_lossy());
-                let props = InputPropsBuilder::from(props)
-                    .with_value(text_editor)
-                    .build();
-                let _ = self.view.update(super::COMPONENT_INPUT_TEXT_EDITOR, props);
-            }
-            // Protocol
-            if let Some(props) = self.view.get_props(super::COMPONENT_RADIO_DEFAULT_PROTOCOL) {
-                let protocol: usize = match cli.get_default_protocol() {
-                    FileTransferProtocol::Sftp => 0,
-                    FileTransferProtocol::Scp => 1,
-                    FileTransferProtocol::Ftp(false) => 2,
-                    FileTransferProtocol::Ftp(true) => 3,
-                };
-                let props = RadioPropsBuilder::from(props).with_value(protocol).build();
-                let _ = self
-                    .view
-                    .update(super::COMPONENT_RADIO_DEFAULT_PROTOCOL, props);
-            }
-            // Hidden files
-            if let Some(props) = self.view.get_props(super::COMPONENT_RADIO_HIDDEN_FILES) {
-                let hidden: usize = match cli.get_show_hidden_files() {
-                    true => 0,
-                    false => 1,
-                };
-                let props = RadioPropsBuilder::from(props).with_value(hidden).build();
-                let _ = self.view.update(super::COMPONENT_RADIO_HIDDEN_FILES, props);
-            }
-            // Updates
-            if let Some(props) = self.view.get_props(super::COMPONENT_RADIO_UPDATES) {
-                let updates: usize = match cli.get_check_for_updates() {
-                    true => 0,
-                    false => 1,
-                };
-                let props = RadioPropsBuilder::from(props).with_value(updates).build();
-                let _ = self.view.update(super::COMPONENT_RADIO_UPDATES, props);
-            }
-            // Group dirs
-            if let Some(props) = self.view.get_props(super::COMPONENT_RADIO_GROUP_DIRS) {
-                let dirs: usize = match cli.get_group_dirs() {
-                    Some(GroupDirs::First) => 0,
-                    Some(GroupDirs::Last) => 1,
-                    None => 2,
-                };
-                let props = RadioPropsBuilder::from(props).with_value(dirs).build();
-                let _ = self.view.update(super::COMPONENT_RADIO_GROUP_DIRS, props);
-            }
-            // Local File Fmt
-            if let Some(props) = self.view.get_props(super::COMPONENT_INPUT_LOCAL_FILE_FMT) {
-                let file_fmt: String = cli.get_local_file_fmt().unwrap_or_default();
-                let props = InputPropsBuilder::from(props).with_value(file_fmt).build();
-                let _ = self
-                    .view
-                    .update(super::COMPONENT_INPUT_LOCAL_FILE_FMT, props);
-            }
-            // Remote File Fmt
-            if let Some(props) = self.view.get_props(super::COMPONENT_INPUT_REMOTE_FILE_FMT) {
-                let file_fmt: String = cli.get_remote_file_fmt().unwrap_or_default();
-                let props = InputPropsBuilder::from(props).with_value(file_fmt).build();
-                let _ = self
-                    .view
-                    .update(super::COMPONENT_INPUT_REMOTE_FILE_FMT, props);
-            }
+        // Text editor
+        if let Some(props) = self.view.get_props(super::COMPONENT_INPUT_TEXT_EDITOR) {
+            let text_editor: String =
+                String::from(self.config().get_text_editor().as_path().to_string_lossy());
+            let props = InputPropsBuilder::from(props)
+                .with_value(text_editor)
+                .build();
+            let _ = self.view.update(super::COMPONENT_INPUT_TEXT_EDITOR, props);
+        }
+        // Protocol
+        if let Some(props) = self.view.get_props(super::COMPONENT_RADIO_DEFAULT_PROTOCOL) {
+            let protocol: usize = match self.config().get_default_protocol() {
+                FileTransferProtocol::Sftp => 0,
+                FileTransferProtocol::Scp => 1,
+                FileTransferProtocol::Ftp(false) => 2,
+                FileTransferProtocol::Ftp(true) => 3,
+            };
+            let props = RadioPropsBuilder::from(props).with_value(protocol).build();
+            let _ = self
+                .view
+                .update(super::COMPONENT_RADIO_DEFAULT_PROTOCOL, props);
+        }
+        // Hidden files
+        if let Some(props) = self.view.get_props(super::COMPONENT_RADIO_HIDDEN_FILES) {
+            let hidden: usize = match self.config().get_show_hidden_files() {
+                true => 0,
+                false => 1,
+            };
+            let props = RadioPropsBuilder::from(props).with_value(hidden).build();
+            let _ = self.view.update(super::COMPONENT_RADIO_HIDDEN_FILES, props);
+        }
+        // Updates
+        if let Some(props) = self.view.get_props(super::COMPONENT_RADIO_UPDATES) {
+            let updates: usize = match self.config().get_check_for_updates() {
+                true => 0,
+                false => 1,
+            };
+            let props = RadioPropsBuilder::from(props).with_value(updates).build();
+            let _ = self.view.update(super::COMPONENT_RADIO_UPDATES, props);
+        }
+        // Group dirs
+        if let Some(props) = self.view.get_props(super::COMPONENT_RADIO_GROUP_DIRS) {
+            let dirs: usize = match self.config().get_group_dirs() {
+                Some(GroupDirs::First) => 0,
+                Some(GroupDirs::Last) => 1,
+                None => 2,
+            };
+            let props = RadioPropsBuilder::from(props).with_value(dirs).build();
+            let _ = self.view.update(super::COMPONENT_RADIO_GROUP_DIRS, props);
+        }
+        // Local File Fmt
+        if let Some(props) = self.view.get_props(super::COMPONENT_INPUT_LOCAL_FILE_FMT) {
+            let file_fmt: String = self.config().get_local_file_fmt().unwrap_or_default();
+            let props = InputPropsBuilder::from(props).with_value(file_fmt).build();
+            let _ = self
+                .view
+                .update(super::COMPONENT_INPUT_LOCAL_FILE_FMT, props);
+        }
+        // Remote File Fmt
+        if let Some(props) = self.view.get_props(super::COMPONENT_INPUT_REMOTE_FILE_FMT) {
+            let file_fmt: String = self.config().get_remote_file_fmt().unwrap_or_default();
+            let props = InputPropsBuilder::from(props).with_value(file_fmt).build();
+            let _ = self
+                .view
+                .update(super::COMPONENT_INPUT_REMOTE_FILE_FMT, props);
         }
     }
 
@@ -360,55 +358,54 @@ impl SetupActivity {
     ///
     /// Collect values from input and put them into the configuration
     pub(crate) fn collect_input_values(&mut self) {
-        if let Some(cli) = self.context.as_mut().unwrap().config_client.as_mut() {
-            if let Some(Payload::One(Value::Str(editor))) =
-                self.view.get_state(super::COMPONENT_INPUT_TEXT_EDITOR)
-            {
-                cli.set_text_editor(PathBuf::from(editor.as_str()));
-            }
-            if let Some(Payload::One(Value::Usize(protocol))) =
-                self.view.get_state(super::COMPONENT_RADIO_DEFAULT_PROTOCOL)
-            {
-                let protocol: FileTransferProtocol = match protocol {
-                    1 => FileTransferProtocol::Scp,
-                    2 => FileTransferProtocol::Ftp(false),
-                    3 => FileTransferProtocol::Ftp(true),
-                    _ => FileTransferProtocol::Sftp,
-                };
-                cli.set_default_protocol(protocol);
-            }
-            if let Some(Payload::One(Value::Usize(opt))) =
-                self.view.get_state(super::COMPONENT_RADIO_HIDDEN_FILES)
-            {
-                let show: bool = matches!(opt, 0);
-                cli.set_show_hidden_files(show);
-            }
-            if let Some(Payload::One(Value::Usize(opt))) =
-                self.view.get_state(super::COMPONENT_RADIO_UPDATES)
-            {
-                let check: bool = matches!(opt, 0);
-                cli.set_check_for_updates(check);
-            }
-            if let Some(Payload::One(Value::Str(fmt))) =
-                self.view.get_state(super::COMPONENT_INPUT_LOCAL_FILE_FMT)
-            {
-                cli.set_local_file_fmt(fmt);
-            }
-            if let Some(Payload::One(Value::Str(fmt))) =
-                self.view.get_state(super::COMPONENT_INPUT_REMOTE_FILE_FMT)
-            {
-                cli.set_remote_file_fmt(fmt);
-            }
-            if let Some(Payload::One(Value::Usize(opt))) =
-                self.view.get_state(super::COMPONENT_RADIO_GROUP_DIRS)
-            {
-                let dirs: Option<GroupDirs> = match opt {
-                    0 => Some(GroupDirs::First),
-                    1 => Some(GroupDirs::Last),
-                    _ => None,
-                };
-                cli.set_group_dirs(dirs);
-            }
+        if let Some(Payload::One(Value::Str(editor))) =
+            self.view.get_state(super::COMPONENT_INPUT_TEXT_EDITOR)
+        {
+            self.config_mut()
+                .set_text_editor(PathBuf::from(editor.as_str()));
+        }
+        if let Some(Payload::One(Value::Usize(protocol))) =
+            self.view.get_state(super::COMPONENT_RADIO_DEFAULT_PROTOCOL)
+        {
+            let protocol: FileTransferProtocol = match protocol {
+                1 => FileTransferProtocol::Scp,
+                2 => FileTransferProtocol::Ftp(false),
+                3 => FileTransferProtocol::Ftp(true),
+                _ => FileTransferProtocol::Sftp,
+            };
+            self.config_mut().set_default_protocol(protocol);
+        }
+        if let Some(Payload::One(Value::Usize(opt))) =
+            self.view.get_state(super::COMPONENT_RADIO_HIDDEN_FILES)
+        {
+            let show: bool = matches!(opt, 0);
+            self.config_mut().set_show_hidden_files(show);
+        }
+        if let Some(Payload::One(Value::Usize(opt))) =
+            self.view.get_state(super::COMPONENT_RADIO_UPDATES)
+        {
+            let check: bool = matches!(opt, 0);
+            self.config_mut().set_check_for_updates(check);
+        }
+        if let Some(Payload::One(Value::Str(fmt))) =
+            self.view.get_state(super::COMPONENT_INPUT_LOCAL_FILE_FMT)
+        {
+            self.config_mut().set_local_file_fmt(fmt);
+        }
+        if let Some(Payload::One(Value::Str(fmt))) =
+            self.view.get_state(super::COMPONENT_INPUT_REMOTE_FILE_FMT)
+        {
+            self.config_mut().set_remote_file_fmt(fmt);
+        }
+        if let Some(Payload::One(Value::Usize(opt))) =
+            self.view.get_state(super::COMPONENT_RADIO_GROUP_DIRS)
+        {
+            let dirs: Option<GroupDirs> = match opt {
+                0 => Some(GroupDirs::First),
+                1 => Some(GroupDirs::Last),
+                _ => None,
+            };
+            self.config_mut().set_group_dirs(dirs);
         }
     }
 }

@@ -111,33 +111,36 @@ impl AuthActivity {
     fn check_for_updates(&mut self) {
         debug!("Check for updates...");
         // Check version only if unset in the store
-        let ctx: &Context = self.context.as_ref().unwrap();
+        let ctx: &mut Context = self.context.as_mut().unwrap();
         if !ctx.store.isset(STORE_KEY_LATEST_VERSION) {
             debug!("Version is not set in storage");
-            let mut github_tag: Option<git::GithubTag> = match ctx.config_client.as_ref() {
-                Some(client) => {
-                    if client.get_check_for_updates() {
-                        debug!("Check for updates is enabled");
-                        // Send request
-                        match git::check_for_updates(env!("CARGO_PKG_VERSION")) {
-                            Ok(github_tag) => github_tag,
-                            Err(err) => {
-                                // Report error
-                                error!("Failed to get latest version: {}", err);
-                                self.mount_error(
-                                    format!("Could not check for new updates: {}", err).as_str(),
-                                );
-                                // None
-                                None
-                            }
-                        }
-                    } else {
-                        info!("Check for updates is disabled");
-                        None
+            if ctx.config_client.get_check_for_updates() {
+                debug!("Check for updates is enabled");
+                // Send request
+                match git::check_for_updates(env!("CARGO_PKG_VERSION")) {
+                    Ok(Some(git::GithubTag { tag_name, body })) => {
+                        // If some, store version and release notes
+                        info!("Latest version is: {}", tag_name);
+                        ctx.store.set_string(STORE_KEY_LATEST_VERSION, tag_name);
+                        ctx.store.set_string(STORE_KEY_RELEASE_NOTES, body);
+                    }
+                    Ok(None) => {
+                        info!("Latest version is: {} (current)", env!("CARGO_PKG_VERSION"));
+                        // Just set flag as check
+                        ctx.store.set(STORE_KEY_LATEST_VERSION);
+                    }
+                    Err(err) => {
+                        // Report error
+                        error!("Failed to get latest version: {}", err);
+                        self.mount_error(
+                            format!("Could not check for new updates: {}", err).as_str(),
+                        );
                     }
                 }
-                None => None,
-            };
+            } else {
+                info!("Check for updates is disabled");
+            }
+            /*
             let ctx: &mut Context = self.context.as_mut().unwrap();
             // Set version into the store (or just a flag)
             match github_tag.take() {
@@ -152,7 +155,7 @@ impl AuthActivity {
                     // Just set flag as check
                     ctx.store.set(STORE_KEY_LATEST_VERSION);
                 }
-            }
+            }*/
         }
     }
 
@@ -194,7 +197,7 @@ impl Activity for AuthActivity {
             self.view_recent_connections();
         }
         // Verify error state from context
-        if let Some(err) = self.context.as_mut().unwrap().get_error() {
+        if let Some(err) = self.context.as_mut().unwrap().error() {
             self.mount_error(err.as_str());
         }
         info!("Activity initialized");

@@ -109,11 +109,12 @@ impl AuthActivity {
             )),
         );
         // Get default protocol
-        let default_protocol: FileTransferProtocol =
-            match self.context.as_ref().unwrap().config_client.as_ref() {
-                Some(cli) => cli.get_default_protocol(),
-                None => FileTransferProtocol::Sftp,
-            };
+        let default_protocol: FileTransferProtocol = self
+            .context
+            .as_ref()
+            .unwrap()
+            .config_client
+            .get_default_protocol();
         // Protocol
         self.view.mount(
             super::COMPONENT_RADIO_PROTOCOL,

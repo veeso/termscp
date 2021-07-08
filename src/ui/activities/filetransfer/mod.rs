@@ -210,6 +210,13 @@ impl FileTransferActivity {
         })
     }
 
+    /// ### config
+    ///
+    /// Returns config client reference
+    fn config(&self) -> &ConfigClient {
+        &self.context.as_ref().unwrap().config_client
+    }
+
     /// ### theme
     ///
     /// Get a reference to `Theme`
@@ -249,7 +256,7 @@ impl Activity for FileTransferActivity {
         self.init();
         debug!("Initialized view");
         // Verify error state from context
-        if let Some(err) = self.context.as_mut().unwrap().get_error() {
+        if let Some(err) = self.context.as_mut().unwrap().error() {
             error!("Fatal error on create: {}", err);
             self.mount_fatal(&err);
         }

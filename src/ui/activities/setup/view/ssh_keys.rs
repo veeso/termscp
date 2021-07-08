@@ -275,22 +275,21 @@ impl SetupActivity {
     ///
     /// Reload ssh keys
     pub(crate) fn reload_ssh_keys(&mut self) {
-        if let Some(cli) = self.context.as_ref().unwrap().config_client.as_ref() {
-            // get props
-            if let Some(props) = self.view.get_props(super::COMPONENT_LIST_SSH_KEYS) {
-                // Create texts
-                let keys: Vec<String> = cli
-                    .iter_ssh_keys()
-                    .map(|x| {
-                        let (addr, username, _) = cli.get_ssh_key(x).ok().unwrap().unwrap();
-                        format!("{} at {}", addr, username)
-                    })
-                    .collect();
-                let props = BookmarkListPropsBuilder::from(props)
-                    .with_bookmarks(Some(String::from("SSH Keys")), keys)
-                    .build();
-                self.view.update(super::COMPONENT_LIST_SSH_KEYS, props);
-            }
+        // get props
+        if let Some(props) = self.view.get_props(super::COMPONENT_LIST_SSH_KEYS) {
+            // Create texts
+            let keys: Vec<String> = self
+                .config()
+                .iter_ssh_keys()
+                .map(|x| {
+                    let (addr, username, _) = self.config().get_ssh_key(x).ok().unwrap().unwrap();
+                    format!("{} at {}", addr, username)
+                })
+                .collect();
+            let props = BookmarkListPropsBuilder::from(props)
+                .with_bookmarks(Some(String::from("SSH Keys")), keys)
+                .build();
+            self.view.update(super::COMPONENT_LIST_SSH_KEYS, props);
         }
     }
 }

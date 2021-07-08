@@ -67,12 +67,12 @@ impl ActivityManager {
     pub fn new(local_dir: &Path, interval: Duration) -> Result<ActivityManager, HostError> {
         // Prepare Context
         // Initialize configuration client
-        let (config_client, error): (Option<ConfigClient>, Option<String>) =
+        let (config_client, error): (ConfigClient, Option<String>) =
             match Self::init_config_client() {
-                Ok(cli) => (Some(cli), None),
+                Ok(cli) => (cli, None),
                 Err(err) => {
                     error!("Failed to initialize config client: {}", err);
-                    (None, Some(err))
+                    (ConfigClient::degraded(), Some(err))
                 }
             };
         let theme_provider: ThemeProvider = Self::init_theme_provider();

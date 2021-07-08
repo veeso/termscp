@@ -80,32 +80,29 @@ impl SetupActivity {
     /// delete of a ssh key
     pub(super) fn action_delete_ssh_key(&mut self) {
         // Get key
-        if let Some(config_cli) = self.context.as_mut().unwrap().config_client.as_mut() {
-            // get index
-            let idx: Option<usize> = match self.view.get_state(super::COMPONENT_LIST_SSH_KEYS) {
-                Some(Payload::One(Value::Usize(idx))) => Some(idx),
-                _ => None,
-            };
-            if let Some(idx) = idx {
-                let key: Option<String> = config_cli.iter_ssh_keys().nth(idx).cloned();
-                if let Some(key) = key {
-                    match config_cli.get_ssh_key(&key) {
-                        Ok(opt) => {
-                            if let Some((host, username, _)) = opt {
-                                if let Err(err) =
-                                    self.delete_ssh_key(host.as_str(), username.as_str())
-                                {
-                                    // Report error
-                                    self.mount_error(err.as_str());
-                                }
+        // get index
+        let idx: Option<usize> = match self.view.get_state(super::COMPONENT_LIST_SSH_KEYS) {
+            Some(Payload::One(Value::Usize(idx))) => Some(idx),
+            _ => None,
+        };
+        if let Some(idx) = idx {
+            let key: Option<String> = self.config().iter_ssh_keys().nth(idx).cloned();
+            if let Some(key) = key {
+                match self.config().get_ssh_key(&key) {
+                    Ok(opt) => {
+                        if let Some((host, username, _)) = opt {
+                            if let Err(err) = self.delete_ssh_key(host.as_str(), username.as_str())
+                            {
+                                // Report error
+                                self.mount_error(err.as_str());
                             }
                         }
-                        Err(err) => {
-                            // Report error
-                            self.mount_error(
-                                format!("Could not get ssh key \"{}\": {}", key, err).as_str(),
-                            );
-                        }
+                    }
+                    Err(err) => {
+                        // Report error
+                        self.mount_error(
+                            format!("Could not get ssh key \"{}\": {}", key, err).as_str(),
+                        );
                     }
                 }
             }
@@ -116,66 +113,62 @@ impl SetupActivity {
     ///
     /// Create a new ssh key
     pub(super) fn action_new_ssh_key(&mut self) {
-        if let Some(cli) = self.context.as_mut().unwrap().config_client.as_mut() {
-            // get parameters
-            let host: String = match self.view.get_state(super::COMPONENT_INPUT_SSH_HOST) {
-                Some(Payload::One(Value::Str(host))) => host,
-                _ => String::new(),
-            };
-            let username: String = match self.view.get_state(super::COMPONENT_INPUT_SSH_USERNAME) {
-                Some(Payload::One(Value::Str(user))) => user,
-                _ => String::new(),
-            };
-            // Prepare text editor
-            env::set_var("EDITOR", cli.get_text_editor());
-            let placeholder: String = format!("# Type private SSH key for {}@{}\n", username, host);
-            // Put input mode back to normal
-            if let Err(err) = disable_raw_mode() {
-                error!("Failed to disable raw mode: {}", err);
-            }
-            // Leave alternate mode
-            #[cfg(not(target_os = "windows"))]
-            if let Some(ctx) = self.context.as_mut() {
-                ctx.leave_alternate_screen();
-            }
-            // Re-enable raw mode
-            if let Err(err) = enable_raw_mode() {
-                error!("Failed to enter raw mode: {}", err);
-            }
-            // Write key to file
-            match edit::edit(placeholder.as_bytes()) {
-                Ok(rsa_key) => {
-                    // Remove placeholder from `rsa_key`
-                    let rsa_key: String = rsa_key.as_str().replace(placeholder.as_str(), "");
-                    if rsa_key.is_empty() {
-                        // Report error: empty key
-                        self.mount_error("SSH key is empty!");
-                    } else {
-                        // Add key
-                        if let Err(err) =
-                            self.add_ssh_key(host.as_str(), username.as_str(), rsa_key.as_str())
-                        {
-                            self.mount_error(
-                                format!("Could not create new private key: {}", err).as_str(),
-                            );
-                        }
+        // get parameters
+        let host: String = match self.view.get_state(super::COMPONENT_INPUT_SSH_HOST) {
+            Some(Payload::One(Value::Str(host))) => host,
+            _ => String::new(),
+        };
+        let username: String = match self.view.get_state(super::COMPONENT_INPUT_SSH_USERNAME) {
+            Some(Payload::One(Value::Str(user))) => user,
+            _ => String::new(),
+        };
+        // Prepare text editor
+        env::set_var("EDITOR", self.config().get_text_editor());
+        let placeholder: String = format!("# Type private SSH key for {}@{}\n", username, host);
+        // Put input mode back to normal
+        if let Err(err) = disable_raw_mode() {
+            error!("Failed to disable raw mode: {}", err);
+        }
+        // Leave alternate mode
+        #[cfg(not(target_os = "windows"))]
+        if let Some(ctx) = self.context.as_mut() {
+            ctx.leave_alternate_screen();
+        }
+        // Re-enable raw mode
+        if let Err(err) = enable_raw_mode() {
+            error!("Failed to enter raw mode: {}", err);
+        }
+        // Write key to file
+        match edit::edit(placeholder.as_bytes()) {
+            Ok(rsa_key) => {
+                // Remove placeholder from `rsa_key`
+                let rsa_key: String = rsa_key.as_str().replace(placeholder.as_str(), "");
+                if rsa_key.is_empty() {
+                    // Report error: empty key
+                    self.mount_error("SSH key is empty!");
+                } else {
+                    // Add key
+                    if let Err(err) =
+                        self.add_ssh_key(host.as_str(), username.as_str(), rsa_key.as_str())
+                    {
+                        self.mount_error(
+                            format!("Could not create new private key: {}", err).as_str(),
+                        );
                     }
                 }
-                Err(err) => {
-                    // Report error
-                    self.mount_error(
-                        format!("Could not write private key to file: {}", err).as_str(),
-                    );
-                }
             }
-            // Restore terminal
-            #[cfg(not(target_os = "windows"))]
-            if let Some(ctx) = self.context.as_mut() {
-                // Clear screen
-                ctx.clear_screen();
-                // Enter alternate mode
-                ctx.enter_alternate_screen();
+            Err(err) => {
+                // Report error
+                self.mount_error(format!("Could not write private key to file: {}", err).as_str());
             }
+        }
+        // Restore terminal
+        #[cfg(not(target_os = "windows"))]
+        if let Some(ctx) = self.context.as_mut() {
+            // Clear screen
+            ctx.clear_screen();
+            // Enter alternate mode
+            ctx.enter_alternate_screen();
         }
     }
 

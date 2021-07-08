@@ -35,6 +35,7 @@ mod view;
 // Locals
 use super::{Activity, Context, ExitReason};
 use crate::config::themes::Theme;
+use crate::system::config_client::ConfigClient;
 use crate::system::theme_provider::ThemeProvider;
 // Ext
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
@@ -133,6 +134,14 @@ impl Default for SetupActivity {
 }
 
 impl SetupActivity {
+    fn config(&self) -> &ConfigClient {
+        &self.context.as_ref().unwrap().config_client
+    }
+
+    fn config_mut(&mut self) -> &mut ConfigClient {
+        &mut self.context.as_mut().unwrap().config_client
+    }
+
     fn theme(&self) -> &Theme {
         self.context.as_ref().unwrap().theme_provider.theme()
     }
@@ -164,7 +173,7 @@ impl Activity for SetupActivity {
         // Init view
         self.init(ViewLayout::SetupForm);
         // Verify error state from context
-        if let Some(err) = self.context.as_mut().unwrap().get_error() {
+        if let Some(err) = self.context.as_mut().unwrap().error() {
             self.mount_error(err.as_str());
         }
     }

@@ -46,7 +46,7 @@ use tuirealm::tui::Terminal;
 /// Context holds data structures used by the ui
 pub struct Context {
     pub ft_params: Option<FileTransferParams>,
-    pub(crate) config_client: Option<ConfigClient>,
+    pub(crate) config_client: ConfigClient,
     pub(crate) store: Store,
     pub(crate) input_hnd: InputHandler,
     pub(crate) terminal: Terminal<CrosstermBackend<Stdout>>,
@@ -71,7 +71,7 @@ impl Context {
     ///
     /// Instantiates a new Context
     pub fn new(
-        config_client: Option<ConfigClient>,
+        config_client: ConfigClient,
         theme_provider: ThemeProvider,
         error: Option<String>,
     ) -> Context {
@@ -96,10 +96,10 @@ impl Context {
         self.error = Some(err);
     }
 
-    /// ### get_error
+    /// ### error
     ///
     /// Get error message and remove it from the context
-    pub fn get_error(&mut self) -> Option<String> {
+    pub fn error(&mut self) -> Option<String> {
         self.error.take()
     }
 
