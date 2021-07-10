@@ -49,7 +49,9 @@ Released on FIXME: ??
   - Fixed broken input cursor when typing UTF8 characters (tui-realm 0.3.2)
   - Fixed save bookmark dialog: you could switch out from dialog with `<TAB>`
 - Dependencies:
+  - Added `argh 0.1.5`
   - Added `open 1.7.0`
+  - Removed `getopts`
   - Updated `rand` to `0.8.4`
   - Updated `textwrap` to `0.14.2`
   - Updated `tui-realm` to `0.4.3`

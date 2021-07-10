@@ -26,7 +26,7 @@ const TERMSCP_VERSION: &str = env!("CARGO_PKG_VERSION");
 const TERMSCP_AUTHORS: &str = env!("CARGO_PKG_AUTHORS");
 
 // Crates
-extern crate getopts;
+extern crate argh;
 #[macro_use]
 extern crate bitflags;
 #[macro_use]
@@ -38,7 +38,7 @@ extern crate magic_crypt;
 extern crate rpassword;
 
 // External libs
-use getopts::{Matches, Options};
+use argh::FromArgs;
 use std::env;
 use std::path::PathBuf;
 use std::time::Duration;
@@ -62,6 +62,38 @@ use system::logging;
 enum Task {
     Activity(NextActivity),
     ImportTheme(PathBuf),
+}
+
+#[derive(FromArgs)]
+#[argh(description = "
+where positional can be: [protocol://user@address:port:wrkdir] [local-wrkdir]
+
+Please, report issues to <https://github.com/veeso/termscp>
+Please, consider supporting the author <https://www.buymeacoffee.com/veeso>")]
+struct Args {
+    #[argh(switch, short = 'c', description = "open termscp configuration")]
+    config: bool,
+    #[argh(option, short = 'P', description = "provide password from CLI")]
+    password: Option<String>,
+    #[argh(switch, short = 'q', description = "disable logging")]
+    quiet: bool,
+    #[argh(option, short = 't', description = "import specified theme")]
+    theme: Option<String>,
+    #[argh(
+        option,
+        short = 'T',
+        default = "10",
+        description = "set UI ticks; default 10ms"
+    )]
+    ticks: u64,
+    #[argh(switch, short = 'v', description = "print version")]
+    version: bool,
+    // -- positional
+    #[argh(
+        positional,
+        description = "protocol://user@address:port:wrkdir local-wrkdir"
+    )]
+    positional: Vec<String>,
 }
 
 struct RunOpts {
@@ -93,34 +125,15 @@ impl Default for RunOpts {
 }
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
-    //Program CLI options
-    let mut run_opts: RunOpts = RunOpts::default();
-    //Process options
-    let mut opts = Options::new();
-    opts.optflag("c", "config", "Open termscp configuration");
-    opts.optflag("q", "quiet", "Disable logging");
-    opts.optopt("t", "theme", "Import specified theme", "<path>");
-    opts.optopt("P", "password", "Provide password from CLI", "<password>");
-    opts.optopt("T", "ticks", "Set UI ticks; default 10ms", "<ms>");
-    opts.optflag("v", "version", "");
-    opts.optflag("h", "help", "Print this menu");
-    let matches: Matches = match opts.parse(&args[1..]) {
-        Ok(m) => m,
-        Err(f) => {
-            println!("{}", f.to_string());
+    let args: Args = argh::from_env();
+    // Parse args
+    let mut run_opts: RunOpts = match parse_args(args) {
+        Ok(opts) => opts,
+        Err(err) => {
+            eprintln!("{}", err);
             std::process::exit(255);
         }
     };
-    // Parse args
-    if let Err(err) = parse_run_opts(&mut run_opts, matches) {
-        if let Some(err) = err {
-            eprintln!("{}", err);
-        } else {
-            print_usage(opts);
-        }
-        std::process::exit(255);
-    }
     // Setup logging
     if run_opts.log_enabled {
         if let Err(err) = logging::init() {
@@ -141,65 +154,43 @@ fn main() {
     std::process::exit(rc);
 }
 
-/// ### print_usage
+/// ### parse_args
 ///
-/// Print usage
-fn print_usage(opts: Options) {
-    let brief = String::from(
-        "Usage: termscp [options]... [protocol://user@address:port:wrkdir] [local-wrkdir]",
-    );
-    print!("{}", opts.usage(&brief));
-    println!("\nPlease, report issues to <https://github.com/veeso/termscp>");
-    println!("Please, consider supporting the author <https://www.buymeacoffee.com/veeso>")
-}
-
-/// ### parse_run_opts
-///
-/// Parse run options; in case something is wrong returns the error message
-fn parse_run_opts(run_opts: &mut RunOpts, opts: Matches) -> Result<(), Option<String>> {
-    // Help
-    if opts.opt_present("h") {
-        return Err(None);
-    }
+/// Parse arguments
+/// In case of success returns `RunOpts`
+/// in case something is wrong returns the error message
+fn parse_args(args: Args) -> Result<RunOpts, String> {
+    let mut run_opts: RunOpts = RunOpts::default();
     // Version
-    if opts.opt_present("v") {
-        return Err(Some(format!(
+    if args.version {
+        return Err(format!(
             "termscp - {} - Developed by {}",
             TERMSCP_VERSION, TERMSCP_AUTHORS,
-        )));
+        ));
     }
     // Setup activity?
-    if opts.opt_present("c") {
+    if args.config {
         run_opts.task = Task::Activity(NextActivity::SetupActivity);
     }
     // Logging
-    if opts.opt_present("q") {
+    if args.quiet {
         run_opts.log_enabled = false;
     }
     // Match password
-    if let Some(passwd) = opts.opt_str("P") {
+    if let Some(passwd) = args.password {
         run_opts.password = Some(passwd);
     }
     // Match ticks
-    if let Some(val) = opts.opt_str("T") {
-        match val.parse::<usize>() {
-            Ok(val) => run_opts.ticks = Duration::from_millis(val as u64),
-            Err(_) => {
-                return Err(Some(format!("Ticks is not a number: '{}'", val)));
-            }
-        }
-    }
+    run_opts.ticks = Duration::from_millis(args.ticks);
     // @! extra modes
-    if let Some(theme) = opts.opt_str("t") {
+    if let Some(theme) = args.theme {
         run_opts.task = Task::ImportTheme(PathBuf::from(theme));
     }
     // @! Ordinary mode
-    // Check free args
-    let extra_args: Vec<String> = opts.free;
     // Remote argument
-    if let Some(remote) = extra_args.get(0) {
+    if let Some(remote) = args.positional.get(0) {
         // Parse address
-        match utils::parser::parse_remote_opt(remote) {
+        match utils::parser::parse_remote_opt(remote.as_str()) {
             Ok(host_opts) => {
                 // Set params
                 run_opts.address = Some(host_opts.hostname);
@@ -211,19 +202,19 @@ fn parse_run_opts(run_opts: &mut RunOpts, opts: Matches) -> Result<(), Option<St
                 run_opts.task = Task::Activity(NextActivity::FileTransfer);
             }
             Err(err) => {
-                return Err(Some(format!("Bad address option: {}", err)));
+                return Err(format!("Bad address option: {}", err));
             }
         }
     }
     // Local directory
-    if let Some(localdir) = extra_args.get(1) {
+    if let Some(localdir) = args.positional.get(1) {
         // Change working directory if local dir is set
         let localdir: PathBuf = PathBuf::from(localdir);
         if let Err(err) = env::set_current_dir(localdir.as_path()) {
-            return Err(Some(format!("Bad working directory argument: {}", err)));
+            return Err(format!("Bad working directory argument: {}", err));
         }
     }
-    Ok(())
+    Ok(run_opts)
 }
 
 /// ### read_password
