@@ -450,16 +450,22 @@ impl FileTransferActivity {
                     // Write remote file
                     let mut total_bytes_written: usize = 0;
                     let mut last_progress_val: f64 = 0.0;
-                    let mut last_input_event_fetch: Instant = Instant::now();
+                    let mut last_input_event_fetch: Option<Instant> = None;
                     // While the entire file hasn't been completely written,
                     // Or filetransfer has been aborted
                     while total_bytes_written < file_size && !self.transfer.aborted() {
-                        // Handle input events (each 500ms)
-                        if last_input_event_fetch.elapsed().as_millis() >= 500 {
+                        // Handle input events (each 500ms) or if never fetched before
+                        if last_input_event_fetch.is_none()
+                            || last_input_event_fetch
+                                .unwrap_or_else(Instant::now)
+                                .elapsed()
+                                .as_millis()
+                                >= 500
+                        {
                             // Read events
                             self.read_input_event();
                             // Reset instant
-                            last_input_event_fetch = Instant::now();
+                            last_input_event_fetch = Some(Instant::now());
                         }
                         // Read till you can
                         let mut buffer: [u8; 65536] = [0; 65536];
@@ -790,16 +796,22 @@ impl FileTransferActivity {
                         self.transfer.partial.init(remote.size);
                         // Write local file
                         let mut last_progress_val: f64 = 0.0;
-                        let mut last_input_event_fetch: Instant = Instant::now();
+                        let mut last_input_event_fetch: Option<Instant> = None;
                         // While the entire file hasn't been completely read,
                         // Or filetransfer has been aborted
                         while total_bytes_written < remote.size && !self.transfer.aborted() {
-                            // Handle input events (each 500 ms)
-                            if last_input_event_fetch.elapsed().as_millis() >= 500 {
+                            // Handle input events (each 500 ms) or is None
+                            if last_input_event_fetch.is_none()
+                                || last_input_event_fetch
+                                    .unwrap_or_else(Instant::now)
+                                    .elapsed()
+                                    .as_millis()
+                                    >= 500
+                            {
                                 // Read events
                                 self.read_input_event();
                                 // Reset instant
-                                last_input_event_fetch = Instant::now();
+                                last_input_event_fetch = Some(Instant::now());
                             }
                             // Read till you can
                             let mut buffer: [u8; 65536] = [0; 65536];
