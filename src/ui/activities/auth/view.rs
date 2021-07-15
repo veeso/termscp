@@ -138,7 +138,7 @@ impl AuthActivity {
                 InputPropsBuilder::default()
                     .with_foreground(addr_color)
                     .with_borders(Borders::ALL, BorderType::Rounded, addr_color)
-                    .with_label(String::from("Remote address"))
+                    .with_label(String::from("Remote host"))
                     .build(),
             )),
         );
@@ -823,8 +823,11 @@ impl AuthActivity {
 
     pub(super) fn get_input_port(&self) -> u16 {
         match self.view.get_state(super::COMPONENT_INPUT_PORT) {
-            Some(Payload::One(Value::Usize(x))) => x as u16,
-            _ => Self::get_default_port_for_protocol(FileTransferProtocol::Sftp),
+            Some(Payload::One(Value::Usize(x))) => match x > 65535 {
+                true => 0,
+                false => x as u16,
+            },
+            _ => 0,
         }
     }
 

@@ -25,7 +25,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-use super::{AuthActivity, FileTransferProtocol};
+use super::{AuthActivity, FileTransferParams, FileTransferProtocol};
 
 impl AuthActivity {
     /// ### protocol_opt_to_enum
@@ -79,5 +79,38 @@ impl AuthActivity {
         } else {
             self.umount_size_err();
         }
+    }
+
+    /// ### collect_host_params
+    ///
+    /// Get input values from fields or return an error if fields are invalid
+    pub(super) fn collect_host_params(&self) -> Result<FileTransferParams, &'static str> {
+        let (address, port, protocol, username, password): (
+            String,
+            u16,
+            FileTransferProtocol,
+            String,
+            String,
+        ) = self.get_input();
+        if address.is_empty() {
+            return Err("Invalid host");
+        }
+        if port == 0 {
+            return Err("Invalid port");
+        }
+        Ok(FileTransferParams {
+            address,
+            port,
+            protocol,
+            username: match username.is_empty() {
+                true => None,
+                false => Some(username),
+            },
+            password: match password.is_empty() {
+                true => None,
+                false => Some(password),
+            },
+            entry_directory: None,
+        })
     }
 }

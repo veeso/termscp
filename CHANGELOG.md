@@ -48,10 +48,13 @@ Released on FIXME: ??
 - Enhancements:
   - Show a "wait" message when deleting, copying and moving files and when executing commands
   - Replaced all `...` with `…` in texts
+  - Check if remote host is valid in authentication form
+  - Check if port number is valid in authentication form
 - Bugfix:
   - Fixed broken input cursor when typing UTF8 characters (tui-realm 0.3.2)
   - Fixed save bookmark dialog: you could switch out from dialog with `<TAB>`
   - Fixed transfer interruption: it was not possible to abort a transfer if the size of the file was less than 65k
+  - Changed `Remote address` to `Remote host` in authentication form
 - Dependencies:
   - Added `argh 0.1.5`
   - Added `open 1.7.0`

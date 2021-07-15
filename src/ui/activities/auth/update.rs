@@ -27,9 +27,9 @@
  */
 // locals
 use super::{
-    AuthActivity, FileTransferParams, FileTransferProtocol, COMPONENT_BOOKMARKS_LIST,
-    COMPONENT_INPUT_ADDR, COMPONENT_INPUT_BOOKMARK_NAME, COMPONENT_INPUT_PASSWORD,
-    COMPONENT_INPUT_PORT, COMPONENT_INPUT_USERNAME, COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK,
+    AuthActivity, FileTransferProtocol, COMPONENT_BOOKMARKS_LIST, COMPONENT_INPUT_ADDR,
+    COMPONENT_INPUT_BOOKMARK_NAME, COMPONENT_INPUT_PASSWORD, COMPONENT_INPUT_PORT,
+    COMPONENT_INPUT_USERNAME, COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK,
     COMPONENT_RADIO_BOOKMARK_DEL_RECENT, COMPONENT_RADIO_BOOKMARK_SAVE_PWD,
     COMPONENT_RADIO_PROTOCOL, COMPONENT_RADIO_QUIT, COMPONENT_RECENTS_LIST, COMPONENT_TEXT_ERROR,
     COMPONENT_TEXT_HELP, COMPONENT_TEXT_NEW_VERSION_NOTES, COMPONENT_TEXT_SIZE_ERR,
@@ -327,27 +327,20 @@ impl Update for AuthActivity {
                 }
                 // On submit on any unhandled (connect)
                 (_, Msg::OnSubmit(_)) | (_, &MSG_KEY_ENTER) => {
-                    // Match <ENTER> key for all other components
-                    self.save_recent();
-                    let (address, port, protocol, username, password) = self.get_input();
-                    // Set file transfer params to context
-                    let params: FileTransferParams = FileTransferParams {
-                        address,
-                        port,
-                        protocol,
-                        username: match username.is_empty() {
-                            true => None,
-                            false => Some(username),
-                        },
-                        password: match password.is_empty() {
-                            true => None,
-                            false => Some(password),
-                        },
-                        entry_directory: None,
-                    };
-                    self.context_mut().set_ftparams(params);
-                    // Set exit reason
-                    self.exit_reason = Some(super::ExitReason::Connect);
+                    // Validate fields
+                    match self.collect_host_params() {
+                        Err(err) => {
+                            // mount error
+                            self.mount_error(err);
+                        }
+                        Ok(params) => {
+                            self.save_recent();
+                            // Set file transfer params to context
+                            self.context_mut().set_ftparams(params);
+                            // Set exit reason
+                            self.exit_reason = Some(super::ExitReason::Connect);
+                        }
+                    }
                     // Return None
                     None
                 }
