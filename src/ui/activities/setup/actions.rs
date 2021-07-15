@@ -39,10 +39,16 @@ impl SetupActivity {
     /// ### action_save_config
     ///
     /// Save configuration
-    pub(super) fn action_save_all(&mut self) -> Result<(), String> {
+    pub(super) fn action_save_config(&mut self) -> Result<(), String> {
         // Collect input values
         self.collect_input_values();
-        self.save_config()?;
+        self.save_config()
+    }
+
+    /// ### action_save_theme
+    ///
+    /// Save configuration
+    pub(super) fn action_save_theme(&mut self) -> Result<(), String> {
         // save theme
         self.collect_styles()
             .map_err(|e| format!("'{}' has an invalid color", e))?;

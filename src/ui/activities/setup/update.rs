@@ -141,7 +141,7 @@ impl SetupActivity {
                 // Exit
                 (COMPONENT_RADIO_QUIT, Msg::OnSubmit(Payload::One(Value::Usize(0)))) => {
                     // Save changes
-                    if let Err(err) = self.action_save_all() {
+                    if let Err(err) = self.action_save_config() {
                         self.mount_error(err.as_str());
                     }
                     // Exit
@@ -170,7 +170,7 @@ impl SetupActivity {
                 // Save popup
                 (COMPONENT_RADIO_SAVE, Msg::OnSubmit(Payload::One(Value::Usize(0)))) => {
                     // Save config
-                    if let Err(err) = self.action_save_all() {
+                    if let Err(err) = self.action_save_config() {
                         self.mount_error(err.as_str());
                     }
                     self.umount_save_popup();
@@ -234,7 +234,7 @@ impl SetupActivity {
                 // Exit
                 (COMPONENT_RADIO_QUIT, Msg::OnSubmit(Payload::One(Value::Usize(0)))) => {
                     // Save changes
-                    if let Err(err) = self.action_save_all() {
+                    if let Err(err) = self.action_save_config() {
                         self.mount_error(err.as_str());
                     }
                     // Exit
@@ -279,7 +279,7 @@ impl SetupActivity {
                 // Save popup
                 (COMPONENT_RADIO_SAVE, Msg::OnSubmit(Payload::One(Value::Usize(0)))) => {
                     // Save config
-                    if let Err(err) = self.action_save_all() {
+                    if let Err(err) = self.action_save_config() {
                         self.mount_error(err.as_str());
                     }
                     self.umount_save_popup();
@@ -623,7 +623,7 @@ impl SetupActivity {
                 // Exit
                 (COMPONENT_RADIO_QUIT, Msg::OnSubmit(Payload::One(Value::Usize(0)))) => {
                     // Save changes
-                    if let Err(err) = self.action_save_all() {
+                    if let Err(err) = self.action_save_theme() {
                         self.mount_error(err.as_str());
                     }
                     // Exit
@@ -652,7 +652,7 @@ impl SetupActivity {
                 // Save popup
                 (COMPONENT_RADIO_SAVE, Msg::OnSubmit(Payload::One(Value::Usize(0)))) => {
                     // Save config
-                    if let Err(err) = self.action_save_all() {
+                    if let Err(err) = self.action_save_theme() {
                         self.mount_error(err.as_str());
                     }
                     self.umount_save_popup();

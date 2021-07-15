@@ -351,17 +351,17 @@ impl SetupActivity {
                 )
                 .split(colors_layout[3]);
             self.view.render(
-                super::COMPONENT_COLOR_TRANSFER_PROG_BAR_FULL,
+                super::COMPONENT_COLOR_TRANSFER_TITLE_2,
                 f,
                 transfer_colors_layout_col2[0],
             );
             self.view.render(
-                super::COMPONENT_COLOR_TRANSFER_PROG_BAR_PARTIAL,
+                super::COMPONENT_COLOR_TRANSFER_PROG_BAR_FULL,
                 f,
                 transfer_colors_layout_col2[1],
             );
             self.view.render(
-                super::COMPONENT_COLOR_TRANSFER_TITLE_2,
+                super::COMPONENT_COLOR_TRANSFER_PROG_BAR_PARTIAL,
                 f,
                 transfer_colors_layout_col2[2],
             );
