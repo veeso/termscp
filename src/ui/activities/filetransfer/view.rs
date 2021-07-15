@@ -422,17 +422,28 @@ impl FileTransferActivity {
     }
 
     pub(super) fn mount_wait(&mut self, text: &str) {
+        self.mount_wait_ex(text, false, Color::Reset);
+    }
+
+    pub(super) fn mount_blocking_wait(&mut self, text: &str) {
+        self.mount_wait_ex(text, true, Color::Reset);
+        self.view();
+    }
+
+    fn mount_wait_ex(&mut self, text: &str, blink: bool, color: Color) {
         // Mount
+        let mut builder: MsgBoxPropsBuilder = MsgBoxPropsBuilder::default();
+        builder
+            .with_foreground(color)
+            .with_borders(Borders::ALL, BorderType::Rounded, Color::White)
+            .bold()
+            .with_texts(None, vec![TextSpan::from(text)]);
+        if blink {
+            builder.blink();
+        }
         self.view.mount(
             super::COMPONENT_TEXT_WAIT,
-            Box::new(MsgBox::new(
-                MsgBoxPropsBuilder::default()
-                    .with_foreground(Color::White)
-                    .with_borders(Borders::ALL, BorderType::Rounded, Color::White)
-                    .bold()
-                    .with_texts(None, vec![TextSpan::from(text)])
-                    .build(),
-            )),
+            Box::new(MsgBox::new(builder.build())),
         );
         // Give focus to info
         self.view.active(super::COMPONENT_TEXT_WAIT);

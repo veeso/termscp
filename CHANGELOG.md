@@ -45,6 +45,8 @@ Released on FIXME: ??
 - **Installation script**:
   - From now on, in case cargo is used to install termscp, all the cargo dependencies will be installed
 - **Start termscp from configuration**: Start termscp with `-c` or `--config` to start termscp from configuration page
+- Enhancements:
+  - Show a "wait" message when deleting, copying and moving files and when executing commands
 - Bugfix:
   - Fixed broken input cursor when typing UTF8 characters (tui-realm 0.3.2)
   - Fixed save bookmark dialog: you could switch out from dialog with `<TAB>`

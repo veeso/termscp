@@ -94,6 +94,13 @@ impl MsgBoxPropsBuilder {
         self
     }
 
+    pub fn blink(&mut self) -> &mut Self {
+        if let Some(props) = self.props.as_mut() {
+            props.modifiers |= Modifier::SLOW_BLINK;
+        }
+        self
+    }
+
     pub fn with_borders(
         &mut self,
         borders: Borders,
@@ -221,6 +228,7 @@ mod tests {
                 .visible()
                 .with_foreground(Color::Red)
                 .bold()
+                .blink()
                 .with_borders(Borders::ALL, BorderType::Double, Color::Red)
                 .with_texts(
                     None,

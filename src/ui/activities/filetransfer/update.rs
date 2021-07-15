@@ -366,12 +366,14 @@ impl Update for FileTransferActivity {
                 }
                 (COMPONENT_INPUT_COPY, Msg::OnSubmit(Payload::One(Value::Str(input)))) => {
                     // Copy file
+                    self.umount_copy();
+                    self.mount_blocking_wait("Copying file(s)…");
                     match self.browser.tab() {
                         FileExplorerTab::Local => self.action_local_copy(input.to_string()),
                         FileExplorerTab::Remote => self.action_remote_copy(input.to_string()),
                         _ => panic!("Found tab doesn't support COPY"),
                     }
-                    self.umount_copy();
+                    self.umount_wait();
                     // Reload files
                     match self.browser.tab() {
                         FileExplorerTab::Local => self.update_local_filelist(),
@@ -387,12 +389,14 @@ impl Update for FileTransferActivity {
                 }
                 (COMPONENT_INPUT_EXEC, Msg::OnSubmit(Payload::One(Value::Str(input)))) => {
                     // Exex command
+                    self.umount_exec();
+                    self.mount_blocking_wait(format!("Executing '{}'…", input).as_str());
                     match self.browser.tab() {
                         FileExplorerTab::Local => self.action_local_exec(input.to_string()),
                         FileExplorerTab::Remote => self.action_remote_exec(input.to_string()),
                         _ => panic!("Found tab doesn't support EXEC"),
                     }
-                    self.umount_exec();
+                    self.umount_wait();
                     // Reload files
                     match self.browser.tab() {
                         FileExplorerTab::Local => self.update_local_filelist(),
@@ -532,12 +536,14 @@ impl Update for FileTransferActivity {
                     None
                 }
                 (COMPONENT_INPUT_RENAME, Msg::OnSubmit(Payload::One(Value::Str(input)))) => {
+                    self.umount_rename();
+                    self.mount_blocking_wait("Moving file(s)…");
                     match self.browser.tab() {
                         FileExplorerTab::Local => self.action_local_rename(input.to_string()),
                         FileExplorerTab::Remote => self.action_remote_rename(input.to_string()),
                         _ => panic!("Found tab doesn't support RENAME"),
                     }
-                    self.umount_rename();
+                    self.umount_wait();
                     // Reload files
                     match self.browser.tab() {
                         FileExplorerTab::Local => self.update_local_filelist(),
@@ -586,6 +592,8 @@ impl Update for FileTransferActivity {
                 }
                 (COMPONENT_RADIO_DELETE, Msg::OnSubmit(Payload::One(Value::Usize(0)))) => {
                     // Choice is 'YES'
+                    self.umount_radio_delete();
+                    self.mount_blocking_wait("Removing file(s)…");
                     match self.browser.tab() {
                         FileExplorerTab::Local => self.action_local_delete(),
                         FileExplorerTab::Remote => self.action_remote_delete(),
@@ -612,7 +620,7 @@ impl Update for FileTransferActivity {
                             self.update_find_list();
                         }
                     }
-                    self.umount_radio_delete();
+                    self.umount_wait();
                     // Reload files
                     match self.browser.tab() {
                         FileExplorerTab::Local => self.update_local_filelist(),
@@ -906,7 +914,7 @@ impl FileTransferActivity {
     /// ### elide_wrkdir_path
     ///
     /// Elide working directory path if longer than width + host.len
-    /// In this case, the path is formatted to {ANCESTOR[0]}/.../{PARENT[0]}/{BASENAME}
+    /// In this case, the path is formatted to {ANCESTOR[0]}/…/{PARENT[0]}/{BASENAME}
     fn elide_wrkdir_path(wrkdir: &Path, host: &str, width: usize) -> PathBuf {
         let fmt_path: String = format!("{}", wrkdir.display());
         // NOTE: +5 is const
@@ -921,9 +929,9 @@ impl FileTransferActivity {
                 if ancestors_len > 2 {
                     elided_path.push(ancestors.nth(ancestors_len - 2).unwrap());
                 }
-                // If ancestors_len is bigger than 3, push '...' and parent too
+                // If ancestors_len is bigger than 3, push '…' and parent too
                 if ancestors_len > 3 {
-                    elided_path.push("...");
+                    elided_path.push("…");
                     if let Some(parent) = wrkdir.ancestors().nth(1) {
                         elided_path.push(parent.file_name().unwrap());
                     }
