@@ -48,7 +48,7 @@ impl FileTransferActivity {
             if entry.is_file() {
                 self.log(
                     LogLevel::Info,
-                    format!("Opening file \"{}\"...", entry.get_abs_path().display()),
+                    format!("Opening file \"{}\"…", entry.get_abs_path().display()),
                 );
                 // Edit file
                 if let Err(err) = self.edit_local_file(entry.get_abs_path().as_path()) {
@@ -72,7 +72,7 @@ impl FileTransferActivity {
             if let FsEntry::File(file) = entry {
                 self.log(
                     LogLevel::Info,
-                    format!("Opening file \"{}\"...", file.abs_path.display()),
+                    format!("Opening file \"{}\"…", file.abs_path.display()),
                 );
                 // Edit file
                 if let Err(err) = self.edit_remote_file(file) {

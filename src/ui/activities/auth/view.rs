@@ -640,7 +640,7 @@ impl AuthActivity {
             Box::new(Input::new(
                 InputPropsBuilder::default()
                     .with_foreground(save_color)
-                    .with_label(String::from("Save bookmark as..."))
+                    .with_label(String::from("Save bookmark as…"))
                     .with_borders(
                         Borders::TOP | Borders::RIGHT | Borders::LEFT,
                         BorderType::Rounded,

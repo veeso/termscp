@@ -316,13 +316,13 @@ impl Formatter {
         };
         let name: &str = fsentry.get_name();
         let last_idx: usize = match fsentry.is_dir() {
-            // NOTE: For directories is 19, since we push '/' to name
-            true => file_len - 5,
-            false => file_len - 4,
+            // NOTE: For directories is l - 2, since we push '/' to name
+            true => file_len - 2,
+            false => file_len - 1,
         };
         let mut name: String = match name.len() >= file_len {
             false => name.to_string(),
-            true => format!("{}...", &name[0..last_idx]),
+            true => format!("{}…", &name[0..last_idx]),
         };
         if fsentry.is_dir() {
             name.push('/');
@@ -635,7 +635,7 @@ mod tests {
         assert_eq!(
             formatter.fmt(&entry),
             format!(
-                "piroparoporoperoperu...  -rw-r--r-- root         8.2 KB     {}",
+                "piroparoporoperoperupup… -rw-r--r-- root         8.2 KB     {}",
                 fmt_time(t, "%b %d %Y %H:%M")
             )
         );
@@ -643,7 +643,7 @@ mod tests {
         assert_eq!(
             formatter.fmt(&entry),
             format!(
-                "piroparoporoperoperu...  -rw-r--r-- 0            8.2 KB     {}",
+                "piroparoporoperoperupup… -rw-r--r-- 0            8.2 KB     {}",
                 fmt_time(t, "%b %d %Y %H:%M")
             )
         );

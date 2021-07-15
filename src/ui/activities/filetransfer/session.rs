@@ -122,7 +122,7 @@ impl FileTransferActivity {
     /// disconnect from remote
     pub(super) fn disconnect(&mut self) {
         let params = self.context().ft_params().unwrap();
-        let msg: String = format!("Disconnecting from {}...", params.address);
+        let msg: String = format!("Disconnecting from {}…", params.address);
         // Show popup disconnecting
         self.mount_wait(msg.as_str());
         // Disconnect
@@ -236,7 +236,7 @@ impl FileTransferActivity {
         let total_transfer_size: usize = file.size;
         self.transfer.full.init(total_transfer_size);
         // Mount progress bar
-        self.mount_progress_bar(format!("Uploading {}...", file.abs_path.display()));
+        self.mount_progress_bar(format!("Uploading {}…", file.abs_path.display()));
         // Get remote path
         let file_name: String = file.name.clone();
         let mut remote_path: PathBuf = PathBuf::from(curr_remote_path);
@@ -268,7 +268,7 @@ impl FileTransferActivity {
         let total_transfer_size: usize = self.get_total_transfer_size_local(entry);
         self.transfer.full.init(total_transfer_size);
         // Mount progress bar
-        self.mount_progress_bar(format!("Uploading {}...", entry.get_abs_path().display()));
+        self.mount_progress_bar(format!("Uploading {}…", entry.get_abs_path().display()));
         // Send recurse
         self.filetransfer_send_recurse(entry, curr_remote_path, dst_name);
         // Umount progress bar
@@ -293,7 +293,7 @@ impl FileTransferActivity {
             .sum();
         self.transfer.full.init(total_transfer_size);
         // Mount progress bar
-        self.mount_progress_bar(format!("Uploading {} entries...", entries.len()));
+        self.mount_progress_bar(format!("Uploading {} entries…", entries.len()));
         // Send recurse
         entries
             .iter()
@@ -502,7 +502,7 @@ impl FileTransferActivity {
                         // Draw only if a significant progress has been made (performance improvement)
                         if last_progress_val < self.transfer.partial.calc_progress() - 0.01 {
                             // Draw
-                            self.update_progress_bar(format!("Uploading \"{}\"...", file_name));
+                            self.update_progress_bar(format!("Uploading \"{}\"…", file_name));
                             self.view();
                             last_progress_val = self.transfer.partial.calc_progress();
                         }
@@ -571,7 +571,7 @@ impl FileTransferActivity {
         let total_transfer_size: usize = self.get_total_transfer_size_remote(entry);
         self.transfer.full.init(total_transfer_size);
         // Mount progress bar
-        self.mount_progress_bar(format!("Downloading {}...", entry.get_abs_path().display()));
+        self.mount_progress_bar(format!("Downloading {}…", entry.get_abs_path().display()));
         // Receive
         self.filetransfer_recv_recurse(entry, local_path, dst_name);
         // Umount progress bar
@@ -589,7 +589,7 @@ impl FileTransferActivity {
         let total_transfer_size: usize = entry.size;
         self.transfer.full.init(total_transfer_size);
         // Mount progress bar
-        self.mount_progress_bar(format!("Downloading {}...", entry.abs_path.display()));
+        self.mount_progress_bar(format!("Downloading {}…", entry.abs_path.display()));
         // Receive
         let result = self.filetransfer_recv_one(local_path, entry, entry.name.clone());
         // Umount progress bar
@@ -615,7 +615,7 @@ impl FileTransferActivity {
             .sum();
         self.transfer.full.init(total_transfer_size);
         // Mount progress bar
-        self.mount_progress_bar(format!("Downloading {} entries...", entries.len()));
+        self.mount_progress_bar(format!("Downloading {} entries…", entries.len()));
         // Send recurse
         entries
             .iter()

@@ -120,10 +120,19 @@ pub fn align_text_center(text: &str, width: u16) -> String {
 /// ### elide_path
 ///
 /// Elide a path if longer than width
-/// In this case, the path is formatted to {ANCESTOR[0]}/.../{PARENT[0]}/{BASENAME}
+/// In this case, the path is formatted to {ANCESTOR[0]}/…/{PARENT[0]}/{BASENAME}
 pub fn fmt_path_elide(p: &Path, width: usize) -> String {
+    fmt_path_elide_ex(p, width, 0)
+}
+
+/// ### fmt_path_elide_ex
+///
+/// Elide a path if longer than width
+/// In this case, the path is formatted to {ANCESTOR[0]}/…/{PARENT[0]}/{BASENAME}
+/// This function allows to specify an extra length to consider to elide path
+pub fn fmt_path_elide_ex(p: &Path, width: usize, extra_len: usize) -> String {
     let fmt_path: String = format!("{}", p.display());
-    match fmt_path.len() > width as usize {
+    match fmt_path.len() + extra_len > width as usize {
         false => fmt_path,
         true => {
             // Elide
@@ -134,9 +143,9 @@ pub fn fmt_path_elide(p: &Path, width: usize) -> String {
             if ancestors_len > 2 {
                 elided_path.push(ancestors.nth(ancestors_len - 2).unwrap());
             }
-            // If ancestors_len is bigger than 3, push '...' and parent too
+            // If ancestors_len is bigger than 3, push '…' and parent too
             if ancestors_len > 3 {
-                elided_path.push("...");
+                elided_path.push("…");
                 if let Some(parent) = p.ancestors().nth(1) {
                     elided_path.push(parent.file_name().unwrap());
                 }
@@ -390,7 +399,7 @@ mod tests {
         // Above max size, only one ancestor
         assert_eq!(fmt_path_elide(p, 8), String::from("/develop/pippo"));
         let p: &Path = &Path::new("/develop/pippo/foo/bar");
-        assert_eq!(fmt_path_elide(p, 16), String::from("/develop/.../foo/bar"));
+        assert_eq!(fmt_path_elide(p, 16), String::from("/develop/…/foo/bar"));
     }
 
     #[test]

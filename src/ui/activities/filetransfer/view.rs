@@ -521,7 +521,7 @@ impl FileTransferActivity {
                 InputPropsBuilder::default()
                     .with_borders(Borders::ALL, BorderType::Rounded, input_color)
                     .with_foreground(input_color)
-                    .with_label(String::from("Copy file(s) to..."))
+                    .with_label(String::from("Copy file(s) to…"))
                     .build(),
             )),
         );
@@ -672,7 +672,7 @@ impl FileTransferActivity {
                 InputPropsBuilder::default()
                     .with_borders(Borders::ALL, BorderType::Rounded, input_color)
                     .with_foreground(input_color)
-                    .with_label(String::from("Open file with..."))
+                    .with_label(String::from("Open file with…"))
                     .build(),
             )),
         );
@@ -691,7 +691,7 @@ impl FileTransferActivity {
                 InputPropsBuilder::default()
                     .with_borders(Borders::ALL, BorderType::Rounded, input_color)
                     .with_foreground(input_color)
-                    .with_label(String::from("Move file(s) to..."))
+                    .with_label(String::from("Move file(s) to…"))
                     .build(),
             )),
         );
@@ -710,7 +710,7 @@ impl FileTransferActivity {
                 InputPropsBuilder::default()
                     .with_borders(Borders::ALL, BorderType::Rounded, input_color)
                     .with_foreground(input_color)
-                    .with_label(String::from("Save as..."))
+                    .with_label(String::from("Save as…"))
                     .build(),
             )),
         );

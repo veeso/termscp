@@ -40,8 +40,8 @@ use crate::fs::explorer::FileSorting;
 use crate::fs::FsEntry;
 use crate::ui::components::{file_list::FileListPropsBuilder, logbox::LogboxPropsBuilder};
 use crate::ui::keymap::*;
+use crate::utils::fmt::fmt_path_elide_ex;
 // externals
-use std::path::{Path, PathBuf};
 use tuirealm::{
     components::progress_bar::ProgressBarPropsBuilder,
     props::{PropsBuilder, TableBuilder, TextSpan, TextSpanBuilder},
@@ -743,12 +743,7 @@ impl FileTransferActivity {
                 let hostname: String = format!(
                     "{}:{} ",
                     hostname,
-                    FileTransferActivity::elide_wrkdir_path(
-                        self.local().wrkdir.as_path(),
-                        hostname.as_str(),
-                        width
-                    )
-                    .display()
+                    fmt_path_elide_ex(self.local().wrkdir.as_path(), width, hostname.len() + 3) // 3 because of '/…/'
                 );
                 let files: Vec<String> = self
                     .local()
@@ -782,12 +777,11 @@ impl FileTransferActivity {
                 let hostname: String = format!(
                     "{}:{} ",
                     params.address,
-                    FileTransferActivity::elide_wrkdir_path(
+                    fmt_path_elide_ex(
                         self.remote().wrkdir.as_path(),
-                        params.address.as_str(),
-                        width
+                        width,
+                        params.address.len() + 3 // 3 because of '/…/'
                     )
-                    .display()
                 );
                 let files: Vec<String> = self
                     .remote()
@@ -907,40 +901,6 @@ impl FileTransferActivity {
                     .with_files(Some(title), files)
                     .build();
                 self.view.update(COMPONENT_EXPLORER_FIND, props)
-            }
-        }
-    }
-
-    /// ### elide_wrkdir_path
-    ///
-    /// Elide working directory path if longer than width + host.len
-    /// In this case, the path is formatted to {ANCESTOR[0]}/…/{PARENT[0]}/{BASENAME}
-    fn elide_wrkdir_path(wrkdir: &Path, host: &str, width: usize) -> PathBuf {
-        let fmt_path: String = format!("{}", wrkdir.display());
-        // NOTE: +5 is const
-        match fmt_path.len() + host.len() + 5 > width {
-            false => PathBuf::from(wrkdir),
-            true => {
-                // Elide
-                let ancestors_len: usize = wrkdir.ancestors().count();
-                let mut ancestors = wrkdir.ancestors();
-                let mut elided_path: PathBuf = PathBuf::new();
-                // If ancestors_len's size is bigger than 2, push count - 2
-                if ancestors_len > 2 {
-                    elided_path.push(ancestors.nth(ancestors_len - 2).unwrap());
-                }
-                // If ancestors_len is bigger than 3, push '…' and parent too
-                if ancestors_len > 3 {
-                    elided_path.push("…");
-                    if let Some(parent) = wrkdir.ancestors().nth(1) {
-                        elided_path.push(parent.file_name().unwrap());
-                    }
-                }
-                // Push file_name
-                if let Some(name) = wrkdir.file_name() {
-                    elided_path.push(name);
-                }
-                elided_path
             }
         }
     }

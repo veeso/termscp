@@ -295,7 +295,7 @@ impl Activity for FileTransferActivity {
                 "Client is not connected to remote; connecting to {}:{}",
                 params.address, params.port
             );
-            let msg: String = format!("Connecting to {}:{}...", params.address, params.port);
+            let msg: String = format!("Connecting to {}:{}…", params.address, params.port);
             // Set init state to connecting popup
             self.mount_wait(msg.as_str());
             // Force ui draw
