@@ -141,7 +141,7 @@ impl SetupActivity {
                 // Exit
                 (COMPONENT_RADIO_QUIT, Msg::OnSubmit(Payload::One(Value::Usize(0)))) => {
                     // Save changes
-                    if let Err(err) = self.action_save_config() {
+                    if let Err(err) = self.action_save_all() {
                         self.mount_error(err.as_str());
                     }
                     // Exit
@@ -170,7 +170,7 @@ impl SetupActivity {
                 // Save popup
                 (COMPONENT_RADIO_SAVE, Msg::OnSubmit(Payload::One(Value::Usize(0)))) => {
                     // Save config
-                    if let Err(err) = self.action_save_config() {
+                    if let Err(err) = self.action_save_all() {
                         self.mount_error(err.as_str());
                     }
                     self.umount_save_popup();
@@ -190,7 +190,9 @@ impl SetupActivity {
                 }
                 (_, &MSG_KEY_TAB) => {
                     // Change view
-                    self.init(ViewLayout::SshKeys);
+                    if let Err(err) = self.action_change_tab(ViewLayout::SshKeys) {
+                        self.mount_error(err.as_str());
+                    }
                     None
                 }
                 // <CTRL+R> Revert changes
@@ -234,7 +236,7 @@ impl SetupActivity {
                 // Exit
                 (COMPONENT_RADIO_QUIT, Msg::OnSubmit(Payload::One(Value::Usize(0)))) => {
                     // Save changes
-                    if let Err(err) = self.action_save_config() {
+                    if let Err(err) = self.action_save_all() {
                         self.mount_error(err.as_str());
                     }
                     // Exit
@@ -279,7 +281,7 @@ impl SetupActivity {
                 // Save popup
                 (COMPONENT_RADIO_SAVE, Msg::OnSubmit(Payload::One(Value::Usize(0)))) => {
                     // Save config
-                    if let Err(err) = self.action_save_config() {
+                    if let Err(err) = self.action_save_all() {
                         self.mount_error(err.as_str());
                     }
                     self.umount_save_popup();
@@ -357,7 +359,9 @@ impl SetupActivity {
                 }
                 (_, &MSG_KEY_TAB) => {
                     // Change view
-                    self.init(ViewLayout::Theme);
+                    if let Err(err) = self.action_change_tab(ViewLayout::Theme) {
+                        self.mount_error(err.as_str());
+                    }
                     None
                 }
                 // <CTRL+R> Revert changes
@@ -623,7 +627,7 @@ impl SetupActivity {
                 // Exit
                 (COMPONENT_RADIO_QUIT, Msg::OnSubmit(Payload::One(Value::Usize(0)))) => {
                     // Save changes
-                    if let Err(err) = self.action_save_theme() {
+                    if let Err(err) = self.action_save_all() {
                         self.mount_error(err.as_str());
                     }
                     // Exit
@@ -652,7 +656,7 @@ impl SetupActivity {
                 // Save popup
                 (COMPONENT_RADIO_SAVE, Msg::OnSubmit(Payload::One(Value::Usize(0)))) => {
                     // Save config
-                    if let Err(err) = self.action_save_theme() {
+                    if let Err(err) = self.action_save_all() {
                         self.mount_error(err.as_str());
                     }
                     self.umount_save_popup();
@@ -673,7 +677,9 @@ impl SetupActivity {
                 }
                 (_, &MSG_KEY_TAB) => {
                     // Change view
-                    self.init(ViewLayout::SetupForm);
+                    if let Err(err) = self.action_change_tab(ViewLayout::SetupForm) {
+                        self.mount_error(err.as_str());
+                    }
                     None
                 }
                 // <CTRL+R> Revert changes

@@ -27,7 +27,7 @@
  * SOFTWARE.
  */
 // Locals
-use super::SetupActivity;
+use super::{SetupActivity, ViewLayout};
 // Ext
 use crate::config::themes::Theme;
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
@@ -36,23 +36,53 @@ use tuirealm::tui::style::Color;
 use tuirealm::{Payload, Value};
 
 impl SetupActivity {
+    /// ### action_save_all
+    ///
+    /// Save all configurations. If current tab can load values, they will be loaded, otherwise they'll just be saved
+    pub(super) fn action_save_all(&mut self) -> Result<(), String> {
+        self.action_save_config()?;
+        self.action_save_theme()
+    }
+
     /// ### action_save_config
     ///
     /// Save configuration
-    pub(super) fn action_save_config(&mut self) -> Result<(), String> {
-        // Collect input values
-        self.collect_input_values();
+    fn action_save_config(&mut self) -> Result<(), String> {
+        // Collect input values if in setup form
+        if self.layout == ViewLayout::SetupForm {
+            self.collect_input_values();
+        }
         self.save_config()
     }
 
     /// ### action_save_theme
     ///
     /// Save configuration
-    pub(super) fn action_save_theme(&mut self) -> Result<(), String> {
+    fn action_save_theme(&mut self) -> Result<(), String> {
+        // Collect input values if in theme form
+        if self.layout == ViewLayout::Theme {
+            self.collect_styles()
+                .map_err(|e| format!("'{}' has an invalid color", e))?;
+        }
         // save theme
-        self.collect_styles()
-            .map_err(|e| format!("'{}' has an invalid color", e))?;
         self.save_theme()
+    }
+
+    /// ### action_change_tab
+    ///
+    /// Change view tab and load input values in order not to lose them
+    pub(super) fn action_change_tab(&mut self, new_tab: ViewLayout) -> Result<(), String> {
+        // load values for current tab first
+        match self.layout {
+            ViewLayout::SetupForm => self.collect_input_values(),
+            ViewLayout::Theme => self
+                .collect_styles()
+                .map_err(|e| format!("'{}' has an invalid color", e))?,
+            _ => {}
+        }
+        // Update view
+        self.init(new_tab);
+        Ok(())
     }
 
     /// ### action_reset_config
