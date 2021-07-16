@@ -71,7 +71,7 @@ impl FileTransferActivity {
     ///
     /// Initialize configuration client if possible.
     /// This function doesn't return errors.
-    pub(super) fn init_config_client() -> Option<ConfigClient> {
+    pub(super) fn init_config_client() -> ConfigClient {
         match environment::init_config_dir() {
             Ok(termscp_dir) => match termscp_dir {
                 Some(termscp_dir) => {
@@ -79,24 +79,21 @@ impl FileTransferActivity {
                     let (config_path, ssh_keys_path): (PathBuf, PathBuf) =
                         environment::get_config_paths(termscp_dir.as_path());
                     match ConfigClient::new(config_path.as_path(), ssh_keys_path.as_path()) {
-                        Ok(config_client) => Some(config_client),
-                        Err(_) => None,
+                        Ok(config_client) => config_client,
+                        Err(_) => ConfigClient::degraded(),
                     }
                 }
-                None => None,
+                None => ConfigClient::degraded(),
             },
-            Err(_) => None,
+            Err(_) => ConfigClient::degraded(),
         }
     }
 
     /// ### make_ssh_storage
     ///
-    /// Make ssh storage from `ConfigClient` if possible, empty otherwise
-    pub(super) fn make_ssh_storage(cli: Option<&ConfigClient>) -> SshKeyStorage {
-        match cli {
-            Some(cli) => SshKeyStorage::storage_from_config(cli),
-            None => SshKeyStorage::empty(),
-        }
+    /// Make ssh storage from `ConfigClient` if possible, empty otherwise (empty is implicit if degraded)
+    pub(super) fn make_ssh_storage(cli: &ConfigClient) -> SshKeyStorage {
+        SshKeyStorage::storage_from_config(cli)
     }
 
     /// ### setup_text_editor

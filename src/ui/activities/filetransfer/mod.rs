@@ -141,7 +141,7 @@ impl FileTransferActivity {
     /// Instantiates a new FileTransferActivity
     pub fn new(host: Localhost, protocol: FileTransferProtocol) -> FileTransferActivity {
         // Get config client
-        let config_client: Option<ConfigClient> = Self::init_config_client();
+        let config_client: ConfigClient = Self::init_config_client();
         FileTransferActivity {
             exit_reason: None,
             context: None,
@@ -149,14 +149,14 @@ impl FileTransferActivity {
             host,
             client: match protocol {
                 FileTransferProtocol::Sftp => Box::new(SftpFileTransfer::new(
-                    Self::make_ssh_storage(config_client.as_ref()),
+                    Self::make_ssh_storage(&config_client),
                 )),
                 FileTransferProtocol::Ftp(ftps) => Box::new(FtpFileTransfer::new(ftps)),
-                FileTransferProtocol::Scp => Box::new(ScpFileTransfer::new(
-                    Self::make_ssh_storage(config_client.as_ref()),
-                )),
+                FileTransferProtocol::Scp => {
+                    Box::new(ScpFileTransfer::new(Self::make_ssh_storage(&config_client)))
+                }
             },
-            browser: Browser::new(config_client.as_ref()),
+            browser: Browser::new(&config_client),
             log_records: VecDeque::with_capacity(256), // 256 events is enough I guess
             transfer: TransferStates::default(),
             cache: match TempDir::new() {

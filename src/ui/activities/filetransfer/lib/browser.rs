@@ -55,7 +55,7 @@ impl Browser {
     /// ### new
     ///
     /// Build a new `Browser` struct
-    pub fn new(cli: Option<&ConfigClient>) -> Self {
+    pub fn new(cli: &ConfigClient) -> Self {
         Self {
             local: Self::build_local_explorer(cli),
             remote: Self::build_remote_explorer(cli),
@@ -120,45 +120,32 @@ impl Browser {
     /// ### build_local_explorer
     ///
     /// Build a file explorer with local host setup
-    pub fn build_local_explorer(cli: Option<&ConfigClient>) -> FileExplorer {
+    pub fn build_local_explorer(cli: &ConfigClient) -> FileExplorer {
         let mut builder = Self::build_explorer(cli);
-        if let Some(cli) = cli {
-            builder.with_formatter(cli.get_local_file_fmt().as_deref());
-        }
+        builder.with_formatter(cli.get_local_file_fmt().as_deref());
         builder.build()
     }
 
     /// ### build_remote_explorer
     ///
     /// Build a file explorer with remote host setup
-    pub fn build_remote_explorer(cli: Option<&ConfigClient>) -> FileExplorer {
+    pub fn build_remote_explorer(cli: &ConfigClient) -> FileExplorer {
         let mut builder = Self::build_explorer(cli);
-        if let Some(cli) = cli {
-            builder.with_formatter(cli.get_remote_file_fmt().as_deref());
-        }
+        builder.with_formatter(cli.get_remote_file_fmt().as_deref());
         builder.build()
     }
 
     /// ### build_explorer
     ///
     /// Build explorer reading configuration from `ConfigClient`
-    fn build_explorer(cli: Option<&ConfigClient>) -> FileExplorerBuilder {
+    fn build_explorer(cli: &ConfigClient) -> FileExplorerBuilder {
         let mut builder: FileExplorerBuilder = FileExplorerBuilder::new();
         // Set common keys
         builder
             .with_file_sorting(FileSorting::ByName)
-            .with_stack_size(16);
-        match &cli {
-            Some(cli) => {
-                builder // Build according to current configuration
-                    .with_group_dirs(cli.get_group_dirs())
-                    .with_hidden_files(cli.get_show_hidden_files());
-            }
-            None => {
-                builder // Build default
-                    .with_group_dirs(Some(GroupDirs::First));
-            }
-        };
+            .with_stack_size(16)
+            .with_group_dirs(cli.get_group_dirs())
+            .with_hidden_files(cli.get_show_hidden_files());
         builder
     }
 
