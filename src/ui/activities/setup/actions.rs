@@ -36,12 +36,28 @@ use tuirealm::tui::style::Color;
 use tuirealm::{Payload, Value};
 
 impl SetupActivity {
+    /// ### action_on_esc
+    ///
+    /// On <ESC>, if there are changes in the configuration, the quit dialog must be shown, otherwise
+    /// we can exit  without any problem
+    pub(super) fn action_on_esc(&mut self) {
+        if self.config_changed() {
+            self.mount_quit();
+        } else {
+            self.exit_reason = Some(super::ExitReason::Quit);
+        }
+    }
+
     /// ### action_save_all
     ///
-    /// Save all configurations. If current tab can load values, they will be loaded, otherwise they'll just be saved
+    /// Save all configurations. If current tab can load values, they will be loaded, otherwise they'll just be saved.
+    /// Once all the configuration has been changed, set config_changed to false
     pub(super) fn action_save_all(&mut self) -> Result<(), String> {
         self.action_save_config()?;
-        self.action_save_theme()
+        self.action_save_theme()?;
+        // Set config changed to false
+        self.set_config_changed(false);
+        Ok(())
     }
 
     /// ### action_save_config

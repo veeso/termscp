@@ -182,6 +182,12 @@ impl SetupActivity {
                     None
                 }
                 (COMPONENT_RADIO_SAVE, _) => None,
+                // Detect config changed
+                (_, Msg::OnChange(_)) => {
+                    // An input field has changed value; report config changed
+                    self.set_config_changed(true);
+                    None
+                }
                 // <CTRL+H> Show help
                 (_, &MSG_KEY_CTRL_H) => {
                     // Show help
@@ -211,8 +217,7 @@ impl SetupActivity {
                 }
                 // <ESC>
                 (_, &MSG_KEY_ESC) => {
-                    // Mount quit prompt
-                    self.mount_quit();
+                    self.action_on_esc();
                     None
                 }
                 (_, _) => None, // Nothing to do
@@ -380,8 +385,7 @@ impl SetupActivity {
                 }
                 // <ESC>
                 (_, &MSG_KEY_ESC) => {
-                    // Mount quit prompt
-                    self.mount_quit();
+                    self.action_on_esc();
                     None
                 }
                 (_, _) => None, // Nothing to do
@@ -614,6 +618,8 @@ impl SetupActivity {
                 (component, Msg::OnChange(Payload::One(Value::Str(color)))) => {
                     if let Some(color) = parse_color(color) {
                         self.action_save_color(component, color);
+                        // Set unsaved changes to true
+                        self.set_config_changed(true);
                     }
                     None
                 }
@@ -698,8 +704,7 @@ impl SetupActivity {
                 }
                 // <ESC>
                 (_, &MSG_KEY_ESC) => {
-                    // Mount quit prompt
-                    self.mount_quit();
+                    self.action_on_esc();
                     None
                 }
                 (_, _) => None, // Nothing to do

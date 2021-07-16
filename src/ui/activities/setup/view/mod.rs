@@ -111,7 +111,9 @@ impl SetupActivity {
                     .with_inverted_color(Color::Black)
                     .with_borders(Borders::ALL, BorderType::Rounded, Color::LightRed)
                     .with_options(
-                        Some(String::from("Exit setup?")),
+                        Some(String::from(
+                            "There are unsaved changes! Save changes before leaving?",
+                        )),
                         vec![
                             String::from("Save"),
                             String::from("Don't save"),

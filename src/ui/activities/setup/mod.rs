@@ -100,6 +100,9 @@ const COMPONENT_COLOR_TRANSFER_STATUS_SORTING: &str = "COMPONENT_COLOR_TRANSFER_
 const COMPONENT_COLOR_TRANSFER_STATUS_HIDDEN: &str = "COMPONENT_COLOR_TRANSFER_STATUS_HIDDEN";
 const COMPONENT_COLOR_TRANSFER_STATUS_SYNC: &str = "COMPONENT_COLOR_TRANSFER_STATUS_SYNC";
 
+// -- store
+const STORE_CONFIG_CHANGED: &str = "SETUP_CONFIG_CHANGED";
+
 /// ### ViewLayout
 ///
 /// Current view layout
@@ -167,6 +170,25 @@ impl SetupActivity {
     fn theme_provider(&mut self) -> &mut ThemeProvider {
         self.context_mut().theme_provider_mut()
     }
+
+    /// ### config_changed
+    ///
+    /// Returns whether config has changed
+    fn config_changed(&self) -> bool {
+        self.context()
+            .store()
+            .get_boolean(STORE_CONFIG_CHANGED)
+            .unwrap_or(false)
+    }
+
+    /// ### set_config_changed
+    ///
+    /// Set value for config changed key into the store
+    fn set_config_changed(&mut self, changed: bool) {
+        self.context_mut()
+            .store_mut()
+            .set_boolean(STORE_CONFIG_CHANGED, changed);
+    }
 }
 
 impl Activity for SetupActivity {
@@ -180,6 +202,8 @@ impl Activity for SetupActivity {
         self.context = Some(context);
         // Clear terminal
         self.context.as_mut().unwrap().clear_screen();
+        // Set config changed to false
+        self.set_config_changed(false);
         // Put raw mode on enabled
         if let Err(err) = enable_raw_mode() {
             error!("Failed to enter raw mode: {}", err);

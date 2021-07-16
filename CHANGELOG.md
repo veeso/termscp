@@ -50,6 +50,7 @@ Released on FIXME: ??
   - Replaced all `...` with `…` in texts
   - Check if remote host is valid in authentication form
   - Check if port number is valid in authentication form
+  - From now on, if you try to leave setup without making any change, you won't be prompted whether to save configuration or not
 - Bugfix:
   - Fixed broken input cursor when typing UTF8 characters (tui-realm 0.3.2)
   - Fixed save bookmark dialog: you could switch out from dialog with `<TAB>`
