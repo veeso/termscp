@@ -26,7 +26,7 @@
  * SOFTWARE.
  */
 // Locals
-use crate::filetransfer::FileTransferProtocol;
+use crate::filetransfer::{FileTransferParams, FileTransferProtocol};
 #[cfg(not(test))] // NOTE: don't use configuration during tests
 use crate::system::config_client::ConfigClient;
 #[cfg(not(test))] // NOTE: don't use configuration during tests
@@ -75,14 +75,6 @@ lazy_static! {
     static ref COLOR_RGB_REGEX: Regex = Regex::new(r"^(rgb)?\(?([01]?\d\d?|2[0-4]\d|25[0-5])(\W+)([01]?\d\d?|2[0-4]\d|25[0-5])\W+(([01]?\d\d?|2[0-4]\d|25[0-5])\)?)").unwrap();
 }
 
-pub struct RemoteOptions {
-    pub hostname: String,
-    pub port: u16,
-    pub protocol: FileTransferProtocol,
-    pub username: Option<String>,
-    pub wrkdir: Option<PathBuf>,
-}
-
 /// ### parse_remote_opt
 ///
 /// Parse remote option string. Returns in case of success a RemoteOptions struct
@@ -101,8 +93,7 @@ pub struct RemoteOptions {
 /// - sftp://172.26.104.1:4022
 /// - sftp://172.26.104.1
 /// - ...
-///
-pub fn parse_remote_opt(remote: &str) -> Result<RemoteOptions, String> {
+pub fn parse_remote_opt(remote: &str) -> Result<FileTransferParams, String> {
     // Set protocol to default protocol
     #[cfg(not(test))] // NOTE: don't use configuration during tests
     let mut protocol: FileTransferProtocol = match environment::init_config_dir() {
@@ -152,7 +143,7 @@ pub fn parse_remote_opt(remote: &str) -> Result<RemoteOptions, String> {
                 },
             };
             // Get address
-            let hostname: String = match groups.get(3) {
+            let address: String = match groups.get(3) {
                 Some(group) => group.as_str().to_string(),
                 None => return Err(String::from("Missing address")),
             };
@@ -164,14 +155,13 @@ pub fn parse_remote_opt(remote: &str) -> Result<RemoteOptions, String> {
                 };
             }
             // Get workdir
-            let wrkdir: Option<PathBuf> = groups.get(5).map(|group| PathBuf::from(group.as_str()));
-            Ok(RemoteOptions {
-                hostname,
-                port,
-                protocol,
-                username,
-                wrkdir,
-            })
+            let entry_directory: Option<PathBuf> =
+                groups.get(5).map(|group| PathBuf::from(group.as_str()));
+            Ok(FileTransferParams::new(address)
+                .port(port)
+                .protocol(protocol)
+                .username(username)
+                .entry_directory(entry_directory))
         }
         None => Err(String::from("Bad remote host syntax!")),
     }
@@ -476,107 +466,110 @@ mod tests {
     #[test]
     fn test_utils_parse_remote_opt() {
         // Base case
-        let result: RemoteOptions = parse_remote_opt(&String::from("172.26.104.1"))
+        let result: FileTransferParams = parse_remote_opt(&String::from("172.26.104.1"))
             .ok()
             .unwrap();
-        assert_eq!(result.hostname, String::from("172.26.104.1"));
+        assert_eq!(result.address, String::from("172.26.104.1"));
         assert_eq!(result.port, 22);
         assert_eq!(result.protocol, FileTransferProtocol::Sftp);
         assert!(result.username.is_some());
         // User case
-        let result: RemoteOptions = parse_remote_opt(&String::from("root@172.26.104.1"))
+        let result: FileTransferParams = parse_remote_opt(&String::from("root@172.26.104.1"))
             .ok()
             .unwrap();
-        assert_eq!(result.hostname, String::from("172.26.104.1"));
+        assert_eq!(result.address, String::from("172.26.104.1"));
         assert_eq!(result.port, 22);
         assert_eq!(result.protocol, FileTransferProtocol::Sftp);
         assert_eq!(result.username.unwrap(), String::from("root"));
-        assert!(result.wrkdir.is_none());
+        assert!(result.entry_directory.is_none());
         // User + port
-        let result: RemoteOptions = parse_remote_opt(&String::from("root@172.26.104.1:8022"))
+        let result: FileTransferParams = parse_remote_opt(&String::from("root@172.26.104.1:8022"))
             .ok()
             .unwrap();
-        assert_eq!(result.hostname, String::from("172.26.104.1"));
+        assert_eq!(result.address, String::from("172.26.104.1"));
         assert_eq!(result.port, 8022);
         assert_eq!(result.protocol, FileTransferProtocol::Sftp);
         assert_eq!(result.username.unwrap(), String::from("root"));
-        assert!(result.wrkdir.is_none());
+        assert!(result.entry_directory.is_none());
         // Port only
-        let result: RemoteOptions = parse_remote_opt(&String::from("172.26.104.1:4022"))
+        let result: FileTransferParams = parse_remote_opt(&String::from("172.26.104.1:4022"))
             .ok()
             .unwrap();
-        assert_eq!(result.hostname, String::from("172.26.104.1"));
+        assert_eq!(result.address, String::from("172.26.104.1"));
         assert_eq!(result.port, 4022);
         assert_eq!(result.protocol, FileTransferProtocol::Sftp);
         assert!(result.username.is_some());
-        assert!(result.wrkdir.is_none());
+        assert!(result.entry_directory.is_none());
         // Protocol
-        let result: RemoteOptions = parse_remote_opt(&String::from("ftp://172.26.104.1"))
+        let result: FileTransferParams = parse_remote_opt(&String::from("ftp://172.26.104.1"))
             .ok()
             .unwrap();
-        assert_eq!(result.hostname, String::from("172.26.104.1"));
+        assert_eq!(result.address, String::from("172.26.104.1"));
         assert_eq!(result.port, 21); // Fallback to ftp default
         assert_eq!(result.protocol, FileTransferProtocol::Ftp(false));
         assert!(result.username.is_none()); // Doesn't fall back
-        assert!(result.wrkdir.is_none());
+        assert!(result.entry_directory.is_none());
         // Protocol
-        let result: RemoteOptions = parse_remote_opt(&String::from("sftp://172.26.104.1"))
+        let result: FileTransferParams = parse_remote_opt(&String::from("sftp://172.26.104.1"))
             .ok()
             .unwrap();
-        assert_eq!(result.hostname, String::from("172.26.104.1"));
+        assert_eq!(result.address, String::from("172.26.104.1"));
         assert_eq!(result.port, 22); // Fallback to sftp default
         assert_eq!(result.protocol, FileTransferProtocol::Sftp);
         assert!(result.username.is_some()); // Doesn't fall back
-        assert!(result.wrkdir.is_none());
-        let result: RemoteOptions = parse_remote_opt(&String::from("scp://172.26.104.1"))
+        assert!(result.entry_directory.is_none());
+        let result: FileTransferParams = parse_remote_opt(&String::from("scp://172.26.104.1"))
             .ok()
             .unwrap();
-        assert_eq!(result.hostname, String::from("172.26.104.1"));
+        assert_eq!(result.address, String::from("172.26.104.1"));
         assert_eq!(result.port, 22); // Fallback to scp default
         assert_eq!(result.protocol, FileTransferProtocol::Scp);
         assert!(result.username.is_some()); // Doesn't fall back
-        assert!(result.wrkdir.is_none());
+        assert!(result.entry_directory.is_none());
         // Protocol + user
-        let result: RemoteOptions = parse_remote_opt(&String::from("ftps://anon@172.26.104.1"))
-            .ok()
-            .unwrap();
-        assert_eq!(result.hostname, String::from("172.26.104.1"));
+        let result: FileTransferParams =
+            parse_remote_opt(&String::from("ftps://anon@172.26.104.1"))
+                .ok()
+                .unwrap();
+        assert_eq!(result.address, String::from("172.26.104.1"));
         assert_eq!(result.port, 21); // Fallback to ftp default
         assert_eq!(result.protocol, FileTransferProtocol::Ftp(true));
         assert_eq!(result.username.unwrap(), String::from("anon"));
-        assert!(result.wrkdir.is_none());
+        assert!(result.entry_directory.is_none());
         // Path
-        let result: RemoteOptions = parse_remote_opt(&String::from("root@172.26.104.1:8022:/var"))
-            .ok()
-            .unwrap();
-        assert_eq!(result.hostname, String::from("172.26.104.1"));
+        let result: FileTransferParams =
+            parse_remote_opt(&String::from("root@172.26.104.1:8022:/var"))
+                .ok()
+                .unwrap();
+        assert_eq!(result.address, String::from("172.26.104.1"));
         assert_eq!(result.port, 8022);
         assert_eq!(result.protocol, FileTransferProtocol::Sftp);
         assert_eq!(result.username.unwrap(), String::from("root"));
-        assert_eq!(result.wrkdir.unwrap(), PathBuf::from("/var"));
+        assert_eq!(result.entry_directory.unwrap(), PathBuf::from("/var"));
         // Port only
-        let result: RemoteOptions = parse_remote_opt(&String::from("172.26.104.1:home"))
+        let result: FileTransferParams = parse_remote_opt(&String::from("172.26.104.1:home"))
             .ok()
             .unwrap();
-        assert_eq!(result.hostname, String::from("172.26.104.1"));
+        assert_eq!(result.address, String::from("172.26.104.1"));
         assert_eq!(result.port, 22);
         assert_eq!(result.protocol, FileTransferProtocol::Sftp);
         assert!(result.username.is_some());
-        assert_eq!(result.wrkdir.unwrap(), PathBuf::from("home"));
+        assert_eq!(result.entry_directory.unwrap(), PathBuf::from("home"));
         // All together now
-        let result: RemoteOptions =
+        let result: FileTransferParams =
             parse_remote_opt(&String::from("ftp://anon@172.26.104.1:8021:/tmp"))
                 .ok()
                 .unwrap();
-        assert_eq!(result.hostname, String::from("172.26.104.1"));
+        assert_eq!(result.address, String::from("172.26.104.1"));
         assert_eq!(result.port, 8021); // Fallback to ftp default
         assert_eq!(result.protocol, FileTransferProtocol::Ftp(false));
         assert_eq!(result.username.unwrap(), String::from("anon"));
-        assert_eq!(result.wrkdir.unwrap(), PathBuf::from("/tmp"));
+        assert_eq!(result.entry_directory.unwrap(), PathBuf::from("/tmp"));
         // bad syntax
-        assert!(parse_remote_opt(&String::from("omar://172.26.104.1")).is_err()); // Bad protocol
-        assert!(parse_remote_opt(&String::from("omar://172.26.104.1:650000")).is_err());
+        // Bad protocol
+        assert!(parse_remote_opt(&String::from("omar://172.26.104.1")).is_err());
         // Bad port
+        assert!(parse_remote_opt(&String::from("scp://172.26.104.1:650000")).is_err());
     }
 
     #[test]

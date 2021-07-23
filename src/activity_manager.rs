@@ -26,7 +26,7 @@
  * SOFTWARE.
  */
 // Deps
-use crate::filetransfer::FileTransferProtocol;
+use crate::filetransfer::{FileTransferParams, FileTransferProtocol};
 use crate::host::{HostError, Localhost};
 use crate::system::config_client::ConfigClient;
 use crate::system::environment;
@@ -35,7 +35,7 @@ use crate::ui::activities::{
     auth::AuthActivity, filetransfer::FileTransferActivity, setup::SetupActivity, Activity,
     ExitReason,
 };
-use crate::ui::context::{Context, FileTransferParams};
+use crate::ui::context::Context;
 
 // Namespaces
 use std::path::{Path, PathBuf};
@@ -87,27 +87,9 @@ impl ActivityManager {
     /// ### set_filetransfer_params
     ///
     /// Set file transfer params
-    pub fn set_filetransfer_params(
-        &mut self,
-        address: String,
-        port: u16,
-        protocol: FileTransferProtocol,
-        username: Option<String>,
-        password: Option<String>,
-        entry_directory: Option<PathBuf>,
-    ) {
+    pub fn set_filetransfer_params(&mut self, params: FileTransferParams) {
         // Put params into the context
-        self.context
-            .as_mut()
-            .unwrap()
-            .set_ftparams(FileTransferParams {
-                address,
-                port,
-                protocol,
-                username,
-                password,
-                entry_directory,
-            });
+        self.context.as_mut().unwrap().set_ftparams(params);
     }
 
     /// ### run

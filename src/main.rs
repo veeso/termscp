@@ -56,7 +56,7 @@ mod utils;
 
 // namespaces
 use activity_manager::{ActivityManager, NextActivity};
-use filetransfer::FileTransferProtocol;
+use filetransfer::FileTransferParams;
 use system::logging;
 
 enum Task {
@@ -97,12 +97,7 @@ struct Args {
 }
 
 struct RunOpts {
-    address: Option<String>,
-    port: u16,
-    username: Option<String>,
-    password: Option<String>,
-    remote_wrkdir: Option<PathBuf>,
-    protocol: FileTransferProtocol,
+    remote: Option<FileTransferParams>,
     ticks: Duration,
     log_enabled: bool,
     task: Task,
@@ -111,12 +106,7 @@ struct RunOpts {
 impl Default for RunOpts {
     fn default() -> Self {
         Self {
-            address: None,
-            port: 22,
-            username: None,
-            password: None,
-            remote_wrkdir: None,
-            protocol: FileTransferProtocol::Sftp,
+            remote: None,
             ticks: Duration::from_millis(10),
             log_enabled: true,
             task: Task::Activity(NextActivity::Authentication),
@@ -176,10 +166,6 @@ fn parse_args(args: Args) -> Result<RunOpts, String> {
     if args.quiet {
         run_opts.log_enabled = false;
     }
-    // Match password
-    if let Some(passwd) = args.password {
-        run_opts.password = Some(passwd);
-    }
     // Match ticks
     run_opts.ticks = Duration::from_millis(args.ticks);
     // @! extra modes
@@ -191,13 +177,13 @@ fn parse_args(args: Args) -> Result<RunOpts, String> {
     if let Some(remote) = args.positional.get(0) {
         // Parse address
         match utils::parser::parse_remote_opt(remote.as_str()) {
-            Ok(host_opts) => {
+            Ok(mut remote) => {
+                // If password is provided, set password
+                if let Some(passwd) = args.password {
+                    remote = remote.password(Some(passwd));
+                }
                 // Set params
-                run_opts.address = Some(host_opts.hostname);
-                run_opts.port = host_opts.port;
-                run_opts.protocol = host_opts.protocol;
-                run_opts.username = host_opts.username;
-                run_opts.remote_wrkdir = host_opts.wrkdir;
+                run_opts.remote = Some(remote);
                 // In this case the first activity will be FileTransfer
                 run_opts.task = Task::Activity(NextActivity::FileTransfer);
             }
@@ -222,11 +208,11 @@ fn parse_args(args: Args) -> Result<RunOpts, String> {
 /// Read password from tty if address is specified
 fn read_password(run_opts: &mut RunOpts) -> Result<(), String> {
     // Initialize client if necessary
-    if run_opts.address.is_some() {
-        debug!("User has specified remote options: address: {:?}, port: {:?}, protocol: {:?}, user: {:?}, password: {}", run_opts.address, run_opts.port, run_opts.protocol, run_opts.username, utils::fmt::shadow_password(run_opts.password.as_deref().unwrap_or("")));
-        if run_opts.password.is_none() {
+    if let Some(remote) = run_opts.remote.as_mut() {
+        debug!("User has specified remote options: address: {:?}, port: {:?}, protocol: {:?}, user: {:?}, password: {}", remote.address, remote.port, remote.protocol, remote.username, utils::fmt::shadow_password(remote.password.as_deref().unwrap_or("")));
+        if remote.password.is_none() {
             // Ask password if unspecified
-            run_opts.password = match rpassword::read_password_from_tty(Some("Password: ")) {
+            remote.password = match rpassword::read_password_from_tty(Some("Password: ")) {
                 Ok(p) => {
                     if p.is_empty() {
                         None
@@ -278,15 +264,8 @@ fn run(mut run_opts: RunOpts) -> i32 {
                     }
                 };
             // Set file transfer params if set
-            if let Some(address) = run_opts.address.take() {
-                manager.set_filetransfer_params(
-                    address,
-                    run_opts.port,
-                    run_opts.protocol,
-                    run_opts.username,
-                    run_opts.password,
-                    run_opts.remote_wrkdir,
-                );
+            if let Some(remote) = run_opts.remote.take() {
+                manager.set_filetransfer_params(remote);
             }
             manager.run(activity);
             0

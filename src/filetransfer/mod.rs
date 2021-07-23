@@ -34,8 +34,11 @@ use thiserror::Error;
 use wildmatch::WildMatch;
 // exports
 pub mod ftp_transfer;
+pub mod params;
 pub mod scp_transfer;
 pub mod sftp_transfer;
+
+pub use params::FileTransferParams;
 
 /// ## FileTransferProtocol
 ///

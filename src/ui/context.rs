@@ -28,7 +28,7 @@
 // Locals
 use super::input::InputHandler;
 use super::store::Store;
-use crate::filetransfer::FileTransferProtocol;
+use crate::filetransfer::FileTransferParams;
 use crate::system::config_client::ConfigClient;
 use crate::system::theme_provider::ThemeProvider;
 
@@ -37,7 +37,6 @@ use crossterm::event::DisableMouseCapture;
 use crossterm::execute;
 use crossterm::terminal::{EnterAlternateScreen, LeaveAlternateScreen};
 use std::io::{stdout, Stdout};
-use std::path::PathBuf;
 use tuirealm::tui::backend::CrosstermBackend;
 use tuirealm::tui::Terminal;
 
@@ -54,19 +53,6 @@ pub struct Context {
     pub(crate) terminal: TuiTerminal,
     theme_provider: ThemeProvider,
     error: Option<String>,
-}
-
-/// ### FileTransferParams
-///
-/// Holds connection parameters for file transfers
-#[derive(Clone)]
-pub struct FileTransferParams {
-    pub address: String,
-    pub port: u16,
-    pub protocol: FileTransferProtocol,
-    pub username: Option<String>,
-    pub password: Option<String>,
-    pub entry_directory: Option<PathBuf>,
 }
 
 impl Context {
@@ -196,36 +182,5 @@ impl Drop for Context {
     fn drop(&mut self) {
         // Re-enable terminal stuff
         self.leave_alternate_screen();
-    }
-}
-
-impl Default for FileTransferParams {
-    fn default() -> Self {
-        Self {
-            address: String::new(),
-            port: 22,
-            protocol: FileTransferProtocol::Sftp,
-            username: None,
-            password: None,
-            entry_directory: None,
-        }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-
-    use super::*;
-
-    use pretty_assertions::assert_eq;
-
-    #[test]
-    fn test_ui_context_ft_params() {
-        let params: FileTransferParams = FileTransferParams::default();
-        assert_eq!(params.address.as_str(), "");
-        assert_eq!(params.port, 22);
-        assert_eq!(params.protocol, FileTransferProtocol::Sftp);
-        assert!(params.username.is_none());
-        assert!(params.password.is_none());
     }
 }

@@ -34,9 +34,8 @@ mod view;
 // locals
 use super::{Activity, Context, ExitReason};
 use crate::config::themes::Theme;
-use crate::filetransfer::FileTransferProtocol;
+use crate::filetransfer::{FileTransferParams, FileTransferProtocol};
 use crate::system::bookmarks_client::BookmarksClient;
-use crate::ui::context::FileTransferParams;
 use crate::utils::git;
 
 // Includes
