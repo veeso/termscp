@@ -21,7 +21,7 @@
 
 ## 0.6.0
 
-Released on FIXME: ??
+Released on 23/07/2021
 
 > 🍹 Summer update 2021 🍨
 
@@ -29,8 +29,8 @@ Released on FIXME: ??
   - Open file with default program for file type with `<V>`
   - Open file with a specific program with `<W>`
 - **Themes**:
-  - You can now set colors for 25 elements in the application
-  - Colors can be any RGB, also supports **CSS colors** syntax
+  - You can now set colors for 26 elements in the application
+  - Colors can be any RGB, also **CSS colors** syntax is supported (e.g. `aquamarine`)
   - Configure theme from settings or import from CLI using the `-t <theme file>` argument
   - You can find several themes in the `themes/` directory
 - **Keyring support for Linux**

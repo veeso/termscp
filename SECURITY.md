@@ -8,4 +8,3 @@ Because of that, **you should always consider updating termscp to the latest ver
 ## Reporting a Vulnerability
 
 If you have any security vulnerability or concern to report, please open an issue using the `Security report` template.
-w
