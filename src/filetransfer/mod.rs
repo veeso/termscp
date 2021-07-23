@@ -25,8 +25,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-// dependencies
-extern crate wildmatch;
 // locals
 use crate::fs::{FsEntry, FsFile};
 // ext
@@ -36,8 +34,11 @@ use thiserror::Error;
 use wildmatch::WildMatch;
 // exports
 pub mod ftp_transfer;
+pub mod params;
 pub mod scp_transfer;
 pub mod sftp_transfer;
+
+pub use params::FileTransferParams;
 
 /// ## FileTransferProtocol
 ///

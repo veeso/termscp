@@ -67,6 +67,7 @@ impl SshKeyStorage {
     /// ### empty
     ///
     /// Create an empty ssh key storage; used in case `ConfigClient` is not available
+    #[cfg(test)]
     pub fn empty() -> Self {
         SshKeyStorage {
             hosts: HashMap::new(),

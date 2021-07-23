@@ -25,12 +25,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-// Deps
-extern crate bytesize;
-extern crate content_inspector;
-extern crate crossterm;
-extern crate tempfile;
-
 // Locals
 use super::{FileTransferActivity, LogLevel};
 use crate::filetransfer::FileTransferError;
@@ -82,15 +76,15 @@ impl FileTransferActivity {
     ///
     /// Connect to remote
     pub(super) fn connect(&mut self) {
-        let params = self.context.as_ref().unwrap().ft_params.as_ref().unwrap();
+        let params = self.context().ft_params().unwrap().clone();
         let addr: String = params.address.clone();
         let entry_dir: Option<PathBuf> = params.entry_directory.clone();
         // Connect to remote
         match self.client.connect(
-            params.address.clone(),
+            params.address,
             params.port,
-            params.username.clone(),
-            params.password.clone(),
+            params.username,
+            params.password,
         ) {
             Ok(welcome) => {
                 if let Some(banner) = welcome {
@@ -127,8 +121,8 @@ impl FileTransferActivity {
     ///
     /// disconnect from remote
     pub(super) fn disconnect(&mut self) {
-        let params = self.context.as_ref().unwrap().ft_params.as_ref().unwrap();
-        let msg: String = format!("Disconnecting from {}...", params.address);
+        let params = self.context().ft_params().unwrap();
+        let msg: String = format!("Disconnecting from {}…", params.address);
         // Show popup disconnecting
         self.mount_wait(msg.as_str());
         // Disconnect
@@ -147,19 +141,59 @@ impl FileTransferActivity {
 
     /// ### reload_remote_dir
     ///
-    /// Reload remote directory entries
+    /// Reload remote directory entries and update browser
     pub(super) fn reload_remote_dir(&mut self) {
         // Get current entries
-        if let Ok(pwd) = self.client.pwd() {
-            self.remote_scan(pwd.as_path());
+        if let Ok(wrkdir) = self.client.pwd() {
+            self.remote_scan(wrkdir.as_path());
             // Set wrkdir
-            self.remote_mut().wrkdir = pwd;
+            self.remote_mut().wrkdir = wrkdir;
         }
     }
 
+    /// ### reload_local_dir
+    ///
+    /// Reload local directory entries and update browser
     pub(super) fn reload_local_dir(&mut self) {
-        let wrkdir: PathBuf = self.local().wrkdir.clone();
+        let wrkdir: PathBuf = self.host.pwd();
         self.local_scan(wrkdir.as_path());
+        self.local_mut().wrkdir = wrkdir;
+    }
+
+    /// ### local_scan
+    ///
+    /// Scan current local directory
+    fn local_scan(&mut self, path: &Path) {
+        match self.host.scan_dir(path) {
+            Ok(files) => {
+                // Set files and sort (sorting is implicit)
+                self.local_mut().set_files(files);
+            }
+            Err(err) => {
+                self.log_and_alert(
+                    LogLevel::Error,
+                    format!("Could not scan current directory: {}", err),
+                );
+            }
+        }
+    }
+
+    /// ### remote_scan
+    ///
+    /// Scan current remote directory
+    fn remote_scan(&mut self, path: &Path) {
+        match self.client.list_dir(path) {
+            Ok(files) => {
+                // Set files and sort (sorting is implicit)
+                self.remote_mut().set_files(files);
+            }
+            Err(err) => {
+                self.log_and_alert(
+                    LogLevel::Error,
+                    format!("Could not scan current directory: {}", err),
+                );
+            }
+        }
     }
 
     /// ### filetransfer_send
@@ -202,7 +236,7 @@ impl FileTransferActivity {
         let total_transfer_size: usize = file.size;
         self.transfer.full.init(total_transfer_size);
         // Mount progress bar
-        self.mount_progress_bar(format!("Uploading {}...", file.abs_path.display()));
+        self.mount_progress_bar(format!("Uploading {}…", file.abs_path.display()));
         // Get remote path
         let file_name: String = file.name.clone();
         let mut remote_path: PathBuf = PathBuf::from(curr_remote_path);
@@ -234,7 +268,7 @@ impl FileTransferActivity {
         let total_transfer_size: usize = self.get_total_transfer_size_local(entry);
         self.transfer.full.init(total_transfer_size);
         // Mount progress bar
-        self.mount_progress_bar(format!("Uploading {}...", entry.get_abs_path().display()));
+        self.mount_progress_bar(format!("Uploading {}…", entry.get_abs_path().display()));
         // Send recurse
         self.filetransfer_send_recurse(entry, curr_remote_path, dst_name);
         // Umount progress bar
@@ -259,7 +293,7 @@ impl FileTransferActivity {
             .sum();
         self.transfer.full.init(total_transfer_size);
         // Mount progress bar
-        self.mount_progress_bar(format!("Uploading {} entries...", entries.len()));
+        self.mount_progress_bar(format!("Uploading {} entries…", entries.len()));
         // Send recurse
         entries
             .iter()
@@ -416,16 +450,22 @@ impl FileTransferActivity {
                     // Write remote file
                     let mut total_bytes_written: usize = 0;
                     let mut last_progress_val: f64 = 0.0;
-                    let mut last_input_event_fetch: Instant = Instant::now();
+                    let mut last_input_event_fetch: Option<Instant> = None;
                     // While the entire file hasn't been completely written,
                     // Or filetransfer has been aborted
                     while total_bytes_written < file_size && !self.transfer.aborted() {
-                        // Handle input events (each 500ms)
-                        if last_input_event_fetch.elapsed().as_millis() >= 500 {
+                        // Handle input events (each 500ms) or if never fetched before
+                        if last_input_event_fetch.is_none()
+                            || last_input_event_fetch
+                                .unwrap_or_else(Instant::now)
+                                .elapsed()
+                                .as_millis()
+                                >= 500
+                        {
                             // Read events
                             self.read_input_event();
                             // Reset instant
-                            last_input_event_fetch = Instant::now();
+                            last_input_event_fetch = Some(Instant::now());
                         }
                         // Read till you can
                         let mut buffer: [u8; 65536] = [0; 65536];
@@ -462,7 +502,7 @@ impl FileTransferActivity {
                         // Draw only if a significant progress has been made (performance improvement)
                         if last_progress_val < self.transfer.partial.calc_progress() - 0.01 {
                             // Draw
-                            self.update_progress_bar(format!("Uploading \"{}\"...", file_name));
+                            self.update_progress_bar(format!("Uploading \"{}\"…", file_name));
                             self.view();
                             last_progress_val = self.transfer.partial.calc_progress();
                         }
@@ -531,7 +571,7 @@ impl FileTransferActivity {
         let total_transfer_size: usize = self.get_total_transfer_size_remote(entry);
         self.transfer.full.init(total_transfer_size);
         // Mount progress bar
-        self.mount_progress_bar(format!("Downloading {}...", entry.get_abs_path().display()));
+        self.mount_progress_bar(format!("Downloading {}…", entry.get_abs_path().display()));
         // Receive
         self.filetransfer_recv_recurse(entry, local_path, dst_name);
         // Umount progress bar
@@ -549,7 +589,7 @@ impl FileTransferActivity {
         let total_transfer_size: usize = entry.size;
         self.transfer.full.init(total_transfer_size);
         // Mount progress bar
-        self.mount_progress_bar(format!("Downloading {}...", entry.abs_path.display()));
+        self.mount_progress_bar(format!("Downloading {}…", entry.abs_path.display()));
         // Receive
         let result = self.filetransfer_recv_one(local_path, entry, entry.name.clone());
         // Umount progress bar
@@ -575,7 +615,7 @@ impl FileTransferActivity {
             .sum();
         self.transfer.full.init(total_transfer_size);
         // Mount progress bar
-        self.mount_progress_bar(format!("Downloading {} entries...", entries.len()));
+        self.mount_progress_bar(format!("Downloading {} entries…", entries.len()));
         // Send recurse
         entries
             .iter()
@@ -722,7 +762,7 @@ impl FileTransferActivity {
             }
         }
         // Reload directory on local
-        self.local_scan(local_path);
+        self.reload_local_dir();
         // if aborted; show alert
         if self.transfer.aborted() {
             // Log abort
@@ -756,16 +796,22 @@ impl FileTransferActivity {
                         self.transfer.partial.init(remote.size);
                         // Write local file
                         let mut last_progress_val: f64 = 0.0;
-                        let mut last_input_event_fetch: Instant = Instant::now();
+                        let mut last_input_event_fetch: Option<Instant> = None;
                         // While the entire file hasn't been completely read,
                         // Or filetransfer has been aborted
                         while total_bytes_written < remote.size && !self.transfer.aborted() {
-                            // Handle input events (each 500 ms)
-                            if last_input_event_fetch.elapsed().as_millis() >= 500 {
+                            // Handle input events (each 500 ms) or is None
+                            if last_input_event_fetch.is_none()
+                                || last_input_event_fetch
+                                    .unwrap_or_else(Instant::now)
+                                    .elapsed()
+                                    .as_millis()
+                                    >= 500
+                            {
                                 // Read events
                                 self.read_input_event();
                                 // Reset instant
-                                last_input_event_fetch = Instant::now();
+                                last_input_event_fetch = Some(Instant::now());
                             }
                             // Read till you can
                             let mut buffer: [u8; 65536] = [0; 65536];
@@ -855,42 +901,6 @@ impl FileTransferActivity {
         Ok(())
     }
 
-    /// ### local_scan
-    ///
-    /// Scan current local directory
-    pub(super) fn local_scan(&mut self, path: &Path) {
-        match self.host.scan_dir(path) {
-            Ok(files) => {
-                // Set files and sort (sorting is implicit)
-                self.local_mut().set_files(files);
-            }
-            Err(err) => {
-                self.log_and_alert(
-                    LogLevel::Error,
-                    format!("Could not scan current directory: {}", err),
-                );
-            }
-        }
-    }
-
-    /// ### remote_scan
-    ///
-    /// Scan current remote directory
-    pub(super) fn remote_scan(&mut self, path: &Path) {
-        match self.client.list_dir(path) {
-            Ok(files) => {
-                // Set files and sort (sorting is implicit)
-                self.remote_mut().set_files(files);
-            }
-            Err(err) => {
-                self.log_and_alert(
-                    LogLevel::Error,
-                    format!("Could not scan current directory: {}", err),
-                );
-            }
-        }
-    }
-
     /// ### local_changedir
     ///
     /// Change directory for local
@@ -905,9 +915,7 @@ impl FileTransferActivity {
                     format!("Changed directory on local: {}", path.display()),
                 );
                 // Reload files
-                self.local_scan(path);
-                // Set wrkdir
-                self.local_mut().wrkdir = PathBuf::from(path);
+                self.reload_local_dir();
                 // Push prev_dir to stack
                 if push {
                     self.local_mut().pushd(prev_dir.as_path())
@@ -934,9 +942,7 @@ impl FileTransferActivity {
                     format!("Changed directory on remote: {}", path.display()),
                 );
                 // Update files
-                self.remote_scan(path);
-                // Set wrkdir
-                self.remote_mut().wrkdir = PathBuf::from(path);
+                self.reload_remote_dir();
                 // Push prev_dir to stack
                 if push {
                     self.remote_mut().pushd(prev_dir.as_path())
@@ -949,6 +955,37 @@ impl FileTransferActivity {
                     format!("Could not change working directory: {}", err),
                 );
             }
+        }
+    }
+
+    /// ### download_file_as_temp
+    ///
+    /// Download provided file as a temporary file
+    pub(super) fn download_file_as_temp(&mut self, file: &FsFile) -> Result<PathBuf, String> {
+        let tmpfile: PathBuf = match self.cache.as_ref() {
+            Some(cache) => {
+                let mut p: PathBuf = cache.path().to_path_buf();
+                p.push(file.name.as_str());
+                p
+            }
+            None => {
+                return Err(String::from(
+                    "Could not create tempfile: cache not available",
+                ))
+            }
+        };
+        // Download file
+        match self.filetransfer_recv(
+            TransferPayload::File(file.clone()),
+            tmpfile.as_path(),
+            Some(file.name.clone()),
+        ) {
+            Err(err) => Err(format!(
+                "Could not download {} to temporary file: {}",
+                file.abs_path.display(),
+                err
+            )),
+            Ok(()) => Ok(tmpfile),
         }
     }
 

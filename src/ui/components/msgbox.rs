@@ -25,9 +25,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-// deps
-extern crate textwrap;
-extern crate tuirealm;
 // locals
 use crate::utils::fmt::align_text_center;
 // ext
@@ -93,6 +90,13 @@ impl MsgBoxPropsBuilder {
     pub fn bold(&mut self) -> &mut Self {
         if let Some(props) = self.props.as_mut() {
             props.modifiers |= Modifier::BOLD;
+        }
+        self
+    }
+
+    pub fn blink(&mut self) -> &mut Self {
+        if let Some(props) = self.props.as_mut() {
+            props.modifiers |= Modifier::SLOW_BLINK;
         }
         self
     }
@@ -224,6 +228,7 @@ mod tests {
                 .visible()
                 .with_foreground(Color::Red)
                 .bold()
+                .blink()
                 .with_borders(Borders::ALL, BorderType::Double, Color::Red)
                 .with_texts(
                     None,

@@ -25,9 +25,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-// Deps
-extern crate dirs;
-
 // Ext
 use std::path::{Path, PathBuf};
 
@@ -96,6 +93,17 @@ pub fn get_log_paths(config_dir: &Path) -> PathBuf {
     log_file
 }
 
+/// ### get_theme_path
+///
+/// Get paths for theme provider
+/// Returns: path of theme.toml
+pub fn get_theme_path(config_dir: &Path) -> PathBuf {
+    // Prepare paths
+    let mut theme_file: PathBuf = PathBuf::from(config_dir);
+    theme_file.push("theme.toml");
+    theme_file
+}
+
 #[cfg(test)]
 mod tests {
 
@@ -158,6 +166,14 @@ mod tests {
         assert_eq!(
             get_log_paths(&Path::new("/home/omar/.config/termscp/")),
             PathBuf::from("/home/omar/.config/termscp/termscp.log"),
+        );
+    }
+
+    #[test]
+    fn test_system_environment_get_theme_path() {
+        assert_eq!(
+            get_theme_path(&Path::new("/home/omar/.config/termscp/")),
+            PathBuf::from("/home/omar/.config/termscp/theme.toml"),
         );
     }
 }

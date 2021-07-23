@@ -1,6 +1,7 @@
 # Changelog
 
 - [Changelog](#changelog)
+  - [0.6.0](#060)
   - [0.5.1](#051)
   - [0.5.0](#050)
   - [0.4.2](#042)
@@ -17,6 +18,51 @@
   - [0.1.0](#010)
 
 ---
+
+## 0.6.0
+
+Released on 23/07/2021
+
+> 🍹 Summer update 2021 🍨
+
+- **Open any file** in explorer:
+  - Open file with default program for file type with `<V>`
+  - Open file with a specific program with `<W>`
+- **Themes**:
+  - You can now set colors for 26 elements in the application
+  - Colors can be any RGB, also **CSS colors** syntax is supported (e.g. `aquamarine`)
+  - Configure theme from settings or import from CLI using the `-t <theme file>` argument
+  - You can find several themes in the `themes/` directory
+- **Keyring support for Linux**
+  - From now on keyring will be available for Linux only
+  - Read the manual to find out if your system supports the keyring and how you can enable it
+  - libdbus is now a dependency
+  - added `with-keyring` feature
+  - **❗ BREAKING CHANGE ❗**: if you start using keyring on Linux, all the saved password will be lost
+- **In-app release notes**
+  - Possibility to see the release note of the new available release whenever a new version is available
+  - Just press `<CTRL+R>` when a new version is available from the auth activity to read the release notes
+- **Installation script**:
+  - From now on, in case cargo is used to install termscp, all the cargo dependencies will be installed
+- **Start termscp from configuration**: Start termscp with `-c` or `--config` to start termscp from configuration page
+- Enhancements:
+  - Show a "wait" message when deleting, copying and moving files and when executing commands
+  - Replaced all `...` with `…` in texts
+  - Check if remote host is valid in authentication form
+  - Check if port number is valid in authentication form
+  - From now on, if you try to leave setup without making any change, you won't be prompted whether to save configuration or not
+- Bugfix:
+  - Fixed broken input cursor when typing UTF8 characters (tui-realm 0.3.2)
+  - Fixed save bookmark dialog: you could switch out from dialog with `<TAB>`
+  - Fixed transfer interruption: it was not possible to abort a transfer if the size of the file was less than 65k
+  - Changed `Remote address` to `Remote host` in authentication form
+- Dependencies:
+  - Added `argh 0.1.5`
+  - Added `open 1.7.0`
+  - Removed `getopts`
+  - Updated `rand` to `0.8.4`
+  - Updated `textwrap` to `0.14.2`
+  - Updated `tui-realm` to `0.4.3`
 
 ## 0.5.1
 

@@ -71,7 +71,7 @@ impl FileTransferActivity {
     ///
     /// Initialize configuration client if possible.
     /// This function doesn't return errors.
-    pub(super) fn init_config_client() -> Option<ConfigClient> {
+    pub(super) fn init_config_client() -> ConfigClient {
         match environment::init_config_dir() {
             Ok(termscp_dir) => match termscp_dir {
                 Some(termscp_dir) => {
@@ -79,34 +79,28 @@ impl FileTransferActivity {
                     let (config_path, ssh_keys_path): (PathBuf, PathBuf) =
                         environment::get_config_paths(termscp_dir.as_path());
                     match ConfigClient::new(config_path.as_path(), ssh_keys_path.as_path()) {
-                        Ok(config_client) => Some(config_client),
-                        Err(_) => None,
+                        Ok(config_client) => config_client,
+                        Err(_) => ConfigClient::degraded(),
                     }
                 }
-                None => None,
+                None => ConfigClient::degraded(),
             },
-            Err(_) => None,
+            Err(_) => ConfigClient::degraded(),
         }
     }
 
     /// ### make_ssh_storage
     ///
-    /// Make ssh storage from `ConfigClient` if possible, empty otherwise
-    pub(super) fn make_ssh_storage(cli: Option<&ConfigClient>) -> SshKeyStorage {
-        match cli {
-            Some(cli) => SshKeyStorage::storage_from_config(cli),
-            None => SshKeyStorage::empty(),
-        }
+    /// Make ssh storage from `ConfigClient` if possible, empty otherwise (empty is implicit if degraded)
+    pub(super) fn make_ssh_storage(cli: &ConfigClient) -> SshKeyStorage {
+        SshKeyStorage::storage_from_config(cli)
     }
 
     /// ### setup_text_editor
     ///
     /// Set text editor to use
     pub(super) fn setup_text_editor(&self) {
-        if let Some(config_cli) = self.context.as_ref().unwrap().config_client.as_ref() {
-            // Set text editor
-            env::set_var("EDITOR", config_cli.get_text_editor());
-        }
+        env::set_var("EDITOR", self.config().get_text_editor());
     }
 
     /// ### read_input_event
@@ -114,7 +108,7 @@ impl FileTransferActivity {
     /// Read one event.
     /// Returns whether at least one event has been handled
     pub(super) fn read_input_event(&mut self) -> bool {
-        if let Ok(Some(event)) = self.context.as_ref().unwrap().input_hnd.read_event() {
+        if let Ok(Some(event)) = self.context().input_hnd().read_event() {
             // Handle event
             let msg = self.view.on(event);
             self.update(msg);

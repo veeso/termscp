@@ -25,13 +25,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-// Dependencies
-extern crate chrono;
-extern crate ftp4;
-#[cfg(os_target = "windows")]
-extern crate path_slash;
-extern crate regex;
-
 use super::{FileTransfer, FileTransferError, FileTransferErrorType};
 use crate::fs::{FsDirectory, FsEntry, FsFile};
 use crate::utils::fmt::{fmt_time, shadow_password};

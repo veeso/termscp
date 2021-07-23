@@ -96,6 +96,16 @@ impl LogboxPropsBuilder {
         self
     }
 
+    /// ### with_background
+    ///
+    /// Set background color for area
+    pub fn with_background(&mut self, color: Color) -> &mut Self {
+        if let Some(props) = self.props.as_mut() {
+            props.background = color;
+        }
+        self
+    }
+
     pub fn with_log(&mut self, title: Option<String>, table: TextTable) -> &mut Self {
         if let Some(props) = self.props.as_mut() {
             props.texts = TextParts::table(title, table);
@@ -219,6 +229,7 @@ impl Component for LogBox {
                 ))
                 .start_corner(Corner::BottomLeft)
                 .highlight_symbol(">> ")
+                .style(Style::default().bg(self.props.background))
                 .highlight_style(Style::default().add_modifier(self.props.modifiers));
             let mut state: ListState = ListState::default();
             state.select(Some(self.states.list_index));
@@ -311,6 +322,7 @@ mod tests {
                 .hidden()
                 .visible()
                 .with_borders(Borders::ALL, BorderType::Double, Color::Red)
+                .with_background(Color::Blue)
                 .with_log(
                     Some(String::from("Log")),
                     TableBuilder::default()
@@ -324,6 +336,7 @@ mod tests {
                 .build(),
         );
         assert_eq!(component.props.visible, true);
+        assert_eq!(component.props.background, Color::Blue);
         assert_eq!(
             component.props.texts.title.as_ref().unwrap().as_str(),
             "Log"

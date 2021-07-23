@@ -25,15 +25,15 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-// Deps
-extern crate whoami;
 // Crate
-#[cfg(any(target_os = "windows", target_os = "macos"))]
+#[cfg(feature = "with-keyring")]
 use super::keys::keyringstorage::KeyringStorage;
 use super::keys::{filestorage::FileStorage, KeyStorage, KeyStorageError};
 // Local
-use crate::bookmarks::serializer::BookmarkSerializer;
-use crate::bookmarks::{Bookmark, SerializerError, SerializerErrorKind, UserHosts};
+use crate::config::{
+    bookmarks::{Bookmark, UserHosts},
+    serialization::{deserialize, serialize, SerializerError, SerializerErrorKind},
+};
 use crate::filetransfer::FileTransferProtocol;
 use crate::utils::crypto;
 use crate::utils::fmt::fmt_time;
@@ -67,10 +67,10 @@ impl BookmarksClient {
         recents_size: usize,
     ) -> Result<BookmarksClient, SerializerError> {
         // Create default hosts
-        let default_hosts: UserHosts = Default::default();
+        let default_hosts: UserHosts = UserHosts::default();
         debug!("Setting up bookmarks client...");
-        // Make a key storage (windows / macos)
-        #[cfg(any(target_os = "windows", target_os = "macos"))]
+        // Make a key storage (with-keyring)
+        #[cfg(feature = "with-keyring")]
         let (key_storage, service_id): (Box<dyn KeyStorage>, &str) = {
             debug!("Setting up KeyStorage");
             let username: String = whoami::username();
@@ -91,13 +91,8 @@ impl BookmarksClient {
                 }
             }
         };
-        // Make a key storage (linux / unix)
-        #[cfg(any(
-            target_os = "linux",
-            target_os = "freebsd",
-            target_os = "netbsd",
-            target_os = "netbsd"
-        ))]
+        // Make a key storage (wno-keyring)
+        #[cfg(not(feature = "with-keyring"))]
         let (key_storage, service_id): (Box<dyn KeyStorage>, &str) = {
             #[cfg(not(test))]
             let app_name: &str = "bookmarks";
@@ -329,10 +324,7 @@ impl BookmarksClient {
             .truncate(true)
             .open(self.bookmarks_file.as_path())
         {
-            Ok(writer) => {
-                let serializer: BookmarkSerializer = BookmarkSerializer {};
-                serializer.serialize(Box::new(writer), &self.hosts)
-            }
+            Ok(writer) => serialize(&self.hosts, Box::new(writer)),
             Err(err) => {
                 error!("Failed to write bookmarks: {}", err);
                 Err(SerializerError::new_ex(
@@ -355,8 +347,7 @@ impl BookmarksClient {
         {
             Ok(reader) => {
                 // Deserialize
-                let deserializer: BookmarkSerializer = BookmarkSerializer {};
-                match deserializer.deserialize(Box::new(reader)) {
+                match deserialize(Box::new(reader)) {
                     Ok(hosts) => {
                         self.hosts = hosts;
                         Ok(())
@@ -455,7 +446,7 @@ mod tests {
         target_os = "linux",
         target_os = "freebsd",
         target_os = "netbsd",
-        target_os = "netbsd"
+        target_os = "openbsd"
     ))]
     fn test_system_bookmarks_new_err() {
         assert!(BookmarksClient::new(
@@ -707,6 +698,21 @@ mod tests {
             String::from("pi"),
             Some(String::from("mypassword")),
         );
+    }
+
+    #[test]
+    fn test_system_bookmarks_decrypt_str() {
+        let tmp_dir: tempfile::TempDir = TempDir::new().ok().unwrap();
+        let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
+        // Initialize a new bookmarks client
+        let mut client: BookmarksClient =
+            BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16).unwrap();
+        client.key = "MYSUPERSECRETKEY".to_string();
+        assert_eq!(
+            client.decrypt_str("z4Z6LpcpYqBW4+bkIok+5A==").ok().unwrap(),
+            "Hello world!"
+        );
+        assert!(client.decrypt_str("bidoof").is_err());
     }
 
     /// ### get_paths

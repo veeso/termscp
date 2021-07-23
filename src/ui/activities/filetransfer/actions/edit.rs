@@ -32,7 +32,7 @@ use crate::fs::FsFile;
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use std::fs::OpenOptions;
 use std::io::Read;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 
 impl FileTransferActivity {
@@ -48,7 +48,7 @@ impl FileTransferActivity {
             if entry.is_file() {
                 self.log(
                     LogLevel::Info,
-                    format!("Opening file \"{}\"...", entry.get_abs_path().display()),
+                    format!("Opening file \"{}\"…", entry.get_abs_path().display()),
                 );
                 // Edit file
                 if let Err(err) = self.edit_local_file(entry.get_abs_path().as_path()) {
@@ -72,7 +72,7 @@ impl FileTransferActivity {
             if let FsEntry::File(file) = entry {
                 self.log(
                     LogLevel::Info,
-                    format!("Opening file \"{}\"...", file.abs_path.display()),
+                    format!("Opening file \"{}\"…", file.abs_path.display()),
                 );
                 // Edit file
                 if let Err(err) = self.edit_remote_file(file) {
@@ -145,44 +145,42 @@ impl FileTransferActivity {
     /// Edit file on remote host
     fn edit_remote_file(&mut self, file: FsFile) -> Result<(), String> {
         // Create temp file
-        let tmpfile: tempfile::NamedTempFile = match tempfile::NamedTempFile::new() {
-            Ok(f) => f,
-            Err(err) => {
-                return Err(format!("Could not create temporary file: {}", err));
-            }
+        let tmpfile: PathBuf = match self.download_file_as_temp(&file) {
+            Ok(p) => p,
+            Err(err) => return Err(err),
         };
         // Download file
         let file_name = file.name.clone();
         let file_path = file.abs_path.clone();
         if let Err(err) = self.filetransfer_recv(
             TransferPayload::File(file),
-            tmpfile.path(),
+            tmpfile.as_path(),
             Some(file_name.clone()),
         ) {
             return Err(format!("Could not open file {}: {}", file_name, err));
         }
         // Get current file modification time
-        let prev_mtime: SystemTime = match self.host.stat(tmpfile.path()) {
+        let prev_mtime: SystemTime = match self.host.stat(tmpfile.as_path()) {
             Ok(e) => e.get_last_change_time(),
             Err(err) => {
                 return Err(format!(
                     "Could not stat \"{}\": {}",
-                    tmpfile.path().display(),
+                    tmpfile.as_path().display(),
                     err
                 ))
             }
         };
         // Edit file
-        if let Err(err) = self.edit_local_file(tmpfile.path()) {
+        if let Err(err) = self.edit_local_file(tmpfile.as_path()) {
             return Err(err);
         }
         // Get local fs entry
-        let tmpfile_entry: FsEntry = match self.host.stat(tmpfile.path()) {
+        let tmpfile_entry: FsEntry = match self.host.stat(tmpfile.as_path()) {
             Ok(e) => e,
             Err(err) => {
                 return Err(format!(
                     "Could not stat \"{}\": {}",
-                    tmpfile.path().display(),
+                    tmpfile.as_path().display(),
                     err
                 ))
             }
@@ -198,12 +196,12 @@ impl FileTransferActivity {
                     ),
                 );
                 // Get local fs entry
-                let tmpfile_entry: FsFile = match self.host.stat(tmpfile.path()) {
+                let tmpfile_entry: FsFile = match self.host.stat(tmpfile.as_path()) {
                     Ok(e) => e.unwrap_file(),
                     Err(err) => {
                         return Err(format!(
                             "Could not stat \"{}\": {}",
-                            tmpfile.path().display(),
+                            tmpfile.as_path().display(),
                             err
                         ))
                     }

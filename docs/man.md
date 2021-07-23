@@ -1,5 +1,30 @@
 # User manual 🎓
 
+- [User manual 🎓](#user-manual-)
+  - [Usage ❓](#usage-)
+    - [Address argument 🌎](#address-argument-)
+      - [How Password can be provided 🔐](#how-password-can-be-provided-)
+  - [File explorer 📂](#file-explorer-)
+    - [Keybindings ⌨](#keybindings-)
+    - [Work on multiple files 🥷](#work-on-multiple-files-)
+    - [Synchronized browsing ⏲️](#synchronized-browsing-️)
+    - [Open and Open With 🚪](#open-and-open-with-)
+  - [Bookmarks ⭐](#bookmarks-)
+    - [Are my passwords Safe 😈](#are-my-passwords-safe-)
+      - [Linux Keyring](#linux-keyring)
+        - [KeepassXC setup for termscp](#keepassxc-setup-for-termscp)
+  - [Configuration ⚙️](#configuration-️)
+    - [SSH Key Storage 🔐](#ssh-key-storage-)
+    - [File Explorer Format](#file-explorer-format)
+  - [Themes 🎨](#themes-)
+    - [Styles 💈](#styles-)
+      - [Authentication page](#authentication-page)
+      - [Transfer page](#transfer-page)
+      - [Misc](#misc)
+  - [Text Editor ✏](#text-editor-)
+    - [How do I configure the text editor 🦥](#how-do-i-configure-the-text-editor-)
+  - [Logging 🩺](#logging-)
+
 ## Usage ❓
 
 termscp can be started with the following options:
@@ -7,7 +32,9 @@ termscp can be started with the following options:
 `termscp [options]... [protocol://user@address:port:wrkdir] [local-wrkdir]`
 
 - `-P, --password <password>` if address is provided, password will be this argument
+- `-c, --config` Open termscp starting from the configuration page
 - `-q, --quiet` Disable logging
+- `-t, --theme <path>` Import specified theme
 - `-v, --version` Print version info
 - `-h, --help` Print help page
 
@@ -105,6 +132,8 @@ In order to change panel you need to type `<LEFT>` to move the remote explorer p
 | `<R>`         | Rename file                                           | Rename      |
 | `<S>`         | Save file as...                                       | Save        |
 | `<U>`         | Go to parent directory                                | Upper       |
+| `<V>`         | Open file with default program for filetype           | View        |
+| `<W>`         | Open file with provided program                       | With        |
 | `<X>`         | Execute a command                                     | eXecute     |
 | `<Y>`         | Toggle synchronized browsing                          | sYnc        |
 | `<DEL>`       | Delete file                                           |             |
@@ -129,6 +158,23 @@ When enabled, synchronized browsing, will allow you to synchronize the navigatio
 This means that whenever you'll change the working directory on one panel, the same action will be reproduced on the other panel. If you want to enable synchronized browsing just press `<Y>`; press twice to disable. While enabled, the synchronized browising state will be reported on the status bar on `ON`.
 
 *Warning*: at the moment, whenever you try to access an unexisting directory, you won't be prompted to create it. This might change in a future update.
+
+### Open and Open With 🚪
+
+Open and open with commands are powered by [open-rs](https://docs.rs/crate/open/1.7.0).
+When opening files with View command (`<V>`), the system default application for the file type will be used. To do so, the default operting system service will be used, so be sure to have at least one of these installed on your system:
+
+- **Windows** users: you don't have to worry about it, since the crate will use the `start` command.
+- **MacOS** users: you don't have to worry either, since the crate will use `open`, which is already installed on your system.
+- **Linux** users: one of these should be installed
+  - *xdg-open*
+  - *gio*
+  - *gnome-open*
+  - *kde-open*
+- **WSL** users: *wslview* is required, you must install [wslu](https://github.com/wslutilities/wslu).
+
+> Q: Can I edit remote files using the view command?  
+> A: No, at least not directly from the "remote panel". You have to download it to a local directory first, that's due to the fact that when you open a remote file, the file is downloaded into a temporary directory, but there's no way to create a watcher for the file to check when the program you used to open it was closed, so termscp is not able to know when you're done editing the file.
 
 ---
 
@@ -168,13 +214,35 @@ whenever you want to use the previously saved connection, just press `<TAB>` to 
 
 ### Are my passwords Safe 😈
 
-Well, kinda.
-As said before, bookmarks are saved in your configuration directory along with passwords. Passwords are obviously not plain text, they are encrypted with **AES-128**. Does this make them safe? Well, depends on your operating system:
+Well, Yep 😉.
+As said before, bookmarks are saved in your configuration directory along with passwords. Passwords are obviously not plain text, they are encrypted with **AES-128**. Does this make them safe? Absolutely! (except for BSD and WSL users 😢)
 
-On Windows and MacOS the passwords are stored, if possible (but should be), in respectively the Windows Vault and the Keychain. This is actually super-safe and is directly managed by your operating system.
+On **Windows**, **Linux** and **MacOS** the passwords are stored, if possible (but should be), respectively in the *Windows Vault*, in the *system keyring* and into the *Keychain*. This is actually super-safe and is directly managed by your operating system.
 
-On Linux and BSD, on the other hand, the key used to encrypt your passwords is stored on your drive (at $HOME/.config/termscp). It is then, still possible to retrieve the key to decrypt passwords. Luckily, the location of the key guarantees your key can't be read by users different from yours, but yeah, I still wouldn't save the password for a server exposed on the internet 😉.
-Actually [keyring-rs](https://github.com/hwchen/keyring-rs), supports Linux, but for different reasons I preferred not to make it available for this configuration. If you want to read more about my decision read [this issue](https://github.com/veeso/termscp/issues/2), while if you think this might have been implemented differently feel free to open an issue with your proposal.
+❗ Please, notice that if you're a Linux user, you should really read the [chapter below 👀](#linux-keyring), because the keyring might not be enabled or supported on your system!
+
+On *BSD* and *WSL*, on the other hand, the key used to encrypt your passwords is stored on your drive (at $HOME/.config/termscp). It is then, still possible to retrieve the key to decrypt passwords. Luckily, the location of the key guarantees your key can't be read by users different from yours, but yeah, I still wouldn't save the password for a server exposed on the internet 😉.
+
+#### Linux Keyring
+
+We all love Linux thanks to the freedom it gives to the users. You can basically do anything you want as a Linux user, but this has also some cons, such as the fact that often there is no standard applications across different distributions. And this involves keyring too.
+This means that on Linux there might be no keyring installed on your system. Unfortunately the library we use to work with the key storage requires a service which exposes `org.freedesktop.secrets` on D-BUS and the worst fact is that there only two services exposing it.
+
+- ❗ If you use GNOME as desktop environment (e.g. ubuntu users), you should already be fine, since keyring is already provided by `gnome-keyring` and everything should already be working.
+- ❗ For other desktop environment users there is a nice program you can use to get a keyring which is [KeepassXC](https://keepassxc.org/), which I use on my Manjaro installation (with KDE) and works fine. The only problem is that you have to setup it to be used along with termscp (but it's quite simple). To get started with KeepassXC read more [here](#keepassxc-setup-for-termscp).
+- ❗ What about you don't want to install any of these services? Well, there's no problem! **termscp will keep working as usual**, but it will save the key in a file, as it usually does for BSD and WSL.
+
+##### KeepassXC setup for termscp
+
+Follow these steps in order to setup keepassXC for termscp:
+
+1. Install KeepassXC
+2. Go to "tools" > "settings" in toolbar
+3. Select "Secret service integration" and toggle "Enable KeepassXC freedesktop.org secret service integration"
+4. Create a database, if you don't have one yet: from toolbar "Database" > "New database"
+5. From toolbar: "Database" > "Database settings"
+6. Select "Secret service integration" and toggle "Expose entries under this group"
+7. Select the group in the list where you want the termscp secret to be kept. Remember that this group might be used by any other application to store secrets via DBUS.
 
 ---
 
@@ -198,7 +266,8 @@ These parameters can be changed:
 - **Show Hidden Files**: select whether hidden files shall be displayed by default. You will be able to decide whether to show or not hidden files at runtime pressing `A` anyway.
 - **Check for updates**: if set to `yes`, termscp will fetch the Github API to check if there is a new version of termscp available.
 - **Group Dirs**: select whether directories should be groupped or not in file explorers. If `Display first` is selected, directories will be sorted using the configured method but displayed before files, viceversa if `Display last` is selected.
-- **File formatter syntax**: syntax to display file info for each file in the explorer. See [File explorer format](#file-explorer-format)
+- **Remote File formatter syntax**: syntax to display file info for each file in the remote explorer. See [File explorer format](#file-explorer-format)
+- **Local File formatter syntax**: syntax to display file info for each file in the local explorer. See [File explorer format](#file-explorer-format)
 
 ### SSH Key Storage 🔐
 
@@ -236,6 +305,74 @@ These are the keys supported by the formatter:
 - `USER`: Owner user
 
 If left empty, the default formatter syntax will be used: `{NAME:24} {PEX} {USER} {SIZE} {MTIME:17:%b %d %Y %H:%M}`
+
+---
+
+## Themes 🎨
+
+Termscp provides you with an awesome feature: the possibility to set the colors for several components in the application.
+If you want to customize termscp there are two available ways to do so:
+
+- From the **configuration menu**
+- Importing a **theme file**
+
+In order to create your own customization from termscp, all you have to do so is to enter the configuration from the auth activity, pressing `<CTRL+C>` and then `<TAB>` twice. You should have now moved to the `themes` panel.
+
+Here you can move with `<UP>` and `<DOWN>` to change the style you want to change, as shown in the gif below:
+
+![Themes](../assets/images/themes.gif)
+
+termscp supports both the traditional explicit hex (`#rrggbb`) and rgb `rgb(r, g, b)` syntax to provide colors, but also **[css colors](https://www.w3schools.com/cssref/css_colors.asp)** (such as `crimson`) are accepted 😉. There is also a special keywork which is `Default`. Default means that the color used will be the default foreground or background color based on the situation (foreground for texts and lines, background for well, guess what).
+
+As said before, you can also import theme files. You can take inspiration from or directly use one of the themes provided along with termscp, located in the `themes/` directory of this repository and import them running termscp as `termscp -t <theme_file>`. If everything was fine, it should tell you the theme has successfully been imported.
+
+### Styles 💈
+
+You can find in the table below, the description for each style field.
+Please, notice that **styles won't apply to configuration page**, in order to make it always accessible in case you mess everything up
+
+#### Authentication page
+
+| Key            | Description                              |
+|----------------|------------------------------------------|
+| auth_address   | Color of the input field for IP address  |
+| auth_bookmarks | Color of the bookmarks panel             |
+| auth_password  | Color of the input field for password    |
+| auth_port      | Color of the input field for port number |
+| auth_protocol  | Color of the radio group for protocol    |
+| auth_recents   | Color of the recents panel               |
+| auth_username  | Color of the input field for username    |
+
+#### Transfer page
+
+| Key                                  | Description                                                               |
+|--------------------------------------|---------------------------------------------------------------------------|
+| transfer_local_explorer_background   | Background color of localhost explorer                                    |
+| transfer_local_explorer_foreground   | Foreground coloor of localhost explorer                                   |
+| transfer_local_explorer_highlighted  | Border and highlighted color for localhost explorer                       |
+| transfer_remote_explorer_background  | Background color of remote explorer                                       |
+| transfer_remote_explorer_foreground  | Foreground coloor of remote explorer                                      |
+| transfer_remote_explorer_highlighted | Border and highlighted color for remote explorer                          |
+| transfer_log_background              | Background color for log panel                                            |
+| transfer_log_window                  | Window color for log panel                                                |
+| transfer_progress_bar_partial        | Partial progress bar color                                                |
+| transfer_progress_bar_total          | Total progress bar color                                                  |
+| transfer_status_hidden               | Color for status bar "hidden" label                                       |
+| transfer_status_sorting              | Color for status bar "sorting" label; applies also to file sorting dialog |
+| transfer_status_sync_browsing        | Color for status bar "sync browsing" label                                |
+
+#### Misc
+
+These styles applie to different part of the application.
+
+| Key               | Description                                 |
+|-------------------|---------------------------------------------|
+| misc_error_dialog | Color for error messages                    |
+| misc_input_dialog | Color for input dialogs (such as copy file) |
+| misc_keys         | Color of text for key strokes               |
+| misc_quit_dialog  | Color for quit dialogs                      |
+| misc_save_dialog  | Color for save dialogs                      |
+| misc_warn_dialog  | Color for warn dialogs                      |
 
 ---
 

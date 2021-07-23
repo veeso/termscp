@@ -33,14 +33,9 @@ pub(self) mod session;
 pub(self) mod update;
 pub(self) mod view;
 
-// Dependencies
-extern crate chrono;
-extern crate crossterm;
-extern crate textwrap;
-extern crate tuirealm;
-
 // locals
 use super::{Activity, Context, ExitReason};
+use crate::config::themes::Theme;
 use crate::filetransfer::ftp_transfer::FtpFileTransfer;
 use crate::filetransfer::scp_transfer::ScpFileTransfer;
 use crate::filetransfer::sftp_transfer::SftpFileTransfer;
@@ -58,7 +53,7 @@ pub(self) use session::TransferPayload;
 use chrono::{DateTime, Local};
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use std::collections::VecDeque;
-use std::path::PathBuf;
+use tempfile::TempDir;
 use tuirealm::View;
 
 // -- Storage keys
@@ -83,6 +78,7 @@ const COMPONENT_INPUT_FIND: &str = "INPUT_FIND";
 const COMPONENT_INPUT_GOTO: &str = "INPUT_GOTO";
 const COMPONENT_INPUT_MKDIR: &str = "INPUT_MKDIR";
 const COMPONENT_INPUT_NEWFILE: &str = "INPUT_NEWFILE";
+const COMPONENT_INPUT_OPEN_WITH: &str = "INPUT_OPEN_WITH";
 const COMPONENT_INPUT_RENAME: &str = "INPUT_RENAME";
 const COMPONENT_INPUT_SAVEAS: &str = "INPUT_SAVEAS";
 const COMPONENT_RADIO_DELETE: &str = "RADIO_DELETE";
@@ -136,6 +132,7 @@ pub struct FileTransferActivity {
     browser: Browser,                 // Browser
     log_records: VecDeque<LogRecord>, // Log records
     transfer: TransferStates,         // Transfer states
+    cache: Option<TempDir>,           // Temporary directory where to store stuff
 }
 
 impl FileTransferActivity {
@@ -144,7 +141,7 @@ impl FileTransferActivity {
     /// Instantiates a new FileTransferActivity
     pub fn new(host: Localhost, protocol: FileTransferProtocol) -> FileTransferActivity {
         // Get config client
-        let config_client: Option<ConfigClient> = Self::init_config_client();
+        let config_client: ConfigClient = Self::init_config_client();
         FileTransferActivity {
             exit_reason: None,
             context: None,
@@ -152,41 +149,93 @@ impl FileTransferActivity {
             host,
             client: match protocol {
                 FileTransferProtocol::Sftp => Box::new(SftpFileTransfer::new(
-                    Self::make_ssh_storage(config_client.as_ref()),
+                    Self::make_ssh_storage(&config_client),
                 )),
                 FileTransferProtocol::Ftp(ftps) => Box::new(FtpFileTransfer::new(ftps)),
-                FileTransferProtocol::Scp => Box::new(ScpFileTransfer::new(
-                    Self::make_ssh_storage(config_client.as_ref()),
-                )),
+                FileTransferProtocol::Scp => {
+                    Box::new(ScpFileTransfer::new(Self::make_ssh_storage(&config_client)))
+                }
             },
-            browser: Browser::new(config_client.as_ref()),
+            browser: Browser::new(&config_client),
             log_records: VecDeque::with_capacity(256), // 256 events is enough I guess
             transfer: TransferStates::default(),
+            cache: match TempDir::new() {
+                Ok(d) => Some(d),
+                Err(_) => None,
+            },
         }
     }
 
-    pub(crate) fn local(&self) -> &FileExplorer {
+    fn local(&self) -> &FileExplorer {
         self.browser.local()
     }
 
-    pub(crate) fn local_mut(&mut self) -> &mut FileExplorer {
+    fn local_mut(&mut self) -> &mut FileExplorer {
         self.browser.local_mut()
     }
 
-    pub(crate) fn remote(&self) -> &FileExplorer {
+    fn remote(&self) -> &FileExplorer {
         self.browser.remote()
     }
 
-    pub(crate) fn remote_mut(&mut self) -> &mut FileExplorer {
+    fn remote_mut(&mut self) -> &mut FileExplorer {
         self.browser.remote_mut()
     }
 
-    pub(crate) fn found(&self) -> Option<&FileExplorer> {
+    fn found(&self) -> Option<&FileExplorer> {
         self.browser.found()
     }
 
-    pub(crate) fn found_mut(&mut self) -> Option<&mut FileExplorer> {
+    fn found_mut(&mut self) -> Option<&mut FileExplorer> {
         self.browser.found_mut()
+    }
+
+    /// ### get_cache_tmp_name
+    ///
+    /// Get file name for a file in cache
+    fn get_cache_tmp_name(&self, name: &str, file_type: Option<&str>) -> Option<String> {
+        self.cache.as_ref().map(|_| {
+            let base: String = format!(
+                "{}-{}",
+                name,
+                std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_millis()
+            );
+            match file_type {
+                None => base,
+                Some(file_type) => format!("{}.{}", base, file_type),
+            }
+        })
+    }
+
+    /// ### context
+    ///
+    /// Returns a reference to context
+    fn context(&self) -> &Context {
+        self.context.as_ref().unwrap()
+    }
+
+    /// ### context_mut
+    ///
+    /// Returns a mutable reference to context
+    fn context_mut(&mut self) -> &mut Context {
+        self.context.as_mut().unwrap()
+    }
+
+    /// ### config
+    ///
+    /// Returns config client reference
+    fn config(&self) -> &ConfigClient {
+        &self.context().config()
+    }
+
+    /// ### theme
+    ///
+    /// Get a reference to `Theme`
+    fn theme(&self) -> &Theme {
+        self.context().theme_provider().theme()
     }
 }
 
@@ -206,16 +255,13 @@ impl Activity for FileTransferActivity {
         // Set context
         self.context = Some(context);
         // Clear terminal
-        self.context.as_mut().unwrap().clear_screen();
+        self.context_mut().clear_screen();
         // Put raw mode on enabled
         if let Err(err) = enable_raw_mode() {
             error!("Failed to enter raw mode: {}", err);
         }
-        // Set working directory
-        let pwd: PathBuf = self.host.pwd();
-        // Get files at current wd
-        self.local_scan(pwd.as_path());
-        self.local_mut().wrkdir = pwd;
+        // Get files at current pwd
+        self.reload_local_dir();
         debug!("Read working directory");
         // Configure text editor
         self.setup_text_editor();
@@ -224,7 +270,7 @@ impl Activity for FileTransferActivity {
         self.init();
         debug!("Initialized view");
         // Verify error state from context
-        if let Some(err) = self.context.as_mut().unwrap().get_error() {
+        if let Some(err) = self.context.as_mut().unwrap().error() {
             error!("Fatal error on create: {}", err);
             self.mount_fatal(&err);
         }
@@ -244,12 +290,12 @@ impl Activity for FileTransferActivity {
         }
         // Check if connected (popup must be None, otherwise would try reconnecting in loop in case of error)
         if !self.client.is_connected() && self.view.get_props(COMPONENT_TEXT_FATAL).is_none() {
-            let params = self.context.as_ref().unwrap().ft_params.as_ref().unwrap();
+            let params = self.context().ft_params().unwrap();
             info!(
                 "Client is not connected to remote; connecting to {}:{}",
                 params.address, params.port
             );
-            let msg: String = format!("Connecting to {}:{}...", params.address, params.port);
+            let msg: String = format!("Connecting to {}:{}…", params.address, params.port);
             // Set init state to connecting popup
             self.mount_wait(msg.as_str());
             // Force ui draw
@@ -281,6 +327,12 @@ impl Activity for FileTransferActivity {
     /// `on_destroy` is the function which cleans up runtime variables and data before terminating the activity.
     /// This function must be called once before terminating the activity.
     fn on_destroy(&mut self) -> Option<Context> {
+        // Destroy cache
+        if let Some(cache) = self.cache.take() {
+            if let Err(err) = cache.close() {
+                error!("Failed to delete cache: {}", err);
+            }
+        }
         // Disable raw mode
         if let Err(err) = disable_raw_mode() {
             error!("Failed to disable raw mode: {}", err);

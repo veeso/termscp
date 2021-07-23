@@ -37,12 +37,9 @@ impl SetupActivity {
     ///
     /// Save configuration
     pub(super) fn save_config(&mut self) -> Result<(), String> {
-        match self.context.as_ref().unwrap().config_client.as_ref() {
-            Some(cli) => match cli.write_config() {
-                Ok(_) => Ok(()),
-                Err(err) => Err(format!("Could not save configuration: {}", err)),
-            },
-            None => Ok(()),
+        match self.config().write_config() {
+            Ok(_) => Ok(()),
+            Err(err) => Err(format!("Could not save configuration: {}", err)),
         }
     }
 
@@ -51,28 +48,39 @@ impl SetupActivity {
     /// Reset configuration changes; pratically read config from file, overwriting any change made
     /// since last write action
     pub(super) fn reset_config_changes(&mut self) -> Result<(), String> {
-        match self.context.as_mut().unwrap().config_client.as_mut() {
-            Some(cli) => match cli.read_config() {
-                Ok(_) => Ok(()),
-                Err(err) => Err(format!("Could not restore configuration: {}", err)),
-            },
-            None => Ok(()),
-        }
+        self.config_mut()
+            .read_config()
+            .map_err(|e| format!("Could not reload configuration: {}", e))
+    }
+
+    /// ### save_theme
+    ///
+    /// Save theme to file
+    pub(super) fn save_theme(&mut self) -> Result<(), String> {
+        self.theme_provider()
+            .save()
+            .map_err(|e| format!("Could not save theme: {}", e))
+    }
+
+    /// ### reset_theme_changes
+    ///
+    /// Reset changes committed to theme
+    pub(super) fn reset_theme_changes(&mut self) -> Result<(), String> {
+        self.theme_provider()
+            .load()
+            .map_err(|e| format!("Could not restore theme: {}", e))
     }
 
     /// ### delete_ssh_key
     ///
     /// Delete ssh key from config cli
     pub(super) fn delete_ssh_key(&mut self, host: &str, username: &str) -> Result<(), String> {
-        match self.context.as_mut().unwrap().config_client.as_mut() {
-            Some(cli) => match cli.del_ssh_key(host, username) {
-                Ok(_) => Ok(()),
-                Err(err) => Err(format!(
-                    "Could not delete ssh key \"{}@{}\": {}",
-                    host, username, err
-                )),
-            },
-            None => Ok(()),
+        match self.config_mut().del_ssh_key(host, username) {
+            Ok(_) => Ok(()),
+            Err(err) => Err(format!(
+                "Could not delete ssh key \"{}@{}\": {}",
+                host, username, err
+            )),
         }
     }
 
@@ -84,9 +92,7 @@ impl SetupActivity {
             None => Ok(()),
             Some(ctx) => {
                 // Set editor if config client exists
-                if let Some(config_cli) = ctx.config_client.as_ref() {
-                    env::set_var("EDITOR", config_cli.get_text_editor());
-                }
+                env::set_var("EDITOR", ctx.config().get_text_editor());
                 // Prepare terminal
                 if let Err(err) = disable_raw_mode() {
                     error!("Failed to disable raw mode: {}", err);
@@ -95,27 +101,22 @@ impl SetupActivity {
                 #[cfg(not(target_os = "windows"))]
                 ctx.leave_alternate_screen();
                 // Get result
-                let result: Result<(), String> = match ctx.config_client.as_ref() {
-                    Some(config_cli) => match config_cli.iter_ssh_keys().nth(idx) {
-                        Some(key) => {
-                            // Get key path
-                            match config_cli.get_ssh_key(key) {
-                                Ok(ssh_key) => match ssh_key {
-                                    None => Ok(()),
-                                    Some((_, _, key_path)) => {
-                                        match edit::edit_file(key_path.as_path()) {
-                                            Ok(_) => Ok(()),
-                                            Err(err) => {
-                                                Err(format!("Could not edit ssh key: {}", err))
-                                            }
-                                        }
+                let result: Result<(), String> = match ctx.config().iter_ssh_keys().nth(idx) {
+                    Some(key) => {
+                        // Get key path
+                        match ctx.config().get_ssh_key(key) {
+                            Ok(ssh_key) => match ssh_key {
+                                None => Ok(()),
+                                Some((_, _, key_path)) => {
+                                    match edit::edit_file(key_path.as_path()) {
+                                        Ok(_) => Ok(()),
+                                        Err(err) => Err(format!("Could not edit ssh key: {}", err)),
                                     }
-                                },
-                                Err(err) => Err(format!("Could not read ssh key: {}", err)),
-                            }
+                                }
+                            },
+                            Err(err) => Err(format!("Could not read ssh key: {}", err)),
                         }
-                        None => Ok(()),
-                    },
+                    }
                     None => Ok(()),
                 };
                 // Restore terminal
@@ -143,15 +144,8 @@ impl SetupActivity {
         username: &str,
         rsa_key: &str,
     ) -> Result<(), String> {
-        match self.context.as_mut().unwrap().config_client.as_mut() {
-            Some(cli) => {
-                // Add key to client
-                match cli.add_ssh_key(host, username, rsa_key) {
-                    Ok(_) => Ok(()),
-                    Err(err) => Err(format!("Could not add SSH key: {}", err)),
-                }
-            }
-            None => Ok(()),
-        }
+        self.config_mut()
+            .add_ssh_key(host, username, rsa_key)
+            .map_err(|e| format!("Could not add SSH key: {}", e))
     }
 }

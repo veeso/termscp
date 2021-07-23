@@ -173,4 +173,49 @@ impl FileTransferActivity {
             }
         }
     }
+
+    pub(crate) fn action_find_open(&mut self) {
+        match self.get_found_selected_entries() {
+            SelectedEntry::One(entry) => {
+                // Open file
+                self.open_found_file(&entry, None);
+            }
+            SelectedEntry::Many(entries) => {
+                // Iter files
+                for entry in entries.iter() {
+                    // Open file
+                    self.open_found_file(entry, None);
+                }
+            }
+            SelectedEntry::None => {}
+        }
+    }
+
+    pub(crate) fn action_find_open_with(&mut self, with: &str) {
+        match self.get_found_selected_entries() {
+            SelectedEntry::One(entry) => {
+                // Open file
+                self.open_found_file(&entry, Some(with));
+            }
+            SelectedEntry::Many(entries) => {
+                // Iter files
+                for entry in entries.iter() {
+                    // Open file
+                    self.open_found_file(entry, Some(with));
+                }
+            }
+            SelectedEntry::None => {}
+        }
+    }
+
+    fn open_found_file(&mut self, entry: &FsEntry, with: Option<&str>) {
+        match self.browser.tab() {
+            FileExplorerTab::FindLocal | FileExplorerTab::Local => {
+                self.action_open_local_file(entry, with);
+            }
+            FileExplorerTab::FindRemote | FileExplorerTab::Remote => {
+                self.action_open_remote_file(entry, with);
+            }
+        }
+    }
 }

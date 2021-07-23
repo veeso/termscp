@@ -8,6 +8,7 @@ RUN apt update && apt install -y \
   pkg-config \
   libssl-dev \
   libssh2-1-dev \
+  libdbus-1-dev \
   curl
 
 # Install rust

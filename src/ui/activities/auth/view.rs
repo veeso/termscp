@@ -39,6 +39,7 @@ use tuirealm::components::{
     radio::{Radio, RadioPropsBuilder},
     scrolltable::{ScrollTablePropsBuilder, Scrolltable},
     span::{Span, SpanPropsBuilder},
+    textarea::{Textarea, TextareaPropsBuilder},
 };
 use tuirealm::tui::{
     layout::{Constraint, Direction, Layout},
@@ -55,6 +56,14 @@ impl AuthActivity {
     ///
     /// Initialize view, mounting all startup components inside the view
     pub(super) fn init(&mut self) {
+        let key_color = self.theme().misc_keys;
+        let addr_color = self.theme().auth_address;
+        let protocol_color = self.theme().auth_protocol;
+        let port_color = self.theme().auth_port;
+        let username_color = self.theme().auth_username;
+        let password_color = self.theme().auth_password;
+        let bookmarks_color = self.theme().auth_bookmarks;
+        let recents_color = self.theme().auth_recents;
         // Headers
         self.view.mount(
             super::COMPONENT_TEXT_H1,
@@ -85,14 +94,14 @@ impl AuthActivity {
                         TextSpanBuilder::new("Press ").bold().build(),
                         TextSpanBuilder::new("<CTRL+H>")
                             .bold()
-                            .with_foreground(Color::Cyan)
+                            .with_foreground(key_color)
                             .build(),
                         TextSpanBuilder::new(" to show keybindings; ")
                             .bold()
                             .build(),
                         TextSpanBuilder::new("<CTRL+C>")
                             .bold()
-                            .with_foreground(Color::Cyan)
+                            .with_foreground(key_color)
                             .build(),
                         TextSpanBuilder::new(" to enter setup").bold().build(),
                     ])
@@ -100,19 +109,15 @@ impl AuthActivity {
             )),
         );
         // Get default protocol
-        let default_protocol: FileTransferProtocol =
-            match self.context.as_ref().unwrap().config_client.as_ref() {
-                Some(cli) => cli.get_default_protocol(),
-                None => FileTransferProtocol::Sftp,
-            };
+        let default_protocol: FileTransferProtocol = self.context().config().get_default_protocol();
         // Protocol
         self.view.mount(
             super::COMPONENT_RADIO_PROTOCOL,
             Box::new(Radio::new(
                 RadioPropsBuilder::default()
-                    .with_color(Color::LightGreen)
+                    .with_color(protocol_color)
                     .with_inverted_color(Color::Black)
-                    .with_borders(Borders::ALL, BorderType::Rounded, Color::LightGreen)
+                    .with_borders(Borders::ALL, BorderType::Rounded, protocol_color)
                     .with_options(
                         Some(String::from("Protocol")),
                         vec![
@@ -131,9 +136,9 @@ impl AuthActivity {
             super::COMPONENT_INPUT_ADDR,
             Box::new(Input::new(
                 InputPropsBuilder::default()
-                    .with_foreground(Color::Yellow)
-                    .with_borders(Borders::ALL, BorderType::Rounded, Color::LightYellow)
-                    .with_label(String::from("Remote address"))
+                    .with_foreground(addr_color)
+                    .with_borders(Borders::ALL, BorderType::Rounded, addr_color)
+                    .with_label(String::from("Remote host"))
                     .build(),
             )),
         );
@@ -142,8 +147,8 @@ impl AuthActivity {
             super::COMPONENT_INPUT_PORT,
             Box::new(Input::new(
                 InputPropsBuilder::default()
-                    .with_foreground(Color::LightCyan)
-                    .with_borders(Borders::ALL, BorderType::Rounded, Color::LightCyan)
+                    .with_foreground(port_color)
+                    .with_borders(Borders::ALL, BorderType::Rounded, port_color)
                     .with_label(String::from("Port number"))
                     .with_input(InputType::Number)
                     .with_input_len(5)
@@ -156,8 +161,8 @@ impl AuthActivity {
             super::COMPONENT_INPUT_USERNAME,
             Box::new(Input::new(
                 InputPropsBuilder::default()
-                    .with_foreground(Color::LightMagenta)
-                    .with_borders(Borders::ALL, BorderType::Rounded, Color::LightMagenta)
+                    .with_foreground(username_color)
+                    .with_borders(Borders::ALL, BorderType::Rounded, username_color)
                     .with_label(String::from("Username"))
                     .build(),
             )),
@@ -167,8 +172,8 @@ impl AuthActivity {
             super::COMPONENT_INPUT_PASSWORD,
             Box::new(Input::new(
                 InputPropsBuilder::default()
-                    .with_foreground(Color::LightBlue)
-                    .with_borders(Borders::ALL, BorderType::Rounded, Color::LightBlue)
+                    .with_foreground(password_color)
+                    .with_borders(Borders::ALL, BorderType::Rounded, password_color)
                     .with_label(String::from("Password"))
                     .with_input(InputType::Password)
                     .build(),
@@ -176,26 +181,23 @@ impl AuthActivity {
         );
         // Version notice
         if let Some(version) = self
-            .context
-            .as_ref()
-            .unwrap()
-            .store
+            .context()
+            .store()
             .get_string(super::STORE_KEY_LATEST_VERSION)
         {
+            let version: String = version.to_string();
             self.view.mount(
                 super::COMPONENT_TEXT_NEW_VERSION,
                 Box::new(Span::new(
-                        SpanPropsBuilder::default()
+                    SpanPropsBuilder::default()
                         .with_foreground(Color::Yellow)
-                        .with_spans(
-                            vec![
-                                TextSpan::from("termscp "),
-                                TextSpanBuilder::new(version).underlined().bold().build(),
-                                TextSpan::from(" is now available! Download it from <https://github.com/veeso/termscp/releases/latest>")
-                            ]
-                        )
-                        .build()
-                ))
+                        .with_spans(vec![
+                            TextSpan::from("termscp "),
+                            TextSpanBuilder::new(version.as_str()).underlined().bold().build(),
+                            TextSpan::from(" is NOW available! Get it from <https://veeso.github.io/termscp/>; view release notes with <CTRL+R>"),
+                        ])
+                        .build(),
+                )),
             );
         }
         // Bookmarks
@@ -203,26 +205,27 @@ impl AuthActivity {
             super::COMPONENT_BOOKMARKS_LIST,
             Box::new(BookmarkList::new(
                 BookmarkListPropsBuilder::default()
-                    .with_background(Color::LightGreen)
+                    .with_background(bookmarks_color)
                     .with_foreground(Color::Black)
-                    .with_borders(Borders::ALL, BorderType::Plain, Color::LightGreen)
+                    .with_borders(Borders::ALL, BorderType::Plain, bookmarks_color)
                     .with_bookmarks(Some(String::from("Bookmarks")), vec![])
                     .build(),
             )),
         );
-        let _ = self.view_bookmarks();
         // Recents
         self.view.mount(
             super::COMPONENT_RECENTS_LIST,
             Box::new(BookmarkList::new(
                 BookmarkListPropsBuilder::default()
-                    .with_background(Color::LightBlue)
+                    .with_background(recents_color)
                     .with_foreground(Color::Black)
-                    .with_borders(Borders::ALL, BorderType::Plain, Color::LightBlue)
+                    .with_borders(Borders::ALL, BorderType::Plain, recents_color)
                     .with_bookmarks(Some(String::from("Recent connections")), vec![])
                     .build(),
             )),
         );
+        // Load bookmarks
+        let _ = self.view_bookmarks();
         let _ = self.view_recent_connections();
         // Active protocol
         self.view.active(super::COMPONENT_RADIO_PROTOCOL);
@@ -233,7 +236,7 @@ impl AuthActivity {
     /// Display view on canvas
     pub(super) fn view(&mut self) {
         let mut ctx: Context = self.context.take().unwrap();
-        let _ = ctx.terminal.draw(|f| {
+        let _ = ctx.terminal().draw(|f| {
             // Check window size
             let height: u16 = f.size().height;
             self.check_minimum_window_size(height);
@@ -344,6 +347,15 @@ impl AuthActivity {
                     f.render_widget(Clear, popup);
                     self.view
                         .render(super::COMPONENT_RADIO_BOOKMARK_DEL_RECENT, f, popup);
+                }
+            }
+            if let Some(props) = self.view.get_props(super::COMPONENT_TEXT_NEW_VERSION_NOTES) {
+                if props.visible {
+                    // make popup
+                    let popup = draw_area_in(f.size(), 90, 90);
+                    f.render_widget(Clear, popup);
+                    self.view
+                        .render(super::COMPONENT_TEXT_NEW_VERSION_NOTES, f, popup);
                 }
             }
             if let Some(props) = self.view.get_props(super::COMPONENT_TEXT_HELP) {
@@ -467,12 +479,13 @@ impl AuthActivity {
     /// Mount error box
     pub(super) fn mount_error(&mut self, text: &str) {
         // Mount
+        let err_color = self.theme().misc_error_dialog;
         self.view.mount(
             super::COMPONENT_TEXT_ERROR,
             Box::new(MsgBox::new(
                 MsgBoxPropsBuilder::default()
-                    .with_foreground(Color::Red)
-                    .with_borders(Borders::ALL, BorderType::Thick, Color::Red)
+                    .with_foreground(err_color)
+                    .with_borders(Borders::ALL, BorderType::Thick, err_color)
                     .bold()
                     .with_texts(None, vec![TextSpan::from(text)])
                     .build(),
@@ -494,12 +507,13 @@ impl AuthActivity {
     /// Mount size error
     pub(super) fn mount_size_err(&mut self) {
         // Mount
+        let err_color = self.theme().misc_error_dialog;
         self.view.mount(
             super::COMPONENT_TEXT_SIZE_ERR,
             Box::new(MsgBox::new(
                 MsgBoxPropsBuilder::default()
-                    .with_foreground(Color::Red)
-                    .with_borders(Borders::ALL, BorderType::Thick, Color::Red)
+                    .with_foreground(err_color)
+                    .with_borders(Borders::ALL, BorderType::Thick, err_color)
                     .bold()
                     .with_texts(
                         None,
@@ -526,12 +540,13 @@ impl AuthActivity {
     /// Mount quit popup
     pub(super) fn mount_quit(&mut self) {
         // Protocol
+        let quit_color = self.theme().misc_quit_dialog;
         self.view.mount(
             super::COMPONENT_RADIO_QUIT,
             Box::new(Radio::new(
                 RadioPropsBuilder::default()
-                    .with_color(Color::Yellow)
-                    .with_borders(Borders::ALL, BorderType::Rounded, Color::Yellow)
+                    .with_color(quit_color)
+                    .with_borders(Borders::ALL, BorderType::Rounded, quit_color)
                     .with_inverted_color(Color::Black)
                     .with_options(
                         Some(String::from("Quit termscp?")),
@@ -554,13 +569,14 @@ impl AuthActivity {
     ///
     /// Mount bookmark delete dialog
     pub(super) fn mount_bookmark_del_dialog(&mut self) {
+        let warn_color = self.theme().misc_warn_dialog;
         self.view.mount(
             super::COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK,
             Box::new(Radio::new(
                 RadioPropsBuilder::default()
-                    .with_color(Color::Yellow)
+                    .with_color(warn_color)
                     .with_inverted_color(Color::Black)
-                    .with_borders(Borders::ALL, BorderType::Rounded, Color::Yellow)
+                    .with_borders(Borders::ALL, BorderType::Rounded, warn_color)
                     .with_options(
                         Some(String::from("Delete bookmark?")),
                         vec![String::from("Yes"), String::from("No")],
@@ -586,13 +602,14 @@ impl AuthActivity {
     ///
     /// Mount recent delete dialog
     pub(super) fn mount_recent_del_dialog(&mut self) {
+        let warn_color = self.theme().misc_warn_dialog;
         self.view.mount(
             super::COMPONENT_RADIO_BOOKMARK_DEL_RECENT,
             Box::new(Radio::new(
                 RadioPropsBuilder::default()
-                    .with_color(Color::Yellow)
+                    .with_color(warn_color)
                     .with_inverted_color(Color::Black)
-                    .with_borders(Borders::ALL, BorderType::Rounded, Color::Yellow)
+                    .with_borders(Borders::ALL, BorderType::Rounded, warn_color)
                     .with_options(
                         Some(String::from("Delete bookmark?")),
                         vec![String::from("Yes"), String::from("No")],
@@ -616,12 +633,14 @@ impl AuthActivity {
     ///
     /// Mount bookmark save dialog
     pub(super) fn mount_bookmark_save_dialog(&mut self) {
+        let save_color = self.theme().misc_save_dialog;
+        let warn_color = self.theme().misc_warn_dialog;
         self.view.mount(
             super::COMPONENT_INPUT_BOOKMARK_NAME,
             Box::new(Input::new(
                 InputPropsBuilder::default()
-                    .with_foreground(Color::LightCyan)
-                    .with_label(String::from("Save bookmark as..."))
+                    .with_foreground(save_color)
+                    .with_label(String::from("Save bookmark as…"))
                     .with_borders(
                         Borders::TOP | Borders::RIGHT | Borders::LEFT,
                         BorderType::Rounded,
@@ -634,7 +653,7 @@ impl AuthActivity {
             super::COMPONENT_RADIO_BOOKMARK_SAVE_PWD,
             Box::new(Radio::new(
                 RadioPropsBuilder::default()
-                    .with_color(Color::Red)
+                    .with_color(warn_color)
                     .with_borders(
                         Borders::BOTTOM | Borders::RIGHT | Borders::LEFT,
                         BorderType::Rounded,
@@ -663,6 +682,7 @@ impl AuthActivity {
     ///
     /// Mount help
     pub(super) fn mount_help(&mut self) {
+        let key_color = self.theme().misc_keys;
         self.view.mount(
             super::COMPONENT_TEXT_HELP,
             Box::new(Scrolltable::new(
@@ -677,7 +697,7 @@ impl AuthActivity {
                             .add_col(
                                 TextSpanBuilder::new("<ESC>")
                                     .bold()
-                                    .with_foreground(Color::Cyan)
+                                    .with_foreground(key_color)
                                     .build(),
                             )
                             .add_col(TextSpan::from("           Quit termscp"))
@@ -685,7 +705,7 @@ impl AuthActivity {
                             .add_col(
                                 TextSpanBuilder::new("<TAB>")
                                     .bold()
-                                    .with_foreground(Color::Cyan)
+                                    .with_foreground(key_color)
                                     .build(),
                             )
                             .add_col(TextSpan::from("           Switch from form and bookmarks"))
@@ -693,7 +713,7 @@ impl AuthActivity {
                             .add_col(
                                 TextSpanBuilder::new("<RIGHT/LEFT>")
                                     .bold()
-                                    .with_foreground(Color::Cyan)
+                                    .with_foreground(key_color)
                                     .build(),
                             )
                             .add_col(TextSpan::from("    Switch bookmark tab"))
@@ -701,7 +721,7 @@ impl AuthActivity {
                             .add_col(
                                 TextSpanBuilder::new("<UP/DOWN>")
                                     .bold()
-                                    .with_foreground(Color::Cyan)
+                                    .with_foreground(key_color)
                                     .build(),
                             )
                             .add_col(TextSpan::from("       Move up/down in current tab"))
@@ -709,7 +729,7 @@ impl AuthActivity {
                             .add_col(
                                 TextSpanBuilder::new("<ENTER>")
                                     .bold()
-                                    .with_foreground(Color::Cyan)
+                                    .with_foreground(key_color)
                                     .build(),
                             )
                             .add_col(TextSpan::from("         Connect/Load bookmark"))
@@ -717,7 +737,7 @@ impl AuthActivity {
                             .add_col(
                                 TextSpanBuilder::new("<DEL|E>")
                                     .bold()
-                                    .with_foreground(Color::Cyan)
+                                    .with_foreground(key_color)
                                     .build(),
                             )
                             .add_col(TextSpan::from("         Delete selected bookmark"))
@@ -725,7 +745,7 @@ impl AuthActivity {
                             .add_col(
                                 TextSpanBuilder::new("<CTRL+C>")
                                     .bold()
-                                    .with_foreground(Color::Cyan)
+                                    .with_foreground(key_color)
                                     .build(),
                             )
                             .add_col(TextSpan::from("        Enter setup"))
@@ -733,7 +753,7 @@ impl AuthActivity {
                             .add_col(
                                 TextSpanBuilder::new("<CTRL+S>")
                                     .bold()
-                                    .with_foreground(Color::Cyan)
+                                    .with_foreground(key_color)
                                     .build(),
                             )
                             .add_col(TextSpan::from("        Save bookmark"))
@@ -751,6 +771,35 @@ impl AuthActivity {
     /// Umount help
     pub(super) fn umount_help(&mut self) {
         self.view.umount(super::COMPONENT_TEXT_HELP);
+    }
+
+    /// ### mount_release_notes
+    ///
+    /// mount release notes text area
+    pub(super) fn mount_release_notes(&mut self) {
+        if let Some(ctx) = self.context.as_ref() {
+            if let Some(release_notes) = ctx.store().get_string(super::STORE_KEY_RELEASE_NOTES) {
+                // make spans
+                let spans: Vec<TextSpan> = release_notes.lines().map(TextSpan::from).collect();
+                self.view.mount(
+                    super::COMPONENT_TEXT_NEW_VERSION_NOTES,
+                    Box::new(Textarea::new(
+                        TextareaPropsBuilder::default()
+                            .with_borders(Borders::ALL, BorderType::Rounded, Color::LightYellow)
+                            .with_texts(Some(String::from("Release notes")), spans)
+                            .build(),
+                    )),
+                );
+                self.view.active(super::COMPONENT_TEXT_NEW_VERSION_NOTES);
+            }
+        }
+    }
+
+    /// ### umount_release_notes
+    ///
+    /// Umount release notes text area
+    pub(super) fn umount_release_notes(&mut self) {
+        self.view.umount(super::COMPONENT_TEXT_NEW_VERSION_NOTES);
     }
 
     /// ### get_input
@@ -774,8 +823,11 @@ impl AuthActivity {
 
     pub(super) fn get_input_port(&self) -> u16 {
         match self.view.get_state(super::COMPONENT_INPUT_PORT) {
-            Some(Payload::One(Value::Usize(x))) => x as u16,
-            _ => Self::get_default_port_for_protocol(FileTransferProtocol::Sftp),
+            Some(Payload::One(Value::Usize(x))) => match x > 65535 {
+                true => 0,
+                false => x as u16,
+            },
+            _ => 0,
         }
     }
 

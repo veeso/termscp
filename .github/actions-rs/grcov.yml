@@ -3,12 +3,13 @@ ignore-not-existing: true
 llvm: true
 output-type: lcov
 ignore:
-    - "/*"
-    - "C:/*"
-    - "../*"
-    - src/main.rs
-    - src/lib.rs
-    - src/activity_manager.rs
-    - "src/ui/activities/*"
-    - src/ui/context.rs
-    - src/ui/input.rs
+  - "/*"
+  - "C:/*"
+  - "../*"
+  - src/main.rs
+  - src/lib.rs
+  - src/activity_manager.rs
+  - src/support.rs
+  - "src/ui/activities/*"
+  - src/ui/context.rs
+  - src/ui/input.rs

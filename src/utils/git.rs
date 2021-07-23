@@ -25,45 +25,44 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-// Deps
-extern crate ureq;
 // Locals
 use super::parser::parse_semver;
 // Others
 use serde::Deserialize;
 
-#[derive(Deserialize)]
-struct TagInfo {
-    tag_name: String,
+#[derive(Debug, Deserialize)]
+/// ## GithubTag
+///
+/// Info related to a github tag
+pub struct GithubTag {
+    pub tag_name: String,
+    pub body: String,
 }
 
 /// ### check_for_updates
 ///
 /// Check if there is a new version available for termscp.
 /// This is performed through the Github API
-/// In case of success returns Ok(Option<String>), where the Option is Some(new_version); otherwise if no version is available, return None
+/// In case of success returns Ok(Option<GithubTag>), where the Option is Some(new_version); otherwise if no version is available, return None
 /// In case of error returns Error with the error description
 
-pub fn check_for_updates(current_version: &str) -> Result<Option<String>, String> {
+pub fn check_for_updates(current_version: &str) -> Result<Option<GithubTag>, String> {
     // Send request
-    let github_version: Result<String, String> =
+    let github_tag: Result<GithubTag, String> =
         match ureq::get("https://api.github.com/repos/veeso/termscp/releases/latest").call() {
-            Ok(response) => match response.into_json::<TagInfo>() {
-                Ok(tag_info) => Ok(tag_info.tag_name),
-                Err(err) => Err(err.to_string()),
-            },
+            Ok(response) => response.into_json::<GithubTag>().map_err(|x| x.to_string()),
             Err(err) => Err(err.to_string()),
         };
     // Check version
-    match github_version {
+    match github_tag {
         Err(err) => Err(err),
-        Ok(version) => {
+        Ok(tag) => {
             // Parse version
-            match parse_semver(version.as_str()) {
+            match parse_semver(tag.tag_name.as_str()) {
                 Some(new_version) => {
                     // Check if version is different
                     if new_version.as_str() > current_version {
-                        Ok(Some(new_version)) // New version is available
+                        Ok(Some(tag)) // New version is available
                     } else {
                         Ok(None) // No new version
                     }
@@ -80,7 +79,15 @@ mod tests {
     use super::*;
 
     #[test]
-    #[cfg(not(all(target_os = "macos", feature = "github-actions")))]
+    #[cfg(not(all(
+        any(
+            target_os = "macos",
+            target_os = "freebsd",
+            target_os = "netbsd",
+            target_os = "netbsd"
+        ),
+        feature = "github-actions"
+    )))]
     fn test_utils_git_check_for_updates() {
         assert!(check_for_updates("100.0.0").ok().unwrap().is_none());
         assert!(check_for_updates("0.0.1").ok().unwrap().is_some());

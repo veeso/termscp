@@ -25,54 +25,45 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-// Dependencies
-extern crate crossterm;
-extern crate tuirealm;
-
 // Locals
 use super::input::InputHandler;
 use super::store::Store;
-use crate::filetransfer::FileTransferProtocol;
+use crate::filetransfer::FileTransferParams;
 use crate::system::config_client::ConfigClient;
+use crate::system::theme_provider::ThemeProvider;
 
 // Includes
 use crossterm::event::DisableMouseCapture;
 use crossterm::execute;
 use crossterm::terminal::{EnterAlternateScreen, LeaveAlternateScreen};
 use std::io::{stdout, Stdout};
-use std::path::PathBuf;
 use tuirealm::tui::backend::CrosstermBackend;
 use tuirealm::tui::Terminal;
+
+type TuiTerminal = Terminal<CrosstermBackend<Stdout>>;
 
 /// ## Context
 ///
 /// Context holds data structures used by the ui
 pub struct Context {
-    pub ft_params: Option<FileTransferParams>,
-    pub(crate) config_client: Option<ConfigClient>,
+    ft_params: Option<FileTransferParams>,
+    config_client: ConfigClient,
     pub(crate) store: Store,
-    pub(crate) input_hnd: InputHandler,
-    pub(crate) terminal: Terminal<CrosstermBackend<Stdout>>,
+    input_hnd: InputHandler,
+    pub(crate) terminal: TuiTerminal,
+    theme_provider: ThemeProvider,
     error: Option<String>,
-}
-
-/// ### FileTransferParams
-///
-/// Holds connection parameters for file transfers
-pub struct FileTransferParams {
-    pub address: String,
-    pub port: u16,
-    pub protocol: FileTransferProtocol,
-    pub username: Option<String>,
-    pub password: Option<String>,
-    pub entry_directory: Option<PathBuf>,
 }
 
 impl Context {
     /// ### new
     ///
     /// Instantiates a new Context
-    pub fn new(config_client: Option<ConfigClient>, error: Option<String>) -> Context {
+    pub fn new(
+        config_client: ConfigClient,
+        theme_provider: ThemeProvider,
+        error: Option<String>,
+    ) -> Context {
         // Create terminal
         let mut stdout = stdout();
         assert!(execute!(stdout, EnterAlternateScreen).is_ok());
@@ -82,9 +73,56 @@ impl Context {
             store: Store::init(),
             input_hnd: InputHandler::new(),
             terminal: Terminal::new(CrosstermBackend::new(stdout)).unwrap(),
+            theme_provider,
             error,
         }
     }
+
+    // -- getters
+
+    pub fn ft_params(&self) -> Option<&FileTransferParams> {
+        self.ft_params.as_ref()
+    }
+
+    pub fn config(&self) -> &ConfigClient {
+        &self.config_client
+    }
+
+    pub fn config_mut(&mut self) -> &mut ConfigClient {
+        &mut self.config_client
+    }
+
+    pub(crate) fn input_hnd(&self) -> &InputHandler {
+        &self.input_hnd
+    }
+
+    pub(crate) fn store(&self) -> &Store {
+        &self.store
+    }
+
+    pub(crate) fn store_mut(&mut self) -> &mut Store {
+        &mut self.store
+    }
+
+    pub fn theme_provider(&self) -> &ThemeProvider {
+        &self.theme_provider
+    }
+
+    pub fn theme_provider_mut(&mut self) -> &mut ThemeProvider {
+        &mut self.theme_provider
+    }
+
+    pub fn terminal(&mut self) -> &mut TuiTerminal {
+        &mut self.terminal
+    }
+
+    // -- setter
+
+    pub fn set_ftparams(&mut self, params: FileTransferParams) {
+        self.ft_params = Some(params);
+    }
+
+    // -- error
 
     /// ### set_error
     ///
@@ -93,10 +131,10 @@ impl Context {
         self.error = Some(err);
     }
 
-    /// ### get_error
+    /// ### error
     ///
     /// Get error message and remove it from the context
-    pub fn get_error(&mut self) -> Option<String> {
+    pub fn error(&mut self) -> Option<String> {
         self.error.take()
     }
 
@@ -144,59 +182,5 @@ impl Drop for Context {
     fn drop(&mut self) {
         // Re-enable terminal stuff
         self.leave_alternate_screen();
-    }
-}
-
-impl Default for FileTransferParams {
-    fn default() -> Self {
-        Self {
-            address: String::new(),
-            port: 22,
-            protocol: FileTransferProtocol::Sftp,
-            username: None,
-            password: None,
-            entry_directory: None,
-        }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-
-    use super::*;
-
-    use pretty_assertions::assert_eq;
-
-    #[test]
-    fn test_ui_context_ft_params() {
-        let params: FileTransferParams = FileTransferParams::default();
-        assert_eq!(params.address.as_str(), "");
-        assert_eq!(params.port, 22);
-        assert_eq!(params.protocol, FileTransferProtocol::Sftp);
-        assert!(params.username.is_none());
-        assert!(params.password.is_none());
-    }
-
-    #[test]
-    #[cfg(not(feature = "github-actions"))]
-    fn test_ui_context() {
-        // Prepare stuff
-        let mut ctx: Context = Context::new(None, Some(String::from("alles kaput")));
-        assert!(ctx.error.is_some());
-        assert_eq!(ctx.get_error().unwrap().as_str(), "alles kaput");
-        assert!(ctx.error.is_none());
-        assert!(ctx.get_error().is_none());
-        ctx.set_error(String::from("err"));
-        assert!(ctx.error.is_some());
-        assert!(ctx.get_error().is_some());
-        assert!(ctx.get_error().is_none());
-        // Try other methods
-        #[cfg(not(target_os = "windows"))]
-        {
-            ctx.enter_alternate_screen();
-            ctx.clear_screen();
-            ctx.leave_alternate_screen();
-        }
-        drop(ctx);
     }
 }

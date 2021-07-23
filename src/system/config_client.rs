@@ -25,11 +25,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-// Deps
-extern crate rand;
 // Locals
-use crate::config::serializer::ConfigSerializer;
-use crate::config::{SerializerError, SerializerErrorKind, UserConfig};
+use crate::config::{
+    params::UserConfig,
+    serialization::{deserialize, serialize, SerializerError, SerializerErrorKind},
+};
 use crate::filetransfer::FileTransferProtocol;
 use crate::fs::explorer::GroupDirs;
 // Ext
@@ -49,13 +49,14 @@ pub struct ConfigClient {
     config: UserConfig,   // Configuration loaded
     config_path: PathBuf, // Configuration TOML Path
     ssh_key_dir: PathBuf, // SSH Key storage directory
+    degraded: bool,       // Indicates the `ConfigClient` is working in degraded mode
 }
 
 impl ConfigClient {
     /// ### new
     ///
     /// Instantiate a new `ConfigClient` with provided path
-    pub fn new(config_path: &Path, ssh_key_dir: &Path) -> Result<ConfigClient, SerializerError> {
+    pub fn new(config_path: &Path, ssh_key_dir: &Path) -> Result<Self, SerializerError> {
         // Initialize a default configuration
         let default_config: UserConfig = UserConfig::default();
         info!(
@@ -68,6 +69,7 @@ impl ConfigClient {
             config: default_config,
             config_path: PathBuf::from(config_path),
             ssh_key_dir: PathBuf::from(ssh_key_dir),
+            degraded: false,
         };
         // If ssh key directory doesn't exist, create it
         if !ssh_key_dir.exists() {
@@ -100,6 +102,20 @@ impl ConfigClient {
             debug!("Read configuration file");
         }
         Ok(client)
+    }
+
+    /// ### degraded
+    ///
+    /// Instantiate a ConfigClient in degraded mode.
+    /// When in degraded mode, the configuration in use will be the default configuration
+    /// and the IO operation on configuration won't be available
+    pub fn degraded() -> Self {
+        Self {
+            config: UserConfig::default(),
+            config_path: PathBuf::default(),
+            ssh_key_dir: PathBuf::default(),
+            degraded: true,
+        }
     }
 
     // Text editor
@@ -234,6 +250,12 @@ impl ConfigClient {
         username: &str,
         ssh_key: &str,
     ) -> Result<(), SerializerError> {
+        if self.degraded {
+            return Err(SerializerError::new_ex(
+                SerializerErrorKind::GenericError,
+                String::from("Configuration won't be saved, since in degraded mode"),
+            ));
+        }
         let host_name: String = Self::make_ssh_host_key(host, username);
         // Get key path
         let ssh_key_path: PathBuf = {
@@ -267,6 +289,12 @@ impl ConfigClient {
     /// This operation also unlinks the key file in `ssh_key_dir`
     /// and also commits changes to configuration, to prevent incoerent data
     pub fn del_ssh_key(&mut self, host: &str, username: &str) -> Result<(), SerializerError> {
+        if self.degraded {
+            return Err(SerializerError::new_ex(
+                SerializerErrorKind::GenericError,
+                String::from("Configuration won't be saved, since in degraded mode"),
+            ));
+        }
         // Remove key from configuration and get key path
         info!("Removing key for {}@{}", host, username);
         let key_path: PathBuf = match self
@@ -293,6 +321,9 @@ impl ConfigClient {
     /// None is returned if key doesn't exist
     /// `std::io::Error` is returned in case it was not possible to read the key file
     pub fn get_ssh_key(&self, mkey: &str) -> std::io::Result<Option<SshHost>> {
+        if self.degraded {
+            return Ok(None);
+        }
         // Check if Key exists
         match self.config.remote.ssh_keys.get(mkey) {
             None => Ok(None),
@@ -318,6 +349,12 @@ impl ConfigClient {
     ///
     /// Write configuration to file
     pub fn write_config(&self) -> Result<(), SerializerError> {
+        if self.degraded {
+            return Err(SerializerError::new_ex(
+                SerializerErrorKind::GenericError,
+                String::from("Configuration won't be saved, since in degraded mode"),
+            ));
+        }
         // Open file
         match OpenOptions::new()
             .create(true)
@@ -325,10 +362,7 @@ impl ConfigClient {
             .truncate(true)
             .open(self.config_path.as_path())
         {
-            Ok(writer) => {
-                let serializer: ConfigSerializer = ConfigSerializer {};
-                serializer.serialize(Box::new(writer), &self.config)
-            }
+            Ok(writer) => serialize(&self.config, Box::new(writer)),
             Err(err) => {
                 error!("Failed to write configuration file: {}", err);
                 Err(SerializerError::new_ex(
@@ -343,6 +377,12 @@ impl ConfigClient {
     ///
     /// Read configuration from file (or reload it if already read)
     pub fn read_config(&mut self) -> Result<(), SerializerError> {
+        if self.degraded {
+            return Err(SerializerError::new_ex(
+                SerializerErrorKind::GenericError,
+                String::from("Configuration won't be loaded, since in degraded mode"),
+            ));
+        }
         // Open bookmarks file for read
         match OpenOptions::new()
             .read(true)
@@ -350,8 +390,7 @@ impl ConfigClient {
         {
             Ok(reader) => {
                 // Deserialize
-                let deserializer: ConfigSerializer = ConfigSerializer {};
-                match deserializer.deserialize(Box::new(reader)) {
+                match deserialize(Box::new(reader)) {
                     Ok(config) => {
                         self.config = config;
                         Ok(())
@@ -419,6 +458,7 @@ mod tests {
             .unwrap();
         // Verify parameters
         let default_config: UserConfig = UserConfig::default();
+        assert_eq!(client.degraded, false);
         assert_eq!(client.config.remote.ssh_keys.len(), 0);
         assert_eq!(
             client.config.user_interface.default_protocol,
@@ -430,6 +470,20 @@ mod tests {
         );
         assert_eq!(client.config_path, cfg_path);
         assert_eq!(client.ssh_key_dir, ssh_keys_path);
+    }
+
+    #[test]
+    fn test_system_config_degraded() {
+        let mut client: ConfigClient = ConfigClient::degraded();
+        assert_eq!(client.degraded, true);
+        assert_eq!(client.config_path, PathBuf::default());
+        assert_eq!(client.ssh_key_dir, PathBuf::default());
+        // I/O
+        assert!(client.add_ssh_key("Omar", "omar", "omar").is_err());
+        assert!(client.del_ssh_key("omar", "omar").is_err());
+        assert!(client.get_ssh_key("omar").ok().unwrap().is_none());
+        assert!(client.write_config().is_err());
+        assert!(client.read_config().is_err());
     }
 
     #[test]

@@ -8,7 +8,7 @@
 #   -f, -y, --force, --yes
 #     Skip the confirmation prompt during installation
 
-TERMSCP_VERSION="0.5.1"
+TERMSCP_VERSION="0.6.0"
 GITHUB_URL="https://github.com/veeso/termscp/releases/download/v${TERMSCP_VERSION}"
 DEB_URL="${GITHUB_URL}/termscp_${TERMSCP_VERSION}_amd64.deb"
 FREEBSD_URL="${GITHUB_URL}/termscp-${TERMSCP_VERSION}.txz"
@@ -81,6 +81,17 @@ download() {
     return $rc
 }
 
+test_writeable() {
+  local path
+  path="${1:-}/test.txt"
+  if touch "${path}" 2>/dev/null; then
+    rm "${path}"
+    return 0
+  else
+    return 1
+  fi
+}
+
 elevate_priv() {
     if ! has sudo; then
         error 'Could not find the command "sudo", needed to install termscp on your system.'
@@ -95,15 +106,16 @@ elevate_priv() {
     fi
 }
 
-test_writeable() {
-  local path
-  path="${1:-}/test.txt"
-  if touch "${path}" 2>/dev/null; then
-    rm "${path}"
-    return 0
-  else
-    return 1
-  fi
+elevate_priv_ex() {
+    check_dir="$1"
+    if test_writeable "$check_dir"; then
+        sudo=""
+    else
+        warn "Root permissions are required to install dependecies"
+        elevate_priv
+        sudo="sudo"
+    fi
+    echo $sudo
 }
 
 # Currently supporting:
@@ -275,11 +287,92 @@ install_on_macos() {
     fi
 }
 
+# -- cargo installation
+
+install_bsd_cargo_deps() {
+    set -e
+    confirm "${YELLOW}libssh, gcc${NO_COLOR} are required to install ${GREEN}termscp${NO_COLOR}; would you like to proceed?"
+    sudo="$(elevate_priv_ex /usr/local/bin)"
+    $sudo pkg install -y curl wget libssh gcc
+    info "Dependencies installed successfully"
+}
+
+install_linux_cargo_deps() {
+    local debian_deps="gcc pkg-config libssl-dev libssh2-1-dev libdbus-1-dev"
+    local rpm_deps="gcc openssl pkgconfig libdbus-devel openssl-devel"
+    local arch_deps="gcc openssl pkg-config dbus"
+    local deps_cmd=""
+    # Get pkg manager
+    if has apt; then
+        deps_cmd="apt install -y $debian_deps"
+    elif has apt-get; then
+        deps_cmd="apt-get install -y $debian_deps"
+    elif has yum; then
+        deps_cmd="yum -y install $rpm_deps"
+    elif has dnf; then
+        deps_cmd="dnf -y install $rpm_deps"
+    elif has pacman; then
+        deps_cmd="pacman -S --noconfirm $arch_deps"
+    else
+        error "Could not find any suitable package manager for your linux distro 🙄"
+        error "Supported package manager are: 'apt', 'apt-get', 'yum', 'dnf', 'pacman'"
+        exit 1
+    fi
+    set -e
+    confirm "${YELLOW}libssh, gcc, openssl, pkg-config, libdbus${NO_COLOR} are required to install ${GREEN}termscp${NO_COLOR}. The following command will be used to install the dependencies: '${BOLD}${YELLOW}${deps_cmd}${NO_COLOR}'. Would you like to proceed?"
+    sudo="$(elevate_priv_ex /usr/local/bin)"
+    $sudo $deps_cmd
+    info "Dependencies installed successfully"
+}
+
+install_cargo() {
+    if has cargo; then
+        return 0
+    fi
+    cargo_env="$HOME/.cargo/env"
+    # Check if cargo is already installed (actually), but not loaded
+    if [ -f $cargo_env ]; then
+        . $cargo_env
+    fi
+    # Check again cargo
+    if has cargo; then
+        return 0
+    else
+        confirm "${YELLOW}rust${NO_COLOR} is required to build termscp with cargo; would you like to install it now?"
+        set -e
+        rustup=$(get_tmpfile "sh")
+        info "Downloading rustup.sh…"
+        download "${rustup}" "https://sh.rustup.rs"
+        chmod +x $rustup
+        $rustup -y
+        info "Rust installed with success"
+        . $cargo_env
+    fi
+
+}
+
 try_with_cargo() {
     err="$1"
+    # Install cargo
+    install_cargo
     if has cargo; then
         info "Installing ${GREEN}termscp${NO_COLOR} via Cargo…"
-        cargo install termscp
+        case $PLATFORM in
+            "freebsd")
+                install_bsd_cargo_deps
+                cargo install --no-default-features termscp
+            ;;
+
+            "linux")
+                install_linux_cargo_deps
+                cargo install termscp
+            ;;
+
+            *)
+                cargo install termscp
+            ;;
+
+        esac
     else
         error "$err"
         error "Alternatively you can opt for installing Cargo <https://www.rust-lang.org/tools/install>"
