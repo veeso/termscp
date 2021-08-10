@@ -381,7 +381,7 @@ impl FileTransferActivity {
                                     }
                                     // Send entry; name is always None after first call
                                     self.filetransfer_send_recurse(
-                                        &entry,
+                                        entry,
                                         remote_path.as_path(),
                                         None,
                                     );
@@ -730,7 +730,7 @@ impl FileTransferActivity {
                                     // Receive entry; name is always None after first call
                                     // Local path becomes local_dir_path
                                     self.filetransfer_recv_recurse(
-                                        &entry,
+                                        entry,
                                         local_dir_path.as_path(),
                                         None,
                                     );

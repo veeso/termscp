@@ -282,7 +282,7 @@ impl FileTransfer for SftpFileTransfer {
         // Try addresses
         for socket_addr in socket_addresses.iter() {
             debug!("Trying socket address {}", socket_addr);
-            match TcpStream::connect_timeout(&socket_addr, Duration::from_secs(30)) {
+            match TcpStream::connect_timeout(socket_addr, Duration::from_secs(30)) {
                 Ok(stream) => {
                     tcp = Some(stream);
                     break;
@@ -602,7 +602,7 @@ impl FileTransfer for SftpFileTransfer {
                 // Get directory files
                 let directory_content: Vec<FsEntry> = self.list_dir(d.abs_path.as_path())?;
                 for entry in directory_content.iter() {
-                    if let Err(err) = self.remove(&entry) {
+                    if let Err(err) = self.remove(entry) {
                         return Err(err);
                     }
                 }

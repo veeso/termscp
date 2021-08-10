@@ -663,10 +663,10 @@ impl Update for FileTransferActivity {
                 (COMPONENT_RADIO_SORTING, Msg::OnChange(Payload::One(Value::Usize(mode)))) => {
                     // Get sorting mode
                     let sorting: FileSorting = match mode {
-                        1 => FileSorting::ByModifyTime,
-                        2 => FileSorting::ByCreationTime,
-                        3 => FileSorting::BySize,
-                        _ => FileSorting::ByName,
+                        1 => FileSorting::ModifyTime,
+                        2 => FileSorting::CreationTime,
+                        3 => FileSorting::Size,
+                        _ => FileSorting::Name,
                     };
                     match self.browser.tab() {
                         FileExplorerTab::Local => self.local_mut().sort_by(sorting),

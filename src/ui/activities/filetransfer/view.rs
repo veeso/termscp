@@ -770,10 +770,10 @@ impl FileTransferActivity {
             _ => panic!("You can't mount file sorting when in found result"),
         };
         let index: usize = match sorting {
-            FileSorting::ByCreationTime => 2,
-            FileSorting::ByModifyTime => 1,
-            FileSorting::ByName => 0,
-            FileSorting::BySize => 3,
+            FileSorting::CreationTime => 2,
+            FileSorting::ModifyTime => 1,
+            FileSorting::Name => 0,
+            FileSorting::Size => 3,
         };
         self.view.mount(
             super::COMPONENT_RADIO_SORTING,
@@ -1280,10 +1280,10 @@ impl FileTransferActivity {
 
     fn get_file_sorting_str(mode: FileSorting) -> &'static str {
         match mode {
-            FileSorting::ByName => "By name",
-            FileSorting::ByCreationTime => "By creation time",
-            FileSorting::ByModifyTime => "By modify time",
-            FileSorting::BySize => "By size",
+            FileSorting::Name => "By name",
+            FileSorting::CreationTime => "By creation time",
+            FileSorting::ModifyTime => "By modify time",
+            FileSorting::Size => "By size",
         }
     }
 

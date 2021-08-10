@@ -169,7 +169,7 @@ impl ScpFileTransfer {
                 // Get symlink; PATH mustn't be equal to filename
                 let symlink: Option<Box<FsEntry>> = match symlink_path {
                     None => None,
-                    Some(p) => match p.file_name().unwrap_or(&std::ffi::OsStr::new(""))
+                    Some(p) => match p.file_name().unwrap_or_else(|| std::ffi::OsStr::new(""))
                         == file_name.as_str()
                     {
                         // If name is equal, don't stat path; otherwise it would get stuck
@@ -339,7 +339,7 @@ impl FileTransfer for ScpFileTransfer {
         // Try addresses
         for socket_addr in socket_addresses.iter() {
             debug!("Trying socket address {}", socket_addr);
-            match TcpStream::connect_timeout(&socket_addr, Duration::from_secs(30)) {
+            match TcpStream::connect_timeout(socket_addr, Duration::from_secs(30)) {
                 Ok(stream) => {
                     debug!("{} succeded", socket_addr);
                     tcp = Some(stream);
