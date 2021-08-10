@@ -363,48 +363,47 @@ impl FileTransferActivity {
                 }
             }
             FsEntry::Directory(dir) => {
-                // Create directory on remote
-                match self.client.mkdir(remote_path.as_path()) {
-                    Ok(_) => {
-                        self.log(
-                            LogLevel::Info,
-                            format!("Created directory \"{}\"", remote_path.display()),
-                        );
-                        // Get files in dir
-                        match self.host.scan_dir(dir.abs_path.as_path()) {
-                            Ok(entries) => {
-                                // Iterate over files
-                                for entry in entries.iter() {
-                                    // If aborted; break
-                                    if self.transfer.aborted() {
-                                        break;
-                                    }
-                                    // Send entry; name is always None after first call
-                                    self.filetransfer_send_recurse(
-                                        &entry,
-                                        remote_path.as_path(),
-                                        None,
-                                    );
-                                }
+                // Check whether should create directory
+                if self.client.list_dir(remote_path.as_path()).is_err() {
+                    match self.client.mkdir(remote_path.as_path()) {
+                        Ok(_) => {
+                            self.log(
+                                LogLevel::Info,
+                                format!("Created directory \"{}\"", remote_path.display()),
+                            );
+                        }
+                        Err(err) => {
+                            self.log_and_alert(
+                                LogLevel::Error,
+                                format!(
+                                    "Failed to create directory \"{}\": {}",
+                                    remote_path.display(),
+                                    err
+                                ),
+                            );
+                            return;
+                        }
+                    }
+                }
+                // Get files in dir
+                match self.host.scan_dir(dir.abs_path.as_path()) {
+                    Ok(entries) => {
+                        // Iterate over files
+                        for entry in entries.iter() {
+                            // If aborted; break
+                            if self.transfer.aborted() {
+                                break;
                             }
-                            Err(err) => {
-                                self.log_and_alert(
-                                    LogLevel::Error,
-                                    format!(
-                                        "Could not scan directory \"{}\": {}",
-                                        dir.abs_path.display(),
-                                        err
-                                    ),
-                                );
-                            }
+                            // Send entry; name is always None after first call
+                            self.filetransfer_send_recurse(&entry, remote_path.as_path(), None);
                         }
                     }
                     Err(err) => {
                         self.log_and_alert(
                             LogLevel::Error,
                             format!(
-                                "Failed to create directory \"{}\": {}",
-                                remote_path.display(),
+                                "Could not scan directory \"{}\": {}",
+                                dir.abs_path.display(),
                                 err
                             ),
                         );

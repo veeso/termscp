@@ -1,6 +1,7 @@
 # Changelog
 
 - [Changelog](#changelog)
+  - [0.7.0](#070)
   - [0.6.0](#060)
   - [0.5.1](#051)
   - [0.5.0](#050)
@@ -18,6 +19,15 @@
   - [0.1.0](#010)
 
 ---
+
+## 0.7.0
+
+Released on ??
+
+> 🍁 Autumn update 2021 🍇
+
+- Bugfix:
+  - Fixed [Issue 58](https://github.com/veeso/termscp/issues/58):When uploading a directory, create directory only if it doesn't exist
 
 ## 0.6.0
 
