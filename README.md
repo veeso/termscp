@@ -122,13 +122,14 @@ Major termscp releases will now be seasonal, so expect 4 major updates during th
 
 Planned for *🍁 Autumn update 🍇*:
 
-- **Configuration profile for bookmarks 📚**: Basically this feature adds the possibility to have a specific setup for a certain host, instead of having only one global configuration.
 - **Self-update ⬇️**: In order to increase users updating termscp, I want to provide the possibility to  update termscp directly from application, when a new update is available.
 - **AWS S3 support 🪣**: I'll use `rust-s3` library to implement this. This is really big **Maybe** for the autumn update and might be moved to the Winter update.
+- **Prompt before replacing files ☢️**: Possibility to configure whether a prompt should be displayed before replacing files.
 
 Planned for *❄️ Winter update ⛄*:
 
 - **SMB Support 🎉**: This will require a long time to be implemented, since I'm currently working on a Rust native SMB library, since I don't want to add new C-bindings. ~~Fear the 🦚~~
+- **Configuration profile for bookmarks 📚**: Basically this feature adds the possibility to have a specific setup for a certain host, instead of having only one global configuration.
 
 Along to new features, termscp developments is now focused on UX and performance improvements, so if you have any suggestion, feel free to open an issue.
 
