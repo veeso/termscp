@@ -100,23 +100,6 @@ pub fn fmt_millis(duration: Duration) -> String {
     format!("{}.{:0width$}", seconds, millis, width = 3)
 }
 
-/// align_text_center
-///
-/// Align text to center for a given width
-pub fn align_text_center(text: &str, width: u16) -> String {
-    let indent_size: usize = match (width as usize) >= text.len() {
-        // NOTE: The check prevents underflow
-        true => (width as usize - text.len()) / 2,
-        false => 0,
-    };
-    textwrap::indent(
-        text,
-        (0..indent_size).map(|_| " ").collect::<String>().as_str(),
-    )
-    .trim_end()
-    .to_string()
-}
-
 /// ### elide_path
 ///
 /// Elide a path if longer than width
@@ -362,18 +345,6 @@ mod tests {
         );
     }
 
-    #[test]
-    fn test_utils_align_text_center() {
-        assert_eq!(
-            align_text_center("hello world!", 24),
-            String::from("      hello world!")
-        );
-        // Bad case
-        assert_eq!(
-            align_text_center("hello world!", 8),
-            String::from("hello world!")
-        );
-    }
     #[test]
     fn test_utils_fmt_millis() {
         assert_eq!(
