@@ -469,6 +469,7 @@ impl FileTransferActivity {
                     .with_borders(Borders::ALL, BorderType::Rounded, quit_color)
                     .with_title("Are you sure you want to quit?", Alignment::Center)
                     .with_options(&[String::from("Yes"), String::from("No")])
+                    .rewind(true)
                     .build(),
             )),
         );
@@ -497,6 +498,7 @@ impl FileTransferActivity {
                     .with_borders(Borders::ALL, BorderType::Rounded, quit_color)
                     .with_title("Are you sure you want to disconnect?", Alignment::Center)
                     .with_options(&[String::from("Yes"), String::from("No")])
+                    .rewind(true)
                     .build(),
             )),
         );
@@ -812,6 +814,7 @@ impl FileTransferActivity {
                     .with_title("Delete file", Alignment::Center)
                     .with_options(&[String::from("Yes"), String::from("No")])
                     .with_value(1)
+                    .rewind(true)
                     .build(),
             )),
         );

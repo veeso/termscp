@@ -182,6 +182,7 @@ impl SetupActivity {
                     .with_title("Delete key?", Alignment::Center)
                     .with_options(&[String::from("Yes"), String::from("No")])
                     .with_value(1) // Default: No
+                    .rewind(true)
                     .build(),
             )),
         );

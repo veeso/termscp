@@ -87,6 +87,7 @@ impl SetupActivity {
                         String::from("FTP"),
                         String::from("FTPS"),
                     ])
+                    .rewind(true)
                     .build(),
             )),
         );
@@ -99,6 +100,7 @@ impl SetupActivity {
                     .with_borders(Borders::ALL, BorderType::Rounded, Color::LightRed)
                     .with_title("Show hidden files (by default)?", Alignment::Left)
                     .with_options(&[String::from("Yes"), String::from("No")])
+                    .rewind(true)
                     .build(),
             )),
         );
@@ -111,6 +113,7 @@ impl SetupActivity {
                     .with_borders(Borders::ALL, BorderType::Rounded, Color::LightYellow)
                     .with_title("Check for updates?", Alignment::Left)
                     .with_options(&[String::from("Yes"), String::from("No")])
+                    .rewind(true)
                     .build(),
             )),
         );
@@ -127,6 +130,7 @@ impl SetupActivity {
                         String::from("Display Last"),
                         String::from("No"),
                     ])
+                    .rewind(true)
                     .build(),
             )),
         );

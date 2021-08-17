@@ -120,6 +120,7 @@ impl SetupActivity {
                         String::from("Don't save"),
                         String::from("Cancel"),
                     ])
+                    .rewind(true)
                     .build(),
             )),
         );
@@ -147,6 +148,7 @@ impl SetupActivity {
                     .with_borders(Borders::ALL, BorderType::Rounded, Color::LightYellow)
                     .with_title("Save changes?", Alignment::Center)
                     .with_options(&[String::from("Yes"), String::from("No")])
+                    .rewind(true)
                     .build(),
             )),
         );
@@ -175,6 +177,7 @@ impl SetupActivity {
                         String::from("Theme"),
                     ])
                     .with_value(idx)
+                    .rewind(true)
                     .build(),
             )),
         );

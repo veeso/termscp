@@ -111,6 +111,7 @@ impl AuthActivity {
                     .with_title("Protocol", Alignment::Left)
                     .with_options(&["SFTP", "SCP", "FTP", "FTPS"])
                     .with_value(Self::protocol_enum_to_opt(default_protocol))
+                    .rewind(true)
                     .build(),
             )),
         );
@@ -532,6 +533,7 @@ impl AuthActivity {
                     .with_inverted_color(Color::Black)
                     .with_title("Quit termscp?", Alignment::Center)
                     .with_options(&[String::from("Yes"), String::from("No")])
+                    .rewind(true)
                     .build(),
             )),
         );
@@ -560,6 +562,7 @@ impl AuthActivity {
                     .with_title("Delete bookmark?", Alignment::Center)
                     .with_options(&[String::from("Yes"), String::from("No")])
                     .with_value(1)
+                    .rewind(true)
                     .build(),
             )),
         );
@@ -591,6 +594,7 @@ impl AuthActivity {
                     .with_title("Delete bookmark?", Alignment::Center)
                     .with_options(&[String::from("Yes"), String::from("No")])
                     .with_value(1)
+                    .rewind(true)
                     .build(),
             )),
         );
@@ -637,6 +641,7 @@ impl AuthActivity {
                     )
                     .with_title("Save password?", Alignment::Center)
                     .with_options(&[String::from("Yes"), String::from("No")])
+                    .rewind(true)
                     .build(),
             )),
         );
