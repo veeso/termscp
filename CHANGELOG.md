@@ -1,7 +1,7 @@
 # Changelog
 
 - [Changelog](#changelog)
-  - [0.7.0](#070)
+  - [0.6.1](#061)
   - [0.6.0](#060)
   - [0.5.1](#051)
   - [0.5.0](#050)
@@ -20,14 +20,22 @@
 
 ---
 
-## 0.7.0
+## 0.6.1
 
 Released on ??
 
-> 🍁 Autumn update 2021 🍇
-
+- Enhancements:
+  - Now that tui-rs supports title alignment, UI has been improved
+  - Added new `Directory already exists` variant for file transfer errors
 - Bugfix:
   - Fixed [Issue 58](https://github.com/veeso/termscp/issues/58):When uploading a directory, create directory only if it doesn't exist
+- Dependencies:
+  - Updated `bitflags` to `1.3.2`
+  - Updated `bytesize` to `1.1.0`
+  - Updated `crossterm` to `0.20`
+  - Updated `open` to `2.0.1`
+  - Added `tui-realm-stdlib 0.6.0`
+  - Updated `tui-realm` to `0.6.0`
 
 ## 0.6.0
 

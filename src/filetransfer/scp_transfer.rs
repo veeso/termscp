@@ -169,7 +169,7 @@ impl ScpFileTransfer {
                 // Get symlink; PATH mustn't be equal to filename
                 let symlink: Option<Box<FsEntry>> = match symlink_path {
                     None => None,
-                    Some(p) => match p.file_name().unwrap_or(&std::ffi::OsStr::new(""))
+                    Some(p) => match p.file_name().unwrap_or_else(|| std::ffi::OsStr::new(""))
                         == file_name.as_str()
                     {
                         // If name is equal, don't stat path; otherwise it would get stuck
@@ -339,7 +339,7 @@ impl FileTransfer for ScpFileTransfer {
         // Try addresses
         for socket_addr in socket_addresses.iter() {
             debug!("Trying socket address {}", socket_addr);
-            match TcpStream::connect_timeout(&socket_addr, Duration::from_secs(30)) {
+            match TcpStream::connect_timeout(socket_addr, Duration::from_secs(30)) {
                 Ok(stream) => {
                     debug!("{} succeded", socket_addr);
                     tcp = Some(stream);
@@ -643,13 +643,20 @@ impl FileTransfer for ScpFileTransfer {
     /// ### mkdir
     ///
     /// Make directory
-    /// You must return error in case the directory already exists
+    /// It MUSTN'T return error in case the directory already exists
     fn mkdir(&mut self, dir: &Path) -> Result<(), FileTransferError> {
         match self.is_connected() {
             true => {
                 let dir: PathBuf = Self::resolve(dir);
                 info!("Making directory {}", dir.display());
                 let p: PathBuf = self.wrkdir.clone();
+                // If directory already exists, return Err
+                if let Ok(_) = self.stat(dir.as_path()) {
+                    error!("Directory {} already exists", dir.display());
+                    return Err(FileTransferError::new(
+                        FileTransferErrorType::DirectoryAlreadyExists,
+                    ));
+                }
                 // Mkdir dir && echo 0
                 match self.perform_shell_cmd_with_path(
                     p.as_path(),

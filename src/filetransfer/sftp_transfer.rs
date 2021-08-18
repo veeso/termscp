@@ -282,7 +282,7 @@ impl FileTransfer for SftpFileTransfer {
         // Try addresses
         for socket_addr in socket_addresses.iter() {
             debug!("Trying socket address {}", socket_addr);
-            match TcpStream::connect_timeout(&socket_addr, Duration::from_secs(30)) {
+            match TcpStream::connect_timeout(socket_addr, Duration::from_secs(30)) {
                 Ok(stream) => {
                     tcp = Some(stream);
                     break;
@@ -559,6 +559,13 @@ impl FileTransfer for SftpFileTransfer {
             Some(sftp) => {
                 // Make directory
                 let path: PathBuf = self.get_abs_path(PathBuf::from(dir).as_path());
+                // If directory already exists, return Err
+                if let Ok(_) = sftp.stat(path.as_path()) {
+                    error!("Directory {} already exists", path.display());
+                    return Err(FileTransferError::new(
+                        FileTransferErrorType::DirectoryAlreadyExists,
+                    ));
+                }
                 info!("Making directory {}", path.display());
                 match sftp.mkdir(path.as_path(), 0o775) {
                     Ok(_) => Ok(()),
@@ -602,7 +609,7 @@ impl FileTransfer for SftpFileTransfer {
                 // Get directory files
                 let directory_content: Vec<FsEntry> = self.list_dir(d.abs_path.as_path())?;
                 for entry in directory_content.iter() {
-                    if let Err(err) = self.remove(&entry) {
+                    if let Err(err) = self.remove(entry) {
                         return Err(err);
                     }
                 }

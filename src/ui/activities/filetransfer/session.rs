@@ -27,7 +27,7 @@
  */
 // Locals
 use super::{FileTransferActivity, LogLevel};
-use crate::filetransfer::FileTransferError;
+use crate::filetransfer::{FileTransferError, FileTransferErrorType};
 use crate::fs::{FsEntry, FsFile};
 use crate::host::HostError;
 use crate::utils::fmt::fmt_millis;
@@ -363,26 +363,33 @@ impl FileTransferActivity {
                 }
             }
             FsEntry::Directory(dir) => {
-                // Check whether should create directory
-                if self.client.list_dir(remote_path.as_path()).is_err() {
-                    match self.client.mkdir(remote_path.as_path()) {
-                        Ok(_) => {
-                            self.log(
-                                LogLevel::Info,
-                                format!("Created directory \"{}\"", remote_path.display()),
-                            );
-                        }
-                        Err(err) => {
-                            self.log_and_alert(
-                                LogLevel::Error,
-                                format!(
-                                    "Failed to create directory \"{}\": {}",
-                                    remote_path.display(),
-                                    err
-                                ),
-                            );
-                            return;
-                        }
+                // Create directory on remote first
+                match self.client.mkdir(remote_path.as_path()) {
+                    Ok(_) => {
+                        self.log(
+                            LogLevel::Info,
+                            format!("Created directory \"{}\"", remote_path.display()),
+                        );
+                    }
+                    Err(err) if err.kind() == FileTransferErrorType::DirectoryAlreadyExists => {
+                        self.log(
+                            LogLevel::Info,
+                            format!(
+                                "Directory \"{}\" already exists on remote",
+                                remote_path.display()
+                            ),
+                        );
+                    }
+                    Err(err) => {
+                        self.log_and_alert(
+                            LogLevel::Error,
+                            format!(
+                                "Failed to create directory \"{}\": {}",
+                                remote_path.display(),
+                                err
+                            ),
+                        );
+                        return;
                     }
                 }
                 // Get files in dir
@@ -395,7 +402,7 @@ impl FileTransferActivity {
                                 break;
                             }
                             // Send entry; name is always None after first call
-                            self.filetransfer_send_recurse(&entry, remote_path.as_path(), None);
+                            self.filetransfer_send_recurse(entry, remote_path.as_path(), None);
                         }
                     }
                     Err(err) => {
@@ -729,7 +736,7 @@ impl FileTransferActivity {
                                     // Receive entry; name is always None after first call
                                     // Local path becomes local_dir_path
                                     self.filetransfer_recv_recurse(
-                                        &entry,
+                                        entry,
                                         local_dir_path.as_path(),
                                         None,
                                     );

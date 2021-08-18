@@ -189,7 +189,7 @@ impl FtpFileTransfer {
                             FsEntry::Directory(FsDirectory {
                                 name: p
                                     .file_name()
-                                    .unwrap_or(&std::ffi::OsStr::new(""))
+                                    .unwrap_or_else(|| std::ffi::OsStr::new(""))
                                     .to_string_lossy()
                                     .to_string(),
                                 abs_path: p.clone(),
@@ -206,7 +206,7 @@ impl FtpFileTransfer {
                         false => FsEntry::File(FsFile {
                             name: p
                                 .file_name()
-                                .unwrap_or(&std::ffi::OsStr::new(""))
+                                .unwrap_or_else(|| std::ffi::OsStr::new(""))
                                 .to_string_lossy()
                                 .to_string(),
                             abs_path: p.clone(),
@@ -659,7 +659,7 @@ impl FileTransfer for FtpFileTransfer {
                         // Remove recursively files
                         debug!("Removing {} entries from directory...", files.len());
                         for file in files.iter() {
-                            if let Err(err) = self.remove(&file) {
+                            if let Err(err) = self.remove(file) {
                                 return Err(FileTransferError::new_ex(
                                     FileTransferErrorType::PexError,
                                     err.to_string(),

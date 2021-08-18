@@ -56,6 +56,7 @@ extern crate regex;
 extern crate ssh2;
 extern crate tempfile;
 extern crate textwrap;
+extern crate tui_realm_stdlib;
 extern crate tuirealm;
 extern crate ureq;
 #[cfg(target_family = "unix")]
