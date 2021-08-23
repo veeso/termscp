@@ -720,7 +720,11 @@ impl FileTransfer for SftpFileTransfer {
                 // Calculate file mode
                 let mode: i32 = match local.unix_pex {
                     None => 0o644,
-                    Some((u, g, o)) => ((u.as_byte() as i32) << 6) + ((g.as_byte() as i32) << 3) + (o.as_byte() as i32),
+                    Some((u, g, o)) => {
+                        ((u.as_byte() as i32) << 6)
+                            + ((g.as_byte() as i32) << 3)
+                            + (o.as_byte() as i32)
+                    }
                 };
                 debug!("File mode {:?}", mode);
                 match sftp.open_mode(
