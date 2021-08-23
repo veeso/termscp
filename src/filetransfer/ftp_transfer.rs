@@ -26,7 +26,7 @@
  * SOFTWARE.
  */
 use super::{FileTransfer, FileTransferError, FileTransferErrorType};
-use crate::fs::{FsDirectory, FsEntry, FsFile};
+use crate::fs::{FsDirectory, FsEntry, FsFile, UnixPex};
 use crate::utils::fmt::shadow_password;
 
 // Includes
@@ -158,31 +158,24 @@ impl FtpFileTransfer {
     /// ### query_unix_pex
     ///
     /// Returns unix pex in tuple of values
-    fn query_unix_pex(f: &File) -> (u8, u8, u8) {
+    fn query_unix_pex(f: &File) -> (UnixPex, UnixPex, UnixPex) {
         (
-            Self::pex_to_byte(
+            UnixPex::new(
                 f.can_read(PosixPexQuery::Owner),
                 f.can_write(PosixPexQuery::Owner),
                 f.can_execute(PosixPexQuery::Owner),
             ),
-            Self::pex_to_byte(
+            UnixPex::new(
                 f.can_read(PosixPexQuery::Group),
                 f.can_write(PosixPexQuery::Group),
                 f.can_execute(PosixPexQuery::Group),
             ),
-            Self::pex_to_byte(
+            UnixPex::new(
                 f.can_read(PosixPexQuery::Others),
                 f.can_write(PosixPexQuery::Others),
                 f.can_execute(PosixPexQuery::Others),
             ),
         )
-    }
-
-    /// ### pex_to_byte
-    ///
-    /// Convert unix permissions to byte value
-    fn pex_to_byte(read: bool, write: bool, exec: bool) -> u8 {
-        ((read as u8) << 2) + ((write as u8) << 1) + (exec as u8)
     }
 }
 
@@ -775,7 +768,7 @@ mod tests {
             symlink: None,                    // UNIX only
             user: Some(0),                    // UNIX only
             group: Some(0),                   // UNIX only
-            unix_pex: Some((6, 4, 4)),        // UNIX only
+            unix_pex: Some((UnixPex::from(6), UnixPex::from(4), UnixPex::from(4))), // UNIX only
         });
         assert!(ftp
             .rename(&dummy, PathBuf::from("/a/b/c").as_path())
@@ -874,7 +867,10 @@ mod tests {
         assert!(file.symlink.is_none());
         assert_eq!(file.user, None);
         assert_eq!(file.group, None);
-        assert_eq!(file.unix_pex.unwrap(), (6, 6, 4));
+        assert_eq!(
+            file.unix_pex.unwrap(),
+            (UnixPex::from(6), UnixPex::from(6), UnixPex::from(4))
+        );
         assert_eq!(
             file.last_access_time
                 .duration_since(UNIX_EPOCH)
@@ -930,7 +926,7 @@ mod tests {
             symlink: None,                    // UNIX only
             user: Some(0),                    // UNIX only
             group: Some(0),                   // UNIX only
-            unix_pex: Some((6, 4, 4)),        // UNIX only
+            unix_pex: Some((UnixPex::from(6), UnixPex::from(4), UnixPex::from(4))), // UNIX only
         };
         let mut ftp: FtpFileTransfer = FtpFileTransfer::new(false);
         assert!(ftp.change_dir(Path::new("/tmp")).is_err());

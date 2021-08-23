@@ -27,7 +27,7 @@
  */
 // Locals
 use super::{FileTransfer, FileTransferError, FileTransferErrorType};
-use crate::fs::{FsDirectory, FsEntry, FsFile};
+use crate::fs::{FsDirectory, FsEntry, FsFile, UnixPex};
 use crate::system::sshkey_storage::SshKeyStorage;
 use crate::utils::fmt::{fmt_time, shadow_password};
 
@@ -126,11 +126,11 @@ impl SftpFileTransfer {
             .map(|ext| String::from(ext.to_str().unwrap_or("")));
         let uid: Option<u32> = metadata.uid;
         let gid: Option<u32> = metadata.gid;
-        let pex: Option<(u8, u8, u8)> = metadata.perm.map(|x| {
+        let pex: Option<(UnixPex, UnixPex, UnixPex)> = metadata.perm.map(|x| {
             (
-                ((x >> 6) & 0x7) as u8,
-                ((x >> 3) & 0x7) as u8,
-                (x & 0x7) as u8,
+                UnixPex::from(((x >> 6) & 0x7) as u8),
+                UnixPex::from(((x >> 3) & 0x7) as u8),
+                UnixPex::from((x & 0x7) as u8),
             )
         });
         let size: u64 = metadata.size.unwrap_or(0);
@@ -720,7 +720,7 @@ impl FileTransfer for SftpFileTransfer {
                 // Calculate file mode
                 let mode: i32 = match local.unix_pex {
                     None => 0o644,
-                    Some((u, g, o)) => ((u as i32) << 6) + ((g as i32) << 3) + (o as i32),
+                    Some((u, g, o)) => ((u.as_byte() as i32) << 6) + ((g.as_byte() as i32) << 3) + (o.as_byte() as i32),
                 };
                 debug!("File mode {:?}", mode);
                 match sftp.open_mode(
@@ -924,7 +924,7 @@ mod tests {
             symlink: None,                    // UNIX only
             user: Some(0),                    // UNIX only
             group: Some(0),                   // UNIX only
-            unix_pex: Some((6, 4, 4)),        // UNIX only
+            unix_pex: Some((UnixPex::from(6), UnixPex::from(4), UnixPex::from(4))), // UNIX only
         });
         assert!(client
             .rename(&dummy, PathBuf::from("/a/b/c").as_path())
@@ -1072,7 +1072,7 @@ mod tests {
             symlink: None,                    // UNIX only
             user: Some(0),                    // UNIX only
             group: Some(0),                   // UNIX only
-            unix_pex: Some((6, 4, 4)),        // UNIX only
+            unix_pex: Some((UnixPex::from(6), UnixPex::from(4), UnixPex::from(4))), // UNIX only
         };
         let mut sftp: SftpFileTransfer = SftpFileTransfer::new(SshKeyStorage::empty());
         assert!(sftp.change_dir(Path::new("/tmp")).is_err());

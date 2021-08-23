@@ -27,7 +27,7 @@
  */
 // Locals
 use super::{FileTransfer, FileTransferError, FileTransferErrorType};
-use crate::fs::{FsDirectory, FsEntry, FsFile};
+use crate::fs::{FsDirectory, FsEntry, FsFile, UnixPex};
 use crate::system::sshkey_storage::SshKeyStorage;
 use crate::utils::fmt::{fmt_time, shadow_password};
 use crate::utils::parser::parse_lstime;
@@ -128,7 +128,11 @@ impl ScpFileTransfer {
                 };
 
                 // Get unix pex
-                let unix_pex = (pex(0..3), pex(3..6), pex(6..9));
+                let unix_pex = (
+                    UnixPex::from(pex(0..3)),
+                    UnixPex::from(pex(3..6)),
+                    UnixPex::from(pex(6..9)),
+                );
 
                 // Parse mtime and convert to SystemTime
                 let mtime: SystemTime = match parse_lstime(
@@ -873,7 +877,11 @@ impl FileTransfer for ScpFileTransfer {
                 // Calculate file mode
                 let mode: i32 = match local.unix_pex {
                     None => 0o644,
-                    Some((u, g, o)) => ((u as i32) << 6) + ((g as i32) << 3) + (o as i32),
+                    Some((u, g, o)) => {
+                        ((u.as_byte() as i32) << 6)
+                            + ((g.as_byte() as i32) << 3)
+                            + (o.as_byte() as i32)
+                    }
                 };
                 // Calculate mtime, atime
                 let times: (u64, u64) = {
@@ -1126,7 +1134,7 @@ mod tests {
             symlink: None,                    // UNIX only
             user: Some(0),                    // UNIX only
             group: Some(0),                   // UNIX only
-            unix_pex: Some((6, 4, 4)),        // UNIX only
+            unix_pex: Some((UnixPex::from(6), UnixPex::from(4), UnixPex::from(4))), // UNIX only
         });
         assert!(client
             .rename(&dummy, PathBuf::from("/a/b/c").as_path())
@@ -1239,7 +1247,10 @@ mod tests {
             .unwrap_file();
         assert_eq!(entry.name.as_str(), "Cargo.toml");
         assert_eq!(entry.abs_path, PathBuf::from("/tmp/Cargo.toml"));
-        assert_eq!(entry.unix_pex.unwrap(), (6, 4, 4));
+        assert_eq!(
+            entry.unix_pex.unwrap(),
+            (UnixPex::from(6), UnixPex::from(4), UnixPex::from(4))
+        );
         assert_eq!(entry.size, 2056);
         assert_eq!(entry.ftype.unwrap().as_str(), "toml");
         assert!(entry.symlink.is_none());
@@ -1254,7 +1265,10 @@ mod tests {
             .unwrap_file();
         assert_eq!(entry.name.as_str(), "CODE_OF_CONDUCT.md");
         assert_eq!(entry.abs_path, PathBuf::from("/tmp/CODE_OF_CONDUCT.md"));
-        assert_eq!(entry.unix_pex.unwrap(), (6, 6, 6));
+        assert_eq!(
+            entry.unix_pex.unwrap(),
+            (UnixPex::from(6), UnixPex::from(6), UnixPex::from(6))
+        );
         assert_eq!(entry.size, 3368);
         assert_eq!(entry.ftype.unwrap().as_str(), "md");
         assert!(entry.symlink.is_none());
@@ -1269,7 +1283,10 @@ mod tests {
             .unwrap_dir();
         assert_eq!(entry.name.as_str(), "docs");
         assert_eq!(entry.abs_path, PathBuf::from("/tmp/docs"));
-        assert_eq!(entry.unix_pex.unwrap(), (7, 5, 5));
+        assert_eq!(
+            entry.unix_pex.unwrap(),
+            (UnixPex::from(7), UnixPex::from(5), UnixPex::from(5))
+        );
         assert!(entry.symlink.is_none());
         // Short metadata
         assert!(client
@@ -1320,7 +1337,7 @@ mod tests {
             symlink: None,                    // UNIX only
             user: Some(0),                    // UNIX only
             group: Some(0),                   // UNIX only
-            unix_pex: Some((6, 4, 4)),        // UNIX only
+            unix_pex: Some((UnixPex::from(6), UnixPex::from(4), UnixPex::from(4))), // UNIX only
         };
         let mut scp: ScpFileTransfer = ScpFileTransfer::new(SshKeyStorage::empty());
         assert!(scp.change_dir(Path::new("/tmp")).is_err());

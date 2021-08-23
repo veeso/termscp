@@ -363,7 +363,7 @@ impl FromStr for GroupDirs {
 mod tests {
 
     use super::*;
-    use crate::fs::{FsDirectory, FsFile};
+    use crate::fs::{FsDirectory, FsFile, UnixPex};
     use crate::utils::fmt::fmt_time;
 
     use pretty_assertions::assert_eq;
@@ -587,10 +587,10 @@ mod tests {
             creation_time: t,
             size: 8192,
             ftype: Some(String::from("txt")),
-            symlink: None,             // UNIX only
-            user: Some(0),             // UNIX only
-            group: Some(0),            // UNIX only
-            unix_pex: Some((6, 4, 4)), // UNIX only
+            symlink: None,  // UNIX only
+            user: Some(0),  // UNIX only
+            group: Some(0), // UNIX only
+            unix_pex: Some((UnixPex::from(6), UnixPex::from(4), UnixPex::from(4))), // UNIX only
         });
         #[cfg(target_family = "unix")]
         assert_eq!(
@@ -669,11 +669,11 @@ mod tests {
                 last_access_time: t_now,
                 creation_time: t_now,
                 size: 64,
-                ftype: None,               // File type
-                symlink: None,             // UNIX only
-                user: Some(0),             // UNIX only
-                group: Some(0),            // UNIX only
-                unix_pex: Some((6, 4, 4)), // UNIX only
+                ftype: None,    // File type
+                symlink: None,  // UNIX only
+                user: Some(0),  // UNIX only
+                group: Some(0), // UNIX only
+                unix_pex: Some((UnixPex::from(6), UnixPex::from(4), UnixPex::from(4))), // UNIX only
             }),
             true => FsEntry::Directory(FsDirectory {
                 name: name.to_string(),
@@ -681,10 +681,10 @@ mod tests {
                 last_change_time: t_now,
                 last_access_time: t_now,
                 creation_time: t_now,
-                symlink: None,             // UNIX only
-                user: Some(0),             // UNIX only
-                group: Some(0),            // UNIX only
-                unix_pex: Some((7, 5, 5)), // UNIX only
+                symlink: None,  // UNIX only
+                user: Some(0),  // UNIX only
+                group: Some(0), // UNIX only
+                unix_pex: Some((UnixPex::from(7), UnixPex::from(5), UnixPex::from(5))), // UNIX only
             }),
         }
     }
@@ -699,11 +699,11 @@ mod tests {
                 last_access_time: t_now,
                 creation_time: t_now,
                 size: size,
-                ftype: None,               // File type
-                symlink: None,             // UNIX only
-                user: Some(0),             // UNIX only
-                group: Some(0),            // UNIX only
-                unix_pex: Some((6, 4, 4)), // UNIX only
+                ftype: None,    // File type
+                symlink: None,  // UNIX only
+                user: Some(0),  // UNIX only
+                group: Some(0), // UNIX only
+                unix_pex: Some((UnixPex::from(6), UnixPex::from(4), UnixPex::from(4))), // UNIX only
             }),
             true => FsEntry::Directory(FsDirectory {
                 name: name.to_string(),
@@ -711,10 +711,10 @@ mod tests {
                 last_change_time: t_now,
                 last_access_time: t_now,
                 creation_time: t_now,
-                symlink: None,             // UNIX only
-                user: Some(0),             // UNIX only
-                group: Some(0),            // UNIX only
-                unix_pex: Some((7, 5, 5)), // UNIX only
+                symlink: None,  // UNIX only
+                user: Some(0),  // UNIX only
+                group: Some(0), // UNIX only
+                unix_pex: Some((UnixPex::from(7), UnixPex::from(5), UnixPex::from(5))), // UNIX only
             }),
         }
     }

@@ -38,7 +38,7 @@ use std::fs::set_permissions;
 use std::os::unix::fs::{MetadataExt, PermissionsExt};
 
 // Locals
-use crate::fs::{FsDirectory, FsEntry, FsFile};
+use crate::fs::{FsDirectory, FsEntry, FsFile, UnixPex};
 
 /// ## HostErrorType
 ///
@@ -784,10 +784,10 @@ impl Localhost {
     ///
     /// Return string with format xxxxxx to tuple of permissions (user, group, others)
     #[cfg(target_family = "unix")]
-    fn u32_to_mode(&self, mode: u32) -> (u8, u8, u8) {
-        let user: u8 = ((mode >> 6) & 0x7) as u8;
-        let group: u8 = ((mode >> 3) & 0x7) as u8;
-        let others: u8 = (mode & 0x7) as u8;
+    fn u32_to_mode(&self, mode: u32) -> (UnixPex, UnixPex, UnixPex) {
+        let user: UnixPex = UnixPex::from(((mode >> 6) & 0x7) as u8);
+        let group: UnixPex = UnixPex::from(((mode >> 3) & 0x7) as u8);
+        let others: UnixPex = UnixPex::from((mode & 0x7) as u8);
         (user, group, others)
     }
 

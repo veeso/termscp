@@ -25,6 +25,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+use crate::fs::UnixPex;
+
 use chrono::prelude::*;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime};
@@ -32,55 +34,23 @@ use tuirealm::tui::style::Color;
 
 /// ### fmt_pex
 ///
-/// Convert 3 bytes of permissions value into ls notation (e.g. rwx-wx--x)
-pub fn fmt_pex(owner: u8, group: u8, others: u8) -> String {
-    let mut mode: String = String::with_capacity(9);
-    let read: u8 = (owner >> 2) & 0x1;
-    let write: u8 = (owner >> 1) & 0x1;
-    let exec: u8 = owner & 0x1;
-    mode.push_str(match read {
-        1 => "r",
-        _ => "-",
-    });
-    mode.push_str(match write {
-        1 => "w",
-        _ => "-",
-    });
-    mode.push_str(match exec {
-        1 => "x",
-        _ => "-",
-    });
-    let read: u8 = (group >> 2) & 0x1;
-    let write: u8 = (group >> 1) & 0x1;
-    let exec: u8 = group & 0x1;
-    mode.push_str(match read {
-        1 => "r",
-        _ => "-",
-    });
-    mode.push_str(match write {
-        1 => "w",
-        _ => "-",
-    });
-    mode.push_str(match exec {
-        1 => "x",
-        _ => "-",
-    });
-    let read: u8 = (others >> 2) & 0x1;
-    let write: u8 = (others >> 1) & 0x1;
-    let exec: u8 = others & 0x1;
-    mode.push_str(match read {
-        1 => "r",
-        _ => "-",
-    });
-    mode.push_str(match write {
-        1 => "w",
-        _ => "-",
-    });
-    mode.push_str(match exec {
-        1 => "x",
-        _ => "-",
-    });
-    mode
+/// Convert permissions bytes of permissions value into ls notation (e.g. rwx,-wx,--x)
+pub fn fmt_pex(pex: UnixPex) -> String {
+    format!(
+        "{}{}{}",
+        match pex.can_read() {
+            true => 'r',
+            false => '-',
+        },
+        match pex.can_write() {
+            true => 'w',
+            false => '-',
+        },
+        match pex.can_execute() {
+            true => 'x',
+            false => '-',
+        }
+    )
 }
 
 /// ### instant_to_str
@@ -326,14 +296,9 @@ mod tests {
 
     #[test]
     fn test_utils_fmt_pex() {
-        assert_eq!(fmt_pex(7, 7, 7), String::from("rwxrwxrwx"));
-        assert_eq!(fmt_pex(7, 5, 5), String::from("rwxr-xr-x"));
-        assert_eq!(fmt_pex(6, 6, 6), String::from("rw-rw-rw-"));
-        assert_eq!(fmt_pex(6, 4, 4), String::from("rw-r--r--"));
-        assert_eq!(fmt_pex(6, 0, 0), String::from("rw-------"));
-        assert_eq!(fmt_pex(0, 0, 0), String::from("---------"));
-        assert_eq!(fmt_pex(4, 4, 4), String::from("r--r--r--"));
-        assert_eq!(fmt_pex(1, 2, 1), String::from("--x-w---x"));
+        assert_eq!(fmt_pex(UnixPex::from(7)), String::from("rwx"));
+        assert_eq!(fmt_pex(UnixPex::from(5)), String::from("r-xr-x"));
+        assert_eq!(fmt_pex(UnixPex::from(6)), String::from("rw-"));
     }
 
     #[test]

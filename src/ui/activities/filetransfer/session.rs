@@ -707,13 +707,16 @@ impl FileTransferActivity {
                             target_os = "macos",
                             target_os = "linux"
                         ))]
-                        if let Some(pex) = dir.unix_pex {
-                            if let Err(err) = self.host.chmod(local_dir_path.as_path(), pex) {
+                        if let Some((owner, group, others)) = dir.unix_pex {
+                            if let Err(err) = self.host.chmod(
+                                local_dir_path.as_path(),
+                                (owner.as_byte(), group.as_byte(), others.as_byte()),
+                            ) {
                                 self.log(
                                     LogLevel::Error,
                                     format!(
                                         "Could not apply file mode {:?} to \"{}\": {}",
-                                        pex,
+                                        (owner.as_byte(), group.as_byte(), others.as_byte()),
                                         local_dir_path.display(),
                                         err
                                     ),
@@ -874,13 +877,16 @@ impl FileTransferActivity {
                             target_os = "macos",
                             target_os = "linux"
                         ))]
-                        if let Some(pex) = remote.unix_pex {
-                            if let Err(err) = self.host.chmod(local, pex) {
+                        if let Some((owner, group, others)) = remote.unix_pex {
+                            if let Err(err) = self
+                                .host
+                                .chmod(local, (owner.as_byte(), group.as_byte(), others.as_byte()))
+                            {
                                 self.log(
                                     LogLevel::Error,
                                     format!(
                                         "Could not apply file mode {:?} to \"{}\": {}",
-                                        pex,
+                                        (owner.as_byte(), group.as_byte(), others.as_byte()),
                                         local.display(),
                                         err
                                     ),

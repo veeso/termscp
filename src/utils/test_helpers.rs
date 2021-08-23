@@ -25,7 +25,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-use crate::fs::{FsDirectory, FsEntry, FsFile};
+use crate::fs::{FsDirectory, FsEntry, FsFile, UnixPex};
 // ext
 use std::fs::File;
 #[cfg(feature = "with-containers")]
@@ -53,11 +53,11 @@ pub fn create_sample_file_entry() -> (FsFile, NamedTempFile) {
             last_access_time: SystemTime::UNIX_EPOCH,
             creation_time: SystemTime::UNIX_EPOCH,
             size: 127,
-            ftype: None,               // File type
-            symlink: None,             // UNIX only
-            user: Some(0),             // UNIX only
-            group: Some(0),            // UNIX only
-            unix_pex: Some((6, 4, 4)), // UNIX only
+            ftype: None,    // File type
+            symlink: None,  // UNIX only
+            user: Some(0),  // UNIX only
+            group: Some(0), // UNIX only
+            unix_pex: Some((UnixPex::from(6), UnixPex::from(4), UnixPex::from(4))), // UNIX only
         },
         tmpfile,
     )
@@ -161,10 +161,10 @@ pub fn make_fsentry(path: PathBuf, is_dir: bool) -> FsEntry {
             last_change_time: SystemTime::UNIX_EPOCH,
             last_access_time: SystemTime::UNIX_EPOCH,
             creation_time: SystemTime::UNIX_EPOCH,
-            symlink: None,             // UNIX only
-            user: Some(0),             // UNIX only
-            group: Some(0),            // UNIX only
-            unix_pex: Some((6, 4, 4)), // UNIX only
+            symlink: None,  // UNIX only
+            user: Some(0),  // UNIX only
+            group: Some(0), // UNIX only
+            unix_pex: Some((UnixPex::from(6), UnixPex::from(4), UnixPex::from(4))), // UNIX only
         }),
         false => FsEntry::File(FsFile {
             name: path.file_name().unwrap().to_string_lossy().to_string(),
@@ -173,11 +173,11 @@ pub fn make_fsentry(path: PathBuf, is_dir: bool) -> FsEntry {
             last_access_time: SystemTime::UNIX_EPOCH,
             creation_time: SystemTime::UNIX_EPOCH,
             size: 127,
-            ftype: None,               // File type
-            symlink: None,             // UNIX only
-            user: Some(0),             // UNIX only
-            group: Some(0),            // UNIX only
-            unix_pex: Some((6, 4, 4)), // UNIX only
+            ftype: None,    // File type
+            symlink: None,  // UNIX only
+            user: Some(0),  // UNIX only
+            group: Some(0), // UNIX only
+            unix_pex: Some((UnixPex::from(6), UnixPex::from(4), UnixPex::from(4))), // UNIX only
         }),
     }
 }

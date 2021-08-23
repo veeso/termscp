@@ -354,7 +354,9 @@ impl Formatter {
         pex.push(file_type);
         match fsentry.get_unix_pex() {
             None => pex.push_str("?????????"),
-            Some((owner, group, others)) => pex.push_str(fmt_pex(owner, group, others).as_str()),
+            Some((owner, group, others)) => pex.push_str(
+                format!("{}{}{}", fmt_pex(owner), fmt_pex(group), fmt_pex(others)).as_str(),
+            ),
         }
         // Add to cur str, prefix and the key value
         format!("{}{}{:10}", cur_str, prefix, pex)
@@ -533,7 +535,7 @@ impl Formatter {
 mod tests {
 
     use super::*;
-    use crate::fs::{FsDirectory, FsFile};
+    use crate::fs::{FsDirectory, FsFile, UnixPex};
 
     use pretty_assertions::assert_eq;
     use std::path::PathBuf;
@@ -553,10 +555,10 @@ mod tests {
             creation_time: t_now,
             size: 8192,
             ftype: Some(String::from("txt")),
-            symlink: None,             // UNIX only
-            user: Some(0),             // UNIX only
-            group: Some(0),            // UNIX only
-            unix_pex: Some((6, 4, 4)), // UNIX only
+            symlink: None,  // UNIX only
+            user: Some(0),  // UNIX only
+            group: Some(0), // UNIX only
+            unix_pex: Some((UnixPex::from(6), UnixPex::from(4), UnixPex::from(4))), // UNIX only
         });
         let prefix: String = String::from("h");
         let mut callchain: CallChainBlock = CallChainBlock::new(dummy_fmt, prefix, None, None);
@@ -593,10 +595,10 @@ mod tests {
             creation_time: t,
             size: 8192,
             ftype: Some(String::from("txt")),
-            symlink: None,             // UNIX only
-            user: Some(0),             // UNIX only
-            group: Some(0),            // UNIX only
-            unix_pex: Some((6, 4, 4)), // UNIX only
+            symlink: None,  // UNIX only
+            user: Some(0),  // UNIX only
+            group: Some(0), // UNIX only
+            unix_pex: Some((UnixPex::from(6), UnixPex::from(4), UnixPex::from(4))), // UNIX only
         });
         #[cfg(target_family = "unix")]
         assert_eq!(
@@ -623,10 +625,10 @@ mod tests {
             creation_time: t,
             size: 8192,
             ftype: Some(String::from("txt")),
-            symlink: None,             // UNIX only
-            user: Some(0),             // UNIX only
-            group: Some(0),            // UNIX only
-            unix_pex: Some((6, 4, 4)), // UNIX only
+            symlink: None,  // UNIX only
+            user: Some(0),  // UNIX only
+            group: Some(0), // UNIX only
+            unix_pex: Some((UnixPex::from(6), UnixPex::from(4), UnixPex::from(4))), // UNIX only
         });
         #[cfg(target_family = "unix")]
         assert_eq!(
@@ -718,10 +720,10 @@ mod tests {
             last_change_time: t_now,
             last_access_time: t_now,
             creation_time: t_now,
-            symlink: None,             // UNIX only
-            user: Some(0),             // UNIX only
-            group: Some(0),            // UNIX only
-            unix_pex: Some((7, 5, 5)), // UNIX only
+            symlink: None,  // UNIX only
+            user: Some(0),  // UNIX only
+            group: Some(0), // UNIX only
+            unix_pex: Some((UnixPex::from(7), UnixPex::from(5), UnixPex::from(5))), // UNIX only
         });
         #[cfg(target_family = "unix")]
         assert_eq!(
@@ -797,7 +799,7 @@ mod tests {
             symlink: Some(Box::new(pointer)), // UNIX only
             user: None,                       // UNIX only
             group: None,                      // UNIX only
-            unix_pex: Some((7, 5, 5)),        // UNIX only
+            unix_pex: Some((UnixPex::from(7), UnixPex::from(5), UnixPex::from(5))), // UNIX only
         });
         assert_eq!(formatter.fmt(&entry), format!(
             "projects/        -> project.info 0            0            lrwxr-xr-x            {} {} {}",
@@ -812,10 +814,10 @@ mod tests {
             last_change_time: t,
             last_access_time: t,
             creation_time: t,
-            symlink: None,             // UNIX only
-            user: None,                // UNIX only
-            group: None,               // UNIX only
-            unix_pex: Some((7, 5, 5)), // UNIX only
+            symlink: None, // UNIX only
+            user: None,    // UNIX only
+            group: None,   // UNIX only
+            unix_pex: Some((UnixPex::from(7), UnixPex::from(5), UnixPex::from(5))), // UNIX only
         });
         assert_eq!(formatter.fmt(&entry), format!(
             "projects/                                 0            0            drwxr-xr-x            {} {} {}",
@@ -848,7 +850,7 @@ mod tests {
             symlink: Some(Box::new(pointer)), // UNIX only
             user: None,                       // UNIX only
             group: None,                      // UNIX only
-            unix_pex: Some((6, 4, 4)),        // UNIX only
+            unix_pex: Some((UnixPex::from(6), UnixPex::from(4), UnixPex::from(4))), // UNIX only
         });
         assert_eq!(formatter.fmt(&entry), format!(
             "bar.txt          -> project.info 0            0            lrw-r--r-- 8.2 KB     {} {} {}",
@@ -865,10 +867,10 @@ mod tests {
             creation_time: t,
             size: 8192,
             ftype: Some(String::from("txt")),
-            symlink: None,             // UNIX only
-            user: None,                // UNIX only
-            group: None,               // UNIX only
-            unix_pex: Some((6, 4, 4)), // UNIX only
+            symlink: None, // UNIX only
+            user: None,    // UNIX only
+            group: None,   // UNIX only
+            unix_pex: Some((UnixPex::from(6), UnixPex::from(4), UnixPex::from(4))), // UNIX only
         });
         assert_eq!(formatter.fmt(&entry), format!(
             "bar.txt                                   0            0            -rw-r--r-- 8.2 KB     {} {} {}",
