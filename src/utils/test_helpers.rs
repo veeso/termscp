@@ -53,8 +53,7 @@ pub fn create_sample_file_entry() -> (FsFile, NamedTempFile) {
             last_access_time: SystemTime::UNIX_EPOCH,
             creation_time: SystemTime::UNIX_EPOCH,
             size: 127,
-            ftype: None, // File type
-            readonly: false,
+            ftype: None,               // File type
             symlink: None,             // UNIX only
             user: Some(0),             // UNIX only
             group: Some(0),            // UNIX only
@@ -162,7 +161,6 @@ pub fn make_fsentry(path: PathBuf, is_dir: bool) -> FsEntry {
             last_change_time: SystemTime::UNIX_EPOCH,
             last_access_time: SystemTime::UNIX_EPOCH,
             creation_time: SystemTime::UNIX_EPOCH,
-            readonly: false,
             symlink: None,             // UNIX only
             user: Some(0),             // UNIX only
             group: Some(0),            // UNIX only
@@ -175,8 +173,7 @@ pub fn make_fsentry(path: PathBuf, is_dir: bool) -> FsEntry {
             last_access_time: SystemTime::UNIX_EPOCH,
             creation_time: SystemTime::UNIX_EPOCH,
             size: 127,
-            ftype: None, // File type
-            readonly: false,
+            ftype: None,               // File type
             symlink: None,             // UNIX only
             user: Some(0),             // UNIX only
             group: Some(0),            // UNIX only
@@ -200,7 +197,7 @@ mod test {
     #[test]
     fn test_utils_test_helpers_sample_file() {
         let (file, _) = create_sample_file_entry();
-        assert_eq!(file.readonly, false);
+        assert!(file.symlink.is_none());
     }
 
     #[test]

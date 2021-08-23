@@ -461,7 +461,6 @@ impl Localhost {
                 last_change_time: attr.modified().unwrap_or(SystemTime::UNIX_EPOCH),
                 last_access_time: attr.accessed().unwrap_or(SystemTime::UNIX_EPOCH),
                 creation_time: attr.created().unwrap_or(SystemTime::UNIX_EPOCH),
-                readonly: attr.permissions().readonly(),
                 symlink: match fs::read_link(path.as_path()) {
                     Ok(p) => match self.stat(p.as_path()) {
                         Ok(entry) => Some(Box::new(entry)),
@@ -484,7 +483,6 @@ impl Localhost {
                     last_change_time: attr.modified().unwrap_or(SystemTime::UNIX_EPOCH),
                     last_access_time: attr.accessed().unwrap_or(SystemTime::UNIX_EPOCH),
                     creation_time: attr.created().unwrap_or(SystemTime::UNIX_EPOCH),
-                    readonly: attr.permissions().readonly(),
                     size: attr.len() as usize,
                     ftype: extension,
                     symlink: match fs::read_link(path.as_path()) {
@@ -506,7 +504,6 @@ impl Localhost {
     ///
     /// Stat file and create a FsEntry
     #[cfg(target_os = "windows")]
-    #[cfg(not(tarpaulin_include))]
     pub fn stat(&self, path: &Path) -> Result<FsEntry, HostError> {
         let path: PathBuf = self.to_abs_path(path);
         info!("Stating file {}", path.display());
@@ -530,7 +527,6 @@ impl Localhost {
                 last_change_time: attr.modified().unwrap_or(SystemTime::UNIX_EPOCH),
                 last_access_time: attr.accessed().unwrap_or(SystemTime::UNIX_EPOCH),
                 creation_time: attr.created().unwrap_or(SystemTime::UNIX_EPOCH),
-                readonly: attr.permissions().readonly(),
                 symlink: match fs::read_link(path.as_path()) {
                     Ok(p) => match self.stat(p.as_path()) {
                         Ok(entry) => Some(Box::new(entry)),
@@ -554,7 +550,6 @@ impl Localhost {
                     last_change_time: attr.modified().unwrap_or(SystemTime::UNIX_EPOCH),
                     last_access_time: attr.accessed().unwrap_or(SystemTime::UNIX_EPOCH),
                     creation_time: attr.created().unwrap_or(SystemTime::UNIX_EPOCH),
-                    readonly: attr.permissions().readonly(),
                     size: attr.len() as usize,
                     ftype: extension,
                     symlink: match fs::read_link(path.as_path()) {

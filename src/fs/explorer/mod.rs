@@ -586,7 +586,6 @@ mod tests {
             last_access_time: t,
             creation_time: t,
             size: 8192,
-            readonly: false,
             ftype: Some(String::from("txt")),
             symlink: None,             // UNIX only
             user: Some(0),             // UNIX only
@@ -670,8 +669,7 @@ mod tests {
                 last_access_time: t_now,
                 creation_time: t_now,
                 size: 64,
-                ftype: None, // File type
-                readonly: false,
+                ftype: None,               // File type
                 symlink: None,             // UNIX only
                 user: Some(0),             // UNIX only
                 group: Some(0),            // UNIX only
@@ -683,7 +681,6 @@ mod tests {
                 last_change_time: t_now,
                 last_access_time: t_now,
                 creation_time: t_now,
-                readonly: false,
                 symlink: None,             // UNIX only
                 user: Some(0),             // UNIX only
                 group: Some(0),            // UNIX only
@@ -702,8 +699,7 @@ mod tests {
                 last_access_time: t_now,
                 creation_time: t_now,
                 size: size,
-                ftype: None, // File type
-                readonly: false,
+                ftype: None,               // File type
                 symlink: None,             // UNIX only
                 user: Some(0),             // UNIX only
                 group: Some(0),            // UNIX only
@@ -715,7 +711,6 @@ mod tests {
                 last_change_time: t_now,
                 last_access_time: t_now,
                 creation_time: t_now,
-                readonly: false,
                 symlink: None,             // UNIX only
                 user: Some(0),             // UNIX only
                 group: Some(0),            // UNIX only

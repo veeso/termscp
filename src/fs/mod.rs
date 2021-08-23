@@ -52,7 +52,6 @@ pub struct FsDirectory {
     pub last_change_time: SystemTime,
     pub last_access_time: SystemTime,
     pub creation_time: SystemTime,
-    pub readonly: bool,
     pub symlink: Option<Box<FsEntry>>,  // UNIX only
     pub user: Option<u32>,              // UNIX only
     pub group: Option<u32>,             // UNIX only
@@ -71,8 +70,7 @@ pub struct FsFile {
     pub last_access_time: SystemTime,
     pub creation_time: SystemTime,
     pub size: usize,
-    pub ftype: Option<String>, // File type
-    pub readonly: bool,
+    pub ftype: Option<String>,          // File type
     pub symlink: Option<Box<FsEntry>>,  // UNIX only
     pub user: Option<u32>,              // UNIX only
     pub group: Option<u32>,             // UNIX only
@@ -264,7 +262,6 @@ mod tests {
             last_change_time: t_now,
             last_access_time: t_now,
             creation_time: t_now,
-            readonly: false,
             symlink: None,             // UNIX only
             user: Some(0),             // UNIX only
             group: Some(0),            // UNIX only
@@ -296,7 +293,6 @@ mod tests {
             last_access_time: t_now,
             creation_time: t_now,
             size: 8192,
-            readonly: false,
             ftype: Some(String::from("txt")),
             symlink: None,             // UNIX only
             user: Some(0),             // UNIX only
@@ -330,7 +326,6 @@ mod tests {
             last_access_time: t_now,
             creation_time: t_now,
             size: 8192,
-            readonly: false,
             ftype: Some(String::from("txt")),
             symlink: None,             // UNIX only
             user: Some(0),             // UNIX only
@@ -350,7 +345,6 @@ mod tests {
             last_change_time: t_now,
             last_access_time: t_now,
             creation_time: t_now,
-            readonly: false,
             symlink: None,             // UNIX only
             user: Some(0),             // UNIX only
             group: Some(0),            // UNIX only
@@ -369,7 +363,6 @@ mod tests {
             last_access_time: t_now,
             creation_time: t_now,
             size: 8192,
-            readonly: false,
             ftype: Some(String::from("txt")),
             symlink: None,             // UNIX only
             user: Some(0),             // UNIX only
@@ -384,7 +377,6 @@ mod tests {
             last_access_time: t_now,
             creation_time: t_now,
             size: 8192,
-            readonly: false,
             ftype: Some(String::from("txt")),
             symlink: None,             // UNIX only
             user: Some(0),             // UNIX only
@@ -398,7 +390,6 @@ mod tests {
             last_change_time: t_now,
             last_access_time: t_now,
             creation_time: t_now,
-            readonly: false,
             symlink: None,             // UNIX only
             user: Some(0),             // UNIX only
             group: Some(0),            // UNIX only
@@ -418,7 +409,6 @@ mod tests {
             last_access_time: t_now,
             creation_time: t_now,
             size: 8192,
-            readonly: false,
             ftype: Some(String::from("txt")),
             symlink: None,             // UNIX only
             user: Some(0),             // UNIX only
@@ -437,7 +427,6 @@ mod tests {
             last_change_time: t_now,
             last_access_time: t_now,
             creation_time: t_now,
-            readonly: false,
             symlink: None,             // UNIX only
             user: Some(0),             // UNIX only
             group: Some(0),            // UNIX only
@@ -457,7 +446,6 @@ mod tests {
             last_change_time: t_now,
             last_access_time: t_now,
             creation_time: t_now,
-            readonly: false,
             symlink: None,             // UNIX only
             user: Some(0),             // UNIX only
             group: Some(0),            // UNIX only
@@ -469,7 +457,6 @@ mod tests {
             last_change_time: t_now,
             last_access_time: t_now,
             creation_time: t_now,
-            readonly: false,
             symlink: Some(Box::new(entry_target)),
             user: Some(0),
             group: Some(0),
@@ -482,7 +469,6 @@ mod tests {
             last_access_time: t_now,
             creation_time: t_now,
             size: 8,
-            readonly: false,
             ftype: None,
             symlink: Some(Box::new(entry_child)),
             user: Some(0),

@@ -178,7 +178,6 @@ impl SftpFileTransfer {
                 last_change_time: mtime,
                 last_access_time: atime,
                 creation_time: SystemTime::UNIX_EPOCH,
-                readonly: false,
                 symlink,
                 user: uid,
                 group: gid,
@@ -192,7 +191,6 @@ impl SftpFileTransfer {
                 last_change_time: mtime,
                 last_access_time: atime,
                 creation_time: SystemTime::UNIX_EPOCH,
-                readonly: false,
                 symlink,
                 user: uid,
                 group: gid,
@@ -923,11 +921,10 @@ mod tests {
             creation_time: SystemTime::UNIX_EPOCH,
             size: 0,
             ftype: Some(String::from("txt")), // File type
-            readonly: true,
-            symlink: None,             // UNIX only
-            user: Some(0),             // UNIX only
-            group: Some(0),            // UNIX only
-            unix_pex: Some((6, 4, 4)), // UNIX only
+            symlink: None,                    // UNIX only
+            user: Some(0),                    // UNIX only
+            group: Some(0),                   // UNIX only
+            unix_pex: Some((6, 4, 4)),        // UNIX only
         });
         assert!(client
             .rename(&dummy, PathBuf::from("/a/b/c").as_path())
@@ -1072,11 +1069,10 @@ mod tests {
             creation_time: SystemTime::UNIX_EPOCH,
             size: 0,
             ftype: Some(String::from("txt")), // File type
-            readonly: true,
-            symlink: None,             // UNIX only
-            user: Some(0),             // UNIX only
-            group: Some(0),            // UNIX only
-            unix_pex: Some((6, 4, 4)), // UNIX only
+            symlink: None,                    // UNIX only
+            user: Some(0),                    // UNIX only
+            group: Some(0),                   // UNIX only
+            unix_pex: Some((6, 4, 4)),        // UNIX only
         };
         let mut sftp: SftpFileTransfer = SftpFileTransfer::new(SshKeyStorage::empty());
         assert!(sftp.change_dir(Path::new("/tmp")).is_err());

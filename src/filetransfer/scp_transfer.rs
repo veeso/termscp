@@ -218,7 +218,6 @@ impl ScpFileTransfer {
                         last_change_time: mtime,
                         last_access_time: mtime,
                         creation_time: mtime,
-                        readonly: false,
                         symlink,
                         user: uid,
                         group: gid,
@@ -232,7 +231,6 @@ impl ScpFileTransfer {
                         creation_time: mtime,
                         size: filesize,
                         ftype: extension,
-                        readonly: false,
                         symlink,
                         user: uid,
                         group: gid,
@@ -1125,11 +1123,10 @@ mod tests {
             creation_time: SystemTime::UNIX_EPOCH,
             size: 0,
             ftype: Some(String::from("txt")), // File type
-            readonly: true,
-            symlink: None,             // UNIX only
-            user: Some(0),             // UNIX only
-            group: Some(0),            // UNIX only
-            unix_pex: Some((6, 4, 4)), // UNIX only
+            symlink: None,                    // UNIX only
+            user: Some(0),                    // UNIX only
+            group: Some(0),                   // UNIX only
+            unix_pex: Some((6, 4, 4)),        // UNIX only
         });
         assert!(client
             .rename(&dummy, PathBuf::from("/a/b/c").as_path())
@@ -1244,7 +1241,6 @@ mod tests {
         assert_eq!(entry.abs_path, PathBuf::from("/tmp/Cargo.toml"));
         assert_eq!(entry.unix_pex.unwrap(), (6, 4, 4));
         assert_eq!(entry.size, 2056);
-        assert_eq!(entry.readonly, false);
         assert_eq!(entry.ftype.unwrap().as_str(), "toml");
         assert!(entry.symlink.is_none());
         // File (year)
@@ -1260,7 +1256,6 @@ mod tests {
         assert_eq!(entry.abs_path, PathBuf::from("/tmp/CODE_OF_CONDUCT.md"));
         assert_eq!(entry.unix_pex.unwrap(), (6, 6, 6));
         assert_eq!(entry.size, 3368);
-        assert_eq!(entry.readonly, false);
         assert_eq!(entry.ftype.unwrap().as_str(), "md");
         assert!(entry.symlink.is_none());
         // Directory
@@ -1275,7 +1270,6 @@ mod tests {
         assert_eq!(entry.name.as_str(), "docs");
         assert_eq!(entry.abs_path, PathBuf::from("/tmp/docs"));
         assert_eq!(entry.unix_pex.unwrap(), (7, 5, 5));
-        assert_eq!(entry.readonly, false);
         assert!(entry.symlink.is_none());
         // Short metadata
         assert!(client
@@ -1323,11 +1317,10 @@ mod tests {
             creation_time: SystemTime::UNIX_EPOCH,
             size: 0,
             ftype: Some(String::from("txt")), // File type
-            readonly: true,
-            symlink: None,             // UNIX only
-            user: Some(0),             // UNIX only
-            group: Some(0),            // UNIX only
-            unix_pex: Some((6, 4, 4)), // UNIX only
+            symlink: None,                    // UNIX only
+            user: Some(0),                    // UNIX only
+            group: Some(0),                   // UNIX only
+            unix_pex: Some((6, 4, 4)),        // UNIX only
         };
         let mut scp: ScpFileTransfer = ScpFileTransfer::new(SshKeyStorage::empty());
         assert!(scp.change_dir(Path::new("/tmp")).is_err());

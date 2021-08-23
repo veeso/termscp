@@ -92,7 +92,6 @@ impl FtpFileTransfer {
                         last_access_time: x.modified(),
                         last_change_time: x.modified(),
                         creation_time: x.modified(),
-                        readonly: false,
                         symlink: None,
                         user: x.uid(),
                         group: x.gid(),
@@ -107,7 +106,6 @@ impl FtpFileTransfer {
                         last_access_time: x.modified(),
                         last_change_time: x.modified(),
                         creation_time: x.modified(),
-                        readonly: false,
                         user: x.uid(),
                         group: x.gid(),
                         symlink: Self::get_symlink_entry(path, x.symlink()),
@@ -149,7 +147,6 @@ impl FtpFileTransfer {
                     creation_time: UNIX_EPOCH,
                     user: None,
                     group: None,
-                    readonly: false,
                     symlink: None,
                     unix_pex: None,
                     abs_path,
@@ -775,11 +772,10 @@ mod tests {
             creation_time: UNIX_EPOCH,
             size: 0,
             ftype: Some(String::from("txt")), // File type
-            readonly: true,
-            symlink: None,             // UNIX only
-            user: Some(0),             // UNIX only
-            group: Some(0),            // UNIX only
-            unix_pex: Some((6, 4, 4)), // UNIX only
+            symlink: None,                    // UNIX only
+            user: Some(0),                    // UNIX only
+            group: Some(0),                   // UNIX only
+            unix_pex: Some((6, 4, 4)),        // UNIX only
         });
         assert!(ftp
             .rename(&dummy, PathBuf::from("/a/b/c").as_path())
@@ -931,11 +927,10 @@ mod tests {
             creation_time: UNIX_EPOCH,
             size: 0,
             ftype: Some(String::from("txt")), // File type
-            readonly: true,
-            symlink: None,             // UNIX only
-            user: Some(0),             // UNIX only
-            group: Some(0),            // UNIX only
-            unix_pex: Some((6, 4, 4)), // UNIX only
+            symlink: None,                    // UNIX only
+            user: Some(0),                    // UNIX only
+            group: Some(0),                   // UNIX only
+            unix_pex: Some((6, 4, 4)),        // UNIX only
         };
         let mut ftp: FtpFileTransfer = FtpFileTransfer::new(false);
         assert!(ftp.change_dir(Path::new("/tmp")).is_err());
