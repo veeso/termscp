@@ -643,13 +643,22 @@ impl FileTransfer for ScpFileTransfer {
     /// ### mkdir
     ///
     /// Make directory
-    /// You must return error in case the directory already exists
+    /// In case the directory already exists, it must return an Error of kind `FileTransferErrorType::DirectoryAlreadyExists`
     fn mkdir(&mut self, dir: &Path) -> Result<(), FileTransferError> {
         match self.is_connected() {
             true => {
                 let dir: PathBuf = Self::resolve(dir);
                 info!("Making directory {}", dir.display());
                 let p: PathBuf = self.wrkdir.clone();
+                // If directory already exists, return Err
+                let mut dir_stat_path: PathBuf = dir.clone();
+                dir_stat_path.push("./");
+                if self.stat(dir_stat_path.as_path()).is_ok() {
+                    error!("Directory {} already exists", dir.display());
+                    return Err(FileTransferError::new(
+                        FileTransferErrorType::DirectoryAlreadyExists,
+                    ));
+                }
                 // Mkdir dir && echo 0
                 match self.perform_shell_cmd_with_path(
                     p.as_path(),
@@ -1019,6 +1028,15 @@ mod tests {
         assert!(client.list_dir(&Path::new("/config")).unwrap().len() >= 4);
         // Make directory
         assert!(client.mkdir(PathBuf::from("/tmp/omar").as_path()).is_ok());
+        // Remake directory (should report already exists)
+        assert_eq!(
+            client
+                .mkdir(PathBuf::from("/tmp/omar").as_path())
+                .err()
+                .unwrap()
+                .kind(),
+            FileTransferErrorType::DirectoryAlreadyExists
+        );
         // Make directory (err)
         assert!(client
             .mkdir(PathBuf::from("/root/aaaaa/pommlar").as_path())

@@ -337,7 +337,7 @@ mod tests {
                 .visible()
                 .with_borders(Borders::ALL, BorderType::Double, Color::Red)
                 .with_background(Color::Blue)
-                .with_title("log", Alignment::Left)
+                .with_title("Log", Alignment::Left)
                 .with_log(
                     TableBuilder::default()
                         .add_col(TextSpan::from("12:29"))

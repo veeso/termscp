@@ -26,12 +26,16 @@ Released on ??
 
 - Enhancements:
   - Now that tui-rs supports title alignment, UI has been improved
+  - Added new `Directory already exists` variant for file transfer errors
+- Bugfix:
+  - Fixed [Issue 58](https://github.com/veeso/termscp/issues/58):When uploading a directory, create directory only if it doesn't exist
 - Dependencies:
   - Updated `bitflags` to `1.3.2`
   - Updated `bytesize` to `1.1.0`
   - Updated `crossterm` to `0.20`
   - Updated `open` to `2.0.1`
   - Added `tui-realm-stdlib 0.6.0`
+  - Replaced `ftp4` with `suppaftp 4.1.1`
   - Updated `tui-realm` to `0.6.0`
 
 ## 0.6.0

@@ -554,11 +554,19 @@ impl FileTransfer for SftpFileTransfer {
     /// ### mkdir
     ///
     /// Make directory
+    /// In case the directory already exists, it must return an Error of kind `FileTransferErrorType::DirectoryAlreadyExists`
     fn mkdir(&mut self, dir: &Path) -> Result<(), FileTransferError> {
         match self.sftp.as_ref() {
             Some(sftp) => {
                 // Make directory
                 let path: PathBuf = self.get_abs_path(PathBuf::from(dir).as_path());
+                // If directory already exists, return Err
+                if sftp.stat(path.as_path()).is_ok() {
+                    error!("Directory {} already exists", path.display());
+                    return Err(FileTransferError::new(
+                        FileTransferErrorType::DirectoryAlreadyExists,
+                    ));
+                }
                 info!("Making directory {}", path.display());
                 match sftp.mkdir(path.as_path(), 0o775) {
                     Ok(_) => Ok(()),
@@ -839,6 +847,15 @@ mod tests {
         assert!(client.list_dir(&Path::new("/config")).unwrap().len() >= 4);
         // Make directory
         assert!(client.mkdir(PathBuf::from("/tmp/omar").as_path()).is_ok());
+        // Remake directory (should report already exists)
+        assert_eq!(
+            client
+                .mkdir(PathBuf::from("/tmp/omar").as_path())
+                .err()
+                .unwrap()
+                .kind(),
+            FileTransferErrorType::DirectoryAlreadyExists
+        );
         // Make directory (err)
         assert!(client
             .mkdir(PathBuf::from("/root/aaaaa/pommlar").as_path())
