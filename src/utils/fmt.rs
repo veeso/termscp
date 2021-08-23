@@ -297,7 +297,7 @@ mod tests {
     #[test]
     fn test_utils_fmt_pex() {
         assert_eq!(fmt_pex(UnixPex::from(7)), String::from("rwx"));
-        assert_eq!(fmt_pex(UnixPex::from(5)), String::from("r-xr-x"));
+        assert_eq!(fmt_pex(UnixPex::from(5)), String::from("r-x"));
         assert_eq!(fmt_pex(UnixPex::from(6)), String::from("rw-"));
     }
 
