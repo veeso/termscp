@@ -35,7 +35,6 @@ content_inspector = "0.2.4"
 crossterm = "0.20"
 dirs = "3.0.1"
 edit = "0.1.3"
-ftp4 = { version = "4.0.2", features = [ "secure" ] }
 hostname = "0.3.1"
 keyring = { version = "0.10.1", optional = true }
 lazy_static = "1.4.0"
@@ -48,6 +47,7 @@ rpassword = "5.0.1"
 serde = { version = "^1.0.0", features = [ "derive" ] }
 simplelog = "0.10.0"
 ssh2 = "0.9.0"
+suppaftp = { version = "4.1.1", features = [ "secure" ] }
 tempfile = "3.1.0"
 textwrap = "0.14.2"
 thiserror = "^1.0.0"

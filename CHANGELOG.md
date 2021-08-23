@@ -35,6 +35,7 @@ Released on ??
   - Updated `crossterm` to `0.20`
   - Updated `open` to `2.0.1`
   - Added `tui-realm-stdlib 0.6.0`
+  - Replaced `ftp4` with `suppaftp 4.1.1`
   - Updated `tui-realm` to `0.6.0`
 
 ## 0.6.0

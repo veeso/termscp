@@ -182,7 +182,7 @@ pub trait FileTransfer {
     /// ### mkdir
     ///
     /// Make directory
-    /// It MUSTN'T return error in case the directory already exists
+    /// In case the directory already exists, it must return an Error of kind `FileTransferErrorType::DirectoryAlreadyExists`
     fn mkdir(&mut self, dir: &Path) -> Result<(), FileTransferError>;
 
     /// ### remove

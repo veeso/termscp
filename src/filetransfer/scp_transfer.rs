@@ -643,7 +643,7 @@ impl FileTransfer for ScpFileTransfer {
     /// ### mkdir
     ///
     /// Make directory
-    /// It MUSTN'T return error in case the directory already exists
+    /// In case the directory already exists, it must return an Error of kind `FileTransferErrorType::DirectoryAlreadyExists`
     fn mkdir(&mut self, dir: &Path) -> Result<(), FileTransferError> {
         match self.is_connected() {
             true => {
@@ -651,7 +651,7 @@ impl FileTransfer for ScpFileTransfer {
                 info!("Making directory {}", dir.display());
                 let p: PathBuf = self.wrkdir.clone();
                 // If directory already exists, return Err
-                if let Ok(_) = self.stat(dir.as_path()) {
+                if self.stat(dir.as_path()).is_ok() {
                     error!("Directory {} already exists", dir.display());
                     return Err(FileTransferError::new(
                         FileTransferErrorType::DirectoryAlreadyExists,
@@ -1026,6 +1026,15 @@ mod tests {
         assert!(client.list_dir(&Path::new("/config")).unwrap().len() >= 4);
         // Make directory
         assert!(client.mkdir(PathBuf::from("/tmp/omar").as_path()).is_ok());
+        // Remake directory (should report already exists)
+        assert_eq!(
+            client
+                .mkdir(PathBuf::from("/tmp/omar").as_path())
+                .err()
+                .unwrap()
+                .kind(),
+            FileTransferErrorType::DirectoryAlreadyExists
+        );
         // Make directory (err)
         assert!(client
             .mkdir(PathBuf::from("/root/aaaaa/pommlar").as_path())
