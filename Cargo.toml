@@ -47,7 +47,7 @@ rpassword = "5.0.1"
 serde = { version = "^1.0.0", features = [ "derive" ] }
 simplelog = "0.10.0"
 ssh2 = "0.9.0"
-suppaftp = { version = "4.1.1", features = [ "secure" ] }
+suppaftp = { version = "4.1.2", features = [ "secure" ] }
 tempfile = "3.1.0"
 textwrap = "0.14.2"
 thiserror = "^1.0.0"

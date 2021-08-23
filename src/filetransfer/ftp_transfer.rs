@@ -36,7 +36,7 @@ use std::path::{Path, PathBuf};
 use std::time::UNIX_EPOCH;
 use suppaftp::native_tls::TlsConnector;
 use suppaftp::{
-    list::{File, UnixPexQuery},
+    list::{File, PosixPexQuery},
     status::FILE_UNAVAILABLE,
     types::{FileType, Response},
     FtpError, FtpStream,
@@ -164,19 +164,19 @@ impl FtpFileTransfer {
     fn query_unix_pex(f: &File) -> (u8, u8, u8) {
         (
             Self::pex_to_byte(
-                f.can_read(UnixPexQuery::Owner),
-                f.can_write(UnixPexQuery::Owner),
-                f.can_execute(UnixPexQuery::Owner),
+                f.can_read(PosixPexQuery::Owner),
+                f.can_write(PosixPexQuery::Owner),
+                f.can_execute(PosixPexQuery::Owner),
             ),
             Self::pex_to_byte(
-                f.can_read(UnixPexQuery::Group),
-                f.can_write(UnixPexQuery::Group),
-                f.can_execute(UnixPexQuery::Group),
+                f.can_read(PosixPexQuery::Group),
+                f.can_write(PosixPexQuery::Group),
+                f.can_execute(PosixPexQuery::Group),
             ),
             Self::pex_to_byte(
-                f.can_read(UnixPexQuery::Others),
-                f.can_write(UnixPexQuery::Others),
-                f.can_execute(UnixPexQuery::Others),
+                f.can_read(PosixPexQuery::Others),
+                f.can_write(PosixPexQuery::Others),
+                f.can_execute(PosixPexQuery::Others),
             ),
         )
     }
@@ -399,7 +399,7 @@ impl FileTransfer for FtpFileTransfer {
         match &mut self.stream {
             Some(stream) => match stream.mkdir(&dir.as_path().to_string_lossy()) {
                 Ok(_) => Ok(()),
-                Err(FtpError::InvalidResponse(Response {
+                Err(FtpError::UnexpectedResponse(Response {
                     // Directory already exists
                     code: FILE_UNAVAILABLE,
                     body: _,
