@@ -651,7 +651,9 @@ impl FileTransfer for ScpFileTransfer {
                 info!("Making directory {}", dir.display());
                 let p: PathBuf = self.wrkdir.clone();
                 // If directory already exists, return Err
-                if self.stat(dir.as_path()).is_ok() {
+                let mut dir_stat_path: PathBuf = dir.clone();
+                dir_stat_path.push("./");
+                if self.stat(dir_stat_path.as_path()).is_ok() {
                     error!("Directory {} already exists", dir.display());
                     return Err(FileTransferError::new(
                         FileTransferErrorType::DirectoryAlreadyExists,
