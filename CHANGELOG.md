@@ -29,6 +29,7 @@ Released on ??
   - Added new `Directory already exists` variant for file transfer errors
 - Bugfix:
   - Fixed [Issue 58](https://github.com/veeso/termscp/issues/58):When uploading a directory, create directory only if it doesn't exist
+  - Fixed [Issue 59](https://github.com/veeso/termscp/issues/59): When copying files with tricky copy, the upper progress bar shows no text
 - Dependencies:
   - Updated `bitflags` to `1.3.2`
   - Updated `bytesize` to `1.1.0`
