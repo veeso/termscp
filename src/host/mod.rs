@@ -39,6 +39,7 @@ use std::os::unix::fs::{MetadataExt, PermissionsExt};
 
 // Locals
 use crate::fs::{FsDirectory, FsEntry, FsFile, UnixPex};
+use crate::utils::path;
 
 /// ## HostErrorType
 ///
@@ -803,15 +804,7 @@ impl Localhost {
     ///
     /// Convert path to absolute path
     fn to_abs_path(&self, p: &Path) -> PathBuf {
-        // Convert to abs path
-        match p.is_relative() {
-            true => {
-                let mut path: PathBuf = self.wrkdir.clone();
-                path.push(p);
-                path
-            }
-            false => PathBuf::from(p),
-        }
+        path::absolutize(self.wrkdir.as_path(), p)
     }
 }
 

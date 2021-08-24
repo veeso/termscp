@@ -28,6 +28,7 @@
 use super::{FileTransfer, FileTransferError, FileTransferErrorType};
 use crate::fs::{FsDirectory, FsEntry, FsFile, UnixPex};
 use crate::utils::fmt::shadow_password;
+use crate::utils::path;
 
 // Includes
 use std::convert::TryFrom;
@@ -125,14 +126,7 @@ impl FtpFileTransfer {
             None => None,
             Some(p) => {
                 // Make abs path
-                let abs_path: PathBuf = match p.is_absolute() {
-                    true => p.to_path_buf(),
-                    false => {
-                        let mut abs = wrkdir.to_path_buf();
-                        abs.push(p);
-                        abs
-                    }
-                };
+                let abs_path: PathBuf = path::absolutize(wrkdir, p);
                 Some(Box::new(FsEntry::File(FsFile {
                     name: p
                         .file_name()

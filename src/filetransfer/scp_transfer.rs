@@ -76,6 +76,21 @@ impl ScpFileTransfer {
         p.to_path_buf()
     }
 
+    /// ### absolutize
+    ///
+    /// Absolutize target path if relative.
+    /// This also converts backslashes to slashes if relative
+    fn absolutize(wrkdir: &Path, target: &Path) -> PathBuf {
+        match target.is_absolute() {
+            true => target.to_path_buf(),
+            false => {
+                let mut p: PathBuf = wrkdir.to_path_buf();
+                p.push(target);
+                Self::resolve(p.as_path())
+            }
+        }
+    }
+
     /// ### parse_ls_output
     ///
     /// Parse a line of `ls -l` output and tokenize the output into a `FsEntry`
@@ -506,14 +521,7 @@ impl FileTransfer for ScpFileTransfer {
         match self.is_connected() {
             true => {
                 let p: PathBuf = self.wrkdir.clone();
-                let remote_path: PathBuf = match dir.is_absolute() {
-                    true => PathBuf::from(dir),
-                    false => {
-                        let mut p: PathBuf = PathBuf::from(".");
-                        p.push(dir);
-                        Self::resolve(p.as_path())
-                    }
-                };
+                let remote_path: PathBuf = Self::absolutize(&Path::new("."), dir);
                 info!("Changing working directory to {}", remote_path.display());
                 // Change directory
                 match self.perform_shell_cmd_with_path(
@@ -774,14 +782,7 @@ impl FileTransfer for ScpFileTransfer {
     ///
     /// Stat file and return FsEntry
     fn stat(&mut self, path: &Path) -> Result<FsEntry, FileTransferError> {
-        let path: PathBuf = match path.is_absolute() {
-            true => PathBuf::from(path),
-            false => {
-                let mut p: PathBuf = self.wrkdir.clone();
-                p.push(path);
-                Self::resolve(p.as_path())
-            }
-        };
+        let path: PathBuf = Self::absolutize(self.wrkdir.as_path(), path);
         match self.is_connected() {
             true => {
                 let p: PathBuf = self.wrkdir.clone();
@@ -857,15 +858,7 @@ impl FileTransfer for ScpFileTransfer {
     ) -> Result<Box<dyn Write>, FileTransferError> {
         match self.session.as_ref() {
             Some(session) => {
-                let file_name: PathBuf = match file_name.is_absolute() {
-                    true => PathBuf::from(file_name),
-                    false => {
-                        let mut p: PathBuf = self.wrkdir.clone();
-                        p.push(file_name);
-                        Self::resolve(p.as_path())
-                    }
-                };
-                let file_name: PathBuf = Self::resolve(file_name.as_path());
+                let file_name: PathBuf = Self::absolutize(self.wrkdir.as_path(), file_name);
                 info!(
                     "Sending file {} to {}",
                     local.abs_path.display(),
