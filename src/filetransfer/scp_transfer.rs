@@ -521,7 +521,7 @@ impl FileTransfer for ScpFileTransfer {
         match self.is_connected() {
             true => {
                 let p: PathBuf = self.wrkdir.clone();
-                let remote_path: PathBuf = Self::absolutize(&Path::new("."), dir);
+                let remote_path: PathBuf = Self::absolutize(Path::new("."), dir);
                 info!("Changing working directory to {}", remote_path.display());
                 // Change directory
                 match self.perform_shell_cmd_with_path(
