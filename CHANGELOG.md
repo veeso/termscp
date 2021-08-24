@@ -22,7 +22,7 @@
 
 ## 0.6.1
 
-Released on ??
+Released on 31/08/2021
 
 - Enhancements:
   - Now that tui-rs supports title alignment, UI has been improved
