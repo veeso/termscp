@@ -26,6 +26,7 @@
  * SOFTWARE.
  */
 use super::{AuthActivity, FileTransferParams, FileTransferProtocol};
+use crate::filetransfer::params::{AwsS3Params, GenericProtocolParams, ProtocolParams};
 
 impl AuthActivity {
     /// ### protocol_opt_to_enum
@@ -36,6 +37,7 @@ impl AuthActivity {
             1 => FileTransferProtocol::Scp,
             2 => FileTransferProtocol::Ftp(false),
             3 => FileTransferProtocol::Ftp(true),
+            4 => FileTransferProtocol::AwsS3,
             _ => FileTransferProtocol::Sftp,
         }
     }
@@ -49,6 +51,7 @@ impl AuthActivity {
             FileTransferProtocol::Scp => 1,
             FileTransferProtocol::Ftp(false) => 2,
             FileTransferProtocol::Ftp(true) => 3,
+            FileTransferProtocol::AwsS3 => 4,
         }
     }
 
@@ -59,6 +62,7 @@ impl AuthActivity {
         match protocol {
             FileTransferProtocol::Sftp | FileTransferProtocol::Scp => 22,
             FileTransferProtocol::Ftp(_) => 21,
+            FileTransferProtocol::AwsS3 => 22, // Doesn't matter, since not used
         }
     }
 
@@ -83,15 +87,24 @@ impl AuthActivity {
 
     /// ### collect_host_params
     ///
-    /// Get input values from fields or return an error if fields are invalid
+    /// Collect host params as `FileTransferParams`
     pub(super) fn collect_host_params(&self) -> Result<FileTransferParams, &'static str> {
-        let (address, port, protocol, username, password): (
-            String,
-            u16,
-            FileTransferProtocol,
-            String,
-            String,
-        ) = self.get_input();
+        let protocol: FileTransferProtocol = self.get_protocol();
+        match protocol {
+            FileTransferProtocol::AwsS3 => self.collect_s3_host_params(protocol),
+            protocol => self.collect_generic_host_params(protocol),
+        }
+    }
+
+    /// ### collect_generic_host_params
+    ///
+    /// Get input values from fields or return an error if fields are invalid to work as generic
+    pub(super) fn collect_generic_host_params(
+        &self,
+        protocol: FileTransferProtocol,
+    ) -> Result<FileTransferParams, &'static str> {
+        let (address, port, username, password): (String, u16, String, String) =
+            self.get_generic_params_input();
         if address.is_empty() {
             return Err("Invalid host");
         }
@@ -99,17 +112,42 @@ impl AuthActivity {
             return Err("Invalid port");
         }
         Ok(FileTransferParams {
-            address,
-            port,
             protocol,
-            username: match username.is_empty() {
-                true => None,
-                false => Some(username),
-            },
-            password: match password.is_empty() {
-                true => None,
-                false => Some(password),
-            },
+            params: ProtocolParams::Generic(
+                GenericProtocolParams::default()
+                    .address(address)
+                    .port(port)
+                    .username(match username.is_empty() {
+                        true => None,
+                        false => Some(username),
+                    })
+                    .password(match password.is_empty() {
+                        true => None,
+                        false => Some(password),
+                    }),
+            ),
+            entry_directory: None,
+        })
+    }
+
+    /// ### collect_s3_host_params
+    ///
+    /// Get input values from fields or return an error if fields are invalid to work as aws s3
+    pub(super) fn collect_s3_host_params(
+        &self,
+        protocol: FileTransferProtocol,
+    ) -> Result<FileTransferParams, &'static str> {
+        let (bucket, region, profile): (String, String, Option<String>) =
+            self.get_s3_params_input();
+        if bucket.is_empty() {
+            return Err("Invalid bucket");
+        }
+        if region.is_empty() {
+            return Err("Invalid region");
+        }
+        Ok(FileTransferParams {
+            protocol,
+            params: ProtocolParams::AwsS3(AwsS3Params::new(bucket, region, profile)),
             entry_directory: None,
         })
     }

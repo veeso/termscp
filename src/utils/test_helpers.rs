@@ -28,9 +28,9 @@
 use crate::fs::{FsDirectory, FsEntry, FsFile, UnixPex};
 // ext
 use std::fs::File;
-#[cfg(feature = "with-containers")]
+#[cfg(any(feature = "with-containers", feature = "with-s3-ci"))]
 use std::fs::OpenOptions;
-#[cfg(feature = "with-containers")]
+#[cfg(any(feature = "with-containers", feature = "with-s3-ci"))]
 use std::io::Read;
 use std::io::Write;
 use std::path::{Path, PathBuf};
@@ -97,7 +97,7 @@ pub fn make_dir_at(dir: &Path, dirname: &str) -> std::io::Result<()> {
     std::fs::create_dir(p.as_path())
 }
 
-#[cfg(feature = "with-containers")]
+#[cfg(any(feature = "with-containers", feature = "with-s3-ci"))]
 pub fn write_file(file: &NamedTempFile, writable: &mut Box<dyn Write>) {
     let mut fhnd = OpenOptions::new()
         .create(false)
@@ -153,7 +153,8 @@ RorU9FCmS/654wAAABFyb290QDhjNTBmZDRjMzQ1YQECAw==
 /// ### make_fsentry
 ///
 /// Create a FsEntry at specified path
-pub fn make_fsentry(path: PathBuf, is_dir: bool) -> FsEntry {
+pub fn make_fsentry<P: AsRef<Path>>(path: P, is_dir: bool) -> FsEntry {
+    let path: PathBuf = path.as_ref().to_path_buf();
     match is_dir {
         true => FsEntry::Directory(FsDirectory {
             name: path.file_name().unwrap().to_string_lossy().to_string(),

@@ -34,6 +34,7 @@ use crate::utils::fmt::fmt_millis;
 
 // Ext
 use bytesize::ByteSize;
+use std::fs::File;
 use std::io::{Read, Seek, Write};
 use std::path::{Path, PathBuf};
 use std::time::Instant;
@@ -76,22 +77,20 @@ impl FileTransferActivity {
     ///
     /// Connect to remote
     pub(super) fn connect(&mut self) {
-        let params = self.context().ft_params().unwrap().clone();
-        let addr: String = params.address.clone();
-        let entry_dir: Option<PathBuf> = params.entry_directory.clone();
+        let ft_params = self.context().ft_params().unwrap().clone();
+        let entry_dir: Option<PathBuf> = ft_params.entry_directory.clone();
         // Connect to remote
-        match self.client.connect(
-            params.address,
-            params.port,
-            params.username,
-            params.password,
-        ) {
+        match self.client.connect(&ft_params.params) {
             Ok(welcome) => {
                 if let Some(banner) = welcome {
                     // Log welcome
                     self.log(
                         LogLevel::Info,
-                        format!("Established connection with '{}': \"{}\"", addr, banner),
+                        format!(
+                            "Established connection with '{}': \"{}\"",
+                            self.get_remote_hostname(),
+                            banner
+                        ),
                     );
                 }
                 // Try to change directory to entry directory
@@ -121,8 +120,7 @@ impl FileTransferActivity {
     ///
     /// disconnect from remote
     pub(super) fn disconnect(&mut self) {
-        let params = self.context().ft_params().unwrap();
-        let msg: String = format!("Disconnecting from {}…", params.address);
+        let msg: String = format!("Disconnecting from {}…", self.get_remote_hostname());
         // Show popup disconnecting
         self.mount_wait(msg.as_str());
         // Disconnect
@@ -442,103 +440,165 @@ impl FileTransferActivity {
         // Upload file
         // Try to open local file
         match self.host.open_file_read(local.abs_path.as_path()) {
-            Ok(mut fhnd) => match self.client.send_file(local, remote) {
-                Ok(mut rhnd) => {
-                    // Write file
-                    let file_size: usize =
-                        fhnd.seek(std::io::SeekFrom::End(0)).unwrap_or(0) as usize;
-                    // Init transfer
-                    self.transfer.partial.init(file_size);
-                    // rewind
-                    if let Err(err) = fhnd.seek(std::io::SeekFrom::Start(0)) {
-                        return Err(TransferErrorReason::CouldNotRewind(err));
-                    }
-                    // Write remote file
-                    let mut total_bytes_written: usize = 0;
-                    let mut last_progress_val: f64 = 0.0;
-                    let mut last_input_event_fetch: Option<Instant> = None;
-                    // While the entire file hasn't been completely written,
-                    // Or filetransfer has been aborted
-                    while total_bytes_written < file_size && !self.transfer.aborted() {
-                        // Handle input events (each 500ms) or if never fetched before
-                        if last_input_event_fetch.is_none()
-                            || last_input_event_fetch
-                                .unwrap_or_else(Instant::now)
-                                .elapsed()
-                                .as_millis()
-                                >= 500
-                        {
-                            // Read events
-                            self.read_input_event();
-                            // Reset instant
-                            last_input_event_fetch = Some(Instant::now());
-                        }
-                        // Read till you can
-                        let mut buffer: [u8; 65536] = [0; 65536];
-                        let delta: usize = match fhnd.read(&mut buffer) {
-                            Ok(bytes_read) => {
-                                total_bytes_written += bytes_read;
-                                if bytes_read == 0 {
-                                    continue;
-                                } else {
-                                    let mut delta: usize = 0;
-                                    while delta < bytes_read {
-                                        // Write bytes
-                                        match rhnd.write(&buffer[delta..bytes_read]) {
-                                            Ok(bytes) => {
-                                                delta += bytes;
-                                            }
-                                            Err(err) => {
-                                                return Err(TransferErrorReason::RemoteIoError(
-                                                    err,
-                                                ));
-                                            }
-                                        }
-                                    }
-                                    delta
+            Ok(fhnd) => match self.client.send_file(local, remote) {
+                Ok(rhnd) => {
+                    self.filetransfer_send_one_with_stream(local, remote, file_name, fhnd, rhnd)
+                }
+                Err(err) if err.kind() == FileTransferErrorType::UnsupportedFeature => {
+                    self.filetransfer_send_one_wno_stream(local, remote, file_name, fhnd)
+                }
+                Err(err) => Err(TransferErrorReason::FileTransferError(err)),
+            },
+            Err(err) => Err(TransferErrorReason::HostError(err)),
+        }
+    }
+
+    /// ### filetransfer_send_one_with_stream
+    ///
+    /// Send file to remote using stream
+    fn filetransfer_send_one_with_stream(
+        &mut self,
+        local: &FsFile,
+        remote: &Path,
+        file_name: String,
+        mut reader: File,
+        mut writer: Box<dyn Write>,
+    ) -> Result<(), TransferErrorReason> {
+        // Write file
+        let file_size: usize = reader.seek(std::io::SeekFrom::End(0)).unwrap_or(0) as usize;
+        // Init transfer
+        self.transfer.partial.init(file_size);
+        // rewind
+        if let Err(err) = reader.seek(std::io::SeekFrom::Start(0)) {
+            return Err(TransferErrorReason::CouldNotRewind(err));
+        }
+        // Write remote file
+        let mut total_bytes_written: usize = 0;
+        let mut last_progress_val: f64 = 0.0;
+        let mut last_input_event_fetch: Option<Instant> = None;
+        // While the entire file hasn't been completely written,
+        // Or filetransfer has been aborted
+        while total_bytes_written < file_size && !self.transfer.aborted() {
+            // Handle input events (each 500ms) or if never fetched before
+            if last_input_event_fetch.is_none()
+                || last_input_event_fetch
+                    .unwrap_or_else(Instant::now)
+                    .elapsed()
+                    .as_millis()
+                    >= 500
+            {
+                // Read events
+                self.read_input_event();
+                // Reset instant
+                last_input_event_fetch = Some(Instant::now());
+            }
+            // Read till you can
+            let mut buffer: [u8; 65536] = [0; 65536];
+            let delta: usize = match reader.read(&mut buffer) {
+                Ok(bytes_read) => {
+                    total_bytes_written += bytes_read;
+                    if bytes_read == 0 {
+                        continue;
+                    } else {
+                        let mut delta: usize = 0;
+                        while delta < bytes_read {
+                            // Write bytes
+                            match writer.write(&buffer[delta..bytes_read]) {
+                                Ok(bytes) => {
+                                    delta += bytes;
+                                }
+                                Err(err) => {
+                                    return Err(TransferErrorReason::RemoteIoError(err));
                                 }
                             }
-                            Err(err) => {
-                                return Err(TransferErrorReason::LocalIoError(err));
-                            }
-                        };
-                        // Increase progress
-                        self.transfer.partial.update_progress(delta);
-                        self.transfer.full.update_progress(delta);
-                        // Draw only if a significant progress has been made (performance improvement)
-                        if last_progress_val < self.transfer.partial.calc_progress() - 0.01 {
-                            // Draw
-                            self.update_progress_bar(format!("Uploading \"{}\"…", file_name));
-                            self.view();
-                            last_progress_val = self.transfer.partial.calc_progress();
                         }
+                        delta
                     }
-                    // Finalize stream
-                    if let Err(err) = self.client.on_sent(rhnd) {
-                        self.log(
-                            LogLevel::Warn,
-                            format!("Could not finalize remote stream: \"{}\"", err),
-                        );
-                    }
-                    // if upload was abrupted, return error
-                    if self.transfer.aborted() {
-                        return Err(TransferErrorReason::Abrupted);
-                    }
-                    self.log(
-                        LogLevel::Info,
-                        format!(
-                            "Saved file \"{}\" to \"{}\" (took {} seconds; at {}/s)",
-                            local.abs_path.display(),
-                            remote.display(),
-                            fmt_millis(self.transfer.partial.started().elapsed()),
-                            ByteSize(self.transfer.partial.calc_bytes_per_second()),
-                        ),
-                    );
                 }
-                Err(err) => return Err(TransferErrorReason::FileTransferError(err)),
-            },
-            Err(err) => return Err(TransferErrorReason::HostError(err)),
+                Err(err) => {
+                    return Err(TransferErrorReason::LocalIoError(err));
+                }
+            };
+            // Increase progress
+            self.transfer.partial.update_progress(delta);
+            self.transfer.full.update_progress(delta);
+            // Draw only if a significant progress has been made (performance improvement)
+            if last_progress_val < self.transfer.partial.calc_progress() - 0.01 {
+                // Draw
+                self.update_progress_bar(format!("Uploading \"{}\"…", file_name));
+                self.view();
+                last_progress_val = self.transfer.partial.calc_progress();
+            }
         }
+        // Finalize stream
+        if let Err(err) = self.client.on_sent(writer) {
+            self.log(
+                LogLevel::Warn,
+                format!("Could not finalize remote stream: \"{}\"", err),
+            );
+        }
+        // if upload was abrupted, return error
+        if self.transfer.aborted() {
+            return Err(TransferErrorReason::Abrupted);
+        }
+        self.log(
+            LogLevel::Info,
+            format!(
+                "Saved file \"{}\" to \"{}\" (took {} seconds; at {}/s)",
+                local.abs_path.display(),
+                remote.display(),
+                fmt_millis(self.transfer.partial.started().elapsed()),
+                ByteSize(self.transfer.partial.calc_bytes_per_second()),
+            ),
+        );
+        Ok(())
+    }
+
+    /// ### filetransfer_send_one_wno_stream
+    ///
+    /// Send an `FsFile` to remote without using streams.
+    fn filetransfer_send_one_wno_stream(
+        &mut self,
+        local: &FsFile,
+        remote: &Path,
+        file_name: String,
+        mut reader: File,
+    ) -> Result<(), TransferErrorReason> {
+        // Write file
+        let file_size: usize = reader.seek(std::io::SeekFrom::End(0)).unwrap_or(0) as usize;
+        // Init transfer
+        self.transfer.partial.init(file_size);
+        // rewind
+        if let Err(err) = reader.seek(std::io::SeekFrom::Start(0)) {
+            return Err(TransferErrorReason::CouldNotRewind(err));
+        }
+        // Draw before
+        self.update_progress_bar(format!("Uploading \"{}\"…", file_name));
+        self.view();
+        // Send file
+        if let Err(err) = self
+            .client
+            .send_file_wno_stream(local, remote, Box::new(reader))
+        {
+            return Err(TransferErrorReason::FileTransferError(err));
+        }
+        // Set transfer size ok
+        self.transfer.partial.update_progress(file_size);
+        self.transfer.full.update_progress(file_size);
+        // Draw again after
+        self.update_progress_bar(format!("Uploading \"{}\"…", file_name));
+        self.view();
+        // log and return Ok
+        self.log(
+            LogLevel::Info,
+            format!(
+                "Saved file \"{}\" to \"{}\" (took {} seconds; at {}/s)",
+                local.abs_path.display(),
+                remote.display(),
+                fmt_millis(self.transfer.partial.started().elapsed()),
+                ByteSize(self.transfer.partial.calc_bytes_per_second()),
+            ),
+        );
         Ok(())
     }
 
@@ -796,120 +856,187 @@ impl FileTransferActivity {
     ) -> Result<(), TransferErrorReason> {
         // Try to open local file
         match self.host.open_file_write(local) {
-            Ok(mut local_file) => {
+            Ok(local_file) => {
                 // Download file from remote
                 match self.client.recv_file(remote) {
-                    Ok(mut rhnd) => {
-                        let mut total_bytes_written: usize = 0;
-                        // Init transfer
-                        self.transfer.partial.init(remote.size);
-                        // Write local file
-                        let mut last_progress_val: f64 = 0.0;
-                        let mut last_input_event_fetch: Option<Instant> = None;
-                        // While the entire file hasn't been completely read,
-                        // Or filetransfer has been aborted
-                        while total_bytes_written < remote.size && !self.transfer.aborted() {
-                            // Handle input events (each 500 ms) or is None
-                            if last_input_event_fetch.is_none()
-                                || last_input_event_fetch
-                                    .unwrap_or_else(Instant::now)
-                                    .elapsed()
-                                    .as_millis()
-                                    >= 500
-                            {
-                                // Read events
-                                self.read_input_event();
-                                // Reset instant
-                                last_input_event_fetch = Some(Instant::now());
-                            }
-                            // Read till you can
-                            let mut buffer: [u8; 65536] = [0; 65536];
-                            let delta: usize = match rhnd.read(&mut buffer) {
-                                Ok(bytes_read) => {
-                                    total_bytes_written += bytes_read;
-                                    if bytes_read == 0 {
-                                        continue;
-                                    } else {
-                                        let mut delta: usize = 0;
-                                        while delta < bytes_read {
-                                            // Write bytes
-                                            match local_file.write(&buffer[delta..bytes_read]) {
-                                                Ok(bytes) => delta += bytes,
-                                                Err(err) => {
-                                                    return Err(TransferErrorReason::LocalIoError(
-                                                        err,
-                                                    ));
-                                                }
-                                            }
-                                        }
-                                        delta
-                                    }
-                                }
-                                Err(err) => {
-                                    return Err(TransferErrorReason::RemoteIoError(err));
-                                }
-                            };
-                            // Set progress
-                            self.transfer.partial.update_progress(delta);
-                            self.transfer.full.update_progress(delta);
-                            // Draw only if a significant progress has been made (performance improvement)
-                            if last_progress_val < self.transfer.partial.calc_progress() - 0.01 {
-                                // Draw
-                                self.update_progress_bar(format!("Downloading \"{}\"", file_name));
-                                self.view();
-                                last_progress_val = self.transfer.partial.calc_progress();
-                            }
-                        }
-                        // Finalize stream
-                        if let Err(err) = self.client.on_recv(rhnd) {
-                            self.log(
-                                LogLevel::Warn,
-                                format!("Could not finalize remote stream: \"{}\"", err),
-                            );
-                        }
-                        // If download was abrupted, return Error
-                        if self.transfer.aborted() {
-                            return Err(TransferErrorReason::Abrupted);
-                        }
-                        // Apply file mode to file
-                        #[cfg(any(
-                            target_family = "unix",
-                            target_os = "macos",
-                            target_os = "linux"
-                        ))]
-                        if let Some((owner, group, others)) = remote.unix_pex {
-                            if let Err(err) = self
-                                .host
-                                .chmod(local, (owner.as_byte(), group.as_byte(), others.as_byte()))
-                            {
-                                self.log(
-                                    LogLevel::Error,
-                                    format!(
-                                        "Could not apply file mode {:?} to \"{}\": {}",
-                                        (owner.as_byte(), group.as_byte(), others.as_byte()),
-                                        local.display(),
-                                        err
-                                    ),
-                                );
-                            }
-                        }
-                        // Log
-                        self.log(
-                            LogLevel::Info,
-                            format!(
-                                "Saved file \"{}\" to \"{}\" (took {} seconds; at {}/s)",
-                                remote.abs_path.display(),
-                                local.display(),
-                                fmt_millis(self.transfer.partial.started().elapsed()),
-                                ByteSize(self.transfer.partial.calc_bytes_per_second()),
-                            ),
-                        );
+                    Ok(rhnd) => self.filetransfer_recv_one_with_stream(
+                        local, remote, file_name, rhnd, local_file,
+                    ),
+                    Err(err) if err.kind() == FileTransferErrorType::UnsupportedFeature => {
+                        self.filetransfer_recv_one_wno_stream(local, remote, file_name)
                     }
-                    Err(err) => return Err(TransferErrorReason::FileTransferError(err)),
+                    Err(err) => Err(TransferErrorReason::FileTransferError(err)),
                 }
             }
-            Err(err) => return Err(TransferErrorReason::HostError(err)),
+            Err(err) => Err(TransferErrorReason::HostError(err)),
         }
+    }
+
+    /// ### filetransfer_recv_one_with_stream
+    ///
+    /// Receive an `FsEntry` from remote using stream
+    fn filetransfer_recv_one_with_stream(
+        &mut self,
+        local: &Path,
+        remote: &FsFile,
+        file_name: String,
+        mut reader: Box<dyn Read>,
+        mut writer: File,
+    ) -> Result<(), TransferErrorReason> {
+        let mut total_bytes_written: usize = 0;
+        // Init transfer
+        self.transfer.partial.init(remote.size);
+        // Write local file
+        let mut last_progress_val: f64 = 0.0;
+        let mut last_input_event_fetch: Option<Instant> = None;
+        // While the entire file hasn't been completely read,
+        // Or filetransfer has been aborted
+        while total_bytes_written < remote.size && !self.transfer.aborted() {
+            // Handle input events (each 500 ms) or is None
+            if last_input_event_fetch.is_none()
+                || last_input_event_fetch
+                    .unwrap_or_else(Instant::now)
+                    .elapsed()
+                    .as_millis()
+                    >= 500
+            {
+                // Read events
+                self.read_input_event();
+                // Reset instant
+                last_input_event_fetch = Some(Instant::now());
+            }
+            // Read till you can
+            let mut buffer: [u8; 65536] = [0; 65536];
+            let delta: usize = match reader.read(&mut buffer) {
+                Ok(bytes_read) => {
+                    total_bytes_written += bytes_read;
+                    if bytes_read == 0 {
+                        continue;
+                    } else {
+                        let mut delta: usize = 0;
+                        while delta < bytes_read {
+                            // Write bytes
+                            match writer.write(&buffer[delta..bytes_read]) {
+                                Ok(bytes) => delta += bytes,
+                                Err(err) => {
+                                    return Err(TransferErrorReason::LocalIoError(err));
+                                }
+                            }
+                        }
+                        delta
+                    }
+                }
+                Err(err) => {
+                    return Err(TransferErrorReason::RemoteIoError(err));
+                }
+            };
+            // Set progress
+            self.transfer.partial.update_progress(delta);
+            self.transfer.full.update_progress(delta);
+            // Draw only if a significant progress has been made (performance improvement)
+            if last_progress_val < self.transfer.partial.calc_progress() - 0.01 {
+                // Draw
+                self.update_progress_bar(format!("Downloading \"{}\"", file_name));
+                self.view();
+                last_progress_val = self.transfer.partial.calc_progress();
+            }
+        }
+        // Finalize stream
+        if let Err(err) = self.client.on_recv(reader) {
+            self.log(
+                LogLevel::Warn,
+                format!("Could not finalize remote stream: \"{}\"", err),
+            );
+        }
+        // If download was abrupted, return Error
+        if self.transfer.aborted() {
+            return Err(TransferErrorReason::Abrupted);
+        }
+        // Apply file mode to file
+        #[cfg(target_family = "unix")]
+        if let Some((owner, group, others)) = remote.unix_pex {
+            if let Err(err) = self
+                .host
+                .chmod(local, (owner.as_byte(), group.as_byte(), others.as_byte()))
+            {
+                self.log(
+                    LogLevel::Error,
+                    format!(
+                        "Could not apply file mode {:?} to \"{}\": {}",
+                        (owner.as_byte(), group.as_byte(), others.as_byte()),
+                        local.display(),
+                        err
+                    ),
+                );
+            }
+        }
+        // Log
+        self.log(
+            LogLevel::Info,
+            format!(
+                "Saved file \"{}\" to \"{}\" (took {} seconds; at {}/s)",
+                remote.abs_path.display(),
+                local.display(),
+                fmt_millis(self.transfer.partial.started().elapsed()),
+                ByteSize(self.transfer.partial.calc_bytes_per_second()),
+            ),
+        );
+        Ok(())
+    }
+
+    /// ### filetransfer_recv_one_with_stream
+    ///
+    /// Receive an `FsEntry` from remote without using stream
+    fn filetransfer_recv_one_wno_stream(
+        &mut self,
+        local: &Path,
+        remote: &FsFile,
+        file_name: String,
+    ) -> Result<(), TransferErrorReason> {
+        // Init transfer
+        self.transfer.partial.init(remote.size);
+        // Draw before transfer
+        self.update_progress_bar(format!("Downloading \"{}\"", file_name));
+        self.view();
+        // recv wno stream
+        if let Err(err) = self.client.recv_file_wno_stream(remote, local) {
+            return Err(TransferErrorReason::FileTransferError(err));
+        }
+        // Update progress at the end
+        self.transfer.partial.update_progress(remote.size);
+        self.transfer.full.update_progress(remote.size);
+        // Draw after transfer
+        self.update_progress_bar(format!("Downloading \"{}\"", file_name));
+        self.view();
+        // Apply file mode to file
+        #[cfg(target_family = "unix")]
+        if let Some((owner, group, others)) = remote.unix_pex {
+            if let Err(err) = self
+                .host
+                .chmod(local, (owner.as_byte(), group.as_byte(), others.as_byte()))
+            {
+                self.log(
+                    LogLevel::Error,
+                    format!(
+                        "Could not apply file mode {:?} to \"{}\": {}",
+                        (owner.as_byte(), group.as_byte(), others.as_byte()),
+                        local.display(),
+                        err
+                    ),
+                );
+            }
+        }
+        // Log
+        self.log(
+            LogLevel::Info,
+            format!(
+                "Saved file \"{}\" to \"{}\" (took {} seconds; at {}/s)",
+                remote.abs_path.display(),
+                local.display(),
+                fmt_millis(self.transfer.partial.started().elapsed()),
+                ByteSize(self.transfer.partial.calc_bytes_per_second()),
+            ),
+        );
         Ok(())
     }
 

@@ -27,6 +27,12 @@ Released on ??
 
 > 🍁 Autumn update 🍇
 
+- **Aws S3**
+  - Added support for the aws-s3 protocol
+  - Operate on your bucket directly from the file explorer
+  - You can also save your buckets as bookmarks
+  - Aws s3 reads credentials directly from your credentials file at `$HOME/.aws/credentials` or from environment. Read more in the user manual.
+
 ## 0.6.1
 
 Released on 31/08/2021
