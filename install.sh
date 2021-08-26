@@ -8,7 +8,7 @@
 #   -f, -y, --force, --yes
 #     Skip the confirmation prompt during installation
 
-TERMSCP_VERSION="0.6.1"
+TERMSCP_VERSION="0.7.0"
 GITHUB_URL="https://github.com/veeso/termscp/releases/download/v${TERMSCP_VERSION}"
 DEB_URL="${GITHUB_URL}/termscp_${TERMSCP_VERSION}_amd64.deb"
 FREEBSD_URL="${GITHUB_URL}/termscp-${TERMSCP_VERSION}.txz"
