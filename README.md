@@ -123,7 +123,7 @@ Major termscp releases will now be seasonal, so expect 4 major updates during th
 Planned for *🍁 Autumn update 🍇*:
 
 - **Self-update ⬇️**: In order to increase users updating termscp, I want to provide the possibility to  update termscp directly from application, when a new update is available.
-- **AWS S3 support 🪣**: I'll use `rust-s3` library to implement this. This is really big **Maybe** for the autumn update and might be moved to the Winter update.
+- **AWS S3 support 🪣**: Already into the 0.7.0 backlog
 - **Prompt before replacing files ☢️**: Possibility to configure whether a prompt should be displayed before replacing files.
 
 Planned for *❄️ Winter update ⛄*:
