@@ -1,4 +1,4 @@
-FROM rust:1.48.0 AS builder
+FROM rust:1.55.0 AS builder
 
 WORKDIR /usr/src/
 # Add toolchains
@@ -10,9 +10,9 @@ RUN git clone https://github.com/veeso/termscp.git
 # Set workdir to termscp
 WORKDIR /usr/src/termscp/
 # Install cargo RPM/Deb
-RUN cargo install cargo-deb cargo-rpm
+RUN cargo install cargo-deb cargo-rpm cargo-strip
 # Build for x86_64
-RUN cargo build --release --target x86_64-unknown-linux-gnu
+RUN cargo build --release --target x86_64-unknown-linux-gnu && cargo strip
 # Build pkgs
 RUN cargo deb && cargo rpm init && cargo rpm build
 
