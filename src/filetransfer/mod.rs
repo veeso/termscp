@@ -28,27 +28,29 @@
 // locals
 use crate::fs::{FsEntry, FsFile};
 // ext
-use std::io::{Read, Write};
+use std::fs::File;
+use std::io::{self, Read, Write};
 use std::path::{Path, PathBuf};
 use thiserror::Error;
 use wildmatch::WildMatch;
 // exports
-pub mod ftp_transfer;
 pub mod params;
-pub mod scp_transfer;
-pub mod sftp_transfer;
+mod transfer;
 
-pub use params::FileTransferParams;
+// -- export types
+pub use params::{FileTransferParams, ProtocolParams};
+pub use transfer::{FtpFileTransfer, S3FileTransfer, ScpFileTransfer, SftpFileTransfer};
 
 /// ## FileTransferProtocol
 ///
 /// This enum defines the different transfer protocol available in termscp
 
-#[derive(PartialEq, Debug, std::clone::Clone, Copy)]
+#[derive(PartialEq, Debug, Clone, Copy)]
 pub enum FileTransferProtocol {
     Sftp,
     Scp,
     Ftp(bool), // Bool is for secure (true => ftps)
+    AwsS3,
 }
 
 /// ## FileTransferError
@@ -130,25 +132,16 @@ impl std::fmt::Display for FileTransferError {
 /// ## FileTransfer
 ///
 /// File transfer trait must be implemented by all the file transfers and defines the method used by a generic file transfer
-
 pub trait FileTransfer {
     /// ### connect
     ///
     /// Connect to the remote server
     /// Can return banner / welcome message on success
-
-    fn connect(
-        &mut self,
-        address: String,
-        port: u16,
-        username: Option<String>,
-        password: Option<String>,
-    ) -> Result<Option<String>, FileTransferError>;
+    fn connect(&mut self, params: &ProtocolParams) -> Result<Option<String>, FileTransferError>;
 
     /// ### disconnect
     ///
     /// Disconnect from the remote server
-
     fn disconnect(&mut self) -> Result<(), FileTransferError>;
 
     /// ### is_connected
@@ -210,18 +203,28 @@ pub trait FileTransfer {
     /// Send file to remote
     /// File name is referred to the name of the file as it will be saved
     /// Data contains the file data
-    /// Returns file and its size
+    /// Returns file and its size.
+    /// By default returns unsupported feature
     fn send_file(
         &mut self,
-        local: &FsFile,
-        file_name: &Path,
-    ) -> Result<Box<dyn Write>, FileTransferError>;
+        _local: &FsFile,
+        _file_name: &Path,
+    ) -> Result<Box<dyn Write>, FileTransferError> {
+        Err(FileTransferError::new(
+            FileTransferErrorType::UnsupportedFeature,
+        ))
+    }
 
     /// ### recv_file
     ///
     /// Receive file from remote with provided name
     /// Returns file and its size
-    fn recv_file(&mut self, file: &FsFile) -> Result<Box<dyn Read>, FileTransferError>;
+    /// By default returns unsupported feature
+    fn recv_file(&mut self, _file: &FsFile) -> Result<Box<dyn Read>, FileTransferError> {
+        Err(FileTransferError::new(
+            FileTransferErrorType::UnsupportedFeature,
+        ))
+    }
 
     /// ### on_sent
     ///
@@ -230,7 +233,10 @@ pub trait FileTransfer {
     /// The purpose of this method is to finalize the connection with the peer when writing data.
     /// This is necessary for some protocols such as FTP.
     /// You must call this method each time you want to finalize the write of the remote file.
-    fn on_sent(&mut self, writable: Box<dyn Write>) -> Result<(), FileTransferError>;
+    /// By default this function returns already `Ok(())`
+    fn on_sent(&mut self, _writable: Box<dyn Write>) -> Result<(), FileTransferError> {
+        Ok(())
+    }
 
     /// ### on_recv
     ///
@@ -239,7 +245,71 @@ pub trait FileTransfer {
     /// The purpose of this method is to finalize the connection with the peer when reading data.
     /// This mighe be necessary for some protocols.
     /// You must call this method each time you want to finalize the read of the remote file.
-    fn on_recv(&mut self, readable: Box<dyn Read>) -> Result<(), FileTransferError>;
+    /// By default this function returns already `Ok(())`
+    fn on_recv(&mut self, _readable: Box<dyn Read>) -> Result<(), FileTransferError> {
+        Ok(())
+    }
+
+    /// ### send_file_wno_stream
+    ///
+    /// Send a file to remote WITHOUT using streams.
+    /// This method SHOULD be implemented ONLY when streams are not supported by the current file transfer.
+    /// The developer implementing the filetransfer user should FIRST try with `send_file` followed by `on_sent`
+    /// If the function returns error kind() `UnsupportedFeature`, then he should call this function.
+    /// By default this function uses the streams function to copy content from reader to writer
+    fn send_file_wno_stream(
+        &mut self,
+        src: &FsFile,
+        dest: &Path,
+        mut reader: Box<dyn Read>,
+    ) -> Result<(), FileTransferError> {
+        match self.is_connected() {
+            true => {
+                let mut stream = self.send_file(src, dest)?;
+                io::copy(&mut reader, &mut stream).map_err(|e| {
+                    FileTransferError::new_ex(FileTransferErrorType::ProtocolError, e.to_string())
+                })?;
+                self.on_sent(stream)
+            }
+            false => Err(FileTransferError::new(
+                FileTransferErrorType::UninitializedSession,
+            )),
+        }
+    }
+
+    /// ### recv_file_wno_stream
+    ///
+    /// Receive a file from remote WITHOUT using streams.
+    /// This method SHOULD be implemented ONLY when streams are not supported by the current file transfer.
+    /// The developer implementing the filetransfer user should FIRST try with `send_file` followed by `on_sent`
+    /// If the function returns error kind() `UnsupportedFeature`, then he should call this function.
+    /// For safety reasons this function doesn't accept the `Write` trait, but the destination path.
+    /// By default this function uses the streams function to copy content from reader to writer
+    fn recv_file_wno_stream(&mut self, src: &FsFile, dest: &Path) -> Result<(), FileTransferError> {
+        match self.is_connected() {
+            true => {
+                let mut writer = File::create(dest).map_err(|e| {
+                    FileTransferError::new_ex(
+                        FileTransferErrorType::FileCreateDenied,
+                        format!("Could not open local file: {}", e),
+                    )
+                })?;
+                let mut stream = self.recv_file(src)?;
+                io::copy(&mut stream, &mut writer)
+                    .map(|_| ())
+                    .map_err(|e| {
+                        FileTransferError::new_ex(
+                            FileTransferErrorType::ProtocolError,
+                            e.to_string(),
+                        )
+                    })?;
+                self.on_recv(stream)
+            }
+            false => Err(FileTransferError::new(
+                FileTransferErrorType::UninitializedSession,
+            )),
+        }
+    }
 
     /// ### find
     ///
@@ -314,6 +384,7 @@ impl std::string::ToString for FileTransferProtocol {
             },
             FileTransferProtocol::Scp => "SCP",
             FileTransferProtocol::Sftp => "SFTP",
+            FileTransferProtocol::AwsS3 => "S3",
         })
     }
 }
@@ -326,6 +397,7 @@ impl std::str::FromStr for FileTransferProtocol {
             "FTPS" => Ok(FileTransferProtocol::Ftp(true)),
             "SCP" => Ok(FileTransferProtocol::Scp),
             "SFTP" => Ok(FileTransferProtocol::Sftp),
+            "S3" => Ok(FileTransferProtocol::AwsS3),
             _ => Err(s.to_string()),
         }
     }
@@ -385,6 +457,14 @@ mod tests {
             FileTransferProtocol::from_str("scp").ok().unwrap(),
             FileTransferProtocol::Scp
         );
+        assert_eq!(
+            FileTransferProtocol::from_str("S3").ok().unwrap(),
+            FileTransferProtocol::AwsS3
+        );
+        assert_eq!(
+            FileTransferProtocol::from_str("s3").ok().unwrap(),
+            FileTransferProtocol::AwsS3
+        );
         // Error
         assert!(FileTransferProtocol::from_str("dummy").is_err());
         // To String
@@ -398,6 +478,7 @@ mod tests {
         );
         assert_eq!(FileTransferProtocol::Scp.to_string(), String::from("SCP"));
         assert_eq!(FileTransferProtocol::Sftp.to_string(), String::from("SFTP"));
+        assert_eq!(FileTransferProtocol::AwsS3.to_string(), String::from("S3"));
     }
 
     #[test]

@@ -26,7 +26,9 @@
  * SOFTWARE.
  */
 // Locals
-use super::{AuthActivity, Context, FileTransferProtocol};
+use super::{AuthActivity, Context, FileTransferProtocol, InputMask};
+use crate::filetransfer::params::ProtocolParams;
+use crate::filetransfer::FileTransferParams;
 use crate::ui::components::bookmark_list::{BookmarkList, BookmarkListPropsBuilder};
 use crate::utils::ui::draw_area_in;
 // Ext
@@ -109,7 +111,7 @@ impl AuthActivity {
                     .with_inverted_color(Color::Black)
                     .with_borders(Borders::ALL, BorderType::Rounded, protocol_color)
                     .with_title("Protocol", Alignment::Left)
-                    .with_options(&["SFTP", "SCP", "FTP", "FTPS"])
+                    .with_options(&["SFTP", "SCP", "FTP", "FTPS", "AWS S3"])
                     .with_value(Self::protocol_enum_to_opt(default_protocol))
                     .rewind(true)
                     .build(),
@@ -160,6 +162,39 @@ impl AuthActivity {
                     .with_borders(Borders::ALL, BorderType::Rounded, password_color)
                     .with_label("Password", Alignment::Left)
                     .with_input(InputType::Password)
+                    .build(),
+            )),
+        );
+        // Bucket
+        self.view.mount(
+            super::COMPONENT_INPUT_S3_BUCKET,
+            Box::new(Input::new(
+                InputPropsBuilder::default()
+                    .with_foreground(addr_color)
+                    .with_borders(Borders::ALL, BorderType::Rounded, addr_color)
+                    .with_label("Bucket name", Alignment::Left)
+                    .build(),
+            )),
+        );
+        // Region
+        self.view.mount(
+            super::COMPONENT_INPUT_S3_REGION,
+            Box::new(Input::new(
+                InputPropsBuilder::default()
+                    .with_foreground(port_color)
+                    .with_borders(Borders::ALL, BorderType::Rounded, port_color)
+                    .with_label("Region", Alignment::Left)
+                    .build(),
+            )),
+        );
+        // Profile
+        self.view.mount(
+            super::COMPONENT_INPUT_S3_PROFILE,
+            Box::new(Input::new(
+                InputPropsBuilder::default()
+                    .with_foreground(username_color)
+                    .with_borders(Borders::ALL, BorderType::Rounded, username_color)
+                    .with_label("Profile", Alignment::Left)
                     .build(),
             )),
         );
@@ -240,20 +275,43 @@ impl AuthActivity {
             let auth_chunks = Layout::default()
                 .constraints(
                     [
-                        Constraint::Length(1), // h1
-                        Constraint::Length(1), // h2
-                        Constraint::Length(1), // Version
-                        Constraint::Length(3), // protocol
-                        Constraint::Length(3), // host
-                        Constraint::Length(3), // port
-                        Constraint::Length(3), // username
-                        Constraint::Length(3), // password
-                        Constraint::Length(3), // footer
+                        Constraint::Length(1),                      // h1
+                        Constraint::Length(1),                      // h2
+                        Constraint::Length(1),                      // Version
+                        Constraint::Length(3),                      // protocol
+                        Constraint::Length(self.input_mask_size()), // Input mask
+                        Constraint::Length(3),                      // footer
                     ]
                     .as_ref(),
                 )
                 .direction(Direction::Vertical)
                 .split(chunks[0]);
+            // Input mask chunks
+            let input_mask = match self.input_mask() {
+                InputMask::AwsS3 => Layout::default()
+                    .constraints(
+                        [
+                            Constraint::Length(3), // bucket
+                            Constraint::Length(3), // region
+                            Constraint::Length(3), // profile
+                        ]
+                        .as_ref(),
+                    )
+                    .direction(Direction::Vertical)
+                    .split(auth_chunks[4]),
+                InputMask::Generic => Layout::default()
+                    .constraints(
+                        [
+                            Constraint::Length(3), // host
+                            Constraint::Length(3), // port
+                            Constraint::Length(3), // username
+                            Constraint::Length(3), // password
+                        ]
+                        .as_ref(),
+                    )
+                    .direction(Direction::Vertical)
+                    .split(auth_chunks[4]),
+            };
             // Create bookmark chunks
             let bookmark_chunks = Layout::default()
                 .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
@@ -269,16 +327,29 @@ impl AuthActivity {
                 .render(super::COMPONENT_TEXT_NEW_VERSION, f, auth_chunks[2]);
             self.view
                 .render(super::COMPONENT_RADIO_PROTOCOL, f, auth_chunks[3]);
+            // Render input mask
+            match self.input_mask() {
+                InputMask::AwsS3 => {
+                    self.view
+                        .render(super::COMPONENT_INPUT_S3_BUCKET, f, input_mask[0]);
+                    self.view
+                        .render(super::COMPONENT_INPUT_S3_REGION, f, input_mask[1]);
+                    self.view
+                        .render(super::COMPONENT_INPUT_S3_PROFILE, f, input_mask[2]);
+                }
+                InputMask::Generic => {
+                    self.view
+                        .render(super::COMPONENT_INPUT_ADDR, f, input_mask[0]);
+                    self.view
+                        .render(super::COMPONENT_INPUT_PORT, f, input_mask[1]);
+                    self.view
+                        .render(super::COMPONENT_INPUT_USERNAME, f, input_mask[2]);
+                    self.view
+                        .render(super::COMPONENT_INPUT_PASSWORD, f, input_mask[3]);
+                }
+            }
             self.view
-                .render(super::COMPONENT_INPUT_ADDR, f, auth_chunks[4]);
-            self.view
-                .render(super::COMPONENT_INPUT_PORT, f, auth_chunks[5]);
-            self.view
-                .render(super::COMPONENT_INPUT_USERNAME, f, auth_chunks[6]);
-            self.view
-                .render(super::COMPONENT_INPUT_PASSWORD, f, auth_chunks[7]);
-            self.view
-                .render(super::COMPONENT_TEXT_FOOTER, f, auth_chunks[8]);
+                .render(super::COMPONENT_TEXT_FOOTER, f, auth_chunks[5]);
             // Bookmark chunks
             self.view
                 .render(super::COMPONENT_BOOKMARKS_LIST, f, bookmark_chunks[0]);
@@ -388,19 +459,13 @@ impl AuthActivity {
             .bookmarks_list
             .iter()
             .map(|x| {
-                let entry: (String, u16, FileTransferProtocol, String, _) = self
-                    .bookmarks_client
-                    .as_ref()
-                    .unwrap()
-                    .get_bookmark(x)
-                    .unwrap();
-                format!(
-                    "{} ({}://{}@{}:{})",
+                Self::fmt_bookmark(
                     x,
-                    entry.2.to_string().to_lowercase(),
-                    entry.3,
-                    entry.0,
-                    entry.1
+                    self.bookmarks_client
+                        .as_ref()
+                        .unwrap()
+                        .get_bookmark(x)
+                        .unwrap(),
                 )
             })
             .collect();
@@ -426,19 +491,12 @@ impl AuthActivity {
             .recents_list
             .iter()
             .map(|x| {
-                let entry: (String, u16, FileTransferProtocol, String) = self
-                    .bookmarks_client
-                    .as_ref()
-                    .unwrap()
-                    .get_recent(x)
-                    .unwrap();
-
-                format!(
-                    "{}://{}@{}:{}",
-                    entry.2.to_string().to_lowercase(),
-                    entry.3,
-                    entry.0,
-                    entry.1
+                Self::fmt_recent(
+                    self.bookmarks_client
+                        .as_ref()
+                        .unwrap()
+                        .get_recent(x)
+                        .unwrap(),
                 )
             })
             .collect();
@@ -743,16 +801,32 @@ impl AuthActivity {
         self.view.umount(super::COMPONENT_TEXT_NEW_VERSION_NOTES);
     }
 
-    /// ### get_input
+    /// ### get_protocol
+    ///
+    /// Get protocol from view
+    pub(super) fn get_protocol(&self) -> FileTransferProtocol {
+        self.get_input_protocol()
+    }
+
+    /// ### get_generic_params
     ///
     /// Collect input values from view
-    pub(super) fn get_input(&self) -> (String, u16, FileTransferProtocol, String, String) {
+    pub(super) fn get_generic_params_input(&self) -> (String, u16, String, String) {
         let addr: String = self.get_input_addr();
         let port: u16 = self.get_input_port();
-        let protocol: FileTransferProtocol = self.get_input_protocol();
         let username: String = self.get_input_username();
         let password: String = self.get_input_password();
-        (addr, port, protocol, username, password)
+        (addr, port, username, password)
+    }
+
+    /// ### get_s3_params_input
+    ///
+    /// Collect s3 input values from view
+    pub(super) fn get_s3_params_input(&self) -> (String, String, Option<String>) {
+        let bucket: String = self.get_input_s3_bucket();
+        let region: String = self.get_input_s3_region();
+        let profile: Option<String> = self.get_input_s3_profile();
+        (bucket, region, profile)
     }
 
     pub(super) fn get_input_addr(&self) -> String {
@@ -790,6 +864,77 @@ impl AuthActivity {
         match self.view.get_state(super::COMPONENT_INPUT_PASSWORD) {
             Some(Payload::One(Value::Str(x))) => x,
             _ => String::new(),
+        }
+    }
+
+    pub(super) fn get_input_s3_bucket(&self) -> String {
+        match self.view.get_state(super::COMPONENT_INPUT_S3_BUCKET) {
+            Some(Payload::One(Value::Str(x))) => x,
+            _ => String::new(),
+        }
+    }
+
+    pub(super) fn get_input_s3_region(&self) -> String {
+        match self.view.get_state(super::COMPONENT_INPUT_S3_REGION) {
+            Some(Payload::One(Value::Str(x))) => x,
+            _ => String::new(),
+        }
+    }
+
+    pub(super) fn get_input_s3_profile(&self) -> Option<String> {
+        match self.view.get_state(super::COMPONENT_INPUT_S3_PROFILE) {
+            Some(Payload::One(Value::Str(x))) => match x.is_empty() {
+                true => None,
+                false => Some(x),
+            },
+            _ => None,
+        }
+    }
+
+    /// ### input_mask_size
+    ///
+    /// Returns the input mask size based on current input mask
+    pub(super) fn input_mask_size(&self) -> u16 {
+        match self.input_mask() {
+            InputMask::AwsS3 => 9,
+            InputMask::Generic => 12,
+        }
+    }
+
+    /// ### fmt_bookmark
+    ///
+    /// Format bookmark to display on ui
+    fn fmt_bookmark(name: &str, b: FileTransferParams) -> String {
+        let addr: String = Self::fmt_recent(b);
+        format!("{} ({})", name, addr)
+    }
+
+    /// ### fmt_recent
+    ///
+    /// Format recent connection to display on ui
+    fn fmt_recent(b: FileTransferParams) -> String {
+        let protocol: String = b.protocol.to_string().to_lowercase();
+        match b.params {
+            ProtocolParams::AwsS3(s3) => {
+                let profile: String = match s3.profile {
+                    Some(p) => format!("[{}]", p),
+                    None => String::default(),
+                };
+                format!(
+                    "{}://{} ({}) {}",
+                    protocol, s3.bucket_name, s3.region, profile
+                )
+            }
+            ProtocolParams::Generic(params) => {
+                let username: String = match params.username {
+                    None => String::default(),
+                    Some(u) => format!("{}@", u),
+                };
+                format!(
+                    "{}://{}{}:{}",
+                    protocol, username, params.address, params.port
+                )
+            }
         }
     }
 }

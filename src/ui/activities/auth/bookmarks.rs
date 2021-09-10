@@ -26,14 +26,15 @@
  * SOFTWARE.
  */
 // Locals
-use super::{AuthActivity, FileTransferProtocol};
+use super::{AuthActivity, FileTransferParams};
+use crate::filetransfer::params::{AwsS3Params, GenericProtocolParams, ProtocolParams};
 use crate::system::bookmarks_client::BookmarksClient;
 use crate::system::environment;
 
 // Ext
 use std::path::PathBuf;
 use tui_realm_stdlib::{input::InputPropsBuilder, radio::RadioPropsBuilder};
-use tuirealm::{Payload, PropsBuilder, Value};
+use tuirealm::PropsBuilder;
 
 impl AuthActivity {
     /// ### del_bookmark
@@ -62,9 +63,7 @@ impl AuthActivity {
             if let Some(key) = self.bookmarks_list.get(idx) {
                 if let Some(bookmark) = bookmarks_cli.get_bookmark(key) {
                     // Load parameters into components
-                    self.load_bookmark_into_gui(
-                        bookmark.0, bookmark.1, bookmark.2, bookmark.3, bookmark.4,
-                    );
+                    self.load_bookmark_into_gui(bookmark);
                 }
             }
         }
@@ -74,20 +73,15 @@ impl AuthActivity {
     ///
     /// Save current input fields as a bookmark
     pub(super) fn save_bookmark(&mut self, name: String, save_password: bool) {
-        let (address, port, protocol, username, password) = self.get_input();
+        let params = match self.collect_host_params() {
+            Ok(p) => p,
+            Err(e) => {
+                self.mount_error(e);
+                return;
+            }
+        };
         if let Some(bookmarks_cli) = self.bookmarks_client.as_mut() {
-            // Check if password must be saved
-            let password: Option<String> = match save_password {
-                true => match self
-                    .view
-                    .get_state(super::COMPONENT_RADIO_BOOKMARK_SAVE_PWD)
-                {
-                    Some(Payload::One(Value::Usize(0))) => Some(password), // Yes
-                    _ => None,                                             // No such component / No
-                },
-                false => None,
-            };
-            bookmarks_cli.add_bookmark(name.clone(), address, port, protocol, username, password);
+            bookmarks_cli.add_bookmark(name.clone(), params, save_password);
             // Save bookmarks
             self.write_bookmarks();
             // Remove `name` from bookmarks if exists
@@ -122,9 +116,7 @@ impl AuthActivity {
             if let Some(key) = self.recents_list.get(idx) {
                 if let Some(bookmark) = client.get_recent(key) {
                     // Load parameters
-                    self.load_bookmark_into_gui(
-                        bookmark.0, bookmark.1, bookmark.2, bookmark.3, None,
-                    );
+                    self.load_bookmark_into_gui(bookmark);
                 }
             }
         }
@@ -134,9 +126,15 @@ impl AuthActivity {
     ///
     /// Save current input fields as a "recent"
     pub(super) fn save_recent(&mut self) {
-        let (address, port, protocol, username, _password) = self.get_input();
+        let params = match self.collect_host_params() {
+            Ok(p) => p,
+            Err(e) => {
+                self.mount_error(e);
+                return;
+            }
+        };
         if let Some(bookmarks_cli) = self.bookmarks_client.as_mut() {
-            bookmarks_cli.add_recent(address, port, protocol, username);
+            bookmarks_cli.add_recent(params);
             // Save bookmarks
             self.write_bookmarks();
         }
@@ -234,40 +232,66 @@ impl AuthActivity {
     /// ### load_bookmark_into_gui
     ///
     /// Load bookmark data into the gui components
-    fn load_bookmark_into_gui(
-        &mut self,
-        addr: String,
-        port: u16,
-        protocol: FileTransferProtocol,
-        username: String,
-        password: Option<String>,
-    ) {
+    fn load_bookmark_into_gui(&mut self, bookmark: FileTransferParams) {
         // Load parameters into components
+        if let Some(props) = self.view.get_props(super::COMPONENT_RADIO_PROTOCOL) {
+            let props = RadioPropsBuilder::from(props)
+                .with_value(Self::protocol_enum_to_opt(bookmark.protocol))
+                .build();
+            self.view.update(super::COMPONENT_RADIO_PROTOCOL, props);
+        }
+        match bookmark.params {
+            ProtocolParams::AwsS3(params) => self.load_bookmark_s3_into_gui(params),
+            ProtocolParams::Generic(params) => self.load_bookmark_generic_into_gui(params),
+        }
+    }
+
+    fn load_bookmark_generic_into_gui(&mut self, params: GenericProtocolParams) {
         if let Some(props) = self.view.get_props(super::COMPONENT_INPUT_ADDR) {
-            let props = InputPropsBuilder::from(props).with_value(addr).build();
+            let props = InputPropsBuilder::from(props)
+                .with_value(params.address.clone())
+                .build();
             self.view.update(super::COMPONENT_INPUT_ADDR, props);
         }
         if let Some(props) = self.view.get_props(super::COMPONENT_INPUT_PORT) {
             let props = InputPropsBuilder::from(props)
-                .with_value(port.to_string())
+                .with_value(params.port.to_string())
                 .build();
             self.view.update(super::COMPONENT_INPUT_PORT, props);
         }
-        if let Some(props) = self.view.get_props(super::COMPONENT_RADIO_PROTOCOL) {
-            let props = RadioPropsBuilder::from(props)
-                .with_value(Self::protocol_enum_to_opt(protocol))
-                .build();
-            self.view.update(super::COMPONENT_RADIO_PROTOCOL, props);
-        }
+
         if let Some(props) = self.view.get_props(super::COMPONENT_INPUT_USERNAME) {
-            let props = InputPropsBuilder::from(props).with_value(username).build();
+            let props = InputPropsBuilder::from(props)
+                .with_value(params.username.as_deref().unwrap_or_default().to_string())
+                .build();
             self.view.update(super::COMPONENT_INPUT_USERNAME, props);
         }
-        if let Some(password) = password {
-            if let Some(props) = self.view.get_props(super::COMPONENT_INPUT_PASSWORD) {
-                let props = InputPropsBuilder::from(props).with_value(password).build();
-                self.view.update(super::COMPONENT_INPUT_PASSWORD, props);
-            }
+        if let Some(props) = self.view.get_props(super::COMPONENT_INPUT_PASSWORD) {
+            let props = InputPropsBuilder::from(props)
+                .with_value(params.password.as_deref().unwrap_or_default().to_string())
+                .build();
+            self.view.update(super::COMPONENT_INPUT_PASSWORD, props);
+        }
+    }
+
+    fn load_bookmark_s3_into_gui(&mut self, params: AwsS3Params) {
+        if let Some(props) = self.view.get_props(super::COMPONENT_INPUT_S3_BUCKET) {
+            let props = InputPropsBuilder::from(props)
+                .with_value(params.bucket_name.clone())
+                .build();
+            self.view.update(super::COMPONENT_INPUT_S3_BUCKET, props);
+        }
+        if let Some(props) = self.view.get_props(super::COMPONENT_INPUT_S3_REGION) {
+            let props = InputPropsBuilder::from(props)
+                .with_value(params.region.clone())
+                .build();
+            self.view.update(super::COMPONENT_INPUT_S3_REGION, props);
+        }
+        if let Some(props) = self.view.get_props(super::COMPONENT_INPUT_S3_PROFILE) {
+            let props = InputPropsBuilder::from(props)
+                .with_value(params.profile.as_deref().unwrap_or_default().to_string())
+                .build();
+            self.view.update(super::COMPONENT_INPUT_S3_PROFILE, props);
         }
     }
 }

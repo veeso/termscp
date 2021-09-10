@@ -140,6 +140,10 @@ impl ProgressStates {
     ///
     /// Calculate progress in a range between 0.0 to 1.0
     pub fn calc_progress(&self) -> f64 {
+        // Prevent dividing by 0
+        if self.total == 0 {
+            return 0.0;
+        }
         let prog: f64 = (self.written as f64) / (self.total as f64);
         match prog > 1.0 {
             true => 1.0,
@@ -238,6 +242,11 @@ mod test {
         // Check if terminated at started
         states.started = Instant::now();
         assert_eq!(states.calc_bytes_per_second(), 1024);
+        // Divide by zero
+        let states: ProgressStates = ProgressStates::default();
+        assert_eq!(states.total, 0);
+        assert_eq!(states.written, 0);
+        assert_eq!(states.calc_progress(), 0.0);
     }
 
     #[test]

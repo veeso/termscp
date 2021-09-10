@@ -3,6 +3,7 @@
 - [User manual 🎓](#user-manual-)
   - [Usage ❓](#usage-)
     - [Address argument 🌎](#address-argument-)
+      - [AWS S3 address argument](#aws-s3-address-argument)
       - [How Password can be provided 🔐](#how-password-can-be-provided-)
   - [File explorer 📂](#file-explorer-)
     - [Keybindings ⌨](#keybindings-)
@@ -13,6 +14,7 @@
     - [Are my passwords Safe 😈](#are-my-passwords-safe-)
       - [Linux Keyring](#linux-keyring)
         - [KeepassXC setup for termscp](#keepassxc-setup-for-termscp)
+  - [Aws S3 credentials 🦊](#aws-s3-credentials-)
   - [Configuration ⚙️](#configuration-️)
     - [SSH Key Storage 🔐](#ssh-key-storage-)
     - [File Explorer Format](#file-explorer-format)
@@ -77,6 +79,20 @@ Let's see some example of this particular syntax, since it's very comfortable an
     ```sh
     termscp scp://omar@192.168.1.31:4022:/tmp
     ```
+
+#### AWS S3 address argument
+
+Aws S3 has a different syntax for CLI address argument, for obvious reasons, but I managed to keep it the more similiar as possible to the generic address argument:
+
+```txt
+s3://<bucket-name>@<region>[:profile][:/wrkdir]
+```
+
+e.g.
+
+```txt
+s3://buckethead@eu-central-1:default:/assets
+```
 
 #### How Password can be provided 🔐
 
@@ -243,6 +259,30 @@ Follow these steps in order to setup keepassXC for termscp:
 5. From toolbar: "Database" > "Database settings"
 6. Select "Secret service integration" and toggle "Expose entries under this group"
 7. Select the group in the list where you want the termscp secret to be kept. Remember that this group might be used by any other application to store secrets via DBUS.
+
+---
+
+## Aws S3 credentials 🦊
+
+In order to connect to an Aws S3 bucket you must obviously provide some credentials.
+There are basically two ways to achieve this, and as you've probably already noticed you **can't** do that via the authentication form.
+So these are the ways you can provide the credentials for s3:
+
+1. Use your credentials file: just configure the AWS cli via `aws configure` and your credentials should already be located at `~/.aws/credentials`. In case you're using a profile different from `default`, just provide it in the profile field in the authentication form.
+2. **Environment variables**: you can always provide your credentials as environment variables. Keep in mind that these credentials **will always override** the credentials located in the `credentials` file. See how to configure the environment below:
+
+    These should always be mandatory:
+
+    - `AWS_ACCESS_KEY_ID`: aws access key ID (usually starts with `AKIA...`)
+    - `AWS_SECRET_ACCESS_KEY`: the secret access key
+
+    In case you've configured a stronger security, you *may* require these too:
+
+    - `AWS_SECURITY_TOKEN`: security token
+    - `AWS_SESSION_TOKEN`: session token
+
+⚠️ Your credentials are safe: termscp won't manipulate these values directly! Your credentials are directly consumed by the **s3** crate.
+In case you've got some concern regarding security, please contact the library author on [Github](https://github.com/durch/rust-s3) ⚠️
 
 ---
 
