@@ -27,6 +27,9 @@
  */
 use super::{AuthActivity, FileTransferParams, FileTransferProtocol};
 use crate::filetransfer::params::{AwsS3Params, GenericProtocolParams, ProtocolParams};
+use crate::system::auto_update::{Update, UpdateStatus};
+
+use tuirealm::tui::style::Color;
 
 impl AuthActivity {
     /// ### protocol_opt_to_enum
@@ -150,5 +153,32 @@ impl AuthActivity {
             params: ProtocolParams::AwsS3(AwsS3Params::new(bucket, region, profile)),
             entry_directory: None,
         })
+    }
+
+    // -- update install
+
+    /// ### install_update
+    ///
+    /// Install latest termscp version via GUI
+    pub(super) fn install_update(&mut self) {
+        // Umount release notes
+        self.umount_release_notes();
+        // Mount wait box
+        self.mount_wait("Installing update. Please wait…");
+        // Install update
+        let result = Update::default().show_progress(false).upgrade();
+        // Umount wait
+        self.umount_wait();
+        // Show outcome
+        match result {
+            Ok(UpdateStatus::AlreadyUptodate) => {
+                self.mount_info("termscp is already up to date!", Color::Cyan)
+            }
+            Ok(UpdateStatus::UpdateInstalled(ver)) => self.mount_info(
+                format!("termscp has been updated to version {}!", ver),
+                Color::Green,
+            ),
+            Err(err) => self.mount_error(format!("Could not install update: {}", err)),
+        }
     }
 }

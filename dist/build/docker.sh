@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ -z "$1" ]; then
-    echo "Usage: deploy.sh <version>"
+    echo "Usage: docker.sh <version>"
     exit 1
 fi
 
@@ -19,8 +19,15 @@ cd x86_64_debian9/
 docker build --tag termscp-${VERSION}-x86_64_debian9 .
 cd -
 mkdir -p ${PKGS_DIR}/deb/
+mkdir -p ${PKGS_DIR}/x86_64-unknown-linux-gnu/
 CONTAINER_NAME=$(docker create termscp-${VERSION}-x86_64_debian9 termscp-${VERSION}-x86_64_debian9)
 docker cp ${CONTAINER_NAME}:/usr/src/termscp/target/debian/termscp_${VERSION}_amd64.deb ${PKGS_DIR}/deb/
+docker cp ${CONTAINER_NAME}:/usr/src/termscp/target/release/termscp ${PKGS_DIR}/x86_64-unknown-linux-gnu/
+# Make tar.gz
+cd ${PKGS_DIR}/x84_64-unknown-linux-gnu/
+tar cvzf termscp-v${VERSION}-x86_64-unknown-linux-gnu.tar.gz termscp
+rm termscp
+cd -
 # Build x86_64_centos7
 cd x86_64_centos7/
 docker build --tag termscp-${VERSION}-x86_64_centos7 .

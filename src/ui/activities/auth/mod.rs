@@ -35,8 +35,8 @@ mod view;
 use super::{Activity, Context, ExitReason};
 use crate::config::themes::Theme;
 use crate::filetransfer::{FileTransferParams, FileTransferProtocol};
+use crate::system::auto_update::{Release, Update as TermscpUpdate};
 use crate::system::bookmarks_client::BookmarksClient;
-use crate::utils::git;
 
 // Includes
 use crossterm::event::Event;
@@ -51,6 +51,8 @@ const COMPONENT_TEXT_NEW_VERSION_NOTES: &str = "TEXTAREA_NEW_VERSION";
 const COMPONENT_TEXT_FOOTER: &str = "TEXT_FOOTER";
 const COMPONENT_TEXT_HELP: &str = "TEXT_HELP";
 const COMPONENT_TEXT_ERROR: &str = "TEXT_ERROR";
+const COMPONENT_TEXT_INFO: &str = "TEXT_INFO";
+const COMPONENT_TEXT_WAIT: &str = "TEXT_WAIT";
 const COMPONENT_TEXT_SIZE_ERR: &str = "TEXT_SIZE_ERR";
 const COMPONENT_INPUT_ADDR: &str = "INPUT_ADDRESS";
 const COMPONENT_INPUT_PORT: &str = "INPUT_PORT";
@@ -65,6 +67,7 @@ const COMPONENT_RADIO_QUIT: &str = "RADIO_QUIT";
 const COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK: &str = "RADIO_DELETE_BOOKMARK";
 const COMPONENT_RADIO_BOOKMARK_DEL_RECENT: &str = "RADIO_DELETE_RECENT";
 const COMPONENT_RADIO_BOOKMARK_SAVE_PWD: &str = "RADIO_SAVE_PASSWORD";
+const COMPONENT_RADIO_INSTALL_UPDATE: &str = "RADIO_INSTALL_UPDATE";
 const COMPONENT_BOOKMARKS_LIST: &str = "BOOKMARKS_LIST";
 const COMPONENT_RECENTS_LIST: &str = "RECENTS_LIST";
 
@@ -119,12 +122,12 @@ impl AuthActivity {
             if ctx.config().get_check_for_updates() {
                 debug!("Check for updates is enabled");
                 // Send request
-                match git::check_for_updates(env!("CARGO_PKG_VERSION")) {
-                    Ok(Some(git::GithubTag { tag_name, body })) => {
+                match TermscpUpdate::is_new_version_available() {
+                    Ok(Some(Release { version, body })) => {
                         // If some, store version and release notes
-                        info!("Latest version is: {}", tag_name);
+                        info!("Latest version is: {}", version);
                         ctx.store_mut()
-                            .set_string(STORE_KEY_LATEST_VERSION, tag_name);
+                            .set_string(STORE_KEY_LATEST_VERSION, version);
                         ctx.store_mut().set_string(STORE_KEY_RELEASE_NOTES, body);
                     }
                     Ok(None) => {

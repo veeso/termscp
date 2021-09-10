@@ -24,7 +24,7 @@
 
 ## About termscp 🖥
 
-Termscp is a feature rich terminal file transfer and explorer, with support for SCP/SFTP/FTP/S3. So basically is a terminal utility with an TUI to connect to a remote server to retrieve and upload files and to interact with the local file system. It is **Linux**, **MacOS**, **BSD** and **Windows** compatible and supports SFTP, SCP, FTP, FTPS and S3.
+Termscp is a feature rich terminal file transfer and explorer, with support for SCP/SFTP/FTP/S3. So basically is a terminal utility with an TUI to connect to a remote server to retrieve and upload files and to interact with the local file system. It is **Linux**, **MacOS**, **FreeBSD** and **Windows** compatible and supports SFTP, SCP, FTP, FTPS and S3.
 
 ![Explorer](assets/images/explorer.gif)
 
@@ -33,10 +33,10 @@ Termscp is a feature rich terminal file transfer and explorer, with support for 
 ## Features 🎁
 
 - 📁  Different communication protocols
-  - SFTP
-  - SCP
-  - FTP and FTPS
-  - Aws S3
+  - **SFTP**
+  - **SCP**
+  - **FTP** and **FTPS**
+  - **Aws S3**
 - 🖥  Explore and operate on the remote and on the local machine file system with a handy UI
   - Create, remove, rename, search, view and edit files
 - ⭐  Connect to your favourite hosts through built-in bookmarks and recent connections
@@ -70,6 +70,8 @@ curl --proto '=https' --tlsv1.2 -sSLf "https://git.io/JBhDb" | sh
 while if you're a Windows user, you can install termscp with [Chocolatey](https://chocolatey.org/).
 
 For more information or other platforms, please visit [veeso.github.io](https://veeso.github.io/termscp/#get-started) to view all installation methods.
+
+⚠️ If you're looking on how to update termscp just run termscp from CLI with: `(sudo) termscp --update` ⚠️
 
 ### Requirements ❗
 
@@ -157,6 +159,7 @@ termscp is powered by these aweseome projects:
 - [open-rs](https://github.com/Byron/open-rs)
 - [rpassword](https://github.com/conradkleinespel/rpassword)
 - [rust-s3](https://github.com/durch/rust-s3)
+- [self_update](https://github.com/jaemk/self_update)
 - [ssh2-rs](https://github.com/alexcrichton/ssh2-rs)
 - [suppaftp](https://github.com/veeso/suppaftp)
 - [textwrap](https://github.com/mgeisler/textwrap)

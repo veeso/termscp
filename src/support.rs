@@ -26,7 +26,11 @@
  * SOFTWARE.
  */
 // mod
-use crate::system::{environment, theme_provider::ThemeProvider};
+use crate::system::{
+    auto_update::{Update, UpdateStatus},
+    environment,
+    theme_provider::ThemeProvider,
+};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -49,6 +53,23 @@ pub fn import_theme(p: &Path) -> Result<(), String> {
     fs::copy(p, theme_file.as_path())
         .map(|_| ())
         .map_err(|e| format!("Could not import theme: {}", e))
+}
+
+/// ### install_update
+///
+/// Install latest version of termscp if an update is available
+pub fn install_update() -> Result<String, String> {
+    match Update::default()
+        .show_progress(true)
+        .ask_confirm(true)
+        .upgrade()
+    {
+        Ok(UpdateStatus::AlreadyUptodate) => Ok("termscp is already up to date".to_string()),
+        Ok(UpdateStatus::UpdateInstalled(v)) => {
+            Ok(format!("termscp has been updated to version {}", v))
+        }
+        Err(err) => Err(err.to_string()),
+    }
 }
 
 /// ### get_config_dir

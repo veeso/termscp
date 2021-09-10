@@ -26,6 +26,7 @@
  * SOFTWARE.
  */
 // modules
+pub mod auto_update;
 pub mod bookmarks_client;
 pub mod config_client;
 pub mod environment;
