@@ -3,7 +3,9 @@
 //! This module exposes all the file transfers supported by termscp
 
 // -- import
-use super::{FileTransfer, FileTransferError, FileTransferErrorType, ProtocolParams};
+use super::{
+    FileTransfer, FileTransferError, FileTransferErrorType, FileTransferResult, ProtocolParams,
+};
 
 // -- modules
 mod ftp;

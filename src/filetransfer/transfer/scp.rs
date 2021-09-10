@@ -26,7 +26,9 @@
  * SOFTWARE.
  */
 // Locals
-use super::{FileTransfer, FileTransferError, FileTransferErrorType, ProtocolParams};
+use super::{
+    FileTransfer, FileTransferError, FileTransferErrorType, FileTransferResult, ProtocolParams,
+};
 use crate::fs::{FsDirectory, FsEntry, FsFile, UnixPex};
 use crate::system::sshkey_storage::SshKeyStorage;
 use crate::utils::fmt::{fmt_time, shadow_password};
@@ -278,7 +280,7 @@ impl ScpFileTransfer {
         &mut self,
         path: &Path,
         cmd: &str,
-    ) -> Result<String, FileTransferError> {
+    ) -> FileTransferResult<String> {
         self.perform_shell_cmd(format!("cd \"{}\"; {}", path.display(), cmd).as_str())
     }
 
@@ -286,7 +288,7 @@ impl ScpFileTransfer {
     ///
     /// Perform a shell command and read the output from shell
     /// This operation is, obviously, blocking.
-    fn perform_shell_cmd(&mut self, cmd: &str) -> Result<String, FileTransferError> {
+    fn perform_shell_cmd(&mut self, cmd: &str) -> FileTransferResult<String> {
         match self.session.as_mut() {
             Some(session) => {
                 debug!("Running command: {}", cmd);
@@ -333,7 +335,7 @@ impl FileTransfer for ScpFileTransfer {
     /// ### connect
     ///
     /// Connect to the remote server
-    fn connect(&mut self, params: &ProtocolParams) -> Result<Option<String>, FileTransferError> {
+    fn connect(&mut self, params: &ProtocolParams) -> FileTransferResult<Option<String>> {
         let params = match params.generic_params() {
             Some(params) => params,
             None => return Err(FileTransferError::new(FileTransferErrorType::BadAddress)),
@@ -472,7 +474,7 @@ impl FileTransfer for ScpFileTransfer {
     /// ### disconnect
     ///
     /// Disconnect from the remote server
-    fn disconnect(&mut self) -> Result<(), FileTransferError> {
+    fn disconnect(&mut self) -> FileTransferResult<()> {
         info!("Disconnecting from remote...");
         match self.session.as_ref() {
             Some(session) => {
@@ -506,7 +508,7 @@ impl FileTransfer for ScpFileTransfer {
     ///
     /// Print working directory
 
-    fn pwd(&mut self) -> Result<PathBuf, FileTransferError> {
+    fn pwd(&mut self) -> FileTransferResult<PathBuf> {
         info!("PWD: {}", self.wrkdir.display());
         match self.is_connected() {
             true => Ok(self.wrkdir.clone()),
@@ -520,7 +522,7 @@ impl FileTransfer for ScpFileTransfer {
     ///
     /// Change working directory
 
-    fn change_dir(&mut self, dir: &Path) -> Result<PathBuf, FileTransferError> {
+    fn change_dir(&mut self, dir: &Path) -> FileTransferResult<PathBuf> {
         match self.is_connected() {
             true => {
                 let p: PathBuf = self.wrkdir.clone();
@@ -564,7 +566,7 @@ impl FileTransfer for ScpFileTransfer {
     /// ### copy
     ///
     /// Copy file to destination
-    fn copy(&mut self, src: &FsEntry, dst: &Path) -> Result<(), FileTransferError> {
+    fn copy(&mut self, src: &FsEntry, dst: &Path) -> FileTransferResult<()> {
         match self.is_connected() {
             true => {
                 let dst: PathBuf = Self::resolve(dst);
@@ -612,7 +614,7 @@ impl FileTransfer for ScpFileTransfer {
     ///
     /// List directory entries
 
-    fn list_dir(&mut self, path: &Path) -> Result<Vec<FsEntry>, FileTransferError> {
+    fn list_dir(&mut self, path: &Path) -> FileTransferResult<Vec<FsEntry>> {
         match self.is_connected() {
             true => {
                 // Send ls -l to path
@@ -657,7 +659,7 @@ impl FileTransfer for ScpFileTransfer {
     ///
     /// Make directory
     /// In case the directory already exists, it must return an Error of kind `FileTransferErrorType::DirectoryAlreadyExists`
-    fn mkdir(&mut self, dir: &Path) -> Result<(), FileTransferError> {
+    fn mkdir(&mut self, dir: &Path) -> FileTransferResult<()> {
         match self.is_connected() {
             true => {
                 let dir: PathBuf = Self::resolve(dir);
@@ -703,7 +705,7 @@ impl FileTransfer for ScpFileTransfer {
     /// ### remove
     ///
     /// Remove a file or a directory
-    fn remove(&mut self, file: &FsEntry) -> Result<(), FileTransferError> {
+    fn remove(&mut self, file: &FsEntry) -> FileTransferResult<()> {
         // Yay, we have rm -rf here :D
         match self.is_connected() {
             true => {
@@ -741,7 +743,7 @@ impl FileTransfer for ScpFileTransfer {
     /// ### rename
     ///
     /// Rename file or a directory
-    fn rename(&mut self, file: &FsEntry, dst: &Path) -> Result<(), FileTransferError> {
+    fn rename(&mut self, file: &FsEntry, dst: &Path) -> FileTransferResult<()> {
         match self.is_connected() {
             true => {
                 // Get path
@@ -784,7 +786,7 @@ impl FileTransfer for ScpFileTransfer {
     /// ### stat
     ///
     /// Stat file and return FsEntry
-    fn stat(&mut self, path: &Path) -> Result<FsEntry, FileTransferError> {
+    fn stat(&mut self, path: &Path) -> FileTransferResult<FsEntry> {
         let path: PathBuf = Self::absolutize(self.wrkdir.as_path(), path);
         match self.is_connected() {
             true => {
@@ -829,7 +831,7 @@ impl FileTransfer for ScpFileTransfer {
     /// ### exec
     ///
     /// Execute a command on remote host
-    fn exec(&mut self, cmd: &str) -> Result<String, FileTransferError> {
+    fn exec(&mut self, cmd: &str) -> FileTransferResult<String> {
         match self.is_connected() {
             true => {
                 let p: PathBuf = self.wrkdir.clone();
@@ -858,7 +860,7 @@ impl FileTransfer for ScpFileTransfer {
         &mut self,
         local: &FsFile,
         file_name: &Path,
-    ) -> Result<Box<dyn Write>, FileTransferError> {
+    ) -> FileTransferResult<Box<dyn Write>> {
         match self.session.as_ref() {
             Some(session) => {
                 let file_name: PathBuf = Self::absolutize(self.wrkdir.as_path(), file_name);
@@ -925,7 +927,7 @@ impl FileTransfer for ScpFileTransfer {
     ///
     /// Receive file from remote with provided name
     /// Returns file and its size
-    fn recv_file(&mut self, file: &FsFile) -> Result<Box<dyn Read>, FileTransferError> {
+    fn recv_file(&mut self, file: &FsFile) -> FileTransferResult<Box<dyn Read>> {
         match self.session.as_ref() {
             Some(session) => {
                 info!("Receiving file {}", file.abs_path.display());

@@ -26,7 +26,9 @@
  * SOFTWARE.
  */
 // Locals
-use super::{FileTransfer, FileTransferError, FileTransferErrorType, ProtocolParams};
+use super::{
+    FileTransfer, FileTransferError, FileTransferErrorType, FileTransferResult, ProtocolParams,
+};
 use crate::fs::{FsDirectory, FsEntry, FsFile, UnixPex};
 use crate::system::sshkey_storage::SshKeyStorage;
 use crate::utils::fmt::{fmt_time, shadow_password};
@@ -64,7 +66,7 @@ impl SftpFileTransfer {
     /// ### get_abs_path
     ///
     /// Get absolute path from path argument and check if it exists
-    fn get_remote_path(&self, p: &Path) -> Result<PathBuf, FileTransferError> {
+    fn get_remote_path(&self, p: &Path) -> FileTransferResult<PathBuf> {
         match p.is_relative() {
             true => {
                 let mut root: PathBuf = self.wrkdir.clone();
@@ -202,7 +204,7 @@ impl SftpFileTransfer {
     /// ### perform_shell_cmd_with
     ///
     /// Perform a shell command, but change directory to specified path first
-    fn perform_shell_cmd_with_path(&mut self, cmd: &str) -> Result<String, FileTransferError> {
+    fn perform_shell_cmd_with_path(&mut self, cmd: &str) -> FileTransferResult<String> {
         self.perform_shell_cmd(format!("cd \"{}\"; {}", self.wrkdir.display(), cmd).as_str())
     }
 
@@ -210,7 +212,7 @@ impl SftpFileTransfer {
     ///
     /// Perform a shell command and read the output from shell
     /// This operation is, obviously, blocking.
-    fn perform_shell_cmd(&mut self, cmd: &str) -> Result<String, FileTransferError> {
+    fn perform_shell_cmd(&mut self, cmd: &str) -> FileTransferResult<String> {
         match self.session.as_mut() {
             Some(session) => {
                 // Create channel
@@ -257,7 +259,7 @@ impl FileTransfer for SftpFileTransfer {
     /// ### connect
     ///
     /// Connect to the remote server
-    fn connect(&mut self, params: &ProtocolParams) -> Result<Option<String>, FileTransferError> {
+    fn connect(&mut self, params: &ProtocolParams) -> FileTransferResult<Option<String>> {
         let params = match params.generic_params() {
             Some(params) => params,
             None => return Err(FileTransferError::new(FileTransferErrorType::BadAddress)),
@@ -413,7 +415,7 @@ impl FileTransfer for SftpFileTransfer {
     /// ### disconnect
     ///
     /// Disconnect from the remote server
-    fn disconnect(&mut self) -> Result<(), FileTransferError> {
+    fn disconnect(&mut self) -> FileTransferResult<()> {
         info!("Disconnecting from remote...");
         match self.session.as_ref() {
             Some(session) => {
@@ -447,7 +449,7 @@ impl FileTransfer for SftpFileTransfer {
     /// ### pwd
     ///
     /// Print working directory
-    fn pwd(&mut self) -> Result<PathBuf, FileTransferError> {
+    fn pwd(&mut self) -> FileTransferResult<PathBuf> {
         info!("PWD: {}", self.wrkdir.display());
         match self.sftp {
             Some(_) => Ok(self.wrkdir.clone()),
@@ -460,7 +462,7 @@ impl FileTransfer for SftpFileTransfer {
     /// ### change_dir
     ///
     /// Change working directory
-    fn change_dir(&mut self, dir: &Path) -> Result<PathBuf, FileTransferError> {
+    fn change_dir(&mut self, dir: &Path) -> FileTransferResult<PathBuf> {
         match self.sftp.as_ref() {
             Some(_) => {
                 // Change working directory
@@ -477,7 +479,7 @@ impl FileTransfer for SftpFileTransfer {
     /// ### copy
     ///
     /// Copy file to destination
-    fn copy(&mut self, src: &FsEntry, dst: &Path) -> Result<(), FileTransferError> {
+    fn copy(&mut self, src: &FsEntry, dst: &Path) -> FileTransferResult<()> {
         // NOTE: use SCP command to perform copy (UNSAFE)
         match self.is_connected() {
             true => {
@@ -523,7 +525,7 @@ impl FileTransfer for SftpFileTransfer {
     /// ### list_dir
     ///
     /// List directory entries
-    fn list_dir(&mut self, path: &Path) -> Result<Vec<FsEntry>, FileTransferError> {
+    fn list_dir(&mut self, path: &Path) -> FileTransferResult<Vec<FsEntry>> {
         match self.sftp.as_ref() {
             Some(sftp) => {
                 // Get path
@@ -556,7 +558,7 @@ impl FileTransfer for SftpFileTransfer {
     ///
     /// Make directory
     /// In case the directory already exists, it must return an Error of kind `FileTransferErrorType::DirectoryAlreadyExists`
-    fn mkdir(&mut self, dir: &Path) -> Result<(), FileTransferError> {
+    fn mkdir(&mut self, dir: &Path) -> FileTransferResult<()> {
         match self.sftp.as_ref() {
             Some(sftp) => {
                 // Make directory
@@ -586,7 +588,7 @@ impl FileTransfer for SftpFileTransfer {
     /// ### remove
     ///
     /// Remove a file or a directory
-    fn remove(&mut self, file: &FsEntry) -> Result<(), FileTransferError> {
+    fn remove(&mut self, file: &FsEntry) -> FileTransferResult<()> {
         if self.sftp.is_none() {
             return Err(FileTransferError::new(
                 FileTransferErrorType::UninitializedSession,
@@ -630,7 +632,7 @@ impl FileTransfer for SftpFileTransfer {
     /// ### rename
     ///
     /// Rename file or a directory
-    fn rename(&mut self, file: &FsEntry, dst: &Path) -> Result<(), FileTransferError> {
+    fn rename(&mut self, file: &FsEntry, dst: &Path) -> FileTransferResult<()> {
         match self.sftp.as_ref() {
             None => Err(FileTransferError::new(
                 FileTransferErrorType::UninitializedSession,
@@ -659,7 +661,7 @@ impl FileTransfer for SftpFileTransfer {
     /// ### stat
     ///
     /// Stat file and return FsEntry
-    fn stat(&mut self, path: &Path) -> Result<FsEntry, FileTransferError> {
+    fn stat(&mut self, path: &Path) -> FileTransferResult<FsEntry> {
         match self.sftp.as_ref() {
             Some(sftp) => {
                 // Get path
@@ -683,7 +685,7 @@ impl FileTransfer for SftpFileTransfer {
     /// ### exec
     ///
     /// Execute a command on remote host
-    fn exec(&mut self, cmd: &str) -> Result<String, FileTransferError> {
+    fn exec(&mut self, cmd: &str) -> FileTransferResult<String> {
         info!("Executing command {}", cmd);
         match self.is_connected() {
             true => match self.perform_shell_cmd_with_path(cmd) {
@@ -708,7 +710,7 @@ impl FileTransfer for SftpFileTransfer {
         &mut self,
         local: &FsFile,
         file_name: &Path,
-    ) -> Result<Box<dyn Write>, FileTransferError> {
+    ) -> FileTransferResult<Box<dyn Write>> {
         match self.sftp.as_ref() {
             None => Err(FileTransferError::new(
                 FileTransferErrorType::UninitializedSession,
@@ -749,7 +751,7 @@ impl FileTransfer for SftpFileTransfer {
     /// ### recv_file
     ///
     /// Receive file from remote with provided name
-    fn recv_file(&mut self, file: &FsFile) -> Result<Box<dyn Read>, FileTransferError> {
+    fn recv_file(&mut self, file: &FsFile) -> FileTransferResult<Box<dyn Read>> {
         match self.sftp.as_ref() {
             None => Err(FileTransferError::new(
                 FileTransferErrorType::UninitializedSession,

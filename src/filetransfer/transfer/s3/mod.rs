@@ -29,7 +29,9 @@
 mod object;
 
 // Locals
-use super::{FileTransfer, FileTransferError, FileTransferErrorType, ProtocolParams};
+use super::{
+    FileTransfer, FileTransferError, FileTransferErrorType, FileTransferResult, ProtocolParams,
+};
 use crate::fs::{FsDirectory, FsEntry, FsFile};
 use crate::utils::path;
 use object::S3Object;
@@ -64,7 +66,7 @@ impl S3FileTransfer {
     /// ### list_objects
     ///
     /// List objects contained in `p` path
-    fn list_objects(&self, p: &Path, list_dir: bool) -> Result<Vec<S3Object>, FileTransferError> {
+    fn list_objects(&self, p: &Path, list_dir: bool) -> FileTransferResult<Vec<S3Object>> {
         // Make path relative
         let key: String = Self::fmt_path(p, list_dir);
         debug!("Query list directory {}; key: {}", p.display(), key);
@@ -74,7 +76,7 @@ impl S3FileTransfer {
     /// ### stat_object
     ///
     /// Stat an s3 object
-    fn stat_object(&self, p: &Path) -> Result<S3Object, FileTransferError> {
+    fn stat_object(&self, p: &Path) -> FileTransferResult<S3Object> {
         let key: String = Self::fmt_path(p, false);
         debug!("Query stat object {}; key: {}", p.display(), key);
         let objects = self.query_objects(key, false)?;
@@ -100,7 +102,7 @@ impl S3FileTransfer {
         &self,
         key: String,
         only_direct_children: bool,
-    ) -> Result<Vec<S3Object>, FileTransferError> {
+    ) -> FileTransferResult<Vec<S3Object>> {
         let results = self.bucket.as_ref().unwrap().list(key.clone(), None);
         match results {
             Ok(entries) => {
@@ -200,7 +202,7 @@ impl FileTransfer for S3FileTransfer {
     ///
     /// Connect to the remote server
     /// Can return banner / welcome message on success
-    fn connect(&mut self, params: &ProtocolParams) -> Result<Option<String>, FileTransferError> {
+    fn connect(&mut self, params: &ProtocolParams) -> FileTransferResult<Option<String>> {
         // Verify parameters are S3
         let params = match params.s3_params() {
             Some(params) => params,
@@ -242,7 +244,7 @@ impl FileTransfer for S3FileTransfer {
     /// ### disconnect
     ///
     /// Disconnect from the remote server
-    fn disconnect(&mut self) -> Result<(), FileTransferError> {
+    fn disconnect(&mut self) -> FileTransferResult<()> {
         info!("Disconnecting from S3 bucket...");
         match self.bucket.take() {
             Some(bucket) => {
@@ -265,7 +267,7 @@ impl FileTransfer for S3FileTransfer {
     /// ### pwd
     ///
     /// Print working directory
-    fn pwd(&mut self) -> Result<PathBuf, FileTransferError> {
+    fn pwd(&mut self) -> FileTransferResult<PathBuf> {
         info!("PWD");
         match self.is_connected() {
             true => Ok(self.wrkdir.clone()),
@@ -278,7 +280,7 @@ impl FileTransfer for S3FileTransfer {
     /// ### change_dir
     ///
     /// Change working directory
-    fn change_dir(&mut self, dir: &Path) -> Result<PathBuf, FileTransferError> {
+    fn change_dir(&mut self, dir: &Path) -> FileTransferResult<PathBuf> {
         match &self.bucket.is_some() {
             true => {
                 // Always allow entering root
@@ -315,7 +317,7 @@ impl FileTransfer for S3FileTransfer {
     /// ### copy
     ///
     /// Copy file to destination
-    fn copy(&mut self, _src: &FsEntry, _dst: &Path) -> Result<(), FileTransferError> {
+    fn copy(&mut self, _src: &FsEntry, _dst: &Path) -> FileTransferResult<()> {
         Err(FileTransferError::new(
             FileTransferErrorType::UnsupportedFeature,
         ))
@@ -324,7 +326,7 @@ impl FileTransfer for S3FileTransfer {
     /// ### list_dir
     ///
     /// List directory entries
-    fn list_dir(&mut self, path: &Path) -> Result<Vec<FsEntry>, FileTransferError> {
+    fn list_dir(&mut self, path: &Path) -> FileTransferResult<Vec<FsEntry>> {
         match self.is_connected() {
             true => self
                 .list_objects(path, true)
@@ -339,7 +341,7 @@ impl FileTransfer for S3FileTransfer {
     ///
     /// Make directory
     /// In case the directory already exists, it must return an Error of kind `FileTransferErrorType::DirectoryAlreadyExists`
-    fn mkdir(&mut self, dir: &Path) -> Result<(), FileTransferError> {
+    fn mkdir(&mut self, dir: &Path) -> FileTransferResult<()> {
         match &self.bucket {
             Some(bucket) => {
                 let dir: String = Self::fmt_path(self.resolve(dir).as_path(), true);
@@ -373,7 +375,7 @@ impl FileTransfer for S3FileTransfer {
     /// ### remove
     ///
     /// Remove a file or a directory
-    fn remove(&mut self, file: &FsEntry) -> Result<(), FileTransferError> {
+    fn remove(&mut self, file: &FsEntry) -> FileTransferResult<()> {
         let path = Self::fmt_path(
             path::diff_paths(file.get_abs_path(), &Path::new("/"))
                 .unwrap_or_default()
@@ -397,7 +399,7 @@ impl FileTransfer for S3FileTransfer {
     /// ### rename
     ///
     /// Rename file or a directory
-    fn rename(&mut self, _file: &FsEntry, _dst: &Path) -> Result<(), FileTransferError> {
+    fn rename(&mut self, _file: &FsEntry, _dst: &Path) -> FileTransferResult<()> {
         Err(FileTransferError::new(
             FileTransferErrorType::UnsupportedFeature,
         ))
@@ -406,7 +408,7 @@ impl FileTransfer for S3FileTransfer {
     /// ### stat
     ///
     /// Stat file and return FsEntry
-    fn stat(&mut self, p: &Path) -> Result<FsEntry, FileTransferError> {
+    fn stat(&mut self, p: &Path) -> FileTransferResult<FsEntry> {
         match self.is_connected() {
             true => {
                 // First try as a "file"
@@ -428,7 +430,7 @@ impl FileTransfer for S3FileTransfer {
     /// ### exec
     ///
     /// Execute a command on remote host
-    fn exec(&mut self, _cmd: &str) -> Result<String, FileTransferError> {
+    fn exec(&mut self, _cmd: &str) -> FileTransferResult<String> {
         Err(FileTransferError::new(
             FileTransferErrorType::UnsupportedFeature,
         ))
@@ -446,7 +448,7 @@ impl FileTransfer for S3FileTransfer {
         _src: &FsFile,
         dest: &Path,
         mut reader: Box<dyn Read>,
-    ) -> Result<(), FileTransferError> {
+    ) -> FileTransferResult<()> {
         match &mut self.bucket {
             Some(bucket) => {
                 let key = Self::fmt_path(dest, false);
@@ -474,7 +476,7 @@ impl FileTransfer for S3FileTransfer {
     /// The developer implementing the filetransfer user should FIRST try with `send_file` followed by `on_sent`
     /// If the function returns error kind() `UnsupportedFeature`, then he should call this function.
     /// By default this function uses the streams function to copy content from reader to writer
-    fn recv_file_wno_stream(&mut self, src: &FsFile, dest: &Path) -> Result<(), FileTransferError> {
+    fn recv_file_wno_stream(&mut self, src: &FsFile, dest: &Path) -> FileTransferResult<()> {
         match &mut self.bucket {
             Some(bucket) => {
                 let mut writer = File::create(dest).map_err(|e| {

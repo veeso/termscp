@@ -62,15 +62,6 @@ pub struct FileTransferError {
     msg: Option<String>,
 }
 
-impl FileTransferError {
-    /// ### kind
-    ///
-    /// Returns the error kind
-    pub fn kind(&self) -> FileTransferErrorType {
-        self.code
-    }
-}
-
 /// ## FileTransferErrorType
 ///
 /// FileTransferErrorType defines the possible errors available for a file transfer
@@ -118,6 +109,13 @@ impl FileTransferError {
         err.msg = Some(msg);
         err
     }
+
+    /// ### kind
+    ///
+    /// Returns the error kind
+    pub fn kind(&self) -> FileTransferErrorType {
+        self.code
+    }
 }
 
 impl std::fmt::Display for FileTransferError {
@@ -129,6 +127,11 @@ impl std::fmt::Display for FileTransferError {
     }
 }
 
+/// ## FileTransferResult
+///
+/// Result type returned by a `FileTransfer` implementation
+pub type FileTransferResult<T> = Result<T, FileTransferError>;
+
 /// ## FileTransfer
 ///
 /// File transfer trait must be implemented by all the file transfers and defines the method used by a generic file transfer
@@ -137,12 +140,12 @@ pub trait FileTransfer {
     ///
     /// Connect to the remote server
     /// Can return banner / welcome message on success
-    fn connect(&mut self, params: &ProtocolParams) -> Result<Option<String>, FileTransferError>;
+    fn connect(&mut self, params: &ProtocolParams) -> FileTransferResult<Option<String>>;
 
     /// ### disconnect
     ///
     /// Disconnect from the remote server
-    fn disconnect(&mut self) -> Result<(), FileTransferError>;
+    fn disconnect(&mut self) -> FileTransferResult<()>;
 
     /// ### is_connected
     ///
@@ -153,50 +156,50 @@ pub trait FileTransfer {
     ///
     /// Print working directory
 
-    fn pwd(&mut self) -> Result<PathBuf, FileTransferError>;
+    fn pwd(&mut self) -> FileTransferResult<PathBuf>;
 
     /// ### change_dir
     ///
     /// Change working directory
 
-    fn change_dir(&mut self, dir: &Path) -> Result<PathBuf, FileTransferError>;
+    fn change_dir(&mut self, dir: &Path) -> FileTransferResult<PathBuf>;
 
     /// ### copy
     ///
     /// Copy file to destination
-    fn copy(&mut self, src: &FsEntry, dst: &Path) -> Result<(), FileTransferError>;
+    fn copy(&mut self, src: &FsEntry, dst: &Path) -> FileTransferResult<()>;
 
     /// ### list_dir
     ///
     /// List directory entries
 
-    fn list_dir(&mut self, path: &Path) -> Result<Vec<FsEntry>, FileTransferError>;
+    fn list_dir(&mut self, path: &Path) -> FileTransferResult<Vec<FsEntry>>;
 
     /// ### mkdir
     ///
     /// Make directory
     /// In case the directory already exists, it must return an Error of kind `FileTransferErrorType::DirectoryAlreadyExists`
-    fn mkdir(&mut self, dir: &Path) -> Result<(), FileTransferError>;
+    fn mkdir(&mut self, dir: &Path) -> FileTransferResult<()>;
 
     /// ### remove
     ///
     /// Remove a file or a directory
-    fn remove(&mut self, file: &FsEntry) -> Result<(), FileTransferError>;
+    fn remove(&mut self, file: &FsEntry) -> FileTransferResult<()>;
 
     /// ### rename
     ///
     /// Rename file or a directory
-    fn rename(&mut self, file: &FsEntry, dst: &Path) -> Result<(), FileTransferError>;
+    fn rename(&mut self, file: &FsEntry, dst: &Path) -> FileTransferResult<()>;
 
     /// ### stat
     ///
     /// Stat file and return FsEntry
-    fn stat(&mut self, path: &Path) -> Result<FsEntry, FileTransferError>;
+    fn stat(&mut self, path: &Path) -> FileTransferResult<FsEntry>;
 
     /// ### exec
     ///
     /// Execute a command on remote host
-    fn exec(&mut self, cmd: &str) -> Result<String, FileTransferError>;
+    fn exec(&mut self, cmd: &str) -> FileTransferResult<String>;
 
     /// ### send_file
     ///
@@ -209,7 +212,7 @@ pub trait FileTransfer {
         &mut self,
         _local: &FsFile,
         _file_name: &Path,
-    ) -> Result<Box<dyn Write>, FileTransferError> {
+    ) -> FileTransferResult<Box<dyn Write>> {
         Err(FileTransferError::new(
             FileTransferErrorType::UnsupportedFeature,
         ))
@@ -220,7 +223,7 @@ pub trait FileTransfer {
     /// Receive file from remote with provided name
     /// Returns file and its size
     /// By default returns unsupported feature
-    fn recv_file(&mut self, _file: &FsFile) -> Result<Box<dyn Read>, FileTransferError> {
+    fn recv_file(&mut self, _file: &FsFile) -> FileTransferResult<Box<dyn Read>> {
         Err(FileTransferError::new(
             FileTransferErrorType::UnsupportedFeature,
         ))
@@ -234,7 +237,7 @@ pub trait FileTransfer {
     /// This is necessary for some protocols such as FTP.
     /// You must call this method each time you want to finalize the write of the remote file.
     /// By default this function returns already `Ok(())`
-    fn on_sent(&mut self, _writable: Box<dyn Write>) -> Result<(), FileTransferError> {
+    fn on_sent(&mut self, _writable: Box<dyn Write>) -> FileTransferResult<()> {
         Ok(())
     }
 
@@ -246,7 +249,7 @@ pub trait FileTransfer {
     /// This mighe be necessary for some protocols.
     /// You must call this method each time you want to finalize the read of the remote file.
     /// By default this function returns already `Ok(())`
-    fn on_recv(&mut self, _readable: Box<dyn Read>) -> Result<(), FileTransferError> {
+    fn on_recv(&mut self, _readable: Box<dyn Read>) -> FileTransferResult<()> {
         Ok(())
     }
 
@@ -262,7 +265,7 @@ pub trait FileTransfer {
         src: &FsFile,
         dest: &Path,
         mut reader: Box<dyn Read>,
-    ) -> Result<(), FileTransferError> {
+    ) -> FileTransferResult<()> {
         match self.is_connected() {
             true => {
                 let mut stream = self.send_file(src, dest)?;
@@ -285,7 +288,7 @@ pub trait FileTransfer {
     /// If the function returns error kind() `UnsupportedFeature`, then he should call this function.
     /// For safety reasons this function doesn't accept the `Write` trait, but the destination path.
     /// By default this function uses the streams function to copy content from reader to writer
-    fn recv_file_wno_stream(&mut self, src: &FsFile, dest: &Path) -> Result<(), FileTransferError> {
+    fn recv_file_wno_stream(&mut self, src: &FsFile, dest: &Path) -> FileTransferResult<()> {
         match self.is_connected() {
             true => {
                 let mut writer = File::create(dest).map_err(|e| {
@@ -315,7 +318,7 @@ pub trait FileTransfer {
     ///
     /// Find files from current directory (in all subdirectories) whose name matches the provided search
     /// Search supports wildcards ('?', '*')
-    fn find(&mut self, search: &str) -> Result<Vec<FsEntry>, FileTransferError> {
+    fn find(&mut self, search: &str) -> FileTransferResult<Vec<FsEntry>> {
         match self.is_connected() {
             true => {
                 // Starting from current directory, iter dir
@@ -335,11 +338,7 @@ pub trait FileTransfer {
     /// Search recursively in `dir` for file matching the wildcard.
     /// NOTE: DON'T RE-IMPLEMENT THIS FUNCTION, unless the file transfer provides a faster way to do so
     /// NOTE: don't call this method from outside; consider it as private
-    fn iter_search(
-        &mut self,
-        dir: &Path,
-        filter: &WildMatch,
-    ) -> Result<Vec<FsEntry>, FileTransferError> {
+    fn iter_search(&mut self, dir: &Path, filter: &WildMatch) -> FileTransferResult<Vec<FsEntry>> {
         let mut drained: Vec<FsEntry> = Vec::new();
         // Scan directory
         match self.list_dir(dir) {
