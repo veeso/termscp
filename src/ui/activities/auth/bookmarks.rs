@@ -33,7 +33,7 @@ use crate::system::environment;
 
 // Ext
 use std::path::PathBuf;
-use tui_realm_stdlib::{input::InputPropsBuilder, radio::RadioPropsBuilder};
+use tui_realm_stdlib::{InputPropsBuilder, RadioPropsBuilder};
 use tuirealm::PropsBuilder;
 
 impl AuthActivity {

@@ -30,7 +30,7 @@
 use crate::utils::fmt::fmt_color;
 use crate::utils::parser::parse_color;
 // ext
-use tui_realm_stdlib::input::{Input, InputPropsBuilder};
+use tui_realm_stdlib::{Input, InputPropsBuilder};
 use tuirealm::event::Event;
 use tuirealm::props::{Alignment, Props, PropsBuilder};
 use tuirealm::tui::{

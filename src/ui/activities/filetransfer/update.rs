@@ -42,7 +42,7 @@ use crate::ui::components::{file_list::FileListPropsBuilder, logbox::LogboxProps
 use crate::ui::keymap::*;
 use crate::utils::fmt::fmt_path_elide_ex;
 // externals
-use tui_realm_stdlib::progress_bar::ProgressBarPropsBuilder;
+use tui_realm_stdlib::ProgressBarPropsBuilder;
 use tuirealm::{
     props::{Alignment, PropsBuilder, TableBuilder, TextSpan},
     tui::style::Color,

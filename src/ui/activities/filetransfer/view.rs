@@ -40,13 +40,9 @@ use crate::utils::ui::draw_area_in;
 use bytesize::ByteSize;
 use std::path::PathBuf;
 use tui_realm_stdlib::{
-    input::{Input, InputPropsBuilder},
-    list::{List, ListPropsBuilder},
-    paragraph::{Paragraph, ParagraphPropsBuilder},
-    progress_bar::{ProgressBar, ProgressBarPropsBuilder},
-    radio::{Radio, RadioPropsBuilder},
-    span::{Span, SpanPropsBuilder},
-    table::{Table, TablePropsBuilder},
+    Input, InputPropsBuilder, List, ListPropsBuilder, Paragraph, ParagraphPropsBuilder,
+    ProgressBar, ProgressBarPropsBuilder, Radio, RadioPropsBuilder, Span, SpanPropsBuilder, Table,
+    TablePropsBuilder,
 };
 use tuirealm::props::{Alignment, PropsBuilder, TableBuilder, TextSpan};
 use tuirealm::tui::{

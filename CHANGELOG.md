@@ -32,6 +32,9 @@ Released on ??
   - Operate on your bucket directly from the file explorer
   - You can also save your buckets as bookmarks
   - Aws s3 reads credentials directly from your credentials file at `$HOME/.aws/credentials` or from environment. Read more in the user manual.
+- Dependencies:
+  - Updated `argh` to `0.1.6`
+  - Updated `tui-realm-stdlib` to `0.6.2`
 
 ## 0.6.1
 
