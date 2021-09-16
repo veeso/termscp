@@ -209,7 +209,7 @@ impl AuthActivity {
                         .with_spans(vec![
                             TextSpan::from("termscp "),
                             TextSpan::new(version.as_str()).underlined().bold(),
-                            TextSpan::from(" is NOW available! Get it from <https://veeso.github.io/termscp/>; view release notes with <CTRL+R>"),
+                            TextSpan::from(" is NOW available! Install update and view release notes with <CTRL+R>"),
                         ])
                         .build(),
                 )),
@@ -360,6 +360,22 @@ impl AuthActivity {
                     self.view.render(super::COMPONENT_TEXT_ERROR, f, popup);
                 }
             }
+            if let Some(props) = self.view.get_props(super::COMPONENT_TEXT_INFO) {
+                if props.visible {
+                    let popup = draw_area_in(f.size(), 50, 10);
+                    f.render_widget(Clear, popup);
+                    // make popup
+                    self.view.render(super::COMPONENT_TEXT_INFO, f, popup);
+                }
+            }
+            if let Some(props) = self.view.get_props(super::COMPONENT_TEXT_WAIT) {
+                if props.visible {
+                    let popup = draw_area_in(f.size(), 50, 10);
+                    f.render_widget(Clear, popup);
+                    // make popup
+                    self.view.render(super::COMPONENT_TEXT_WAIT, f, popup);
+                }
+            }
             if let Some(props) = self.view.get_props(super::COMPONENT_TEXT_SIZE_ERR) {
                 if props.visible {
                     let popup = draw_area_in(f.size(), 80, 20);
@@ -403,10 +419,22 @@ impl AuthActivity {
             if let Some(props) = self.view.get_props(super::COMPONENT_TEXT_NEW_VERSION_NOTES) {
                 if props.visible {
                     // make popup
-                    let popup = draw_area_in(f.size(), 90, 90);
+                    let popup = draw_area_in(f.size(), 90, 85);
                     f.render_widget(Clear, popup);
+                    let popup_chunks = Layout::default()
+                        .direction(Direction::Vertical)
+                        .constraints(
+                            [
+                                Constraint::Percentage(90), // Notes
+                                Constraint::Length(3),      // Install radio
+                            ]
+                            .as_ref(),
+                        )
+                        .split(popup);
                     self.view
-                        .render(super::COMPONENT_TEXT_NEW_VERSION_NOTES, f, popup);
+                        .render(super::COMPONENT_TEXT_NEW_VERSION_NOTES, f, popup_chunks[0]);
+                    self.view
+                        .render(super::COMPONENT_RADIO_INSTALL_UPDATE, f, popup_chunks[1]);
                 }
             }
             if let Some(props) = self.view.get_props(super::COMPONENT_TEXT_HELP) {
@@ -515,7 +543,7 @@ impl AuthActivity {
     /// ### mount_error
     ///
     /// Mount error box
-    pub(super) fn mount_error(&mut self, text: &str) {
+    pub(super) fn mount_error<S: AsRef<str>>(&mut self, text: S) {
         // Mount
         let err_color = self.theme().misc_error_dialog;
         self.view.mount(
@@ -526,7 +554,7 @@ impl AuthActivity {
                     .with_borders(Borders::ALL, BorderType::Thick, err_color)
                     .bold()
                     .with_text_alignment(Alignment::Center)
-                    .with_texts(vec![TextSpan::from(text)])
+                    .with_texts(vec![TextSpan::from(text.as_ref().to_string())])
                     .build(),
             )),
         );
@@ -539,6 +567,62 @@ impl AuthActivity {
     /// Umount error message
     pub(super) fn umount_error(&mut self) {
         self.view.umount(super::COMPONENT_TEXT_ERROR);
+    }
+
+    /// ### mount_info
+    ///
+    /// Mount info box
+    pub(super) fn mount_info<S: AsRef<str>>(&mut self, text: S, color: Color) {
+        // Mount
+        self.view.mount(
+            super::COMPONENT_TEXT_INFO,
+            Box::new(Paragraph::new(
+                ParagraphPropsBuilder::default()
+                    .with_borders(Borders::ALL, BorderType::Thick, color)
+                    .with_foreground(color)
+                    .bold()
+                    .with_text_alignment(Alignment::Center)
+                    .with_texts(vec![TextSpan::from(text.as_ref().to_string())])
+                    .build(),
+            )),
+        );
+        // Give focus to error
+        self.view.active(super::COMPONENT_TEXT_INFO);
+    }
+
+    /// ### umount_info
+    ///
+    /// Umount info message
+    pub(super) fn umount_info(&mut self) {
+        self.view.umount(super::COMPONENT_TEXT_INFO);
+    }
+
+    /// ### mount_error
+    ///
+    /// Mount wait box
+    pub(super) fn mount_wait(&mut self, text: &str, color: Color) {
+        // Mount
+        self.view.mount(
+            super::COMPONENT_TEXT_WAIT,
+            Box::new(Paragraph::new(
+                ParagraphPropsBuilder::default()
+                    .with_borders(Borders::ALL, BorderType::Thick, color)
+                    .with_foreground(color)
+                    .bold()
+                    .with_text_alignment(Alignment::Center)
+                    .with_texts(vec![TextSpan::from(text)])
+                    .build(),
+            )),
+        );
+        // Give focus to error
+        self.view.active(super::COMPONENT_TEXT_WAIT);
+    }
+
+    /// ### umount_wait
+    ///
+    /// Umount wait message
+    pub(super) fn umount_wait(&mut self) {
+        self.view.umount(super::COMPONENT_TEXT_WAIT);
     }
 
     /// ### mount_size_err
@@ -785,7 +869,22 @@ impl AuthActivity {
                             .build(),
                     )),
                 );
-                self.view.active(super::COMPONENT_TEXT_NEW_VERSION_NOTES);
+                // Mount install popup
+                self.view.mount(
+                    super::COMPONENT_RADIO_INSTALL_UPDATE,
+                    Box::new(Radio::new(
+                        RadioPropsBuilder::default()
+                            .with_color(Color::LightYellow)
+                            .with_inverted_color(Color::Black)
+                            .with_borders(Borders::ALL, BorderType::Rounded, Color::LightYellow)
+                            .with_title("Install new version?", Alignment::Left)
+                            .with_options(&["Yes", "No"])
+                            .with_value(0)
+                            .rewind(true)
+                            .build(),
+                    )),
+                );
+                self.view.active(super::COMPONENT_RADIO_INSTALL_UPDATE);
             }
         }
     }
@@ -795,6 +894,7 @@ impl AuthActivity {
     /// Umount release notes text area
     pub(super) fn umount_release_notes(&mut self) {
         self.view.umount(super::COMPONENT_TEXT_NEW_VERSION_NOTES);
+        self.view.umount(super::COMPONENT_RADIO_INSTALL_UPDATE);
     }
 
     /// ### get_protocol

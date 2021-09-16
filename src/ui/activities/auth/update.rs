@@ -32,8 +32,9 @@ use super::{
     COMPONENT_INPUT_S3_BUCKET, COMPONENT_INPUT_S3_PROFILE, COMPONENT_INPUT_S3_REGION,
     COMPONENT_INPUT_USERNAME, COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK,
     COMPONENT_RADIO_BOOKMARK_DEL_RECENT, COMPONENT_RADIO_BOOKMARK_SAVE_PWD,
-    COMPONENT_RADIO_PROTOCOL, COMPONENT_RADIO_QUIT, COMPONENT_RECENTS_LIST, COMPONENT_TEXT_ERROR,
-    COMPONENT_TEXT_HELP, COMPONENT_TEXT_NEW_VERSION_NOTES, COMPONENT_TEXT_SIZE_ERR,
+    COMPONENT_RADIO_INSTALL_UPDATE, COMPONENT_RADIO_PROTOCOL, COMPONENT_RADIO_QUIT,
+    COMPONENT_RECENTS_LIST, COMPONENT_TEXT_ERROR, COMPONENT_TEXT_HELP, COMPONENT_TEXT_INFO,
+    COMPONENT_TEXT_NEW_VERSION_NOTES, COMPONENT_TEXT_SIZE_ERR, COMPONENT_TEXT_WAIT,
 };
 use crate::ui::keymap::*;
 use tui_realm_stdlib::InputPropsBuilder;
@@ -252,15 +253,44 @@ impl Update for AuthActivity {
                     self.umount_error();
                     None
                 }
-                (COMPONENT_TEXT_ERROR, _) => None,
-                (COMPONENT_TEXT_NEW_VERSION_NOTES, key)
-                    if key == &MSG_KEY_ESC || key == &MSG_KEY_ENTER =>
-                {
+                // -- Text info
+                (COMPONENT_TEXT_INFO, key) if key == &MSG_KEY_ESC || key == &MSG_KEY_ENTER => {
+                    // Umount text info
+                    self.umount_info();
+                    None
+                }
+                (COMPONENT_TEXT_ERROR, _) | (COMPONENT_TEXT_INFO, _) => None,
+                // -- Text wait
+                (COMPONENT_TEXT_WAIT, _) => None,
+                // -- Release notes
+                (COMPONENT_TEXT_NEW_VERSION_NOTES, key) if key == &MSG_KEY_ESC => {
                     // Umount release notes
                     self.umount_release_notes();
                     None
                 }
+                (COMPONENT_TEXT_NEW_VERSION_NOTES, key) if key == &MSG_KEY_TAB => {
+                    // Focus to radio update
+                    self.view.active(COMPONENT_RADIO_INSTALL_UPDATE);
+                    None
+                }
                 (COMPONENT_TEXT_NEW_VERSION_NOTES, _) => None,
+                // -- Install update radio
+                (COMPONENT_RADIO_INSTALL_UPDATE, Msg::OnSubmit(Payload::One(Value::Usize(0)))) => {
+                    // Install update
+                    self.install_update();
+                    None
+                }
+                (COMPONENT_RADIO_INSTALL_UPDATE, Msg::OnSubmit(Payload::One(Value::Usize(1)))) => {
+                    // Umount
+                    self.umount_release_notes();
+                    None
+                }
+                (COMPONENT_RADIO_INSTALL_UPDATE, key) if key == &MSG_KEY_TAB => {
+                    // Focus to changelog
+                    self.view.active(COMPONENT_TEXT_NEW_VERSION_NOTES);
+                    None
+                }
+                (COMPONENT_RADIO_INSTALL_UPDATE, _) => None,
                 // Help
                 (_, key) if key == &MSG_KEY_CTRL_H => {
                     // Show help

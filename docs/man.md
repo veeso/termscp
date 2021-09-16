@@ -37,6 +37,7 @@ termscp can be started with the following options:
 - `-c, --config` Open termscp starting from the configuration page
 - `-q, --quiet` Disable logging
 - `-t, --theme <path>` Import specified theme
+- `-u, --update` Update termscp to latest version
 - `-v, --version` Print version info
 - `-h, --help` Print help page
 

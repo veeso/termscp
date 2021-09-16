@@ -62,6 +62,7 @@ use system::logging;
 enum Task {
     Activity(NextActivity),
     ImportTheme(PathBuf),
+    InstallUpdate,
 }
 
 #[derive(FromArgs)]
@@ -84,6 +85,12 @@ struct Args {
     quiet: bool,
     #[argh(option, short = 't', description = "import specified theme")]
     theme: Option<String>,
+    #[argh(
+        switch,
+        short = 'u',
+        description = "update termscp to the latest version"
+    )]
+    update: bool,
     #[argh(
         option,
         short = 'T',
@@ -177,6 +184,9 @@ fn parse_args(args: Args) -> Result<RunOpts, String> {
     if let Some(theme) = args.theme {
         run_opts.task = Task::ImportTheme(PathBuf::from(theme));
     }
+    if args.update {
+        run_opts.task = Task::InstallUpdate;
+    }
     // @! Ordinary mode
     // Remote argument
     if let Some(remote) = args.positional.get(0) {
@@ -253,6 +263,16 @@ fn run(mut run_opts: RunOpts) -> i32 {
             }
             Err(err) => {
                 eprintln!("{}", err);
+                1
+            }
+        },
+        Task::InstallUpdate => match support::install_update() {
+            Ok(msg) => {
+                println!("{}", msg);
+                0
+            }
+            Err(err) => {
+                eprintln!("Could not install update: {}", err);
                 1
             }
         },

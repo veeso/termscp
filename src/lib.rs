@@ -53,13 +53,13 @@ extern crate path_slash;
 extern crate rand;
 extern crate regex;
 extern crate s3;
+extern crate self_update;
 extern crate ssh2;
 extern crate suppaftp;
 extern crate tempfile;
 extern crate textwrap;
 extern crate tui_realm_stdlib;
 extern crate tuirealm;
-extern crate ureq;
 #[cfg(target_family = "unix")]
 extern crate users;
 extern crate whoami;

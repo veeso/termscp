@@ -28,13 +28,20 @@ Released on ??
 > 🍁 Autumn update 🍇
 
 - **Aws S3**
-  - Added support for the aws-s3 protocol
-  - Operate on your bucket directly from the file explorer
-  - You can also save your buckets as bookmarks
+  - Added support for the aws-s3 protocol.
+  - Operate on your bucket directly from the file explorer.
+  - You can also save your buckets as bookmarks.
   - Aws s3 reads credentials directly from your credentials file at `$HOME/.aws/credentials` or from environment. Read more in the user manual.
+- **Auto update** ⬇️
+  - Possibility to update termscp directly via GUI or CLI.
+  - Install update via CLI running `(sudo) termscp --update`.
+  - Install update via GUI from auth form: when the "new version message" is displayed press `<CTRL+R>`, then enter `YES` in the radio input asking whether to install the update.
 - Dependencies:
+  - Added `rust-s3 0.27-rc4`
+  - Added `self_update 0.27.0`
   - Updated `argh` to `0.1.6`
   - Updated `tui-realm-stdlib` to `0.6.2`
+  - Removed `ureq`
 
 ## 0.6.1
 
