@@ -66,7 +66,11 @@ If you are a Linux, a FreeBSD or a MacOS user this simple shell script will inst
 curl --proto '=https' --tlsv1.2 -sSLf "https://git.io/JBhDb" | sh
 ```
 
-while if you're a Windows user, you can install termscp with [Chocolatey](https://chocolatey.org/).
+while if you're a Windows user, you can install termscp with [Chocolatey](https://chocolatey.org/):
+
+```sh
+choco install termscp
+```
 
 For more information or other platforms, please visit [veeso.github.io](https://veeso.github.io/termscp/#get-started) to view all installation methods.
 
