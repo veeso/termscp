@@ -131,7 +131,7 @@ impl Update {
                     new_version,
                     cargo_crate_version!()
                 );
-                if new_version.as_str() > "cargo_crate_version!()" {
+                if new_version.as_str() > cargo_crate_version!() {
                     Some(r) // New version is available
                 } else {
                     None // No new version

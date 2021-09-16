@@ -579,10 +579,10 @@ impl AuthActivity {
             Box::new(Paragraph::new(
                 ParagraphPropsBuilder::default()
                     .with_borders(Borders::ALL, BorderType::Thick, color)
+                    .with_foreground(color)
                     .bold()
                     .with_text_alignment(Alignment::Center)
                     .with_texts(vec![TextSpan::from(text.as_ref().to_string())])
-                    .with_foreground(color)
                     .build(),
             )),
         );
@@ -600,13 +600,14 @@ impl AuthActivity {
     /// ### mount_error
     ///
     /// Mount wait box
-    pub(super) fn mount_wait(&mut self, text: &str) {
+    pub(super) fn mount_wait(&mut self, text: &str, color: Color) {
         // Mount
         self.view.mount(
             super::COMPONENT_TEXT_WAIT,
             Box::new(Paragraph::new(
                 ParagraphPropsBuilder::default()
-                    .with_borders(Borders::ALL, BorderType::Thick, Color::Reset)
+                    .with_borders(Borders::ALL, BorderType::Thick, color)
+                    .with_foreground(color)
                     .bold()
                     .with_text_alignment(Alignment::Center)
                     .with_texts(vec![TextSpan::from(text)])

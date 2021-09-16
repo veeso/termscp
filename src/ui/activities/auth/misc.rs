@@ -164,7 +164,9 @@ impl AuthActivity {
         // Umount release notes
         self.umount_release_notes();
         // Mount wait box
-        self.mount_wait("Installing update. Please wait…");
+        self.mount_wait("Installing update. Please wait…", Color::LightYellow);
+        // Refresh UI
+        self.view();
         // Install update
         let result = Update::default().show_progress(false).upgrade();
         // Umount wait
