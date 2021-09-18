@@ -33,7 +33,7 @@ bytesize = "1.1.0"
 chrono = "0.4.19"
 content_inspector = "0.2.4"
 crossterm = "0.20"
-dirs = "3.0.1"
+dirs = "4.0.0"
 edit = "0.1.3"
 hostname = "0.3.1"
 keyring = { version = "0.10.1", optional = true }

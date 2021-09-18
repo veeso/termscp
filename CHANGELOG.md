@@ -40,6 +40,7 @@ Released on ??
   - Added `rust-s3 0.27-rc4`
   - Added `self_update 0.27.0`
   - Updated `argh` to `0.1.6`
+  - Updated `dirs` to `4.0.0`
   - Updated `tui-realm-stdlib` to `0.6.2`
   - Removed `ureq`
 
