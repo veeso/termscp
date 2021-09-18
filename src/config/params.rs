@@ -51,7 +51,8 @@ pub struct UserInterfaceConfig {
     pub text_editor: PathBuf,
     pub default_protocol: String,
     pub show_hidden_files: bool,
-    pub check_for_updates: Option<bool>, // @! Since 0.3.3
+    pub check_for_updates: Option<bool>,      // @! Since 0.3.3
+    pub prompt_on_file_replace: Option<bool>, // @! Since 0.7.0; Default True
     pub group_dirs: Option<String>,
     pub file_fmt: Option<String>, // Refers to local host (for backward compatibility)
     pub remote_file_fmt: Option<String>, // @! Since 0.5.0
@@ -84,6 +85,7 @@ impl Default for UserInterfaceConfig {
             default_protocol: FileTransferProtocol::Sftp.to_string(),
             show_hidden_files: false,
             check_for_updates: Some(true),
+            prompt_on_file_replace: Some(true),
             group_dirs: None,
             file_fmt: None,
             remote_file_fmt: None,
@@ -120,6 +122,7 @@ mod tests {
             text_editor: PathBuf::from("nano"),
             show_hidden_files: true,
             check_for_updates: Some(true),
+            prompt_on_file_replace: Some(true),
             group_dirs: Some(String::from("first")),
             file_fmt: Some(String::from("{NAME}")),
             remote_file_fmt: Some(String::from("{USER}")),
@@ -128,6 +131,7 @@ mod tests {
         assert_eq!(ui.text_editor, PathBuf::from("nano"));
         assert_eq!(ui.show_hidden_files, true);
         assert_eq!(ui.check_for_updates, Some(true));
+        assert_eq!(ui.prompt_on_file_replace, Some(true));
         assert_eq!(ui.group_dirs, Some(String::from("first")));
         assert_eq!(ui.file_fmt, Some(String::from("{NAME}")));
         let cfg: UserConfig = UserConfig {
@@ -145,6 +149,7 @@ mod tests {
         assert_eq!(cfg.user_interface.text_editor, PathBuf::from("nano"));
         assert_eq!(cfg.user_interface.show_hidden_files, true);
         assert_eq!(cfg.user_interface.check_for_updates, Some(true));
+        assert_eq!(cfg.user_interface.prompt_on_file_replace, Some(true));
         assert_eq!(cfg.user_interface.group_dirs, Some(String::from("first")));
         assert_eq!(cfg.user_interface.file_fmt, Some(String::from("{NAME}")));
         assert_eq!(
