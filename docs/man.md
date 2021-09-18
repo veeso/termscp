@@ -174,7 +174,7 @@ All the actions are available when working with multiple files, but be aware tha
 When enabled, synchronized browsing, will allow you to synchronize the navigation between the two panels.
 This means that whenever you'll change the working directory on one panel, the same action will be reproduced on the other panel. If you want to enable synchronized browsing just press `<Y>`; press twice to disable. While enabled, the synchronized browising state will be reported on the status bar on `ON`.
 
-*Warning*: at the moment, whenever you try to access an unexisting directory, you won't be prompted to create it. This might change in a future update.
+> ❗ at the moment, whenever you try to access an unexisting directory, you won't be prompted to create it. This might change in a future update.
 
 ### Open and Open With 🚪
 
@@ -208,14 +208,7 @@ Bookmarks will be saved, if possible at:
 - `FOLDERID_RoamingAppData\termscp\` on Windows
 
 For bookmarks only (this won't apply to recent hosts) it is also possible to save the password used to authenticate. The password is not saved by default and must be specified through the prompt when saving a new Bookmark.
-
-> I was very undecided about storing passwords in termscp. The reason? Saving a password on your computer might give access to a hacker to any server you've registered. But I must admit by myself that for many machines typing the password everytime is really boring, also many times I have to work with machines in LAN, which wouldn't provide any advantage to an attacker, So I came out with a good compromise for passwords.
-
-I warmly suggest you to follow these guidelines in order to decide whether you should or you shouldn't save passwords:
-
-- **DON'T** save passwords for machines which are exposed on the internet, save passwords only for machines in LAN
-- Make sure your machine is protected by attackers. If possible encrypt your disk and don't leave your PC unlocked while you're away.
-- Preferably, save passwords only when a compromising of the target machine wouldn't be a problem.
+If you're concerned about the security of the password saved for your bookmarks, please read the [chapter below 👀](#are-my-passwords-safe-).
 
 In order to create a new bookmark, just follow these steps:
 
@@ -231,12 +224,12 @@ whenever you want to use the previously saved connection, just press `<TAB>` to 
 
 ### Are my passwords Safe 😈
 
-Well, Yep 😉.
+Sure 😉.
 As said before, bookmarks are saved in your configuration directory along with passwords. Passwords are obviously not plain text, they are encrypted with **AES-128**. Does this make them safe? Absolutely! (except for BSD and WSL users 😢)
 
 On **Windows**, **Linux** and **MacOS** the passwords are stored, if possible (but should be), respectively in the *Windows Vault*, in the *system keyring* and into the *Keychain*. This is actually super-safe and is directly managed by your operating system.
 
-❗ Please, notice that if you're a Linux user, you should really read the [chapter below 👀](#linux-keyring), because the keyring might not be enabled or supported on your system!
+❗ Please, notice that if you're a Linux user, you'd better to read the [chapter below 👀](#linux-keyring), because the keyring might not be enabled or supported on your system!
 
 On *BSD* and *WSL*, on the other hand, the key used to encrypt your passwords is stored on your drive (at $HOME/.config/termscp). It is then, still possible to retrieve the key to decrypt passwords. Luckily, the location of the key guarantees your key can't be read by users different from yours, but yeah, I still wouldn't save the password for a server exposed on the internet 😉.
 
@@ -448,7 +441,7 @@ No. The reason is quite simple: when an issue happens, you must be able to know 
 
 > If trace level is set for logging, is the file going to reach a huge size?
 
-Probably not, unless you never quit termscp, but I think that's likely to happne. A long session may produce up to 10MB of log files (I said a long session), but I think a normal session won't exceed 2MB.
+Probably not, unless you never quit termscp, but I think that's unlikely to happen. A long session may produce up to 10MB of log files (I said a long session), but I think a normal session won't exceed 2MB.
 
 > I don't want logging, can I turn it off?
 
