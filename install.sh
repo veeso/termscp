@@ -345,16 +345,16 @@ try_with_cargo() {
         case $PLATFORM in
             "freebsd")
                 install_bsd_cargo_deps
-                cargo install --no-default-features termscp
+                cargo install --locked --no-default-features termscp
             ;;
 
             "linux")
                 install_linux_cargo_deps
-                cargo install termscp
+                cargo install --locked termscp
             ;;
 
             *)
-                cargo install termscp
+                cargo install --locked termscp
             ;;
 
         esac
