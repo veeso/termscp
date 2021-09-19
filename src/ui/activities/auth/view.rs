@@ -544,22 +544,8 @@ impl AuthActivity {
     ///
     /// Mount error box
     pub(super) fn mount_error<S: AsRef<str>>(&mut self, text: S) {
-        // Mount
         let err_color = self.theme().misc_error_dialog;
-        self.view.mount(
-            super::COMPONENT_TEXT_ERROR,
-            Box::new(Paragraph::new(
-                ParagraphPropsBuilder::default()
-                    .with_foreground(err_color)
-                    .with_borders(Borders::ALL, BorderType::Thick, err_color)
-                    .bold()
-                    .with_text_alignment(Alignment::Center)
-                    .with_texts(vec![TextSpan::from(text.as_ref().to_string())])
-                    .build(),
-            )),
-        );
-        // Give focus to error
-        self.view.active(super::COMPONENT_TEXT_ERROR);
+        self.mount_text_dialog(super::COMPONENT_TEXT_ERROR, text.as_ref(), err_color);
     }
 
     /// ### umount_error
@@ -572,22 +558,9 @@ impl AuthActivity {
     /// ### mount_info
     ///
     /// Mount info box
-    pub(super) fn mount_info<S: AsRef<str>>(&mut self, text: S, color: Color) {
-        // Mount
-        self.view.mount(
-            super::COMPONENT_TEXT_INFO,
-            Box::new(Paragraph::new(
-                ParagraphPropsBuilder::default()
-                    .with_borders(Borders::ALL, BorderType::Thick, color)
-                    .with_foreground(color)
-                    .bold()
-                    .with_text_alignment(Alignment::Center)
-                    .with_texts(vec![TextSpan::from(text.as_ref().to_string())])
-                    .build(),
-            )),
-        );
-        // Give focus to error
-        self.view.active(super::COMPONENT_TEXT_INFO);
+    pub(super) fn mount_info<S: AsRef<str>>(&mut self, text: S) {
+        let color = self.theme().misc_info_dialog;
+        self.mount_text_dialog(super::COMPONENT_TEXT_INFO, text.as_ref(), color);
     }
 
     /// ### umount_info
@@ -600,22 +573,9 @@ impl AuthActivity {
     /// ### mount_error
     ///
     /// Mount wait box
-    pub(super) fn mount_wait(&mut self, text: &str, color: Color) {
-        // Mount
-        self.view.mount(
-            super::COMPONENT_TEXT_WAIT,
-            Box::new(Paragraph::new(
-                ParagraphPropsBuilder::default()
-                    .with_borders(Borders::ALL, BorderType::Thick, color)
-                    .with_foreground(color)
-                    .bold()
-                    .with_text_alignment(Alignment::Center)
-                    .with_texts(vec![TextSpan::from(text)])
-                    .build(),
-            )),
-        );
-        // Give focus to error
-        self.view.active(super::COMPONENT_TEXT_WAIT);
+    pub(super) fn mount_wait(&mut self, text: &str) {
+        let wait_color = self.theme().misc_info_dialog;
+        self.mount_text_dialog(super::COMPONENT_TEXT_WAIT, text, wait_color);
     }
 
     /// ### umount_wait
@@ -631,22 +591,11 @@ impl AuthActivity {
     pub(super) fn mount_size_err(&mut self) {
         // Mount
         let err_color = self.theme().misc_error_dialog;
-        self.view.mount(
+        self.mount_text_dialog(
             super::COMPONENT_TEXT_SIZE_ERR,
-            Box::new(Paragraph::new(
-                ParagraphPropsBuilder::default()
-                    .with_foreground(err_color)
-                    .with_borders(Borders::ALL, BorderType::Thick, err_color)
-                    .bold()
-                    .with_texts(vec![TextSpan::from(
-                        "termscp requires at least 24 lines of height to run",
-                    )])
-                    .with_text_alignment(Alignment::Center)
-                    .build(),
-            )),
+            "termscp requires at least 24 lines of height to run",
+            err_color,
         );
-        // Give focus to error
-        self.view.active(super::COMPONENT_TEXT_SIZE_ERR);
     }
 
     /// ### umount_size_err
@@ -662,20 +611,13 @@ impl AuthActivity {
     pub(super) fn mount_quit(&mut self) {
         // Protocol
         let quit_color = self.theme().misc_quit_dialog;
-        self.view.mount(
+        self.mount_radio_dialog(
             super::COMPONENT_RADIO_QUIT,
-            Box::new(Radio::new(
-                RadioPropsBuilder::default()
-                    .with_color(quit_color)
-                    .with_borders(Borders::ALL, BorderType::Rounded, quit_color)
-                    .with_inverted_color(Color::Black)
-                    .with_title("Quit termscp?", Alignment::Center)
-                    .with_options(&[String::from("Yes"), String::from("No")])
-                    .rewind(true)
-                    .build(),
-            )),
+            "Quit termscp?",
+            &["Yes", "No"],
+            0,
+            quit_color,
         );
-        self.view.active(super::COMPONENT_RADIO_QUIT);
     }
 
     /// ### umount_quit
@@ -690,23 +632,13 @@ impl AuthActivity {
     /// Mount bookmark delete dialog
     pub(super) fn mount_bookmark_del_dialog(&mut self) {
         let warn_color = self.theme().misc_warn_dialog;
-        self.view.mount(
+        self.mount_radio_dialog(
             super::COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK,
-            Box::new(Radio::new(
-                RadioPropsBuilder::default()
-                    .with_color(warn_color)
-                    .with_inverted_color(Color::Black)
-                    .with_borders(Borders::ALL, BorderType::Rounded, warn_color)
-                    .with_title("Delete bookmark?", Alignment::Center)
-                    .with_options(&[String::from("Yes"), String::from("No")])
-                    .with_value(1)
-                    .rewind(true)
-                    .build(),
-            )),
+            "Delete bookmark?",
+            &["Yes", "No"],
+            1,
+            warn_color,
         );
-        // Active
-        self.view
-            .active(super::COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK);
     }
 
     /// ### umount_bookmark_del_dialog
@@ -722,22 +654,13 @@ impl AuthActivity {
     /// Mount recent delete dialog
     pub(super) fn mount_recent_del_dialog(&mut self) {
         let warn_color = self.theme().misc_warn_dialog;
-        self.view.mount(
+        self.mount_radio_dialog(
             super::COMPONENT_RADIO_BOOKMARK_DEL_RECENT,
-            Box::new(Radio::new(
-                RadioPropsBuilder::default()
-                    .with_color(warn_color)
-                    .with_inverted_color(Color::Black)
-                    .with_borders(Borders::ALL, BorderType::Rounded, warn_color)
-                    .with_title("Delete bookmark?", Alignment::Center)
-                    .with_options(&[String::from("Yes"), String::from("No")])
-                    .with_value(1)
-                    .rewind(true)
-                    .build(),
-            )),
+            "Delete bookmark?",
+            &["Yes", "No"],
+            1,
+            warn_color,
         );
-        // Active
-        self.view.active(super::COMPONENT_RADIO_BOOKMARK_DEL_RECENT);
     }
 
     /// ### umount_recent_del_dialog
@@ -859,32 +782,25 @@ impl AuthActivity {
             if let Some(release_notes) = ctx.store().get_string(super::STORE_KEY_RELEASE_NOTES) {
                 // make spans
                 let spans: Vec<TextSpan> = release_notes.lines().map(TextSpan::from).collect();
+                let info_color = self.theme().misc_info_dialog;
                 self.view.mount(
                     super::COMPONENT_TEXT_NEW_VERSION_NOTES,
                     Box::new(Textarea::new(
                         TextareaPropsBuilder::default()
-                            .with_borders(Borders::ALL, BorderType::Rounded, Color::LightYellow)
+                            .with_borders(Borders::ALL, BorderType::Rounded, info_color)
                             .with_title("Release notes", Alignment::Center)
                             .with_texts(spans)
                             .build(),
                     )),
                 );
                 // Mount install popup
-                self.view.mount(
+                self.mount_radio_dialog(
                     super::COMPONENT_RADIO_INSTALL_UPDATE,
-                    Box::new(Radio::new(
-                        RadioPropsBuilder::default()
-                            .with_color(Color::LightYellow)
-                            .with_inverted_color(Color::Black)
-                            .with_borders(Borders::ALL, BorderType::Rounded, Color::LightYellow)
-                            .with_title("Install new version?", Alignment::Left)
-                            .with_options(&["Yes", "No"])
-                            .with_value(0)
-                            .rewind(true)
-                            .build(),
-                    )),
+                    "Install new version?",
+                    &["Yes", "No"],
+                    0,
+                    info_color,
                 );
-                self.view.active(super::COMPONENT_RADIO_INSTALL_UPDATE);
             }
         }
     }
@@ -1032,5 +948,51 @@ impl AuthActivity {
                 )
             }
         }
+    }
+
+    // -- mount helpers
+
+    fn mount_text_dialog(&mut self, id: &str, text: &str, color: Color) {
+        // Mount
+        self.view.mount(
+            id,
+            Box::new(Paragraph::new(
+                ParagraphPropsBuilder::default()
+                    .with_borders(Borders::ALL, BorderType::Thick, color)
+                    .with_foreground(color)
+                    .bold()
+                    .with_text_alignment(Alignment::Center)
+                    .with_texts(vec![TextSpan::from(text)])
+                    .build(),
+            )),
+        );
+        // Give focus to error
+        self.view.active(id);
+    }
+
+    fn mount_radio_dialog(
+        &mut self,
+        id: &str,
+        text: &str,
+        opts: &[&str],
+        default: usize,
+        color: Color,
+    ) {
+        self.view.mount(
+            id,
+            Box::new(Radio::new(
+                RadioPropsBuilder::default()
+                    .with_color(color)
+                    .with_inverted_color(Color::Black)
+                    .with_borders(Borders::ALL, BorderType::Rounded, color)
+                    .with_title(text, Alignment::Center)
+                    .with_options(opts)
+                    .with_value(default)
+                    .rewind(true)
+                    .build(),
+            )),
+        );
+        // Active
+        self.view.active(id);
     }
 }

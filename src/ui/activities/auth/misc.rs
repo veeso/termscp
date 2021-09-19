@@ -29,8 +29,6 @@ use super::{AuthActivity, FileTransferParams, FileTransferProtocol};
 use crate::filetransfer::params::{AwsS3Params, GenericProtocolParams, ProtocolParams};
 use crate::system::auto_update::{Update, UpdateStatus};
 
-use tuirealm::tui::style::Color;
-
 impl AuthActivity {
     /// ### protocol_opt_to_enum
     ///
@@ -164,7 +162,7 @@ impl AuthActivity {
         // Umount release notes
         self.umount_release_notes();
         // Mount wait box
-        self.mount_wait("Installing update. Please wait…", Color::LightYellow);
+        self.mount_wait("Installing update. Please wait…");
         // Refresh UI
         self.view();
         // Install update
@@ -173,13 +171,10 @@ impl AuthActivity {
         self.umount_wait();
         // Show outcome
         match result {
-            Ok(UpdateStatus::AlreadyUptodate) => {
-                self.mount_info("termscp is already up to date!", Color::Cyan)
+            Ok(UpdateStatus::AlreadyUptodate) => self.mount_info("termscp is already up to date!"),
+            Ok(UpdateStatus::UpdateInstalled(ver)) => {
+                self.mount_info(format!("termscp has been updated to version {}!", ver))
             }
-            Ok(UpdateStatus::UpdateInstalled(ver)) => self.mount_info(
-                format!("termscp has been updated to version {}!", ver),
-                Color::Green,
-            ),
             Err(err) => self.mount_error(format!("Could not install update: {}", err)),
         }
     }
