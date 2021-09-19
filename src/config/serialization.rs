@@ -556,6 +556,7 @@ mod tests {
         auth_recents = "LightBlue"
         auth_username = "LightMagenta"
         misc_error_dialog = "Red"
+        misc_info_dialog = "LightYellow"
         misc_input_dialog = "240,240,240"
         misc_keys = "Cyan"
         misc_quit_dialog = "Yellow"

@@ -36,6 +36,8 @@ Released on ??
   - Possibility to update termscp directly via GUI or CLI.
   - Install update via CLI running `(sudo) termscp --update`.
   - Install update via GUI from auth form: when the "new version message" is displayed press `<CTRL+R>`, then enter `YES` in the radio input asking whether to install the update.
+- **❗ BREAKING CHANGES ❗**:
+  - Added a new key in themes: `misc_info_dialog`: if your theme won't load, just reload it. If you're using a customised theme, you can add to it the missing key via a text editor. Just edit the `theme.toml` in your `$CONFIG_DIR/termscp/theme.toml` and add `misc_info_dialog` (Read more in manual at Themes).
 - Dependencies:
   - Added `rust-s3 0.27-rc4`
   - Added `self_update 0.27.0`

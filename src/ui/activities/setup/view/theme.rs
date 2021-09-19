@@ -70,6 +70,7 @@ impl SetupActivity {
         // Misc
         self.mount_title(super::COMPONENT_COLOR_MISC_TITLE, "Misc styles");
         self.mount_color_picker(super::COMPONENT_COLOR_MISC_ERROR, "Error");
+        self.mount_color_picker(super::COMPONENT_COLOR_MISC_INFO, "Info dialogs");
         self.mount_color_picker(super::COMPONENT_COLOR_MISC_INPUT, "Input fields");
         self.mount_color_picker(super::COMPONENT_COLOR_MISC_KEYS, "Key strokes");
         self.mount_color_picker(super::COMPONENT_COLOR_MISC_QUIT, "Quit dialogs");
@@ -222,12 +223,12 @@ impl SetupActivity {
                     [
                         Constraint::Length(1), // Title
                         Constraint::Length(3), // Error
+                        Constraint::Length(3), // Info
                         Constraint::Length(3), // Input
                         Constraint::Length(3), // Keys
                         Constraint::Length(3), // Quit
                         Constraint::Length(3), // Save
                         Constraint::Length(3), // Warn
-                        Constraint::Length(3), // Empty
                     ]
                     .as_ref(),
                 )
@@ -237,15 +238,17 @@ impl SetupActivity {
             self.view
                 .render(super::COMPONENT_COLOR_MISC_ERROR, f, misc_colors_layout[1]);
             self.view
-                .render(super::COMPONENT_COLOR_MISC_INPUT, f, misc_colors_layout[2]);
+                .render(super::COMPONENT_COLOR_MISC_INFO, f, misc_colors_layout[2]);
             self.view
-                .render(super::COMPONENT_COLOR_MISC_KEYS, f, misc_colors_layout[3]);
+                .render(super::COMPONENT_COLOR_MISC_INPUT, f, misc_colors_layout[3]);
             self.view
-                .render(super::COMPONENT_COLOR_MISC_QUIT, f, misc_colors_layout[4]);
+                .render(super::COMPONENT_COLOR_MISC_KEYS, f, misc_colors_layout[4]);
             self.view
-                .render(super::COMPONENT_COLOR_MISC_SAVE, f, misc_colors_layout[5]);
+                .render(super::COMPONENT_COLOR_MISC_QUIT, f, misc_colors_layout[5]);
             self.view
-                .render(super::COMPONENT_COLOR_MISC_WARN, f, misc_colors_layout[6]);
+                .render(super::COMPONENT_COLOR_MISC_SAVE, f, misc_colors_layout[6]);
+            self.view
+                .render(super::COMPONENT_COLOR_MISC_WARN, f, misc_colors_layout[7]);
 
             let transfer_colors_layout_col1 = Layout::default()
                 .direction(Direction::Vertical)
@@ -405,6 +408,7 @@ impl SetupActivity {
         self.update_color(super::COMPONENT_COLOR_AUTH_RECENTS, theme.auth_recents);
         self.update_color(super::COMPONENT_COLOR_AUTH_USERNAME, theme.auth_username);
         self.update_color(super::COMPONENT_COLOR_MISC_ERROR, theme.misc_error_dialog);
+        self.update_color(super::COMPONENT_COLOR_MISC_INFO, theme.misc_info_dialog);
         self.update_color(super::COMPONENT_COLOR_MISC_INPUT, theme.misc_input_dialog);
         self.update_color(super::COMPONENT_COLOR_MISC_KEYS, theme.misc_keys);
         self.update_color(super::COMPONENT_COLOR_MISC_QUIT, theme.misc_quit_dialog);
@@ -495,6 +499,9 @@ impl SetupActivity {
         let misc_error_dialog: Color = self
             .get_color(super::COMPONENT_COLOR_MISC_ERROR)
             .map_err(|_| super::COMPONENT_COLOR_MISC_ERROR)?;
+        let misc_info_dialog: Color = self
+            .get_color(super::COMPONENT_COLOR_MISC_INFO)
+            .map_err(|_| super::COMPONENT_COLOR_MISC_INFO)?;
         let misc_input_dialog: Color = self
             .get_color(super::COMPONENT_COLOR_MISC_INPUT)
             .map_err(|_| super::COMPONENT_COLOR_MISC_INPUT)?;
@@ -560,6 +567,7 @@ impl SetupActivity {
         theme.auth_recents = auth_recents;
         theme.auth_username = auth_username;
         theme.misc_error_dialog = misc_error_dialog;
+        theme.misc_info_dialog = misc_info_dialog;
         theme.misc_input_dialog = misc_input_dialog;
         theme.misc_keys = misc_keys;
         theme.misc_quit_dialog = misc_quit_dialog;

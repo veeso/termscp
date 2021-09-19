@@ -31,8 +31,8 @@ use super::{
     SetupActivity, ViewLayout, COMPONENT_COLOR_AUTH_ADDR, COMPONENT_COLOR_AUTH_BOOKMARKS,
     COMPONENT_COLOR_AUTH_PASSWORD, COMPONENT_COLOR_AUTH_PORT, COMPONENT_COLOR_AUTH_PROTOCOL,
     COMPONENT_COLOR_AUTH_RECENTS, COMPONENT_COLOR_AUTH_USERNAME, COMPONENT_COLOR_MISC_ERROR,
-    COMPONENT_COLOR_MISC_INPUT, COMPONENT_COLOR_MISC_KEYS, COMPONENT_COLOR_MISC_QUIT,
-    COMPONENT_COLOR_MISC_SAVE, COMPONENT_COLOR_MISC_WARN,
+    COMPONENT_COLOR_MISC_INFO, COMPONENT_COLOR_MISC_INPUT, COMPONENT_COLOR_MISC_KEYS,
+    COMPONENT_COLOR_MISC_QUIT, COMPONENT_COLOR_MISC_SAVE, COMPONENT_COLOR_MISC_WARN,
     COMPONENT_COLOR_TRANSFER_EXPLORER_LOCAL_BG, COMPONENT_COLOR_TRANSFER_EXPLORER_LOCAL_FG,
     COMPONENT_COLOR_TRANSFER_EXPLORER_LOCAL_HG, COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_BG,
     COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_FG, COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_HG,
@@ -441,6 +441,10 @@ impl SetupActivity {
                     None
                 }
                 (COMPONENT_COLOR_MISC_ERROR, key) if key == &MSG_KEY_DOWN => {
+                    self.view.active(COMPONENT_COLOR_MISC_INFO);
+                    None
+                }
+                (COMPONENT_COLOR_MISC_INFO, key) if key == &MSG_KEY_DOWN => {
                     self.view.active(COMPONENT_COLOR_MISC_INPUT);
                     None
                 }
@@ -551,8 +555,12 @@ impl SetupActivity {
                     self.view.active(COMPONENT_COLOR_AUTH_RECENTS);
                     None
                 }
-                (COMPONENT_COLOR_MISC_INPUT, key) if key == &MSG_KEY_UP => {
+                (COMPONENT_COLOR_MISC_INFO, key) if key == &MSG_KEY_UP => {
                     self.view.active(COMPONENT_COLOR_MISC_ERROR);
+                    None
+                }
+                (COMPONENT_COLOR_MISC_INPUT, key) if key == &MSG_KEY_UP => {
+                    self.view.active(COMPONENT_COLOR_MISC_INFO);
                     None
                 }
                 (COMPONENT_COLOR_MISC_KEYS, key) if key == &MSG_KEY_UP => {

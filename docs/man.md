@@ -19,6 +19,7 @@
     - [SSH Key Storage 🔐](#ssh-key-storage-)
     - [File Explorer Format](#file-explorer-format)
   - [Themes 🎨](#themes-)
+    - [My theme won't load 😱](#my-theme-wont-load-)
     - [Styles 💈](#styles-)
       - [Authentication page](#authentication-page)
       - [Transfer page](#transfer-page)
@@ -360,6 +361,24 @@ termscp supports both the traditional explicit hex (`#rrggbb`) and rgb `rgb(r, g
 
 As said before, you can also import theme files. You can take inspiration from or directly use one of the themes provided along with termscp, located in the `themes/` directory of this repository and import them running termscp as `termscp -t <theme_file>`. If everything was fine, it should tell you the theme has successfully been imported.
 
+### My theme won't load 😱
+
+This is probably due to a recent update which has broken the theme. Whenever I add a new key to themes, the saved theme won't load. To fix this issues there are two really quick-fix solutions:
+
+1. Reload theme: whenever I release an update I will also patch the "official" themes, so you just have to download it from the repository again and re-import the theme via `-t` option
+
+    ```sh
+    termscp -t <theme.toml>
+    ```
+
+2. Fix your theme: If you're using a custom theme, then you can edit via `vim` and add the missing key. The theme is located at `$CONFIG_DIR/termscp/theme.toml` where `$CONFIG_DIR` is:
+
+    - FreeBSD/GNU-Linux: `$HOME/.config/`
+    - MacOs: `$HOME/Library/Application Support`
+    - Windows: `%appdata%`
+
+    ❗ Missing keys are reported in the CHANGELOG under `BREAKING CHANGES` for the version you've just installed.
+
 ### Styles 💈
 
 You can find in the table below, the description for each style field.
@@ -402,6 +421,7 @@ These styles applie to different part of the application.
 | Key               | Description                                 |
 |-------------------|---------------------------------------------|
 | misc_error_dialog | Color for error messages                    |
+| misc_info_dialog  | Color for info dialogs                      |
 | misc_input_dialog | Color for input dialogs (such as copy file) |
 | misc_keys         | Color of text for key strokes               |
 | misc_quit_dialog  | Color for quit dialogs                      |

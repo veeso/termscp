@@ -254,6 +254,9 @@ impl SetupActivity {
             super::COMPONENT_COLOR_MISC_ERROR => {
                 theme.misc_error_dialog = color;
             }
+            super::COMPONENT_COLOR_MISC_INFO => {
+                theme.misc_info_dialog = color;
+            }
             super::COMPONENT_COLOR_MISC_INPUT => {
                 theme.misc_input_dialog = color;
             }
