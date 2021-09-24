@@ -44,7 +44,7 @@ use crate::host::Localhost;
 use crate::system::config_client::ConfigClient;
 pub(self) use lib::browser;
 use lib::browser::Browser;
-use lib::transfer::TransferStates;
+use lib::transfer::{TransferOpts, TransferStates};
 pub(self) use session::TransferPayload;
 
 // Includes
@@ -57,6 +57,7 @@ use tuirealm::View;
 // -- Storage keys
 
 const STORAGE_EXPLORER_WIDTH: &str = "FILETRANSFER_EXPLORER_WIDTH";
+const STORAGE_PENDING_TRANSFER: &str = "FILETRANSFER_PENDING_TRANSFER";
 
 // -- components
 
@@ -80,6 +81,7 @@ const COMPONENT_INPUT_OPEN_WITH: &str = "INPUT_OPEN_WITH";
 const COMPONENT_INPUT_RENAME: &str = "INPUT_RENAME";
 const COMPONENT_INPUT_SAVEAS: &str = "INPUT_SAVEAS";
 const COMPONENT_RADIO_DELETE: &str = "RADIO_DELETE";
+const COMPONENT_RADIO_REPLACE: &str = "RADIO_REPLACE"; // NOTE: used for file transfers, to choose whether to replace files
 const COMPONENT_RADIO_DISCONNECT: &str = "RADIO_DISCONNECT";
 const COMPONENT_RADIO_QUIT: &str = "RADIO_QUIT";
 const COMPONENT_RADIO_SORTING: &str = "RADIO_SORTING";

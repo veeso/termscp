@@ -26,34 +26,85 @@
  * SOFTWARE.
  */
 // locals
-use super::{FileTransferActivity, LogLevel, SelectedEntry, TransferPayload};
+use super::{
+    super::STORAGE_PENDING_TRANSFER, FileExplorerTab, FileTransferActivity, FsEntry, LogLevel,
+    SelectedEntry, TransferOpts, TransferPayload,
+};
 use std::path::PathBuf;
 
 impl FileTransferActivity {
     pub(crate) fn action_local_saveas(&mut self, input: String) {
-        self.action_local_send_file(Some(input));
+        self.local_send_file(TransferOpts::default().save_as(input));
     }
 
     pub(crate) fn action_remote_saveas(&mut self, input: String) {
-        self.action_remote_recv_file(Some(input));
+        self.remote_recv_file(TransferOpts::default().save_as(input));
     }
 
     pub(crate) fn action_local_send(&mut self) {
-        self.action_local_send_file(None);
+        self.local_send_file(TransferOpts::default());
     }
 
     pub(crate) fn action_remote_recv(&mut self) {
-        self.action_remote_recv_file(None);
+        self.remote_recv_file(TransferOpts::default());
     }
 
-    fn action_local_send_file(&mut self, save_as: Option<String>) {
+    /// ### action_finalize_pending_transfer
+    ///
+    /// Finalize "pending" transfer.
+    /// The pending transfer is created after a transfer which required a user action to be completed first.
+    /// The name of the file to transfer, is contained in the storage at `STORAGE_PENDING_TRANSFER`.
+    /// NOTE: Panics if `STORAGE_PENDING_TRANSFER` is undefined
+    pub(crate) fn action_finalize_pending_transfer(&mut self) {
+        // Retrieve pending transfer
+        let file_name: String = self
+            .context_mut()
+            .store_mut()
+            .take_string(STORAGE_PENDING_TRANSFER)
+            .unwrap();
+        // Send file
+        match self.browser.tab() {
+            FileExplorerTab::Local => self.local_send_file(
+                TransferOpts::default()
+                    .save_as(file_name)
+                    .check_replace(false),
+            ),
+            FileExplorerTab::Remote => self.remote_recv_file(
+                TransferOpts::default()
+                    .save_as(file_name)
+                    .check_replace(false),
+            ),
+            FileExplorerTab::FindLocal | FileExplorerTab::FindRemote => self.action_find_transfer(
+                TransferOpts::default()
+                    .save_as(file_name)
+                    .check_replace(false),
+            ),
+        }
+        // Reload browsers
+        match self.browser.tab() {
+            FileExplorerTab::Local => self.reload_remote_dir(),
+            FileExplorerTab::Remote => self.reload_local_dir(),
+            FileExplorerTab::FindLocal | FileExplorerTab::FindRemote => {}
+        }
+    }
+
+    fn local_send_file(&mut self, opts: TransferOpts) {
         let wrkdir: PathBuf = self.remote().wrkdir.clone();
         match self.get_local_selected_entries() {
             SelectedEntry::One(entry) => {
-                if let Err(err) = self.filetransfer_send(
+                let file_to_check = Self::file_to_check(&entry, opts.save_as.as_ref());
+                if opts.check_replace
+                    && self.config().get_prompt_on_file_replace()
+                    && self.remote_file_exists(file_to_check.as_path())
+                {
+                    // Save pending transfer
+                    self.set_pending_transfer(
+                        opts.save_as.as_deref().unwrap_or_else(|| entry.get_name()),
+                    );
+                } else if let Err(err) = self.filetransfer_send(
                     TransferPayload::Any(entry.get_realfile()),
                     wrkdir.as_path(),
-                    save_as,
+                    opts.save_as,
                 ) {
                     {
                         self.log_and_alert(
@@ -67,7 +118,7 @@ impl FileTransferActivity {
             SelectedEntry::Many(entries) => {
                 // In case of selection: save multiple files in wrkdir/input
                 let mut dest_path: PathBuf = wrkdir;
-                if let Some(save_as) = save_as {
+                if let Some(save_as) = opts.save_as {
                     dest_path.push(save_as);
                 }
                 // Iter files
@@ -90,14 +141,23 @@ impl FileTransferActivity {
         }
     }
 
-    fn action_remote_recv_file(&mut self, save_as: Option<String>) {
+    fn remote_recv_file(&mut self, opts: TransferOpts) {
         let wrkdir: PathBuf = self.local().wrkdir.clone();
         match self.get_remote_selected_entries() {
             SelectedEntry::One(entry) => {
-                if let Err(err) = self.filetransfer_recv(
+                let file_to_check = Self::file_to_check(&entry, opts.save_as.as_ref());
+                if opts.check_replace
+                    && self.config().get_prompt_on_file_replace()
+                    && self.local_file_exists(file_to_check.as_path())
+                {
+                    // Save pending transfer
+                    self.set_pending_transfer(
+                        opts.save_as.as_deref().unwrap_or_else(|| entry.get_name()),
+                    );
+                } else if let Err(err) = self.filetransfer_recv(
                     TransferPayload::Any(entry.get_realfile()),
                     wrkdir.as_path(),
-                    save_as,
+                    opts.save_as,
                 ) {
                     {
                         self.log_and_alert(
@@ -111,7 +171,7 @@ impl FileTransferActivity {
             SelectedEntry::Many(entries) => {
                 // In case of selection: save multiple files in wrkdir/input
                 let mut dest_path: PathBuf = wrkdir;
-                if let Some(save_as) = save_as {
+                if let Some(save_as) = opts.save_as {
                     dest_path.push(save_as);
                 }
                 // Iter files
@@ -131,6 +191,27 @@ impl FileTransferActivity {
                 }
             }
             SelectedEntry::None => {}
+        }
+    }
+
+    /// ### set_pending_transfer
+    ///
+    /// Set pending transfer into storage
+    pub(crate) fn set_pending_transfer(&mut self, file_name: &str) {
+        self.mount_radio_replace(file_name);
+        // Put pending transfer in store
+        self.context_mut()
+            .store_mut()
+            .set_string(STORAGE_PENDING_TRANSFER, file_name.to_string());
+    }
+
+    /// ### file_to_check
+    ///
+    /// Get file to check for path
+    pub(crate) fn file_to_check(e: &FsEntry, alt: Option<&String>) -> PathBuf {
+        match alt {
+            Some(s) => PathBuf::from(s),
+            None => PathBuf::from(e.get_name()),
         }
     }
 }

@@ -43,8 +43,8 @@ use super::{
     COMPONENT_INPUT_REMOTE_FILE_FMT, COMPONENT_INPUT_SSH_HOST, COMPONENT_INPUT_SSH_USERNAME,
     COMPONENT_INPUT_TEXT_EDITOR, COMPONENT_LIST_SSH_KEYS, COMPONENT_RADIO_DEFAULT_PROTOCOL,
     COMPONENT_RADIO_DEL_SSH_KEY, COMPONENT_RADIO_GROUP_DIRS, COMPONENT_RADIO_HIDDEN_FILES,
-    COMPONENT_RADIO_QUIT, COMPONENT_RADIO_SAVE, COMPONENT_RADIO_UPDATES, COMPONENT_TEXT_ERROR,
-    COMPONENT_TEXT_HELP,
+    COMPONENT_RADIO_PROMPT_ON_FILE_REPLACE, COMPONENT_RADIO_QUIT, COMPONENT_RADIO_SAVE,
+    COMPONENT_RADIO_UPDATES, COMPONENT_TEXT_ERROR, COMPONENT_TEXT_HELP,
 };
 use crate::ui::keymap::*;
 use crate::utils::parser::parse_color;
@@ -87,6 +87,10 @@ impl SetupActivity {
                     None
                 }
                 (COMPONENT_RADIO_UPDATES, key) if key == &MSG_KEY_DOWN => {
+                    self.view.active(COMPONENT_RADIO_PROMPT_ON_FILE_REPLACE);
+                    None
+                }
+                (COMPONENT_RADIO_PROMPT_ON_FILE_REPLACE, key) if key == &MSG_KEY_DOWN => {
                     self.view.active(COMPONENT_RADIO_GROUP_DIRS);
                     None
                 }
@@ -112,6 +116,10 @@ impl SetupActivity {
                     None
                 }
                 (COMPONENT_RADIO_GROUP_DIRS, key) if key == &MSG_KEY_UP => {
+                    self.view.active(COMPONENT_RADIO_PROMPT_ON_FILE_REPLACE);
+                    None
+                }
+                (COMPONENT_RADIO_PROMPT_ON_FILE_REPLACE, key) if key == &MSG_KEY_UP => {
                     self.view.active(COMPONENT_RADIO_UPDATES);
                     None
                 }

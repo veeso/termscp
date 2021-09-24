@@ -308,6 +308,14 @@ impl FileTransferActivity {
                     self.view.render(super::COMPONENT_RADIO_DELETE, f, popup);
                 }
             }
+            if let Some(props) = self.view.get_props(super::COMPONENT_RADIO_REPLACE) {
+                if props.visible {
+                    let popup = draw_area_in(f.size(), 50, 10);
+                    f.render_widget(Clear, popup);
+                    // make popup
+                    self.view.render(super::COMPONENT_RADIO_REPLACE, f, popup);
+                }
+            }
             if let Some(props) = self.view.get_props(super::COMPONENT_RADIO_DISCONNECT) {
                 if props.visible {
                     let popup = draw_area_in(f.size(), 30, 10);
@@ -696,6 +704,32 @@ impl FileTransferActivity {
 
     pub(super) fn umount_radio_delete(&mut self) {
         self.view.umount(super::COMPONENT_RADIO_DELETE);
+    }
+
+    pub(super) fn mount_radio_replace(&mut self, file_name: &str) {
+        let warn_color = self.theme().misc_warn_dialog;
+        self.view.mount(
+            super::COMPONENT_RADIO_REPLACE,
+            Box::new(Radio::new(
+                RadioPropsBuilder::default()
+                    .with_color(warn_color)
+                    .with_inverted_color(Color::Black)
+                    .with_borders(Borders::ALL, BorderType::Plain, warn_color)
+                    .with_title(
+                        format!("File '{}' already exists. Overwrite file?", file_name),
+                        Alignment::Center,
+                    )
+                    .with_options(&[String::from("Yes"), String::from("No")])
+                    .with_value(0)
+                    .rewind(true)
+                    .build(),
+            )),
+        );
+        self.view.active(super::COMPONENT_RADIO_REPLACE);
+    }
+
+    pub(super) fn umount_radio_replace(&mut self) {
+        self.view.umount(super::COMPONENT_RADIO_REPLACE);
     }
 
     pub(super) fn mount_file_info(&mut self, file: &FsEntry) {

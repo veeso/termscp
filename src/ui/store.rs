@@ -67,6 +67,7 @@ impl Store {
     }
 
     // -- getters
+
     /// ### get_string
     ///
     /// Get string from store
@@ -168,6 +169,58 @@ impl Store {
     pub fn set(&mut self, key: &str) {
         self.store.insert(key.to_string(), StoreState::Flag);
     }
+
+    // -- Consumers
+
+    /// ### take_string
+    ///
+    /// Take string from store
+    pub fn take_string(&mut self, key: &str) -> Option<String> {
+        match self.store.remove(key) {
+            Some(StoreState::Str(s)) => Some(s),
+            _ => None,
+        }
+    }
+
+    /// ### take_signed
+    ///
+    /// Take signed from store
+    pub fn take_signed(&mut self, key: &str) -> Option<isize> {
+        match self.store.remove(key) {
+            Some(StoreState::Signed(i)) => Some(i),
+            _ => None,
+        }
+    }
+
+    /// ### take_unsigned
+    ///
+    /// Take unsigned from store
+    pub fn take_unsigned(&mut self, key: &str) -> Option<usize> {
+        match self.store.remove(key) {
+            Some(StoreState::Unsigned(u)) => Some(u),
+            _ => None,
+        }
+    }
+
+    /// ### get_float
+    ///
+    /// Take float from store
+    pub fn take_float(&mut self, key: &str) -> Option<f64> {
+        match self.store.remove(key) {
+            Some(StoreState::Float(f)) => Some(f),
+            _ => None,
+        }
+    }
+
+    /// ### get_boolean
+    ///
+    /// Take boolean from store
+    pub fn take_boolean(&mut self, key: &str) -> Option<bool> {
+        match self.store.remove(key) {
+            Some(StoreState::Boolean(b)) => Some(b),
+            _ => None,
+        }
+    }
 }
 
 #[cfg(test)]
@@ -184,20 +237,30 @@ mod tests {
         // Test string
         store.set_string("test", String::from("hello"));
         assert_eq!(*store.get_string("test").as_ref().unwrap(), "hello");
+        assert_eq!(store.take_string("test").unwrap(), "hello".to_string());
+        assert_eq!(store.take_string("test"), None);
         // Test isize
         store.set_signed("number", 3005);
         assert_eq!(store.get_signed("number").unwrap(), 3005);
+        assert_eq!(store.take_signed("number").unwrap(), 3005);
+        assert_eq!(store.take_signed("number"), None);
         store.set_signed("number", -123);
         assert_eq!(store.get_signed("number").unwrap(), -123);
         // Test usize
         store.set_unsigned("unumber", 1024);
         assert_eq!(store.get_unsigned("unumber").unwrap(), 1024);
+        assert_eq!(store.take_unsigned("unumber").unwrap(), 1024);
+        assert_eq!(store.take_unsigned("unumber"), None);
         // Test float
         store.set_float("float", 3.33);
         assert_eq!(store.get_float("float").unwrap(), 3.33);
+        assert_eq!(store.take_float("float").unwrap(), 3.33);
+        assert_eq!(store.take_float("float"), None);
         // Test boolean
         store.set_boolean("bool", true);
         assert_eq!(store.get_boolean("bool").unwrap(), true);
+        assert_eq!(store.take_boolean("bool").unwrap(), true);
+        assert_eq!(store.take_boolean("bool"), None);
         // Test flag
         store.set("myflag");
         assert_eq!(store.isset("myflag"), true);

@@ -29,6 +29,8 @@ use bytesize::ByteSize;
 use std::fmt;
 use std::time::Instant;
 
+// -- States and progress
+
 /// ### TransferStates
 ///
 /// TransferStates contains the states related to the transfer process
@@ -195,6 +197,45 @@ impl ProgressStates {
     }
 }
 
+// -- Options
+
+/// ## TransferOpts
+///
+/// Defines the transfer options for transfer actions
+pub struct TransferOpts {
+    /// Save file as
+    pub save_as: Option<String>,
+    /// Whether to check if file is being replaced
+    pub check_replace: bool,
+}
+
+impl Default for TransferOpts {
+    fn default() -> Self {
+        Self {
+            save_as: None,
+            check_replace: true,
+        }
+    }
+}
+
+impl TransferOpts {
+    /// ### save_as
+    ///
+    /// Define the name of the file to be saved
+    pub fn save_as<S: AsRef<str>>(mut self, n: S) -> Self {
+        self.save_as = Some(n.as_ref().to_string());
+        self
+    }
+
+    /// ### check_replace
+    ///
+    /// Set whether to check if the file being transferred will "replace" an existing one
+    pub fn check_replace(mut self, opt: bool) -> Self {
+        self.check_replace = opt;
+        self
+    }
+}
+
 #[cfg(test)]
 mod test {
 
@@ -264,5 +305,17 @@ mod test {
         assert_eq!(states.aborted(), true);
         states.reset();
         assert_eq!(states.aborted(), false);
+    }
+
+    #[test]
+    fn transfer_opts() {
+        let opts = TransferOpts::default();
+        assert_eq!(opts.check_replace, true);
+        assert!(opts.save_as.is_none());
+        let opts = TransferOpts::default()
+            .check_replace(false)
+            .save_as("omar.txt");
+        assert_eq!(opts.save_as.as_deref().unwrap(), "omar.txt");
+        assert_eq!(opts.check_replace, false);
     }
 }

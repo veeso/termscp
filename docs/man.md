@@ -300,6 +300,7 @@ These parameters can be changed:
 - **Default Protocol**: the default protocol is the default value for the file transfer protocol to be used in termscp. This applies for the login page and for the address CLI argument.
 - **Show Hidden Files**: select whether hidden files shall be displayed by default. You will be able to decide whether to show or not hidden files at runtime pressing `A` anyway.
 - **Check for updates**: if set to `yes`, termscp will fetch the Github API to check if there is a new version of termscp available.
+- **Prompt when replacing existing files?**: If set to `yes`, termscp will prompt for confirmation you whenever a file transfer would cause an existing file on target host to be replaced.
 - **Group Dirs**: select whether directories should be groupped or not in file explorers. If `Display first` is selected, directories will be sorted using the configured method but displayed before files, viceversa if `Display last` is selected.
 - **Remote File formatter syntax**: syntax to display file info for each file in the remote explorer. See [File explorer format](#file-explorer-format)
 - **Local File formatter syntax**: syntax to display file info for each file in the local explorer. See [File explorer format](#file-explorer-format)

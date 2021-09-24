@@ -181,6 +181,23 @@ impl ConfigClient {
         self.config.user_interface.check_for_updates = Some(value);
     }
 
+    /// ### get_prompt_on_file_replace
+    ///
+    /// Get value of `prompt_on_file_replace`
+    pub fn get_prompt_on_file_replace(&self) -> bool {
+        self.config
+            .user_interface
+            .prompt_on_file_replace
+            .unwrap_or(true)
+    }
+
+    /// ### set_prompt_on_file_replace
+    ///
+    /// Set new value for `prompt_on_file_replace`
+    pub fn set_prompt_on_file_replace(&mut self, value: bool) {
+        self.config.user_interface.prompt_on_file_replace = Some(value);
+    }
+
     /// ### get_group_dirs
     ///
     /// Get GroupDirs value from configuration (will be converted from string)
@@ -578,6 +595,20 @@ mod tests {
         assert_eq!(client.get_check_for_updates(), true);
         client.set_check_for_updates(false);
         assert_eq!(client.get_check_for_updates(), false);
+    }
+
+    #[test]
+    fn test_system_config_prompt_on_file_replace() {
+        let tmp_dir: TempDir = TempDir::new().ok().unwrap();
+        let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
+        let mut client: ConfigClient = ConfigClient::new(cfg_path.as_path(), key_path.as_path())
+            .ok()
+            .unwrap();
+        assert_eq!(client.get_prompt_on_file_replace(), true); // Null ?
+        client.set_prompt_on_file_replace(true);
+        assert_eq!(client.get_prompt_on_file_replace(), true);
+        client.set_prompt_on_file_replace(false);
+        assert_eq!(client.get_prompt_on_file_replace(), false);
     }
 
     #[test]

@@ -25,7 +25,10 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-pub(self) use super::{FileTransferActivity, FsEntry, LogLevel, TransferPayload};
+pub(self) use super::{
+    browser::FileExplorerTab, FileTransferActivity, FsEntry, LogLevel, TransferOpts,
+    TransferPayload,
+};
 use tuirealm::{Payload, Value};
 
 // actions

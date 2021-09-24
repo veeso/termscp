@@ -110,6 +110,19 @@ impl SetupActivity {
             )),
         );
         self.view.mount(
+            super::COMPONENT_RADIO_PROMPT_ON_FILE_REPLACE,
+            Box::new(Radio::new(
+                RadioPropsBuilder::default()
+                    .with_color(Color::LightCyan)
+                    .with_inverted_color(Color::Black)
+                    .with_borders(Borders::ALL, BorderType::Rounded, Color::LightCyan)
+                    .with_title("Prompt when replacing existing files?", Alignment::Left)
+                    .with_options(&[String::from("Yes"), String::from("No")])
+                    .rewind(true)
+                    .build(),
+            )),
+        );
+        self.view.mount(
             super::COMPONENT_RADIO_GROUP_DIRS,
             Box::new(Radio::new(
                 RadioPropsBuilder::default()
@@ -178,6 +191,7 @@ impl SetupActivity {
                         Constraint::Length(3), // Protocol tab
                         Constraint::Length(3), // Hidden files
                         Constraint::Length(3), // Updates tab
+                        Constraint::Length(3), // Prompt file replace
                         Constraint::Length(3), // Group dirs
                         Constraint::Length(3), // Local Format input
                         Constraint::Length(3), // Remote Format input
@@ -193,12 +207,17 @@ impl SetupActivity {
                 .render(super::COMPONENT_RADIO_HIDDEN_FILES, f, ui_cfg_chunks[2]);
             self.view
                 .render(super::COMPONENT_RADIO_UPDATES, f, ui_cfg_chunks[3]);
+            self.view.render(
+                super::COMPONENT_RADIO_PROMPT_ON_FILE_REPLACE,
+                f,
+                ui_cfg_chunks[4],
+            );
             self.view
-                .render(super::COMPONENT_RADIO_GROUP_DIRS, f, ui_cfg_chunks[4]);
+                .render(super::COMPONENT_RADIO_GROUP_DIRS, f, ui_cfg_chunks[5]);
             self.view
-                .render(super::COMPONENT_INPUT_LOCAL_FILE_FMT, f, ui_cfg_chunks[5]);
+                .render(super::COMPONENT_INPUT_LOCAL_FILE_FMT, f, ui_cfg_chunks[6]);
             self.view
-                .render(super::COMPONENT_INPUT_REMOTE_FILE_FMT, f, ui_cfg_chunks[6]);
+                .render(super::COMPONENT_INPUT_REMOTE_FILE_FMT, f, ui_cfg_chunks[7]);
             // Popups
             if let Some(props) = self.view.get_props(super::COMPONENT_TEXT_ERROR) {
                 if props.visible {
@@ -282,6 +301,20 @@ impl SetupActivity {
             let props = RadioPropsBuilder::from(props).with_value(updates).build();
             let _ = self.view.update(super::COMPONENT_RADIO_UPDATES, props);
         }
+        // File replace
+        if let Some(props) = self
+            .view
+            .get_props(super::COMPONENT_RADIO_PROMPT_ON_FILE_REPLACE)
+        {
+            let updates: usize = match self.config().get_prompt_on_file_replace() {
+                true => 0,
+                false => 1,
+            };
+            let props = RadioPropsBuilder::from(props).with_value(updates).build();
+            let _ = self
+                .view
+                .update(super::COMPONENT_RADIO_PROMPT_ON_FILE_REPLACE, props);
+        }
         // Group dirs
         if let Some(props) = self.view.get_props(super::COMPONENT_RADIO_GROUP_DIRS) {
             let dirs: usize = match self.config().get_group_dirs() {
@@ -343,6 +376,13 @@ impl SetupActivity {
         {
             let check: bool = matches!(opt, 0);
             self.config_mut().set_check_for_updates(check);
+        }
+        if let Some(Payload::One(Value::Usize(opt))) = self
+            .view
+            .get_state(super::COMPONENT_RADIO_PROMPT_ON_FILE_REPLACE)
+        {
+            let check: bool = matches!(opt, 0);
+            self.config_mut().set_prompt_on_file_replace(check);
         }
         if let Some(Payload::One(Value::Str(fmt))) =
             self.view.get_state(super::COMPONENT_INPUT_LOCAL_FILE_FMT)

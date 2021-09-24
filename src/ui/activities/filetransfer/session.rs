@@ -1187,4 +1187,14 @@ impl FileTransferActivity {
             }
         }
     }
+
+    // -- file exist
+
+    pub(crate) fn local_file_exists(&mut self, p: &Path) -> bool {
+        self.host.file_exists(p)
+    }
+
+    pub(crate) fn remote_file_exists(&mut self, p: &Path) -> bool {
+        self.client.stat(p).is_ok()
+    }
 }
