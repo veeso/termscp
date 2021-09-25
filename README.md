@@ -93,7 +93,7 @@ These requirements are not forcely required to run termscp, but to enjoy all of 
     - *gnome-open*
     - *kde-open*
 - **Linux** users:
-  - A keyring manager: read more in the [User manual](docs/man.md#linux-keyring)
+  - A keyring manager: read more in the [User manual](docs/man_en.md#linux-keyring)
 - **WSL** users
   - To **open** files via `V` (at least one of these)
     - [wslu](https://github.com/wslutilities/wslu)
@@ -108,7 +108,14 @@ If you like termscp and you'd love to see the project to grow, please consider a
 
 ---
 
-## Documentation 📚
+## User manual and Documentation 📚
+
+The user manual can be found on the [termscp's website](https://veeso.github.io/termscp/#user-manual) or on Github:
+
+- ![en](https://raw.githubusercontent.com/gosquared/flags/master/flags/flags/shiny/24/United-Kingdom.png) [User manual (English)](docs/man-en.md)
+- ![zh](https://raw.githubusercontent.com/gosquared/flags/master/flags/flags/shiny/24/China.png) [用户手册 (简体中文)](docs/man-zh.md)
+
+A translation of the user manual in other languages would be really appreciated 😉
 
 The developer documentation can be found on Rust Docs at <https://docs.rs/termscp>
 
@@ -143,6 +150,8 @@ Along to new features, termscp developments is now focused on UX and performance
 
 Contributions, bug reports, new features and questions are welcome! 😉
 If you have any question or concern, or you want to suggest a new feature, or you want just want to improve termscp, feel free to open an issue or a PR.
+
+An **appreciated** contribution would be a translation of the user manual and readme in **other languages**
 
 Please follow [our contributing guidelines](CONTRIBUTING.md)
 
