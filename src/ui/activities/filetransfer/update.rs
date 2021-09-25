@@ -31,10 +31,11 @@ use super::{
     COMPONENT_EXPLORER_FIND, COMPONENT_EXPLORER_LOCAL, COMPONENT_EXPLORER_REMOTE,
     COMPONENT_INPUT_COPY, COMPONENT_INPUT_EXEC, COMPONENT_INPUT_FIND, COMPONENT_INPUT_GOTO,
     COMPONENT_INPUT_MKDIR, COMPONENT_INPUT_NEWFILE, COMPONENT_INPUT_OPEN_WITH,
-    COMPONENT_INPUT_RENAME, COMPONENT_INPUT_SAVEAS, COMPONENT_LIST_FILEINFO, COMPONENT_LOG_BOX,
-    COMPONENT_PROGRESS_BAR_FULL, COMPONENT_PROGRESS_BAR_PARTIAL, COMPONENT_RADIO_DELETE,
-    COMPONENT_RADIO_DISCONNECT, COMPONENT_RADIO_QUIT, COMPONENT_RADIO_REPLACE,
-    COMPONENT_RADIO_SORTING, COMPONENT_TEXT_ERROR, COMPONENT_TEXT_FATAL, COMPONENT_TEXT_HELP,
+    COMPONENT_INPUT_RENAME, COMPONENT_INPUT_SAVEAS, COMPONENT_LIST_FILEINFO,
+    COMPONENT_LIST_REPLACING_FILES, COMPONENT_LOG_BOX, COMPONENT_PROGRESS_BAR_FULL,
+    COMPONENT_PROGRESS_BAR_PARTIAL, COMPONENT_RADIO_DELETE, COMPONENT_RADIO_DISCONNECT,
+    COMPONENT_RADIO_QUIT, COMPONENT_RADIO_REPLACE, COMPONENT_RADIO_SORTING, COMPONENT_TEXT_ERROR,
+    COMPONENT_TEXT_FATAL, COMPONENT_TEXT_HELP,
 };
 use crate::fs::explorer::FileSorting;
 use crate::fs::FsEntry;
@@ -583,7 +584,7 @@ impl Update for FileTransferActivity {
                         FileExplorerTab::Remote => self.action_remote_saveas(input.to_string()),
                         FileExplorerTab::FindLocal | FileExplorerTab::FindRemote => {
                             // Get entry
-                            self.action_find_transfer(TransferOpts::default().save_as(input));
+                            self.action_find_transfer(TransferOpts::default().save_as(Some(input)));
                         }
                     }
                     self.umount_saveas();
@@ -661,6 +662,12 @@ impl Update for FileTransferActivity {
                     self.umount_radio_replace();
                     None
                 }
+                (COMPONENT_RADIO_REPLACE, key) if key == &MSG_KEY_TAB => {
+                    if self.is_radio_replace_extended() {
+                        self.view.active(COMPONENT_LIST_REPLACING_FILES);
+                    }
+                    None
+                }
                 (COMPONENT_RADIO_REPLACE, Msg::OnSubmit(Payload::One(Value::Usize(0)))) => {
                     // Choice is 'YES'
                     self.umount_radio_replace();
@@ -668,6 +675,15 @@ impl Update for FileTransferActivity {
                     None
                 }
                 (COMPONENT_RADIO_REPLACE, _) => None,
+                (COMPONENT_LIST_REPLACING_FILES, key) if key == &MSG_KEY_TAB => {
+                    self.view.active(COMPONENT_RADIO_REPLACE);
+                    None
+                }
+                (COMPONENT_LIST_REPLACING_FILES, key) if key == &MSG_KEY_ESC => {
+                    self.umount_radio_replace();
+                    None
+                }
+                (COMPONENT_LIST_REPLACING_FILES, _) => None,
                 // -- disconnect
                 (COMPONENT_RADIO_DISCONNECT, key)
                     if key == &MSG_KEY_ESC

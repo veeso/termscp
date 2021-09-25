@@ -30,15 +30,15 @@ use super::{
     super::STORAGE_PENDING_TRANSFER, FileExplorerTab, FileTransferActivity, FsEntry, LogLevel,
     SelectedEntry, TransferOpts, TransferPayload,
 };
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 impl FileTransferActivity {
     pub(crate) fn action_local_saveas(&mut self, input: String) {
-        self.local_send_file(TransferOpts::default().save_as(input));
+        self.local_send_file(TransferOpts::default().save_as(Some(input)));
     }
 
     pub(crate) fn action_remote_saveas(&mut self, input: String) {
-        self.remote_recv_file(TransferOpts::default().save_as(input));
+        self.remote_recv_file(TransferOpts::default().save_as(Some(input)));
     }
 
     pub(crate) fn action_local_send(&mut self) {
@@ -57,11 +57,10 @@ impl FileTransferActivity {
     /// NOTE: Panics if `STORAGE_PENDING_TRANSFER` is undefined
     pub(crate) fn action_finalize_pending_transfer(&mut self) {
         // Retrieve pending transfer
-        let file_name: String = self
+        let file_name = self
             .context_mut()
             .store_mut()
-            .take_string(STORAGE_PENDING_TRANSFER)
-            .unwrap();
+            .take_string(STORAGE_PENDING_TRANSFER);
         // Send file
         match self.browser.tab() {
             FileExplorerTab::Local => self.local_send_file(
@@ -82,9 +81,12 @@ impl FileTransferActivity {
         }
         // Reload browsers
         match self.browser.tab() {
-            FileExplorerTab::Local => self.reload_remote_dir(),
-            FileExplorerTab::Remote => self.reload_local_dir(),
-            FileExplorerTab::FindLocal | FileExplorerTab::FindRemote => {}
+            FileExplorerTab::Local | FileExplorerTab::FindLocal => {
+                self.update_remote_filelist();
+            }
+            FileExplorerTab::Remote | FileExplorerTab::FindRemote => {
+                self.update_local_filelist();
+            }
         }
     }
 
@@ -122,7 +124,26 @@ impl FileTransferActivity {
                     dest_path.push(save_as);
                 }
                 // Iter files
-                let entries = entries.iter().map(|x| x.get_realfile()).collect();
+                let entries: Vec<FsEntry> = entries.iter().map(|x| x.get_realfile()).collect();
+                if opts.check_replace && self.config().get_prompt_on_file_replace() {
+                    // Check which file would be replaced
+                    let existing_files: Vec<&FsEntry> = entries
+                        .iter()
+                        .filter(|x| {
+                            self.remote_file_exists(
+                                Self::file_to_check_many(x, dest_path.as_path()).as_path(),
+                            )
+                        })
+                        .collect();
+                    // Save pending transfer
+                    if !existing_files.is_empty() {
+                        self.set_pending_transfer_many(
+                            existing_files,
+                            &dest_path.to_string_lossy().to_owned(),
+                        );
+                        return;
+                    }
+                }
                 if let Err(err) = self.filetransfer_send(
                     TransferPayload::Many(entries),
                     dest_path.as_path(),
@@ -175,7 +196,26 @@ impl FileTransferActivity {
                     dest_path.push(save_as);
                 }
                 // Iter files
-                let entries = entries.iter().map(|x| x.get_realfile()).collect();
+                let entries: Vec<FsEntry> = entries.iter().map(|x| x.get_realfile()).collect();
+                if opts.check_replace && self.config().get_prompt_on_file_replace() {
+                    // Check which file would be replaced
+                    let existing_files: Vec<&FsEntry> = entries
+                        .iter()
+                        .filter(|x| {
+                            self.local_file_exists(
+                                Self::file_to_check_many(x, dest_path.as_path()).as_path(),
+                            )
+                        })
+                        .collect();
+                    // Save pending transfer
+                    if !existing_files.is_empty() {
+                        self.set_pending_transfer_many(
+                            existing_files,
+                            &dest_path.to_string_lossy().to_owned(),
+                        );
+                        return;
+                    }
+                }
                 if let Err(err) = self.filetransfer_recv(
                     TransferPayload::Many(entries),
                     dest_path.as_path(),
@@ -205,6 +245,17 @@ impl FileTransferActivity {
             .set_string(STORAGE_PENDING_TRANSFER, file_name.to_string());
     }
 
+    /// ### set_pending_transfer_many
+    ///
+    /// Set pending transfer for many files into storage and mount radio
+    pub(crate) fn set_pending_transfer_many(&mut self, files: Vec<&FsEntry>, dest_path: &str) {
+        let file_names: Vec<&str> = files.iter().map(|x| x.get_name()).collect();
+        self.mount_radio_replace_many(file_names.as_slice());
+        self.context_mut()
+            .store_mut()
+            .set_string(STORAGE_PENDING_TRANSFER, dest_path.to_string());
+    }
+
     /// ### file_to_check
     ///
     /// Get file to check for path
@@ -213,5 +264,11 @@ impl FileTransferActivity {
             Some(s) => PathBuf::from(s),
             None => PathBuf::from(e.get_name()),
         }
+    }
+
+    pub(crate) fn file_to_check_many(e: &FsEntry, wrkdir: &Path) -> PathBuf {
+        let mut p = wrkdir.to_path_buf();
+        p.push(e.get_name());
+        p
     }
 }

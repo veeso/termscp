@@ -222,8 +222,8 @@ impl TransferOpts {
     /// ### save_as
     ///
     /// Define the name of the file to be saved
-    pub fn save_as<S: AsRef<str>>(mut self, n: S) -> Self {
-        self.save_as = Some(n.as_ref().to_string());
+    pub fn save_as<S: AsRef<str>>(mut self, n: Option<S>) -> Self {
+        self.save_as = n.map(|x| x.as_ref().to_string());
         self
     }
 
@@ -314,7 +314,7 @@ mod test {
         assert!(opts.save_as.is_none());
         let opts = TransferOpts::default()
             .check_replace(false)
-            .save_as("omar.txt");
+            .save_as(Some("omar.txt"));
         assert_eq!(opts.save_as.as_deref().unwrap(), "omar.txt");
         assert_eq!(opts.check_replace, false);
     }

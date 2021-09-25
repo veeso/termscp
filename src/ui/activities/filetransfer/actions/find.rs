@@ -130,9 +130,28 @@ impl FileTransferActivity {
                     dest_path.push(save_as);
                 }
                 // Iter files
-                let entries = entries.iter().map(|x| x.get_realfile()).collect();
+                let entries: Vec<FsEntry> = entries.iter().map(|x| x.get_realfile()).collect();
                 match self.browser.tab() {
                     FileExplorerTab::FindLocal | FileExplorerTab::Local => {
+                        if opts.check_replace && self.config().get_prompt_on_file_replace() {
+                            // Check which file would be replaced
+                            let existing_files: Vec<&FsEntry> = entries
+                                .iter()
+                                .filter(|x| {
+                                    self.remote_file_exists(
+                                        Self::file_to_check_many(x, dest_path.as_path()).as_path(),
+                                    )
+                                })
+                                .collect();
+                            // Save pending transfer
+                            if !existing_files.is_empty() {
+                                self.set_pending_transfer_many(
+                                    existing_files,
+                                    &dest_path.to_string_lossy().to_owned(),
+                                );
+                                return;
+                            }
+                        }
                         if let Err(err) = self.filetransfer_send(
                             TransferPayload::Many(entries),
                             dest_path.as_path(),
@@ -148,6 +167,26 @@ impl FileTransferActivity {
                         }
                     }
                     FileExplorerTab::FindRemote | FileExplorerTab::Remote => {
+                        if opts.check_replace && self.config().get_prompt_on_file_replace() {
+                            // Check which file would be replaced
+                            let existing_files: Vec<&FsEntry> = entries
+                                .iter()
+                                .filter(|x| {
+                                    self.local_file_exists(
+                                        Self::file_to_check_many(x, dest_path.as_path()).as_path(),
+                                    )
+                                })
+                                .collect();
+                            // Save pending transfer
+                            // Save pending transfer
+                            if !existing_files.is_empty() {
+                                self.set_pending_transfer_many(
+                                    existing_files,
+                                    &dest_path.to_string_lossy().to_owned(),
+                                );
+                                return;
+                            }
+                        }
                         if let Err(err) = self.filetransfer_recv(
                             TransferPayload::Many(entries),
                             dest_path.as_path(),

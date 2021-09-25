@@ -310,10 +310,30 @@ impl FileTransferActivity {
             }
             if let Some(props) = self.view.get_props(super::COMPONENT_RADIO_REPLACE) {
                 if props.visible {
-                    let popup = draw_area_in(f.size(), 50, 10);
-                    f.render_widget(Clear, popup);
-                    // make popup
-                    self.view.render(super::COMPONENT_RADIO_REPLACE, f, popup);
+                    // NOTE: handle extended / normal modes
+                    if self.is_radio_replace_extended() {
+                        let popup = draw_area_in(f.size(), 50, 50);
+                        f.render_widget(Clear, popup);
+                        let popup_chunks = Layout::default()
+                            .direction(Direction::Vertical)
+                            .constraints(
+                                [
+                                    Constraint::Percentage(85), // List
+                                    Constraint::Percentage(15), // Radio
+                                ]
+                                .as_ref(),
+                            )
+                            .split(popup);
+                        self.view
+                            .render(super::COMPONENT_LIST_REPLACING_FILES, f, popup_chunks[0]);
+                        self.view
+                            .render(super::COMPONENT_RADIO_REPLACE, f, popup_chunks[1]);
+                    } else {
+                        let popup = draw_area_in(f.size(), 50, 10);
+                        f.render_widget(Clear, popup);
+                        // make popup
+                        self.view.render(super::COMPONENT_RADIO_REPLACE, f, popup);
+                    }
                 }
             }
             if let Some(props) = self.view.get_props(super::COMPONENT_RADIO_DISCONNECT) {
@@ -708,28 +728,57 @@ impl FileTransferActivity {
 
     pub(super) fn mount_radio_replace(&mut self, file_name: &str) {
         let warn_color = self.theme().misc_warn_dialog;
-        self.view.mount(
+        self.mount_radio_dialog(
             super::COMPONENT_RADIO_REPLACE,
-            Box::new(Radio::new(
-                RadioPropsBuilder::default()
-                    .with_color(warn_color)
-                    .with_inverted_color(Color::Black)
-                    .with_borders(Borders::ALL, BorderType::Plain, warn_color)
+            format!("File '{}' already exists. Overwrite file?", file_name),
+            &["Yes", "No"],
+            0,
+            warn_color,
+        );
+    }
+
+    pub(super) fn mount_radio_replace_many(&mut self, files: &[&str]) {
+        let warn_color = self.theme().misc_warn_dialog;
+        // Make rows
+        let rows = files.iter().map(|x| vec![TextSpan::new(x)]).collect();
+        self.view.mount(
+            super::COMPONENT_LIST_REPLACING_FILES,
+            Box::new(List::new(
+                ListPropsBuilder::default()
+                    .with_borders(Borders::ALL, BorderType::Rounded, warn_color)
+                    .scrollable(true)
+                    .with_highlighted_color(warn_color)
+                    .with_highlighted_str(Some("> "))
                     .with_title(
-                        format!("File '{}' already exists. Overwrite file?", file_name),
+                        "The following files are going to be replaced",
                         Alignment::Center,
                     )
-                    .with_options(&[String::from("Yes"), String::from("No")])
-                    .with_value(0)
-                    .rewind(true)
+                    .with_foreground(warn_color)
+                    .with_rows(rows)
                     .build(),
             )),
         );
-        self.view.active(super::COMPONENT_RADIO_REPLACE);
+        self.mount_radio_dialog(
+            super::COMPONENT_RADIO_REPLACE,
+            "Overwrite files?",
+            &["Yes", "No"],
+            0,
+            warn_color,
+        );
+    }
+
+    /// ### is_radio_replace_extended
+    ///
+    /// Returns whether radio replace is in "extended" mode (for many files)
+    pub(super) fn is_radio_replace_extended(&self) -> bool {
+        self.view
+            .get_state(super::COMPONENT_LIST_REPLACING_FILES)
+            .is_some()
     }
 
     pub(super) fn umount_radio_replace(&mut self) {
         self.view.umount(super::COMPONENT_RADIO_REPLACE);
+        self.view.umount(super::COMPONENT_LIST_REPLACING_FILES); // NOTE: replace anyway
     }
 
     pub(super) fn mount_file_info(&mut self, file: &FsEntry) {
@@ -1056,10 +1105,10 @@ impl FileTransferActivity {
         self.view.active(id);
     }
 
-    fn mount_radio_dialog(
+    fn mount_radio_dialog<S: AsRef<str>>(
         &mut self,
         id: &str,
-        text: &str,
+        text: S,
         opts: &[&str],
         default: usize,
         color: Color,
@@ -1071,7 +1120,7 @@ impl FileTransferActivity {
                     .with_color(color)
                     .with_inverted_color(Color::Black)
                     .with_borders(Borders::ALL, BorderType::Rounded, color)
-                    .with_title(text, Alignment::Center)
+                    .with_title(text.as_ref(), Alignment::Center)
                     .with_options(opts)
                     .with_value(default)
                     .rewind(true)

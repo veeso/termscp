@@ -88,6 +88,7 @@ const COMPONENT_RADIO_SORTING: &str = "RADIO_SORTING";
 const COMPONENT_SPAN_STATUS_BAR_LOCAL: &str = "STATUS_BAR_LOCAL";
 const COMPONENT_SPAN_STATUS_BAR_REMOTE: &str = "STATUS_BAR_REMOTE";
 const COMPONENT_LIST_FILEINFO: &str = "LIST_FILEINFO";
+const COMPONENT_LIST_REPLACING_FILES: &str = "LIST_REPLACING_FILES"; // NOTE: used for file transfers, to list files which are going to be replaced
 
 /// ## LogLevel
 ///
