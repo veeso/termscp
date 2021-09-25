@@ -314,7 +314,7 @@ Termscp为你提供了一个很棒的功能：可以为应用程序中的几个�
 
 在这里你可以用`<UP>`和`<DOWN>`移动来选择你想改变的样式，如下图所示：
 
-![Themes](./assets/images/themes.gif)
+![Themes](../assets/images/themes.gif)
 
 termscp支持传统的十六进制（`#rrggbb`）和RGB`rgb(r, g, b)`语法来表示颜色，但也接受 **[css颜色](https://www.w3schools.com/cssref/css_colors.asp)**（如`crimson`）😉。还有一个特殊的关键词是`Default`，意味着使用的颜色将是基于情景的默认前景或背景颜色（文本和线条的前景色，以及容器的背景色，你猜是什么）。
 
