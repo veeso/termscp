@@ -112,8 +112,8 @@ If you like termscp and you'd love to see the project to grow, please consider a
 
 The user manual can be found on the [termscp's website](https://veeso.github.io/termscp/#user-manual) or on Github:
 
-- ![en](https://raw.githubusercontent.com/gosquared/flags/master/flags/flags/shiny/24/United-Kingdom.png) [User manual (English)](docs/man-en.md)
-- ![zh](https://raw.githubusercontent.com/gosquared/flags/master/flags/flags/shiny/24/China.png) [用户手册 (简体中文)](docs/man-zh.md)
+- ![en](https://raw.githubusercontent.com/gosquared/flags/master/flags/flags/shiny/24/United-Kingdom.png) [User manual](docs/man-en.md)
+- ![zh](https://raw.githubusercontent.com/gosquared/flags/master/flags/flags/shiny/24/China.png) [用户手册](docs/man-zh.md)
 
 A translation of the user manual in other languages would be really appreciated 😉
 
