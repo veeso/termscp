@@ -84,7 +84,7 @@ Let's see some example of this particular syntax, since it's very comfortable an
 
 #### AWS S3 address argument
 
-Aws S3 has a different syntax for CLI address argument, for obvious reasons, but I managed to keep it the more similiar as possible to the generic address argument:
+Aws S3 has a different syntax for CLI address argument, for obvious reasons, but I managed to keep it the more similar as possible to the generic address argument:
 
 ```txt
 s3://<bucket-name>@<region>[:profile][:/wrkdir]
