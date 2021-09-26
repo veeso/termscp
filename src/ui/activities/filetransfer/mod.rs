@@ -36,7 +36,7 @@ pub(self) mod view;
 // locals
 use super::{Activity, Context, ExitReason};
 use crate::config::themes::Theme;
-use crate::filetransfer::{FileTransfer, FileTransferProtocol, ProtocolParams};
+use crate::filetransfer::{FileTransfer, FileTransferProtocol};
 use crate::filetransfer::{FtpFileTransfer, S3FileTransfer, ScpFileTransfer, SftpFileTransfer};
 use crate::fs::explorer::FileExplorer;
 use crate::fs::FsEntry;
@@ -238,28 +238,6 @@ impl FileTransferActivity {
     /// Get a reference to `Theme`
     fn theme(&self) -> &Theme {
         self.context().theme_provider().theme()
-    }
-
-    /// ### get_connection_msg
-    ///
-    /// Get connection message to show to client
-    fn get_connection_msg(params: &ProtocolParams) -> String {
-        match params {
-            ProtocolParams::Generic(params) => {
-                info!(
-                    "Client is not connected to remote; connecting to {}:{}",
-                    params.address, params.port
-                );
-                format!("Connecting to {}:{}…", params.address, params.port)
-            }
-            ProtocolParams::AwsS3(params) => {
-                info!(
-                    "Client is not connected to remote; connecting to {} ({})",
-                    params.bucket_name, params.region
-                );
-                format!("Connecting to {}…", params.bucket_name)
-            }
-        }
     }
 }
 

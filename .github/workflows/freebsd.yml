@@ -12,7 +12,7 @@ jobs:
         uses: vmactions/freebsd-vm@v0.1.4
         with:
           usesh: true
-          prepare: pkg install -y curl wget libssh gcc vim
+          prepare: pkg install -y curl wget libssh gcc vim dbus pkgconf
           run: |
             curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > /tmp/rustup.sh && \
             chmod +x /tmp/rustup.sh && \

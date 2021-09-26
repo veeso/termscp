@@ -27,7 +27,8 @@
  */
 use super::{AuthActivity, FileTransferParams, FileTransferProtocol};
 use crate::filetransfer::params::{AwsS3Params, GenericProtocolParams, ProtocolParams};
-use crate::system::auto_update::{Update, UpdateStatus};
+use crate::system::auto_update::{Release, Update, UpdateStatus};
+use crate::system::notifications::Notification;
 
 impl AuthActivity {
     /// ### protocol_opt_to_enum
@@ -155,6 +156,51 @@ impl AuthActivity {
 
     // -- update install
 
+    /// ### check_for_updates
+    ///
+    /// If enabled in configuration, check for updates from Github
+    pub(super) fn check_for_updates(&mut self) {
+        debug!("Check for updates...");
+        // Check version only if unset in the store
+        let ctx = self.context_mut();
+        if !ctx.store().isset(super::STORE_KEY_LATEST_VERSION) {
+            debug!("Version is not set in storage");
+            if ctx.config().get_check_for_updates() {
+                debug!("Check for updates is enabled");
+                // Send request
+                match Update::is_new_version_available() {
+                    Ok(Some(Release { version, body })) => {
+                        // If some, store version and release notes
+                        info!("Latest version is: {}", version);
+                        if ctx.config().get_notifications() {
+                            // Notify new version available
+                            Notification::update_available(version.as_str());
+                        }
+                        // Store info
+                        ctx.store_mut()
+                            .set_string(super::STORE_KEY_LATEST_VERSION, version);
+                        ctx.store_mut()
+                            .set_string(super::STORE_KEY_RELEASE_NOTES, body);
+                    }
+                    Ok(None) => {
+                        info!("Latest version is: {} (current)", env!("CARGO_PKG_VERSION"));
+                        // Just set flag as check
+                        ctx.store_mut().set(super::STORE_KEY_LATEST_VERSION);
+                    }
+                    Err(err) => {
+                        // Report error
+                        error!("Failed to get latest version: {}", err);
+                        self.mount_error(
+                            format!("Could not check for new updates: {}", err).as_str(),
+                        );
+                    }
+                }
+            } else {
+                info!("Check for updates is disabled");
+            }
+        }
+    }
+
     /// ### install_update
     ///
     /// Install latest termscp version via GUI
@@ -173,9 +219,17 @@ impl AuthActivity {
         match result {
             Ok(UpdateStatus::AlreadyUptodate) => self.mount_info("termscp is already up to date!"),
             Ok(UpdateStatus::UpdateInstalled(ver)) => {
+                if self.config().get_notifications() {
+                    Notification::update_installed(ver.as_str());
+                }
                 self.mount_info(format!("termscp has been updated to version {}!", ver))
             }
-            Err(err) => self.mount_error(format!("Could not install update: {}", err)),
+            Err(err) => {
+                if self.config().get_notifications() {
+                    Notification::update_failed(err.to_string());
+                }
+                self.mount_error(format!("Could not install update: {}", err))
+            }
         }
     }
 }

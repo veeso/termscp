@@ -35,8 +35,8 @@ mod view;
 use super::{Activity, Context, ExitReason};
 use crate::config::themes::Theme;
 use crate::filetransfer::{FileTransferParams, FileTransferProtocol};
-use crate::system::auto_update::{Release, Update as TermscpUpdate};
 use crate::system::bookmarks_client::BookmarksClient;
+use crate::system::config_client::ConfigClient;
 
 // Includes
 use crossterm::event::Event;
@@ -110,45 +110,6 @@ impl AuthActivity {
         }
     }
 
-    /// ### on_create
-    ///
-    /// If enabled in configuration, check for updates from Github
-    fn check_for_updates(&mut self) {
-        debug!("Check for updates...");
-        // Check version only if unset in the store
-        let ctx: &mut Context = self.context_mut();
-        if !ctx.store().isset(STORE_KEY_LATEST_VERSION) {
-            debug!("Version is not set in storage");
-            if ctx.config().get_check_for_updates() {
-                debug!("Check for updates is enabled");
-                // Send request
-                match TermscpUpdate::is_new_version_available() {
-                    Ok(Some(Release { version, body })) => {
-                        // If some, store version and release notes
-                        info!("Latest version is: {}", version);
-                        ctx.store_mut()
-                            .set_string(STORE_KEY_LATEST_VERSION, version);
-                        ctx.store_mut().set_string(STORE_KEY_RELEASE_NOTES, body);
-                    }
-                    Ok(None) => {
-                        info!("Latest version is: {} (current)", env!("CARGO_PKG_VERSION"));
-                        // Just set flag as check
-                        ctx.store_mut().set(STORE_KEY_LATEST_VERSION);
-                    }
-                    Err(err) => {
-                        // Report error
-                        error!("Failed to get latest version: {}", err);
-                        self.mount_error(
-                            format!("Could not check for new updates: {}", err).as_str(),
-                        );
-                    }
-                }
-            } else {
-                info!("Check for updates is disabled");
-            }
-        }
-    }
-
     /// ### context
     ///
     /// Returns a reference to context
@@ -161,6 +122,13 @@ impl AuthActivity {
     /// Returns a mutable reference to context
     fn context_mut(&mut self) -> &mut Context {
         self.context.as_mut().unwrap()
+    }
+
+    /// ### config
+    ///
+    /// Returns config client reference
+    fn config(&self) -> &ConfigClient {
+        self.context().config()
     }
 
     /// ### theme

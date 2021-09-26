@@ -206,17 +206,27 @@ impl FileTransferActivity {
         dst_name: Option<String>,
     ) -> Result<(), String> {
         // Use different method based on payload
-        match payload {
-            TransferPayload::Any(entry) => {
-                self.filetransfer_send_any(&entry, curr_remote_path, dst_name)
+        let result = match payload {
+            TransferPayload::Any(ref entry) => {
+                self.filetransfer_send_any(entry, curr_remote_path, dst_name)
             }
-            TransferPayload::File(file) => {
-                self.filetransfer_send_file(&file, curr_remote_path, dst_name)
+            TransferPayload::File(ref file) => {
+                self.filetransfer_send_file(file, curr_remote_path, dst_name)
             }
-            TransferPayload::Many(entries) => {
+            TransferPayload::Many(ref entries) => {
                 self.filetransfer_send_many(entries, curr_remote_path)
             }
+        };
+        // Notify
+        match &result {
+            Ok(_) => {
+                self.notify_transfer_completed(&payload);
+            }
+            Err(e) => {
+                self.notify_transfer_error(e.as_str());
+            }
         }
+        result
     }
 
     /// ### filetransfer_send_file
@@ -268,10 +278,10 @@ impl FileTransferActivity {
         // Mount progress bar
         self.mount_progress_bar(format!("Uploading {}…", entry.get_abs_path().display()));
         // Send recurse
-        self.filetransfer_send_recurse(entry, curr_remote_path, dst_name);
+        let result = self.filetransfer_send_recurse(entry, curr_remote_path, dst_name);
         // Umount progress bar
         self.umount_progress_bar();
-        Ok(())
+        result
     }
 
     /// ### filetransfer_send_many
@@ -279,7 +289,7 @@ impl FileTransferActivity {
     /// Send many entries to remote
     fn filetransfer_send_many(
         &mut self,
-        entries: Vec<FsEntry>,
+        entries: &[FsEntry],
         curr_remote_path: &Path,
     ) -> Result<(), String> {
         // Reset states
@@ -293,12 +303,14 @@ impl FileTransferActivity {
         // Mount progress bar
         self.mount_progress_bar(format!("Uploading {} entries…", entries.len()));
         // Send recurse
-        entries
+        let result = entries
             .iter()
-            .for_each(|x| self.filetransfer_send_recurse(x, curr_remote_path, None));
+            .map(|x| self.filetransfer_send_recurse(x, curr_remote_path, None))
+            .find(|x| x.is_err())
+            .unwrap_or(Ok(()));
         // Umount progress bar
         self.umount_progress_bar();
-        Ok(())
+        result
     }
 
     fn filetransfer_send_recurse(
@@ -306,7 +318,7 @@ impl FileTransferActivity {
         entry: &FsEntry,
         curr_remote_path: &Path,
         dst_name: Option<String>,
-    ) {
+    ) -> Result<(), String> {
         // Write popup
         let file_name: String = match entry {
             FsEntry::Directory(dir) => dir.name.clone(),
@@ -320,44 +332,42 @@ impl FileTransferActivity {
         };
         remote_path.push(remote_file_name);
         // Match entry
-        match entry {
+        let result: Result<(), String> = match entry {
             FsEntry::File(file) => {
-                if let Err(err) = self.filetransfer_send_one(file, remote_path.as_path(), file_name)
-                {
-                    // Log error
-                    self.log_and_alert(
-                        LogLevel::Error,
-                        format!("Failed to upload file {}: {}", file.name, err),
-                    );
-                    // If transfer was abrupted or there was an IO error on remote, remove file
-                    if matches!(
-                        err,
-                        TransferErrorReason::Abrupted | TransferErrorReason::RemoteIoError(_)
-                    ) {
-                        // Stat file on remote and remove it if exists
-                        match self.client.stat(remote_path.as_path()) {
-                            Err(err) => self.log(
-                                LogLevel::Error,
-                                format!(
-                                    "Could not remove created file {}: {}",
-                                    remote_path.display(),
-                                    err
+                match self.filetransfer_send_one(file, remote_path.as_path(), file_name) {
+                    Err(err) => {
+                        // If transfer was abrupted or there was an IO error on remote, remove file
+                        if matches!(
+                            err,
+                            TransferErrorReason::Abrupted | TransferErrorReason::RemoteIoError(_)
+                        ) {
+                            // Stat file on remote and remove it if exists
+                            match self.client.stat(remote_path.as_path()) {
+                                Err(err) => self.log(
+                                    LogLevel::Error,
+                                    format!(
+                                        "Could not remove created file {}: {}",
+                                        remote_path.display(),
+                                        err
+                                    ),
                                 ),
-                            ),
-                            Ok(entry) => {
-                                if let Err(err) = self.client.remove(&entry) {
-                                    self.log(
-                                        LogLevel::Error,
-                                        format!(
-                                            "Could not remove created file {}: {}",
-                                            remote_path.display(),
-                                            err
-                                        ),
-                                    );
+                                Ok(entry) => {
+                                    if let Err(err) = self.client.remove(&entry) {
+                                        self.log(
+                                            LogLevel::Error,
+                                            format!(
+                                                "Could not remove created file {}: {}",
+                                                remote_path.display(),
+                                                err
+                                            ),
+                                        );
+                                    }
                                 }
                             }
                         }
+                        Err(err.to_string())
                     }
+                    Ok(_) => Ok(()),
                 }
             }
             FsEntry::Directory(dir) => {
@@ -387,7 +397,7 @@ impl FileTransferActivity {
                                 err
                             ),
                         );
-                        return;
+                        return Err(err.to_string());
                     }
                 }
                 // Get files in dir
@@ -400,8 +410,13 @@ impl FileTransferActivity {
                                 break;
                             }
                             // Send entry; name is always None after first call
-                            self.filetransfer_send_recurse(entry, remote_path.as_path(), None);
+                            if let Err(err) =
+                                self.filetransfer_send_recurse(entry, remote_path.as_path(), None)
+                            {
+                                return Err(err);
+                            }
                         }
+                        Ok(())
                     }
                     Err(err) => {
                         self.log_and_alert(
@@ -412,10 +427,11 @@ impl FileTransferActivity {
                                 err
                             ),
                         );
+                        Err(err.to_string())
                     }
                 }
             }
-        }
+        };
         // Scan dir on remote
         self.reload_remote_dir();
         // If aborted; show popup
@@ -426,6 +442,7 @@ impl FileTransferActivity {
                 format!("Upload aborted for \"{}\"!", entry.get_abs_path().display()),
             );
         }
+        result
     }
 
     /// ### filetransfer_send_file
@@ -613,11 +630,23 @@ impl FileTransferActivity {
         local_path: &Path,
         dst_name: Option<String>,
     ) -> Result<(), String> {
-        match payload {
-            TransferPayload::Any(entry) => self.filetransfer_recv_any(&entry, local_path, dst_name),
-            TransferPayload::File(file) => self.filetransfer_recv_file(&file, local_path),
-            TransferPayload::Many(entries) => self.filetransfer_recv_many(entries, local_path),
+        let result = match payload {
+            TransferPayload::Any(ref entry) => {
+                self.filetransfer_recv_any(entry, local_path, dst_name)
+            }
+            TransferPayload::File(ref file) => self.filetransfer_recv_file(file, local_path),
+            TransferPayload::Many(ref entries) => self.filetransfer_recv_many(entries, local_path),
+        };
+        // Notify
+        match &result {
+            Ok(_) => {
+                self.notify_transfer_completed(&payload);
+            }
+            Err(e) => {
+                self.notify_transfer_error(e.as_str());
+            }
         }
+        result
     }
 
     /// ### filetransfer_recv_any
@@ -639,10 +668,10 @@ impl FileTransferActivity {
         // Mount progress bar
         self.mount_progress_bar(format!("Downloading {}…", entry.get_abs_path().display()));
         // Receive
-        self.filetransfer_recv_recurse(entry, local_path, dst_name);
+        let result = self.filetransfer_recv_recurse(entry, local_path, dst_name);
         // Umount progress bar
         self.umount_progress_bar();
-        Ok(())
+        result
     }
 
     /// ### filetransfer_recv_file
@@ -669,7 +698,7 @@ impl FileTransferActivity {
     /// Send many entries to remote
     fn filetransfer_recv_many(
         &mut self,
-        entries: Vec<FsEntry>,
+        entries: &[FsEntry],
         curr_remote_path: &Path,
     ) -> Result<(), String> {
         // Reset states
@@ -683,12 +712,14 @@ impl FileTransferActivity {
         // Mount progress bar
         self.mount_progress_bar(format!("Downloading {} entries…", entries.len()));
         // Send recurse
-        entries
+        let result = entries
             .iter()
-            .for_each(|x| self.filetransfer_recv_recurse(x, curr_remote_path, None));
+            .map(|x| self.filetransfer_recv_recurse(x, curr_remote_path, None))
+            .find(|x| x.is_err())
+            .unwrap_or(Ok(()));
         // Umount progress bar
         self.umount_progress_bar();
-        Ok(())
+        result
     }
 
     fn filetransfer_recv_recurse(
@@ -696,14 +727,14 @@ impl FileTransferActivity {
         entry: &FsEntry,
         local_path: &Path,
         dst_name: Option<String>,
-    ) {
+    ) -> Result<(), String> {
         // Write popup
         let file_name: String = match entry {
             FsEntry::Directory(dir) => dir.name.clone(),
             FsEntry::File(file) => file.name.clone(),
         };
         // Match entry
-        match entry {
+        let result: Result<(), String> = match entry {
             FsEntry::File(file) => {
                 // Get local file
                 let mut local_file_path: PathBuf = PathBuf::from(local_path);
@@ -716,10 +747,6 @@ impl FileTransferActivity {
                 if let Err(err) =
                     self.filetransfer_recv_one(local_file_path.as_path(), file, file_name)
                 {
-                    self.log_and_alert(
-                        LogLevel::Error,
-                        format!("Could not download file {}: {}", file.name, err),
-                    );
                     // If transfer was abrupted or there was an IO error on remote, remove file
                     if matches!(
                         err,
@@ -749,6 +776,9 @@ impl FileTransferActivity {
                             }
                         }
                     }
+                    Err(err.to_string())
+                } else {
+                    Ok(())
                 }
             }
             FsEntry::Directory(dir) => {
@@ -798,12 +828,15 @@ impl FileTransferActivity {
                                     }
                                     // Receive entry; name is always None after first call
                                     // Local path becomes local_dir_path
-                                    self.filetransfer_recv_recurse(
+                                    if let Err(err) = self.filetransfer_recv_recurse(
                                         entry,
                                         local_dir_path.as_path(),
                                         None,
-                                    );
+                                    ) {
+                                        return Err(err);
+                                    }
                                 }
+                                Ok(())
                             }
                             Err(err) => {
                                 self.log_and_alert(
@@ -814,6 +847,7 @@ impl FileTransferActivity {
                                         err
                                     ),
                                 );
+                                Err(err.to_string())
                             }
                         }
                     }
@@ -826,10 +860,11 @@ impl FileTransferActivity {
                                 err
                             ),
                         );
+                        Err(err.to_string())
                     }
                 }
             }
-        }
+        };
         // Reload directory on local
         self.reload_local_dir();
         // if aborted; show alert
@@ -843,6 +878,7 @@ impl FileTransferActivity {
                 ),
             );
         }
+        result
     }
 
     /// ### filetransfer_recv_one

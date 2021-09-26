@@ -11,6 +11,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: sudo apt update && sudo apt install -y libdbus-1-dev libssh2-1-dev libssl-dev
       - name: Setup containers
         run: docker-compose -f "tests/docker-compose.yml" up -d --build
       - name: Setup nightly toolchain

@@ -87,6 +87,13 @@ impl TransferStates {
     pub fn aborted(&self) -> bool {
         self.aborted
     }
+
+    /// ### full_size
+    ///
+    /// Returns the size of the entire transfer
+    pub fn full_size(&self) -> usize {
+        self.full.total
+    }
 }
 
 impl Default for ProgressStates {
@@ -305,6 +312,8 @@ mod test {
         assert_eq!(states.aborted(), true);
         states.reset();
         assert_eq!(states.aborted(), false);
+        states.full.total = 1024;
+        assert_eq!(states.full_size(), 1024);
     }
 
     #[test]
