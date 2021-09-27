@@ -79,8 +79,9 @@ For more information or other platforms, please visit [veeso.github.io](https://
 - **Linux** users:
   - libssh
   - libdbus-1
-- **BSD** users:
+- **FreeBSD** users:
   - libssh
+  - dbus
 
 ### Optional Requirements ✔️
 

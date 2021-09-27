@@ -278,7 +278,7 @@ install_bsd_cargo_deps() {
     set -e
     confirm "${YELLOW}libssh, gcc${NO_COLOR} are required to install ${GREEN}termscp${NO_COLOR}; would you like to proceed?"
     sudo="$(elevate_priv_ex /usr/local/bin)"
-    $sudo pkg install -y curl wget libssh gcc
+    $sudo pkg install -y curl wget libssh gcc dbus
     info "Dependencies installed successfully"
 }
 
