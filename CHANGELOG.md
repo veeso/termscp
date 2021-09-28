@@ -50,9 +50,10 @@ Released on ??
   - Added a new key in themes: `misc_info_dialog`: if your theme won't load, just reload it. If you're using a customised theme, you can add to it the missing key via a text editor. Just edit the `theme.toml` in your `$CONFIG_DIR/termscp/theme.toml` and add `misc_info_dialog` (Read more in manual at Themes).
 - Enhancements:
   - Reuse mounts in UI, in order to reduce executable size
+  - File list can now be "rewinded", which means that moving with arrows will now allow you to go from top to bottom of the list pressing `<UP>` and viceversa pressing `<DOWN>`.
 - Dependencies:
-  - Added `rust-s3 0.27-rc4`
   - Added `notify_rust 4.5.3`
+  - Added `rust-s3 0.27-rc4`
   - Added `self_update 0.27.0`
   - Updated `argh` to `0.1.6`
   - Updated `dirs` to `4.0.0`
