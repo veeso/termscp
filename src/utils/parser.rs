@@ -36,6 +36,7 @@ use crate::system::config_client::ConfigClient;
 use crate::system::environment;
 
 // Ext
+use bytesize::ByteSize;
 use chrono::format::ParseError;
 use chrono::prelude::*;
 use regex::Regex;
@@ -95,6 +96,12 @@ lazy_static! {
      * - group 6: blue
      */
     static ref COLOR_RGB_REGEX: Regex = Regex::new(r"^(rgb)?\(?([01]?\d\d?|2[0-4]\d|25[0-5])(\W+)([01]?\d\d?|2[0-4]\d|25[0-5])\W+(([01]?\d\d?|2[0-4]\d|25[0-5])\)?)").unwrap();
+    /**
+     * Regex matches:
+     * - group 1: amount (number)
+     * - group 4: unit (K, M, G, T, P)
+     */
+    static ref BYTESIZE_REGEX: Regex = Regex::new(r"(:?([0-9])+)( )*(:?[KMGTP])?B").unwrap();
 }
 
 // -- remote opts
@@ -547,6 +554,57 @@ fn parse_rgb_color(color: &str) -> Option<Color> {
             u8::from_str(groups.get(6).unwrap().as_str()).ok().unwrap(),
         )
     })
+}
+
+#[derive(Debug, PartialEq)]
+enum ByteUnit {
+    Byte,
+    Kilobyte,
+    Megabyte,
+    Gigabyte,
+    Terabyte,
+    Petabyte,
+}
+
+impl FromStr for ByteUnit {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "B" => Ok(Self::Byte),
+            "KB" => Ok(Self::Kilobyte),
+            "MB" => Ok(Self::Megabyte),
+            "GB" => Ok(Self::Gigabyte),
+            "TB" => Ok(Self::Terabyte),
+            "PB" => Ok(Self::Petabyte),
+            _ => Err("Invalid unit"),
+        }
+    }
+}
+
+/// ### parse_bytesize
+///
+/// Parse bytes repr (e.g. `24 MB`) into `ByteSize`
+pub fn parse_bytesize<S: AsRef<str>>(bytes: S) -> Option<ByteSize> {
+    match BYTESIZE_REGEX.captures(bytes.as_ref()) {
+        None => None,
+        Some(groups) => {
+            let amount = groups
+                .get(1)
+                .map(|x| x.as_str().parse::<u64>().unwrap_or(0))?;
+            let unit = groups.get(4).map(|x| x.as_str().to_string());
+            let unit = format!("{}B", unit.unwrap_or_default());
+            let unit = ByteUnit::from_str(unit.as_str()).unwrap();
+            Some(match unit {
+                ByteUnit::Byte => ByteSize::b(amount),
+                ByteUnit::Gigabyte => ByteSize::gib(amount),
+                ByteUnit::Kilobyte => ByteSize::kib(amount),
+                ByteUnit::Megabyte => ByteSize::mib(amount),
+                ByteUnit::Petabyte => ByteSize::pib(amount),
+                ByteUnit::Terabyte => ByteSize::tib(amount),
+            })
+        }
+    }
 }
 
 #[cfg(test)]
@@ -1054,5 +1112,26 @@ mod tests {
             Color::Rgb(255, 64, 32)
         );
         assert!(parse_color("redd").is_none());
+    }
+
+    #[test]
+    fn parse_byteunit() {
+        assert_eq!(ByteUnit::from_str("B").ok().unwrap(), ByteUnit::Byte);
+        assert_eq!(ByteUnit::from_str("KB").ok().unwrap(), ByteUnit::Kilobyte);
+        assert_eq!(ByteUnit::from_str("MB").ok().unwrap(), ByteUnit::Megabyte);
+        assert_eq!(ByteUnit::from_str("GB").ok().unwrap(), ByteUnit::Gigabyte);
+        assert_eq!(ByteUnit::from_str("TB").ok().unwrap(), ByteUnit::Terabyte);
+        assert_eq!(ByteUnit::from_str("PB").ok().unwrap(), ByteUnit::Petabyte);
+        assert!(ByteUnit::from_str("uB").is_err());
+    }
+
+    #[test]
+    fn parse_str_as_bytesize() {
+        assert_eq!(parse_bytesize("1024 B").unwrap().as_u64(), 1024);
+        assert_eq!(parse_bytesize("1024B").unwrap().as_u64(), 1024);
+        assert_eq!(parse_bytesize("10240 KB").unwrap().as_u64(), 10485760);
+        assert_eq!(parse_bytesize("2 GB").unwrap().as_u64(), 2147483648);
+        assert_eq!(parse_bytesize("1 TB").unwrap().as_u64(), 1099511627776);
+        assert!(parse_bytesize("1 XB").is_none());
     }
 }

@@ -27,6 +27,7 @@
   - [Text Editor ✏](#text-editor-)
     - [How do I configure the text editor 🦥](#how-do-i-configure-the-text-editor-)
   - [Logging 🩺](#logging-)
+  - [Notifications 📫](#notifications-)
 
 ## Usage ❓
 
@@ -304,6 +305,8 @@ These parameters can be changed:
 - **Group Dirs**: select whether directories should be groupped or not in file explorers. If `Display first` is selected, directories will be sorted using the configured method but displayed before files, viceversa if `Display last` is selected.
 - **Remote File formatter syntax**: syntax to display file info for each file in the remote explorer. See [File explorer format](#file-explorer-format)
 - **Local File formatter syntax**: syntax to display file info for each file in the local explorer. See [File explorer format](#file-explorer-format)
+- **Enable notifications?**: If set to `Yes`, notifications will be displayed.
+- **Notifications: minimum transfer size**: if transfer size is greater or equal than the specified value, notifications for transfer will be displayed. The accepted values are in format `{UNSIGNED} B/KB/MB/GB/TB/PB`
 
 ### SSH Key Storage 🔐
 
@@ -471,3 +474,18 @@ Yes, you can. Just start termscp with `-q or --quiet` option. You can alias term
 > Is logging safe?
 
 If you're concerned about security, the log file doesn't contain any plain password, so don't worry and exposes the same information the sibling file `bookmarks` reports.
+
+## Notifications 📫
+
+Termscp will send Desktop notifications for these kind of events:
+
+- on **Transfer completed**: The notification will be sent once a transfer has been successfully completed.
+  - ❗ The notification will be displayed only if the transfer total size is at least the specified `Notifications: minimum transfer size` in the configuration.
+- on **Transfer failed**: The notification will be sent once a transfer has failed due to an error.
+  - ❗ The notification will be displayed only if the transfer total size is at least the specified `Notifications: minimum transfer size` in the configuration.
+- on **Update available**: Whenever a new version of termscp is available, a notification will be displayed.
+- on **Update installed**: Whenever a new version of termscp has been installed, a notification will be displayed.
+- on **Update failed**: Whenever the installation of the update fails, a notification will be displayed.
+
+❗ If you prefer to keep notifications turned off, you can just enter setup and set `Enable notifications?` to `No` 😉.
+❗ If you want to change the minimum transfer size to display notifications, you can change the value in the configuration with key `Notifications: minimum transfer size` and set it to whatever suits better for you 🙂.

@@ -287,6 +287,25 @@ pub fn shadow_password(s: &str) -> String {
     (0..s.len()).map(|_| '*').collect()
 }
 
+/// ### fmt_bytes
+///
+/// Format bytes
+pub fn fmt_bytes(v: u64) -> String {
+    if v >= 1125899906842624 {
+        format!("{} PB", v / 1125899906842624)
+    } else if v >= 1099511627776 {
+        format!("{} TB", v / 1099511627776)
+    } else if v >= 1073741824 {
+        format!("{} GB", v / 1073741824)
+    } else if v >= 1048576 {
+        format!("{} MB", v / 1048576)
+    } else if v >= 1024 {
+        format!("{} KB", v / 1024)
+    } else {
+        format!("{} B", v)
+    }
+}
+
 #[cfg(test)]
 mod tests {
 
@@ -598,5 +617,15 @@ mod tests {
     #[test]
     fn test_utils_fmt_shadow_password() {
         assert_eq!(shadow_password("foobar"), String::from("******"));
+    }
+
+    #[test]
+    fn format_bytes() {
+        assert_eq!(fmt_bytes(110).as_str(), "110 B");
+        assert_eq!(fmt_bytes(2048).as_str(), "2 KB");
+        assert_eq!(fmt_bytes(2097152).as_str(), "2 MB");
+        assert_eq!(fmt_bytes(4294967296).as_str(), "4 GB");
+        assert_eq!(fmt_bytes(3298534883328).as_str(), "3 TB");
+        assert_eq!(fmt_bytes(3377699720527872).as_str(), "3 PB");
     }
 }

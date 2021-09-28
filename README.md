@@ -82,8 +82,11 @@ For more information or other platforms, please visit [veeso.github.io](https://
 - **Linux** users:
   - libssh
   - libdbus-1
+  - pkg-config
 - **BSD** users:
   - libssh
+  - dbus
+  - pkgconf
 
 ### Optional Requirements ✔️
 

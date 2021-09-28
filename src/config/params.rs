@@ -33,6 +33,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
 
+pub const DEFAULT_NOTIFICATION_TRANSFER_THRESHOLD: u64 = 536870912; // 512MB
+
 #[derive(Deserialize, Serialize, std::fmt::Debug)]
 /// ## UserConfig
 ///
@@ -56,6 +58,8 @@ pub struct UserInterfaceConfig {
     pub group_dirs: Option<String>,
     pub file_fmt: Option<String>, // Refers to local host (for backward compatibility)
     pub remote_file_fmt: Option<String>, // @! Since 0.5.0
+    pub notifications: Option<bool>, // @! Since 0.7.0; Default true
+    pub notification_threshold: Option<u64>, // @! Since 0.7.0; Default 512MB
 }
 
 #[derive(Deserialize, Serialize, std::fmt::Debug)]
@@ -89,6 +93,8 @@ impl Default for UserInterfaceConfig {
             group_dirs: None,
             file_fmt: None,
             remote_file_fmt: None,
+            notifications: Some(true),
+            notification_threshold: Some(DEFAULT_NOTIFICATION_TRANSFER_THRESHOLD),
         }
     }
 }
@@ -126,6 +132,8 @@ mod tests {
             group_dirs: Some(String::from("first")),
             file_fmt: Some(String::from("{NAME}")),
             remote_file_fmt: Some(String::from("{USER}")),
+            notifications: Some(true),
+            notification_threshold: Some(DEFAULT_NOTIFICATION_TRANSFER_THRESHOLD),
         };
         assert_eq!(ui.default_protocol, String::from("SFTP"));
         assert_eq!(ui.text_editor, PathBuf::from("nano"));
@@ -155,6 +163,11 @@ mod tests {
         assert_eq!(
             cfg.user_interface.remote_file_fmt,
             Some(String::from("{USER}"))
+        );
+        assert_eq!(cfg.user_interface.notifications, Some(true));
+        assert_eq!(
+            cfg.user_interface.notification_threshold,
+            Some(DEFAULT_NOTIFICATION_TRANSFER_THRESHOLD)
         );
     }
 }

@@ -202,6 +202,8 @@ mod tests {
         assert_eq!(cfg.user_interface.show_hidden_files, true);
         assert_eq!(cfg.user_interface.check_for_updates.unwrap(), true);
         assert_eq!(cfg.user_interface.prompt_on_file_replace.unwrap(), false);
+        assert_eq!(cfg.user_interface.notifications.unwrap(), false);
+        assert_eq!(cfg.user_interface.notification_threshold.unwrap(), 1024);
         assert_eq!(cfg.user_interface.group_dirs, Some(String::from("last")));
         assert_eq!(
             cfg.user_interface.file_fmt,
@@ -248,6 +250,8 @@ mod tests {
         assert!(cfg.user_interface.prompt_on_file_replace.is_none());
         assert!(cfg.user_interface.file_fmt.is_none());
         assert!(cfg.user_interface.remote_file_fmt.is_none());
+        assert!(cfg.user_interface.notifications.is_none());
+        assert!(cfg.user_interface.notification_threshold.is_none());
         // Verify keys
         assert_eq!(
             *cfg.remote
@@ -323,6 +327,8 @@ mod tests {
         group_dirs = "last"
         file_fmt = "{NAME} {PEX}"
         remote_file_fmt = "{NAME} {USER}"
+        notifications = false
+        notification_threshold = 1024
 
         [remote.ssh_keys]
         "192.168.1.31" = "/home/omar/.ssh/raspberry.key"

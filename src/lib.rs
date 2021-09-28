@@ -47,6 +47,7 @@ extern crate lazy_static;
 extern crate log;
 #[macro_use]
 extern crate magic_crypt;
+extern crate notify_rust;
 extern crate open;
 #[cfg(target_os = "windows")]
 extern crate path_slash;

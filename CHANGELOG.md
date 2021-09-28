@@ -27,7 +27,7 @@ Released on ??
 
 > 🍁 Autumn update 🍇
 
-- **Aws S3**
+- **Aws S3** 🪣
   - Added support for the aws-s3 protocol.
   - Operate on your bucket directly from the file explorer.
   - You can also save your buckets as bookmarks.
@@ -36,7 +36,14 @@ Released on ??
   - Possibility to update termscp directly via GUI or CLI.
   - Install update via CLI running `(sudo) termscp --update`.
   - Install update via GUI from auth form: when the "new version message" is displayed press `<CTRL+R>`, then enter `YES` in the radio input asking whether to install the update.
-- **Prompt user when about to replace existing file on a file transfer**:
+- **Notifications** 📫
+  - termscp will now send Desktop notifications in these cases
+    - on transfer completed (minimum transfer size can be specified in configuration; default 512MB)
+    - on transfer error (same as above)
+    - on update available
+  - Added "notifications enabled" in configuration (Default enabled)
+  - Added "Notifications: minimum transfer size": if transfer size is greater or equal than the specified value, notifications for transfer will be displayed.
+- **Prompt user when about to replace existing file on a file transfer** ❓
   - Whenever a file transfer is about to replace an existing file on local/remote host, you will be prompted if you're sure you really want to replace that file.
   - You may want to disable this option. You can go to configuration and set "Prompt when replacing existing files?" to "NO"
 - **❗ BREAKING CHANGES ❗**:
@@ -45,6 +52,7 @@ Released on ??
   - Reuse mounts in UI, in order to reduce executable size
 - Dependencies:
   - Added `rust-s3 0.27-rc4`
+  - Added `notify_rust 4.5.3`
   - Added `self_update 0.27.0`
   - Updated `argh` to `0.1.6`
   - Updated `dirs` to `4.0.0`
