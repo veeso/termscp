@@ -99,100 +99,63 @@ impl AuthActivity {
         // Get default protocol
         let default_protocol: FileTransferProtocol = self.context().config().get_default_protocol();
         // Protocol
-        self.view.mount(
+        self.mount_radio(
             super::COMPONENT_RADIO_PROTOCOL,
-            Box::new(Radio::new(
-                RadioPropsBuilder::default()
-                    .with_color(protocol_color)
-                    .with_inverted_color(Color::Black)
-                    .with_borders(Borders::ALL, BorderType::Rounded, protocol_color)
-                    .with_title("Protocol", Alignment::Left)
-                    .with_options(&["SFTP", "SCP", "FTP", "FTPS", "AWS S3"])
-                    .with_value(Self::protocol_enum_to_opt(default_protocol))
-                    .rewind(true)
-                    .build(),
-            )),
+            "Protocol",
+            &["SFTP", "SCP", "FTP", "FTPS", "AWS S3"],
+            Self::protocol_enum_to_opt(default_protocol),
+            protocol_color,
         );
         // Address
-        self.view.mount(
+        self.mount_input(
             super::COMPONENT_INPUT_ADDR,
-            Box::new(Input::new(
-                InputPropsBuilder::default()
-                    .with_foreground(addr_color)
-                    .with_borders(Borders::ALL, BorderType::Rounded, addr_color)
-                    .with_label("Remote host", Alignment::Left)
-                    .build(),
-            )),
+            "Remote host",
+            addr_color,
+            InputType::Text,
         );
         // Port
-        self.view.mount(
+        self.mount_input_ex(
             super::COMPONENT_INPUT_PORT,
-            Box::new(Input::new(
-                InputPropsBuilder::default()
-                    .with_foreground(port_color)
-                    .with_borders(Borders::ALL, BorderType::Rounded, port_color)
-                    .with_label("Port number", Alignment::Left)
-                    .with_input(InputType::Number)
-                    .with_input_len(5)
-                    .with_value(Self::get_default_port_for_protocol(default_protocol).to_string())
-                    .build(),
-            )),
+            "Port number",
+            port_color,
+            InputType::Number,
+            Some(5),
+            Some(Self::get_default_port_for_protocol(default_protocol).to_string()),
         );
         // Username
-        self.view.mount(
+        self.mount_input(
             super::COMPONENT_INPUT_USERNAME,
-            Box::new(Input::new(
-                InputPropsBuilder::default()
-                    .with_foreground(username_color)
-                    .with_borders(Borders::ALL, BorderType::Rounded, username_color)
-                    .with_label("Username", Alignment::Left)
-                    .build(),
-            )),
+            "Username",
+            username_color,
+            InputType::Text,
         );
         // Password
-        self.view.mount(
+        self.mount_input(
             super::COMPONENT_INPUT_PASSWORD,
-            Box::new(Input::new(
-                InputPropsBuilder::default()
-                    .with_foreground(password_color)
-                    .with_borders(Borders::ALL, BorderType::Rounded, password_color)
-                    .with_label("Password", Alignment::Left)
-                    .with_input(InputType::Password)
-                    .build(),
-            )),
+            "Password",
+            password_color,
+            InputType::Password,
         );
         // Bucket
-        self.view.mount(
+        self.mount_input(
             super::COMPONENT_INPUT_S3_BUCKET,
-            Box::new(Input::new(
-                InputPropsBuilder::default()
-                    .with_foreground(addr_color)
-                    .with_borders(Borders::ALL, BorderType::Rounded, addr_color)
-                    .with_label("Bucket name", Alignment::Left)
-                    .build(),
-            )),
+            "Bucket name",
+            addr_color,
+            InputType::Text,
         );
         // Region
-        self.view.mount(
+        self.mount_input(
             super::COMPONENT_INPUT_S3_REGION,
-            Box::new(Input::new(
-                InputPropsBuilder::default()
-                    .with_foreground(port_color)
-                    .with_borders(Borders::ALL, BorderType::Rounded, port_color)
-                    .with_label("Region", Alignment::Left)
-                    .build(),
-            )),
+            "Region",
+            port_color,
+            InputType::Text,
         );
         // Profile
-        self.view.mount(
+        self.mount_input(
             super::COMPONENT_INPUT_S3_PROFILE,
-            Box::new(Input::new(
-                InputPropsBuilder::default()
-                    .with_foreground(username_color)
-                    .with_borders(Borders::ALL, BorderType::Rounded, username_color)
-                    .with_label("Profile", Alignment::Left)
-                    .build(),
-            )),
+            "Profile",
+            username_color,
+            InputType::Text,
         );
         // Version notice
         if let Some(version) = self
@@ -994,5 +957,50 @@ impl AuthActivity {
         );
         // Active
         self.view.active(id);
+    }
+
+    fn mount_radio(&mut self, id: &str, text: &str, opts: &[&str], default: usize, color: Color) {
+        self.view.mount(
+            id,
+            Box::new(Radio::new(
+                RadioPropsBuilder::default()
+                    .with_color(color)
+                    .with_inverted_color(Color::Black)
+                    .with_borders(Borders::ALL, BorderType::Rounded, color)
+                    .with_title(text, Alignment::Left)
+                    .with_options(opts)
+                    .with_value(default)
+                    .rewind(true)
+                    .build(),
+            )),
+        );
+    }
+
+    fn mount_input(&mut self, id: &str, label: &str, fg: Color, typ: InputType) {
+        self.mount_input_ex(id, label, fg, typ, None, None);
+    }
+
+    fn mount_input_ex(
+        &mut self,
+        id: &str,
+        label: &str,
+        fg: Color,
+        typ: InputType,
+        len: Option<usize>,
+        value: Option<String>,
+    ) {
+        let mut props = InputPropsBuilder::default();
+        props
+            .with_foreground(fg)
+            .with_borders(Borders::ALL, BorderType::Rounded, fg)
+            .with_label(label, Alignment::Left)
+            .with_input(typ);
+        if let Some(len) = len {
+            props.with_input_len(len);
+        }
+        if let Some(value) = value {
+            props.with_value(value);
+        }
+        self.view.mount(id, Box::new(Input::new(props.build())));
     }
 }

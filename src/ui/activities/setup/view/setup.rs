@@ -27,14 +27,14 @@
  * SOFTWARE.
  */
 // Locals
-use super::{Context, SetupActivity};
+use super::{Context, InputType, SetupActivity};
 use crate::filetransfer::FileTransferProtocol;
 use crate::fs::explorer::GroupDirs;
 use crate::ui::components::bytes::{Bytes, BytesPropsBuilder};
 use crate::utils::ui::draw_area_in;
 // Ext
 use std::path::PathBuf;
-use tui_realm_stdlib::{Input, InputPropsBuilder, Radio, RadioPropsBuilder};
+use tui_realm_stdlib::{InputPropsBuilder, RadioPropsBuilder};
 use tuirealm::tui::{
     layout::{Constraint, Direction, Layout},
     style::Color,
@@ -60,118 +60,66 @@ impl SetupActivity {
         // Footer
         self.mount_footer();
         // Input fields
-        self.view.mount(
+        self.mount_input(
             super::COMPONENT_INPUT_TEXT_EDITOR,
-            Box::new(Input::new(
-                InputPropsBuilder::default()
-                    .with_foreground(Color::LightGreen)
-                    .with_borders(Borders::ALL, BorderType::Rounded, Color::LightGreen)
-                    .with_label("Text editor", Alignment::Left)
-                    .build(),
-            )),
+            "Text editor",
+            Color::LightGreen,
+            InputType::Text,
         );
         self.view.active(super::COMPONENT_INPUT_TEXT_EDITOR); // <-- Focus
-        self.view.mount(
+        self.mount_radio(
             super::COMPONENT_RADIO_DEFAULT_PROTOCOL,
-            Box::new(Radio::new(
-                RadioPropsBuilder::default()
-                    .with_color(Color::LightCyan)
-                    .with_inverted_color(Color::Black)
-                    .with_borders(Borders::ALL, BorderType::Rounded, Color::LightCyan)
-                    .with_title("Default file transfer protocol", Alignment::Left)
-                    .with_options(&["SFTP", "SCP", "FTP", "FTPS", "AWS S3"])
-                    .rewind(true)
-                    .build(),
-            )),
+            "Default protocol",
+            &["SFTP", "SCP", "FTP", "FTPS", "AWS S3"],
+            0,
+            Color::LightCyan,
         );
-        self.view.mount(
+        self.mount_radio(
             super::COMPONENT_RADIO_HIDDEN_FILES,
-            Box::new(Radio::new(
-                RadioPropsBuilder::default()
-                    .with_color(Color::LightRed)
-                    .with_inverted_color(Color::Black)
-                    .with_borders(Borders::ALL, BorderType::Rounded, Color::LightRed)
-                    .with_title("Show hidden files (by default)?", Alignment::Left)
-                    .with_options(&[String::from("Yes"), String::from("No")])
-                    .rewind(true)
-                    .build(),
-            )),
+            "Show hidden files (by default)?",
+            &["Yes", "No"],
+            0,
+            Color::LightRed,
         );
-        self.view.mount(
+        self.mount_radio(
             super::COMPONENT_RADIO_UPDATES,
-            Box::new(Radio::new(
-                RadioPropsBuilder::default()
-                    .with_color(Color::LightYellow)
-                    .with_inverted_color(Color::Black)
-                    .with_borders(Borders::ALL, BorderType::Rounded, Color::LightYellow)
-                    .with_title("Check for updates?", Alignment::Left)
-                    .with_options(&[String::from("Yes"), String::from("No")])
-                    .rewind(true)
-                    .build(),
-            )),
+            "Check for updates?",
+            &["Yes", "No"],
+            0,
+            Color::LightYellow,
         );
-        self.view.mount(
+        self.mount_radio(
             super::COMPONENT_RADIO_PROMPT_ON_FILE_REPLACE,
-            Box::new(Radio::new(
-                RadioPropsBuilder::default()
-                    .with_color(Color::LightCyan)
-                    .with_inverted_color(Color::Black)
-                    .with_borders(Borders::ALL, BorderType::Rounded, Color::LightCyan)
-                    .with_title("Prompt when replacing existing files?", Alignment::Left)
-                    .with_options(&[String::from("Yes"), String::from("No")])
-                    .rewind(true)
-                    .build(),
-            )),
+            "Prompt when replacing existing files?",
+            &["Yes", "No"],
+            0,
+            Color::LightCyan,
         );
-        self.view.mount(
+        self.mount_radio(
             super::COMPONENT_RADIO_GROUP_DIRS,
-            Box::new(Radio::new(
-                RadioPropsBuilder::default()
-                    .with_color(Color::LightMagenta)
-                    .with_inverted_color(Color::Black)
-                    .with_borders(Borders::ALL, BorderType::Rounded, Color::LightMagenta)
-                    .with_title("Group directories", Alignment::Left)
-                    .with_options(&[
-                        String::from("Display first"),
-                        String::from("Display Last"),
-                        String::from("No"),
-                    ])
-                    .rewind(true)
-                    .build(),
-            )),
+            "Group directories",
+            &["Display first", "Display last", "No"],
+            0,
+            Color::LightMagenta,
         );
-        self.view.mount(
+        self.mount_input(
             super::COMPONENT_INPUT_LOCAL_FILE_FMT,
-            Box::new(Input::new(
-                InputPropsBuilder::default()
-                    .with_foreground(Color::LightGreen)
-                    .with_borders(Borders::ALL, BorderType::Rounded, Color::LightGreen)
-                    .with_label("File formatter syntax (local)", Alignment::Left)
-                    .build(),
-            )),
+            "File formatter syntax (local)",
+            Color::LightGreen,
+            InputType::Text,
         );
-        self.view.mount(
+        self.mount_input(
             super::COMPONENT_INPUT_REMOTE_FILE_FMT,
-            Box::new(Input::new(
-                InputPropsBuilder::default()
-                    .with_foreground(Color::LightCyan)
-                    .with_borders(Borders::ALL, BorderType::Rounded, Color::LightCyan)
-                    .with_label("File formatter syntax (remote)", Alignment::Left)
-                    .build(),
-            )),
+            "File formatter syntax (remote)",
+            Color::LightCyan,
+            InputType::Text,
         );
-        self.view.mount(
+        self.mount_radio(
             super::COMPONENT_RADIO_NOTIFICATIONS_ENABLED,
-            Box::new(Radio::new(
-                RadioPropsBuilder::default()
-                    .with_color(Color::LightRed)
-                    .with_inverted_color(Color::Black)
-                    .with_borders(Borders::ALL, BorderType::Rounded, Color::LightRed)
-                    .with_title("Enable notifications?", Alignment::Left)
-                    .with_options(&[String::from("Yes"), String::from("No")])
-                    .rewind(true)
-                    .build(),
-            )),
+            "Enable notifications?",
+            &["Yes", "No"],
+            0,
+            Color::LightRed,
         );
         self.view.mount(
             super::COMPONENT_INPUT_NOTIFICATIONS_THRESHOLD,

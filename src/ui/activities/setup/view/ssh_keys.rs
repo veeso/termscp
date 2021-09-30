@@ -31,7 +31,7 @@ use super::{Context, SetupActivity};
 use crate::ui::components::bookmark_list::{BookmarkList, BookmarkListPropsBuilder};
 use crate::utils::ui::draw_area_in;
 // Ext
-use tui_realm_stdlib::{Input, InputPropsBuilder, Radio, RadioPropsBuilder};
+use tui_realm_stdlib::{Input, InputPropsBuilder};
 use tuirealm::tui::{
     layout::{Constraint, Direction, Layout},
     style::Color,
@@ -169,22 +169,13 @@ impl SetupActivity {
     ///
     /// Mount delete ssh key component
     pub(crate) fn mount_del_ssh_key(&mut self) {
-        self.view.mount(
+        self.mount_radio_dialog(
             super::COMPONENT_RADIO_DEL_SSH_KEY,
-            Box::new(Radio::new(
-                RadioPropsBuilder::default()
-                    .with_color(Color::LightRed)
-                    .with_inverted_color(Color::Black)
-                    .with_borders(Borders::ALL, BorderType::Rounded, Color::LightRed)
-                    .with_title("Delete key?", Alignment::Center)
-                    .with_options(&[String::from("Yes"), String::from("No")])
-                    .with_value(1) // Default: No
-                    .rewind(true)
-                    .build(),
-            )),
+            "Delete key?",
+            &["Yes", "No"],
+            1,
+            Color::LightRed,
         );
-        // Active
-        self.view.active(super::COMPONENT_RADIO_DEL_SSH_KEY);
     }
 
     /// ### umount_del_ssh_key

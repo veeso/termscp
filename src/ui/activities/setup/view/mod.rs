@@ -36,10 +36,10 @@ pub use ssh_keys::*;
 pub use theme::*;
 // Ext
 use tui_realm_stdlib::{
-    List, ListPropsBuilder, Paragraph, ParagraphPropsBuilder, Radio, RadioPropsBuilder, Span,
-    SpanPropsBuilder,
+    Input, InputPropsBuilder, List, ListPropsBuilder, Paragraph, ParagraphPropsBuilder, Radio,
+    RadioPropsBuilder, Span, SpanPropsBuilder,
 };
-use tuirealm::props::{Alignment, PropsBuilder, TableBuilder, TextSpan};
+use tuirealm::props::{Alignment, InputType, PropsBuilder, TableBuilder, TextSpan};
 use tuirealm::tui::{
     style::Color,
     widgets::{BorderType, Borders},
@@ -74,21 +74,7 @@ impl SetupActivity {
     ///
     /// Mount error box
     pub(super) fn mount_error(&mut self, text: &str) {
-        // Mount
-        self.view.mount(
-            super::COMPONENT_TEXT_ERROR,
-            Box::new(Paragraph::new(
-                ParagraphPropsBuilder::default()
-                    .with_foreground(Color::Red)
-                    .bold()
-                    .with_borders(Borders::ALL, BorderType::Rounded, Color::Red)
-                    .with_texts(vec![TextSpan::from(text)])
-                    .with_text_alignment(Alignment::Center)
-                    .build(),
-            )),
-        );
-        // Give focus to error
-        self.view.active(super::COMPONENT_TEXT_ERROR);
+        self.mount_text_dialog(super::COMPONENT_TEXT_ERROR, text, Color::Red);
     }
 
     /// ### umount_error
@@ -102,28 +88,13 @@ impl SetupActivity {
     ///
     /// Mount quit popup
     pub(super) fn mount_quit(&mut self) {
-        self.view.mount(
+        self.mount_radio_dialog(
             super::COMPONENT_RADIO_QUIT,
-            Box::new(Radio::new(
-                RadioPropsBuilder::default()
-                    .with_color(Color::LightRed)
-                    .with_inverted_color(Color::Black)
-                    .with_borders(Borders::ALL, BorderType::Rounded, Color::LightRed)
-                    .with_title(
-                        "There are unsaved changes! Save changes before leaving?",
-                        Alignment::Center,
-                    )
-                    .with_options(&[
-                        String::from("Save"),
-                        String::from("Don't save"),
-                        String::from("Cancel"),
-                    ])
-                    .rewind(true)
-                    .build(),
-            )),
+            "There are unsaved changes! Save changes before leaving?",
+            &["Save", "Don't save", "Cancel"],
+            0,
+            Color::LightRed,
         );
-        // Active
-        self.view.active(super::COMPONENT_RADIO_QUIT);
     }
 
     /// ### umount_quit
@@ -137,21 +108,13 @@ impl SetupActivity {
     ///
     /// Mount save popup
     pub(super) fn mount_save_popup(&mut self) {
-        self.view.mount(
+        self.mount_radio_dialog(
             super::COMPONENT_RADIO_SAVE,
-            Box::new(Radio::new(
-                RadioPropsBuilder::default()
-                    .with_color(Color::LightYellow)
-                    .with_inverted_color(Color::Black)
-                    .with_borders(Borders::ALL, BorderType::Rounded, Color::LightYellow)
-                    .with_title("Save changes?", Alignment::Center)
-                    .with_options(&[String::from("Yes"), String::from("No")])
-                    .rewind(true)
-                    .build(),
-            )),
+            "Save changes?",
+            &["Yes", "No"],
+            0,
+            Color::LightYellow,
         );
-        // Active
-        self.view.active(super::COMPONENT_RADIO_SAVE);
     }
 
     /// ### umount_quit
@@ -252,5 +215,96 @@ impl SetupActivity {
     /// Umount help
     pub(super) fn umount_help(&mut self) {
         self.view.umount(super::COMPONENT_TEXT_HELP);
+    }
+
+    // -- mount helpers
+
+    fn mount_text_dialog(&mut self, id: &str, text: &str, color: Color) {
+        // Mount
+        self.view.mount(
+            id,
+            Box::new(Paragraph::new(
+                ParagraphPropsBuilder::default()
+                    .with_borders(Borders::ALL, BorderType::Thick, color)
+                    .with_foreground(color)
+                    .bold()
+                    .with_text_alignment(Alignment::Center)
+                    .with_texts(vec![TextSpan::from(text)])
+                    .build(),
+            )),
+        );
+        // Give focus to error
+        self.view.active(id);
+    }
+
+    fn mount_radio_dialog(
+        &mut self,
+        id: &str,
+        text: &str,
+        opts: &[&str],
+        default: usize,
+        color: Color,
+    ) {
+        self.view.mount(
+            id,
+            Box::new(Radio::new(
+                RadioPropsBuilder::default()
+                    .with_color(color)
+                    .with_inverted_color(Color::Black)
+                    .with_borders(Borders::ALL, BorderType::Rounded, color)
+                    .with_title(text, Alignment::Center)
+                    .with_options(opts)
+                    .with_value(default)
+                    .rewind(true)
+                    .build(),
+            )),
+        );
+        // Active
+        self.view.active(id);
+    }
+
+    fn mount_radio(&mut self, id: &str, text: &str, opts: &[&str], default: usize, color: Color) {
+        self.view.mount(
+            id,
+            Box::new(Radio::new(
+                RadioPropsBuilder::default()
+                    .with_color(color)
+                    .with_inverted_color(Color::Black)
+                    .with_borders(Borders::ALL, BorderType::Rounded, color)
+                    .with_title(text, Alignment::Left)
+                    .with_options(opts)
+                    .with_value(default)
+                    .rewind(true)
+                    .build(),
+            )),
+        );
+    }
+
+    fn mount_input(&mut self, id: &str, label: &str, fg: Color, typ: InputType) {
+        self.mount_input_ex(id, label, fg, typ, None, None);
+    }
+
+    fn mount_input_ex(
+        &mut self,
+        id: &str,
+        label: &str,
+        fg: Color,
+        typ: InputType,
+        len: Option<usize>,
+        value: Option<String>,
+    ) {
+        let mut props = InputPropsBuilder::default();
+        props
+            .with_foreground(fg)
+            .with_borders(Borders::ALL, BorderType::Rounded, fg)
+            .with_label(label, Alignment::Left)
+            .with_input(typ);
+        if let Some(len) = len {
+            props.with_input_len(len);
+        }
+        if let Some(value) = value {
+            props.with_value(value);
+        }
+        self.view.mount(id, Box::new(Input::new(props.build())));
     }
 }
