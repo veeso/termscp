@@ -23,9 +23,9 @@
 
 ## 0.7.0
 
-Released on ??
+Released on 12/10/2021
 
-> 🍁 Autumn update 🍇
+> 🍁 Autumn update 2021 🍇
 
 - **Aws S3** 🪣
   - Added support for the aws-s3 protocol.
