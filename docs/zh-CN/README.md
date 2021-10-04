@@ -159,7 +159,7 @@ choco install termscp
 
 ## 支持我 ☕
 
-如果您喜欢 termscp 并且希望看到该项目不断发展和改进，请考虑在**给我买杯咖啡**上捐款以支持我**🥳
+如果您喜欢 termscp 并且希望看到该项目不断发展和改进，请考虑在**给我买杯咖啡**上捐款以支持我🥳
 
 [![给我买一杯咖啡](https://img.buymeacoffee.com/button-api/?text=%E7%BB%99%E6%88%91%E4%B9%B0%E4%B8%80%E6%9D%AF%E5%92%96%E5%95%A1&emoji=&slug=veeso&button_colour=404040&font_colour=ffffff&font_family=Comic&outline_colour=ffffff&coffee_colour=FFDD00)](https://www.buymeacoffee.com/veeso)
 
