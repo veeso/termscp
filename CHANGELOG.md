@@ -51,13 +51,15 @@ Released on 12/10/2021
 - Enhancements:
   - Reuse mounts in UI, in order to reduce executable size
   - File list can now be "rewinded", which means that moving with arrows will now allow you to go from top to bottom of the list pressing `<UP>` and viceversa pressing `<DOWN>`.
+- Bugfix:
+  - Fixed [Issue 70](https://github.com/veeso/termscp/issues/70): Unable to type characters with `CTRL+ALT` (e.g. italian layout `CTRL+ALT+ò` => `@`) due to a crossterm issue. Fixed with tui-realm-stdlib `0.6.3`.
 - Dependencies:
   - Added `notify_rust 4.5.3`
   - Added `rust-s3 0.27-rc4`
   - Added `self_update 0.27.0`
   - Updated `argh` to `0.1.6`
   - Updated `dirs` to `4.0.0`
-  - Updated `tui-realm-stdlib` to `0.6.2`
+  - Updated `tui-realm-stdlib` to `0.6.3`
   - Removed `ureq`
 
 ## 0.6.1

@@ -33,9 +33,12 @@ use crate::system::config_client::ConfigClient;
 use crate::system::theme_provider::ThemeProvider;
 
 // Includes
-use crossterm::event::DisableMouseCapture;
-use crossterm::execute;
-use crossterm::terminal::{EnterAlternateScreen, LeaveAlternateScreen};
+#[cfg(target_family = "unix")]
+use crossterm::{
+    event::DisableMouseCapture,
+    execute,
+    terminal::{EnterAlternateScreen, LeaveAlternateScreen},
+};
 use std::io::{stdout, Stdout};
 use tuirealm::tui::backend::CrosstermBackend;
 use tuirealm::tui::Terminal;
@@ -64,15 +67,12 @@ impl Context {
         theme_provider: ThemeProvider,
         error: Option<String>,
     ) -> Context {
-        // Create terminal
-        let mut stdout = stdout();
-        assert!(execute!(stdout, EnterAlternateScreen).is_ok());
         Context {
             ft_params: None,
             config_client,
             store: Store::init(),
             input_hnd: InputHandler::new(),
-            terminal: Terminal::new(CrosstermBackend::new(stdout)).unwrap(),
+            terminal: Terminal::new(CrosstermBackend::new(Self::stdout())).unwrap(),
             theme_provider,
             error,
         }
@@ -141,7 +141,7 @@ impl Context {
     /// ### enter_alternate_screen
     ///
     /// Enter alternate screen (gui window)
-    #[cfg(not(target_os = "windows"))]
+    #[cfg(target_family = "unix")]
     pub fn enter_alternate_screen(&mut self) {
         match execute!(
             self.terminal.backend_mut(),
@@ -153,9 +153,16 @@ impl Context {
         }
     }
 
+    /// ### enter_alternate_screen
+    ///
+    /// Enter alternate screen (gui window)
+    #[cfg(target_family = "windows")]
+    pub fn enter_alternate_screen(&self) {}
+
     /// ### leave_alternate_screen
     ///
     /// Go back to normal screen (gui window)
+    #[cfg(target_family = "unix")]
     pub fn leave_alternate_screen(&mut self) {
         match execute!(
             self.terminal.backend_mut(),
@@ -167,6 +174,12 @@ impl Context {
         }
     }
 
+    /// ### leave_alternate_screen
+    ///
+    /// Go back to normal screen (gui window)
+    #[cfg(target_family = "windows")]
+    pub fn leave_alternate_screen(&self) {}
+
     /// ### clear_screen
     ///
     /// Clear terminal screen
@@ -175,6 +188,18 @@ impl Context {
             Err(err) => error!("Failed to clear screen: {}", err),
             Ok(_) => info!("Cleared screen"),
         }
+    }
+
+    #[cfg(target_family = "unix")]
+    fn stdout() -> Stdout {
+        let mut stdout = stdout();
+        assert!(execute!(stdout, EnterAlternateScreen).is_ok());
+        stdout
+    }
+
+    #[cfg(target_family = "windows")]
+    fn stdout() -> Stdout {
+        stdout()
     }
 }
 
