@@ -182,7 +182,6 @@ impl SetupActivity {
             error!("Failed to disable raw mode: {}", err);
         }
         // Leave alternate mode
-        #[cfg(not(target_os = "windows"))]
         if let Some(ctx) = self.context.as_mut() {
             ctx.leave_alternate_screen();
         }
@@ -215,7 +214,6 @@ impl SetupActivity {
             }
         }
         // Restore terminal
-        #[cfg(not(target_os = "windows"))]
         if let Some(ctx) = self.context.as_mut() {
             // Clear screen
             ctx.clear_screen();
