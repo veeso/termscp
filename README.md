@@ -13,6 +13,55 @@
   <a href="https://veeso.github.io/termscp/#user-manual" target="_blank">User manual</a>
 </p>
 
+<p align="center">
+  <a href="https://github.com/veeso/termscp"
+    ><img
+      height="20"
+      src="https://raw.githubusercontent.com/veeso/termscp/main/assets/images/flags/us.png"
+      alt="English"
+  /></a>
+  &nbsp;
+  <a
+    href="https://github.com/veeso/termscp/blob/main/docs/de/README.md"
+    ><img
+      height="20"
+      src="https://raw.githubusercontent.com/veeso/termscp/main/assets/images/flags/de.png"
+      alt="Deutsch"
+  /></a>
+  &nbsp;
+  <a
+    href="https://github.com/veeso/termscp/blob/main/docs/es/README.md"
+    ><img
+      height="20"
+      src="https://raw.githubusercontent.com/veeso/termscp/main/assets/images/flags/es.png"
+      alt="Español"
+  /></a>
+  &nbsp;
+  <a
+    href="https://github.com/veeso/termscp/blob/main/docs/fr/README.md"
+    ><img
+      height="20"
+      src="https://raw.githubusercontent.com/veeso/termscp/main/assets/images/flags/fr.png"
+      alt="Français"
+  /></a>
+  &nbsp;
+  <a
+    href="https://github.com/veeso/termscp/blob/main/docs/it/README.md"
+    ><img
+      height="20"
+      src="https://raw.githubusercontent.com/veeso/termscp/main/assets/images/flags/it.png"
+      alt="Italiano"
+  /></a>
+  &nbsp;
+  <a
+    href="https://github.com/veeso/termscp/blob/main/docs/zh-CN/README.md"
+    ><img
+      height="20"
+      src="https://raw.githubusercontent.com/veeso/termscp/main/assets/images/flags/cn.png"
+      alt="简体中文"
+  /></a>
+</p>
+
 <p align="center">Developed by <a href="https://veeso.github.io/">@veeso</a></p>
 <p align="center">Current version: 0.7.0 (12/10/2021)</p>
 
@@ -117,12 +166,7 @@ If you like termscp and you'd love to see the project to grow, please consider a
 
 ## User manual and Documentation 📚
 
-The user manual can be found on the [termscp's website](https://veeso.github.io/termscp/#user-manual) or on Github:
-
-- [User manual](docs/man-en.md)
-- [用户手册](docs/man-zh.md)
-
-A translation of the user manual in other languages would be really appreciated 😉
+The user manual can be found on the [termscp's website](https://veeso.github.io/termscp/#user-manual) or on [Github](docs/man.md).
 
 The developer documentation can be found on Rust Docs at <https://docs.rs/termscp>
 
