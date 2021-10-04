@@ -22,7 +22,7 @@
   /></a>
   &nbsp;
   <a
-    href="https://github.com/veeso/termscp/blob/main/docs/de/README.md"
+    href="/docs/de/README.md"
     ><img
       height="20"
       src="/assets/images/flags/de.png"
@@ -30,7 +30,7 @@
   /></a>
   &nbsp;
   <a
-    href="https://github.com/veeso/termscp/blob/main/docs/es/README.md"
+    href="/docs/es/README.md"
     ><img
       height="20"
       src="/assets/images/flags/es.png"
@@ -38,7 +38,7 @@
   /></a>
   &nbsp;
   <a
-    href="https://github.com/veeso/termscp/blob/main/docs/fr/README.md"
+    href="/docs/fr/README.md"
     ><img
       height="20"
       src="/assets/images/flags/fr.png"
@@ -46,7 +46,7 @@
   /></a>
   &nbsp;
   <a
-    href="https://github.com/veeso/termscp/blob/main/docs/it/README.md"
+    href="/docs/it/README.md"
     ><img
       height="20"
       src="/assets/images/flags/it.png"
@@ -54,7 +54,7 @@
   /></a>
   &nbsp;
   <a
-    href="https://github.com/veeso/termscp/blob/main/docs/zh-CN/README.md"
+    href="/docs/zh-CN/README.md"
     ><img
       height="20"
       src="/assets/images/flags/cn.png"
