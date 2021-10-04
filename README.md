@@ -17,7 +17,7 @@
   <a href="https://github.com/veeso/termscp"
     ><img
       height="20"
-      src="https://raw.githubusercontent.com/veeso/termscp/main/assets/images/flags/us.png"
+      src="/assets/images/flags/us.png"
       alt="English"
   /></a>
   &nbsp;
@@ -25,7 +25,7 @@
     href="https://github.com/veeso/termscp/blob/main/docs/de/README.md"
     ><img
       height="20"
-      src="https://raw.githubusercontent.com/veeso/termscp/main/assets/images/flags/de.png"
+      src="/assets/images/flags/de.png"
       alt="Deutsch"
   /></a>
   &nbsp;
@@ -33,7 +33,7 @@
     href="https://github.com/veeso/termscp/blob/main/docs/es/README.md"
     ><img
       height="20"
-      src="https://raw.githubusercontent.com/veeso/termscp/main/assets/images/flags/es.png"
+      src="/assets/images/flags/es.png"
       alt="Español"
   /></a>
   &nbsp;
@@ -41,7 +41,7 @@
     href="https://github.com/veeso/termscp/blob/main/docs/fr/README.md"
     ><img
       height="20"
-      src="https://raw.githubusercontent.com/veeso/termscp/main/assets/images/flags/fr.png"
+      src="/assets/images/flags/fr.png"
       alt="Français"
   /></a>
   &nbsp;
@@ -49,7 +49,7 @@
     href="https://github.com/veeso/termscp/blob/main/docs/it/README.md"
     ><img
       height="20"
-      src="https://raw.githubusercontent.com/veeso/termscp/main/assets/images/flags/it.png"
+      src="/assets/images/flags/it.png"
       alt="Italiano"
   /></a>
   &nbsp;
@@ -57,7 +57,7 @@
     href="https://github.com/veeso/termscp/blob/main/docs/zh-CN/README.md"
     ><img
       height="20"
-      src="https://raw.githubusercontent.com/veeso/termscp/main/assets/images/flags/cn.png"
+      src="/assets/images/flags/cn.png"
       alt="简体中文"
   /></a>
 </p>
@@ -73,7 +73,7 @@
 
 ## About termscp 🖥
 
-Termscp is a feature rich terminal file transfer and explorer, with support for SCP/SFTP/FTP/S3. So basically is a terminal utility with an TUI to connect to a remote server to retrieve and upload files and to interact with the local file system. It is **Linux**, **MacOS**, **FreeBSD** and **Windows** compatible and supports SFTP, SCP, FTP, FTPS and S3.
+Termscp is a feature rich terminal file transfer and explorer, with support for SCP/SFTP/FTP/S3. So basically is a terminal utility with an TUI to connect to a remote server to retrieve and upload files and to interact with the local file system. It is **Linux**, **MacOS**, **FreeBSD** and **Windows** compatible.
 
 ![Explorer](assets/images/explorer.gif)
 
@@ -109,7 +109,7 @@ Termscp is a feature rich terminal file transfer and explorer, with support for 
 ## Get started 🚀
 
 If you're considering to install termscp I want to thank you 💜 ! I hope you will enjoy termscp!  
-If you want to contribute to this project, don't forget to check out our contribute guide. [Read More](CONTRIBUTING.md)
+If you want to contribute to this project, don't forget to check out our [contribute guide](CONTRIBUTING.md).
 
 If you are a Linux, a FreeBSD or a MacOS user this simple shell script will install termscp on your system with a single command:
 
@@ -133,7 +133,7 @@ For more information or other platforms, please visit [veeso.github.io](https://
   - libssh
   - libdbus-1
   - pkg-config
-- **BSD** users:
+- **FreeBSD** users:
   - libssh
   - dbus
   - pkgconf
@@ -142,7 +142,7 @@ For more information or other platforms, please visit [veeso.github.io](https://
 
 These requirements are not forcely required to run termscp, but to enjoy all of its features
 
-- **Linux/BSD** users:
+- **Linux/FreeBSD** users:
   - To **open** files via `V` (at least one of these)
     - *xdg-open*
     - *gio*
@@ -156,9 +156,9 @@ These requirements are not forcely required to run termscp, but to enjoy all of 
 
 ---
 
-## Buy me a coffee ☕
+## Support me ☕
 
-If you like termscp and you'd love to see the project to grow, please consider a little donation 🥳
+If you like termscp and you'd love to see the project to grow and to improve, please consider a little donation to support me on **Buy me a coffee** 🥳
 
 [![Buy-me-a-coffee](https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20coffee&emoji=&slug=veeso&button_colour=404040&font_colour=ffffff&font_family=Comic&outline_colour=ffffff&coffee_colour=FFDD00)](https://www.buymeacoffee.com/veeso)
 
@@ -221,7 +221,7 @@ View termscp's changelog [HERE](CHANGELOG.md)
 
 ## Powered by 💪
 
-termscp is powered by these aweseome projects:
+termscp is powered by these awesome projects:
 
 - [bytesize](https://github.com/hyunsik/bytesize)
 - [crossterm](https://github.com/crossterm-rs/crossterm)

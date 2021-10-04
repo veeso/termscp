@@ -25,7 +25,6 @@
       - [Transfer page](#transfer-page)
       - [Misc](#misc)
   - [Text Editor ✏](#text-editor-)
-    - [How do I configure the text editor 🦥](#how-do-i-configure-the-text-editor-)
   - [Logging 🩺](#logging-)
   - [Notifications 📫](#notifications-)
 
@@ -174,7 +173,7 @@ All the actions are available when working with multiple files, but be aware tha
 ### Synchronized browsing ⏲️
 
 When enabled, synchronized browsing, will allow you to synchronize the navigation between the two panels.
-This means that whenever you'll change the working directory on one panel, the same action will be reproduced on the other panel. If you want to enable synchronized browsing just press `<Y>`; press twice to disable. While enabled, the synchronized browising state will be reported on the status bar on `ON`.
+This means that whenever you'll change the working directory on one panel, the same action will be reproduced on the other panel. If you want to enable synchronized browsing just press `<Y>`; press twice to disable. While enabled, the synchronized browsing state will be reported on the status bar on `ON`.
 
 > ❗ at the moment, whenever you try to access an unexisting directory, you won't be prompted to create it. This might change in a future update.
 
@@ -229,7 +228,7 @@ whenever you want to use the previously saved connection, just press `<TAB>` to 
 Sure 😉.
 As said before, bookmarks are saved in your configuration directory along with passwords. Passwords are obviously not plain text, they are encrypted with **AES-128**. Does this make them safe? Absolutely! (except for BSD and WSL users 😢)
 
-On **Windows**, **Linux** and **MacOS** the passwords are stored, if possible (but should be), respectively in the *Windows Vault*, in the *system keyring* and into the *Keychain*. This is actually super-safe and is directly managed by your operating system.
+On **Windows**, **Linux** and **MacOS** the key used to encrypt passwords is stored, if possible (but should be), respectively in the *Windows Vault*, in the *system keyring* and into the *Keychain*. This is actually super-safe and is directly managed by your operating system.
 
 ❗ Please, notice that if you're a Linux user, you'd better to read the [chapter below 👀](#linux-keyring), because the keyring might not be enabled or supported on your system!
 
@@ -337,7 +336,7 @@ These are the keys supported by the formatter:
 - `CTIME`: Creation time (with syntax `%b %d %Y %H:%M`); Extra might be provided as the time syntax (e.g. `{CTIME:8:%H:%M}`)
 - `GROUP`: Owner group
 - `MTIME`: Last change time (with syntax `%b %d %Y %H:%M`); Extra might be provided as the time syntax (e.g. `{MTIME:8:%H:%M}`)
-- `NAME`: File name (Elided if longer than 24)
+- `NAME`: File name (Elided if longer than LENGTH)
 - `PEX`: File permissions (UNIX format)
 - `SIZE`: File size (omitted for directories)
 - `SYMLINK`: Symlink (if any `-> {FILE_PATH}`)
@@ -359,7 +358,7 @@ In order to create your own customization from termscp, all you have to do so is
 
 Here you can move with `<UP>` and `<DOWN>` to change the style you want to change, as shown in the gif below:
 
-![Themes](../assets/images/themes.gif)
+![Themes](https://github.com/veeso/termscp/blob/main/assets/images/themes.gif?raw=true)
 
 termscp supports both the traditional explicit hex (`#rrggbb`) and rgb `rgb(r, g, b)` syntax to provide colors, but also **[css colors](https://www.w3schools.com/cssref/css_colors.asp)** (such as `crimson`) are accepted 😉. There is also a special keywork which is `Default`. Default means that the color used will be the default foreground or background color based on the situation (foreground for texts and lines, background for well, guess what).
 
@@ -441,10 +440,6 @@ In case the file is located on remote host, the file will be first downloaded in
 
 Just a reminder: **you can edit only textual file**; binary files are not supported.
 
-### How do I configure the text editor 🦥
-
-Text editor is automatically found using this [awesome crate](https://github.com/milkey-mouse/edit), if you want to change the text editor to use, change it in termscp configuration. [Read more](#configuration-️)
-
 ---
 
 ## Logging 🩺
@@ -487,5 +482,5 @@ Termscp will send Desktop notifications for these kind of events:
 - on **Update installed**: Whenever a new version of termscp has been installed, a notification will be displayed.
 - on **Update failed**: Whenever the installation of the update fails, a notification will be displayed.
 
-❗ If you prefer to keep notifications turned off, you can just enter setup and set `Enable notifications?` to `No` 😉.
+❗ If you prefer to keep notifications turned off, you can just enter setup and set `Enable notifications?` to `No` 😉.  
 ❗ If you want to change the minimum transfer size to display notifications, you can change the value in the configuration with key `Notifications: minimum transfer size` and set it to whatever suits better for you 🙂.
