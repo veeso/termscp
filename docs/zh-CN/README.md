@@ -62,7 +62,7 @@
   /></a>
 </p>
 
-<p align="center">由 <a href="https://veeso.github.io/">@veeso</a> 开发</p>
+<p align="center">由 <a href="https://veeso.github.io/" target="_blank">@veeso</a> 开发</p>
 <p align="center">当前版本： 0.7.0 (12/10/2021)</p>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-teal.svg)](https://opensource.org/licenses/MIT) [![Stars](https://img.shields.io/github/stars/veeso/termscp.svg)](https://github.com/veeso/termscp) [![Downloads](https://img.shields.io/crates/d/termscp.svg)](https://crates.io/crates/termscp) [![Crates.io](https://img.shields.io/badge/crates.io-v0.7.0-orange.svg)](https://crates.io/crates/termscp)  

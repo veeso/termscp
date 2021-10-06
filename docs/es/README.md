@@ -75,7 +75,7 @@
 
 Termscp is a feature rich terminal file transfer and explorer, with support for SCP/SFTP/FTP/S3. So basically is a terminal utility with an TUI to connect to a remote server to retrieve and upload files and to interact with the local file system. It is **Linux**, **MacOS**, **FreeBSD** and **Windows** compatible.
 
-![Explorer](assets/images/explorer.gif)
+![Explorer](/assets/images/explorer.gif)
 
 ---
 
@@ -109,7 +109,7 @@ Termscp is a feature rich terminal file transfer and explorer, with support for 
 ## Get started 🚀
 
 If you're considering to install termscp I want to thank you 💜 ! I hope you will enjoy termscp!  
-If you want to contribute to this project, don't forget to check out our [contribute guide](CONTRIBUTING.md).
+If you want to contribute to this project, don't forget to check out our [contribute guide](../../CONTRIBUTING.md).
 
 If you are a Linux, a FreeBSD or a MacOS user this simple shell script will install termscp on your system with a single command:
 
@@ -149,7 +149,7 @@ These requirements are not forced required to run termscp, but to enjoy all of i
     - *gnome-open*
     - *kde-open*
 - **Linux** users:
-  - A keyring manager: read more in the [User manual](docs/man.md#linux-keyring)
+  - A keyring manager: read more in the [User manual](man.md#linux-keyring)
 - **WSL** users
   - To **open** files via `V` (at least one of these)
     - [wslu](https://github.com/wslutilities/wslu)
@@ -166,7 +166,7 @@ If you like termscp and you'd love to see the project to grow and to improve, pl
 
 ## User manual and Documentation 📚
 
-The user manual can be found on the [termscp's website](https://veeso.github.io/termscp/#user-manual) or on [Github](docs/man.md).
+The user manual can be found on the [termscp's website](https://veeso.github.io/termscp/#user-manual) or on [Github](man.md).
 
 The developer documentation can be found on Rust Docs at <https://docs.rs/termscp>
 
@@ -178,44 +178,18 @@ The developer documentation can be found on Rust Docs at <https://docs.rs/termsc
 
 ---
 
-## Upcoming Features 🧪
-
-Major termscp releases will now be seasonal, so expect 4 major updates during the year.
-
-Planned for *❄️ Winter update 2021 ⛄*:
-
-- **File system watcher 🔭**: The feature consists in the possibility to track some files in order to automatically sync them with remote host. For the implementation [notify](https://github.com/notify-rs/notify) will be used.
-- **Translations 🌐**: The feature consists in the possibility for the user to install the language pack for the language he prefers in order to replace the default English interface. The following language will be provided along to English:
-  - 🇨🇳 Chinese
-  - 🇫🇷 French
-  - 🇩🇪 German
-  - 🇮🇹 Italian
-  - 🇳🇱 Dutch
-  - 🇪🇸 Spanish
-
-Planned for *🍓 Spring update 2022 🌹*:
-
-- **SMB Support 🎉**: This will require a long time to be implemented, since I'm currently working on a Rust native SMB library, since I don't want to add new C-bindings. ~~Fear the 🦚~~
-- **Configuration profile for bookmarks 📚**: Basically this feature adds the possibility to have a specific setup for a certain host, instead of having only one global configuration. (Maybe will be postponed to spring 2022).
-
-Along to new features, termscp developments is now focused on UX and performance improvements, so if you have any suggestion, feel free to open an issue.
-
----
-
 ## Contributing and issues 🤝🏻
 
 Contributions, bug reports, new features and questions are welcome! 😉
 If you have any question or concern, or you want to suggest a new feature, or you want just want to improve termscp, feel free to open an issue or a PR.
 
-An **appreciated** contribution would be a translation of the user manual and readme in **other languages**
-
-Please follow [our contributing guidelines](CONTRIBUTING.md)
+Please follow [our contributing guidelines](../../CONTRIBUTING.md)
 
 ---
 
 ## Changelog ⏳
 
-View termscp's changelog [HERE](CHANGELOG.md)
+View termscp's changelog [HERE](../../CHANGELOG.md)
 
 ---
 
@@ -245,19 +219,19 @@ termscp is powered by these awesome projects:
 
 > Termscp Home
 
-![Auth](assets/images/auth.gif)
+![Auth](/assets/images/auth.gif)
 
 > Bookmarks
 
-![Bookmarks](assets/images/bookmarks.gif)
+![Bookmarks](/assets/images/bookmarks.gif)
 
 > Setup
 
-![Setup](assets/images/config.gif)
+![Setup](/assets/images/config.gif)
 
 > Text editor
 
-![TextEditor](assets/images/text-editor.gif)
+![TextEditor](/assets/images/text-editor.gif)
 
 ---
 
@@ -265,4 +239,4 @@ termscp is powered by these awesome projects:
 
 termscp is licensed under the MIT license.
 
-You can read the entire license [HERE](LICENSE)
+You can read the entire license [HERE](../../LICENSE)
