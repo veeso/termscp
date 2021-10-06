@@ -20,6 +20,13 @@
 
 ---
 
+## Unreleased
+
+- Bugfix:
+  - Fixed [Issue 74](https://github.com/veeso/termscp/issues/74): Minor update to tui-realm-stdlib dependency breaks compatibility
+- Dependencies:
+  - Updated `tui-realm-stdlib` to `0.6.3`
+
 ## 0.6.1
 
 Released on 31/08/2021
@@ -28,7 +35,7 @@ Released on 31/08/2021
   - Now that tui-rs supports title alignment, UI has been improved
   - Added new `Directory already exists` variant for file transfer errors
 - Bugfix:
-  - Fixed [Issue 58](https://github.com/veeso/termscp/issues/58):When uploading a directory, create directory only if it doesn't exist
+  - Fixed [Issue 58](https://github.com/veeso/termscp/issues/58): When uploading a directory, create directory only if it doesn't exist
   - Fixed [Issue 59](https://github.com/veeso/termscp/issues/59): When copying files with tricky copy, the upper progress bar shows no text
 - Dependencies:
   - Updated `bitflags` to `1.3.2`
@@ -135,10 +142,10 @@ Released on 23/05/2021
   - termscp now writes a log file, useful to debug and to contribute to fix issues.
   - Read more on [manual](docs/man.md)
 - **File transfer changes**
-  - *SFTP*
+  - _SFTP_
     - Added **COPY** command to SFTP (Please note that Copy command is not supported by SFTP natively, so here it just uses the `cp` shell command as it does in SCP).
-  - *FTP*
-    - Added support for file copy (achieved through *tricky-copy*: the file is first downloaded, then uploaded with a different file name)
+  - _FTP_
+    - Added support for file copy (achieved through _tricky-copy_: the file is first downloaded, then uploaded with a different file name)
 - **Double progress bar**:
   - From now one two progress bar will be displayed:
     - the first, on top, displays the full transfer state (e.g. when downloading a directory of 10 files, the progress of the entire transfer)
@@ -276,7 +283,7 @@ Released on 18/01/2021
 
 ## 0.3.0
 
- Released on 10/01/2021
+Released on 10/01/2021
 
 > The SSH Key Storage Update
 
@@ -345,7 +352,7 @@ Released on 21/12/2020
   - `O`: Open text file in editor
 - Enhancements:
   - User interface
-    - Collpased borders to make everything more *aesthetic*
+    - Collpased borders to make everything more _aesthetic_
     - Rounded input field boards
     - File explorer:
       - Log how long it took to upload/download a file and the transfer speed

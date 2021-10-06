@@ -52,7 +52,7 @@ tempfile = "3.1.0"
 textwrap = "0.14.2"
 thiserror = "^1.0.0"
 toml = "0.5.8"
-tui-realm-stdlib = "0.6.0"
+tui-realm-stdlib = "0.6.3"
 tuirealm = "0.6.0"
 ureq = { version = "2.1.0", features = [ "json" ] }
 whoami = "1.1.1"

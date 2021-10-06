@@ -33,7 +33,7 @@ use crate::ui::components::color_picker::{ColorPicker, ColorPickerPropsBuilder};
 use crate::utils::parser::parse_color;
 use crate::utils::ui::draw_area_in;
 // Ext
-use tui_realm_stdlib::label::{Label, LabelPropsBuilder};
+use tui_realm_stdlib::{Label, LabelPropsBuilder};
 use tuirealm::tui::{
     layout::{Constraint, Direction, Layout},
     style::Color,

@@ -34,8 +34,7 @@ use crate::utils::ui::draw_area_in;
 // Ext
 use std::path::PathBuf;
 use tui_realm_stdlib::{
-    input::{Input, InputPropsBuilder},
-    radio::{Radio, RadioPropsBuilder},
+    {Input, InputPropsBuilder}, {Radio, RadioPropsBuilder},
 };
 use tuirealm::tui::{
     layout::{Constraint, Direction, Layout},

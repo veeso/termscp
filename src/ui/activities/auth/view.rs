@@ -31,13 +31,9 @@ use crate::ui::components::bookmark_list::{BookmarkList, BookmarkListPropsBuilde
 use crate::utils::ui::draw_area_in;
 // Ext
 use tui_realm_stdlib::{
-    input::{Input, InputPropsBuilder},
-    label::{Label, LabelPropsBuilder},
-    list::{List, ListPropsBuilder},
-    paragraph::{Paragraph, ParagraphPropsBuilder},
-    radio::{Radio, RadioPropsBuilder},
-    span::{Span, SpanPropsBuilder},
-    textarea::{Textarea, TextareaPropsBuilder},
+    {Input, InputPropsBuilder}, {Label, LabelPropsBuilder}, {List, ListPropsBuilder},
+    {Paragraph, ParagraphPropsBuilder}, {Radio, RadioPropsBuilder}, {Span, SpanPropsBuilder},
+    {Textarea, TextareaPropsBuilder},
 };
 use tuirealm::tui::{
     layout::{Constraint, Direction, Layout},
