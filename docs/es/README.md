@@ -4,13 +4,13 @@
   <img src="/assets/images/termscp.svg" width="256" height="256" />
 </p>
 
-<p align="center">~ A feature rich terminal file transfer ~</p>
+<p align="center">~ Una transferencia de archivos de terminal rica en funciones ~</p>
 <p align="center">
-  <a href="https://veeso.github.io/termscp/" target="_blank">Website</a>
+  <a href="https://veeso.github.io/termscp/" target="_blank">Sitio Web</a>
   ·
-  <a href="https://veeso.github.io/termscp/#get-started" target="_blank">Installation</a>
+  <a href="https://veeso.github.io/termscp/#get-started" target="_blank">Instalación</a>
   ·
-  <a href="https://veeso.github.io/termscp/#user-manual" target="_blank">User manual</a>
+  <a href="https://veeso.github.io/termscp/#user-manual" target="_blank">Manual de usuario</a>
 </p>
 
 <p align="center">
@@ -62,8 +62,8 @@
   /></a>
 </p>
 
-<p align="center">Developed by <a href="https://veeso.github.io/" target="_blank">@veeso</a></p>
-<p align="center">Current version: 0.7.0 (12/10/2021)</p>
+<p align="center">Desarrollado por <a href="https://veeso.github.io/" target="_blank">@veeso</a></p>
+<p align="center">Versión actual: 0.7.0 (12/10/2021)</p>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-teal.svg)](https://opensource.org/licenses/MIT) [![Stars](https://img.shields.io/github/stars/veeso/termscp.svg)](https://github.com/veeso/termscp) [![Downloads](https://img.shields.io/crates/d/termscp.svg)](https://crates.io/crates/termscp) [![Crates.io](https://img.shields.io/badge/crates.io-v0.7.0-orange.svg)](https://crates.io/crates/termscp)  
 
@@ -71,131 +71,131 @@
 
 ---
 
-## About termscp 🖥
+## Sobre termscp 🖥
 
-Termscp is a feature rich terminal file transfer and explorer, with support for SCP/SFTP/FTP/S3. So basically is a terminal utility with an TUI to connect to a remote server to retrieve and upload files and to interact with the local file system. It is **Linux**, **MacOS**, **FreeBSD** and **Windows** compatible.
+Termscp es un explorador y transferencia de archivos de terminal rico en funciones, con apoyo para SCP/SFTP/FTP/S3. Básicamente, es una utilidad de terminal con una TUI para conectarse a un servidor remoto para recuperar y cargar archivos e interactuar con el sistema de archivos local. Es compatible con **Linux**, **MacOS**, **FreeBSD** y **Windows**.
 
 ![Explorer](/assets/images/explorer.gif)
 
 ---
 
-## Features 🎁
+## Características 🎁
 
-- 📁  Different communication protocols
+- 📁  Diferentes protocolos de comunicación
   - **SFTP**
   - **SCP**
-  - **FTP** and **FTPS**
+  - **FTP** y **FTPS**
   - **Aws S3**
-- 🖥  Explore and operate on the remote and on the local machine file system with a handy UI
-  - Create, remove, rename, search, view and edit files
-- ⭐  Connect to your favourite hosts through built-in bookmarks and recent connections
-- 📝  View and edit files with your favourite applications
-- 💁  SFTP/SCP authentication with SSH keys and username/password
-- 🐧  Compatible with Windows, Linux, FreeBSD and MacOS
-- 🎨  Make it yours!
-  - Themes
-  - Custom file explorer format
-  - Customizable text editor
-  - Customizable file sorting
-  - and many other parameters...
-- 📫  Get notified via Desktop Notifications when a large file has been transferred
-- 🔐  Save your password in your operating system key vault
+- 🖥  Explore y opere en el sistema de archivos de la máquina local y remota con una interfaz de usuario práctica
+  - Cree, elimine, cambie el nombre, busque, vea y edite archivos
+- ⭐  Conéctese a sus hosts favoritos y conexiones recientes
+- 📝  Ver y editar archivos con sus aplicaciones favoritas
+- 💁  Autenticación SFTP / SCP con claves SSH y nombre de usuario / contraseña
+- 🐧  compatible con Linux, MacOS, FreeBSD y Windows
+- 🎨  Haz lo tuyo!
+  - Temas
+  - Formato de explorador de archivos personalizado
+  - Editor de texto personalizable
+  - Clasificación de archivos personalizable
+  - y muchos otros parámetros ...
+- 📫  Reciba una notificación cuando se haya transferido un archivo grande
+- 🔐  Guarde su contraseña en el almacén de claves de su sistema operativo
 - 🦀  Rust-powered
-- 👀  Developed keeping an eye on performance
-- 🦄  Frequent awesome updates
+- 👀  Desarrollado sin perder de vista el rendimiento
+- 🦄  Actualizaciones frecuentes
 
 ---
 
-## Get started 🚀
+## Para iniciar 🚀
 
-If you're considering to install termscp I want to thank you 💜 ! I hope you will enjoy termscp!  
-If you want to contribute to this project, don't forget to check out our [contribute guide](../../CONTRIBUTING.md).
+Si estás considerando instalar termscp, ¡quiero darte las gracias 💜! ¡Espero que disfrutes de termscp!
+Si desea contribuir a este proyecto, no olvide consultar nuestra [guía de contribución](../../CONTRIBUTING.md).
 
-If you are a Linux, a FreeBSD or a MacOS user this simple shell script will install termscp on your system with a single command:
+Si tu eres un usuario de Linux, FreeBSD o MacOS, este sencillo script de shell instalará termscp en tu sistema con un solo comando:
 
 ```sh
 curl --proto '=https' --tlsv1.2 -sSLf "https://git.io/JBhDb" | sh
 ```
 
-while if you're a Windows user, you can install termscp with [Chocolatey](https://chocolatey.org/):
+mientras que si eres un usuario de Windows, puedes instalar termscp con [Chocolatey](https://chocolatey.org/):
 
 ```sh
 choco install termscp
 ```
 
-For more information or other platforms, please visit [veeso.github.io](https://veeso.github.io/termscp/#get-started) to view all installation methods.
+Para obtener más información u otras plataformas, visite [veeso.github.io](https://veeso.github.io/termscp/#get-started) para ver todos los métodos de instalación.
 
-⚠️ If you're looking on how to update termscp just run termscp from CLI with: `(sudo) termscp --update` ⚠️
+⚠️ Si estás buscando cómo actualizar termscp, simplemente ejecute termscp desde CLI con:: `(sudo) termscp --update` ⚠️
 
-### Requirements ❗
+### Requisitos ❗
 
-- **Linux** users:
+- Usuarios **Linux**:
   - libssh
   - libdbus-1
   - pkg-config
-- **FreeBSD** users:
+- Usuarios **FreeBSD**:
   - libssh
   - dbus
   - pkgconf
 
-### Optional Requirements ✔️
+### Requisitos opcionales ✔️
 
 These requirements are not forced required to run termscp, but to enjoy all of its features
 
-- **Linux/FreeBSD** users:
-  - To **open** files via `V` (at least one of these)
+- Usuarios **Linux/FreeBSD**:
+  - Para **abrir** archivos con `V` (al menos uno de estos)
     - *xdg-open*
     - *gio*
     - *gnome-open*
     - *kde-open*
-- **Linux** users:
-  - A keyring manager: read more in the [User manual](man.md#linux-keyring)
-- **WSL** users
-  - To **open** files via `V` (at least one of these)
+- Usuarios **Linux**:
+  - Un keyring manager: leer más en el [manual de usuario](man.md#linux-keyring)
+- Usuarios **WSL**
+  - Para **abrir** archivos con `V` (al menos uno de estos)
     - [wslu](https://github.com/wslutilities/wslu)
 
 ---
 
-## Support me ☕
+## Apoyame ☕
 
-If you like termscp and you'd love to see the project to grow and to improve, please consider a little donation to support me on **Buy me a coffee** 🥳
+Si te gusta termscp y te encantaría que el proyecto crezca y mejore, considera una pequeña donación para apoyarme en **Buy me a coffee** 🥳
 
 [![Buy-me-a-coffee](https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20coffee&emoji=&slug=veeso&button_colour=404040&font_colour=ffffff&font_family=Comic&outline_colour=ffffff&coffee_colour=FFDD00)](https://www.buymeacoffee.com/veeso)
 
 ---
 
-## User manual and Documentation 📚
+## Manual de usuario y documentación 📚
 
-The user manual can be found on the [termscp's website](https://veeso.github.io/termscp/#user-manual) or on [Github](man.md).
+El manual del usuario se puede encontrar en el [sitio web de termscp](https://veeso.github.io/termscp/#user-manual) o en [Github](man.md).
 
-The developer documentation can be found on Rust Docs at <https://docs.rs/termscp>
-
----
-
-## Known issues 🧻
-
-- `NoSuchFileOrDirectory` on connect (WSL1): I know about this issue and it's a glitch of WSL I guess. Don't worry about it, just move the termscp executable into another PATH location, such as `/usr/bin`, or install it through the appropriate package format (e.g. deb).
+La documentación para desarrolladores se puede encontrar en Rust Docs en <https://docs.rs/termscp>
 
 ---
 
-## Contributing and issues 🤝🏻
+## Problemas conocidos 🧻
 
-Contributions, bug reports, new features and questions are welcome! 😉
-If you have any question or concern, or you want to suggest a new feature, or you want just want to improve termscp, feel free to open an issue or a PR.
+- `NoSuchFileOrDirectory` al conectar (WSL1): Conozco este problema y supongo que es un problema técnico de WSL. No se preocupe, simplemente mueva el ejecutable termscp a otra ubicación en el PATH, como `/usr/bin`, o instálelo a través del formato de paquete apropiado (por ejemplo, deb).
 
-Please follow [our contributing guidelines](../../CONTRIBUTING.md)
+---
+
+## Contribuir y problemas 🤝🏻
+
+¡Las contribuciones, los informes de errores, las nuevas funciones y las preguntas son bienvenidas! 😉
+Si tiene alguna pregunta o inquietud, o si desea sugerir una nueva función, o simplemente desea mejorar termscp, no dude en abrir un problema o un PR.
+
+Sigue [nuestras pautas de contribución](../../CONTRIBUTING.md)
 
 ---
 
 ## Changelog ⏳
 
-View termscp's changelog [HERE](../../CHANGELOG.md)
+Ver registro de cambios de termscp [AQUÍ](../../CHANGELOG.md)
 
 ---
 
 ## Powered by 💪
 
-termscp is powered by these awesome projects:
+termscp funciona con estos increíbles proyectos:
 
 - [bytesize](https://github.com/hyunsik/bytesize)
 - [crossterm](https://github.com/crossterm-rs/crossterm)
@@ -215,7 +215,7 @@ termscp is powered by these awesome projects:
 
 ---
 
-## Gallery 🎬
+## Galería 🎬
 
 > Termscp Home
 
@@ -235,8 +235,8 @@ termscp is powered by these awesome projects:
 
 ---
 
-## License 📃
+## Licencia 📃
 
-termscp is licensed under the MIT license.
+termscp tiene la licencia MIT.
 
-You can read the entire license [HERE](../../LICENSE)
+Puede leer la licencia completa [AQUÍ](../../LICENSE)
