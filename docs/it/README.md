@@ -65,13 +65,64 @@
 <p align="center">Sviluppato da <a href="https://veeso.github.io/" target="_blank">@veeso</a></p>
 <p align="center">Versione corrente: 0.7.0 (12/10/2021)</p>
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-teal.svg)](https://opensource.org/licenses/MIT) [![Stars](https://img.shields.io/github/stars/veeso/termscp.svg)](https://github.com/veeso/termscp) [![Downloads](https://img.shields.io/crates/d/termscp.svg)](https://crates.io/crates/termscp) [![Crates.io](https://img.shields.io/badge/crates.io-v0.7.0-orange.svg)](https://crates.io/crates/termscp)  
-
-[![Linux](https://github.com/veeso/termscp/workflows/Linux/badge.svg)](https://github.com/veeso/termscp/actions) [![MacOs](https://github.com/veeso/termscp/workflows/MacOS/badge.svg)](https://github.com/veeso/termscp/actions) [![Windows](https://github.com/veeso/termscp/workflows/Windows/badge.svg)](https://github.com/veeso/termscp/actions) [![FreeBSD](https://github.com/veeso/termscp/workflows/FreeBSD/badge.svg)](https://github.com/veeso/termscp/actions) [![Coverage Status](https://coveralls.io/repos/github/veeso/termscp/badge.svg)](https://coveralls.io/github/veeso/termscp) [![Docs](https://docs.rs/termscp/badge.svg)](https://docs.rs/termscp)
+<p align="center">
+  <a href="https://opensource.org/licenses/MIT"
+    ><img
+      src="https://img.shields.io/badge/License-MIT-teal.svg"
+      alt="License-MIT"
+  /></a>
+  <a href="https://github.com/veeso/termscp/stargazers"
+    ><img
+      src="https://img.shields.io/github/stars/veeso/termscp.svg"
+      alt="Repo stars"
+  /></a>
+  <a href="https://crates.io/crates/termscp"
+    ><img
+      src="https://img.shields.io/crates/d/termscp.svg"
+      alt="Downloads counter"
+  /></a>
+  <a href="https://crates.io/crates/termscp"
+    ><img
+      src="https://img.shields.io/crates/v/termscp.svg"
+      alt="Latest version"
+  /></a>
+</p>
+<p align="center">
+  <a href="https://github.com/veeso/termscp/actions"
+    ><img
+      src="https://github.com/veeso/termscp/workflows/Linux/badge.svg"
+      alt="Linux CI"
+  /></a>
+  <a href="https://github.com/veeso/termscp/actions"
+    ><img
+      src="https://github.com/veeso/termscp/workflows/MacOS/badge.svg"
+      alt="MacOS CI"
+  /></a>
+  <a href="https://github.com/veeso/termscp/actions"
+    ><img
+      src="https://github.com/veeso/termscp/workflows/Windows/badge.svg"
+      alt="Windows CI"
+  /></a>
+  <a href="https://github.com/veeso/termscp/actions"
+    ><img
+      src="https://github.com/veeso/termscp/workflows/FreeBSD/badge.svg"
+      alt="FreeBSD CI"
+  /></a>
+  <a href="https://coveralls.io/github/veeso/termscp"
+    ><img
+      src="https://coveralls.io/repos/github/veeso/termscp/badge.svg"
+      alt="Coveralls"
+  /></a>
+  <a href="https://docs.rs/termscp"
+    ><img
+      src="https://docs.rs/termscp/badge.svg"
+      alt="Docs"
+  /></a>
+</p>
 
 ---
 
-## Riguardo termscp 🖥
+## Riguardo a termscp 🖥
 
 Termscp è un file transfer ed explorer ricco di funzionalità, con supporto a SCP/SFTP/FTP/S3. Basicamente è un utility su terminale con una terminal user-interface per connettersi a server remoti per scambiare file ed interagire con il file system sia locale che remoto. È compatibile con **Linux**, **MacOS**, **FreeBSD** e **Windows**.
 

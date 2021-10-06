@@ -65,9 +65,60 @@
 <p align="center">由 <a href="https://veeso.github.io/" target="_blank">@veeso</a> 开发</p>
 <p align="center">当前版本： 0.7.0 (12/10/2021)</p>
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-teal.svg)](https://opensource.org/licenses/MIT) [![Stars](https://img.shields.io/github/stars/veeso/termscp.svg)](https://github.com/veeso/termscp) [![Downloads](https://img.shields.io/crates/d/termscp.svg)](https://crates.io/crates/termscp) [![Crates.io](https://img.shields.io/badge/crates.io-v0.7.0-orange.svg)](https://crates.io/crates/termscp)  
-
-[![Linux](https://github.com/veeso/termscp/workflows/Linux/badge.svg)](https://github.com/veeso/termscp/actions) [![MacOs](https://github.com/veeso/termscp/workflows/MacOS/badge.svg)](https://github.com/veeso/termscp/actions) [![Windows](https://github.com/veeso/termscp/workflows/Windows/badge.svg)](https://github.com/veeso/termscp/actions) [![FreeBSD](https://github.com/veeso/termscp/workflows/FreeBSD/badge.svg)](https://github.com/veeso/termscp/actions) [![Coverage Status](https://coveralls.io/repos/github/veeso/termscp/badge.svg)](https://coveralls.io/github/veeso/termscp) [![Docs](https://docs.rs/termscp/badge.svg)](https://docs.rs/termscp)
+<p align="center">
+  <a href="https://opensource.org/licenses/MIT"
+    ><img
+      src="https://img.shields.io/badge/License-MIT-teal.svg"
+      alt="License-MIT"
+  /></a>
+  <a href="https://github.com/veeso/termscp/stargazers"
+    ><img
+      src="https://img.shields.io/github/stars/veeso/termscp.svg"
+      alt="Repo stars"
+  /></a>
+  <a href="https://crates.io/crates/termscp"
+    ><img
+      src="https://img.shields.io/crates/d/termscp.svg"
+      alt="Downloads counter"
+  /></a>
+  <a href="https://crates.io/crates/termscp"
+    ><img
+      src="https://img.shields.io/crates/v/termscp.svg"
+      alt="Latest version"
+  /></a>
+</p>
+<p align="center">
+  <a href="https://github.com/veeso/termscp/actions"
+    ><img
+      src="https://github.com/veeso/termscp/workflows/Linux/badge.svg"
+      alt="Linux CI"
+  /></a>
+  <a href="https://github.com/veeso/termscp/actions"
+    ><img
+      src="https://github.com/veeso/termscp/workflows/MacOS/badge.svg"
+      alt="MacOS CI"
+  /></a>
+  <a href="https://github.com/veeso/termscp/actions"
+    ><img
+      src="https://github.com/veeso/termscp/workflows/Windows/badge.svg"
+      alt="Windows CI"
+  /></a>
+  <a href="https://github.com/veeso/termscp/actions"
+    ><img
+      src="https://github.com/veeso/termscp/workflows/FreeBSD/badge.svg"
+      alt="FreeBSD CI"
+  /></a>
+  <a href="https://coveralls.io/github/veeso/termscp"
+    ><img
+      src="https://coveralls.io/repos/github/veeso/termscp/badge.svg"
+      alt="Coveralls"
+  /></a>
+  <a href="https://docs.rs/termscp"
+    ><img
+      src="https://docs.rs/termscp/badge.svg"
+      alt="Docs"
+  /></a>
+</p>
 
 ---
 
@@ -159,7 +210,7 @@ choco install termscp
 
 ## 支持我 ☕
 
-如果您喜欢 termscp 并且希望看到该项目不断发展和改进，请考虑在**给我买杯咖啡**上捐款以支持我🥳
+如果您喜欢 termscp 并且希望看到该项目不断发展和改进，请考虑在 **Buy me a coffee** 上捐款以支持我🥳
 
 [![给我买一杯咖啡](https://img.buymeacoffee.com/button-api/?text=%E7%BB%99%E6%88%91%E4%B9%B0%E4%B8%80%E6%9D%AF%E5%92%96%E5%95%A1&emoji=&slug=veeso&button_colour=404040&font_colour=ffffff&font_family=Comic&outline_colour=ffffff&coffee_colour=FFDD00)](https://www.buymeacoffee.com/veeso)
 
