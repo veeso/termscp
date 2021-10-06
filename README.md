@@ -71,19 +71,16 @@
       src="https://img.shields.io/badge/License-MIT-teal.svg"
       alt="License-MIT"
   /></a>
-  &nbsp;
   <a href="https://github.com/veeso/termscp/stargazers"
     ><img
       src="https://img.shields.io/github/stars/veeso/termscp.svg"
       alt="Repo stars"
   /></a>
-  &nbsp;
   <a href="https://crates.io/crates/termscp"
     ><img
       src="https://img.shields.io/crates/d/termscp.svg"
       alt="Downloads counter"
   /></a>
-  &nbsp;
   <a href="https://crates.io/crates/termscp"
     ><img
       src="https://img.shields.io/crates/v/termscp.svg"
@@ -96,37 +93,31 @@
       src="https://github.com/veeso/termscp/workflows/Linux/badge.svg"
       alt="Linux CI"
   /></a>
-  &nbsp;
   <a href="https://github.com/veeso/termscp/actions"
     ><img
       src="https://github.com/veeso/termscp/workflows/MacOS/badge.svg"
       alt="MacOS CI"
   /></a>
-  &nbsp;
   <a href="https://github.com/veeso/termscp/actions"
     ><img
       src="https://github.com/veeso/termscp/workflows/Windows/badge.svg"
       alt="Windows CI"
   /></a>
-  &nbsp;
   <a href="https://github.com/veeso/termscp/actions"
     ><img
       src="https://github.com/veeso/termscp/workflows/FreeBSD/badge.svg"
       alt="FreeBSD CI"
   /></a>
-  &nbsp;
   <a href="https://coveralls.io/github/veeso/termscp"
     ><img
       src="https://coveralls.io/repos/github/veeso/termscp/badge.svg"
       alt="Coveralls"
   /></a>
-  &nbsp;
   <a href="https://docs.rs/termscp"
     ><img
       src="https://docs.rs/termscp/badge.svg"
       alt="Docs"
   /></a>
-  &nbsp;
 </p>
 
 ---
