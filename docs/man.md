@@ -5,6 +5,7 @@
     - [Address argument 🌎](#address-argument-)
       - [AWS S3 address argument](#aws-s3-address-argument)
       - [How Password can be provided 🔐](#how-password-can-be-provided-)
+  - [Aws S3 credentials 🦊](#aws-s3-credentials-)
   - [File explorer 📂](#file-explorer-)
     - [Keybindings ⌨](#keybindings-)
     - [Work on multiple files 🥷](#work-on-multiple-files-)
@@ -14,7 +15,6 @@
     - [Are my passwords Safe 😈](#are-my-passwords-safe-)
       - [Linux Keyring](#linux-keyring)
         - [KeepassXC setup for termscp](#keepassxc-setup-for-termscp)
-  - [Aws S3 credentials 🦊](#aws-s3-credentials-)
   - [Configuration ⚙️](#configuration-️)
     - [SSH Key Storage 🔐](#ssh-key-storage-)
     - [File Explorer Format](#file-explorer-format)
@@ -101,9 +101,33 @@ s3://buckethead@eu-central-1:default:/assets
 You have probably noticed, that, when providing the address as argument, there's no way to provide the password.
 Password can be basically provided through 3 ways when address argument is provided:
 
-- `-P, --password` option: just use this CLI option providing the password. I strongly unrecommend this method, since it's very unsecure (since you might keep the password in the shell history)
+- `-P, --password` option: just use this CLI option providing the password. I strongly unrecommend this method, since it's very insecure (since you might keep the password in the shell history)
 - Via `sshpass`: you can provide password via `sshpass`, e.g. `sshpass -f ~/.ssh/topsecret.key termscp cvisintin@192.168.1.31`
 - You will be prompted for it: if you don't use any of the previous methods, you will be prompted for the password, as happens with the more classics tools such as `scp`, `ssh`, etc.
+
+---
+
+## Aws S3 credentials 🦊
+
+In order to connect to an Aws S3 bucket you must obviously provide some credentials.
+There are basically two ways to achieve this, and as you've probably already noticed you **can't** do that via the authentication form.
+So these are the ways you can provide the credentials for s3:
+
+1. Use your credentials file: just configure the AWS cli via `aws configure` and your credentials should already be located at `~/.aws/credentials`. In case you're using a profile different from `default`, just provide it in the profile field in the authentication form.
+2. **Environment variables**: you can always provide your credentials as environment variables. Keep in mind that these credentials **will always override** the credentials located in the `credentials` file. See how to configure the environment below:
+
+    These should always be mandatory:
+
+    - `AWS_ACCESS_KEY_ID`: aws access key ID (usually starts with `AKIA...`)
+    - `AWS_SECRET_ACCESS_KEY`: the secret access key
+
+    In case you've configured a stronger security, you *may* require these too:
+
+    - `AWS_SECURITY_TOKEN`: security token
+    - `AWS_SESSION_TOKEN`: session token
+
+⚠️ Your credentials are safe: termscp won't manipulate these values directly! Your credentials are directly consumed by the **s3** crate.
+In case you've got some concern regarding security, please contact the library author on [Github](https://github.com/durch/rust-s3) ⚠️
 
 ---
 
@@ -257,30 +281,6 @@ Follow these steps in order to setup keepassXC for termscp:
 
 ---
 
-## Aws S3 credentials 🦊
-
-In order to connect to an Aws S3 bucket you must obviously provide some credentials.
-There are basically two ways to achieve this, and as you've probably already noticed you **can't** do that via the authentication form.
-So these are the ways you can provide the credentials for s3:
-
-1. Use your credentials file: just configure the AWS cli via `aws configure` and your credentials should already be located at `~/.aws/credentials`. In case you're using a profile different from `default`, just provide it in the profile field in the authentication form.
-2. **Environment variables**: you can always provide your credentials as environment variables. Keep in mind that these credentials **will always override** the credentials located in the `credentials` file. See how to configure the environment below:
-
-    These should always be mandatory:
-
-    - `AWS_ACCESS_KEY_ID`: aws access key ID (usually starts with `AKIA...`)
-    - `AWS_SECRET_ACCESS_KEY`: the secret access key
-
-    In case you've configured a stronger security, you *may* require these too:
-
-    - `AWS_SECURITY_TOKEN`: security token
-    - `AWS_SESSION_TOKEN`: session token
-
-⚠️ Your credentials are safe: termscp won't manipulate these values directly! Your credentials are directly consumed by the **s3** crate.
-In case you've got some concern regarding security, please contact the library author on [Github](https://github.com/durch/rust-s3) ⚠️
-
----
-
 ## Configuration ⚙️
 
 termscp supports some user defined parameters, which can be defined in the configuration.
@@ -296,7 +296,7 @@ To access configuration, you just have to press `<CTRL+C>` from the home of term
 
 These parameters can be changed:
 
-- **Text Editor**: the text editor to use. By default termscp will find the default editor for you; with this option you can force an editor to be used (e.g. `vim`). **Also GUI editors are supported**, unless they `nohup` from the parent process so if you ask: yes, you can use `notepad.exe`, and no: **Visual Studio Code doesn't work**.
+- **Text Editor**: the text editor to use. By default termscp will find the default editor for you; with this option you can force an editor to be used (e.g. `vim`). **Also GUI editors are supported**, unless they `nohup` from the parent process.
 - **Default Protocol**: the default protocol is the default value for the file transfer protocol to be used in termscp. This applies for the login page and for the address CLI argument.
 - **Show Hidden Files**: select whether hidden files shall be displayed by default. You will be able to decide whether to show or not hidden files at runtime pressing `A` anyway.
 - **Check for updates**: if set to `yes`, termscp will fetch the Github API to check if there is a new version of termscp available.
@@ -404,10 +404,10 @@ Please, notice that **styles won't apply to configuration page**, in order to ma
 | Key                                  | Description                                                               |
 |--------------------------------------|---------------------------------------------------------------------------|
 | transfer_local_explorer_background   | Background color of localhost explorer                                    |
-| transfer_local_explorer_foreground   | Foreground coloor of localhost explorer                                   |
+| transfer_local_explorer_foreground   | Foreground color of localhost explorer                                   |
 | transfer_local_explorer_highlighted  | Border and highlighted color for localhost explorer                       |
 | transfer_remote_explorer_background  | Background color of remote explorer                                       |
-| transfer_remote_explorer_foreground  | Foreground coloor of remote explorer                                      |
+| transfer_remote_explorer_foreground  | Foreground color of remote explorer                                      |
 | transfer_remote_explorer_highlighted | Border and highlighted color for remote explorer                          |
 | transfer_log_background              | Background color for log panel                                            |
 | transfer_log_window                  | Window color for log panel                                                |
@@ -438,7 +438,7 @@ These styles applie to different part of the application.
 termscp has, as you might have noticed, many features, one of these is the possibility to view and edit text file. It doesn't matter if the file is located on the local host or on the remote host, termscp provides the possibility to open a file in your favourite text editor.
 In case the file is located on remote host, the file will be first downloaded into your temporary file directory and then, **only** if changes were made to the file, re-uploaded to the remote host. termscp checks if you made changes to the file verifying the last modification time of the file.
 
-Just a reminder: **you can edit only textual file**; binary files are not supported.
+> ❗ Just a reminder: **you can edit only textual file**; binary files are not supported.
 
 ---
 

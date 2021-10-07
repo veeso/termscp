@@ -5,6 +5,7 @@
     - [Argomento indirizzo 🌎](#argomento-indirizzo-)
       - [Argomento indirizzo per AWS S3](#argomento-indirizzo-per-aws-s3)
       - [Come fornire la password 🔐](#come-fornire-la-password-)
+  - [Credenziali Aws S3 🦊](#credenziali-aws-s3-)
   - [File explorer 📂](#file-explorer-)
     - [Abbinamento tasti ⌨](#abbinamento-tasti-)
     - [Lavora su più file 🥷](#lavora-su-più-file-)
@@ -14,7 +15,6 @@
     - [Le mie password sono al sicuro 😈](#le-mie-password-sono-al-sicuro-)
       - [Linux Keyring](#linux-keyring)
         - [KeepassXC setup per termscp](#keepassxc-setup-per-termscp)
-  - [Credenziali Aws S3 🦊](#credenziali-aws-s3-)
   - [Configurazione ⚙️](#configurazione-️)
     - [SSH Key Storage 🔐](#ssh-key-storage-)
     - [File Explorer Format](#file-explorer-format)
@@ -101,6 +101,29 @@ Quando si usa l'argomento indirizzo non è possibile fornire la password diretta
 - Argomento `-P, --password <password>`: Passa direttamente la password nell'argomento. Non lo consiglio particolarmente questo metodo, in quanto la password rimarrebbe nella history della shell in chiaro.
 - Tramite `sshpass`: puoi fornire la password tramite l'applicazione GNU/Linux sshpass `sshpass -f ~/.ssh/topsecret.key termscp cvisintin@192.168.1.31`
 - Forniscila quando richiesta: se non la fornisci tramite nessun metodo precedente, alla connessione ti verrà richiesto di fornirla in un prompt che la oscurerà (come avviene con sudo tipo).
+
+---
+
+## Credenziali Aws S3 🦊
+
+Per connettersi ad un bucket S3 devi come già saprai fornire le credenziali fornite da AWS.
+Ci sono due modi per passare queste credenziali a termscp e come avrai già notato **non puoi** farlo dal form di autenticazione.
+Questi sono quindi i due modi per passare le chiavi:
+
+1. Utilizza il file delle credenziali s3: configurando aws via `aws configure` le tue credenziali dovrebbero già venir salvate in  `~/.aws/credentials`. Nel caso tu debba usare un profile diverso da `default`, puoi fornire un profilo diverso nell'authentication form.
+2. **Variabili d'ambiente**: nel caso il primo metodo non sia utilizzabile, puoi comunque fornirle come variabili d'ambiente. Considera però che queste variabili sovrascriveranno sempre le credenziali situate nel file credentials. Vediamo come impostarle:
+
+    Queste sono sempre obbligatorie:
+
+    - `AWS_ACCESS_KEY_ID`: aws access key ID (di solito inizia per `AKIA...`)
+    - `AWS_SECRET_ACCESS_KEY`: la secret access key
+
+    nel caso tu abbia impostato un maggiore livello di sicurezza, potrebbero servirti anche queste:
+
+    - `AWS_SECURITY_TOKEN`: security token
+    - `AWS_SESSION_TOKEN`: session token
+
+⚠️ le tue credenziali sono al sicuro: termscp non manipola direttamente questi dati! Le credenziali sono direttamente lette dal crate di **s3**. Nel caso tu abbia dei dubbi sulla sicurezza, puoi contattare l'autore della libreria su [Github](https://github.com/durch/rust-s3) ⚠️
 
 ---
 
@@ -255,29 +278,6 @@ Questo tutorial spiega come impostare KeepassXC per termscp.
 
 ---
 
-## Credenziali Aws S3 🦊
-
-Per connettersi ad un bucket S3 devi come già saprai fornire le credenziali fornite da AWS.
-Ci sono due modi per passare queste credenziali a termscp e come avrai già notato **non puoi** farlo dal form di autenticazione.
-Questi sono quindi i due modi per passare le chiavi:
-
-1. Utilizza il file delle credenziali s3: configurando aws via `aws configure` le tue credenziali dovrebbero già venir salvate in  `~/.aws/credentials`. Nel caso tu debba usare un profile diverso da `default`, puoi fornire un profilo diverso nell'authentication form.
-2. **Variabili d'ambiente**: nel caso il primo metodo non sia utilizzabile, puoi comunque fornirle come variabili d'ambiente. Considera però che queste variabili sovrascriveranno sempre le credenziali situate nel file credentials. Vediamo come impostarle:
-
-    Queste sono sempre obbligatorie:
-
-    - `AWS_ACCESS_KEY_ID`: aws access key ID (di solito inizia per `AKIA...`)
-    - `AWS_SECRET_ACCESS_KEY`: la secret access key
-
-    nel caso tu abbia impostato un maggiore livello di sicurezza, potrebbero servirti anche queste:
-
-    - `AWS_SECURITY_TOKEN`: security token
-    - `AWS_SESSION_TOKEN`: session token
-
-⚠️ le tue credenziali sono al sicuro: termscp non manipola direttamente questi dati! Le credenziali sono direttamente lette dal crate di **s3**. Nel caso tu abbia dei dubbi sulla sicurezza, puoi contattare l'autore della libreria su [Github](https://github.com/durch/rust-s3) ⚠️
-
----
-
 ## Configurazione ⚙️
 
 termscp supporta diversi parametri definiti dall'utente, che possono essere impostati nella configurazione.
@@ -293,7 +293,7 @@ Per accedere alla configurazione è sufficiente premere `<CTRL+C>` dall'authenti
 
 Questi parametri possono essere impostati:
 
-- **Text Editor**: l'editor di testo da utilizzare per aprire i file. Di default termscp userà quello definito nella variabile `EDITOR` od il primo che troverà installato tra quelli più popolari. Puoi tuttavia definire quello che vuoi (ad esempio `vim`). **Anche gli editor GUI sono supportati**, a meno che loro non partano in `nohup` dal processo padre, quindi se vuoi saperlo: sì puoi utilizzare `notepad.exe`, ma non **Visual Studio Code**.
+- **Text Editor**: l'editor di testo da utilizzare per aprire i file. Di default termscp userà quello definito nella variabile `EDITOR` od il primo che troverà installato tra quelli più popolari. Puoi tuttavia definire quello che vuoi (ad esempio `vim`). **Anche gli editor GUI sono supportati**, a meno che loro non partano in `nohup` dal processo padre.
 - **Default Protocol**: il protocollo di default da visualizzare come prima opzione nell'authentication form. Questa opzione sarà anche utilizzata quando si usa l'argomento indirizzo da CLI e non si specifica un protocollo.
 - **Show Hidden Files**: seleziona se mostrare di default i file nascosti. A runtime potrai comunque scegliere se visualizzarli o meno premendo `<A>`.
 - **Check for updates**: se impostato a `YES` all'avvio termscp controllerà l'eventuale presenza di aggiornamenti. Per farlo utilizzerà una chiamata GET all'API di Github.
@@ -436,7 +436,7 @@ Con termscp puoi anche modificare i file di testo direttamente da terminale, uti
 Non importa se il file si trova in locale od in remoto, termscp ti consente di modificare e sincronizzare le modifiche per entrambi.
 Nel caso il file si trovi su host remoto, il file verrà prima scaricato temporaneamente in locale, modificato e poi nel caso ci siano state modifiche, reinviato in remoto.
 
-Ricorda: **puoi modificare solo i file testuali**; non puoi modificare i file binari.
+> ❗ Ricorda: **puoi modificare solo i file testuali**; non puoi modificare i file binari.
 
 ---
 
