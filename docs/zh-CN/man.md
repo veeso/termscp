@@ -5,6 +5,7 @@
     - [地址参数](#地址参数)
       - [AWS S3 地址参数](#aws-s3-地址参数)
       - [如何输入密码](#如何输入密码)
+  - [Aws S3 凭证](#aws-s3-凭证)
   - [文件浏览](#文件浏览)
     - [快捷键](#快捷键)
     - [处理多个文件](#处理多个文件)
@@ -13,8 +14,7 @@
   - [书签](#书签)
     - [我的密码安全吗？](#我的密码安全吗)
       - [Linux Keyring](#linux-keyring)
-        - [用于 termcp 的 KeepassXC 设置](#用于-termcp-的-keepassxc-设置)
-  - [Aws S3 凭证](#aws-s3-凭证)
+        - [用于 termscp 的 KeepassXC 设置](#用于-termscp-的-keepassxc-设置)
   - [配置](#配置)
     - [SSH Key Storage](#ssh-key-storage)
     - [资源管理器格式](#资源管理器格式)
@@ -25,7 +25,6 @@
       - [文件传输页](#文件传输页)
       - [Misc](#misc)
   - [文本编辑器](#文本编辑器)
-    - [如何配置文本编辑器？](#如何配置文本编辑器)
   - [日志](#日志)
   - [通知](#通知)
 
@@ -103,6 +102,30 @@ s3://buckethead@eu-central-1:default:/assets
 - `-P, --password` 不推荐：直接在参数中填写明文密码。强烈不推荐这种方法，因为它非常不安全（因为你可能会把密码保留在shell历史记录中）。
 - 通过 `sshpass`: 你可以通过 `sshpass` 传入密码, 例如： `sshpass -f ~/.ssh/topsecret.key termscp cvisintin@192.168.1.31`
 - 提示输入密码：如果你不使用前面的任何方法，你会被提示输入密码，就像 `scp`、`ssh` 等比较经典的工具上一样。
+
+---
+
+## Aws S3 凭证
+
+为了连接到 Aws S3 存储桶，您显然必须提供一些凭据。
+基本上有两种方法可以实现这一点，而且您可能已经注意到您**不能**通过身份验证表单来做到这一点。
+因此，您可以通过以下方式为 s3 提供凭据：
+
+1. 使用您的凭证文件：只需通过`aws configure` 配置AWS cli，您的凭证应该已经位于`~/.aws/credentials`。 如果您使用的配置文件不同于“默认”，只需在身份验证表单的配置文件字段中提供它。
+2. **环境变量**: 您始终可以将您的凭据作为环境变量提供。 请记住，这些凭据**将始终覆盖**位于 `credentials` 文件中的凭据。 下面看看如何配置环境：
+
+    这些应该始终是强制性的:
+
+    - `AWS_ACCESS_KEY_ID`: aws 访问密钥 ID（通常以 `AKIA...` 开头）
+    - `AWS_SECRET_ACCESS_KEY`: 秘密访问密钥
+
+    如果您配置了更强的安全性，您*可能*也需要这些：
+
+    - `AWS_SECURITY_TOKEN`: 安全令牌
+    - `AWS_SESSION_TOKEN`: 会话令牌
+
+⚠️ 您的凭据是安全的：termscp 不会直接操作这些值！ 您的凭据直接由 **s3** crate 使用。
+如果您对安全有一些担忧，请联系 [Github](https://github.com/durch/rust-s3) 上的库作者 ⚠️
 
 ---
 
@@ -237,7 +260,7 @@ termscp中的文件资源管理器是指你与远程建立连接后可以看到�
 - ❗对于其他桌面环境的用户，有一个很好的程序，你可以用它来获得钥匙串，这就是[KeepassXC](https://keepassxc.org/)，我在我的Manjaro中使用它（带KDE），一切都很正常。唯一的问题是，你必须设置它与termscp一起使用（但这很简单）。要开始使用KeepassXC，请阅读更多[这里]（#keepassxc-setup-for-termscp）。
 - ❗如果你不想安装任何这些服务呢？好吧，这没有问题! **termscp依然能正常工作**，但它会将密钥保存在一个文件中，就像它通常为BSD和WSL做的那样。
 
-##### 用于 termcp 的 KeepassXC 设置
+##### 用于 termscp 的 KeepassXC 设置
 
 参照以下步骤，为termscp配置keepassXC：
 
@@ -248,30 +271,6 @@ termscp中的文件资源管理器是指你与远程建立连接后可以看到�
 5. 从工具条上 "数据库" > "数据库设置"
 6. 选择 "secret服务集成 "并切换 "在此组下暴露条目"
 7. 7.在列表中选择你希望termscp secret保存到的组。记住，这个组可能被任何其他应用程序通过DBUS存储密钥。
-
----
-
-## Aws S3 凭证
-
-为了连接到 Aws S3 存储桶，您显然必须提供一些凭据。
-基本上有两种方法可以实现这一点，而且您可能已经注意到您**不能**通过身份验证表单来做到这一点。
-因此，您可以通过以下方式为 s3 提供凭据：
-
-1. 使用您的凭证文件：只需通过`aws configure` 配置AWS cli，您的凭证应该已经位于`~/.aws/credentials`。 如果您使用的配置文件不同于“默认”，只需在身份验证表单的配置文件字段中提供它。
-2. **环境变量**: 您始终可以将您的凭据作为环境变量提供。 请记住，这些凭据**将始终覆盖**位于 `credentials` 文件中的凭据。 下面看看如何配置环境：
-
-    这些应该始终是强制性的:
-
-    - `AWS_ACCESS_KEY_ID`: aws 访问密钥 ID（通常以 `AKIA...` 开头）
-    - `AWS_SECRET_ACCESS_KEY`: 秘密访问密钥
-
-    如果您配置了更强的安全性，您*可能*也需要这些：
-
-    - `AWS_SECURITY_TOKEN`: 安全令牌
-    - `AWS_SESSION_TOKEN`: 会话令牌
-
-⚠️ 您的凭据是安全的：termscp 不会直接操作这些值！ 您的凭据直接由 **s3** crate 使用。
-如果您对安全有一些担忧，请联系 [Github](https://github.com/durch/rust-s3) 上的库作者 ⚠️
 
 ---
 
@@ -330,7 +329,7 @@ termscp和书签一样，只需要保证这些路径是可访问的：
 - `CTIME`: 创建时间（语法为`%b %d %Y %H:%M`）；Extra参数可以指定时间显示语法（例如：`{CTIME:8:%H:%M}`）
 - `GROUP`: 所属组
 - `MTIME`: 最后修改时间（语法为`%b %d %Y %H:%M`）；Extra参数可以指定时间显示语法（例如：`{MTIME:8:%H:%M}`）
-- `NAME`: 文件名（超过24个字符的部分会被省略）
+- `NAME`: 文件名（超过 LENGTH 个字符的部分会被省略）
 - `PEX`: 文件权限（UNIX格式）
 - `SIZE`: 文件大小（目录不显示）
 - `SYMLINK`: 超链接（如果存在的话`-> {FILE_PATH}`）。
@@ -352,7 +351,7 @@ Termscp为你提供了一个很棒的功能：可以为应用程序中的几个�
 
 在这里你可以用`<UP>`和`<DOWN>`移动来选择你想改变的样式，如下图所示：
 
-![Themes](../assets/images/themes.gif)
+![Themes](https://github.com/veeso/termscp/blob/main/assets/images/themes.gif?raw=true)
 
 termscp支持传统的十六进制（`#rrggbb`）和RGB`rgb(r, g, b)`语法来表示颜色，但也接受 **[css颜色](https://www.w3schools.com/cssref/css_colors.asp)**（如`crimson`）😉。还有一个特殊的关键词是`Default`，意味着使用的颜色将是基于情景的默认前景或背景颜色（文本和线条的前景色，以及容器的背景色，你猜是什么）。
 
@@ -432,11 +431,7 @@ termscp支持传统的十六进制（`#rrggbb`）和RGB`rgb(r, g, b)`语法来�
 Termscp有很多功能，你可能已经注意到了，其中之一就是可以查看和编辑文本文件。不管文件是在本地主机还是在远程主机上，termscp都提供了在你喜欢的文本编辑器中打开文件的功能。
 如果文件位于远程主机上，该文件将首先被下载到你的临时文件目录中，然后，**只有**在对该文件进行了修改的情况下，才会重新上传至远程主机上。
 
-多说一句，**你只能编辑文本文件**；二进制文件是不可以的。
-
-### 如何配置文本编辑器？
-
-文本编辑器是通过[awesome crate](https://github.com/milkey-mouse/edit)自动查找的，如果你想改变默认的文本编辑器，请在termscp配置中改变它。[阅读更多](#配置)
+> ❗ 多说一句，**你只能编辑文本文件**；二进制文件是不可以的。
 
 ---
 
@@ -478,5 +473,5 @@ termscp 将针对这些类型的事件发送桌面通知：
 - **更新已安装**：每当安装了新版本的termscp 时，都会显示通知。
 - **更新失败**：每当更新安装失败时，都会显示通知。
 
-❗ 如果您希望保持关闭通知，您只需进入设置并将 `Enable notifications?` 设置为 `No`😉。
+❗ 如果您希望保持关闭通知，您只需进入设置并将 `Enable notifications?` 设置为 `No`😉。  
 ❗ 如果您想更改最小传输大小以显示通知，您可以使用键 `Notifications: minimum transfer size` 更改配置中的值，并将其设置为更适合您的任何值🙂。

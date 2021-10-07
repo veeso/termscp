@@ -9,6 +9,7 @@ Please note we have a [code of conduct](CODE_OF_CONDUCT.md), please follow it in
   - [Open an issue](#open-an-issue)
     - [Questions](#questions)
     - [Bug reports](#bug-reports)
+    - [Copy error](#copy-error)
     - [Feature requests](#feature-requests)
   - [Preferred contributions](#preferred-contributions)
   - [Pull Request Process](#pull-request-process)
@@ -45,6 +46,7 @@ Open an issue when:
 
 - You have questions or concerns regarding the project or the application itself.
 - You have a bug to report.
+- You have a copy error to report. (Error in documentation; bad translation or sentence)
 - You have a feature or a suggestion to improve termscp to submit.
 
 ### Questions
@@ -70,6 +72,15 @@ Maintainers will may add additional labels to your issue:
 - **priority**: this must be fixed asap
 - **sorcery**: it is not possible to find out what's causing your bug, nor is reproducible on our test environments.
 - **wontfix**: your bug has a very high ratio between the difficulty to fix it and the probability to encounter it, or it just isn't a bug, but a feature.
+
+### Copy error
+
+If you want to report a copy error, create an issue using the `copy` template.
+The `Documentation` label should already be set and the issue should already be assigned to `veeso`.
+
+If you want to fix the copy by yourself you can fork the project and open a PR, otherwise I will fix it by myself.
+The copy issue is accepted **also if you're not a C1/C2 speaker**, but a speaker of that level in case the language is different from Italian/English is preferred.
+Please fullfil the form on the bottom of the template if you want.
 
 ### Feature requests
 
@@ -97,9 +108,10 @@ Always mind that your suggestion, may be rejected: I'll always provide a feedbac
 At the moment, these kind of contributions are more appreciated and should be preferred:
 
 - Fix for issues described in [Known Issues](./README.md#known-issues-) or [issues reported by the community](https://github.com/veeso/termscp/issues)
-- New file transfers: for further details see [Implementing File Transfer](#implementing-file-transfers)
-- Code optimizations: any optimization to the code is welcome
+- **New file transfers**: for further details see [Implementing File Transfer](#implementing-file-transfers). ⚠️ this is going to be deprecated SOON! We're moving the file transfers into another library. Please see [remotefs-rs](https://github.com/veeso/remotefs-rs).
+- **Code optimizations**: any optimization to the code is welcome
 - See also features described in [Upcoming features](./README.md##upcoming-features-). Open an issue first though.
+- README/User manual **translations**: really appreciated atm. Please just add a folder into `docs/` with the language code. Language code with two characters is used in case the language is understandable by all the countries where this language is spoken (e.g. `it-CH`, `it-IT` are not really different, so I just created `it`, but there is a big difference from `zh-CN` and `zh-TW` for instance). Don't worry about flags in README, I will implement that part if it's too complicated.
 
 For any other kind of contribution, especially for new features, please submit a new issue first.
 

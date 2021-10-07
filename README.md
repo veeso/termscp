@@ -13,18 +13,118 @@
   <a href="https://veeso.github.io/termscp/#user-manual" target="_blank">User manual</a>
 </p>
 
-<p align="center">Developed by <a href="https://veeso.github.io/">@veeso</a></p>
+<p align="center">
+  <a href="https://github.com/veeso/termscp"
+    ><img
+      height="20"
+      src="/assets/images/flags/us.png"
+      alt="English"
+  /></a>
+  &nbsp;
+  <a
+    href="/docs/de/README.md"
+    ><img
+      height="20"
+      src="/assets/images/flags/de.png"
+      alt="Deutsch"
+  /></a>
+  &nbsp;
+  <a
+    href="/docs/es/README.md"
+    ><img
+      height="20"
+      src="/assets/images/flags/es.png"
+      alt="Español"
+  /></a>
+  &nbsp;
+  <a
+    href="/docs/fr/README.md"
+    ><img
+      height="20"
+      src="/assets/images/flags/fr.png"
+      alt="Français"
+  /></a>
+  &nbsp;
+  <a
+    href="/docs/it/README.md"
+    ><img
+      height="20"
+      src="/assets/images/flags/it.png"
+      alt="Italiano"
+  /></a>
+  &nbsp;
+  <a
+    href="/docs/zh-CN/README.md"
+    ><img
+      height="20"
+      src="/assets/images/flags/cn.png"
+      alt="简体中文"
+  /></a>
+</p>
+
+<p align="center">Developed by <a href="https://veeso.github.io/" target="_blank">@veeso</a></p>
 <p align="center">Current version: 0.7.0 (12/10/2021)</p>
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-teal.svg)](https://opensource.org/licenses/MIT) [![Stars](https://img.shields.io/github/stars/veeso/termscp.svg)](https://github.com/veeso/termscp) [![Downloads](https://img.shields.io/crates/d/termscp.svg)](https://crates.io/crates/termscp) [![Crates.io](https://img.shields.io/badge/crates.io-v0.7.0-orange.svg)](https://crates.io/crates/termscp)  
-
-[![Linux](https://github.com/veeso/termscp/workflows/Linux/badge.svg)](https://github.com/veeso/termscp/actions) [![MacOs](https://github.com/veeso/termscp/workflows/MacOS/badge.svg)](https://github.com/veeso/termscp/actions) [![Windows](https://github.com/veeso/termscp/workflows/Windows/badge.svg)](https://github.com/veeso/termscp/actions) [![FreeBSD](https://github.com/veeso/termscp/workflows/FreeBSD/badge.svg)](https://github.com/veeso/termscp/actions) [![Coverage Status](https://coveralls.io/repos/github/veeso/termscp/badge.svg)](https://coveralls.io/github/veeso/termscp) [![Docs](https://docs.rs/termscp/badge.svg)](https://docs.rs/termscp)
+<p align="center">
+  <a href="https://opensource.org/licenses/MIT"
+    ><img
+      src="https://img.shields.io/badge/License-MIT-teal.svg"
+      alt="License-MIT"
+  /></a>
+  <a href="https://github.com/veeso/termscp/stargazers"
+    ><img
+      src="https://img.shields.io/github/stars/veeso/termscp.svg"
+      alt="Repo stars"
+  /></a>
+  <a href="https://crates.io/crates/termscp"
+    ><img
+      src="https://img.shields.io/crates/d/termscp.svg"
+      alt="Downloads counter"
+  /></a>
+  <a href="https://crates.io/crates/termscp"
+    ><img
+      src="https://img.shields.io/crates/v/termscp.svg"
+      alt="Latest version"
+  /></a>
+</p>
+<p align="center">
+  <a href="https://github.com/veeso/termscp/actions"
+    ><img
+      src="https://github.com/veeso/termscp/workflows/Linux/badge.svg"
+      alt="Linux CI"
+  /></a>
+  <a href="https://github.com/veeso/termscp/actions"
+    ><img
+      src="https://github.com/veeso/termscp/workflows/MacOS/badge.svg"
+      alt="MacOS CI"
+  /></a>
+  <a href="https://github.com/veeso/termscp/actions"
+    ><img
+      src="https://github.com/veeso/termscp/workflows/Windows/badge.svg"
+      alt="Windows CI"
+  /></a>
+  <a href="https://github.com/veeso/termscp/actions"
+    ><img
+      src="https://github.com/veeso/termscp/workflows/FreeBSD/badge.svg"
+      alt="FreeBSD CI"
+  /></a>
+  <a href="https://coveralls.io/github/veeso/termscp"
+    ><img
+      src="https://coveralls.io/repos/github/veeso/termscp/badge.svg"
+      alt="Coveralls"
+  /></a>
+  <a href="https://docs.rs/termscp"
+    ><img
+      src="https://docs.rs/termscp/badge.svg"
+      alt="Docs"
+  /></a>
+</p>
 
 ---
 
 ## About termscp 🖥
 
-Termscp is a feature rich terminal file transfer and explorer, with support for SCP/SFTP/FTP/S3. So basically is a terminal utility with an TUI to connect to a remote server to retrieve and upload files and to interact with the local file system. It is **Linux**, **MacOS**, **FreeBSD** and **Windows** compatible and supports SFTP, SCP, FTP, FTPS and S3.
+Termscp is a feature rich terminal file transfer and explorer, with support for SCP/SFTP/FTP/S3. So basically is a terminal utility with an TUI to connect to a remote server to retrieve and upload files and to interact with the local file system. It is **Linux**, **MacOS**, **FreeBSD** and **Windows** compatible.
 
 ![Explorer](assets/images/explorer.gif)
 
@@ -60,7 +160,7 @@ Termscp is a feature rich terminal file transfer and explorer, with support for 
 ## Get started 🚀
 
 If you're considering to install termscp I want to thank you 💜 ! I hope you will enjoy termscp!  
-If you want to contribute to this project, don't forget to check out our contribute guide. [Read More](CONTRIBUTING.md)
+If you want to contribute to this project, don't forget to check out our [contribute guide](CONTRIBUTING.md).
 
 If you are a Linux, a FreeBSD or a MacOS user this simple shell script will install termscp on your system with a single command:
 
@@ -84,32 +184,32 @@ For more information or other platforms, please visit [veeso.github.io](https://
   - libssh
   - libdbus-1
   - pkg-config
-- **BSD** users:
+- **FreeBSD** users:
   - libssh
   - dbus
   - pkgconf
 
 ### Optional Requirements ✔️
 
-These requirements are not forcely required to run termscp, but to enjoy all of its features
+These requirements are not forced required to run termscp, but to enjoy all of its features
 
-- **Linux/BSD** users:
+- **Linux/FreeBSD** users:
   - To **open** files via `V` (at least one of these)
     - *xdg-open*
     - *gio*
     - *gnome-open*
     - *kde-open*
 - **Linux** users:
-  - A keyring manager: read more in the [User manual](docs/man_en.md#linux-keyring)
+  - A keyring manager: read more in the [User manual](docs/man.md#linux-keyring)
 - **WSL** users
   - To **open** files via `V` (at least one of these)
     - [wslu](https://github.com/wslutilities/wslu)
 
 ---
 
-## Buy me a coffee ☕
+## Support me ☕
 
-If you like termscp and you'd love to see the project to grow, please consider a little donation 🥳
+If you like termscp and you'd love to see the project to grow and to improve, please consider a little donation to support me on **Buy me a coffee** 🥳
 
 [![Buy-me-a-coffee](https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20coffee&emoji=&slug=veeso&button_colour=404040&font_colour=ffffff&font_family=Comic&outline_colour=ffffff&coffee_colour=FFDD00)](https://www.buymeacoffee.com/veeso)
 
@@ -117,12 +217,7 @@ If you like termscp and you'd love to see the project to grow, please consider a
 
 ## User manual and Documentation 📚
 
-The user manual can be found on the [termscp's website](https://veeso.github.io/termscp/#user-manual) or on Github:
-
-- [User manual](docs/man-en.md)
-- [用户手册](docs/man-zh.md)
-
-A translation of the user manual in other languages would be really appreciated 😉
+The user manual can be found on the [termscp's website](https://veeso.github.io/termscp/#user-manual) or on [Github](docs/man.md).
 
 The developer documentation can be found on Rust Docs at <https://docs.rs/termscp>
 
@@ -177,7 +272,7 @@ View termscp's changelog [HERE](CHANGELOG.md)
 
 ## Powered by 💪
 
-termscp is powered by these aweseome projects:
+termscp is powered by these awesome projects:
 
 - [bytesize](https://github.com/hyunsik/bytesize)
 - [crossterm](https://github.com/crossterm-rs/crossterm)
