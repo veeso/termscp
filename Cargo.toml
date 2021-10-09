@@ -22,6 +22,11 @@ buildflags = ["--release"]
 [package.metadata.rpm.targets]
 termscp = { path = "/usr/bin/termscp" }
 
+[package.metadata.deb]
+maintainer = "Christian Visintin <christian.visintin1997@gmail.com>"
+copyright = "2021, Christian Visintin <christian.visintin1997@gmail.com>"
+extended-description-file = "docs/misc/README.deb.txt"
+
 [[bin]]
 name = "termscp"
 path = "src/main.rs"
