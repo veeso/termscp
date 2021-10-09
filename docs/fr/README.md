@@ -157,7 +157,7 @@ Termscp est un file transfer et explorateur de fichiers de terminal riche en fon
 
 ---
 
-## Commencer 🚀
+## Pour commencer 🚀
 
 Si tu envisage d'installer termscp, je veux te remercier 💜 ! J'espère que tu vas apprécier termscp !  
 Si tu veux contribuer à ce projet, n'oublié pas de consulter notre [guide de contribution](../../CONTRIBUTING.md).
