@@ -21,3 +21,5 @@ dist/pkgs/arch/*.tar.gz
 
 # Macos
 .DS_Store
+
+dist/pkgs/
