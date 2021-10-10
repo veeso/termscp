@@ -86,6 +86,11 @@
       src="https://img.shields.io/crates/v/termscp.svg"
       alt="Latest version"
   /></a>
+  <a href="https://www.buymeacoffee.com/veeso"
+    ><img
+      src="https://img.shields.io/badge/Donate-BuyMeACoffee-yellow.svg"
+      alt="Buy me a coffee"
+  /></a>
 </p>
 <p align="center">
   <a href="https://github.com/veeso/termscp/actions"
@@ -212,6 +217,10 @@ Ces requis ne sont pas obligatoires d'exécuter termscp, mais seulement à toute
 Si tu aime termscp et que tu aimerais voir le projet grandir et s'améliorer, voudrais considérer un petit don pour me soutenir sur **Buy me a coffee** 🥳
 
 [![Buy-me-a-coffee](https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20coffee&emoji=&slug=veeso&button_colour=404040&font_colour=ffffff&font_family=Comic&outline_colour=ffffff&coffee_colour=FFDD00)](https://www.buymeacoffee.com/veeso)
+
+ou, si tu préfére, tu peux également faire un don sur PayPal :
+
+[![Donate](https://img.shields.io/badge/Donate-PayPal-blue.svg)](https://www.paypal.me/chrisintin)
 
 ---
 
