@@ -24,7 +24,30 @@ cd target/release/
 PKG="termscp-v${VERSION}-x86_64-unknown-freebsd.tar.gz"
 tar czf $PKG termscp
 sha256sum $PKG
+# Calc sha256 of exec and copy to path
+HASH=`sha256sum termscp | cut -d ' ' -f1`
+sudo cp termscp /usr/local/bin/termscp
 mkdir -p ../../dist/pkgs/freebsd/
 mv $PKG ../../dist/pkgs/freebsd/$PKG
+cd ../../dist/pkgs/freebsd/
+rm manifest
+echo -e "name: \"termscp\"" > manifest
+echo -e "version: $VERSION" >> manifest
+echo -e "origin: veeso/termscp" >> manifest
+echo -e "comment: \"A feature rich terminal UI file transfer and explorer with support for SCP/SFTP/FTP/S3\"" >> manifest
+echo -e "desc: <<EOD\n\
+    A feature rich terminal UI file transfer and explorer with support for SCP/SFTP/FTP/S3\n\
+EOD\n\
+arch: \"amd64\"\n\
+www: \"https://veeso.github.io/termscp/\"\n\
+maintainer: \"christian.visintin1997@gmail.com\"\n\
+prefix: \"/usr/local/bin\"\n\
+deps: {\n\
+  libssh: {origin: security/libssh, version: 0.9.5}\n\
+}\n\
+files: {\n\
+  /usr/local/bin/termscp: \"$HASH\"\n\
+}\n\
+" >> manifest
 
 exit $?
