@@ -9,6 +9,7 @@ RUN apt update && apt install -y \
   libssl-dev \
   libssh2-1-dev \
   libdbus-1-dev \
+  bash \
   curl
 
 # Install rust
@@ -26,4 +27,4 @@ RUN . $HOME/.cargo/env && cargo build --release && cargo strip
 # Build pkgs
 RUN . $HOME/.cargo/env && cargo deb
 
-CMD ["sh"]
+CMD ["bash"]

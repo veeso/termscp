@@ -8,7 +8,8 @@ RUN yum -y install \
     openssl \
     pkgconfig \
     dbus-devel \
-    openssl-devel
+    openssl-devel \
+    bash
 # Install rust
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > /tmp/rust.sh && \
     chmod +x /tmp/rust.sh && \
