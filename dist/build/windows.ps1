@@ -14,7 +14,7 @@ cargo build --release
 # Make zip
 $zipName = "termscp-v$version-x86_64-pc-windows-msvc.zip"
 Set-Location .\target\release\
-Compress-Archive termscp $zipName
+Compress-Archive termscp.exe $zipName
 # Get checksum
 checksum.exe -t sha256 $zipName
 Move-Item $zipName .\..\..\dist\pkgs\windows\$zipName
