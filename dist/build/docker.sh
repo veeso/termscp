@@ -24,7 +24,7 @@ CONTAINER_NAME=$(docker create termscp-${VERSION}-x86_64_debian9 /bin/bash)
 docker cp ${CONTAINER_NAME}:/usr/src/termscp/target/debian/termscp_${VERSION}_amd64.deb ${PKGS_DIR}/deb/
 docker cp ${CONTAINER_NAME}:/usr/src/termscp/target/release/termscp ${PKGS_DIR}/x86_64-unknown-linux-gnu/
 # Make tar.gz
-cd ${PKGS_DIR}/x84_64-unknown-linux-gnu/
+cd ${PKGS_DIR}/x86_64-unknown-linux-gnu/
 tar cvzf termscp-v${VERSION}-x86_64-unknown-linux-gnu.tar.gz termscp
 rm termscp
 cd -
