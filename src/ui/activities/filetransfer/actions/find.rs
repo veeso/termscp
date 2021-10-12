@@ -27,7 +27,9 @@
  */
 // locals
 use super::super::browser::FileExplorerTab;
-use super::{FileTransferActivity, FsEntry, LogLevel, SelectedEntry, TransferPayload};
+use super::{
+    FileTransferActivity, FsEntry, LogLevel, SelectedEntry, TransferOpts, TransferPayload,
+};
 
 use std::path::PathBuf;
 
@@ -69,7 +71,7 @@ impl FileTransferActivity {
         }
     }
 
-    pub(crate) fn action_find_transfer(&mut self, save_as: Option<String>) {
+    pub(crate) fn action_find_transfer(&mut self, opts: TransferOpts) {
         let wrkdir: PathBuf = match self.browser.tab() {
             FileExplorerTab::FindLocal | FileExplorerTab::Local => self.remote().wrkdir.clone(),
             FileExplorerTab::FindRemote | FileExplorerTab::Remote => self.local().wrkdir.clone(),
@@ -77,10 +79,19 @@ impl FileTransferActivity {
         match self.get_found_selected_entries() {
             SelectedEntry::One(entry) => match self.browser.tab() {
                 FileExplorerTab::FindLocal | FileExplorerTab::Local => {
-                    if let Err(err) = self.filetransfer_send(
+                    let file_to_check = Self::file_to_check(&entry, opts.save_as.as_ref());
+                    if opts.check_replace
+                        && self.config().get_prompt_on_file_replace()
+                        && self.remote_file_exists(file_to_check.as_path())
+                    {
+                        // Save pending transfer
+                        self.set_pending_transfer(
+                            opts.save_as.as_deref().unwrap_or_else(|| entry.get_name()),
+                        );
+                    } else if let Err(err) = self.filetransfer_send(
                         TransferPayload::Any(entry.get_realfile()),
                         wrkdir.as_path(),
-                        save_as,
+                        opts.save_as,
                     ) {
                         self.log_and_alert(
                             LogLevel::Error,
@@ -90,10 +101,19 @@ impl FileTransferActivity {
                     }
                 }
                 FileExplorerTab::FindRemote | FileExplorerTab::Remote => {
-                    if let Err(err) = self.filetransfer_recv(
+                    let file_to_check = Self::file_to_check(&entry, opts.save_as.as_ref());
+                    if opts.check_replace
+                        && self.config().get_prompt_on_file_replace()
+                        && self.local_file_exists(file_to_check.as_path())
+                    {
+                        // Save pending transfer
+                        self.set_pending_transfer(
+                            opts.save_as.as_deref().unwrap_or_else(|| entry.get_name()),
+                        );
+                    } else if let Err(err) = self.filetransfer_recv(
                         TransferPayload::Any(entry.get_realfile()),
                         wrkdir.as_path(),
-                        save_as,
+                        opts.save_as,
                     ) {
                         self.log_and_alert(
                             LogLevel::Error,
@@ -106,13 +126,32 @@ impl FileTransferActivity {
             SelectedEntry::Many(entries) => {
                 // In case of selection: save multiple files in wrkdir/input
                 let mut dest_path: PathBuf = wrkdir;
-                if let Some(save_as) = save_as {
+                if let Some(save_as) = opts.save_as {
                     dest_path.push(save_as);
                 }
                 // Iter files
-                let entries = entries.iter().map(|x| x.get_realfile()).collect();
+                let entries: Vec<FsEntry> = entries.iter().map(|x| x.get_realfile()).collect();
                 match self.browser.tab() {
                     FileExplorerTab::FindLocal | FileExplorerTab::Local => {
+                        if opts.check_replace && self.config().get_prompt_on_file_replace() {
+                            // Check which file would be replaced
+                            let existing_files: Vec<&FsEntry> = entries
+                                .iter()
+                                .filter(|x| {
+                                    self.remote_file_exists(
+                                        Self::file_to_check_many(x, dest_path.as_path()).as_path(),
+                                    )
+                                })
+                                .collect();
+                            // Save pending transfer
+                            if !existing_files.is_empty() {
+                                self.set_pending_transfer_many(
+                                    existing_files,
+                                    &dest_path.to_string_lossy().to_owned(),
+                                );
+                                return;
+                            }
+                        }
                         if let Err(err) = self.filetransfer_send(
                             TransferPayload::Many(entries),
                             dest_path.as_path(),
@@ -128,6 +167,26 @@ impl FileTransferActivity {
                         }
                     }
                     FileExplorerTab::FindRemote | FileExplorerTab::Remote => {
+                        if opts.check_replace && self.config().get_prompt_on_file_replace() {
+                            // Check which file would be replaced
+                            let existing_files: Vec<&FsEntry> = entries
+                                .iter()
+                                .filter(|x| {
+                                    self.local_file_exists(
+                                        Self::file_to_check_many(x, dest_path.as_path()).as_path(),
+                                    )
+                                })
+                                .collect();
+                            // Save pending transfer
+                            // Save pending transfer
+                            if !existing_files.is_empty() {
+                                self.set_pending_transfer_many(
+                                    existing_files,
+                                    &dest_path.to_string_lossy().to_owned(),
+                                );
+                                return;
+                            }
+                        }
                         if let Err(err) = self.filetransfer_recv(
                             TransferPayload::Many(entries),
                             dest_path.as_path(),

@@ -29,6 +29,8 @@ use bytesize::ByteSize;
 use std::fmt;
 use std::time::Instant;
 
+// -- States and progress
+
 /// ### TransferStates
 ///
 /// TransferStates contains the states related to the transfer process
@@ -85,6 +87,13 @@ impl TransferStates {
     pub fn aborted(&self) -> bool {
         self.aborted
     }
+
+    /// ### full_size
+    ///
+    /// Returns the size of the entire transfer
+    pub fn full_size(&self) -> usize {
+        self.full.total
+    }
 }
 
 impl Default for ProgressStates {
@@ -140,6 +149,10 @@ impl ProgressStates {
     ///
     /// Calculate progress in a range between 0.0 to 1.0
     pub fn calc_progress(&self) -> f64 {
+        // Prevent dividing by 0
+        if self.total == 0 {
+            return 0.0;
+        }
         let prog: f64 = (self.written as f64) / (self.total as f64);
         match prog > 1.0 {
             true => 1.0,
@@ -191,6 +204,45 @@ impl ProgressStates {
     }
 }
 
+// -- Options
+
+/// ## TransferOpts
+///
+/// Defines the transfer options for transfer actions
+pub struct TransferOpts {
+    /// Save file as
+    pub save_as: Option<String>,
+    /// Whether to check if file is being replaced
+    pub check_replace: bool,
+}
+
+impl Default for TransferOpts {
+    fn default() -> Self {
+        Self {
+            save_as: None,
+            check_replace: true,
+        }
+    }
+}
+
+impl TransferOpts {
+    /// ### save_as
+    ///
+    /// Define the name of the file to be saved
+    pub fn save_as<S: AsRef<str>>(mut self, n: Option<S>) -> Self {
+        self.save_as = n.map(|x| x.as_ref().to_string());
+        self
+    }
+
+    /// ### check_replace
+    ///
+    /// Set whether to check if the file being transferred will "replace" an existing one
+    pub fn check_replace(mut self, opt: bool) -> Self {
+        self.check_replace = opt;
+        self
+    }
+}
+
 #[cfg(test)]
 mod test {
 
@@ -238,6 +290,11 @@ mod test {
         // Check if terminated at started
         states.started = Instant::now();
         assert_eq!(states.calc_bytes_per_second(), 1024);
+        // Divide by zero
+        let states: ProgressStates = ProgressStates::default();
+        assert_eq!(states.total, 0);
+        assert_eq!(states.written, 0);
+        assert_eq!(states.calc_progress(), 0.0);
     }
 
     #[test]
@@ -255,5 +312,19 @@ mod test {
         assert_eq!(states.aborted(), true);
         states.reset();
         assert_eq!(states.aborted(), false);
+        states.full.total = 1024;
+        assert_eq!(states.full_size(), 1024);
+    }
+
+    #[test]
+    fn transfer_opts() {
+        let opts = TransferOpts::default();
+        assert_eq!(opts.check_replace, true);
+        assert!(opts.save_as.is_none());
+        let opts = TransferOpts::default()
+            .check_replace(false)
+            .save_as(Some("omar.txt"));
+        assert_eq!(opts.save_as.as_deref().unwrap(), "omar.txt");
+        assert_eq!(opts.check_replace, false);
     }
 }

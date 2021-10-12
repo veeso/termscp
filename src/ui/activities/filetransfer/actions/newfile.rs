@@ -27,6 +27,7 @@
  */
 // locals
 use super::{FileTransferActivity, FsEntry, LogLevel};
+use std::fs::File;
 use std::path::PathBuf;
 
 impl FileTransferActivity {
@@ -99,24 +100,29 @@ impl FileTransferActivity {
                 };
                 if let FsEntry::File(local_file) = local_file {
                     // Create file
-                    match self.client.send_file(&local_file, file_path.as_path()) {
+                    let reader = Box::new(match File::open(tfile.path()) {
+                        Ok(f) => f,
+                        Err(err) => {
+                            self.log_and_alert(
+                                LogLevel::Error,
+                                format!("Could not open tempfile: {}", err),
+                            );
+                            return;
+                        }
+                    });
+                    match self
+                        .client
+                        .send_file_wno_stream(&local_file, file_path.as_path(), reader)
+                    {
                         Err(err) => self.log_and_alert(
                             LogLevel::Error,
                             format!("Could not create file \"{}\": {}", file_path.display(), err),
                         ),
-                        Ok(writer) => {
-                            // Finalize write
-                            if let Err(err) = self.client.on_sent(writer) {
-                                self.log_and_alert(
-                                    LogLevel::Warn,
-                                    format!("Could not finalize file: {}", err),
-                                );
-                            } else {
-                                self.log(
-                                    LogLevel::Info,
-                                    format!("Created file \"{}\"", file_path.display()),
-                                );
-                            }
+                        Ok(_) => {
+                            self.log(
+                                LogLevel::Info,
+                                format!("Created file \"{}\"", file_path.display()),
+                            );
                             // Reload files
                             self.reload_remote_dir();
                         }

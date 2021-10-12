@@ -1,6 +1,7 @@
 # Changelog
 
 - [Changelog](#changelog)
+  - [0.7.0](#070)
   - [0.6.1](#061)
   - [0.6.0](#060)
   - [0.5.1](#051)
@@ -19,6 +20,47 @@
   - [0.1.0](#010)
 
 ---
+
+## 0.7.0
+
+Released on 12/10/2021
+
+> 🍁 Autumn update 2021 🍇
+
+- **Aws S3** 🪣
+  - Added support for the aws-s3 protocol.
+  - Operate on your bucket directly from the file explorer.
+  - You can also save your buckets as bookmarks.
+  - Aws s3 reads credentials directly from your credentials file at `$HOME/.aws/credentials` or from environment. Read more in the user manual.
+- **Auto update** ⬇️
+  - Possibility to update termscp directly via GUI or CLI.
+  - Install update via CLI running `(sudo) termscp --update`.
+  - Install update via GUI from auth form: when the "new version message" is displayed press `<CTRL+R>`, then enter `YES` in the radio input asking whether to install the update.
+- **Notifications** 📫
+  - termscp will now send Desktop notifications in these cases
+    - on transfer completed (minimum transfer size can be specified in configuration; default 512MB)
+    - on transfer error (same as above)
+    - on update available
+  - Added "notifications enabled" in configuration (Default enabled)
+  - Added "Notifications: minimum transfer size": if transfer size is greater or equal than the specified value, notifications for transfer will be displayed.
+- **Prompt user when about to replace existing file on a file transfer** ❓
+  - Whenever a file transfer is about to replace an existing file on local/remote host, you will be prompted if you're sure you really want to replace that file.
+  - You may want to disable this option. You can go to configuration and set "Prompt when replacing existing files?" to "NO"
+- **❗ BREAKING CHANGES ❗**:
+  - Added a new key in themes: `misc_info_dialog`: if your theme won't load, just reload it. If you're using a customised theme, you can add to it the missing key via a text editor. Just edit the `theme.toml` in your `$CONFIG_DIR/termscp/theme.toml` and add `misc_info_dialog` (Read more in manual at Themes).
+- Enhancements:
+  - Reuse mounts in UI, in order to reduce executable size
+  - File list can now be "rewinded", which means that moving with arrows will now allow you to go from top to bottom of the list pressing `<UP>` and viceversa pressing `<DOWN>`.
+- Bugfix:
+  - Fixed [Issue 70](https://github.com/veeso/termscp/issues/70): Unable to type characters with `CTRL+ALT` (e.g. italian layout `CTRL+ALT+ò` => `@`) due to a crossterm issue. Fixed with tui-realm-stdlib `0.6.3`.
+- Dependencies:
+  - Added `notify_rust 4.5.3`
+  - Added `rust-s3 0.27-rc4`
+  - Added `self_update 0.27.0`
+  - Updated `argh` to `0.1.6`
+  - Updated `dirs` to `4.0.0`
+  - Updated `tui-realm-stdlib` to `0.6.3`
+  - Removed `ureq`
 
 ## 0.6.1
 

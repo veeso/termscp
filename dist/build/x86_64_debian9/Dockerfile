@@ -9,6 +9,7 @@ RUN apt update && apt install -y \
   libssl-dev \
   libssh2-1-dev \
   libdbus-1-dev \
+  bash \
   curl
 
 # Install rust
@@ -20,10 +21,10 @@ RUN git clone https://github.com/veeso/termscp.git
 # Set workdir to termscp
 WORKDIR /usr/src/termscp/
 # Install cargo deb
-RUN . $HOME/.cargo/env && cargo install cargo-deb
+RUN . $HOME/.cargo/env && cargo install cargo-deb cargo-strip
 # Build for x86_64
-RUN . $HOME/.cargo/env && cargo build --release
+RUN . $HOME/.cargo/env && cargo build --release && cargo strip
 # Build pkgs
 RUN . $HOME/.cargo/env && cargo deb
 
-CMD ["sh"]
+CMD ["bash"]

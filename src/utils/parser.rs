@@ -26,13 +26,17 @@
  * SOFTWARE.
  */
 // Locals
-use crate::filetransfer::{FileTransferParams, FileTransferProtocol};
+use crate::filetransfer::{
+    params::{AwsS3Params, GenericProtocolParams, ProtocolParams},
+    FileTransferParams, FileTransferProtocol,
+};
 #[cfg(not(test))] // NOTE: don't use configuration during tests
 use crate::system::config_client::ConfigClient;
 #[cfg(not(test))] // NOTE: don't use configuration during tests
 use crate::system::environment;
 
 // Ext
+use bytesize::ByteSize;
 use chrono::format::ParseError;
 use chrono::prelude::*;
 use regex::Regex;
@@ -43,15 +47,34 @@ use tuirealm::tui::style::Color;
 
 // Regex
 lazy_static! {
+
+    /**
+     * This regex matches the protocol used as option
+     * Regex matches:
+     * - group 1: Some(protocol) | None
+     * - group 2: Some(other args)
+    */
+    static ref REMOTE_OPT_PROTOCOL_REGEX: Regex = Regex::new(r"(?:([a-z0-9]+)://)?(?:(.+))").unwrap();
+
     /**
      * Regex matches:
-     *  - group 1: Some(protocol) | None
-     *  - group 2: Some(user) | None
-     *  - group 3: Address
-     *  - group 4: Some(port) | None
-     *  - group 5: Some(path) | None
+     *  - group 1: Some(user) | None
+     *  - group 2: Address
+     *  - group 3: Some(port) | None
+     *  - group 4: Some(path) | None
      */
-    static ref REMOTE_OPT_REGEX: Regex = Regex::new(r"(?:([a-z]+)://)?(?:([^@]+)@)?(?:([^:]+))(?::((?:[0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])(?:[0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])))?(?::([^:]+))?").ok().unwrap();
+    static ref REMOTE_GENERIC_OPT_REGEX: Regex = Regex::new(r"(?:([^@]+)@)?(?:([^:]+))(?::((?:[0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])(?:[0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])))?(?::([^:]+))?").ok().unwrap();
+
+    /**
+     * Regex matches:
+     * - group 1: Bucket
+     * - group 2: Region
+     * - group 3: Some(profile) | None
+     * - group 4: Some(path) | None
+     */
+    static ref REMOTE_S3_OPT_REGEX: Regex = Regex::new(r"(?:([^@]+)@)(?:([^:]+))(?::([a-zA-Z0-9][^:]+))?(?::([^:]+))?").unwrap();
+
+
     /**
      * Regex matches:
      * - group 1: Version
@@ -73,7 +96,15 @@ lazy_static! {
      * - group 6: blue
      */
     static ref COLOR_RGB_REGEX: Regex = Regex::new(r"^(rgb)?\(?([01]?\d\d?|2[0-4]\d|25[0-5])(\W+)([01]?\d\d?|2[0-4]\d|25[0-5])\W+(([01]?\d\d?|2[0-4]\d|25[0-5])\)?)").unwrap();
+    /**
+     * Regex matches:
+     * - group 1: amount (number)
+     * - group 4: unit (K, M, G, T, P)
+     */
+    static ref BYTESIZE_REGEX: Regex = Regex::new(r"(:?([0-9])+)( )*(:?[KMGTP])?B").unwrap();
 }
+
+// -- remote opts
 
 /// ### parse_remote_opt
 ///
@@ -93,10 +124,10 @@ lazy_static! {
 /// - sftp://172.26.104.1:4022
 /// - sftp://172.26.104.1
 /// - ...
-pub fn parse_remote_opt(remote: &str) -> Result<FileTransferParams, String> {
+pub fn parse_remote_opt(s: &str) -> Result<FileTransferParams, String> {
     // Set protocol to default protocol
     #[cfg(not(test))] // NOTE: don't use configuration during tests
-    let mut protocol: FileTransferProtocol = match environment::init_config_dir() {
+    let default_protocol: FileTransferProtocol = match environment::init_config_dir() {
         Ok(p) => match p {
             Some(p) => {
                 // Create config client
@@ -111,28 +142,60 @@ pub fn parse_remote_opt(remote: &str) -> Result<FileTransferParams, String> {
         Err(_) => FileTransferProtocol::Sftp,
     };
     #[cfg(test)] // NOTE: during test set protocol just to Sftp
-    let mut protocol: FileTransferProtocol = FileTransferProtocol::Sftp;
-    // Match against regex
-    match REMOTE_OPT_REGEX.captures(remote) {
+    let default_protocol: FileTransferProtocol = FileTransferProtocol::Sftp;
+    // Get protocol
+    let (protocol, s): (FileTransferProtocol, String) =
+        parse_remote_opt_protocol(s, default_protocol)?;
+    // Match against regex for protocol type
+    match protocol {
+        FileTransferProtocol::AwsS3 => parse_s3_remote_opt(s.as_str()),
+        protocol => parse_generic_remote_opt(s.as_str(), protocol),
+    }
+}
+
+/// ### parse_remote_opt_protocol
+///
+/// Parse protocol from CLI option. In case of success, return the protocol to be used and the remaining arguments
+fn parse_remote_opt_protocol(
+    s: &str,
+    default: FileTransferProtocol,
+) -> Result<(FileTransferProtocol, String), String> {
+    match REMOTE_OPT_PROTOCOL_REGEX.captures(s) {
         Some(groups) => {
-            // Match protocol
-            let mut port: u16 = 22;
-            if let Some(group) = groups.get(1) {
-                // Set protocol from group
-                let (m_protocol, m_port) = match FileTransferProtocol::from_str(group.as_str()) {
-                    Ok(proto) => match proto {
-                        FileTransferProtocol::Ftp(_) => (proto, 21),
-                        FileTransferProtocol::Scp => (proto, 22),
-                        FileTransferProtocol::Sftp => (proto, 22),
-                    },
-                    Err(_) => return Err(format!("Unknown protocol \"{}\"", group.as_str())),
-                };
-                // NOTE: tuple destructuring assignment is not supported yet :(
-                protocol = m_protocol;
-                port = m_port;
-            }
+            // Parse protocol or use default
+            let protocol = groups.get(1).map(|x| {
+                FileTransferProtocol::from_str(x.as_str())
+                    .map_err(|_| format!("Unknown protocol \"{}\"", x.as_str()))
+            });
+            let protocol = match protocol {
+                Some(Ok(protocol)) => protocol,
+                Some(Err(err)) => return Err(err),
+                None => default,
+            };
+            // Return protocol and remaining arguments
+            Ok((
+                protocol,
+                groups
+                    .get(2)
+                    .map(|x| x.as_str().to_string())
+                    .unwrap_or_default(),
+            ))
+        }
+        None => Err("Invalid args".to_string()),
+    }
+}
+
+/// ### parse_generic_remote_opt
+///
+/// Parse generic remote options
+fn parse_generic_remote_opt(
+    s: &str,
+    protocol: FileTransferProtocol,
+) -> Result<FileTransferParams, String> {
+    match REMOTE_GENERIC_OPT_REGEX.captures(s) {
+        Some(groups) => {
             // Match user
-            let username: Option<String> = match groups.get(2) {
+            let username: Option<String> = match groups.get(1) {
                 Some(group) => Some(group.as_str().to_string()),
                 None => match protocol {
                     // If group is empty, set to current user
@@ -143,25 +206,62 @@ pub fn parse_remote_opt(remote: &str) -> Result<FileTransferParams, String> {
                 },
             };
             // Get address
-            let address: String = match groups.get(3) {
+            let address: String = match groups.get(2) {
                 Some(group) => group.as_str().to_string(),
                 None => return Err(String::from("Missing address")),
             };
             // Get port
-            if let Some(group) = groups.get(4) {
-                port = match group.as_str().parse::<u16>() {
+            let port: u16 = match groups.get(3) {
+                Some(port) => match port.as_str().parse::<u16>() {
+                    // Try to parse port
                     Ok(p) => p,
-                    Err(err) => return Err(format!("Bad port \"{}\": {}", group.as_str(), err)),
-                };
-            }
+                    Err(err) => return Err(format!("Bad port \"{}\": {}", port.as_str(), err)),
+                },
+                None => match protocol {
+                    // Set port based on protocol
+                    FileTransferProtocol::Ftp(_) => 21,
+                    FileTransferProtocol::Scp => 22,
+                    FileTransferProtocol::Sftp => 22,
+                    _ => 22, // Doesn't matter
+                },
+            };
             // Get workdir
             let entry_directory: Option<PathBuf> =
-                groups.get(5).map(|group| PathBuf::from(group.as_str()));
-            Ok(FileTransferParams::new(address)
-                .port(port)
-                .protocol(protocol)
-                .username(username)
-                .entry_directory(entry_directory))
+                groups.get(4).map(|group| PathBuf::from(group.as_str()));
+            let params: ProtocolParams = ProtocolParams::Generic(
+                GenericProtocolParams::default()
+                    .address(address)
+                    .port(port)
+                    .username(username),
+            );
+            Ok(FileTransferParams::new(protocol, params).entry_directory(entry_directory))
+        }
+        None => Err(String::from("Bad remote host syntax!")),
+    }
+}
+
+/// ### parse_s3_remote_opt
+///
+/// Parse remote options for s3 protocol
+fn parse_s3_remote_opt(s: &str) -> Result<FileTransferParams, String> {
+    match REMOTE_S3_OPT_REGEX.captures(s) {
+        Some(groups) => {
+            let bucket: String = groups
+                .get(1)
+                .map(|x| x.as_str().to_string())
+                .unwrap_or_default();
+            let region: String = groups
+                .get(2)
+                .map(|x| x.as_str().to_string())
+                .unwrap_or_default();
+            let profile: Option<String> = groups.get(3).map(|x| x.as_str().to_string());
+            let entry_directory: Option<PathBuf> =
+                groups.get(4).map(|group| PathBuf::from(group.as_str()));
+            Ok(FileTransferParams::new(
+                FileTransferProtocol::AwsS3,
+                ProtocolParams::AwsS3(AwsS3Params::new(bucket, region, profile)),
+            )
+            .entry_directory(entry_directory))
         }
         None => Err(String::from("Bad remote host syntax!")),
     }
@@ -456,6 +556,57 @@ fn parse_rgb_color(color: &str) -> Option<Color> {
     })
 }
 
+#[derive(Debug, PartialEq)]
+enum ByteUnit {
+    Byte,
+    Kilobyte,
+    Megabyte,
+    Gigabyte,
+    Terabyte,
+    Petabyte,
+}
+
+impl FromStr for ByteUnit {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "B" => Ok(Self::Byte),
+            "KB" => Ok(Self::Kilobyte),
+            "MB" => Ok(Self::Megabyte),
+            "GB" => Ok(Self::Gigabyte),
+            "TB" => Ok(Self::Terabyte),
+            "PB" => Ok(Self::Petabyte),
+            _ => Err("Invalid unit"),
+        }
+    }
+}
+
+/// ### parse_bytesize
+///
+/// Parse bytes repr (e.g. `24 MB`) into `ByteSize`
+pub fn parse_bytesize<S: AsRef<str>>(bytes: S) -> Option<ByteSize> {
+    match BYTESIZE_REGEX.captures(bytes.as_ref()) {
+        None => None,
+        Some(groups) => {
+            let amount = groups
+                .get(1)
+                .map(|x| x.as_str().parse::<u64>().unwrap_or(0))?;
+            let unit = groups.get(4).map(|x| x.as_str().to_string());
+            let unit = format!("{}B", unit.unwrap_or_default());
+            let unit = ByteUnit::from_str(unit.as_str()).unwrap();
+            Some(match unit {
+                ByteUnit::Byte => ByteSize::b(amount),
+                ByteUnit::Gigabyte => ByteSize::gib(amount),
+                ByteUnit::Kilobyte => ByteSize::kib(amount),
+                ByteUnit::Megabyte => ByteSize::mib(amount),
+                ByteUnit::Petabyte => ByteSize::pib(amount),
+                ByteUnit::Terabyte => ByteSize::tib(amount),
+            })
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
 
@@ -470,107 +621,183 @@ mod tests {
         let result: FileTransferParams = parse_remote_opt(&String::from("172.26.104.1"))
             .ok()
             .unwrap();
-        assert_eq!(result.address, String::from("172.26.104.1"));
-        assert_eq!(result.port, 22);
+        let params = result.params.generic_params().unwrap();
         assert_eq!(result.protocol, FileTransferProtocol::Sftp);
-        assert!(result.username.is_some());
+        assert_eq!(params.address, String::from("172.26.104.1"));
+        assert_eq!(params.port, 22);
+        assert!(params.username.is_some());
         // User case
         let result: FileTransferParams = parse_remote_opt(&String::from("root@172.26.104.1"))
             .ok()
             .unwrap();
-        assert_eq!(result.address, String::from("172.26.104.1"));
-        assert_eq!(result.port, 22);
+        let params = result.params.generic_params().unwrap();
         assert_eq!(result.protocol, FileTransferProtocol::Sftp);
-        assert_eq!(result.username.unwrap(), String::from("root"));
+        assert_eq!(params.address, String::from("172.26.104.1"));
+        assert_eq!(params.port, 22);
+        assert_eq!(
+            params.username.as_deref().unwrap().to_string(),
+            String::from("root")
+        );
         assert!(result.entry_directory.is_none());
         // User + port
         let result: FileTransferParams = parse_remote_opt(&String::from("root@172.26.104.1:8022"))
             .ok()
             .unwrap();
-        assert_eq!(result.address, String::from("172.26.104.1"));
-        assert_eq!(result.port, 8022);
+        let params = result.params.generic_params().unwrap();
+        assert_eq!(params.address, String::from("172.26.104.1"));
+        assert_eq!(params.port, 8022);
+        assert_eq!(
+            params.username.as_deref().unwrap().to_string(),
+            String::from("root")
+        );
         assert_eq!(result.protocol, FileTransferProtocol::Sftp);
-        assert_eq!(result.username.unwrap(), String::from("root"));
         assert!(result.entry_directory.is_none());
         // Port only
         let result: FileTransferParams = parse_remote_opt(&String::from("172.26.104.1:4022"))
             .ok()
             .unwrap();
-        assert_eq!(result.address, String::from("172.26.104.1"));
-        assert_eq!(result.port, 4022);
+        let params = result.params.generic_params().unwrap();
         assert_eq!(result.protocol, FileTransferProtocol::Sftp);
-        assert!(result.username.is_some());
+        assert_eq!(params.address, String::from("172.26.104.1"));
+        assert_eq!(params.port, 4022);
+        assert!(params.username.is_some());
         assert!(result.entry_directory.is_none());
         // Protocol
         let result: FileTransferParams = parse_remote_opt(&String::from("ftp://172.26.104.1"))
             .ok()
             .unwrap();
-        assert_eq!(result.address, String::from("172.26.104.1"));
-        assert_eq!(result.port, 21); // Fallback to ftp default
+        let params = result.params.generic_params().unwrap();
         assert_eq!(result.protocol, FileTransferProtocol::Ftp(false));
-        assert!(result.username.is_none()); // Doesn't fall back
+        assert_eq!(params.address, String::from("172.26.104.1"));
+        assert_eq!(params.port, 21); // Fallback to ftp default
+        assert!(params.username.is_none()); // Doesn't fall back
         assert!(result.entry_directory.is_none());
         // Protocol
         let result: FileTransferParams = parse_remote_opt(&String::from("sftp://172.26.104.1"))
             .ok()
             .unwrap();
-        assert_eq!(result.address, String::from("172.26.104.1"));
-        assert_eq!(result.port, 22); // Fallback to sftp default
+        let params = result.params.generic_params().unwrap();
         assert_eq!(result.protocol, FileTransferProtocol::Sftp);
-        assert!(result.username.is_some()); // Doesn't fall back
+        assert_eq!(params.address, String::from("172.26.104.1"));
+        assert_eq!(params.port, 22); // Fallback to sftp default
+        assert!(params.username.is_some()); // Doesn't fall back
         assert!(result.entry_directory.is_none());
         let result: FileTransferParams = parse_remote_opt(&String::from("scp://172.26.104.1"))
             .ok()
             .unwrap();
-        assert_eq!(result.address, String::from("172.26.104.1"));
-        assert_eq!(result.port, 22); // Fallback to scp default
+        let params = result.params.generic_params().unwrap();
         assert_eq!(result.protocol, FileTransferProtocol::Scp);
-        assert!(result.username.is_some()); // Doesn't fall back
+        assert_eq!(params.address, String::from("172.26.104.1"));
+        assert_eq!(params.port, 22); // Fallback to scp default
+        assert!(params.username.is_some()); // Doesn't fall back
         assert!(result.entry_directory.is_none());
         // Protocol + user
         let result: FileTransferParams =
             parse_remote_opt(&String::from("ftps://anon@172.26.104.1"))
                 .ok()
                 .unwrap();
-        assert_eq!(result.address, String::from("172.26.104.1"));
-        assert_eq!(result.port, 21); // Fallback to ftp default
+        let params = result.params.generic_params().unwrap();
         assert_eq!(result.protocol, FileTransferProtocol::Ftp(true));
-        assert_eq!(result.username.unwrap(), String::from("anon"));
+        assert_eq!(params.address, String::from("172.26.104.1"));
+        assert_eq!(params.port, 21); // Fallback to ftp default
+        assert_eq!(
+            params.username.as_deref().unwrap().to_string(),
+            String::from("anon")
+        );
         assert!(result.entry_directory.is_none());
         // Path
         let result: FileTransferParams =
             parse_remote_opt(&String::from("root@172.26.104.1:8022:/var"))
                 .ok()
                 .unwrap();
-        assert_eq!(result.address, String::from("172.26.104.1"));
-        assert_eq!(result.port, 8022);
+        let params = result.params.generic_params().unwrap();
         assert_eq!(result.protocol, FileTransferProtocol::Sftp);
-        assert_eq!(result.username.unwrap(), String::from("root"));
+        assert_eq!(params.address, String::from("172.26.104.1"));
+        assert_eq!(params.port, 8022);
+        assert_eq!(
+            params.username.as_deref().unwrap().to_string(),
+            String::from("root")
+        );
         assert_eq!(result.entry_directory.unwrap(), PathBuf::from("/var"));
         // Port only
         let result: FileTransferParams = parse_remote_opt(&String::from("172.26.104.1:home"))
             .ok()
             .unwrap();
-        assert_eq!(result.address, String::from("172.26.104.1"));
-        assert_eq!(result.port, 22);
+        let params = result.params.generic_params().unwrap();
         assert_eq!(result.protocol, FileTransferProtocol::Sftp);
-        assert!(result.username.is_some());
+        assert_eq!(params.address, String::from("172.26.104.1"));
+        assert_eq!(params.port, 22);
+        assert!(params.username.is_some());
         assert_eq!(result.entry_directory.unwrap(), PathBuf::from("home"));
         // All together now
         let result: FileTransferParams =
             parse_remote_opt(&String::from("ftp://anon@172.26.104.1:8021:/tmp"))
                 .ok()
                 .unwrap();
-        assert_eq!(result.address, String::from("172.26.104.1"));
-        assert_eq!(result.port, 8021); // Fallback to ftp default
+        let params = result.params.generic_params().unwrap();
         assert_eq!(result.protocol, FileTransferProtocol::Ftp(false));
-        assert_eq!(result.username.unwrap(), String::from("anon"));
+        assert_eq!(params.address, String::from("172.26.104.1"));
+        assert_eq!(params.port, 8021); // Fallback to ftp default
+        assert_eq!(
+            params.username.as_deref().unwrap().to_string(),
+            String::from("anon")
+        );
         assert_eq!(result.entry_directory.unwrap(), PathBuf::from("/tmp"));
         // bad syntax
         // Bad protocol
         assert!(parse_remote_opt(&String::from("omar://172.26.104.1")).is_err());
         // Bad port
         assert!(parse_remote_opt(&String::from("scp://172.26.104.1:650000")).is_err());
+    }
+
+    #[test]
+    fn parse_aws_s3_opt() {
+        // Simple
+        let result: FileTransferParams =
+            parse_remote_opt(&String::from("s3://mybucket@eu-central-1"))
+                .ok()
+                .unwrap();
+        let params = result.params.s3_params().unwrap();
+        assert_eq!(result.protocol, FileTransferProtocol::AwsS3);
+        assert_eq!(result.entry_directory, None);
+        assert_eq!(params.bucket_name.as_str(), "mybucket");
+        assert_eq!(params.region.as_str(), "eu-central-1");
+        assert_eq!(params.profile, None);
+        // With profile
+        let result: FileTransferParams =
+            parse_remote_opt(&String::from("s3://mybucket@eu-central-1:default"))
+                .ok()
+                .unwrap();
+        let params = result.params.s3_params().unwrap();
+        assert_eq!(result.protocol, FileTransferProtocol::AwsS3);
+        assert_eq!(result.entry_directory, None);
+        assert_eq!(params.bucket_name.as_str(), "mybucket");
+        assert_eq!(params.region.as_str(), "eu-central-1");
+        assert_eq!(params.profile.as_deref(), Some("default"));
+        // With wrkdir only
+        let result: FileTransferParams =
+            parse_remote_opt(&String::from("s3://mybucket@eu-central-1:/foobar"))
+                .ok()
+                .unwrap();
+        let params = result.params.s3_params().unwrap();
+        assert_eq!(result.protocol, FileTransferProtocol::AwsS3);
+        assert_eq!(result.entry_directory, Some(PathBuf::from("/foobar")));
+        assert_eq!(params.bucket_name.as_str(), "mybucket");
+        assert_eq!(params.region.as_str(), "eu-central-1");
+        assert_eq!(params.profile, None);
+        // With all arguments
+        let result: FileTransferParams =
+            parse_remote_opt(&String::from("s3://mybucket@eu-central-1:default:/foobar"))
+                .ok()
+                .unwrap();
+        let params = result.params.s3_params().unwrap();
+        assert_eq!(result.protocol, FileTransferProtocol::AwsS3);
+        assert_eq!(result.entry_directory, Some(PathBuf::from("/foobar")));
+        assert_eq!(params.bucket_name.as_str(), "mybucket");
+        assert_eq!(params.region.as_str(), "eu-central-1");
+        assert_eq!(params.profile.as_deref(), Some("default"));
+        // -- bad args
+        assert!(parse_remote_opt(&String::from("s3://mybucket:default:/foobar")).is_err());
     }
 
     #[test]
@@ -885,5 +1112,26 @@ mod tests {
             Color::Rgb(255, 64, 32)
         );
         assert!(parse_color("redd").is_none());
+    }
+
+    #[test]
+    fn parse_byteunit() {
+        assert_eq!(ByteUnit::from_str("B").ok().unwrap(), ByteUnit::Byte);
+        assert_eq!(ByteUnit::from_str("KB").ok().unwrap(), ByteUnit::Kilobyte);
+        assert_eq!(ByteUnit::from_str("MB").ok().unwrap(), ByteUnit::Megabyte);
+        assert_eq!(ByteUnit::from_str("GB").ok().unwrap(), ByteUnit::Gigabyte);
+        assert_eq!(ByteUnit::from_str("TB").ok().unwrap(), ByteUnit::Terabyte);
+        assert_eq!(ByteUnit::from_str("PB").ok().unwrap(), ByteUnit::Petabyte);
+        assert!(ByteUnit::from_str("uB").is_err());
+    }
+
+    #[test]
+    fn parse_str_as_bytesize() {
+        assert_eq!(parse_bytesize("1024 B").unwrap().as_u64(), 1024);
+        assert_eq!(parse_bytesize("1024B").unwrap().as_u64(), 1024);
+        assert_eq!(parse_bytesize("10240 KB").unwrap().as_u64(), 10485760);
+        assert_eq!(parse_bytesize("2 GB").unwrap().as_u64(), 2147483648);
+        assert_eq!(parse_bytesize("1 TB").unwrap().as_u64(), 1099511627776);
+        assert!(parse_bytesize("1 XB").is_none());
     }
 }

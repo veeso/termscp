@@ -188,21 +188,27 @@ impl OwnStates {
 
     /// ### incr_list_index
     ///
-    /// Incremenet list index
-    pub fn incr_list_index(&mut self) {
+    /// Incremenet list index.
+    /// If `can_rewind` is `true` the index rewinds when boundary is reached
+    pub fn incr_list_index(&mut self, can_rewind: bool) {
         // Check if index is at last element
         if self.list_index + 1 < self.list_len() {
             self.list_index += 1;
+        } else if can_rewind {
+            self.list_index = 0;
         }
     }
 
     /// ### decr_list_index
     ///
     /// Decrement list index
-    pub fn decr_list_index(&mut self) {
+    /// If `can_rewind` is `true` the index rewinds when boundary is reached
+    pub fn decr_list_index(&mut self, can_rewind: bool) {
         // Check if index is bigger than 0
         if self.list_index > 0 {
             self.list_index -= 1;
+        } else if self.list_len() > 0 && can_rewind {
+            self.list_index = self.list_len() - 1;
         }
     }
 
@@ -388,25 +394,25 @@ impl Component for FileList {
             match key.code {
                 KeyCode::Down => {
                     // Update states
-                    self.states.incr_list_index();
+                    self.states.incr_list_index(true);
                     Msg::None
                 }
                 KeyCode::Up => {
                     // Update states
-                    self.states.decr_list_index();
+                    self.states.decr_list_index(true);
                     Msg::None
                 }
                 KeyCode::PageDown => {
                     // Update states
                     for _ in 0..8 {
-                        self.states.incr_list_index();
+                        self.states.incr_list_index(false);
                     }
                     Msg::None
                 }
                 KeyCode::PageUp => {
                     // Update states
                     for _ in 0..8 {
-                        self.states.decr_list_index();
+                        self.states.decr_list_index(false);
                     }
                     Msg::None
                 }
@@ -525,14 +531,21 @@ mod tests {
         assert_eq!(states.selected[0], 4);
         // Index
         states.init_list_states(2);
-        states.incr_list_index();
+        // Incr
+        states.incr_list_index(false);
         assert_eq!(states.list_index(), 1);
-        states.incr_list_index();
+        states.incr_list_index(false);
         assert_eq!(states.list_index(), 1);
-        states.decr_list_index();
+        states.incr_list_index(true);
         assert_eq!(states.list_index(), 0);
-        states.decr_list_index();
+        // Decr
+        states.list_index = 1;
+        states.decr_list_index(false);
         assert_eq!(states.list_index(), 0);
+        states.decr_list_index(false);
+        assert_eq!(states.list_index(), 0);
+        states.decr_list_index(true);
+        assert_eq!(states.list_index(), 1);
         // Try fixing index
         states.init_list_states(5);
         states.list_index = 4;

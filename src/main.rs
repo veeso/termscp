@@ -62,11 +62,17 @@ use system::logging;
 enum Task {
     Activity(NextActivity),
     ImportTheme(PathBuf),
+    InstallUpdate,
 }
 
 #[derive(FromArgs)]
 #[argh(description = "
-where positional can be: [protocol://user@address:port:wrkdir] [local-wrkdir]
+where positional can be: [address] [local-wrkdir]
+
+Address syntax can be:
+
+    - `protocol://user@address:port:wrkdir` for protocols such as Sftp, Scp, Ftp
+    - `s3://bucket-name@region:profile:/wrkdir` for Aws S3 protocol
 
 Please, report issues to <https://github.com/veeso/termscp>
 Please, consider supporting the author <https://www.buymeacoffee.com/veeso>")]
@@ -79,6 +85,12 @@ struct Args {
     quiet: bool,
     #[argh(option, short = 't', description = "import specified theme")]
     theme: Option<String>,
+    #[argh(
+        switch,
+        short = 'u',
+        description = "update termscp to the latest version"
+    )]
+    update: bool,
     #[argh(
         option,
         short = 'T',
@@ -172,6 +184,9 @@ fn parse_args(args: Args) -> Result<RunOpts, String> {
     if let Some(theme) = args.theme {
         run_opts.task = Task::ImportTheme(PathBuf::from(theme));
     }
+    if args.update {
+        run_opts.task = Task::InstallUpdate;
+    }
     // @! Ordinary mode
     // Remote argument
     if let Some(remote) = args.positional.get(0) {
@@ -180,7 +195,9 @@ fn parse_args(args: Args) -> Result<RunOpts, String> {
             Ok(mut remote) => {
                 // If password is provided, set password
                 if let Some(passwd) = args.password {
-                    remote = remote.password(Some(passwd));
+                    if let Some(mut params) = remote.params.mut_generic_params() {
+                        params.password = Some(passwd);
+                    }
                 }
                 // Set params
                 run_opts.remote = Some(remote);
@@ -209,25 +226,26 @@ fn parse_args(args: Args) -> Result<RunOpts, String> {
 fn read_password(run_opts: &mut RunOpts) -> Result<(), String> {
     // Initialize client if necessary
     if let Some(remote) = run_opts.remote.as_mut() {
-        debug!("User has specified remote options: address: {:?}, port: {:?}, protocol: {:?}, user: {:?}, password: {}", remote.address, remote.port, remote.protocol, remote.username, utils::fmt::shadow_password(remote.password.as_deref().unwrap_or("")));
-        if remote.password.is_none() {
-            // Ask password if unspecified
-            remote.password = match rpassword::read_password_from_tty(Some("Password: ")) {
-                Ok(p) => {
-                    if p.is_empty() {
-                        None
-                    } else {
-                        debug!(
-                            "Read password from tty: {}",
-                            utils::fmt::shadow_password(p.as_str())
-                        );
-                        Some(p)
+        if let Some(mut params) = remote.params.mut_generic_params() {
+            if params.password.is_none() {
+                // Ask password if unspecified
+                params.password = match rpassword::read_password_from_tty(Some("Password: ")) {
+                    Ok(p) => {
+                        if p.is_empty() {
+                            None
+                        } else {
+                            debug!(
+                                "Read password from tty: {}",
+                                utils::fmt::shadow_password(p.as_str())
+                            );
+                            Some(p)
+                        }
                     }
-                }
-                Err(_) => {
-                    return Err("Could not read password from prompt".to_string());
-                }
-            };
+                    Err(_) => {
+                        return Err("Could not read password from prompt".to_string());
+                    }
+                };
+            }
         }
     }
     Ok(())
@@ -245,6 +263,16 @@ fn run(mut run_opts: RunOpts) -> i32 {
             }
             Err(err) => {
                 eprintln!("{}", err);
+                1
+            }
+        },
+        Task::InstallUpdate => match support::install_update() {
+            Ok(msg) => {
+                println!("{}", msg);
+                0
+            }
+            Err(err) => {
+                eprintln!("Could not install update: {}", err);
                 1
             }
         },

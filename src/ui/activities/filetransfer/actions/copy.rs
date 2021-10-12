@@ -125,7 +125,7 @@ impl FileTransferActivity {
             Err(err) => match err.kind() {
                 FileTransferErrorType::UnsupportedFeature => {
                     // If copy is not supported, perform the tricky copy
-                    self.tricky_copy(entry, dest);
+                    let _ = self.tricky_copy(entry, dest);
                 }
                 _ => self.log_and_alert(
                     LogLevel::Error,
@@ -143,7 +143,7 @@ impl FileTransferActivity {
     /// ### tricky_copy
     ///
     /// Tricky copy will be used whenever copy command is not available on remote host
-    fn tricky_copy(&mut self, entry: FsEntry, dest: &Path) {
+    pub(super) fn tricky_copy(&mut self, entry: FsEntry, dest: &Path) -> Result<(), String> {
         // NOTE: VERY IMPORTANT; wait block must be umounted or something really bad will happen
         self.umount_wait();
         // match entry
@@ -157,7 +157,7 @@ impl FileTransferActivity {
                             LogLevel::Error,
                             format!("Copy failed: could not create temporary file: {}", err),
                         );
-                        return;
+                        return Err(String::from("Could not create temporary file"));
                     }
                 };
                 // Download file
@@ -170,7 +170,7 @@ impl FileTransferActivity {
                         LogLevel::Error,
                         format!("Copy failed: could not download to temporary file: {}", err),
                     );
-                    return;
+                    return Err(err);
                 }
                 // Get local fs entry
                 let tmpfile_entry: FsFile = match self.host.stat(tmpfile.path()) {
@@ -184,7 +184,7 @@ impl FileTransferActivity {
                                 err
                             ),
                         );
-                        return;
+                        return Err(err.to_string());
                     }
                 };
                 // Upload file to destination
@@ -202,8 +202,9 @@ impl FileTransferActivity {
                             err
                         ),
                     );
-                    return;
+                    return Err(err);
                 }
+                Ok(())
             }
             FsEntry::Directory(_) => {
                 let tempdir: tempfile::TempDir = match tempfile::TempDir::new() {
@@ -213,7 +214,7 @@ impl FileTransferActivity {
                             LogLevel::Error,
                             format!("Copy failed: could not create temporary directory: {}", err),
                         );
-                        return;
+                        return Err(err.to_string());
                     }
                 };
                 // Get path of dest
@@ -227,7 +228,7 @@ impl FileTransferActivity {
                         LogLevel::Error,
                         format!("Copy failed: failed to download file: {}", err),
                     );
-                    return;
+                    return Err(err);
                 }
                 // Stat dir
                 let tempdir_entry: FsEntry = match self.host.stat(tempdir_path.as_path()) {
@@ -241,7 +242,7 @@ impl FileTransferActivity {
                                 err
                             ),
                         );
-                        return;
+                        return Err(err.to_string());
                     }
                 };
                 // Upload to destination
@@ -255,8 +256,9 @@ impl FileTransferActivity {
                         LogLevel::Error,
                         format!("Copy failed: failed to send file: {}", err),
                     );
-                    return;
+                    return Err(err);
                 }
+                Ok(())
             }
         }
     }

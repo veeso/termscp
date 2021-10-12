@@ -3,7 +3,9 @@
 - [User manual 🎓](#user-manual-)
   - [Usage ❓](#usage-)
     - [Address argument 🌎](#address-argument-)
+      - [AWS S3 address argument](#aws-s3-address-argument)
       - [How Password can be provided 🔐](#how-password-can-be-provided-)
+  - [Aws S3 credentials 🦊](#aws-s3-credentials-)
   - [File explorer 📂](#file-explorer-)
     - [Keybindings ⌨](#keybindings-)
     - [Work on multiple files 🥷](#work-on-multiple-files-)
@@ -17,13 +19,16 @@
     - [SSH Key Storage 🔐](#ssh-key-storage-)
     - [File Explorer Format](#file-explorer-format)
   - [Themes 🎨](#themes-)
+    - [My theme won't load 😱](#my-theme-wont-load-)
     - [Styles 💈](#styles-)
       - [Authentication page](#authentication-page)
       - [Transfer page](#transfer-page)
       - [Misc](#misc)
   - [Text Editor ✏](#text-editor-)
-    - [How do I configure the text editor 🦥](#how-do-i-configure-the-text-editor-)
   - [Logging 🩺](#logging-)
+  - [Notifications 📫](#notifications-)
+
+> ❗ I need a help to translate this manual into German. If you want to contribute to the translations, please open a PR 🙏
 
 ## Usage ❓
 
@@ -35,6 +40,7 @@ termscp can be started with the following options:
 - `-c, --config` Open termscp starting from the configuration page
 - `-q, --quiet` Disable logging
 - `-t, --theme <path>` Import specified theme
+- `-u, --update` Update termscp to latest version
 - `-v, --version` Print version info
 - `-h, --help` Print help page
 
@@ -78,6 +84,20 @@ Let's see some example of this particular syntax, since it's very comfortable an
     termscp scp://omar@192.168.1.31:4022:/tmp
     ```
 
+#### AWS S3 address argument
+
+Aws S3 has a different syntax for CLI address argument, for obvious reasons, but I managed to keep it the more similar as possible to the generic address argument:
+
+```txt
+s3://<bucket-name>@<region>[:profile][:/wrkdir]
+```
+
+e.g.
+
+```txt
+s3://buckethead@eu-central-1:default:/assets
+```
+
 #### How Password can be provided 🔐
 
 You have probably noticed, that, when providing the address as argument, there's no way to provide the password.
@@ -86,6 +106,30 @@ Password can be basically provided through 3 ways when address argument is provi
 - `-P, --password` option: just use this CLI option providing the password. I strongly unrecommend this method, since it's very unsecure (since you might keep the password in the shell history)
 - Via `sshpass`: you can provide password via `sshpass`, e.g. `sshpass -f ~/.ssh/topsecret.key termscp cvisintin@192.168.1.31`
 - You will be prompted for it: if you don't use any of the previous methods, you will be prompted for the password, as happens with the more classics tools such as `scp`, `ssh`, etc.
+
+---
+
+## Aws S3 credentials 🦊
+
+In order to connect to an Aws S3 bucket you must obviously provide some credentials.
+There are basically two ways to achieve this, and as you've probably already noticed you **can't** do that via the authentication form.
+So these are the ways you can provide the credentials for s3:
+
+1. Use your credentials file: just configure the AWS cli via `aws configure` and your credentials should already be located at `~/.aws/credentials`. In case you're using a profile different from `default`, just provide it in the profile field in the authentication form.
+2. **Environment variables**: you can always provide your credentials as environment variables. Keep in mind that these credentials **will always override** the credentials located in the `credentials` file. See how to configure the environment below:
+
+    These should always be mandatory:
+
+    - `AWS_ACCESS_KEY_ID`: aws access key ID (usually starts with `AKIA...`)
+    - `AWS_SECRET_ACCESS_KEY`: the secret access key
+
+    In case you've configured a stronger security, you *may* require these too:
+
+    - `AWS_SECURITY_TOKEN`: security token
+    - `AWS_SESSION_TOKEN`: session token
+
+⚠️ Your credentials are safe: termscp won't manipulate these values directly! Your credentials are directly consumed by the **s3** crate.
+In case you've got some concern regarding security, please contact the library author on [Github](https://github.com/durch/rust-s3) ⚠️
 
 ---
 
@@ -155,9 +199,9 @@ All the actions are available when working with multiple files, but be aware tha
 ### Synchronized browsing ⏲️
 
 When enabled, synchronized browsing, will allow you to synchronize the navigation between the two panels.
-This means that whenever you'll change the working directory on one panel, the same action will be reproduced on the other panel. If you want to enable synchronized browsing just press `<Y>`; press twice to disable. While enabled, the synchronized browising state will be reported on the status bar on `ON`.
+This means that whenever you'll change the working directory on one panel, the same action will be reproduced on the other panel. If you want to enable synchronized browsing just press `<Y>`; press twice to disable. While enabled, the synchronized browsing state will be reported on the status bar on `ON`.
 
-*Warning*: at the moment, whenever you try to access an unexisting directory, you won't be prompted to create it. This might change in a future update.
+> ❗ at the moment, whenever you try to access an unexisting directory, you won't be prompted to create it. This might change in a future update.
 
 ### Open and Open With 🚪
 
@@ -191,14 +235,7 @@ Bookmarks will be saved, if possible at:
 - `FOLDERID_RoamingAppData\termscp\` on Windows
 
 For bookmarks only (this won't apply to recent hosts) it is also possible to save the password used to authenticate. The password is not saved by default and must be specified through the prompt when saving a new Bookmark.
-
-> I was very undecided about storing passwords in termscp. The reason? Saving a password on your computer might give access to a hacker to any server you've registered. But I must admit by myself that for many machines typing the password everytime is really boring, also many times I have to work with machines in LAN, which wouldn't provide any advantage to an attacker, So I came out with a good compromise for passwords.
-
-I warmly suggest you to follow these guidelines in order to decide whether you should or you shouldn't save passwords:
-
-- **DON'T** save passwords for machines which are exposed on the internet, save passwords only for machines in LAN
-- Make sure your machine is protected by attackers. If possible encrypt your disk and don't leave your PC unlocked while you're away.
-- Preferably, save passwords only when a compromising of the target machine wouldn't be a problem.
+If you're concerned about the security of the password saved for your bookmarks, please read the [chapter below 👀](#are-my-passwords-safe-).
 
 In order to create a new bookmark, just follow these steps:
 
@@ -214,12 +251,12 @@ whenever you want to use the previously saved connection, just press `<TAB>` to 
 
 ### Are my passwords Safe 😈
 
-Well, Yep 😉.
+Sure 😉.
 As said before, bookmarks are saved in your configuration directory along with passwords. Passwords are obviously not plain text, they are encrypted with **AES-128**. Does this make them safe? Absolutely! (except for BSD and WSL users 😢)
 
-On **Windows**, **Linux** and **MacOS** the passwords are stored, if possible (but should be), respectively in the *Windows Vault*, in the *system keyring* and into the *Keychain*. This is actually super-safe and is directly managed by your operating system.
+On **Windows**, **Linux** and **MacOS** the key used to encrypt passwords is stored, if possible (but should be), respectively in the *Windows Vault*, in the *system keyring* and into the *Keychain*. This is actually super-safe and is directly managed by your operating system.
 
-❗ Please, notice that if you're a Linux user, you should really read the [chapter below 👀](#linux-keyring), because the keyring might not be enabled or supported on your system!
+❗ Please, notice that if you're a Linux user, you'd better to read the [chapter below 👀](#linux-keyring), because the keyring might not be enabled or supported on your system!
 
 On *BSD* and *WSL*, on the other hand, the key used to encrypt your passwords is stored on your drive (at $HOME/.config/termscp). It is then, still possible to retrieve the key to decrypt passwords. Luckily, the location of the key guarantees your key can't be read by users different from yours, but yeah, I still wouldn't save the password for a server exposed on the internet 😉.
 
@@ -265,9 +302,12 @@ These parameters can be changed:
 - **Default Protocol**: the default protocol is the default value for the file transfer protocol to be used in termscp. This applies for the login page and for the address CLI argument.
 - **Show Hidden Files**: select whether hidden files shall be displayed by default. You will be able to decide whether to show or not hidden files at runtime pressing `A` anyway.
 - **Check for updates**: if set to `yes`, termscp will fetch the Github API to check if there is a new version of termscp available.
+- **Prompt when replacing existing files?**: If set to `yes`, termscp will prompt for confirmation you whenever a file transfer would cause an existing file on target host to be replaced.
 - **Group Dirs**: select whether directories should be groupped or not in file explorers. If `Display first` is selected, directories will be sorted using the configured method but displayed before files, viceversa if `Display last` is selected.
 - **Remote File formatter syntax**: syntax to display file info for each file in the remote explorer. See [File explorer format](#file-explorer-format)
 - **Local File formatter syntax**: syntax to display file info for each file in the local explorer. See [File explorer format](#file-explorer-format)
+- **Enable notifications?**: If set to `Yes`, notifications will be displayed.
+- **Notifications: minimum transfer size**: if transfer size is greater or equal than the specified value, notifications for transfer will be displayed. The accepted values are in format `{UNSIGNED} B/KB/MB/GB/TB/PB`
 
 ### SSH Key Storage 🔐
 
@@ -298,7 +338,7 @@ These are the keys supported by the formatter:
 - `CTIME`: Creation time (with syntax `%b %d %Y %H:%M`); Extra might be provided as the time syntax (e.g. `{CTIME:8:%H:%M}`)
 - `GROUP`: Owner group
 - `MTIME`: Last change time (with syntax `%b %d %Y %H:%M`); Extra might be provided as the time syntax (e.g. `{MTIME:8:%H:%M}`)
-- `NAME`: File name (Elided if longer than 24)
+- `NAME`: File name (Elided if longer than LENGTH)
 - `PEX`: File permissions (UNIX format)
 - `SIZE`: File size (omitted for directories)
 - `SYMLINK`: Symlink (if any `-> {FILE_PATH}`)
@@ -320,11 +360,29 @@ In order to create your own customization from termscp, all you have to do so is
 
 Here you can move with `<UP>` and `<DOWN>` to change the style you want to change, as shown in the gif below:
 
-![Themes](../assets/images/themes.gif)
+![Themes](https://github.com/veeso/termscp/blob/main/assets/images/themes.gif?raw=true)
 
 termscp supports both the traditional explicit hex (`#rrggbb`) and rgb `rgb(r, g, b)` syntax to provide colors, but also **[css colors](https://www.w3schools.com/cssref/css_colors.asp)** (such as `crimson`) are accepted 😉. There is also a special keywork which is `Default`. Default means that the color used will be the default foreground or background color based on the situation (foreground for texts and lines, background for well, guess what).
 
 As said before, you can also import theme files. You can take inspiration from or directly use one of the themes provided along with termscp, located in the `themes/` directory of this repository and import them running termscp as `termscp -t <theme_file>`. If everything was fine, it should tell you the theme has successfully been imported.
+
+### My theme won't load 😱
+
+This is probably due to a recent update which has broken the theme. Whenever I add a new key to themes, the saved theme won't load. To fix this issues there are two really quick-fix solutions:
+
+1. Reload theme: whenever I release an update I will also patch the "official" themes, so you just have to download it from the repository again and re-import the theme via `-t` option
+
+    ```sh
+    termscp -t <theme.toml>
+    ```
+
+2. Fix your theme: If you're using a custom theme, then you can edit via `vim` and add the missing key. The theme is located at `$CONFIG_DIR/termscp/theme.toml` where `$CONFIG_DIR` is:
+
+    - FreeBSD/GNU-Linux: `$HOME/.config/`
+    - MacOs: `$HOME/Library/Application Support`
+    - Windows: `%appdata%`
+
+    ❗ Missing keys are reported in the CHANGELOG under `BREAKING CHANGES` for the version you've just installed.
 
 ### Styles 💈
 
@@ -368,6 +426,7 @@ These styles applie to different part of the application.
 | Key               | Description                                 |
 |-------------------|---------------------------------------------|
 | misc_error_dialog | Color for error messages                    |
+| misc_info_dialog  | Color for info dialogs                      |
 | misc_input_dialog | Color for input dialogs (such as copy file) |
 | misc_keys         | Color of text for key strokes               |
 | misc_quit_dialog  | Color for quit dialogs                      |
@@ -382,10 +441,6 @@ termscp has, as you might have noticed, many features, one of these is the possi
 In case the file is located on remote host, the file will be first downloaded into your temporary file directory and then, **only** if changes were made to the file, re-uploaded to the remote host. termscp checks if you made changes to the file verifying the last modification time of the file.
 
 Just a reminder: **you can edit only textual file**; binary files are not supported.
-
-### How do I configure the text editor 🦥
-
-Text editor is automatically found using this [awesome crate](https://github.com/milkey-mouse/edit), if you want to change the text editor to use, change it in termscp configuration. [Read more](#configuration-️)
 
 ---
 
@@ -407,7 +462,7 @@ No. The reason is quite simple: when an issue happens, you must be able to know 
 
 > If trace level is set for logging, is the file going to reach a huge size?
 
-Probably not, unless you never quit termscp, but I think that's likely to happne. A long session may produce up to 10MB of log files (I said a long session), but I think a normal session won't exceed 2MB.
+Probably not, unless you never quit termscp, but I think that's unlikely to happen. A long session may produce up to 10MB of log files (I said a long session), but I think a normal session won't exceed 2MB.
 
 > I don't want logging, can I turn it off?
 
@@ -416,3 +471,18 @@ Yes, you can. Just start termscp with `-q or --quiet` option. You can alias term
 > Is logging safe?
 
 If you're concerned about security, the log file doesn't contain any plain password, so don't worry and exposes the same information the sibling file `bookmarks` reports.
+
+## Notifications 📫
+
+Termscp will send Desktop notifications for these kind of events:
+
+- on **Transfer completed**: The notification will be sent once a transfer has been successfully completed.
+  - ❗ The notification will be displayed only if the transfer total size is at least the specified `Notifications: minimum transfer size` in the configuration.
+- on **Transfer failed**: The notification will be sent once a transfer has failed due to an error.
+  - ❗ The notification will be displayed only if the transfer total size is at least the specified `Notifications: minimum transfer size` in the configuration.
+- on **Update available**: Whenever a new version of termscp is available, a notification will be displayed.
+- on **Update installed**: Whenever a new version of termscp has been installed, a notification will be displayed.
+- on **Update failed**: Whenever the installation of the update fails, a notification will be displayed.
+
+❗ If you prefer to keep notifications turned off, you can just enter setup and set `Enable notifications?` to `No` 😉.  
+❗ If you want to change the minimum transfer size to display notifications, you can change the value in the configuration with key `Notifications: minimum transfer size` and set it to whatever suits better for you 🙂.

@@ -83,6 +83,11 @@ pub struct Theme {
         deserialize_with = "deserialize_color",
         serialize_with = "serialize_color"
     )]
+    pub misc_info_dialog: Color,
+    #[serde(
+        deserialize_with = "deserialize_color",
+        serialize_with = "serialize_color"
+    )]
     pub misc_input_dialog: Color,
     #[serde(
         deserialize_with = "deserialize_color",
@@ -183,6 +188,7 @@ impl Default for Theme {
             auth_recents: Color::LightBlue,
             auth_username: Color::LightMagenta,
             misc_error_dialog: Color::Red,
+            misc_info_dialog: Color::LightYellow,
             misc_input_dialog: Color::Reset,
             misc_keys: Color::Cyan,
             misc_quit_dialog: Color::Yellow,
@@ -245,6 +251,7 @@ mod test {
         assert_eq!(theme.auth_recents, Color::LightBlue);
         assert_eq!(theme.auth_username, Color::LightMagenta);
         assert_eq!(theme.misc_error_dialog, Color::Red);
+        assert_eq!(theme.misc_info_dialog, Color::LightYellow);
         assert_eq!(theme.misc_input_dialog, Color::Reset);
         assert_eq!(theme.misc_keys, Color::Cyan);
         assert_eq!(theme.misc_quit_dialog, Color::Yellow);

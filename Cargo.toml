@@ -1,7 +1,7 @@
 [package]
 authors = ["Christian Visintin"]
 categories = ["command-line-utilities"]
-description = "termscp is a feature rich terminal file transfer and explorer with support for SCP/SFTP/FTP"
+description = "termscp is a feature rich terminal file transfer and explorer with support for SCP/SFTP/FTP/S3"
 documentation = "https://docs.rs/termscp"
 edition = "2018"
 homepage = "https://veeso.github.io/termscp/"
@@ -11,7 +11,7 @@ license = "MIT"
 name = "termscp"
 readme = "README.md"
 repository = "https://github.com/veeso/termscp"
-version = "0.6.1"
+version = "0.7.0"
 
 [package.metadata.rpm]
 package = "termscp"
@@ -22,28 +22,36 @@ buildflags = ["--release"]
 [package.metadata.rpm.targets]
 termscp = { path = "/usr/bin/termscp" }
 
+[package.metadata.deb]
+maintainer = "Christian Visintin <christian.visintin1997@gmail.com>"
+copyright = "2021, Christian Visintin <christian.visintin1997@gmail.com>"
+extended-description-file = "docs/misc/README.deb.txt"
+
 [[bin]]
 name = "termscp"
 path = "src/main.rs"
 
 [dependencies]
-argh = "0.1.5"
+argh = "0.1.6"
 bitflags = "1.3.2"
 bytesize = "1.1.0"
 chrono = "0.4.19"
 content_inspector = "0.2.4"
 crossterm = "0.20"
-dirs = "3.0.1"
+dirs = "4.0.0"
 edit = "0.1.3"
 hostname = "0.3.1"
 keyring = { version = "0.10.1", optional = true }
 lazy_static = "1.4.0"
 log = "0.4.14"
 magic-crypt = "3.1.7"
+notify-rust = { version = "4.5.3", default-features = false, features = [ "d" ] }
 open = "2.0.1"
 rand = "0.8.4"
 regex = "1.5.4"
 rpassword = "5.0.1"
+rust-s3 = { version = "0.27.0-rc4", default-features = false, features = [ "sync-native-tls", "sync" ] }
+self_update = { version = "0.27.0", features = [ "archive-tar", "archive-zip", "compression-flate2", "compression-zip-deflate" ] }
 serde = { version = "^1.0.0", features = [ "derive" ] }
 simplelog = "0.10.0"
 ssh2 = "0.9.0"
@@ -52,9 +60,8 @@ tempfile = "3.1.0"
 textwrap = "0.14.2"
 thiserror = "^1.0.0"
 toml = "0.5.8"
-tui-realm-stdlib = "0.6.0"
+tui-realm-stdlib = "0.6.3"
 tuirealm = "0.6.0"
-ureq = { version = "2.1.0", features = [ "json" ] }
 whoami = "1.1.1"
 wildmatch = "2.0.0"
 
@@ -63,7 +70,8 @@ pretty_assertions = "0.7.2"
 
 [features]
 default = [ "with-keyring" ]
-github-actions = []
+github-actions = [ ]
+with-s3-ci = []
 with-containers = []
 with-keyring = [ "keyring" ]
 

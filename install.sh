@@ -8,7 +8,7 @@
 #   -f, -y, --force, --yes
 #     Skip the confirmation prompt during installation
 
-TERMSCP_VERSION="0.6.1"
+TERMSCP_VERSION="0.7.0"
 GITHUB_URL="https://github.com/veeso/termscp/releases/download/v${TERMSCP_VERSION}"
 DEB_URL="${GITHUB_URL}/termscp_${TERMSCP_VERSION}_amd64.deb"
 RPM_URL="${GITHUB_URL}/termscp-${TERMSCP_VERSION}-1.x86_64.rpm"
@@ -278,7 +278,7 @@ install_bsd_cargo_deps() {
     set -e
     confirm "${YELLOW}libssh, gcc${NO_COLOR} are required to install ${GREEN}termscp${NO_COLOR}; would you like to proceed?"
     sudo="$(elevate_priv_ex /usr/local/bin)"
-    $sudo pkg install -y curl wget libssh gcc dbus
+    $sudo pkg install -y curl wget libssh gcc dbus pkgconf
     info "Dependencies installed successfully"
 }
 

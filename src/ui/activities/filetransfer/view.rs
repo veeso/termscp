@@ -40,13 +40,9 @@ use crate::utils::ui::draw_area_in;
 use bytesize::ByteSize;
 use std::path::PathBuf;
 use tui_realm_stdlib::{
-    input::{Input, InputPropsBuilder},
-    list::{List, ListPropsBuilder},
-    paragraph::{Paragraph, ParagraphPropsBuilder},
-    progress_bar::{ProgressBar, ProgressBarPropsBuilder},
-    radio::{Radio, RadioPropsBuilder},
-    span::{Span, SpanPropsBuilder},
-    table::{Table, TablePropsBuilder},
+    Input, InputPropsBuilder, List, ListPropsBuilder, Paragraph, ParagraphPropsBuilder,
+    ProgressBar, ProgressBarPropsBuilder, Radio, RadioPropsBuilder, Span, SpanPropsBuilder, Table,
+    TablePropsBuilder,
 };
 use tuirealm::props::{Alignment, PropsBuilder, TableBuilder, TextSpan};
 use tuirealm::tui::{
@@ -312,6 +308,34 @@ impl FileTransferActivity {
                     self.view.render(super::COMPONENT_RADIO_DELETE, f, popup);
                 }
             }
+            if let Some(props) = self.view.get_props(super::COMPONENT_RADIO_REPLACE) {
+                if props.visible {
+                    // NOTE: handle extended / normal modes
+                    if self.is_radio_replace_extended() {
+                        let popup = draw_area_in(f.size(), 50, 50);
+                        f.render_widget(Clear, popup);
+                        let popup_chunks = Layout::default()
+                            .direction(Direction::Vertical)
+                            .constraints(
+                                [
+                                    Constraint::Percentage(85), // List
+                                    Constraint::Percentage(15), // Radio
+                                ]
+                                .as_ref(),
+                            )
+                            .split(popup);
+                        self.view
+                            .render(super::COMPONENT_LIST_REPLACING_FILES, f, popup_chunks[0]);
+                        self.view
+                            .render(super::COMPONENT_RADIO_REPLACE, f, popup_chunks[1]);
+                    } else {
+                        let popup = draw_area_in(f.size(), 50, 10);
+                        f.render_widget(Clear, popup);
+                        // make popup
+                        self.view.render(super::COMPONENT_RADIO_REPLACE, f, popup);
+                    }
+                }
+            }
             if let Some(props) = self.view.get_props(super::COMPONENT_RADIO_DISCONNECT) {
                 if props.visible {
                     let popup = draw_area_in(f.size(), 30, 10);
@@ -382,20 +406,7 @@ impl FileTransferActivity {
     pub(super) fn mount_error(&mut self, text: &str) {
         // Mount
         let error_color = self.theme().misc_error_dialog;
-        self.view.mount(
-            super::COMPONENT_TEXT_ERROR,
-            Box::new(Paragraph::new(
-                ParagraphPropsBuilder::default()
-                    .with_foreground(error_color)
-                    .with_borders(Borders::ALL, BorderType::Rounded, error_color)
-                    .bold()
-                    .with_text_alignment(Alignment::Center)
-                    .with_texts(vec![TextSpan::from(text)])
-                    .build(),
-            )),
-        );
-        // Give focus to error
-        self.view.active(super::COMPONENT_TEXT_ERROR);
+        self.mount_text_dialog(super::COMPONENT_TEXT_ERROR, text, error_color);
     }
 
     /// ### umount_error
@@ -408,46 +419,21 @@ impl FileTransferActivity {
     pub(super) fn mount_fatal(&mut self, text: &str) {
         // Mount
         let error_color = self.theme().misc_error_dialog;
-        self.view.mount(
-            super::COMPONENT_TEXT_FATAL,
-            Box::new(Paragraph::new(
-                ParagraphPropsBuilder::default()
-                    .with_foreground(error_color)
-                    .with_borders(Borders::ALL, BorderType::Rounded, error_color)
-                    .bold()
-                    .with_text_alignment(Alignment::Center)
-                    .with_texts(vec![TextSpan::from(text)])
-                    .build(),
-            )),
-        );
-        // Give focus to error
-        self.view.active(super::COMPONENT_TEXT_FATAL);
+        self.mount_text_dialog(super::COMPONENT_TEXT_FATAL, text, error_color);
     }
 
     pub(super) fn mount_wait(&mut self, text: &str) {
-        self.mount_wait_ex(text, Color::Reset);
+        self.mount_wait_ex(text);
     }
 
     pub(super) fn mount_blocking_wait(&mut self, text: &str) {
-        self.mount_wait_ex(text, Color::Reset);
+        self.mount_wait_ex(text);
         self.view();
     }
 
-    fn mount_wait_ex(&mut self, text: &str, color: Color) {
-        // Mount
-        let mut builder: ParagraphPropsBuilder = ParagraphPropsBuilder::default();
-        builder
-            .with_foreground(color)
-            .with_borders(Borders::ALL, BorderType::Rounded, Color::White)
-            .bold()
-            .with_text_alignment(Alignment::Center)
-            .with_texts(vec![TextSpan::from(text)]);
-        self.view.mount(
-            super::COMPONENT_TEXT_WAIT,
-            Box::new(Paragraph::new(builder.build())),
-        );
-        // Give focus to info
-        self.view.active(super::COMPONENT_TEXT_WAIT);
+    fn mount_wait_ex(&mut self, text: &str) {
+        let color = self.theme().misc_info_dialog;
+        self.mount_text_dialog(super::COMPONENT_TEXT_WAIT, text, color);
     }
 
     pub(super) fn umount_wait(&mut self) {
@@ -460,20 +446,13 @@ impl FileTransferActivity {
     pub(super) fn mount_quit(&mut self) {
         // Protocol
         let quit_color = self.theme().misc_quit_dialog;
-        self.view.mount(
+        self.mount_radio_dialog(
             super::COMPONENT_RADIO_QUIT,
-            Box::new(Radio::new(
-                RadioPropsBuilder::default()
-                    .with_color(quit_color)
-                    .with_inverted_color(Color::Black)
-                    .with_borders(Borders::ALL, BorderType::Rounded, quit_color)
-                    .with_title("Are you sure you want to quit?", Alignment::Center)
-                    .with_options(&[String::from("Yes"), String::from("No")])
-                    .rewind(true)
-                    .build(),
-            )),
+            "Are you sure you want to quit?",
+            &["Yes", "No"],
+            0,
+            quit_color,
         );
-        self.view.active(super::COMPONENT_RADIO_QUIT);
     }
 
     /// ### umount_quit
@@ -489,20 +468,13 @@ impl FileTransferActivity {
     pub(super) fn mount_disconnect(&mut self) {
         // Protocol
         let quit_color = self.theme().misc_quit_dialog;
-        self.view.mount(
+        self.mount_radio_dialog(
             super::COMPONENT_RADIO_DISCONNECT,
-            Box::new(Radio::new(
-                RadioPropsBuilder::default()
-                    .with_color(quit_color)
-                    .with_inverted_color(Color::Black)
-                    .with_borders(Borders::ALL, BorderType::Rounded, quit_color)
-                    .with_title("Are you sure you want to disconnect?", Alignment::Center)
-                    .with_options(&[String::from("Yes"), String::from("No")])
-                    .rewind(true)
-                    .build(),
-            )),
+            "Are you sure you want to disconnect?",
+            &["Yes", "No"],
+            0,
+            quit_color,
         );
-        self.view.active(super::COMPONENT_RADIO_DISCONNECT);
     }
 
     /// ### umount_disconnect
@@ -514,17 +486,12 @@ impl FileTransferActivity {
 
     pub(super) fn mount_copy(&mut self) {
         let input_color = self.theme().misc_input_dialog;
-        self.view.mount(
+        self.mount_input_dialog(
             super::COMPONENT_INPUT_COPY,
-            Box::new(Input::new(
-                InputPropsBuilder::default()
-                    .with_borders(Borders::ALL, BorderType::Rounded, input_color)
-                    .with_foreground(input_color)
-                    .with_label("Copy file(s) to…", Alignment::Center)
-                    .build(),
-            )),
+            "Copy file(s) to…",
+            "",
+            input_color,
         );
-        self.view.active(super::COMPONENT_INPUT_COPY);
     }
 
     pub(super) fn umount_copy(&mut self) {
@@ -533,17 +500,12 @@ impl FileTransferActivity {
 
     pub(super) fn mount_exec(&mut self) {
         let input_color = self.theme().misc_input_dialog;
-        self.view.mount(
+        self.mount_input_dialog(
             super::COMPONENT_INPUT_EXEC,
-            Box::new(Input::new(
-                InputPropsBuilder::default()
-                    .with_borders(Borders::ALL, BorderType::Rounded, input_color)
-                    .with_foreground(input_color)
-                    .with_label("Execute command", Alignment::Center)
-                    .build(),
-            )),
+            "Execute command",
+            "",
+            input_color,
         );
-        self.view.active(super::COMPONENT_INPUT_EXEC);
     }
 
     pub(super) fn umount_exec(&mut self) {
@@ -590,18 +552,12 @@ impl FileTransferActivity {
 
     pub(super) fn mount_find_input(&mut self) {
         let input_color = self.theme().misc_input_dialog;
-        self.view.mount(
+        self.mount_input_dialog(
             super::COMPONENT_INPUT_FIND,
-            Box::new(Input::new(
-                InputPropsBuilder::default()
-                    .with_borders(Borders::ALL, BorderType::Rounded, input_color)
-                    .with_foreground(input_color)
-                    .with_label("Search files by name", Alignment::Center)
-                    .build(),
-            )),
+            "Search files by name",
+            "",
+            input_color,
         );
-        // Give focus to input find
-        self.view.active(super::COMPONENT_INPUT_FIND);
     }
 
     pub(super) fn umount_find_input(&mut self) {
@@ -611,17 +567,12 @@ impl FileTransferActivity {
 
     pub(super) fn mount_goto(&mut self) {
         let input_color = self.theme().misc_input_dialog;
-        self.view.mount(
+        self.mount_input_dialog(
             super::COMPONENT_INPUT_GOTO,
-            Box::new(Input::new(
-                InputPropsBuilder::default()
-                    .with_borders(Borders::ALL, BorderType::Rounded, input_color)
-                    .with_foreground(input_color)
-                    .with_label("Change working directory", Alignment::Center)
-                    .build(),
-            )),
+            "Change working directory",
+            "",
+            input_color,
         );
-        self.view.active(super::COMPONENT_INPUT_GOTO);
     }
 
     pub(super) fn umount_goto(&mut self) {
@@ -630,17 +581,12 @@ impl FileTransferActivity {
 
     pub(super) fn mount_mkdir(&mut self) {
         let input_color = self.theme().misc_input_dialog;
-        self.view.mount(
+        self.mount_input_dialog(
             super::COMPONENT_INPUT_MKDIR,
-            Box::new(Input::new(
-                InputPropsBuilder::default()
-                    .with_borders(Borders::ALL, BorderType::Rounded, input_color)
-                    .with_foreground(input_color)
-                    .with_label("Insert directory name", Alignment::Center)
-                    .build(),
-            )),
+            "Insert directory name",
+            "",
+            input_color,
         );
-        self.view.active(super::COMPONENT_INPUT_MKDIR);
     }
 
     pub(super) fn umount_mkdir(&mut self) {
@@ -649,17 +595,12 @@ impl FileTransferActivity {
 
     pub(super) fn mount_newfile(&mut self) {
         let input_color = self.theme().misc_input_dialog;
-        self.view.mount(
+        self.mount_input_dialog(
             super::COMPONENT_INPUT_NEWFILE,
-            Box::new(Input::new(
-                InputPropsBuilder::default()
-                    .with_borders(Borders::ALL, BorderType::Rounded, input_color)
-                    .with_foreground(input_color)
-                    .with_label("New file name", Alignment::Center)
-                    .build(),
-            )),
+            "New file name",
+            "",
+            input_color,
         );
-        self.view.active(super::COMPONENT_INPUT_NEWFILE);
     }
 
     pub(super) fn umount_newfile(&mut self) {
@@ -668,17 +609,12 @@ impl FileTransferActivity {
 
     pub(super) fn mount_openwith(&mut self) {
         let input_color = self.theme().misc_input_dialog;
-        self.view.mount(
+        self.mount_input_dialog(
             super::COMPONENT_INPUT_OPEN_WITH,
-            Box::new(Input::new(
-                InputPropsBuilder::default()
-                    .with_borders(Borders::ALL, BorderType::Rounded, input_color)
-                    .with_foreground(input_color)
-                    .with_label("Open file with…", Alignment::Center)
-                    .build(),
-            )),
+            "Open file with…",
+            "",
+            input_color,
         );
-        self.view.active(super::COMPONENT_INPUT_OPEN_WITH);
     }
 
     pub(super) fn umount_openwith(&mut self) {
@@ -687,17 +623,12 @@ impl FileTransferActivity {
 
     pub(super) fn mount_rename(&mut self) {
         let input_color = self.theme().misc_input_dialog;
-        self.view.mount(
+        self.mount_input_dialog(
             super::COMPONENT_INPUT_RENAME,
-            Box::new(Input::new(
-                InputPropsBuilder::default()
-                    .with_borders(Borders::ALL, BorderType::Rounded, input_color)
-                    .with_foreground(input_color)
-                    .with_label("Move file(s) to…", Alignment::Center)
-                    .build(),
-            )),
+            "Move file(s) to…",
+            "",
+            input_color,
         );
-        self.view.active(super::COMPONENT_INPUT_RENAME);
     }
 
     pub(super) fn umount_rename(&mut self) {
@@ -706,17 +637,7 @@ impl FileTransferActivity {
 
     pub(super) fn mount_saveas(&mut self) {
         let input_color = self.theme().misc_input_dialog;
-        self.view.mount(
-            super::COMPONENT_INPUT_SAVEAS,
-            Box::new(Input::new(
-                InputPropsBuilder::default()
-                    .with_borders(Borders::ALL, BorderType::Rounded, input_color)
-                    .with_foreground(input_color)
-                    .with_label("Save as…", Alignment::Center)
-                    .build(),
-            )),
-        );
-        self.view.active(super::COMPONENT_INPUT_SAVEAS);
+        self.mount_input_dialog(super::COMPONENT_INPUT_SAVEAS, "Save as…", "", input_color);
     }
 
     pub(super) fn umount_saveas(&mut self) {
@@ -777,25 +698,13 @@ impl FileTransferActivity {
             FileSorting::Name => 0,
             FileSorting::Size => 3,
         };
-        self.view.mount(
+        self.mount_radio_dialog(
             super::COMPONENT_RADIO_SORTING,
-            Box::new(Radio::new(
-                RadioPropsBuilder::default()
-                    .with_color(sorting_color)
-                    .with_inverted_color(Color::Black)
-                    .with_borders(Borders::ALL, BorderType::Rounded, sorting_color)
-                    .with_title("Sort files by", Alignment::Center)
-                    .with_options(&[
-                        String::from("Name"),
-                        String::from("Modify time"),
-                        String::from("Creation time"),
-                        String::from("Size"),
-                    ])
-                    .with_value(index)
-                    .build(),
-            )),
+            "Sort files by",
+            &["Name", "Modify time", "Creation time", "Size"],
+            index,
+            sorting_color,
         );
-        self.view.active(super::COMPONENT_RADIO_SORTING);
     }
 
     pub(super) fn umount_file_sorting(&mut self) {
@@ -804,25 +713,72 @@ impl FileTransferActivity {
 
     pub(super) fn mount_radio_delete(&mut self) {
         let warn_color = self.theme().misc_warn_dialog;
-        self.view.mount(
+        self.mount_radio_dialog(
             super::COMPONENT_RADIO_DELETE,
-            Box::new(Radio::new(
-                RadioPropsBuilder::default()
-                    .with_color(warn_color)
-                    .with_inverted_color(Color::Black)
-                    .with_borders(Borders::ALL, BorderType::Plain, warn_color)
-                    .with_title("Delete file", Alignment::Center)
-                    .with_options(&[String::from("Yes"), String::from("No")])
-                    .with_value(1)
-                    .rewind(true)
-                    .build(),
-            )),
+            "Delete file",
+            &["Yes", "No"],
+            1,
+            warn_color,
         );
-        self.view.active(super::COMPONENT_RADIO_DELETE);
     }
 
     pub(super) fn umount_radio_delete(&mut self) {
         self.view.umount(super::COMPONENT_RADIO_DELETE);
+    }
+
+    pub(super) fn mount_radio_replace(&mut self, file_name: &str) {
+        let warn_color = self.theme().misc_warn_dialog;
+        self.mount_radio_dialog(
+            super::COMPONENT_RADIO_REPLACE,
+            format!("File '{}' already exists. Overwrite file?", file_name),
+            &["Yes", "No"],
+            0,
+            warn_color,
+        );
+    }
+
+    pub(super) fn mount_radio_replace_many(&mut self, files: &[&str]) {
+        let warn_color = self.theme().misc_warn_dialog;
+        // Make rows
+        let rows = files.iter().map(|x| vec![TextSpan::new(x)]).collect();
+        self.view.mount(
+            super::COMPONENT_LIST_REPLACING_FILES,
+            Box::new(List::new(
+                ListPropsBuilder::default()
+                    .with_borders(Borders::ALL, BorderType::Rounded, warn_color)
+                    .scrollable(true)
+                    .with_highlighted_color(warn_color)
+                    .with_highlighted_str(Some("> "))
+                    .with_title(
+                        "The following files are going to be replaced",
+                        Alignment::Center,
+                    )
+                    .with_foreground(warn_color)
+                    .with_rows(rows)
+                    .build(),
+            )),
+        );
+        self.mount_radio_dialog(
+            super::COMPONENT_RADIO_REPLACE,
+            "Overwrite files?",
+            &["Yes", "No"],
+            0,
+            warn_color,
+        );
+    }
+
+    /// ### is_radio_replace_extended
+    ///
+    /// Returns whether radio replace is in "extended" mode (for many files)
+    pub(super) fn is_radio_replace_extended(&self) -> bool {
+        self.view
+            .get_state(super::COMPONENT_LIST_REPLACING_FILES)
+            .is_some()
+    }
+
+    pub(super) fn umount_radio_replace(&mut self) {
+        self.view.umount(super::COMPONENT_RADIO_REPLACE);
+        self.view.umount(super::COMPONENT_LIST_REPLACING_FILES); // NOTE: replace anyway
     }
 
     pub(super) fn mount_file_info(&mut self, file: &FsEntry) {
@@ -1112,5 +1068,66 @@ impl FileTransferActivity {
             true => "Show",
             false => "Hide",
         }
+    }
+
+    // -- Mount helpers
+
+    fn mount_text_dialog(&mut self, id: &str, text: &str, color: Color) {
+        // Mount
+        self.view.mount(
+            id,
+            Box::new(Paragraph::new(
+                ParagraphPropsBuilder::default()
+                    .with_borders(Borders::ALL, BorderType::Thick, color)
+                    .with_foreground(color)
+                    .bold()
+                    .with_text_alignment(Alignment::Center)
+                    .with_texts(vec![TextSpan::from(text)])
+                    .build(),
+            )),
+        );
+        // Give focus to error
+        self.view.active(id);
+    }
+
+    fn mount_input_dialog(&mut self, id: &str, text: &str, val: &str, color: Color) {
+        self.view.mount(
+            id,
+            Box::new(Input::new(
+                InputPropsBuilder::default()
+                    .with_foreground(color)
+                    .with_label(text, Alignment::Center)
+                    .with_borders(Borders::ALL, BorderType::Rounded, color)
+                    .with_value(val.to_string())
+                    .build(),
+            )),
+        );
+        self.view.active(id);
+    }
+
+    fn mount_radio_dialog<S: AsRef<str>>(
+        &mut self,
+        id: &str,
+        text: S,
+        opts: &[&str],
+        default: usize,
+        color: Color,
+    ) {
+        self.view.mount(
+            id,
+            Box::new(Radio::new(
+                RadioPropsBuilder::default()
+                    .with_color(color)
+                    .with_inverted_color(Color::Black)
+                    .with_borders(Borders::ALL, BorderType::Rounded, color)
+                    .with_title(text.as_ref(), Alignment::Center)
+                    .with_options(opts)
+                    .with_value(default)
+                    .rewind(true)
+                    .build(),
+            )),
+        );
+        // Active
+        self.view.active(id);
     }
 }

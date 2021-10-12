@@ -34,14 +34,13 @@ use crate::config::{
     bookmarks::{Bookmark, UserHosts},
     serialization::{deserialize, serialize, SerializerError, SerializerErrorKind},
 };
-use crate::filetransfer::FileTransferProtocol;
+use crate::filetransfer::FileTransferParams;
 use crate::utils::crypto;
 use crate::utils::fmt::fmt_time;
 use crate::utils::random::random_alphanumeric_with_len;
 // Ext
 use std::fs::OpenOptions;
 use std::path::{Path, PathBuf};
-use std::str::FromStr;
 use std::string::ToString;
 use std::time::SystemTime;
 
@@ -166,59 +165,45 @@ impl BookmarksClient {
     /// ### get_bookmark
     ///
     /// Get bookmark associated to key
-    pub fn get_bookmark(
-        &self,
-        key: &str,
-    ) -> Option<(String, u16, FileTransferProtocol, String, Option<String>)> {
-        let entry: &Bookmark = self.hosts.bookmarks.get(key)?;
+    pub fn get_bookmark(&self, key: &str) -> Option<FileTransferParams> {
         debug!("Getting bookmark {}", key);
-        Some((
-            entry.address.clone(),
-            entry.port,
-            match FileTransferProtocol::from_str(entry.protocol.as_str()) {
-                Ok(proto) => proto,
-                Err(err) => {
-                    error!(
-                        "Found invalid protocol in bookmarks: {}; defaulting to SFTP",
-                        err
-                    );
-                    FileTransferProtocol::Sftp // Default
+        let mut entry: Bookmark = self.hosts.bookmarks.get(key).cloned()?;
+        // Decrypt password first
+        if let Some(pwd) = entry.password.as_mut() {
+            match self.decrypt_str(pwd.as_str()) {
+                Ok(decrypted_pwd) => {
+                    *pwd = decrypted_pwd;
                 }
-            },
-            entry.username.clone(),
-            match &entry.password {
-                // Decrypted password if Some; if decryption fails return None
-                Some(pwd) => match self.decrypt_str(pwd.as_str()) {
-                    Ok(decrypted_pwd) => Some(decrypted_pwd),
-                    Err(err) => {
-                        error!("Failed to decrypt password for bookmark: {}", err);
-                        None
-                    }
-                },
-                None => None,
-            },
-        ))
+                Err(err) => {
+                    error!("Failed to decrypt password for bookmark: {}", err);
+                }
+            }
+        }
+        // Then convert into
+        Some(FileTransferParams::from(entry))
     }
 
     /// ### add_recent
     ///
     /// Add a new recent to bookmarks
-    pub fn add_bookmark(
+    pub fn add_bookmark<S: AsRef<str>>(
         &mut self,
-        name: String,
-        addr: String,
-        port: u16,
-        protocol: FileTransferProtocol,
-        username: String,
-        password: Option<String>,
+        name: S,
+        params: FileTransferParams,
+        save_password: bool,
     ) {
+        let name: String = name.as_ref().to_string();
         if name.is_empty() {
             error!("Fatal error; bookmark name is empty");
             panic!("Bookmark name can't be empty");
         }
         // Make bookmark
-        info!("Added bookmark {} with address {}", name, addr);
-        let host: Bookmark = self.make_bookmark(addr, port, protocol, username, password);
+        info!("Added bookmark {}", name);
+        let mut host: Bookmark = self.make_bookmark(params);
+        // If not save_password, set password to `None`
+        if !save_password {
+            host.password = None;
+        }
         self.hosts.bookmarks.insert(name, host);
     }
 
@@ -239,43 +224,25 @@ impl BookmarksClient {
     /// ### get_recent
     ///
     /// Get recent associated to key
-    pub fn get_recent(&self, key: &str) -> Option<(String, u16, FileTransferProtocol, String)> {
+    pub fn get_recent(&self, key: &str) -> Option<FileTransferParams> {
         // NOTE: password is not decrypted; recents will never have password
         info!("Getting bookmark {}", key);
-        let entry: &Bookmark = self.hosts.recents.get(key)?;
-        Some((
-            entry.address.clone(),
-            entry.port,
-            match FileTransferProtocol::from_str(entry.protocol.as_str()) {
-                Ok(proto) => proto,
-                Err(err) => {
-                    error!(
-                        "Found invalid protocol in bookmarks: {}; defaulting to SFTP",
-                        err
-                    );
-                    FileTransferProtocol::Sftp // Default
-                }
-            },
-            entry.username.clone(),
-        ))
+        let entry: Bookmark = self.hosts.recents.get(key).cloned()?;
+        Some(FileTransferParams::from(entry))
     }
 
     /// ### add_recent
     ///
     /// Add a new recent to bookmarks
-    pub fn add_recent(
-        &mut self,
-        addr: String,
-        port: u16,
-        protocol: FileTransferProtocol,
-        username: String,
-    ) {
+    pub fn add_recent(&mut self, params: FileTransferParams) {
         // Make bookmark
-        let host: Bookmark = self.make_bookmark(addr, port, protocol, username, None);
+        let mut host: Bookmark = self.make_bookmark(params);
+        // Null password for recents
+        host.password = None;
         // Check if duplicated
-        for recent_host in self.hosts.recents.values() {
-            if *recent_host == host {
-                debug!("Discarding recent since duplicated ({})", host.address);
+        for (key, value) in &self.hosts.recents {
+            if *value == host {
+                debug!("Discarding recent since duplicated ({})", key);
                 // Don't save duplicates
                 return;
             }
@@ -300,7 +267,7 @@ impl BookmarksClient {
             }
         }
         let name: String = fmt_time(SystemTime::now(), "ISO%Y%m%dT%H%M%S");
-        info!("Saved recent host {} ({})", name, host.address);
+        info!("Saved recent host {}", name);
         self.hosts.recents.insert(name, host);
     }
 
@@ -376,21 +343,13 @@ impl BookmarksClient {
     /// ### make_bookmark
     ///
     /// Make bookmark from credentials
-    fn make_bookmark(
-        &self,
-        addr: String,
-        port: u16,
-        protocol: FileTransferProtocol,
-        username: String,
-        password: Option<String>,
-    ) -> Bookmark {
-        Bookmark {
-            address: addr,
-            port,
-            username,
-            protocol: protocol.to_string(),
-            password: password.map(|p| self.encrypt_str(p.as_str())),
+    fn make_bookmark(&self, params: FileTransferParams) -> Bookmark {
+        let mut bookmark: Bookmark = Bookmark::from(params);
+        // Encrypt password
+        if let Some(pwd) = bookmark.password {
+            bookmark.password = Some(self.encrypt_str(pwd.as_str()));
         }
+        bookmark
     }
 
     /// ### encrypt_str
@@ -419,6 +378,8 @@ impl BookmarksClient {
 mod tests {
 
     use super::*;
+    use crate::filetransfer::params::GenericProtocolParams;
+    use crate::filetransfer::{FileTransferProtocol, ProtocolParams};
 
     use pretty_assertions::assert_eq;
     use std::thread::sleep;
@@ -473,19 +434,23 @@ mod tests {
             BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16).unwrap();
         // Add some bookmarks
         client.add_bookmark(
-            String::from("raspberry"),
-            String::from("192.168.1.31"),
-            22,
-            FileTransferProtocol::Sftp,
-            String::from("pi"),
-            Some(String::from("mypassword")),
+            "raspberry",
+            make_generic_ftparams(
+                FileTransferProtocol::Sftp,
+                "192.168.1.31",
+                22,
+                "pi",
+                Some("mypassword"),
+            ),
+            true,
         );
-        client.add_recent(
-            String::from("192.168.1.31"),
-            22,
+        client.add_recent(make_generic_ftparams(
             FileTransferProtocol::Sftp,
-            String::from("pi"),
-        );
+            "192.168.1.31",
+            22,
+            "pi",
+            Some("mypassword"),
+        ));
         let recent_key: String = String::from(client.iter_recents().next().unwrap());
         assert!(client.write_bookmarks().is_ok());
         let key: String = client.key.clone();
@@ -494,19 +459,18 @@ mod tests {
             BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16).unwrap();
         // Verify it loaded parameters correctly
         assert_eq!(client.key, key);
-        let bookmark: (String, u16, FileTransferProtocol, String, Option<String>) =
-            client.get_bookmark(&String::from("raspberry")).unwrap();
+        let bookmark = ftparams_to_tup(client.get_bookmark("raspberry").unwrap());
         assert_eq!(bookmark.0, String::from("192.168.1.31"));
         assert_eq!(bookmark.1, 22);
         assert_eq!(bookmark.2, FileTransferProtocol::Sftp);
         assert_eq!(bookmark.3, String::from("pi"));
         assert_eq!(*bookmark.4.as_ref().unwrap(), String::from("mypassword"));
-        let bookmark: (String, u16, FileTransferProtocol, String) =
-            client.get_recent(&recent_key).unwrap();
+        let bookmark = ftparams_to_tup(client.get_recent(&recent_key).unwrap());
         assert_eq!(bookmark.0, String::from("192.168.1.31"));
         assert_eq!(bookmark.1, 22);
         assert_eq!(bookmark.2, FileTransferProtocol::Sftp);
         assert_eq!(bookmark.3, String::from("pi"));
+        assert_eq!(bookmark.4, None);
     }
 
     #[test]
@@ -519,26 +483,31 @@ mod tests {
             BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16).unwrap();
         // Add bookmark
         client.add_bookmark(
-            String::from("raspberry"),
-            String::from("192.168.1.31"),
-            22,
-            FileTransferProtocol::Sftp,
-            String::from("pi"),
-            Some(String::from("mypassword")),
+            "raspberry",
+            make_generic_ftparams(
+                FileTransferProtocol::Sftp,
+                "192.168.1.31",
+                22,
+                "pi",
+                Some("mypassword"),
+            ),
+            true,
         );
         client.add_bookmark(
-            String::from("raspberry2"),
-            String::from("192.168.1.32"),
-            22,
-            FileTransferProtocol::Sftp,
-            String::from("pi"),
-            Some(String::from("mypassword2")),
+            "raspberry2",
+            make_generic_ftparams(
+                FileTransferProtocol::Sftp,
+                "192.168.1.31",
+                22,
+                "pi",
+                Some("mypassword2"),
+            ),
+            true,
         );
         // Iter
         assert_eq!(client.iter_bookmarks().count(), 2);
         // Get bookmark
-        let bookmark: (String, u16, FileTransferProtocol, String, Option<String>) =
-            client.get_bookmark(&String::from("raspberry")).unwrap();
+        let bookmark = ftparams_to_tup(client.get_bookmark(&String::from("raspberry")).unwrap());
         assert_eq!(bookmark.0, String::from("192.168.1.31"));
         assert_eq!(bookmark.1, 22);
         assert_eq!(bookmark.2, FileTransferProtocol::Sftp);
@@ -565,13 +534,43 @@ mod tests {
             BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16).unwrap();
         // Add bookmark
         client.add_bookmark(
-            String::from(""),
-            String::from("192.168.1.31"),
-            22,
-            FileTransferProtocol::Sftp,
-            String::from("pi"),
-            Some(String::from("mypassword")),
+            "",
+            make_generic_ftparams(
+                FileTransferProtocol::Sftp,
+                "192.168.1.31",
+                22,
+                "pi",
+                Some("mypassword"),
+            ),
+            true,
         );
+    }
+
+    #[test]
+    fn save_bookmark_wno_password() {
+        let tmp_dir: tempfile::TempDir = TempDir::new().ok().unwrap();
+        let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
+        // Initialize a new bookmarks client
+        let mut client: BookmarksClient =
+            BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16).unwrap();
+        // Add bookmark
+        client.add_bookmark(
+            "raspberry",
+            make_generic_ftparams(
+                FileTransferProtocol::Sftp,
+                "192.168.1.31",
+                22,
+                "pi",
+                Some("mypassword"),
+            ),
+            false,
+        );
+        let bookmark = ftparams_to_tup(client.get_bookmark(&String::from("raspberry")).unwrap());
+        assert_eq!(bookmark.0, String::from("192.168.1.31"));
+        assert_eq!(bookmark.1, 22);
+        assert_eq!(bookmark.2, FileTransferProtocol::Sftp);
+        assert_eq!(bookmark.3, String::from("pi"));
+        assert_eq!(bookmark.4, None);
     }
 
     #[test]
@@ -583,22 +582,23 @@ mod tests {
         let mut client: BookmarksClient =
             BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16).unwrap();
         // Add bookmark
-        client.add_recent(
-            String::from("192.168.1.31"),
-            22,
+        client.add_recent(make_generic_ftparams(
             FileTransferProtocol::Sftp,
-            String::from("pi"),
-        );
+            "192.168.1.31",
+            22,
+            "pi",
+            Some("mypassword"),
+        ));
         // Iter
         assert_eq!(client.iter_recents().count(), 1);
         let key: String = String::from(client.iter_recents().next().unwrap());
         // Get bookmark
-        let bookmark: (String, u16, FileTransferProtocol, String) =
-            client.get_recent(&key).unwrap();
+        let bookmark = ftparams_to_tup(client.get_recent(&key).unwrap());
         assert_eq!(bookmark.0, String::from("192.168.1.31"));
         assert_eq!(bookmark.1, 22);
         assert_eq!(bookmark.2, FileTransferProtocol::Sftp);
         assert_eq!(bookmark.3, String::from("pi"));
+        assert_eq!(bookmark.4, None);
         // Write bookmarks
         assert!(client.write_bookmarks().is_ok());
         // Delete bookmark
@@ -618,18 +618,20 @@ mod tests {
         let mut client: BookmarksClient =
             BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16).unwrap();
         // Add bookmark
-        client.add_recent(
-            String::from("192.168.1.31"),
-            22,
+        client.add_recent(make_generic_ftparams(
             FileTransferProtocol::Sftp,
-            String::from("pi"),
-        );
-        client.add_recent(
-            String::from("192.168.1.31"),
+            "192.168.1.31",
             22,
+            "pi",
+            Some("mypassword"),
+        ));
+        client.add_recent(make_generic_ftparams(
             FileTransferProtocol::Sftp,
-            String::from("pi"),
-        );
+            "192.168.1.31",
+            22,
+            "pi",
+            Some("mypassword"),
+        ));
         // There should be only one recent
         assert_eq!(client.iter_recents().count(), 1);
     }
@@ -644,39 +646,60 @@ mod tests {
             BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 2).unwrap();
         // Add recent, wait 1 second for each one (cause the name depends on time)
         // 1
-        client.add_recent(
-            String::from("192.168.1.1"),
-            22,
+        client.add_recent(make_generic_ftparams(
             FileTransferProtocol::Sftp,
-            String::from("pi"),
-        );
+            "192.168.1.1",
+            22,
+            "pi",
+            Some("mypassword"),
+        ));
         sleep(Duration::from_secs(1));
         // 2
-        client.add_recent(
-            String::from("192.168.1.2"),
-            22,
+        client.add_recent(make_generic_ftparams(
             FileTransferProtocol::Sftp,
-            String::from("pi"),
-        );
+            "192.168.1.2",
+            22,
+            "pi",
+            Some("mypassword"),
+        ));
         sleep(Duration::from_secs(1));
         // 3
-        client.add_recent(
-            String::from("192.168.1.3"),
-            22,
+        client.add_recent(make_generic_ftparams(
             FileTransferProtocol::Sftp,
-            String::from("pi"),
-        );
+            "192.168.1.3",
+            22,
+            "pi",
+            Some("mypassword"),
+        ));
         // Limit is 2
         assert_eq!(client.iter_recents().count(), 2);
         // Check that 192.168.1.1 has been removed
         let key: String = client.iter_recents().nth(0).unwrap().to_string();
         assert!(matches!(
-            client.hosts.recents.get(&key).unwrap().address.as_str(),
+            client
+                .hosts
+                .recents
+                .get(&key)
+                .unwrap()
+                .address
+                .as_ref()
+                .cloned()
+                .unwrap_or_default()
+                .as_str(),
             "192.168.1.2" | "192.168.1.3"
         ));
         let key: String = client.iter_recents().nth(1).unwrap().to_string();
         assert!(matches!(
-            client.hosts.recents.get(&key).unwrap().address.as_str(),
+            client
+                .hosts
+                .recents
+                .get(&key)
+                .unwrap()
+                .address
+                .as_ref()
+                .cloned()
+                .unwrap_or_default()
+                .as_str(),
             "192.168.1.2" | "192.168.1.3"
         ));
     }
@@ -691,12 +714,15 @@ mod tests {
             BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16).unwrap();
         // Add bookmark
         client.add_bookmark(
-            String::from(""),
-            String::from("192.168.1.31"),
-            22,
-            FileTransferProtocol::Sftp,
-            String::from("pi"),
-            Some(String::from("mypassword")),
+            "",
+            make_generic_ftparams(
+                FileTransferProtocol::Sftp,
+                "192.168.1.31",
+                22,
+                "pi",
+                Some("mypassword"),
+            ),
+            true,
         );
     }
 
@@ -723,5 +749,36 @@ mod tests {
         let mut c: PathBuf = k.clone();
         c.push("bookmarks.toml");
         (c, k)
+    }
+
+    fn make_generic_ftparams(
+        protocol: FileTransferProtocol,
+        address: &str,
+        port: u16,
+        username: &str,
+        password: Option<&str>,
+    ) -> FileTransferParams {
+        let params = ProtocolParams::Generic(
+            GenericProtocolParams::default()
+                .address(address)
+                .port(port)
+                .username(Some(username))
+                .password(password),
+        );
+        FileTransferParams::new(protocol, params)
+    }
+
+    fn ftparams_to_tup(
+        params: FileTransferParams,
+    ) -> (String, u16, FileTransferProtocol, String, Option<String>) {
+        let protocol = params.protocol;
+        let p = params.params.generic_params().unwrap();
+        (
+            p.address.to_string(),
+            p.port,
+            protocol,
+            p.username.as_ref().cloned().unwrap_or_default(),
+            p.password.as_ref().cloned(),
+        )
     }
 }

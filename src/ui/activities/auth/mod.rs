@@ -36,7 +36,7 @@ use super::{Activity, Context, ExitReason};
 use crate::config::themes::Theme;
 use crate::filetransfer::{FileTransferParams, FileTransferProtocol};
 use crate::system::bookmarks_client::BookmarksClient;
-use crate::utils::git;
+use crate::system::config_client::ConfigClient;
 
 // Includes
 use crossterm::event::Event;
@@ -51,17 +51,23 @@ const COMPONENT_TEXT_NEW_VERSION_NOTES: &str = "TEXTAREA_NEW_VERSION";
 const COMPONENT_TEXT_FOOTER: &str = "TEXT_FOOTER";
 const COMPONENT_TEXT_HELP: &str = "TEXT_HELP";
 const COMPONENT_TEXT_ERROR: &str = "TEXT_ERROR";
+const COMPONENT_TEXT_INFO: &str = "TEXT_INFO";
+const COMPONENT_TEXT_WAIT: &str = "TEXT_WAIT";
 const COMPONENT_TEXT_SIZE_ERR: &str = "TEXT_SIZE_ERR";
 const COMPONENT_INPUT_ADDR: &str = "INPUT_ADDRESS";
 const COMPONENT_INPUT_PORT: &str = "INPUT_PORT";
 const COMPONENT_INPUT_USERNAME: &str = "INPUT_USERNAME";
 const COMPONENT_INPUT_PASSWORD: &str = "INPUT_PASSWORD";
 const COMPONENT_INPUT_BOOKMARK_NAME: &str = "INPUT_BOOKMARK_NAME";
+const COMPONENT_INPUT_S3_BUCKET: &str = "INPUT_S3_BUCKET";
+const COMPONENT_INPUT_S3_REGION: &str = "INPUT_S3_REGION";
+const COMPONENT_INPUT_S3_PROFILE: &str = "INPUT_S3_PROFILE";
 const COMPONENT_RADIO_PROTOCOL: &str = "RADIO_PROTOCOL";
 const COMPONENT_RADIO_QUIT: &str = "RADIO_QUIT";
 const COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK: &str = "RADIO_DELETE_BOOKMARK";
 const COMPONENT_RADIO_BOOKMARK_DEL_RECENT: &str = "RADIO_DELETE_RECENT";
 const COMPONENT_RADIO_BOOKMARK_SAVE_PWD: &str = "RADIO_SAVE_PASSWORD";
+const COMPONENT_RADIO_INSTALL_UPDATE: &str = "RADIO_INSTALL_UPDATE";
 const COMPONENT_BOOKMARKS_LIST: &str = "BOOKMARKS_LIST";
 const COMPONENT_RECENTS_LIST: &str = "RECENTS_LIST";
 
@@ -104,45 +110,6 @@ impl AuthActivity {
         }
     }
 
-    /// ### on_create
-    ///
-    /// If enabled in configuration, check for updates from Github
-    fn check_for_updates(&mut self) {
-        debug!("Check for updates...");
-        // Check version only if unset in the store
-        let ctx: &mut Context = self.context_mut();
-        if !ctx.store().isset(STORE_KEY_LATEST_VERSION) {
-            debug!("Version is not set in storage");
-            if ctx.config().get_check_for_updates() {
-                debug!("Check for updates is enabled");
-                // Send request
-                match git::check_for_updates(env!("CARGO_PKG_VERSION")) {
-                    Ok(Some(git::GithubTag { tag_name, body })) => {
-                        // If some, store version and release notes
-                        info!("Latest version is: {}", tag_name);
-                        ctx.store_mut()
-                            .set_string(STORE_KEY_LATEST_VERSION, tag_name);
-                        ctx.store_mut().set_string(STORE_KEY_RELEASE_NOTES, body);
-                    }
-                    Ok(None) => {
-                        info!("Latest version is: {} (current)", env!("CARGO_PKG_VERSION"));
-                        // Just set flag as check
-                        ctx.store_mut().set(STORE_KEY_LATEST_VERSION);
-                    }
-                    Err(err) => {
-                        // Report error
-                        error!("Failed to get latest version: {}", err);
-                        self.mount_error(
-                            format!("Could not check for new updates: {}", err).as_str(),
-                        );
-                    }
-                }
-            } else {
-                info!("Check for updates is disabled");
-            }
-        }
-    }
-
     /// ### context
     ///
     /// Returns a reference to context
@@ -157,11 +124,28 @@ impl AuthActivity {
         self.context.as_mut().unwrap()
     }
 
+    /// ### config
+    ///
+    /// Returns config client reference
+    fn config(&self) -> &ConfigClient {
+        self.context().config()
+    }
+
     /// ### theme
     ///
     /// Returns a reference to theme
     fn theme(&self) -> &Theme {
         self.context().theme_provider().theme()
+    }
+
+    /// ### input_mask
+    ///
+    /// Get current input mask to show
+    fn input_mask(&self) -> InputMask {
+        match self.get_protocol() {
+            FileTransferProtocol::AwsS3 => InputMask::AwsS3,
+            _ => InputMask::Generic,
+        }
     }
 }
 
@@ -260,4 +244,13 @@ impl Activity for AuthActivity {
             None => None,
         }
     }
+}
+
+/// ## InputMask
+///
+/// Auth form input mask
+#[derive(Eq, PartialEq)]
+enum InputMask {
+    Generic,
+    AwsS3,
 }

@@ -36,17 +36,15 @@ pub(self) mod view;
 // locals
 use super::{Activity, Context, ExitReason};
 use crate::config::themes::Theme;
-use crate::filetransfer::ftp_transfer::FtpFileTransfer;
-use crate::filetransfer::scp_transfer::ScpFileTransfer;
-use crate::filetransfer::sftp_transfer::SftpFileTransfer;
 use crate::filetransfer::{FileTransfer, FileTransferProtocol};
+use crate::filetransfer::{FtpFileTransfer, S3FileTransfer, ScpFileTransfer, SftpFileTransfer};
 use crate::fs::explorer::FileExplorer;
 use crate::fs::FsEntry;
 use crate::host::Localhost;
 use crate::system::config_client::ConfigClient;
 pub(self) use lib::browser;
 use lib::browser::Browser;
-use lib::transfer::TransferStates;
+use lib::transfer::{TransferOpts, TransferStates};
 pub(self) use session::TransferPayload;
 
 // Includes
@@ -59,6 +57,7 @@ use tuirealm::View;
 // -- Storage keys
 
 const STORAGE_EXPLORER_WIDTH: &str = "FILETRANSFER_EXPLORER_WIDTH";
+const STORAGE_PENDING_TRANSFER: &str = "FILETRANSFER_PENDING_TRANSFER";
 
 // -- components
 
@@ -82,12 +81,14 @@ const COMPONENT_INPUT_OPEN_WITH: &str = "INPUT_OPEN_WITH";
 const COMPONENT_INPUT_RENAME: &str = "INPUT_RENAME";
 const COMPONENT_INPUT_SAVEAS: &str = "INPUT_SAVEAS";
 const COMPONENT_RADIO_DELETE: &str = "RADIO_DELETE";
+const COMPONENT_RADIO_REPLACE: &str = "RADIO_REPLACE"; // NOTE: used for file transfers, to choose whether to replace files
 const COMPONENT_RADIO_DISCONNECT: &str = "RADIO_DISCONNECT";
 const COMPONENT_RADIO_QUIT: &str = "RADIO_QUIT";
 const COMPONENT_RADIO_SORTING: &str = "RADIO_SORTING";
 const COMPONENT_SPAN_STATUS_BAR_LOCAL: &str = "STATUS_BAR_LOCAL";
 const COMPONENT_SPAN_STATUS_BAR_REMOTE: &str = "STATUS_BAR_REMOTE";
 const COMPONENT_LIST_FILEINFO: &str = "LIST_FILEINFO";
+const COMPONENT_LIST_REPLACING_FILES: &str = "LIST_REPLACING_FILES"; // NOTE: used for file transfers, to list files which are going to be replaced
 
 /// ## LogLevel
 ///
@@ -155,6 +156,7 @@ impl FileTransferActivity {
                 FileTransferProtocol::Scp => {
                     Box::new(ScpFileTransfer::new(Self::make_ssh_storage(&config_client)))
                 }
+                FileTransferProtocol::AwsS3 => Box::new(S3FileTransfer::default()),
             },
             browser: Browser::new(&config_client),
             log_records: VecDeque::with_capacity(256), // 256 events is enough I guess
@@ -290,12 +292,9 @@ impl Activity for FileTransferActivity {
         }
         // Check if connected (popup must be None, otherwise would try reconnecting in loop in case of error)
         if !self.client.is_connected() && self.view.get_props(COMPONENT_TEXT_FATAL).is_none() {
-            let params = self.context().ft_params().unwrap();
-            info!(
-                "Client is not connected to remote; connecting to {}:{}",
-                params.address, params.port
-            );
-            let msg: String = format!("Connecting to {}:{}…", params.address, params.port);
+            let ftparams = self.context().ft_params().unwrap();
+            // print params
+            let msg: String = Self::get_connection_msg(&ftparams.params);
             // Set init state to connecting popup
             self.mount_wait(msg.as_str());
             // Force ui draw

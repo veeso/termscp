@@ -182,7 +182,6 @@ impl SetupActivity {
             error!("Failed to disable raw mode: {}", err);
         }
         // Leave alternate mode
-        #[cfg(not(target_os = "windows"))]
         if let Some(ctx) = self.context.as_mut() {
             ctx.leave_alternate_screen();
         }
@@ -215,7 +214,6 @@ impl SetupActivity {
             }
         }
         // Restore terminal
-        #[cfg(not(target_os = "windows"))]
         if let Some(ctx) = self.context.as_mut() {
             // Clear screen
             ctx.clear_screen();
@@ -253,6 +251,9 @@ impl SetupActivity {
             }
             super::COMPONENT_COLOR_MISC_ERROR => {
                 theme.misc_error_dialog = color;
+            }
+            super::COMPONENT_COLOR_MISC_INFO => {
+                theme.misc_info_dialog = color;
             }
             super::COMPONENT_COLOR_MISC_INPUT => {
                 theme.misc_input_dialog = color;

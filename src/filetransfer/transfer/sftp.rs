@@ -1,4 +1,4 @@
-//! ## SFTP_Transfer
+//! ## SFTP transfer
 //!
 //! `sftp_transfer` is the module which provides the implementation for the SFTP file transfer
 
@@ -26,7 +26,9 @@
  * SOFTWARE.
  */
 // Locals
-use super::{FileTransfer, FileTransferError, FileTransferErrorType};
+use super::{
+    FileTransfer, FileTransferError, FileTransferErrorType, FileTransferResult, ProtocolParams,
+};
 use crate::fs::{FsDirectory, FsEntry, FsFile, UnixPex};
 use crate::system::sshkey_storage::SshKeyStorage;
 use crate::utils::fmt::{fmt_time, shadow_password};
@@ -64,7 +66,7 @@ impl SftpFileTransfer {
     /// ### get_abs_path
     ///
     /// Get absolute path from path argument and check if it exists
-    fn get_remote_path(&self, p: &Path) -> Result<PathBuf, FileTransferError> {
+    fn get_remote_path(&self, p: &Path) -> FileTransferResult<PathBuf> {
         match p.is_relative() {
             true => {
                 let mut root: PathBuf = self.wrkdir.clone();
@@ -202,7 +204,7 @@ impl SftpFileTransfer {
     /// ### perform_shell_cmd_with
     ///
     /// Perform a shell command, but change directory to specified path first
-    fn perform_shell_cmd_with_path(&mut self, cmd: &str) -> Result<String, FileTransferError> {
+    fn perform_shell_cmd_with_path(&mut self, cmd: &str) -> FileTransferResult<String> {
         self.perform_shell_cmd(format!("cd \"{}\"; {}", self.wrkdir.display(), cmd).as_str())
     }
 
@@ -210,7 +212,7 @@ impl SftpFileTransfer {
     ///
     /// Perform a shell command and read the output from shell
     /// This operation is, obviously, blocking.
-    fn perform_shell_cmd(&mut self, cmd: &str) -> Result<String, FileTransferError> {
+    fn perform_shell_cmd(&mut self, cmd: &str) -> FileTransferResult<String> {
         match self.session.as_mut() {
             Some(session) => {
                 // Create channel
@@ -257,17 +259,15 @@ impl FileTransfer for SftpFileTransfer {
     /// ### connect
     ///
     /// Connect to the remote server
-    fn connect(
-        &mut self,
-        address: String,
-        port: u16,
-        username: Option<String>,
-        password: Option<String>,
-    ) -> Result<Option<String>, FileTransferError> {
+    fn connect(&mut self, params: &ProtocolParams) -> FileTransferResult<Option<String>> {
+        let params = match params.generic_params() {
+            Some(params) => params,
+            None => return Err(FileTransferError::new(FileTransferErrorType::BadAddress)),
+        };
         // Setup tcp stream
-        info!("Connecting to {}:{}", address, port);
+        info!("Connecting to {}:{}", params.address, params.port);
         let socket_addresses: Vec<SocketAddr> =
-            match format!("{}:{}", address, port).to_socket_addrs() {
+            match format!("{}:{}", params.address, params.port).to_socket_addrs() {
                 Ok(s) => s.collect(),
                 Err(err) => {
                     return Err(FileTransferError::new_ex(
@@ -321,14 +321,14 @@ impl FileTransfer for SftpFileTransfer {
                 err.to_string(),
             ));
         }
-        let username: String = match username {
-            Some(u) => u,
+        let username: String = match &params.username {
+            Some(u) => u.to_string(),
             None => String::from(""),
         };
         // Check if it is possible to authenticate using a RSA key
         match self
             .key_storage
-            .resolve(address.as_str(), username.as_str())
+            .resolve(params.address.as_str(), username.as_str())
         {
             Some(rsa_key) => {
                 debug!(
@@ -341,7 +341,7 @@ impl FileTransfer for SftpFileTransfer {
                     username.as_str(),
                     None,
                     rsa_key.as_path(),
-                    password.as_deref(),
+                    params.password.as_deref(),
                 ) {
                     error!("Authentication failed: {}", err);
                     return Err(FileTransferError::new_ex(
@@ -355,11 +355,16 @@ impl FileTransfer for SftpFileTransfer {
                 debug!(
                     "Authenticating with username {} and password {}",
                     username,
-                    shadow_password(password.as_deref().unwrap_or(""))
+                    shadow_password(params.password.as_deref().unwrap_or(""))
                 );
                 if let Err(err) = session.userauth_password(
                     username.as_str(),
-                    password.unwrap_or_else(|| String::from("")).as_str(),
+                    params
+                        .password
+                        .as_ref()
+                        .cloned()
+                        .unwrap_or_else(|| String::from(""))
+                        .as_str(),
                 ) {
                     error!("Authentication failed: {}", err);
                     return Err(FileTransferError::new_ex(
@@ -410,7 +415,7 @@ impl FileTransfer for SftpFileTransfer {
     /// ### disconnect
     ///
     /// Disconnect from the remote server
-    fn disconnect(&mut self) -> Result<(), FileTransferError> {
+    fn disconnect(&mut self) -> FileTransferResult<()> {
         info!("Disconnecting from remote...");
         match self.session.as_ref() {
             Some(session) => {
@@ -444,7 +449,7 @@ impl FileTransfer for SftpFileTransfer {
     /// ### pwd
     ///
     /// Print working directory
-    fn pwd(&mut self) -> Result<PathBuf, FileTransferError> {
+    fn pwd(&mut self) -> FileTransferResult<PathBuf> {
         info!("PWD: {}", self.wrkdir.display());
         match self.sftp {
             Some(_) => Ok(self.wrkdir.clone()),
@@ -457,7 +462,7 @@ impl FileTransfer for SftpFileTransfer {
     /// ### change_dir
     ///
     /// Change working directory
-    fn change_dir(&mut self, dir: &Path) -> Result<PathBuf, FileTransferError> {
+    fn change_dir(&mut self, dir: &Path) -> FileTransferResult<PathBuf> {
         match self.sftp.as_ref() {
             Some(_) => {
                 // Change working directory
@@ -474,7 +479,7 @@ impl FileTransfer for SftpFileTransfer {
     /// ### copy
     ///
     /// Copy file to destination
-    fn copy(&mut self, src: &FsEntry, dst: &Path) -> Result<(), FileTransferError> {
+    fn copy(&mut self, src: &FsEntry, dst: &Path) -> FileTransferResult<()> {
         // NOTE: use SCP command to perform copy (UNSAFE)
         match self.is_connected() {
             true => {
@@ -520,7 +525,7 @@ impl FileTransfer for SftpFileTransfer {
     /// ### list_dir
     ///
     /// List directory entries
-    fn list_dir(&mut self, path: &Path) -> Result<Vec<FsEntry>, FileTransferError> {
+    fn list_dir(&mut self, path: &Path) -> FileTransferResult<Vec<FsEntry>> {
         match self.sftp.as_ref() {
             Some(sftp) => {
                 // Get path
@@ -553,7 +558,7 @@ impl FileTransfer for SftpFileTransfer {
     ///
     /// Make directory
     /// In case the directory already exists, it must return an Error of kind `FileTransferErrorType::DirectoryAlreadyExists`
-    fn mkdir(&mut self, dir: &Path) -> Result<(), FileTransferError> {
+    fn mkdir(&mut self, dir: &Path) -> FileTransferResult<()> {
         match self.sftp.as_ref() {
             Some(sftp) => {
                 // Make directory
@@ -583,7 +588,7 @@ impl FileTransfer for SftpFileTransfer {
     /// ### remove
     ///
     /// Remove a file or a directory
-    fn remove(&mut self, file: &FsEntry) -> Result<(), FileTransferError> {
+    fn remove(&mut self, file: &FsEntry) -> FileTransferResult<()> {
         if self.sftp.is_none() {
             return Err(FileTransferError::new(
                 FileTransferErrorType::UninitializedSession,
@@ -627,7 +632,7 @@ impl FileTransfer for SftpFileTransfer {
     /// ### rename
     ///
     /// Rename file or a directory
-    fn rename(&mut self, file: &FsEntry, dst: &Path) -> Result<(), FileTransferError> {
+    fn rename(&mut self, file: &FsEntry, dst: &Path) -> FileTransferResult<()> {
         match self.sftp.as_ref() {
             None => Err(FileTransferError::new(
                 FileTransferErrorType::UninitializedSession,
@@ -656,7 +661,7 @@ impl FileTransfer for SftpFileTransfer {
     /// ### stat
     ///
     /// Stat file and return FsEntry
-    fn stat(&mut self, path: &Path) -> Result<FsEntry, FileTransferError> {
+    fn stat(&mut self, path: &Path) -> FileTransferResult<FsEntry> {
         match self.sftp.as_ref() {
             Some(sftp) => {
                 // Get path
@@ -680,7 +685,7 @@ impl FileTransfer for SftpFileTransfer {
     /// ### exec
     ///
     /// Execute a command on remote host
-    fn exec(&mut self, cmd: &str) -> Result<String, FileTransferError> {
+    fn exec(&mut self, cmd: &str) -> FileTransferResult<String> {
         info!("Executing command {}", cmd);
         match self.is_connected() {
             true => match self.perform_shell_cmd_with_path(cmd) {
@@ -705,7 +710,7 @@ impl FileTransfer for SftpFileTransfer {
         &mut self,
         local: &FsFile,
         file_name: &Path,
-    ) -> Result<Box<dyn Write>, FileTransferError> {
+    ) -> FileTransferResult<Box<dyn Write>> {
         match self.sftp.as_ref() {
             None => Err(FileTransferError::new(
                 FileTransferErrorType::UninitializedSession,
@@ -746,7 +751,7 @@ impl FileTransfer for SftpFileTransfer {
     /// ### recv_file
     ///
     /// Receive file from remote with provided name
-    fn recv_file(&mut self, file: &FsFile) -> Result<Box<dyn Read>, FileTransferError> {
+    fn recv_file(&mut self, file: &FsFile) -> FileTransferResult<Box<dyn Read>> {
         match self.sftp.as_ref() {
             None => Err(FileTransferError::new(
                 FileTransferErrorType::UninitializedSession,
@@ -766,36 +771,21 @@ impl FileTransfer for SftpFileTransfer {
             }
         }
     }
-
-    /// ### on_sent
-    ///
-    /// Finalize send method. This method must be implemented only if necessary.
-    /// The purpose of this method is to finalize the connection with the peer when writing data.
-    /// This is necessary for some protocols such as FTP.
-    /// You must call this method each time you want to finalize the write of the remote file.
-    fn on_sent(&mut self, _writable: Box<dyn Write>) -> Result<(), FileTransferError> {
-        Ok(())
-    }
-
-    /// ### on_recv
-    ///
-    /// Finalize recv method. This method must be implemented only if necessary.
-    /// The purpose of this method is to finalize the connection with the peer when reading data.
-    /// This mighe be necessary for some protocols.
-    /// You must call this method each time you want to finalize the read of the remote file.
-    fn on_recv(&mut self, _readable: Box<dyn Read>) -> Result<(), FileTransferError> {
-        Ok(())
-    }
 }
 
 #[cfg(test)]
 mod tests {
 
     use super::*;
+    use crate::filetransfer::params::GenericProtocolParams;
     use crate::utils::test_helpers::make_fsentry;
     #[cfg(feature = "with-containers")]
-    use crate::utils::test_helpers::{create_sample_file_entry, write_file, write_ssh_key};
+    use crate::utils::test_helpers::{
+        create_sample_file, create_sample_file_entry, write_file, write_ssh_key,
+    };
     use pretty_assertions::assert_eq;
+    #[cfg(feature = "with-containers")]
+    use std::fs::File;
 
     #[test]
     fn test_filetransfer_sftp_new() {
@@ -814,12 +804,13 @@ mod tests {
         let (entry, file): (FsFile, tempfile::NamedTempFile) = create_sample_file_entry();
         // Connect
         assert!(client
-            .connect(
-                String::from("127.0.0.1"),
-                10022,
-                Some(String::from("sftp")),
-                Some(String::from("password"))
-            )
+            .connect(&ProtocolParams::Generic(
+                GenericProtocolParams::default()
+                    .address("127.0.0.1")
+                    .port(10022)
+                    .username(Some("sftp"))
+                    .password(Some("password"))
+            ))
             .is_ok());
         // Check session and sftp
         assert!(client.session.is_some());
@@ -889,6 +880,11 @@ mod tests {
             .unwrap();
         write_file(&file, &mut writable);
         assert!(client.on_sent(writable).is_ok());
+        // Upload file without stream
+        let reader = Box::new(File::open(entry.abs_path.as_path()).ok().unwrap());
+        assert!(client
+            .send_file_wno_stream(&entry, PathBuf::from("README2.md").as_path(), reader)
+            .is_ok());
         // Upload file (err)
         assert!(client
             .send_file(&entry, PathBuf::from("/ommlar/omarone").as_path())
@@ -898,10 +894,10 @@ mod tests {
             .list_dir(PathBuf::from("/tmp/omar").as_path())
             .ok()
             .unwrap();
-        assert_eq!(list.len(), 2);
+        assert_eq!(list.len(), 3);
         // Find
         assert_eq!(client.find("*.txt").ok().unwrap().len(), 1);
-        assert_eq!(client.find("*.md").ok().unwrap().len(), 1);
+        assert_eq!(client.find("*.md").ok().unwrap().len(), 2);
         assert_eq!(client.find("*.jpeg").ok().unwrap().len(), 0);
         // Rename
         assert!(client
@@ -955,6 +951,9 @@ mod tests {
         let mut data: Vec<u8> = vec![0; 1024];
         assert!(readable.read(&mut data).is_ok());
         assert!(client.on_recv(readable).is_ok());
+        let dest_file = create_sample_file();
+        // Receive file wno stream
+        assert!(client.recv_file_wno_stream(&file, dest_file.path()).is_ok());
         // Receive file (err)
         assert!(client.recv_file(&entry).is_err());
         // Cleanup
@@ -979,12 +978,13 @@ mod tests {
         let mut client: SftpFileTransfer = SftpFileTransfer::new(storage);
         // Connect
         assert!(client
-            .connect(
-                String::from("127.0.0.1"),
-                10022,
-                Some(String::from("sftp")),
-                None,
-            )
+            .connect(&ProtocolParams::Generic(
+                GenericProtocolParams::default()
+                    .address("127.0.0.1")
+                    .port(10022)
+                    .username(Some("sftp"))
+                    .password::<&str>(None)
+            ))
             .is_ok());
         assert_eq!(client.is_connected(), true);
         assert!(client.disconnect().is_ok());
@@ -994,12 +994,13 @@ mod tests {
     fn test_filetransfer_sftp_bad_auth() {
         let mut client: SftpFileTransfer = SftpFileTransfer::new(SshKeyStorage::empty());
         assert!(client
-            .connect(
-                String::from("127.0.0.1"),
-                10022,
-                Some(String::from("demo")),
-                Some(String::from("badpassword"))
-            )
+            .connect(&ProtocolParams::Generic(
+                GenericProtocolParams::default()
+                    .address("127.0.0.1")
+                    .port(10022)
+                    .username(Some("sftp"))
+                    .password(Some("badpassword"))
+            ))
             .is_err());
     }
 
@@ -1008,7 +1009,13 @@ mod tests {
     fn test_filetransfer_sftp_no_credentials() {
         let mut client: SftpFileTransfer = SftpFileTransfer::new(SshKeyStorage::empty());
         assert!(client
-            .connect(String::from("127.0.0.1"), 10022, None, None)
+            .connect(&ProtocolParams::Generic(
+                GenericProtocolParams::default()
+                    .address("127.0.0.1")
+                    .port(10022)
+                    .username::<&str>(None)
+                    .password::<&str>(None)
+            ))
             .is_err());
     }
 
@@ -1018,12 +1025,13 @@ mod tests {
         let mut client: SftpFileTransfer = SftpFileTransfer::new(SshKeyStorage::empty());
         // Connect
         assert!(client
-            .connect(
-                String::from("127.0.0.1"),
-                10022,
-                Some(String::from("sftp")),
-                Some(String::from("password"))
-            )
+            .connect(&ProtocolParams::Generic(
+                GenericProtocolParams::default()
+                    .address("127.0.0.1")
+                    .port(10022)
+                    .username(Some("sftp"))
+                    .password(Some("password"))
+            ))
             .is_ok());
         // get realpath
         assert!(client
@@ -1054,12 +1062,13 @@ mod tests {
     fn test_filetransfer_sftp_bad_server() {
         let mut client: SftpFileTransfer = SftpFileTransfer::new(SshKeyStorage::empty());
         assert!(client
-            .connect(
-                String::from("mybadserver.veryverybad.awful"),
-                22,
-                None,
-                None
-            )
+            .connect(&ProtocolParams::Generic(
+                GenericProtocolParams::default()
+                    .address("myverybad.verybad.server")
+                    .port(10022)
+                    .username(Some("sftp"))
+                    .password(Some("password"))
+            ))
             .is_err());
     }
 

@@ -141,16 +141,18 @@ where
 mod tests {
 
     use super::*;
+
+    use crate::config::bookmarks::{Bookmark, S3Params, UserHosts};
+    use crate::config::params::UserConfig;
+    use crate::config::themes::Theme;
+    use crate::filetransfer::FileTransferProtocol;
+    use crate::utils::test_helpers::create_file_ioers;
+
     use pretty_assertions::assert_eq;
     use std::collections::HashMap;
     use std::io::{Seek, SeekFrom};
     use std::path::PathBuf;
     use tuirealm::tui::style::Color;
-
-    use crate::config::bookmarks::{Bookmark, UserHosts};
-    use crate::config::params::UserConfig;
-    use crate::config::themes::Theme;
-    use crate::utils::test_helpers::create_file_ioers;
 
     #[test]
     fn test_config_serialization_errors() {
@@ -199,6 +201,9 @@ mod tests {
         assert_eq!(cfg.user_interface.text_editor, PathBuf::from("vim"));
         assert_eq!(cfg.user_interface.show_hidden_files, true);
         assert_eq!(cfg.user_interface.check_for_updates.unwrap(), true);
+        assert_eq!(cfg.user_interface.prompt_on_file_replace.unwrap(), false);
+        assert_eq!(cfg.user_interface.notifications.unwrap(), false);
+        assert_eq!(cfg.user_interface.notification_threshold.unwrap(), 1024);
         assert_eq!(cfg.user_interface.group_dirs, Some(String::from("last")));
         assert_eq!(
             cfg.user_interface.file_fmt,
@@ -242,8 +247,11 @@ mod tests {
         assert_eq!(cfg.user_interface.show_hidden_files, true);
         assert_eq!(cfg.user_interface.group_dirs, None);
         assert!(cfg.user_interface.check_for_updates.is_none());
+        assert!(cfg.user_interface.prompt_on_file_replace.is_none());
         assert!(cfg.user_interface.file_fmt.is_none());
         assert!(cfg.user_interface.remote_file_fmt.is_none());
+        assert!(cfg.user_interface.notifications.is_none());
+        assert!(cfg.user_interface.notification_threshold.is_none());
         // Verify keys
         assert_eq!(
             *cfg.remote
@@ -315,9 +323,12 @@ mod tests {
         text_editor = "vim"
         show_hidden_files = true
         check_for_updates = true
+        prompt_on_file_replace = false
         group_dirs = "last"
         file_fmt = "{NAME} {PEX}"
         remote_file_fmt = "{NAME} {USER}"
+        notifications = false
+        notification_threshold = 1024
 
         [remote.ssh_keys]
         "192.168.1.31" = "/home/omar/.ssh/raspberry.key"
@@ -373,31 +384,42 @@ mod tests {
         // Verify recents
         assert_eq!(hosts.recents.len(), 1);
         let host: &Bookmark = hosts.recents.get("ISO20201215T094000Z").unwrap();
-        assert_eq!(host.address, String::from("172.16.104.10"));
-        assert_eq!(host.port, 22);
-        assert_eq!(host.protocol, String::from("SCP"));
-        assert_eq!(host.username, String::from("root"));
+        assert_eq!(host.address.as_deref().unwrap(), "172.16.104.10");
+        assert_eq!(host.port.unwrap(), 22);
+        assert_eq!(host.protocol, FileTransferProtocol::Scp);
+        assert_eq!(host.username.as_deref().unwrap(), "root");
         assert_eq!(host.password, None);
         // Verify bookmarks
-        assert_eq!(hosts.bookmarks.len(), 3);
+        assert_eq!(hosts.bookmarks.len(), 4);
         let host: &Bookmark = hosts.bookmarks.get("raspberrypi2").unwrap();
-        assert_eq!(host.address, String::from("192.168.1.31"));
-        assert_eq!(host.port, 22);
-        assert_eq!(host.protocol, String::from("SFTP"));
-        assert_eq!(host.username, String::from("root"));
-        assert_eq!(*host.password.as_ref().unwrap(), String::from("mypassword"));
+        assert_eq!(host.address.as_deref().unwrap(), "192.168.1.31");
+        assert_eq!(host.port.unwrap(), 22);
+        assert_eq!(host.protocol, FileTransferProtocol::Sftp);
+        assert_eq!(host.username.as_deref().unwrap(), "root");
+        assert_eq!(host.password.as_deref().unwrap(), "mypassword");
         let host: &Bookmark = hosts.bookmarks.get("msi-estrem").unwrap();
-        assert_eq!(host.address, String::from("192.168.1.30"));
-        assert_eq!(host.port, 22);
-        assert_eq!(host.protocol, String::from("SFTP"));
-        assert_eq!(host.username, String::from("cvisintin"));
-        assert_eq!(*host.password.as_ref().unwrap(), String::from("mysecret"));
+        assert_eq!(host.address.as_deref().unwrap(), "192.168.1.30");
+        assert_eq!(host.port.unwrap(), 22);
+        assert_eq!(host.protocol, FileTransferProtocol::Sftp);
+        assert_eq!(host.username.as_deref().unwrap(), "cvisintin");
+        assert_eq!(host.password.as_deref().unwrap(), "mysecret");
         let host: &Bookmark = hosts.bookmarks.get("aws-server-prod1").unwrap();
-        assert_eq!(host.address, String::from("51.23.67.12"));
-        assert_eq!(host.port, 21);
-        assert_eq!(host.protocol, String::from("FTPS"));
-        assert_eq!(host.username, String::from("aws001"));
+        assert_eq!(host.address.as_deref().unwrap(), "51.23.67.12");
+        assert_eq!(host.port.unwrap(), 21);
+        assert_eq!(host.protocol, FileTransferProtocol::Ftp(true));
+        assert_eq!(host.username.as_deref().unwrap(), "aws001");
         assert_eq!(host.password, None);
+        // Aws s3 bucket
+        let host: &Bookmark = hosts.bookmarks.get("my-bucket").unwrap();
+        assert_eq!(host.address, None);
+        assert_eq!(host.port, None);
+        assert_eq!(host.username, None);
+        assert_eq!(host.password, None);
+        assert_eq!(host.protocol, FileTransferProtocol::AwsS3);
+        let s3 = host.s3.as_ref().unwrap();
+        assert_eq!(s3.bucket.as_str(), "veeso");
+        assert_eq!(s3.region.as_str(), "eu-west-1");
+        assert_eq!(s3.profile.as_deref().unwrap(), "default");
     }
 
     #[test]
@@ -416,32 +438,50 @@ mod tests {
         bookmarks.insert(
             String::from("raspberrypi2"),
             Bookmark {
-                address: String::from("192.168.1.31"),
-                port: 22,
-                protocol: String::from("SFTP"),
-                username: String::from("root"),
+                address: Some(String::from("192.168.1.31")),
+                port: Some(22),
+                protocol: FileTransferProtocol::Sftp,
+                username: Some(String::from("root")),
                 password: None,
+                s3: None,
             },
         );
         bookmarks.insert(
             String::from("msi-estrem"),
             Bookmark {
-                address: String::from("192.168.1.30"),
-                port: 4022,
-                protocol: String::from("SFTP"),
-                username: String::from("cvisintin"),
+                address: Some(String::from("192.168.1.30")),
+                port: Some(4022),
+                protocol: FileTransferProtocol::Sftp,
+                username: Some(String::from("cvisintin")),
                 password: Some(String::from("password")),
+                s3: None,
+            },
+        );
+        bookmarks.insert(
+            String::from("my-bucket"),
+            Bookmark {
+                address: None,
+                port: None,
+                protocol: FileTransferProtocol::AwsS3,
+                username: None,
+                password: None,
+                s3: Some(S3Params {
+                    bucket: "veeso".to_string(),
+                    region: "eu-west-1".to_string(),
+                    profile: None,
+                }),
             },
         );
         let mut recents: HashMap<String, Bookmark> = HashMap::with_capacity(1);
         recents.insert(
             String::from("ISO20201215T094000Z"),
             Bookmark {
-                address: String::from("192.168.1.254"),
-                port: 3022,
-                protocol: String::from("SCP"),
-                username: String::from("omar"),
+                address: Some(String::from("192.168.1.254")),
+                port: Some(3022),
+                protocol: FileTransferProtocol::Scp,
+                username: Some(String::from("omar")),
                 password: Some(String::from("aaa")),
+                s3: None,
             },
         );
         let tmpfile: tempfile::NamedTempFile = tempfile::NamedTempFile::new().unwrap();
@@ -482,6 +522,14 @@ mod tests {
         raspberrypi2 = { address = "192.168.1.31", port = 22, protocol = "SFTP", username = "root", password = "mypassword" }
         msi-estrem = { address = "192.168.1.30", port = 22, protocol = "SFTP", username = "cvisintin", password = "mysecret" }
         aws-server-prod1 = { address = "51.23.67.12", port = 21, protocol = "FTPS", username = "aws001" }
+        
+        [bookmarks.my-bucket]
+        protocol = "S3"
+
+        [bookmarks.my-bucket.s3]
+        bucket = "veeso"
+        region = "eu-west-1"
+        profile = "default"
 
         [recents]
         ISO20201215T094000Z = { address = "172.16.104.10", port = 22, protocol = "SCP", username = "root" }
@@ -497,7 +545,7 @@ mod tests {
         let file_content: &str = r#"
         [bookmarks]
         raspberrypi2 = { address = "192.168.1.31", port = 22, protocol = "SFTP", username = "root"}
-        msi-estrem = { address = "192.168.1.30", port = 22, protocol = "SFTP" }
+        msi-estrem = { address = "192.168.1.30", port = 22 }
         aws-server-prod1 = { address = "51.23.67.12", port = 21, protocol = "FTPS", username = "aws001" }
 
         [recents]
@@ -517,6 +565,7 @@ mod tests {
         auth_recents = "LightBlue"
         auth_username = "LightMagenta"
         misc_error_dialog = "Red"
+        misc_info_dialog = "LightYellow"
         misc_input_dialog = "240,240,240"
         misc_keys = "Cyan"
         misc_quit_dialog = "Yellow"

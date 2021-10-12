@@ -27,12 +27,14 @@
  */
 // locals
 use super::{
-    AuthActivity, FileTransferProtocol, COMPONENT_BOOKMARKS_LIST, COMPONENT_INPUT_ADDR,
+    AuthActivity, FileTransferProtocol, InputMask, COMPONENT_BOOKMARKS_LIST, COMPONENT_INPUT_ADDR,
     COMPONENT_INPUT_BOOKMARK_NAME, COMPONENT_INPUT_PASSWORD, COMPONENT_INPUT_PORT,
+    COMPONENT_INPUT_S3_BUCKET, COMPONENT_INPUT_S3_PROFILE, COMPONENT_INPUT_S3_REGION,
     COMPONENT_INPUT_USERNAME, COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK,
     COMPONENT_RADIO_BOOKMARK_DEL_RECENT, COMPONENT_RADIO_BOOKMARK_SAVE_PWD,
-    COMPONENT_RADIO_PROTOCOL, COMPONENT_RADIO_QUIT, COMPONENT_RECENTS_LIST, COMPONENT_TEXT_ERROR,
-    COMPONENT_TEXT_HELP, COMPONENT_TEXT_NEW_VERSION_NOTES, COMPONENT_TEXT_SIZE_ERR,
+    COMPONENT_RADIO_INSTALL_UPDATE, COMPONENT_RADIO_PROTOCOL, COMPONENT_RADIO_QUIT,
+    COMPONENT_RECENTS_LIST, COMPONENT_TEXT_ERROR, COMPONENT_TEXT_HELP, COMPONENT_TEXT_INFO,
+    COMPONENT_TEXT_NEW_VERSION_NOTES, COMPONENT_TEXT_SIZE_ERR, COMPONENT_TEXT_WAIT,
 };
 use crate::ui::keymap::*;
 use tui_realm_stdlib::InputPropsBuilder;
@@ -53,54 +55,80 @@ impl Update for AuthActivity {
             Some(msg) => match msg {
                 // Focus ( DOWN )
                 (COMPONENT_RADIO_PROTOCOL, key) if key == &MSG_KEY_DOWN => {
-                    // Give focus to port
-                    self.view.active(COMPONENT_INPUT_ADDR);
+                    // Give focus based on current mask
+                    match self.input_mask() {
+                        InputMask::Generic => self.view.active(COMPONENT_INPUT_ADDR),
+                        InputMask::AwsS3 => self.view.active(COMPONENT_INPUT_S3_BUCKET),
+                    };
                     None
                 }
+                // -- generic mask (DOWN)
                 (COMPONENT_INPUT_ADDR, key) if key == &MSG_KEY_DOWN => {
-                    // Give focus to port
                     self.view.active(COMPONENT_INPUT_PORT);
                     None
                 }
                 (COMPONENT_INPUT_PORT, key) if key == &MSG_KEY_DOWN => {
-                    // Give focus to port
                     self.view.active(COMPONENT_INPUT_USERNAME);
                     None
                 }
                 (COMPONENT_INPUT_USERNAME, key) if key == &MSG_KEY_DOWN => {
-                    // Give focus to port
                     self.view.active(COMPONENT_INPUT_PASSWORD);
                     None
                 }
                 (COMPONENT_INPUT_PASSWORD, key) if key == &MSG_KEY_DOWN => {
-                    // Give focus to port
+                    self.view.active(COMPONENT_RADIO_PROTOCOL);
+                    None
+                }
+                // -- s3 mask (DOWN)
+                (COMPONENT_INPUT_S3_BUCKET, key) if key == &MSG_KEY_DOWN => {
+                    self.view.active(COMPONENT_INPUT_S3_REGION);
+                    None
+                }
+                (COMPONENT_INPUT_S3_REGION, key) if key == &MSG_KEY_DOWN => {
+                    self.view.active(COMPONENT_INPUT_S3_PROFILE);
+                    None
+                }
+                (COMPONENT_INPUT_S3_PROFILE, key) if key == &MSG_KEY_DOWN => {
                     self.view.active(COMPONENT_RADIO_PROTOCOL);
                     None
                 }
                 // Focus ( UP )
+                // -- generic (UP)
                 (COMPONENT_INPUT_PASSWORD, key) if key == &MSG_KEY_UP => {
-                    // Give focus to port
                     self.view.active(COMPONENT_INPUT_USERNAME);
                     None
                 }
                 (COMPONENT_INPUT_USERNAME, key) if key == &MSG_KEY_UP => {
-                    // Give focus to port
                     self.view.active(COMPONENT_INPUT_PORT);
                     None
                 }
                 (COMPONENT_INPUT_PORT, key) if key == &MSG_KEY_UP => {
-                    // Give focus to port
                     self.view.active(COMPONENT_INPUT_ADDR);
                     None
                 }
                 (COMPONENT_INPUT_ADDR, key) if key == &MSG_KEY_UP => {
-                    // Give focus to port
                     self.view.active(COMPONENT_RADIO_PROTOCOL);
                     None
                 }
+                // -- s3 (UP)
+                (COMPONENT_INPUT_S3_BUCKET, key) if key == &MSG_KEY_UP => {
+                    self.view.active(COMPONENT_RADIO_PROTOCOL);
+                    None
+                }
+                (COMPONENT_INPUT_S3_REGION, key) if key == &MSG_KEY_UP => {
+                    self.view.active(COMPONENT_INPUT_S3_BUCKET);
+                    None
+                }
+                (COMPONENT_INPUT_S3_PROFILE, key) if key == &MSG_KEY_UP => {
+                    self.view.active(COMPONENT_INPUT_S3_REGION);
+                    None
+                }
                 (COMPONENT_RADIO_PROTOCOL, key) if key == &MSG_KEY_UP => {
-                    // Give focus to port
-                    self.view.active(COMPONENT_INPUT_PASSWORD);
+                    // Give focus based on current mask
+                    match self.input_mask() {
+                        InputMask::Generic => self.view.active(COMPONENT_INPUT_PASSWORD),
+                        InputMask::AwsS3 => self.view.active(COMPONENT_INPUT_S3_PROFILE),
+                    };
                     None
                 }
                 // Protocol - On Change
@@ -144,14 +172,20 @@ impl Update for AuthActivity {
                 // Enter
                 (COMPONENT_BOOKMARKS_LIST, Msg::OnSubmit(Payload::One(Value::Usize(idx)))) => {
                     self.load_bookmark(*idx);
-                    // Give focus to input password
-                    self.view.active(COMPONENT_INPUT_PASSWORD);
+                    // Give focus to input password (or to protocol if not generic)
+                    self.view.active(match self.input_mask() {
+                        InputMask::Generic => COMPONENT_INPUT_PASSWORD,
+                        InputMask::AwsS3 => COMPONENT_INPUT_S3_BUCKET,
+                    });
                     None
                 }
                 (COMPONENT_RECENTS_LIST, Msg::OnSubmit(Payload::One(Value::Usize(idx)))) => {
                     self.load_recent(*idx);
                     // Give focus to input password
-                    self.view.active(COMPONENT_INPUT_PASSWORD);
+                    self.view.active(match self.input_mask() {
+                        InputMask::Generic => COMPONENT_INPUT_PASSWORD,
+                        InputMask::AwsS3 => COMPONENT_INPUT_S3_BUCKET,
+                    });
                     None
                 }
                 // Bookmark radio
@@ -219,15 +253,44 @@ impl Update for AuthActivity {
                     self.umount_error();
                     None
                 }
-                (COMPONENT_TEXT_ERROR, _) => None,
-                (COMPONENT_TEXT_NEW_VERSION_NOTES, key)
-                    if key == &MSG_KEY_ESC || key == &MSG_KEY_ENTER =>
-                {
+                // -- Text info
+                (COMPONENT_TEXT_INFO, key) if key == &MSG_KEY_ESC || key == &MSG_KEY_ENTER => {
+                    // Umount text info
+                    self.umount_info();
+                    None
+                }
+                (COMPONENT_TEXT_ERROR, _) | (COMPONENT_TEXT_INFO, _) => None,
+                // -- Text wait
+                (COMPONENT_TEXT_WAIT, _) => None,
+                // -- Release notes
+                (COMPONENT_TEXT_NEW_VERSION_NOTES, key) if key == &MSG_KEY_ESC => {
                     // Umount release notes
                     self.umount_release_notes();
                     None
                 }
+                (COMPONENT_TEXT_NEW_VERSION_NOTES, key) if key == &MSG_KEY_TAB => {
+                    // Focus to radio update
+                    self.view.active(COMPONENT_RADIO_INSTALL_UPDATE);
+                    None
+                }
                 (COMPONENT_TEXT_NEW_VERSION_NOTES, _) => None,
+                // -- Install update radio
+                (COMPONENT_RADIO_INSTALL_UPDATE, Msg::OnSubmit(Payload::One(Value::Usize(0)))) => {
+                    // Install update
+                    self.install_update();
+                    None
+                }
+                (COMPONENT_RADIO_INSTALL_UPDATE, Msg::OnSubmit(Payload::One(Value::Usize(1)))) => {
+                    // Umount
+                    self.umount_release_notes();
+                    None
+                }
+                (COMPONENT_RADIO_INSTALL_UPDATE, key) if key == &MSG_KEY_TAB => {
+                    // Focus to changelog
+                    self.view.active(COMPONENT_TEXT_NEW_VERSION_NOTES);
+                    None
+                }
+                (COMPONENT_RADIO_INSTALL_UPDATE, _) => None,
                 // Help
                 (_, key) if key == &MSG_KEY_CTRL_H => {
                     // Show help
@@ -320,7 +383,7 @@ impl Update for AuthActivity {
                     if key == &MSG_KEY_TAB =>
                 {
                     // Give focus to address
-                    self.view.active(COMPONENT_INPUT_ADDR);
+                    self.view.active(COMPONENT_RADIO_PROTOCOL);
                     None
                 }
                 // Any <TAB>, go to bookmarks

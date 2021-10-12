@@ -27,7 +27,7 @@
  */
 // Locals
 use crate::config::{
-    params::UserConfig,
+    params::{UserConfig, DEFAULT_NOTIFICATION_TRANSFER_THRESHOLD},
     serialization::{deserialize, serialize, SerializerError, SerializerErrorKind},
 };
 use crate::filetransfer::FileTransferProtocol;
@@ -181,6 +181,23 @@ impl ConfigClient {
         self.config.user_interface.check_for_updates = Some(value);
     }
 
+    /// ### get_prompt_on_file_replace
+    ///
+    /// Get value of `prompt_on_file_replace`
+    pub fn get_prompt_on_file_replace(&self) -> bool {
+        self.config
+            .user_interface
+            .prompt_on_file_replace
+            .unwrap_or(true)
+    }
+
+    /// ### set_prompt_on_file_replace
+    ///
+    /// Set new value for `prompt_on_file_replace`
+    pub fn set_prompt_on_file_replace(&mut self, value: bool) {
+        self.config.user_interface.prompt_on_file_replace = Some(value);
+    }
+
     /// ### get_group_dirs
     ///
     /// Get GroupDirs value from configuration (will be converted from string)
@@ -235,6 +252,37 @@ impl ConfigClient {
             true => None,
             false => Some(s),
         };
+    }
+
+    /// ### get_notifications
+    ///
+    /// Get value of `notifications`
+    pub fn get_notifications(&self) -> bool {
+        self.config.user_interface.notifications.unwrap_or(true)
+    }
+
+    /// ### set_notifications
+    ///
+    /// Set new value for `notifications`
+    pub fn set_notifications(&mut self, value: bool) {
+        self.config.user_interface.notifications = Some(value);
+    }
+
+    /// ### get_notification_threshold
+    ///
+    /// Get value of `notification_threshold`
+    pub fn get_notification_threshold(&self) -> u64 {
+        self.config
+            .user_interface
+            .notification_threshold
+            .unwrap_or(DEFAULT_NOTIFICATION_TRANSFER_THRESHOLD)
+    }
+
+    /// ### set_notification_threshold
+    ///
+    /// Set new value for `notification_threshold`
+    pub fn set_notification_threshold(&mut self, value: u64) {
+        self.config.user_interface.notification_threshold = Some(value);
     }
 
     // SSH Keys
@@ -581,6 +629,20 @@ mod tests {
     }
 
     #[test]
+    fn test_system_config_prompt_on_file_replace() {
+        let tmp_dir: TempDir = TempDir::new().ok().unwrap();
+        let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
+        let mut client: ConfigClient = ConfigClient::new(cfg_path.as_path(), key_path.as_path())
+            .ok()
+            .unwrap();
+        assert_eq!(client.get_prompt_on_file_replace(), true); // Null ?
+        client.set_prompt_on_file_replace(true);
+        assert_eq!(client.get_prompt_on_file_replace(), true);
+        client.set_prompt_on_file_replace(false);
+        assert_eq!(client.get_prompt_on_file_replace(), false);
+    }
+
+    #[test]
     fn test_system_config_group_dirs() {
         let tmp_dir: TempDir = TempDir::new().ok().unwrap();
         let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
@@ -624,6 +686,37 @@ mod tests {
         // Delete
         client.set_remote_file_fmt(String::from(""));
         assert_eq!(client.get_remote_file_fmt(), None);
+    }
+
+    #[test]
+    fn test_system_config_notifications() {
+        let tmp_dir: TempDir = TempDir::new().ok().unwrap();
+        let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
+        let mut client: ConfigClient = ConfigClient::new(cfg_path.as_path(), key_path.as_path())
+            .ok()
+            .unwrap();
+        assert_eq!(client.get_notifications(), true); // Null ?
+        client.set_notifications(true);
+        assert_eq!(client.get_notifications(), true);
+        client.set_notifications(false);
+        assert_eq!(client.get_notifications(), false);
+    }
+
+    #[test]
+    fn test_system_config_remote_notification_threshold() {
+        let tmp_dir: TempDir = TempDir::new().ok().unwrap();
+        let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
+        let mut client: ConfigClient = ConfigClient::new(cfg_path.as_path(), key_path.as_path())
+            .ok()
+            .unwrap();
+        assert_eq!(
+            client.get_notification_threshold(),
+            DEFAULT_NOTIFICATION_TRANSFER_THRESHOLD
+        ); // Null ?
+        client.set_notification_threshold(1024);
+        assert_eq!(client.get_notification_threshold(), 1024);
+        client.set_notification_threshold(64);
+        assert_eq!(client.get_notification_threshold(), 64);
     }
 
     #[test]

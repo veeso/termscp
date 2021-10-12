@@ -27,16 +27,14 @@
  * SOFTWARE.
  */
 // Locals
-use super::{Context, SetupActivity};
+use super::{Context, InputType, SetupActivity};
 use crate::filetransfer::FileTransferProtocol;
 use crate::fs::explorer::GroupDirs;
+use crate::ui::components::bytes::{Bytes, BytesPropsBuilder};
 use crate::utils::ui::draw_area_in;
 // Ext
 use std::path::PathBuf;
-use tui_realm_stdlib::{
-    input::{Input, InputPropsBuilder},
-    radio::{Radio, RadioPropsBuilder},
-};
+use tui_realm_stdlib::{InputPropsBuilder, RadioPropsBuilder};
 use tuirealm::tui::{
     layout::{Constraint, Direction, Layout},
     style::Color,
@@ -62,95 +60,74 @@ impl SetupActivity {
         // Footer
         self.mount_footer();
         // Input fields
-        self.view.mount(
+        self.mount_input(
             super::COMPONENT_INPUT_TEXT_EDITOR,
-            Box::new(Input::new(
-                InputPropsBuilder::default()
-                    .with_foreground(Color::LightGreen)
-                    .with_borders(Borders::ALL, BorderType::Rounded, Color::LightGreen)
-                    .with_label("Text editor", Alignment::Left)
-                    .build(),
-            )),
+            "Text editor",
+            Color::LightGreen,
+            InputType::Text,
         );
         self.view.active(super::COMPONENT_INPUT_TEXT_EDITOR); // <-- Focus
-        self.view.mount(
+        self.mount_radio(
             super::COMPONENT_RADIO_DEFAULT_PROTOCOL,
-            Box::new(Radio::new(
-                RadioPropsBuilder::default()
-                    .with_color(Color::LightCyan)
-                    .with_inverted_color(Color::Black)
-                    .with_borders(Borders::ALL, BorderType::Rounded, Color::LightCyan)
-                    .with_title("Default file transfer protocol", Alignment::Left)
-                    .with_options(&[
-                        String::from("SFTP"),
-                        String::from("SCP"),
-                        String::from("FTP"),
-                        String::from("FTPS"),
-                    ])
-                    .rewind(true)
-                    .build(),
-            )),
+            "Default protocol",
+            &["SFTP", "SCP", "FTP", "FTPS", "AWS S3"],
+            0,
+            Color::LightCyan,
         );
-        self.view.mount(
+        self.mount_radio(
             super::COMPONENT_RADIO_HIDDEN_FILES,
-            Box::new(Radio::new(
-                RadioPropsBuilder::default()
-                    .with_color(Color::LightRed)
-                    .with_inverted_color(Color::Black)
-                    .with_borders(Borders::ALL, BorderType::Rounded, Color::LightRed)
-                    .with_title("Show hidden files (by default)?", Alignment::Left)
-                    .with_options(&[String::from("Yes"), String::from("No")])
-                    .rewind(true)
-                    .build(),
-            )),
+            "Show hidden files (by default)?",
+            &["Yes", "No"],
+            0,
+            Color::LightRed,
         );
-        self.view.mount(
+        self.mount_radio(
             super::COMPONENT_RADIO_UPDATES,
-            Box::new(Radio::new(
-                RadioPropsBuilder::default()
-                    .with_color(Color::LightYellow)
-                    .with_inverted_color(Color::Black)
-                    .with_borders(Borders::ALL, BorderType::Rounded, Color::LightYellow)
-                    .with_title("Check for updates?", Alignment::Left)
-                    .with_options(&[String::from("Yes"), String::from("No")])
-                    .rewind(true)
-                    .build(),
-            )),
+            "Check for updates?",
+            &["Yes", "No"],
+            0,
+            Color::LightYellow,
         );
-        self.view.mount(
+        self.mount_radio(
+            super::COMPONENT_RADIO_PROMPT_ON_FILE_REPLACE,
+            "Prompt when replacing existing files?",
+            &["Yes", "No"],
+            0,
+            Color::LightCyan,
+        );
+        self.mount_radio(
             super::COMPONENT_RADIO_GROUP_DIRS,
-            Box::new(Radio::new(
-                RadioPropsBuilder::default()
-                    .with_color(Color::LightMagenta)
-                    .with_inverted_color(Color::Black)
-                    .with_borders(Borders::ALL, BorderType::Rounded, Color::LightMagenta)
-                    .with_title("Group directories", Alignment::Left)
-                    .with_options(&[
-                        String::from("Display first"),
-                        String::from("Display Last"),
-                        String::from("No"),
-                    ])
-                    .rewind(true)
-                    .build(),
-            )),
+            "Group directories",
+            &["Display first", "Display last", "No"],
+            0,
+            Color::LightMagenta,
         );
-        self.view.mount(
+        self.mount_input(
             super::COMPONENT_INPUT_LOCAL_FILE_FMT,
-            Box::new(Input::new(
-                InputPropsBuilder::default()
-                    .with_foreground(Color::LightBlue)
-                    .with_borders(Borders::ALL, BorderType::Rounded, Color::LightBlue)
-                    .with_label("File formatter syntax (local)", Alignment::Left)
-                    .build(),
-            )),
+            "File formatter syntax (local)",
+            Color::LightGreen,
+            InputType::Text,
+        );
+        self.mount_input(
+            super::COMPONENT_INPUT_REMOTE_FILE_FMT,
+            "File formatter syntax (remote)",
+            Color::LightCyan,
+            InputType::Text,
+        );
+        self.mount_radio(
+            super::COMPONENT_RADIO_NOTIFICATIONS_ENABLED,
+            "Enable notifications?",
+            &["Yes", "No"],
+            0,
+            Color::LightRed,
         );
         self.view.mount(
-            super::COMPONENT_INPUT_REMOTE_FILE_FMT,
-            Box::new(Input::new(
-                InputPropsBuilder::default()
-                    .with_foreground(Color::LightGreen)
-                    .with_borders(Borders::ALL, BorderType::Rounded, Color::LightGreen)
-                    .with_label("File formatter syntax (remote)", Alignment::Left)
+            super::COMPONENT_INPUT_NOTIFICATIONS_THRESHOLD,
+            Box::new(Bytes::new(
+                BytesPropsBuilder::default()
+                    .with_foreground(Color::LightYellow)
+                    .with_borders(Borders::ALL, BorderType::Rounded, Color::LightYellow)
+                    .with_label("Notifications: minimum transfer size", Alignment::Left)
                     .build(),
             )),
         );
@@ -168,7 +145,7 @@ impl SetupActivity {
                 .constraints(
                     [
                         Constraint::Length(3),  // Current tab
-                        Constraint::Length(21), // Main body
+                        Constraint::Length(18), // Main body
                         Constraint::Length(3),  // Help footer
                     ]
                     .as_ref(),
@@ -177,8 +154,13 @@ impl SetupActivity {
             // Render common widget
             self.view.render(super::COMPONENT_RADIO_TAB, f, chunks[0]);
             self.view.render(super::COMPONENT_TEXT_FOOTER, f, chunks[2]);
-            // Make chunks
+            // Make chunks (two columns)
             let ui_cfg_chunks = Layout::default()
+                .direction(Direction::Horizontal)
+                .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
+                .split(chunks[1]);
+            // Column 1
+            let ui_cfg_chunks_col1 = Layout::default()
                 .direction(Direction::Vertical)
                 .constraints(
                     [
@@ -186,27 +168,67 @@ impl SetupActivity {
                         Constraint::Length(3), // Protocol tab
                         Constraint::Length(3), // Hidden files
                         Constraint::Length(3), // Updates tab
+                        Constraint::Length(3), // Prompt file replace
                         Constraint::Length(3), // Group dirs
-                        Constraint::Length(3), // Local Format input
-                        Constraint::Length(3), // Remote Format input
                     ]
                     .as_ref(),
                 )
-                .split(chunks[1]);
+                .split(ui_cfg_chunks[0]);
             self.view
-                .render(super::COMPONENT_INPUT_TEXT_EDITOR, f, ui_cfg_chunks[0]);
+                .render(super::COMPONENT_INPUT_TEXT_EDITOR, f, ui_cfg_chunks_col1[0]);
+            self.view.render(
+                super::COMPONENT_RADIO_DEFAULT_PROTOCOL,
+                f,
+                ui_cfg_chunks_col1[1],
+            );
+            self.view.render(
+                super::COMPONENT_RADIO_HIDDEN_FILES,
+                f,
+                ui_cfg_chunks_col1[2],
+            );
             self.view
-                .render(super::COMPONENT_RADIO_DEFAULT_PROTOCOL, f, ui_cfg_chunks[1]);
+                .render(super::COMPONENT_RADIO_UPDATES, f, ui_cfg_chunks_col1[3]);
+            self.view.render(
+                super::COMPONENT_RADIO_PROMPT_ON_FILE_REPLACE,
+                f,
+                ui_cfg_chunks_col1[4],
+            );
             self.view
-                .render(super::COMPONENT_RADIO_HIDDEN_FILES, f, ui_cfg_chunks[2]);
-            self.view
-                .render(super::COMPONENT_RADIO_UPDATES, f, ui_cfg_chunks[3]);
-            self.view
-                .render(super::COMPONENT_RADIO_GROUP_DIRS, f, ui_cfg_chunks[4]);
-            self.view
-                .render(super::COMPONENT_INPUT_LOCAL_FILE_FMT, f, ui_cfg_chunks[5]);
-            self.view
-                .render(super::COMPONENT_INPUT_REMOTE_FILE_FMT, f, ui_cfg_chunks[6]);
+                .render(super::COMPONENT_RADIO_GROUP_DIRS, f, ui_cfg_chunks_col1[5]);
+            // Column 2
+            let ui_cfg_chunks_col2 = Layout::default()
+                .direction(Direction::Vertical)
+                .constraints(
+                    [
+                        Constraint::Length(3), // Local Format input
+                        Constraint::Length(3), // Remote Format input
+                        Constraint::Length(3), // Notifications enabled
+                        Constraint::Length(3), // Notifications threshold
+                        Constraint::Length(1), // Filler
+                    ]
+                    .as_ref(),
+                )
+                .split(ui_cfg_chunks[1]);
+            self.view.render(
+                super::COMPONENT_INPUT_LOCAL_FILE_FMT,
+                f,
+                ui_cfg_chunks_col2[0],
+            );
+            self.view.render(
+                super::COMPONENT_INPUT_REMOTE_FILE_FMT,
+                f,
+                ui_cfg_chunks_col2[1],
+            );
+            self.view.render(
+                super::COMPONENT_RADIO_NOTIFICATIONS_ENABLED,
+                f,
+                ui_cfg_chunks_col2[2],
+            );
+            self.view.render(
+                super::COMPONENT_INPUT_NOTIFICATIONS_THRESHOLD,
+                f,
+                ui_cfg_chunks_col2[3],
+            );
             // Popups
             if let Some(props) = self.view.get_props(super::COMPONENT_TEXT_ERROR) {
                 if props.visible {
@@ -265,6 +287,7 @@ impl SetupActivity {
                 FileTransferProtocol::Scp => 1,
                 FileTransferProtocol::Ftp(false) => 2,
                 FileTransferProtocol::Ftp(true) => 3,
+                FileTransferProtocol::AwsS3 => 4,
             };
             let props = RadioPropsBuilder::from(props).with_value(protocol).build();
             let _ = self
@@ -288,6 +311,20 @@ impl SetupActivity {
             };
             let props = RadioPropsBuilder::from(props).with_value(updates).build();
             let _ = self.view.update(super::COMPONENT_RADIO_UPDATES, props);
+        }
+        // File replace
+        if let Some(props) = self
+            .view
+            .get_props(super::COMPONENT_RADIO_PROMPT_ON_FILE_REPLACE)
+        {
+            let updates: usize = match self.config().get_prompt_on_file_replace() {
+                true => 0,
+                false => 1,
+            };
+            let props = RadioPropsBuilder::from(props).with_value(updates).build();
+            let _ = self
+                .view
+                .update(super::COMPONENT_RADIO_PROMPT_ON_FILE_REPLACE, props);
         }
         // Group dirs
         if let Some(props) = self.view.get_props(super::COMPONENT_RADIO_GROUP_DIRS) {
@@ -315,6 +352,31 @@ impl SetupActivity {
                 .view
                 .update(super::COMPONENT_INPUT_REMOTE_FILE_FMT, props);
         }
+        // Notifications enabled
+        if let Some(props) = self
+            .view
+            .get_props(super::COMPONENT_RADIO_NOTIFICATIONS_ENABLED)
+        {
+            let enabled: usize = match self.config().get_notifications() {
+                true => 0,
+                false => 1,
+            };
+            let props = RadioPropsBuilder::from(props).with_value(enabled).build();
+            let _ = self
+                .view
+                .update(super::COMPONENT_RADIO_NOTIFICATIONS_ENABLED, props);
+        }
+        // Notifications threshold
+        if let Some(props) = self
+            .view
+            .get_props(super::COMPONENT_INPUT_NOTIFICATIONS_THRESHOLD)
+        {
+            let value: u64 = self.config().get_notification_threshold();
+            let props = BytesPropsBuilder::from(props).with_value(value).build();
+            let _ = self
+                .view
+                .update(super::COMPONENT_INPUT_NOTIFICATIONS_THRESHOLD, props);
+        }
     }
 
     /// ### collect_input_values
@@ -334,6 +396,7 @@ impl SetupActivity {
                 1 => FileTransferProtocol::Scp,
                 2 => FileTransferProtocol::Ftp(false),
                 3 => FileTransferProtocol::Ftp(true),
+                4 => FileTransferProtocol::AwsS3,
                 _ => FileTransferProtocol::Sftp,
             };
             self.config_mut().set_default_protocol(protocol);
@@ -349,6 +412,13 @@ impl SetupActivity {
         {
             let check: bool = matches!(opt, 0);
             self.config_mut().set_check_for_updates(check);
+        }
+        if let Some(Payload::One(Value::Usize(opt))) = self
+            .view
+            .get_state(super::COMPONENT_RADIO_PROMPT_ON_FILE_REPLACE)
+        {
+            let check: bool = matches!(opt, 0);
+            self.config_mut().set_prompt_on_file_replace(check);
         }
         if let Some(Payload::One(Value::Str(fmt))) =
             self.view.get_state(super::COMPONENT_INPUT_LOCAL_FILE_FMT)
@@ -369,6 +439,18 @@ impl SetupActivity {
                 _ => None,
             };
             self.config_mut().set_group_dirs(dirs);
+        }
+        if let Some(Payload::One(Value::Usize(opt))) = self
+            .view
+            .get_state(super::COMPONENT_RADIO_NOTIFICATIONS_ENABLED)
+        {
+            self.config_mut().set_notifications(opt == 0);
+        }
+        if let Some(Payload::One(Value::U64(bytes))) = self
+            .view
+            .get_state(super::COMPONENT_INPUT_NOTIFICATIONS_THRESHOLD)
+        {
+            self.config_mut().set_notification_threshold(bytes);
         }
     }
 }

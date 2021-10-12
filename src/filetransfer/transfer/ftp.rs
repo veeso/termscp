@@ -1,4 +1,4 @@
-//! ## Ftp_transfer
+//! ## FTP transfer
 //!
 //! `ftp_transfer` is the module which provides the implementation for the FTP/FTPS file transfer
 
@@ -25,7 +25,9 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-use super::{FileTransfer, FileTransferError, FileTransferErrorType};
+use super::{
+    FileTransfer, FileTransferError, FileTransferErrorType, FileTransferResult, ProtocolParams,
+};
 use crate::fs::{FsDirectory, FsEntry, FsFile, UnixPex};
 use crate::utils::fmt::shadow_password;
 use crate::utils::path;
@@ -178,25 +180,24 @@ impl FileTransfer for FtpFileTransfer {
     ///
     /// Connect to the remote server
 
-    fn connect(
-        &mut self,
-        address: String,
-        port: u16,
-        username: Option<String>,
-        password: Option<String>,
-    ) -> Result<Option<String>, FileTransferError> {
-        // Get stream
-        info!("Connecting to {}:{}", address, port);
-        let mut stream: FtpStream = match FtpStream::connect(format!("{}:{}", address, port)) {
-            Ok(stream) => stream,
-            Err(err) => {
-                error!("Failed to connect: {}", err);
-                return Err(FileTransferError::new_ex(
-                    FileTransferErrorType::ConnectionError,
-                    err.to_string(),
-                ));
-            }
+    fn connect(&mut self, params: &ProtocolParams) -> FileTransferResult<Option<String>> {
+        let params = match params.generic_params() {
+            Some(params) => params,
+            None => return Err(FileTransferError::new(FileTransferErrorType::BadAddress)),
         };
+        // Get stream
+        info!("Connecting to {}:{}", params.address, params.port);
+        let mut stream: FtpStream =
+            match FtpStream::connect(format!("{}:{}", params.address, params.port)) {
+                Ok(stream) => stream,
+                Err(err) => {
+                    error!("Failed to connect: {}", err);
+                    return Err(FileTransferError::new_ex(
+                        FileTransferErrorType::ConnectionError,
+                        err.to_string(),
+                    ));
+                }
+            };
         // If SSL, open secure session
         if self.ftps {
             info!("Setting up TLS stream...");
@@ -214,7 +215,7 @@ impl FileTransfer for FtpFileTransfer {
                     ));
                 }
             };
-            stream = match stream.into_secure(ctx, address.as_str()) {
+            stream = match stream.into_secure(ctx, params.address.as_str()) {
                 Ok(s) => s,
                 Err(err) => {
                     error!("Failed to setup TLS stream: {}", err);
@@ -226,12 +227,12 @@ impl FileTransfer for FtpFileTransfer {
             };
         }
         // Login (use anonymous if credentials are unspecified)
-        let username: String = match username {
-            Some(u) => u,
+        let username: String = match &params.username {
+            Some(u) => u.to_string(),
             None => String::from("anonymous"),
         };
-        let password: String = match password {
-            Some(pwd) => pwd,
+        let password: String = match &params.password {
+            Some(pwd) => pwd.to_string(),
             None => String::new(),
         };
         info!(
@@ -271,7 +272,7 @@ impl FileTransfer for FtpFileTransfer {
     ///
     /// Disconnect from the remote server
 
-    fn disconnect(&mut self) -> Result<(), FileTransferError> {
+    fn disconnect(&mut self) -> FileTransferResult<()> {
         info!("Disconnecting from FTP server...");
         match &mut self.stream {
             Some(stream) => match stream.quit() {
@@ -301,7 +302,7 @@ impl FileTransfer for FtpFileTransfer {
     ///
     /// Print working directory
 
-    fn pwd(&mut self) -> Result<PathBuf, FileTransferError> {
+    fn pwd(&mut self) -> FileTransferResult<PathBuf> {
         info!("PWD");
         match &mut self.stream {
             Some(stream) => match stream.pwd() {
@@ -321,7 +322,7 @@ impl FileTransfer for FtpFileTransfer {
     ///
     /// Change working directory
 
-    fn change_dir(&mut self, dir: &Path) -> Result<PathBuf, FileTransferError> {
+    fn change_dir(&mut self, dir: &Path) -> FileTransferResult<PathBuf> {
         let dir: PathBuf = Self::resolve(dir);
         info!("Changing directory to {}", dir.display());
         match &mut self.stream {
@@ -341,7 +342,7 @@ impl FileTransfer for FtpFileTransfer {
     /// ### copy
     ///
     /// Copy file to destination
-    fn copy(&mut self, _src: &FsEntry, _dst: &Path) -> Result<(), FileTransferError> {
+    fn copy(&mut self, _src: &FsEntry, _dst: &Path) -> FileTransferResult<()> {
         // FTP doesn't support file copy
         debug!("COPY issues (will fail, since unsupported)");
         Err(FileTransferError::new(
@@ -353,7 +354,7 @@ impl FileTransfer for FtpFileTransfer {
     ///
     /// List directory entries
 
-    fn list_dir(&mut self, path: &Path) -> Result<Vec<FsEntry>, FileTransferError> {
+    fn list_dir(&mut self, path: &Path) -> FileTransferResult<Vec<FsEntry>> {
         let dir: PathBuf = Self::resolve(path);
         info!("LIST dir {}", dir.display());
         match &mut self.stream {
@@ -377,7 +378,7 @@ impl FileTransfer for FtpFileTransfer {
     /// ### mkdir
     ///
     /// In case the directory already exists, it must return an Error of kind `FileTransferErrorType::DirectoryAlreadyExists`
-    fn mkdir(&mut self, dir: &Path) -> Result<(), FileTransferError> {
+    fn mkdir(&mut self, dir: &Path) -> FileTransferResult<()> {
         let dir: PathBuf = Self::resolve(dir);
         info!("MKDIR {}", dir.display());
         match &mut self.stream {
@@ -407,7 +408,7 @@ impl FileTransfer for FtpFileTransfer {
     /// ### remove
     ///
     /// Remove a file or a directory
-    fn remove(&mut self, fsentry: &FsEntry) -> Result<(), FileTransferError> {
+    fn remove(&mut self, fsentry: &FsEntry) -> FileTransferResult<()> {
         if self.stream.is_none() {
             return Err(FileTransferError::new(
                 FileTransferErrorType::UninitializedSession,
@@ -494,7 +495,7 @@ impl FileTransfer for FtpFileTransfer {
     /// ### rename
     ///
     /// Rename file or a directory
-    fn rename(&mut self, file: &FsEntry, dst: &Path) -> Result<(), FileTransferError> {
+    fn rename(&mut self, file: &FsEntry, dst: &Path) -> FileTransferResult<()> {
         let dst: PathBuf = Self::resolve(dst);
         info!(
             "Renaming {} to {}",
@@ -526,7 +527,7 @@ impl FileTransfer for FtpFileTransfer {
     /// ### stat
     ///
     /// Stat file and return FsEntry
-    fn stat(&mut self, _path: &Path) -> Result<FsEntry, FileTransferError> {
+    fn stat(&mut self, _path: &Path) -> FileTransferResult<FsEntry> {
         match &mut self.stream {
             Some(_) => Err(FileTransferError::new(
                 FileTransferErrorType::UnsupportedFeature,
@@ -540,7 +541,7 @@ impl FileTransfer for FtpFileTransfer {
     /// ### exec
     ///
     /// Execute a command on remote host
-    fn exec(&mut self, _cmd: &str) -> Result<String, FileTransferError> {
+    fn exec(&mut self, _cmd: &str) -> FileTransferResult<String> {
         Err(FileTransferError::new(
             FileTransferErrorType::UnsupportedFeature,
         ))
@@ -556,7 +557,7 @@ impl FileTransfer for FtpFileTransfer {
         &mut self,
         _local: &FsFile,
         file_name: &Path,
-    ) -> Result<Box<dyn Write>, FileTransferError> {
+    ) -> FileTransferResult<Box<dyn Write>> {
         let file_name: PathBuf = Self::resolve(file_name);
         info!("Sending file {}", file_name.display());
         match &mut self.stream {
@@ -577,7 +578,7 @@ impl FileTransfer for FtpFileTransfer {
     ///
     /// Receive file from remote with provided name
     /// Returns file and its size
-    fn recv_file(&mut self, file: &FsFile) -> Result<Box<dyn Read>, FileTransferError> {
+    fn recv_file(&mut self, file: &FsFile) -> FileTransferResult<Box<dyn Read>> {
         info!("Receiving file {}", file.abs_path.display());
         match &mut self.stream {
             Some(stream) => match stream.retr_as_stream(&file.abs_path.as_path().to_string_lossy())
@@ -601,7 +602,7 @@ impl FileTransfer for FtpFileTransfer {
     /// The purpose of this method is to finalize the connection with the peer when writing data.
     /// This is necessary for some protocols such as FTP.
     /// You must call this method each time you want to finalize the write of the remote file.
-    fn on_sent(&mut self, writable: Box<dyn Write>) -> Result<(), FileTransferError> {
+    fn on_sent(&mut self, writable: Box<dyn Write>) -> FileTransferResult<()> {
         info!("Finalizing put stream");
         match &mut self.stream {
             Some(stream) => match stream.finalize_put_stream(writable) {
@@ -624,7 +625,7 @@ impl FileTransfer for FtpFileTransfer {
     /// The purpose of this method is to finalize the connection with the peer when reading data.
     /// This mighe be necessary for some protocols.
     /// You must call this method each time you want to finalize the read of the remote file.
-    fn on_recv(&mut self, readable: Box<dyn Read>) -> Result<(), FileTransferError> {
+    fn on_recv(&mut self, readable: Box<dyn Read>) -> FileTransferResult<()> {
         info!("Finalizing get");
         match &mut self.stream {
             Some(stream) => match stream.finalize_retr_stream(readable) {
@@ -645,6 +646,7 @@ impl FileTransfer for FtpFileTransfer {
 mod tests {
 
     use super::*;
+    use crate::filetransfer::params::GenericProtocolParams;
     use crate::utils::file::open_file;
     #[cfg(feature = "with-containers")]
     use crate::utils::test_helpers::write_file;
@@ -672,17 +674,15 @@ mod tests {
         // Sample file
         let (entry, file): (FsFile, tempfile::NamedTempFile) = create_sample_file_entry();
         // Connect
-        #[cfg(not(feature = "github-actions"))]
-        let hostname: String = String::from("127.0.0.1");
-        #[cfg(feature = "github-actions")]
         let hostname: String = String::from("127.0.0.1");
         assert!(ftp
-            .connect(
-                hostname,
-                10021,
-                Some(String::from("test")),
-                Some(String::from("test")),
-            )
+            .connect(&ProtocolParams::Generic(
+                GenericProtocolParams::default()
+                    .address(hostname)
+                    .port(10021)
+                    .username(Some("test"))
+                    .password(Some("test"))
+            ))
             .is_ok());
         assert_eq!(ftp.is_connected(), true);
         // Get pwd
@@ -810,12 +810,13 @@ mod tests {
         let mut ftp: FtpFileTransfer = FtpFileTransfer::new(false);
         // Connect
         assert!(ftp
-            .connect(
-                String::from("127.0.0.1"),
-                10021,
-                Some(String::from("omar")),
-                Some(String::from("ommlar")),
-            )
+            .connect(&ProtocolParams::Generic(
+                GenericProtocolParams::default()
+                    .address("127.0.0.1")
+                    .port(10021)
+                    .username(Some("omar"))
+                    .password(Some("ommlar"))
+            ))
             .is_err());
     }
 
@@ -824,7 +825,13 @@ mod tests {
     fn test_filetransfer_ftp_no_credentials() {
         let mut ftp: FtpFileTransfer = FtpFileTransfer::new(false);
         assert!(ftp
-            .connect(String::from("127.0.0.1"), 10021, None, None)
+            .connect(&ProtocolParams::Generic(
+                GenericProtocolParams::default()
+                    .address("127.0.0.1")
+                    .port(10021)
+                    .username::<&str>(None)
+                    .password::<&str>(None)
+            ))
             .is_err());
     }
 
@@ -833,12 +840,13 @@ mod tests {
         let mut ftp: FtpFileTransfer = FtpFileTransfer::new(false);
         // Connect
         assert!(ftp
-            .connect(
-                String::from("mybadserver.veryverybad.awful"),
-                21,
-                Some(String::from("omar")),
-                Some(String::from("ommlar")),
-            )
+            .connect(&ProtocolParams::Generic(
+                GenericProtocolParams::default()
+                    .address("mybad.veribad.server")
+                    .port(21)
+                    .username::<&str>(None)
+                    .password::<&str>(None)
+            ))
             .is_err());
     }
 
@@ -890,12 +898,13 @@ mod tests {
         let mut ftp: FtpFileTransfer = FtpFileTransfer::new(false);
         // Connect
         assert!(ftp
-            .connect(
-                String::from("test.rebex.net"),
-                21,
-                Some(String::from("demo")),
-                Some(String::from("password"))
-            )
+            .connect(&ProtocolParams::Generic(
+                GenericProtocolParams::default()
+                    .address("test.rebex.net")
+                    .port(21)
+                    .username(Some("demo"))
+                    .password(Some("password"))
+            ))
             .is_ok());
         // Pwd
         assert_eq!(ftp.pwd().ok().unwrap(), PathBuf::from("/"));

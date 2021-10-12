@@ -38,7 +38,9 @@ use std::fs::set_permissions;
 use std::os::unix::fs::{MetadataExt, PermissionsExt};
 
 // Locals
-use crate::fs::{FsDirectory, FsEntry, FsFile, UnixPex};
+#[cfg(target_family = "unix")]
+use crate::fs::UnixPex;
+use crate::fs::{FsDirectory, FsEntry, FsFile};
 use crate::utils::path;
 
 /// ## HostErrorType

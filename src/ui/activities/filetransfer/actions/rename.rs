@@ -27,6 +27,7 @@
  */
 // locals
 use super::{FileTransferActivity, FsEntry, LogLevel, SelectedEntry};
+use crate::filetransfer::FileTransferErrorType;
 use std::path::{Path, PathBuf};
 
 impl FileTransferActivity {
@@ -114,6 +115,9 @@ impl FileTransferActivity {
                     ),
                 );
             }
+            Err(err) if err.kind() == FileTransferErrorType::UnsupportedFeature => {
+                self.tricky_move(entry, dest);
+            }
             Err(err) => self.log_and_alert(
                 LogLevel::Error,
                 format!(
@@ -123,6 +127,43 @@ impl FileTransferActivity {
                     err
                 ),
             ),
+        }
+    }
+
+    /// ### tricky_move
+    ///
+    /// Tricky move will be used whenever copy command is not available on remote host.
+    /// It basically uses the tricky_copy function, then it just deletes the previous entry (`entry`)
+    fn tricky_move(&mut self, entry: &FsEntry, dest: &Path) {
+        debug!(
+            "Using tricky-move to move entry {} to {}",
+            entry.get_abs_path().display(),
+            dest.display()
+        );
+        if self.tricky_copy(entry.clone(), dest).is_ok() {
+            // Delete remote existing entry
+            debug!("Tricky-copy worked; removing existing remote entry");
+            match self.client.remove(entry) {
+                Ok(_) => self.log(
+                    LogLevel::Info,
+                    format!(
+                        "Moved \"{}\" to \"{}\"",
+                        entry.get_abs_path().display(),
+                        dest.display()
+                    ),
+                ),
+                Err(err) => self.log_and_alert(
+                    LogLevel::Error,
+                    format!(
+                        "Copied \"{}\" to \"{}\"; but failed to remove src: {}",
+                        entry.get_abs_path().display(),
+                        dest.display(),
+                        err
+                    ),
+                ),
+            }
+        } else {
+            error!("Tricky move aborted due to tricky-copy failure");
         }
     }
 }
