@@ -217,11 +217,11 @@ choco install termscp
 
 如果您喜欢 termscp 并且希望看到该项目不断发展和改进，请考虑在 **Buy me a coffee** 上捐款以支持我🥳
 
-[![Buy-me-a-coffee](https://img.shields.io/badge/Donate-BuyMeACoffee-yellow.svg)](https://www.buymeacoffee.com/veeso)
+[![Buy-me-a-coffee](https://img.shields.io/badge/-buy_me_a%C2%A0coffee-gray?style=for-the-badge&logo=buy-me-a-coffee)](https://www.buymeacoffee.com/veeso)
 
 或者，如果您愿意，您也可以在 PayPal 上捐款：
 
-[![PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg)](https://www.paypal.me/chrisintin)
+[![PayPal](https://img.shields.io/badge/PayPal-00457C?style=for-the-badge&logo=paypal&logoColor=white)](https://www.paypal.me/chrisintin)
 
 ---
 
