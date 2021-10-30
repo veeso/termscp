@@ -214,13 +214,12 @@ These requirements are not forced required to run termscp, but to enjoy all of i
 
 ## Apoyame ☕
 
-Si te gusta termscp y te encantaría que el proyecto crezca y mejore, considera una pequeña donación para apoyarme en **Buy me a coffee** 🥳
+Si te gusta termscp y te encantaría que el proyecto crezca y mejore, considera una pequeña donación para apoyarme 🥳
 
-[![Buy-me-a-coffee](https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20coffee&emoji=&slug=veeso&button_colour=404040&font_colour=ffffff&font_family=Comic&outline_colour=ffffff&coffee_colour=FFDD00)](https://www.buymeacoffee.com/veeso)
+Puedes hacer una donación con una de estas plataformas:
 
-o, si lo prefiere, también puede donar en PayPal:
-
-[![Donate](https://img.shields.io/badge/Donate-PayPal-blue.svg)](https://www.paypal.me/chrisintin)
+[![Buy-me-a-coffee](https://img.shields.io/badge/Donate-BuyMeACoffee-yellow.svg)](https://www.buymeacoffee.com/veeso)
+[![PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg)](https://www.paypal.me/chrisintin)
 
 ---
 

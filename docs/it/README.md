@@ -212,15 +212,14 @@ Questi requisiti non sono per forza necessari, ma lo sono per sfruttare tutte le
 
 ---
 
-## Supportami ☕
+## Supporta lo sviluppatore ☕
 
-Se ti piace termscp e ti piacerebbe vedere il progetto crescere e migliorare, considera una piccola donazione su **Buy me a coffee** 🥳.
+Se ti piace termscp e ti piacerebbe vedere il progetto crescere e migliorare, considera una piccola donazione 🥳.
 
-[![Buy-me-a-coffee](https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20coffee&emoji=&slug=veeso&button_colour=404040&font_colour=ffffff&font_family=Comic&outline_colour=ffffff&coffee_colour=FFDD00)](https://www.buymeacoffee.com/veeso)
+Puoi fare una donazione tramite una di queste piattaforme:
 
-o, se lo preferisci, puoi anche fare una donazione tramite PayPal:
-
-[![Donate](https://img.shields.io/badge/Donate-PayPal-blue.svg)](https://www.paypal.me/chrisintin)
+[![Buy-me-a-coffee](https://img.shields.io/badge/Donate-BuyMeACoffee-yellow.svg)](https://www.buymeacoffee.com/veeso)
+[![PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg)](https://www.paypal.me/chrisintin)
 
 ---
 
