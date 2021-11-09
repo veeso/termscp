@@ -19,4 +19,4 @@ jobs:
             /tmp/rustup.sh -y
             . $HOME/.cargo/env
             cargo build --no-default-features
-            cargo test --no-default-features --verbose --lib --features github-actions -- --test-threads 1
+            cargo test --no-default-features --verbose --features github-actions -- --test-threads 1
