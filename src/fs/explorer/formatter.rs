@@ -43,6 +43,7 @@ const FMT_KEY_CTIME: &str = "CTIME";
 const FMT_KEY_GROUP: &str = "GROUP";
 const FMT_KEY_MTIME: &str = "MTIME";
 const FMT_KEY_NAME: &str = "NAME";
+const FMT_KEY_PATH: &str = "PATH";
 const FMT_KEY_PEX: &str = "PEX";
 const FMT_KEY_SIZE: &str = "SIZE";
 const FMT_KEY_SYMLINK: &str = "SYMLINK";
@@ -68,10 +69,15 @@ lazy_static! {
 /// a chain of function is made using the Formatters method.
 /// This method provides an extremely fast way to format fs entries
 struct CallChainBlock {
+    /// The function to call to format current item
     func: FmtCallback,
+    /// All the content which is between two `{KEY}` items
     prefix: String,
+    /// The fmt len, specied for key as `{KEY:LEN}`
     fmt_len: Option<usize>,
+    /// The extra argument for formatting, specified for key as `{KEY:LEN:EXTRA}`
     fmt_extra: Option<String>,
+    /// The next block to format
     next_block: Option<Box<CallChainBlock>>,
 }
 
@@ -331,6 +337,28 @@ impl Formatter {
         format!("{}{}{:0width$}", cur_str, prefix, name, width = file_len)
     }
 
+    /// ### fmt_path
+    ///
+    /// Format path
+    fn fmt_path(
+        &self,
+        fsentry: &FsEntry,
+        cur_str: &str,
+        prefix: &str,
+        fmt_len: Option<&usize>,
+        _fmt_extra: Option<&String>,
+    ) -> String {
+        format!(
+            "{}{}{}",
+            cur_str,
+            prefix,
+            match fmt_len {
+                None => fsentry.get_abs_path().display().to_string(),
+                Some(len) => fmt_path_elide(fsentry.get_abs_path().as_path(), *len),
+            }
+        )
+    }
+
     /// ### fmt_pex
     ///
     /// Format file permissions
@@ -490,6 +518,7 @@ impl Formatter {
                             FMT_KEY_GROUP => Self::fmt_group,
                             FMT_KEY_MTIME => Self::fmt_mtime,
                             FMT_KEY_NAME => Self::fmt_name,
+                            FMT_KEY_PATH => Self::fmt_path,
                             FMT_KEY_PEX => Self::fmt_pex,
                             FMT_KEY_SIZE => Self::fmt_size,
                             FMT_KEY_SYMLINK => Self::fmt_symlink,
@@ -878,6 +907,34 @@ mod tests {
             fmt_time(t, "%a %b %d %Y %H:%M"), 
             fmt_time(t, "%a %b %d %Y %H:%M"), 
         ));
+    }
+
+    #[test]
+    fn should_fmt_path() {
+        let t: SystemTime = SystemTime::now();
+        let entry: FsEntry = FsEntry::File(FsFile {
+            name: String::from("bar.txt"),
+            abs_path: PathBuf::from("/tmp/a/b/c/bar.txt"),
+            last_change_time: t,
+            last_access_time: t,
+            creation_time: t,
+            size: 8192,
+            ftype: Some(String::from("txt")),
+            symlink: None, // UNIX only
+            user: None,    // UNIX only
+            group: None,   // UNIX only
+            unix_pex: Some((UnixPex::from(6), UnixPex::from(4), UnixPex::from(4))), // UNIX only
+        });
+        let formatter: Formatter = Formatter::new("File path: {PATH}");
+        assert_eq!(
+            formatter.fmt(&entry).as_str(),
+            "File path: /tmp/a/b/c/bar.txt"
+        );
+        let formatter: Formatter = Formatter::new("File path: {PATH:8}");
+        assert_eq!(
+            formatter.fmt(&entry).as_str(),
+            "File path: /tmp/…/c/bar.txt"
+        );
     }
 
     /// ### dummy_fmt

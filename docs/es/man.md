@@ -337,7 +337,8 @@ Estas son las claves admitidas por el formateador:
 - `CTIME`: Hora de creación (con sintaxis`%b %d %Y %H:%M`); Se puede proporcionar un extra como sintaxis de tiempo (p. Ej., `{CTIME:8:%H:%M}`)
 - `GROUP`: Grupo propietario
 - `MTIME`: Hora del último cambio (con sintaxis`%b %d %Y %H:%M`); Se puede proporcionar extra como sintaxis de tiempo (p. Ej., `{MTIME: 8:% H:% M}`)
-- `NAME`: nombre de archivo (se omite si es más largo que LENGTH)
+- `NAME`: nombre de archivo (Las carpetas entre la raíz y los primeros antepasados ​​se eliminan si es más largo que LENGTH)
+- `PATH`: Percorso completo de archivo (Las carpetas entre la raíz y los primeros antepasados ​​se eliminan si es màs largo que LENGHT)
 - `PEX`: permisos de archivo (formato UNIX)
 - `SIZE`: Tamaño del archivo (se omite para directorios)
 - `SYMLINK`: Symlink (si existe` -> {FILE_PATH} `)
