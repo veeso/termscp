@@ -16,4 +16,4 @@ jobs:
       - name: Run tests
         run: cargo test --verbose --lib --features github-actions -- --test-threads 1
       - name: Clippy
-        run: cargo clippy
+        run: cargo clippy -- -Dwarnings
