@@ -400,6 +400,15 @@ impl FileTransferActivity {
 
     // -- partials
 
+    /// ### mount_info
+    ///
+    /// Mount info box
+    pub(super) fn mount_info(&mut self, text: &str) {
+        // Mount
+        let info_color = self.theme().misc_info_dialog;
+        self.mount_text_dialog(super::COMPONENT_TEXT_ERROR, text, info_color);
+    }
+
     /// ### mount_error
     ///
     /// Mount error box

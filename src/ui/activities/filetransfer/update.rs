@@ -449,6 +449,12 @@ impl Update for FileTransferActivity {
                             // Mount error
                             self.mount_error(err.as_str());
                         }
+                        Ok(files) if files.is_empty() => {
+                            // If no file has been found notify user
+                            self.mount_info(
+                                format!(r#"Could not find any file matching "{}""#, input).as_str(),
+                            );
+                        }
                         Ok(files) => {
                             // Create explorer and load files
                             self.browser.set_found(files);
