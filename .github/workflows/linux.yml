@@ -24,7 +24,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --lib --no-default-features --features github-actions --features with-containers --no-fail-fast
+          args: --no-default-features --features github-actions --features with-containers --no-fail-fast
       - name: Format
         run: cargo fmt --all -- --check
       - name: Clippy

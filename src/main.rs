@@ -35,7 +35,6 @@ extern crate lazy_static;
 extern crate log;
 #[macro_use]
 extern crate magic_crypt;
-extern crate rpassword;
 
 // External libs
 use argh::FromArgs;
