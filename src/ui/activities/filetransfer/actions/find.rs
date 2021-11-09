@@ -97,7 +97,6 @@ impl FileTransferActivity {
                             LogLevel::Error,
                             format!("Could not upload file: {}", err),
                         );
-                        return;
                     }
                 }
                 FileExplorerTab::FindRemote | FileExplorerTab::Remote => {
@@ -119,7 +118,6 @@ impl FileTransferActivity {
                             LogLevel::Error,
                             format!("Could not download file: {}", err),
                         );
-                        return;
                     }
                 }
             },
@@ -162,7 +160,6 @@ impl FileTransferActivity {
                                     LogLevel::Error,
                                     format!("Could not upload file: {}", err),
                                 );
-                                return;
                             }
                         }
                     }
@@ -196,7 +193,6 @@ impl FileTransferActivity {
                                 LogLevel::Error,
                                 format!("Could not download file: {}", err),
                             );
-                            return;
                         }
                     }
                 }
