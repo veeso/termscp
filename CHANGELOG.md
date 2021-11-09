@@ -31,6 +31,7 @@ Released on FIXME:
 - **Enhancements**:
   - Find feature:
     - A "wait popup" will now be displayed while searching files
+    - If find command doesn't return any result show an info dialog and not an empty explorer
 
 ## 0.7.0
 
