@@ -433,12 +433,16 @@ impl Update for FileTransferActivity {
                 }
                 (COMPONENT_INPUT_FIND, Msg::OnSubmit(Payload::One(Value::Str(input)))) => {
                     self.umount_find_input();
+                    // Mount wait
+                    self.mount_blocking_wait(format!(r#"Searching for "{}"…"#, input).as_str());
                     // Find
                     let res: Result<Vec<FsEntry>, String> = match self.browser.tab() {
                         FileExplorerTab::Local => self.action_local_find(input.to_string()),
                         FileExplorerTab::Remote => self.action_remote_find(input.to_string()),
                         _ => panic!("Trying to search for files, while already in a find result"),
                     };
+                    // Umount wait
+                    self.umount_wait();
                     // Match result
                     match res {
                         Err(err) => {

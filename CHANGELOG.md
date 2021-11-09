@@ -28,6 +28,10 @@ Released on FIXME:
 
 > ❄️ Winter update 2022 ⛄
 
+- **Enhancements**:
+  - Find feature:
+    - A "wait popup" will now be displayed while searching files
+
 ## 0.7.0
 
 Released on 12/10/2021
