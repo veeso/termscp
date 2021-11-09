@@ -333,7 +333,8 @@ These are the keys supported by the formatter:
 - `CTIME`: Creation time (con sintassi di default `%b %d %Y %H:%M`); Extra definisce il formato data (e.g. `{CTIME:8:%H:%M}`)
 - `GROUP`: Owner group
 - `MTIME`: Last change time (con sintassi di default `%b %d %Y %H:%M`); Extra definisce il formato data (e.g. `{MTIME:8:%H:%M}`)
-- `NAME`: Nome file (Elided if longer than LENGTH)
+- `NAME`: Nome file (Le cartelle comprese tra la root ed il genitore del file sono omessi se la lunghezza è maggiore di LENGTH)
+- `PATH`: Percorso assoluto del file (Le cartelle comprese tra la root ed il genitore del file sono omessi se la lunghezza è maggiore di LENGHT)
 - `PEX`: Permessi utente (formato UNIX)
 - `SIZE`: Dimensione file (omesso per le directory)
 - `SYMLINK`: Link simbolico (se presente `-> {FILE_PATH}`)

@@ -339,6 +339,7 @@ These are the keys supported by the formatter:
 - `GROUP`: Owner group
 - `MTIME`: Last change time (with syntax `%b %d %Y %H:%M`); Extra might be provided as the time syntax (e.g. `{MTIME:8:%H:%M}`)
 - `NAME`: File name (Elided if longer than LENGTH)
+- `PATH`: File absolute path (Elided if longer than LENGHT)
 - `PEX`: File permissions (UNIX format)
 - `SIZE`: File size (omitted for directories)
 - `SYMLINK`: Symlink (if any `-> {FILE_PATH}`)

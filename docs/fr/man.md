@@ -336,6 +336,7 @@ Voici les clés prises en charge par le formateur :
 - `GROUP`: Groupe de propriétaires
 - `MTIME`: Heure du dernier changement (avec la syntaxe `%b %d %Y %H:%M`); Un supplément peut être fourni comme syntaxe de l'heure (par exemple, `{MTIME:8:%H:%M}`)
 - `NAME`: Nom du fichier (élidé si plus long que LENGTH)
+- `PATH`: Chemin absolu du fichier (les dossiers entre la racine et les premiers ancêtres sont éludés s'ils sont plus longs que LENGTH)
 - `PEX`: Autorisations de fichiers (format UNIX)
 - `SIZE`: Taille du fichier (omis pour les répertoires)
 - `SYMLINK`: Lien symbolique (le cas échéant `-> {FILE_PATH}`)
