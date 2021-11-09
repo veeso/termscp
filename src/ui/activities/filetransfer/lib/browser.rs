@@ -40,14 +40,23 @@ pub enum FileExplorerTab {
     FindRemote, // Find result tab
 }
 
+/// ## FoundExplorerTab
+///
+/// Describes the explorer tab type
+#[derive(Copy, Clone, Debug)]
+pub enum FoundExplorerTab {
+    Local,
+    Remote,
+}
+
 /// ## Browser
 ///
 /// Browser contains the browser options
 pub struct Browser {
-    local: FileExplorer,         // Local File explorer state
-    remote: FileExplorer,        // Remote File explorer state
-    found: Option<FileExplorer>, // File explorer for find result
-    tab: FileExplorerTab,        // Current selected tab
+    local: FileExplorer,                             // Local File explorer state
+    remote: FileExplorer,                            // Remote File explorer state
+    found: Option<(FoundExplorerTab, FileExplorer)>, // File explorer for find result
+    tab: FileExplorerTab,                            // Current selected tab
     pub sync_browsing: bool,
 }
 
@@ -82,21 +91,28 @@ impl Browser {
     }
 
     pub fn found(&self) -> Option<&FileExplorer> {
-        self.found.as_ref()
+        self.found.as_ref().map(|x| &x.1)
     }
 
     pub fn found_mut(&mut self) -> Option<&mut FileExplorer> {
-        self.found.as_mut()
+        self.found.as_mut().map(|x| &mut x.1)
     }
 
-    pub fn set_found(&mut self, files: Vec<FsEntry>) {
+    pub fn set_found(&mut self, tab: FoundExplorerTab, files: Vec<FsEntry>) {
         let mut explorer = Self::build_found_explorer();
         explorer.set_files(files);
-        self.found = Some(explorer);
+        self.found = Some((tab, explorer));
     }
 
     pub fn del_found(&mut self) {
         self.found = None;
+    }
+
+    /// ### found_tab
+    ///
+    /// Returns found tab if any
+    pub fn found_tab(&self) -> Option<FoundExplorerTab> {
+        self.found.as_ref().map(|x| x.0)
     }
 
     pub fn tab(&self) -> FileExplorerTab {

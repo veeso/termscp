@@ -26,7 +26,10 @@
  * SOFTWARE.
  */
 // locals
-use super::{browser::FileExplorerTab, Context, FileTransferActivity};
+use super::{
+    browser::{FileExplorerTab, FoundExplorerTab},
+    Context, FileTransferActivity,
+};
 use crate::fs::explorer::FileSorting;
 use crate::fs::FsEntry;
 use crate::ui::components::{
@@ -165,24 +168,20 @@ impl FileTransferActivity {
             }
             // Draw explorers
             // @! Local explorer (Find or default)
-            match self.browser.tab() {
-                FileExplorerTab::FindLocal => {
-                    self.view
-                        .render(super::COMPONENT_EXPLORER_FIND, f, tabs_chunks[0])
-                }
-                _ => self
-                    .view
-                    .render(super::COMPONENT_EXPLORER_LOCAL, f, tabs_chunks[0]),
+            if matches!(self.browser.found_tab(), Some(FoundExplorerTab::Local)) {
+                self.view
+                    .render(super::COMPONENT_EXPLORER_FIND, f, tabs_chunks[0]);
+            } else {
+                self.view
+                    .render(super::COMPONENT_EXPLORER_LOCAL, f, tabs_chunks[0]);
             }
             // @! Remote explorer (Find or default)
-            match self.browser.tab() {
-                FileExplorerTab::FindRemote => {
-                    self.view
-                        .render(super::COMPONENT_EXPLORER_FIND, f, tabs_chunks[1])
-                }
-                _ => self
-                    .view
-                    .render(super::COMPONENT_EXPLORER_REMOTE, f, tabs_chunks[1]),
+            if matches!(self.browser.found_tab(), Some(FoundExplorerTab::Remote)) {
+                self.view
+                    .render(super::COMPONENT_EXPLORER_FIND, f, tabs_chunks[1]);
+            } else {
+                self.view
+                    .render(super::COMPONENT_EXPLORER_REMOTE, f, tabs_chunks[1]);
             }
             // Draw log box
             self.view

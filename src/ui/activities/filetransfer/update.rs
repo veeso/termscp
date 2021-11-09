@@ -27,15 +27,17 @@
  */
 // locals
 use super::{
-    actions::SelectedEntry, browser::FileExplorerTab, FileTransferActivity, LogLevel, TransferOpts,
-    COMPONENT_EXPLORER_FIND, COMPONENT_EXPLORER_LOCAL, COMPONENT_EXPLORER_REMOTE,
-    COMPONENT_INPUT_COPY, COMPONENT_INPUT_EXEC, COMPONENT_INPUT_FIND, COMPONENT_INPUT_GOTO,
-    COMPONENT_INPUT_MKDIR, COMPONENT_INPUT_NEWFILE, COMPONENT_INPUT_OPEN_WITH,
-    COMPONENT_INPUT_RENAME, COMPONENT_INPUT_SAVEAS, COMPONENT_LIST_FILEINFO,
-    COMPONENT_LIST_REPLACING_FILES, COMPONENT_LOG_BOX, COMPONENT_PROGRESS_BAR_FULL,
-    COMPONENT_PROGRESS_BAR_PARTIAL, COMPONENT_RADIO_DELETE, COMPONENT_RADIO_DISCONNECT,
-    COMPONENT_RADIO_QUIT, COMPONENT_RADIO_REPLACE, COMPONENT_RADIO_SORTING, COMPONENT_TEXT_ERROR,
-    COMPONENT_TEXT_FATAL, COMPONENT_TEXT_HELP,
+    actions::SelectedEntry,
+    browser::{FileExplorerTab, FoundExplorerTab},
+    FileTransferActivity, LogLevel, TransferOpts, COMPONENT_EXPLORER_FIND,
+    COMPONENT_EXPLORER_LOCAL, COMPONENT_EXPLORER_REMOTE, COMPONENT_INPUT_COPY,
+    COMPONENT_INPUT_EXEC, COMPONENT_INPUT_FIND, COMPONENT_INPUT_GOTO, COMPONENT_INPUT_MKDIR,
+    COMPONENT_INPUT_NEWFILE, COMPONENT_INPUT_OPEN_WITH, COMPONENT_INPUT_RENAME,
+    COMPONENT_INPUT_SAVEAS, COMPONENT_LIST_FILEINFO, COMPONENT_LIST_REPLACING_FILES,
+    COMPONENT_LOG_BOX, COMPONENT_PROGRESS_BAR_FULL, COMPONENT_PROGRESS_BAR_PARTIAL,
+    COMPONENT_RADIO_DELETE, COMPONENT_RADIO_DISCONNECT, COMPONENT_RADIO_QUIT,
+    COMPONENT_RADIO_REPLACE, COMPONENT_RADIO_SORTING, COMPONENT_TEXT_ERROR, COMPONENT_TEXT_FATAL,
+    COMPONENT_TEXT_HELP,
 };
 use crate::fs::explorer::FileSorting;
 use crate::fs::FsEntry;
@@ -64,6 +66,15 @@ impl Update for FileTransferActivity {
             None => None, // Exit after None
             Some(msg) => match msg {
                 // -- local tab
+                (COMPONENT_EXPLORER_LOCAL, key)
+                    if key == &MSG_KEY_RIGHT
+                        && matches!(self.browser.found_tab(), Some(FoundExplorerTab::Remote)) =>
+                {
+                    // Go to find explorer
+                    self.view.active(COMPONENT_EXPLORER_FIND);
+                    self.browser.change_tab(FileExplorerTab::FindRemote);
+                    None
+                }
                 (COMPONENT_EXPLORER_LOCAL, key) if key == &MSG_KEY_RIGHT => {
                     // Change tab
                     self.view.active(COMPONENT_EXPLORER_REMOTE);
@@ -137,6 +148,15 @@ impl Update for FileTransferActivity {
                     self.update_local_filelist()
                 }
                 // -- remote tab
+                (COMPONENT_EXPLORER_REMOTE, key)
+                    if key == &MSG_KEY_LEFT
+                        && matches!(self.browser.found_tab(), Some(FoundExplorerTab::Local)) =>
+                {
+                    // Go to find explorer
+                    self.view.active(COMPONENT_EXPLORER_FIND);
+                    self.browser.change_tab(FileExplorerTab::FindLocal);
+                    None
+                }
                 (COMPONENT_EXPLORER_REMOTE, key) if key == &MSG_KEY_LEFT => {
                     // Change tab
                     self.view.active(COMPONENT_EXPLORER_LOCAL);
@@ -336,6 +356,24 @@ impl Update for FileTransferActivity {
                     None
                 }
                 // -- find result explorer
+                (COMPONENT_EXPLORER_FIND, key)
+                    if key == &MSG_KEY_RIGHT
+                        && matches!(self.browser.tab(), FileExplorerTab::FindLocal) =>
+                {
+                    // Active remote explorer
+                    self.view.active(COMPONENT_EXPLORER_REMOTE);
+                    self.browser.change_tab(FileExplorerTab::Remote);
+                    None
+                }
+                (COMPONENT_EXPLORER_FIND, key)
+                    if key == &MSG_KEY_LEFT
+                        && matches!(self.browser.tab(), FileExplorerTab::FindRemote) =>
+                {
+                    // Active local explorer
+                    self.view.active(COMPONENT_EXPLORER_LOCAL);
+                    self.browser.change_tab(FileExplorerTab::Local);
+                    None
+                }
                 (COMPONENT_EXPLORER_FIND, key) if key == &MSG_KEY_ESC => {
                     // Umount find
                     self.umount_find();
@@ -457,7 +495,13 @@ impl Update for FileTransferActivity {
                         }
                         Ok(files) => {
                             // Create explorer and load files
-                            self.browser.set_found(files);
+                            self.browser.set_found(
+                                match self.browser.tab() {
+                                    FileExplorerTab::Local => FoundExplorerTab::Local,
+                                    _ => FoundExplorerTab::Remote,
+                                },
+                                files,
+                            );
                             // Mount result widget
                             self.mount_find(input);
                             self.update_find_list();
