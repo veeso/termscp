@@ -29,6 +29,8 @@ use crate::fs::explorer::{builder::FileExplorerBuilder, FileExplorer, FileSortin
 use crate::fs::FsEntry;
 use crate::system::config_client::ConfigClient;
 
+use std::path::Path;
+
 /// ## FileExplorerTab
 ///
 /// File explorer tab
@@ -98,8 +100,8 @@ impl Browser {
         self.found.as_mut().map(|x| &mut x.1)
     }
 
-    pub fn set_found(&mut self, tab: FoundExplorerTab, files: Vec<FsEntry>) {
-        let mut explorer = Self::build_found_explorer();
+    pub fn set_found(&mut self, tab: FoundExplorerTab, files: Vec<FsEntry>, wrkdir: &Path) {
+        let mut explorer = Self::build_found_explorer(wrkdir);
         explorer.set_files(files);
         self.found = Some((tab, explorer));
     }
@@ -168,13 +170,15 @@ impl Browser {
     /// ### build_found_explorer
     ///
     /// Build explorer reading from `ConfigClient`, for found result (has some differences)
-    fn build_found_explorer() -> FileExplorer {
+    fn build_found_explorer(wrkdir: &Path) -> FileExplorer {
         FileExplorerBuilder::new()
             .with_file_sorting(FileSorting::Name)
             .with_group_dirs(Some(GroupDirs::First))
             .with_hidden_files(true)
             .with_stack_size(0)
-            .with_formatter(Some("{PATH:36} {SYMLINK}"))
+            .with_formatter(Some(
+                format!("{{PATH:36:{}}} {{SYMLINK}}", wrkdir.display()).as_str(),
+            ))
             .build()
     }
 }
