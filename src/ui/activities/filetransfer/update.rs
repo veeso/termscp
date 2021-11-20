@@ -494,6 +494,11 @@ impl Update for FileTransferActivity {
                             );
                         }
                         Ok(files) => {
+                            // Get wrkdir
+                            let wrkdir = match self.browser.tab() {
+                                FileExplorerTab::Local => self.local().wrkdir.clone(),
+                                _ => self.remote().wrkdir.clone(),
+                            };
                             // Create explorer and load files
                             self.browser.set_found(
                                 match self.browser.tab() {
@@ -501,6 +506,7 @@ impl Update for FileTransferActivity {
                                     _ => FoundExplorerTab::Remote,
                                 },
                                 files,
+                                wrkdir.as_path(),
                             );
                             // Mount result widget
                             self.mount_find(input);

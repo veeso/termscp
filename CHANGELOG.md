@@ -29,12 +29,12 @@ Released on FIXME:
 > ❄️ Winter update 2022 ⛄
 
 - **Enhancements**:
-  - Find feature:
+  - **Find** feature:
     - A "wait popup" will now be displayed while searching files
     - If find command doesn't return any result show an info dialog and not an empty explorer
     - It is now possible to keep navigating on the other explorer while "found tab" is open
       - ❗ It is not possible though to have the "found tab" on both explorers (otherwise you wouldn't be able to tell whether you're transferring files)
-    - Files found from search are now displayed with their absolute path
+    - Files found from search are now displayed with their relative path from working directory
 
 ## 0.7.0
 

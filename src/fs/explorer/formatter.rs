@@ -28,9 +28,11 @@
 // Locals
 use super::FsEntry;
 use crate::utils::fmt::{fmt_path_elide, fmt_pex, fmt_time};
+use crate::utils::path::diff_paths;
 // Ext
 use bytesize::ByteSize;
 use regex::Regex;
+use std::path::PathBuf;
 #[cfg(target_family = "unix")]
 use users::{get_group_by_gid, get_user_by_uid};
 // Types
@@ -346,15 +348,23 @@ impl Formatter {
         cur_str: &str,
         prefix: &str,
         fmt_len: Option<&usize>,
-        _fmt_extra: Option<&String>,
+        fmt_extra: Option<&String>,
     ) -> String {
+        let p = match fmt_extra {
+            None => fsentry.get_abs_path(),
+            Some(rel) => diff_paths(
+                fsentry.get_abs_path().as_path(),
+                PathBuf::from(rel.as_str()).as_path(),
+            )
+            .unwrap_or_else(|| fsentry.get_abs_path()),
+        };
         format!(
             "{}{}{}",
             cur_str,
             prefix,
             match fmt_len {
-                None => fsentry.get_abs_path().display().to_string(),
-                Some(len) => fmt_path_elide(fsentry.get_abs_path().as_path(), *len),
+                None => p.display().to_string(),
+                Some(len) => fmt_path_elide(p.as_path(), *len),
             }
         )
     }
@@ -935,6 +945,8 @@ mod tests {
             formatter.fmt(&entry).as_str(),
             "File path: /tmp/…/c/bar.txt"
         );
+        let formatter: Formatter = Formatter::new("File path: {PATH:128:/tmp/a/b}");
+        assert_eq!(formatter.fmt(&entry).as_str(), "File path: c/bar.txt");
     }
 
     /// ### dummy_fmt
