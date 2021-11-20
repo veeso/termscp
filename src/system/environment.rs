@@ -110,10 +110,12 @@ mod tests {
     use super::*;
 
     use pretty_assertions::assert_eq;
+    use serial_test::serial;
     use std::fs::{File, OpenOptions};
     use std::io::Write;
 
     #[test]
+    #[serial]
     fn test_system_environment_get_config_dir() {
         // Create and get conf_dir
         let conf_dir: PathBuf = init_config_dir().ok().unwrap().unwrap();
@@ -122,6 +124,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_system_environment_get_config_dir_err() {
         let mut conf_dir: PathBuf = std::env::temp_dir();
         conf_dir.push("termscp");
@@ -143,6 +146,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_system_environment_get_bookmarks_paths() {
         assert_eq!(
             get_bookmarks_paths(&Path::new("/home/omar/.config/termscp/")),
@@ -151,6 +155,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_system_environment_get_config_paths() {
         assert_eq!(
             get_config_paths(&Path::new("/home/omar/.config/termscp/")),
@@ -162,6 +167,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_system_environment_get_log_paths() {
         assert_eq!(
             get_log_paths(&Path::new("/home/omar/.config/termscp/")),
@@ -170,6 +176,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_system_environment_get_theme_path() {
         assert_eq!(
             get_theme_path(&Path::new("/home/omar/.config/termscp/")),
