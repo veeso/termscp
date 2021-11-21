@@ -28,6 +28,7 @@
  */
 // Submodules
 mod actions;
+mod components;
 mod config;
 mod update;
 mod view;
@@ -38,71 +39,209 @@ use crate::config::themes::Theme;
 use crate::system::config_client::ConfigClient;
 use crate::system::theme_provider::ThemeProvider;
 // Ext
-use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
-use tuirealm::{Update, View};
+use std::time::Duration;
+use tuirealm::listener::EventListenerCfg;
+use tuirealm::props::Color;
+use tuirealm::{application::PollStrategy, Application, NoUserEvent, Update};
 
 // -- components
-// -- common
-const COMPONENT_TEXT_HELP: &str = "TEXT_HELP";
-const COMPONENT_TEXT_FOOTER: &str = "TEXT_FOOTER";
-const COMPONENT_TEXT_ERROR: &str = "TEXT_ERROR";
-const COMPONENT_RADIO_QUIT: &str = "RADIO_QUIT";
-const COMPONENT_RADIO_SAVE: &str = "RADIO_SAVE";
-const COMPONENT_RADIO_TAB: &str = "RADIO_TAB";
-// -- config
-const COMPONENT_INPUT_TEXT_EDITOR: &str = "INPUT_TEXT_EDITOR";
-const COMPONENT_RADIO_DEFAULT_PROTOCOL: &str = "RADIO_DEFAULT_PROTOCOL";
-const COMPONENT_RADIO_HIDDEN_FILES: &str = "RADIO_HIDDEN_FILES";
-const COMPONENT_RADIO_UPDATES: &str = "RADIO_CHECK_UPDATES";
-const COMPONENT_RADIO_PROMPT_ON_FILE_REPLACE: &str = "RADIO_PROMPT_ON_FILE_REPLACE";
-const COMPONENT_RADIO_GROUP_DIRS: &str = "RADIO_GROUP_DIRS";
-const COMPONENT_INPUT_LOCAL_FILE_FMT: &str = "INPUT_LOCAL_FILE_FMT";
-const COMPONENT_INPUT_REMOTE_FILE_FMT: &str = "INPUT_REMOTE_FILE_FMT";
-const COMPONENT_RADIO_NOTIFICATIONS_ENABLED: &str = "RADIO_NOTIFICATIONS_ENABLED";
-const COMPONENT_INPUT_NOTIFICATIONS_THRESHOLD: &str = "INPUT_NOTIFICATIONS_THRESHOLD";
-// -- ssh keys
-const COMPONENT_LIST_SSH_KEYS: &str = "LIST_SSH_KEYS";
-const COMPONENT_INPUT_SSH_HOST: &str = "INPUT_SSH_HOST";
-const COMPONENT_INPUT_SSH_USERNAME: &str = "INPUT_SSH_USERNAME";
-const COMPONENT_RADIO_DEL_SSH_KEY: &str = "RADIO_DEL_SSH_KEY";
-// -- theme
-const COMPONENT_COLOR_AUTH_TITLE: &str = "COMPONENT_COLOR_AUTH_TITLE";
-const COMPONENT_COLOR_MISC_TITLE: &str = "COMPONENT_COLOR_MISC_TITLE";
-const COMPONENT_COLOR_TRANSFER_TITLE: &str = "COMPONENT_COLOR_TRANSFER_TITLE";
-const COMPONENT_COLOR_TRANSFER_TITLE_2: &str = "COMPONENT_COLOR_TRANSFER_TITLE_2";
-const COMPONENT_COLOR_AUTH_ADDR: &str = "COMPONENT_COLOR_AUTH_ADDR";
-const COMPONENT_COLOR_AUTH_BOOKMARKS: &str = "COMPONENT_COLOR_AUTH_BOOKMARKS";
-const COMPONENT_COLOR_AUTH_PASSWORD: &str = "COMPONENT_COLOR_AUTH_PASSWORD";
-const COMPONENT_COLOR_AUTH_PORT: &str = "COMPONENT_COLOR_AUTH_PORT";
-const COMPONENT_COLOR_AUTH_PROTOCOL: &str = "COMPONENT_COLOR_AUTH_PROTOCOL";
-const COMPONENT_COLOR_AUTH_RECENTS: &str = "COMPONENT_COLOR_AUTH_RECENTS";
-const COMPONENT_COLOR_AUTH_USERNAME: &str = "COMPONENT_COLOR_AUTH_USERNAME";
-const COMPONENT_COLOR_MISC_ERROR: &str = "COMPONENT_COLOR_MISC_ERROR";
-const COMPONENT_COLOR_MISC_INFO: &str = "COMPONENT_COLOR_MISC_INFO";
-const COMPONENT_COLOR_MISC_INPUT: &str = "COMPONENT_COLOR_MISC_INPUT";
-const COMPONENT_COLOR_MISC_KEYS: &str = "COMPONENT_COLOR_MISC_KEYS";
-const COMPONENT_COLOR_MISC_QUIT: &str = "COMPONENT_COLOR_MISC_QUIT";
-const COMPONENT_COLOR_MISC_SAVE: &str = "COMPONENT_COLOR_MISC_SAVE";
-const COMPONENT_COLOR_MISC_WARN: &str = "COMPONENT_COLOR_MISC_WARN";
-const COMPONENT_COLOR_TRANSFER_EXPLORER_LOCAL_BG: &str =
-    "COMPONENT_COLOR_TRANSFER_EXPLORER_LOCAL_BG";
-const COMPONENT_COLOR_TRANSFER_EXPLORER_LOCAL_FG: &str =
-    "COMPONENT_COLOR_TRANSFER_EXPLORER_LOCAL_FG";
-const COMPONENT_COLOR_TRANSFER_EXPLORER_LOCAL_HG: &str =
-    "COMPONENT_COLOR_TRANSFER_EXPLORER_LOCAL_HG";
-const COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_BG: &str =
-    "COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_BG";
-const COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_FG: &str =
-    "COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_FG";
-const COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_HG: &str =
-    "COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_HG";
-const COMPONENT_COLOR_TRANSFER_PROG_BAR_FULL: &str = "COMPONENT_COLOR_TRANSFER_PROG_BAR_FULL";
-const COMPONENT_COLOR_TRANSFER_PROG_BAR_PARTIAL: &str = "COMPONENT_COLOR_TRANSFER_PROG_BAR_PARTIAL";
-const COMPONENT_COLOR_TRANSFER_LOG_BG: &str = "COMPONENT_COLOR_TRANSFER_LOG_BG";
-const COMPONENT_COLOR_TRANSFER_LOG_WIN: &str = "COMPONENT_COLOR_TRANSFER_LOG_WIN";
-const COMPONENT_COLOR_TRANSFER_STATUS_SORTING: &str = "COMPONENT_COLOR_TRANSFER_STATUS_SORTING";
-const COMPONENT_COLOR_TRANSFER_STATUS_HIDDEN: &str = "COMPONENT_COLOR_TRANSFER_STATUS_HIDDEN";
-const COMPONENT_COLOR_TRANSFER_STATUS_SYNC: &str = "COMPONENT_COLOR_TRANSFER_STATUS_SYNC";
+#[derive(Debug, Eq, PartialEq, Clone, Hash)]
+enum Id {
+    Common(IdCommon),
+    Config(IdConfig),
+    Ssh(IdSsh),
+    Theme(IdTheme),
+}
+
+#[derive(Debug, Eq, PartialEq, Clone, Hash)]
+enum IdCommon {
+    ErrorPopup,
+    Footer,
+    GlobalListener,
+    Header,
+    Keybindings,
+    QuitPopup,
+    SavePopup,
+}
+
+#[derive(Debug, Eq, PartialEq, Clone, Hash)]
+enum IdConfig {
+    CheckUpdates,
+    DefaultProtocol,
+    GroupDirs,
+    HiddenFiles,
+    LocalFileFmt,
+    NotificationsEnabled,
+    NotificationsThreshold,
+    PromptOnFileReplace,
+    RemoteFileFmt,
+    TextEditor,
+}
+
+#[derive(Debug, Eq, PartialEq, Clone, Hash)]
+enum IdSsh {
+    DelSshKeyPopup,
+    SshHost,
+    SshKeys,
+    SshUsername,
+}
+
+#[derive(Debug, Eq, PartialEq, Clone, Hash)]
+pub enum IdTheme {
+    AuthAddress,
+    AuthBookmarks,
+    AuthPassword,
+    AuthPort,
+    AuthProtocol,
+    AuthRecentHosts,
+    AuthTitle,
+    AuthUsername,
+    ExplorerLocalBg,
+    ExplorerLocalFg,
+    ExplorerLocalHg,
+    ExplorerRemoteBg,
+    ExplorerRemoteFg,
+    ExplorerRemoteHg,
+    LogBg,
+    LogWindow,
+    MiscError,
+    MiscInfo,
+    MiscInput,
+    MiscKeys,
+    MiscQuit,
+    MiscSave,
+    MiscTitle,
+    MiscWarn,
+    ProgBarFull,
+    ProgBarPartial,
+    StatusHidden,
+    StatusSorting,
+    StatusSync,
+    TransferTitle,
+    TransferTitle2,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum Msg {
+    Common(CommonMsg),
+    Config(ConfigMsg),
+    Ssh(SshMsg),
+    Theme(ThemeMsg),
+    None,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum CommonMsg {
+    ChangeLayout,
+    CloseErrorPopup,
+    CloseKeybindingsPopup,
+    CloseQuitPopup,
+    CloseSavePopup,
+    Quit,
+    RevertChanges,
+    SaveAndQuit,
+    SaveConfig,
+    ShowKeybindings,
+    ShowQuitPopup,
+    ShowSavePopup,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum ConfigMsg {
+    CheckUpdatesBlurDown,
+    CheckUpdatesBlurUp,
+    ConfigChanged,
+    DefaultProtocolBlurDown,
+    DefaultProtocolBlurUp,
+    GroupDirsBlurDown,
+    GroupDirsBlurUp,
+    HiddenFilesBlurDown,
+    HiddenFilesBlurUp,
+    LocalFileFmtBlurDown,
+    LocalFileFmtBlurUp,
+    NotificationsEnabledBlurDown,
+    NotificationsEnabledBlurUp,
+    NotificationsThresholdBlurDown,
+    NotificationsThresholdBlurUp,
+    PromptOnFileReplaceBlurDown,
+    PromptOnFileReplaceBlurUp,
+    RemoteFileFmtBlurDown,
+    RemoteFileFmtBlurUp,
+    TextEditorBlurDown,
+    TextEditorBlurUp,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum SshMsg {
+    CloseDelSshKeyPopup,
+    CloseNewSshKeyPopup,
+    DeleteSshKey,
+    EditSshKey(usize),
+    SaveSshKey,
+    ShowDelSshKeyPopup,
+    ShowNewSshKeyPopup,
+    SshHostBlur,
+    SshUsernameBlur,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum ThemeMsg {
+    AuthAddressBlurDown,
+    AuthAddressBlurUp,
+    AuthBookmarksBlurDown,
+    AuthBookmarksBlurUp,
+    AuthPasswordBlurDown,
+    AuthPasswordBlurUp,
+    AuthPortBlurDown,
+    AuthPortBlurUp,
+    AuthProtocolBlurDown,
+    AuthProtocolBlurUp,
+    AuthRecentHostsBlurDown,
+    AuthRecentHostsBlurUp,
+    AuthUsernameBlurDown,
+    AuthUsernameBlurUp,
+    ColorChanged(IdTheme, Color),
+    ExplorerLocalBgBlurDown,
+    ExplorerLocalBgBlurUp,
+    ExplorerLocalFgBlurDown,
+    ExplorerLocalFgBlurUp,
+    ExplorerLocalHgBlurDown,
+    ExplorerLocalHgBlurUp,
+    ExplorerRemoteBgBlurDown,
+    ExplorerRemoteBgBlurUp,
+    ExplorerRemoteFgBlurDown,
+    ExplorerRemoteFgBlurUp,
+    ExplorerRemoteHgBlurDown,
+    ExplorerRemoteHgBlurUp,
+    LogBgBlurDown,
+    LogBgBlurUp,
+    LogWindowBlurDown,
+    LogWindowBlurUp,
+    MiscErrorBlurDown,
+    MiscErrorBlurUp,
+    MiscInfoBlurDown,
+    MiscInfoBlurUp,
+    MiscInputBlurDown,
+    MiscInputBlurUp,
+    MiscKeysBlurDown,
+    MiscKeysBlurUp,
+    MiscQuitBlurDown,
+    MiscQuitBlurUp,
+    MiscSaveBlurDown,
+    MiscSaveBlurUp,
+    MiscWarnBlurDown,
+    MiscWarnBlurUp,
+    ProgBarFullBlurDown,
+    ProgBarFullBlurUp,
+    ProgBarPartialBlurDown,
+    ProgBarPartialBlurUp,
+    StatusHiddenBlurDown,
+    StatusHiddenBlurUp,
+    StatusSortingBlurDown,
+    StatusSortingBlurUp,
+    StatusSyncBlurDown,
+    StatusSyncBlurUp,
+}
 
 // -- store
 const STORE_CONFIG_CHANGED: &str = "SETUP_CONFIG_CHANGED";
@@ -110,8 +249,8 @@ const STORE_CONFIG_CHANGED: &str = "SETUP_CONFIG_CHANGED";
 /// ### ViewLayout
 ///
 /// Current view layout
-#[derive(std::cmp::PartialEq)]
-enum ViewLayout {
+#[derive(PartialEq)]
+pub enum ViewLayout {
     SetupForm,
     SshKeys,
     Theme,
@@ -121,26 +260,28 @@ enum ViewLayout {
 ///
 /// Setup activity states holder
 pub struct SetupActivity {
+    app: Application<Id, Msg, NoUserEvent>,
     exit_reason: Option<ExitReason>,
     context: Option<Context>, // Context holder
-    view: View,               // View
     layout: ViewLayout,       // View layout
     redraw: bool,
 }
 
-impl Default for SetupActivity {
-    fn default() -> Self {
-        SetupActivity {
+impl SetupActivity {
+    pub fn new(ticks: Duration) -> Self {
+        Self {
+            app: Application::init(
+                EventListenerCfg::default()
+                    .default_input_listener(ticks)
+                    .poll_timeout(ticks),
+            ),
             exit_reason: None,
             context: None,
-            view: View::init(),
             layout: ViewLayout::SetupForm,
             redraw: true, // Draw at first `on_draw`
         }
     }
-}
 
-impl SetupActivity {
     /// ### context
     ///
     /// Returns a reference to context
@@ -205,11 +346,13 @@ impl Activity for SetupActivity {
         // Set context
         self.context = Some(context);
         // Clear terminal
-        self.context.as_mut().unwrap().clear_screen();
+        if let Err(err) = self.context.as_mut().unwrap().terminal().clear_screen() {
+            error!("Failed to clear screen: {}", err);
+        }
         // Set config changed to false
         self.set_config_changed(false);
         // Put raw mode on enabled
-        if let Err(err) = enable_raw_mode() {
+        if let Err(err) = self.context_mut().terminal().enable_raw_mode() {
             error!("Failed to enter raw mode: {}", err);
         }
         // Init view
@@ -229,20 +372,25 @@ impl Activity for SetupActivity {
         if self.context.is_none() {
             return;
         }
-        // Read one event
-        if let Ok(Some(event)) = self.context().input_hnd().read_event() {
-            // Set redraw to true
-            self.redraw = true;
-            // Handle event
-            let msg = self.view.on(event);
-            self.update(msg);
+        match self.app.tick(PollStrategy::UpTo(3)) {
+            Ok(messages) => {
+                if !messages.is_empty() {
+                    self.redraw = true;
+                }
+                for msg in messages.into_iter() {
+                    let mut msg = Some(msg);
+                    while msg.is_some() {
+                        msg = self.update(msg);
+                    }
+                }
+            }
+            Err(err) => {
+                self.mount_error(format!("Application error: {}", err));
+            }
         }
-        // Redraw if necessary
+        // View
         if self.redraw {
-            // View
             self.view();
-            // Redraw back to false
-            self.redraw = false;
         }
     }
 
@@ -262,17 +410,12 @@ impl Activity for SetupActivity {
     /// This function finally releases the context
     fn on_destroy(&mut self) -> Option<Context> {
         // Disable raw mode
-        if let Err(err) = disable_raw_mode() {
+        if let Err(err) = self.context_mut().terminal().disable_raw_mode() {
             error!("Failed to disable raw mode: {}", err);
         }
-        self.context.as_ref()?;
-        // Clear terminal and return
-        match self.context.take() {
-            Some(mut ctx) => {
-                ctx.clear_screen();
-                Some(ctx)
-            }
-            None => None,
+        if let Err(err) = self.context_mut().terminal().clear_screen() {
+            error!("Failed to clear screen: {}", err);
         }
+        self.context.take()
     }
 }

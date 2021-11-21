@@ -26,34 +26,21 @@
  * SOFTWARE.
  */
 // Locals
-use super::input::InputHandler;
 use super::store::Store;
 use crate::filetransfer::FileTransferParams;
 use crate::system::config_client::ConfigClient;
 use crate::system::theme_provider::ThemeProvider;
 
-// Includes
-#[cfg(target_family = "unix")]
-use crossterm::{
-    event::DisableMouseCapture,
-    execute,
-    terminal::{EnterAlternateScreen, LeaveAlternateScreen},
-};
-use std::io::{stdout, Stdout};
-use tuirealm::tui::backend::CrosstermBackend;
-use tuirealm::tui::Terminal;
-
-type TuiTerminal = Terminal<CrosstermBackend<Stdout>>;
+use tuirealm::terminal::TerminalBridge;
 
 /// ## Context
 ///
-/// Context holds data structures used by the ui
+/// Context holds data structures shared by the activities
 pub struct Context {
     ft_params: Option<FileTransferParams>,
     config_client: ConfigClient,
     pub(crate) store: Store,
-    input_hnd: InputHandler,
-    pub(crate) terminal: TuiTerminal,
+    pub(crate) terminal: TerminalBridge,
     theme_provider: ThemeProvider,
     error: Option<String>,
 }
@@ -71,8 +58,7 @@ impl Context {
             ft_params: None,
             config_client,
             store: Store::init(),
-            input_hnd: InputHandler::new(),
-            terminal: Terminal::new(CrosstermBackend::new(Self::stdout())).unwrap(),
+            terminal: TerminalBridge::new().expect("Could not initialize terminal"),
             theme_provider,
             error,
         }
@@ -92,10 +78,6 @@ impl Context {
         &mut self.config_client
     }
 
-    pub(crate) fn input_hnd(&self) -> &InputHandler {
-        &self.input_hnd
-    }
-
     pub(crate) fn store(&self) -> &Store {
         &self.store
     }
@@ -112,7 +94,7 @@ impl Context {
         &mut self.theme_provider
     }
 
-    pub fn terminal(&mut self) -> &mut TuiTerminal {
+    pub fn terminal(&mut self) -> &mut TerminalBridge {
         &mut self.terminal
     }
 
@@ -137,75 +119,13 @@ impl Context {
     pub fn error(&mut self) -> Option<String> {
         self.error.take()
     }
-
-    /// ### enter_alternate_screen
-    ///
-    /// Enter alternate screen (gui window)
-    #[cfg(target_family = "unix")]
-    pub fn enter_alternate_screen(&mut self) {
-        match execute!(
-            self.terminal.backend_mut(),
-            EnterAlternateScreen,
-            DisableMouseCapture
-        ) {
-            Err(err) => error!("Failed to enter alternate screen: {}", err),
-            Ok(_) => info!("Entered alternate screen"),
-        }
-    }
-
-    /// ### enter_alternate_screen
-    ///
-    /// Enter alternate screen (gui window)
-    #[cfg(target_family = "windows")]
-    pub fn enter_alternate_screen(&self) {}
-
-    /// ### leave_alternate_screen
-    ///
-    /// Go back to normal screen (gui window)
-    #[cfg(target_family = "unix")]
-    pub fn leave_alternate_screen(&mut self) {
-        match execute!(
-            self.terminal.backend_mut(),
-            LeaveAlternateScreen,
-            DisableMouseCapture
-        ) {
-            Err(err) => error!("Failed to leave alternate screen: {}", err),
-            Ok(_) => info!("Left alternate screen"),
-        }
-    }
-
-    /// ### leave_alternate_screen
-    ///
-    /// Go back to normal screen (gui window)
-    #[cfg(target_family = "windows")]
-    pub fn leave_alternate_screen(&self) {}
-
-    /// ### clear_screen
-    ///
-    /// Clear terminal screen
-    pub fn clear_screen(&mut self) {
-        match self.terminal.clear() {
-            Err(err) => error!("Failed to clear screen: {}", err),
-            Ok(_) => info!("Cleared screen"),
-        }
-    }
-
-    #[cfg(target_family = "unix")]
-    fn stdout() -> Stdout {
-        let mut stdout = stdout();
-        assert!(execute!(stdout, EnterAlternateScreen).is_ok());
-        stdout
-    }
-
-    #[cfg(target_family = "windows")]
-    fn stdout() -> Stdout {
-        stdout()
-    }
 }
 
 impl Drop for Context {
     fn drop(&mut self) {
         // Re-enable terminal stuff
-        self.leave_alternate_screen();
+        let _ = self.terminal.disable_raw_mode();
+        let _ = self.terminal.leave_alternate_screen();
+        let _ = self.terminal.clear_screen();
     }
 }

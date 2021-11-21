@@ -26,10 +26,10 @@
  * SOFTWARE.
  */
 pub(self) use super::{
-    browser::FileExplorerTab, FileTransferActivity, FsEntry, LogLevel, TransferOpts,
+    browser::FileExplorerTab, FileTransferActivity, FsEntry, Id, LogLevel, TransferOpts,
     TransferPayload,
 };
-use tuirealm::{Payload, Value};
+use tuirealm::{State, StateValue};
 
 // actions
 pub(crate) mod change_dir;
@@ -79,7 +79,7 @@ impl FileTransferActivity {
     ///
     /// Get local file entry
     pub(crate) fn get_local_selected_entries(&self) -> SelectedEntry {
-        match self.get_selected_index(super::COMPONENT_EXPLORER_LOCAL) {
+        match self.get_selected_index(&Id::ExplorerLocal) {
             SelectedEntryIndex::One(idx) => SelectedEntry::from(self.local().get(idx)),
             SelectedEntryIndex::Many(files) => {
                 let files: Vec<&FsEntry> = files
@@ -97,7 +97,7 @@ impl FileTransferActivity {
     ///
     /// Get remote file entry
     pub(crate) fn get_remote_selected_entries(&self) -> SelectedEntry {
-        match self.get_selected_index(super::COMPONENT_EXPLORER_REMOTE) {
+        match self.get_selected_index(&Id::ExplorerRemote) {
             SelectedEntryIndex::One(idx) => SelectedEntry::from(self.remote().get(idx)),
             SelectedEntryIndex::Many(files) => {
                 let files: Vec<&FsEntry> = files
@@ -115,7 +115,7 @@ impl FileTransferActivity {
     ///
     /// Get remote file entry
     pub(crate) fn get_found_selected_entries(&self) -> SelectedEntry {
-        match self.get_selected_index(super::COMPONENT_EXPLORER_FIND) {
+        match self.get_selected_index(&Id::ExplorerFind) {
             SelectedEntryIndex::One(idx) => {
                 SelectedEntry::from(self.found().as_ref().unwrap().get(idx))
             }
@@ -133,14 +133,14 @@ impl FileTransferActivity {
 
     // -- private
 
-    fn get_selected_index(&self, component: &str) -> SelectedEntryIndex {
-        match self.view.get_state(component) {
-            Some(Payload::One(Value::Usize(idx))) => SelectedEntryIndex::One(idx),
-            Some(Payload::Vec(files)) => {
+    fn get_selected_index(&self, id: &Id) -> SelectedEntryIndex {
+        match self.app.state(id) {
+            Ok(State::One(StateValue::Usize(idx))) => SelectedEntryIndex::One(idx),
+            Ok(State::Vec(files)) => {
                 let list: Vec<usize> = files
                     .iter()
                     .map(|x| match x {
-                        Value::Usize(v) => *v,
+                        StateValue::Usize(v) => *v,
                         _ => 0,
                     })
                     .collect();

@@ -26,19 +26,20 @@
  * SOFTWARE.
  */
 // This module is split into files, cause it's just too big
-pub(self) mod actions;
-pub(self) mod lib;
-pub(self) mod misc;
-pub(self) mod session;
-pub(self) mod update;
-pub(self) mod view;
+mod actions;
+mod components;
+mod lib;
+mod misc;
+mod session;
+mod update;
+mod view;
 
 // locals
 use super::{Activity, Context, ExitReason};
 use crate::config::themes::Theme;
 use crate::filetransfer::{FileTransfer, FileTransferProtocol};
 use crate::filetransfer::{FtpFileTransfer, S3FileTransfer, ScpFileTransfer, SftpFileTransfer};
-use crate::fs::explorer::FileExplorer;
+use crate::fs::explorer::{FileExplorer, FileSorting};
 use crate::fs::FsEntry;
 use crate::host::Localhost;
 use crate::system::config_client::ConfigClient;
@@ -49,10 +50,10 @@ pub(self) use session::TransferPayload;
 
 // Includes
 use chrono::{DateTime, Local};
-use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use std::collections::VecDeque;
+use std::time::Duration;
 use tempfile::TempDir;
-use tuirealm::View;
+use tuirealm::{Application, EventListenerCfg, NoUserEvent};
 
 // -- Storage keys
 
@@ -61,34 +62,115 @@ const STORAGE_PENDING_TRANSFER: &str = "FILETRANSFER_PENDING_TRANSFER";
 
 // -- components
 
-const COMPONENT_EXPLORER_LOCAL: &str = "EXPLORER_LOCAL";
-const COMPONENT_EXPLORER_REMOTE: &str = "EXPLORER_REMOTE";
-const COMPONENT_EXPLORER_FIND: &str = "EXPLORER_FIND";
-const COMPONENT_LOG_BOX: &str = "LOG_BOX";
-const COMPONENT_PROGRESS_BAR_FULL: &str = "PROGRESS_BAR_FULL";
-const COMPONENT_PROGRESS_BAR_PARTIAL: &str = "PROGRESS_BAR_PARTIAL";
-const COMPONENT_TEXT_ERROR: &str = "TEXT_ERROR";
-const COMPONENT_TEXT_FATAL: &str = "TEXT_FATAL";
-const COMPONENT_TEXT_HELP: &str = "TEXT_HELP";
-const COMPONENT_TEXT_WAIT: &str = "TEXT_WAIT";
-const COMPONENT_INPUT_COPY: &str = "INPUT_COPY";
-const COMPONENT_INPUT_EXEC: &str = "INPUT_EXEC";
-const COMPONENT_INPUT_FIND: &str = "INPUT_FIND";
-const COMPONENT_INPUT_GOTO: &str = "INPUT_GOTO";
-const COMPONENT_INPUT_MKDIR: &str = "INPUT_MKDIR";
-const COMPONENT_INPUT_NEWFILE: &str = "INPUT_NEWFILE";
-const COMPONENT_INPUT_OPEN_WITH: &str = "INPUT_OPEN_WITH";
-const COMPONENT_INPUT_RENAME: &str = "INPUT_RENAME";
-const COMPONENT_INPUT_SAVEAS: &str = "INPUT_SAVEAS";
-const COMPONENT_RADIO_DELETE: &str = "RADIO_DELETE";
-const COMPONENT_RADIO_REPLACE: &str = "RADIO_REPLACE"; // NOTE: used for file transfers, to choose whether to replace files
-const COMPONENT_RADIO_DISCONNECT: &str = "RADIO_DISCONNECT";
-const COMPONENT_RADIO_QUIT: &str = "RADIO_QUIT";
-const COMPONENT_RADIO_SORTING: &str = "RADIO_SORTING";
-const COMPONENT_SPAN_STATUS_BAR_LOCAL: &str = "STATUS_BAR_LOCAL";
-const COMPONENT_SPAN_STATUS_BAR_REMOTE: &str = "STATUS_BAR_REMOTE";
-const COMPONENT_LIST_FILEINFO: &str = "LIST_FILEINFO";
-const COMPONENT_LIST_REPLACING_FILES: &str = "LIST_REPLACING_FILES"; // NOTE: used for file transfers, to list files which are going to be replaced
+#[derive(Debug, Eq, PartialEq, Clone, Hash)]
+enum Id {
+    CopyPopup,
+    DeletePopup,
+    DisconnectPopup,
+    ErrorPopup,
+    ExecPopup,
+    ExplorerFind,
+    ExplorerLocal,
+    ExplorerRemote,
+    FatalPopup,
+    FileInfoPopup,
+    FindPopup,
+    GlobalListener,
+    GotoPopup,
+    KeybindingsPopup,
+    Log,
+    MkdirPopup,
+    NewfilePopup,
+    OpenWithPopup,
+    ProgressBarFull,
+    ProgressBarPartial,
+    QuitPopup,
+    RenamePopup,
+    ReplacePopup,
+    ReplacingFilesListPopup,
+    SaveAsPopup,
+    SortingPopup,
+    StatusBarLocal,
+    StatusBarRemote,
+    WaitPopup,
+}
+
+#[derive(Debug, PartialEq)]
+enum Msg {
+    Transfer(TransferMsg),
+    Ui(UiMsg),
+    None,
+}
+
+#[derive(Debug, PartialEq)]
+enum TransferMsg {
+    AbortTransfer,
+    CopyFileTo(String),
+    DeleteFile,
+    EnterDirectory,
+    ExecuteCmd(String),
+    GoTo(String),
+    GoToParentDirectory,
+    GoToPreviousDirectory,
+    Mkdir(String),
+    NewFile(String),
+    OpenFile,
+    OpenFileWith(String),
+    OpenTextFile,
+    ReloadDir,
+    RenameFile(String),
+    SaveFileAs(String),
+    SearchFile(String),
+    TransferFile,
+    TransferPendingFile,
+}
+
+#[derive(Debug, PartialEq)]
+enum UiMsg {
+    ChangeFileSorting(FileSorting),
+    ChangeTransferWindow,
+    CloseCopyPopup,
+    CloseDeletePopup,
+    CloseDisconnectPopup,
+    CloseErrorPopup,
+    CloseExecPopup,
+    CloseFatalPopup,
+    CloseFileInfoPopup,
+    CloseFileSortingPopup,
+    CloseFindExplorer,
+    CloseFindPopup,
+    CloseGotoPopup,
+    CloseKeybindingsPopup,
+    CloseMkdirPopup,
+    CloseNewFilePopup,
+    CloseOpenWithPopup,
+    CloseQuitPopup,
+    CloseReplacePopups,
+    CloseRenamePopup,
+    CloseSaveAsPopup,
+    Disconnect,
+    ExplorerTabbed,
+    LogTabbed,
+    Quit,
+    ReplacePopupTabbed,
+    ShowCopyPopup,
+    ShowDeletePopup,
+    ShowDisconnectPopup,
+    ShowExecPopup,
+    ShowFileInfoPopup,
+    ShowFileSortingPopup,
+    ShowFindPopup,
+    ShowGotoPopup,
+    ShowKeybindingsPopup,
+    ShowMkdirPopup,
+    ShowNewFilePopup,
+    ShowOpenWithPopup,
+    ShowQuitPopup,
+    ShowRenamePopup,
+    ShowSaveAsPopup,
+    ToggleHiddenFiles,
+    ToggleSyncBrowsing,
+}
 
 /// ## LogLevel
 ///
@@ -125,28 +207,43 @@ impl LogRecord {
 ///
 /// FileTransferActivity is the data holder for the file transfer activity
 pub struct FileTransferActivity {
-    exit_reason: Option<ExitReason>,  // Exit reason
-    context: Option<Context>,         // Context holder
-    view: View,                       // View
-    host: Localhost,                  // Localhost
-    client: Box<dyn FileTransfer>,    // File transfer client
-    browser: Browser,                 // Browser
-    log_records: VecDeque<LogRecord>, // Log records
-    transfer: TransferStates,         // Transfer states
-    cache: Option<TempDir>,           // Temporary directory where to store stuff
+    /// Exit reason
+    exit_reason: Option<ExitReason>,
+    /// Context holder
+    context: Option<Context>,
+    /// Tui-realm application
+    app: Application<Id, Msg, NoUserEvent>,
+    /// Whether should redraw UI
+    redraw: bool,
+    /// Localhost bridge
+    host: Localhost,
+    /// Remote host
+    client: Box<dyn FileTransfer>,
+    /// Browser
+    browser: Browser,
+    /// Current log lines
+    log_records: VecDeque<LogRecord>,
+    transfer: TransferStates,
+    /// Temporary directory where to store temporary stuff
+    cache: Option<TempDir>,
 }
 
 impl FileTransferActivity {
     /// ### new
     ///
     /// Instantiates a new FileTransferActivity
-    pub fn new(host: Localhost, protocol: FileTransferProtocol) -> FileTransferActivity {
+    pub fn new(host: Localhost, protocol: FileTransferProtocol, ticks: Duration) -> Self {
         // Get config client
         let config_client: ConfigClient = Self::init_config_client();
-        FileTransferActivity {
+        Self {
             exit_reason: None,
             context: None,
-            view: View::init(),
+            app: Application::init(
+                EventListenerCfg::default()
+                    .poll_timeout(ticks)
+                    .default_input_listener(ticks),
+            ),
+            redraw: true,
             host,
             client: match protocol {
                 FileTransferProtocol::Sftp => Box::new(SftpFileTransfer::new(
@@ -257,9 +354,11 @@ impl Activity for FileTransferActivity {
         // Set context
         self.context = Some(context);
         // Clear terminal
-        self.context_mut().clear_screen();
+        if let Err(err) = self.context.as_mut().unwrap().terminal().clear_screen() {
+            error!("Failed to clear screen: {}", err);
+        }
         // Put raw mode on enabled
-        if let Err(err) = enable_raw_mode() {
+        if let Err(err) = self.context_mut().terminal().enable_raw_mode() {
             error!("Failed to enter raw mode: {}", err);
         }
         // Get files at current pwd
@@ -284,14 +383,12 @@ impl Activity for FileTransferActivity {
     /// `on_draw` is the function which draws the graphical interface.
     /// This function must be called at each tick to refresh the interface
     fn on_draw(&mut self) {
-        // Should ui actually be redrawned?
-        let mut redraw: bool = false;
         // Context must be something
         if self.context.is_none() {
             return;
         }
         // Check if connected (popup must be None, otherwise would try reconnecting in loop in case of error)
-        if !self.client.is_connected() && self.view.get_props(COMPONENT_TEXT_FATAL).is_none() {
+        if !self.client.is_connected() && !self.app.mounted(&Id::FatalPopup) {
             let ftparams = self.context().ft_params().unwrap();
             // print params
             let msg: String = Self::get_connection_msg(&ftparams.params);
@@ -302,12 +399,11 @@ impl Activity for FileTransferActivity {
             // Connect to remote
             self.connect();
             // Redraw
-            redraw = true;
+            self.redraw = true;
         }
-        // Handle input events (if false, becomes true; otherwise remains true)
-        redraw |= self.read_input_event();
-        // @! draw interface
-        if redraw {
+        self.tick();
+        // View
+        if self.redraw {
             self.view();
         }
     }
@@ -333,20 +429,16 @@ impl Activity for FileTransferActivity {
             }
         }
         // Disable raw mode
-        if let Err(err) = disable_raw_mode() {
+        if let Err(err) = self.context_mut().terminal().disable_raw_mode() {
             error!("Failed to disable raw mode: {}", err);
+        }
+        if let Err(err) = self.context_mut().terminal().clear_screen() {
+            error!("Failed to clear screen: {}", err);
         }
         // Disconnect client
         if self.client.is_connected() {
             let _ = self.client.disconnect();
         }
-        // Clear terminal and return
-        match self.context.take() {
-            Some(mut ctx) => {
-                ctx.clear_screen();
-                Some(ctx)
-            }
-            None => None,
-        }
+        self.context.take()
     }
 }

@@ -1977,7 +1977,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e0bccbcf40c8938196944a3da0e133e031a33f4d6b72db3bda3cc556e361905d"
 dependencies = [
  "lazy_static",
- "parking_lot 0.11.2",
+ "parking_lot 0.10.2",
  "serial_test_derive",
 ]
 
@@ -2205,7 +2205,6 @@ dependencies = [
  "bytesize",
  "chrono",
  "content_inspector",
- "crossterm",
  "dirs 4.0.0",
  "edit",
  "hostname",
@@ -2413,9 +2412,9 @@ dependencies = [
 
 [[package]]
 name = "tui-realm-stdlib"
-version = "0.6.3"
+version = "1.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f159d383b40dec75e0541530bc3416318f5e0a8b6999db9df9b5efa6b122380e"
+checksum = "b6444ac3cf88c6cbee4267b6999775aa65ef4ddf556587d2154631d74b5d65fc"
 dependencies = [
  "textwrap",
  "tuirealm",
@@ -2424,12 +2423,28 @@ dependencies = [
 
 [[package]]
 name = "tuirealm"
-version = "0.6.0"
+version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "634ad8e6a4b80ef032d31356b55964a995da5d05a9cf3a1bd134bae1ba7c197a"
+checksum = "69e5c7137a0bd92feadea98033a1849fe51c83d23f7761b866e8700a3d6f1de7"
 dependencies = [
+ "bitflags 1.3.2",
  "crossterm",
+ "lazy_static",
+ "regex",
+ "thiserror",
  "tui",
+ "tuirealm_derive",
+]
+
+[[package]]
+name = "tuirealm_derive"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e0adcdaf59881626555558eae08f8a53003c8a1961723b4d7a10c51599abbc81"
+dependencies = [
+ "proc-macro2",
+ "quote 1.0.9",
+ "syn 1.0.76",
 ]
 
 [[package]]

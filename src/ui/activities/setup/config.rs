@@ -29,7 +29,6 @@
 // Locals
 use super::SetupActivity;
 // Ext
-use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use std::env;
 
 impl SetupActivity {
@@ -94,11 +93,15 @@ impl SetupActivity {
                 // Set editor if config client exists
                 env::set_var("EDITOR", ctx.config().get_text_editor());
                 // Prepare terminal
-                if let Err(err) = disable_raw_mode() {
+                if let Err(err) = ctx.terminal().disable_raw_mode() {
                     error!("Failed to disable raw mode: {}", err);
                 }
                 // Leave alternate mode
-                ctx.leave_alternate_screen();
+                if let Err(err) = ctx.terminal().leave_alternate_screen() {
+                    error!("Could not leave alternate screen: {}", err);
+                }
+                // Lock ports
+                assert!(self.app.lock_ports().is_ok());
                 // Get result
                 let result: Result<(), String> = match ctx.config().iter_ssh_keys().nth(idx) {
                     Some(key) => {
@@ -120,13 +123,19 @@ impl SetupActivity {
                 };
                 // Restore terminal
                 // Clear screen
-                ctx.clear_screen();
+                if let Err(err) = ctx.terminal().clear_screen() {
+                    error!("Could not clear screen screen: {}", err);
+                }
                 // Enter alternate mode
-                ctx.enter_alternate_screen();
+                if let Err(err) = ctx.terminal().enter_alternate_screen() {
+                    error!("Could not enter alternate screen: {}", err);
+                }
                 // Re-enable raw mode
-                if let Err(err) = enable_raw_mode() {
+                if let Err(err) = ctx.terminal().enable_raw_mode() {
                     error!("Failed to enter raw mode: {}", err);
                 }
+                // Unlock ports
+                assert!(self.app.unlock_ports().is_ok());
                 // Return result
                 result
             }

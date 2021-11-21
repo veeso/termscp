@@ -27,22 +27,10 @@
  * SOFTWARE.
  */
 // Locals
-use super::{Context, SetupActivity};
-use crate::config::themes::Theme;
-use crate::ui::components::color_picker::{ColorPicker, ColorPickerPropsBuilder};
-use crate::utils::parser::parse_color;
-use crate::utils::ui::draw_area_in;
+use super::{components, Context, Id, IdCommon, IdTheme, SetupActivity, Theme, ViewLayout};
+
 // Ext
-use tui_realm_stdlib::{Label, LabelPropsBuilder};
-use tuirealm::tui::{
-    layout::{Constraint, Direction, Layout},
-    style::Color,
-    widgets::{BorderType, Borders, Clear},
-};
-use tuirealm::{
-    props::{Alignment, PropsBuilder},
-    Payload, Value, View,
-};
+use tuirealm::tui::layout::{Constraint, Direction, Layout};
 
 impl SetupActivity {
     // -- view
@@ -51,96 +39,19 @@ impl SetupActivity {
     ///
     /// Initialize thene view
     pub(super) fn init_theme(&mut self) {
-        // Init view
-        self.view = View::init();
-        // Common stuff
-        // Radio tab
-        self.mount_header_tab(2);
-        // Footer
-        self.mount_footer();
-        // auth colors
-        self.mount_title(super::COMPONENT_COLOR_AUTH_TITLE, "Authentication styles");
-        self.mount_color_picker(super::COMPONENT_COLOR_AUTH_PROTOCOL, "Protocol");
-        self.mount_color_picker(super::COMPONENT_COLOR_AUTH_ADDR, "Ip address");
-        self.mount_color_picker(super::COMPONENT_COLOR_AUTH_PORT, "Port");
-        self.mount_color_picker(super::COMPONENT_COLOR_AUTH_USERNAME, "Username");
-        self.mount_color_picker(super::COMPONENT_COLOR_AUTH_PASSWORD, "Password");
-        self.mount_color_picker(super::COMPONENT_COLOR_AUTH_BOOKMARKS, "Bookmarks");
-        self.mount_color_picker(super::COMPONENT_COLOR_AUTH_RECENTS, "Recent connections");
-        // Misc
-        self.mount_title(super::COMPONENT_COLOR_MISC_TITLE, "Misc styles");
-        self.mount_color_picker(super::COMPONENT_COLOR_MISC_ERROR, "Error");
-        self.mount_color_picker(super::COMPONENT_COLOR_MISC_INFO, "Info dialogs");
-        self.mount_color_picker(super::COMPONENT_COLOR_MISC_INPUT, "Input fields");
-        self.mount_color_picker(super::COMPONENT_COLOR_MISC_KEYS, "Key strokes");
-        self.mount_color_picker(super::COMPONENT_COLOR_MISC_QUIT, "Quit dialogs");
-        self.mount_color_picker(super::COMPONENT_COLOR_MISC_SAVE, "Save confirmations");
-        self.mount_color_picker(super::COMPONENT_COLOR_MISC_WARN, "Warnings");
-        // Transfer (1)
-        self.mount_title(super::COMPONENT_COLOR_TRANSFER_TITLE, "Transfer styles");
-        self.mount_color_picker(
-            super::COMPONENT_COLOR_TRANSFER_EXPLORER_LOCAL_BG,
-            "Local explorer background",
-        );
-        self.mount_color_picker(
-            super::COMPONENT_COLOR_TRANSFER_EXPLORER_LOCAL_FG,
-            "Local explorer foreground",
-        );
-        self.mount_color_picker(
-            super::COMPONENT_COLOR_TRANSFER_EXPLORER_LOCAL_HG,
-            "Local explorer highlighted",
-        );
-        self.mount_color_picker(
-            super::COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_BG,
-            "Remote explorer background",
-        );
-        self.mount_color_picker(
-            super::COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_FG,
-            "Remote explorer foreground",
-        );
-        self.mount_color_picker(
-            super::COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_HG,
-            "Remote explorer highlighted",
-        );
-        self.mount_color_picker(
-            super::COMPONENT_COLOR_TRANSFER_PROG_BAR_FULL,
-            "'Full transfer' Progress bar",
-        );
-        self.mount_color_picker(
-            super::COMPONENT_COLOR_TRANSFER_PROG_BAR_PARTIAL,
-            "'Partial transfer' Progress bar",
-        );
-        // Transfer (2)
-        self.mount_title(
-            super::COMPONENT_COLOR_TRANSFER_TITLE_2,
-            "Transfer styles (2)",
-        );
-        self.mount_color_picker(
-            super::COMPONENT_COLOR_TRANSFER_LOG_BG,
-            "Log window background",
-        );
-        self.mount_color_picker(super::COMPONENT_COLOR_TRANSFER_LOG_WIN, "Log window");
-        self.mount_color_picker(
-            super::COMPONENT_COLOR_TRANSFER_STATUS_SORTING,
-            "File sorting",
-        );
-        self.mount_color_picker(
-            super::COMPONENT_COLOR_TRANSFER_STATUS_HIDDEN,
-            "Hidden files",
-        );
-        self.mount_color_picker(
-            super::COMPONENT_COLOR_TRANSFER_STATUS_SYNC,
-            "Synchronized browsing",
-        );
+        // Init view (and mount commons)
+        self.new_app(ViewLayout::Theme);
+        // Mount titles
+        self.load_titles();
         // Load styles
         self.load_styles();
         // Active first field
-        self.view.active(super::COMPONENT_COLOR_AUTH_PROTOCOL);
+        assert!(self.app.active(&Id::Theme(IdTheme::AuthProtocol)).is_ok());
     }
 
     pub(super) fn view_theme(&mut self) {
         let mut ctx: Context = self.context.take().unwrap();
-        let _ = ctx.terminal().draw(|f| {
+        let _ = ctx.terminal().raw_mut().draw(|f| {
             // Prepare main chunks
             let chunks = Layout::default()
                 .direction(Direction::Vertical)
@@ -155,8 +66,8 @@ impl SetupActivity {
                 )
                 .split(f.size());
             // Render common widget
-            self.view.render(super::COMPONENT_RADIO_TAB, f, chunks[0]);
-            self.view.render(super::COMPONENT_TEXT_FOOTER, f, chunks[2]);
+            self.app.view(&Id::Common(IdCommon::Header), f, chunks[0]);
+            self.app.view(&Id::Common(IdCommon::Footer), f, chunks[2]);
             // Make chunks
             let colors_layout = Layout::default()
                 .direction(Direction::Horizontal)
@@ -186,34 +97,22 @@ impl SetupActivity {
                     .as_ref(),
                 )
                 .split(colors_layout[0]);
-            self.view
-                .render(super::COMPONENT_COLOR_AUTH_TITLE, f, auth_colors_layout[0]);
-            self.view.render(
-                super::COMPONENT_COLOR_AUTH_PROTOCOL,
-                f,
-                auth_colors_layout[1],
-            );
-            self.view
-                .render(super::COMPONENT_COLOR_AUTH_ADDR, f, auth_colors_layout[2]);
-            self.view
-                .render(super::COMPONENT_COLOR_AUTH_PORT, f, auth_colors_layout[3]);
-            self.view.render(
-                super::COMPONENT_COLOR_AUTH_USERNAME,
-                f,
-                auth_colors_layout[4],
-            );
-            self.view.render(
-                super::COMPONENT_COLOR_AUTH_PASSWORD,
-                f,
-                auth_colors_layout[5],
-            );
-            self.view.render(
-                super::COMPONENT_COLOR_AUTH_BOOKMARKS,
-                f,
-                auth_colors_layout[6],
-            );
-            self.view.render(
-                super::COMPONENT_COLOR_AUTH_RECENTS,
+            self.app
+                .view(&Id::Theme(IdTheme::AuthTitle), f, auth_colors_layout[0]);
+            self.app
+                .view(&Id::Theme(IdTheme::AuthProtocol), f, auth_colors_layout[1]);
+            self.app
+                .view(&Id::Theme(IdTheme::AuthAddress), f, auth_colors_layout[2]);
+            self.app
+                .view(&Id::Theme(IdTheme::AuthPort), f, auth_colors_layout[3]);
+            self.app
+                .view(&Id::Theme(IdTheme::AuthUsername), f, auth_colors_layout[4]);
+            self.app
+                .view(&Id::Theme(IdTheme::AuthPassword), f, auth_colors_layout[5]);
+            self.app
+                .view(&Id::Theme(IdTheme::AuthBookmarks), f, auth_colors_layout[6]);
+            self.app.view(
+                &Id::Theme(IdTheme::AuthRecentHosts),
                 f,
                 auth_colors_layout[7],
             );
@@ -233,22 +132,22 @@ impl SetupActivity {
                     .as_ref(),
                 )
                 .split(colors_layout[1]);
-            self.view
-                .render(super::COMPONENT_COLOR_MISC_TITLE, f, misc_colors_layout[0]);
-            self.view
-                .render(super::COMPONENT_COLOR_MISC_ERROR, f, misc_colors_layout[1]);
-            self.view
-                .render(super::COMPONENT_COLOR_MISC_INFO, f, misc_colors_layout[2]);
-            self.view
-                .render(super::COMPONENT_COLOR_MISC_INPUT, f, misc_colors_layout[3]);
-            self.view
-                .render(super::COMPONENT_COLOR_MISC_KEYS, f, misc_colors_layout[4]);
-            self.view
-                .render(super::COMPONENT_COLOR_MISC_QUIT, f, misc_colors_layout[5]);
-            self.view
-                .render(super::COMPONENT_COLOR_MISC_SAVE, f, misc_colors_layout[6]);
-            self.view
-                .render(super::COMPONENT_COLOR_MISC_WARN, f, misc_colors_layout[7]);
+            self.app
+                .view(&Id::Theme(IdTheme::MiscTitle), f, misc_colors_layout[0]);
+            self.app
+                .view(&Id::Theme(IdTheme::MiscError), f, misc_colors_layout[1]);
+            self.app
+                .view(&Id::Theme(IdTheme::MiscInfo), f, misc_colors_layout[2]);
+            self.app
+                .view(&Id::Theme(IdTheme::MiscInput), f, misc_colors_layout[3]);
+            self.app
+                .view(&Id::Theme(IdTheme::MiscKeys), f, misc_colors_layout[4]);
+            self.app
+                .view(&Id::Theme(IdTheme::MiscQuit), f, misc_colors_layout[5]);
+            self.app
+                .view(&Id::Theme(IdTheme::MiscSave), f, misc_colors_layout[6]);
+            self.app
+                .view(&Id::Theme(IdTheme::MiscWarn), f, misc_colors_layout[7]);
 
             let transfer_colors_layout_col1 = Layout::default()
                 .direction(Direction::Vertical)
@@ -266,38 +165,38 @@ impl SetupActivity {
                     .as_ref(),
                 )
                 .split(colors_layout[2]);
-            self.view.render(
-                super::COMPONENT_COLOR_TRANSFER_TITLE,
+            self.app.view(
+                &Id::Theme(IdTheme::TransferTitle),
                 f,
                 transfer_colors_layout_col1[0],
             );
-            self.view.render(
-                super::COMPONENT_COLOR_TRANSFER_EXPLORER_LOCAL_BG,
+            self.app.view(
+                &Id::Theme(IdTheme::ExplorerLocalBg),
                 f,
                 transfer_colors_layout_col1[1],
             );
-            self.view.render(
-                super::COMPONENT_COLOR_TRANSFER_EXPLORER_LOCAL_FG,
+            self.app.view(
+                &Id::Theme(IdTheme::ExplorerLocalFg),
                 f,
                 transfer_colors_layout_col1[2],
             );
-            self.view.render(
-                super::COMPONENT_COLOR_TRANSFER_EXPLORER_LOCAL_HG,
+            self.app.view(
+                &Id::Theme(IdTheme::ExplorerLocalHg),
                 f,
                 transfer_colors_layout_col1[3],
             );
-            self.view.render(
-                super::COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_BG,
+            self.app.view(
+                &Id::Theme(IdTheme::ExplorerRemoteBg),
                 f,
                 transfer_colors_layout_col1[4],
             );
-            self.view.render(
-                super::COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_FG,
+            self.app.view(
+                &Id::Theme(IdTheme::ExplorerRemoteFg),
                 f,
                 transfer_colors_layout_col1[5],
             );
-            self.view.render(
-                super::COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_HG,
+            self.app.view(
+                &Id::Theme(IdTheme::ExplorerRemoteHg),
                 f,
                 transfer_colors_layout_col1[6],
             );
@@ -317,82 +216,86 @@ impl SetupActivity {
                     .as_ref(),
                 )
                 .split(colors_layout[3]);
-            self.view.render(
-                super::COMPONENT_COLOR_TRANSFER_TITLE_2,
+            self.app.view(
+                &Id::Theme(IdTheme::TransferTitle2),
                 f,
                 transfer_colors_layout_col2[0],
             );
-            self.view.render(
-                super::COMPONENT_COLOR_TRANSFER_PROG_BAR_FULL,
+            self.app.view(
+                &Id::Theme(IdTheme::ProgBarFull),
                 f,
                 transfer_colors_layout_col2[1],
             );
-            self.view.render(
-                super::COMPONENT_COLOR_TRANSFER_PROG_BAR_PARTIAL,
+            self.app.view(
+                &Id::Theme(IdTheme::ProgBarPartial),
                 f,
                 transfer_colors_layout_col2[2],
             );
-            self.view.render(
-                super::COMPONENT_COLOR_TRANSFER_LOG_BG,
+            self.app.view(
+                &Id::Theme(IdTheme::LogBg),
                 f,
                 transfer_colors_layout_col2[3],
             );
-            self.view.render(
-                super::COMPONENT_COLOR_TRANSFER_LOG_WIN,
+            self.app.view(
+                &Id::Theme(IdTheme::LogWindow),
                 f,
                 transfer_colors_layout_col2[4],
             );
-            self.view.render(
-                super::COMPONENT_COLOR_TRANSFER_STATUS_SORTING,
+            self.app.view(
+                &Id::Theme(IdTheme::StatusSorting),
                 f,
                 transfer_colors_layout_col2[5],
             );
-            self.view.render(
-                super::COMPONENT_COLOR_TRANSFER_STATUS_HIDDEN,
+            self.app.view(
+                &Id::Theme(IdTheme::StatusHidden),
                 f,
                 transfer_colors_layout_col2[6],
             );
-            self.view.render(
-                super::COMPONENT_COLOR_TRANSFER_STATUS_SYNC,
+            self.app.view(
+                &Id::Theme(IdTheme::StatusSync),
                 f,
                 transfer_colors_layout_col2[7],
             );
             // Popups
-            if let Some(props) = self.view.get_props(super::COMPONENT_TEXT_ERROR) {
-                if props.visible {
-                    let popup = draw_area_in(f.size(), 50, 10);
-                    f.render_widget(Clear, popup);
-                    // make popup
-                    self.view.render(super::COMPONENT_TEXT_ERROR, f, popup);
-                }
-            }
-            if let Some(props) = self.view.get_props(super::COMPONENT_RADIO_QUIT) {
-                if props.visible {
-                    // make popup
-                    let popup = draw_area_in(f.size(), 40, 10);
-                    f.render_widget(Clear, popup);
-                    self.view.render(super::COMPONENT_RADIO_QUIT, f, popup);
-                }
-            }
-            if let Some(props) = self.view.get_props(super::COMPONENT_TEXT_HELP) {
-                if props.visible {
-                    // make popup
-                    let popup = draw_area_in(f.size(), 50, 70);
-                    f.render_widget(Clear, popup);
-                    self.view.render(super::COMPONENT_TEXT_HELP, f, popup);
-                }
-            }
-            if let Some(props) = self.view.get_props(super::COMPONENT_RADIO_SAVE) {
-                if props.visible {
-                    // make popup
-                    let popup = draw_area_in(f.size(), 30, 10);
-                    f.render_widget(Clear, popup);
-                    self.view.render(super::COMPONENT_RADIO_SAVE, f, popup);
-                }
-            }
+            self.view_popups(f);
         });
         // Put context back to context
         self.context = Some(ctx);
+    }
+
+    fn load_titles(&mut self) {
+        assert!(self
+            .app
+            .remount(
+                Id::Theme(IdTheme::AuthTitle),
+                Box::new(components::AuthTitle::default()),
+                vec![]
+            )
+            .is_ok());
+        assert!(self
+            .app
+            .remount(
+                Id::Theme(IdTheme::MiscTitle),
+                Box::new(components::MiscTitle::default()),
+                vec![]
+            )
+            .is_ok());
+        assert!(self
+            .app
+            .remount(
+                Id::Theme(IdTheme::TransferTitle),
+                Box::new(components::TransferTitle::default()),
+                vec![]
+            )
+            .is_ok());
+        assert!(self
+            .app
+            .remount(
+                Id::Theme(IdTheme::TransferTitle2),
+                Box::new(components::TransferTitle2::default()),
+                vec![]
+            )
+            .is_ok());
     }
 
     /// ### load_styles
@@ -400,249 +303,241 @@ impl SetupActivity {
     /// Load values from theme into input fields
     pub(crate) fn load_styles(&mut self) {
         let theme: Theme = self.theme().clone();
-        self.update_color(super::COMPONENT_COLOR_AUTH_ADDR, theme.auth_address);
-        self.update_color(super::COMPONENT_COLOR_AUTH_BOOKMARKS, theme.auth_bookmarks);
-        self.update_color(super::COMPONENT_COLOR_AUTH_PASSWORD, theme.auth_password);
-        self.update_color(super::COMPONENT_COLOR_AUTH_PORT, theme.auth_port);
-        self.update_color(super::COMPONENT_COLOR_AUTH_PROTOCOL, theme.auth_protocol);
-        self.update_color(super::COMPONENT_COLOR_AUTH_RECENTS, theme.auth_recents);
-        self.update_color(super::COMPONENT_COLOR_AUTH_USERNAME, theme.auth_username);
-        self.update_color(super::COMPONENT_COLOR_MISC_ERROR, theme.misc_error_dialog);
-        self.update_color(super::COMPONENT_COLOR_MISC_INFO, theme.misc_info_dialog);
-        self.update_color(super::COMPONENT_COLOR_MISC_INPUT, theme.misc_input_dialog);
-        self.update_color(super::COMPONENT_COLOR_MISC_KEYS, theme.misc_keys);
-        self.update_color(super::COMPONENT_COLOR_MISC_QUIT, theme.misc_quit_dialog);
-        self.update_color(super::COMPONENT_COLOR_MISC_SAVE, theme.misc_save_dialog);
-        self.update_color(super::COMPONENT_COLOR_MISC_WARN, theme.misc_warn_dialog);
-        self.update_color(
-            super::COMPONENT_COLOR_TRANSFER_EXPLORER_LOCAL_BG,
-            theme.transfer_local_explorer_background,
-        );
-        self.update_color(
-            super::COMPONENT_COLOR_TRANSFER_EXPLORER_LOCAL_FG,
-            theme.transfer_local_explorer_foreground,
-        );
-        self.update_color(
-            super::COMPONENT_COLOR_TRANSFER_EXPLORER_LOCAL_HG,
-            theme.transfer_local_explorer_highlighted,
-        );
-        self.update_color(
-            super::COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_BG,
-            theme.transfer_remote_explorer_background,
-        );
-        self.update_color(
-            super::COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_FG,
-            theme.transfer_remote_explorer_foreground,
-        );
-        self.update_color(
-            super::COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_HG,
-            theme.transfer_remote_explorer_highlighted,
-        );
-        self.update_color(
-            super::COMPONENT_COLOR_TRANSFER_PROG_BAR_FULL,
-            theme.transfer_progress_bar_full,
-        );
-        self.update_color(
-            super::COMPONENT_COLOR_TRANSFER_PROG_BAR_PARTIAL,
-            theme.transfer_progress_bar_partial,
-        );
-        self.update_color(
-            super::COMPONENT_COLOR_TRANSFER_LOG_BG,
-            theme.transfer_log_background,
-        );
-        self.update_color(
-            super::COMPONENT_COLOR_TRANSFER_LOG_WIN,
-            theme.transfer_log_window,
-        );
-        self.update_color(
-            super::COMPONENT_COLOR_TRANSFER_STATUS_SORTING,
-            theme.transfer_status_sorting,
-        );
-        self.update_color(
-            super::COMPONENT_COLOR_TRANSFER_STATUS_HIDDEN,
-            theme.transfer_status_hidden,
-        );
-        self.update_color(
-            super::COMPONENT_COLOR_TRANSFER_STATUS_SYNC,
-            theme.transfer_status_sync_browsing,
-        );
-    }
-
-    /// ### collect_styles
-    ///
-    /// Collect values from input and put them into the theme.
-    /// If a component has an invalid color, returns Err(component_id)
-    pub(crate) fn collect_styles(&mut self) -> Result<(), &'static str> {
-        // auth
-        let auth_address: Color = self
-            .get_color(super::COMPONENT_COLOR_AUTH_ADDR)
-            .map_err(|_| super::COMPONENT_COLOR_AUTH_ADDR)?;
-        let auth_bookmarks: Color = self
-            .get_color(super::COMPONENT_COLOR_AUTH_BOOKMARKS)
-            .map_err(|_| super::COMPONENT_COLOR_AUTH_BOOKMARKS)?;
-        let auth_password: Color = self
-            .get_color(super::COMPONENT_COLOR_AUTH_PASSWORD)
-            .map_err(|_| super::COMPONENT_COLOR_AUTH_PASSWORD)?;
-        let auth_port: Color = self
-            .get_color(super::COMPONENT_COLOR_AUTH_PORT)
-            .map_err(|_| super::COMPONENT_COLOR_AUTH_PORT)?;
-        let auth_protocol: Color = self
-            .get_color(super::COMPONENT_COLOR_AUTH_PROTOCOL)
-            .map_err(|_| super::COMPONENT_COLOR_AUTH_PROTOCOL)?;
-        let auth_recents: Color = self
-            .get_color(super::COMPONENT_COLOR_AUTH_RECENTS)
-            .map_err(|_| super::COMPONENT_COLOR_AUTH_RECENTS)?;
-        let auth_username: Color = self
-            .get_color(super::COMPONENT_COLOR_AUTH_USERNAME)
-            .map_err(|_| super::COMPONENT_COLOR_AUTH_USERNAME)?;
-        // misc
-        let misc_error_dialog: Color = self
-            .get_color(super::COMPONENT_COLOR_MISC_ERROR)
-            .map_err(|_| super::COMPONENT_COLOR_MISC_ERROR)?;
-        let misc_info_dialog: Color = self
-            .get_color(super::COMPONENT_COLOR_MISC_INFO)
-            .map_err(|_| super::COMPONENT_COLOR_MISC_INFO)?;
-        let misc_input_dialog: Color = self
-            .get_color(super::COMPONENT_COLOR_MISC_INPUT)
-            .map_err(|_| super::COMPONENT_COLOR_MISC_INPUT)?;
-        let misc_keys: Color = self
-            .get_color(super::COMPONENT_COLOR_MISC_KEYS)
-            .map_err(|_| super::COMPONENT_COLOR_MISC_KEYS)?;
-        let misc_quit_dialog: Color = self
-            .get_color(super::COMPONENT_COLOR_MISC_QUIT)
-            .map_err(|_| super::COMPONENT_COLOR_MISC_QUIT)?;
-        let misc_save_dialog: Color = self
-            .get_color(super::COMPONENT_COLOR_MISC_SAVE)
-            .map_err(|_| super::COMPONENT_COLOR_MISC_SAVE)?;
-        let misc_warn_dialog: Color = self
-            .get_color(super::COMPONENT_COLOR_MISC_WARN)
-            .map_err(|_| super::COMPONENT_COLOR_MISC_WARN)?;
-        // transfer
-        let transfer_local_explorer_background: Color = self
-            .get_color(super::COMPONENT_COLOR_TRANSFER_EXPLORER_LOCAL_BG)
-            .map_err(|_| super::COMPONENT_COLOR_TRANSFER_EXPLORER_LOCAL_BG)?;
-        let transfer_local_explorer_foreground: Color = self
-            .get_color(super::COMPONENT_COLOR_TRANSFER_EXPLORER_LOCAL_FG)
-            .map_err(|_| super::COMPONENT_COLOR_TRANSFER_EXPLORER_LOCAL_FG)?;
-        let transfer_local_explorer_highlighted: Color = self
-            .get_color(super::COMPONENT_COLOR_TRANSFER_EXPLORER_LOCAL_HG)
-            .map_err(|_| super::COMPONENT_COLOR_TRANSFER_EXPLORER_LOCAL_HG)?;
-        let transfer_remote_explorer_background: Color = self
-            .get_color(super::COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_BG)
-            .map_err(|_| super::COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_BG)?;
-        let transfer_remote_explorer_foreground: Color = self
-            .get_color(super::COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_FG)
-            .map_err(|_| super::COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_FG)?;
-        let transfer_remote_explorer_highlighted: Color = self
-            .get_color(super::COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_HG)
-            .map_err(|_| super::COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_HG)?;
-        let transfer_log_background: Color = self
-            .get_color(super::COMPONENT_COLOR_TRANSFER_LOG_BG)
-            .map_err(|_| super::COMPONENT_COLOR_TRANSFER_LOG_BG)?;
-        let transfer_log_window: Color = self
-            .get_color(super::COMPONENT_COLOR_TRANSFER_LOG_WIN)
-            .map_err(|_| super::COMPONENT_COLOR_TRANSFER_LOG_WIN)?;
-        let transfer_progress_bar_full: Color = self
-            .get_color(super::COMPONENT_COLOR_TRANSFER_PROG_BAR_FULL)
-            .map_err(|_| super::COMPONENT_COLOR_TRANSFER_PROG_BAR_FULL)?;
-        let transfer_progress_bar_partial: Color = self
-            .get_color(super::COMPONENT_COLOR_TRANSFER_PROG_BAR_PARTIAL)
-            .map_err(|_| super::COMPONENT_COLOR_TRANSFER_PROG_BAR_PARTIAL)?;
-        let transfer_status_hidden: Color = self
-            .get_color(super::COMPONENT_COLOR_TRANSFER_STATUS_HIDDEN)
-            .map_err(|_| super::COMPONENT_COLOR_TRANSFER_STATUS_HIDDEN)?;
-        let transfer_status_sorting: Color = self
-            .get_color(super::COMPONENT_COLOR_TRANSFER_STATUS_SORTING)
-            .map_err(|_| super::COMPONENT_COLOR_TRANSFER_STATUS_SORTING)?;
-        let transfer_status_sync_browsing: Color = self
-            .get_color(super::COMPONENT_COLOR_TRANSFER_STATUS_SYNC)
-            .map_err(|_| super::COMPONENT_COLOR_TRANSFER_STATUS_SYNC)?;
-        // Update theme
-        let mut theme: &mut Theme = self.theme_mut();
-        theme.auth_address = auth_address;
-        theme.auth_bookmarks = auth_bookmarks;
-        theme.auth_password = auth_password;
-        theme.auth_port = auth_port;
-        theme.auth_protocol = auth_protocol;
-        theme.auth_recents = auth_recents;
-        theme.auth_username = auth_username;
-        theme.misc_error_dialog = misc_error_dialog;
-        theme.misc_info_dialog = misc_info_dialog;
-        theme.misc_input_dialog = misc_input_dialog;
-        theme.misc_keys = misc_keys;
-        theme.misc_quit_dialog = misc_quit_dialog;
-        theme.misc_save_dialog = misc_save_dialog;
-        theme.misc_warn_dialog = misc_warn_dialog;
-        theme.transfer_local_explorer_background = transfer_local_explorer_background;
-        theme.transfer_local_explorer_foreground = transfer_local_explorer_foreground;
-        theme.transfer_local_explorer_highlighted = transfer_local_explorer_highlighted;
-        theme.transfer_remote_explorer_background = transfer_remote_explorer_background;
-        theme.transfer_remote_explorer_foreground = transfer_remote_explorer_foreground;
-        theme.transfer_remote_explorer_highlighted = transfer_remote_explorer_highlighted;
-        theme.transfer_log_background = transfer_log_background;
-        theme.transfer_log_window = transfer_log_window;
-        theme.transfer_progress_bar_full = transfer_progress_bar_full;
-        theme.transfer_progress_bar_partial = transfer_progress_bar_partial;
-        theme.transfer_status_hidden = transfer_status_hidden;
-        theme.transfer_status_sorting = transfer_status_sorting;
-        theme.transfer_status_sync_browsing = transfer_status_sync_browsing;
-        Ok(())
-    }
-
-    /// ### update_color
-    ///
-    /// Update color for provided component
-    fn update_color(&mut self, component: &str, color: Color) {
-        if let Some(props) = self.view.get_props(component) {
-            self.view.update(
-                component,
-                ColorPickerPropsBuilder::from(props)
-                    .with_color(&color)
-                    .build(),
-            );
-        }
-    }
-
-    /// ### get_color
-    ///
-    /// Get color from component
-    fn get_color(&self, component: &str) -> Result<Color, ()> {
-        match self.view.get_state(component) {
-            Some(Payload::One(Value::Str(color))) => match parse_color(color.as_str()) {
-                Some(c) => Ok(c),
-                None => Err(()),
-            },
-            _ => Err(()),
-        }
-    }
-
-    /// ### mount_color_picker
-    ///
-    /// Mount color picker with provided data
-    fn mount_color_picker(&mut self, id: &str, label: &str) {
-        self.view.mount(
-            id,
-            Box::new(ColorPicker::new(
-                ColorPickerPropsBuilder::default()
-                    .with_borders(Borders::ALL, BorderType::Rounded, Color::Reset)
-                    .with_label(label.to_string(), Alignment::Left)
-                    .build(),
-            )),
-        );
-    }
-
-    /// ### mount_title
-    ///
-    /// Mount title
-    fn mount_title(&mut self, id: &str, text: &str) {
-        self.view.mount(
-            id,
-            Box::new(Label::new(
-                LabelPropsBuilder::default()
-                    .bold()
-                    .with_text(text.to_string())
-                    .build(),
-            )),
-        );
+        assert!(self
+            .app
+            .remount(
+                Id::Theme(IdTheme::AuthAddress),
+                Box::new(components::AuthAddress::new(theme.auth_address)),
+                vec![]
+            )
+            .is_ok());
+        assert!(self
+            .app
+            .remount(
+                Id::Theme(IdTheme::AuthBookmarks),
+                Box::new(components::AuthBookmarks::new(theme.auth_bookmarks)),
+                vec![]
+            )
+            .is_ok());
+        assert!(self
+            .app
+            .remount(
+                Id::Theme(IdTheme::AuthPassword),
+                Box::new(components::AuthPassword::new(theme.auth_password)),
+                vec![]
+            )
+            .is_ok());
+        assert!(self
+            .app
+            .remount(
+                Id::Theme(IdTheme::AuthPort),
+                Box::new(components::AuthPort::new(theme.auth_port)),
+                vec![]
+            )
+            .is_ok());
+        assert!(self
+            .app
+            .remount(
+                Id::Theme(IdTheme::AuthProtocol),
+                Box::new(components::AuthProtocol::new(theme.auth_protocol)),
+                vec![]
+            )
+            .is_ok());
+        assert!(self
+            .app
+            .remount(
+                Id::Theme(IdTheme::AuthRecentHosts),
+                Box::new(components::AuthRecentHosts::new(theme.auth_recents)),
+                vec![]
+            )
+            .is_ok());
+        assert!(self
+            .app
+            .remount(
+                Id::Theme(IdTheme::AuthUsername),
+                Box::new(components::AuthUsername::new(theme.auth_username)),
+                vec![]
+            )
+            .is_ok());
+        assert!(self
+            .app
+            .remount(
+                Id::Theme(IdTheme::MiscError),
+                Box::new(components::MiscError::new(theme.misc_error_dialog)),
+                vec![]
+            )
+            .is_ok());
+        assert!(self
+            .app
+            .remount(
+                Id::Theme(IdTheme::MiscInfo),
+                Box::new(components::MiscInfo::new(theme.misc_info_dialog)),
+                vec![]
+            )
+            .is_ok());
+        assert!(self
+            .app
+            .remount(
+                Id::Theme(IdTheme::MiscInput),
+                Box::new(components::MiscInput::new(theme.misc_input_dialog)),
+                vec![]
+            )
+            .is_ok());
+        assert!(self
+            .app
+            .remount(
+                Id::Theme(IdTheme::MiscKeys),
+                Box::new(components::MiscKeys::new(theme.misc_keys)),
+                vec![]
+            )
+            .is_ok());
+        assert!(self
+            .app
+            .remount(
+                Id::Theme(IdTheme::MiscQuit),
+                Box::new(components::MiscQuit::new(theme.misc_quit_dialog)),
+                vec![]
+            )
+            .is_ok());
+        assert!(self
+            .app
+            .remount(
+                Id::Theme(IdTheme::MiscSave),
+                Box::new(components::MiscSave::new(theme.misc_save_dialog)),
+                vec![]
+            )
+            .is_ok());
+        assert!(self
+            .app
+            .remount(
+                Id::Theme(IdTheme::MiscWarn),
+                Box::new(components::MiscWarn::new(theme.misc_warn_dialog)),
+                vec![]
+            )
+            .is_ok());
+        assert!(self
+            .app
+            .remount(
+                Id::Theme(IdTheme::ExplorerLocalBg),
+                Box::new(components::ExplorerLocalBg::new(
+                    theme.transfer_local_explorer_background
+                )),
+                vec![]
+            )
+            .is_ok());
+        assert!(self
+            .app
+            .remount(
+                Id::Theme(IdTheme::ExplorerLocalFg),
+                Box::new(components::ExplorerLocalFg::new(
+                    theme.transfer_local_explorer_foreground
+                )),
+                vec![]
+            )
+            .is_ok());
+        assert!(self
+            .app
+            .remount(
+                Id::Theme(IdTheme::ExplorerLocalHg),
+                Box::new(components::ExplorerLocalHg::new(
+                    theme.transfer_local_explorer_highlighted
+                )),
+                vec![]
+            )
+            .is_ok());
+        assert!(self
+            .app
+            .remount(
+                Id::Theme(IdTheme::ExplorerRemoteBg),
+                Box::new(components::ExplorerRemoteBg::new(
+                    theme.transfer_remote_explorer_background
+                )),
+                vec![]
+            )
+            .is_ok());
+        assert!(self
+            .app
+            .remount(
+                Id::Theme(IdTheme::ExplorerRemoteFg),
+                Box::new(components::ExplorerRemoteFg::new(
+                    theme.transfer_remote_explorer_foreground
+                )),
+                vec![]
+            )
+            .is_ok());
+        assert!(self
+            .app
+            .remount(
+                Id::Theme(IdTheme::ExplorerRemoteHg),
+                Box::new(components::ExplorerRemoteHg::new(
+                    theme.transfer_remote_explorer_highlighted
+                )),
+                vec![]
+            )
+            .is_ok());
+        assert!(self
+            .app
+            .remount(
+                Id::Theme(IdTheme::ProgBarFull),
+                Box::new(components::ProgBarFull::new(
+                    theme.transfer_progress_bar_full
+                )),
+                vec![]
+            )
+            .is_ok());
+        assert!(self
+            .app
+            .remount(
+                Id::Theme(IdTheme::ProgBarPartial),
+                Box::new(components::ProgBarPartial::new(
+                    theme.transfer_progress_bar_partial
+                )),
+                vec![]
+            )
+            .is_ok());
+        assert!(self
+            .app
+            .remount(
+                Id::Theme(IdTheme::LogBg),
+                Box::new(components::LogBg::new(theme.transfer_log_background)),
+                vec![]
+            )
+            .is_ok());
+        assert!(self
+            .app
+            .remount(
+                Id::Theme(IdTheme::LogWindow),
+                Box::new(components::LogWindow::new(theme.transfer_log_window)),
+                vec![]
+            )
+            .is_ok());
+        assert!(self
+            .app
+            .remount(
+                Id::Theme(IdTheme::StatusSorting),
+                Box::new(components::StatusSorting::new(
+                    theme.transfer_status_sorting
+                )),
+                vec![]
+            )
+            .is_ok());
+        assert!(self
+            .app
+            .remount(
+                Id::Theme(IdTheme::StatusHidden),
+                Box::new(components::StatusHidden::new(theme.transfer_status_hidden)),
+                vec![]
+            )
+            .is_ok());
+        assert!(self
+            .app
+            .remount(
+                Id::Theme(IdTheme::StatusSync),
+                Box::new(components::StatusSync::new(
+                    theme.transfer_status_sync_browsing
+                )),
+                vec![]
+            )
+            .is_ok());
     }
 }
