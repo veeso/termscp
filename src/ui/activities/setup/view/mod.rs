@@ -31,18 +31,15 @@ pub mod ssh_keys;
 pub mod theme;
 
 use super::*;
+use crate::utils::ui::draw_area_in;
 pub use setup::*;
 pub use ssh_keys::*;
 pub use theme::*;
-// Ext
-use tui_realm_stdlib::{
-    Input, InputPropsBuilder, List, ListPropsBuilder, Paragraph, ParagraphPropsBuilder, Radio,
-    RadioPropsBuilder, Span, SpanPropsBuilder,
-};
-use tuirealm::props::{Alignment, InputType, PropsBuilder, TableBuilder, TextSpan};
-use tuirealm::tui::{
-    style::Color,
-    widgets::{BorderType, Borders},
+
+use tuirealm::tui::widgets::Clear;
+use tuirealm::{
+    event::{Key, KeyEvent, KeyModifiers},
+    Frame, Sub, SubClause, SubEventClause,
 };
 
 impl SetupActivity {
@@ -61,6 +58,7 @@ impl SetupActivity {
     ///
     /// View gui
     pub(super) fn view(&mut self) {
+        self.redraw = false;
         match self.layout {
             ViewLayout::SetupForm => self.view_setup(),
             ViewLayout::SshKeys => self.view_ssh_keys(),
@@ -73,238 +71,229 @@ impl SetupActivity {
     /// ### mount_error
     ///
     /// Mount error box
-    pub(super) fn mount_error(&mut self, text: &str) {
-        self.mount_text_dialog(super::COMPONENT_TEXT_ERROR, text, Color::Red);
+    pub(super) fn mount_error<S: AsRef<str>>(&mut self, text: S) {
+        assert!(self
+            .app
+            .remount(
+                Id::Common(IdCommon::ErrorPopup),
+                Box::new(components::ErrorPopup::new(text)),
+                vec![],
+            )
+            .is_ok());
+        assert!(self.app.active(&Id::Common(IdCommon::ErrorPopup)).is_ok());
     }
 
     /// ### umount_error
     ///
     /// Umount error message
     pub(super) fn umount_error(&mut self) {
-        self.view.umount(super::COMPONENT_TEXT_ERROR);
+        let _ = self.app.umount(&Id::Common(IdCommon::ErrorPopup));
     }
 
     /// ### mount_quit
     ///
     /// Mount quit popup
     pub(super) fn mount_quit(&mut self) {
-        self.mount_radio_dialog(
-            super::COMPONENT_RADIO_QUIT,
-            "There are unsaved changes! Save changes before leaving?",
-            &["Save", "Don't save", "Cancel"],
-            0,
-            Color::LightRed,
-        );
+        assert!(self
+            .app
+            .remount(
+                Id::Common(IdCommon::QuitPopup),
+                Box::new(components::QuitPopup::default()),
+                vec![],
+            )
+            .is_ok());
+        assert!(self.app.active(&Id::Common(IdCommon::QuitPopup)).is_ok());
     }
 
     /// ### umount_quit
     ///
     /// Umount quit
     pub(super) fn umount_quit(&mut self) {
-        self.view.umount(super::COMPONENT_RADIO_QUIT);
+        let _ = self.app.umount(&Id::Common(IdCommon::QuitPopup));
     }
 
     /// ### mount_save_popup
     ///
     /// Mount save popup
     pub(super) fn mount_save_popup(&mut self) {
-        self.mount_radio_dialog(
-            super::COMPONENT_RADIO_SAVE,
-            "Save changes?",
-            &["Yes", "No"],
-            0,
-            Color::LightYellow,
-        );
+        assert!(self
+            .app
+            .remount(
+                Id::Common(IdCommon::SavePopup),
+                Box::new(components::SavePopup::default()),
+                vec![],
+            )
+            .is_ok());
+        assert!(self.app.active(&Id::Common(IdCommon::SavePopup)).is_ok());
     }
 
     /// ### umount_quit
     ///
     /// Umount quit
     pub(super) fn umount_save_popup(&mut self) {
-        self.view.umount(super::COMPONENT_RADIO_SAVE);
-    }
-
-    pub(self) fn mount_header_tab(&mut self, idx: usize) {
-        self.view.mount(
-            super::COMPONENT_RADIO_TAB,
-            Box::new(Radio::new(
-                RadioPropsBuilder::default()
-                    .with_color(Color::LightYellow)
-                    .with_inverted_color(Color::Black)
-                    .with_borders(Borders::BOTTOM, BorderType::Thick, Color::White)
-                    .with_options(&[
-                        String::from("User Interface"),
-                        String::from("SSH Keys"),
-                        String::from("Theme"),
-                    ])
-                    .with_value(idx)
-                    .rewind(true)
-                    .build(),
-            )),
-        );
-    }
-
-    pub(self) fn mount_footer(&mut self) {
-        self.view.mount(
-            super::COMPONENT_TEXT_FOOTER,
-            Box::new(Span::new(
-                SpanPropsBuilder::default()
-                    .with_spans(vec![
-                        TextSpan::new("Press ").bold(),
-                        TextSpan::new("<CTRL+H>").bold().fg(Color::Cyan),
-                        TextSpan::new(" to show keybindings").bold(),
-                    ])
-                    .build(),
-            )),
-        );
+        let _ = self.app.umount(&Id::Common(IdCommon::SavePopup));
     }
 
     /// ### mount_help
     ///
     /// Mount help
     pub(super) fn mount_help(&mut self) {
-        self.view.mount(
-            super::COMPONENT_TEXT_HELP,
-            Box::new(List::new(
-                ListPropsBuilder::default()
-                    .with_borders(Borders::ALL, BorderType::Rounded, Color::White)
-                    .with_highlighted_str(Some("?"))
-                    .with_max_scroll_step(8)
-                    .bold()
-                    .with_title("Help", Alignment::Center)
-                    .scrollable(true)
-                    .with_rows(
-                        TableBuilder::default()
-                            .add_col(TextSpan::new("<ESC>").bold().fg(Color::Cyan))
-                            .add_col(TextSpan::from("           Exit setup"))
-                            .add_row()
-                            .add_col(TextSpan::new("<TAB>").bold().fg(Color::Cyan))
-                            .add_col(TextSpan::from("           Change setup page"))
-                            .add_row()
-                            .add_col(TextSpan::new("<RIGHT/LEFT>").bold().fg(Color::Cyan))
-                            .add_col(TextSpan::from("    Change cursor"))
-                            .add_row()
-                            .add_col(TextSpan::new("<UP/DOWN>").bold().fg(Color::Cyan))
-                            .add_col(TextSpan::from("       Change input field"))
-                            .add_row()
-                            .add_col(TextSpan::new("<ENTER>").bold().fg(Color::Cyan))
-                            .add_col(TextSpan::from("         Select / Dismiss popup"))
-                            .add_row()
-                            .add_col(TextSpan::new("<DEL|E>").bold().fg(Color::Cyan))
-                            .add_col(TextSpan::from("         Delete SSH key"))
-                            .add_row()
-                            .add_col(TextSpan::new("<CTRL+N>").bold().fg(Color::Cyan))
-                            .add_col(TextSpan::from("        New SSH key"))
-                            .add_row()
-                            .add_col(TextSpan::new("<CTRL+R>").bold().fg(Color::Cyan))
-                            .add_col(TextSpan::from("        Revert changes"))
-                            .add_row()
-                            .add_col(TextSpan::new("<CTRL+S>").bold().fg(Color::Cyan))
-                            .add_col(TextSpan::from("        Save configuration"))
-                            .build(),
-                    )
-                    .build(),
-            )),
-        );
-        // Active help
-        self.view.active(super::COMPONENT_TEXT_HELP);
+        assert!(self
+            .app
+            .remount(
+                Id::Common(IdCommon::Keybindings),
+                Box::new(components::Keybindings::default()),
+                vec![],
+            )
+            .is_ok());
+        assert!(self.app.active(&Id::Common(IdCommon::Keybindings)).is_ok());
     }
 
     /// ### umount_help
     ///
     /// Umount help
     pub(super) fn umount_help(&mut self) {
-        self.view.umount(super::COMPONENT_TEXT_HELP);
+        let _ = self.app.umount(&Id::Common(IdCommon::Keybindings));
     }
 
-    // -- mount helpers
-
-    fn mount_text_dialog(&mut self, id: &str, text: &str, color: Color) {
-        // Mount
-        self.view.mount(
-            id,
-            Box::new(Paragraph::new(
-                ParagraphPropsBuilder::default()
-                    .with_borders(Borders::ALL, BorderType::Thick, color)
-                    .with_foreground(color)
-                    .bold()
-                    .with_text_alignment(Alignment::Center)
-                    .with_texts(vec![TextSpan::from(text)])
-                    .build(),
-            )),
-        );
-        // Give focus to error
-        self.view.active(id);
-    }
-
-    fn mount_radio_dialog(
-        &mut self,
-        id: &str,
-        text: &str,
-        opts: &[&str],
-        default: usize,
-        color: Color,
-    ) {
-        self.view.mount(
-            id,
-            Box::new(Radio::new(
-                RadioPropsBuilder::default()
-                    .with_color(color)
-                    .with_inverted_color(Color::Black)
-                    .with_borders(Borders::ALL, BorderType::Rounded, color)
-                    .with_title(text, Alignment::Center)
-                    .with_options(opts)
-                    .with_value(default)
-                    .rewind(true)
-                    .build(),
-            )),
-        );
-        // Active
-        self.view.active(id);
-    }
-
-    fn mount_radio(&mut self, id: &str, text: &str, opts: &[&str], default: usize, color: Color) {
-        self.view.mount(
-            id,
-            Box::new(Radio::new(
-                RadioPropsBuilder::default()
-                    .with_color(color)
-                    .with_inverted_color(Color::Black)
-                    .with_borders(Borders::ALL, BorderType::Rounded, color)
-                    .with_title(text, Alignment::Left)
-                    .with_options(opts)
-                    .with_value(default)
-                    .rewind(true)
-                    .build(),
-            )),
-        );
-    }
-
-    fn mount_input(&mut self, id: &str, label: &str, fg: Color, typ: InputType) {
-        self.mount_input_ex(id, label, fg, typ, None, None);
-    }
-
-    fn mount_input_ex(
-        &mut self,
-        id: &str,
-        label: &str,
-        fg: Color,
-        typ: InputType,
-        len: Option<usize>,
-        value: Option<String>,
-    ) {
-        let mut props = InputPropsBuilder::default();
-        props
-            .with_foreground(fg)
-            .with_borders(Borders::ALL, BorderType::Rounded, fg)
-            .with_label(label, Alignment::Left)
-            .with_input(typ);
-        if let Some(len) = len {
-            props.with_input_len(len);
+    pub(super) fn view_popups(&mut self, f: &mut Frame) {
+        if self.app.mounted(&Id::Common(IdCommon::ErrorPopup)) {
+            let popup = draw_area_in(f.size(), 50, 10);
+            f.render_widget(Clear, popup);
+            // make popup
+            self.app.view(&Id::Common(IdCommon::ErrorPopup), f, popup);
+        } else if self.app.mounted(&Id::Common(IdCommon::QuitPopup)) {
+            // make popup
+            let popup = draw_area_in(f.size(), 40, 10);
+            f.render_widget(Clear, popup);
+            self.app.view(&Id::Common(IdCommon::QuitPopup), f, popup);
+        } else if self.app.mounted(&Id::Common(IdCommon::Keybindings)) {
+            // make popup
+            let popup = draw_area_in(f.size(), 50, 70);
+            f.render_widget(Clear, popup);
+            self.app.view(&Id::Common(IdCommon::Keybindings), f, popup);
+        } else if self.app.mounted(&Id::Common(IdCommon::SavePopup)) {
+            // make popup
+            let popup = draw_area_in(f.size(), 30, 10);
+            f.render_widget(Clear, popup);
+            self.app.view(&Id::Common(IdCommon::SavePopup), f, popup);
         }
-        if let Some(value) = value {
-            props.with_value(value);
-        }
-        self.view.mount(id, Box::new(Input::new(props.build())));
+    }
+
+    /// ### new_app
+    ///
+    /// Clean app up and remount common components and global listener
+    fn new_app(&mut self, layout: ViewLayout) {
+        self.app.umount_all();
+        self.mount_global_listener();
+        self.mount_commons(layout);
+    }
+
+    /// ### mount_commons
+    ///
+    /// Mount common components
+    fn mount_commons(&mut self, layout: ViewLayout) {
+        // Radio tab
+        assert!(self
+            .app
+            .remount(
+                Id::Common(IdCommon::Header),
+                Box::new(components::Header::new(layout)),
+                vec![],
+            )
+            .is_ok());
+        // Footer
+        assert!(self
+            .app
+            .remount(
+                Id::Common(IdCommon::Footer),
+                Box::new(components::Footer::default()),
+                vec![],
+            )
+            .is_ok());
+    }
+
+    /// ### mount_global_listener
+    ///
+    /// Mount global listener
+    fn mount_global_listener(&mut self) {
+        assert!(self
+            .app
+            .mount(
+                Id::Common(IdCommon::GlobalListener),
+                Box::new(components::GlobalListener::default()),
+                vec![
+                    Sub::new(
+                        SubEventClause::Keyboard(KeyEvent {
+                            code: Key::Esc,
+                            modifiers: KeyModifiers::NONE,
+                        }),
+                        Self::no_popup_mounted_clause(),
+                    ),
+                    Sub::new(
+                        SubEventClause::Keyboard(KeyEvent {
+                            code: Key::Tab,
+                            modifiers: KeyModifiers::NONE,
+                        }),
+                        Self::no_popup_mounted_clause(),
+                    ),
+                    Sub::new(
+                        SubEventClause::Keyboard(KeyEvent {
+                            code: Key::Char('h'),
+                            modifiers: KeyModifiers::CONTROL,
+                        }),
+                        Self::no_popup_mounted_clause(),
+                    ),
+                    Sub::new(
+                        SubEventClause::Keyboard(KeyEvent {
+                            code: Key::Char('r'),
+                            modifiers: KeyModifiers::CONTROL,
+                        }),
+                        Self::no_popup_mounted_clause(),
+                    ),
+                    Sub::new(
+                        SubEventClause::Keyboard(KeyEvent {
+                            code: Key::Char('s'),
+                            modifiers: KeyModifiers::CONTROL,
+                        }),
+                        Self::no_popup_mounted_clause(),
+                    ),
+                ]
+            )
+            .is_ok());
+    }
+
+    /// ### no_popup_mounted_clause
+    ///
+    /// Returns a sub clause which requires that no popup is mounted in order to be satisfied
+    fn no_popup_mounted_clause() -> SubClause<Id> {
+        SubClause::And(
+            Box::new(SubClause::Not(Box::new(SubClause::IsMounted(Id::Common(
+                IdCommon::ErrorPopup,
+            ))))),
+            Box::new(SubClause::And(
+                Box::new(SubClause::Not(Box::new(SubClause::IsMounted(Id::Common(
+                    IdCommon::Keybindings,
+                ))))),
+                Box::new(SubClause::And(
+                    Box::new(SubClause::Not(Box::new(SubClause::IsMounted(Id::Common(
+                        IdCommon::QuitPopup,
+                    ))))),
+                    Box::new(SubClause::And(
+                        Box::new(SubClause::Not(Box::new(SubClause::IsMounted(Id::Common(
+                            IdCommon::SavePopup,
+                        ))))),
+                        Box::new(SubClause::And(
+                            Box::new(SubClause::Not(Box::new(SubClause::IsMounted(Id::Ssh(
+                                IdSsh::DelSshKeyPopup,
+                            ))))),
+                            Box::new(SubClause::Not(Box::new(SubClause::IsMounted(Id::Ssh(
+                                IdSsh::SshHost,
+                            ))))),
+                        )),
+                    )),
+                )),
+            )),
+        )
     }
 }

@@ -505,7 +505,7 @@ impl FileTransferActivity {
                     >= 500
             {
                 // Read events
-                self.read_input_event();
+                self.tick();
                 // Reset instant
                 last_input_event_fetch = Some(Instant::now());
             }
@@ -937,7 +937,7 @@ impl FileTransferActivity {
                     >= 500
             {
                 // Read events
-                self.read_input_event();
+                self.tick();
                 // Reset instant
                 last_input_event_fetch = Some(Instant::now());
             }

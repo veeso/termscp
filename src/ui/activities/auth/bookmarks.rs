@@ -33,8 +33,6 @@ use crate::system::environment;
 
 // Ext
 use std::path::PathBuf;
-use tui_realm_stdlib::{InputPropsBuilder, RadioPropsBuilder};
-use tuirealm::PropsBuilder;
 
 impl AuthActivity {
     /// ### del_bookmark
@@ -234,12 +232,8 @@ impl AuthActivity {
     /// Load bookmark data into the gui components
     fn load_bookmark_into_gui(&mut self, bookmark: FileTransferParams) {
         // Load parameters into components
-        if let Some(props) = self.view.get_props(super::COMPONENT_RADIO_PROTOCOL) {
-            let props = RadioPropsBuilder::from(props)
-                .with_value(Self::protocol_enum_to_opt(bookmark.protocol))
-                .build();
-            self.view.update(super::COMPONENT_RADIO_PROTOCOL, props);
-        }
+        self.protocol = bookmark.protocol;
+        self.mount_protocol(bookmark.protocol);
         match bookmark.params {
             ProtocolParams::AwsS3(params) => self.load_bookmark_s3_into_gui(params),
             ProtocolParams::Generic(params) => self.load_bookmark_generic_into_gui(params),
@@ -247,51 +241,15 @@ impl AuthActivity {
     }
 
     fn load_bookmark_generic_into_gui(&mut self, params: GenericProtocolParams) {
-        if let Some(props) = self.view.get_props(super::COMPONENT_INPUT_ADDR) {
-            let props = InputPropsBuilder::from(props)
-                .with_value(params.address.clone())
-                .build();
-            self.view.update(super::COMPONENT_INPUT_ADDR, props);
-        }
-        if let Some(props) = self.view.get_props(super::COMPONENT_INPUT_PORT) {
-            let props = InputPropsBuilder::from(props)
-                .with_value(params.port.to_string())
-                .build();
-            self.view.update(super::COMPONENT_INPUT_PORT, props);
-        }
-
-        if let Some(props) = self.view.get_props(super::COMPONENT_INPUT_USERNAME) {
-            let props = InputPropsBuilder::from(props)
-                .with_value(params.username.as_deref().unwrap_or_default().to_string())
-                .build();
-            self.view.update(super::COMPONENT_INPUT_USERNAME, props);
-        }
-        if let Some(props) = self.view.get_props(super::COMPONENT_INPUT_PASSWORD) {
-            let props = InputPropsBuilder::from(props)
-                .with_value(params.password.as_deref().unwrap_or_default().to_string())
-                .build();
-            self.view.update(super::COMPONENT_INPUT_PASSWORD, props);
-        }
+        self.mount_address(params.address.as_str());
+        self.mount_port(params.port);
+        self.mount_username(params.username.as_deref().unwrap_or(""));
+        self.mount_password(params.password.as_deref().unwrap_or(""));
     }
 
     fn load_bookmark_s3_into_gui(&mut self, params: AwsS3Params) {
-        if let Some(props) = self.view.get_props(super::COMPONENT_INPUT_S3_BUCKET) {
-            let props = InputPropsBuilder::from(props)
-                .with_value(params.bucket_name.clone())
-                .build();
-            self.view.update(super::COMPONENT_INPUT_S3_BUCKET, props);
-        }
-        if let Some(props) = self.view.get_props(super::COMPONENT_INPUT_S3_REGION) {
-            let props = InputPropsBuilder::from(props)
-                .with_value(params.region.clone())
-                .build();
-            self.view.update(super::COMPONENT_INPUT_S3_REGION, props);
-        }
-        if let Some(props) = self.view.get_props(super::COMPONENT_INPUT_S3_PROFILE) {
-            let props = InputPropsBuilder::from(props)
-                .with_value(params.profile.as_deref().unwrap_or_default().to_string())
-                .build();
-            self.view.update(super::COMPONENT_INPUT_S3_PROFILE, props);
-        }
+        self.mount_s3_bucket(params.bucket_name.as_str());
+        self.mount_s3_region(params.region.as_str());
+        self.mount_s3_profile(params.profile.as_deref().unwrap_or(""));
     }
 }

@@ -27,20 +27,12 @@
  * SOFTWARE.
  */
 // Locals
-use super::{Context, SetupActivity};
-use crate::ui::components::bookmark_list::{BookmarkList, BookmarkListPropsBuilder};
+use super::{components, Context, Id, IdCommon, IdSsh, SetupActivity, ViewLayout};
 use crate::utils::ui::draw_area_in;
+
 // Ext
-use tui_realm_stdlib::{Input, InputPropsBuilder};
-use tuirealm::tui::{
-    layout::{Constraint, Direction, Layout},
-    style::Color,
-    widgets::{BorderType, Borders, Clear},
-};
-use tuirealm::{
-    props::{Alignment, PropsBuilder},
-    View,
-};
+use tuirealm::tui::layout::{Constraint, Direction, Layout};
+use tuirealm::tui::widgets::Clear;
 
 impl SetupActivity {
     // -- view
@@ -49,34 +41,17 @@ impl SetupActivity {
     ///
     /// Initialize ssh keys view
     pub(super) fn init_ssh_keys(&mut self) {
-        // Init view
-        self.view = View::init();
-        // Common stuff
-        // Radio tab
-        // Radio tab
-        self.mount_header_tab(1);
-        // Footer
-        self.mount_footer();
-        self.view.mount(
-            super::COMPONENT_LIST_SSH_KEYS,
-            Box::new(BookmarkList::new(
-                BookmarkListPropsBuilder::default()
-                    .with_title("SSH keys", Alignment::Left)
-                    .with_borders(Borders::ALL, BorderType::Plain, Color::LightGreen)
-                    .with_background(Color::LightGreen)
-                    .with_foreground(Color::Black)
-                    .build(),
-            )),
-        );
-        // Give focus
-        self.view.active(super::COMPONENT_LIST_SSH_KEYS);
+        // Init view (and mount commons)
+        self.new_app(ViewLayout::SshKeys);
         // Load keys
         self.reload_ssh_keys();
+        // Give focus
+        assert!(self.app.active(&Id::Ssh(IdSsh::SshKeys)).is_ok());
     }
 
     pub(crate) fn view_ssh_keys(&mut self) {
         let mut ctx: Context = self.context.take().unwrap();
-        let _ = ctx.terminal().draw(|f| {
+        let _ = ctx.terminal().raw_mut().draw(|f| {
             // Prepare main chunks
             let chunks = Layout::default()
                 .direction(Direction::Vertical)
@@ -91,72 +66,31 @@ impl SetupActivity {
                 )
                 .split(f.size());
             // Render common widget
-            self.view.render(super::COMPONENT_RADIO_TAB, f, chunks[0]);
-            self.view.render(super::COMPONENT_TEXT_FOOTER, f, chunks[2]);
-            self.view
-                .render(super::COMPONENT_LIST_SSH_KEYS, f, chunks[1]);
+            self.app.view(&Id::Common(IdCommon::Header), f, chunks[0]);
+            self.app.view(&Id::Common(IdCommon::Footer), f, chunks[2]);
+            self.app.view(&Id::Ssh(IdSsh::SshKeys), f, chunks[1]);
             // Popups
-            if let Some(props) = self.view.get_props(super::COMPONENT_TEXT_ERROR) {
-                if props.visible {
-                    let popup = draw_area_in(f.size(), 50, 10);
-                    f.render_widget(Clear, popup);
-                    // make popup
-                    self.view.render(super::COMPONENT_TEXT_ERROR, f, popup);
-                }
-            }
-            if let Some(props) = self.view.get_props(super::COMPONENT_RADIO_QUIT) {
-                if props.visible {
-                    // make popup
-                    let popup = draw_area_in(f.size(), 40, 10);
-                    f.render_widget(Clear, popup);
-                    self.view.render(super::COMPONENT_RADIO_QUIT, f, popup);
-                }
-            }
-            if let Some(props) = self.view.get_props(super::COMPONENT_TEXT_HELP) {
-                if props.visible {
-                    // make popup
-                    let popup = draw_area_in(f.size(), 50, 70);
-                    f.render_widget(Clear, popup);
-                    self.view.render(super::COMPONENT_TEXT_HELP, f, popup);
-                }
-            }
-            if let Some(props) = self.view.get_props(super::COMPONENT_RADIO_SAVE) {
-                if props.visible {
-                    // make popup
-                    let popup = draw_area_in(f.size(), 30, 10);
-                    f.render_widget(Clear, popup);
-                    self.view.render(super::COMPONENT_RADIO_SAVE, f, popup);
-                }
-            }
-            if let Some(props) = self.view.get_props(super::COMPONENT_RADIO_DEL_SSH_KEY) {
-                if props.visible {
-                    // make popup
-                    let popup = draw_area_in(f.size(), 30, 10);
-                    f.render_widget(Clear, popup);
-                    self.view
-                        .render(super::COMPONENT_RADIO_DEL_SSH_KEY, f, popup);
-                }
-            }
-            if let Some(props) = self.view.get_props(super::COMPONENT_INPUT_SSH_HOST) {
-                if props.visible {
-                    // make popup
-                    let popup = draw_area_in(f.size(), 50, 20);
-                    f.render_widget(Clear, popup);
-                    let popup_chunks = Layout::default()
-                        .direction(Direction::Vertical)
-                        .constraints(
-                            [
-                                Constraint::Length(3), // Host
-                                Constraint::Length(3), // Username
-                            ]
-                            .as_ref(),
-                        )
-                        .split(popup);
-                    self.view
-                        .render(super::COMPONENT_INPUT_SSH_HOST, f, popup_chunks[0]);
-                    self.view
-                        .render(super::COMPONENT_INPUT_SSH_USERNAME, f, popup_chunks[1]);
-                }
+            self.view_popups(f);
+            if self.app.mounted(&Id::Ssh(IdSsh::DelSshKeyPopup)) {
+                let popup = draw_area_in(f.size(), 30, 10);
+                f.render_widget(Clear, popup);
+                self.app.view(&Id::Ssh(IdSsh::DelSshKeyPopup), f, popup);
+            } else if self.app.mounted(&Id::Ssh(IdSsh::SshHost)) {
+                let popup = draw_area_in(f.size(), 50, 20);
+                f.render_widget(Clear, popup);
+                let popup_chunks = Layout::default()
+                    .direction(Direction::Vertical)
+                    .constraints(
+                        [
+                            Constraint::Length(3), // Host
+                            Constraint::Length(3), // Username
+                        ]
+                        .as_ref(),
+                    )
+                    .split(popup);
+                self.app.view(&Id::Ssh(IdSsh::SshHost), f, popup_chunks[0]);
+                self.app
+                    .view(&Id::Ssh(IdSsh::SshUsername), f, popup_chunks[1]);
             }
         });
         // Put context back to context
@@ -169,82 +103,74 @@ impl SetupActivity {
     ///
     /// Mount delete ssh key component
     pub(crate) fn mount_del_ssh_key(&mut self) {
-        self.mount_radio_dialog(
-            super::COMPONENT_RADIO_DEL_SSH_KEY,
-            "Delete key?",
-            &["Yes", "No"],
-            1,
-            Color::LightRed,
-        );
+        assert!(self
+            .app
+            .remount(
+                Id::Ssh(IdSsh::DelSshKeyPopup),
+                Box::new(components::DelSshKeyPopup::default()),
+                vec![]
+            )
+            .is_ok());
+        assert!(self.app.active(&Id::Ssh(IdSsh::DelSshKeyPopup)).is_ok());
     }
 
     /// ### umount_del_ssh_key
     ///
     /// Umount delete ssh key
     pub(crate) fn umount_del_ssh_key(&mut self) {
-        self.view.umount(super::COMPONENT_RADIO_DEL_SSH_KEY);
+        let _ = self.app.umount(&Id::Ssh(IdSsh::DelSshKeyPopup));
     }
 
     /// ### mount_new_ssh_key
     ///
     /// Mount new ssh key prompt
     pub(crate) fn mount_new_ssh_key(&mut self) {
-        self.view.mount(
-            super::COMPONENT_INPUT_SSH_HOST,
-            Box::new(Input::new(
-                InputPropsBuilder::default()
-                    .with_label("Hostname or address", Alignment::Center)
-                    .with_borders(
-                        Borders::TOP | Borders::RIGHT | Borders::LEFT,
-                        BorderType::Plain,
-                        Color::Reset,
-                    )
-                    .build(),
-            )),
-        );
-        self.view.mount(
-            super::COMPONENT_INPUT_SSH_USERNAME,
-            Box::new(Input::new(
-                InputPropsBuilder::default()
-                    .with_label("Username", Alignment::Center)
-                    .with_borders(
-                        Borders::BOTTOM | Borders::RIGHT | Borders::LEFT,
-                        BorderType::Plain,
-                        Color::Reset,
-                    )
-                    .build(),
-            )),
-        );
-        self.view.active(super::COMPONENT_INPUT_SSH_HOST);
+        assert!(self
+            .app
+            .remount(
+                Id::Ssh(IdSsh::SshHost),
+                Box::new(components::SshHost::default()),
+                vec![]
+            )
+            .is_ok());
+        assert!(self
+            .app
+            .remount(
+                Id::Ssh(IdSsh::SshUsername),
+                Box::new(components::SshUsername::default()),
+                vec![]
+            )
+            .is_ok());
+        assert!(self.app.active(&Id::Ssh(IdSsh::SshHost)).is_ok());
     }
 
     /// ### umount_new_ssh_key
     ///
     /// Umount new ssh key prompt
     pub(crate) fn umount_new_ssh_key(&mut self) {
-        self.view.umount(super::COMPONENT_INPUT_SSH_HOST);
-        self.view.umount(super::COMPONENT_INPUT_SSH_USERNAME);
+        let _ = self.app.umount(&Id::Ssh(IdSsh::SshUsername));
+        let _ = self.app.umount(&Id::Ssh(IdSsh::SshHost));
     }
 
     /// ### reload_ssh_keys
     ///
     /// Reload ssh keys
     pub(crate) fn reload_ssh_keys(&mut self) {
-        // get props
-        if let Some(props) = self.view.get_props(super::COMPONENT_LIST_SSH_KEYS) {
-            // Create texts
-            let keys: Vec<String> = self
-                .config()
-                .iter_ssh_keys()
-                .map(|x| {
-                    let (addr, username, _) = self.config().get_ssh_key(x).ok().unwrap().unwrap();
-                    format!("{} at {}", addr, username)
-                })
-                .collect();
-            let props = BookmarkListPropsBuilder::from(props)
-                .with_bookmarks(keys)
-                .build();
-            self.view.update(super::COMPONENT_LIST_SSH_KEYS, props);
-        }
+        let keys: Vec<String> = self
+            .config()
+            .iter_ssh_keys()
+            .map(|x| {
+                let (addr, username, _) = self.config().get_ssh_key(x).ok().unwrap().unwrap();
+                format!("{} at {}", addr, username)
+            })
+            .collect();
+        assert!(self
+            .app
+            .remount(
+                Id::Ssh(IdSsh::SshKeys),
+                Box::new(components::SshKeys::new(&keys)),
+                vec![]
+            )
+            .is_ok());
     }
 }

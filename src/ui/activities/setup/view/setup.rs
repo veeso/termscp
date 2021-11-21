@@ -27,23 +27,15 @@
  * SOFTWARE.
  */
 // Locals
-use super::{Context, InputType, SetupActivity};
+use super::{components, Context, Id, IdCommon, IdConfig, SetupActivity, ViewLayout};
 use crate::filetransfer::FileTransferProtocol;
 use crate::fs::explorer::GroupDirs;
-use crate::ui::components::bytes::{Bytes, BytesPropsBuilder};
-use crate::utils::ui::draw_area_in;
+use crate::utils::fmt::fmt_bytes;
+
 // Ext
 use std::path::PathBuf;
-use tui_realm_stdlib::{InputPropsBuilder, RadioPropsBuilder};
-use tuirealm::tui::{
-    layout::{Constraint, Direction, Layout},
-    style::Color,
-    widgets::{BorderType, Borders, Clear},
-};
-use tuirealm::{
-    props::{Alignment, PropsBuilder},
-    Payload, Value, View,
-};
+use tuirealm::tui::layout::{Constraint, Direction, Layout};
+use tuirealm::{State, StateValue};
 
 impl SetupActivity {
     // -- view
@@ -52,92 +44,17 @@ impl SetupActivity {
     ///
     /// Initialize setup view
     pub(super) fn init_setup(&mut self) {
-        // Init view
-        self.view = View::init();
-        // Common stuff
-        // Radio tab
-        self.mount_header_tab(0);
-        // Footer
-        self.mount_footer();
-        // Input fields
-        self.mount_input(
-            super::COMPONENT_INPUT_TEXT_EDITOR,
-            "Text editor",
-            Color::LightGreen,
-            InputType::Text,
-        );
-        self.view.active(super::COMPONENT_INPUT_TEXT_EDITOR); // <-- Focus
-        self.mount_radio(
-            super::COMPONENT_RADIO_DEFAULT_PROTOCOL,
-            "Default protocol",
-            &["SFTP", "SCP", "FTP", "FTPS", "AWS S3"],
-            0,
-            Color::LightCyan,
-        );
-        self.mount_radio(
-            super::COMPONENT_RADIO_HIDDEN_FILES,
-            "Show hidden files (by default)?",
-            &["Yes", "No"],
-            0,
-            Color::LightRed,
-        );
-        self.mount_radio(
-            super::COMPONENT_RADIO_UPDATES,
-            "Check for updates?",
-            &["Yes", "No"],
-            0,
-            Color::LightYellow,
-        );
-        self.mount_radio(
-            super::COMPONENT_RADIO_PROMPT_ON_FILE_REPLACE,
-            "Prompt when replacing existing files?",
-            &["Yes", "No"],
-            0,
-            Color::LightCyan,
-        );
-        self.mount_radio(
-            super::COMPONENT_RADIO_GROUP_DIRS,
-            "Group directories",
-            &["Display first", "Display last", "No"],
-            0,
-            Color::LightMagenta,
-        );
-        self.mount_input(
-            super::COMPONENT_INPUT_LOCAL_FILE_FMT,
-            "File formatter syntax (local)",
-            Color::LightGreen,
-            InputType::Text,
-        );
-        self.mount_input(
-            super::COMPONENT_INPUT_REMOTE_FILE_FMT,
-            "File formatter syntax (remote)",
-            Color::LightCyan,
-            InputType::Text,
-        );
-        self.mount_radio(
-            super::COMPONENT_RADIO_NOTIFICATIONS_ENABLED,
-            "Enable notifications?",
-            &["Yes", "No"],
-            0,
-            Color::LightRed,
-        );
-        self.view.mount(
-            super::COMPONENT_INPUT_NOTIFICATIONS_THRESHOLD,
-            Box::new(Bytes::new(
-                BytesPropsBuilder::default()
-                    .with_foreground(Color::LightYellow)
-                    .with_borders(Borders::ALL, BorderType::Rounded, Color::LightYellow)
-                    .with_label("Notifications: minimum transfer size", Alignment::Left)
-                    .build(),
-            )),
-        );
+        // Init view (and mount commons)
+        self.new_app(ViewLayout::SetupForm);
         // Load values
         self.load_input_values();
+        // Active text editor
+        assert!(self.app.active(&Id::Config(IdConfig::TextEditor)).is_ok());
     }
 
     pub(super) fn view_setup(&mut self) {
         let mut ctx: Context = self.context.take().unwrap();
-        let _ = ctx.terminal().draw(|f| {
+        let _ = ctx.terminal().raw_mut().draw(|f| {
             // Prepare main chunks
             let chunks = Layout::default()
                 .direction(Direction::Vertical)
@@ -152,8 +69,8 @@ impl SetupActivity {
                 )
                 .split(f.size());
             // Render common widget
-            self.view.render(super::COMPONENT_RADIO_TAB, f, chunks[0]);
-            self.view.render(super::COMPONENT_TEXT_FOOTER, f, chunks[2]);
+            self.app.view(&Id::Common(IdCommon::Header), f, chunks[0]);
+            self.app.view(&Id::Common(IdCommon::Footer), f, chunks[2]);
             // Make chunks (two columns)
             let ui_cfg_chunks = Layout::default()
                 .direction(Direction::Horizontal)
@@ -174,27 +91,27 @@ impl SetupActivity {
                     .as_ref(),
                 )
                 .split(ui_cfg_chunks[0]);
-            self.view
-                .render(super::COMPONENT_INPUT_TEXT_EDITOR, f, ui_cfg_chunks_col1[0]);
-            self.view.render(
-                super::COMPONENT_RADIO_DEFAULT_PROTOCOL,
+            self.app
+                .view(&Id::Config(IdConfig::TextEditor), f, ui_cfg_chunks_col1[0]);
+            self.app.view(
+                &Id::Config(IdConfig::DefaultProtocol),
                 f,
                 ui_cfg_chunks_col1[1],
             );
-            self.view.render(
-                super::COMPONENT_RADIO_HIDDEN_FILES,
+            self.app
+                .view(&Id::Config(IdConfig::HiddenFiles), f, ui_cfg_chunks_col1[2]);
+            self.app.view(
+                &Id::Config(IdConfig::CheckUpdates),
                 f,
-                ui_cfg_chunks_col1[2],
+                ui_cfg_chunks_col1[3],
             );
-            self.view
-                .render(super::COMPONENT_RADIO_UPDATES, f, ui_cfg_chunks_col1[3]);
-            self.view.render(
-                super::COMPONENT_RADIO_PROMPT_ON_FILE_REPLACE,
+            self.app.view(
+                &Id::Config(IdConfig::PromptOnFileReplace),
                 f,
                 ui_cfg_chunks_col1[4],
             );
-            self.view
-                .render(super::COMPONENT_RADIO_GROUP_DIRS, f, ui_cfg_chunks_col1[5]);
+            self.app
+                .view(&Id::Config(IdConfig::GroupDirs), f, ui_cfg_chunks_col1[5]);
             // Column 2
             let ui_cfg_chunks_col2 = Layout::default()
                 .direction(Direction::Vertical)
@@ -209,59 +126,28 @@ impl SetupActivity {
                     .as_ref(),
                 )
                 .split(ui_cfg_chunks[1]);
-            self.view.render(
-                super::COMPONENT_INPUT_LOCAL_FILE_FMT,
+            self.app.view(
+                &Id::Config(IdConfig::LocalFileFmt),
                 f,
                 ui_cfg_chunks_col2[0],
             );
-            self.view.render(
-                super::COMPONENT_INPUT_REMOTE_FILE_FMT,
+            self.app.view(
+                &Id::Config(IdConfig::RemoteFileFmt),
                 f,
                 ui_cfg_chunks_col2[1],
             );
-            self.view.render(
-                super::COMPONENT_RADIO_NOTIFICATIONS_ENABLED,
+            self.app.view(
+                &Id::Config(IdConfig::NotificationsEnabled),
                 f,
                 ui_cfg_chunks_col2[2],
             );
-            self.view.render(
-                super::COMPONENT_INPUT_NOTIFICATIONS_THRESHOLD,
+            self.app.view(
+                &Id::Config(IdConfig::NotificationsThreshold),
                 f,
                 ui_cfg_chunks_col2[3],
             );
             // Popups
-            if let Some(props) = self.view.get_props(super::COMPONENT_TEXT_ERROR) {
-                if props.visible {
-                    let popup = draw_area_in(f.size(), 50, 10);
-                    f.render_widget(Clear, popup);
-                    // make popup
-                    self.view.render(super::COMPONENT_TEXT_ERROR, f, popup);
-                }
-            }
-            if let Some(props) = self.view.get_props(super::COMPONENT_RADIO_QUIT) {
-                if props.visible {
-                    // make popup
-                    let popup = draw_area_in(f.size(), 40, 10);
-                    f.render_widget(Clear, popup);
-                    self.view.render(super::COMPONENT_RADIO_QUIT, f, popup);
-                }
-            }
-            if let Some(props) = self.view.get_props(super::COMPONENT_TEXT_HELP) {
-                if props.visible {
-                    // make popup
-                    let popup = draw_area_in(f.size(), 50, 70);
-                    f.render_widget(Clear, popup);
-                    self.view.render(super::COMPONENT_TEXT_HELP, f, popup);
-                }
-            }
-            if let Some(props) = self.view.get_props(super::COMPONENT_RADIO_SAVE) {
-                if props.visible {
-                    // make popup
-                    let popup = draw_area_in(f.size(), 30, 10);
-                    f.render_widget(Clear, popup);
-                    self.view.render(super::COMPONENT_RADIO_SAVE, f, popup);
-                }
-            }
+            self.view_popups(f);
         });
         // Put context back to context
         self.context = Some(ctx);
@@ -272,125 +158,127 @@ impl SetupActivity {
     /// Load values from configuration into input fields
     pub(crate) fn load_input_values(&mut self) {
         // Text editor
-        if let Some(props) = self.view.get_props(super::COMPONENT_INPUT_TEXT_EDITOR) {
-            let text_editor: String =
-                String::from(self.config().get_text_editor().as_path().to_string_lossy());
-            let props = InputPropsBuilder::from(props)
-                .with_value(text_editor)
-                .build();
-            let _ = self.view.update(super::COMPONENT_INPUT_TEXT_EDITOR, props);
-        }
+        let text_editor: String =
+            String::from(self.config().get_text_editor().as_path().to_string_lossy());
+        assert!(self
+            .app
+            .remount(
+                Id::Config(IdConfig::TextEditor),
+                Box::new(components::TextEditor::new(text_editor.as_str())),
+                vec![]
+            )
+            .is_ok());
         // Protocol
-        if let Some(props) = self.view.get_props(super::COMPONENT_RADIO_DEFAULT_PROTOCOL) {
-            let protocol: usize = match self.config().get_default_protocol() {
-                FileTransferProtocol::Sftp => 0,
-                FileTransferProtocol::Scp => 1,
-                FileTransferProtocol::Ftp(false) => 2,
-                FileTransferProtocol::Ftp(true) => 3,
-                FileTransferProtocol::AwsS3 => 4,
-            };
-            let props = RadioPropsBuilder::from(props).with_value(protocol).build();
-            let _ = self
-                .view
-                .update(super::COMPONENT_RADIO_DEFAULT_PROTOCOL, props);
-        }
+        assert!(self
+            .app
+            .remount(
+                Id::Config(IdConfig::DefaultProtocol),
+                Box::new(components::DefaultProtocol::new(
+                    self.config().get_default_protocol()
+                )),
+                vec![]
+            )
+            .is_ok());
         // Hidden files
-        if let Some(props) = self.view.get_props(super::COMPONENT_RADIO_HIDDEN_FILES) {
-            let hidden: usize = match self.config().get_show_hidden_files() {
-                true => 0,
-                false => 1,
-            };
-            let props = RadioPropsBuilder::from(props).with_value(hidden).build();
-            let _ = self.view.update(super::COMPONENT_RADIO_HIDDEN_FILES, props);
-        }
+        assert!(self
+            .app
+            .remount(
+                Id::Config(IdConfig::HiddenFiles),
+                Box::new(components::HiddenFiles::new(
+                    self.config().get_show_hidden_files()
+                )),
+                vec![]
+            )
+            .is_ok());
         // Updates
-        if let Some(props) = self.view.get_props(super::COMPONENT_RADIO_UPDATES) {
-            let updates: usize = match self.config().get_check_for_updates() {
-                true => 0,
-                false => 1,
-            };
-            let props = RadioPropsBuilder::from(props).with_value(updates).build();
-            let _ = self.view.update(super::COMPONENT_RADIO_UPDATES, props);
-        }
+        assert!(self
+            .app
+            .remount(
+                Id::Config(IdConfig::CheckUpdates),
+                Box::new(components::CheckUpdates::new(
+                    self.config().get_check_for_updates()
+                )),
+                vec![]
+            )
+            .is_ok());
         // File replace
-        if let Some(props) = self
-            .view
-            .get_props(super::COMPONENT_RADIO_PROMPT_ON_FILE_REPLACE)
-        {
-            let updates: usize = match self.config().get_prompt_on_file_replace() {
-                true => 0,
-                false => 1,
-            };
-            let props = RadioPropsBuilder::from(props).with_value(updates).build();
-            let _ = self
-                .view
-                .update(super::COMPONENT_RADIO_PROMPT_ON_FILE_REPLACE, props);
-        }
+        assert!(self
+            .app
+            .remount(
+                Id::Config(IdConfig::PromptOnFileReplace),
+                Box::new(components::PromptOnFileReplace::new(
+                    self.config().get_prompt_on_file_replace()
+                )),
+                vec![]
+            )
+            .is_ok());
         // Group dirs
-        if let Some(props) = self.view.get_props(super::COMPONENT_RADIO_GROUP_DIRS) {
-            let dirs: usize = match self.config().get_group_dirs() {
-                Some(GroupDirs::First) => 0,
-                Some(GroupDirs::Last) => 1,
-                None => 2,
-            };
-            let props = RadioPropsBuilder::from(props).with_value(dirs).build();
-            let _ = self.view.update(super::COMPONENT_RADIO_GROUP_DIRS, props);
-        }
+        assert!(self
+            .app
+            .remount(
+                Id::Config(IdConfig::GroupDirs),
+                Box::new(components::GroupDirs::new(self.config().get_group_dirs())),
+                vec![]
+            )
+            .is_ok());
         // Local File Fmt
-        if let Some(props) = self.view.get_props(super::COMPONENT_INPUT_LOCAL_FILE_FMT) {
-            let file_fmt: String = self.config().get_local_file_fmt().unwrap_or_default();
-            let props = InputPropsBuilder::from(props).with_value(file_fmt).build();
-            let _ = self
-                .view
-                .update(super::COMPONENT_INPUT_LOCAL_FILE_FMT, props);
-        }
+        assert!(self
+            .app
+            .remount(
+                Id::Config(IdConfig::LocalFileFmt),
+                Box::new(components::LocalFileFmt::new(
+                    &self.config().get_local_file_fmt().unwrap_or_default()
+                )),
+                vec![]
+            )
+            .is_ok());
         // Remote File Fmt
-        if let Some(props) = self.view.get_props(super::COMPONENT_INPUT_REMOTE_FILE_FMT) {
-            let file_fmt: String = self.config().get_remote_file_fmt().unwrap_or_default();
-            let props = InputPropsBuilder::from(props).with_value(file_fmt).build();
-            let _ = self
-                .view
-                .update(super::COMPONENT_INPUT_REMOTE_FILE_FMT, props);
-        }
+        assert!(self
+            .app
+            .remount(
+                Id::Config(IdConfig::RemoteFileFmt),
+                Box::new(components::RemoteFileFmt::new(
+                    &self.config().get_remote_file_fmt().unwrap_or_default()
+                )),
+                vec![]
+            )
+            .is_ok());
         // Notifications enabled
-        if let Some(props) = self
-            .view
-            .get_props(super::COMPONENT_RADIO_NOTIFICATIONS_ENABLED)
-        {
-            let enabled: usize = match self.config().get_notifications() {
-                true => 0,
-                false => 1,
-            };
-            let props = RadioPropsBuilder::from(props).with_value(enabled).build();
-            let _ = self
-                .view
-                .update(super::COMPONENT_RADIO_NOTIFICATIONS_ENABLED, props);
-        }
+        assert!(self
+            .app
+            .remount(
+                Id::Config(IdConfig::NotificationsEnabled),
+                Box::new(components::NotificationsEnabled::new(
+                    self.config().get_notifications()
+                )),
+                vec![]
+            )
+            .is_ok());
         // Notifications threshold
-        if let Some(props) = self
-            .view
-            .get_props(super::COMPONENT_INPUT_NOTIFICATIONS_THRESHOLD)
-        {
-            let value: u64 = self.config().get_notification_threshold();
-            let props = BytesPropsBuilder::from(props).with_value(value).build();
-            let _ = self
-                .view
-                .update(super::COMPONENT_INPUT_NOTIFICATIONS_THRESHOLD, props);
-        }
+        assert!(self
+            .app
+            .remount(
+                Id::Config(IdConfig::NotificationsThreshold),
+                Box::new(components::NotificationsThreshold::new(&fmt_bytes(
+                    self.config().get_notification_threshold()
+                ))),
+                vec![]
+            )
+            .is_ok());
     }
 
     /// ### collect_input_values
     ///
     /// Collect values from input and put them into the configuration
     pub(crate) fn collect_input_values(&mut self) {
-        if let Some(Payload::One(Value::Str(editor))) =
-            self.view.get_state(super::COMPONENT_INPUT_TEXT_EDITOR)
+        if let Ok(State::One(StateValue::String(editor))) =
+            self.app.state(&Id::Config(IdConfig::TextEditor))
         {
             self.config_mut()
                 .set_text_editor(PathBuf::from(editor.as_str()));
         }
-        if let Some(Payload::One(Value::Usize(protocol))) =
-            self.view.get_state(super::COMPONENT_RADIO_DEFAULT_PROTOCOL)
+        if let Ok(State::One(StateValue::Usize(protocol))) =
+            self.app.state(&Id::Config(IdConfig::DefaultProtocol))
         {
             let protocol: FileTransferProtocol = match protocol {
                 1 => FileTransferProtocol::Scp,
@@ -401,37 +289,36 @@ impl SetupActivity {
             };
             self.config_mut().set_default_protocol(protocol);
         }
-        if let Some(Payload::One(Value::Usize(opt))) =
-            self.view.get_state(super::COMPONENT_RADIO_HIDDEN_FILES)
+        if let Ok(State::One(StateValue::Usize(opt))) =
+            self.app.state(&Id::Config(IdConfig::HiddenFiles))
         {
             let show: bool = matches!(opt, 0);
             self.config_mut().set_show_hidden_files(show);
         }
-        if let Some(Payload::One(Value::Usize(opt))) =
-            self.view.get_state(super::COMPONENT_RADIO_UPDATES)
+        if let Ok(State::One(StateValue::Usize(opt))) =
+            self.app.state(&Id::Config(IdConfig::CheckUpdates))
         {
             let check: bool = matches!(opt, 0);
             self.config_mut().set_check_for_updates(check);
         }
-        if let Some(Payload::One(Value::Usize(opt))) = self
-            .view
-            .get_state(super::COMPONENT_RADIO_PROMPT_ON_FILE_REPLACE)
+        if let Ok(State::One(StateValue::Usize(opt))) =
+            self.app.state(&Id::Config(IdConfig::PromptOnFileReplace))
         {
             let check: bool = matches!(opt, 0);
             self.config_mut().set_prompt_on_file_replace(check);
         }
-        if let Some(Payload::One(Value::Str(fmt))) =
-            self.view.get_state(super::COMPONENT_INPUT_LOCAL_FILE_FMT)
+        if let Ok(State::One(StateValue::String(fmt))) =
+            self.app.state(&Id::Config(IdConfig::LocalFileFmt))
         {
             self.config_mut().set_local_file_fmt(fmt);
         }
-        if let Some(Payload::One(Value::Str(fmt))) =
-            self.view.get_state(super::COMPONENT_INPUT_REMOTE_FILE_FMT)
+        if let Ok(State::One(StateValue::String(fmt))) =
+            self.app.state(&Id::Config(IdConfig::RemoteFileFmt))
         {
             self.config_mut().set_remote_file_fmt(fmt);
         }
-        if let Some(Payload::One(Value::Usize(opt))) =
-            self.view.get_state(super::COMPONENT_RADIO_GROUP_DIRS)
+        if let Ok(State::One(StateValue::Usize(opt))) =
+            self.app.state(&Id::Config(IdConfig::GroupDirs))
         {
             let dirs: Option<GroupDirs> = match opt {
                 0 => Some(GroupDirs::First),
@@ -440,15 +327,14 @@ impl SetupActivity {
             };
             self.config_mut().set_group_dirs(dirs);
         }
-        if let Some(Payload::One(Value::Usize(opt))) = self
-            .view
-            .get_state(super::COMPONENT_RADIO_NOTIFICATIONS_ENABLED)
+        if let Ok(State::One(StateValue::Usize(opt))) =
+            self.app.state(&Id::Config(IdConfig::NotificationsEnabled))
         {
             self.config_mut().set_notifications(opt == 0);
         }
-        if let Some(Payload::One(Value::U64(bytes))) = self
-            .view
-            .get_state(super::COMPONENT_INPUT_NOTIFICATIONS_THRESHOLD)
+        if let Ok(State::One(StateValue::U64(bytes))) = self
+            .app
+            .state(&Id::Config(IdConfig::NotificationsThreshold))
         {
             self.config_mut().set_notification_threshold(bytes);
         }

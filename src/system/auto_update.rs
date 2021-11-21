@@ -187,7 +187,10 @@ mod test {
     }
 
     #[test]
-    #[cfg(not(all(target_os = "macos", feature = "github-actions")))]
+    #[cfg(not(all(
+        any(target_os = "macos", target_os = "freebsd"),
+        feature = "github-actions"
+    )))]
     fn auto_update() {
         // Wno version
         assert_eq!(
@@ -201,7 +204,10 @@ mod test {
     }
 
     #[test]
-    #[cfg(not(all(target_os = "macos", feature = "github-actions")))]
+    #[cfg(not(all(
+        any(target_os = "macos", target_os = "freebsd"),
+        feature = "github-actions"
+    )))]
     fn check_for_updates() {
         println!("{:?}", Update::is_new_version_available());
         assert!(Update::is_new_version_available().is_ok());

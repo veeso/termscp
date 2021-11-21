@@ -31,32 +31,6 @@ use crate::system::auto_update::{Release, Update, UpdateStatus};
 use crate::system::notifications::Notification;
 
 impl AuthActivity {
-    /// ### protocol_opt_to_enum
-    ///
-    /// Convert radio index for protocol into a `FileTransferProtocol`
-    pub(super) fn protocol_opt_to_enum(protocol: usize) -> FileTransferProtocol {
-        match protocol {
-            1 => FileTransferProtocol::Scp,
-            2 => FileTransferProtocol::Ftp(false),
-            3 => FileTransferProtocol::Ftp(true),
-            4 => FileTransferProtocol::AwsS3,
-            _ => FileTransferProtocol::Sftp,
-        }
-    }
-
-    /// ### protocol_enum_to_opt
-    ///
-    /// Convert `FileTransferProtocol` enum into radio group index
-    pub(super) fn protocol_enum_to_opt(protocol: FileTransferProtocol) -> usize {
-        match protocol {
-            FileTransferProtocol::Sftp => 0,
-            FileTransferProtocol::Scp => 1,
-            FileTransferProtocol::Ftp(false) => 2,
-            FileTransferProtocol::Ftp(true) => 3,
-            FileTransferProtocol::AwsS3 => 4,
-        }
-    }
-
     /// ### get_default_port_for_protocol
     ///
     /// Get the default port for protocol
@@ -91,9 +65,8 @@ impl AuthActivity {
     ///
     /// Collect host params as `FileTransferParams`
     pub(super) fn collect_host_params(&self) -> Result<FileTransferParams, &'static str> {
-        let protocol: FileTransferProtocol = self.get_protocol();
-        match protocol {
-            FileTransferProtocol::AwsS3 => self.collect_s3_host_params(protocol),
+        match self.protocol {
+            FileTransferProtocol::AwsS3 => self.collect_s3_host_params(),
             protocol => self.collect_generic_host_params(protocol),
         }
     }
@@ -135,10 +108,7 @@ impl AuthActivity {
     /// ### collect_s3_host_params
     ///
     /// Get input values from fields or return an error if fields are invalid to work as aws s3
-    pub(super) fn collect_s3_host_params(
-        &self,
-        protocol: FileTransferProtocol,
-    ) -> Result<FileTransferParams, &'static str> {
+    pub(super) fn collect_s3_host_params(&self) -> Result<FileTransferParams, &'static str> {
         let (bucket, region, profile): (String, String, Option<String>) =
             self.get_s3_params_input();
         if bucket.is_empty() {
@@ -148,7 +118,7 @@ impl AuthActivity {
             return Err("Invalid region");
         }
         Ok(FileTransferParams {
-            protocol,
+            protocol: FileTransferProtocol::AwsS3,
             params: ProtocolParams::AwsS3(AwsS3Params::new(bucket, region, profile)),
             entry_directory: None,
         })

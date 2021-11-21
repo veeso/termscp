@@ -27,6 +27,7 @@
  */
 // Sub modules
 mod bookmarks;
+mod components;
 mod misc;
 mod update;
 mod view;
@@ -39,37 +40,101 @@ use crate::system::bookmarks_client::BookmarksClient;
 use crate::system::config_client::ConfigClient;
 
 // Includes
-use crossterm::event::Event;
-use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
-use tuirealm::{Update, View};
+use std::time::Duration;
+use tuirealm::listener::EventListenerCfg;
+use tuirealm::{application::PollStrategy, Application, NoUserEvent, Update};
 
 // -- components
-const COMPONENT_TEXT_H1: &str = "TEXT_H1";
-const COMPONENT_TEXT_H2: &str = "TEXT_H2";
-const COMPONENT_TEXT_NEW_VERSION: &str = "TEXT_NEW_VERSION";
-const COMPONENT_TEXT_NEW_VERSION_NOTES: &str = "TEXTAREA_NEW_VERSION";
-const COMPONENT_TEXT_FOOTER: &str = "TEXT_FOOTER";
-const COMPONENT_TEXT_HELP: &str = "TEXT_HELP";
-const COMPONENT_TEXT_ERROR: &str = "TEXT_ERROR";
-const COMPONENT_TEXT_INFO: &str = "TEXT_INFO";
-const COMPONENT_TEXT_WAIT: &str = "TEXT_WAIT";
-const COMPONENT_TEXT_SIZE_ERR: &str = "TEXT_SIZE_ERR";
-const COMPONENT_INPUT_ADDR: &str = "INPUT_ADDRESS";
-const COMPONENT_INPUT_PORT: &str = "INPUT_PORT";
-const COMPONENT_INPUT_USERNAME: &str = "INPUT_USERNAME";
-const COMPONENT_INPUT_PASSWORD: &str = "INPUT_PASSWORD";
-const COMPONENT_INPUT_BOOKMARK_NAME: &str = "INPUT_BOOKMARK_NAME";
-const COMPONENT_INPUT_S3_BUCKET: &str = "INPUT_S3_BUCKET";
-const COMPONENT_INPUT_S3_REGION: &str = "INPUT_S3_REGION";
-const COMPONENT_INPUT_S3_PROFILE: &str = "INPUT_S3_PROFILE";
-const COMPONENT_RADIO_PROTOCOL: &str = "RADIO_PROTOCOL";
-const COMPONENT_RADIO_QUIT: &str = "RADIO_QUIT";
-const COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK: &str = "RADIO_DELETE_BOOKMARK";
-const COMPONENT_RADIO_BOOKMARK_DEL_RECENT: &str = "RADIO_DELETE_RECENT";
-const COMPONENT_RADIO_BOOKMARK_SAVE_PWD: &str = "RADIO_SAVE_PASSWORD";
-const COMPONENT_RADIO_INSTALL_UPDATE: &str = "RADIO_INSTALL_UPDATE";
-const COMPONENT_BOOKMARKS_LIST: &str = "BOOKMARKS_LIST";
-const COMPONENT_RECENTS_LIST: &str = "RECENTS_LIST";
+#[derive(Debug, Eq, PartialEq, Clone, Hash)]
+pub enum Id {
+    Address,
+    BookmarkName,
+    BookmarkSavePassword,
+    BookmarksList,
+    DeleteBookmarkPopup,
+    DeleteRecentPopup,
+    ErrorPopup,
+    GlobalListener,
+    HelpText,
+    InfoPopup,
+    InstallUpdatePopup,
+    Keybindings,
+    NewVersionChangelog,
+    NewVersionDisclaimer,
+    Password,
+    Port,
+    Protocol,
+    QuitPopup,
+    RecentsList,
+    S3Bucket,
+    S3Profile,
+    S3Region,
+    Subtitle,
+    Title,
+    Username,
+    WaitPopup,
+    WindowSizeError,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum Msg {
+    AddressBlurDown,
+    AddressBlurUp,
+    BookmarksListBlur,
+    BookmarksTabBlur,
+    CloseDeleteBookmark,
+    CloseDeleteRecent,
+    CloseErrorPopup,
+    CloseInfoPopup,
+    CloseInstallUpdatePopup,
+    CloseKeybindingsPopup,
+    CloseQuitPopup,
+    CloseSaveBookmark,
+    Connect,
+    DeleteBookmark,
+    DeleteRecent,
+    EnterSetup,
+    InstallUpdate,
+    LoadBookmark(usize),
+    LoadRecent(usize),
+    ParamsFormBlur,
+    PasswordBlurDown,
+    PasswordBlurUp,
+    PortBlurDown,
+    PortBlurUp,
+    ProtocolBlurDown,
+    ProtocolBlurUp,
+    ProtocolChanged(FileTransferProtocol),
+    Quit,
+    RececentsListBlur,
+    S3BucketBlurDown,
+    S3BucketBlurUp,
+    S3ProfileBlurDown,
+    S3ProfileBlurUp,
+    S3RegionBlurDown,
+    S3RegionBlurUp,
+    SaveBookmark,
+    BookmarkNameBlur,
+    SaveBookmarkPasswordBlur,
+    ShowDeleteBookmarkPopup,
+    ShowDeleteRecentPopup,
+    ShowKeybindingsPopup,
+    ShowQuitPopup,
+    ShowReleaseNotes,
+    ShowSaveBookmarkPopup,
+    UsernameBlurDown,
+    UsernameBlurUp,
+    None,
+}
+
+/// ## InputMask
+///
+/// Auth form input mask
+#[derive(Eq, PartialEq)]
+enum InputMask {
+    Generic,
+    AwsS3,
+}
 
 // Store keys
 const STORE_KEY_LATEST_VERSION: &str = "AUTH_LATEST_VERSION";
@@ -79,34 +144,39 @@ const STORE_KEY_RELEASE_NOTES: &str = "AUTH_RELEASE_NOTES";
 ///
 /// AuthActivity is the data holder for the authentication activity
 pub struct AuthActivity {
-    exit_reason: Option<ExitReason>,
-    context: Option<Context>,
-    view: View,
+    app: Application<Id, Msg, NoUserEvent>,
     bookmarks_client: Option<BookmarksClient>,
-    redraw: bool,                // Should ui actually be redrawned?
-    bookmarks_list: Vec<String>, // List of bookmarks
-    recents_list: Vec<String>,   // list of recents
-}
-
-impl Default for AuthActivity {
-    fn default() -> Self {
-        Self::new()
-    }
+    /// List of bookmarks
+    bookmarks_list: Vec<String>,
+    /// List of recent hosts
+    recents_list: Vec<String>,
+    /// Exit reason
+    exit_reason: Option<ExitReason>,
+    /// Should redraw ui
+    redraw: bool,
+    /// Protocol
+    protocol: FileTransferProtocol,
+    context: Option<Context>,
 }
 
 impl AuthActivity {
     /// ### new
     ///
     /// Instantiates a new AuthActivity
-    pub fn new() -> AuthActivity {
+    pub fn new(ticks: Duration) -> AuthActivity {
         AuthActivity {
-            exit_reason: None,
+            app: Application::init(
+                EventListenerCfg::default()
+                    .default_input_listener(ticks)
+                    .poll_timeout(ticks),
+            ),
             context: None,
-            view: View::init(),
             bookmarks_client: None,
-            redraw: true, // True at startup
             bookmarks_list: Vec::new(),
+            exit_reason: None,
             recents_list: Vec::new(),
+            redraw: true,
+            protocol: FileTransferProtocol::Sftp,
         }
     }
 
@@ -142,9 +212,11 @@ impl AuthActivity {
     ///
     /// Get current input mask to show
     fn input_mask(&self) -> InputMask {
-        match self.get_protocol() {
+        match self.protocol {
             FileTransferProtocol::AwsS3 => InputMask::AwsS3,
-            _ => InputMask::Generic,
+            FileTransferProtocol::Ftp(_)
+            | FileTransferProtocol::Scp
+            | FileTransferProtocol::Sftp => InputMask::Generic,
         }
     }
 }
@@ -162,9 +234,11 @@ impl Activity for AuthActivity {
         // Set context
         self.context = Some(context);
         // Clear terminal
-        self.context_mut().clear_screen();
+        if let Err(err) = self.context_mut().terminal().clear_screen() {
+            error!("Failed to clear screen: {}", err);
+        }
         // Put raw mode on enabled
-        if let Err(err) = enable_raw_mode() {
+        if let Err(err) = self.context_mut().terminal().enable_raw_mode() {
             error!("Failed to enter raw mode: {}", err);
         }
         // If check for updates is enabled, check for updates
@@ -194,24 +268,23 @@ impl Activity for AuthActivity {
         if self.context.is_none() {
             return;
         }
-        // Read one event
-        if let Ok(Some(event)) = self.context().input_hnd().read_event() {
-            // Set redraw to true
-            self.redraw = true;
-            // Handle on resize
-            if let Event::Resize(_, h) = event {
-                self.check_minimum_window_size(h);
+        // Tick
+        match self.app.tick(PollStrategy::UpTo(3)) {
+            Ok(messages) => {
+                for msg in messages.into_iter() {
+                    let mut msg = Some(msg);
+                    while msg.is_some() {
+                        msg = self.update(msg);
+                    }
+                }
             }
-            // Handle event on view and update
-            let msg = self.view.on(event);
-            self.update(msg);
+            Err(err) => {
+                self.mount_error(format!("Application error: {}", err));
+            }
         }
-        // Redraw if necessary
+        // View
         if self.redraw {
-            // View
             self.view();
-            // Set redraw to false
-            self.redraw = false;
         }
     }
 
@@ -231,26 +304,12 @@ impl Activity for AuthActivity {
     /// This function finally releases the context
     fn on_destroy(&mut self) -> Option<Context> {
         // Disable raw mode
-        if let Err(err) = disable_raw_mode() {
+        if let Err(err) = self.context_mut().terminal().disable_raw_mode() {
             error!("Failed to disable raw mode: {}", err);
         }
-        self.context.as_ref()?;
-        // Clear terminal and return
-        match self.context.take() {
-            Some(mut ctx) => {
-                ctx.clear_screen();
-                Some(ctx)
-            }
-            None => None,
+        if let Err(err) = self.context_mut().terminal().clear_screen() {
+            error!("Failed to clear screen: {}", err);
         }
+        self.context.take()
     }
-}
-
-/// ## InputMask
-///
-/// Auth form input mask
-#[derive(Eq, PartialEq)]
-enum InputMask {
-    Generic,
-    AwsS3,
 }

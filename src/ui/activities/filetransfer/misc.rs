@@ -22,22 +22,50 @@
  * SOFTWARE.
  */
 // Locals
-use super::{ConfigClient, FileTransferActivity, LogLevel, LogRecord, TransferPayload};
+use super::{
+    browser::FileExplorerTab, ConfigClient, FileTransferActivity, Id, LogLevel, LogRecord,
+    TransferPayload,
+};
 use crate::filetransfer::ProtocolParams;
 use crate::system::environment;
 use crate::system::notifications::Notification;
 use crate::system::sshkey_storage::SshKeyStorage;
-use crate::utils::fmt::fmt_millis;
+use crate::utils::fmt::{fmt_millis, fmt_path_elide_ex};
 use crate::utils::path;
 // Ext
 use bytesize::ByteSize;
 use std::env;
 use std::path::{Path, PathBuf};
-use tuirealm::Update;
+use tuirealm::props::{
+    Alignment, AttrValue, Attribute, Color, PropPayload, PropValue, TableBuilder, TextSpan,
+};
+use tuirealm::{PollStrategy, Update};
 
 const LOG_CAPACITY: usize = 256;
 
 impl FileTransferActivity {
+    /// ### tick
+    ///
+    /// Call `Application::tick()` and process messages in `Update`
+    pub(super) fn tick(&mut self) {
+        match self.app.tick(PollStrategy::UpTo(3)) {
+            Ok(messages) => {
+                if !messages.is_empty() {
+                    self.redraw = true;
+                }
+                for msg in messages.into_iter() {
+                    let mut msg = Some(msg);
+                    while msg.is_some() {
+                        msg = self.update(msg);
+                    }
+                }
+            }
+            Err(err) => {
+                self.mount_error(format!("Application error: {}", err));
+            }
+        }
+    }
+
     /// ### log
     ///
     /// Add message to log events
@@ -57,8 +85,7 @@ impl FileTransferActivity {
         // Eventually push front the new record
         self.log_records.push_front(record);
         // Update log
-        let msg = self.update_logbox();
-        self.update(msg);
+        self.update_logbox();
     }
 
     /// ### log_and_alert
@@ -68,8 +95,7 @@ impl FileTransferActivity {
         self.mount_error(msg.as_str());
         self.log(level, msg);
         // Update log
-        let msg = self.update_logbox();
-        self.update(msg);
+        self.update_logbox();
     }
 
     /// ### init_config_client
@@ -106,23 +132,6 @@ impl FileTransferActivity {
     /// Set text editor to use
     pub(super) fn setup_text_editor(&self) {
         env::set_var("EDITOR", self.config().get_text_editor());
-    }
-
-    /// ### read_input_event
-    ///
-    /// Read one event.
-    /// Returns whether at least one event has been handled
-    pub(super) fn read_input_event(&mut self) -> bool {
-        if let Ok(Some(event)) = self.context().input_hnd().read_event() {
-            // Handle event
-            let msg = self.view.on(event);
-            self.update(msg);
-            // Return true
-            true
-        } else {
-            // Error
-            false
-        }
     }
 
     /// ### local_to_abs_path
@@ -229,6 +238,247 @@ impl FileTransferActivity {
                     transfer_stats
                 )
             }
+        }
+    }
+
+    /// ### update_local_filelist
+    ///
+    /// Update local file list
+    pub(super) fn update_local_filelist(&mut self) {
+        // Get width
+        let width: usize = self
+            .context()
+            .store()
+            .get_unsigned(super::STORAGE_EXPLORER_WIDTH)
+            .unwrap_or(256);
+        let hostname: String = match hostname::get() {
+            Ok(h) => {
+                let hostname: String = h.as_os_str().to_string_lossy().to_string();
+                let tokens: Vec<&str> = hostname.split('.').collect();
+                String::from(*tokens.get(0).unwrap_or(&"localhost"))
+            }
+            Err(_) => String::from("localhost"),
+        };
+        let hostname: String = format!(
+            "{}:{} ",
+            hostname,
+            fmt_path_elide_ex(self.local().wrkdir.as_path(), width, hostname.len() + 3) // 3 because of '/…/'
+        );
+        let files: Vec<Vec<TextSpan>> = self
+            .local()
+            .iter_files()
+            .map(|x| vec![TextSpan::from(self.local().fmt_file(x))])
+            .collect();
+        // Update content and title
+        assert!(self
+            .app
+            .attr(
+                &Id::ExplorerLocal,
+                Attribute::Content,
+                AttrValue::Table(files)
+            )
+            .is_ok());
+        assert!(self
+            .app
+            .attr(
+                &Id::ExplorerLocal,
+                Attribute::Title,
+                AttrValue::Title((hostname, Alignment::Left))
+            )
+            .is_ok());
+    }
+
+    /// ### update_remote_filelist
+    ///
+    /// Update remote file list
+    pub(super) fn update_remote_filelist(&mut self) {
+        let width: usize = self
+            .context()
+            .store()
+            .get_unsigned(super::STORAGE_EXPLORER_WIDTH)
+            .unwrap_or(256);
+        let hostname = self.get_remote_hostname();
+        let hostname: String = format!(
+            "{}:{} ",
+            hostname,
+            fmt_path_elide_ex(
+                self.remote().wrkdir.as_path(),
+                width,
+                hostname.len() + 3 // 3 because of '/…/'
+            )
+        );
+        let files: Vec<Vec<TextSpan>> = self
+            .remote()
+            .iter_files()
+            .map(|x| vec![TextSpan::from(self.remote().fmt_file(x))])
+            .collect();
+        // Update content and title
+        assert!(self
+            .app
+            .attr(
+                &Id::ExplorerRemote,
+                Attribute::Content,
+                AttrValue::Table(files)
+            )
+            .is_ok());
+        assert!(self
+            .app
+            .attr(
+                &Id::ExplorerRemote,
+                Attribute::Title,
+                AttrValue::Title((hostname, Alignment::Left))
+            )
+            .is_ok());
+    }
+
+    /// ### update_logbox
+    ///
+    /// Update log box
+    pub(super) fn update_logbox(&mut self) {
+        let mut table: TableBuilder = TableBuilder::default();
+        for (idx, record) in self.log_records.iter().enumerate() {
+            // Add row if not first row
+            if idx > 0 {
+                table.add_row();
+            }
+            let fg = match record.level {
+                LogLevel::Error => Color::Red,
+                LogLevel::Warn => Color::Yellow,
+                LogLevel::Info => Color::Green,
+            };
+            table
+                .add_col(TextSpan::from(format!(
+                    "{}",
+                    record.time.format("%Y-%m-%dT%H:%M:%S%Z")
+                )))
+                .add_col(TextSpan::from(" ["))
+                .add_col(
+                    TextSpan::new(
+                        format!(
+                            "{:5}",
+                            match record.level {
+                                LogLevel::Error => "ERROR",
+                                LogLevel::Warn => "WARN",
+                                LogLevel::Info => "INFO",
+                            }
+                        )
+                        .as_str(),
+                    )
+                    .fg(fg),
+                )
+                .add_col(TextSpan::from("]: "))
+                .add_col(TextSpan::from(record.msg.as_str()));
+        }
+        assert!(self
+            .app
+            .attr(
+                &Id::Log,
+                Attribute::Content,
+                AttrValue::Table(table.build())
+            )
+            .is_ok());
+    }
+
+    pub(super) fn update_progress_bar(&mut self, filename: String) {
+        assert!(self
+            .app
+            .attr(
+                &Id::ProgressBarFull,
+                Attribute::Text,
+                AttrValue::String(self.transfer.full.to_string())
+            )
+            .is_ok());
+        assert!(self
+            .app
+            .attr(
+                &Id::ProgressBarFull,
+                Attribute::Value,
+                AttrValue::Payload(PropPayload::One(PropValue::F64(
+                    self.transfer.full.calc_progress()
+                )))
+            )
+            .is_ok());
+        assert!(self
+            .app
+            .attr(
+                &Id::ProgressBarPartial,
+                Attribute::Text,
+                AttrValue::String(self.transfer.partial.to_string())
+            )
+            .is_ok());
+        assert!(self
+            .app
+            .attr(
+                &Id::ProgressBarPartial,
+                Attribute::Value,
+                AttrValue::Payload(PropPayload::One(PropValue::F64(
+                    self.transfer.partial.calc_progress()
+                )))
+            )
+            .is_ok());
+        assert!(self
+            .app
+            .attr(
+                &Id::ProgressBarPartial,
+                Attribute::Title,
+                AttrValue::Title((filename, Alignment::Left))
+            )
+            .is_ok());
+    }
+
+    /// ### finalize_find
+    ///
+    /// Finalize find process
+    pub(super) fn finalize_find(&mut self) {
+        // Set found to none
+        self.browser.del_found();
+        // Restore tab
+        let new_tab = match self.browser.tab() {
+            FileExplorerTab::FindLocal => FileExplorerTab::Local,
+            FileExplorerTab::FindRemote => FileExplorerTab::Remote,
+            _ => FileExplorerTab::Local,
+        };
+        // Give focus to new tab
+        match new_tab {
+            FileExplorerTab::Local => assert!(self.app.active(&Id::ExplorerLocal).is_ok()),
+            FileExplorerTab::Remote => {
+                assert!(self.app.active(&Id::ExplorerRemote).is_ok())
+            }
+            FileExplorerTab::FindLocal | FileExplorerTab::FindRemote => {
+                assert!(self.app.active(&Id::ExplorerFind).is_ok())
+            }
+        }
+        self.browser.change_tab(new_tab);
+    }
+
+    pub(super) fn update_find_list(&mut self) {
+        let files: Vec<Vec<TextSpan>> = self
+            .found()
+            .unwrap()
+            .iter_files()
+            .map(|x| vec![TextSpan::from(self.found().unwrap().fmt_file(x))])
+            .collect();
+        assert!(self
+            .app
+            .attr(
+                &Id::ExplorerFind,
+                Attribute::Content,
+                AttrValue::Table(files)
+            )
+            .is_ok());
+    }
+
+    pub(super) fn update_browser_file_list(&mut self) {
+        match self.browser.tab() {
+            FileExplorerTab::Local | FileExplorerTab::FindLocal => self.update_local_filelist(),
+            FileExplorerTab::Remote | FileExplorerTab::FindRemote => self.update_remote_filelist(),
+        }
+    }
+
+    pub(super) fn update_browser_file_list_swapped(&mut self) {
+        match self.browser.tab() {
+            FileExplorerTab::Local | FileExplorerTab::FindLocal => self.update_remote_filelist(),
+            FileExplorerTab::Remote | FileExplorerTab::FindRemote => self.update_local_filelist(),
         }
     }
 }
