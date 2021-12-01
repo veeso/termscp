@@ -29,7 +29,6 @@
 use super::{FileTransferActivity, FsEntry, LogLevel, SelectedEntry, TransferPayload};
 use crate::fs::FsFile;
 // ext
-use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use std::fs::OpenOptions;
 use std::io::Read;
 use std::path::{Path, PathBuf};
@@ -109,13 +108,15 @@ impl FileTransferActivity {
             }
         }
         // Put input mode back to normal
-        if let Err(err) = disable_raw_mode() {
+        if let Err(err) = self.context_mut().terminal().disable_raw_mode() {
             error!("Failed to disable raw mode: {}", err);
         }
         // Leave alternate mode
-        if let Some(ctx) = self.context.as_mut() {
-            ctx.leave_alternate_screen();
+        if let Err(err) = self.context_mut().terminal().leave_alternate_screen() {
+            error!("Could not leave alternate screen: {}", err);
         }
+        // Lock ports
+        assert!(self.app.lock_ports().is_ok());
         // Open editor
         match edit::edit_file(path) {
             Ok(_) => self.log(
@@ -128,13 +129,20 @@ impl FileTransferActivity {
             Err(err) => return Err(format!("Could not open editor: {}", err)),
         }
         if let Some(ctx) = self.context.as_mut() {
-            // Clear screen
-            ctx.clear_screen();
+            if let Err(err) = ctx.terminal().clear_screen() {
+                error!("Could not clear screen screen: {}", err);
+            }
             // Enter alternate mode
-            ctx.enter_alternate_screen();
+            if let Err(err) = ctx.terminal().enter_alternate_screen() {
+                error!("Could not enter alternate screen: {}", err);
+            }
+            // Re-enable raw mode
+            if let Err(err) = ctx.terminal().enable_raw_mode() {
+                error!("Failed to enter raw mode: {}", err);
+            }
+            // Unlock ports
+            assert!(self.app.unlock_ports().is_ok());
         }
-        // Re-enable raw mode
-        let _ = enable_raw_mode();
         Ok(())
     }
 

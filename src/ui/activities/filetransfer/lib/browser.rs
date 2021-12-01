@@ -34,7 +34,7 @@ use std::path::Path;
 /// ## FileExplorerTab
 ///
 /// File explorer tab
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum FileExplorerTab {
     Local,
     Remote,

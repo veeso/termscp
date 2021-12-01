@@ -35,6 +35,16 @@ Released on FIXME:
     - It is now possible to keep navigating on the other explorer while "found tab" is open
       - ❗ It is not possible though to have the "found tab" on both explorers (otherwise you wouldn't be able to tell whether you're transferring files)
     - Files found from search are now displayed with their relative path from working directory
+  - **Ui**:
+    - Transfer abortion is now more responsive
+    - Selected files will now be rendered with **Reversed, underlined and italic** text modifiers instead of being prepended with `*`.
+  - **Tui-realm migration**:
+    - migrated application to tui-realm 1.x
+    - Improved application performance
+- Dependencies:
+  - Updated `tui-realm` to `1.3.0`
+  - Updated `tui-realm-stdlib` to `1.1.4`
+  - Removed `crossterm` (since bridged by tui-realm)
 
 ## 0.7.0
 

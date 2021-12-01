@@ -101,7 +101,7 @@ lazy_static! {
      * - group 1: amount (number)
      * - group 4: unit (K, M, G, T, P)
      */
-    static ref BYTESIZE_REGEX: Regex = Regex::new(r"(:?([0-9])+)( )*(:?[KMGTP])?B").unwrap();
+    static ref BYTESIZE_REGEX: Regex = Regex::new(r"(:?([0-9])+)( )*(:?[KMGTP])?B$").unwrap();
 }
 
 // -- remote opts
@@ -1133,5 +1133,8 @@ mod tests {
         assert_eq!(parse_bytesize("2 GB").unwrap().as_u64(), 2147483648);
         assert_eq!(parse_bytesize("1 TB").unwrap().as_u64(), 1099511627776);
         assert!(parse_bytesize("1 XB").is_none());
+        assert!(parse_bytesize("1 GB aaaaa").is_none());
+        assert!(parse_bytesize("1 GBaaaaa").is_none());
+        assert!(parse_bytesize("1MBaaaaa").is_none());
     }
 }

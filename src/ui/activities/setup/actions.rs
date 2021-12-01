@@ -27,13 +27,12 @@
  * SOFTWARE.
  */
 // Locals
-use super::{SetupActivity, ViewLayout};
+use super::{Id, IdSsh, IdTheme, SetupActivity, ViewLayout};
 // Ext
 use crate::config::themes::Theme;
-use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use std::env;
 use tuirealm::tui::style::Color;
-use tuirealm::{Payload, Value};
+use tuirealm::{State, StateValue};
 
 impl SetupActivity {
     /// ### action_on_esc
@@ -78,7 +77,7 @@ impl SetupActivity {
         // Collect input values if in theme form
         if self.layout == ViewLayout::Theme {
             self.collect_styles()
-                .map_err(|e| format!("'{}' has an invalid color", e))?;
+                .map_err(|e| format!("'{:?}' has an invalid color", e))?;
         }
         // save theme
         self.save_theme()
@@ -93,7 +92,7 @@ impl SetupActivity {
             ViewLayout::SetupForm => self.collect_input_values(),
             ViewLayout::Theme => self
                 .collect_styles()
-                .map_err(|e| format!("'{}' has an invalid color", e))?,
+                .map_err(|e| format!("'{:?}' has an invalid color", e))?,
             _ => {}
         }
         // Update view
@@ -133,8 +132,8 @@ impl SetupActivity {
     pub(super) fn action_delete_ssh_key(&mut self) {
         // Get key
         // get index
-        let idx: Option<usize> = match self.view.get_state(super::COMPONENT_LIST_SSH_KEYS) {
-            Some(Payload::One(Value::Usize(idx))) => Some(idx),
+        let idx: Option<usize> = match self.app.state(&Id::Ssh(IdSsh::SshKeys)) {
+            Ok(State::One(StateValue::Usize(idx))) => Some(idx),
             _ => None,
         };
         if let Some(idx) = idx {
@@ -166,29 +165,27 @@ impl SetupActivity {
     /// Create a new ssh key
     pub(super) fn action_new_ssh_key(&mut self) {
         // get parameters
-        let host: String = match self.view.get_state(super::COMPONENT_INPUT_SSH_HOST) {
-            Some(Payload::One(Value::Str(host))) => host,
+        let host: String = match self.app.state(&Id::Ssh(IdSsh::SshHost)) {
+            Ok(State::One(StateValue::String(host))) => host,
             _ => String::new(),
         };
-        let username: String = match self.view.get_state(super::COMPONENT_INPUT_SSH_USERNAME) {
-            Some(Payload::One(Value::Str(user))) => user,
+        let username: String = match self.app.state(&Id::Ssh(IdSsh::SshUsername)) {
+            Ok(State::One(StateValue::String(user))) => user,
             _ => String::new(),
         };
         // Prepare text editor
         env::set_var("EDITOR", self.config().get_text_editor());
         let placeholder: String = format!("# Type private SSH key for {}@{}\n", username, host);
         // Put input mode back to normal
-        if let Err(err) = disable_raw_mode() {
-            error!("Failed to disable raw mode: {}", err);
+        if let Err(err) = self.context_mut().terminal().disable_raw_mode() {
+            error!("Could not disable raw mode: {}", err);
         }
         // Leave alternate mode
-        if let Some(ctx) = self.context.as_mut() {
-            ctx.leave_alternate_screen();
+        if let Err(err) = self.context_mut().terminal().leave_alternate_screen() {
+            error!("Could not leave alternate screen: {}", err);
         }
-        // Re-enable raw mode
-        if let Err(err) = enable_raw_mode() {
-            error!("Failed to enter raw mode: {}", err);
-        }
+        // Lock ports
+        assert!(self.app.lock_ports().is_ok());
         // Write key to file
         match edit::edit(placeholder.as_bytes()) {
             Ok(rsa_key) => {
@@ -215,101 +212,246 @@ impl SetupActivity {
         }
         // Restore terminal
         if let Some(ctx) = self.context.as_mut() {
-            // Clear screen
-            ctx.clear_screen();
+            if let Err(err) = ctx.terminal().clear_screen() {
+                error!("Could not clear screen screen: {}", err);
+            }
             // Enter alternate mode
-            ctx.enter_alternate_screen();
+            if let Err(err) = ctx.terminal().enter_alternate_screen() {
+                error!("Could not enter alternate screen: {}", err);
+            }
+            // Re-enable raw mode
+            if let Err(err) = ctx.terminal().enable_raw_mode() {
+                error!("Failed to enter raw mode: {}", err);
+            }
+            // Unlock ports
+            assert!(self.app.unlock_ports().is_ok());
         }
     }
 
     /// ### set_color
     ///
     /// Given a component and a color, save the color into the theme
-    pub(super) fn action_save_color(&mut self, component: &str, color: Color) {
+    pub(super) fn action_save_color(&mut self, component: IdTheme, color: Color) {
         let theme: &mut Theme = self.theme_mut();
         match component {
-            super::COMPONENT_COLOR_AUTH_ADDR => {
+            IdTheme::AuthAddress => {
                 theme.auth_address = color;
             }
-            super::COMPONENT_COLOR_AUTH_BOOKMARKS => {
+            IdTheme::AuthBookmarks => {
                 theme.auth_bookmarks = color;
             }
-            super::COMPONENT_COLOR_AUTH_PASSWORD => {
+            IdTheme::AuthPassword => {
                 theme.auth_password = color;
             }
-            super::COMPONENT_COLOR_AUTH_PORT => {
+            IdTheme::AuthPort => {
                 theme.auth_port = color;
             }
-            super::COMPONENT_COLOR_AUTH_PROTOCOL => {
+            IdTheme::AuthProtocol => {
                 theme.auth_protocol = color;
             }
-            super::COMPONENT_COLOR_AUTH_RECENTS => {
+            IdTheme::AuthRecentHosts => {
                 theme.auth_recents = color;
             }
-            super::COMPONENT_COLOR_AUTH_USERNAME => {
+            IdTheme::AuthUsername => {
                 theme.auth_username = color;
             }
-            super::COMPONENT_COLOR_MISC_ERROR => {
+            IdTheme::MiscError => {
                 theme.misc_error_dialog = color;
             }
-            super::COMPONENT_COLOR_MISC_INFO => {
+            IdTheme::MiscInfo => {
                 theme.misc_info_dialog = color;
             }
-            super::COMPONENT_COLOR_MISC_INPUT => {
+            IdTheme::MiscInput => {
                 theme.misc_input_dialog = color;
             }
-            super::COMPONENT_COLOR_MISC_KEYS => {
+            IdTheme::MiscKeys => {
                 theme.misc_keys = color;
             }
-            super::COMPONENT_COLOR_MISC_QUIT => {
+            IdTheme::MiscQuit => {
                 theme.misc_quit_dialog = color;
             }
-            super::COMPONENT_COLOR_MISC_SAVE => {
+            IdTheme::MiscSave => {
                 theme.misc_save_dialog = color;
             }
-            super::COMPONENT_COLOR_MISC_WARN => {
+            IdTheme::MiscWarn => {
                 theme.misc_warn_dialog = color;
             }
-            super::COMPONENT_COLOR_TRANSFER_EXPLORER_LOCAL_BG => {
+            IdTheme::ExplorerLocalBg => {
                 theme.transfer_local_explorer_background = color;
             }
-            super::COMPONENT_COLOR_TRANSFER_EXPLORER_LOCAL_FG => {
+            IdTheme::ExplorerLocalFg => {
                 theme.transfer_local_explorer_foreground = color;
             }
-            super::COMPONENT_COLOR_TRANSFER_EXPLORER_LOCAL_HG => {
+            IdTheme::ExplorerLocalHg => {
                 theme.transfer_local_explorer_highlighted = color;
             }
-            super::COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_BG => {
+            IdTheme::ExplorerRemoteBg => {
                 theme.transfer_remote_explorer_background = color;
             }
-            super::COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_FG => {
+            IdTheme::ExplorerRemoteFg => {
                 theme.transfer_remote_explorer_foreground = color;
             }
-            super::COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_HG => {
+            IdTheme::ExplorerRemoteHg => {
                 theme.transfer_remote_explorer_highlighted = color;
             }
-            super::COMPONENT_COLOR_TRANSFER_LOG_BG => {
+            IdTheme::LogBg => {
                 theme.transfer_log_background = color;
             }
-            super::COMPONENT_COLOR_TRANSFER_LOG_WIN => {
+            IdTheme::LogWindow => {
                 theme.transfer_log_window = color;
             }
-            super::COMPONENT_COLOR_TRANSFER_PROG_BAR_FULL => {
+            IdTheme::ProgBarFull => {
                 theme.transfer_progress_bar_full = color;
             }
-            super::COMPONENT_COLOR_TRANSFER_PROG_BAR_PARTIAL => {
+            IdTheme::ProgBarPartial => {
                 theme.transfer_progress_bar_partial = color;
             }
-            super::COMPONENT_COLOR_TRANSFER_STATUS_HIDDEN => {
+            IdTheme::StatusHidden => {
                 theme.transfer_status_hidden = color;
             }
-            super::COMPONENT_COLOR_TRANSFER_STATUS_SORTING => {
+            IdTheme::StatusSorting => {
                 theme.transfer_status_sorting = color;
             }
-            super::COMPONENT_COLOR_TRANSFER_STATUS_SYNC => {
+            IdTheme::StatusSync => {
                 theme.transfer_status_sync_browsing = color;
             }
             _ => {}
+        }
+    }
+
+    /// ### collect_styles
+    ///
+    /// Collect values from input and put them into the theme.
+    /// If a component has an invalid color, returns Err(component_id)
+    fn collect_styles(&mut self) -> Result<(), Id> {
+        // auth
+        let auth_address = self
+            .get_color(&Id::Theme(IdTheme::AuthAddress))
+            .map_err(|_| Id::Theme(IdTheme::AuthAddress))?;
+        let auth_bookmarks = self
+            .get_color(&Id::Theme(IdTheme::AuthBookmarks))
+            .map_err(|_| Id::Theme(IdTheme::AuthBookmarks))?;
+        let auth_password = self
+            .get_color(&Id::Theme(IdTheme::AuthPassword))
+            .map_err(|_| Id::Theme(IdTheme::AuthPassword))?;
+        let auth_port = self
+            .get_color(&Id::Theme(IdTheme::AuthPort))
+            .map_err(|_| Id::Theme(IdTheme::AuthPort))?;
+        let auth_protocol = self
+            .get_color(&Id::Theme(IdTheme::AuthProtocol))
+            .map_err(|_| Id::Theme(IdTheme::AuthProtocol))?;
+        let auth_recents = self
+            .get_color(&Id::Theme(IdTheme::AuthRecentHosts))
+            .map_err(|_| Id::Theme(IdTheme::AuthRecentHosts))?;
+        let auth_username = self
+            .get_color(&Id::Theme(IdTheme::AuthUsername))
+            .map_err(|_| Id::Theme(IdTheme::AuthUsername))?;
+        // misc
+        let misc_error_dialog = self
+            .get_color(&Id::Theme(IdTheme::MiscError))
+            .map_err(|_| Id::Theme(IdTheme::MiscError))?;
+        let misc_info_dialog = self
+            .get_color(&Id::Theme(IdTheme::MiscInfo))
+            .map_err(|_| Id::Theme(IdTheme::MiscInfo))?;
+        let misc_input_dialog = self
+            .get_color(&Id::Theme(IdTheme::MiscInput))
+            .map_err(|_| Id::Theme(IdTheme::MiscInput))?;
+        let misc_keys = self
+            .get_color(&Id::Theme(IdTheme::MiscKeys))
+            .map_err(|_| Id::Theme(IdTheme::MiscKeys))?;
+        let misc_quit_dialog = self
+            .get_color(&Id::Theme(IdTheme::MiscQuit))
+            .map_err(|_| Id::Theme(IdTheme::MiscQuit))?;
+        let misc_save_dialog = self
+            .get_color(&Id::Theme(IdTheme::MiscSave))
+            .map_err(|_| Id::Theme(IdTheme::MiscSave))?;
+        let misc_warn_dialog = self
+            .get_color(&Id::Theme(IdTheme::MiscWarn))
+            .map_err(|_| Id::Theme(IdTheme::MiscWarn))?;
+        // transfer
+        let transfer_local_explorer_background = self
+            .get_color(&Id::Theme(IdTheme::ExplorerLocalBg))
+            .map_err(|_| Id::Theme(IdTheme::ExplorerLocalBg))?;
+        let transfer_local_explorer_foreground = self
+            .get_color(&Id::Theme(IdTheme::ExplorerLocalFg))
+            .map_err(|_| Id::Theme(IdTheme::ExplorerLocalFg))?;
+        let transfer_local_explorer_highlighted = self
+            .get_color(&Id::Theme(IdTheme::ExplorerLocalHg))
+            .map_err(|_| Id::Theme(IdTheme::ExplorerLocalHg))?;
+        let transfer_remote_explorer_background = self
+            .get_color(&Id::Theme(IdTheme::ExplorerRemoteBg))
+            .map_err(|_| Id::Theme(IdTheme::ExplorerRemoteBg))?;
+        let transfer_remote_explorer_foreground = self
+            .get_color(&Id::Theme(IdTheme::ExplorerRemoteFg))
+            .map_err(|_| Id::Theme(IdTheme::ExplorerRemoteFg))?;
+        let transfer_remote_explorer_highlighted = self
+            .get_color(&Id::Theme(IdTheme::ExplorerRemoteHg))
+            .map_err(|_| Id::Theme(IdTheme::ExplorerRemoteHg))?;
+        let transfer_log_background = self
+            .get_color(&Id::Theme(IdTheme::LogBg))
+            .map_err(|_| Id::Theme(IdTheme::LogBg))?;
+        let transfer_log_window = self
+            .get_color(&Id::Theme(IdTheme::LogWindow))
+            .map_err(|_| Id::Theme(IdTheme::LogWindow))?;
+        let transfer_progress_bar_full = self
+            .get_color(&Id::Theme(IdTheme::ProgBarFull))
+            .map_err(|_| Id::Theme(IdTheme::ProgBarFull))?;
+        let transfer_progress_bar_partial = self
+            .get_color(&Id::Theme(IdTheme::ProgBarPartial))
+            .map_err(|_| Id::Theme(IdTheme::ProgBarPartial))?;
+        let transfer_status_hidden = self
+            .get_color(&Id::Theme(IdTheme::StatusHidden))
+            .map_err(|_| Id::Theme(IdTheme::StatusHidden))?;
+        let transfer_status_sorting = self
+            .get_color(&Id::Theme(IdTheme::StatusSorting))
+            .map_err(|_| Id::Theme(IdTheme::StatusSorting))?;
+        let transfer_status_sync_browsing = self
+            .get_color(&Id::Theme(IdTheme::StatusSync))
+            .map_err(|_| Id::Theme(IdTheme::StatusSync))?;
+        // Update theme
+        let mut theme: &mut Theme = self.theme_mut();
+        theme.auth_address = auth_address;
+        theme.auth_bookmarks = auth_bookmarks;
+        theme.auth_password = auth_password;
+        theme.auth_port = auth_port;
+        theme.auth_protocol = auth_protocol;
+        theme.auth_recents = auth_recents;
+        theme.auth_username = auth_username;
+        theme.misc_error_dialog = misc_error_dialog;
+        theme.misc_info_dialog = misc_info_dialog;
+        theme.misc_input_dialog = misc_input_dialog;
+        theme.misc_keys = misc_keys;
+        theme.misc_quit_dialog = misc_quit_dialog;
+        theme.misc_save_dialog = misc_save_dialog;
+        theme.misc_warn_dialog = misc_warn_dialog;
+        theme.transfer_local_explorer_background = transfer_local_explorer_background;
+        theme.transfer_local_explorer_foreground = transfer_local_explorer_foreground;
+        theme.transfer_local_explorer_highlighted = transfer_local_explorer_highlighted;
+        theme.transfer_remote_explorer_background = transfer_remote_explorer_background;
+        theme.transfer_remote_explorer_foreground = transfer_remote_explorer_foreground;
+        theme.transfer_remote_explorer_highlighted = transfer_remote_explorer_highlighted;
+        theme.transfer_log_background = transfer_log_background;
+        theme.transfer_log_window = transfer_log_window;
+        theme.transfer_progress_bar_full = transfer_progress_bar_full;
+        theme.transfer_progress_bar_partial = transfer_progress_bar_partial;
+        theme.transfer_status_hidden = transfer_status_hidden;
+        theme.transfer_status_sorting = transfer_status_sorting;
+        theme.transfer_status_sync_browsing = transfer_status_sync_browsing;
+        Ok(())
+    }
+
+    /// ### get_color
+    ///
+    /// Get color from component
+    fn get_color(&self, component: &Id) -> Result<Color, ()> {
+        match self.app.state(component) {
+            Ok(State::One(StateValue::String(color))) => {
+                match crate::utils::parser::parse_color(color.as_str()) {
+                    Some(c) => Ok(c),
+                    None => Err(()),
+                }
+            }
+            _ => Err(()),
         }
     }
 }

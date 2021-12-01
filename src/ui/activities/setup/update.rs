@@ -28,737 +28,446 @@
  */
 // locals
 use super::{
-    SetupActivity, ViewLayout, COMPONENT_COLOR_AUTH_ADDR, COMPONENT_COLOR_AUTH_BOOKMARKS,
-    COMPONENT_COLOR_AUTH_PASSWORD, COMPONENT_COLOR_AUTH_PORT, COMPONENT_COLOR_AUTH_PROTOCOL,
-    COMPONENT_COLOR_AUTH_RECENTS, COMPONENT_COLOR_AUTH_USERNAME, COMPONENT_COLOR_MISC_ERROR,
-    COMPONENT_COLOR_MISC_INFO, COMPONENT_COLOR_MISC_INPUT, COMPONENT_COLOR_MISC_KEYS,
-    COMPONENT_COLOR_MISC_QUIT, COMPONENT_COLOR_MISC_SAVE, COMPONENT_COLOR_MISC_WARN,
-    COMPONENT_COLOR_TRANSFER_EXPLORER_LOCAL_BG, COMPONENT_COLOR_TRANSFER_EXPLORER_LOCAL_FG,
-    COMPONENT_COLOR_TRANSFER_EXPLORER_LOCAL_HG, COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_BG,
-    COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_FG, COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_HG,
-    COMPONENT_COLOR_TRANSFER_LOG_BG, COMPONENT_COLOR_TRANSFER_LOG_WIN,
-    COMPONENT_COLOR_TRANSFER_PROG_BAR_FULL, COMPONENT_COLOR_TRANSFER_PROG_BAR_PARTIAL,
-    COMPONENT_COLOR_TRANSFER_STATUS_HIDDEN, COMPONENT_COLOR_TRANSFER_STATUS_SORTING,
-    COMPONENT_COLOR_TRANSFER_STATUS_SYNC, COMPONENT_INPUT_LOCAL_FILE_FMT,
-    COMPONENT_INPUT_NOTIFICATIONS_THRESHOLD, COMPONENT_INPUT_REMOTE_FILE_FMT,
-    COMPONENT_INPUT_SSH_HOST, COMPONENT_INPUT_SSH_USERNAME, COMPONENT_INPUT_TEXT_EDITOR,
-    COMPONENT_LIST_SSH_KEYS, COMPONENT_RADIO_DEFAULT_PROTOCOL, COMPONENT_RADIO_DEL_SSH_KEY,
-    COMPONENT_RADIO_GROUP_DIRS, COMPONENT_RADIO_HIDDEN_FILES,
-    COMPONENT_RADIO_NOTIFICATIONS_ENABLED, COMPONENT_RADIO_PROMPT_ON_FILE_REPLACE,
-    COMPONENT_RADIO_QUIT, COMPONENT_RADIO_SAVE, COMPONENT_RADIO_UPDATES, COMPONENT_TEXT_ERROR,
-    COMPONENT_TEXT_HELP,
+    CommonMsg, ConfigMsg, Id, IdConfig, IdSsh, IdTheme, Msg, SetupActivity, SshMsg, ThemeMsg,
+    ViewLayout,
 };
-use crate::ui::keymap::*;
-use crate::utils::parser::parse_color;
 
 // ext
-use tuirealm::{Msg, Payload, Update, Value};
+use tuirealm::Update;
 
-impl Update for SetupActivity {
+impl Update<Msg> for SetupActivity {
     /// ### update
     ///
     /// Update auth activity model based on msg
     /// The function exits when returns None
-    fn update(&mut self, msg: Option<(String, Msg)>) -> Option<(String, Msg)> {
-        match self.layout {
-            ViewLayout::SetupForm => self.update_setup(msg),
-            ViewLayout::SshKeys => self.update_ssh_keys(msg),
-            ViewLayout::Theme => self.update_theme(msg),
+    fn update(&mut self, msg: Option<Msg>) -> Option<Msg> {
+        match msg.unwrap_or(Msg::None) {
+            Msg::Common(msg) => self.common_update(msg),
+            Msg::Config(msg) => self.config_update(msg),
+            Msg::Ssh(msg) => self.ssh_update(msg),
+            Msg::Theme(msg) => self.theme_update(msg),
+            Msg::None => None,
         }
     }
 }
 
 impl SetupActivity {
-    fn update_setup(&mut self, msg: Option<(String, Msg)>) -> Option<(String, Msg)> {
-        let ref_msg: Option<(&str, &Msg)> = msg.as_ref().map(|(s, msg)| (s.as_str(), msg));
-        // Match msg
-        match ref_msg {
-            None => None,
-            Some(msg) => match msg {
-                // Input field <DOWN>
-                (COMPONENT_INPUT_TEXT_EDITOR, key) if key == &MSG_KEY_DOWN => {
-                    self.view.active(COMPONENT_RADIO_DEFAULT_PROTOCOL);
-                    None
-                }
-                (COMPONENT_RADIO_DEFAULT_PROTOCOL, key) if key == &MSG_KEY_DOWN => {
-                    self.view.active(COMPONENT_RADIO_HIDDEN_FILES);
-                    None
-                }
-                (COMPONENT_RADIO_HIDDEN_FILES, key) if key == &MSG_KEY_DOWN => {
-                    self.view.active(COMPONENT_RADIO_UPDATES);
-                    None
-                }
-                (COMPONENT_RADIO_UPDATES, key) if key == &MSG_KEY_DOWN => {
-                    self.view.active(COMPONENT_RADIO_PROMPT_ON_FILE_REPLACE);
-                    None
-                }
-                (COMPONENT_RADIO_PROMPT_ON_FILE_REPLACE, key) if key == &MSG_KEY_DOWN => {
-                    self.view.active(COMPONENT_RADIO_GROUP_DIRS);
-                    None
-                }
-                (COMPONENT_RADIO_GROUP_DIRS, key) if key == &MSG_KEY_DOWN => {
-                    self.view.active(COMPONENT_INPUT_LOCAL_FILE_FMT);
-                    None
-                }
-                (COMPONENT_INPUT_LOCAL_FILE_FMT, key) if key == &MSG_KEY_DOWN => {
-                    self.view.active(COMPONENT_INPUT_REMOTE_FILE_FMT);
-                    None
-                }
-                (COMPONENT_INPUT_REMOTE_FILE_FMT, key) if key == &MSG_KEY_DOWN => {
-                    self.view.active(COMPONENT_RADIO_NOTIFICATIONS_ENABLED);
-                    None
-                }
-                (COMPONENT_RADIO_NOTIFICATIONS_ENABLED, key) if key == &MSG_KEY_DOWN => {
-                    self.view.active(COMPONENT_INPUT_NOTIFICATIONS_THRESHOLD);
-                    None
-                }
-                (COMPONENT_INPUT_NOTIFICATIONS_THRESHOLD, key) if key == &MSG_KEY_DOWN => {
-                    self.view.active(COMPONENT_INPUT_TEXT_EDITOR);
-                    None
-                }
-                // Input field <UP>
-                (COMPONENT_INPUT_NOTIFICATIONS_THRESHOLD, key) if key == &MSG_KEY_UP => {
-                    self.view.active(COMPONENT_RADIO_NOTIFICATIONS_ENABLED);
-                    None
-                }
-                (COMPONENT_RADIO_NOTIFICATIONS_ENABLED, key) if key == &MSG_KEY_UP => {
-                    self.view.active(COMPONENT_INPUT_REMOTE_FILE_FMT);
-                    None
-                }
-                (COMPONENT_INPUT_REMOTE_FILE_FMT, key) if key == &MSG_KEY_UP => {
-                    self.view.active(COMPONENT_INPUT_LOCAL_FILE_FMT);
-                    None
-                }
-                (COMPONENT_INPUT_LOCAL_FILE_FMT, key) if key == &MSG_KEY_UP => {
-                    self.view.active(COMPONENT_RADIO_GROUP_DIRS);
-                    None
-                }
-                (COMPONENT_RADIO_GROUP_DIRS, key) if key == &MSG_KEY_UP => {
-                    self.view.active(COMPONENT_RADIO_PROMPT_ON_FILE_REPLACE);
-                    None
-                }
-                (COMPONENT_RADIO_PROMPT_ON_FILE_REPLACE, key) if key == &MSG_KEY_UP => {
-                    self.view.active(COMPONENT_RADIO_UPDATES);
-                    None
-                }
-                (COMPONENT_RADIO_UPDATES, key) if key == &MSG_KEY_UP => {
-                    self.view.active(COMPONENT_RADIO_HIDDEN_FILES);
-                    None
-                }
-                (COMPONENT_RADIO_HIDDEN_FILES, key) if key == &MSG_KEY_UP => {
-                    self.view.active(COMPONENT_RADIO_DEFAULT_PROTOCOL);
-                    None
-                }
-                (COMPONENT_RADIO_DEFAULT_PROTOCOL, key) if key == &MSG_KEY_UP => {
-                    self.view.active(COMPONENT_INPUT_TEXT_EDITOR);
-                    None
-                }
-                (COMPONENT_INPUT_TEXT_EDITOR, key) if key == &MSG_KEY_UP => {
-                    self.view.active(COMPONENT_INPUT_NOTIFICATIONS_THRESHOLD);
-                    None
-                }
-                // Error <ENTER> or <ESC>
-                (COMPONENT_TEXT_ERROR, key) | (COMPONENT_TEXT_ERROR, key)
-                    if key == &MSG_KEY_ESC || key == &MSG_KEY_ENTER =>
-                {
-                    // Umount text error
-                    self.umount_error();
-                    None
-                }
-                (COMPONENT_TEXT_ERROR, _) => None,
-                // Exit
-                (COMPONENT_RADIO_QUIT, Msg::OnSubmit(Payload::One(Value::Usize(0)))) => {
-                    // Save changes
-                    if let Err(err) = self.action_save_all() {
-                        self.mount_error(err.as_str());
-                    }
-                    // Exit
-                    self.exit_reason = Some(super::ExitReason::Quit);
-                    None
-                }
-                (COMPONENT_RADIO_QUIT, Msg::OnSubmit(Payload::One(Value::Usize(1)))) => {
-                    // Quit
-                    self.exit_reason = Some(super::ExitReason::Quit);
-                    self.umount_quit();
-                    None
-                }
-                (COMPONENT_RADIO_QUIT, Msg::OnSubmit(_)) => {
-                    // Umount popup
-                    self.umount_quit();
-                    None
-                }
-                (COMPONENT_RADIO_QUIT, _) => None,
-                // Close help
-                (COMPONENT_TEXT_HELP, key) | (COMPONENT_TEXT_HELP, key)
-                    if key == &MSG_KEY_ESC || key == &MSG_KEY_ENTER =>
-                {
-                    // Umount help
-                    self.umount_help();
-                    None
-                }
-                (COMPONENT_TEXT_HELP, _) => None,
-                // Save popup
-                (COMPONENT_RADIO_SAVE, Msg::OnSubmit(Payload::One(Value::Usize(0)))) => {
-                    // Save config
-                    if let Err(err) = self.action_save_all() {
-                        self.mount_error(err.as_str());
-                    }
-                    self.umount_save_popup();
-                    None
-                }
-                (COMPONENT_RADIO_SAVE, Msg::OnSubmit(_)) => {
-                    // Umount radio save
-                    self.umount_save_popup();
-                    None
-                }
-                (COMPONENT_RADIO_SAVE, _) => None,
-                // Detect config changed
-                (_, Msg::OnChange(_)) => {
-                    // An input field has changed value; report config changed
-                    self.set_config_changed(true);
-                    None
-                }
-                // <CTRL+H> Show help
-                (_, key) if key == &MSG_KEY_CTRL_H => {
-                    // Show help
-                    self.mount_help();
-                    None
-                }
-                (_, key) if key == &MSG_KEY_TAB => {
-                    // Change view
-                    if let Err(err) = self.action_change_tab(ViewLayout::SshKeys) {
-                        self.mount_error(err.as_str());
-                    }
-                    None
-                }
-                // <CTRL+R> Revert changes
-                (_, key) if key == &MSG_KEY_CTRL_R => {
-                    // Revert changes
-                    if let Err(err) = self.action_reset_config() {
-                        self.mount_error(err.as_str());
-                    }
-                    None
-                }
-                // <CTRL+S> Save
-                (_, key) if key == &MSG_KEY_CTRL_S => {
-                    // Show save
-                    self.mount_save_popup();
-                    None
-                }
-                // <ESC>
-                (_, key) if key == &MSG_KEY_ESC => {
-                    self.action_on_esc();
-                    None
-                }
-                (_, _) => None, // Nothing to do
-            },
-        }
-    }
-
-    fn update_ssh_keys(&mut self, msg: Option<(String, Msg)>) -> Option<(String, Msg)> {
-        let ref_msg: Option<(&str, &Msg)> = msg.as_ref().map(|(s, msg)| (s.as_str(), msg));
-        // Match msg
-        match ref_msg {
-            None => None,
-            Some(msg) => match msg {
-                // Error <ENTER> or <ESC>
-                (COMPONENT_TEXT_ERROR, key) | (COMPONENT_TEXT_ERROR, key)
-                    if key == &MSG_KEY_ESC || key == &MSG_KEY_ENTER =>
-                {
-                    // Umount text error
-                    self.umount_error();
-                    None
-                }
-                (COMPONENT_TEXT_ERROR, _) => None,
-                // Exit
-                (COMPONENT_RADIO_QUIT, Msg::OnSubmit(Payload::One(Value::Usize(0)))) => {
-                    // Save changes
-                    if let Err(err) = self.action_save_all() {
-                        self.mount_error(err.as_str());
-                    }
-                    // Exit
-                    self.exit_reason = Some(super::ExitReason::Quit);
-                    None
-                }
-                (COMPONENT_RADIO_QUIT, Msg::OnSubmit(Payload::One(Value::Usize(1)))) => {
-                    // Quit
-                    self.exit_reason = Some(super::ExitReason::Quit);
-                    self.umount_quit();
-                    None
-                }
-                (COMPONENT_RADIO_QUIT, Msg::OnSubmit(_)) => {
-                    // Umount popup
-                    self.umount_quit();
-                    None
-                }
-                (COMPONENT_RADIO_QUIT, _) => None,
-                // Close help
-                (COMPONENT_TEXT_HELP, key) | (COMPONENT_TEXT_HELP, key)
-                    if key == &MSG_KEY_ESC || key == &MSG_KEY_ENTER =>
-                {
-                    // Umount help
-                    self.umount_help();
-                    None
-                }
-                (COMPONENT_TEXT_HELP, _) => None,
-                // Delete key
-                (COMPONENT_RADIO_DEL_SSH_KEY, Msg::OnSubmit(Payload::One(Value::Usize(0)))) => {
-                    // Delete key
-                    self.action_delete_ssh_key();
-                    // Reload ssh keys
-                    self.reload_ssh_keys();
-                    // Delete popup
-                    self.umount_del_ssh_key();
-                    None
-                }
-                (COMPONENT_RADIO_DEL_SSH_KEY, Msg::OnSubmit(_)) => {
-                    // Umount
-                    self.umount_del_ssh_key();
-                    None
-                }
-                (COMPONENT_RADIO_DEL_SSH_KEY, _) => None,
-                // Save popup
-                (COMPONENT_RADIO_SAVE, Msg::OnSubmit(Payload::One(Value::Usize(0)))) => {
-                    // Save config
-                    if let Err(err) = self.action_save_all() {
-                        self.mount_error(err.as_str());
-                    }
-                    self.umount_save_popup();
-                    None
-                }
-                (COMPONENT_RADIO_SAVE, Msg::OnSubmit(_)) => {
-                    // Umount radio save
-                    self.umount_save_popup();
-                    None
-                }
-                (COMPONENT_RADIO_SAVE, _) => None,
-                // Edit SSH Key
-                // <CTRL+H> Show help
-                (_, key) if key == &MSG_KEY_CTRL_H => {
-                    // Show help
-                    self.mount_help();
-                    None
-                }
-                // New key <DOWN>
-                (COMPONENT_INPUT_SSH_HOST, key) if key == &MSG_KEY_DOWN => {
-                    self.view.active(COMPONENT_INPUT_SSH_USERNAME);
-                    None
-                }
-                (COMPONENT_INPUT_SSH_USERNAME, key) if key == &MSG_KEY_DOWN => {
-                    self.view.active(COMPONENT_INPUT_SSH_HOST);
-                    None
-                }
-                // New key <UP>
-                (COMPONENT_INPUT_SSH_USERNAME, key) | (COMPONENT_INPUT_SSH_USERNAME, key)
-                    if key == &MSG_KEY_UP || key == &MSG_KEY_TAB =>
-                {
-                    self.view.active(COMPONENT_INPUT_SSH_HOST);
-                    None
-                }
-                (COMPONENT_INPUT_SSH_HOST, key) | (COMPONENT_INPUT_SSH_HOST, key)
-                    if key == &MSG_KEY_UP || key == &MSG_KEY_TAB =>
-                {
-                    self.view.active(COMPONENT_INPUT_SSH_USERNAME);
-                    None
-                }
-                // New key <ENTER>
-                (COMPONENT_INPUT_SSH_HOST, Msg::OnSubmit(_))
-                | (COMPONENT_INPUT_SSH_USERNAME, Msg::OnSubmit(_)) => {
-                    // Save ssh key
-                    self.action_new_ssh_key();
-                    self.umount_new_ssh_key();
-                    self.reload_ssh_keys();
-                    None
-                }
-                // New key <ESC>
-                (COMPONENT_INPUT_SSH_HOST, key) | (COMPONENT_INPUT_SSH_USERNAME, key)
-                    if key == &MSG_KEY_ESC =>
-                {
-                    // Umount new ssh key
-                    self.umount_new_ssh_key();
-                    None
-                }
-                // <CTRL+N> New key
-                (COMPONENT_LIST_SSH_KEYS, key) if key == &MSG_KEY_CTRL_N => {
-                    // Show new key popup
-                    self.mount_new_ssh_key();
-                    None
-                }
-                // <ENTER> Edit key
-                (COMPONENT_LIST_SSH_KEYS, Msg::OnSubmit(Payload::One(Value::Usize(idx)))) => {
-                    // Edit ssh key
-                    if let Err(err) = self.edit_ssh_key(*idx) {
-                        self.mount_error(err.as_str());
-                    }
-                    None
-                }
-                // <DEL | CTRL+E> Show delete
-                (COMPONENT_LIST_SSH_KEYS, key) | (COMPONENT_LIST_SSH_KEYS, key)
-                    if key == &MSG_KEY_CTRL_E || key == &MSG_KEY_DEL =>
-                {
-                    // Show delete key
-                    self.mount_del_ssh_key();
-                    None
-                }
-                (_, key) if key == &MSG_KEY_TAB => {
-                    // Change view
-                    if let Err(err) = self.action_change_tab(ViewLayout::Theme) {
-                        self.mount_error(err.as_str());
-                    }
-                    None
-                }
-                // <CTRL+R> Revert changes
-                (_, key) if key == &MSG_KEY_CTRL_R => {
-                    // Revert changes
-                    if let Err(err) = self.action_reset_config() {
-                        self.mount_error(err.as_str());
-                    }
-                    None
-                }
-                // <CTRL+S> Save
-                (_, key) if key == &MSG_KEY_CTRL_S => {
-                    // Show save
-                    self.mount_save_popup();
-                    None
-                }
-                // <ESC>
-                (_, key) if key == &MSG_KEY_ESC => {
-                    self.action_on_esc();
-                    None
-                }
-                (_, _) => None, // Nothing to do
-            },
-        }
-    }
-
-    fn update_theme(&mut self, msg: Option<(String, Msg)>) -> Option<(String, Msg)> {
-        let ref_msg: Option<(&str, &Msg)> = msg.as_ref().map(|(s, msg)| (s.as_str(), msg));
-        // Match msg
-        match ref_msg {
-            None => None,
-            Some(msg) => match msg {
-                // Input fields
-                (COMPONENT_COLOR_AUTH_PROTOCOL, key) if key == &MSG_KEY_DOWN => {
-                    self.view.active(COMPONENT_COLOR_AUTH_ADDR);
-                    None
-                }
-                (COMPONENT_COLOR_AUTH_ADDR, key) if key == &MSG_KEY_DOWN => {
-                    self.view.active(COMPONENT_COLOR_AUTH_PORT);
-                    None
-                }
-                (COMPONENT_COLOR_AUTH_PORT, key) if key == &MSG_KEY_DOWN => {
-                    self.view.active(COMPONENT_COLOR_AUTH_USERNAME);
-                    None
-                }
-                (COMPONENT_COLOR_AUTH_USERNAME, key) if key == &MSG_KEY_DOWN => {
-                    self.view.active(COMPONENT_COLOR_AUTH_PASSWORD);
-                    None
-                }
-                (COMPONENT_COLOR_AUTH_PASSWORD, key) if key == &MSG_KEY_DOWN => {
-                    self.view.active(COMPONENT_COLOR_AUTH_BOOKMARKS);
-                    None
-                }
-                (COMPONENT_COLOR_AUTH_BOOKMARKS, key) if key == &MSG_KEY_DOWN => {
-                    self.view.active(COMPONENT_COLOR_AUTH_RECENTS);
-                    None
-                }
-                (COMPONENT_COLOR_AUTH_RECENTS, key) if key == &MSG_KEY_DOWN => {
-                    self.view.active(COMPONENT_COLOR_MISC_ERROR);
-                    None
-                }
-                (COMPONENT_COLOR_MISC_ERROR, key) if key == &MSG_KEY_DOWN => {
-                    self.view.active(COMPONENT_COLOR_MISC_INFO);
-                    None
-                }
-                (COMPONENT_COLOR_MISC_INFO, key) if key == &MSG_KEY_DOWN => {
-                    self.view.active(COMPONENT_COLOR_MISC_INPUT);
-                    None
-                }
-                (COMPONENT_COLOR_MISC_INPUT, key) if key == &MSG_KEY_DOWN => {
-                    self.view.active(COMPONENT_COLOR_MISC_KEYS);
-                    None
-                }
-                (COMPONENT_COLOR_MISC_KEYS, key) if key == &MSG_KEY_DOWN => {
-                    self.view.active(COMPONENT_COLOR_MISC_QUIT);
-                    None
-                }
-                (COMPONENT_COLOR_MISC_QUIT, key) if key == &MSG_KEY_DOWN => {
-                    self.view.active(COMPONENT_COLOR_MISC_SAVE);
-                    None
-                }
-                (COMPONENT_COLOR_MISC_SAVE, key) if key == &MSG_KEY_DOWN => {
-                    self.view.active(COMPONENT_COLOR_MISC_WARN);
-                    None
-                }
-                (COMPONENT_COLOR_MISC_WARN, key) if key == &MSG_KEY_DOWN => {
-                    self.view.active(COMPONENT_COLOR_TRANSFER_EXPLORER_LOCAL_BG);
-                    None
-                }
-                (COMPONENT_COLOR_TRANSFER_EXPLORER_LOCAL_BG, key) if key == &MSG_KEY_DOWN => {
-                    self.view.active(COMPONENT_COLOR_TRANSFER_EXPLORER_LOCAL_FG);
-                    None
-                }
-                (COMPONENT_COLOR_TRANSFER_EXPLORER_LOCAL_FG, key) if key == &MSG_KEY_DOWN => {
-                    self.view.active(COMPONENT_COLOR_TRANSFER_EXPLORER_LOCAL_HG);
-                    None
-                }
-                (COMPONENT_COLOR_TRANSFER_EXPLORER_LOCAL_HG, key) if key == &MSG_KEY_DOWN => {
-                    self.view
-                        .active(COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_BG);
-                    None
-                }
-                (COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_BG, key) if key == &MSG_KEY_DOWN => {
-                    self.view
-                        .active(COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_FG);
-                    None
-                }
-                (COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_FG, key) if key == &MSG_KEY_DOWN => {
-                    self.view
-                        .active(COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_HG);
-                    None
-                }
-                (COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_HG, key) if key == &MSG_KEY_DOWN => {
-                    self.view.active(COMPONENT_COLOR_TRANSFER_PROG_BAR_FULL);
-                    None
-                }
-                (COMPONENT_COLOR_TRANSFER_PROG_BAR_FULL, key) if key == &MSG_KEY_DOWN => {
-                    self.view.active(COMPONENT_COLOR_TRANSFER_PROG_BAR_PARTIAL);
-                    None
-                }
-                (COMPONENT_COLOR_TRANSFER_PROG_BAR_PARTIAL, key) if key == &MSG_KEY_DOWN => {
-                    self.view.active(COMPONENT_COLOR_TRANSFER_LOG_BG);
-                    None
-                }
-                (COMPONENT_COLOR_TRANSFER_LOG_BG, key) if key == &MSG_KEY_DOWN => {
-                    self.view.active(COMPONENT_COLOR_TRANSFER_LOG_WIN);
-                    None
-                }
-                (COMPONENT_COLOR_TRANSFER_LOG_WIN, key) if key == &MSG_KEY_DOWN => {
-                    self.view.active(COMPONENT_COLOR_TRANSFER_STATUS_SORTING);
-                    None
-                }
-                (COMPONENT_COLOR_TRANSFER_STATUS_SORTING, key) if key == &MSG_KEY_DOWN => {
-                    self.view.active(COMPONENT_COLOR_TRANSFER_STATUS_HIDDEN);
-                    None
-                }
-                (COMPONENT_COLOR_TRANSFER_STATUS_HIDDEN, key) if key == &MSG_KEY_DOWN => {
-                    self.view.active(COMPONENT_COLOR_TRANSFER_STATUS_SYNC);
-                    None
-                }
-                (COMPONENT_COLOR_TRANSFER_STATUS_SYNC, key) if key == &MSG_KEY_DOWN => {
-                    self.view.active(COMPONENT_COLOR_AUTH_PROTOCOL);
-                    None
-                }
-                (COMPONENT_COLOR_AUTH_PROTOCOL, key) if key == &MSG_KEY_UP => {
-                    self.view.active(COMPONENT_COLOR_TRANSFER_STATUS_SYNC);
-                    None
-                }
-                (COMPONENT_COLOR_AUTH_ADDR, key) if key == &MSG_KEY_UP => {
-                    self.view.active(COMPONENT_COLOR_AUTH_PROTOCOL);
-                    None
-                }
-                (COMPONENT_COLOR_AUTH_PORT, key) if key == &MSG_KEY_UP => {
-                    self.view.active(COMPONENT_COLOR_AUTH_ADDR);
-                    None
-                }
-                (COMPONENT_COLOR_AUTH_USERNAME, key) if key == &MSG_KEY_UP => {
-                    self.view.active(COMPONENT_COLOR_AUTH_PORT);
-                    None
-                }
-                (COMPONENT_COLOR_AUTH_PASSWORD, key) if key == &MSG_KEY_UP => {
-                    self.view.active(COMPONENT_COLOR_AUTH_USERNAME);
-                    None
-                }
-                (COMPONENT_COLOR_AUTH_BOOKMARKS, key) if key == &MSG_KEY_UP => {
-                    self.view.active(COMPONENT_COLOR_AUTH_PASSWORD);
-                    None
-                }
-                (COMPONENT_COLOR_AUTH_RECENTS, key) if key == &MSG_KEY_UP => {
-                    self.view.active(COMPONENT_COLOR_AUTH_BOOKMARKS);
-                    None
-                }
-                (COMPONENT_COLOR_MISC_ERROR, key) if key == &MSG_KEY_UP => {
-                    self.view.active(COMPONENT_COLOR_AUTH_RECENTS);
-                    None
-                }
-                (COMPONENT_COLOR_MISC_INFO, key) if key == &MSG_KEY_UP => {
-                    self.view.active(COMPONENT_COLOR_MISC_ERROR);
-                    None
-                }
-                (COMPONENT_COLOR_MISC_INPUT, key) if key == &MSG_KEY_UP => {
-                    self.view.active(COMPONENT_COLOR_MISC_INFO);
-                    None
-                }
-                (COMPONENT_COLOR_MISC_KEYS, key) if key == &MSG_KEY_UP => {
-                    self.view.active(COMPONENT_COLOR_MISC_INPUT);
-                    None
-                }
-                (COMPONENT_COLOR_MISC_QUIT, key) if key == &MSG_KEY_UP => {
-                    self.view.active(COMPONENT_COLOR_MISC_KEYS);
-                    None
-                }
-                (COMPONENT_COLOR_MISC_SAVE, key) if key == &MSG_KEY_UP => {
-                    self.view.active(COMPONENT_COLOR_MISC_QUIT);
-                    None
-                }
-                (COMPONENT_COLOR_MISC_WARN, key) if key == &MSG_KEY_UP => {
-                    self.view.active(COMPONENT_COLOR_MISC_SAVE);
-                    None
-                }
-                (COMPONENT_COLOR_TRANSFER_EXPLORER_LOCAL_BG, key) if key == &MSG_KEY_UP => {
-                    self.view.active(COMPONENT_COLOR_MISC_WARN);
-                    None
-                }
-                (COMPONENT_COLOR_TRANSFER_EXPLORER_LOCAL_FG, key) if key == &MSG_KEY_UP => {
-                    self.view.active(COMPONENT_COLOR_TRANSFER_EXPLORER_LOCAL_BG);
-                    None
-                }
-                (COMPONENT_COLOR_TRANSFER_EXPLORER_LOCAL_HG, key) if key == &MSG_KEY_UP => {
-                    self.view.active(COMPONENT_COLOR_TRANSFER_EXPLORER_LOCAL_FG);
-                    None
-                }
-                (COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_BG, key) if key == &MSG_KEY_UP => {
-                    self.view.active(COMPONENT_COLOR_TRANSFER_EXPLORER_LOCAL_HG);
-                    None
-                }
-                (COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_FG, key) if key == &MSG_KEY_UP => {
-                    self.view
-                        .active(COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_BG);
-                    None
-                }
-                (COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_HG, key) if key == &MSG_KEY_UP => {
-                    self.view
-                        .active(COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_FG);
-                    None
-                }
-                (COMPONENT_COLOR_TRANSFER_PROG_BAR_FULL, key) if key == &MSG_KEY_UP => {
-                    self.view
-                        .active(COMPONENT_COLOR_TRANSFER_EXPLORER_REMOTE_HG);
-                    None
-                }
-                (COMPONENT_COLOR_TRANSFER_PROG_BAR_PARTIAL, key) if key == &MSG_KEY_UP => {
-                    self.view.active(COMPONENT_COLOR_TRANSFER_PROG_BAR_FULL);
-                    None
-                }
-                (COMPONENT_COLOR_TRANSFER_LOG_BG, key) if key == &MSG_KEY_UP => {
-                    self.view.active(COMPONENT_COLOR_TRANSFER_PROG_BAR_PARTIAL);
-                    None
-                }
-                (COMPONENT_COLOR_TRANSFER_LOG_WIN, key) if key == &MSG_KEY_UP => {
-                    self.view.active(COMPONENT_COLOR_TRANSFER_LOG_BG);
-                    None
-                }
-                (COMPONENT_COLOR_TRANSFER_STATUS_SORTING, key) if key == &MSG_KEY_UP => {
-                    self.view.active(COMPONENT_COLOR_TRANSFER_LOG_WIN);
-                    None
-                }
-                (COMPONENT_COLOR_TRANSFER_STATUS_HIDDEN, key) if key == &MSG_KEY_UP => {
-                    self.view.active(COMPONENT_COLOR_TRANSFER_STATUS_SORTING);
-                    None
-                }
-                (COMPONENT_COLOR_TRANSFER_STATUS_SYNC, key) if key == &MSG_KEY_UP => {
-                    self.view.active(COMPONENT_COLOR_TRANSFER_STATUS_HIDDEN);
-                    None
-                }
-                // On color change
-                (component, Msg::OnChange(Payload::One(Value::Str(color)))) => {
-                    if let Some(color) = parse_color(color) {
-                        self.action_save_color(component, color);
-                        // Set unsaved changes to true
-                        self.set_config_changed(true);
-                    }
-                    None
-                }
-                // Error <ENTER> or <ESC>
-                (COMPONENT_TEXT_ERROR, key) | (COMPONENT_TEXT_ERROR, key)
-                    if key == &MSG_KEY_ESC || key == &MSG_KEY_ENTER =>
-                {
-                    // Umount text error
-                    self.umount_error();
-                    None
-                }
-                (COMPONENT_TEXT_ERROR, _) => None,
-                // Exit
-                (COMPONENT_RADIO_QUIT, Msg::OnSubmit(Payload::One(Value::Usize(0)))) => {
-                    // Save changes
-                    if let Err(err) = self.action_save_all() {
-                        self.mount_error(err.as_str());
-                    }
-                    // Exit
-                    self.exit_reason = Some(super::ExitReason::Quit);
-                    None
-                }
-                (COMPONENT_RADIO_QUIT, Msg::OnSubmit(Payload::One(Value::Usize(1)))) => {
-                    // Quit
-                    self.exit_reason = Some(super::ExitReason::Quit);
-                    self.umount_quit();
-                    None
-                }
-                (COMPONENT_RADIO_QUIT, Msg::OnSubmit(_)) => {
-                    // Umount popup
-                    self.umount_quit();
-                    None
-                }
-                (COMPONENT_RADIO_QUIT, _) => None,
-                // Close help
-                (COMPONENT_TEXT_HELP, key) | (COMPONENT_TEXT_HELP, key)
-                    if key == &MSG_KEY_ESC || key == &MSG_KEY_ENTER =>
-                {
-                    // Umount help
-                    self.umount_help();
-                    None
-                }
-                (COMPONENT_TEXT_HELP, _) => None,
-                // Save popup
-                (COMPONENT_RADIO_SAVE, Msg::OnSubmit(Payload::One(Value::Usize(0)))) => {
-                    // Save config
-                    if let Err(err) = self.action_save_all() {
-                        self.mount_error(err.as_str());
-                    }
-                    self.umount_save_popup();
-                    None
-                }
-                (COMPONENT_RADIO_SAVE, Msg::OnSubmit(_)) => {
-                    // Umount radio save
-                    self.umount_save_popup();
-                    None
-                }
-                (COMPONENT_RADIO_SAVE, _) => None,
-                // Edit SSH Key
-                // <CTRL+H> Show help
-                (_, key) if key == &MSG_KEY_CTRL_H => {
-                    // Show help
-                    self.mount_help();
-                    None
-                }
-                (_, key) if key == &MSG_KEY_TAB => {
-                    // Change view
-                    if let Err(err) = self.action_change_tab(ViewLayout::SetupForm) {
-                        self.mount_error(err.as_str());
-                    }
-                    None
-                }
-                // <CTRL+R> Revert changes
-                (_, key) if key == &MSG_KEY_CTRL_R => {
-                    // Revert changes
+    fn common_update(&mut self, msg: CommonMsg) -> Option<Msg> {
+        match msg {
+            CommonMsg::ChangeLayout => {
+                let new_layout = match self.layout {
+                    ViewLayout::SetupForm => ViewLayout::SshKeys,
+                    ViewLayout::SshKeys => ViewLayout::Theme,
+                    ViewLayout::Theme => ViewLayout::SetupForm,
+                };
+                if let Err(err) = self.action_change_tab(new_layout) {
+                    self.mount_error(err.as_str());
+                }
+            }
+            CommonMsg::CloseErrorPopup => {
+                self.umount_error();
+            }
+            CommonMsg::CloseKeybindingsPopup => {
+                self.umount_help();
+            }
+            CommonMsg::CloseQuitPopup => {
+                self.umount_quit();
+            }
+            CommonMsg::CloseSavePopup => {
+                self.umount_save_popup();
+            }
+            CommonMsg::Quit => {
+                self.exit_reason = Some(super::ExitReason::Quit);
+            }
+            CommonMsg::RevertChanges => match self.layout {
+                ViewLayout::Theme => {
                     if let Err(err) = self.action_reset_theme() {
-                        self.mount_error(err.as_str());
+                        self.mount_error(err);
                     }
-                    None
                 }
-                // <CTRL+S> Save
-                (_, key) if key == &MSG_KEY_CTRL_S => {
-                    // Show save
-                    self.mount_save_popup();
-                    None
+                ViewLayout::SshKeys | ViewLayout::SetupForm => {
+                    if let Err(err) = self.action_reset_config() {
+                        self.mount_error(err);
+                    }
                 }
-                // <ESC>
-                (_, key) if key == &MSG_KEY_ESC => {
-                    self.action_on_esc();
-                    None
-                }
-                (_, _) => None, // Nothing to do
             },
+            CommonMsg::SaveAndQuit => {
+                // Save changes
+                if let Err(err) = self.action_save_all() {
+                    self.mount_error(err.as_str());
+                }
+                // Exit
+                self.exit_reason = Some(super::ExitReason::Quit);
+            }
+            CommonMsg::SaveConfig => {
+                if let Err(err) = self.action_save_all() {
+                    self.mount_error(err.as_str());
+                }
+                self.umount_save_popup();
+            }
+            CommonMsg::ShowKeybindings => {
+                self.mount_help();
+            }
+            CommonMsg::ShowQuitPopup => {
+                self.action_on_esc();
+            }
+            CommonMsg::ShowSavePopup => {
+                self.mount_save_popup();
+            }
         }
+        None
+    }
+
+    fn config_update(&mut self, msg: ConfigMsg) -> Option<Msg> {
+        match msg {
+            ConfigMsg::CheckUpdatesBlurDown => {
+                assert!(self
+                    .app
+                    .active(&Id::Config(IdConfig::PromptOnFileReplace))
+                    .is_ok());
+            }
+            ConfigMsg::CheckUpdatesBlurUp => {
+                assert!(self.app.active(&Id::Config(IdConfig::HiddenFiles)).is_ok());
+            }
+            ConfigMsg::DefaultProtocolBlurDown => {
+                assert!(self.app.active(&Id::Config(IdConfig::HiddenFiles)).is_ok());
+            }
+            ConfigMsg::DefaultProtocolBlurUp => {
+                assert!(self.app.active(&Id::Config(IdConfig::TextEditor)).is_ok());
+            }
+            ConfigMsg::GroupDirsBlurDown => {
+                assert!(self.app.active(&Id::Config(IdConfig::LocalFileFmt)).is_ok());
+            }
+            ConfigMsg::GroupDirsBlurUp => {
+                assert!(self
+                    .app
+                    .active(&Id::Config(IdConfig::PromptOnFileReplace))
+                    .is_ok());
+            }
+            ConfigMsg::HiddenFilesBlurDown => {
+                assert!(self.app.active(&Id::Config(IdConfig::CheckUpdates)).is_ok());
+            }
+            ConfigMsg::HiddenFilesBlurUp => {
+                assert!(self
+                    .app
+                    .active(&Id::Config(IdConfig::DefaultProtocol))
+                    .is_ok());
+            }
+            ConfigMsg::LocalFileFmtBlurDown => {
+                assert!(self
+                    .app
+                    .active(&Id::Config(IdConfig::RemoteFileFmt))
+                    .is_ok());
+            }
+            ConfigMsg::LocalFileFmtBlurUp => {
+                assert!(self.app.active(&Id::Config(IdConfig::GroupDirs)).is_ok());
+            }
+            ConfigMsg::NotificationsEnabledBlurDown => {
+                assert!(self
+                    .app
+                    .active(&Id::Config(IdConfig::NotificationsThreshold))
+                    .is_ok());
+            }
+            ConfigMsg::NotificationsEnabledBlurUp => {
+                assert!(self
+                    .app
+                    .active(&Id::Config(IdConfig::RemoteFileFmt))
+                    .is_ok());
+            }
+            ConfigMsg::NotificationsThresholdBlurDown => {
+                assert!(self.app.active(&Id::Config(IdConfig::TextEditor)).is_ok());
+            }
+            ConfigMsg::NotificationsThresholdBlurUp => {
+                assert!(self
+                    .app
+                    .active(&Id::Config(IdConfig::NotificationsEnabled))
+                    .is_ok());
+            }
+            ConfigMsg::PromptOnFileReplaceBlurDown => {
+                assert!(self.app.active(&Id::Config(IdConfig::GroupDirs)).is_ok());
+            }
+            ConfigMsg::PromptOnFileReplaceBlurUp => {
+                assert!(self.app.active(&Id::Config(IdConfig::CheckUpdates)).is_ok());
+            }
+            ConfigMsg::RemoteFileFmtBlurDown => {
+                assert!(self
+                    .app
+                    .active(&Id::Config(IdConfig::NotificationsEnabled))
+                    .is_ok());
+            }
+            ConfigMsg::RemoteFileFmtBlurUp => {
+                assert!(self.app.active(&Id::Config(IdConfig::LocalFileFmt)).is_ok());
+            }
+            ConfigMsg::TextEditorBlurDown => {
+                assert!(self
+                    .app
+                    .active(&Id::Config(IdConfig::DefaultProtocol))
+                    .is_ok());
+            }
+            ConfigMsg::TextEditorBlurUp => {
+                assert!(self
+                    .app
+                    .active(&Id::Config(IdConfig::NotificationsThreshold))
+                    .is_ok());
+            }
+            ConfigMsg::ConfigChanged => {
+                self.set_config_changed(true);
+            }
+        }
+        None
+    }
+
+    fn ssh_update(&mut self, msg: SshMsg) -> Option<Msg> {
+        match msg {
+            SshMsg::CloseDelSshKeyPopup => {
+                self.umount_del_ssh_key();
+            }
+            SshMsg::CloseNewSshKeyPopup => {
+                self.umount_new_ssh_key();
+            }
+            SshMsg::DeleteSshKey => {
+                self.action_delete_ssh_key();
+                self.umount_del_ssh_key();
+                self.reload_ssh_keys();
+            }
+            SshMsg::EditSshKey(i) => {
+                if let Err(err) = self.edit_ssh_key(i) {
+                    self.mount_error(err.as_str());
+                }
+            }
+            SshMsg::SaveSshKey => {
+                self.action_new_ssh_key();
+                self.umount_new_ssh_key();
+                self.reload_ssh_keys();
+            }
+            SshMsg::ShowDelSshKeyPopup => {
+                self.mount_del_ssh_key();
+            }
+            SshMsg::ShowNewSshKeyPopup => {
+                self.mount_new_ssh_key();
+            }
+            SshMsg::SshHostBlur => {
+                assert!(self.app.active(&Id::Ssh(IdSsh::SshUsername)).is_ok());
+            }
+            SshMsg::SshUsernameBlur => {
+                assert!(self.app.active(&Id::Ssh(IdSsh::SshHost)).is_ok());
+            }
+        }
+        None
+    }
+
+    fn theme_update(&mut self, msg: ThemeMsg) -> Option<Msg> {
+        match msg {
+            ThemeMsg::AuthAddressBlurDown => {
+                assert!(self.app.active(&Id::Theme(IdTheme::AuthPort)).is_ok());
+            }
+            ThemeMsg::AuthAddressBlurUp => {
+                assert!(self.app.active(&Id::Theme(IdTheme::AuthProtocol)).is_ok());
+            }
+            ThemeMsg::AuthBookmarksBlurDown => {
+                assert!(self
+                    .app
+                    .active(&Id::Theme(IdTheme::AuthRecentHosts))
+                    .is_ok());
+            }
+            ThemeMsg::AuthBookmarksBlurUp => {
+                assert!(self.app.active(&Id::Theme(IdTheme::AuthPassword)).is_ok());
+            }
+            ThemeMsg::AuthPasswordBlurDown => {
+                assert!(self.app.active(&Id::Theme(IdTheme::AuthBookmarks)).is_ok());
+            }
+            ThemeMsg::AuthPasswordBlurUp => {
+                assert!(self.app.active(&Id::Theme(IdTheme::AuthUsername)).is_ok());
+            }
+            ThemeMsg::AuthPortBlurDown => {
+                assert!(self.app.active(&Id::Theme(IdTheme::AuthUsername)).is_ok());
+            }
+            ThemeMsg::AuthPortBlurUp => {
+                assert!(self.app.active(&Id::Theme(IdTheme::AuthAddress)).is_ok());
+            }
+            ThemeMsg::AuthProtocolBlurDown => {
+                assert!(self.app.active(&Id::Theme(IdTheme::AuthAddress)).is_ok());
+            }
+            ThemeMsg::AuthProtocolBlurUp => {
+                assert!(self.app.active(&Id::Theme(IdTheme::StatusSync)).is_ok());
+            }
+            ThemeMsg::AuthRecentHostsBlurDown => {
+                assert!(self.app.active(&Id::Theme(IdTheme::MiscError)).is_ok());
+            }
+            ThemeMsg::AuthRecentHostsBlurUp => {
+                assert!(self.app.active(&Id::Theme(IdTheme::AuthBookmarks)).is_ok());
+            }
+            ThemeMsg::AuthUsernameBlurDown => {
+                assert!(self.app.active(&Id::Theme(IdTheme::AuthPassword)).is_ok());
+            }
+            ThemeMsg::AuthUsernameBlurUp => {
+                assert!(self.app.active(&Id::Theme(IdTheme::AuthPort)).is_ok());
+            }
+            ThemeMsg::MiscErrorBlurDown => {
+                assert!(self.app.active(&Id::Theme(IdTheme::MiscInfo)).is_ok());
+            }
+            ThemeMsg::MiscErrorBlurUp => {
+                assert!(self
+                    .app
+                    .active(&Id::Theme(IdTheme::AuthRecentHosts))
+                    .is_ok());
+            }
+            ThemeMsg::MiscInfoBlurDown => {
+                assert!(self.app.active(&Id::Theme(IdTheme::MiscInput)).is_ok());
+            }
+            ThemeMsg::MiscInfoBlurUp => {
+                assert!(self.app.active(&Id::Theme(IdTheme::MiscError)).is_ok());
+            }
+            ThemeMsg::MiscInputBlurDown => {
+                assert!(self.app.active(&Id::Theme(IdTheme::MiscKeys)).is_ok());
+            }
+            ThemeMsg::MiscInputBlurUp => {
+                assert!(self.app.active(&Id::Theme(IdTheme::MiscInfo)).is_ok());
+            }
+            ThemeMsg::MiscKeysBlurDown => {
+                assert!(self.app.active(&Id::Theme(IdTheme::MiscQuit)).is_ok());
+            }
+            ThemeMsg::MiscKeysBlurUp => {
+                assert!(self.app.active(&Id::Theme(IdTheme::MiscInput)).is_ok());
+            }
+            ThemeMsg::MiscQuitBlurDown => {
+                assert!(self.app.active(&Id::Theme(IdTheme::MiscSave)).is_ok());
+            }
+            ThemeMsg::MiscQuitBlurUp => {
+                assert!(self.app.active(&Id::Theme(IdTheme::MiscKeys)).is_ok());
+            }
+            ThemeMsg::MiscSaveBlurDown => {
+                assert!(self.app.active(&Id::Theme(IdTheme::MiscWarn)).is_ok());
+            }
+            ThemeMsg::MiscSaveBlurUp => {
+                assert!(self.app.active(&Id::Theme(IdTheme::MiscQuit)).is_ok());
+            }
+            ThemeMsg::MiscWarnBlurDown => {
+                assert!(self
+                    .app
+                    .active(&Id::Theme(IdTheme::ExplorerLocalBg))
+                    .is_ok());
+            }
+            ThemeMsg::MiscWarnBlurUp => {
+                assert!(self.app.active(&Id::Theme(IdTheme::MiscSave)).is_ok());
+            }
+            ThemeMsg::ExplorerLocalBgBlurDown => {
+                assert!(self
+                    .app
+                    .active(&Id::Theme(IdTheme::ExplorerLocalFg))
+                    .is_ok());
+            }
+            ThemeMsg::ExplorerLocalBgBlurUp => {
+                assert!(self.app.active(&Id::Theme(IdTheme::MiscWarn)).is_ok());
+            }
+            ThemeMsg::ExplorerLocalFgBlurDown => {
+                assert!(self
+                    .app
+                    .active(&Id::Theme(IdTheme::ExplorerLocalHg))
+                    .is_ok());
+            }
+            ThemeMsg::ExplorerLocalFgBlurUp => {
+                assert!(self
+                    .app
+                    .active(&Id::Theme(IdTheme::ExplorerLocalBg))
+                    .is_ok());
+            }
+            ThemeMsg::ExplorerLocalHgBlurDown => {
+                assert!(self
+                    .app
+                    .active(&Id::Theme(IdTheme::ExplorerRemoteBg))
+                    .is_ok());
+            }
+            ThemeMsg::ExplorerLocalHgBlurUp => {
+                assert!(self
+                    .app
+                    .active(&Id::Theme(IdTheme::ExplorerLocalFg))
+                    .is_ok());
+            }
+            ThemeMsg::ExplorerRemoteBgBlurDown => {
+                assert!(self
+                    .app
+                    .active(&Id::Theme(IdTheme::ExplorerRemoteFg))
+                    .is_ok());
+            }
+            ThemeMsg::ExplorerRemoteBgBlurUp => {
+                assert!(self
+                    .app
+                    .active(&Id::Theme(IdTheme::ExplorerLocalHg))
+                    .is_ok());
+            }
+            ThemeMsg::ExplorerRemoteFgBlurDown => {
+                assert!(self
+                    .app
+                    .active(&Id::Theme(IdTheme::ExplorerRemoteHg))
+                    .is_ok());
+            }
+            ThemeMsg::ExplorerRemoteFgBlurUp => {
+                assert!(self
+                    .app
+                    .active(&Id::Theme(IdTheme::ExplorerRemoteBg))
+                    .is_ok());
+            }
+            ThemeMsg::ExplorerRemoteHgBlurDown => {
+                assert!(self.app.active(&Id::Theme(IdTheme::ProgBarFull)).is_ok());
+            }
+            ThemeMsg::ExplorerRemoteHgBlurUp => {
+                assert!(self
+                    .app
+                    .active(&Id::Theme(IdTheme::ExplorerRemoteFg))
+                    .is_ok());
+            }
+            ThemeMsg::ProgBarFullBlurDown => {
+                assert!(self.app.active(&Id::Theme(IdTheme::ProgBarPartial)).is_ok());
+            }
+            ThemeMsg::ProgBarFullBlurUp => {
+                assert!(self
+                    .app
+                    .active(&Id::Theme(IdTheme::ExplorerRemoteHg))
+                    .is_ok());
+            }
+            ThemeMsg::ProgBarPartialBlurDown => {
+                assert!(self.app.active(&Id::Theme(IdTheme::LogBg)).is_ok());
+            }
+            ThemeMsg::ProgBarPartialBlurUp => {
+                assert!(self.app.active(&Id::Theme(IdTheme::ProgBarFull)).is_ok());
+            }
+            ThemeMsg::LogBgBlurDown => {
+                assert!(self.app.active(&Id::Theme(IdTheme::LogWindow)).is_ok());
+            }
+            ThemeMsg::LogBgBlurUp => {
+                assert!(self.app.active(&Id::Theme(IdTheme::ProgBarPartial)).is_ok());
+            }
+            ThemeMsg::LogWindowBlurDown => {
+                assert!(self.app.active(&Id::Theme(IdTheme::StatusSorting)).is_ok());
+            }
+            ThemeMsg::LogWindowBlurUp => {
+                assert!(self.app.active(&Id::Theme(IdTheme::LogBg)).is_ok());
+            }
+            ThemeMsg::StatusSortingBlurDown => {
+                assert!(self.app.active(&Id::Theme(IdTheme::StatusHidden)).is_ok());
+            }
+            ThemeMsg::StatusSortingBlurUp => {
+                assert!(self.app.active(&Id::Theme(IdTheme::LogWindow)).is_ok());
+            }
+            ThemeMsg::StatusHiddenBlurDown => {
+                assert!(self.app.active(&Id::Theme(IdTheme::StatusSync)).is_ok());
+            }
+            ThemeMsg::StatusHiddenBlurUp => {
+                assert!(self.app.active(&Id::Theme(IdTheme::StatusSorting)).is_ok());
+            }
+            ThemeMsg::StatusSyncBlurDown => {
+                assert!(self.app.active(&Id::Theme(IdTheme::AuthProtocol)).is_ok());
+            }
+            ThemeMsg::StatusSyncBlurUp => {
+                assert!(self.app.active(&Id::Theme(IdTheme::StatusHidden)).is_ok());
+            }
+            ThemeMsg::ColorChanged(id, color) => {
+                self.action_save_color(id, color);
+                // Set unsaved changes to true
+                self.set_config_changed(true);
+            }
+        }
+        None
     }
 }

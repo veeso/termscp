@@ -39,7 +39,6 @@ use crate::ui::context::Context;
 
 // Namespaces
 use std::path::{Path, PathBuf};
-use std::thread::sleep;
 use std::time::Duration;
 
 /// ### NextActivity
@@ -56,7 +55,7 @@ pub enum NextActivity {
 /// The activity manager takes care of running activities and handling them until the application has ended
 pub struct ActivityManager {
     context: Option<Context>,
-    interval: Duration,
+    ticks: Duration,
     local_dir: PathBuf,
 }
 
@@ -64,7 +63,7 @@ impl ActivityManager {
     /// ### new
     ///
     /// Initializes a new Activity Manager
-    pub fn new(local_dir: &Path, interval: Duration) -> Result<ActivityManager, HostError> {
+    pub fn new(local_dir: &Path, ticks: Duration) -> Result<ActivityManager, HostError> {
         // Prepare Context
         // Initialize configuration client
         let (config_client, error): (ConfigClient, Option<String>) =
@@ -80,7 +79,7 @@ impl ActivityManager {
         Ok(ActivityManager {
             context: Some(ctx),
             local_dir: local_dir.to_path_buf(),
-            interval,
+            ticks,
         })
     }
 
@@ -123,7 +122,7 @@ impl ActivityManager {
     fn run_authentication(&mut self) -> Option<NextActivity> {
         info!("Starting AuthActivity...");
         // Prepare activity
-        let mut activity: AuthActivity = AuthActivity::default();
+        let mut activity: AuthActivity = AuthActivity::new(self.ticks);
         // Prepare result
         let result: Option<NextActivity>;
         // Get context
@@ -162,8 +161,6 @@ impl ActivityManager {
                     _ => { /* Nothing to do */ }
                 }
             }
-            // Sleep for ticks
-            sleep(self.interval);
         }
         // Destroy activity
         self.context = activity.on_destroy();
@@ -205,7 +202,8 @@ impl ActivityManager {
                 return None;
             }
         };
-        let mut activity: FileTransferActivity = FileTransferActivity::new(host, protocol);
+        let mut activity: FileTransferActivity =
+            FileTransferActivity::new(host, protocol, self.ticks);
         // Prepare result
         let result: Option<NextActivity>;
         // Create activity
@@ -230,8 +228,6 @@ impl ActivityManager {
                     _ => { /* Nothing to do */ }
                 }
             }
-            // Sleep for ticks
-            sleep(self.interval);
         }
         // Destroy activity
         self.context = activity.on_destroy();
@@ -245,7 +241,7 @@ impl ActivityManager {
     /// Returns the next activity to run
     fn run_setup(&mut self) -> Option<NextActivity> {
         // Prepare activity
-        let mut activity: SetupActivity = SetupActivity::default();
+        let mut activity: SetupActivity = SetupActivity::new(self.ticks);
         // Get context
         let ctx: Context = match self.context.take() {
             Some(ctx) => ctx,
@@ -264,8 +260,6 @@ impl ActivityManager {
                 info!("SetupActivity terminated due to 'Quit'");
                 break;
             }
-            // Sleep for ticks
-            sleep(self.interval);
         }
         // Destroy activity
         self.context = activity.on_destroy();

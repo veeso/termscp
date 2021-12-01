@@ -160,7 +160,9 @@ impl FileTransferActivity {
         // NOTE: clear screen in order to prevent crap on stderr
         if let Some(ctx) = self.context.as_mut() {
             // Clear screen
-            ctx.clear_screen();
+            if let Err(err) = ctx.terminal().clear_screen() {
+                error!("Could not clear screen screen: {}", err);
+            }
         }
     }
 }

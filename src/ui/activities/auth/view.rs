@@ -26,26 +26,15 @@
  * SOFTWARE.
  */
 // Locals
-use super::{AuthActivity, Context, FileTransferProtocol, InputMask};
+use super::{components, AuthActivity, Context, FileTransferProtocol, Id, InputMask};
 use crate::filetransfer::params::ProtocolParams;
 use crate::filetransfer::FileTransferParams;
-use crate::ui::components::bookmark_list::{BookmarkList, BookmarkListPropsBuilder};
 use crate::utils::ui::draw_area_in;
-// Ext
-use tui_realm_stdlib::{
-    Input, InputPropsBuilder, Label, LabelPropsBuilder, List, ListPropsBuilder, Paragraph,
-    ParagraphPropsBuilder, Radio, RadioPropsBuilder, Span, SpanPropsBuilder, Textarea,
-    TextareaPropsBuilder,
-};
-use tuirealm::tui::{
-    layout::{Constraint, Direction, Layout},
-    style::Color,
-    widgets::{BorderType, Borders, Clear},
-};
-use tuirealm::{
-    props::{Alignment, InputType, PropsBuilder, TableBuilder, TextSpan},
-    Msg, Payload, Value,
-};
+
+use std::str::FromStr;
+use tuirealm::tui::layout::{Constraint, Direction, Layout};
+use tuirealm::tui::widgets::Clear;
+use tuirealm::{State, StateValue, Sub, SubClause, SubEventClause};
 
 impl AuthActivity {
     /// ### init
@@ -53,110 +42,40 @@ impl AuthActivity {
     /// Initialize view, mounting all startup components inside the view
     pub(super) fn init(&mut self) {
         let key_color = self.theme().misc_keys;
-        let addr_color = self.theme().auth_address;
-        let protocol_color = self.theme().auth_protocol;
-        let port_color = self.theme().auth_port;
-        let username_color = self.theme().auth_username;
-        let password_color = self.theme().auth_password;
-        let bookmarks_color = self.theme().auth_bookmarks;
-        let recents_color = self.theme().auth_recents;
+        let info_color = self.theme().misc_info_dialog;
         // Headers
-        self.view.mount(
-            super::COMPONENT_TEXT_H1,
-            Box::new(Label::new(
-                LabelPropsBuilder::default()
-                    .bold()
-                    .italic()
-                    .with_text(String::from("$ termscp"))
-                    .build(),
-            )),
-        );
-        self.view.mount(
-            super::COMPONENT_TEXT_H2,
-            Box::new(Label::new(
-                LabelPropsBuilder::default()
-                    .bold()
-                    .italic()
-                    .with_text(format!("$ version {}", env!("CARGO_PKG_VERSION")))
-                    .build(),
-            )),
-        );
+        assert!(self
+            .app
+            .mount(Id::Title, Box::new(components::Title::default()), vec![])
+            .is_ok());
+        assert!(self
+            .app
+            .mount(
+                Id::Subtitle,
+                Box::new(components::Subtitle::default()),
+                vec![]
+            )
+            .is_ok());
         // Footer
-        self.view.mount(
-            super::COMPONENT_TEXT_FOOTER,
-            Box::new(Span::new(
-                SpanPropsBuilder::default()
-                    .with_spans(vec![
-                        TextSpan::new("Press ").bold(),
-                        TextSpan::new("<CTRL+H>").bold().fg(key_color),
-                        TextSpan::new(" to show keybindings; ").bold(),
-                        TextSpan::new("<CTRL+C>").bold().fg(key_color),
-                        TextSpan::new(" to enter setup").bold(),
-                    ])
-                    .build(),
-            )),
-        );
+        assert!(self
+            .app
+            .mount(
+                Id::HelpText,
+                Box::new(components::HelpText::new(key_color)),
+                vec![]
+            )
+            .is_ok());
         // Get default protocol
         let default_protocol: FileTransferProtocol = self.context().config().get_default_protocol();
-        // Protocol
-        self.mount_radio(
-            super::COMPONENT_RADIO_PROTOCOL,
-            "Protocol",
-            &["SFTP", "SCP", "FTP", "FTPS", "AWS S3"],
-            Self::protocol_enum_to_opt(default_protocol),
-            protocol_color,
-        );
-        // Address
-        self.mount_input(
-            super::COMPONENT_INPUT_ADDR,
-            "Remote host",
-            addr_color,
-            InputType::Text,
-        );
-        // Port
-        self.mount_input_ex(
-            super::COMPONENT_INPUT_PORT,
-            "Port number",
-            port_color,
-            InputType::Number,
-            Some(5),
-            Some(Self::get_default_port_for_protocol(default_protocol).to_string()),
-        );
-        // Username
-        self.mount_input(
-            super::COMPONENT_INPUT_USERNAME,
-            "Username",
-            username_color,
-            InputType::Text,
-        );
-        // Password
-        self.mount_input(
-            super::COMPONENT_INPUT_PASSWORD,
-            "Password",
-            password_color,
-            InputType::Password,
-        );
-        // Bucket
-        self.mount_input(
-            super::COMPONENT_INPUT_S3_BUCKET,
-            "Bucket name",
-            addr_color,
-            InputType::Text,
-        );
-        // Region
-        self.mount_input(
-            super::COMPONENT_INPUT_S3_REGION,
-            "Region",
-            port_color,
-            InputType::Text,
-        );
-        // Profile
-        self.mount_input(
-            super::COMPONENT_INPUT_S3_PROFILE,
-            "Profile",
-            username_color,
-            InputType::Text,
-        );
+        // Auth form
+        self.mount_protocol(default_protocol);
+        self.mount_address("");
+        self.mount_port(Self::get_default_port_for_protocol(default_protocol));
+        self.mount_username("");
+        self.mount_password("");
+        self.mount_s3_bucket("");
+        self.mount_s3_profile("");
+        self.mount_s3_region("");
         // Version notice
         if let Some(version) = self
             .context()
@@ -164,57 +83,34 @@ impl AuthActivity {
             .get_string(super::STORE_KEY_LATEST_VERSION)
         {
             let version: String = version.to_string();
-            self.view.mount(
-                super::COMPONENT_TEXT_NEW_VERSION,
-                Box::new(Span::new(
-                    SpanPropsBuilder::default()
-                        .with_foreground(Color::Yellow)
-                        .with_spans(vec![
-                            TextSpan::from("termscp "),
-                            TextSpan::new(version.as_str()).underlined().bold(),
-                            TextSpan::from(" is NOW available! Install update and view release notes with <CTRL+R>"),
-                        ])
-                        .build(),
-                )),
-            );
+            assert!(self
+                .app
+                .mount(
+                    Id::NewVersionDisclaimer,
+                    Box::new(components::NewVersionDisclaimer::new(
+                        version.as_str(),
+                        info_color
+                    )),
+                    vec![]
+                )
+                .is_ok());
         }
-        // Bookmarks
-        self.view.mount(
-            super::COMPONENT_BOOKMARKS_LIST,
-            Box::new(BookmarkList::new(
-                BookmarkListPropsBuilder::default()
-                    .with_background(bookmarks_color)
-                    .with_foreground(Color::Black)
-                    .with_borders(Borders::ALL, BorderType::Plain, bookmarks_color)
-                    .with_title("Bookmarks", Alignment::Left)
-                    .build(),
-            )),
-        );
-        // Recents
-        self.view.mount(
-            super::COMPONENT_RECENTS_LIST,
-            Box::new(BookmarkList::new(
-                BookmarkListPropsBuilder::default()
-                    .with_background(recents_color)
-                    .with_foreground(Color::Black)
-                    .with_borders(Borders::ALL, BorderType::Plain, recents_color)
-                    .with_title("Recent connections", Alignment::Left)
-                    .build(),
-            )),
-        );
         // Load bookmarks
-        let _ = self.view_bookmarks();
-        let _ = self.view_recent_connections();
+        self.view_bookmarks();
+        self.view_recent_connections();
+        // Global listener
+        self.init_global_listener();
         // Active protocol
-        self.view.active(super::COMPONENT_RADIO_PROTOCOL);
+        assert!(self.app.active(&Id::Protocol).is_ok());
     }
 
     /// ### view
     ///
     /// Display view on canvas
     pub(super) fn view(&mut self) {
+        self.redraw = false;
         let mut ctx: Context = self.context.take().unwrap();
-        let _ = ctx.terminal().draw(|f| {
+        let _ = ctx.terminal().raw_mut().draw(|f| {
             // Check window size
             let height: u16 = f.size().height;
             self.check_minimum_window_size(height);
@@ -278,159 +174,101 @@ impl AuthActivity {
                 .split(chunks[1]);
             // Render
             // Auth chunks
-            self.view
-                .render(super::COMPONENT_TEXT_H1, f, auth_chunks[0]);
-            self.view
-                .render(super::COMPONENT_TEXT_H2, f, auth_chunks[1]);
-            self.view
-                .render(super::COMPONENT_TEXT_NEW_VERSION, f, auth_chunks[2]);
-            self.view
-                .render(super::COMPONENT_RADIO_PROTOCOL, f, auth_chunks[3]);
+            self.app.view(&Id::Title, f, auth_chunks[0]);
+            self.app.view(&Id::Subtitle, f, auth_chunks[1]);
+            self.app.view(&Id::NewVersionDisclaimer, f, auth_chunks[2]);
+            self.app.view(&Id::Protocol, f, auth_chunks[3]);
             // Render input mask
             match self.input_mask() {
                 InputMask::AwsS3 => {
-                    self.view
-                        .render(super::COMPONENT_INPUT_S3_BUCKET, f, input_mask[0]);
-                    self.view
-                        .render(super::COMPONENT_INPUT_S3_REGION, f, input_mask[1]);
-                    self.view
-                        .render(super::COMPONENT_INPUT_S3_PROFILE, f, input_mask[2]);
+                    self.app.view(&Id::S3Bucket, f, input_mask[0]);
+                    self.app.view(&Id::S3Region, f, input_mask[1]);
+                    self.app.view(&Id::S3Profile, f, input_mask[2]);
                 }
                 InputMask::Generic => {
-                    self.view
-                        .render(super::COMPONENT_INPUT_ADDR, f, input_mask[0]);
-                    self.view
-                        .render(super::COMPONENT_INPUT_PORT, f, input_mask[1]);
-                    self.view
-                        .render(super::COMPONENT_INPUT_USERNAME, f, input_mask[2]);
-                    self.view
-                        .render(super::COMPONENT_INPUT_PASSWORD, f, input_mask[3]);
+                    self.app.view(&Id::Address, f, input_mask[0]);
+                    self.app.view(&Id::Port, f, input_mask[1]);
+                    self.app.view(&Id::Username, f, input_mask[2]);
+                    self.app.view(&Id::Password, f, input_mask[3]);
                 }
             }
-            self.view
-                .render(super::COMPONENT_TEXT_FOOTER, f, auth_chunks[5]);
+            self.app.view(&Id::HelpText, f, auth_chunks[5]);
             // Bookmark chunks
-            self.view
-                .render(super::COMPONENT_BOOKMARKS_LIST, f, bookmark_chunks[0]);
-            self.view
-                .render(super::COMPONENT_RECENTS_LIST, f, bookmark_chunks[1]);
+            self.app.view(&Id::BookmarksList, f, bookmark_chunks[0]);
+            self.app.view(&Id::RecentsList, f, bookmark_chunks[1]);
             // Popups
-            if let Some(props) = self.view.get_props(super::COMPONENT_TEXT_ERROR) {
-                if props.visible {
-                    let popup = draw_area_in(f.size(), 50, 10);
-                    f.render_widget(Clear, popup);
-                    // make popup
-                    self.view.render(super::COMPONENT_TEXT_ERROR, f, popup);
-                }
-            }
-            if let Some(props) = self.view.get_props(super::COMPONENT_TEXT_INFO) {
-                if props.visible {
-                    let popup = draw_area_in(f.size(), 50, 10);
-                    f.render_widget(Clear, popup);
-                    // make popup
-                    self.view.render(super::COMPONENT_TEXT_INFO, f, popup);
-                }
-            }
-            if let Some(props) = self.view.get_props(super::COMPONENT_TEXT_WAIT) {
-                if props.visible {
-                    let popup = draw_area_in(f.size(), 50, 10);
-                    f.render_widget(Clear, popup);
-                    // make popup
-                    self.view.render(super::COMPONENT_TEXT_WAIT, f, popup);
-                }
-            }
-            if let Some(props) = self.view.get_props(super::COMPONENT_TEXT_SIZE_ERR) {
-                if props.visible {
-                    let popup = draw_area_in(f.size(), 80, 20);
-                    f.render_widget(Clear, popup);
-                    // make popup
-                    self.view.render(super::COMPONENT_TEXT_SIZE_ERR, f, popup);
-                }
-            }
-            if let Some(props) = self.view.get_props(super::COMPONENT_RADIO_QUIT) {
-                if props.visible {
-                    // make popup
-                    let popup = draw_area_in(f.size(), 30, 10);
-                    f.render_widget(Clear, popup);
-                    self.view.render(super::COMPONENT_RADIO_QUIT, f, popup);
-                }
-            }
-            if let Some(props) = self
-                .view
-                .get_props(super::COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK)
-            {
-                if props.visible {
-                    // make popup
-                    let popup = draw_area_in(f.size(), 30, 10);
-                    f.render_widget(Clear, popup);
-                    self.view
-                        .render(super::COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK, f, popup);
-                }
-            }
-            if let Some(props) = self
-                .view
-                .get_props(super::COMPONENT_RADIO_BOOKMARK_DEL_RECENT)
-            {
-                if props.visible {
-                    // make popup
-                    let popup = draw_area_in(f.size(), 30, 10);
-                    f.render_widget(Clear, popup);
-                    self.view
-                        .render(super::COMPONENT_RADIO_BOOKMARK_DEL_RECENT, f, popup);
-                }
-            }
-            if let Some(props) = self.view.get_props(super::COMPONENT_TEXT_NEW_VERSION_NOTES) {
-                if props.visible {
-                    // make popup
-                    let popup = draw_area_in(f.size(), 90, 85);
-                    f.render_widget(Clear, popup);
-                    let popup_chunks = Layout::default()
-                        .direction(Direction::Vertical)
-                        .constraints(
-                            [
-                                Constraint::Percentage(90), // Notes
-                                Constraint::Length(3),      // Install radio
-                            ]
-                            .as_ref(),
-                        )
-                        .split(popup);
-                    self.view
-                        .render(super::COMPONENT_TEXT_NEW_VERSION_NOTES, f, popup_chunks[0]);
-                    self.view
-                        .render(super::COMPONENT_RADIO_INSTALL_UPDATE, f, popup_chunks[1]);
-                }
-            }
-            if let Some(props) = self.view.get_props(super::COMPONENT_TEXT_HELP) {
-                if props.visible {
-                    // make popup
-                    let popup = draw_area_in(f.size(), 50, 70);
-                    f.render_widget(Clear, popup);
-                    self.view.render(super::COMPONENT_TEXT_HELP, f, popup);
-                }
-            }
-            if let Some(props) = self
-                .view
-                .get_props(super::COMPONENT_RADIO_BOOKMARK_SAVE_PWD)
-            {
-                if props.visible {
-                    // make popup
-                    let popup = draw_area_in(f.size(), 20, 20);
-                    f.render_widget(Clear, popup);
-                    let popup_chunks = Layout::default()
-                        .direction(Direction::Vertical)
-                        .constraints(
-                            [
-                                Constraint::Length(3), // Input form
-                                Constraint::Length(2), // Yes/No
-                            ]
-                            .as_ref(),
-                        )
-                        .split(popup);
-                    self.view
-                        .render(super::COMPONENT_INPUT_BOOKMARK_NAME, f, popup_chunks[0]);
-                    self.view
-                        .render(super::COMPONENT_RADIO_BOOKMARK_SAVE_PWD, f, popup_chunks[1]);
-                }
+            if self.app.mounted(&Id::ErrorPopup) {
+                let popup = draw_area_in(f.size(), 50, 10);
+                f.render_widget(Clear, popup);
+                // make popup
+                self.app.view(&Id::ErrorPopup, f, popup);
+            } else if self.app.mounted(&Id::InfoPopup) {
+                let popup = draw_area_in(f.size(), 50, 10);
+                f.render_widget(Clear, popup);
+                // make popup
+                self.app.view(&Id::InfoPopup, f, popup);
+            } else if self.app.mounted(&Id::WaitPopup) {
+                let popup = draw_area_in(f.size(), 50, 10);
+                f.render_widget(Clear, popup);
+                // make popup
+                self.app.view(&Id::WaitPopup, f, popup);
+            } else if self.app.mounted(&Id::WindowSizeError) {
+                let popup = draw_area_in(f.size(), 80, 20);
+                f.render_widget(Clear, popup);
+                // make popup
+                self.app.view(&Id::WindowSizeError, f, popup);
+            } else if self.app.mounted(&Id::QuitPopup) {
+                // make popup
+                let popup = draw_area_in(f.size(), 30, 10);
+                f.render_widget(Clear, popup);
+                self.app.view(&Id::QuitPopup, f, popup);
+            } else if self.app.mounted(&Id::DeleteBookmarkPopup) {
+                // make popup
+                let popup = draw_area_in(f.size(), 30, 10);
+                f.render_widget(Clear, popup);
+                self.app.view(&Id::DeleteBookmarkPopup, f, popup);
+            } else if self.app.mounted(&Id::DeleteRecentPopup) {
+                // make popup
+                let popup = draw_area_in(f.size(), 30, 10);
+                f.render_widget(Clear, popup);
+                self.app.view(&Id::DeleteRecentPopup, f, popup);
+            } else if self.app.mounted(&Id::NewVersionChangelog) {
+                // make popup
+                let popup = draw_area_in(f.size(), 90, 85);
+                f.render_widget(Clear, popup);
+                let popup_chunks = Layout::default()
+                    .direction(Direction::Vertical)
+                    .constraints(
+                        [
+                            Constraint::Percentage(90), // Notes
+                            Constraint::Length(3),      // Install radio
+                        ]
+                        .as_ref(),
+                    )
+                    .split(popup);
+                self.app.view(&Id::NewVersionChangelog, f, popup_chunks[0]);
+                self.app.view(&Id::InstallUpdatePopup, f, popup_chunks[1]);
+            } else if self.app.mounted(&Id::Keybindings) {
+                // make popup
+                let popup = draw_area_in(f.size(), 50, 70);
+                f.render_widget(Clear, popup);
+                self.app.view(&Id::Keybindings, f, popup);
+            } else if self.app.mounted(&Id::BookmarkSavePassword) {
+                // make popup
+                let popup = draw_area_in(f.size(), 20, 20);
+                f.render_widget(Clear, popup);
+                let popup_chunks = Layout::default()
+                    .direction(Direction::Vertical)
+                    .constraints(
+                        [
+                            Constraint::Length(3), // Input form
+                            Constraint::Length(2), // Yes/No
+                        ]
+                        .as_ref(),
+                    )
+                    .split(popup);
+                self.app.view(&Id::BookmarkName, f, popup_chunks[0]);
+                self.app.view(&Id::BookmarkSavePassword, f, popup_chunks[1]);
             }
         });
         self.context = Some(ctx);
@@ -441,7 +279,7 @@ impl AuthActivity {
     /// ### view_bookmarks
     ///
     /// Make text span from bookmarks
-    pub(super) fn view_bookmarks(&mut self) -> Option<(String, Msg)> {
+    pub(super) fn view_bookmarks(&mut self) {
         let bookmarks: Vec<String> = self
             .bookmarks_list
             .iter()
@@ -456,24 +294,21 @@ impl AuthActivity {
                 )
             })
             .collect();
-        match self.view.get_props(super::COMPONENT_BOOKMARKS_LIST) {
-            None => None,
-            Some(props) => {
-                let msg = self.view.update(
-                    super::COMPONENT_BOOKMARKS_LIST,
-                    BookmarkListPropsBuilder::from(props)
-                        .with_bookmarks(bookmarks)
-                        .build(),
-                );
-                msg
-            }
-        }
+        let bookmarks_color = self.theme().auth_bookmarks;
+        assert!(self
+            .app
+            .remount(
+                Id::BookmarksList,
+                Box::new(components::BookmarksList::new(&bookmarks, bookmarks_color)),
+                vec![]
+            )
+            .is_ok());
     }
 
     /// ### view_recent_connections
     ///
     /// View recent connections
-    pub(super) fn view_recent_connections(&mut self) -> Option<(String, Msg)> {
+    pub(super) fn view_recent_connections(&mut self) {
         let bookmarks: Vec<String> = self
             .recents_list
             .iter()
@@ -487,18 +322,15 @@ impl AuthActivity {
                 )
             })
             .collect();
-        match self.view.get_props(super::COMPONENT_RECENTS_LIST) {
-            None => None,
-            Some(props) => {
-                let msg = self.view.update(
-                    super::COMPONENT_RECENTS_LIST,
-                    BookmarkListPropsBuilder::from(props)
-                        .with_bookmarks(bookmarks)
-                        .build(),
-                );
-                msg
-            }
-        }
+        let recents_color = self.theme().auth_recents;
+        assert!(self
+            .app
+            .remount(
+                Id::RecentsList,
+                Box::new(components::RecentsList::new(&bookmarks, recents_color)),
+                vec![]
+            )
+            .is_ok());
     }
 
     // -- mount
@@ -508,14 +340,22 @@ impl AuthActivity {
     /// Mount error box
     pub(super) fn mount_error<S: AsRef<str>>(&mut self, text: S) {
         let err_color = self.theme().misc_error_dialog;
-        self.mount_text_dialog(super::COMPONENT_TEXT_ERROR, text.as_ref(), err_color);
+        assert!(self
+            .app
+            .remount(
+                Id::ErrorPopup,
+                Box::new(components::ErrorPopup::new(text, err_color)),
+                vec![]
+            )
+            .is_ok());
+        assert!(self.app.active(&Id::ErrorPopup).is_ok());
     }
 
     /// ### umount_error
     ///
     /// Umount error message
     pub(super) fn umount_error(&mut self) {
-        self.view.umount(super::COMPONENT_TEXT_ERROR);
+        let _ = self.app.umount(&Id::ErrorPopup);
     }
 
     /// ### mount_info
@@ -523,14 +363,22 @@ impl AuthActivity {
     /// Mount info box
     pub(super) fn mount_info<S: AsRef<str>>(&mut self, text: S) {
         let color = self.theme().misc_info_dialog;
-        self.mount_text_dialog(super::COMPONENT_TEXT_INFO, text.as_ref(), color);
+        assert!(self
+            .app
+            .remount(
+                Id::InfoPopup,
+                Box::new(components::InfoPopup::new(text, color)),
+                vec![]
+            )
+            .is_ok());
+        assert!(self.app.active(&Id::InfoPopup).is_ok());
     }
 
     /// ### umount_info
     ///
     /// Umount info message
     pub(super) fn umount_info(&mut self) {
-        self.view.umount(super::COMPONENT_TEXT_INFO);
+        let _ = self.app.umount(&Id::InfoPopup);
     }
 
     /// ### mount_error
@@ -538,14 +386,22 @@ impl AuthActivity {
     /// Mount wait box
     pub(super) fn mount_wait(&mut self, text: &str) {
         let wait_color = self.theme().misc_info_dialog;
-        self.mount_text_dialog(super::COMPONENT_TEXT_WAIT, text, wait_color);
+        assert!(self
+            .app
+            .remount(
+                Id::WaitPopup,
+                Box::new(components::WaitPopup::new(text, wait_color)),
+                vec![]
+            )
+            .is_ok());
+        assert!(self.app.active(&Id::WaitPopup).is_ok());
     }
 
     /// ### umount_wait
     ///
     /// Umount wait message
     pub(super) fn umount_wait(&mut self) {
-        self.view.umount(super::COMPONENT_TEXT_WAIT);
+        let _ = self.app.umount(&Id::WaitPopup);
     }
 
     /// ### mount_size_err
@@ -554,18 +410,22 @@ impl AuthActivity {
     pub(super) fn mount_size_err(&mut self) {
         // Mount
         let err_color = self.theme().misc_error_dialog;
-        self.mount_text_dialog(
-            super::COMPONENT_TEXT_SIZE_ERR,
-            "termscp requires at least 24 lines of height to run",
-            err_color,
-        );
+        assert!(self
+            .app
+            .remount(
+                Id::WindowSizeError,
+                Box::new(components::WindowSizeError::new(err_color)),
+                vec![]
+            )
+            .is_ok());
+        assert!(self.app.active(&Id::WindowSizeError).is_ok());
     }
 
     /// ### umount_size_err
     ///
     /// Umount error size error
     pub(super) fn umount_size_err(&mut self) {
-        self.view.umount(super::COMPONENT_TEXT_SIZE_ERR);
+        let _ = self.app.umount(&Id::WindowSizeError);
     }
 
     /// ### mount_quit
@@ -574,20 +434,22 @@ impl AuthActivity {
     pub(super) fn mount_quit(&mut self) {
         // Protocol
         let quit_color = self.theme().misc_quit_dialog;
-        self.mount_radio_dialog(
-            super::COMPONENT_RADIO_QUIT,
-            "Quit termscp?",
-            &["Yes", "No"],
-            0,
-            quit_color,
-        );
+        assert!(self
+            .app
+            .remount(
+                Id::QuitPopup,
+                Box::new(components::QuitPopup::new(quit_color)),
+                vec![]
+            )
+            .is_ok());
+        assert!(self.app.active(&Id::QuitPopup).is_ok());
     }
 
     /// ### umount_quit
     ///
     /// Umount quit popup
     pub(super) fn umount_quit(&mut self) {
-        self.view.umount(super::COMPONENT_RADIO_QUIT);
+        let _ = self.app.umount(&Id::QuitPopup);
     }
 
     /// ### mount_bookmark_del_dialog
@@ -595,21 +457,22 @@ impl AuthActivity {
     /// Mount bookmark delete dialog
     pub(super) fn mount_bookmark_del_dialog(&mut self) {
         let warn_color = self.theme().misc_warn_dialog;
-        self.mount_radio_dialog(
-            super::COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK,
-            "Delete bookmark?",
-            &["Yes", "No"],
-            1,
-            warn_color,
-        );
+        assert!(self
+            .app
+            .remount(
+                Id::DeleteBookmarkPopup,
+                Box::new(components::DeleteBookmarkPopup::new(warn_color)),
+                vec![]
+            )
+            .is_ok());
+        assert!(self.app.active(&Id::DeleteBookmarkPopup).is_ok());
     }
 
     /// ### umount_bookmark_del_dialog
     ///
     /// umount delete bookmark dialog
     pub(super) fn umount_bookmark_del_dialog(&mut self) {
-        self.view
-            .umount(super::COMPONENT_RADIO_BOOKMARK_DEL_BOOKMARK);
+        let _ = self.app.umount(&Id::DeleteBookmarkPopup);
     }
 
     /// ### mount_bookmark_del_dialog
@@ -617,20 +480,22 @@ impl AuthActivity {
     /// Mount recent delete dialog
     pub(super) fn mount_recent_del_dialog(&mut self) {
         let warn_color = self.theme().misc_warn_dialog;
-        self.mount_radio_dialog(
-            super::COMPONENT_RADIO_BOOKMARK_DEL_RECENT,
-            "Delete bookmark?",
-            &["Yes", "No"],
-            1,
-            warn_color,
-        );
+        assert!(self
+            .app
+            .remount(
+                Id::DeleteRecentPopup,
+                Box::new(components::DeleteRecentPopup::new(warn_color)),
+                vec![]
+            )
+            .is_ok());
+        assert!(self.app.active(&Id::DeleteRecentPopup).is_ok());
     }
 
     /// ### umount_recent_del_dialog
     ///
     /// umount delete recent dialog
     pub(super) fn umount_recent_del_dialog(&mut self) {
-        self.view.umount(super::COMPONENT_RADIO_BOOKMARK_DEL_RECENT);
+        let _ = self.app.umount(&Id::DeleteRecentPopup);
     }
 
     /// ### mount_bookmark_save_dialog
@@ -639,102 +504,56 @@ impl AuthActivity {
     pub(super) fn mount_bookmark_save_dialog(&mut self) {
         let save_color = self.theme().misc_save_dialog;
         let warn_color = self.theme().misc_warn_dialog;
-        self.view.mount(
-            super::COMPONENT_INPUT_BOOKMARK_NAME,
-            Box::new(Input::new(
-                InputPropsBuilder::default()
-                    .with_foreground(save_color)
-                    .with_label("Save bookmark as…", Alignment::Center)
-                    .with_borders(
-                        Borders::TOP | Borders::RIGHT | Borders::LEFT,
-                        BorderType::Rounded,
-                        Color::Reset,
-                    )
-                    .build(),
-            )),
-        );
-        self.view.mount(
-            super::COMPONENT_RADIO_BOOKMARK_SAVE_PWD,
-            Box::new(Radio::new(
-                RadioPropsBuilder::default()
-                    .with_color(warn_color)
-                    .with_borders(
-                        Borders::BOTTOM | Borders::RIGHT | Borders::LEFT,
-                        BorderType::Rounded,
-                        Color::Reset,
-                    )
-                    .with_title("Save password?", Alignment::Center)
-                    .with_options(&[String::from("Yes"), String::from("No")])
-                    .rewind(true)
-                    .build(),
-            )),
-        );
+        assert!(self
+            .app
+            .remount(
+                Id::BookmarkName,
+                Box::new(components::BookmarkName::new(save_color)),
+                vec![]
+            )
+            .is_ok());
+        assert!(self
+            .app
+            .remount(
+                Id::BookmarkSavePassword,
+                Box::new(components::BookmarkSavePassword::new(warn_color)),
+                vec![]
+            )
+            .is_ok());
         // Give focus to input bookmark name
-        self.view.active(super::COMPONENT_INPUT_BOOKMARK_NAME);
+        assert!(self.app.active(&Id::BookmarkName).is_ok());
     }
 
     /// ### umount_bookmark_save_dialog
     ///
     /// Umount bookmark save dialog
     pub(super) fn umount_bookmark_save_dialog(&mut self) {
-        self.view.umount(super::COMPONENT_RADIO_BOOKMARK_SAVE_PWD);
-        self.view.umount(super::COMPONENT_INPUT_BOOKMARK_NAME);
+        let _ = self.app.umount(&Id::BookmarkName);
+        let _ = self.app.umount(&Id::BookmarkSavePassword);
     }
 
-    /// ### mount_help
+    /// ### mount_keybindings
     ///
-    /// Mount help
-    pub(super) fn mount_help(&mut self) {
+    /// Mount keybindings
+    pub(super) fn mount_keybindings(&mut self) {
         let key_color = self.theme().misc_keys;
-        self.view.mount(
-            super::COMPONENT_TEXT_HELP,
-            Box::new(List::new(
-                ListPropsBuilder::default()
-                    .with_borders(Borders::ALL, BorderType::Rounded, Color::White)
-                    .with_highlighted_str(Some("?"))
-                    .with_max_scroll_step(8)
-                    .scrollable(true)
-                    .bold()
-                    .with_title("Help", Alignment::Center)
-                    .with_rows(
-                        TableBuilder::default()
-                            .add_col(TextSpan::new("<ESC>").bold().fg(key_color))
-                            .add_col(TextSpan::from("           Quit termscp"))
-                            .add_row()
-                            .add_col(TextSpan::new("<TAB>").bold().fg(key_color))
-                            .add_col(TextSpan::from("           Switch from form and bookmarks"))
-                            .add_row()
-                            .add_col(TextSpan::new("<RIGHT/LEFT>").bold().fg(key_color))
-                            .add_col(TextSpan::from("    Switch bookmark tab"))
-                            .add_row()
-                            .add_col(TextSpan::new("<UP/DOWN>").bold().fg(key_color))
-                            .add_col(TextSpan::from("       Move up/down in current tab"))
-                            .add_row()
-                            .add_col(TextSpan::new("<ENTER>").bold().fg(key_color))
-                            .add_col(TextSpan::from("         Connect/Load bookmark"))
-                            .add_row()
-                            .add_col(TextSpan::new("<DEL|E>").bold().fg(key_color))
-                            .add_col(TextSpan::from("         Delete selected bookmark"))
-                            .add_row()
-                            .add_col(TextSpan::new("<CTRL+C>").bold().fg(key_color))
-                            .add_col(TextSpan::from("        Enter setup"))
-                            .add_row()
-                            .add_col(TextSpan::new("<CTRL+S>").bold().fg(key_color))
-                            .add_col(TextSpan::from("        Save bookmark"))
-                            .build(),
-                    )
-                    .build(),
-            )),
-        );
+        assert!(self
+            .app
+            .remount(
+                Id::Keybindings,
+                Box::new(components::Keybindings::new(key_color)),
+                vec![]
+            )
+            .is_ok());
         // Active help
-        self.view.active(super::COMPONENT_TEXT_HELP);
+        assert!(self.app.active(&Id::Keybindings).is_ok());
     }
 
     /// ### umount_help
     ///
     /// Umount help
     pub(super) fn umount_help(&mut self) {
-        self.view.umount(super::COMPONENT_TEXT_HELP);
+        let _ = self.app.umount(&Id::Keybindings);
     }
 
     /// ### mount_release_notes
@@ -744,26 +563,24 @@ impl AuthActivity {
         if let Some(ctx) = self.context.as_ref() {
             if let Some(release_notes) = ctx.store().get_string(super::STORE_KEY_RELEASE_NOTES) {
                 // make spans
-                let spans: Vec<TextSpan> = release_notes.lines().map(TextSpan::from).collect();
                 let info_color = self.theme().misc_info_dialog;
-                self.view.mount(
-                    super::COMPONENT_TEXT_NEW_VERSION_NOTES,
-                    Box::new(Textarea::new(
-                        TextareaPropsBuilder::default()
-                            .with_borders(Borders::ALL, BorderType::Rounded, info_color)
-                            .with_title("Release notes", Alignment::Center)
-                            .with_texts(spans)
-                            .build(),
-                    )),
-                );
-                // Mount install popup
-                self.mount_radio_dialog(
-                    super::COMPONENT_RADIO_INSTALL_UPDATE,
-                    "Install new version?",
-                    &["Yes", "No"],
-                    0,
-                    info_color,
-                );
+                assert!(self
+                    .app
+                    .remount(
+                        Id::NewVersionChangelog,
+                        Box::new(components::ReleaseNotes::new(release_notes, info_color)),
+                        vec![]
+                    )
+                    .is_ok());
+                assert!(self
+                    .app
+                    .remount(
+                        Id::InstallUpdatePopup,
+                        Box::new(components::InstallUpdatePopup::new(info_color)),
+                        vec![]
+                    )
+                    .is_ok());
+                assert!(self.app.active(&Id::InstallUpdatePopup).is_ok());
             }
         }
     }
@@ -772,16 +589,107 @@ impl AuthActivity {
     ///
     /// Umount release notes text area
     pub(super) fn umount_release_notes(&mut self) {
-        self.view.umount(super::COMPONENT_TEXT_NEW_VERSION_NOTES);
-        self.view.umount(super::COMPONENT_RADIO_INSTALL_UPDATE);
+        let _ = self.app.umount(&Id::NewVersionChangelog);
+        let _ = self.app.umount(&Id::InstallUpdatePopup);
     }
 
-    /// ### get_protocol
-    ///
-    /// Get protocol from view
-    pub(super) fn get_protocol(&self) -> FileTransferProtocol {
-        self.get_input_protocol()
+    pub(super) fn mount_protocol(&mut self, protocol: FileTransferProtocol) {
+        let protocol_color = self.theme().auth_protocol;
+        assert!(self
+            .app
+            .remount(
+                Id::Protocol,
+                Box::new(components::ProtocolRadio::new(protocol, protocol_color)),
+                vec![]
+            )
+            .is_ok());
     }
+
+    pub(super) fn mount_address(&mut self, address: &str) {
+        let addr_color = self.theme().auth_address;
+        assert!(self
+            .app
+            .remount(
+                Id::Address,
+                Box::new(components::InputAddress::new(address, addr_color)),
+                vec![]
+            )
+            .is_ok());
+    }
+
+    pub(super) fn mount_port(&mut self, port: u16) {
+        let port_color = self.theme().auth_port;
+        assert!(self
+            .app
+            .remount(
+                Id::Port,
+                Box::new(components::InputPort::new(port, port_color)),
+                vec![]
+            )
+            .is_ok());
+    }
+
+    pub(crate) fn mount_username(&mut self, username: &str) {
+        let username_color = self.theme().auth_username;
+        assert!(self
+            .app
+            .remount(
+                Id::Username,
+                Box::new(components::InputUsername::new(username, username_color)),
+                vec![]
+            )
+            .is_ok());
+    }
+
+    pub(crate) fn mount_password(&mut self, password: &str) {
+        let password_color = self.theme().auth_password;
+        assert!(self
+            .app
+            .remount(
+                Id::Password,
+                Box::new(components::InputPassword::new(password, password_color)),
+                vec![]
+            )
+            .is_ok());
+    }
+
+    pub(super) fn mount_s3_bucket(&mut self, bucket: &str) {
+        let addr_color = self.theme().auth_address;
+        assert!(self
+            .app
+            .remount(
+                Id::S3Bucket,
+                Box::new(components::InputS3Bucket::new(bucket, addr_color)),
+                vec![]
+            )
+            .is_ok());
+    }
+
+    pub(super) fn mount_s3_region(&mut self, region: &str) {
+        let port_color = self.theme().auth_port;
+        assert!(self
+            .app
+            .remount(
+                Id::S3Region,
+                Box::new(components::InputS3Region::new(region, port_color)),
+                vec![]
+            )
+            .is_ok());
+    }
+
+    pub(crate) fn mount_s3_profile(&mut self, profile: &str) {
+        let username_color = self.theme().auth_username;
+        assert!(self
+            .app
+            .remount(
+                Id::S3Profile,
+                Box::new(components::InputS3Profile::new(profile, username_color)),
+                vec![]
+            )
+            .is_ok());
+    }
+
+    // -- query
 
     /// ### get_generic_params
     ///
@@ -805,66 +713,76 @@ impl AuthActivity {
     }
 
     pub(super) fn get_input_addr(&self) -> String {
-        match self.view.get_state(super::COMPONENT_INPUT_ADDR) {
-            Some(Payload::One(Value::Str(x))) => x,
+        match self.app.state(&Id::Address) {
+            Ok(State::One(StateValue::String(x))) => x,
             _ => String::new(),
         }
     }
 
     pub(super) fn get_input_port(&self) -> u16 {
-        match self.view.get_state(super::COMPONENT_INPUT_PORT) {
-            Some(Payload::One(Value::Usize(x))) => match x > 65535 {
-                true => 0,
-                false => x as u16,
+        match self.app.state(&Id::Port) {
+            Ok(State::One(StateValue::String(x))) => match u16::from_str(x.as_str()) {
+                Ok(v) => v,
+                _ => 0,
             },
             _ => 0,
         }
     }
 
-    pub(super) fn get_input_protocol(&self) -> FileTransferProtocol {
-        match self.view.get_state(super::COMPONENT_RADIO_PROTOCOL) {
-            Some(Payload::One(Value::Usize(x))) => Self::protocol_opt_to_enum(x),
-            _ => FileTransferProtocol::Sftp,
-        }
-    }
-
     pub(super) fn get_input_username(&self) -> String {
-        match self.view.get_state(super::COMPONENT_INPUT_USERNAME) {
-            Some(Payload::One(Value::Str(x))) => x,
+        match self.app.state(&Id::Username) {
+            Ok(State::One(StateValue::String(x))) => x,
             _ => String::new(),
         }
     }
 
     pub(super) fn get_input_password(&self) -> String {
-        match self.view.get_state(super::COMPONENT_INPUT_PASSWORD) {
-            Some(Payload::One(Value::Str(x))) => x,
+        match self.app.state(&Id::Password) {
+            Ok(State::One(StateValue::String(x))) => x,
             _ => String::new(),
         }
     }
 
     pub(super) fn get_input_s3_bucket(&self) -> String {
-        match self.view.get_state(super::COMPONENT_INPUT_S3_BUCKET) {
-            Some(Payload::One(Value::Str(x))) => x,
+        match self.app.state(&Id::S3Bucket) {
+            Ok(State::One(StateValue::String(x))) => x,
             _ => String::new(),
         }
     }
 
     pub(super) fn get_input_s3_region(&self) -> String {
-        match self.view.get_state(super::COMPONENT_INPUT_S3_REGION) {
-            Some(Payload::One(Value::Str(x))) => x,
+        match self.app.state(&Id::S3Region) {
+            Ok(State::One(StateValue::String(x))) => x,
             _ => String::new(),
         }
     }
 
     pub(super) fn get_input_s3_profile(&self) -> Option<String> {
-        match self.view.get_state(super::COMPONENT_INPUT_S3_PROFILE) {
-            Some(Payload::One(Value::Str(x))) => match x.is_empty() {
-                true => None,
-                false => Some(x),
-            },
+        match self.app.state(&Id::S3Profile) {
+            Ok(State::One(StateValue::String(x))) if !x.is_empty() => Some(x),
             _ => None,
         }
     }
+
+    /// ### get_new_bookmark
+    ///
+    /// Get new bookmark params
+    pub(super) fn get_new_bookmark(&self) -> (String, bool) {
+        let name = match self.app.state(&Id::BookmarkName) {
+            Ok(State::One(StateValue::String(name))) => name,
+            _ => String::default(),
+        };
+        if matches!(
+            self.app.state(&Id::BookmarkSavePassword),
+            Ok(State::One(StateValue::Usize(0)))
+        ) {
+            (name, true)
+        } else {
+            (name, false)
+        }
+    }
+
+    // -- len
 
     /// ### input_mask_size
     ///
@@ -875,6 +793,8 @@ impl AuthActivity {
             InputMask::Generic => 12,
         }
     }
+
+    // -- fmt
 
     /// ### fmt_bookmark
     ///
@@ -913,94 +833,95 @@ impl AuthActivity {
         }
     }
 
-    // -- mount helpers
+    fn init_global_listener(&mut self) {
+        use tuirealm::event::{Key, KeyEvent, KeyModifiers};
+        assert!(self
+            .app
+            .mount(
+                Id::GlobalListener,
+                Box::new(components::GlobalListener::default()),
+                vec![
+                    Sub::new(
+                        SubEventClause::Keyboard(KeyEvent {
+                            code: Key::Esc,
+                            modifiers: KeyModifiers::NONE,
+                        }),
+                        Self::no_popup_mounted_clause(),
+                    ),
+                    Sub::new(
+                        SubEventClause::Keyboard(KeyEvent {
+                            code: Key::Char('c'),
+                            modifiers: KeyModifiers::CONTROL,
+                        }),
+                        Self::no_popup_mounted_clause(),
+                    ),
+                    Sub::new(
+                        SubEventClause::Keyboard(KeyEvent {
+                            code: Key::Char('h'),
+                            modifiers: KeyModifiers::CONTROL,
+                        }),
+                        Self::no_popup_mounted_clause(),
+                    ),
+                    Sub::new(
+                        SubEventClause::Keyboard(KeyEvent {
+                            code: Key::Char('r'),
+                            modifiers: KeyModifiers::CONTROL,
+                        }),
+                        Self::no_popup_mounted_clause(),
+                    ),
+                    Sub::new(
+                        SubEventClause::Keyboard(KeyEvent {
+                            code: Key::Char('s'),
+                            modifiers: KeyModifiers::CONTROL,
+                        }),
+                        Self::no_popup_mounted_clause(),
+                    ),
+                ]
+            )
+            .is_ok());
+    }
 
-    fn mount_text_dialog(&mut self, id: &str, text: &str, color: Color) {
-        // Mount
-        self.view.mount(
-            id,
-            Box::new(Paragraph::new(
-                ParagraphPropsBuilder::default()
-                    .with_borders(Borders::ALL, BorderType::Thick, color)
-                    .with_foreground(color)
-                    .bold()
-                    .with_text_alignment(Alignment::Center)
-                    .with_texts(vec![TextSpan::from(text)])
-                    .build(),
+    /// ### no_popup_mounted_clause
+    ///
+    /// Returns a sub clause which requires that no popup is mounted in order to be satisfied
+    fn no_popup_mounted_clause() -> SubClause<Id> {
+        SubClause::And(
+            Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
+                Id::ErrorPopup,
+            )))),
+            Box::new(SubClause::And(
+                Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
+                    Id::InfoPopup,
+                )))),
+                Box::new(SubClause::And(
+                    Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
+                        Id::Keybindings,
+                    )))),
+                    Box::new(SubClause::And(
+                        Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
+                            Id::DeleteBookmarkPopup,
+                        )))),
+                        Box::new(SubClause::And(
+                            Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
+                                Id::DeleteRecentPopup,
+                            )))),
+                            Box::new(SubClause::And(
+                                Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
+                                    Id::InstallUpdatePopup,
+                                )))),
+                                Box::new(SubClause::And(
+                                    Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
+                                        Id::BookmarkSavePassword,
+                                    )))),
+                                    Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
+                                        Id::WaitPopup,
+                                    )))),
+                                )),
+                            )),
+                        )),
+                    )),
+                )),
             )),
-        );
-        // Give focus to error
-        self.view.active(id);
-    }
-
-    fn mount_radio_dialog(
-        &mut self,
-        id: &str,
-        text: &str,
-        opts: &[&str],
-        default: usize,
-        color: Color,
-    ) {
-        self.view.mount(
-            id,
-            Box::new(Radio::new(
-                RadioPropsBuilder::default()
-                    .with_color(color)
-                    .with_inverted_color(Color::Black)
-                    .with_borders(Borders::ALL, BorderType::Rounded, color)
-                    .with_title(text, Alignment::Center)
-                    .with_options(opts)
-                    .with_value(default)
-                    .rewind(true)
-                    .build(),
-            )),
-        );
-        // Active
-        self.view.active(id);
-    }
-
-    fn mount_radio(&mut self, id: &str, text: &str, opts: &[&str], default: usize, color: Color) {
-        self.view.mount(
-            id,
-            Box::new(Radio::new(
-                RadioPropsBuilder::default()
-                    .with_color(color)
-                    .with_inverted_color(Color::Black)
-                    .with_borders(Borders::ALL, BorderType::Rounded, color)
-                    .with_title(text, Alignment::Left)
-                    .with_options(opts)
-                    .with_value(default)
-                    .rewind(true)
-                    .build(),
-            )),
-        );
-    }
-
-    fn mount_input(&mut self, id: &str, label: &str, fg: Color, typ: InputType) {
-        self.mount_input_ex(id, label, fg, typ, None, None);
-    }
-
-    fn mount_input_ex(
-        &mut self,
-        id: &str,
-        label: &str,
-        fg: Color,
-        typ: InputType,
-        len: Option<usize>,
-        value: Option<String>,
-    ) {
-        let mut props = InputPropsBuilder::default();
-        props
-            .with_foreground(fg)
-            .with_borders(Borders::ALL, BorderType::Rounded, fg)
-            .with_label(label, Alignment::Left)
-            .with_input(typ);
-        if let Some(len) = len {
-            props.with_input_len(len);
-        }
-        if let Some(value) = value {
-            props.with_value(value);
-        }
-        self.view.mount(id, Box::new(Input::new(props.build())));
+        )
     }
 }

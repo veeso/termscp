@@ -920,6 +920,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(target_family = "unix")]
     fn should_fmt_path() {
         let t: SystemTime = SystemTime::now();
         let entry: FsEntry = FsEntry::File(FsFile {
