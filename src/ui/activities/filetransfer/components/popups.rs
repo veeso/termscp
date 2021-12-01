@@ -109,7 +109,7 @@ impl Component<Msg, NoUserEvent> for CopyPopup {
             }
             Event::Keyboard(KeyEvent {
                 code: Key::Char(ch),
-                modifiers: KeyModifiers::NONE,
+                ..
             }) => {
                 self.perform(Cmd::Type(ch));
                 Some(Msg::None)
@@ -339,7 +339,7 @@ impl Component<Msg, NoUserEvent> for ExecPopup {
             }
             Event::Keyboard(KeyEvent {
                 code: Key::Char(ch),
-                modifiers: KeyModifiers::NONE,
+                ..
             }) => {
                 self.perform(Cmd::Type(ch));
                 Some(Msg::None)
@@ -561,7 +561,7 @@ impl Component<Msg, NoUserEvent> for FindPopup {
             }
             Event::Keyboard(KeyEvent {
                 code: Key::Char(ch),
-                modifiers: KeyModifiers::NONE,
+                ..
             }) => {
                 self.perform(Cmd::Type(ch));
                 Some(Msg::None)
@@ -647,7 +647,7 @@ impl Component<Msg, NoUserEvent> for GoToPopup {
             }
             Event::Keyboard(KeyEvent {
                 code: Key::Char(ch),
-                modifiers: KeyModifiers::NONE,
+                ..
             }) => {
                 self.perform(Cmd::Type(ch));
                 Some(Msg::None)
@@ -895,7 +895,7 @@ impl Component<Msg, NoUserEvent> for MkdirPopup {
             }
             Event::Keyboard(KeyEvent {
                 code: Key::Char(ch),
-                modifiers: KeyModifiers::NONE,
+                ..
             }) => {
                 self.perform(Cmd::Type(ch));
                 Some(Msg::None)
@@ -979,7 +979,7 @@ impl Component<Msg, NoUserEvent> for NewfilePopup {
             }
             Event::Keyboard(KeyEvent {
                 code: Key::Char(ch),
-                modifiers: KeyModifiers::NONE,
+                ..
             }) => {
                 self.perform(Cmd::Type(ch));
                 Some(Msg::None)
@@ -1063,7 +1063,7 @@ impl Component<Msg, NoUserEvent> for OpenWithPopup {
             }
             Event::Keyboard(KeyEvent {
                 code: Key::Char(ch),
-                modifiers: KeyModifiers::NONE,
+                ..
             }) => {
                 self.perform(Cmd::Type(ch));
                 Some(Msg::None)
@@ -1281,7 +1281,7 @@ impl Component<Msg, NoUserEvent> for RenamePopup {
             }
             Event::Keyboard(KeyEvent {
                 code: Key::Char(ch),
-                modifiers: KeyModifiers::NONE,
+                ..
             }) => {
                 self.perform(Cmd::Type(ch));
                 Some(Msg::None)
@@ -1504,7 +1504,7 @@ impl Component<Msg, NoUserEvent> for SaveAsPopup {
             }
             Event::Keyboard(KeyEvent {
                 code: Key::Char(ch),
-                modifiers: KeyModifiers::NONE,
+                ..
             }) => {
                 self.perform(Cmd::Type(ch));
                 Some(Msg::None)
