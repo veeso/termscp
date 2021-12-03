@@ -229,7 +229,6 @@ impl Component<Msg, NoUserEvent> for Log {
 struct OwnStates {
     list_index: usize, // Index of selected element in list
     list_len: usize,   // Length of file list
-    focus: bool,       // Has focus?
 }
 
 impl Default for OwnStates {
@@ -237,7 +236,6 @@ impl Default for OwnStates {
         OwnStates {
             list_index: 0,
             list_len: 0,
-            focus: false,
         }
     }
 }
