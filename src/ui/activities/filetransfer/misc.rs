@@ -421,7 +421,7 @@ impl FileTransferActivity {
             .attr(
                 &Id::ProgressBarPartial,
                 Attribute::Title,
-                AttrValue::Title((filename, Alignment::Left))
+                AttrValue::Title((filename, Alignment::Center))
             )
             .is_ok());
     }
