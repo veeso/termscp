@@ -86,10 +86,10 @@
       src="https://img.shields.io/crates/v/termscp.svg"
       alt="Latest version"
   /></a>
-  <a href="https://www.buymeacoffee.com/veeso"
-    ><img
-      src="https://img.shields.io/badge/Donate-BuyMeACoffee-yellow.svg"
-      alt="Buy me a coffee"
+  <a href="https://ko-fi.com/veeso">
+    <img
+      src="https://img.shields.io/badge/donate-ko--fi-red"
+      alt="Ko-fi"
   /></a>
 </p>
 <p align="center">
@@ -218,7 +218,7 @@ Si te gusta termscp y te encantaría que el proyecto crezca y mejore, considera 
 
 Puedes hacer una donación con una de estas plataformas:
 
-[![Buy-me-a-coffee](https://img.shields.io/badge/-buy_me_a%C2%A0coffee-gray?style=for-the-badge&logo=buy-me-a-coffee)](https://www.buymeacoffee.com/veeso)
+[![ko-fi](https://img.shields.io/badge/Ko--fi-F16061?style=for-the-badge&logo=ko-fi&logoColor=white)](https://ko-fi.com/veeso)
 [![PayPal](https://img.shields.io/badge/PayPal-00457C?style=for-the-badge&logo=paypal&logoColor=white)](https://www.paypal.me/chrisintin)
 
 ---
