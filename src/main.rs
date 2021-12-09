@@ -45,8 +45,8 @@ use std::time::Duration;
 // Include
 mod activity_manager;
 mod config;
+mod explorer;
 mod filetransfer;
-mod fs;
 mod host;
 mod support;
 mod system;

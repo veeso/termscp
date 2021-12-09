@@ -26,7 +26,9 @@
  * SOFTWARE.
  */
 // locals
-use super::{FileTransferActivity, FsEntry, LogLevel, SelectedEntry};
+use super::{FileTransferActivity, LogLevel, SelectedEntry};
+
+use remotefs::Entry;
 
 impl FileTransferActivity {
     pub(crate) fn action_local_delete(&mut self) {
@@ -71,13 +73,13 @@ impl FileTransferActivity {
         }
     }
 
-    pub(crate) fn local_remove_file(&mut self, entry: &FsEntry) {
+    pub(crate) fn local_remove_file(&mut self, entry: &Entry) {
         match self.host.remove(entry) {
             Ok(_) => {
                 // Log
                 self.log(
                     LogLevel::Info,
-                    format!("Removed file \"{}\"", entry.get_abs_path().display()),
+                    format!("Removed file \"{}\"", entry.path().display()),
                 );
             }
             Err(err) => {
@@ -85,7 +87,7 @@ impl FileTransferActivity {
                     LogLevel::Error,
                     format!(
                         "Could not delete file \"{}\": {}",
-                        entry.get_abs_path().display(),
+                        entry.path().display(),
                         err
                     ),
                 );
@@ -93,12 +95,12 @@ impl FileTransferActivity {
         }
     }
 
-    pub(crate) fn remote_remove_file(&mut self, entry: &FsEntry) {
-        match self.client.remove(entry) {
+    pub(crate) fn remote_remove_file(&mut self, entry: &Entry) {
+        match self.client.remove_dir_all(entry.path()) {
             Ok(_) => {
                 self.log(
                     LogLevel::Info,
-                    format!("Removed file \"{}\"", entry.get_abs_path().display()),
+                    format!("Removed file \"{}\"", entry.path().display()),
                 );
             }
             Err(err) => {
@@ -106,7 +108,7 @@ impl FileTransferActivity {
                     LogLevel::Error,
                     format!(
                         "Could not delete file \"{}\": {}",
-                        entry.get_abs_path().display(),
+                        entry.path().display(),
                         err
                     ),
                 );

@@ -26,9 +26,9 @@
  * SOFTWARE.
  */
 // locals
-use super::{FileTransferActivity, FsEntry, LogLevel, SelectedEntry, TransferPayload};
-use crate::filetransfer::FileTransferErrorType;
-use crate::fs::FsFile;
+use super::{FileTransferActivity, LogLevel, SelectedEntry, TransferPayload};
+
+use remotefs::{Entry, RemoteErrorType};
 use std::path::{Path, PathBuf};
 
 impl FileTransferActivity {
@@ -49,7 +49,7 @@ impl FileTransferActivity {
                 // Iter files
                 for entry in entries.iter() {
                     let mut dest_path: PathBuf = base_path.clone();
-                    dest_path.push(entry.get_name());
+                    dest_path.push(entry.name());
                     self.local_copy_file(entry, dest_path.as_path());
                 }
                 // Reload entries
@@ -76,7 +76,7 @@ impl FileTransferActivity {
                 // Iter files
                 for entry in entries.into_iter() {
                     let mut dest_path: PathBuf = base_path.clone();
-                    dest_path.push(entry.get_name());
+                    dest_path.push(entry.name());
                     self.remote_copy_file(entry, dest_path.as_path());
                 }
                 // Reload entries
@@ -86,14 +86,14 @@ impl FileTransferActivity {
         }
     }
 
-    fn local_copy_file(&mut self, entry: &FsEntry, dest: &Path) {
+    fn local_copy_file(&mut self, entry: &Entry, dest: &Path) {
         match self.host.copy(entry, dest) {
             Ok(_) => {
                 self.log(
                     LogLevel::Info,
                     format!(
                         "Copied \"{}\" to \"{}\"",
-                        entry.get_abs_path().display(),
+                        entry.path().display(),
                         dest.display()
                     ),
                 );
@@ -102,7 +102,7 @@ impl FileTransferActivity {
                 LogLevel::Error,
                 format!(
                     "Could not copy \"{}\" to \"{}\": {}",
-                    entry.get_abs_path().display(),
+                    entry.path().display(),
                     dest.display(),
                     err
                 ),
@@ -110,20 +110,20 @@ impl FileTransferActivity {
         }
     }
 
-    fn remote_copy_file(&mut self, entry: FsEntry, dest: &Path) {
-        match self.client.as_mut().copy(&entry, dest) {
+    fn remote_copy_file(&mut self, entry: Entry, dest: &Path) {
+        match self.client.as_mut().copy(entry.path(), dest) {
             Ok(_) => {
                 self.log(
                     LogLevel::Info,
                     format!(
                         "Copied \"{}\" to \"{}\"",
-                        entry.get_abs_path().display(),
+                        entry.path().display(),
                         dest.display()
                     ),
                 );
             }
-            Err(err) => match err.kind() {
-                FileTransferErrorType::UnsupportedFeature => {
+            Err(err) => match err.kind {
+                RemoteErrorType::UnsupportedFeature => {
                     // If copy is not supported, perform the tricky copy
                     let _ = self.tricky_copy(entry, dest);
                 }
@@ -131,7 +131,7 @@ impl FileTransferActivity {
                     LogLevel::Error,
                     format!(
                         "Could not copy \"{}\" to \"{}\": {}",
-                        entry.get_abs_path().display(),
+                        entry.path().display(),
                         dest.display(),
                         err
                     ),
@@ -143,12 +143,12 @@ impl FileTransferActivity {
     /// ### tricky_copy
     ///
     /// Tricky copy will be used whenever copy command is not available on remote host
-    pub(super) fn tricky_copy(&mut self, entry: FsEntry, dest: &Path) -> Result<(), String> {
+    pub(super) fn tricky_copy(&mut self, entry: Entry, dest: &Path) -> Result<(), String> {
         // NOTE: VERY IMPORTANT; wait block must be umounted or something really bad will happen
         self.umount_wait();
         // match entry
         match entry {
-            FsEntry::File(entry) => {
+            Entry::File(entry) => {
                 // Create tempfile
                 let tmpfile: tempfile::NamedTempFile = match tempfile::NamedTempFile::new() {
                     Ok(f) => f,
@@ -162,7 +162,7 @@ impl FileTransferActivity {
                 };
                 // Download file
                 let name = entry.name.clone();
-                let entry_path = entry.abs_path.clone();
+                let entry_path = entry.path.clone();
                 if let Err(err) =
                     self.filetransfer_recv(TransferPayload::File(entry), tmpfile.path(), Some(name))
                 {
@@ -173,7 +173,7 @@ impl FileTransferActivity {
                     return Err(err);
                 }
                 // Get local fs entry
-                let tmpfile_entry: FsFile = match self.host.stat(tmpfile.path()) {
+                let tmpfile_entry = match self.host.stat(tmpfile.path()) {
                     Ok(e) => e.unwrap_file(),
                     Err(err) => {
                         self.log_and_alert(
@@ -206,7 +206,7 @@ impl FileTransferActivity {
                 }
                 Ok(())
             }
-            FsEntry::Directory(_) => {
+            Entry::Directory(_) => {
                 let tempdir: tempfile::TempDir = match tempfile::TempDir::new() {
                     Ok(d) => d,
                     Err(err) => {
@@ -219,7 +219,7 @@ impl FileTransferActivity {
                 };
                 // Get path of dest
                 let mut tempdir_path: PathBuf = tempdir.path().to_path_buf();
-                tempdir_path.push(entry.get_name());
+                tempdir_path.push(entry.name());
                 // Download file
                 if let Err(err) =
                     self.filetransfer_recv(TransferPayload::Any(entry), tempdir.path(), None)
@@ -231,7 +231,7 @@ impl FileTransferActivity {
                     return Err(err);
                 }
                 // Stat dir
-                let tempdir_entry: FsEntry = match self.host.stat(tempdir_path.as_path()) {
+                let tempdir_entry = match self.host.stat(tempdir_path.as_path()) {
                     Ok(e) => e,
                     Err(err) => {
                         self.log_and_alert(

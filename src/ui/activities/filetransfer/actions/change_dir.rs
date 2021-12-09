@@ -26,7 +26,9 @@
  * SOFTWARE.
  */
 // locals
-use super::{FileTransferActivity, FsEntry};
+use super::FileTransferActivity;
+
+use remotefs::Directory;
 use std::path::PathBuf;
 
 impl FileTransferActivity {
@@ -34,70 +36,24 @@ impl FileTransferActivity {
     ///
     /// Enter a directory on local host from entry
     /// Return true whether the directory changed
-    pub(crate) fn action_enter_local_dir(&mut self, entry: FsEntry, block_sync: bool) -> bool {
-        match entry {
-            FsEntry::Directory(dir) => {
-                self.local_changedir(dir.abs_path.as_path(), true);
-                if self.browser.sync_browsing && !block_sync {
-                    self.action_change_remote_dir(dir.name, true);
-                }
-                true
-            }
-            FsEntry::File(file) => {
-                match &file.symlink {
-                    Some(symlink_entry) => {
-                        // If symlink and is directory, point to symlink
-                        match &**symlink_entry {
-                            FsEntry::Directory(dir) => {
-                                self.local_changedir(dir.abs_path.as_path(), true);
-                                // Check whether to sync
-                                if self.browser.sync_browsing && !block_sync {
-                                    self.action_change_remote_dir(dir.name.clone(), true);
-                                }
-                                true
-                            }
-                            _ => false,
-                        }
-                    }
-                    None => false,
-                }
-            }
+    pub(crate) fn action_enter_local_dir(&mut self, dir: Directory, block_sync: bool) -> bool {
+        self.local_changedir(dir.path.as_path(), true);
+        if self.browser.sync_browsing && !block_sync {
+            self.action_change_remote_dir(dir.name, true);
         }
+        true
     }
 
     /// ### action_enter_remote_dir
     ///
     /// Enter a directory on local host from entry
     /// Return true whether the directory changed
-    pub(crate) fn action_enter_remote_dir(&mut self, entry: FsEntry, block_sync: bool) -> bool {
-        match entry {
-            FsEntry::Directory(dir) => {
-                self.remote_changedir(dir.abs_path.as_path(), true);
-                if self.browser.sync_browsing && !block_sync {
-                    self.action_change_local_dir(dir.name, true);
-                }
-                true
-            }
-            FsEntry::File(file) => {
-                match &file.symlink {
-                    Some(symlink_entry) => {
-                        // If symlink and is directory, point to symlink
-                        match &**symlink_entry {
-                            FsEntry::Directory(dir) => {
-                                self.remote_changedir(dir.abs_path.as_path(), true);
-                                // Check whether to sync
-                                if self.browser.sync_browsing && !block_sync {
-                                    self.action_change_local_dir(dir.name.clone(), true);
-                                }
-                                true
-                            }
-                            _ => false,
-                        }
-                    }
-                    None => false,
-                }
-            }
+    pub(crate) fn action_enter_remote_dir(&mut self, dir: Directory, block_sync: bool) -> bool {
+        self.remote_changedir(dir.path.as_path(), true);
+        if self.browser.sync_browsing && !block_sync {
+            self.action_change_local_dir(dir.name, true);
         }
+        true
     }
 
     /// ### action_change_local_dir

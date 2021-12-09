@@ -27,7 +27,7 @@
  */
 // locals
 use super::{
-    super::STORAGE_PENDING_TRANSFER, FileExplorerTab, FileTransferActivity, FsEntry, LogLevel,
+    super::STORAGE_PENDING_TRANSFER, Entry, FileExplorerTab, FileTransferActivity, LogLevel,
     SelectedEntry, TransferOpts, TransferPayload,
 };
 use std::path::{Path, PathBuf};
@@ -101,10 +101,10 @@ impl FileTransferActivity {
                 {
                     // Save pending transfer
                     self.set_pending_transfer(
-                        opts.save_as.as_deref().unwrap_or_else(|| entry.get_name()),
+                        opts.save_as.as_deref().unwrap_or_else(|| entry.name()),
                     );
                 } else if let Err(err) = self.filetransfer_send(
-                    TransferPayload::Any(entry.get_realfile()),
+                    TransferPayload::Any(entry.clone()),
                     wrkdir.as_path(),
                     opts.save_as,
                 ) {
@@ -123,10 +123,9 @@ impl FileTransferActivity {
                     dest_path.push(save_as);
                 }
                 // Iter files
-                let entries: Vec<FsEntry> = entries.iter().map(|x| x.get_realfile()).collect();
                 if opts.check_replace && self.config().get_prompt_on_file_replace() {
                     // Check which file would be replaced
-                    let existing_files: Vec<&FsEntry> = entries
+                    let existing_files: Vec<&Entry> = entries
                         .iter()
                         .filter(|x| {
                             self.remote_file_exists(
@@ -171,10 +170,10 @@ impl FileTransferActivity {
                 {
                     // Save pending transfer
                     self.set_pending_transfer(
-                        opts.save_as.as_deref().unwrap_or_else(|| entry.get_name()),
+                        opts.save_as.as_deref().unwrap_or_else(|| entry.name()),
                     );
                 } else if let Err(err) = self.filetransfer_recv(
-                    TransferPayload::Any(entry.get_realfile()),
+                    TransferPayload::Any(entry.clone()),
                     wrkdir.as_path(),
                     opts.save_as,
                 ) {
@@ -193,10 +192,9 @@ impl FileTransferActivity {
                     dest_path.push(save_as);
                 }
                 // Iter files
-                let entries: Vec<FsEntry> = entries.iter().map(|x| x.get_realfile()).collect();
                 if opts.check_replace && self.config().get_prompt_on_file_replace() {
                     // Check which file would be replaced
-                    let existing_files: Vec<&FsEntry> = entries
+                    let existing_files: Vec<&Entry> = entries
                         .iter()
                         .filter(|x| {
                             self.local_file_exists(
@@ -244,8 +242,8 @@ impl FileTransferActivity {
     /// ### set_pending_transfer_many
     ///
     /// Set pending transfer for many files into storage and mount radio
-    pub(crate) fn set_pending_transfer_many(&mut self, files: Vec<&FsEntry>, dest_path: &str) {
-        let file_names: Vec<&str> = files.iter().map(|x| x.get_name()).collect();
+    pub(crate) fn set_pending_transfer_many(&mut self, files: Vec<&Entry>, dest_path: &str) {
+        let file_names: Vec<&str> = files.iter().map(|x| x.name()).collect();
         self.mount_radio_replace_many(file_names.as_slice());
         self.context_mut()
             .store_mut()
@@ -255,16 +253,16 @@ impl FileTransferActivity {
     /// ### file_to_check
     ///
     /// Get file to check for path
-    pub(crate) fn file_to_check(e: &FsEntry, alt: Option<&String>) -> PathBuf {
+    pub(crate) fn file_to_check(e: &Entry, alt: Option<&String>) -> PathBuf {
         match alt {
             Some(s) => PathBuf::from(s),
-            None => PathBuf::from(e.get_name()),
+            None => PathBuf::from(e.name()),
         }
     }
 
-    pub(crate) fn file_to_check_many(e: &FsEntry, wrkdir: &Path) -> PathBuf {
+    pub(crate) fn file_to_check_many(e: &Entry, wrkdir: &Path) -> PathBuf {
         let mut p = wrkdir.to_path_buf();
-        p.push(e.get_name());
+        p.push(e.name());
         p
     }
 }

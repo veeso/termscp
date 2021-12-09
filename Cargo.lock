@@ -123,9 +123,9 @@ dependencies = [
 
 [[package]]
 name = "attohttpc"
-version = "0.16.3"
+version = "0.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fdb8867f378f33f78a811a8eb9bf108ad99430d7aad43315dd9319c827ef6247"
+checksum = "e69e13a99a7e6e070bb114f7ff381e58c7ccc188630121fc4c2fe4bcf24cd072"
 dependencies = [
  "http",
  "log",
@@ -134,21 +134,7 @@ dependencies = [
  "serde",
  "serde_json",
  "url",
- "wildmatch 1.1.0",
-]
-
-[[package]]
-name = "attohttpc"
-version = "0.17.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9a8bda305457262b339322106c776e3fd21df860018e566eb6a5b1aa4b6ae02d"
-dependencies = [
- "http",
- "log",
- "native-tls",
- "openssl",
- "url",
- "wildmatch 1.1.0",
+ "wildmatch",
 ]
 
 [[package]]
@@ -159,13 +145,13 @@ checksum = "cdb031dd78e28731d87d56cc8ffef4a8f36ca26c38fe2de700543e627f8a464a"
 
 [[package]]
 name = "aws-creds"
-version = "0.26.0"
+version = "0.27.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1331d069460a674d42bd27c12b47ce578f789954c7bd7f239fd030771eca6616"
+checksum = "460a75eac8f3cb7683e0a9a588a83c3ff039331ea7bfbfbfcecf1dacab276e11"
 dependencies = [
  "anyhow",
- "attohttpc 0.16.3",
- "dirs 3.0.2",
+ "attohttpc",
+ "dirs 4.0.0",
  "rust-ini",
  "serde",
  "serde-xml-rs",
@@ -457,6 +443,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "crypto-mac"
+version = "0.11.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b1d1a86f49236c215f271d40892d5fc950490551400b02ef360692c29815c714"
+dependencies = [
+ "generic-array",
+ "subtle",
+]
+
+[[package]]
 name = "ctor"
 version = "0.1.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -527,15 +523,6 @@ dependencies = [
  "libc",
  "redox_users 0.3.5",
  "winapi",
-]
-
-[[package]]
-name = "dirs"
-version = "3.0.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "30baa043103c9d0c2a57cf537cc2f35623889dc0d405e6c3cccfadbc81c71309"
-dependencies = [
- "dirs-sys",
 ]
 
 [[package]]
@@ -799,7 +786,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "51ab2f639c231793c5f6114bdb9bbe50a7dbbfcd7c7c6bd8475dec2d991e964f"
 dependencies = [
  "digest",
- "hmac",
+ "hmac 0.10.1",
 ]
 
 [[package]]
@@ -808,7 +795,17 @@ version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c1441c6b1e930e2817404b5046f1f989899143a12bf92de603b69f4e0aee1e15"
 dependencies = [
- "crypto-mac",
+ "crypto-mac 0.10.1",
+ "digest",
+]
+
+[[package]]
+name = "hmac"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2a2a2320eb7ec0ebe8da8f744d7812d9fc4cb4d09344ac01898dbcb6a20ae69b"
+dependencies = [
+ "crypto-mac 0.11.1",
  "digest",
 ]
 
@@ -1132,15 +1129,6 @@ name = "mime"
 version = "0.3.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2a60c7ce501c71e03a9c9c0d35b861413ae925bd979cc7a4e30d060069aaac8d"
-
-[[package]]
-name = "minidom"
-version = "0.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "332592c2149fc7dd40a64fc9ef6f0d65607284b474cef9817d1fc8c7e7b3608e"
-dependencies = [
- "quick-xml",
-]
 
 [[package]]
 name = "miniz_oxide"
@@ -1687,6 +1675,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f497285884f3fcff424ffc933e56d7cbca511def0c9831a7f9b5f6153e3cc89b"
 
 [[package]]
+name = "remotefs"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c72915b01014a11d7e21b3a28141ff32b881bd8103c0f65269cc7932a03ae61c"
+dependencies = [
+ "chrono",
+ "lazy_static",
+ "log",
+ "path-slash",
+ "regex",
+ "rust-s3",
+ "ssh2",
+ "ssh2-config",
+ "suppaftp",
+ "thiserror",
+ "users",
+ "wildmatch",
+]
+
+[[package]]
 name = "remove_dir_all"
 version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1754,35 +1762,34 @@ dependencies = [
 
 [[package]]
 name = "rust-ini"
-version = "0.16.1"
+version = "0.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "55b134767a87e0b086f73a4ce569ac9ce7d202f39c8eab6caa266e2617e73ac6"
+checksum = "63471c4aa97a1cf8332a5f97709a79a4234698de6a1f5087faf66f2dae810e22"
 dependencies = [
- "cfg-if 0.1.10",
+ "cfg-if 1.0.0",
  "ordered-multimap",
 ]
 
 [[package]]
 name = "rust-s3"
-version = "0.27.0-rc4"
+version = "0.28.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5c93272c1d654d492f8ab30b94cd43d98f2700b1db55b2576aff7712ce40e3ef"
+checksum = "18c58d4682844a5d6301efbf915dd7a9d3d638006f9bb821527a0bbbf2a4cfc2"
 dependencies = [
  "anyhow",
  "async-trait",
- "attohttpc 0.17.0",
+ "attohttpc",
  "aws-creds",
  "aws-region",
  "base64",
  "cfg-if 1.0.0",
  "chrono",
  "hex",
- "hmac",
+ "hmac 0.11.0",
  "http",
  "log",
  "maybe-async",
  "md5",
- "minidom",
  "percent-encoding",
  "serde",
  "serde-xml-rs",
@@ -1926,9 +1933,9 @@ dependencies = [
 
 [[package]]
 name = "serde-xml-rs"
-version = "0.4.1"
+version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f0bf1ba0696ccf0872866277143ff1fd14d22eec235d2b23702f95e6660f7dfa"
+checksum = "65162e9059be2f6a3421ebbb4fef3e74b7d9e7c60c50a0e292c6239f19f1edfa"
 dependencies = [
  "log",
  "serde",
@@ -1977,7 +1984,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e0bccbcf40c8938196944a3da0e133e031a33f4d6b72db3bda3cc556e361905d"
 dependencies = [
  "lazy_static",
- "parking_lot 0.10.2",
+ "parking_lot 0.11.2",
  "serial_test_derive",
 ]
 
@@ -2087,6 +2094,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "ssh2-config"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "31e64d0ea4897c9415c34011a4cdf21a0e0168c200595f1f543be1ca807942d8"
+dependencies = [
+ "thiserror",
+ "wildmatch",
+]
+
+[[package]]
 name = "strum"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2110,12 +2127,13 @@ checksum = "6bdef32e8150c2a081110b42772ffe7d7c9032b606bc226c8260fd97e0976601"
 
 [[package]]
 name = "suppaftp"
-version = "4.1.2"
+version = "4.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "29a4d861acfdc117c6d373c3b743c534dbbbb2d782e7646b27439a7c5282ad6a"
+checksum = "3c42610de5ed0db28274b24c010aa530ebc391e5a4e9bd44a08e9daa8a245cc5"
 dependencies = [
  "chrono",
  "lazy_static",
+ "log",
  "native-tls",
  "regex",
  "thiserror",
@@ -2214,18 +2232,15 @@ dependencies = [
  "magic-crypt",
  "notify-rust",
  "open",
- "path-slash",
  "pretty_assertions",
  "rand 0.8.4",
  "regex",
+ "remotefs",
  "rpassword",
- "rust-s3",
  "self_update",
  "serde",
  "serial_test",
  "simplelog",
- "ssh2",
- "suppaftp",
  "tempfile",
  "textwrap",
  "thiserror",
@@ -2234,7 +2249,7 @@ dependencies = [
  "tuirealm",
  "users",
  "whoami",
- "wildmatch 2.1.0",
+ "wildmatch",
 ]
 
 [[package]]
@@ -2661,12 +2676,6 @@ dependencies = [
  "wasm-bindgen",
  "web-sys",
 ]
-
-[[package]]
-name = "wildmatch"
-version = "1.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7f44b95f62d34113cf558c93511ac93027e03e9c29a60dd0fd70e6e025c7270a"
 
 [[package]]
 name = "wildmatch"

@@ -26,9 +26,9 @@
  * SOFTWARE.
  */
 pub(self) use super::{
-    browser::FileExplorerTab, FileTransferActivity, FsEntry, Id, LogLevel, TransferOpts,
-    TransferPayload,
+    browser::FileExplorerTab, FileTransferActivity, Id, LogLevel, TransferOpts, TransferPayload,
 };
+pub(self) use remotefs::Entry;
 use tuirealm::{State, StateValue};
 
 // actions
@@ -47,8 +47,8 @@ pub(crate) mod submit;
 
 #[derive(Debug)]
 pub(crate) enum SelectedEntry {
-    One(FsEntry),
-    Many(Vec<FsEntry>),
+    One(Entry),
+    Many(Vec<Entry>),
     None,
 }
 
@@ -59,8 +59,8 @@ enum SelectedEntryIndex {
     None,
 }
 
-impl From<Option<&FsEntry>> for SelectedEntry {
-    fn from(opt: Option<&FsEntry>) -> Self {
+impl From<Option<&Entry>> for SelectedEntry {
+    fn from(opt: Option<&Entry>) -> Self {
         match opt {
             Some(e) => SelectedEntry::One(e.clone()),
             None => SelectedEntry::None,
@@ -68,8 +68,8 @@ impl From<Option<&FsEntry>> for SelectedEntry {
     }
 }
 
-impl From<Vec<&FsEntry>> for SelectedEntry {
-    fn from(files: Vec<&FsEntry>) -> Self {
+impl From<Vec<&Entry>> for SelectedEntry {
+    fn from(files: Vec<&Entry>) -> Self {
         SelectedEntry::Many(files.into_iter().cloned().collect())
     }
 }
@@ -82,9 +82,9 @@ impl FileTransferActivity {
         match self.get_selected_index(&Id::ExplorerLocal) {
             SelectedEntryIndex::One(idx) => SelectedEntry::from(self.local().get(idx)),
             SelectedEntryIndex::Many(files) => {
-                let files: Vec<&FsEntry> = files
+                let files: Vec<&Entry> = files
                     .iter()
-                    .map(|x| self.local().get(*x)) // Usize to Option<FsEntry>
+                    .map(|x| self.local().get(*x)) // Usize to Option<Entry>
                     .flatten()
                     .collect();
                 SelectedEntry::from(files)
@@ -100,9 +100,9 @@ impl FileTransferActivity {
         match self.get_selected_index(&Id::ExplorerRemote) {
             SelectedEntryIndex::One(idx) => SelectedEntry::from(self.remote().get(idx)),
             SelectedEntryIndex::Many(files) => {
-                let files: Vec<&FsEntry> = files
+                let files: Vec<&Entry> = files
                     .iter()
-                    .map(|x| self.remote().get(*x)) // Usize to Option<FsEntry>
+                    .map(|x| self.remote().get(*x)) // Usize to Option<Entry>
                     .flatten()
                     .collect();
                 SelectedEntry::from(files)
@@ -120,9 +120,9 @@ impl FileTransferActivity {
                 SelectedEntry::from(self.found().as_ref().unwrap().get(idx))
             }
             SelectedEntryIndex::Many(files) => {
-                let files: Vec<&FsEntry> = files
+                let files: Vec<&Entry> = files
                     .iter()
-                    .map(|x| self.found().as_ref().unwrap().get(*x)) // Usize to Option<FsEntry>
+                    .map(|x| self.found().as_ref().unwrap().get(*x)) // Usize to Option<Entry>
                     .flatten()
                     .collect();
                 SelectedEntry::from(files)

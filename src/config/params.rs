@@ -35,7 +35,7 @@ use std::path::PathBuf;
 
 pub const DEFAULT_NOTIFICATION_TRANSFER_THRESHOLD: u64 = 536870912; // 512MB
 
-#[derive(Deserialize, Serialize, std::fmt::Debug)]
+#[derive(Deserialize, Serialize, Debug, Default)]
 /// ## UserConfig
 ///
 /// UserConfig contains all the configurations for the user,
@@ -45,7 +45,7 @@ pub struct UserConfig {
     pub remote: RemoteConfig,
 }
 
-#[derive(Deserialize, Serialize, std::fmt::Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 /// ## UserInterfaceConfig
 ///
 /// UserInterfaceConfig provides all the keys to configure the user interface
@@ -62,21 +62,12 @@ pub struct UserInterfaceConfig {
     pub notification_threshold: Option<u64>, // @! Since 0.7.0; Default 512MB
 }
 
-#[derive(Deserialize, Serialize, std::fmt::Debug)]
+#[derive(Deserialize, Serialize, Debug, Default)]
 /// ## RemoteConfig
 ///
 /// Contains configuratio related to remote hosts
 pub struct RemoteConfig {
     pub ssh_keys: HashMap<String, PathBuf>, // Association between host name and path to private key
-}
-
-impl Default for UserConfig {
-    fn default() -> Self {
-        UserConfig {
-            user_interface: UserInterfaceConfig::default(),
-            remote: RemoteConfig::default(),
-        }
-    }
 }
 
 impl Default for UserInterfaceConfig {
@@ -95,14 +86,6 @@ impl Default for UserInterfaceConfig {
             remote_file_fmt: None,
             notifications: Some(true),
             notification_threshold: Some(DEFAULT_NOTIFICATION_TRANSFER_THRESHOLD),
-        }
-    }
-}
-
-impl Default for RemoteConfig {
-    fn default() -> Self {
-        RemoteConfig {
-            ssh_keys: HashMap::new(),
         }
     }
 }

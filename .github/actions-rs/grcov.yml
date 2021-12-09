@@ -8,7 +8,6 @@ ignore:
   - "../*"
   - src/main.rs
   - src/activity_manager.rs
-  - src/filetransfer/transfer/s3/mod.rs
   - src/support.rs
   - src/system/notifications.rs
   - "src/ui/activities/*"

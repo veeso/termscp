@@ -13,8 +13,6 @@ jobs:
       - uses: actions/checkout@v2
       - name: Install dependencies
         run: sudo apt update && sudo apt install -y libdbus-1-dev libssh2-1-dev libssl-dev
-      - name: Setup containers
-        run: docker-compose -f "tests/docker-compose.yml" up -d --build
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
@@ -24,7 +22,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --no-default-features --features github-actions --features with-containers --no-fail-fast
+          args: --no-default-features --features github-actions --no-fail-fast
       - name: Format
         run: cargo fmt --all -- --check
       - name: Clippy

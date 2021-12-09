@@ -37,12 +37,9 @@ use crate::system::environment;
 
 // Ext
 use bytesize::ByteSize;
-use chrono::format::ParseError;
-use chrono::prelude::*;
 use regex::Regex;
 use std::path::PathBuf;
 use std::str::FromStr;
-use std::time::{Duration, SystemTime};
 use tuirealm::tui::style::Color;
 
 // Regex
@@ -264,54 +261,6 @@ fn parse_s3_remote_opt(s: &str) -> Result<FileTransferParams, String> {
             .entry_directory(entry_directory))
         }
         None => Err(String::from("Bad remote host syntax!")),
-    }
-}
-
-/// ### parse_lstime
-///
-/// Convert ls syntax time to System Time
-/// ls time has two possible syntax:
-/// 1. if year is current: %b %d %H:%M (e.g. Nov 5 13:46)
-/// 2. else: %b %d %Y (e.g. Nov 5 2019)
-pub fn parse_lstime(tm: &str, fmt_year: &str, fmt_hours: &str) -> Result<SystemTime, ParseError> {
-    let datetime: NaiveDateTime = match NaiveDate::parse_from_str(tm, fmt_year) {
-        Ok(date) => {
-            // Case 2.
-            // Return NaiveDateTime from NaiveDate with time 00:00:00
-            date.and_hms(0, 0, 0)
-        }
-        Err(_) => {
-            // Might be case 1.
-            // We need to add Current Year at the end of the string
-            let this_year: i32 = Utc::now().year();
-            let date_time_str: String = format!("{} {}", tm, this_year);
-            // Now parse
-            NaiveDateTime::parse_from_str(
-                date_time_str.as_ref(),
-                format!("{} %Y", fmt_hours).as_ref(),
-            )?
-        }
-    };
-    // Convert datetime to system time
-    let sys_time: SystemTime = SystemTime::UNIX_EPOCH;
-    Ok(sys_time
-        .checked_add(Duration::from_secs(datetime.timestamp() as u64))
-        .unwrap_or(SystemTime::UNIX_EPOCH))
-}
-
-/// ### parse_datetime
-///
-/// Parse date time string representation and transform it into `SystemTime`
-#[allow(dead_code)]
-pub fn parse_datetime(tm: &str, fmt: &str) -> Result<SystemTime, ParseError> {
-    match NaiveDateTime::parse_from_str(tm, fmt) {
-        Ok(dt) => {
-            let sys_time: SystemTime = SystemTime::UNIX_EPOCH;
-            Ok(sys_time
-                .checked_add(Duration::from_secs(dt.timestamp() as u64))
-                .unwrap_or(SystemTime::UNIX_EPOCH))
-        }
-        Err(err) => Err(err),
     }
 }
 
@@ -611,7 +560,6 @@ pub fn parse_bytesize<S: AsRef<str>>(bytes: S) -> Option<ByteSize> {
 mod tests {
 
     use super::*;
-    use crate::utils::fmt::fmt_time;
 
     use pretty_assertions::assert_eq;
 
@@ -798,68 +746,6 @@ mod tests {
         assert_eq!(params.profile.as_deref(), Some("default"));
         // -- bad args
         assert!(parse_remote_opt(&String::from("s3://mybucket:default:/foobar")).is_err());
-    }
-
-    #[test]
-    fn test_utils_parse_lstime() {
-        // Good cases
-        assert_eq!(
-            fmt_time(
-                parse_lstime("Nov 5 16:32", "%b %d %Y", "%b %d %H:%M")
-                    .ok()
-                    .unwrap(),
-                "%m %d %M"
-            )
-            .as_str(),
-            "11 05 32"
-        );
-        assert_eq!(
-            fmt_time(
-                parse_lstime("Dec 2 21:32", "%b %d %Y", "%b %d %H:%M")
-                    .ok()
-                    .unwrap(),
-                "%m %d %M"
-            )
-            .as_str(),
-            "12 02 32"
-        );
-        assert_eq!(
-            parse_lstime("Nov 5 2018", "%b %d %Y", "%b %d %H:%M")
-                .ok()
-                .unwrap()
-                .duration_since(SystemTime::UNIX_EPOCH)
-                .ok()
-                .unwrap(),
-            Duration::from_secs(1541376000)
-        );
-        assert_eq!(
-            parse_lstime("Mar 18 2018", "%b %d %Y", "%b %d %H:%M")
-                .ok()
-                .unwrap()
-                .duration_since(SystemTime::UNIX_EPOCH)
-                .ok()
-                .unwrap(),
-            Duration::from_secs(1521331200)
-        );
-        // bad cases
-        assert!(parse_lstime("Oma 31 2018", "%b %d %Y", "%b %d %H:%M").is_err());
-        assert!(parse_lstime("Feb 31 2018", "%b %d %Y", "%b %d %H:%M").is_err());
-        assert!(parse_lstime("Feb 15 25:32", "%b %d %Y", "%b %d %H:%M").is_err());
-    }
-
-    #[test]
-    fn test_utils_parse_datetime() {
-        assert_eq!(
-            parse_datetime("04-08-14  03:09PM", "%d-%m-%y %I:%M%p")
-                .ok()
-                .unwrap()
-                .duration_since(SystemTime::UNIX_EPOCH)
-                .ok()
-                .unwrap(),
-            Duration::from_secs(1407164940)
-        );
-        // Not enough argument for datetime
-        assert!(parse_datetime("04-08-14", "%d-%m-%y").is_err());
     }
 
     #[test]

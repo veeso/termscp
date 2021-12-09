@@ -28,8 +28,9 @@
 // Locals
 use super::config_client::ConfigClient;
 // Ext
+use remotefs::client::ssh::SshKeyStorage as SshKeyStorageT;
 use std::collections::HashMap;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 pub struct SshKeyStorage {
     hosts: HashMap<String, PathBuf>, // Association between {user}@{host} and RSA key path
@@ -74,14 +75,6 @@ impl SshKeyStorage {
         }
     }
 
-    /// ### resolve
-    ///
-    /// Return RSA key path from host and username
-    pub fn resolve(&self, host: &str, username: &str) -> Option<&PathBuf> {
-        let key: String = Self::make_mapkey(host, username);
-        self.hosts.get(&key)
-    }
-
     /// ### make_mapkey
     ///
     /// Make mapkey from host and username
@@ -97,6 +90,13 @@ impl SshKeyStorage {
     pub fn add_key(&mut self, host: &str, username: &str, p: PathBuf) {
         let key: String = Self::make_mapkey(host, username);
         self.hosts.insert(key, p);
+    }
+}
+
+impl SshKeyStorageT for SshKeyStorage {
+    fn resolve(&self, host: &str, username: &str) -> Option<&Path> {
+        let key: String = Self::make_mapkey(host, username);
+        self.hosts.get(&key).map(|x| x.as_path())
     }
 }
 

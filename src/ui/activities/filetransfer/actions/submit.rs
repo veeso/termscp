@@ -26,7 +26,9 @@
  * SOFTWARE.
  */
 // locals
-use super::{FileTransferActivity, FsEntry};
+use super::{Entry, FileTransferActivity};
+
+use remotefs::fs::{File, Metadata};
 
 enum SubmitAction {
     ChangeDir,
@@ -38,25 +40,41 @@ impl FileTransferActivity {
     ///
     /// Decides which action to perform on submit for local explorer
     /// Return true whether the directory changed
-    pub(crate) fn action_submit_local(&mut self, entry: FsEntry) -> bool {
-        let action: SubmitAction = match &entry {
-            FsEntry::Directory(_) => SubmitAction::ChangeDir,
-            FsEntry::File(file) => {
-                match &file.symlink {
-                    Some(symlink_entry) => {
-                        // If symlink and is directory, point to symlink
-                        match &**symlink_entry {
-                            FsEntry::Directory(_) => SubmitAction::ChangeDir,
-                            _ => SubmitAction::None,
-                        }
+    pub(crate) fn action_submit_local(&mut self, entry: Entry) -> bool {
+        let (action, entry) = match &entry {
+            Entry::Directory(_) => (SubmitAction::ChangeDir, entry),
+            Entry::File(File {
+                path,
+                metadata:
+                    Metadata {
+                        symlink: Some(symlink),
+                        ..
+                    },
+                ..
+            }) => {
+                // Stat file
+                let stat_file = match self.host.stat(symlink.as_path()) {
+                    Ok(e) => e,
+                    Err(err) => {
+                        warn!(
+                            "Could not stat file pointed by {} ({}): {}",
+                            path.display(),
+                            symlink.display(),
+                            err
+                        );
+                        entry
                     }
-                    None => SubmitAction::None,
-                }
+                };
+                (SubmitAction::ChangeDir, stat_file)
             }
+            Entry::File(_) => (SubmitAction::None, entry),
         };
-        match action {
-            SubmitAction::ChangeDir => self.action_enter_local_dir(entry, false),
-            SubmitAction::None => false,
+        match (action, entry) {
+            (SubmitAction::ChangeDir, Entry::Directory(dir)) => {
+                self.action_enter_local_dir(dir, false)
+            }
+            (SubmitAction::ChangeDir, _) => false,
+            (SubmitAction::None, _) => false,
         }
     }
 
@@ -64,25 +82,41 @@ impl FileTransferActivity {
     ///
     /// Decides which action to perform on submit for remote explorer
     /// Return true whether the directory changed
-    pub(crate) fn action_submit_remote(&mut self, entry: FsEntry) -> bool {
-        let action: SubmitAction = match &entry {
-            FsEntry::Directory(_) => SubmitAction::ChangeDir,
-            FsEntry::File(file) => {
-                match &file.symlink {
-                    Some(symlink_entry) => {
-                        // If symlink and is directory, point to symlink
-                        match &**symlink_entry {
-                            FsEntry::Directory(_) => SubmitAction::ChangeDir,
-                            _ => SubmitAction::None,
-                        }
+    pub(crate) fn action_submit_remote(&mut self, entry: Entry) -> bool {
+        let (action, entry) = match &entry {
+            Entry::Directory(_) => (SubmitAction::ChangeDir, entry),
+            Entry::File(File {
+                path,
+                metadata:
+                    Metadata {
+                        symlink: Some(symlink),
+                        ..
+                    },
+                ..
+            }) => {
+                // Stat file
+                let stat_file = match self.client.stat(symlink.as_path()) {
+                    Ok(e) => e,
+                    Err(err) => {
+                        warn!(
+                            "Could not stat file pointed by {} ({}): {}",
+                            path.display(),
+                            symlink.display(),
+                            err
+                        );
+                        entry
                     }
-                    None => SubmitAction::None,
-                }
+                };
+                (SubmitAction::ChangeDir, stat_file)
             }
+            Entry::File(_) => (SubmitAction::None, entry),
         };
-        match action {
-            SubmitAction::ChangeDir => self.action_enter_remote_dir(entry, false),
-            SubmitAction::None => false,
+        match (action, entry) {
+            (SubmitAction::ChangeDir, Entry::Directory(dir)) => {
+                self.action_enter_remote_dir(dir, false)
+            }
+            (SubmitAction::ChangeDir, _) => false,
+            (SubmitAction::None, _) => false,
         }
     }
 }

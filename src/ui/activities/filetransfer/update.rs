@@ -31,8 +31,8 @@ use super::{
     browser::{FileExplorerTab, FoundExplorerTab},
     ExitReason, FileTransferActivity, Id, Msg, TransferMsg, TransferOpts, UiMsg,
 };
-use crate::fs::FsEntry;
 // externals
+use remotefs::fs::Entry;
 use tuirealm::{
     props::{AttrValue, Attribute},
     State, StateValue, Update,
@@ -282,7 +282,7 @@ impl FileTransferActivity {
                 // Mount wait
                 self.mount_blocking_wait(format!(r#"Searching for "{}"…"#, search).as_str());
                 // Find
-                let res: Result<Vec<FsEntry>, String> = match self.browser.tab() {
+                let res: Result<Vec<Entry>, String> = match self.browser.tab() {
                     FileExplorerTab::Local => self.action_local_find(search.clone()),
                     FileExplorerTab::Remote => self.action_remote_find(search.clone()),
                     _ => panic!("Trying to search for files, while already in a find result"),
