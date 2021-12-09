@@ -514,11 +514,7 @@ impl Localhost {
             atime: attr.accessed().unwrap_or(SystemTime::UNIX_EPOCH),
             ctime: attr.created().unwrap_or(SystemTime::UNIX_EPOCH),
             mtime: attr.modified().unwrap_or(SystemTime::UNIX_EPOCH),
-            size: if path.is_dir() {
-                attr.blksize()
-            } else {
-                attr.len()
-            },
+            size: if path.is_dir() { 0 } else { attr.len() },
             symlink: fs::read_link(path.as_path()).ok(),
             uid: None,
             gid: None,
