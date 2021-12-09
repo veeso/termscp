@@ -74,7 +74,7 @@ Address syntax can be:
     - `s3://bucket-name@region:profile:/wrkdir` for Aws S3 protocol
 
 Please, report issues to <https://github.com/veeso/termscp>
-Please, consider supporting the author <https://www.buymeacoffee.com/veeso>")]
+Please, consider supporting the author <https://ko-fi.com/veeso>")]
 struct Args {
     #[argh(switch, short = 'c', description = "open termscp configuration")]
     config: bool,
