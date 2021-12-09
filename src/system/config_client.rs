@@ -30,8 +30,8 @@ use crate::config::{
     params::{UserConfig, DEFAULT_NOTIFICATION_TRANSFER_THRESHOLD},
     serialization::{deserialize, serialize, SerializerError, SerializerErrorKind},
 };
+use crate::explorer::GroupDirs;
 use crate::filetransfer::FileTransferProtocol;
-use crate::fs::explorer::GroupDirs;
 // Ext
 use std::fs::{create_dir, remove_file, File, OpenOptions};
 use std::io::Write;

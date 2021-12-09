@@ -49,9 +49,12 @@ impl FileTransferActivity {
 
     pub(crate) fn action_remote_exec(&mut self, input: String) {
         match self.client.as_mut().exec(input.as_str()) {
-            Ok(output) => {
+            Ok((rc, output)) => {
                 // Reload files
-                self.log(LogLevel::Info, format!("\"{}\": {}", input, output));
+                self.log(
+                    LogLevel::Info,
+                    format!("\"{}\" (exitcode: {}): {}", input, rc, output),
+                );
                 self.reload_remote_dir();
             }
             Err(err) => {

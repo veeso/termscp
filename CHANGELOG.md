@@ -44,6 +44,7 @@ Released on FIXME:
 - Dependencies:
   - Updated `tui-realm` to `1.3.0`
   - Updated `tui-realm-stdlib` to `1.1.4`
+  - Removed `rust-s3`, `ssh2`, `suppaftp`; replaced by `remotefs 0.1.1`
   - Removed `crossterm` (since bridged by tui-realm)
 
 ## 0.7.0

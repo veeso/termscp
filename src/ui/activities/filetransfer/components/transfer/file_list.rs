@@ -39,19 +39,10 @@ pub const FILE_LIST_CMD_SELECT_ALL: &str = "A";
 /// ## OwnStates
 ///
 /// OwnStates contains states for this component
-#[derive(Clone)]
+#[derive(Clone, Default)]
 struct OwnStates {
     list_index: usize,    // Index of selected element in list
     selected: Vec<usize>, // Selected files
-}
-
-impl Default for OwnStates {
-    fn default() -> Self {
-        OwnStates {
-            list_index: 0,
-            selected: Vec::new(),
-        }
-    }
 }
 
 impl OwnStates {

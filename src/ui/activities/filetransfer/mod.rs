@@ -37,10 +37,8 @@ mod view;
 // locals
 use super::{Activity, Context, ExitReason};
 use crate::config::themes::Theme;
-use crate::filetransfer::{FileTransfer, FileTransferProtocol};
-use crate::filetransfer::{FtpFileTransfer, S3FileTransfer, ScpFileTransfer, SftpFileTransfer};
-use crate::fs::explorer::{FileExplorer, FileSorting};
-use crate::fs::FsEntry;
+use crate::explorer::{FileExplorer, FileSorting};
+use crate::filetransfer::{Builder, FileTransferParams};
 use crate::host::Localhost;
 use crate::system::config_client::ConfigClient;
 pub(self) use lib::browser;
@@ -50,6 +48,7 @@ pub(self) use session::TransferPayload;
 
 // Includes
 use chrono::{DateTime, Local};
+use remotefs::RemoteFs;
 use std::collections::VecDeque;
 use std::time::Duration;
 use tempfile::TempDir;
@@ -217,8 +216,8 @@ pub struct FileTransferActivity {
     redraw: bool,
     /// Localhost bridge
     host: Localhost,
-    /// Remote host
-    client: Box<dyn FileTransfer>,
+    /// Remote host client
+    client: Box<dyn RemoteFs>,
     /// Browser
     browser: Browser,
     /// Current log lines
@@ -232,7 +231,7 @@ impl FileTransferActivity {
     /// ### new
     ///
     /// Instantiates a new FileTransferActivity
-    pub fn new(host: Localhost, protocol: FileTransferProtocol, ticks: Duration) -> Self {
+    pub fn new(host: Localhost, params: &FileTransferParams, ticks: Duration) -> Self {
         // Get config client
         let config_client: ConfigClient = Self::init_config_client();
         Self {
@@ -245,16 +244,7 @@ impl FileTransferActivity {
             ),
             redraw: true,
             host,
-            client: match protocol {
-                FileTransferProtocol::Sftp => Box::new(SftpFileTransfer::new(
-                    Self::make_ssh_storage(&config_client),
-                )),
-                FileTransferProtocol::Ftp(ftps) => Box::new(FtpFileTransfer::new(ftps)),
-                FileTransferProtocol::Scp => {
-                    Box::new(ScpFileTransfer::new(Self::make_ssh_storage(&config_client)))
-                }
-                FileTransferProtocol::AwsS3 => Box::new(S3FileTransfer::default()),
-            },
+            client: Builder::build(params.protocol, params.params.clone(), &config_client),
             browser: Browser::new(&config_client),
             log_records: VecDeque::with_capacity(256), // 256 events is enough I guess
             transfer: TransferStates::default(),

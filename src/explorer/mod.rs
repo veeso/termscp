@@ -29,9 +29,9 @@
 pub(crate) mod builder;
 mod formatter;
 // Locals
-use super::FsEntry;
 use formatter::Formatter;
 // Ext
+use remotefs::fs::Entry;
 use std::cmp::Reverse;
 use std::collections::VecDeque;
 use std::path::{Path, PathBuf};
@@ -77,8 +77,8 @@ pub struct FileExplorer {
     pub(crate) file_sorting: FileSorting,     // File sorting criteria
     pub(crate) group_dirs: Option<GroupDirs>, // If Some, defines how to group directories
     pub(crate) opts: ExplorerOpts,            // Explorer options
-    pub(crate) fmt: Formatter,                // FsEntry formatter
-    files: Vec<FsEntry>,                      // Files in directory
+    pub(crate) fmt: Formatter,                // Entry formatter
+    files: Vec<Entry>,                        // Files in directory
 }
 
 impl Default for FileExplorer {
@@ -121,7 +121,7 @@ impl FileExplorer {
     /// Set Explorer files
     /// This method will also sort entries based on current options
     /// Once all sorting have been performed, index is moved to first valid entry.
-    pub fn set_files(&mut self, files: Vec<FsEntry>) {
+    pub fn set_files(&mut self, files: Vec<Entry>) {
         self.files = files;
         // Sort
         self.sort();
@@ -149,7 +149,7 @@ impl FileExplorer {
     ///
     /// Iterate over files
     /// Filters are applied based on current options (e.g. hidden files not returned)
-    pub fn iter_files(&self) -> impl Iterator<Item = &FsEntry> + '_ {
+    pub fn iter_files(&self) -> impl Iterator<Item = &Entry> + '_ {
         // Filter
         let opts: ExplorerOpts = self.opts;
         Box::new(self.files.iter().filter(move |x| {
@@ -166,14 +166,14 @@ impl FileExplorer {
     /// ### iter_files_all
     ///
     /// Iterate all files; doesn't care about options
-    pub fn iter_files_all(&self) -> impl Iterator<Item = &FsEntry> + '_ {
+    pub fn iter_files_all(&self) -> impl Iterator<Item = &Entry> + '_ {
         Box::new(self.files.iter())
     }
 
     /// ### get
     ///
     /// Get file at relative index
-    pub fn get(&self, idx: usize) -> Option<&FsEntry> {
+    pub fn get(&self, idx: usize) -> Option<&Entry> {
         let opts: ExplorerOpts = self.opts;
         let filtered = self
             .files
@@ -196,7 +196,7 @@ impl FileExplorer {
     /// ### fmt_file
     ///
     /// Format a file entry
-    pub fn fmt_file(&self, entry: &FsEntry) -> String {
+    pub fn fmt_file(&self, entry: &Entry) -> String {
         self.fmt.fmt(entry)
     }
 
@@ -256,17 +256,15 @@ impl FileExplorer {
     ///
     /// Sort explorer files by their name. All names are converted to lowercase
     fn sort_files_by_name(&mut self) {
-        self.files
-            .sort_by_key(|x: &FsEntry| x.get_name().to_lowercase());
+        self.files.sort_by_key(|x: &Entry| x.name().to_lowercase());
     }
 
     /// ### sort_files_by_mtime
     ///
     /// Sort files by mtime; the newest comes first
     fn sort_files_by_mtime(&mut self) {
-        self.files.sort_by(|a: &FsEntry, b: &FsEntry| {
-            b.get_last_change_time().cmp(&a.get_last_change_time())
-        });
+        self.files
+            .sort_by(|a: &Entry, b: &Entry| b.metadata().mtime.cmp(&a.metadata().mtime));
     }
 
     /// ### sort_files_by_creation_time
@@ -274,28 +272,29 @@ impl FileExplorer {
     /// Sort files by creation time; the newest comes first
     fn sort_files_by_creation_time(&mut self) {
         self.files
-            .sort_by_key(|b: &FsEntry| Reverse(b.get_creation_time()));
+            .sort_by_key(|b: &Entry| Reverse(b.metadata().ctime));
     }
 
     /// ### sort_files_by_size
     ///
     /// Sort files by size
     fn sort_files_by_size(&mut self) {
-        self.files.sort_by_key(|b: &FsEntry| Reverse(b.get_size()));
+        self.files
+            .sort_by_key(|b: &Entry| Reverse(b.metadata().size));
     }
 
     /// ### sort_files_directories_first
     ///
     /// Sort files; directories come first
     fn sort_files_directories_first(&mut self) {
-        self.files.sort_by_key(|x: &FsEntry| x.is_file());
+        self.files.sort_by_key(|x: &Entry| x.is_file());
     }
 
     /// ### sort_files_directories_last
     ///
     /// Sort files; directories come last
     fn sort_files_directories_last(&mut self) {
-        self.files.sort_by_key(|x: &FsEntry| x.is_dir());
+        self.files.sort_by_key(|x: &Entry| x.is_dir());
     }
 
     /// ### toggle_hidden_files
@@ -363,10 +362,10 @@ impl FromStr for GroupDirs {
 mod tests {
 
     use super::*;
-    use crate::fs::{FsDirectory, FsFile, UnixPex};
     use crate::utils::fmt::fmt_time;
 
     use pretty_assertions::assert_eq;
+    use remotefs::fs::{Directory, File, Metadata, UnixPex};
     use std::thread::sleep;
     use std::time::{Duration, SystemTime};
 
@@ -430,10 +429,7 @@ mod tests {
         assert!(explorer.get(100).is_none());
         //assert_eq!(explorer.count(), 6);
         // Verify (files are sorted by name)
-        assert_eq!(
-            explorer.files.get(0).unwrap().get_name(),
-            String::from(".git/")
-        );
+        assert_eq!(explorer.files.get(0).unwrap().name(), ".git/");
         // Iter files (all)
         assert_eq!(explorer.iter_files_all().count(), 6);
         // Iter files (hidden excluded) (.git, .gitignore are hidden)
@@ -461,47 +457,41 @@ mod tests {
         ]);
         explorer.sort_by(FileSorting::Name);
         // First entry should be "Cargo.lock"
-        assert_eq!(explorer.files.get(0).unwrap().get_name(), "Cargo.lock");
+        assert_eq!(explorer.files.get(0).unwrap().name(), "Cargo.lock");
         // Last should be "src/"
-        assert_eq!(explorer.files.get(8).unwrap().get_name(), "src/");
+        assert_eq!(explorer.files.get(8).unwrap().name(), "src/");
     }
 
     #[test]
     fn test_fs_explorer_sort_by_mtime() {
         let mut explorer: FileExplorer = FileExplorer::default();
-        let entry1: FsEntry = make_fs_entry("README.md", false);
+        let entry1: Entry = make_fs_entry("README.md", false);
         // Wait 1 sec
         sleep(Duration::from_secs(1));
-        let entry2: FsEntry = make_fs_entry("CODE_OF_CONDUCT.md", false);
+        let entry2: Entry = make_fs_entry("CODE_OF_CONDUCT.md", false);
         // Create files (files are then sorted by name)
         explorer.set_files(vec![entry1, entry2]);
         explorer.sort_by(FileSorting::ModifyTime);
         // First entry should be "CODE_OF_CONDUCT.md"
-        assert_eq!(
-            explorer.files.get(0).unwrap().get_name(),
-            "CODE_OF_CONDUCT.md"
-        );
+        assert_eq!(explorer.files.get(0).unwrap().name(), "CODE_OF_CONDUCT.md");
         // Last should be "src/"
-        assert_eq!(explorer.files.get(1).unwrap().get_name(), "README.md");
+        assert_eq!(explorer.files.get(1).unwrap().name(), "README.md");
     }
 
     #[test]
     fn test_fs_explorer_sort_by_creation_time() {
         let mut explorer: FileExplorer = FileExplorer::default();
-        let entry1: FsEntry = make_fs_entry("README.md", false);
+        let entry1: Entry = make_fs_entry("README.md", false);
         // Wait 1 sec
         sleep(Duration::from_secs(1));
-        let entry2: FsEntry = make_fs_entry("CODE_OF_CONDUCT.md", false);
+        let entry2: Entry = make_fs_entry("CODE_OF_CONDUCT.md", false);
         // Create files (files are then sorted by name)
         explorer.set_files(vec![entry1, entry2]);
         explorer.sort_by(FileSorting::CreationTime);
         // First entry should be "CODE_OF_CONDUCT.md"
-        assert_eq!(
-            explorer.files.get(0).unwrap().get_name(),
-            "CODE_OF_CONDUCT.md"
-        );
+        assert_eq!(explorer.files.get(0).unwrap().name(), "CODE_OF_CONDUCT.md");
         // Last should be "src/"
-        assert_eq!(explorer.files.get(1).unwrap().get_name(), "README.md");
+        assert_eq!(explorer.files.get(1).unwrap().name(), "README.md");
     }
 
     #[test]
@@ -510,14 +500,14 @@ mod tests {
         // Create files (files are then sorted by name)
         explorer.set_files(vec![
             make_fs_entry_with_size("README.md", false, 1024),
-            make_fs_entry("src/", true),
+            make_fs_entry_with_size("src/", true, 4096),
             make_fs_entry_with_size("CONTRIBUTING.md", false, 256),
         ]);
         explorer.sort_by(FileSorting::Size);
         // Directory has size 4096
-        assert_eq!(explorer.files.get(0).unwrap().get_name(), "src/");
-        assert_eq!(explorer.files.get(1).unwrap().get_name(), "README.md");
-        assert_eq!(explorer.files.get(2).unwrap().get_name(), "CONTRIBUTING.md");
+        assert_eq!(explorer.files.get(0).unwrap().name(), "src/");
+        assert_eq!(explorer.files.get(1).unwrap().name(), "README.md");
+        assert_eq!(explorer.files.get(2).unwrap().name(), "CONTRIBUTING.md");
     }
 
     #[test]
@@ -539,12 +529,12 @@ mod tests {
         explorer.sort_by(FileSorting::Name);
         explorer.group_dirs_by(Some(GroupDirs::First));
         // First entry should be "docs"
-        assert_eq!(explorer.files.get(0).unwrap().get_name(), "docs/");
-        assert_eq!(explorer.files.get(1).unwrap().get_name(), "src/");
+        assert_eq!(explorer.files.get(0).unwrap().name(), "docs/");
+        assert_eq!(explorer.files.get(1).unwrap().name(), "src/");
         // 3rd is file first for alphabetical order
-        assert_eq!(explorer.files.get(2).unwrap().get_name(), "Cargo.lock");
+        assert_eq!(explorer.files.get(2).unwrap().name(), "Cargo.lock");
         // Last should be "README.md" (last file for alphabetical ordening)
-        assert_eq!(explorer.files.get(9).unwrap().get_name(), "README.md");
+        assert_eq!(explorer.files.get(9).unwrap().name(), "README.md");
     }
 
     #[test]
@@ -566,12 +556,12 @@ mod tests {
         explorer.sort_by(FileSorting::Name);
         explorer.group_dirs_by(Some(GroupDirs::Last));
         // Last entry should be "src"
-        assert_eq!(explorer.files.get(8).unwrap().get_name(), "docs/");
-        assert_eq!(explorer.files.get(9).unwrap().get_name(), "src/");
+        assert_eq!(explorer.files.get(8).unwrap().name(), "docs/");
+        assert_eq!(explorer.files.get(9).unwrap().name(), "src/");
         // first is file for alphabetical order
-        assert_eq!(explorer.files.get(0).unwrap().get_name(), "Cargo.lock");
+        assert_eq!(explorer.files.get(0).unwrap().name(), "Cargo.lock");
         // Last in files should be "README.md" (last file for alphabetical ordening)
-        assert_eq!(explorer.files.get(7).unwrap().get_name(), "README.md");
+        assert_eq!(explorer.files.get(7).unwrap().name(), "README.md");
     }
 
     #[test]
@@ -579,18 +569,20 @@ mod tests {
         let explorer: FileExplorer = FileExplorer::default();
         // Create fs entry
         let t: SystemTime = SystemTime::now();
-        let entry: FsEntry = FsEntry::File(FsFile {
+        let entry: Entry = Entry::File(File {
             name: String::from("bar.txt"),
-            abs_path: PathBuf::from("/bar.txt"),
-            last_change_time: t,
-            last_access_time: t,
-            creation_time: t,
-            size: 8192,
-            ftype: Some(String::from("txt")),
-            symlink: None,  // UNIX only
-            user: Some(0),  // UNIX only
-            group: Some(0), // UNIX only
-            unix_pex: Some((UnixPex::from(6), UnixPex::from(4), UnixPex::from(4))), // UNIX only
+            path: PathBuf::from("/bar.txt"),
+            extension: Some(String::from("txt")),
+            metadata: Metadata {
+                atime: t,
+                ctime: t,
+                size: 8192,
+                mtime: t,
+                symlink: None,
+                uid: Some(0),
+                gid: Some(0),
+                mode: Some(UnixPex::from(0o644)),
+            },
         });
         #[cfg(target_family = "unix")]
         assert_eq!(
@@ -654,67 +646,61 @@ mod tests {
         ]);
         explorer.del_entry(0);
         assert_eq!(explorer.files.len(), 3);
-        assert_eq!(explorer.files[0].get_name(), "docs/");
+        assert_eq!(explorer.files[0].name(), "docs/");
         explorer.del_entry(5);
         assert_eq!(explorer.files.len(), 3);
     }
 
-    fn make_fs_entry(name: &str, is_dir: bool) -> FsEntry {
-        let t_now: SystemTime = SystemTime::now();
+    fn make_fs_entry(name: &str, is_dir: bool) -> Entry {
+        let t: SystemTime = SystemTime::now();
+        let metadata = Metadata {
+            atime: t,
+            ctime: t,
+            mtime: t,
+            symlink: None,
+            gid: Some(0),
+            uid: Some(0),
+            mode: Some(UnixPex::from(if is_dir { 0o755 } else { 0o644 })),
+            size: 64,
+        };
         match is_dir {
-            false => FsEntry::File(FsFile {
+            false => Entry::File(File {
                 name: name.to_string(),
-                abs_path: PathBuf::from(name),
-                last_change_time: t_now,
-                last_access_time: t_now,
-                creation_time: t_now,
-                size: 64,
-                ftype: None,    // File type
-                symlink: None,  // UNIX only
-                user: Some(0),  // UNIX only
-                group: Some(0), // UNIX only
-                unix_pex: Some((UnixPex::from(6), UnixPex::from(4), UnixPex::from(4))), // UNIX only
+                path: PathBuf::from(name),
+                extension: None,
+                metadata,
             }),
-            true => FsEntry::Directory(FsDirectory {
+            true => Entry::Directory(Directory {
                 name: name.to_string(),
-                abs_path: PathBuf::from(name),
-                last_change_time: t_now,
-                last_access_time: t_now,
-                creation_time: t_now,
-                symlink: None,  // UNIX only
-                user: Some(0),  // UNIX only
-                group: Some(0), // UNIX only
-                unix_pex: Some((UnixPex::from(7), UnixPex::from(5), UnixPex::from(5))), // UNIX only
+                path: PathBuf::from(name),
+                metadata,
             }),
         }
     }
 
-    fn make_fs_entry_with_size(name: &str, is_dir: bool, size: usize) -> FsEntry {
-        let t_now: SystemTime = SystemTime::now();
+    fn make_fs_entry_with_size(name: &str, is_dir: bool, size: usize) -> Entry {
+        let t: SystemTime = SystemTime::now();
+        let metadata = Metadata {
+            atime: t,
+            ctime: t,
+            mtime: t,
+            symlink: None,
+            gid: Some(0),
+            uid: Some(0),
+            mode: Some(UnixPex::from(if is_dir { 0o755 } else { 0o644 })),
+            size: size as u64,
+        };
         match is_dir {
-            false => FsEntry::File(FsFile {
+            false => Entry::File(File {
                 name: name.to_string(),
-                abs_path: PathBuf::from(name),
-                last_change_time: t_now,
-                last_access_time: t_now,
-                creation_time: t_now,
-                size: size,
-                ftype: None,    // File type
-                symlink: None,  // UNIX only
-                user: Some(0),  // UNIX only
-                group: Some(0), // UNIX only
-                unix_pex: Some((UnixPex::from(6), UnixPex::from(4), UnixPex::from(4))), // UNIX only
+                path: PathBuf::from(name),
+                extension: None,
+                metadata,
             }),
-            true => FsEntry::Directory(FsDirectory {
+            true => Entry::Directory(Directory {
                 name: name.to_string(),
-                abs_path: PathBuf::from(name),
-                last_change_time: t_now,
-                last_access_time: t_now,
-                creation_time: t_now,
-                symlink: None,  // UNIX only
-                user: Some(0),  // UNIX only
-                group: Some(0), // UNIX only
-                unix_pex: Some((UnixPex::from(7), UnixPex::from(5), UnixPex::from(5))), // UNIX only
+                path: PathBuf::from(name),
+                metadata,
             }),
         }
     }

@@ -3,22 +3,12 @@
 Document audience: developers
 
 - [Developer Manual](#developer-manual)
-  - [How to test](#how-to-test)
   - [How termscp works](#how-termscp-works)
   - [Activities](#activities)
     - [The Context](#the-context)
 
 Welcome to the developer manual for termscp. This chapter DOESN'T contain the documentation for termscp modules, which can instead be found on Rust Docs at <https://docs.rs/termscp>
 This chapter describes how termscp works and the guide lines to implement stuff such as file transfers and add features to the user interface.
-
-## How to test
-
-First an introduction to tests.
-
-Usually it's enough to run `cargo test`, but please note that whenever you're working on file transfer you'll need one more step.
-In order to run tests with file transfers, you need to start the file transfer server containers, which can be started via `docker`.
-
-To run all tests with file transfers just run: `./tests/test.sh`
 
 ---
 

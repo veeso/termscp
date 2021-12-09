@@ -27,21 +27,19 @@
  */
 // locals
 use super::super::browser::FileExplorerTab;
-use super::{
-    FileTransferActivity, FsEntry, LogLevel, SelectedEntry, TransferOpts, TransferPayload,
-};
+use super::{Entry, FileTransferActivity, LogLevel, SelectedEntry, TransferOpts, TransferPayload};
 
 use std::path::PathBuf;
 
 impl FileTransferActivity {
-    pub(crate) fn action_local_find(&mut self, input: String) -> Result<Vec<FsEntry>, String> {
+    pub(crate) fn action_local_find(&mut self, input: String) -> Result<Vec<Entry>, String> {
         match self.host.find(input.as_str()) {
             Ok(entries) => Ok(entries),
             Err(err) => Err(format!("Could not search for files: {}", err)),
         }
     }
 
-    pub(crate) fn action_remote_find(&mut self, input: String) -> Result<Vec<FsEntry>, String> {
+    pub(crate) fn action_remote_find(&mut self, input: String) -> Result<Vec<Entry>, String> {
         match self.client.as_mut().find(input.as_str()) {
             Ok(entries) => Ok(entries),
             Err(err) => Err(format!("Could not search for files: {}", err)),
@@ -53,8 +51,8 @@ impl FileTransferActivity {
         if let SelectedEntry::One(entry) = self.get_found_selected_entries() {
             // Get path: if a directory, use directory path; if it is a File, get parent path
             let path: PathBuf = match entry {
-                FsEntry::Directory(dir) => dir.abs_path,
-                FsEntry::File(file) => match file.abs_path.parent() {
+                Entry::Directory(dir) => dir.path,
+                Entry::File(file) => match file.path.parent() {
                     None => PathBuf::from("."),
                     Some(p) => p.to_path_buf(),
                 },
@@ -86,10 +84,10 @@ impl FileTransferActivity {
                     {
                         // Save pending transfer
                         self.set_pending_transfer(
-                            opts.save_as.as_deref().unwrap_or_else(|| entry.get_name()),
+                            opts.save_as.as_deref().unwrap_or_else(|| entry.name()),
                         );
                     } else if let Err(err) = self.filetransfer_send(
-                        TransferPayload::Any(entry.get_realfile()),
+                        TransferPayload::Any(entry),
                         wrkdir.as_path(),
                         opts.save_as,
                     ) {
@@ -107,10 +105,10 @@ impl FileTransferActivity {
                     {
                         // Save pending transfer
                         self.set_pending_transfer(
-                            opts.save_as.as_deref().unwrap_or_else(|| entry.get_name()),
+                            opts.save_as.as_deref().unwrap_or_else(|| entry.name()),
                         );
                     } else if let Err(err) = self.filetransfer_recv(
-                        TransferPayload::Any(entry.get_realfile()),
+                        TransferPayload::Any(entry),
                         wrkdir.as_path(),
                         opts.save_as,
                     ) {
@@ -128,12 +126,11 @@ impl FileTransferActivity {
                     dest_path.push(save_as);
                 }
                 // Iter files
-                let entries: Vec<FsEntry> = entries.iter().map(|x| x.get_realfile()).collect();
                 match self.browser.tab() {
                     FileExplorerTab::FindLocal | FileExplorerTab::Local => {
                         if opts.check_replace && self.config().get_prompt_on_file_replace() {
                             // Check which file would be replaced
-                            let existing_files: Vec<&FsEntry> = entries
+                            let existing_files: Vec<&Entry> = entries
                                 .iter()
                                 .filter(|x| {
                                     self.remote_file_exists(
@@ -166,7 +163,7 @@ impl FileTransferActivity {
                     FileExplorerTab::FindRemote | FileExplorerTab::Remote => {
                         if opts.check_replace && self.config().get_prompt_on_file_replace() {
                             // Check which file would be replaced
-                            let existing_files: Vec<&FsEntry> = entries
+                            let existing_files: Vec<&Entry> = entries
                                 .iter()
                                 .filter(|x| {
                                     self.local_file_exists(
@@ -218,7 +215,7 @@ impl FileTransferActivity {
         }
     }
 
-    fn remove_found_file(&mut self, entry: &FsEntry) {
+    fn remove_found_file(&mut self, entry: &Entry) {
         match self.browser.tab() {
             FileExplorerTab::FindLocal | FileExplorerTab::Local => {
                 self.local_remove_file(entry);
@@ -263,7 +260,7 @@ impl FileTransferActivity {
         }
     }
 
-    fn open_found_file(&mut self, entry: &FsEntry, with: Option<&str>) {
+    fn open_found_file(&mut self, entry: &Entry, with: Option<&str>) {
         match self.browser.tab() {
             FileExplorerTab::FindLocal | FileExplorerTab::Local => {
                 self.action_open_local_file(entry, with);

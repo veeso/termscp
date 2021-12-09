@@ -48,13 +48,11 @@ notify-rust = { version = "4.5.3", default-features = false, features = [ "d" ] 
 open = "2.0.1"
 rand = "0.8.4"
 regex = "1.5.4"
+remotefs = { version = "0.1.1", features = [ "aws-s3", "ftp", "ssh" ] }
 rpassword = "5.0.1"
-rust-s3 = { version = "0.27.0-rc4", default-features = false, features = [ "sync-native-tls", "sync" ] }
 self_update = { version = "0.27.0", features = [ "archive-tar", "archive-zip", "compression-flate2", "compression-zip-deflate" ] }
 serde = { version = "^1.0.0", features = [ "derive" ] }
 simplelog = "0.10.0"
-ssh2 = "0.9.0"
-suppaftp = { version = "4.1.2", features = [ "secure" ] }
 tempfile = "3.1.0"
 textwrap = "0.14.2"
 thiserror = "^1.0.0"
@@ -71,14 +69,8 @@ serial_test = "^0.5.1"
 [features]
 default = [ "with-keyring" ]
 github-actions = [ ]
-with-s3-ci = []
-with-containers = []
 with-keyring = [ "keyring" ]
 
 [target."cfg(target_family = \"unix\")"]
 [target."cfg(target_family = \"unix\")".dependencies]
 users = "0.11.0"
-
-[target."cfg(target_os = \"windows\")"]
-[target."cfg(target_os = \"windows\")".dependencies]
-path-slash = "0.1.4"

@@ -26,8 +26,8 @@
  * SOFTWARE.
  */
 use super::{ConfigMsg, Msg};
+use crate::explorer::GroupDirs as GroupDirsEnum;
 use crate::filetransfer::FileTransferProtocol;
-use crate::fs::explorer::GroupDirs as GroupDirsEnum;
 use crate::utils::parser::parse_bytesize;
 
 use tui_realm_stdlib::{Input, Radio};

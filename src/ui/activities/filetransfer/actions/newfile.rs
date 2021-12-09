@@ -26,7 +26,7 @@
  * SOFTWARE.
  */
 // locals
-use super::{FileTransferActivity, FsEntry, LogLevel};
+use super::{Entry, FileTransferActivity, LogLevel};
 use std::fs::File;
 use std::path::PathBuf;
 
@@ -35,7 +35,7 @@ impl FileTransferActivity {
         // Check if file exists
         let mut file_exists: bool = false;
         for file in self.local().iter_files_all() {
-            if input == file.get_name() {
+            if input == file.name() {
                 file_exists = true;
             }
         }
@@ -67,7 +67,7 @@ impl FileTransferActivity {
         // Check if file exists
         let mut file_exists: bool = false;
         for file in self.remote().iter_files_all() {
-            if input == file.get_name() {
+            if input == file.name() {
                 file_exists = true;
             }
         }
@@ -88,7 +88,7 @@ impl FileTransferActivity {
             ),
             Ok(tfile) => {
                 // Stat tempfile
-                let local_file: FsEntry = match self.host.stat(tfile.path()) {
+                let local_file: Entry = match self.host.stat(tfile.path()) {
                     Err(err) => {
                         self.log_and_alert(
                             LogLevel::Error,
@@ -98,7 +98,7 @@ impl FileTransferActivity {
                     }
                     Ok(f) => f,
                 };
-                if let FsEntry::File(local_file) = local_file {
+                if let Entry::File(local_file) = local_file {
                     // Create file
                     let reader = Box::new(match File::open(tfile.path()) {
                         Ok(f) => f,
@@ -112,7 +112,7 @@ impl FileTransferActivity {
                     });
                     match self
                         .client
-                        .send_file_wno_stream(&local_file, file_path.as_path(), reader)
+                        .create_file(file_path.as_path(), &local_file.metadata, reader)
                     {
                         Err(err) => self.log_and_alert(
                             LogLevel::Error,

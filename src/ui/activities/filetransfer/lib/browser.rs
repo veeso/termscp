@@ -25,10 +25,10 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-use crate::fs::explorer::{builder::FileExplorerBuilder, FileExplorer, FileSorting, GroupDirs};
-use crate::fs::FsEntry;
+use crate::explorer::{builder::FileExplorerBuilder, FileExplorer, FileSorting, GroupDirs};
 use crate::system::config_client::ConfigClient;
 
+use remotefs::Entry;
 use std::path::Path;
 
 /// ## FileExplorerTab
@@ -100,7 +100,7 @@ impl Browser {
         self.found.as_mut().map(|x| &mut x.1)
     }
 
-    pub fn set_found(&mut self, tab: FoundExplorerTab, files: Vec<FsEntry>, wrkdir: &Path) {
+    pub fn set_found(&mut self, tab: FoundExplorerTab, files: Vec<Entry>, wrkdir: &Path) {
         let mut explorer = Self::build_found_explorer(wrkdir);
         explorer.set_files(files);
         self.found = Some((tab, explorer));
