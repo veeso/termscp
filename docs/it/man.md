@@ -143,8 +143,8 @@ Per cambiare pannello ti puoi muovere con le frecce, `<LEFT>` per andare sul pan
 | Key           | Command                                               | Reminder    |
 |---------------|-------------------------------------------------------|-------------|
 | `<ESC>`       | Disconnettiti; chiudi popup                           |             |
-| `<TAB>`       | Cambia tra explorer e pannello di log                 |             |
 | `<BACKSPACE>` | Vai alla directory precedente                         |             |
+| `<TAB>`       | Cambia pannello remoto                                |             |
 | `<RIGHT>`     | Vai al pannello remoto                                |             |
 | `<LEFT>`      | Vai al pannello locale                                |             |
 | `<UP>`        | Muovi il cursore verso l'alto                         |             |
@@ -153,28 +153,28 @@ Per cambiare pannello ti puoi muovere con le frecce, `<LEFT>` per andare sul pan
 | `<PGDOWN>`    | Muovi il cursore verso il basso di 8                  |             |
 | `<ENTER>`     | Entra nella directory                                 |             |
 | `<SPACE>`     | Upload / download file selezionato/i                  |             |
+| `<BACKTAB>`   | Cambia tra explorer e pannello di log                 |             |
 | `<A>`         | Mostra/nascondi file nascosti                         | All         |
 | `<B>`         | Ordina file per                                       | Bubblesort? |
-| `<C>`         | Copia file/directory                                  | Copy        |
-| `<D>`         | Crea directory                                        | Directory   |
-| `<E>`         | Elimina file (Come   `DEL`)                           | Erase       |
+| `<C|F5>`      | Copia file/directory                                  | Copy        |
+| `<D|F7>`      | Crea directory                                        | Directory   |
+| `<E|F8|DEL>`  | Elimina file                                          | Erase       |
 | `<F>`         | Cerca file (wild match supportato)                    | Find        |
 | `<G>`         | Vai al percorso indicato                              | Go to       |
-| `<H>`         | Mostra help                                           | Help        |
+| `<H|F1>`      | Mostra help                                           | Help        |
 | `<I>`         | Mostra informazioni per il file selezionato           | Info        |
 | `<L>`         | Ricarica posizione corrente / pulisci selezione file  | List        |
 | `<M>`         | Seleziona file                                        | Mark         |
 | `<N>`         | Crea nuovo file con il nome fornito                   | New         |
-| `<O>`         | Modifica file; Vedi text editor                       | Open        |
-| `<Q>`         | Termina termscp                                       | Quit        |
-| `<R>`         | Rinomina file                                         | Rename      |
+| `<O|F4>`      | Modifica file; Vedi text editor                       | Open        |
+| `<Q|F10>`     | Termina termscp                                       | Quit        |
+| `<R|F6>`      | Rinomina file                                         | Rename      |
 | `<S>`         | Salva file con nome                                   | Save        |
 | `<U>`         | Vai alla directory padre                              | Upper       |
-| `<V>`         | Apri il file con il programma definito dal sistema    | View        |
+| `<V|F3>`      | Apri il file con il programma definito dal sistema    | View        |
 | `<W>`         | Apri il file con il programma specificato             | With        |
 | `<X>`         | Esegui comando shell                                  | eXecute     |
 | `<Y>`         | Abilita/disabilita Sync-Browsing                      | sYnc        |
-| `<DEL>`       | Rimuovi file                                          |             |
 | `<CTRL+A>`    | Seleziona tutti i file                                |             |
 | `<CTRL+C>`    | Annulla trasferimento file                            |             |
 

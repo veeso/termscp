@@ -52,8 +52,17 @@ impl FileTransferActivity {
         let remote_explorer_background = self.theme().transfer_remote_explorer_background;
         let remote_explorer_foreground = self.theme().transfer_remote_explorer_foreground;
         let remote_explorer_highlighted = self.theme().transfer_remote_explorer_highlighted;
+        let key_color = self.theme().misc_keys;
         let log_panel = self.theme().transfer_log_window;
         let log_background = self.theme().transfer_log_background;
+        assert!(self
+            .app
+            .mount(
+                Id::FooterBar,
+                Box::new(components::FooterBar::new(key_color)),
+                vec![]
+            )
+            .is_ok());
         assert!(self
             .app
             .mount(
@@ -111,9 +120,19 @@ impl FileTransferActivity {
         let store: &mut Store = &mut context.store;
         let _ = context.terminal.raw_mut().draw(|f| {
             // Prepare chunks
-            let chunks = Layout::default()
+            let body = Layout::default()
                 .direction(Direction::Vertical)
-                .margin(1)
+                .constraints(
+                    [
+                        Constraint::Min(7),    // Body
+                        Constraint::Length(1), // Footer
+                    ]
+                    .as_ref(),
+                )
+                .split(f.size());
+            // main chunks
+            let main_chunks = Layout::default()
+                .direction(Direction::Vertical)
                 .constraints(
                     [
                         Constraint::Percentage(70), // Explorer
@@ -121,17 +140,17 @@ impl FileTransferActivity {
                     ]
                     .as_ref(),
                 )
-                .split(f.size());
+                .split(body[0]);
             // Create explorer chunks
             let tabs_chunks = Layout::default()
                 .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
                 .direction(Direction::Horizontal)
-                .split(chunks[0]);
+                .split(main_chunks[0]);
             // Create log box chunks
             let bottom_chunks = Layout::default()
                 .constraints([Constraint::Length(1), Constraint::Length(10)].as_ref())
                 .direction(Direction::Vertical)
-                .split(chunks[1]);
+                .split(main_chunks[1]);
             // Create status bar chunks
             let status_bar_chunks = Layout::default()
                 .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
@@ -142,6 +161,8 @@ impl FileTransferActivity {
             if !store.isset(super::STORAGE_EXPLORER_WIDTH) {
                 store.set_unsigned(super::STORAGE_EXPLORER_WIDTH, tabs_chunks[0].width as usize);
             }
+            // Draw footer
+            self.app.view(&Id::FooterBar, f, body[1]);
             // Draw explorers
             // @! Local explorer (Find or default)
             if matches!(self.browser.found_tab(), Some(FoundExplorerTab::Local)) {
@@ -812,6 +833,20 @@ impl FileTransferActivity {
                     Sub::new(
                         SubEventClause::Keyboard(KeyEvent {
                             code: Key::Char('h'),
+                            modifiers: KeyModifiers::NONE,
+                        }),
+                        Self::no_popup_mounted_clause(),
+                    ),
+                    Sub::new(
+                        SubEventClause::Keyboard(KeyEvent {
+                            code: Key::Function(1),
+                            modifiers: KeyModifiers::NONE,
+                        }),
+                        Self::no_popup_mounted_clause(),
+                    ),
+                    Sub::new(
+                        SubEventClause::Keyboard(KeyEvent {
+                            code: Key::Function(10),
                             modifiers: KeyModifiers::NONE,
                         }),
                         Self::no_popup_mounted_clause(),

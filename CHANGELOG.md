@@ -38,6 +38,18 @@ Released on FIXME:
   - **Ui**:
     - Transfer abortion is now more responsive
     - Selected files will now be rendered with **Reversed, underlined and italic** text modifiers instead of being prepended with `*`.
+    - **Midnight commander keys**
+      - `<F1>`: Show help
+      - `<F3>`: View file
+      - `<F4>`: Open file (with text editor)
+      - `<F5>`: Copy file
+      - `<F6>`: Rename file
+      - `<F7>`: Make directory
+      - `<F8>`: Remove file
+      - `<F10>`: Quit
+    - Added footer with most used key bindings
+    - ❗ `<TAB>` will now switch explorer tab (will do what `<LEFT>` and `<RIGHT>` currently do)
+    - ❗ Use `<BACKTAB>` to switch between explorer tab and log tab. ❗ Backtab is `<SHIFT + TAB>`
   - **Tui-realm migration**:
     - migrated application to tui-realm 1.x
     - Improved application performance

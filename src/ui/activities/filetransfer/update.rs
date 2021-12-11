@@ -417,10 +417,10 @@ impl FileTransferActivity {
                 self.disconnect();
                 self.umount_disconnect();
             }
-            UiMsg::ExplorerTabbed => {
+            UiMsg::ExplorerBackTabbed => {
                 assert!(self.app.active(&Id::Log).is_ok());
             }
-            UiMsg::LogTabbed => {
+            UiMsg::LogBackTabbed => {
                 assert!(self.app.active(&Id::ExplorerLocal).is_ok());
             }
             UiMsg::Quit => {
