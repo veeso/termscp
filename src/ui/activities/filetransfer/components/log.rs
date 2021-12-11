@@ -62,10 +62,10 @@ impl MockComponent for Log {
             .props
             .get_or(Attribute::Focus, AttrValue::Flag(false))
             .unwrap_flag();
-        let fg = self
+        let borders = self
             .props
-            .get_or(Attribute::Foreground, AttrValue::Color(Color::Reset))
-            .unwrap_color();
+            .get_or(Attribute::Borders, AttrValue::Borders(Borders::default()))
+            .unwrap_borders();
         let bg = self
             .props
             .get_or(Attribute::Background, AttrValue::Color(Color::Reset))
@@ -81,7 +81,7 @@ impl MockComponent for Log {
             .collect();
         let w = TuiList::new(list_items)
             .block(tui_realm_stdlib::utils::get_block(
-                Borders::default().color(fg),
+                borders,
                 Some(("Log".to_string(), Alignment::Left)),
                 focus,
                 None,
@@ -214,7 +214,9 @@ impl Component<Msg, NoUserEvent> for Log {
                 Some(Msg::None)
             }
             // -- comp msg
-            Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => Some(Msg::Ui(UiMsg::LogTabbed)),
+            Event::Keyboard(KeyEvent {
+                code: Key::BackTab, ..
+            }) => Some(Msg::Ui(UiMsg::LogBackTabbed)),
             _ => None,
         }
     }

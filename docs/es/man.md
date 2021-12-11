@@ -149,8 +149,8 @@ Para cambiar de panel, debe escribir `<LEFT>` para mover el panel del explorador
 | Key           | Command                                               | Reminder    |
 |---------------|-------------------------------------------------------|-------------|
 | `<ESC>`       | Desconecte; volver a la página de autenticación       |             |
-| `<TAB>`       | Cambiar entre la pestaña de registro y el explorador  |             |
 | `<BACKSPACE>` | Ir al directorio anterior en la pila                  |             |
+| `<TAB>`       | Cambiar pestaña del explorador                        |             |
 | `<RIGHT>`     | Mover a la pestaña del explorador remoto              |             |
 | `<LEFT>`      | Mover a la pestaña del explorador local               |             |
 | `<UP>`        | Subir en la lista seleccionada                        |             |
@@ -159,28 +159,28 @@ Para cambiar de panel, debe escribir `<LEFT>` para mover el panel del explorador
 | `<PGDOWN>`    | Bajar 8 filas en la lista seleccionada                |             |
 | `<ENTER>`     | Entrar directorio                                     |             |
 | `<SPACE>`     | Cargar / descargar el archivo seleccionado            |             |
+| `<BACKTAB>`   | Cambiar entre la pestaña de registro y el explorador  |             |
 | `<A>`         | Alternar archivos ocultos                             | All         |
 | `<B>`         | Ordenar archivos por                                  | Bubblesort? |
-| `<C>`         | Copiar archivo / directorio                           | Copy        |
-| `<D>`         | Hacer directorio                                      | Directory   |
-| `<E>`         | Eliminar archivo (igual que `DEL`)                    | Erase       |
+| `<C|F5>`      | Copiar archivo / directorio                           | Copy        |
+| `<D|F7>`      | Hacer directorio                                      | Directory   |
+| `<E|F8|DEL>`  | Eliminar archivo                                      | Erase       |
 | `<F>`         | Búsqueda de archivos                                  | Find        |
 | `<G>`         | Ir a la ruta proporcionada                            | Go to       |
-| `<H>`         | Mostrar ayuda                                         | Help        |
+| `<H|F1>`      | Mostrar ayuda                                         | Help        |
 | `<I>`         | Mostrar información sobre el archivo                  | Info        |
 | `<L>`         | Recargar contenido del directorio / Borrar selección  | List        |
 | `<M>`         | Seleccione un archivo                                 | Mark        |
 | `<N>`         | Crear un nuevo archivo con el nombre proporcionado    | New         |
-| `<O>`         | Editar archivo                                        | Open        |
-| `<Q>`         | Salir de termscp                                      | Quit        |
-| `<R>`         | Renombrar archivo                                     | Rename      |
+| `<O|F4>`      | Editar archivo                                        | Open        |
+| `<Q|F10>`     | Salir de termscp                                      | Quit        |
+| `<R|F6>`      | Renombrar archivo                                     | Rename      |
 | `<S>`         | Guardar archivo como...                               | Save        |
 | `<U>`         | Ir al directorio principal                            | Upper       |
-| `<V>`         | Abrir archivo con el programa predeterminado          | View        |
+| `<V|F3>`      | Abrir archivo con el programa predeterminado          | View        |
 | `<W>`         | Abrir archivo con el programa proporcionado           | With        |
 | `<X>`         | Ejecutar un comando                                   | eXecute     |
 | `<Y>`         | Alternar navegación sincronizada                      | sYnc        |
-| `<DEL>`       | Eliminar archivo                                      |             |
 | `<CTRL+A>`    | Seleccionar todos los archivos                        |             |
 | `<CTRL+C>`    | Abortar el proceso de transferencia de archivos       |             |
 

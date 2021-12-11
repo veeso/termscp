@@ -105,14 +105,14 @@ impl Component<Msg, NoUserEvent> for ExplorerFind {
                 Some(Msg::None)
             }
             // -- comp msg
-            Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => {
-                Some(Msg::Ui(UiMsg::ExplorerTabbed))
-            }
+            Event::Keyboard(KeyEvent {
+                code: Key::BackTab, ..
+            }) => Some(Msg::Ui(UiMsg::ExplorerBackTabbed)),
             Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
                 Some(Msg::Ui(UiMsg::CloseFindExplorer))
             }
             Event::Keyboard(KeyEvent {
-                code: Key::Left | Key::Right,
+                code: Key::Left | Key::Right | Key::Tab,
                 ..
             }) => Some(Msg::Ui(UiMsg::ChangeTransferWindow)),
             Event::Keyboard(KeyEvent {
@@ -135,7 +135,7 @@ impl Component<Msg, NoUserEvent> for ExplorerFind {
                 modifiers: KeyModifiers::NONE,
             }) => Some(Msg::Ui(UiMsg::ShowFileSortingPopup)),
             Event::Keyboard(KeyEvent {
-                code: Key::Char('e') | Key::Delete,
+                code: Key::Char('e') | Key::Delete | Key::Function(8),
                 modifiers: KeyModifiers::NONE,
             }) => Some(Msg::Ui(UiMsg::ShowDeletePopup)),
             Event::Keyboard(KeyEvent {
@@ -147,7 +147,7 @@ impl Component<Msg, NoUserEvent> for ExplorerFind {
                 modifiers: KeyModifiers::NONE,
             }) => Some(Msg::Ui(UiMsg::ShowSaveAsPopup)),
             Event::Keyboard(KeyEvent {
-                code: Key::Char('v'),
+                code: Key::Char('v') | Key::Function(3),
                 modifiers: KeyModifiers::NONE,
             }) => Some(Msg::Transfer(TransferMsg::OpenFile)),
             Event::Keyboard(KeyEvent {
@@ -229,14 +229,15 @@ impl Component<Msg, NoUserEvent> for ExplorerLocal {
                 Some(Msg::None)
             }
             // -- comp msg
-            Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => {
-                Some(Msg::Ui(UiMsg::ExplorerTabbed))
-            }
+            Event::Keyboard(KeyEvent {
+                code: Key::BackTab, ..
+            }) => Some(Msg::Ui(UiMsg::ExplorerBackTabbed)),
             Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
                 Some(Msg::Ui(UiMsg::ShowDisconnectPopup))
             }
             Event::Keyboard(KeyEvent {
-                code: Key::Right, ..
+                code: Key::Right | Key::Tab,
+                ..
             }) => Some(Msg::Ui(UiMsg::ChangeTransferWindow)),
             Event::Keyboard(KeyEvent {
                 code: Key::Backspace,
@@ -258,15 +259,15 @@ impl Component<Msg, NoUserEvent> for ExplorerLocal {
                 modifiers: KeyModifiers::NONE,
             }) => Some(Msg::Ui(UiMsg::ShowFileSortingPopup)),
             Event::Keyboard(KeyEvent {
-                code: Key::Char('c'),
+                code: Key::Char('c') | Key::Function(5),
                 modifiers: KeyModifiers::NONE,
             }) => Some(Msg::Ui(UiMsg::ShowCopyPopup)),
             Event::Keyboard(KeyEvent {
-                code: Key::Char('d'),
+                code: Key::Char('d') | Key::Function(7),
                 modifiers: KeyModifiers::NONE,
             }) => Some(Msg::Ui(UiMsg::ShowMkdirPopup)),
             Event::Keyboard(KeyEvent {
-                code: Key::Char('e') | Key::Delete,
+                code: Key::Char('e') | Key::Delete | Key::Function(8),
                 modifiers: KeyModifiers::NONE,
             }) => Some(Msg::Ui(UiMsg::ShowDeletePopup)),
             Event::Keyboard(KeyEvent {
@@ -290,11 +291,11 @@ impl Component<Msg, NoUserEvent> for ExplorerLocal {
                 modifiers: KeyModifiers::NONE,
             }) => Some(Msg::Ui(UiMsg::ShowNewFilePopup)),
             Event::Keyboard(KeyEvent {
-                code: Key::Char('o'),
+                code: Key::Char('o') | Key::Function(4),
                 modifiers: KeyModifiers::NONE,
             }) => Some(Msg::Transfer(TransferMsg::OpenTextFile)),
             Event::Keyboard(KeyEvent {
-                code: Key::Char('r'),
+                code: Key::Char('r') | Key::Function(6),
                 modifiers: KeyModifiers::NONE,
             }) => Some(Msg::Ui(UiMsg::ShowRenamePopup)),
             Event::Keyboard(KeyEvent {
@@ -314,7 +315,7 @@ impl Component<Msg, NoUserEvent> for ExplorerLocal {
                 modifiers: KeyModifiers::NONE,
             }) => Some(Msg::Ui(UiMsg::ToggleSyncBrowsing)),
             Event::Keyboard(KeyEvent {
-                code: Key::Char('v'),
+                code: Key::Char('v') | Key::Function(3),
                 modifiers: KeyModifiers::NONE,
             }) => Some(Msg::Transfer(TransferMsg::OpenFile)),
             Event::Keyboard(KeyEvent {
@@ -396,14 +397,15 @@ impl Component<Msg, NoUserEvent> for ExplorerRemote {
                 Some(Msg::None)
             }
             // -- comp msg
-            Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => {
-                Some(Msg::Ui(UiMsg::ExplorerTabbed))
-            }
+            Event::Keyboard(KeyEvent {
+                code: Key::BackTab, ..
+            }) => Some(Msg::Ui(UiMsg::ExplorerBackTabbed)),
             Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
                 Some(Msg::Ui(UiMsg::ShowDisconnectPopup))
             }
             Event::Keyboard(KeyEvent {
-                code: Key::Left, ..
+                code: Key::Left | Key::Tab,
+                ..
             }) => Some(Msg::Ui(UiMsg::ChangeTransferWindow)),
             Event::Keyboard(KeyEvent {
                 code: Key::Backspace,
@@ -425,15 +427,15 @@ impl Component<Msg, NoUserEvent> for ExplorerRemote {
                 modifiers: KeyModifiers::NONE,
             }) => Some(Msg::Ui(UiMsg::ShowFileSortingPopup)),
             Event::Keyboard(KeyEvent {
-                code: Key::Char('c'),
+                code: Key::Char('c') | Key::Function(5),
                 modifiers: KeyModifiers::NONE,
             }) => Some(Msg::Ui(UiMsg::ShowCopyPopup)),
             Event::Keyboard(KeyEvent {
-                code: Key::Char('d'),
+                code: Key::Char('d') | Key::Function(7),
                 modifiers: KeyModifiers::NONE,
             }) => Some(Msg::Ui(UiMsg::ShowMkdirPopup)),
             Event::Keyboard(KeyEvent {
-                code: Key::Char('e') | Key::Delete,
+                code: Key::Char('e') | Key::Delete | Key::Function(8),
                 modifiers: KeyModifiers::NONE,
             }) => Some(Msg::Ui(UiMsg::ShowDeletePopup)),
             Event::Keyboard(KeyEvent {
@@ -457,11 +459,11 @@ impl Component<Msg, NoUserEvent> for ExplorerRemote {
                 modifiers: KeyModifiers::NONE,
             }) => Some(Msg::Ui(UiMsg::ShowNewFilePopup)),
             Event::Keyboard(KeyEvent {
-                code: Key::Char('o'),
+                code: Key::Char('o') | Key::Function(4),
                 modifiers: KeyModifiers::NONE,
             }) => Some(Msg::Transfer(TransferMsg::OpenTextFile)),
             Event::Keyboard(KeyEvent {
-                code: Key::Char('r'),
+                code: Key::Char('r') | Key::Function(6),
                 modifiers: KeyModifiers::NONE,
             }) => Some(Msg::Ui(UiMsg::ShowRenamePopup)),
             Event::Keyboard(KeyEvent {
@@ -481,7 +483,7 @@ impl Component<Msg, NoUserEvent> for ExplorerRemote {
                 modifiers: KeyModifiers::NONE,
             }) => Some(Msg::Ui(UiMsg::ToggleSyncBrowsing)),
             Event::Keyboard(KeyEvent {
-                code: Key::Char('v'),
+                code: Key::Char('v') | Key::Function(3),
                 modifiers: KeyModifiers::NONE,
             }) => Some(Msg::Transfer(TransferMsg::OpenFile)),
             Event::Keyboard(KeyEvent {

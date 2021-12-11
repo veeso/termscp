@@ -108,7 +108,7 @@ impl Header {
                         .color(Color::Yellow)
                         .sides(BorderSides::BOTTOM),
                 )
-                .choices(&["User interface", "SSH Keys", "Theme"])
+                .choices(&["Configuration parameters", "SSH Keys", "Theme"])
                 .foreground(Color::Yellow)
                 .value(match layout {
                     ViewLayout::SetupForm => 0,

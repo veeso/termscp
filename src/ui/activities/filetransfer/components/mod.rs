@@ -35,10 +35,12 @@ use tuirealm::{
 
 // -- export
 mod log;
+mod misc;
 mod popups;
 mod transfer;
 
 pub use self::log::Log;
+pub use misc::FooterBar;
 pub use popups::{
     CopyPopup, DeletePopup, DisconnectPopup, ErrorPopup, ExecPopup, FatalPopup, FileInfoPopup,
     FindPopup, GoToPopup, KeybindingsPopup, MkdirPopup, NewfilePopup, OpenWithPopup,
@@ -59,11 +61,11 @@ impl Component<Msg, NoUserEvent> for GlobalListener {
                 Some(Msg::Ui(UiMsg::ShowDisconnectPopup))
             }
             Event::Keyboard(KeyEvent {
-                code: Key::Char('q'),
+                code: Key::Char('q') | Key::Function(10),
                 modifiers: KeyModifiers::NONE,
             }) => Some(Msg::Ui(UiMsg::ShowQuitPopup)),
             Event::Keyboard(KeyEvent {
-                code: Key::Char('h'),
+                code: Key::Char('h') | Key::Function(1),
                 modifiers: KeyModifiers::NONE,
             }) => Some(Msg::Ui(UiMsg::ShowKeybindingsPopup)),
             _ => None,
