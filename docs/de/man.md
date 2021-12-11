@@ -149,8 +149,8 @@ In order to change panel you need to type `<LEFT>` to move the remote explorer p
 | Key           | Command                                               | Reminder    |
 |---------------|-------------------------------------------------------|-------------|
 | `<ESC>`       | Disconnect from remote; return to authentication page |             |
-| `<TAB>`       | Switch between log tab and explorer                   |             |
 | `<BACKSPACE>` | Go to previous directory in stack                     |             |
+| `<TAB>`       | Switch explorer tab                                   |             |
 | `<RIGHT>`     | Move to remote explorer tab                           |             |
 | `<LEFT>`      | Move to local explorer tab                            |             |
 | `<UP>`        | Move up in selected list                              |             |
@@ -159,28 +159,28 @@ In order to change panel you need to type `<LEFT>` to move the remote explorer p
 | `<PGDOWN>`    | Move down in selected list by 8 rows                  |             |
 | `<ENTER>`     | Enter directory                                       |             |
 | `<SPACE>`     | Upload / download selected file                       |             |
+| `<BACKTAB>`   | Switch between log tab and explorer                   |             |
 | `<A>`         | Toggle hidden files                                   | All         |
 | `<B>`         | Sort files by                                         | Bubblesort? |
-| `<C>`         | Copy file/directory                                   | Copy        |
-| `<D>`         | Make directory                                        | Directory   |
-| `<E>`         | Delete file (Same as `DEL`)                           | Erase       |
+| `<C|F5>`      | Copy file/directory                                   | Copy        |
+| `<D|F7>`      | Make directory                                        | Directory   |
+| `<E|F8|DEL>`  | Delete file                                           | Erase       |
 | `<F>`         | Search for files (wild match is supported)            | Find        |
 | `<G>`         | Go to supplied path                                   | Go to       |
-| `<H>`         | Show help                                             | Help        |
+| `<H|F1>`      | Show help                                             | Help        |
 | `<I>`         | Show info about selected file or directory            | Info        |
 | `<L>`         | Reload current directory's content / Clear selection  | List        |
 | `<M>`         | Select a file                                         | Mark         |
 | `<N>`         | Create new file with provided name                    | New         |
-| `<O>`         | Edit file; see  Text editor                           | Open        |
-| `<Q>`         | Quit termscp                                          | Quit        |
-| `<R>`         | Rename file                                           | Rename      |
+| `<O|F4>`      | Edit file; see  Text editor                           | Open        |
+| `<Q|F10>`     | Quit termscp                                          | Quit        |
+| `<R|F6>`      | Rename file                                           | Rename      |
 | `<S>`         | Save file as...                                       | Save        |
 | `<U>`         | Go to parent directory                                | Upper       |
-| `<V>`         | Open file with default program for filetype           | View        |
+| `<V|F3>`      | Open file with default program for filetype           | View        |
 | `<W>`         | Open file with provided program                       | With        |
 | `<X>`         | Execute a command                                     | eXecute     |
 | `<Y>`         | Toggle synchronized browsing                          | sYnc        |
-| `<DEL>`       | Delete file                                           |             |
 | `<CTRL+A>`    | Select all files                                      |             |
 | `<CTRL+C>`    | Abort file transfer process                           |             |
 

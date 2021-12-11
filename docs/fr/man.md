@@ -147,8 +147,8 @@ Pour changer de panneau, vous devez taper `<LEFT>` pour déplacer le panneau de 
 | Key           | Command                                                             | Reminder    |
 |---------------|---------------------------------------------------------------------|-------------|
 | `<ESC>`       | Se Déconnecter de le serveur; retour à la page d'authentification   |             |
-| `<TAB>`       | Basculer entre l'onglet journal et l'explorateur                    |             |
 | `<BACKSPACE>` | Aller au répertoire précédent dans la pile                          |             |
+| `<TAB>`       | Changer d'onglet explorateur                          |             |
 | `<RIGHT>`     | Déplacer vers l'onglet explorateur distant                          |             |
 | `<LEFT>`      | Déplacer vers l'onglet explorateur local                            |             |
 | `<UP>`        | Remonter dans la liste sélectionnée                                 |             |
@@ -157,28 +157,28 @@ Pour changer de panneau, vous devez taper `<LEFT>` pour déplacer le panneau de 
 | `<PGDOWN>`    | Descendre dans la liste sélectionnée de 8 lignes                    |             |
 | `<ENTER>`     | Entrer dans le directoire                                           |             |
 | `<SPACE>`     | Télécharger le fichier sélectionné                                  |             |
+| `<BACKTAB>`   | Basculer entre l'onglet journal et l'explorateur                    |             |
 | `<A>`         | Basculer les fichiers cachés                                        | All         |
 | `<B>`         | Trier les fichiers par                                              | Bubblesort? |
-| `<C>`         | Copier le fichier/répertoire                                        | Copy        |
-| `<D>`         | Créer un dossier                                                    | Directory   |
-| `<E>`         | Supprimer le fichier (Identique à `DEL`)                            | Erase       |
+| `<C|F5>`      | Copier le fichier/répertoire                                        | Copy        |
+| `<D|F7>`      | Créer un dossier                                                    | Directory   |
+| `<E|F8|DEL>`  | Supprimer le fichier (Identique à `DEL`)                            | Erase       |
 | `<F>`         | Rechercher des fichiers                                             | Find        |
 | `<G>`         | Aller au chemin fourni                                              | Go to       |
-| `<H>`         | Afficher l'aide                                                     | Help        |
+| `<H|F1>`      | Afficher l'aide                                                     | Help        |
 | `<I>`         | Afficher les informations sur le fichier ou le dossier sélectionné  | Info        |
 | `<L>`         | Recharger le contenu du répertoire actuel / Effacer la sélection    | List        |
 | `<M>`         | Sélectionner un fichier                                             | Mark        |
 | `<N>`         | Créer un nouveau fichier avec le nom fourni                         | New         |
-| `<O>`         | Modifier le fichier                                                 | Open        |
-| `<Q>`         | Quitter termscp                                                     | Quit        |
-| `<R>`         | Renommer le fichier                                                 | Rename      |
+| `<O|F4>`      | Modifier le fichier                                                 | Open        |
+| `<Q|F10>`     | Quitter termscp                                                     | Quit        |
+| `<R|F6>`      | Renommer le fichier                                                 | Rename      |
 | `<S>`         | Enregistrer le fichier sous...                                      | Save        |
 | `<U>`         | Aller dans le répertoire parent                                     | Upper       |
-| `<V>`         | Ouvrir le fichier avec le programme défaut pour le type de fichier  | View        |
+| `<V|F3>`      | Ouvrir le fichier avec le programme défaut pour le type de fichier  | View        |
 | `<W>`         | Ouvrir le fichier avec le programme spécifié                        | With        |
 | `<X>`         | Exécuter une commande                                               | eXecute     |
 | `<Y>`         | Basculer la navigation synchronisée                                 | sYnc        |
-| `<DEL>`       | Supprimer le fichier                                                |             |
 | `<CTRL+A>`    | Sélectionner tous les fichiers                                      |             |
 | `<CTRL+C>`    | Abandonner le processus de transfert de fichiers                    |             |
 
