@@ -307,6 +307,7 @@ Estos parámetros se pueden cambiar:
 - **Local File formatter syntax**: sintaxis para mostrar información de archivo para cada archivo en el explorador local. Consulte [Formato del explorador de archivos](#formato-del-explorador-de-archivos).
 - **Enable notifications?**: Si se establece en "Sí", se mostrarán las notificaciones.
 - **Notifications: minimum transfer size**: si el tamaño de la transferencia es mayor o igual que el valor especificado, se mostrarán notificaciones de transferencia. Los valores aceptados están en formato `{UNSIGNED} B/KB/MB/GB/TB/PB`
+- **SSH configuration path**: Configure el archivo de configuración SSH para usar al conectarse a un servidor SCP / SFTP. Si no se configura (está vacío), no se utilizará ningún archivo. Puede especificar una ruta que comience con `~` para indicar la ruta de inicio (por ejemplo, `~/.ssh/config`)
 
 ### SSH Key Storage 🔐
 

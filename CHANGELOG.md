@@ -53,6 +53,12 @@ Released on FIXME:
   - **Tui-realm migration**:
     - migrated application to tui-realm 1.x
     - Improved application performance
+- **SSH Config**
+  - Added `ssh config` parameter in configuration
+  - It is now possible to specify the ssh configuration file to use
+  - The supported parameters are described at <https://github.com/veeso/ssh2-config>.
+  - If the field is left empty, **no file will be loaded**.
+  - **By default, no file will be used**.
 - Dependencies:
   - Updated `tui-realm` to `1.3.0`
   - Updated `tui-realm-stdlib` to `1.1.4`

@@ -36,6 +36,7 @@ use remotefs::client::{
     ssh::{ScpFs, SftpFs, SshOpts},
 };
 use remotefs::RemoteFs;
+use std::path::PathBuf;
 
 /// Remotefs builder
 pub struct Builder;
@@ -116,6 +117,9 @@ impl Builder {
         }
         if let Some(password) = params.password {
             opts = opts.password(password);
+        }
+        if let Some(config_path) = config_client.get_ssh_config() {
+            opts = opts.config_file(PathBuf::from(config_path));
         }
         opts
     }

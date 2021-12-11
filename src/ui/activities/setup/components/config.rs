@@ -369,6 +369,43 @@ impl Component<Msg, NoUserEvent> for RemoteFileFmt {
 }
 
 #[derive(MockComponent)]
+pub struct SshConfig {
+    component: Input,
+}
+
+impl SshConfig {
+    pub fn new(value: &str) -> Self {
+        Self {
+            component: Input::default()
+                .borders(
+                    Borders::default()
+                        .color(Color::LightBlue)
+                        .modifiers(BorderType::Rounded),
+                )
+                .foreground(Color::LightBlue)
+                .input_type(InputType::Text)
+                .placeholder(
+                    "~/.ssh/config",
+                    Style::default().fg(Color::Rgb(128, 128, 128)),
+                )
+                .title("SSH configuration path", Alignment::Left)
+                .value(value),
+        }
+    }
+}
+
+impl Component<Msg, NoUserEvent> for SshConfig {
+    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+        handle_input_ev(
+            self,
+            ev,
+            Msg::Config(ConfigMsg::SshConfigBlurDown),
+            Msg::Config(ConfigMsg::SshConfigBlurUp),
+        )
+    }
+}
+
+#[derive(MockComponent)]
 pub struct TextEditor {
     component: Input,
 }
@@ -448,7 +485,7 @@ fn handle_input_ev(
         }
         Event::Keyboard(KeyEvent {
             code: Key::Char(ch),
-            modifiers: KeyModifiers::NONE,
+            modifiers: KeyModifiers::NONE | KeyModifiers::SHIFT,
         }) => {
             component.perform(Cmd::Type(ch));
             Some(Msg::Config(ConfigMsg::ConfigChanged))

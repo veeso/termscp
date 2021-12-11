@@ -308,6 +308,7 @@ These parameters can be changed:
 - **Local File formatter syntax**: syntax to display file info for each file in the local explorer. See [File explorer format](#file-explorer-format)
 - **Enable notifications?**: If set to `Yes`, notifications will be displayed.
 - **Notifications: minimum transfer size**: if transfer size is greater or equal than the specified value, notifications for transfer will be displayed. The accepted values are in format `{UNSIGNED} B/KB/MB/GB/TB/PB`
+- **SSH configuration path**: Set SSH configuration file to use when connecting to a SCP/SFTP server. If unset (empty) no file will be used. You can specify a path starting with `~` to indicate the home path (e.g. `~/.ssh/config`)
 
 ### SSH Key Storage 🔐
 

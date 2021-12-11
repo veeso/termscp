@@ -35,7 +35,7 @@ mod theme;
 pub(super) use commons::{ErrorPopup, Footer, Header, Keybindings, QuitPopup, SavePopup};
 pub(super) use config::{
     CheckUpdates, DefaultProtocol, GroupDirs, HiddenFiles, LocalFileFmt, NotificationsEnabled,
-    NotificationsThreshold, PromptOnFileReplace, RemoteFileFmt, TextEditor,
+    NotificationsThreshold, PromptOnFileReplace, RemoteFileFmt, SshConfig, TextEditor,
 };
 pub(super) use ssh::{DelSshKeyPopup, SshHost, SshKeys, SshUsername};
 pub(super) use theme::*;

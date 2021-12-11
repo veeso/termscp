@@ -197,6 +197,11 @@ mod tests {
         assert_eq!(cfg.user_interface.notifications.unwrap(), false);
         assert_eq!(cfg.user_interface.notification_threshold.unwrap(), 1024);
         assert_eq!(cfg.user_interface.group_dirs, Some(String::from("last")));
+        // Remote
+        assert_eq!(
+            cfg.remote.ssh_config.as_deref(),
+            Some("/home/omar/.ssh/config")
+        );
         assert_eq!(
             cfg.user_interface.file_fmt,
             Some(String::from("{NAME} {PEX}"))
@@ -244,6 +249,7 @@ mod tests {
         assert!(cfg.user_interface.remote_file_fmt.is_none());
         assert!(cfg.user_interface.notifications.is_none());
         assert!(cfg.user_interface.notification_threshold.is_none());
+        assert!(cfg.remote.ssh_config.is_none());
         // Verify keys
         assert_eq!(
             *cfg.remote
@@ -321,6 +327,9 @@ mod tests {
         remote_file_fmt = "{NAME} {USER}"
         notifications = false
         notification_threshold = 1024
+
+        [remote]
+        ssh_config = "/home/omar/.ssh/config"
 
         [remote.ssh_keys]
         "192.168.1.31" = "/home/omar/.ssh/raspberry.key"
