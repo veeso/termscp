@@ -47,8 +47,6 @@ bitflags! {
     }
 }
 
-/// ## FileSorting
-///
 /// FileSorting defines the criteria for sorting files
 #[derive(Copy, Clone, PartialEq, std::fmt::Debug)]
 pub enum FileSorting {
@@ -58,8 +56,6 @@ pub enum FileSorting {
     Size,
 }
 
-/// ## GroupDirs
-///
 /// GroupDirs defines how directories should be grouped in sorting files
 #[derive(PartialEq, std::fmt::Debug)]
 pub enum GroupDirs {
@@ -67,8 +63,6 @@ pub enum GroupDirs {
     Last,
 }
 
-/// ## FileExplorer
-///
 /// File explorer states
 pub struct FileExplorer {
     pub wrkdir: PathBuf,                      // Current directory
@@ -97,8 +91,6 @@ impl Default for FileExplorer {
 }
 
 impl FileExplorer {
-    /// ### pushd
-    ///
     /// push directory to stack
     pub fn pushd(&mut self, dir: &Path) {
         // Check if stack would overflow the size
@@ -109,15 +101,11 @@ impl FileExplorer {
         self.dirstack.push_back(PathBuf::from(dir));
     }
 
-    /// ### popd
-    ///
     /// Pop directory from the stack and return the directory
     pub fn popd(&mut self) -> Option<PathBuf> {
         self.dirstack.pop_back()
     }
 
-    /// ### set_files
-    ///
     /// Set Explorer files
     /// This method will also sort entries based on current options
     /// Once all sorting have been performed, index is moved to first valid entry.
@@ -127,8 +115,6 @@ impl FileExplorer {
         self.sort();
     }
 
-    /// ### del_entry
-    ///
     /// Delete file at provided index
     pub fn del_entry(&mut self, idx: usize) {
         if self.files.len() > idx {
@@ -137,16 +123,12 @@ impl FileExplorer {
     }
 
     /*
-    /// ### count
-    ///
     /// Return amount of files
     pub fn count(&self) -> usize {
         self.files.len()
     }
     */
 
-    /// ### iter_files
-    ///
     /// Iterate over files
     /// Filters are applied based on current options (e.g. hidden files not returned)
     pub fn iter_files(&self) -> impl Iterator<Item = &Entry> + '_ {
@@ -163,15 +145,11 @@ impl FileExplorer {
         }))
     }
 
-    /// ### iter_files_all
-    ///
     /// Iterate all files; doesn't care about options
     pub fn iter_files_all(&self) -> impl Iterator<Item = &Entry> + '_ {
         Box::new(self.files.iter())
     }
 
-    /// ### get
-    ///
     /// Get file at relative index
     pub fn get(&self, idx: usize) -> Option<&Entry> {
         let opts: ExplorerOpts = self.opts;
@@ -193,8 +171,6 @@ impl FileExplorer {
 
     // Formatting
 
-    /// ### fmt_file
-    ///
     /// Format a file entry
     pub fn fmt_file(&self, entry: &Entry) -> String {
         self.fmt.fmt(entry)
@@ -202,8 +178,6 @@ impl FileExplorer {
 
     // Sorting
 
-    /// ### sort_by
-    ///
     /// Choose sorting method; then sort files
     pub fn sort_by(&mut self, sorting: FileSorting) {
         // If method HAS ACTUALLY CHANGED, sort (performance!)
@@ -213,15 +187,11 @@ impl FileExplorer {
         }
     }
 
-    /// ### get_file_sorting
-    ///
     /// Get current file sorting method
     pub fn get_file_sorting(&self) -> FileSorting {
         self.file_sorting
     }
 
-    /// ### group_dirs_by
-    ///
     /// Choose group dirs method; then sort files
     pub fn group_dirs_by(&mut self, group_dirs: Option<GroupDirs>) {
         // If method HAS ACTUALLY CHANGED, sort (performance!)
@@ -231,8 +201,6 @@ impl FileExplorer {
         }
     }
 
-    /// ### sort
-    ///
     /// Sort files based on Explorer options.
     fn sort(&mut self) {
         // Choose sorting method
@@ -252,60 +220,44 @@ impl FileExplorer {
         }
     }
 
-    /// ### sort_files_by_name
-    ///
     /// Sort explorer files by their name. All names are converted to lowercase
     fn sort_files_by_name(&mut self) {
         self.files.sort_by_key(|x: &Entry| x.name().to_lowercase());
     }
 
-    /// ### sort_files_by_mtime
-    ///
     /// Sort files by mtime; the newest comes first
     fn sort_files_by_mtime(&mut self) {
         self.files
             .sort_by(|a: &Entry, b: &Entry| b.metadata().mtime.cmp(&a.metadata().mtime));
     }
 
-    /// ### sort_files_by_creation_time
-    ///
     /// Sort files by creation time; the newest comes first
     fn sort_files_by_creation_time(&mut self) {
         self.files
             .sort_by_key(|b: &Entry| Reverse(b.metadata().ctime));
     }
 
-    /// ### sort_files_by_size
-    ///
     /// Sort files by size
     fn sort_files_by_size(&mut self) {
         self.files
             .sort_by_key(|b: &Entry| Reverse(b.metadata().size));
     }
 
-    /// ### sort_files_directories_first
-    ///
     /// Sort files; directories come first
     fn sort_files_directories_first(&mut self) {
         self.files.sort_by_key(|x: &Entry| x.is_file());
     }
 
-    /// ### sort_files_directories_last
-    ///
     /// Sort files; directories come last
     fn sort_files_directories_last(&mut self) {
         self.files.sort_by_key(|x: &Entry| x.is_dir());
     }
 
-    /// ### toggle_hidden_files
-    ///
     /// Enable/disable hidden files
     pub fn toggle_hidden_files(&mut self) {
         self.opts.toggle(ExplorerOpts::SHOW_HIDDEN_FILES);
     }
 
-    /// ### hidden_files_visible
-    ///
     /// Returns whether hidden files are visible
     pub fn hidden_files_visible(&self) -> bool {
         self.opts.intersects(ExplorerOpts::SHOW_HIDDEN_FILES)

@@ -35,8 +35,6 @@ use tuirealm::tui::style::Color;
 use tuirealm::{State, StateValue};
 
 impl SetupActivity {
-    /// ### action_on_esc
-    ///
     /// On <ESC>, if there are changes in the configuration, the quit dialog must be shown, otherwise
     /// we can exit  without any problem
     pub(super) fn action_on_esc(&mut self) {
@@ -47,8 +45,6 @@ impl SetupActivity {
         }
     }
 
-    /// ### action_save_all
-    ///
     /// Save all configurations. If current tab can load values, they will be loaded, otherwise they'll just be saved.
     /// Once all the configuration has been changed, set config_changed to false
     pub(super) fn action_save_all(&mut self) -> Result<(), String> {
@@ -59,8 +55,6 @@ impl SetupActivity {
         Ok(())
     }
 
-    /// ### action_save_config
-    ///
     /// Save configuration
     fn action_save_config(&mut self) -> Result<(), String> {
         // Collect input values if in setup form
@@ -70,8 +64,6 @@ impl SetupActivity {
         self.save_config()
     }
 
-    /// ### action_save_theme
-    ///
     /// Save configuration
     fn action_save_theme(&mut self) -> Result<(), String> {
         // Collect input values if in theme form
@@ -83,8 +75,6 @@ impl SetupActivity {
         self.save_theme()
     }
 
-    /// ### action_change_tab
-    ///
     /// Change view tab and load input values in order not to lose them
     pub(super) fn action_change_tab(&mut self, new_tab: ViewLayout) -> Result<(), String> {
         // load values for current tab first
@@ -100,8 +90,6 @@ impl SetupActivity {
         Ok(())
     }
 
-    /// ### action_reset_config
-    ///
     /// Reset configuration input fields
     pub(super) fn action_reset_config(&mut self) -> Result<(), String> {
         match self.reset_config_changes() {
@@ -113,8 +101,6 @@ impl SetupActivity {
         }
     }
 
-    /// ### action_reset_theme
-    ///
     /// Reset configuration input fields
     pub(super) fn action_reset_theme(&mut self) -> Result<(), String> {
         match self.reset_theme_changes() {
@@ -126,8 +112,6 @@ impl SetupActivity {
         }
     }
 
-    /// ### action_delete_ssh_key
-    ///
     /// delete of a ssh key
     pub(super) fn action_delete_ssh_key(&mut self) {
         // Get key
@@ -160,8 +144,6 @@ impl SetupActivity {
         }
     }
 
-    /// ### action_new_ssh_key
-    ///
     /// Create a new ssh key
     pub(super) fn action_new_ssh_key(&mut self) {
         // get parameters
@@ -228,8 +210,6 @@ impl SetupActivity {
         }
     }
 
-    /// ### set_color
-    ///
     /// Given a component and a color, save the color into the theme
     pub(super) fn action_save_color(&mut self, component: IdTheme, color: Color) {
         let theme: &mut Theme = self.theme_mut();
@@ -319,8 +299,6 @@ impl SetupActivity {
         }
     }
 
-    /// ### collect_styles
-    ///
     /// Collect values from input and put them into the theme.
     /// If a component has an invalid color, returns Err(component_id)
     fn collect_styles(&mut self) -> Result<(), Id> {
@@ -440,8 +418,6 @@ impl SetupActivity {
         Ok(())
     }
 
-    /// ### get_color
-    ///
     /// Get color from component
     fn get_color(&self, component: &Id) -> Result<Color, ()> {
         match self.app.state(component) {

@@ -31,8 +31,6 @@ use super::{Entry, FileTransferActivity, LogLevel, SelectedEntry, TransferPayloa
 use std::path::{Path, PathBuf};
 
 impl FileTransferActivity {
-    /// ### action_open_local
-    ///
     /// Open local file
     pub(crate) fn action_open_local(&mut self) {
         let entries: Vec<Entry> = match self.get_local_selected_entries() {
@@ -45,8 +43,6 @@ impl FileTransferActivity {
             .for_each(|x| self.action_open_local_file(x, None));
     }
 
-    /// ### action_open_remote
-    ///
     /// Open local file
     pub(crate) fn action_open_remote(&mut self) {
         let entries: Vec<Entry> = match self.get_remote_selected_entries() {
@@ -59,15 +55,11 @@ impl FileTransferActivity {
             .for_each(|x| self.action_open_remote_file(x, None));
     }
 
-    /// ### action_open_local_file
-    ///
     /// Perform open lopcal file
     pub(crate) fn action_open_local_file(&mut self, entry: &Entry, open_with: Option<&str>) {
         self.open_path_with(entry.path(), open_with);
     }
 
-    /// ### action_open_local
-    ///
     /// Open remote file. The file is first downloaded to a temporary directory on localhost
     pub(crate) fn action_open_remote_file(&mut self, entry: &Entry, open_with: Option<&str>) {
         // Download file
@@ -107,8 +99,6 @@ impl FileTransferActivity {
         }
     }
 
-    /// ### action_local_open_with
-    ///
     /// Open selected file with provided application
     pub(crate) fn action_local_open_with(&mut self, with: &str) {
         let entries: Vec<Entry> = match self.get_local_selected_entries() {
@@ -122,8 +112,6 @@ impl FileTransferActivity {
             .for_each(|x| self.action_open_local_file(x, Some(with)));
     }
 
-    /// ### action_remote_open_with
-    ///
     /// Open selected file with provided application
     pub(crate) fn action_remote_open_with(&mut self, with: &str) {
         let entries: Vec<Entry> = match self.get_remote_selected_entries() {
@@ -137,8 +125,6 @@ impl FileTransferActivity {
             .for_each(|x| self.action_open_remote_file(x, Some(with)));
     }
 
-    /// ### open_path_with
-    ///
     /// Common function which opens a path with default or specified program.
     fn open_path_with(&mut self, p: &Path, with: Option<&str>) {
         // Open file

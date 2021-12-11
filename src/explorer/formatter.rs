@@ -64,8 +64,6 @@ lazy_static! {
     static ref FMT_ATTR_REGEX: Regex = Regex::new(r"(?:([A-Z]+))(:?([0-9]+))?(:?(.+))?").ok().unwrap();
 }
 
-/// ## CallChainBlock
-///
 /// Call Chain block is a block in a chain of functions which are called in order to format the Entry.
 /// A callChain is instantiated starting from the Formatter syntax and the regex, once the groups are found
 /// a chain of function is made using the Formatters method.
@@ -84,8 +82,6 @@ struct CallChainBlock {
 }
 
 impl CallChainBlock {
-    /// ### new
-    ///
     /// Create a new `CallChainBlock`
     pub fn new(
         func: FmtCallback,
@@ -102,8 +98,6 @@ impl CallChainBlock {
         }
     }
 
-    /// ### next
-    ///
     /// Call next callback in the CallChain
     pub fn next(&self, fmt: &Formatter, fsentry: &Entry, cur_str: &str) -> String {
         // Call func
@@ -122,8 +116,6 @@ impl CallChainBlock {
         }
     }
 
-    /// ### push
-    ///
     /// Push func to the last element in the Call chain
     pub fn push(
         &mut self,
@@ -144,8 +136,6 @@ impl CallChainBlock {
     }
 }
 
-/// ## Formatter
-///
 /// Formatter takes care of formatting FsEntries according to the provided keys.
 /// Formatting is performed using the `CallChainBlock`, which composed makes a Call Chain. This method is extremely fast compared to match the format groups
 /// at each fmt call.
@@ -154,8 +144,6 @@ pub struct Formatter {
 }
 
 impl Default for Formatter {
-    /// ### default
-    ///
     /// Instantiates a Formatter with the default fmt syntax
     fn default() -> Self {
         Formatter {
@@ -165,8 +153,6 @@ impl Default for Formatter {
 }
 
 impl Formatter {
-    /// ### new
-    ///
     /// Instantiates a new `Formatter` with the provided format string
     pub fn new(fmt_str: &str) -> Self {
         Formatter {
@@ -174,8 +160,6 @@ impl Formatter {
         }
     }
 
-    /// ### fmt
-    ///
     /// Format fsentry
     pub fn fmt(&self, fsentry: &Entry) -> String {
         // Execute callchain blocks
@@ -184,8 +168,6 @@ impl Formatter {
 
     // Fmt methods
 
-    /// ### fmt_atime
-    ///
     /// Format last access time
     fn fmt_atime(
         &self,
@@ -213,8 +195,6 @@ impl Formatter {
         )
     }
 
-    /// ### fmt_ctime
-    ///
     /// Format creation time
     fn fmt_ctime(
         &self,
@@ -242,8 +222,6 @@ impl Formatter {
         )
     }
 
-    /// ### fmt_group
-    ///
     /// Format owner group
     fn fmt_group(
         &self,
@@ -277,8 +255,6 @@ impl Formatter {
         )
     }
 
-    /// ### fmt_mtime
-    ///
     /// Format last change time
     fn fmt_mtime(
         &self,
@@ -306,8 +282,6 @@ impl Formatter {
         )
     }
 
-    /// ### fmt_name
-    ///
     /// Format file name
     fn fmt_name(
         &self,
@@ -339,8 +313,6 @@ impl Formatter {
         format!("{}{}{:0width$}", cur_str, prefix, name, width = file_len)
     }
 
-    /// ### fmt_path
-    ///
     /// Format path
     fn fmt_path(
         &self,
@@ -366,8 +338,6 @@ impl Formatter {
         )
     }
 
-    /// ### fmt_pex
-    ///
     /// Format file permissions
     fn fmt_pex(
         &self,
@@ -403,8 +373,6 @@ impl Formatter {
         format!("{}{}{:10}", cur_str, prefix, pex)
     }
 
-    /// ### fmt_size
-    ///
     /// Format file size
     fn fmt_size(
         &self,
@@ -425,8 +393,6 @@ impl Formatter {
         }
     }
 
-    /// ### fmt_symlink
-    ///
     /// Format file symlink (if any)
     fn fmt_symlink(
         &self,
@@ -454,8 +420,6 @@ impl Formatter {
         }
     }
 
-    /// ### fmt_user
-    ///
     /// Format owner user
     fn fmt_user(
         &self,
@@ -483,8 +447,6 @@ impl Formatter {
         format!("{}{}{:12}", cur_str, prefix, username)
     }
 
-    /// ### fmt_fallback
-    ///
     /// Fallback function in case the format key is unknown
     /// It does nothing, just returns cur_str
     fn fmt_fallback(
@@ -501,8 +463,6 @@ impl Formatter {
 
     // Static
 
-    /// ### make_callchain
-    ///
     /// Make a callchain starting from the fmt str
     fn make_callchain(fmt_str: &str) -> CallChainBlock {
         // Init chain block
@@ -952,8 +912,6 @@ mod tests {
         assert_eq!(formatter.fmt(&entry).as_str(), "File path: c/bar.txt");
     }
 
-    /// ### dummy_fmt
-    ///
     /// Dummy formatter, just yelds an 'A' at the end of the current string
     fn dummy_fmt(
         _fmt: &Formatter,

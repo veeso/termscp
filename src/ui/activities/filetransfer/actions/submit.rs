@@ -36,8 +36,6 @@ enum SubmitAction {
 }
 
 impl FileTransferActivity {
-    /// ### action_submit_local
-    ///
     /// Decides which action to perform on submit for local explorer
     /// Return true whether the directory changed
     pub(crate) fn action_submit_local(&mut self, entry: Entry) -> bool {
@@ -78,8 +76,6 @@ impl FileTransferActivity {
         }
     }
 
-    /// ### action_submit_remote
-    ///
     /// Decides which action to perform on submit for remote explorer
     /// Return true whether the directory changed
     pub(crate) fn action_submit_remote(&mut self, entry: Entry) -> bool {

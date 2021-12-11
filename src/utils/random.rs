@@ -28,8 +28,6 @@
 // Ext
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 
-/// ## random_alphanumeric_with_len
-///
 /// Generate a random alphanumeric string with provided length
 pub fn random_alphanumeric_with_len(len: usize) -> String {
     let mut rng = thread_rng();

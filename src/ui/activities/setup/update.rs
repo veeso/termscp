@@ -36,8 +36,6 @@ use super::{
 use tuirealm::Update;
 
 impl Update<Msg> for SetupActivity {
-    /// ### update
-    ///
     /// Update auth activity model based on msg
     /// The function exits when returns None
     fn update(&mut self, msg: Option<Msg>) -> Option<Msg> {

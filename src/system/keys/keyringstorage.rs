@@ -30,16 +30,12 @@ use super::{KeyStorage, KeyStorageError};
 // Ext
 use keyring::{Keyring, KeyringError};
 
-/// ## KeyringStorage
-///
 /// provides a `KeyStorage` implementation using the keyring crate
 pub struct KeyringStorage {
     username: String,
 }
 
 impl KeyringStorage {
-    /// ### new
-    ///
     /// Instantiates a new KeyringStorage
     pub fn new(username: &str) -> Self {
         KeyringStorage {
@@ -49,8 +45,6 @@ impl KeyringStorage {
 }
 
 impl KeyStorage for KeyringStorage {
-    /// ### get_key
-    ///
     /// Retrieve key from the key storage.
     /// The key might be acccess through an identifier, which identifies
     /// the key in the storage
@@ -72,8 +66,6 @@ impl KeyStorage for KeyringStorage {
         }
     }
 
-    /// ### set_key
-    ///
     /// Set the key into the key storage
     fn set_key(&self, storage_id: &str, key: &str) -> Result<(), KeyStorageError> {
         let storage: Keyring = Keyring::new(storage_id, self.username.as_str());

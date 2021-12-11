@@ -44,8 +44,6 @@ pub enum UpdateStatus {
     UpdateInstalled(String),
 }
 
-/// ## Release
-///
 /// Info related to a github release
 #[derive(Debug)]
 pub struct Release {
@@ -53,8 +51,6 @@ pub struct Release {
     pub body: String,
 }
 
-/// ## Update
-///
 /// The update structure defines the options used to install the update.
 /// Once you're fine with the options, just call the `upgrade()` method to upgrade termscp.
 #[derive(Debug, Default)]
@@ -64,16 +60,12 @@ pub struct Update {
 }
 
 impl Update {
-    /// ### show_progress
-    ///
     /// Set whether to show or not the progress bar
     pub fn show_progress(mut self, opt: bool) -> Self {
         self.progress = opt;
         self
     }
 
-    /// ### ask_confirm
-    ///
     /// Set whether to ask for confirm when updating
     pub fn ask_confirm(mut self, opt: bool) -> Self {
         self.ask_confirm = opt;
@@ -96,8 +88,6 @@ impl Update {
             .map(UpdateStatus::from)
     }
 
-    /// ### is_new_version_available
-    ///
     /// Returns whether a new version of termscp is available
     /// In case of success returns Ok(Option<Release>), where the Option is Some(new_version);
     /// otherwise if no version is available, return None
@@ -119,8 +109,6 @@ impl Update {
             .map(Self::check_version)
     }
 
-    /// ### check_version
-    ///
     /// In case received version is newer than current one, version as Some is returned; otherwise None
     fn check_version(r: Release) -> Option<Release> {
         match parse_semver(r.version.as_str()) {

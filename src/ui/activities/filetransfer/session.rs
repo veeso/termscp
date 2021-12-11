@@ -40,8 +40,6 @@ use std::path::{Path, PathBuf};
 use std::time::Instant;
 use thiserror::Error;
 
-/// ## TransferErrorReason
-///
 /// Describes the reason that caused an error during a file transfer
 #[derive(Error, Debug)]
 enum TransferErrorReason {
@@ -59,8 +57,6 @@ enum TransferErrorReason {
     FileTransferError(RemoteError),
 }
 
-/// ## TransferPayload
-///
 /// Represents the entity to send or receive during a transfer.
 /// - File: describes an individual `File` to send
 /// - Any: Can be any kind of `Entry`, but just one
@@ -73,8 +69,6 @@ pub(super) enum TransferPayload {
 }
 
 impl FileTransferActivity {
-    /// ### connect
-    ///
     /// Connect to remote
     pub(super) fn connect(&mut self) {
         let ft_params = self.context().ft_params().unwrap().clone();
@@ -116,8 +110,6 @@ impl FileTransferActivity {
         }
     }
 
-    /// ### disconnect
-    ///
     /// disconnect from remote
     pub(super) fn disconnect(&mut self) {
         let msg: String = format!("Disconnecting from {}…", self.get_remote_hostname());
@@ -129,16 +121,12 @@ impl FileTransferActivity {
         self.exit_reason = Some(super::ExitReason::Disconnect);
     }
 
-    /// ### disconnect_and_quit
-    ///
     /// disconnect from remote and then quit
     pub(super) fn disconnect_and_quit(&mut self) {
         self.disconnect();
         self.exit_reason = Some(super::ExitReason::Quit);
     }
 
-    /// ### reload_remote_dir
-    ///
     /// Reload remote directory entries and update browser
     pub(super) fn reload_remote_dir(&mut self) {
         // Get current entries
@@ -149,8 +137,6 @@ impl FileTransferActivity {
         }
     }
 
-    /// ### reload_local_dir
-    ///
     /// Reload local directory entries and update browser
     pub(super) fn reload_local_dir(&mut self) {
         let wrkdir: PathBuf = self.host.pwd();
@@ -158,8 +144,6 @@ impl FileTransferActivity {
         self.local_mut().wrkdir = wrkdir;
     }
 
-    /// ### local_scan
-    ///
     /// Scan current local directory
     fn local_scan(&mut self, path: &Path) {
         match self.host.scan_dir(path) {
@@ -176,8 +160,6 @@ impl FileTransferActivity {
         }
     }
 
-    /// ### remote_scan
-    ///
     /// Scan current remote directory
     fn remote_scan(&mut self, path: &Path) {
         match self.client.list_dir(path) {
@@ -194,8 +176,6 @@ impl FileTransferActivity {
         }
     }
 
-    /// ### filetransfer_send
-    ///
     /// Send fs entry to remote.
     /// If dst_name is Some, entry will be saved with a different name.
     /// If entry is a directory, this applies to directory only
@@ -229,8 +209,6 @@ impl FileTransferActivity {
         result
     }
 
-    /// ### filetransfer_send_file
-    ///
     /// Send one file to remote at specified path.
     fn filetransfer_send_file(
         &mut self,
@@ -261,8 +239,6 @@ impl FileTransferActivity {
         result.map_err(|x| x.to_string())
     }
 
-    /// ### filetransfer_send_any
-    ///
     /// Send a `TransferPayload` of type `Any`
     fn filetransfer_send_any(
         &mut self,
@@ -284,8 +260,6 @@ impl FileTransferActivity {
         result
     }
 
-    /// ### filetransfer_send_many
-    ///
     /// Send many entries to remote
     fn filetransfer_send_many(
         &mut self,
@@ -448,8 +422,6 @@ impl FileTransferActivity {
         result
     }
 
-    /// ### filetransfer_send_file
-    ///
     /// Send local file and write it to remote path
     fn filetransfer_send_one(
         &mut self,
@@ -479,8 +451,6 @@ impl FileTransferActivity {
         }
     }
 
-    /// ### filetransfer_send_one_with_stream
-    ///
     /// Send file to remote using stream
     fn filetransfer_send_one_with_stream(
         &mut self,
@@ -580,8 +550,6 @@ impl FileTransferActivity {
         Ok(())
     }
 
-    /// ### filetransfer_send_one_wno_stream
-    ///
     /// Send an `File` to remote without using streams.
     fn filetransfer_send_one_wno_stream(
         &mut self,
@@ -631,8 +599,6 @@ impl FileTransferActivity {
         Ok(())
     }
 
-    /// ### filetransfer_recv
-    ///
     /// Recv fs entry from remote.
     /// If dst_name is Some, entry will be saved with a different name.
     /// If entry is a directory, this applies to directory only
@@ -661,8 +627,6 @@ impl FileTransferActivity {
         result
     }
 
-    /// ### filetransfer_recv_any
-    ///
     /// Recv fs entry from remote.
     /// If dst_name is Some, entry will be saved with a different name.
     /// If entry is a directory, this applies to directory only
@@ -686,8 +650,6 @@ impl FileTransferActivity {
         result
     }
 
-    /// ### filetransfer_recv_file
-    ///
     /// Receive a single file from remote.
     fn filetransfer_recv_file(&mut self, entry: &File, local_path: &Path) -> Result<(), String> {
         // Reset states
@@ -705,8 +667,6 @@ impl FileTransferActivity {
         result.map_err(|x| x.to_string())
     }
 
-    /// ### filetransfer_send_many
-    ///
     /// Send many entries to remote
     fn filetransfer_recv_many(
         &mut self,
@@ -887,8 +847,6 @@ impl FileTransferActivity {
         result
     }
 
-    /// ### filetransfer_recv_one
-    ///
     /// Receive file from remote and write it to local path
     fn filetransfer_recv_one(
         &mut self,
@@ -914,8 +872,6 @@ impl FileTransferActivity {
         }
     }
 
-    /// ### filetransfer_recv_one_with_stream
-    ///
     /// Receive an `Entry` from remote using stream
     fn filetransfer_recv_one_with_stream(
         &mut self,
@@ -1023,8 +979,6 @@ impl FileTransferActivity {
         Ok(())
     }
 
-    /// ### filetransfer_recv_one_with_stream
-    ///
     /// Receive an `Entry` from remote without using stream
     fn filetransfer_recv_one_wno_stream(
         &mut self,
@@ -1086,8 +1040,6 @@ impl FileTransferActivity {
         Ok(())
     }
 
-    /// ### local_changedir
-    ///
     /// Change directory for local
     pub(super) fn local_changedir(&mut self, path: &Path, push: bool) {
         // Get current directory
@@ -1143,8 +1095,6 @@ impl FileTransferActivity {
         }
     }
 
-    /// ### download_file_as_temp
-    ///
     /// Download provided file as a temporary file
     pub(super) fn download_file_as_temp(&mut self, file: &File) -> Result<PathBuf, String> {
         let tmpfile: PathBuf = match self.cache.as_ref() {
@@ -1176,8 +1126,6 @@ impl FileTransferActivity {
 
     // -- transfer sizes
 
-    /// ### get_total_transfer_size_local
-    ///
     /// Get total size of transfer for localhost
     fn get_total_transfer_size_local(&mut self, entry: &Entry) -> usize {
         match entry {
@@ -1201,8 +1149,6 @@ impl FileTransferActivity {
         }
     }
 
-    /// ### get_total_transfer_size_remote
-    ///
     /// Get total size of transfer for remote host
     fn get_total_transfer_size_remote(&mut self, entry: &Entry) -> usize {
         match entry {

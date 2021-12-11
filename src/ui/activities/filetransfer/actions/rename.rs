@@ -131,8 +131,6 @@ impl FileTransferActivity {
         }
     }
 
-    /// ### tricky_move
-    ///
     /// Tricky move will be used whenever copy command is not available on remote host.
     /// It basically uses the tricky_copy function, then it just deletes the previous entry (`entry`)
     fn tricky_move(&mut self, entry: &Entry, dest: &Path) {

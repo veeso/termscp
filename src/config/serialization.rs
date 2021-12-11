@@ -29,8 +29,6 @@ use serde::{de::DeserializeOwned, Serialize};
 use std::io::{Read, Write};
 use thiserror::Error;
 
-/// ## SerializerError
-///
 /// Contains the error for serializer/deserializer
 #[derive(std::fmt::Debug)]
 pub struct SerializerError {
@@ -38,8 +36,6 @@ pub struct SerializerError {
     msg: Option<String>,
 }
 
-/// ## SerializerErrorKind
-///
 /// Describes the kind of error for the serializer/deserializer
 #[derive(Error, Debug)]
 pub enum SerializerErrorKind {
@@ -54,15 +50,11 @@ pub enum SerializerErrorKind {
 }
 
 impl SerializerError {
-    /// ### new
-    ///
     /// Instantiate a new `SerializerError`
     pub fn new(kind: SerializerErrorKind) -> SerializerError {
         SerializerError { kind, msg: None }
     }
 
-    /// ### new_ex
-    ///
     /// Instantiates a new `SerializerError` with description message
     pub fn new_ex(kind: SerializerErrorKind, msg: String) -> SerializerError {
         let mut err: SerializerError = SerializerError::new(kind);

@@ -35,8 +35,6 @@ use crate::system::environment;
 use std::path::PathBuf;
 
 impl AuthActivity {
-    /// ### del_bookmark
-    ///
     /// Delete bookmark
     pub(super) fn del_bookmark(&mut self, idx: usize) {
         if let Some(bookmarks_cli) = self.bookmarks_client.as_mut() {
@@ -52,8 +50,6 @@ impl AuthActivity {
         }
     }
 
-    /// ### load_bookmark
-    ///
     /// Load selected bookmark (at index) to input fields
     pub(super) fn load_bookmark(&mut self, idx: usize) {
         if let Some(bookmarks_cli) = self.bookmarks_client.as_ref() {
@@ -67,8 +63,6 @@ impl AuthActivity {
         }
     }
 
-    /// ### save_bookmark
-    ///
     /// Save current input fields as a bookmark
     pub(super) fn save_bookmark(&mut self, name: String, save_password: bool) {
         let params = match self.collect_host_params() {
@@ -89,8 +83,6 @@ impl AuthActivity {
             self.sort_bookmarks();
         }
     }
-    /// ### del_recent
-    ///
     /// Delete recent
     pub(super) fn del_recent(&mut self, idx: usize) {
         if let Some(client) = self.bookmarks_client.as_mut() {
@@ -105,8 +97,6 @@ impl AuthActivity {
         }
     }
 
-    /// ### load_recent
-    ///
     /// Load selected recent (at index) to input fields
     pub(super) fn load_recent(&mut self, idx: usize) {
         if let Some(client) = self.bookmarks_client.as_ref() {
@@ -120,8 +110,6 @@ impl AuthActivity {
         }
     }
 
-    /// ### save_recent
-    ///
     /// Save current input fields as a "recent"
     pub(super) fn save_recent(&mut self) {
         let params = match self.collect_host_params() {
@@ -138,8 +126,6 @@ impl AuthActivity {
         }
     }
 
-    /// ### write_bookmarks
-    ///
     /// Write bookmarks to file
     fn write_bookmarks(&mut self) {
         if let Some(bookmarks_cli) = self.bookmarks_client.as_ref() {
@@ -149,8 +135,6 @@ impl AuthActivity {
         }
     }
 
-    /// ### init_bookmarks_client
-    ///
     /// Initialize bookmarks client
     pub(super) fn init_bookmarks_client(&mut self) {
         // Get config dir
@@ -210,8 +194,6 @@ impl AuthActivity {
 
     // -- privates
 
-    /// ### sort_bookmarks
-    ///
     /// Sort bookmarks in list
     fn sort_bookmarks(&mut self) {
         // Conver to lowercase when sorting
@@ -219,16 +201,12 @@ impl AuthActivity {
             .sort_by(|a, b| a.to_lowercase().as_str().cmp(b.to_lowercase().as_str()));
     }
 
-    /// ### sort_recents
-    ///
     /// Sort recents in list
     fn sort_recents(&mut self) {
         // Reverse order
         self.recents_list.sort_by(|a, b| b.cmp(a));
     }
 
-    /// ### load_bookmark_into_gui
-    ///
     /// Load bookmark data into the gui components
     fn load_bookmark_into_gui(&mut self, bookmark: FileTransferParams) {
         // Load parameters into components

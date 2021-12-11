@@ -36,8 +36,6 @@ use std::path::PathBuf;
 pub const DEFAULT_NOTIFICATION_TRANSFER_THRESHOLD: u64 = 536870912; // 512MB
 
 #[derive(Deserialize, Serialize, Debug, Default)]
-/// ## UserConfig
-///
 /// UserConfig contains all the configurations for the user,
 /// supported by termscp
 pub struct UserConfig {
@@ -46,8 +44,6 @@ pub struct UserConfig {
 }
 
 #[derive(Deserialize, Serialize, Debug)]
-/// ## UserInterfaceConfig
-///
 /// UserInterfaceConfig provides all the keys to configure the user interface
 pub struct UserInterfaceConfig {
     pub text_editor: PathBuf,
@@ -63,8 +59,6 @@ pub struct UserInterfaceConfig {
 }
 
 #[derive(Deserialize, Serialize, Debug, Default)]
-/// ## RemoteConfig
-///
 /// Contains configuratio related to remote hosts
 pub struct RemoteConfig {
     pub ssh_keys: HashMap<String, PathBuf>, // Association between host name and path to private key

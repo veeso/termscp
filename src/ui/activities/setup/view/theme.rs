@@ -35,8 +35,6 @@ use tuirealm::tui::layout::{Constraint, Direction, Layout};
 impl SetupActivity {
     // -- view
 
-    /// ### init_theme
-    ///
     /// Initialize thene view
     pub(super) fn init_theme(&mut self) {
         // Init view (and mount commons)
@@ -298,8 +296,6 @@ impl SetupActivity {
             .is_ok());
     }
 
-    /// ### load_styles
-    ///
     /// Load values from theme into input fields
     pub(crate) fn load_styles(&mut self) {
         let theme: Theme = self.theme().clone();

@@ -127,8 +127,6 @@ pub enum Msg {
     None,
 }
 
-/// ## InputMask
-///
 /// Auth form input mask
 #[derive(Eq, PartialEq)]
 enum InputMask {
@@ -160,8 +158,6 @@ pub struct AuthActivity {
 }
 
 impl AuthActivity {
-    /// ### new
-    ///
     /// Instantiates a new AuthActivity
     pub fn new(ticks: Duration) -> AuthActivity {
         AuthActivity {
@@ -180,36 +176,26 @@ impl AuthActivity {
         }
     }
 
-    /// ### context
-    ///
     /// Returns a reference to context
     fn context(&self) -> &Context {
         self.context.as_ref().unwrap()
     }
 
-    /// ### context_mut
-    ///
     /// Returns a mutable reference to context
     fn context_mut(&mut self) -> &mut Context {
         self.context.as_mut().unwrap()
     }
 
-    /// ### config
-    ///
     /// Returns config client reference
     fn config(&self) -> &ConfigClient {
         self.context().config()
     }
 
-    /// ### theme
-    ///
     /// Returns a reference to theme
     fn theme(&self) -> &Theme {
         self.context().theme_provider().theme()
     }
 
-    /// ### input_mask
-    ///
     /// Get current input mask to show
     fn input_mask(&self) -> InputMask {
         match self.protocol {
@@ -222,8 +208,6 @@ impl AuthActivity {
 }
 
 impl Activity for AuthActivity {
-    /// ### on_create
-    ///
     /// `on_create` is the function which must be called to initialize the activity.
     /// `on_create` must initialize all the data structures used by the activity
     /// Context is taken from activity manager and will be released only when activity is destroyed
@@ -259,8 +243,6 @@ impl Activity for AuthActivity {
         info!("Activity initialized");
     }
 
-    /// ### on_draw
-    ///
     /// `on_draw` is the function which draws the graphical interface.
     /// This function must be called at each tick to refresh the interface
     fn on_draw(&mut self) {
@@ -288,8 +270,6 @@ impl Activity for AuthActivity {
         }
     }
 
-    /// ### will_umount
-    ///
     /// `will_umount` is the method which must be able to report to the activity manager, whether
     /// the activity should be terminated or not.
     /// If not, the call will return `None`, otherwise return`Some(ExitReason)`
@@ -297,8 +277,6 @@ impl Activity for AuthActivity {
         self.exit_reason.as_ref()
     }
 
-    /// ### on_destroy
-    ///
     /// `on_destroy` is the function which cleans up runtime variables and data before terminating the activity.
     /// This function must be called once before terminating the activity.
     /// This function finally releases the context

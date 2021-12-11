@@ -31,8 +31,6 @@ use crate::system::config_client::ConfigClient;
 use remotefs::Entry;
 use std::path::Path;
 
-/// ## FileExplorerTab
-///
 /// File explorer tab
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum FileExplorerTab {
@@ -42,8 +40,6 @@ pub enum FileExplorerTab {
     FindRemote, // Find result tab
 }
 
-/// ## FoundExplorerTab
-///
 /// Describes the explorer tab type
 #[derive(Copy, Clone, Debug)]
 pub enum FoundExplorerTab {
@@ -51,8 +47,6 @@ pub enum FoundExplorerTab {
     Remote,
 }
 
-/// ## Browser
-///
 /// Browser contains the browser options
 pub struct Browser {
     local: FileExplorer,                             // Local File explorer state
@@ -63,8 +57,6 @@ pub struct Browser {
 }
 
 impl Browser {
-    /// ### new
-    ///
     /// Build a new `Browser` struct
     pub fn new(cli: &ConfigClient) -> Self {
         Self {
@@ -110,8 +102,6 @@ impl Browser {
         self.found = None;
     }
 
-    /// ### found_tab
-    ///
     /// Returns found tab if any
     pub fn found_tab(&self) -> Option<FoundExplorerTab> {
         self.found.as_ref().map(|x| x.0)
@@ -121,22 +111,16 @@ impl Browser {
         self.tab
     }
 
-    /// ### change_tab
-    ///
     /// Update tab value
     pub fn change_tab(&mut self, tab: FileExplorerTab) {
         self.tab = tab;
     }
 
-    /// ### toggle_sync_browsing
-    ///
     /// Invert the current state for the sync browsing
     pub fn toggle_sync_browsing(&mut self) {
         self.sync_browsing = !self.sync_browsing;
     }
 
-    /// ### build_local_explorer
-    ///
     /// Build a file explorer with local host setup
     pub fn build_local_explorer(cli: &ConfigClient) -> FileExplorer {
         let mut builder = Self::build_explorer(cli);
@@ -144,8 +128,6 @@ impl Browser {
         builder.build()
     }
 
-    /// ### build_remote_explorer
-    ///
     /// Build a file explorer with remote host setup
     pub fn build_remote_explorer(cli: &ConfigClient) -> FileExplorer {
         let mut builder = Self::build_explorer(cli);
@@ -153,8 +135,6 @@ impl Browser {
         builder.build()
     }
 
-    /// ### build_explorer
-    ///
     /// Build explorer reading configuration from `ConfigClient`
     fn build_explorer(cli: &ConfigClient) -> FileExplorerBuilder {
         let mut builder: FileExplorerBuilder = FileExplorerBuilder::new();
@@ -167,8 +147,6 @@ impl Browser {
         builder
     }
 
-    /// ### build_found_explorer
-    ///
     /// Build explorer reading from `ConfigClient`, for found result (has some differences)
     fn build_found_explorer(wrkdir: &Path) -> FileExplorer {
         FileExplorerBuilder::new()

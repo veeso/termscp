@@ -84,8 +84,6 @@ impl FileTransferActivity {
         self.reload_remote_dir();
     }
 
-    /// ### edit_local_file
-    ///
     /// Edit a file on localhost
     fn edit_local_file(&mut self, path: &Path) -> Result<(), String> {
         // Read first 2048 bytes or less from file to check if it is textual
@@ -147,8 +145,6 @@ impl FileTransferActivity {
         Ok(())
     }
 
-    /// ### edit_remote_file
-    ///
     /// Edit file on remote host
     fn edit_remote_file(&mut self, file: File) -> Result<(), String> {
         // Create temp file

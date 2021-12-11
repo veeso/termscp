@@ -44,8 +44,6 @@ use std::path::{Path, PathBuf};
 use std::string::ToString;
 use std::time::SystemTime;
 
-/// ## BookmarksClient
-///
 /// BookmarksClient provides a layer between the host system and the bookmarks module
 pub struct BookmarksClient {
     hosts: UserHosts,
@@ -55,8 +53,6 @@ pub struct BookmarksClient {
 }
 
 impl BookmarksClient {
-    /// ### BookmarksClient
-    ///
     /// Instantiates a new BookmarksClient
     /// Bookmarks file path must be provided
     /// Storage path for file provider must be provided
@@ -155,15 +151,11 @@ impl BookmarksClient {
         Ok(client)
     }
 
-    /// ### iter_bookmarks
-    ///
     /// Iterate over bookmarks keys
     pub fn iter_bookmarks(&self) -> impl Iterator<Item = &String> + '_ {
         Box::new(self.hosts.bookmarks.keys())
     }
 
-    /// ### get_bookmark
-    ///
     /// Get bookmark associated to key
     pub fn get_bookmark(&self, key: &str) -> Option<FileTransferParams> {
         debug!("Getting bookmark {}", key);
@@ -183,8 +175,6 @@ impl BookmarksClient {
         Some(FileTransferParams::from(entry))
     }
 
-    /// ### add_recent
-    ///
     /// Add a new recent to bookmarks
     pub fn add_bookmark<S: AsRef<str>>(
         &mut self,
@@ -207,22 +197,16 @@ impl BookmarksClient {
         self.hosts.bookmarks.insert(name, host);
     }
 
-    /// ### del_bookmark
-    ///
     /// Delete entry from bookmarks
     pub fn del_bookmark(&mut self, name: &str) {
         let _ = self.hosts.bookmarks.remove(name);
         info!("Removed bookmark {}", name);
     }
-    /// ### iter_recents
-    ///
     /// Iterate over recents keys
     pub fn iter_recents(&self) -> impl Iterator<Item = &String> + '_ {
         Box::new(self.hosts.recents.keys())
     }
 
-    /// ### get_recent
-    ///
     /// Get recent associated to key
     pub fn get_recent(&self, key: &str) -> Option<FileTransferParams> {
         // NOTE: password is not decrypted; recents will never have password
@@ -231,8 +215,6 @@ impl BookmarksClient {
         Some(FileTransferParams::from(entry))
     }
 
-    /// ### add_recent
-    ///
     /// Add a new recent to bookmarks
     pub fn add_recent(&mut self, params: FileTransferParams) {
         // Make bookmark
@@ -271,16 +253,12 @@ impl BookmarksClient {
         self.hosts.recents.insert(name, host);
     }
 
-    /// ### del_recent
-    ///
     /// Delete entry from recents
     pub fn del_recent(&mut self, name: &str) {
         let _ = self.hosts.recents.remove(name);
         info!("Removed recent host {}", name);
     }
 
-    /// ### write_bookmarks
-    ///
     /// Write bookmarks to file
     pub fn write_bookmarks(&self) -> Result<(), SerializerError> {
         // Open file
@@ -302,8 +280,6 @@ impl BookmarksClient {
         }
     }
 
-    /// ### read_bookmarks
-    ///
     /// Read bookmarks from file
     fn read_bookmarks(&mut self) -> Result<(), SerializerError> {
         // Open bookmarks file for read
@@ -332,16 +308,12 @@ impl BookmarksClient {
         }
     }
 
-    /// ### generate_key
-    ///
     /// Generate a new AES key
     fn generate_key() -> String {
         // Generate 256 bytes (2048 bits) key
         random_alphanumeric_with_len(256)
     }
 
-    /// ### make_bookmark
-    ///
     /// Make bookmark from credentials
     fn make_bookmark(&self, params: FileTransferParams) -> Bookmark {
         let mut bookmark: Bookmark = Bookmark::from(params);
@@ -352,15 +324,11 @@ impl BookmarksClient {
         bookmark
     }
 
-    /// ### encrypt_str
-    ///
     /// Encrypt provided string using AES-128. Encrypted buffer is then converted to BASE64
     fn encrypt_str(&self, txt: &str) -> String {
         crypto::aes128_b64_crypt(self.key.as_str(), txt)
     }
 
-    /// ### decrypt_str
-    ///
     /// Decrypt provided string using AES-128
     fn decrypt_str(&self, secret: &str) -> Result<String, SerializerError> {
         match crypto::aes128_b64_decrypt(self.key.as_str(), secret) {
@@ -741,8 +709,6 @@ mod tests {
         assert!(client.decrypt_str("bidoof").is_err());
     }
 
-    /// ### get_paths
-    ///
     /// Get paths for configuration and key for bookmarks
     fn get_paths(dir: &Path) -> (PathBuf, PathBuf) {
         let k: PathBuf = PathBuf::from(dir);

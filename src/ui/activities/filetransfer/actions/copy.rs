@@ -32,8 +32,6 @@ use remotefs::{Entry, RemoteErrorType};
 use std::path::{Path, PathBuf};
 
 impl FileTransferActivity {
-    /// ### action_local_copy
-    ///
     /// Copy file on local
     pub(crate) fn action_local_copy(&mut self, input: String) {
         match self.get_local_selected_entries() {
@@ -59,8 +57,6 @@ impl FileTransferActivity {
         }
     }
 
-    /// ### action_remote_copy
-    ///
     /// Copy file on remote
     pub(crate) fn action_remote_copy(&mut self, input: String) {
         match self.get_remote_selected_entries() {
@@ -140,8 +136,6 @@ impl FileTransferActivity {
         }
     }
 
-    /// ### tricky_copy
-    ///
     /// Tricky copy will be used whenever copy command is not available on remote host
     pub(super) fn tricky_copy(&mut self, entry: Entry, dest: &Path) -> Result<(), String> {
         // NOTE: VERY IMPORTANT; wait block must be umounted or something really bad will happen

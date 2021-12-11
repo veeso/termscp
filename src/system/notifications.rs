@@ -6,14 +6,10 @@
 use notify_rust::Hint;
 use notify_rust::{Notification as OsNotification, Timeout};
 
-/// ## Notification
-///
 /// A notification helper which provides all the functions to send the available notifications for termscp
 pub struct Notification;
 
 impl Notification {
-    /// ### transfer_completed
-    ///
     /// Notify a transfer has been completed with success
     pub fn transfer_completed<S: AsRef<str>>(body: S) {
         Self::notify(
@@ -23,15 +19,11 @@ impl Notification {
         );
     }
 
-    /// ### transfer_error
-    ///
     /// Notify a transfer has failed
     pub fn transfer_error<S: AsRef<str>>(body: S) {
         Self::notify("Transfer failed ❌", body.as_ref(), Some("transfer.error"));
     }
 
-    /// ### update_available
-    ///
     /// Notify a new version of termscp is available for download
     pub fn update_available<S: AsRef<str>>(version: S) {
         Self::notify(
@@ -41,8 +33,6 @@ impl Notification {
         );
     }
 
-    /// ### update_installed
-    ///
     /// Notify the update has been correctly installed
     pub fn update_installed<S: AsRef<str>>(version: S) {
         Self::notify(
@@ -52,15 +42,11 @@ impl Notification {
         );
     }
 
-    /// ### update_failed
-    ///
     /// Notify the update installation has failed
     pub fn update_failed<S: AsRef<str>>(err: S) {
         Self::notify("Update installation failed ❌", err.as_ref(), None);
     }
 
-    /// ### notify
-    ///
     /// Notify guest OS with provided Summary, body and optional category
     /// e.g. Category is supported on FreeBSD/Linux only
     #[allow(unused_variables)]

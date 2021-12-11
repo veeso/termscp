@@ -35,8 +35,6 @@ use std::fs::OpenOptions;
 use std::path::{Path, PathBuf};
 use std::string::ToString;
 
-/// ## ThemeProvider
-///
 /// ThemeProvider provides a high level API to communicate with the termscp theme
 pub struct ThemeProvider {
     theme: Theme,        // Theme loaded
@@ -45,8 +43,6 @@ pub struct ThemeProvider {
 }
 
 impl ThemeProvider {
-    /// ### new
-    ///
     /// Instantiates a new `ThemeProvider`
     pub fn new(theme_path: &Path) -> Result<Self, SerializerError> {
         let default_theme: Theme = Theme::default();
@@ -78,8 +74,6 @@ impl ThemeProvider {
         Ok(provider)
     }
 
-    /// ### degraded
-    ///
     /// Create a new theme provider which won't work with file system.
     /// This is done in order to prevent a lot of `unwrap_or` on Ui
     pub fn degraded() -> Self {
@@ -92,15 +86,11 @@ impl ThemeProvider {
 
     // -- getters
 
-    /// ### theme
-    ///
     /// Returns theme as reference
     pub fn theme(&self) -> &Theme {
         &self.theme
     }
 
-    /// ### theme_mut
-    ///
     /// Returns a mutable reference to the theme
     pub fn theme_mut(&mut self) -> &mut Theme {
         &mut self.theme
@@ -108,8 +98,6 @@ impl ThemeProvider {
 
     // -- io
 
-    /// ### load
-    ///
     /// Load theme from file
     pub fn load(&mut self) -> Result<(), SerializerError> {
         if self.degraded {
@@ -146,8 +134,6 @@ impl ThemeProvider {
         }
     }
 
-    /// ### save
-    ///
     /// Save theme to file
     pub fn save(&self) -> Result<(), SerializerError> {
         if self.degraded {
@@ -235,8 +221,6 @@ mod test {
         assert!(ThemeProvider::new(Path::new("/tmp/oifoif/omar")).is_err());
     }
 
-    /// ### get_theme_path
-    ///
     /// Get paths for theme file
     fn get_theme_path(dir: &Path) -> PathBuf {
         let mut p: PathBuf = PathBuf::from(dir);

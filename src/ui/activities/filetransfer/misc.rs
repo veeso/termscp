@@ -43,8 +43,6 @@ use tuirealm::{PollStrategy, Update};
 const LOG_CAPACITY: usize = 256;
 
 impl FileTransferActivity {
-    /// ### tick
-    ///
     /// Call `Application::tick()` and process messages in `Update`
     pub(super) fn tick(&mut self) {
         match self.app.tick(PollStrategy::UpTo(3)) {
@@ -65,8 +63,6 @@ impl FileTransferActivity {
         }
     }
 
-    /// ### log
-    ///
     /// Add message to log events
     pub(super) fn log(&mut self, level: LogLevel, msg: String) {
         // Log to file
@@ -87,8 +83,6 @@ impl FileTransferActivity {
         self.update_logbox();
     }
 
-    /// ### log_and_alert
-    ///
     /// Add message to log events and also display it as an alert
     pub(super) fn log_and_alert(&mut self, level: LogLevel, msg: String) {
         self.mount_error(msg.as_str());
@@ -97,8 +91,6 @@ impl FileTransferActivity {
         self.update_logbox();
     }
 
-    /// ### init_config_client
-    ///
     /// Initialize configuration client if possible.
     /// This function doesn't return errors.
     pub(super) fn init_config_client() -> ConfigClient {
@@ -119,29 +111,21 @@ impl FileTransferActivity {
         }
     }
 
-    /// ### setup_text_editor
-    ///
     /// Set text editor to use
     pub(super) fn setup_text_editor(&self) {
         env::set_var("EDITOR", self.config().get_text_editor());
     }
 
-    /// ### local_to_abs_path
-    ///
     /// Convert a path to absolute according to local explorer
     pub(super) fn local_to_abs_path(&self, path: &Path) -> PathBuf {
         path::absolutize(self.local().wrkdir.as_path(), path)
     }
 
-    /// ### remote_to_abs_path
-    ///
     /// Convert a path to absolute according to remote explorer
     pub(super) fn remote_to_abs_path(&self, path: &Path) -> PathBuf {
         path::absolutize(self.remote().wrkdir.as_path(), path)
     }
 
-    /// ### get_remote_hostname
-    ///
     /// Get remote hostname
     pub(super) fn get_remote_hostname(&self) -> String {
         let ft_params = self.context().ft_params().unwrap();
@@ -151,8 +135,6 @@ impl FileTransferActivity {
         }
     }
 
-    /// ### get_connection_msg
-    ///
     /// Get connection message to show to client
     pub(super) fn get_connection_msg(params: &ProtocolParams) -> String {
         match params {
@@ -173,8 +155,6 @@ impl FileTransferActivity {
         }
     }
 
-    /// ### notify_transfer_completed
-    ///
     /// Send notification regarding transfer completed
     /// The notification is sent only when these conditions are satisfied:
     ///
@@ -188,8 +168,6 @@ impl FileTransferActivity {
         }
     }
 
-    /// ### notify_transfer_error
-    ///
     /// Send notification regarding transfer error
     /// The notification is sent only when these conditions are satisfied:
     ///
@@ -233,8 +211,6 @@ impl FileTransferActivity {
         }
     }
 
-    /// ### update_local_filelist
-    ///
     /// Update local file list
     pub(super) fn update_local_filelist(&mut self) {
         // Get width
@@ -280,8 +256,6 @@ impl FileTransferActivity {
             .is_ok());
     }
 
-    /// ### update_remote_filelist
-    ///
     /// Update remote file list
     pub(super) fn update_remote_filelist(&mut self) {
         let width: usize = self
@@ -323,8 +297,6 @@ impl FileTransferActivity {
             .is_ok());
     }
 
-    /// ### update_logbox
-    ///
     /// Update log box
     pub(super) fn update_logbox(&mut self) {
         let mut table: TableBuilder = TableBuilder::default();
@@ -418,8 +390,6 @@ impl FileTransferActivity {
             .is_ok());
     }
 
-    /// ### finalize_find
-    ///
     /// Finalize find process
     pub(super) fn finalize_find(&mut self) {
         // Set found to none

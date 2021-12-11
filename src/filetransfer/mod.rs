@@ -32,8 +32,6 @@ pub mod params;
 pub use builder::Builder;
 pub use params::{FileTransferParams, ProtocolParams};
 
-/// ## FileTransferProtocol
-///
 /// This enum defines the different transfer protocol available in termscp
 
 #[derive(PartialEq, Debug, Clone, Copy)]

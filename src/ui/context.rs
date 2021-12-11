@@ -33,8 +33,6 @@ use crate::system::theme_provider::ThemeProvider;
 
 use tuirealm::terminal::TerminalBridge;
 
-/// ## Context
-///
 /// Context holds data structures shared by the activities
 pub struct Context {
     ft_params: Option<FileTransferParams>,
@@ -46,8 +44,6 @@ pub struct Context {
 }
 
 impl Context {
-    /// ### new
-    ///
     /// Instantiates a new Context
     pub fn new(
         config_client: ConfigClient,
@@ -106,15 +102,11 @@ impl Context {
 
     // -- error
 
-    /// ### set_error
-    ///
     /// Set context error
     pub fn set_error(&mut self, err: String) {
         self.error = Some(err);
     }
 
-    /// ### error
-    ///
     /// Get error message and remove it from the context
     pub fn error(&mut self) -> Option<String> {
         self.error.take()

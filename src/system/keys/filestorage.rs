@@ -32,16 +32,12 @@ use std::fs::{OpenOptions, Permissions};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 
-/// ## FileStorage
-///
 /// File storage is an implementation o the `KeyStorage` which uses a file to store the key
 pub struct FileStorage {
     dir_path: PathBuf,
 }
 
 impl FileStorage {
-    /// ### new
-    ///
     /// Instantiates a new `FileStorage`
     pub fn new(dir_path: &Path) -> Self {
         FileStorage {
@@ -49,8 +45,6 @@ impl FileStorage {
         }
     }
 
-    /// ### make_file_path
-    ///
     /// Make file path for key file from `dir_path` and the application id
     fn make_file_path(&self, storage_id: &str) -> PathBuf {
         let mut p: PathBuf = self.dir_path.clone();
@@ -61,8 +55,6 @@ impl FileStorage {
 }
 
 impl KeyStorage for FileStorage {
-    /// ### get_key
-    ///
     /// Retrieve key from the key storage.
     /// The key might be acccess through an identifier, which identifies
     /// the key in the storage
@@ -85,8 +77,6 @@ impl KeyStorage for FileStorage {
         }
     }
 
-    /// ### set_key
-    ///
     /// Set the key into the key storage
     fn set_key(&self, storage_id: &str, key: &str) -> Result<(), KeyStorageError> {
         let key_file: PathBuf = self.make_file_path(storage_id);

@@ -256,8 +256,6 @@ pub enum ViewLayout {
     Theme,
 }
 
-/// ## SetupActivity
-///
 /// Setup activity states holder
 pub struct SetupActivity {
     app: Application<Id, Msg, NoUserEvent>,
@@ -282,15 +280,11 @@ impl SetupActivity {
         }
     }
 
-    /// ### context
-    ///
     /// Returns a reference to context
     fn context(&self) -> &Context {
         self.context.as_ref().unwrap()
     }
 
-    /// ### context_mut
-    ///
     /// Returns a mutable reference to context
     fn context_mut(&mut self) -> &mut Context {
         self.context.as_mut().unwrap()
@@ -316,8 +310,6 @@ impl SetupActivity {
         self.context_mut().theme_provider_mut()
     }
 
-    /// ### config_changed
-    ///
     /// Returns whether config has changed
     fn config_changed(&self) -> bool {
         self.context()
@@ -326,8 +318,6 @@ impl SetupActivity {
             .unwrap_or(false)
     }
 
-    /// ### set_config_changed
-    ///
     /// Set value for config changed key into the store
     fn set_config_changed(&mut self, changed: bool) {
         self.context_mut()
@@ -337,8 +327,6 @@ impl SetupActivity {
 }
 
 impl Activity for SetupActivity {
-    /// ### on_create
-    ///
     /// `on_create` is the function which must be called to initialize the activity.
     /// `on_create` must initialize all the data structures used by the activity
     /// Context is taken from activity manager and will be released only when activity is destroyed
@@ -363,8 +351,6 @@ impl Activity for SetupActivity {
         }
     }
 
-    /// ### on_draw
-    ///
     /// `on_draw` is the function which draws the graphical interface.
     /// This function must be called at each tick to refresh the interface
     fn on_draw(&mut self) {
@@ -394,8 +380,6 @@ impl Activity for SetupActivity {
         }
     }
 
-    /// ### will_umount
-    ///
     /// `will_umount` is the method which must be able to report to the activity manager, whether
     /// the activity should be terminated or not.
     /// If not, the call will return `None`, otherwise return`Some(ExitReason)`
@@ -403,8 +387,6 @@ impl Activity for SetupActivity {
         self.exit_reason.as_ref()
     }
 
-    /// ### on_destroy
-    ///
     /// `on_destroy` is the function which cleans up runtime variables and data before terminating the activity.
     /// This function must be called once before terminating the activity.
     /// This function finally releases the context

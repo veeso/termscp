@@ -31,16 +31,12 @@ use super::{ExplorerOpts, FileExplorer, FileSorting, GroupDirs};
 // Ext
 use std::collections::VecDeque;
 
-/// ## FileExplorerBuilder
-///
 /// Struct used to create a `FileExplorer`
 pub struct FileExplorerBuilder {
     explorer: Option<FileExplorer>,
 }
 
 impl FileExplorerBuilder {
-    /// ### new
-    ///
     /// Build a new `FileExplorerBuilder`
     pub fn new() -> Self {
         FileExplorerBuilder {
@@ -48,15 +44,11 @@ impl FileExplorerBuilder {
         }
     }
 
-    /// ### build
-    ///
     /// Take FileExplorer out of builder
     pub fn build(&mut self) -> FileExplorer {
         self.explorer.take().unwrap()
     }
 
-    /// ### with_hidden_files
-    ///
     /// Enable HIDDEN_FILES option
     pub fn with_hidden_files(&mut self, val: bool) -> &mut FileExplorerBuilder {
         if let Some(e) = self.explorer.as_mut() {
@@ -68,8 +60,6 @@ impl FileExplorerBuilder {
         self
     }
 
-    /// ### with_file_sorting
-    ///
     /// Set sorting method
     pub fn with_file_sorting(&mut self, sorting: FileSorting) -> &mut FileExplorerBuilder {
         if let Some(e) = self.explorer.as_mut() {
@@ -78,8 +68,6 @@ impl FileExplorerBuilder {
         self
     }
 
-    /// ### with_dirs_first
-    ///
     /// Enable DIRS_FIRST option
     pub fn with_group_dirs(&mut self, group_dirs: Option<GroupDirs>) -> &mut FileExplorerBuilder {
         if let Some(e) = self.explorer.as_mut() {
@@ -88,8 +76,6 @@ impl FileExplorerBuilder {
         self
     }
 
-    /// ### with_stack_size
-    ///
     /// Set stack size for FileExplorer
     pub fn with_stack_size(&mut self, sz: usize) -> &mut FileExplorerBuilder {
         if let Some(e) = self.explorer.as_mut() {
@@ -99,8 +85,6 @@ impl FileExplorerBuilder {
         self
     }
 
-    /// ### with_formatter
-    ///
     /// Set formatter for FileExplorer
     pub fn with_formatter(&mut self, fmt_str: Option<&str>) -> &mut FileExplorerBuilder {
         if let Some(e) = self.explorer.as_mut() {
