@@ -391,6 +391,7 @@ impl BookmarkName {
 impl Component<Msg, NoUserEvent> for BookmarkName {
     fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
         match ev {
+            Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => Some(Msg::CloseSaveBookmark),
             Event::Keyboard(KeyEvent {
                 code: Key::Left, ..
             }) => {

@@ -36,7 +36,10 @@ impl SetupActivity {
     pub(super) fn save_config(&mut self) -> Result<(), String> {
         match self.config().write_config() {
             Ok(_) => Ok(()),
-            Err(err) => Err(format!("Could not save configuration: {}", err)),
+            Err(err) => {
+                error!("Could not save configuration: {}", err);
+                Err(format!("Could not save configuration: {}", err))
+            }
         }
     }
 

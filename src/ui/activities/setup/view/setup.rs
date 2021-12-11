@@ -119,6 +119,7 @@ impl SetupActivity {
                         Constraint::Length(3), // Remote Format input
                         Constraint::Length(3), // Notifications enabled
                         Constraint::Length(3), // Notifications threshold
+                        Constraint::Length(3), // Ssh config
                         Constraint::Length(1), // Filler
                     ]
                     .as_ref(),
@@ -144,6 +145,8 @@ impl SetupActivity {
                 f,
                 ui_cfg_chunks_col2[3],
             );
+            self.app
+                .view(&Id::Config(IdConfig::SshConfig), f, ui_cfg_chunks_col2[4]);
             // Popups
             self.view_popups(f);
         });
@@ -261,6 +264,17 @@ impl SetupActivity {
                 vec![]
             )
             .is_ok());
+        // Ssh config
+        assert!(self
+            .app
+            .remount(
+                Id::Config(IdConfig::SshConfig),
+                Box::new(components::SshConfig::new(
+                    self.config().get_ssh_config().unwrap_or("")
+                )),
+                vec![]
+            )
+            .is_ok());
     }
 
     /// Collect values from input and put them into the configuration
@@ -331,6 +345,20 @@ impl SetupActivity {
             .state(&Id::Config(IdConfig::NotificationsThreshold))
         {
             self.config_mut().set_notification_threshold(bytes);
+        }
+        if let Ok(State::One(StateValue::String(mut path))) =
+            self.app.state(&Id::Config(IdConfig::SshConfig))
+        {
+            if path.is_empty() {
+                self.config_mut().set_ssh_config(None);
+            } else {
+                // Replace '~' with home path
+                if path.starts_with('~') {
+                    let home_dir = dirs::home_dir().unwrap_or_else(|| PathBuf::from("/root"));
+                    path = path.replacen('~', &home_dir.to_string_lossy(), 1);
+                }
+                self.config_mut().set_ssh_config(Some(path));
+            }
         }
     }
 }

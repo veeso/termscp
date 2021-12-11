@@ -75,6 +75,7 @@ enum IdConfig {
     NotificationsThreshold,
     PromptOnFileReplace,
     RemoteFileFmt,
+    SshConfig,
     TextEditor,
 }
 
@@ -167,6 +168,8 @@ pub enum ConfigMsg {
     PromptOnFileReplaceBlurUp,
     RemoteFileFmtBlurDown,
     RemoteFileFmtBlurUp,
+    SshConfigBlurDown,
+    SshConfigBlurUp,
     TextEditorBlurDown,
     TextEditorBlurUp,
 }
