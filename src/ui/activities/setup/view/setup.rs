@@ -354,7 +354,7 @@ impl SetupActivity {
             } else {
                 // Replace '~' with home path
                 if path.starts_with('~') {
-                    let home_dir = dirs::home_dir().unwrap_or(PathBuf::from("/root"));
+                    let home_dir = dirs::home_dir().unwrap_or_else(|| PathBuf::from("/root"));
                     path = path.replacen('~', &home_dir.to_string_lossy(), 1);
                 }
                 self.config_mut().set_ssh_config(Some(path));
