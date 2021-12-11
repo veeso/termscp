@@ -52,7 +52,8 @@ pub struct UserInterfaceConfig {
     pub check_for_updates: Option<bool>,      // @! Since 0.3.3
     pub prompt_on_file_replace: Option<bool>, // @! Since 0.7.0; Default True
     pub group_dirs: Option<String>,
-    pub file_fmt: Option<String>, // Refers to local host (for backward compatibility)
+    /// file fmt. Refers to local host (for backward compatibility)
+    pub file_fmt: Option<String>, 
     pub remote_file_fmt: Option<String>, // @! Since 0.5.0
     pub notifications: Option<bool>, // @! Since 0.7.0; Default true
     pub notification_threshold: Option<u64>, // @! Since 0.7.0; Default 512MB
@@ -61,7 +62,11 @@ pub struct UserInterfaceConfig {
 #[derive(Deserialize, Serialize, Debug, Default)]
 /// Contains configuratio related to remote hosts
 pub struct RemoteConfig {
-    pub ssh_keys: HashMap<String, PathBuf>, // Association between host name and path to private key
+    /// Ssh configuration path. If NONE, won't be read
+    pub ssh_config: Option<String>,
+    /// Association between host name and path to private key
+    /// NOTE: this parameter must stay as last: <https://github.com/alexcrichton/toml-rs/issues/142>
+    pub ssh_keys: HashMap<String, PathBuf>,
 }
 
 impl Default for UserInterfaceConfig {
@@ -99,7 +104,10 @@ mod tests {
             String::from("192.168.1.31"),
             PathBuf::from("/tmp/private.key"),
         );
-        let remote: RemoteConfig = RemoteConfig { ssh_keys: keys };
+        let remote: RemoteConfig = RemoteConfig {
+            ssh_keys: keys,
+            ssh_config: Some(String::from("~/.ssh/config")),
+        };
         let ui: UserInterfaceConfig = UserInterfaceConfig {
             default_protocol: String::from("SFTP"),
             text_editor: PathBuf::from("nano"),
@@ -129,6 +137,10 @@ mod tests {
                 .get(&String::from("192.168.1.31"))
                 .unwrap(),
             PathBuf::from("/tmp/private.key")
+        );
+        assert_eq!(
+            cfg.remote.ssh_config.as_deref().unwrap(),
+            String::from("~/.ssh/config")
         );
         assert_eq!(cfg.user_interface.default_protocol, String::from("SFTP"));
         assert_eq!(cfg.user_interface.text_editor, PathBuf::from("nano"));

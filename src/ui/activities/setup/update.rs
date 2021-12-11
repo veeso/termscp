@@ -80,11 +80,13 @@ impl SetupActivity {
             CommonMsg::RevertChanges => match self.layout {
                 ViewLayout::Theme => {
                     if let Err(err) = self.action_reset_theme() {
+                        error!("Failed to reset theme: {}", err);
                         self.mount_error(err);
                     }
                 }
                 ViewLayout::SshKeys | ViewLayout::SetupForm => {
                     if let Err(err) = self.action_reset_config() {
+                        error!("Failed to reset config: {}", err);
                         self.mount_error(err);
                     }
                 }
@@ -92,6 +94,7 @@ impl SetupActivity {
             CommonMsg::SaveAndQuit => {
                 // Save changes
                 if let Err(err) = self.action_save_all() {
+                    error!("Failed to save config: {}", err);
                     self.mount_error(err.as_str());
                 }
                 // Exit
@@ -99,6 +102,7 @@ impl SetupActivity {
             }
             CommonMsg::SaveConfig => {
                 if let Err(err) = self.action_save_all() {
+                    error!("Failed to save config: {}", err);
                     self.mount_error(err.as_str());
                 }
                 self.umount_save_popup();
@@ -173,7 +177,7 @@ impl SetupActivity {
                     .is_ok());
             }
             ConfigMsg::NotificationsThresholdBlurDown => {
-                assert!(self.app.active(&Id::Config(IdConfig::TextEditor)).is_ok());
+                assert!(self.app.active(&Id::Config(IdConfig::SshConfig)).is_ok());
             }
             ConfigMsg::NotificationsThresholdBlurUp => {
                 assert!(self
@@ -203,6 +207,12 @@ impl SetupActivity {
                     .is_ok());
             }
             ConfigMsg::TextEditorBlurUp => {
+                assert!(self.app.active(&Id::Config(IdConfig::SshConfig)).is_ok());
+            }
+            ConfigMsg::SshConfigBlurDown => {
+                assert!(self.app.active(&Id::Config(IdConfig::TextEditor)).is_ok());
+            }
+            ConfigMsg::SshConfigBlurUp => {
                 assert!(self
                     .app
                     .active(&Id::Config(IdConfig::NotificationsThreshold))
@@ -230,6 +240,7 @@ impl SetupActivity {
             }
             SshMsg::EditSshKey(i) => {
                 if let Err(err) = self.edit_ssh_key(i) {
+                    error!("Failed to edit ssh key: {}", err);
                     self.mount_error(err.as_str());
                 }
             }

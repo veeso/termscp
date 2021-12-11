@@ -239,6 +239,18 @@ impl ConfigClient {
         self.config.user_interface.notification_threshold = Some(value);
     }
 
+    // Remote params
+
+    /// Get ssh config path
+    pub fn get_ssh_config(&self) -> Option<&str> {
+        self.config.remote.ssh_config.as_deref()
+    }
+
+    /// Set ssh config path
+    pub fn set_ssh_config(&mut self, p: Option<String>) {
+        self.config.remote.ssh_config = p;
+    }
+
     // SSH Keys
 
     /// Save a SSH key into configuration.
@@ -653,6 +665,20 @@ mod tests {
         assert_eq!(client.get_notification_threshold(), 1024);
         client.set_notification_threshold(64);
         assert_eq!(client.get_notification_threshold(), 64);
+    }
+
+    #[test]
+    fn test_system_config_remote_ssh_config() {
+        let tmp_dir: TempDir = TempDir::new().ok().unwrap();
+        let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
+        let mut client: ConfigClient = ConfigClient::new(cfg_path.as_path(), key_path.as_path())
+            .ok()
+            .unwrap();
+        assert_eq!(client.get_ssh_config(), None); // Null ?
+        client.set_ssh_config(Some(String::from("/tmp/ssh_config")));
+        assert_eq!(client.get_ssh_config(), Some("/tmp/ssh_config"));
+        client.set_ssh_config(None);
+        assert_eq!(client.get_ssh_config(), None);
     }
 
     #[test]
