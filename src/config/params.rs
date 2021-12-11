@@ -53,9 +53,9 @@ pub struct UserInterfaceConfig {
     pub prompt_on_file_replace: Option<bool>, // @! Since 0.7.0; Default True
     pub group_dirs: Option<String>,
     /// file fmt. Refers to local host (for backward compatibility)
-    pub file_fmt: Option<String>, 
-    pub remote_file_fmt: Option<String>, // @! Since 0.5.0
-    pub notifications: Option<bool>, // @! Since 0.7.0; Default true
+    pub file_fmt: Option<String>,
+    pub remote_file_fmt: Option<String>,     // @! Since 0.5.0
+    pub notifications: Option<bool>,         // @! Since 0.7.0; Default true
     pub notification_threshold: Option<u64>, // @! Since 0.7.0; Default 512MB
 }
 
