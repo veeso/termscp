@@ -42,8 +42,6 @@ use std::string::ToString;
 // Types
 pub type SshHost = (String, String, PathBuf); // 0: host, 1: username, 2: RSA key path
 
-/// ## ConfigClient
-///
 /// ConfigClient provides a high level API to communicate with the termscp configuration
 pub struct ConfigClient {
     config: UserConfig,   // Configuration loaded
@@ -53,8 +51,6 @@ pub struct ConfigClient {
 }
 
 impl ConfigClient {
-    /// ### new
-    ///
     /// Instantiate a new `ConfigClient` with provided path
     pub fn new(config_path: &Path, ssh_key_dir: &Path) -> Result<Self, SerializerError> {
         // Initialize a default configuration
@@ -104,8 +100,6 @@ impl ConfigClient {
         Ok(client)
     }
 
-    /// ### degraded
-    ///
     /// Instantiate a ConfigClient in degraded mode.
     /// When in degraded mode, the configuration in use will be the default configuration
     /// and the IO operation on configuration won't be available
@@ -120,15 +114,11 @@ impl ConfigClient {
 
     // Text editor
 
-    /// ### get_text_editor
-    ///
     /// Get text editor from configuration
     pub fn get_text_editor(&self) -> PathBuf {
         self.config.user_interface.text_editor.clone()
     }
 
-    /// ### set_text_editor
-    ///
     /// Set text editor path
     pub fn set_text_editor(&mut self, path: PathBuf) {
         self.config.user_interface.text_editor = path;
@@ -136,8 +126,6 @@ impl ConfigClient {
 
     // Default protocol
 
-    /// ### get_default_protocol
-    ///
     /// Get default protocol from configuration
     pub fn get_default_protocol(&self) -> FileTransferProtocol {
         match FileTransferProtocol::from_str(self.config.user_interface.default_protocol.as_str()) {
@@ -146,43 +134,31 @@ impl ConfigClient {
         }
     }
 
-    /// ### set_default_protocol
-    ///
     /// Set default protocol to configuration
     pub fn set_default_protocol(&mut self, proto: FileTransferProtocol) {
         self.config.user_interface.default_protocol = proto.to_string();
     }
 
-    /// ### get_show_hidden_files
-    ///
     /// Get value of `show_hidden_files`
     pub fn get_show_hidden_files(&self) -> bool {
         self.config.user_interface.show_hidden_files
     }
 
-    /// ### set_show_hidden_files
-    ///
     /// Set new value for `show_hidden_files`
     pub fn set_show_hidden_files(&mut self, value: bool) {
         self.config.user_interface.show_hidden_files = value;
     }
 
-    /// ### get_check_for_updates
-    ///
     /// Get value of `check_for_updates`
     pub fn get_check_for_updates(&self) -> bool {
         self.config.user_interface.check_for_updates.unwrap_or(true)
     }
 
-    /// ### set_check_for_updates
-    ///
     /// Set new value for `check_for_updates`
     pub fn set_check_for_updates(&mut self, value: bool) {
         self.config.user_interface.check_for_updates = Some(value);
     }
 
-    /// ### get_prompt_on_file_replace
-    ///
     /// Get value of `prompt_on_file_replace`
     pub fn get_prompt_on_file_replace(&self) -> bool {
         self.config
@@ -191,15 +167,11 @@ impl ConfigClient {
             .unwrap_or(true)
     }
 
-    /// ### set_prompt_on_file_replace
-    ///
     /// Set new value for `prompt_on_file_replace`
     pub fn set_prompt_on_file_replace(&mut self, value: bool) {
         self.config.user_interface.prompt_on_file_replace = Some(value);
     }
 
-    /// ### get_group_dirs
-    ///
     /// Get GroupDirs value from configuration (will be converted from string)
     pub fn get_group_dirs(&self) -> Option<GroupDirs> {
         // Convert string to `GroupDirs`
@@ -212,23 +184,17 @@ impl ConfigClient {
         }
     }
 
-    /// ### set_group_dirs
-    ///
     /// Set value for group_dir in configuration.
     /// Provided value, if `Some` will be converted to `GroupDirs`
     pub fn set_group_dirs(&mut self, val: Option<GroupDirs>) {
         self.config.user_interface.group_dirs = val.map(|val| val.to_string());
     }
 
-    /// ### get_local_file_fmt
-    ///
     /// Get current file fmt for local host
     pub fn get_local_file_fmt(&self) -> Option<String> {
         self.config.user_interface.file_fmt.clone()
     }
 
-    /// ### set_local_file_fmt
-    ///
     /// Set file fmt parameter for local host
     pub fn set_local_file_fmt(&mut self, s: String) {
         self.config.user_interface.file_fmt = match s.is_empty() {
@@ -237,15 +203,11 @@ impl ConfigClient {
         };
     }
 
-    /// ### get_remote_file_fmt
-    ///
     /// Get current file fmt for remote host
     pub fn get_remote_file_fmt(&self) -> Option<String> {
         self.config.user_interface.remote_file_fmt.clone()
     }
 
-    /// ### set_remote_file_fmt
-    ///
     /// Set file fmt parameter for remote host
     pub fn set_remote_file_fmt(&mut self, s: String) {
         self.config.user_interface.remote_file_fmt = match s.is_empty() {
@@ -254,22 +216,16 @@ impl ConfigClient {
         };
     }
 
-    /// ### get_notifications
-    ///
     /// Get value of `notifications`
     pub fn get_notifications(&self) -> bool {
         self.config.user_interface.notifications.unwrap_or(true)
     }
 
-    /// ### set_notifications
-    ///
     /// Set new value for `notifications`
     pub fn set_notifications(&mut self, value: bool) {
         self.config.user_interface.notifications = Some(value);
     }
 
-    /// ### get_notification_threshold
-    ///
     /// Get value of `notification_threshold`
     pub fn get_notification_threshold(&self) -> u64 {
         self.config
@@ -278,8 +234,6 @@ impl ConfigClient {
             .unwrap_or(DEFAULT_NOTIFICATION_TRANSFER_THRESHOLD)
     }
 
-    /// ### set_notification_threshold
-    ///
     /// Set new value for `notification_threshold`
     pub fn set_notification_threshold(&mut self, value: u64) {
         self.config.user_interface.notification_threshold = Some(value);
@@ -287,8 +241,6 @@ impl ConfigClient {
 
     // SSH Keys
 
-    /// ### save_ssh_key
-    ///
     /// Save a SSH key into configuration.
     /// This operation also creates the key file in `ssh_key_dir`
     /// and also commits changes to configuration, to prevent incoerent data
@@ -331,8 +283,6 @@ impl ConfigClient {
         self.write_config()
     }
 
-    /// ### del_ssh_key
-    ///
     /// Delete a ssh key from configuration, using host as key.
     /// This operation also unlinks the key file in `ssh_key_dir`
     /// and also commits changes to configuration, to prevent incoerent data
@@ -363,8 +313,6 @@ impl ConfigClient {
         self.write_config()
     }
 
-    /// ### get_ssh_key
-    ///
     /// Get ssh key from host.
     /// None is returned if key doesn't exist
     /// `std::io::Error` is returned in case it was not possible to read the key file
@@ -384,8 +332,6 @@ impl ConfigClient {
         }
     }
 
-    /// ### iter_ssh_keys
-    ///
     /// Get an iterator through hosts in the ssh key storage
     pub fn iter_ssh_keys(&self) -> impl Iterator<Item = &String> + '_ {
         Box::new(self.config.remote.ssh_keys.keys())
@@ -393,8 +339,6 @@ impl ConfigClient {
 
     // I/O
 
-    /// ### write_config
-    ///
     /// Write configuration to file
     pub fn write_config(&self) -> Result<(), SerializerError> {
         if self.degraded {
@@ -421,8 +365,6 @@ impl ConfigClient {
         }
     }
 
-    /// ### read_config
-    ///
     /// Read configuration from file (or reload it if already read)
     pub fn read_config(&mut self) -> Result<(), SerializerError> {
         if self.degraded {
@@ -456,16 +398,12 @@ impl ConfigClient {
         }
     }
 
-    /// ### make_ssh_host_key
-    ///
     /// Hosts are saved as `username@host` into configuration.
     /// This method creates the key name, starting from host and username
     fn make_ssh_host_key(host: &str, username: &str) -> String {
         format!("{}@{}", username, host)
     }
 
-    /// ### get_ssh_tokens
-    ///
     /// Get ssh tokens starting from ssh host key
     /// Panics if key has invalid syntax
     /// Returns: (host, username)
@@ -475,8 +413,6 @@ impl ConfigClient {
         (String::from(tokens[1]), String::from(tokens[0]))
     }
 
-    /// ### make_io_err
-    ///
     /// Make serializer error from `std::io::Error`
     fn make_io_err(err: std::io::Error) -> Result<(), SerializerError> {
         Err(SerializerError::new_ex(
@@ -774,8 +710,6 @@ mod tests {
         assert_eq!(err.to_string(), "IO error (permission denied)");
     }
 
-    /// ### get_paths
-    ///
     /// Get paths for configuration and keys directory
     fn get_paths(dir: &Path) -> (PathBuf, PathBuf) {
         let mut k: PathBuf = PathBuf::from(dir);

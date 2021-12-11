@@ -37,8 +37,6 @@ use tuirealm::tui::widgets::Clear;
 impl SetupActivity {
     // -- view
 
-    /// ### init_ssh_keys
-    ///
     /// Initialize ssh keys view
     pub(super) fn init_ssh_keys(&mut self) {
         // Init view (and mount commons)
@@ -99,8 +97,6 @@ impl SetupActivity {
 
     // -- mount
 
-    /// ### mount_del_ssh_key
-    ///
     /// Mount delete ssh key component
     pub(crate) fn mount_del_ssh_key(&mut self) {
         assert!(self
@@ -114,15 +110,11 @@ impl SetupActivity {
         assert!(self.app.active(&Id::Ssh(IdSsh::DelSshKeyPopup)).is_ok());
     }
 
-    /// ### umount_del_ssh_key
-    ///
     /// Umount delete ssh key
     pub(crate) fn umount_del_ssh_key(&mut self) {
         let _ = self.app.umount(&Id::Ssh(IdSsh::DelSshKeyPopup));
     }
 
-    /// ### mount_new_ssh_key
-    ///
     /// Mount new ssh key prompt
     pub(crate) fn mount_new_ssh_key(&mut self) {
         assert!(self
@@ -144,16 +136,12 @@ impl SetupActivity {
         assert!(self.app.active(&Id::Ssh(IdSsh::SshHost)).is_ok());
     }
 
-    /// ### umount_new_ssh_key
-    ///
     /// Umount new ssh key prompt
     pub(crate) fn umount_new_ssh_key(&mut self) {
         let _ = self.app.umount(&Id::Ssh(IdSsh::SshUsername));
         let _ = self.app.umount(&Id::Ssh(IdSsh::SshHost));
     }
 
-    /// ### reload_ssh_keys
-    ///
     /// Reload ssh keys
     pub(crate) fn reload_ssh_keys(&mut self) {
         let keys: Vec<String> = self

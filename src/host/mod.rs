@@ -43,8 +43,6 @@ use std::os::unix::fs::{MetadataExt, PermissionsExt};
 // Locals
 use crate::utils::path;
 
-/// ## HostErrorType
-///
 /// HostErrorType provides an overview of the specific host error
 #[derive(Error, Debug)]
 pub enum HostErrorType {
@@ -77,8 +75,6 @@ pub struct HostError {
 }
 
 impl HostError {
-    /// ### new
-    ///
     /// Instantiates a new HostError
     pub(crate) fn new(error: HostErrorType, errno: Option<std::io::Error>, p: &Path) -> Self {
         HostError {
@@ -112,8 +108,6 @@ impl std::fmt::Display for HostError {
     }
 }
 
-/// ## Localhost
-///
 /// Localhost is the entity which holds the information about the current directory and host.
 /// It provides functions to navigate across the local host file system
 pub struct Localhost {
@@ -122,8 +116,6 @@ pub struct Localhost {
 }
 
 impl Localhost {
-    /// ### new
-    ///
     /// Instantiates a new Localhost struct
     pub fn new(wrkdir: PathBuf) -> Result<Localhost, HostError> {
         debug!("Initializing localhost at {}", wrkdir.display());
@@ -158,23 +150,17 @@ impl Localhost {
         Ok(host)
     }
 
-    /// ### pwd
-    ///
     /// Print working directory
     pub fn pwd(&self) -> PathBuf {
         self.wrkdir.clone()
     }
 
-    /// ### list_dir
-    ///
     /// List files in current directory
     #[allow(dead_code)]
     pub fn list_dir(&self) -> Vec<Entry> {
         self.files.clone()
     }
 
-    /// ### change_wrkdir
-    ///
     /// Change working directory with the new provided directory
     pub fn change_wrkdir(&mut self, new_dir: &Path) -> Result<PathBuf, HostError> {
         let new_dir: PathBuf = self.to_path(new_dir);
@@ -215,15 +201,11 @@ impl Localhost {
         Ok(self.wrkdir.clone())
     }
 
-    /// ### mkdir
-    ///
     /// Make a directory at path and update the file list (only if relative)
     pub fn mkdir(&mut self, dir_name: &Path) -> Result<(), HostError> {
         self.mkdir_ex(dir_name, false)
     }
 
-    /// ### mkdir_ex
-    ///
     /// Extended option version of makedir.
     /// ignex: don't report error if directory already exists
     pub fn mkdir_ex(&mut self, dir_name: &Path, ignex: bool) -> Result<(), HostError> {
@@ -262,8 +244,6 @@ impl Localhost {
         }
     }
 
-    /// ### remove
-    ///
     /// Remove file entry
     pub fn remove(&mut self, entry: &Entry) -> Result<(), HostError> {
         match entry {
@@ -328,8 +308,6 @@ impl Localhost {
         }
     }
 
-    /// ### rename
-    ///
     /// Rename file or directory to new name
     pub fn rename(&mut self, entry: &Entry, dst_path: &Path) -> Result<(), HostError> {
         match std::fs::rename(entry.path(), dst_path) {
@@ -359,8 +337,6 @@ impl Localhost {
         }
     }
 
-    /// ### copy
-    ///
     /// Copy file to destination path
     pub fn copy(&mut self, entry: &Entry, dst: &Path) -> Result<(), HostError> {
         // Get absolute path of dest
@@ -436,8 +412,6 @@ impl Localhost {
         Ok(())
     }
 
-    /// ### stat
-    ///
     /// Stat file and create a Entry
     #[cfg(target_family = "unix")]
     pub fn stat(&self, path: &Path) -> Result<Entry, HostError> {
@@ -491,8 +465,6 @@ impl Localhost {
         })
     }
 
-    /// ### stat
-    ///
     /// Stat file and create a Entry
     #[cfg(target_os = "windows")]
     pub fn stat(&self, path: &Path) -> Result<Entry, HostError> {
@@ -542,8 +514,6 @@ impl Localhost {
         })
     }
 
-    /// ### exec
-    ///
     /// Execute a command on localhost
     pub fn exec(&self, cmd: &str) -> Result<String, HostError> {
         // Make command
@@ -570,8 +540,6 @@ impl Localhost {
         }
     }
 
-    /// ### chmod
-    ///
     /// Change file mode to file, according to UNIX permissions
     #[cfg(target_family = "unix")]
     pub fn chmod(&self, path: &Path, pex: UnixPex) -> Result<(), HostError> {
@@ -611,8 +579,6 @@ impl Localhost {
         }
     }
 
-    /// ### open_file_read
-    ///
     /// Open file for read
     pub fn open_file_read(&self, file: &Path) -> Result<StdFile, HostError> {
         let file: PathBuf = self.to_path(file);
@@ -643,8 +609,6 @@ impl Localhost {
         }
     }
 
-    /// ### open_file_write
-    ///
     /// Open file for write
     pub fn open_file_write(&self, file: &Path) -> Result<StdFile, HostError> {
         let file: PathBuf = self.to_path(file);
@@ -674,15 +638,11 @@ impl Localhost {
         }
     }
 
-    /// ### file_exists
-    ///
     /// Returns whether provided file path exists
     pub fn file_exists(&self, path: &Path) -> bool {
         path.exists()
     }
 
-    /// ### scan_dir
-    ///
     /// Get content of the current directory as a list of fs entry
     pub fn scan_dir(&self, dir: &Path) -> Result<Vec<Entry>, HostError> {
         info!("Reading directory {}", dir.display());
@@ -706,8 +666,6 @@ impl Localhost {
         }
     }
 
-    /// ### find
-    ///
     /// Find files matching `search` on localhost starting from current directory. Search supports recursive search of course.
     /// The `search` argument supports wilcards ('*', '?')
     pub fn find(&self, search: &str) -> Result<Vec<Entry>, HostError> {
@@ -716,8 +674,6 @@ impl Localhost {
 
     // -- privates
 
-    /// ### iter_search
-    ///
     /// Recursive call for `find` method.
     /// Search in current directory for files which match `filter`.
     /// If a directory is found in current directory, `iter_search` will be called using that dir as argument.
@@ -755,8 +711,6 @@ impl Localhost {
         }
     }
 
-    /// ### to_path
-    ///
     /// Convert path to absolute path
     fn to_path(&self, p: &Path) -> PathBuf {
         path::absolutize(self.wrkdir.as_path(), p)

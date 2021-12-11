@@ -54,8 +54,6 @@ impl SetupActivity {
         }
     }
 
-    /// ### view
-    ///
     /// View gui
     pub(super) fn view(&mut self) {
         self.redraw = false;
@@ -68,8 +66,6 @@ impl SetupActivity {
 
     // -- mount
 
-    /// ### mount_error
-    ///
     /// Mount error box
     pub(super) fn mount_error<S: AsRef<str>>(&mut self, text: S) {
         assert!(self
@@ -83,15 +79,11 @@ impl SetupActivity {
         assert!(self.app.active(&Id::Common(IdCommon::ErrorPopup)).is_ok());
     }
 
-    /// ### umount_error
-    ///
     /// Umount error message
     pub(super) fn umount_error(&mut self) {
         let _ = self.app.umount(&Id::Common(IdCommon::ErrorPopup));
     }
 
-    /// ### mount_quit
-    ///
     /// Mount quit popup
     pub(super) fn mount_quit(&mut self) {
         assert!(self
@@ -105,15 +97,11 @@ impl SetupActivity {
         assert!(self.app.active(&Id::Common(IdCommon::QuitPopup)).is_ok());
     }
 
-    /// ### umount_quit
-    ///
     /// Umount quit
     pub(super) fn umount_quit(&mut self) {
         let _ = self.app.umount(&Id::Common(IdCommon::QuitPopup));
     }
 
-    /// ### mount_save_popup
-    ///
     /// Mount save popup
     pub(super) fn mount_save_popup(&mut self) {
         assert!(self
@@ -127,15 +115,11 @@ impl SetupActivity {
         assert!(self.app.active(&Id::Common(IdCommon::SavePopup)).is_ok());
     }
 
-    /// ### umount_quit
-    ///
     /// Umount quit
     pub(super) fn umount_save_popup(&mut self) {
         let _ = self.app.umount(&Id::Common(IdCommon::SavePopup));
     }
 
-    /// ### mount_help
-    ///
     /// Mount help
     pub(super) fn mount_help(&mut self) {
         assert!(self
@@ -149,8 +133,6 @@ impl SetupActivity {
         assert!(self.app.active(&Id::Common(IdCommon::Keybindings)).is_ok());
     }
 
-    /// ### umount_help
-    ///
     /// Umount help
     pub(super) fn umount_help(&mut self) {
         let _ = self.app.umount(&Id::Common(IdCommon::Keybindings));
@@ -180,8 +162,6 @@ impl SetupActivity {
         }
     }
 
-    /// ### new_app
-    ///
     /// Clean app up and remount common components and global listener
     fn new_app(&mut self, layout: ViewLayout) {
         self.app.umount_all();
@@ -189,8 +169,6 @@ impl SetupActivity {
         self.mount_commons(layout);
     }
 
-    /// ### mount_commons
-    ///
     /// Mount common components
     fn mount_commons(&mut self, layout: ViewLayout) {
         // Radio tab
@@ -213,8 +191,6 @@ impl SetupActivity {
             .is_ok());
     }
 
-    /// ### mount_global_listener
-    ///
     /// Mount global listener
     fn mount_global_listener(&mut self) {
         assert!(self
@@ -263,8 +239,6 @@ impl SetupActivity {
             .is_ok());
     }
 
-    /// ### no_popup_mounted_clause
-    ///
     /// Returns a sub clause which requires that no popup is mounted in order to be satisfied
     fn no_popup_mounted_clause() -> SubClause<Id> {
         SubClause::And(

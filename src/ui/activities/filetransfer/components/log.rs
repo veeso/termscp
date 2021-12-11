@@ -222,8 +222,6 @@ impl Component<Msg, NoUserEvent> for Log {
 
 // -- states
 
-/// ## OwnStates
-///
 /// OwnStates contains states for this component
 #[derive(Clone, Default)]
 struct OwnStates {
@@ -232,22 +230,16 @@ struct OwnStates {
 }
 
 impl OwnStates {
-    /// ### set_list_len
-    ///
     /// Set list length
     pub fn set_list_len(&mut self, len: usize) {
         self.list_len = len;
     }
 
-    /// ### get_list_index
-    ///
     /// Return current value for list index
     pub fn get_list_index(&self) -> usize {
         self.list_index
     }
 
-    /// ### incr_list_index
-    ///
     /// Incremenet list index
     pub fn incr_list_index(&mut self) {
         // Check if index is at last element
@@ -256,8 +248,6 @@ impl OwnStates {
         }
     }
 
-    /// ### decr_list_index
-    ///
     /// Decrement list index
     pub fn decr_list_index(&mut self) {
         // Check if index is bigger than 0
@@ -266,8 +256,6 @@ impl OwnStates {
         }
     }
 
-    /// ### list_index_at_last
-    ///
     /// Set list index at last item
     pub fn list_index_at_last(&mut self) {
         self.list_index = match self.list_len {
@@ -276,8 +264,6 @@ impl OwnStates {
         };
     }
 
-    /// ### reset_list_index
-    ///
     /// Reset list index to last element
     pub fn reset_list_index(&mut self) {
         self.list_index = 0; // Last element is always 0

@@ -32,8 +32,6 @@ pub mod keyringstorage;
 // ext
 use thiserror::Error;
 
-/// ## KeyStorageError
-///
 /// defines the error type for the `KeyStorage`
 #[derive(Debug, Error, PartialEq)]
 pub enum KeyStorageError {
@@ -46,19 +44,13 @@ pub enum KeyStorageError {
     NoSuchKey,
 }
 
-/// ## KeyStorage
-///
 /// this traits provides the methods to communicate and interact with the key storage.
 pub trait KeyStorage {
-    /// ### get_key
-    ///
     /// Retrieve key from the key storage.
     /// The key might be acccess through an identifier, which identifies
     /// the key in the storage
     fn get_key(&self, storage_id: &str) -> Result<String, KeyStorageError>;
 
-    /// ### set_key
-    ///
     /// Set the key into the key storage
     fn set_key(&self, storage_id: &str, key: &str) -> Result<(), KeyStorageError>;
 

@@ -31,8 +31,6 @@ use std::collections::HashMap;
 
 // -- store state
 
-/// ## StoreState
-///
 /// Store state describes a value in the store
 #[allow(dead_code)]
 enum StoreState {
@@ -46,8 +44,6 @@ enum StoreState {
 
 // -- store
 
-/// ## Store
-///
 /// Store represent the context store
 /// The store is a key-value hash map. Each key must be unique
 /// To each key a `StoreState` is assigned
@@ -57,8 +53,6 @@ pub(crate) struct Store {
 
 #[allow(dead_code)]
 impl Store {
-    /// ### init
-    ///
     /// Initialize a new Store
     pub fn init() -> Self {
         Store {
@@ -68,8 +62,6 @@ impl Store {
 
     // -- getters
 
-    /// ### get_string
-    ///
     /// Get string from store
     pub fn get_string(&self, key: &str) -> Option<&str> {
         match self.store.get(key) {
@@ -78,8 +70,6 @@ impl Store {
         }
     }
 
-    /// ### get_signed
-    ///
     /// Get signed from store
     pub fn get_signed(&self, key: &str) -> Option<isize> {
         match self.store.get(key) {
@@ -88,8 +78,6 @@ impl Store {
         }
     }
 
-    /// ### get_unsigned
-    ///
     /// Get unsigned from store
     pub fn get_unsigned(&self, key: &str) -> Option<usize> {
         match self.store.get(key) {
@@ -98,8 +86,6 @@ impl Store {
         }
     }
 
-    /// ### get_float
-    ///
     /// get float from store
     pub fn get_float(&self, key: &str) -> Option<f64> {
         match self.store.get(key) {
@@ -108,8 +94,6 @@ impl Store {
         }
     }
 
-    /// ### get_boolean
-    ///
     /// get boolean from store
     pub fn get_boolean(&self, key: &str) -> Option<bool> {
         match self.store.get(key) {
@@ -118,8 +102,6 @@ impl Store {
         }
     }
 
-    /// ### isset
-    ///
     /// Check if a state is set in the store
     pub fn isset(&self, key: &str) -> bool {
         self.store.get(key).is_some()
@@ -127,44 +109,32 @@ impl Store {
 
     // -- setters
 
-    /// ### set_string
-    ///
     /// Set string into the store
     pub fn set_string(&mut self, key: &str, val: String) {
         self.store.insert(key.to_string(), StoreState::Str(val));
     }
 
-    /// ### set_signed
-    ///
     /// Set signed number
     pub fn set_signed(&mut self, key: &str, val: isize) {
         self.store.insert(key.to_string(), StoreState::Signed(val));
     }
 
-    /// ### set_signed
-    ///
     /// Set unsigned number
     pub fn set_unsigned(&mut self, key: &str, val: usize) {
         self.store
             .insert(key.to_string(), StoreState::Unsigned(val));
     }
 
-    /// ### set_float
-    ///
     /// Set floating point number
     pub fn set_float(&mut self, key: &str, val: f64) {
         self.store.insert(key.to_string(), StoreState::Float(val));
     }
 
-    /// ### set_boolean
-    ///
     /// Set boolean
     pub fn set_boolean(&mut self, key: &str, val: bool) {
         self.store.insert(key.to_string(), StoreState::Boolean(val));
     }
 
-    /// ### set
-    ///
     /// Set a key as a flag; has no value
     pub fn set(&mut self, key: &str) {
         self.store.insert(key.to_string(), StoreState::Flag);
@@ -172,8 +142,6 @@ impl Store {
 
     // -- Consumers
 
-    /// ### take_string
-    ///
     /// Take string from store
     pub fn take_string(&mut self, key: &str) -> Option<String> {
         match self.store.remove(key) {
@@ -182,8 +150,6 @@ impl Store {
         }
     }
 
-    /// ### take_signed
-    ///
     /// Take signed from store
     pub fn take_signed(&mut self, key: &str) -> Option<isize> {
         match self.store.remove(key) {
@@ -192,8 +158,6 @@ impl Store {
         }
     }
 
-    /// ### take_unsigned
-    ///
     /// Take unsigned from store
     pub fn take_unsigned(&mut self, key: &str) -> Option<usize> {
         match self.store.remove(key) {
@@ -202,8 +166,6 @@ impl Store {
         }
     }
 
-    /// ### get_float
-    ///
     /// Take float from store
     pub fn take_float(&mut self, key: &str) -> Option<f64> {
         match self.store.remove(key) {
@@ -212,8 +174,6 @@ impl Store {
         }
     }
 
-    /// ### get_boolean
-    ///
     /// Take boolean from store
     pub fn take_boolean(&mut self, key: &str) -> Option<bool> {
         match self.store.remove(key) {

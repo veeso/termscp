@@ -39,8 +39,6 @@ pub struct FileTransferParams {
     pub entry_directory: Option<PathBuf>,
 }
 
-/// ## ProtocolParams
-///
 /// Container for protocol params
 #[derive(Debug, Clone)]
 pub enum ProtocolParams {
@@ -48,8 +46,6 @@ pub enum ProtocolParams {
     AwsS3(AwsS3Params),
 }
 
-/// ## GenericProtocolParams
-///
 /// Protocol params used by most common protocols
 #[derive(Debug, Clone)]
 pub struct GenericProtocolParams {
@@ -59,8 +55,6 @@ pub struct GenericProtocolParams {
     pub password: Option<String>,
 }
 
-/// ## AwsS3Params
-///
 /// Connection parameters for AWS S3 protocol
 #[derive(Debug, Clone)]
 pub struct AwsS3Params {
@@ -70,8 +64,6 @@ pub struct AwsS3Params {
 }
 
 impl FileTransferParams {
-    /// ### new
-    ///
     /// Instantiates a new `FileTransferParams`
     pub fn new(protocol: FileTransferProtocol, params: ProtocolParams) -> Self {
         Self {
@@ -81,8 +73,6 @@ impl FileTransferParams {
         }
     }
 
-    /// ### entry_directory
-    ///
     /// Set entry directory
     pub fn entry_directory<P: AsRef<Path>>(mut self, dir: Option<P>) -> Self {
         self.entry_directory = dir.map(|x| x.as_ref().to_path_buf());
@@ -143,32 +133,24 @@ impl Default for GenericProtocolParams {
 }
 
 impl GenericProtocolParams {
-    /// ### address
-    ///
     /// Set address to params
     pub fn address<S: AsRef<str>>(mut self, address: S) -> Self {
         self.address = address.as_ref().to_string();
         self
     }
 
-    /// ### port
-    ///
     /// Set port to params
     pub fn port(mut self, port: u16) -> Self {
         self.port = port;
         self
     }
 
-    /// ### username
-    ///
     /// Set username for params
     pub fn username<S: AsRef<str>>(mut self, username: Option<S>) -> Self {
         self.username = username.map(|x| x.as_ref().to_string());
         self
     }
 
-    /// ### password
-    ///
     /// Set password for params
     pub fn password<S: AsRef<str>>(mut self, password: Option<S>) -> Self {
         self.password = password.map(|x| x.as_ref().to_string());
@@ -179,8 +161,6 @@ impl GenericProtocolParams {
 // -- S3 params
 
 impl AwsS3Params {
-    /// ### new
-    ///
     /// Instantiates a new `AwsS3Params` struct
     pub fn new<S: AsRef<str>>(bucket: S, region: S, profile: Option<S>) -> Self {
         Self {

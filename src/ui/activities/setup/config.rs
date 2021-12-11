@@ -32,8 +32,6 @@ use super::SetupActivity;
 use std::env;
 
 impl SetupActivity {
-    /// ### save_config
-    ///
     /// Save configuration
     pub(super) fn save_config(&mut self) -> Result<(), String> {
         match self.config().write_config() {
@@ -42,8 +40,6 @@ impl SetupActivity {
         }
     }
 
-    /// ### reset_config_changes
-    ///
     /// Reset configuration changes; pratically read config from file, overwriting any change made
     /// since last write action
     pub(super) fn reset_config_changes(&mut self) -> Result<(), String> {
@@ -52,8 +48,6 @@ impl SetupActivity {
             .map_err(|e| format!("Could not reload configuration: {}", e))
     }
 
-    /// ### save_theme
-    ///
     /// Save theme to file
     pub(super) fn save_theme(&mut self) -> Result<(), String> {
         self.theme_provider()
@@ -61,8 +55,6 @@ impl SetupActivity {
             .map_err(|e| format!("Could not save theme: {}", e))
     }
 
-    /// ### reset_theme_changes
-    ///
     /// Reset changes committed to theme
     pub(super) fn reset_theme_changes(&mut self) -> Result<(), String> {
         self.theme_provider()
@@ -70,8 +62,6 @@ impl SetupActivity {
             .map_err(|e| format!("Could not restore theme: {}", e))
     }
 
-    /// ### delete_ssh_key
-    ///
     /// Delete ssh key from config cli
     pub(super) fn delete_ssh_key(&mut self, host: &str, username: &str) -> Result<(), String> {
         match self.config_mut().del_ssh_key(host, username) {
@@ -83,8 +73,6 @@ impl SetupActivity {
         }
     }
 
-    /// ### edit_ssh_key
-    ///
     /// Edit selected ssh key
     pub(super) fn edit_ssh_key(&mut self, idx: usize) -> Result<(), String> {
         match self.context.as_mut() {
@@ -142,8 +130,6 @@ impl SetupActivity {
         }
     }
 
-    /// ### add_ssh_key
-    ///
     /// Add provided ssh key to config client
     pub(super) fn add_ssh_key(
         &mut self,

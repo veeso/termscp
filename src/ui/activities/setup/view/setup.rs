@@ -40,8 +40,6 @@ use tuirealm::{State, StateValue};
 impl SetupActivity {
     // -- view
 
-    /// ### init_setup
-    ///
     /// Initialize setup view
     pub(super) fn init_setup(&mut self) {
         // Init view (and mount commons)
@@ -153,8 +151,6 @@ impl SetupActivity {
         self.context = Some(ctx);
     }
 
-    /// ### load_input_values
-    ///
     /// Load values from configuration into input fields
     pub(crate) fn load_input_values(&mut self) {
         // Text editor
@@ -267,8 +263,6 @@ impl SetupActivity {
             .is_ok());
     }
 
-    /// ### collect_input_values
-    ///
     /// Collect values from input and put them into the configuration
     pub(crate) fn collect_input_values(&mut self) {
         if let Ok(State::One(StateValue::String(editor))) =

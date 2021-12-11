@@ -171,8 +171,6 @@ enum UiMsg {
     ToggleSyncBrowsing,
 }
 
-/// ## LogLevel
-///
 /// Log level type
 enum LogLevel {
     Error,
@@ -180,8 +178,6 @@ enum LogLevel {
     Info,
 }
 
-/// ## LogRecord
-///
 /// Log record entry
 struct LogRecord {
     pub time: DateTime<Local>,
@@ -190,8 +186,6 @@ struct LogRecord {
 }
 
 impl LogRecord {
-    /// ### new
-    ///
     /// Instantiates a new LogRecord
     pub fn new(level: LogLevel, msg: String) -> LogRecord {
         LogRecord {
@@ -202,8 +196,6 @@ impl LogRecord {
     }
 }
 
-/// ## FileTransferActivity
-///
 /// FileTransferActivity is the data holder for the file transfer activity
 pub struct FileTransferActivity {
     /// Exit reason
@@ -228,8 +220,6 @@ pub struct FileTransferActivity {
 }
 
 impl FileTransferActivity {
-    /// ### new
-    ///
     /// Instantiates a new FileTransferActivity
     pub fn new(host: Localhost, params: &FileTransferParams, ticks: Duration) -> Self {
         // Get config client
@@ -279,8 +269,6 @@ impl FileTransferActivity {
         self.browser.found_mut()
     }
 
-    /// ### get_cache_tmp_name
-    ///
     /// Get file name for a file in cache
     fn get_cache_tmp_name(&self, name: &str, file_type: Option<&str>) -> Option<String> {
         self.cache.as_ref().map(|_| {
@@ -299,29 +287,21 @@ impl FileTransferActivity {
         })
     }
 
-    /// ### context
-    ///
     /// Returns a reference to context
     fn context(&self) -> &Context {
         self.context.as_ref().unwrap()
     }
 
-    /// ### context_mut
-    ///
     /// Returns a mutable reference to context
     fn context_mut(&mut self) -> &mut Context {
         self.context.as_mut().unwrap()
     }
 
-    /// ### config
-    ///
     /// Returns config client reference
     fn config(&self) -> &ConfigClient {
         self.context().config()
     }
 
-    /// ### theme
-    ///
     /// Get a reference to `Theme`
     fn theme(&self) -> &Theme {
         self.context().theme_provider().theme()
@@ -335,8 +315,6 @@ impl FileTransferActivity {
  */
 
 impl Activity for FileTransferActivity {
-    /// ### on_create
-    ///
     /// `on_create` is the function which must be called to initialize the activity.
     /// `on_create` must initialize all the data structures used by the activity
     fn on_create(&mut self, context: Context) {
@@ -368,8 +346,6 @@ impl Activity for FileTransferActivity {
         info!("Created FileTransferActivity");
     }
 
-    /// ### on_draw
-    ///
     /// `on_draw` is the function which draws the graphical interface.
     /// This function must be called at each tick to refresh the interface
     fn on_draw(&mut self) {
@@ -398,8 +374,6 @@ impl Activity for FileTransferActivity {
         }
     }
 
-    /// ### will_umount
-    ///
     /// `will_umount` is the method which must be able to report to the activity manager, whether
     /// the activity should be terminated or not.
     /// If not, the call will return `None`, otherwise return`Some(ExitReason)`
@@ -407,8 +381,6 @@ impl Activity for FileTransferActivity {
         self.exit_reason.as_ref()
     }
 
-    /// ### on_destroy
-    ///
     /// `on_destroy` is the function which cleans up runtime variables and data before terminating the activity.
     /// This function must be called once before terminating the activity.
     fn on_destroy(&mut self) -> Option<Context> {

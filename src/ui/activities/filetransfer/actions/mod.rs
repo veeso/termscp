@@ -75,8 +75,6 @@ impl From<Vec<&Entry>> for SelectedEntry {
 }
 
 impl FileTransferActivity {
-    /// ### get_local_selected_entries
-    ///
     /// Get local file entry
     pub(crate) fn get_local_selected_entries(&self) -> SelectedEntry {
         match self.get_selected_index(&Id::ExplorerLocal) {
@@ -93,8 +91,6 @@ impl FileTransferActivity {
         }
     }
 
-    /// ### get_remote_selected_entries
-    ///
     /// Get remote file entry
     pub(crate) fn get_remote_selected_entries(&self) -> SelectedEntry {
         match self.get_selected_index(&Id::ExplorerRemote) {
@@ -111,8 +107,6 @@ impl FileTransferActivity {
         }
     }
 
-    /// ### get_remote_selected_entries
-    ///
     /// Get remote file entry
     pub(crate) fn get_found_selected_entries(&self) -> SelectedEntry {
         match self.get_selected_index(&Id::ExplorerFind) {

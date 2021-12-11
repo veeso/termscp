@@ -37,8 +37,6 @@ pub struct SshKeyStorage {
 }
 
 impl SshKeyStorage {
-    /// ### storage_from_config
-    ///
     /// Create a `SshKeyStorage` starting from a `ConfigClient`
     pub fn storage_from_config(cfg_client: &ConfigClient) -> Self {
         let mut hosts: HashMap<String, PathBuf> =
@@ -65,8 +63,6 @@ impl SshKeyStorage {
         SshKeyStorage { hosts }
     }
 
-    /// ### empty
-    ///
     /// Create an empty ssh key storage; used in case `ConfigClient` is not available
     #[cfg(test)]
     pub fn empty() -> Self {
@@ -75,16 +71,12 @@ impl SshKeyStorage {
         }
     }
 
-    /// ### make_mapkey
-    ///
     /// Make mapkey from host and username
     fn make_mapkey(host: &str, username: &str) -> String {
         format!("{}@{}", username, host)
     }
 
     #[cfg(test)]
-    /// ### add_key
-    ///
     /// Add a key to storage
     /// NOTE: available only for tests
     pub fn add_key(&mut self, host: &str, username: &str, p: PathBuf) {
@@ -149,8 +141,6 @@ mod tests {
         );
     }
 
-    /// ### get_paths
-    ///
     /// Get paths for configuration and keys directory
     fn get_paths(dir: &Path) -> (PathBuf, PathBuf) {
         let mut k: PathBuf = PathBuf::from(dir);

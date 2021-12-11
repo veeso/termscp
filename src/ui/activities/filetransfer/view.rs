@@ -43,8 +43,6 @@ use tuirealm::{Sub, SubClause, SubEventClause};
 impl FileTransferActivity {
     // -- init
 
-    /// ### init
-    ///
     /// Initialize file transfer activity's view
     pub(super) fn init(&mut self) {
         // Mount local file explorer
@@ -106,8 +104,6 @@ impl FileTransferActivity {
 
     // -- view
 
-    /// ### view
-    ///
     /// View gui
     pub(super) fn view(&mut self) {
         self.redraw = false;
@@ -303,8 +299,6 @@ impl FileTransferActivity {
 
     // -- partials
 
-    /// ### mount_info
-    ///
     /// Mount info box
     pub(super) fn mount_info<S: AsRef<str>>(&mut self, text: S) {
         // Mount
@@ -320,8 +314,6 @@ impl FileTransferActivity {
         assert!(self.app.active(&Id::ErrorPopup).is_ok());
     }
 
-    /// ### mount_error
-    ///
     /// Mount error box
     pub(super) fn mount_error<S: AsRef<str>>(&mut self, text: S) {
         // Mount
@@ -337,8 +329,6 @@ impl FileTransferActivity {
         assert!(self.app.active(&Id::ErrorPopup).is_ok());
     }
 
-    /// ### umount_error
-    ///
     /// Umount error message
     pub(super) fn umount_error(&mut self) {
         let _ = self.app.umount(&Id::ErrorPopup);
@@ -358,8 +348,6 @@ impl FileTransferActivity {
         assert!(self.app.active(&Id::FatalPopup).is_ok());
     }
 
-    /// ### umount_fatal
-    ///
     /// Umount fatal error message
     pub(super) fn umount_fatal(&mut self) {
         let _ = self.app.umount(&Id::FatalPopup);
@@ -387,8 +375,6 @@ impl FileTransferActivity {
         let _ = self.app.umount(&Id::WaitPopup);
     }
 
-    /// ### mount_quit
-    ///
     /// Mount quit popup
     pub(super) fn mount_quit(&mut self) {
         // Protocol
@@ -404,15 +390,11 @@ impl FileTransferActivity {
         assert!(self.app.active(&Id::QuitPopup).is_ok());
     }
 
-    /// ### umount_quit
-    ///
     /// Umount quit popup
     pub(super) fn umount_quit(&mut self) {
         let _ = self.app.umount(&Id::QuitPopup);
     }
 
-    /// ### mount_disconnect
-    ///
     /// Mount disconnect popup
     pub(super) fn mount_disconnect(&mut self) {
         // Protocol
@@ -428,8 +410,6 @@ impl FileTransferActivity {
         assert!(self.app.active(&Id::DisconnectPopup).is_ok());
     }
 
-    /// ### umount_disconnect
-    ///
     /// Umount disconnect popup
     pub(super) fn umount_disconnect(&mut self) {
         let _ = self.app.umount(&Id::DisconnectPopup);
@@ -735,8 +715,6 @@ impl FileTransferActivity {
         assert!(self.app.active(&Id::ReplacePopup).is_ok());
     }
 
-    /// ### is_radio_replace_extended
-    ///
     /// Returns whether radio replace is in "extended" mode (for many files)
     pub(super) fn is_radio_replace_extended(&self) -> bool {
         self.app.mounted(&Id::ReplacingFilesListPopup)
@@ -799,8 +777,6 @@ impl FileTransferActivity {
             .is_ok());
     }
 
-    /// ### mount_help
-    ///
     /// Mount help
     pub(super) fn mount_help(&mut self) {
         let key_color = self.theme().misc_keys;
@@ -852,8 +828,6 @@ impl FileTransferActivity {
             .is_ok());
     }
 
-    /// ### no_popup_mounted_clause
-    ///
     /// Returns a sub clause which requires that no popup is mounted in order to be satisfied
     fn no_popup_mounted_clause() -> SubClause<Id> {
         SubClause::And(

@@ -31,8 +31,6 @@ use crate::system::auto_update::{Release, Update, UpdateStatus};
 use crate::system::notifications::Notification;
 
 impl AuthActivity {
-    /// ### get_default_port_for_protocol
-    ///
     /// Get the default port for protocol
     pub(super) fn get_default_port_for_protocol(protocol: FileTransferProtocol) -> u16 {
         match protocol {
@@ -42,15 +40,11 @@ impl AuthActivity {
         }
     }
 
-    /// ### is_port_standard
-    ///
     /// Returns whether the port is standard or not
     pub(super) fn is_port_standard(port: u16) -> bool {
         port < 1024
     }
 
-    /// ### check_minimum_window_size
-    ///
     /// Check minimum window size window
     pub(super) fn check_minimum_window_size(&mut self, height: u16) {
         if height < 25 {
@@ -61,8 +55,6 @@ impl AuthActivity {
         }
     }
 
-    /// ### collect_host_params
-    ///
     /// Collect host params as `FileTransferParams`
     pub(super) fn collect_host_params(&self) -> Result<FileTransferParams, &'static str> {
         match self.protocol {
@@ -71,8 +63,6 @@ impl AuthActivity {
         }
     }
 
-    /// ### collect_generic_host_params
-    ///
     /// Get input values from fields or return an error if fields are invalid to work as generic
     pub(super) fn collect_generic_host_params(
         &self,
@@ -105,8 +95,6 @@ impl AuthActivity {
         })
     }
 
-    /// ### collect_s3_host_params
-    ///
     /// Get input values from fields or return an error if fields are invalid to work as aws s3
     pub(super) fn collect_s3_host_params(&self) -> Result<FileTransferParams, &'static str> {
         let (bucket, region, profile): (String, String, Option<String>) =
@@ -126,8 +114,6 @@ impl AuthActivity {
 
     // -- update install
 
-    /// ### check_for_updates
-    ///
     /// If enabled in configuration, check for updates from Github
     pub(super) fn check_for_updates(&mut self) {
         debug!("Check for updates...");
@@ -171,8 +157,6 @@ impl AuthActivity {
         }
     }
 
-    /// ### install_update
-    ///
     /// Install latest termscp version via GUI
     pub(super) fn install_update(&mut self) {
         // Umount release notes

@@ -32,8 +32,6 @@ use serde::{de::Error as DeError, Deserialize, Deserializer, Serialize, Serializ
 use std::collections::HashMap;
 use std::str::FromStr;
 
-/// ## UserHosts
-///
 /// UserHosts contains all the hosts saved by the user in the data storage
 /// It contains both `Bookmark`
 #[derive(Deserialize, Serialize, Debug, Default)]
@@ -42,8 +40,6 @@ pub struct UserHosts {
     pub recents: HashMap<String, Bookmark>,
 }
 
-/// ## Bookmark
-///
 /// Bookmark describes a single bookmark entry in the user hosts storage
 #[derive(Clone, Deserialize, Serialize, Debug, PartialEq)]
 pub struct Bookmark {
@@ -64,8 +60,6 @@ pub struct Bookmark {
     pub s3: Option<S3Params>,
 }
 
-/// ## S3Params
-///
 /// Connection parameters for Aws s3 protocol
 #[derive(Clone, Deserialize, Serialize, Debug, PartialEq, Default)]
 pub struct S3Params {

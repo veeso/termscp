@@ -37,8 +37,6 @@ use tuirealm::tui::widgets::Clear;
 use tuirealm::{State, StateValue, Sub, SubClause, SubEventClause};
 
 impl AuthActivity {
-    /// ### init
-    ///
     /// Initialize view, mounting all startup components inside the view
     pub(super) fn init(&mut self) {
         let key_color = self.theme().misc_keys;
@@ -104,8 +102,6 @@ impl AuthActivity {
         assert!(self.app.active(&Id::Protocol).is_ok());
     }
 
-    /// ### view
-    ///
     /// Display view on canvas
     pub(super) fn view(&mut self) {
         self.redraw = false;
@@ -276,8 +272,6 @@ impl AuthActivity {
 
     // -- partials
 
-    /// ### view_bookmarks
-    ///
     /// Make text span from bookmarks
     pub(super) fn view_bookmarks(&mut self) {
         let bookmarks: Vec<String> = self
@@ -305,8 +299,6 @@ impl AuthActivity {
             .is_ok());
     }
 
-    /// ### view_recent_connections
-    ///
     /// View recent connections
     pub(super) fn view_recent_connections(&mut self) {
         let bookmarks: Vec<String> = self
@@ -335,8 +327,6 @@ impl AuthActivity {
 
     // -- mount
 
-    /// ### mount_error
-    ///
     /// Mount error box
     pub(super) fn mount_error<S: AsRef<str>>(&mut self, text: S) {
         let err_color = self.theme().misc_error_dialog;
@@ -351,15 +341,11 @@ impl AuthActivity {
         assert!(self.app.active(&Id::ErrorPopup).is_ok());
     }
 
-    /// ### umount_error
-    ///
     /// Umount error message
     pub(super) fn umount_error(&mut self) {
         let _ = self.app.umount(&Id::ErrorPopup);
     }
 
-    /// ### mount_info
-    ///
     /// Mount info box
     pub(super) fn mount_info<S: AsRef<str>>(&mut self, text: S) {
         let color = self.theme().misc_info_dialog;
@@ -374,15 +360,11 @@ impl AuthActivity {
         assert!(self.app.active(&Id::InfoPopup).is_ok());
     }
 
-    /// ### umount_info
-    ///
     /// Umount info message
     pub(super) fn umount_info(&mut self) {
         let _ = self.app.umount(&Id::InfoPopup);
     }
 
-    /// ### mount_error
-    ///
     /// Mount wait box
     pub(super) fn mount_wait(&mut self, text: &str) {
         let wait_color = self.theme().misc_info_dialog;
@@ -397,15 +379,11 @@ impl AuthActivity {
         assert!(self.app.active(&Id::WaitPopup).is_ok());
     }
 
-    /// ### umount_wait
-    ///
     /// Umount wait message
     pub(super) fn umount_wait(&mut self) {
         let _ = self.app.umount(&Id::WaitPopup);
     }
 
-    /// ### mount_size_err
-    ///
     /// Mount size error
     pub(super) fn mount_size_err(&mut self) {
         // Mount
@@ -421,15 +399,11 @@ impl AuthActivity {
         assert!(self.app.active(&Id::WindowSizeError).is_ok());
     }
 
-    /// ### umount_size_err
-    ///
     /// Umount error size error
     pub(super) fn umount_size_err(&mut self) {
         let _ = self.app.umount(&Id::WindowSizeError);
     }
 
-    /// ### mount_quit
-    ///
     /// Mount quit popup
     pub(super) fn mount_quit(&mut self) {
         // Protocol
@@ -445,15 +419,11 @@ impl AuthActivity {
         assert!(self.app.active(&Id::QuitPopup).is_ok());
     }
 
-    /// ### umount_quit
-    ///
     /// Umount quit popup
     pub(super) fn umount_quit(&mut self) {
         let _ = self.app.umount(&Id::QuitPopup);
     }
 
-    /// ### mount_bookmark_del_dialog
-    ///
     /// Mount bookmark delete dialog
     pub(super) fn mount_bookmark_del_dialog(&mut self) {
         let warn_color = self.theme().misc_warn_dialog;
@@ -468,15 +438,11 @@ impl AuthActivity {
         assert!(self.app.active(&Id::DeleteBookmarkPopup).is_ok());
     }
 
-    /// ### umount_bookmark_del_dialog
-    ///
     /// umount delete bookmark dialog
     pub(super) fn umount_bookmark_del_dialog(&mut self) {
         let _ = self.app.umount(&Id::DeleteBookmarkPopup);
     }
 
-    /// ### mount_bookmark_del_dialog
-    ///
     /// Mount recent delete dialog
     pub(super) fn mount_recent_del_dialog(&mut self) {
         let warn_color = self.theme().misc_warn_dialog;
@@ -491,15 +457,11 @@ impl AuthActivity {
         assert!(self.app.active(&Id::DeleteRecentPopup).is_ok());
     }
 
-    /// ### umount_recent_del_dialog
-    ///
     /// umount delete recent dialog
     pub(super) fn umount_recent_del_dialog(&mut self) {
         let _ = self.app.umount(&Id::DeleteRecentPopup);
     }
 
-    /// ### mount_bookmark_save_dialog
-    ///
     /// Mount bookmark save dialog
     pub(super) fn mount_bookmark_save_dialog(&mut self) {
         let save_color = self.theme().misc_save_dialog;
@@ -524,16 +486,12 @@ impl AuthActivity {
         assert!(self.app.active(&Id::BookmarkName).is_ok());
     }
 
-    /// ### umount_bookmark_save_dialog
-    ///
     /// Umount bookmark save dialog
     pub(super) fn umount_bookmark_save_dialog(&mut self) {
         let _ = self.app.umount(&Id::BookmarkName);
         let _ = self.app.umount(&Id::BookmarkSavePassword);
     }
 
-    /// ### mount_keybindings
-    ///
     /// Mount keybindings
     pub(super) fn mount_keybindings(&mut self) {
         let key_color = self.theme().misc_keys;
@@ -549,15 +507,11 @@ impl AuthActivity {
         assert!(self.app.active(&Id::Keybindings).is_ok());
     }
 
-    /// ### umount_help
-    ///
     /// Umount help
     pub(super) fn umount_help(&mut self) {
         let _ = self.app.umount(&Id::Keybindings);
     }
 
-    /// ### mount_release_notes
-    ///
     /// mount release notes text area
     pub(super) fn mount_release_notes(&mut self) {
         if let Some(ctx) = self.context.as_ref() {
@@ -585,8 +539,6 @@ impl AuthActivity {
         }
     }
 
-    /// ### umount_release_notes
-    ///
     /// Umount release notes text area
     pub(super) fn umount_release_notes(&mut self) {
         let _ = self.app.umount(&Id::NewVersionChangelog);
@@ -691,8 +643,6 @@ impl AuthActivity {
 
     // -- query
 
-    /// ### get_generic_params
-    ///
     /// Collect input values from view
     pub(super) fn get_generic_params_input(&self) -> (String, u16, String, String) {
         let addr: String = self.get_input_addr();
@@ -702,8 +652,6 @@ impl AuthActivity {
         (addr, port, username, password)
     }
 
-    /// ### get_s3_params_input
-    ///
     /// Collect s3 input values from view
     pub(super) fn get_s3_params_input(&self) -> (String, String, Option<String>) {
         let bucket: String = self.get_input_s3_bucket();
@@ -764,8 +712,6 @@ impl AuthActivity {
         }
     }
 
-    /// ### get_new_bookmark
-    ///
     /// Get new bookmark params
     pub(super) fn get_new_bookmark(&self) -> (String, bool) {
         let name = match self.app.state(&Id::BookmarkName) {
@@ -784,8 +730,6 @@ impl AuthActivity {
 
     // -- len
 
-    /// ### input_mask_size
-    ///
     /// Returns the input mask size based on current input mask
     pub(super) fn input_mask_size(&self) -> u16 {
         match self.input_mask() {
@@ -796,16 +740,12 @@ impl AuthActivity {
 
     // -- fmt
 
-    /// ### fmt_bookmark
-    ///
     /// Format bookmark to display on ui
     fn fmt_bookmark(name: &str, b: FileTransferParams) -> String {
         let addr: String = Self::fmt_recent(b);
         format!("{} ({})", name, addr)
     }
 
-    /// ### fmt_recent
-    ///
     /// Format recent connection to display on ui
     fn fmt_recent(b: FileTransferParams) -> String {
         let protocol: String = b.protocol.to_string().to_lowercase();
@@ -881,8 +821,6 @@ impl AuthActivity {
             .is_ok());
     }
 
-    /// ### no_popup_mounted_clause
-    ///
     /// Returns a sub clause which requires that no popup is mounted in order to be satisfied
     fn no_popup_mounted_clause() -> SubClause<Id> {
         SubClause::And(

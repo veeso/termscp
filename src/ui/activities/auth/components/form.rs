@@ -57,8 +57,6 @@ impl ProtocolRadio {
         }
     }
 
-    /// ### protocol_opt_to_enum
-    ///
     /// Convert radio index for protocol into a `FileTransferProtocol`
     fn protocol_opt_to_enum(protocol: usize) -> FileTransferProtocol {
         match protocol {
@@ -70,8 +68,6 @@ impl ProtocolRadio {
         }
     }
 
-    /// ### protocol_enum_to_opt
-    ///
     /// Convert `FileTransferProtocol` enum into radio group index
     fn protocol_enum_to_opt(protocol: FileTransferProtocol) -> usize {
         match protocol {

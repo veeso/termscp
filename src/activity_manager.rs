@@ -60,8 +60,6 @@ pub struct ActivityManager {
 }
 
 impl ActivityManager {
-    /// ### new
-    ///
     /// Initializes a new Activity Manager
     pub fn new(local_dir: &Path, ticks: Duration) -> Result<ActivityManager, HostError> {
         // Prepare Context
@@ -83,16 +81,12 @@ impl ActivityManager {
         })
     }
 
-    /// ### set_filetransfer_params
-    ///
     /// Set file transfer params
     pub fn set_filetransfer_params(&mut self, params: FileTransferParams) {
         // Put params into the context
         self.context.as_mut().unwrap().set_ftparams(params);
     }
 
-    /// ### run
-    ///
     ///
     /// Loop for activity manager. You need to provide the activity to start with
     /// Returns the exitcode
@@ -114,8 +108,6 @@ impl ActivityManager {
 
     // -- Activity Loops
 
-    /// ### run_authentication
-    ///
     /// Loop for Authentication activity.
     /// Returns when activity terminates.
     /// Returns the next activity to run
@@ -168,8 +160,6 @@ impl ActivityManager {
         result
     }
 
-    /// ### run_filetransfer
-    ///
     /// Loop for FileTransfer activity.
     /// Returns when activity terminates.
     /// Returns the next activity to run
@@ -233,8 +223,6 @@ impl ActivityManager {
         result
     }
 
-    /// ### run_setup
-    ///
     /// `SetupActivity` run loop.
     /// Returns when activity terminates.
     /// Returns the next activity to run
@@ -268,8 +256,6 @@ impl ActivityManager {
 
     // -- misc
 
-    /// ### init_config_client
-    ///
     /// Initialize configuration client
     fn init_config_client() -> Result<ConfigClient, String> {
         // Get config dir

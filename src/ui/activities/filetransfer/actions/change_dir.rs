@@ -32,8 +32,6 @@ use remotefs::Directory;
 use std::path::PathBuf;
 
 impl FileTransferActivity {
-    /// ### action_enter_local_dir
-    ///
     /// Enter a directory on local host from entry
     /// Return true whether the directory changed
     pub(crate) fn action_enter_local_dir(&mut self, dir: Directory, block_sync: bool) -> bool {
@@ -44,8 +42,6 @@ impl FileTransferActivity {
         true
     }
 
-    /// ### action_enter_remote_dir
-    ///
     /// Enter a directory on local host from entry
     /// Return true whether the directory changed
     pub(crate) fn action_enter_remote_dir(&mut self, dir: Directory, block_sync: bool) -> bool {
@@ -56,8 +52,6 @@ impl FileTransferActivity {
         true
     }
 
-    /// ### action_change_local_dir
-    ///
     /// Change local directory reading value from input
     pub(crate) fn action_change_local_dir(&mut self, input: String, block_sync: bool) {
         let dir_path: PathBuf = self.local_to_abs_path(PathBuf::from(input.as_str()).as_path());
@@ -68,8 +62,6 @@ impl FileTransferActivity {
         }
     }
 
-    /// ### action_change_remote_dir
-    ///
     /// Change remote directory reading value from input
     pub(crate) fn action_change_remote_dir(&mut self, input: String, block_sync: bool) {
         let dir_path: PathBuf = self.remote_to_abs_path(PathBuf::from(input.as_str()).as_path());
@@ -80,8 +72,6 @@ impl FileTransferActivity {
         }
     }
 
-    /// ### action_go_to_previous_local_dir
-    ///
     /// Go to previous directory from localhost
     pub(crate) fn action_go_to_previous_local_dir(&mut self, block_sync: bool) {
         if let Some(d) = self.local_mut().popd() {
@@ -93,8 +83,6 @@ impl FileTransferActivity {
         }
     }
 
-    /// ### action_go_to_previous_remote_dir
-    ///
     /// Go to previous directory from remote host
     pub(crate) fn action_go_to_previous_remote_dir(&mut self, block_sync: bool) {
         if let Some(d) = self.remote_mut().popd() {
@@ -106,8 +94,6 @@ impl FileTransferActivity {
         }
     }
 
-    /// ### action_go_to_local_upper_dir
-    ///
     /// Go to upper directory on local host
     pub(crate) fn action_go_to_local_upper_dir(&mut self, block_sync: bool) {
         // Get pwd

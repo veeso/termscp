@@ -36,8 +36,6 @@ use tuirealm::{MockComponent, Props, State, StateValue};
 
 pub const FILE_LIST_CMD_SELECT_ALL: &str = "A";
 
-/// ## OwnStates
-///
 /// OwnStates contains states for this component
 #[derive(Clone, Default)]
 struct OwnStates {
@@ -46,23 +44,17 @@ struct OwnStates {
 }
 
 impl OwnStates {
-    /// ### init_list_states
-    ///
     /// Initialize list states
     pub fn init_list_states(&mut self, len: usize) {
         self.selected = Vec::with_capacity(len);
         self.fix_list_index();
     }
 
-    /// ### list_index
-    ///
     /// Return current value for list index
     pub fn list_index(&self) -> usize {
         self.list_index
     }
 
-    /// ### incr_list_index
-    ///
     /// Incremenet list index.
     /// If `can_rewind` is `true` the index rewinds when boundary is reached
     pub fn incr_list_index(&mut self, can_rewind: bool) {
@@ -74,8 +66,6 @@ impl OwnStates {
         }
     }
 
-    /// ### decr_list_index
-    ///
     /// Decrement list index
     /// If `can_rewind` is `true` the index rewinds when boundary is reached
     pub fn decr_list_index(&mut self, can_rewind: bool) {
@@ -98,36 +88,26 @@ impl OwnStates {
         };
     }
 
-    /// ### list_len
-    ///
     /// Returns the length of the file list, which is actually the capacity of the selection vector
     pub fn list_len(&self) -> usize {
         self.selected.capacity()
     }
 
-    /// ### is_selected
-    ///
     /// Returns whether the file with index `entry` is selected
     pub fn is_selected(&self, entry: usize) -> bool {
         self.selected.contains(&entry)
     }
 
-    /// ### is_selection_empty
-    ///
     /// Returns whether the selection is currently empty
     pub fn is_selection_empty(&self) -> bool {
         self.selected.is_empty()
     }
 
-    /// ### get_selection
-    ///
     /// Returns current file selection
     pub fn get_selection(&self) -> Vec<usize> {
         self.selected.clone()
     }
 
-    /// ### fix_list_index
-    ///
     /// Keep index if possible, otherwise set to lenght - 1
     fn fix_list_index(&mut self) {
         if self.list_index >= self.list_len() && self.list_len() > 0 {
@@ -139,8 +119,6 @@ impl OwnStates {
 
     // -- select manipulation
 
-    /// ### toggle_file
-    ///
     /// Select or deselect file with provided entry index
     pub fn toggle_file(&mut self, entry: usize) {
         match self.is_selected(entry) {
@@ -149,8 +127,6 @@ impl OwnStates {
         }
     }
 
-    /// ### select_all
-    ///
     /// Select all files
     pub fn select_all(&mut self) {
         for i in 0..self.list_len() {
@@ -158,8 +134,6 @@ impl OwnStates {
         }
     }
 
-    /// ### select
-    ///
     /// Select provided index if not selected yet
     fn select(&mut self, entry: usize) {
         if !self.is_selected(entry) {
@@ -167,8 +141,6 @@ impl OwnStates {
         }
     }
 
-    /// ### deselect
-    ///
     /// Remove element file with associated index
     fn deselect(&mut self, entry: usize) {
         if self.is_selected(entry) {

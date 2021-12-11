@@ -56,8 +56,6 @@ impl Default for TransferStates {
 }
 
 impl TransferStates {
-    /// ### new
-    ///
     /// Instantiates a new transfer states
     pub fn new() -> TransferStates {
         TransferStates {
@@ -67,29 +65,21 @@ impl TransferStates {
         }
     }
 
-    /// ### reset
-    ///
     /// Re-intiialize transfer states
     pub fn reset(&mut self) {
         self.aborted = false;
     }
 
-    /// ### abort
-    ///
     /// Set aborted to true
     pub fn abort(&mut self) {
         self.aborted = true;
     }
 
-    /// ### aborted
-    ///
     /// Returns whether transfer has been aborted
     pub fn aborted(&self) -> bool {
         self.aborted
     }
 
-    /// ### full_size
-    ///
     /// Returns the size of the entire transfer
     pub fn full_size(&self) -> usize {
         self.full.total
@@ -128,8 +118,6 @@ impl fmt::Display for ProgressStates {
 }
 
 impl ProgressStates {
-    /// ### init
-    ///
     /// Initialize a new Progress State
     pub fn init(&mut self, sz: usize) {
         self.started = Instant::now();
@@ -137,16 +125,12 @@ impl ProgressStates {
         self.written = 0;
     }
 
-    /// ### update_progress
-    ///
     /// Update progress state
     pub fn update_progress(&mut self, delta: usize) -> f64 {
         self.written += delta;
         self.calc_progress_percentage()
     }
 
-    /// ### calc_progress
-    ///
     /// Calculate progress in a range between 0.0 to 1.0
     pub fn calc_progress(&self) -> f64 {
         // Prevent dividing by 0
@@ -160,22 +144,16 @@ impl ProgressStates {
         }
     }
 
-    /// ### started
-    ///
     /// Get started
     pub fn started(&self) -> Instant {
         self.started
     }
 
-    /// ### calc_progress_percentage
-    ///
     /// Calculate the current transfer progress as percentage
     fn calc_progress_percentage(&self) -> f64 {
         self.calc_progress() * 100.0
     }
 
-    /// ### calc_bytes_per_second
-    ///
     /// Generic function to calculate bytes per second using elapsed time since transfer started and the bytes written
     /// and the total amount of bytes to write
     pub fn calc_bytes_per_second(&self) -> u64 {
@@ -191,8 +169,6 @@ impl ProgressStates {
         }
     }
 
-    /// ### calc_eta
-    ///
     /// Calculate ETA for current transfer as seconds
     fn calc_eta(&self) -> u64 {
         let elapsed_secs: u64 = self.started.elapsed().as_secs();
@@ -206,8 +182,6 @@ impl ProgressStates {
 
 // -- Options
 
-/// ## TransferOpts
-///
 /// Defines the transfer options for transfer actions
 pub struct TransferOpts {
     /// Save file as
@@ -226,16 +200,12 @@ impl Default for TransferOpts {
 }
 
 impl TransferOpts {
-    /// ### save_as
-    ///
     /// Define the name of the file to be saved
     pub fn save_as<S: AsRef<str>>(mut self, n: Option<S>) -> Self {
         self.save_as = n.map(|x| x.as_ref().to_string());
         self
     }
 
-    /// ### check_replace
-    ///
     /// Set whether to check if the file being transferred will "replace" an existing one
     pub fn check_replace(mut self, opt: bool) -> Self {
         self.check_replace = opt;

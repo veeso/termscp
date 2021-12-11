@@ -49,8 +49,6 @@ impl FileTransferActivity {
         self.remote_recv_file(TransferOpts::default());
     }
 
-    /// ### action_finalize_pending_transfer
-    ///
     /// Finalize "pending" transfer.
     /// The pending transfer is created after a transfer which required a user action to be completed first.
     /// The name of the file to transfer, is contained in the storage at `STORAGE_PENDING_TRANSFER`.
@@ -228,8 +226,6 @@ impl FileTransferActivity {
         }
     }
 
-    /// ### set_pending_transfer
-    ///
     /// Set pending transfer into storage
     pub(crate) fn set_pending_transfer(&mut self, file_name: &str) {
         self.mount_radio_replace(file_name);
@@ -239,8 +235,6 @@ impl FileTransferActivity {
             .set_string(STORAGE_PENDING_TRANSFER, file_name.to_string());
     }
 
-    /// ### set_pending_transfer_many
-    ///
     /// Set pending transfer for many files into storage and mount radio
     pub(crate) fn set_pending_transfer_many(&mut self, files: Vec<&Entry>, dest_path: &str) {
         let file_names: Vec<&str> = files.iter().map(|x| x.name()).collect();
@@ -250,8 +244,6 @@ impl FileTransferActivity {
             .set_string(STORAGE_PENDING_TRANSFER, dest_path.to_string());
     }
 
-    /// ### file_to_check
-    ///
     /// Get file to check for path
     pub(crate) fn file_to_check(e: &Entry, alt: Option<&String>) -> PathBuf {
         match alt {
