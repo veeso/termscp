@@ -27,14 +27,14 @@
  */
 // Locals
 use super::{FileTransferActivity, LogLevel};
-use crate::filetransfer::{FileTransferError, FileTransferErrorType};
-use crate::fs::{FsEntry, FsFile};
 use crate::host::HostError;
 use crate::utils::fmt::fmt_millis;
 
 // Ext
 use bytesize::ByteSize;
-use std::fs::File;
+use remotefs::fs::{Entry, File, UnixPex, Welcome};
+use remotefs::{RemoteError, RemoteErrorType};
+use std::fs::File as StdFile;
 use std::io::{Read, Seek, Write};
 use std::path::{Path, PathBuf};
 use std::time::Instant;
@@ -56,20 +56,20 @@ enum TransferErrorReason {
     #[error("I/O error on remote: {0}")]
     RemoteIoError(std::io::Error),
     #[error("File transfer error: {0}")]
-    FileTransferError(FileTransferError),
+    FileTransferError(RemoteError),
 }
 
 /// ## TransferPayload
 ///
 /// Represents the entity to send or receive during a transfer.
-/// - File: describes an individual `FsFile` to send
-/// - Any: Can be any kind of `FsEntry`, but just one
-/// - Many: a list of `FsEntry`
+/// - File: describes an individual `File` to send
+/// - Any: Can be any kind of `Entry`, but just one
+/// - Many: a list of `Entry`
 #[derive(Debug)]
 pub(super) enum TransferPayload {
-    File(FsFile),
-    Any(FsEntry),
-    Many(Vec<FsEntry>),
+    File(File),
+    Any(Entry),
+    Many(Vec<Entry>),
 }
 
 impl FileTransferActivity {
@@ -78,11 +78,11 @@ impl FileTransferActivity {
     /// Connect to remote
     pub(super) fn connect(&mut self) {
         let ft_params = self.context().ft_params().unwrap().clone();
-        let entry_dir: Option<PathBuf> = ft_params.entry_directory.clone();
+        let entry_dir: Option<PathBuf> = ft_params.entry_directory;
         // Connect to remote
-        match self.client.connect(&ft_params.params) {
-            Ok(welcome) => {
-                if let Some(banner) = welcome {
+        match self.client.connect() {
+            Ok(Welcome { banner, .. }) => {
+                if let Some(banner) = banner {
                     // Log welcome
                     self.log(
                         LogLevel::Info,
@@ -234,17 +234,17 @@ impl FileTransferActivity {
     /// Send one file to remote at specified path.
     fn filetransfer_send_file(
         &mut self,
-        file: &FsFile,
+        file: &File,
         curr_remote_path: &Path,
         dst_name: Option<String>,
     ) -> Result<(), String> {
         // Reset states
         self.transfer.reset();
         // Calculate total size of transfer
-        let total_transfer_size: usize = file.size;
+        let total_transfer_size: usize = file.metadata.size as usize;
         self.transfer.full.init(total_transfer_size);
         // Mount progress bar
-        self.mount_progress_bar(format!("Uploading {}…", file.abs_path.display()));
+        self.mount_progress_bar(format!("Uploading {}…", file.path.display()));
         // Get remote path
         let file_name: String = file.name.clone();
         let mut remote_path: PathBuf = PathBuf::from(curr_remote_path);
@@ -266,7 +266,7 @@ impl FileTransferActivity {
     /// Send a `TransferPayload` of type `Any`
     fn filetransfer_send_any(
         &mut self,
-        entry: &FsEntry,
+        entry: &Entry,
         curr_remote_path: &Path,
         dst_name: Option<String>,
     ) -> Result<(), String> {
@@ -276,7 +276,7 @@ impl FileTransferActivity {
         let total_transfer_size: usize = self.get_total_transfer_size_local(entry);
         self.transfer.full.init(total_transfer_size);
         // Mount progress bar
-        self.mount_progress_bar(format!("Uploading {}…", entry.get_abs_path().display()));
+        self.mount_progress_bar(format!("Uploading {}…", entry.path().display()));
         // Send recurse
         let result = self.filetransfer_send_recurse(entry, curr_remote_path, dst_name);
         // Umount progress bar
@@ -289,7 +289,7 @@ impl FileTransferActivity {
     /// Send many entries to remote
     fn filetransfer_send_many(
         &mut self,
-        entries: &[FsEntry],
+        entries: &[Entry],
         curr_remote_path: &Path,
     ) -> Result<(), String> {
         // Reset states
@@ -315,14 +315,14 @@ impl FileTransferActivity {
 
     fn filetransfer_send_recurse(
         &mut self,
-        entry: &FsEntry,
+        entry: &Entry,
         curr_remote_path: &Path,
         dst_name: Option<String>,
     ) -> Result<(), String> {
         // Write popup
         let file_name: String = match entry {
-            FsEntry::Directory(dir) => dir.name.clone(),
-            FsEntry::File(file) => file.name.clone(),
+            Entry::Directory(dir) => dir.name.clone(),
+            Entry::File(file) => file.name.clone(),
         };
         // Get remote path
         let mut remote_path: PathBuf = PathBuf::from(curr_remote_path);
@@ -333,7 +333,7 @@ impl FileTransferActivity {
         remote_path.push(remote_file_name);
         // Match entry
         let result: Result<(), String> = match entry {
-            FsEntry::File(file) => {
+            Entry::File(file) => {
                 match self.filetransfer_send_one(file, remote_path.as_path(), file_name) {
                     Err(err) => {
                         // If transfer was abrupted or there was an IO error on remote, remove file
@@ -352,7 +352,7 @@ impl FileTransferActivity {
                                     ),
                                 ),
                                 Ok(entry) => {
-                                    if let Err(err) = self.client.remove(&entry) {
+                                    if let Err(err) = self.client.remove_file(entry.path()) {
                                         self.log(
                                             LogLevel::Error,
                                             format!(
@@ -370,16 +370,19 @@ impl FileTransferActivity {
                     Ok(_) => Ok(()),
                 }
             }
-            FsEntry::Directory(dir) => {
+            Entry::Directory(dir) => {
                 // Create directory on remote first
-                match self.client.mkdir(remote_path.as_path()) {
+                match self
+                    .client
+                    .create_dir(remote_path.as_path(), UnixPex::from(0o755))
+                {
                     Ok(_) => {
                         self.log(
                             LogLevel::Info,
                             format!("Created directory \"{}\"", remote_path.display()),
                         );
                     }
-                    Err(err) if err.kind() == FileTransferErrorType::DirectoryAlreadyExists => {
+                    Err(err) if err.kind == RemoteErrorType::DirectoryAlreadyExists => {
                         self.log(
                             LogLevel::Info,
                             format!(
@@ -401,7 +404,7 @@ impl FileTransferActivity {
                     }
                 }
                 // Get files in dir
-                match self.host.scan_dir(dir.abs_path.as_path()) {
+                match self.host.scan_dir(dir.path.as_path()) {
                     Ok(entries) => {
                         // Iterate over files
                         for entry in entries.iter() {
@@ -423,7 +426,7 @@ impl FileTransferActivity {
                             LogLevel::Error,
                             format!(
                                 "Could not scan directory \"{}\": {}",
-                                dir.abs_path.display(),
+                                dir.path.display(),
                                 err
                             ),
                         );
@@ -439,7 +442,7 @@ impl FileTransferActivity {
             // Log abort
             self.log_and_alert(
                 LogLevel::Warn,
-                format!("Upload aborted for \"{}\"!", entry.get_abs_path().display()),
+                format!("Upload aborted for \"{}\"!", entry.path().display()),
             );
         }
         result
@@ -450,18 +453,24 @@ impl FileTransferActivity {
     /// Send local file and write it to remote path
     fn filetransfer_send_one(
         &mut self,
-        local: &FsFile,
+        local: &File,
         remote: &Path,
         file_name: String,
     ) -> Result<(), TransferErrorReason> {
+        // Sync file size and attributes before transfer
+        let metadata = self
+            .host
+            .stat(local.path.as_path())
+            .map_err(TransferErrorReason::HostError)
+            .map(|x| x.metadata().clone())?;
         // Upload file
         // Try to open local file
-        match self.host.open_file_read(local.abs_path.as_path()) {
-            Ok(fhnd) => match self.client.send_file(local, remote) {
+        match self.host.open_file_read(local.path.as_path()) {
+            Ok(fhnd) => match self.client.create(remote, &metadata) {
                 Ok(rhnd) => {
                     self.filetransfer_send_one_with_stream(local, remote, file_name, fhnd, rhnd)
                 }
-                Err(err) if err.kind() == FileTransferErrorType::UnsupportedFeature => {
+                Err(err) if err.kind == RemoteErrorType::UnsupportedFeature => {
                     self.filetransfer_send_one_wno_stream(local, remote, file_name, fhnd)
                 }
                 Err(err) => Err(TransferErrorReason::FileTransferError(err)),
@@ -475,10 +484,10 @@ impl FileTransferActivity {
     /// Send file to remote using stream
     fn filetransfer_send_one_with_stream(
         &mut self,
-        local: &FsFile,
+        local: &File,
         remote: &Path,
         file_name: String,
-        mut reader: File,
+        mut reader: StdFile,
         mut writer: Box<dyn Write>,
     ) -> Result<(), TransferErrorReason> {
         // Write file
@@ -548,7 +557,7 @@ impl FileTransferActivity {
             }
         }
         // Finalize stream
-        if let Err(err) = self.client.on_sent(writer) {
+        if let Err(err) = self.client.on_written(writer) {
             self.log(
                 LogLevel::Warn,
                 format!("Could not finalize remote stream: \"{}\"", err),
@@ -562,7 +571,7 @@ impl FileTransferActivity {
             LogLevel::Info,
             format!(
                 "Saved file \"{}\" to \"{}\" (took {} seconds; at {}/s)",
-                local.abs_path.display(),
+                local.path.display(),
                 remote.display(),
                 fmt_millis(self.transfer.partial.started().elapsed()),
                 ByteSize(self.transfer.partial.calc_bytes_per_second()),
@@ -573,14 +582,20 @@ impl FileTransferActivity {
 
     /// ### filetransfer_send_one_wno_stream
     ///
-    /// Send an `FsFile` to remote without using streams.
+    /// Send an `File` to remote without using streams.
     fn filetransfer_send_one_wno_stream(
         &mut self,
-        local: &FsFile,
+        local: &File,
         remote: &Path,
         file_name: String,
-        mut reader: File,
+        mut reader: StdFile,
     ) -> Result<(), TransferErrorReason> {
+        // Sync file size and attributes before transfer
+        let metadata = self
+            .host
+            .stat(local.path.as_path())
+            .map_err(TransferErrorReason::HostError)
+            .map(|x| x.metadata().clone())?;
         // Write file
         let file_size: usize = reader.seek(std::io::SeekFrom::End(0)).unwrap_or(0) as usize;
         // Init transfer
@@ -593,10 +608,7 @@ impl FileTransferActivity {
         self.update_progress_bar(format!("Uploading \"{}\"…", file_name));
         self.view();
         // Send file
-        if let Err(err) = self
-            .client
-            .send_file_wno_stream(local, remote, Box::new(reader))
-        {
+        if let Err(err) = self.client.create_file(remote, &metadata, Box::new(reader)) {
             return Err(TransferErrorReason::FileTransferError(err));
         }
         // Set transfer size ok
@@ -610,7 +622,7 @@ impl FileTransferActivity {
             LogLevel::Info,
             format!(
                 "Saved file \"{}\" to \"{}\" (took {} seconds; at {}/s)",
-                local.abs_path.display(),
+                local.path.display(),
                 remote.display(),
                 fmt_millis(self.transfer.partial.started().elapsed()),
                 ByteSize(self.transfer.partial.calc_bytes_per_second()),
@@ -656,7 +668,7 @@ impl FileTransferActivity {
     /// If entry is a directory, this applies to directory only
     fn filetransfer_recv_any(
         &mut self,
-        entry: &FsEntry,
+        entry: &Entry,
         local_path: &Path,
         dst_name: Option<String>,
     ) -> Result<(), String> {
@@ -666,7 +678,7 @@ impl FileTransferActivity {
         let total_transfer_size: usize = self.get_total_transfer_size_remote(entry);
         self.transfer.full.init(total_transfer_size);
         // Mount progress bar
-        self.mount_progress_bar(format!("Downloading {}…", entry.get_abs_path().display()));
+        self.mount_progress_bar(format!("Downloading {}…", entry.path().display()));
         // Receive
         let result = self.filetransfer_recv_recurse(entry, local_path, dst_name);
         // Umount progress bar
@@ -677,14 +689,14 @@ impl FileTransferActivity {
     /// ### filetransfer_recv_file
     ///
     /// Receive a single file from remote.
-    fn filetransfer_recv_file(&mut self, entry: &FsFile, local_path: &Path) -> Result<(), String> {
+    fn filetransfer_recv_file(&mut self, entry: &File, local_path: &Path) -> Result<(), String> {
         // Reset states
         self.transfer.reset();
         // Calculate total transfer size
-        let total_transfer_size: usize = entry.size;
+        let total_transfer_size: usize = entry.metadata.size as usize;
         self.transfer.full.init(total_transfer_size);
         // Mount progress bar
-        self.mount_progress_bar(format!("Downloading {}…", entry.abs_path.display()));
+        self.mount_progress_bar(format!("Downloading {}…", entry.path.display()));
         // Receive
         let result = self.filetransfer_recv_one(local_path, entry, entry.name.clone());
         // Umount progress bar
@@ -698,7 +710,7 @@ impl FileTransferActivity {
     /// Send many entries to remote
     fn filetransfer_recv_many(
         &mut self,
-        entries: &[FsEntry],
+        entries: &[Entry],
         curr_remote_path: &Path,
     ) -> Result<(), String> {
         // Reset states
@@ -724,18 +736,18 @@ impl FileTransferActivity {
 
     fn filetransfer_recv_recurse(
         &mut self,
-        entry: &FsEntry,
+        entry: &Entry,
         local_path: &Path,
         dst_name: Option<String>,
     ) -> Result<(), String> {
         // Write popup
         let file_name: String = match entry {
-            FsEntry::Directory(dir) => dir.name.clone(),
-            FsEntry::File(file) => file.name.clone(),
+            Entry::Directory(dir) => dir.name.clone(),
+            Entry::File(file) => file.name.clone(),
         };
         // Match entry
         let result: Result<(), String> = match entry {
-            FsEntry::File(file) => {
+            Entry::File(file) => {
                 // Get local file
                 let mut local_file_path: PathBuf = PathBuf::from(local_path);
                 let local_file_name: String = match dst_name {
@@ -781,7 +793,7 @@ impl FileTransferActivity {
                     Ok(())
                 }
             }
-            FsEntry::Directory(dir) => {
+            Entry::Directory(dir) => {
                 // Get dir name
                 let mut local_dir_path: PathBuf = PathBuf::from(local_path);
                 match dst_name {
@@ -797,16 +809,13 @@ impl FileTransferActivity {
                             target_os = "macos",
                             target_os = "linux"
                         ))]
-                        if let Some((owner, group, others)) = dir.unix_pex {
-                            if let Err(err) = self.host.chmod(
-                                local_dir_path.as_path(),
-                                (owner.as_byte(), group.as_byte(), others.as_byte()),
-                            ) {
+                        if let Some(mode) = dir.metadata.mode {
+                            if let Err(err) = self.host.chmod(local_dir_path.as_path(), mode) {
                                 self.log(
                                     LogLevel::Error,
                                     format!(
-                                        "Could not apply file mode {:?} to \"{}\": {}",
-                                        (owner.as_byte(), group.as_byte(), others.as_byte()),
+                                        "Could not apply file mode {:o} to \"{}\": {}",
+                                        u32::from(mode),
                                         local_dir_path.display(),
                                         err
                                     ),
@@ -818,7 +827,7 @@ impl FileTransferActivity {
                             format!("Created directory \"{}\"", local_dir_path.display()),
                         );
                         // Get files in dir
-                        match self.client.list_dir(dir.abs_path.as_path()) {
+                        match self.client.list_dir(dir.path.as_path()) {
                             Ok(entries) => {
                                 // Iterate over files
                                 for entry in entries.iter() {
@@ -843,7 +852,7 @@ impl FileTransferActivity {
                                     LogLevel::Error,
                                     format!(
                                         "Could not scan directory \"{}\": {}",
-                                        dir.abs_path.display(),
+                                        dir.path.display(),
                                         err
                                     ),
                                 );
@@ -872,10 +881,7 @@ impl FileTransferActivity {
             // Log abort
             self.log_and_alert(
                 LogLevel::Warn,
-                format!(
-                    "Download aborted for \"{}\"!",
-                    entry.get_abs_path().display()
-                ),
+                format!("Download aborted for \"{}\"!", entry.path().display()),
             );
         }
         result
@@ -887,18 +893,18 @@ impl FileTransferActivity {
     fn filetransfer_recv_one(
         &mut self,
         local: &Path,
-        remote: &FsFile,
+        remote: &File,
         file_name: String,
     ) -> Result<(), TransferErrorReason> {
         // Try to open local file
         match self.host.open_file_write(local) {
             Ok(local_file) => {
                 // Download file from remote
-                match self.client.recv_file(remote) {
+                match self.client.open(remote.path.as_path()) {
                     Ok(rhnd) => self.filetransfer_recv_one_with_stream(
                         local, remote, file_name, rhnd, local_file,
                     ),
-                    Err(err) if err.kind() == FileTransferErrorType::UnsupportedFeature => {
+                    Err(err) if err.kind == RemoteErrorType::UnsupportedFeature => {
                         self.filetransfer_recv_one_wno_stream(local, remote, file_name)
                     }
                     Err(err) => Err(TransferErrorReason::FileTransferError(err)),
@@ -910,24 +916,24 @@ impl FileTransferActivity {
 
     /// ### filetransfer_recv_one_with_stream
     ///
-    /// Receive an `FsEntry` from remote using stream
+    /// Receive an `Entry` from remote using stream
     fn filetransfer_recv_one_with_stream(
         &mut self,
         local: &Path,
-        remote: &FsFile,
+        remote: &File,
         file_name: String,
         mut reader: Box<dyn Read>,
-        mut writer: File,
+        mut writer: StdFile,
     ) -> Result<(), TransferErrorReason> {
         let mut total_bytes_written: usize = 0;
         // Init transfer
-        self.transfer.partial.init(remote.size);
+        self.transfer.partial.init(remote.metadata.size as usize);
         // Write local file
         let mut last_progress_val: f64 = 0.0;
         let mut last_input_event_fetch: Option<Instant> = None;
         // While the entire file hasn't been completely read,
         // Or filetransfer has been aborted
-        while total_bytes_written < remote.size && !self.transfer.aborted() {
+        while total_bytes_written < remote.metadata.size as usize && !self.transfer.aborted() {
             // Handle input events (each 500 ms) or is None
             if last_input_event_fetch.is_none()
                 || last_input_event_fetch
@@ -978,7 +984,7 @@ impl FileTransferActivity {
             }
         }
         // Finalize stream
-        if let Err(err) = self.client.on_recv(reader) {
+        if let Err(err) = self.client.on_read(reader) {
             self.log(
                 LogLevel::Warn,
                 format!("Could not finalize remote stream: \"{}\"", err),
@@ -990,16 +996,13 @@ impl FileTransferActivity {
         }
         // Apply file mode to file
         #[cfg(target_family = "unix")]
-        if let Some((owner, group, others)) = remote.unix_pex {
-            if let Err(err) = self
-                .host
-                .chmod(local, (owner.as_byte(), group.as_byte(), others.as_byte()))
-            {
+        if let Some(mode) = remote.metadata.mode {
+            if let Err(err) = self.host.chmod(local, mode) {
                 self.log(
                     LogLevel::Error,
                     format!(
-                        "Could not apply file mode {:?} to \"{}\": {}",
-                        (owner.as_byte(), group.as_byte(), others.as_byte()),
+                        "Could not apply file mode {:o} to \"{}\": {}",
+                        u32::from(mode),
                         local.display(),
                         err
                     ),
@@ -1011,7 +1014,7 @@ impl FileTransferActivity {
             LogLevel::Info,
             format!(
                 "Saved file \"{}\" to \"{}\" (took {} seconds; at {}/s)",
-                remote.abs_path.display(),
+                remote.path.display(),
                 local.display(),
                 fmt_millis(self.transfer.partial.started().elapsed()),
                 ByteSize(self.transfer.partial.calc_bytes_per_second()),
@@ -1022,40 +1025,47 @@ impl FileTransferActivity {
 
     /// ### filetransfer_recv_one_with_stream
     ///
-    /// Receive an `FsEntry` from remote without using stream
+    /// Receive an `Entry` from remote without using stream
     fn filetransfer_recv_one_wno_stream(
         &mut self,
         local: &Path,
-        remote: &FsFile,
+        remote: &File,
         file_name: String,
     ) -> Result<(), TransferErrorReason> {
+        // Open local file
+        let reader = self
+            .host
+            .open_file_write(local)
+            .map_err(TransferErrorReason::HostError)
+            .map(Box::new)?;
         // Init transfer
-        self.transfer.partial.init(remote.size);
+        self.transfer.partial.init(remote.metadata.size as usize);
         // Draw before transfer
         self.update_progress_bar(format!("Downloading \"{}\"", file_name));
         self.view();
         // recv wno stream
-        if let Err(err) = self.client.recv_file_wno_stream(remote, local) {
+        if let Err(err) = self.client.open_file(remote.path.as_path(), reader) {
             return Err(TransferErrorReason::FileTransferError(err));
         }
         // Update progress at the end
-        self.transfer.partial.update_progress(remote.size);
-        self.transfer.full.update_progress(remote.size);
+        self.transfer
+            .partial
+            .update_progress(remote.metadata.size as usize);
+        self.transfer
+            .full
+            .update_progress(remote.metadata.size as usize);
         // Draw after transfer
         self.update_progress_bar(format!("Downloading \"{}\"", file_name));
         self.view();
         // Apply file mode to file
         #[cfg(target_family = "unix")]
-        if let Some((owner, group, others)) = remote.unix_pex {
-            if let Err(err) = self
-                .host
-                .chmod(local, (owner.as_byte(), group.as_byte(), others.as_byte()))
-            {
+        if let Some(mode) = remote.metadata.mode {
+            if let Err(err) = self.host.chmod(local, mode) {
                 self.log(
                     LogLevel::Error,
                     format!(
-                        "Could not apply file mode {:?} to \"{}\": {}",
-                        (owner.as_byte(), group.as_byte(), others.as_byte()),
+                        "Could not apply file mode {:o} to \"{}\": {}",
+                        u32::from(mode),
                         local.display(),
                         err
                     ),
@@ -1067,7 +1077,7 @@ impl FileTransferActivity {
             LogLevel::Info,
             format!(
                 "Saved file \"{}\" to \"{}\" (took {} seconds; at {}/s)",
-                remote.abs_path.display(),
+                remote.path.display(),
                 local.display(),
                 fmt_millis(self.transfer.partial.started().elapsed()),
                 ByteSize(self.transfer.partial.calc_bytes_per_second()),
@@ -1136,7 +1146,7 @@ impl FileTransferActivity {
     /// ### download_file_as_temp
     ///
     /// Download provided file as a temporary file
-    pub(super) fn download_file_as_temp(&mut self, file: &FsFile) -> Result<PathBuf, String> {
+    pub(super) fn download_file_as_temp(&mut self, file: &File) -> Result<PathBuf, String> {
         let tmpfile: PathBuf = match self.cache.as_ref() {
             Some(cache) => {
                 let mut p: PathBuf = cache.path().to_path_buf();
@@ -1157,7 +1167,7 @@ impl FileTransferActivity {
         ) {
             Err(err) => Err(format!(
                 "Could not download {} to temporary file: {}",
-                file.abs_path.display(),
+                file.path.display(),
                 err
             )),
             Ok(()) => Ok(tmpfile),
@@ -1169,12 +1179,12 @@ impl FileTransferActivity {
     /// ### get_total_transfer_size_local
     ///
     /// Get total size of transfer for localhost
-    fn get_total_transfer_size_local(&mut self, entry: &FsEntry) -> usize {
+    fn get_total_transfer_size_local(&mut self, entry: &Entry) -> usize {
         match entry {
-            FsEntry::File(file) => file.size,
-            FsEntry::Directory(dir) => {
+            Entry::File(file) => file.metadata.size as usize,
+            Entry::Directory(dir) => {
                 // List dir
-                match self.host.scan_dir(dir.abs_path.as_path()) {
+                match self.host.scan_dir(dir.path.as_path()) {
                     Ok(files) => files
                         .iter()
                         .map(|x| self.get_total_transfer_size_local(x))
@@ -1182,11 +1192,7 @@ impl FileTransferActivity {
                     Err(err) => {
                         self.log(
                             LogLevel::Error,
-                            format!(
-                                "Could not list directory {}: {}",
-                                dir.abs_path.display(),
-                                err
-                            ),
+                            format!("Could not list directory {}: {}", dir.path.display(), err),
                         );
                         0
                     }
@@ -1198,12 +1204,12 @@ impl FileTransferActivity {
     /// ### get_total_transfer_size_remote
     ///
     /// Get total size of transfer for remote host
-    fn get_total_transfer_size_remote(&mut self, entry: &FsEntry) -> usize {
+    fn get_total_transfer_size_remote(&mut self, entry: &Entry) -> usize {
         match entry {
-            FsEntry::File(file) => file.size,
-            FsEntry::Directory(dir) => {
+            Entry::File(file) => file.metadata.size as usize,
+            Entry::Directory(dir) => {
                 // List directory
-                match self.client.list_dir(dir.abs_path.as_path()) {
+                match self.client.list_dir(dir.path.as_path()) {
                     Ok(files) => files
                         .iter()
                         .map(|x| self.get_total_transfer_size_remote(x))
@@ -1211,11 +1217,7 @@ impl FileTransferActivity {
                     Err(err) => {
                         self.log(
                             LogLevel::Error,
-                            format!(
-                                "Could not list directory {}: {}",
-                                dir.abs_path.display(),
-                                err
-                            ),
+                            format!("Could not list directory {}: {}", dir.path.display(), err),
                         );
                         0
                     }

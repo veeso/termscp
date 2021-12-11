@@ -26,7 +26,7 @@
  * SOFTWARE.
  */
 // locals
-use super::{FileTransferActivity, FsEntry, LogLevel, SelectedEntry, TransferPayload};
+use super::{Entry, FileTransferActivity, LogLevel, SelectedEntry, TransferPayload};
 // ext
 use std::path::{Path, PathBuf};
 
@@ -35,7 +35,7 @@ impl FileTransferActivity {
     ///
     /// Open local file
     pub(crate) fn action_open_local(&mut self) {
-        let entries: Vec<FsEntry> = match self.get_local_selected_entries() {
+        let entries: Vec<Entry> = match self.get_local_selected_entries() {
             SelectedEntry::One(entry) => vec![entry],
             SelectedEntry::Many(entries) => entries,
             SelectedEntry::None => vec![],
@@ -49,7 +49,7 @@ impl FileTransferActivity {
     ///
     /// Open local file
     pub(crate) fn action_open_remote(&mut self) {
-        let entries: Vec<FsEntry> = match self.get_remote_selected_entries() {
+        let entries: Vec<Entry> = match self.get_remote_selected_entries() {
             SelectedEntry::One(entry) => vec![entry],
             SelectedEntry::Many(entries) => entries,
             SelectedEntry::None => vec![],
@@ -62,25 +62,22 @@ impl FileTransferActivity {
     /// ### action_open_local_file
     ///
     /// Perform open lopcal file
-    pub(crate) fn action_open_local_file(&mut self, entry: &FsEntry, open_with: Option<&str>) {
-        let entry: FsEntry = entry.get_realfile();
-        self.open_path_with(entry.get_abs_path().as_path(), open_with);
+    pub(crate) fn action_open_local_file(&mut self, entry: &Entry, open_with: Option<&str>) {
+        self.open_path_with(entry.path(), open_with);
     }
 
     /// ### action_open_local
     ///
     /// Open remote file. The file is first downloaded to a temporary directory on localhost
-    pub(crate) fn action_open_remote_file(&mut self, entry: &FsEntry, open_with: Option<&str>) {
-        let entry: FsEntry = entry.get_realfile();
+    pub(crate) fn action_open_remote_file(&mut self, entry: &Entry, open_with: Option<&str>) {
         // Download file
-        let tmpfile: String =
-            match self.get_cache_tmp_name(entry.get_name(), entry.get_ftype().as_deref()) {
-                None => {
-                    self.log(LogLevel::Error, String::from("Could not create tempdir"));
-                    return;
-                }
-                Some(p) => p,
-            };
+        let tmpfile: String = match self.get_cache_tmp_name(entry.name(), entry.extension()) {
+            None => {
+                self.log(LogLevel::Error, String::from("Could not create tempdir"));
+                return;
+            }
+            Some(p) => p,
+        };
         let cache: PathBuf = match self.cache.as_ref() {
             None => {
                 self.log(LogLevel::Error, String::from("Could not create tempdir"));
@@ -89,7 +86,7 @@ impl FileTransferActivity {
             Some(p) => p.path().to_path_buf(),
         };
         match self.filetransfer_recv(
-            TransferPayload::Any(entry),
+            TransferPayload::Any(entry.clone()),
             cache.as_path(),
             Some(tmpfile.clone()),
         ) {
@@ -114,7 +111,7 @@ impl FileTransferActivity {
     ///
     /// Open selected file with provided application
     pub(crate) fn action_local_open_with(&mut self, with: &str) {
-        let entries: Vec<FsEntry> = match self.get_local_selected_entries() {
+        let entries: Vec<Entry> = match self.get_local_selected_entries() {
             SelectedEntry::One(entry) => vec![entry],
             SelectedEntry::Many(entries) => entries,
             SelectedEntry::None => vec![],
@@ -129,7 +126,7 @@ impl FileTransferActivity {
     ///
     /// Open selected file with provided application
     pub(crate) fn action_remote_open_with(&mut self, with: &str) {
-        let entries: Vec<FsEntry> = match self.get_remote_selected_entries() {
+        let entries: Vec<Entry> = match self.get_remote_selected_entries() {
             SelectedEntry::One(entry) => vec![entry],
             SelectedEntry::Many(entries) => entries,
             SelectedEntry::None => vec![],

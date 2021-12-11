@@ -57,7 +57,7 @@ pub struct Release {
 ///
 /// The update structure defines the options used to install the update.
 /// Once you're fine with the options, just call the `upgrade()` method to upgrade termscp.
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Update {
     ask_confirm: bool,
     progress: bool,
@@ -141,16 +141,6 @@ impl Update {
         }
     }
 }
-
-impl Default for Update {
-    fn default() -> Self {
-        Self {
-            progress: false,
-            ask_confirm: false,
-        }
-    }
-}
-
 impl From<Status> for UpdateStatus {
     fn from(s: Status) -> Self {
         match s {

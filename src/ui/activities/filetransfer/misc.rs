@@ -29,7 +29,6 @@ use super::{
 use crate::filetransfer::ProtocolParams;
 use crate::system::environment;
 use crate::system::notifications::Notification;
-use crate::system::sshkey_storage::SshKeyStorage;
 use crate::utils::fmt::{fmt_millis, fmt_path_elide_ex};
 use crate::utils::path;
 // Ext
@@ -118,13 +117,6 @@ impl FileTransferActivity {
             },
             Err(_) => ConfigClient::degraded(),
         }
-    }
-
-    /// ### make_ssh_storage
-    ///
-    /// Make ssh storage from `ConfigClient` if possible, empty otherwise (empty is implicit if degraded)
-    pub(super) fn make_ssh_storage(cli: &ConfigClient) -> SshKeyStorage {
-        SshKeyStorage::storage_from_config(cli)
     }
 
     /// ### setup_text_editor
@@ -227,7 +219,7 @@ impl FileTransferActivity {
             TransferPayload::Any(entry) => {
                 format!(
                     "\"{}\" has been successfully transferred ({})",
-                    entry.get_name(),
+                    entry.name(),
                     transfer_stats
                 )
             }

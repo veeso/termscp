@@ -26,9 +26,10 @@
  * SOFTWARE.
  */
 // locals
-use super::{FileTransferActivity, FsEntry, LogLevel, SelectedEntry, TransferPayload};
-use crate::fs::FsFile;
+use super::{FileTransferActivity, LogLevel, SelectedEntry, TransferPayload};
+
 // ext
+use remotefs::{Entry, File};
 use std::fs::OpenOptions;
 use std::io::Read;
 use std::path::{Path, PathBuf};
@@ -36,7 +37,7 @@ use std::time::SystemTime;
 
 impl FileTransferActivity {
     pub(crate) fn action_edit_local_file(&mut self) {
-        let entries: Vec<FsEntry> = match self.get_local_selected_entries() {
+        let entries: Vec<Entry> = match self.get_local_selected_entries() {
             SelectedEntry::One(entry) => vec![entry],
             SelectedEntry::Many(entries) => entries,
             SelectedEntry::None => vec![],
@@ -47,10 +48,10 @@ impl FileTransferActivity {
             if entry.is_file() {
                 self.log(
                     LogLevel::Info,
-                    format!("Opening file \"{}\"…", entry.get_abs_path().display()),
+                    format!("Opening file \"{}\"…", entry.path().display()),
                 );
                 // Edit file
-                if let Err(err) = self.edit_local_file(entry.get_abs_path().as_path()) {
+                if let Err(err) = self.edit_local_file(entry.path()) {
                     self.log_and_alert(LogLevel::Error, err);
                 }
             }
@@ -60,7 +61,7 @@ impl FileTransferActivity {
     }
 
     pub(crate) fn action_edit_remote_file(&mut self) {
-        let entries: Vec<FsEntry> = match self.get_remote_selected_entries() {
+        let entries: Vec<Entry> = match self.get_remote_selected_entries() {
             SelectedEntry::One(entry) => vec![entry],
             SelectedEntry::Many(entries) => entries,
             SelectedEntry::None => vec![],
@@ -68,10 +69,10 @@ impl FileTransferActivity {
         // Edit all entries
         for entry in entries.into_iter() {
             // Check if file
-            if let FsEntry::File(file) = entry {
+            if let Entry::File(file) = entry {
                 self.log(
                     LogLevel::Info,
-                    format!("Opening file \"{}\"…", file.abs_path.display()),
+                    format!("Opening file \"{}\"…", file.path.display()),
                 );
                 // Edit file
                 if let Err(err) = self.edit_remote_file(file) {
@@ -149,7 +150,7 @@ impl FileTransferActivity {
     /// ### edit_remote_file
     ///
     /// Edit file on remote host
-    fn edit_remote_file(&mut self, file: FsFile) -> Result<(), String> {
+    fn edit_remote_file(&mut self, file: File) -> Result<(), String> {
         // Create temp file
         let tmpfile: PathBuf = match self.download_file_as_temp(&file) {
             Ok(p) => p,
@@ -157,7 +158,7 @@ impl FileTransferActivity {
         };
         // Download file
         let file_name = file.name.clone();
-        let file_path = file.abs_path.clone();
+        let file_path = file.path.clone();
         if let Err(err) = self.filetransfer_recv(
             TransferPayload::File(file),
             tmpfile.as_path(),
@@ -167,7 +168,7 @@ impl FileTransferActivity {
         }
         // Get current file modification time
         let prev_mtime: SystemTime = match self.host.stat(tmpfile.as_path()) {
-            Ok(e) => e.get_last_change_time(),
+            Ok(e) => e.metadata().mtime,
             Err(err) => {
                 return Err(format!(
                     "Could not stat \"{}\": {}",
@@ -181,7 +182,7 @@ impl FileTransferActivity {
             return Err(err);
         }
         // Get local fs entry
-        let tmpfile_entry: FsEntry = match self.host.stat(tmpfile.as_path()) {
+        let tmpfile_entry: Entry = match self.host.stat(tmpfile.as_path()) {
             Ok(e) => e,
             Err(err) => {
                 return Err(format!(
@@ -192,7 +193,7 @@ impl FileTransferActivity {
             }
         };
         // Check if file has changed
-        match prev_mtime != tmpfile_entry.get_last_change_time() {
+        match prev_mtime != tmpfile_entry.metadata().mtime {
             true => {
                 self.log(
                     LogLevel::Info,
@@ -202,7 +203,7 @@ impl FileTransferActivity {
                     ),
                 );
                 // Get local fs entry
-                let tmpfile_entry: FsFile = match self.host.stat(tmpfile.as_path()) {
+                let tmpfile_entry = match self.host.stat(tmpfile.as_path()) {
                     Ok(e) => e.unwrap_file(),
                     Err(err) => {
                         return Err(format!(

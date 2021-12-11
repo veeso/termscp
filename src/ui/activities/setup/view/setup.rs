@@ -28,8 +28,8 @@
  */
 // Locals
 use super::{components, Context, Id, IdCommon, IdConfig, SetupActivity, ViewLayout};
+use crate::explorer::GroupDirs;
 use crate::filetransfer::FileTransferProtocol;
-use crate::fs::explorer::GroupDirs;
 use crate::utils::fmt::fmt_bytes;
 
 // Ext

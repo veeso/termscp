@@ -26,7 +26,7 @@
  * SOFTWARE.
  */
 // Deps
-use crate::filetransfer::{FileTransferParams, FileTransferProtocol};
+use crate::filetransfer::FileTransferParams;
 use crate::host::{HostError, Localhost};
 use crate::system::config_client::ConfigClient;
 use crate::system::environment;
@@ -192,7 +192,6 @@ impl ActivityManager {
             }
         };
         // Prepare activity
-        let protocol: FileTransferProtocol = ft_params.protocol;
         let host: Localhost = match Localhost::new(self.local_dir.clone()) {
             Ok(host) => host,
             Err(err) => {
@@ -203,7 +202,7 @@ impl ActivityManager {
             }
         };
         let mut activity: FileTransferActivity =
-            FileTransferActivity::new(host, protocol, self.ticks);
+            FileTransferActivity::new(host, ft_params, self.ticks);
         // Prepare result
         let result: Option<NextActivity>;
         // Create activity

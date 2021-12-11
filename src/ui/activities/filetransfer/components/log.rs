@@ -225,19 +225,10 @@ impl Component<Msg, NoUserEvent> for Log {
 /// ## OwnStates
 ///
 /// OwnStates contains states for this component
-#[derive(Clone)]
+#[derive(Clone, Default)]
 struct OwnStates {
     list_index: usize, // Index of selected element in list
     list_len: usize,   // Length of file list
-}
-
-impl Default for OwnStates {
-    fn default() -> Self {
-        OwnStates {
-            list_index: 0,
-            list_len: 0,
-        }
-    }
 }
 
 impl OwnStates {

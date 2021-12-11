@@ -52,17 +52,9 @@ use tuirealm::{Component, MockComponent};
 
 // -- global listener
 
-#[derive(MockComponent)]
+#[derive(Default, MockComponent)]
 pub struct GlobalListener {
     component: Phantom,
-}
-
-impl Default for GlobalListener {
-    fn default() -> Self {
-        Self {
-            component: Phantom::default(),
-        }
-    }
 }
 
 impl Component<Msg, NoUserEvent> for GlobalListener {

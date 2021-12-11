@@ -103,8 +103,7 @@ impl Default for ProtocolParams {
 }
 
 impl ProtocolParams {
-    /// ### generic_params
-    ///
+    #[cfg(test)]
     /// Retrieve generic parameters from protocol params if any
     pub fn generic_params(&self) -> Option<&GenericProtocolParams> {
         match self {
@@ -120,8 +119,7 @@ impl ProtocolParams {
         }
     }
 
-    /// ### s3_params
-    ///
+    #[cfg(test)]
     /// Retrieve AWS S3 parameters if any
     pub fn s3_params(&self) -> Option<&AwsS3Params> {
         match self {

@@ -25,7 +25,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-use crate::fs::UnixPex;
+use remotefs::fs::UnixPexClass;
 
 use chrono::prelude::*;
 use std::path::{Path, PathBuf};
@@ -35,18 +35,18 @@ use tuirealm::tui::style::Color;
 /// ### fmt_pex
 ///
 /// Convert permissions bytes of permissions value into ls notation (e.g. rwx,-wx,--x)
-pub fn fmt_pex(pex: UnixPex) -> String {
+pub fn fmt_pex(pex: UnixPexClass) -> String {
     format!(
         "{}{}{}",
-        match pex.can_read() {
+        match pex.read() {
             true => 'r',
             false => '-',
         },
-        match pex.can_write() {
+        match pex.write() {
             true => 'w',
             false => '-',
         },
-        match pex.can_execute() {
+        match pex.execute() {
             true => 'x',
             false => '-',
         }
@@ -315,9 +315,9 @@ mod tests {
 
     #[test]
     fn test_utils_fmt_pex() {
-        assert_eq!(fmt_pex(UnixPex::from(7)), String::from("rwx"));
-        assert_eq!(fmt_pex(UnixPex::from(5)), String::from("r-x"));
-        assert_eq!(fmt_pex(UnixPex::from(6)), String::from("rw-"));
+        assert_eq!(fmt_pex(UnixPexClass::from(7)), String::from("rwx"));
+        assert_eq!(fmt_pex(UnixPexClass::from(5)), String::from("r-x"));
+        assert_eq!(fmt_pex(UnixPexClass::from(6)), String::from("rw-"));
     }
 
     #[test]

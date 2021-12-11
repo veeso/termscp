@@ -27,6 +27,7 @@
  */
 // locals
 use super::{FileTransferActivity, LogLevel};
+use remotefs::fs::UnixPex;
 use std::path::PathBuf;
 
 impl FileTransferActivity {
@@ -48,11 +49,10 @@ impl FileTransferActivity {
         }
     }
     pub(crate) fn action_remote_mkdir(&mut self, input: String) {
-        match self
-            .client
-            .as_mut()
-            .mkdir(PathBuf::from(input.as_str()).as_path())
-        {
+        match self.client.as_mut().create_dir(
+            PathBuf::from(input.as_str()).as_path(),
+            UnixPex::from(0o755),
+        ) {
             Ok(_) => {
                 // Reload files
                 self.log(LogLevel::Info, format!("Created directory \"{}\"", input));

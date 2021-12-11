@@ -36,7 +36,7 @@ use std::str::FromStr;
 ///
 /// UserHosts contains all the hosts saved by the user in the data storage
 /// It contains both `Bookmark`
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Default)]
 pub struct UserHosts {
     pub bookmarks: HashMap<String, Bookmark>,
     pub recents: HashMap<String, Bookmark>,
@@ -75,15 +75,6 @@ pub struct S3Params {
 }
 
 // -- impls
-
-impl Default for UserHosts {
-    fn default() -> Self {
-        Self {
-            bookmarks: HashMap::new(),
-            recents: HashMap::new(),
-        }
-    }
-}
 
 impl From<FileTransferParams> for Bookmark {
     fn from(params: FileTransferParams) -> Self {

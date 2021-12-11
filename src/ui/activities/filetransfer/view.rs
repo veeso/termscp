@@ -30,11 +30,11 @@ use super::{
     browser::{FileExplorerTab, FoundExplorerTab},
     components, Context, FileTransferActivity, Id,
 };
-use crate::fs::explorer::FileSorting;
-use crate::fs::FsEntry;
+use crate::explorer::FileSorting;
 use crate::ui::store::Store;
 use crate::utils::ui::draw_area_in;
 // Ext
+use remotefs::fs::Entry;
 use tuirealm::event::{Key, KeyEvent, KeyModifiers};
 use tuirealm::tui::layout::{Constraint, Direction, Layout};
 use tuirealm::tui::widgets::Clear;
@@ -747,7 +747,7 @@ impl FileTransferActivity {
         let _ = self.app.umount(&Id::ReplacingFilesListPopup); // NOTE: replace anyway
     }
 
-    pub(super) fn mount_file_info(&mut self, file: &FsEntry) {
+    pub(super) fn mount_file_info(&mut self, file: &Entry) {
         assert!(self
             .app
             .remount(

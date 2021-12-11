@@ -26,8 +26,9 @@
  * SOFTWARE.
  */
 // locals
-use super::{FileTransferActivity, FsEntry, LogLevel, SelectedEntry};
-use crate::filetransfer::FileTransferErrorType;
+use super::{Entry, FileTransferActivity, LogLevel, SelectedEntry};
+
+use remotefs::RemoteErrorType;
 use std::path::{Path, PathBuf};
 
 impl FileTransferActivity {
@@ -45,7 +46,7 @@ impl FileTransferActivity {
                 // Iter files
                 for entry in entries.iter() {
                     let mut dest_path: PathBuf = base_path.clone();
-                    dest_path.push(entry.get_name());
+                    dest_path.push(entry.name());
                     self.local_rename_file(entry, dest_path.as_path());
                 }
                 // Reload entries
@@ -69,7 +70,7 @@ impl FileTransferActivity {
                 // Iter files
                 for entry in entries.iter() {
                     let mut dest_path: PathBuf = base_path.clone();
-                    dest_path.push(entry.get_name());
+                    dest_path.push(entry.name());
                     self.remote_rename_file(entry, dest_path.as_path());
                 }
                 // Reload entries
@@ -79,14 +80,14 @@ impl FileTransferActivity {
         }
     }
 
-    fn local_rename_file(&mut self, entry: &FsEntry, dest: &Path) {
+    fn local_rename_file(&mut self, entry: &Entry, dest: &Path) {
         match self.host.rename(entry, dest) {
             Ok(_) => {
                 self.log(
                     LogLevel::Info,
                     format!(
                         "Moved \"{}\" to \"{}\"",
-                        entry.get_abs_path().display(),
+                        entry.path().display(),
                         dest.display()
                     ),
                 );
@@ -95,7 +96,7 @@ impl FileTransferActivity {
                 LogLevel::Error,
                 format!(
                     "Could not move \"{}\" to \"{}\": {}",
-                    entry.get_abs_path().display(),
+                    entry.path().display(),
                     dest.display(),
                     err
                 ),
@@ -103,26 +104,26 @@ impl FileTransferActivity {
         }
     }
 
-    fn remote_rename_file(&mut self, entry: &FsEntry, dest: &Path) {
-        match self.client.as_mut().rename(entry, dest) {
+    fn remote_rename_file(&mut self, entry: &Entry, dest: &Path) {
+        match self.client.as_mut().mov(entry.path(), dest) {
             Ok(_) => {
                 self.log(
                     LogLevel::Info,
                     format!(
                         "Moved \"{}\" to \"{}\"",
-                        entry.get_abs_path().display(),
+                        entry.path().display(),
                         dest.display()
                     ),
                 );
             }
-            Err(err) if err.kind() == FileTransferErrorType::UnsupportedFeature => {
+            Err(err) if err.kind == RemoteErrorType::UnsupportedFeature => {
                 self.tricky_move(entry, dest);
             }
             Err(err) => self.log_and_alert(
                 LogLevel::Error,
                 format!(
                     "Could not move \"{}\" to \"{}\": {}",
-                    entry.get_abs_path().display(),
+                    entry.path().display(),
                     dest.display(),
                     err
                 ),
@@ -134,21 +135,21 @@ impl FileTransferActivity {
     ///
     /// Tricky move will be used whenever copy command is not available on remote host.
     /// It basically uses the tricky_copy function, then it just deletes the previous entry (`entry`)
-    fn tricky_move(&mut self, entry: &FsEntry, dest: &Path) {
+    fn tricky_move(&mut self, entry: &Entry, dest: &Path) {
         debug!(
             "Using tricky-move to move entry {} to {}",
-            entry.get_abs_path().display(),
+            entry.path().display(),
             dest.display()
         );
         if self.tricky_copy(entry.clone(), dest).is_ok() {
             // Delete remote existing entry
             debug!("Tricky-copy worked; removing existing remote entry");
-            match self.client.remove(entry) {
+            match self.client.remove_dir_all(entry.path()) {
                 Ok(_) => self.log(
                     LogLevel::Info,
                     format!(
                         "Moved \"{}\" to \"{}\"",
-                        entry.get_abs_path().display(),
+                        entry.path().display(),
                         dest.display()
                     ),
                 ),
@@ -156,7 +157,7 @@ impl FileTransferActivity {
                     LogLevel::Error,
                     format!(
                         "Copied \"{}\" to \"{}\"; but failed to remove src: {}",
-                        entry.get_abs_path().display(),
+                        entry.path().display(),
                         dest.display(),
                         err
                     ),

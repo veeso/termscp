@@ -27,12 +27,11 @@
  */
 use super::super::Browser;
 use super::{Msg, TransferMsg, UiMsg};
-use crate::fs::explorer::FileSorting;
-use crate::fs::FsEntry;
+use crate::explorer::FileSorting;
 use crate::utils::fmt::fmt_time;
 
 use bytesize::ByteSize;
-use std::path::PathBuf;
+use remotefs::Entry;
 
 use tui_realm_stdlib::{Input, List, Paragraph, ProgressBar, Radio, Span};
 use tuirealm::command::{Cmd, CmdResult, Direction, Position};
@@ -400,38 +399,32 @@ pub struct FileInfoPopup {
 }
 
 impl FileInfoPopup {
-    pub fn new(file: &FsEntry) -> Self {
+    pub fn new(file: &Entry) -> Self {
         let mut texts: TableBuilder = TableBuilder::default();
         // Abs path
-        let real_path: Option<PathBuf> = {
-            let real_file: FsEntry = file.get_realfile();
-            match real_file.get_abs_path() != file.get_abs_path() {
-                true => Some(real_file.get_abs_path()),
-                false => None,
-            }
-        };
+        let real_path = file.metadata().symlink.as_deref();
         let path: String = match real_path {
-            Some(symlink) => format!("{} -> {}", file.get_abs_path().display(), symlink.display()),
-            None => format!("{}", file.get_abs_path().display()),
+            Some(symlink) => format!("{} -> {}", file.path().display(), symlink.display()),
+            None => format!("{}", file.path().display()),
         };
         // Make texts
         texts
             .add_col(TextSpan::from("Path: "))
             .add_col(TextSpan::new(path.as_str()).fg(Color::Yellow));
-        if let Some(filetype) = file.get_ftype() {
+        if let Some(filetype) = file.extension() {
             texts
                 .add_row()
                 .add_col(TextSpan::from("File type: "))
-                .add_col(TextSpan::new(filetype.as_str()).fg(Color::LightGreen));
+                .add_col(TextSpan::new(filetype).fg(Color::LightGreen));
         }
-        let (bsize, size): (ByteSize, usize) = (ByteSize(file.get_size() as u64), file.get_size());
+        let (bsize, size): (ByteSize, u64) = (ByteSize(file.metadata().size), file.metadata().size);
         texts
             .add_row()
             .add_col(TextSpan::from("Size: "))
             .add_col(TextSpan::new(format!("{} ({})", bsize, size).as_str()).fg(Color::Cyan));
-        let ctime: String = fmt_time(file.get_creation_time(), "%b %d %Y %H:%M:%S");
-        let atime: String = fmt_time(file.get_last_access_time(), "%b %d %Y %H:%M:%S");
-        let mtime: String = fmt_time(file.get_creation_time(), "%b %d %Y %H:%M:%S");
+        let atime: String = fmt_time(file.metadata().atime, "%b %d %Y %H:%M:%S");
+        let ctime: String = fmt_time(file.metadata().ctime, "%b %d %Y %H:%M:%S");
+        let mtime: String = fmt_time(file.metadata().mtime, "%b %d %Y %H:%M:%S");
         texts
             .add_row()
             .add_col(TextSpan::from("Creation time: "))
@@ -446,7 +439,7 @@ impl FileInfoPopup {
             .add_col(TextSpan::new(atime.as_str()).fg(Color::LightRed));
         // User
         #[cfg(target_family = "unix")]
-        let username: String = match file.get_user() {
+        let username: String = match file.metadata().uid {
             Some(uid) => match get_user_by_uid(uid) {
                 Some(user) => user.name().to_string_lossy().to_string(),
                 None => uid.to_string(),
@@ -454,10 +447,10 @@ impl FileInfoPopup {
             None => String::from("0"),
         };
         #[cfg(target_os = "windows")]
-        let username: String = format!("{}", file.get_user().unwrap_or(0));
+        let username: String = format!("{}", file.metadata().uid.unwrap_or(0));
         // Group
         #[cfg(target_family = "unix")]
-        let group: String = match file.get_group() {
+        let group: String = match file.metadata().gid {
             Some(gid) => match get_group_by_gid(gid) {
                 Some(group) => group.name().to_string_lossy().to_string(),
                 None => gid.to_string(),
@@ -465,7 +458,7 @@ impl FileInfoPopup {
             None => String::from("0"),
         };
         #[cfg(target_os = "windows")]
-        let group: String = format!("{}", file.get_group().unwrap_or(0));
+        let group: String = format!("{}", file.metadata().gid.unwrap_or(0));
         texts
             .add_row()
             .add_col(TextSpan::from("User: "))
@@ -478,7 +471,7 @@ impl FileInfoPopup {
             component: List::default()
                 .borders(Borders::default().modifiers(BorderType::Rounded))
                 .scroll(false)
-                .title(file.get_name(), Alignment::Left)
+                .title(file.name(), Alignment::Left)
                 .rows(texts.build()),
         }
     }
