@@ -58,8 +58,8 @@ impl AuthActivity {
         assert!(self
             .app
             .mount(
-                Id::HelpText,
-                Box::new(components::HelpText::new(key_color)),
+                Id::HelpFooter,
+                Box::new(components::HelpFooter::new(key_color)),
                 vec![]
             )
             .is_ok());
@@ -111,17 +111,30 @@ impl AuthActivity {
             let height: u16 = f.size().height;
             self.check_minimum_window_size(height);
             // Prepare chunks
-            let chunks = Layout::default()
+            let body = Layout::default()
                 .direction(Direction::Vertical)
-                .margin(1)
                 .constraints(
                     [
-                        Constraint::Length(21), // Auth Form
-                        Constraint::Min(3),     // Bookmarks
+                        Constraint::Min(24),   // Body
+                        Constraint::Length(1), // Footer
                     ]
                     .as_ref(),
                 )
                 .split(f.size());
+            // Footer
+            self.app.view(&Id::HelpFooter, f, body[1]);
+            let auth_form_len = 7 + self.input_mask_size();
+            let main_chunks = Layout::default()
+                .direction(Direction::Vertical)
+                .margin(1)
+                .constraints(
+                    [
+                        Constraint::Length(auth_form_len), // Auth Form
+                        Constraint::Min(3),                // Bookmarks
+                    ]
+                    .as_ref(),
+                )
+                .split(body[0]);
             // Create explorer chunks
             let auth_chunks = Layout::default()
                 .constraints(
@@ -131,12 +144,12 @@ impl AuthActivity {
                         Constraint::Length(1),                      // Version
                         Constraint::Length(3),                      // protocol
                         Constraint::Length(self.input_mask_size()), // Input mask
-                        Constraint::Length(3),                      // footer
+                        Constraint::Length(1), // Prevents last field to overflow
                     ]
                     .as_ref(),
                 )
                 .direction(Direction::Vertical)
-                .split(chunks[0]);
+                .split(main_chunks[0]);
             // Input mask chunks
             let input_mask = match self.input_mask() {
                 InputMask::AwsS3 => Layout::default()
@@ -167,7 +180,7 @@ impl AuthActivity {
             let bookmark_chunks = Layout::default()
                 .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
                 .direction(Direction::Horizontal)
-                .split(chunks[1]);
+                .split(main_chunks[1]);
             // Render
             // Auth chunks
             self.app.view(&Id::Title, f, auth_chunks[0]);
@@ -188,7 +201,6 @@ impl AuthActivity {
                     self.app.view(&Id::Password, f, input_mask[3]);
                 }
             }
-            self.app.view(&Id::HelpText, f, auth_chunks[5]);
             // Bookmark chunks
             self.app.view(&Id::BookmarksList, f, bookmark_chunks[0]);
             self.app.view(&Id::RecentsList, f, bookmark_chunks[1]);
@@ -790,6 +802,13 @@ impl AuthActivity {
                     ),
                     Sub::new(
                         SubEventClause::Keyboard(KeyEvent {
+                            code: Key::Function(10),
+                            modifiers: KeyModifiers::NONE,
+                        }),
+                        Self::no_popup_mounted_clause(),
+                    ),
+                    Sub::new(
+                        SubEventClause::Keyboard(KeyEvent {
                             code: Key::Char('c'),
                             modifiers: KeyModifiers::CONTROL,
                         }),
@@ -799,6 +818,13 @@ impl AuthActivity {
                         SubEventClause::Keyboard(KeyEvent {
                             code: Key::Char('h'),
                             modifiers: KeyModifiers::CONTROL,
+                        }),
+                        Self::no_popup_mounted_clause(),
+                    ),
+                    Sub::new(
+                        SubEventClause::Keyboard(KeyEvent {
+                            code: Key::Function(1),
+                            modifiers: KeyModifiers::NONE,
                         }),
                         Self::no_popup_mounted_clause(),
                     ),

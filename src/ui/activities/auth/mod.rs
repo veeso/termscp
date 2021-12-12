@@ -55,7 +55,7 @@ pub enum Id {
     DeleteRecentPopup,
     ErrorPopup,
     GlobalListener,
-    HelpText,
+    HelpFooter,
     InfoPopup,
     InstallUpdatePopup,
     Keybindings,

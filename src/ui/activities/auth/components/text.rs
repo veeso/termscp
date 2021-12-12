@@ -104,28 +104,35 @@ impl Component<Msg, NoUserEvent> for NewVersionDisclaimer {
     }
 }
 
-// -- HelpText
+// -- HelpFooter
 
 #[derive(MockComponent)]
-pub struct HelpText {
+pub struct HelpFooter {
     component: Span,
 }
 
-impl HelpText {
+impl HelpFooter {
     pub fn new(key_color: Color) -> Self {
         Self {
             component: Span::default().spans(&[
-                TextSpan::new("Press ").bold(),
-                TextSpan::new("<CTRL+H>").bold().fg(key_color),
-                TextSpan::new(" to show keybindings; ").bold(),
-                TextSpan::new("<CTRL+C>").bold().fg(key_color),
-                TextSpan::new(" to enter setup").bold(),
+                TextSpan::from("<F1|CTRL+H>").bold().fg(key_color),
+                TextSpan::from(" Help "),
+                TextSpan::from("<CTRL+C>").bold().fg(key_color),
+                TextSpan::from(" Enter setup "),
+                TextSpan::from("<UP/DOWN>").bold().fg(key_color),
+                TextSpan::from(" Change field "),
+                TextSpan::from("<TAB>").bold().fg(key_color),
+                TextSpan::from(" Switch tab "),
+                TextSpan::from("<ENTER>").bold().fg(key_color),
+                TextSpan::from(" Submit form "),
+                TextSpan::from("<F10|ESC>").bold().fg(key_color),
+                TextSpan::from(" Quit "),
             ]),
         }
     }
 }
 
-impl Component<Msg, NoUserEvent> for HelpText {
+impl Component<Msg, NoUserEvent> for HelpFooter {
     fn on(&mut self, _ev: Event<NoUserEvent>) -> Option<Msg> {
         None
     }

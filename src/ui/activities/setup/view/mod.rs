@@ -208,6 +208,13 @@ impl SetupActivity {
                     ),
                     Sub::new(
                         SubEventClause::Keyboard(KeyEvent {
+                            code: Key::Function(10),
+                            modifiers: KeyModifiers::NONE,
+                        }),
+                        Self::no_popup_mounted_clause(),
+                    ),
+                    Sub::new(
+                        SubEventClause::Keyboard(KeyEvent {
                             code: Key::Tab,
                             modifiers: KeyModifiers::NONE,
                         }),
@@ -222,6 +229,13 @@ impl SetupActivity {
                     ),
                     Sub::new(
                         SubEventClause::Keyboard(KeyEvent {
+                            code: Key::Function(1),
+                            modifiers: KeyModifiers::NONE,
+                        }),
+                        Self::no_popup_mounted_clause(),
+                    ),
+                    Sub::new(
+                        SubEventClause::Keyboard(KeyEvent {
                             code: Key::Char('r'),
                             modifiers: KeyModifiers::CONTROL,
                         }),
@@ -231,6 +245,13 @@ impl SetupActivity {
                         SubEventClause::Keyboard(KeyEvent {
                             code: Key::Char('s'),
                             modifiers: KeyModifiers::CONTROL,
+                        }),
+                        Self::no_popup_mounted_clause(),
+                    ),
+                    Sub::new(
+                        SubEventClause::Keyboard(KeyEvent {
+                            code: Key::Function(4),
+                            modifiers: KeyModifiers::NONE,
                         }),
                         Self::no_popup_mounted_clause(),
                     ),

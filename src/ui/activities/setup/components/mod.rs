@@ -54,9 +54,10 @@ pub struct GlobalListener {
 impl Component<Msg, NoUserEvent> for GlobalListener {
     fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
         match ev {
-            Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
-                Some(Msg::Common(CommonMsg::ShowQuitPopup))
-            }
+            Event::Keyboard(KeyEvent {
+                code: Key::Esc | Key::Function(10),
+                ..
+            }) => Some(Msg::Common(CommonMsg::ShowQuitPopup)),
             Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => {
                 Some(Msg::Common(CommonMsg::ChangeLayout))
             }
@@ -65,12 +66,20 @@ impl Component<Msg, NoUserEvent> for GlobalListener {
                 modifiers: KeyModifiers::CONTROL,
             }) => Some(Msg::Common(CommonMsg::ShowKeybindings)),
             Event::Keyboard(KeyEvent {
+                code: Key::Function(1),
+                modifiers: KeyModifiers::NONE,
+            }) => Some(Msg::Common(CommonMsg::ShowKeybindings)),
+            Event::Keyboard(KeyEvent {
                 code: Key::Char('r'),
                 modifiers: KeyModifiers::CONTROL,
             }) => Some(Msg::Common(CommonMsg::RevertChanges)),
             Event::Keyboard(KeyEvent {
                 code: Key::Char('s'),
                 modifiers: KeyModifiers::CONTROL,
+            }) => Some(Msg::Common(CommonMsg::ShowSavePopup)),
+            Event::Keyboard(KeyEvent {
+                code: Key::Function(4),
+                modifiers: KeyModifiers::NONE,
             }) => Some(Msg::Common(CommonMsg::ShowSavePopup)),
             _ => None,
         }

@@ -59,9 +59,9 @@ impl SetupActivity {
                 .margin(1)
                 .constraints(
                     [
-                        Constraint::Length(3),  // Current tab
-                        Constraint::Length(18), // Main body
-                        Constraint::Length(3),  // Help footer
+                        Constraint::Length(3), // Current tab
+                        Constraint::Min(18),   // Main body
+                        Constraint::Length(1), // Help footer
                     ]
                     .as_ref(),
                 )
@@ -85,6 +85,7 @@ impl SetupActivity {
                         Constraint::Length(3), // Updates tab
                         Constraint::Length(3), // Prompt file replace
                         Constraint::Length(3), // Group dirs
+                        Constraint::Length(1), // Prevent overflow
                     ]
                     .as_ref(),
                 )
@@ -120,7 +121,7 @@ impl SetupActivity {
                         Constraint::Length(3), // Notifications enabled
                         Constraint::Length(3), // Notifications threshold
                         Constraint::Length(3), // Ssh config
-                        Constraint::Length(1), // Filler
+                        Constraint::Length(1), // Prevent overflow
                     ]
                     .as_ref(),
                 )
