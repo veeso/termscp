@@ -56,9 +56,9 @@ impl SetupActivity {
                 .margin(1)
                 .constraints(
                     [
-                        Constraint::Length(3),      // Current tab
-                        Constraint::Percentage(90), // Main body
-                        Constraint::Length(3),      // Help footer
+                        Constraint::Length(3), // Current tab
+                        Constraint::Min(5),    // Main body
+                        Constraint::Length(1), // Help footer
                     ]
                     .as_ref(),
                 )

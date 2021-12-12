@@ -56,9 +56,9 @@ impl SetupActivity {
                 .margin(1)
                 .constraints(
                     [
-                        Constraint::Length(3),  // Current tab
-                        Constraint::Length(22), // Main body
-                        Constraint::Length(3),  // Help footer
+                        Constraint::Length(3), // Current tab
+                        Constraint::Min(22),   // Main body
+                        Constraint::Length(1), // Help footer
                     ]
                     .as_ref(),
                 )
@@ -91,6 +91,7 @@ impl SetupActivity {
                         Constraint::Length(3), // Password
                         Constraint::Length(3), // Bookmarks
                         Constraint::Length(3), // Recents
+                        Constraint::Length(1), // Prevent overflow
                     ]
                     .as_ref(),
                 )
@@ -126,6 +127,7 @@ impl SetupActivity {
                         Constraint::Length(3), // Quit
                         Constraint::Length(3), // Save
                         Constraint::Length(3), // Warn
+                        Constraint::Length(1), // Prevent overflow
                     ]
                     .as_ref(),
                 )
@@ -158,7 +160,7 @@ impl SetupActivity {
                         Constraint::Length(3), // remote explorer bg
                         Constraint::Length(3), // remote explorer fg
                         Constraint::Length(3), // remote explorer hg
-                        Constraint::Length(3), // empty
+                        Constraint::Length(1), // Prevent overflow
                     ]
                     .as_ref(),
                 )
@@ -210,6 +212,7 @@ impl SetupActivity {
                         Constraint::Length(3), // status sorting
                         Constraint::Length(3), // status hidden
                         Constraint::Length(3), // sync browsing
+                        Constraint::Length(1), // Prevent overflow
                     ]
                     .as_ref(),
                 )

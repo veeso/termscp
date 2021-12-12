@@ -76,13 +76,16 @@ impl Default for Footer {
     fn default() -> Self {
         Self {
             component: Span::default().spans(&[
-                TextSpan::new("Press ").bold(),
-                TextSpan::new("<CTRL+H>").bold().fg(Color::Cyan),
-                TextSpan::new(" to show keybindings; ").bold(),
-                TextSpan::new("<CTRL+S>").bold().fg(Color::Cyan),
-                TextSpan::new(" to save parameters; ").bold(),
+                TextSpan::new("<F1|CTRL+H>").bold().fg(Color::Cyan),
+                TextSpan::new(" Help "),
+                TextSpan::new("<F4|CTRL+S>").bold().fg(Color::Cyan),
+                TextSpan::new(" Save parameters "),
+                TextSpan::new("<F10|ESC>").bold().fg(Color::Cyan),
+                TextSpan::new(" Exit "),
                 TextSpan::new("<TAB>").bold().fg(Color::Cyan),
-                TextSpan::new(" to change panel").bold(),
+                TextSpan::new(" Change panel "),
+                TextSpan::new("<UP/DOWN>").bold().fg(Color::Cyan),
+                TextSpan::new(" Change field "),
             ]),
         }
     }

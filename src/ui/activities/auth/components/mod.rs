@@ -44,7 +44,7 @@ pub use popup::{
     ErrorPopup, InfoPopup, InstallUpdatePopup, Keybindings, QuitPopup, ReleaseNotes, WaitPopup,
     WindowSizeError,
 };
-pub use text::{HelpText, NewVersionDisclaimer, Subtitle, Title};
+pub use text::{HelpFooter, NewVersionDisclaimer, Subtitle, Title};
 
 use tui_realm_stdlib::Phantom;
 use tuirealm::event::{Event, Key, KeyEvent, KeyModifiers, NoUserEvent};
@@ -60,7 +60,10 @@ pub struct GlobalListener {
 impl Component<Msg, NoUserEvent> for GlobalListener {
     fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
         match ev {
-            Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => Some(Msg::ShowQuitPopup),
+            Event::Keyboard(KeyEvent {
+                code: Key::Esc | Key::Function(10),
+                ..
+            }) => Some(Msg::ShowQuitPopup),
             Event::Keyboard(KeyEvent {
                 code: Key::Char('c'),
                 modifiers: KeyModifiers::CONTROL,
@@ -68,6 +71,10 @@ impl Component<Msg, NoUserEvent> for GlobalListener {
             Event::Keyboard(KeyEvent {
                 code: Key::Char('h'),
                 modifiers: KeyModifiers::CONTROL,
+            }) => Some(Msg::ShowKeybindingsPopup),
+            Event::Keyboard(KeyEvent {
+                code: Key::Function(1),
+                ..
             }) => Some(Msg::ShowKeybindingsPopup),
             Event::Keyboard(KeyEvent {
                 code: Key::Char('r'),
