@@ -56,8 +56,10 @@ use tuirealm::{Application, EventListenerCfg, NoUserEvent};
 
 // -- Storage keys
 
-const STORAGE_EXPLORER_WIDTH: &str = "FILETRANSFER_EXPLORER_WIDTH";
-const STORAGE_PENDING_TRANSFER: &str = "FILETRANSFER_PENDING_TRANSFER";
+/// Stores the explorer width
+const STORAGE_EXPLORER_WIDTH: &str = "FT_EW";
+/// Stores the filename of the entry to transfer, when the replace file dialog must be shown
+const STORAGE_PENDING_TRANSFER: &str = "FT_PT";
 
 // -- components
 
@@ -92,14 +94,22 @@ enum Id {
     SortingPopup,
     StatusBarLocal,
     StatusBarRemote,
+    SyncBrowsingMkdirPopup,
     WaitPopup,
 }
 
 #[derive(Debug, PartialEq)]
 enum Msg {
+    PendingAction(PendingActionMsg),
     Transfer(TransferMsg),
     Ui(UiMsg),
     None,
+}
+
+#[derive(Debug, PartialEq)]
+enum PendingActionMsg {
+    CloseSyncBrowsingMkdirPopup,
+    MakePendingDirectory,
 }
 
 #[derive(Debug, PartialEq)]

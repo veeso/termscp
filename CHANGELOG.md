@@ -62,6 +62,8 @@ Released on FIXME:
 - **Less verbose logging**:
   - By default the log level is now set to `INFO`
   - It is now possible to enable the `TRACE` level with the `-D` CLI option.
+- **Synchronized browsing**:
+  - From now on, if synchronized browsing is *enabled* and you try to enter a directory that doesn't exist on the other host, you will be asked whether you'd like to create the directory.
 - Dependencies:
   - Updated `tui-realm` to `1.3.0`
   - Updated `tui-realm-stdlib` to `1.1.4`
