@@ -42,7 +42,7 @@ impl FileTransferActivity {
     /// Enter a directory on local host from entry
     pub(crate) fn action_enter_local_dir(&mut self, dir: Directory) {
         self.local_changedir(dir.path.as_path(), true);
-        if self.browser.sync_browsing {
+        if self.browser.sync_browsing && self.browser.found().is_none() {
             self.synchronize_browsing(SyncBrowsingDestination::Path(dir.name));
         }
     }
@@ -50,7 +50,7 @@ impl FileTransferActivity {
     /// Enter a directory on local host from entry
     pub(crate) fn action_enter_remote_dir(&mut self, dir: Directory) {
         self.remote_changedir(dir.path.as_path(), true);
-        if self.browser.sync_browsing {
+        if self.browser.sync_browsing && self.browser.found().is_none() {
             self.synchronize_browsing(SyncBrowsingDestination::Path(dir.name));
         }
     }
@@ -60,7 +60,7 @@ impl FileTransferActivity {
         let dir_path: PathBuf = self.local_to_abs_path(PathBuf::from(input.as_str()).as_path());
         self.local_changedir(dir_path.as_path(), true);
         // Check whether to sync
-        if self.browser.sync_browsing {
+        if self.browser.sync_browsing && self.browser.found().is_none() {
             self.synchronize_browsing(SyncBrowsingDestination::Path(input));
         }
     }
@@ -70,7 +70,7 @@ impl FileTransferActivity {
         let dir_path: PathBuf = self.remote_to_abs_path(PathBuf::from(input.as_str()).as_path());
         self.remote_changedir(dir_path.as_path(), true);
         // Check whether to sync
-        if self.browser.sync_browsing {
+        if self.browser.sync_browsing && self.browser.found().is_none() {
             self.synchronize_browsing(SyncBrowsingDestination::Path(input));
         }
     }
@@ -80,7 +80,7 @@ impl FileTransferActivity {
         if let Some(d) = self.local_mut().popd() {
             self.local_changedir(d.as_path(), false);
             // Check whether to sync
-            if self.browser.sync_browsing {
+            if self.browser.sync_browsing && self.browser.found().is_none() {
                 self.synchronize_browsing(SyncBrowsingDestination::PreviousDir);
             }
         }
@@ -91,7 +91,7 @@ impl FileTransferActivity {
         if let Some(d) = self.remote_mut().popd() {
             self.remote_changedir(d.as_path(), false);
             // Check whether to sync
-            if self.browser.sync_browsing {
+            if self.browser.sync_browsing && self.browser.found().is_none() {
                 self.synchronize_browsing(SyncBrowsingDestination::PreviousDir);
             }
         }
@@ -105,7 +105,7 @@ impl FileTransferActivity {
         if let Some(parent) = path.as_path().parent() {
             self.local_changedir(parent, true);
             // If sync is enabled update remote too
-            if self.browser.sync_browsing {
+            if self.browser.sync_browsing && self.browser.found().is_none() {
                 self.synchronize_browsing(SyncBrowsingDestination::ParentDir);
             }
         }
@@ -121,7 +121,7 @@ impl FileTransferActivity {
         if let Some(parent) = path.as_path().parent() {
             self.remote_changedir(parent, true);
             // If sync is enabled update local too
-            if self.browser.sync_browsing {
+            if self.browser.sync_browsing && self.browser.found().is_none() {
                 self.synchronize_browsing(SyncBrowsingDestination::ParentDir);
             }
         }
