@@ -455,16 +455,12 @@ termscp writes a log file for each session, which is written at
 - `FOLDERID_RoamingAppData\termscp\termscp.log` on Windows
 
 the log won't be rotated, but will just be truncated after each launch of termscp, so if you want to report an issue and you want to attach your log file, keep in mind to save the log file in a safe place before using termscp again.
-The log file always reports in *trace* level, so it is kinda verbose.
+The logging by default reports in *INFO* level, so it is not very verbose.
+
+If you want to submit an issue, please, if you can, reproduce the issue with the level set to `TRACE`, to do so, launch termscp with
+the `-D` CLI option.
+
 I know you might have some questions regarding log files, so I made a kind of a Q/A:
-
-> Is it possible to reduce verbosity?
-
-No. The reason is quite simple: when an issue happens, you must be able to know what's causing it and the only way to do that, is to have the log file with the maximum verbosity level set.
-
-> If trace level is set for logging, is the file going to reach a huge size?
-
-Probably not, unless you never quit termscp, but I think that's unlikely to happen. A long session may produce up to 10MB of log files (I said a long session), but I think a normal session won't exceed 2MB.
 
 > I don't want logging, can I turn it off?
 

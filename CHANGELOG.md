@@ -59,6 +59,9 @@ Released on FIXME:
   - The supported parameters are described at <https://github.com/veeso/ssh2-config>.
   - If the field is left empty, **no file will be loaded**.
   - **By default, no file will be used**.
+- **Less verbose logging**:
+  - By default the log level is now set to `INFO`
+  - It is now possible to enable the `TRACE` level with the `-D` CLI option.
 - Dependencies:
   - Updated `tui-realm` to `1.3.0`
   - Updated `tui-realm-stdlib` to `1.1.4`

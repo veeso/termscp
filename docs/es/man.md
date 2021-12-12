@@ -454,16 +454,12 @@ termscp escribe un archivo de registro para cada sesión, que se escribe en
 - `FOLDERID_RoamingAppData\termscp\termscp.log` en Windows
 
 el registro no se rotará, sino que se truncará después de cada lanzamiento de termscp, por lo que si desea informar un problema y desea adjuntar su archivo de registro, recuerde guardar el archivo de registro en un lugar seguro antes de usar termscp de nuevo.
-El archivo de registro siempre informa en el nivel de *seguimiento*, por lo que es un poco detallado.
+El registro por defecto informa en el nivel *INFO*, por lo que no es muy detallado.
+
+Si desea enviar un problema, por favor, si puede, reproduzca el problema con el nivel establecido en "TRACE", para hacerlo, inicie termscp con
+la opción CLI `-D`.
+
 Sé que es posible que tenga algunas preguntas sobre los archivos de registro, así que hice una especie de Q/A:
-
-> ¿Es posible reducir la verbosidad?
-
-No. La razón es bastante simple: cuando ocurre un problema, debe poder saber qué lo está causando y la única forma de hacerlo es tener el archivo de registro con el nivel de verbosidad máximo establecido.
-
-> Si el nivel de seguimiento está configurado para el registro, ¿el archivo alcanzará un tamaño enorme?
-
-Probablemente no, a menos que nunca cerra termscp, pero creo que es poco probable que eso suceda. Una sesión larga puede producir hasta 10 MB de archivos de registro (dije una sesión larga), pero creo que una sesión normal no excederá los 2 MB.
 
 > No quiero el registro, ¿puedo apagarlo?
 

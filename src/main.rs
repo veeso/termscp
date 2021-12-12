@@ -56,7 +56,7 @@ mod utils;
 // namespaces
 use activity_manager::{ActivityManager, NextActivity};
 use filetransfer::FileTransferParams;
-use system::logging;
+use system::logging::{self, LogLevel};
 
 enum Task {
     Activity(NextActivity),
@@ -78,6 +78,8 @@ Please, consider supporting the author <https://ko-fi.com/veeso>")]
 struct Args {
     #[argh(switch, short = 'c', description = "open termscp configuration")]
     config: bool,
+    #[argh(switch, short = 'D', description = "enable TRACE log level")]
+    debug: bool,
     #[argh(option, short = 'P', description = "provide password from CLI")]
     password: Option<String>,
     #[argh(switch, short = 'q', description = "disable logging")]
@@ -110,7 +112,7 @@ struct Args {
 struct RunOpts {
     remote: Option<FileTransferParams>,
     ticks: Duration,
-    log_enabled: bool,
+    log_level: LogLevel,
     task: Task,
 }
 
@@ -119,7 +121,7 @@ impl Default for RunOpts {
         Self {
             remote: None,
             ticks: Duration::from_millis(10),
-            log_enabled: true,
+            log_level: LogLevel::Info,
             task: Task::Activity(NextActivity::Authentication),
         }
     }
@@ -136,10 +138,8 @@ fn main() {
         }
     };
     // Setup logging
-    if run_opts.log_enabled {
-        if let Err(err) = logging::init() {
-            eprintln!("Failed to initialize logging: {}", err);
-        }
+    if let Err(err) = logging::init(run_opts.log_level) {
+        eprintln!("Failed to initialize logging: {}", err);
     }
     // Read password from remote
     if let Err(err) = read_password(&mut run_opts) {
@@ -174,8 +174,10 @@ fn parse_args(args: Args) -> Result<RunOpts, String> {
         run_opts.task = Task::Activity(NextActivity::SetupActivity);
     }
     // Logging
-    if args.quiet {
-        run_opts.log_enabled = false;
+    if args.debug {
+        run_opts.log_level = LogLevel::Trace;
+    } else if args.quiet {
+        run_opts.log_level = LogLevel::Off;
     }
     // Match ticks
     run_opts.ticks = Duration::from_millis(args.ticks);

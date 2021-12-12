@@ -25,7 +25,7 @@
       - [Transfer page](#transfer-page)
       - [Misc](#misc)
   - [Éditeur de texte ✏](#éditeur-de-texte-)
-  - [Enregistrement 🩺](#enregistrement-)
+  - [Fichier Journal 🩺](#fichier-journal-)
   - [Notifications 📫](#notifications-)
 
 ## Usage ❓
@@ -443,7 +443,7 @@ Si le fichier se trouve sur l'hôte distant, le fichier sera d'abord télécharg
 
 ---
 
-## Enregistrement 🩺
+## Fichier Journal 🩺
 
 termscp écrit un fichier journal pour chaque session, qui est écrit à
 
@@ -451,17 +451,14 @@ termscp écrit un fichier journal pour chaque session, qui est écrit à
 - `$HOME/Library/Application Support/termscp/termscp.log` sous MacOs
 - `FOLDERID_RoamingAppData\termscp\termscp.log` sous Windows
 
-le journal ne sera pas tourné, mais sera simplement tronqué après chaque lancement de termscp, donc si vous souhaitez signaler un problème et que vous souhaitez joindre votre fichier journal, n'oubliez pas de sauvegarder le fichier journal dans un endroit sûr avant de l'utiliser termscp à nouveau.
-Le fichier journal rapporte toujours au niveau *trace*, il est donc un peu détaillé.
+le journal ne sera pas tourné, mais sera simplement tronqué après chaque lancement de termscp, donc si vous souhaitez signaler un problème et que vous souhaitez joindre votre fichier journal, n'oubliez pas de sauvegarder le fichier journal dans un endroit sûr avant de l'utiliser termescp à nouveau.
+
+La journalisation par défaut se rapporte au niveau *INFO*, elle n'est donc pas très détaillée.
+
+Si vous souhaitez soumettre un problème, veuillez, si vous le pouvez, reproduire le problème avec le niveau défini sur `TRACE`, pour ce faire, lancez termscp avec
+l'option CLI `-D`.
+
 Je sais que vous pourriez avoir des questions concernant les fichiers journaux, alors j'ai fait une sorte de Q/R :
-
-> Est-il possible de réduire la verbosité ?
-
-Non. La raison est assez simple : lorsqu'un problème survient, vous devez être capable de savoir ce qui en est la cause et la seule façon de le faire est d'avoir le fichier journal avec le niveau de verbosité maximum défini.
-
-> Si le niveau de trace est défini pour la journalisation, le fichier va-t-il atteindre une taille énorme ?
-
-Probablement pas, à moins que vous ne quittiez jamais termscp, mais je pense que cela est peu probable. Une longue session peut produire jusqu'à 10 MB de fichiers journaux (j'ai dit une longue session), mais je pense qu'une session normale ne dépassera pas 2 MB.
 
 > Je ne veux pas me connecter, puis-je le désactiver ?
 
