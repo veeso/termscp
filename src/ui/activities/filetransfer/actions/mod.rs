@@ -26,7 +26,8 @@
  * SOFTWARE.
  */
 pub(self) use super::{
-    browser::FileExplorerTab, FileTransferActivity, Id, LogLevel, TransferOpts, TransferPayload,
+    browser::FileExplorerTab, FileTransferActivity, Id, LogLevel, Msg, PendingActionMsg,
+    TransferOpts, TransferPayload,
 };
 pub(self) use remotefs::Entry;
 use tuirealm::{State, StateValue};
@@ -41,6 +42,7 @@ pub(crate) mod find;
 pub(crate) mod mkdir;
 pub(crate) mod newfile;
 pub(crate) mod open;
+mod pending;
 pub(crate) mod rename;
 pub(crate) mod save;
 pub(crate) mod submit;

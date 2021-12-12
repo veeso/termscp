@@ -26,7 +26,7 @@
  * SOFTWARE.
  */
 use super::super::Browser;
-use super::{Msg, TransferMsg, UiMsg};
+use super::{Msg, PendingActionMsg, TransferMsg, UiMsg};
 use crate::explorer::FileSorting;
 use crate::utils::fmt::fmt_time;
 
@@ -1654,6 +1654,70 @@ fn hidden_files_label(visible: bool) -> &'static str {
     match visible {
         true => "Show",
         false => "Hide",
+    }
+}
+
+#[derive(MockComponent)]
+pub struct SyncBrowsingMkdirPopup {
+    component: Radio,
+}
+
+impl SyncBrowsingMkdirPopup {
+    pub fn new(color: Color, dir_name: &str) -> Self {
+        Self {
+            component: Radio::default()
+                .borders(
+                    Borders::default()
+                        .color(color)
+                        .modifiers(BorderType::Rounded),
+                )
+                .foreground(color)
+                .choices(&["Yes", "No"])
+                .title(
+                    format!(
+                        r#"Sync browsing: directory "{}" doesn't exist. Do you want to create it?"#,
+                        dir_name
+                    ),
+                    Alignment::Center,
+                ),
+        }
+    }
+}
+
+impl Component<Msg, NoUserEvent> for SyncBrowsingMkdirPopup {
+    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+        match ev {
+            Event::Keyboard(KeyEvent {
+                code: Key::Left, ..
+            }) => {
+                self.perform(Cmd::Move(Direction::Left));
+                Some(Msg::None)
+            }
+            Event::Keyboard(KeyEvent {
+                code: Key::Right, ..
+            }) => {
+                self.perform(Cmd::Move(Direction::Right));
+                Some(Msg::None)
+            }
+            Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => Some(Msg::PendingAction(
+                PendingActionMsg::CloseSyncBrowsingMkdirPopup,
+            )),
+            Event::Keyboard(KeyEvent {
+                code: Key::Enter, ..
+            }) => {
+                if matches!(
+                    self.perform(Cmd::Submit),
+                    CmdResult::Submit(State::One(StateValue::Usize(0)))
+                ) {
+                    Some(Msg::PendingAction(PendingActionMsg::MakePendingDirectory))
+                } else {
+                    Some(Msg::PendingAction(
+                        PendingActionMsg::CloseSyncBrowsingMkdirPopup,
+                    ))
+                }
+            }
+            _ => None,
+        }
     }
 }
 

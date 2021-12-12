@@ -199,8 +199,6 @@ All the actions are available when working with multiple files, but be aware tha
 When enabled, synchronized browsing, will allow you to synchronize the navigation between the two panels.
 This means that whenever you'll change the working directory on one panel, the same action will be reproduced on the other panel. If you want to enable synchronized browsing just press `<Y>`; press twice to disable. While enabled, the synchronized browsing state will be reported on the status bar on `ON`.
 
-> ❗ at the moment, whenever you try to access an unexisting directory, you won't be prompted to create it. This might change in a future update.
-
 ### Open and Open With 🚪
 
 Open and open with commands are powered by [open-rs](https://docs.rs/crate/open/1.7.0).
