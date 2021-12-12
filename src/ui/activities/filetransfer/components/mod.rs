@@ -25,7 +25,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-use super::{Msg, TransferMsg, UiMsg};
+use super::{Msg, PendingActionMsg, TransferMsg, UiMsg};
 
 use tui_realm_stdlib::Phantom;
 use tuirealm::{
@@ -45,7 +45,8 @@ pub use popups::{
     CopyPopup, DeletePopup, DisconnectPopup, ErrorPopup, ExecPopup, FatalPopup, FileInfoPopup,
     FindPopup, GoToPopup, KeybindingsPopup, MkdirPopup, NewfilePopup, OpenWithPopup,
     ProgressBarFull, ProgressBarPartial, QuitPopup, RenamePopup, ReplacePopup,
-    ReplacingFilesListPopup, SaveAsPopup, SortingPopup, StatusBarLocal, StatusBarRemote, WaitPopup,
+    ReplacingFilesListPopup, SaveAsPopup, SortingPopup, StatusBarLocal, StatusBarRemote,
+    SyncBrowsingMkdirPopup, WaitPopup,
 };
 pub use transfer::{ExplorerFind, ExplorerLocal, ExplorerRemote};
 

@@ -199,8 +199,6 @@ Toutes les actions sont disponibles lorsque vous travaillez avec plusieurs fichi
 Lorsqu'elle est activée, la navigation synchronisée vous permettra de synchroniser la navigation entre les deux panneaux.
 Cela signifie que chaque fois que vous changerez de répertoire de travail sur un panneau, la même action sera reproduite sur l'autre panneau. Si vous souhaitez activer la navigation synchronisée, appuyez simplement sur `<Y>` ; appuyez deux fois pour désactiver. Lorsqu'il est activé, l'état de navigation synchronisé sera signalé dans la barre d'état sur `ON`
 
-> ❗ pour le moment, chaque fois que vous essayez d'accéder à un répertoire inexistant, vous ne serez pas invité à le créer. Cela pourrait changer dans une future mise à jour.
-
 ### Ouvrir et ouvrir avec 🚪
 
 Lors de l'ouverture de fichiers avec la commande Afficher (`<V>`), l'application par défaut du système pour le type de fichier sera utilisée. Pour ce faire, le service du système d'exploitation par défaut sera utilisé, alors assurez-vous d'avoir au moins l'un de ceux-ci installé sur votre système :

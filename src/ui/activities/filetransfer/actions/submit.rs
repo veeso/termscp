@@ -38,7 +38,7 @@ enum SubmitAction {
 impl FileTransferActivity {
     /// Decides which action to perform on submit for local explorer
     /// Return true whether the directory changed
-    pub(crate) fn action_submit_local(&mut self, entry: Entry) -> bool {
+    pub(crate) fn action_submit_local(&mut self, entry: Entry) {
         let (action, entry) = match &entry {
             Entry::Directory(_) => (SubmitAction::ChangeDir, entry),
             Entry::File(File {
@@ -67,18 +67,14 @@ impl FileTransferActivity {
             }
             Entry::File(_) => (SubmitAction::None, entry),
         };
-        match (action, entry) {
-            (SubmitAction::ChangeDir, Entry::Directory(dir)) => {
-                self.action_enter_local_dir(dir, false)
-            }
-            (SubmitAction::ChangeDir, _) => false,
-            (SubmitAction::None, _) => false,
+        if let (SubmitAction::ChangeDir, Entry::Directory(dir)) = (action, entry) {
+            self.action_enter_local_dir(dir)
         }
     }
 
     /// Decides which action to perform on submit for remote explorer
     /// Return true whether the directory changed
-    pub(crate) fn action_submit_remote(&mut self, entry: Entry) -> bool {
+    pub(crate) fn action_submit_remote(&mut self, entry: Entry) {
         let (action, entry) = match &entry {
             Entry::Directory(_) => (SubmitAction::ChangeDir, entry),
             Entry::File(File {
@@ -107,12 +103,8 @@ impl FileTransferActivity {
             }
             Entry::File(_) => (SubmitAction::None, entry),
         };
-        match (action, entry) {
-            (SubmitAction::ChangeDir, Entry::Directory(dir)) => {
-                self.action_enter_remote_dir(dir, false)
-            }
-            (SubmitAction::ChangeDir, _) => false,
-            (SubmitAction::None, _) => false,
+        if let (SubmitAction::ChangeDir, Entry::Directory(dir)) = (action, entry) {
+            self.action_enter_remote_dir(dir)
         }
     }
 }

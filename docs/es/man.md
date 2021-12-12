@@ -201,8 +201,6 @@ Todas las acciones están disponibles cuando se trabaja con varios archivos, per
 Cuando está habilitada, la navegación sincronizada le permitirá sincronizar la navegación entre los dos paneles.
 Esto significa que siempre que cambie el directorio de trabajo en un panel, la misma acción se reproducirá en el otro panel. Si desea habilitar la navegación sincronizada, simplemente presione `<Y>`; presione dos veces para deshabilitar. Mientras está habilitado, el estado de navegación sincronizada se informará en la barra de estado en "ON".
 
-> ❗ Por el momento, cada vez que intente acceder a un directorio que no existe, no se le pedirá que lo cree. Esto podría cambiar en una actualización futura.
-
 ### Abierta y abierta con 🚪
 
 Al abrir archivos con el comando Ver (`<V>`), se utilizará la aplicación predeterminada del sistema para el tipo de archivo. Para hacerlo, se utilizará el servicio del sistema operativo predeterminado, así que asegúrese de tener al menos uno de estos instalado en su sistema:

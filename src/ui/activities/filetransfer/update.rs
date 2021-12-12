@@ -42,6 +42,10 @@ impl Update<Msg> for FileTransferActivity {
     fn update(&mut self, msg: Option<Msg>) -> Option<Msg> {
         match msg.unwrap_or(Msg::None) {
             Msg::None => None,
+            Msg::PendingAction(_) => {
+                // NOTE: Pending actions must be handled directly in the action
+                None
+            }
             Msg::Transfer(msg) => self.update_transfer(msg),
             Msg::Ui(msg) => self.update_ui(msg),
         }
@@ -106,24 +110,22 @@ impl FileTransferActivity {
             }
             TransferMsg::EnterDirectory if self.browser.tab() == FileExplorerTab::Local => {
                 if let SelectedEntry::One(entry) = self.get_local_selected_entries() {
-                    if self.action_submit_local(entry) {
-                        // Update file list if sync
-                        if self.browser.sync_browsing {
-                            let _ = self.update_remote_filelist();
-                        }
-                        self.update_local_filelist();
+                    self.action_submit_local(entry);
+                    // Update file list if sync
+                    if self.browser.sync_browsing {
+                        let _ = self.update_remote_filelist();
                     }
+                    self.update_local_filelist();
                 }
             }
             TransferMsg::EnterDirectory if self.browser.tab() == FileExplorerTab::Remote => {
                 if let SelectedEntry::One(entry) = self.get_remote_selected_entries() {
-                    if self.action_submit_remote(entry) {
-                        // Update file list if sync
-                        if self.browser.sync_browsing {
-                            let _ = self.update_local_filelist();
-                        }
-                        self.update_remote_filelist();
+                    self.action_submit_remote(entry);
+                    // Update file list if sync
+                    if self.browser.sync_browsing {
+                        let _ = self.update_local_filelist();
                     }
+                    self.update_remote_filelist();
                 }
             }
             TransferMsg::EnterDirectory => {
@@ -152,8 +154,8 @@ impl FileTransferActivity {
             }
             TransferMsg::GoTo(dir) => {
                 match self.browser.tab() {
-                    FileExplorerTab::Local => self.action_change_local_dir(dir, false),
-                    FileExplorerTab::Remote => self.action_change_remote_dir(dir, false),
+                    FileExplorerTab::Local => self.action_change_local_dir(dir),
+                    FileExplorerTab::Remote => self.action_change_remote_dir(dir),
                     _ => panic!("Found tab doesn't support GOTO"),
                 }
                 // Umount
@@ -168,7 +170,7 @@ impl FileTransferActivity {
             TransferMsg::GoToParentDirectory => {
                 match self.browser.tab() {
                     FileExplorerTab::Local => {
-                        self.action_go_to_local_upper_dir(false);
+                        self.action_go_to_local_upper_dir();
                         if self.browser.sync_browsing {
                             let _ = self.update_remote_filelist();
                         }
@@ -176,7 +178,7 @@ impl FileTransferActivity {
                         self.update_local_filelist()
                     }
                     FileExplorerTab::Remote => {
-                        self.action_go_to_remote_upper_dir(false);
+                        self.action_go_to_remote_upper_dir();
                         if self.browser.sync_browsing {
                             let _ = self.update_local_filelist();
                         }
@@ -189,7 +191,7 @@ impl FileTransferActivity {
             TransferMsg::GoToPreviousDirectory => {
                 match self.browser.tab() {
                     FileExplorerTab::Local => {
-                        self.action_go_to_previous_local_dir(false);
+                        self.action_go_to_previous_local_dir();
                         if self.browser.sync_browsing {
                             let _ = self.update_remote_filelist();
                         }
@@ -197,7 +199,7 @@ impl FileTransferActivity {
                         self.update_local_filelist()
                     }
                     FileExplorerTab::Remote => {
-                        self.action_go_to_previous_remote_dir(false);
+                        self.action_go_to_previous_remote_dir();
                         if self.browser.sync_browsing {
                             let _ = self.update_local_filelist();
                         }

@@ -195,8 +195,6 @@ Tutte le azioni sono disponibili quando si lavora sulle selezioni, ma occhio, ch
 Quando abilitato, ti permetterà di sincronizzare la navigazione tra i due pannelli.
 Ciò comporta che quando cambierai directory in uno dei due pannelli, lo stesso verrà fatto nell'altro. Per abilitare la modalità è sufficiente premere `<Y>`; fai lo stesso per disabilitarlo. Mentre abilitato, sull'interfaccia dovrebbe essere visualizzato `Sync Browsing: ON` nella barra di stato.
 
-> ❗ Al momento, se provi ad accedere ad una cartella non esistente su uno dei due host, mentre il sync browsing è attivo, non ti verrà chiesto di crearla, ma semplicemente fallirà. Questo sarà risolto in un aggiornamento futuro.
-
 ### Apri e apri con 🚪
 
 I comandi "apri" e "apri con" sono forniti da [open-rs](https://docs.rs/crate/open/2.1.0).
