@@ -29,14 +29,15 @@
 use crate::system::environment::{get_log_paths, init_config_dir};
 use crate::utils::file::open_file;
 // ext
-use simplelog::{ConfigBuilder, LevelFilter, WriteLogger};
+pub use simplelog::LevelFilter as LogLevel;
+use simplelog::{ConfigBuilder, WriteLogger};
 use std::fs::File;
 use std::path::PathBuf;
 
 /// ### init
 ///
 /// Initialize logger
-pub fn init() -> Result<(), String> {
+pub fn init(level: LogLevel) -> Result<(), String> {
     // Init config dir
     let config_dir: PathBuf = match init_config_dir() {
         Ok(Some(p)) => p,
@@ -56,7 +57,7 @@ pub fn init() -> Result<(), String> {
         .set_time_format_str("%Y-%m-%dT%H:%M:%S%z")
         .build();
     // Make logger
-    WriteLogger::init(LevelFilter::Trace, config, file)
+    WriteLogger::init(level, config, file)
         .map_err(|e| format!("Failed to initialize logger: {}", e))
 }
 
@@ -67,6 +68,6 @@ mod test {
 
     #[test]
     fn test_system_logging_setup() {
-        assert!(init().is_ok());
+        assert!(init(LogLevel::Trace).is_ok());
     }
 }

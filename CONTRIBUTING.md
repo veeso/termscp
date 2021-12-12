@@ -63,7 +63,7 @@ Don't set other labels to your issue, not even priority.
 
 When you open a bug try to be the most precise as possible in describing your issue. I'm not saying you should always be that precise, since sometimes it's very easy for maintainers to understand what you're talking about. Just try to be reasonable to understand sometimes we might not know what you're talking about or we just don't have the technical knowledge you might think.
 Please always provide the environment you're working on and consider that we don't provide any support for older version of termscp, at least for those not classified as LTS (if we'll ever have them).
-If you can, provide the log file or the snippet involving your issue. You can find in the [user manual](docs/man.md) the location of the log file.
+If you can, provide the log file or the snippet involving your issue. You can find in the [user manual](docs/man.md) the location of the log file. Please, if you can, enable the **debug mode**, before submitting the log, in order to provide us with a better overview of the problem.
 Last but not least: the template I've written must be used. Full stop.
 
 Maintainers will may add additional labels to your issue:

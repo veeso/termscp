@@ -451,22 +451,18 @@ termscp scrive un file di log per ogni sessione, nel percorso seguente:
 - `FOLDERID_RoamingAppData\termscp\termscp.log` su Windows
 
 Il log non viene ruotato, ma viene troncato ad ogni lancio di termscp, quindi se devi riportare un issue, non avviare termscp fino a che non avrai salvato il file di log.
-I log sono sempre riportati a livello di *trace*, quindi sono piuttosto parlanti.
+I log sono di default riportati a livello *INFO*, quindi non sono particolarmente parlanti.
+
+Se vuoi riportare un problema, se riesci, riproduci l'errore lanciando termscp in modalità di debug, in modo da fornire un log più dettagliato.
+Per farlo, lancia termscp con l'opzione `-D`.
+
 Ho scritto questo FAQ sui log, visto che potresti avere qualche dubbio:
 
-> Si può ridurre la verbosità?
-
-No. Il motivo è piuttosto semplice: quando c'è un problema, devi sapere cosa lo sta causando e l'unico modo per farlo e avere il log alla massima verbosità per avere la massima precisione sul controllo del flusso.
-
-> Se trace è il livello di verbosità, non si raggiungono dimensioni enormi?
-
-Probabilmente no, a meno che tu tenga sempre termscp acceso. Una lunga sessione potrebbe raggiungere i 10MB di log, ma una sessione media all'incirca 2MB.
-
-> Non voglio il logging, posso disabilitarlo?
+> Non voglio il log, posso disabilitarlo?
 
 Sì, puoi. Basta lanciare termscp con `-q or --quiet` come opzione. Puoi mantenerlo persistente salvandolo come alias nella tua shell. Ricorda che i log vengono usati per diagnosticare problemi e considerando che questo è un progetto open-source è anche un modo per contribuire al progetto 😉. Non voglio far sentire in colpa nessuno, ma tanto per dire.
 
-> Il logging è sicuro?
+> Il log è sicuro?
 
 Se ti chiedi se il log espone dati sensibili, il log non espone nessuna password o dato sensibile.
 
