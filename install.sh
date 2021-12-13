@@ -230,6 +230,7 @@ install_on_linux() {
             fi
             info "$msg"
             $sudo dpkg -i "${archive}"
+            rm -f ${archive}
         fi
     elif has rpm; then
         if [ "${ARCH}" != "x86_64" ]; then # It's okay on AUR; not on other distros
@@ -251,6 +252,7 @@ install_on_linux() {
             fi
             info "$msg"
             $sudo rpm -U "${archive}"
+            rm -f ${archive}
         fi
     else
         try_with_cargo "No suitable installation method found for your Linux distribution; if you're running on Arch linux, please install an AUR package manager (such as yay). Currently only Arch, Debian based and Red Hat based distros are supported"
@@ -330,6 +332,7 @@ install_cargo() {
         download "${rustup}" "https://sh.rustup.rs"
         chmod +x $rustup
         $rustup -y
+        rm -f ${archive}
         info "Rust installed with success"
         . $cargo_env
     fi
