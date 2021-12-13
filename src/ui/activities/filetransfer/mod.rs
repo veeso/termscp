@@ -54,11 +54,6 @@ use std::time::Duration;
 use tempfile::TempDir;
 use tuirealm::{Application, EventListenerCfg, NoUserEvent};
 
-// -- Storage keys
-
-/// Stores the explorer width
-const STORAGE_EXPLORER_WIDTH: &str = "FT_EW";
-
 // -- components
 
 #[derive(Debug, Eq, PartialEq, Clone, Hash)]

@@ -214,11 +214,13 @@ impl FileTransferActivity {
     /// Update local file list
     pub(super) fn update_local_filelist(&mut self) {
         // Get width
-        let width: usize = self
-            .context()
-            .store()
-            .get_unsigned(super::STORAGE_EXPLORER_WIDTH)
-            .unwrap_or(256);
+        let width = self
+            .context_mut()
+            .terminal()
+            .raw()
+            .size()
+            .map(|x| (x.width / 2) - 2)
+            .unwrap_or(0) as usize;
         let hostname: String = match hostname::get() {
             Ok(h) => {
                 let hostname: String = h.as_os_str().to_string_lossy().to_string();
@@ -258,11 +260,13 @@ impl FileTransferActivity {
 
     /// Update remote file list
     pub(super) fn update_remote_filelist(&mut self) {
-        let width: usize = self
-            .context()
-            .store()
-            .get_unsigned(super::STORAGE_EXPLORER_WIDTH)
-            .unwrap_or(256);
+        let width = self
+            .context_mut()
+            .terminal()
+            .raw()
+            .size()
+            .map(|x| (x.width / 2) - 2)
+            .unwrap_or(0) as usize;
         let hostname = self.get_remote_hostname();
         let hostname: String = format!(
             "{}:{} ",
