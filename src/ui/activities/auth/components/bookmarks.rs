@@ -25,7 +25,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-use super::Msg;
+use super::{FormMsg, Msg, UiMsg};
 
 use tui_realm_stdlib::{Input, List, Radio};
 use tuirealm::command::{Cmd, CmdResult, Direction, Position};
@@ -99,16 +99,20 @@ impl Component<Msg, NoUserEvent> for BookmarksList {
             Event::Keyboard(KeyEvent {
                 code: Key::Enter, ..
             }) => match self.state() {
-                State::One(StateValue::Usize(choice)) => Some(Msg::LoadBookmark(choice)),
+                State::One(StateValue::Usize(choice)) => {
+                    Some(Msg::Form(FormMsg::LoadBookmark(choice)))
+                }
                 _ => Some(Msg::None),
             },
             Event::Keyboard(KeyEvent {
                 code: Key::Right, ..
-            }) => Some(Msg::BookmarksListBlur),
-            Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => Some(Msg::BookmarksTabBlur),
+            }) => Some(Msg::Ui(UiMsg::BookmarksListBlur)),
+            Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => {
+                Some(Msg::Ui(UiMsg::BookmarksTabBlur))
+            }
             Event::Keyboard(KeyEvent {
                 code: Key::Delete, ..
-            }) => Some(Msg::ShowDeleteBookmarkPopup),
+            }) => Some(Msg::Ui(UiMsg::ShowDeleteBookmarkPopup)),
             _ => None,
         }
     }
@@ -180,16 +184,20 @@ impl Component<Msg, NoUserEvent> for RecentsList {
             Event::Keyboard(KeyEvent {
                 code: Key::Enter, ..
             }) => match self.state() {
-                State::One(StateValue::Usize(choice)) => Some(Msg::LoadRecent(choice)),
+                State::One(StateValue::Usize(choice)) => {
+                    Some(Msg::Form(FormMsg::LoadRecent(choice)))
+                }
                 _ => Some(Msg::None),
             },
             Event::Keyboard(KeyEvent {
                 code: Key::Left, ..
-            }) => Some(Msg::RececentsListBlur),
-            Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => Some(Msg::BookmarksTabBlur),
+            }) => Some(Msg::Ui(UiMsg::RececentsListBlur)),
+            Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => {
+                Some(Msg::Ui(UiMsg::BookmarksTabBlur))
+            }
             Event::Keyboard(KeyEvent {
                 code: Key::Delete, ..
-            }) => Some(Msg::ShowDeleteRecentPopup),
+            }) => Some(Msg::Ui(UiMsg::ShowDeleteRecentPopup)),
             _ => None,
         }
     }
@@ -223,7 +231,9 @@ impl DeleteBookmarkPopup {
 impl Component<Msg, NoUserEvent> for DeleteBookmarkPopup {
     fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
         match ev {
-            Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => Some(Msg::CloseDeleteBookmark),
+            Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
+                Some(Msg::Ui(UiMsg::CloseDeleteBookmark))
+            }
             Event::Keyboard(KeyEvent {
                 code: Key::Left, ..
             }) => {
@@ -243,9 +253,9 @@ impl Component<Msg, NoUserEvent> for DeleteBookmarkPopup {
                     self.perform(Cmd::Submit),
                     CmdResult::Submit(State::One(StateValue::Usize(0)))
                 ) {
-                    Some(Msg::DeleteBookmark)
+                    Some(Msg::Form(FormMsg::DeleteBookmark))
                 } else {
-                    Some(Msg::CloseDeleteBookmark)
+                    Some(Msg::Ui(UiMsg::CloseDeleteBookmark))
                 }
             }
             _ => None,
@@ -281,7 +291,9 @@ impl DeleteRecentPopup {
 impl Component<Msg, NoUserEvent> for DeleteRecentPopup {
     fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
         match ev {
-            Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => Some(Msg::CloseDeleteRecent),
+            Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
+                Some(Msg::Ui(UiMsg::CloseDeleteRecent))
+            }
             Event::Keyboard(KeyEvent {
                 code: Key::Left, ..
             }) => {
@@ -301,9 +313,9 @@ impl Component<Msg, NoUserEvent> for DeleteRecentPopup {
                     self.perform(Cmd::Submit),
                     CmdResult::Submit(State::One(StateValue::Usize(0)))
                 ) {
-                    Some(Msg::DeleteRecent)
+                    Some(Msg::Form(FormMsg::DeleteRecent))
                 } else {
-                    Some(Msg::CloseDeleteRecent)
+                    Some(Msg::Ui(UiMsg::CloseDeleteRecent))
                 }
             }
             _ => None,
@@ -342,7 +354,9 @@ impl BookmarkSavePassword {
 impl Component<Msg, NoUserEvent> for BookmarkSavePassword {
     fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
         match ev {
-            Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => Some(Msg::CloseSaveBookmark),
+            Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
+                Some(Msg::Ui(UiMsg::CloseSaveBookmark))
+            }
             Event::Keyboard(KeyEvent {
                 code: Key::Left, ..
             }) => {
@@ -357,8 +371,10 @@ impl Component<Msg, NoUserEvent> for BookmarkSavePassword {
             }
             Event::Keyboard(KeyEvent {
                 code: Key::Enter, ..
-            }) => Some(Msg::SaveBookmark),
-            Event::Keyboard(KeyEvent { code: Key::Up, .. }) => Some(Msg::SaveBookmarkPasswordBlur),
+            }) => Some(Msg::Form(FormMsg::SaveBookmark)),
+            Event::Keyboard(KeyEvent { code: Key::Up, .. }) => {
+                Some(Msg::Ui(UiMsg::SaveBookmarkPasswordBlur))
+            }
             _ => None,
         }
     }
@@ -391,7 +407,9 @@ impl BookmarkName {
 impl Component<Msg, NoUserEvent> for BookmarkName {
     fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
         match ev {
-            Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => Some(Msg::CloseSaveBookmark),
+            Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
+                Some(Msg::Ui(UiMsg::CloseSaveBookmark))
+            }
             Event::Keyboard(KeyEvent {
                 code: Key::Left, ..
             }) => {
@@ -436,10 +454,10 @@ impl Component<Msg, NoUserEvent> for BookmarkName {
             }
             Event::Keyboard(KeyEvent {
                 code: Key::Enter, ..
-            }) => Some(Msg::SaveBookmark),
+            }) => Some(Msg::Form(FormMsg::SaveBookmark)),
             Event::Keyboard(KeyEvent {
                 code: Key::Down, ..
-            }) => Some(Msg::BookmarkNameBlur),
+            }) => Some(Msg::Ui(UiMsg::BookmarkNameBlur)),
             _ => None,
         }
     }

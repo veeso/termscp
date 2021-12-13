@@ -25,7 +25,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-use super::{FileTransferProtocol, Msg};
+use super::{FileTransferProtocol, FormMsg, Msg, UiMsg};
 
 use tui_realm_stdlib::{Input, Radio};
 use tuirealm::command::{Cmd, CmdResult, Direction, Position};
@@ -91,18 +91,22 @@ impl Component<Msg, NoUserEvent> for ProtocolRadio {
             }) => self.perform(Cmd::Move(Direction::Right)),
             Event::Keyboard(KeyEvent {
                 code: Key::Enter, ..
-            }) => return Some(Msg::Connect),
+            }) => return Some(Msg::Form(FormMsg::Connect)),
             Event::Keyboard(KeyEvent {
                 code: Key::Down, ..
-            }) => return Some(Msg::ProtocolBlurDown),
-            Event::Keyboard(KeyEvent { code: Key::Up, .. }) => return Some(Msg::ProtocolBlurUp),
-            Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => return Some(Msg::ParamsFormBlur),
+            }) => return Some(Msg::Ui(UiMsg::ProtocolBlurDown)),
+            Event::Keyboard(KeyEvent { code: Key::Up, .. }) => {
+                return Some(Msg::Ui(UiMsg::ProtocolBlurUp))
+            }
+            Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => {
+                return Some(Msg::Ui(UiMsg::ParamsFormBlur))
+            }
             _ => return None,
         };
         match result {
-            CmdResult::Changed(State::One(StateValue::Usize(choice))) => {
-                Some(Msg::ProtocolChanged(Self::protocol_opt_to_enum(choice)))
-            }
+            CmdResult::Changed(State::One(StateValue::Usize(choice))) => Some(Msg::Form(
+                FormMsg::ProtocolChanged(Self::protocol_opt_to_enum(choice)),
+            )),
             _ => Some(Msg::None),
         }
     }
@@ -180,12 +184,14 @@ impl Component<Msg, NoUserEvent> for InputAddress {
             }
             Event::Keyboard(KeyEvent {
                 code: Key::Enter, ..
-            }) => Some(Msg::Connect),
+            }) => Some(Msg::Form(FormMsg::Connect)),
             Event::Keyboard(KeyEvent {
                 code: Key::Down, ..
-            }) => Some(Msg::AddressBlurDown),
-            Event::Keyboard(KeyEvent { code: Key::Up, .. }) => Some(Msg::AddressBlurUp),
-            Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => Some(Msg::ParamsFormBlur),
+            }) => Some(Msg::Ui(UiMsg::AddressBlurDown)),
+            Event::Keyboard(KeyEvent { code: Key::Up, .. }) => Some(Msg::Ui(UiMsg::AddressBlurUp)),
+            Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => {
+                Some(Msg::Ui(UiMsg::ParamsFormBlur))
+            }
             _ => None,
         }
     }
@@ -264,12 +270,14 @@ impl Component<Msg, NoUserEvent> for InputPort {
             }
             Event::Keyboard(KeyEvent {
                 code: Key::Enter, ..
-            }) => Some(Msg::Connect),
+            }) => Some(Msg::Form(FormMsg::Connect)),
             Event::Keyboard(KeyEvent {
                 code: Key::Down, ..
-            }) => Some(Msg::PortBlurDown),
-            Event::Keyboard(KeyEvent { code: Key::Up, .. }) => Some(Msg::PortBlurUp),
-            Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => Some(Msg::ParamsFormBlur),
+            }) => Some(Msg::Ui(UiMsg::PortBlurDown)),
+            Event::Keyboard(KeyEvent { code: Key::Up, .. }) => Some(Msg::Ui(UiMsg::PortBlurUp)),
+            Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => {
+                Some(Msg::Ui(UiMsg::ParamsFormBlur))
+            }
             _ => None,
         }
     }
@@ -347,12 +355,14 @@ impl Component<Msg, NoUserEvent> for InputUsername {
             }
             Event::Keyboard(KeyEvent {
                 code: Key::Enter, ..
-            }) => Some(Msg::Connect),
+            }) => Some(Msg::Form(FormMsg::Connect)),
             Event::Keyboard(KeyEvent {
                 code: Key::Down, ..
-            }) => Some(Msg::UsernameBlurDown),
-            Event::Keyboard(KeyEvent { code: Key::Up, .. }) => Some(Msg::UsernameBlurUp),
-            Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => Some(Msg::ParamsFormBlur),
+            }) => Some(Msg::Ui(UiMsg::UsernameBlurDown)),
+            Event::Keyboard(KeyEvent { code: Key::Up, .. }) => Some(Msg::Ui(UiMsg::UsernameBlurUp)),
+            Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => {
+                Some(Msg::Ui(UiMsg::ParamsFormBlur))
+            }
             _ => None,
         }
     }
@@ -429,12 +439,14 @@ impl Component<Msg, NoUserEvent> for InputPassword {
             }
             Event::Keyboard(KeyEvent {
                 code: Key::Enter, ..
-            }) => Some(Msg::Connect),
+            }) => Some(Msg::Form(FormMsg::Connect)),
             Event::Keyboard(KeyEvent {
                 code: Key::Down, ..
-            }) => Some(Msg::PasswordBlurDown),
-            Event::Keyboard(KeyEvent { code: Key::Up, .. }) => Some(Msg::PasswordBlurUp),
-            Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => Some(Msg::ParamsFormBlur),
+            }) => Some(Msg::Ui(UiMsg::PasswordBlurDown)),
+            Event::Keyboard(KeyEvent { code: Key::Up, .. }) => Some(Msg::Ui(UiMsg::PasswordBlurUp)),
+            Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => {
+                Some(Msg::Ui(UiMsg::ParamsFormBlur))
+            }
             _ => None,
         }
     }
@@ -512,12 +524,14 @@ impl Component<Msg, NoUserEvent> for InputS3Bucket {
             }
             Event::Keyboard(KeyEvent {
                 code: Key::Enter, ..
-            }) => Some(Msg::Connect),
+            }) => Some(Msg::Form(FormMsg::Connect)),
             Event::Keyboard(KeyEvent {
                 code: Key::Down, ..
-            }) => Some(Msg::S3BucketBlurDown),
-            Event::Keyboard(KeyEvent { code: Key::Up, .. }) => Some(Msg::S3BucketBlurUp),
-            Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => Some(Msg::ParamsFormBlur),
+            }) => Some(Msg::Ui(UiMsg::S3BucketBlurDown)),
+            Event::Keyboard(KeyEvent { code: Key::Up, .. }) => Some(Msg::Ui(UiMsg::S3BucketBlurUp)),
+            Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => {
+                Some(Msg::Ui(UiMsg::ParamsFormBlur))
+            }
             _ => None,
         }
     }
@@ -595,12 +609,14 @@ impl Component<Msg, NoUserEvent> for InputS3Region {
             }
             Event::Keyboard(KeyEvent {
                 code: Key::Enter, ..
-            }) => Some(Msg::Connect),
+            }) => Some(Msg::Form(FormMsg::Connect)),
             Event::Keyboard(KeyEvent {
                 code: Key::Down, ..
-            }) => Some(Msg::S3RegionBlurDown),
-            Event::Keyboard(KeyEvent { code: Key::Up, .. }) => Some(Msg::S3RegionBlurUp),
-            Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => Some(Msg::ParamsFormBlur),
+            }) => Some(Msg::Ui(UiMsg::S3RegionBlurDown)),
+            Event::Keyboard(KeyEvent { code: Key::Up, .. }) => Some(Msg::Ui(UiMsg::S3RegionBlurUp)),
+            Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => {
+                Some(Msg::Ui(UiMsg::ParamsFormBlur))
+            }
             _ => None,
         }
     }
@@ -678,12 +694,16 @@ impl Component<Msg, NoUserEvent> for InputS3Profile {
             }
             Event::Keyboard(KeyEvent {
                 code: Key::Enter, ..
-            }) => Some(Msg::Connect),
+            }) => Some(Msg::Form(FormMsg::Connect)),
             Event::Keyboard(KeyEvent {
                 code: Key::Down, ..
-            }) => Some(Msg::S3ProfileBlurDown),
-            Event::Keyboard(KeyEvent { code: Key::Up, .. }) => Some(Msg::S3ProfileBlurUp),
-            Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => Some(Msg::ParamsFormBlur),
+            }) => Some(Msg::Ui(UiMsg::S3ProfileBlurDown)),
+            Event::Keyboard(KeyEvent { code: Key::Up, .. }) => {
+                Some(Msg::Ui(UiMsg::S3ProfileBlurUp))
+            }
+            Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => {
+                Some(Msg::Ui(UiMsg::ParamsFormBlur))
+            }
             _ => None,
         }
     }

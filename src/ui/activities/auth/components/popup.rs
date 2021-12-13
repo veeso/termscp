@@ -25,7 +25,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-use super::Msg;
+use super::{FormMsg, Msg, UiMsg};
 
 use tui_realm_stdlib::{List, Paragraph, Radio, Textarea};
 use tuirealm::command::{Cmd, CmdResult, Direction, Position};
@@ -63,7 +63,7 @@ impl Component<Msg, NoUserEvent> for ErrorPopup {
             Event::Keyboard(KeyEvent {
                 code: Key::Esc | Key::Enter,
                 ..
-            }) => Some(Msg::CloseErrorPopup),
+            }) => Some(Msg::Ui(UiMsg::CloseErrorPopup)),
             _ => None,
         }
     }
@@ -99,7 +99,7 @@ impl Component<Msg, NoUserEvent> for InfoPopup {
             Event::Keyboard(KeyEvent {
                 code: Key::Esc | Key::Enter,
                 ..
-            }) => Some(Msg::CloseInfoPopup),
+            }) => Some(Msg::Ui(UiMsg::CloseInfoPopup)),
             _ => None,
         }
     }
@@ -194,7 +194,9 @@ impl QuitPopup {
 impl Component<Msg, NoUserEvent> for QuitPopup {
     fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
         match ev {
-            Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => Some(Msg::CloseQuitPopup),
+            Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
+                Some(Msg::Ui(UiMsg::CloseQuitPopup))
+            }
             Event::Keyboard(KeyEvent {
                 code: Key::Left, ..
             }) => {
@@ -214,9 +216,9 @@ impl Component<Msg, NoUserEvent> for QuitPopup {
                     self.perform(Cmd::Submit),
                     CmdResult::Submit(State::One(StateValue::Usize(0)))
                 ) {
-                    Some(Msg::Quit)
+                    Some(Msg::Form(FormMsg::Quit))
                 } else {
-                    Some(Msg::CloseQuitPopup)
+                    Some(Msg::Ui(UiMsg::CloseQuitPopup))
                 }
             }
             _ => None,
@@ -251,7 +253,9 @@ impl InstallUpdatePopup {
 impl Component<Msg, NoUserEvent> for InstallUpdatePopup {
     fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
         match ev {
-            Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => Some(Msg::CloseInstallUpdatePopup),
+            Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
+                Some(Msg::Ui(UiMsg::CloseInstallUpdatePopup))
+            }
             Event::Keyboard(KeyEvent {
                 code: Key::Left, ..
             }) => {
@@ -271,9 +275,9 @@ impl Component<Msg, NoUserEvent> for InstallUpdatePopup {
                     self.perform(Cmd::Submit),
                     CmdResult::Submit(State::One(StateValue::Usize(0)))
                 ) {
-                    Some(Msg::InstallUpdate)
+                    Some(Msg::Form(FormMsg::InstallUpdate))
                 } else {
-                    Some(Msg::CloseInstallUpdatePopup)
+                    Some(Msg::Ui(UiMsg::CloseInstallUpdatePopup))
                 }
             }
             _ => None,
@@ -316,7 +320,7 @@ impl Component<Msg, NoUserEvent> for ReleaseNotes {
             Event::Keyboard(KeyEvent {
                 code: Key::Esc | Key::Enter,
                 ..
-            }) => Some(Msg::CloseInstallUpdatePopup),
+            }) => Some(Msg::Ui(UiMsg::CloseInstallUpdatePopup)),
             Event::Keyboard(KeyEvent {
                 code: Key::Down, ..
             }) => {
@@ -412,7 +416,7 @@ impl Component<Msg, NoUserEvent> for Keybindings {
             Event::Keyboard(KeyEvent {
                 code: Key::Esc | Key::Enter,
                 ..
-            }) => Some(Msg::CloseKeybindingsPopup),
+            }) => Some(Msg::Ui(UiMsg::CloseKeybindingsPopup)),
             Event::Keyboard(KeyEvent {
                 code: Key::Down, ..
             }) => {

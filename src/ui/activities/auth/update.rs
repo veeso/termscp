@@ -25,7 +25,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-use super::{AuthActivity, ExitReason, Id, InputMask, Msg, Update};
+use super::{AuthActivity, ExitReason, FormMsg, Id, InputMask, Msg, UiMsg, Update};
 
 use tuirealm::{State, StateValue};
 
@@ -33,46 +33,17 @@ impl Update<Msg> for AuthActivity {
     fn update(&mut self, msg: Option<Msg>) -> Option<Msg> {
         self.redraw = true;
         match msg.unwrap_or(Msg::None) {
-            Msg::AddressBlurDown => {
-                assert!(self.app.active(&Id::Port).is_ok());
-            }
-            Msg::AddressBlurUp => {
-                assert!(self.app.active(&Id::Protocol).is_ok());
-            }
-            Msg::BookmarksListBlur => {
-                assert!(self.app.active(&Id::RecentsList).is_ok());
-            }
-            Msg::BookmarkNameBlur => {
-                assert!(self.app.active(&Id::BookmarkSavePassword).is_ok());
-            }
-            Msg::BookmarksTabBlur => {
-                assert!(self.app.active(&Id::Protocol).is_ok());
-            }
-            Msg::CloseDeleteBookmark => {
-                assert!(self.app.umount(&Id::DeleteBookmarkPopup).is_ok());
-            }
-            Msg::CloseDeleteRecent => {
-                assert!(self.app.umount(&Id::DeleteRecentPopup).is_ok());
-            }
-            Msg::CloseErrorPopup => {
-                self.umount_error();
-            }
-            Msg::CloseInfoPopup => {
-                self.umount_info();
-            }
-            Msg::CloseInstallUpdatePopup => {
-                assert!(self.app.umount(&Id::NewVersionChangelog).is_ok());
-                assert!(self.app.umount(&Id::InstallUpdatePopup).is_ok());
-            }
-            Msg::CloseKeybindingsPopup => {
-                self.umount_help();
-            }
-            Msg::CloseQuitPopup => self.umount_quit(),
-            Msg::CloseSaveBookmark => {
-                assert!(self.app.umount(&Id::BookmarkName).is_ok());
-                assert!(self.app.umount(&Id::BookmarkSavePassword).is_ok());
-            }
-            Msg::Connect => {
+            Msg::Form(msg) => self.update_form(msg),
+            Msg::Ui(msg) => self.update_ui(msg),
+            Msg::None => None,
+        }
+    }
+}
+
+impl AuthActivity {
+    fn update_form(&mut self, msg: FormMsg) -> Option<Msg> {
+        match msg {
+            FormMsg::Connect => {
                 match self.collect_host_params() {
                     Err(err) => {
                         // mount error
@@ -87,7 +58,7 @@ impl Update<Msg> for AuthActivity {
                     }
                 }
             }
-            Msg::DeleteBookmark => {
+            FormMsg::DeleteBookmark => {
                 if let Ok(State::One(StateValue::Usize(idx))) = self.app.state(&Id::BookmarksList) {
                     // Umount dialog
                     self.umount_bookmark_del_dialog();
@@ -97,7 +68,7 @@ impl Update<Msg> for AuthActivity {
                     self.view_bookmarks()
                 }
             }
-            Msg::DeleteRecent => {
+            FormMsg::DeleteRecent => {
                 if let Ok(State::One(StateValue::Usize(idx))) = self.app.state(&Id::RecentsList) {
                     // Umount dialog
                     self.umount_recent_del_dialog();
@@ -107,13 +78,13 @@ impl Update<Msg> for AuthActivity {
                     self.view_recent_connections();
                 }
             }
-            Msg::EnterSetup => {
+            FormMsg::EnterSetup => {
                 self.exit_reason = Some(ExitReason::EnterSetup);
             }
-            Msg::InstallUpdate => {
+            FormMsg::InstallUpdate => {
                 self.install_update();
             }
-            Msg::LoadBookmark(i) => {
+            FormMsg::LoadBookmark(i) => {
                 self.load_bookmark(i);
                 // Give focus to input password (or to protocol if not generic)
                 assert!(self
@@ -124,7 +95,7 @@ impl Update<Msg> for AuthActivity {
                     })
                     .is_ok());
             }
-            Msg::LoadRecent(i) => {
+            FormMsg::LoadRecent(i) => {
                 self.load_recent(i);
                 // Give focus to input password (or to protocol if not generic)
                 assert!(self
@@ -135,40 +106,7 @@ impl Update<Msg> for AuthActivity {
                     })
                     .is_ok());
             }
-            Msg::ParamsFormBlur => {
-                assert!(self.app.active(&Id::BookmarksList).is_ok());
-            }
-            Msg::PasswordBlurDown => {
-                assert!(self.app.active(&Id::Protocol).is_ok());
-            }
-            Msg::PasswordBlurUp => {
-                assert!(self.app.active(&Id::Username).is_ok());
-            }
-            Msg::PortBlurDown => {
-                assert!(self.app.active(&Id::Username).is_ok());
-            }
-            Msg::PortBlurUp => {
-                assert!(self.app.active(&Id::Address).is_ok());
-            }
-            Msg::ProtocolBlurDown => {
-                assert!(self
-                    .app
-                    .active(match self.input_mask() {
-                        InputMask::Generic => &Id::Address,
-                        InputMask::AwsS3 => &Id::S3Bucket,
-                    })
-                    .is_ok());
-            }
-            Msg::ProtocolBlurUp => {
-                assert!(self
-                    .app
-                    .active(match self.input_mask() {
-                        InputMask::Generic => &Id::Password,
-                        InputMask::AwsS3 => &Id::S3Profile,
-                    })
-                    .is_ok());
-            }
-            Msg::ProtocolChanged(protocol) => {
+            FormMsg::ProtocolChanged(protocol) => {
                 self.protocol = protocol;
                 // Update port
                 let port: u16 = self.get_input_port();
@@ -176,31 +114,10 @@ impl Update<Msg> for AuthActivity {
                     self.mount_port(Self::get_default_port_for_protocol(protocol));
                 }
             }
-            Msg::Quit => {
+            FormMsg::Quit => {
                 self.exit_reason = Some(ExitReason::Quit);
             }
-            Msg::RececentsListBlur => {
-                assert!(self.app.active(&Id::BookmarksList).is_ok());
-            }
-            Msg::S3BucketBlurDown => {
-                assert!(self.app.active(&Id::S3Region).is_ok());
-            }
-            Msg::S3BucketBlurUp => {
-                assert!(self.app.active(&Id::Protocol).is_ok());
-            }
-            Msg::S3RegionBlurDown => {
-                assert!(self.app.active(&Id::S3Profile).is_ok());
-            }
-            Msg::S3RegionBlurUp => {
-                assert!(self.app.active(&Id::S3Bucket).is_ok());
-            }
-            Msg::S3ProfileBlurDown => {
-                assert!(self.app.active(&Id::Protocol).is_ok());
-            }
-            Msg::S3ProfileBlurUp => {
-                assert!(self.app.active(&Id::S3Region).is_ok());
-            }
-            Msg::SaveBookmark => {
+            FormMsg::SaveBookmark => {
                 // get bookmark name
                 let (name, save_password) = self.get_new_bookmark();
                 // Save bookmark
@@ -212,35 +129,134 @@ impl Update<Msg> for AuthActivity {
                 // Reload bookmarks
                 self.view_bookmarks()
             }
-            Msg::SaveBookmarkPasswordBlur => {
-                assert!(self.app.active(&Id::BookmarkName).is_ok());
-            }
-            Msg::ShowDeleteBookmarkPopup => {
-                self.mount_bookmark_del_dialog();
-            }
-            Msg::ShowDeleteRecentPopup => {
-                self.mount_recent_del_dialog();
-            }
-            Msg::ShowKeybindingsPopup => {
-                self.mount_keybindings();
-            }
-            Msg::ShowQuitPopup => {
-                self.mount_quit();
-            }
-            Msg::ShowReleaseNotes => {
-                self.mount_release_notes();
-            }
-            Msg::ShowSaveBookmarkPopup => {
-                self.mount_bookmark_save_dialog();
-            }
-            Msg::UsernameBlurDown => {
-                assert!(self.app.active(&Id::Password).is_ok());
-            }
-            Msg::UsernameBlurUp => {
+        }
+        None
+    }
+
+    fn update_ui(&mut self, msg: UiMsg) -> Option<Msg> {
+        match msg {
+            UiMsg::AddressBlurDown => {
                 assert!(self.app.active(&Id::Port).is_ok());
             }
-            Msg::None => {}
+            UiMsg::AddressBlurUp => {
+                assert!(self.app.active(&Id::Protocol).is_ok());
+            }
+            UiMsg::BookmarksListBlur => {
+                assert!(self.app.active(&Id::RecentsList).is_ok());
+            }
+            UiMsg::BookmarkNameBlur => {
+                assert!(self.app.active(&Id::BookmarkSavePassword).is_ok());
+            }
+            UiMsg::BookmarksTabBlur => {
+                assert!(self.app.active(&Id::Protocol).is_ok());
+            }
+            UiMsg::CloseDeleteBookmark => {
+                assert!(self.app.umount(&Id::DeleteBookmarkPopup).is_ok());
+            }
+            UiMsg::CloseDeleteRecent => {
+                assert!(self.app.umount(&Id::DeleteRecentPopup).is_ok());
+            }
+            UiMsg::CloseErrorPopup => {
+                self.umount_error();
+            }
+            UiMsg::CloseInfoPopup => {
+                self.umount_info();
+            }
+            UiMsg::CloseInstallUpdatePopup => {
+                assert!(self.app.umount(&Id::NewVersionChangelog).is_ok());
+                assert!(self.app.umount(&Id::InstallUpdatePopup).is_ok());
+            }
+            UiMsg::CloseKeybindingsPopup => {
+                self.umount_help();
+            }
+            UiMsg::CloseQuitPopup => self.umount_quit(),
+            UiMsg::CloseSaveBookmark => {
+                assert!(self.app.umount(&Id::BookmarkName).is_ok());
+                assert!(self.app.umount(&Id::BookmarkSavePassword).is_ok());
+            }
+            UiMsg::ParamsFormBlur => {
+                assert!(self.app.active(&Id::BookmarksList).is_ok());
+            }
+            UiMsg::PasswordBlurDown => {
+                assert!(self.app.active(&Id::Protocol).is_ok());
+            }
+            UiMsg::PasswordBlurUp => {
+                assert!(self.app.active(&Id::Username).is_ok());
+            }
+            UiMsg::PortBlurDown => {
+                assert!(self.app.active(&Id::Username).is_ok());
+            }
+            UiMsg::PortBlurUp => {
+                assert!(self.app.active(&Id::Address).is_ok());
+            }
+            UiMsg::ProtocolBlurDown => {
+                assert!(self
+                    .app
+                    .active(match self.input_mask() {
+                        InputMask::Generic => &Id::Address,
+                        InputMask::AwsS3 => &Id::S3Bucket,
+                    })
+                    .is_ok());
+            }
+            UiMsg::ProtocolBlurUp => {
+                assert!(self
+                    .app
+                    .active(match self.input_mask() {
+                        InputMask::Generic => &Id::Password,
+                        InputMask::AwsS3 => &Id::S3Profile,
+                    })
+                    .is_ok());
+            }
+            UiMsg::RececentsListBlur => {
+                assert!(self.app.active(&Id::BookmarksList).is_ok());
+            }
+            UiMsg::S3BucketBlurDown => {
+                assert!(self.app.active(&Id::S3Region).is_ok());
+            }
+            UiMsg::S3BucketBlurUp => {
+                assert!(self.app.active(&Id::Protocol).is_ok());
+            }
+            UiMsg::S3RegionBlurDown => {
+                assert!(self.app.active(&Id::S3Profile).is_ok());
+            }
+            UiMsg::S3RegionBlurUp => {
+                assert!(self.app.active(&Id::S3Bucket).is_ok());
+            }
+            UiMsg::S3ProfileBlurDown => {
+                assert!(self.app.active(&Id::Protocol).is_ok());
+            }
+            UiMsg::S3ProfileBlurUp => {
+                assert!(self.app.active(&Id::S3Region).is_ok());
+            }
+            UiMsg::SaveBookmarkPasswordBlur => {
+                assert!(self.app.active(&Id::BookmarkName).is_ok());
+            }
+            UiMsg::ShowDeleteBookmarkPopup => {
+                self.mount_bookmark_del_dialog();
+            }
+            UiMsg::ShowDeleteRecentPopup => {
+                self.mount_recent_del_dialog();
+            }
+            UiMsg::ShowKeybindingsPopup => {
+                self.mount_keybindings();
+            }
+            UiMsg::ShowQuitPopup => {
+                self.mount_quit();
+            }
+            UiMsg::ShowReleaseNotes => {
+                self.mount_release_notes();
+            }
+            UiMsg::ShowSaveBookmarkPopup => {
+                self.mount_bookmark_save_dialog();
+            }
+            UiMsg::UsernameBlurDown => {
+                assert!(self.app.active(&Id::Password).is_ok());
+            }
+            UiMsg::UsernameBlurUp => {
+                assert!(self.app.active(&Id::Port).is_ok());
+            }
         }
+
         None
     }
 }

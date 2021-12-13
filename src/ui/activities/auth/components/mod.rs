@@ -25,7 +25,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-use super::{FileTransferProtocol, Msg};
+use super::{FileTransferProtocol, FormMsg, Msg, UiMsg};
 
 mod bookmarks;
 mod form;
@@ -63,27 +63,27 @@ impl Component<Msg, NoUserEvent> for GlobalListener {
             Event::Keyboard(KeyEvent {
                 code: Key::Esc | Key::Function(10),
                 ..
-            }) => Some(Msg::ShowQuitPopup),
+            }) => Some(Msg::Ui(UiMsg::ShowQuitPopup)),
             Event::Keyboard(KeyEvent {
                 code: Key::Char('c'),
                 modifiers: KeyModifiers::CONTROL,
-            }) => Some(Msg::EnterSetup),
+            }) => Some(Msg::Form(FormMsg::EnterSetup)),
             Event::Keyboard(KeyEvent {
                 code: Key::Char('h'),
                 modifiers: KeyModifiers::CONTROL,
-            }) => Some(Msg::ShowKeybindingsPopup),
+            }) => Some(Msg::Ui(UiMsg::ShowKeybindingsPopup)),
             Event::Keyboard(KeyEvent {
                 code: Key::Function(1),
                 ..
-            }) => Some(Msg::ShowKeybindingsPopup),
+            }) => Some(Msg::Ui(UiMsg::ShowKeybindingsPopup)),
             Event::Keyboard(KeyEvent {
                 code: Key::Char('r'),
                 modifiers: KeyModifiers::CONTROL,
-            }) => Some(Msg::ShowReleaseNotes),
+            }) => Some(Msg::Ui(UiMsg::ShowReleaseNotes)),
             Event::Keyboard(KeyEvent {
                 code: Key::Char('s'),
                 modifiers: KeyModifiers::CONTROL,
-            }) => Some(Msg::ShowSaveBookmarkPopup),
+            }) => Some(Msg::Ui(UiMsg::ShowSaveBookmarkPopup)),
             _ => None,
         }
     }
