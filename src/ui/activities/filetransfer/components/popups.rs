@@ -1343,7 +1343,7 @@ impl Component<Msg, NoUserEvent> for ReplacePopup {
                 Some(Msg::None)
             }
             Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
-                Some(Msg::Ui(UiMsg::CloseReplacePopups))
+                Some(Msg::PendingAction(PendingActionMsg::CloseReplacePopups))
             }
             Event::Keyboard(KeyEvent {
                 code: Key::Enter, ..
@@ -1352,9 +1352,9 @@ impl Component<Msg, NoUserEvent> for ReplacePopup {
                     self.perform(Cmd::Submit),
                     CmdResult::Submit(State::One(StateValue::Usize(0)))
                 ) {
-                    Some(Msg::Transfer(TransferMsg::TransferPendingFile))
+                    Some(Msg::PendingAction(PendingActionMsg::TransferPendingFile))
                 } else {
-                    Some(Msg::Ui(UiMsg::CloseReplacePopups))
+                    Some(Msg::PendingAction(PendingActionMsg::CloseReplacePopups))
                 }
             }
             _ => None,
@@ -1393,7 +1393,7 @@ impl Component<Msg, NoUserEvent> for ReplacingFilesListPopup {
     fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
         match ev {
             Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
-                Some(Msg::Ui(UiMsg::CloseReplacePopups))
+                Some(Msg::PendingAction(PendingActionMsg::CloseReplacePopups))
             }
             Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => {
                 Some(Msg::Ui(UiMsg::ReplacePopupTabbed))

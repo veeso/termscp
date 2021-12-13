@@ -28,7 +28,7 @@
  */
 use super::{FileTransferActivity, Msg};
 
-use tuirealm::PollStrategy;
+use tuirealm::{PollStrategy, Update};
 
 impl FileTransferActivity {
     /// Block execution of activity, preventing ANY kind of message not specified in the `wait_for` argument.
@@ -42,12 +42,22 @@ impl FileTransferActivity {
         loop {
             // Poll
             match self.app.tick(PollStrategy::Once) {
-                Ok(messages) => {
+                Ok(mut messages) => {
                     if !messages.is_empty() {
                         self.redraw = true;
                     }
-                    if let Some(msg) = messages.into_iter().find(|m| wait_for.contains(m)) {
-                        return msg;
+                    let found = messages.iter().position(|m| wait_for.contains(m));
+                    // Return if found
+                    if let Some(index) = found {
+                        return messages.remove(index);
+                    } else {
+                        // Update
+                        for msg in messages.into_iter() {
+                            let mut msg = Some(msg);
+                            while msg.is_some() {
+                                msg = self.update(msg);
+                            }
+                        }
                     }
                 }
                 Err(err) => {
