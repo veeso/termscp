@@ -183,32 +183,16 @@ impl ProgressStates {
 // -- Options
 
 /// Defines the transfer options for transfer actions
+#[derive(Default)]
 pub struct TransferOpts {
     /// Save file as
     pub save_as: Option<String>,
-    /// Whether to check if file is being replaced
-    pub check_replace: bool,
-}
-
-impl Default for TransferOpts {
-    fn default() -> Self {
-        Self {
-            save_as: None,
-            check_replace: true,
-        }
-    }
 }
 
 impl TransferOpts {
     /// Define the name of the file to be saved
     pub fn save_as<S: AsRef<str>>(mut self, n: Option<S>) -> Self {
         self.save_as = n.map(|x| x.as_ref().to_string());
-        self
-    }
-
-    /// Set whether to check if the file being transferred will "replace" an existing one
-    pub fn check_replace(mut self, opt: bool) -> Self {
-        self.check_replace = opt;
         self
     }
 }
@@ -289,12 +273,8 @@ mod test {
     #[test]
     fn transfer_opts() {
         let opts = TransferOpts::default();
-        assert_eq!(opts.check_replace, true);
         assert!(opts.save_as.is_none());
-        let opts = TransferOpts::default()
-            .check_replace(false)
-            .save_as(Some("omar.txt"));
+        let opts = TransferOpts::default().save_as(Some("omar.txt"));
         assert_eq!(opts.save_as.as_deref().unwrap(), "omar.txt");
-        assert_eq!(opts.check_replace, false);
     }
 }

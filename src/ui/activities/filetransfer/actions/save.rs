@@ -27,8 +27,8 @@
  */
 // locals
 use super::{
-    super::STORAGE_PENDING_TRANSFER, Entry, FileExplorerTab, FileTransferActivity, LogLevel,
-    SelectedEntry, TransferOpts, TransferPayload,
+    Entry, FileTransferActivity, LogLevel, Msg, PendingActionMsg, SelectedEntry, TransferOpts,
+    TransferPayload,
 };
 use std::path::{Path, PathBuf};
 
@@ -49,59 +49,21 @@ impl FileTransferActivity {
         self.remote_recv_file(TransferOpts::default());
     }
 
-    /// Finalize "pending" transfer.
-    /// The pending transfer is created after a transfer which required a user action to be completed first.
-    /// The name of the file to transfer, is contained in the storage at `STORAGE_PENDING_TRANSFER`.
-    /// NOTE: Panics if `STORAGE_PENDING_TRANSFER` is undefined
-    pub(crate) fn action_finalize_pending_transfer(&mut self) {
-        // Retrieve pending transfer
-        let file_name = self
-            .context_mut()
-            .store_mut()
-            .take_string(STORAGE_PENDING_TRANSFER);
-        // Send file
-        match self.browser.tab() {
-            FileExplorerTab::Local => self.local_send_file(
-                TransferOpts::default()
-                    .save_as(file_name)
-                    .check_replace(false),
-            ),
-            FileExplorerTab::Remote => self.remote_recv_file(
-                TransferOpts::default()
-                    .save_as(file_name)
-                    .check_replace(false),
-            ),
-            FileExplorerTab::FindLocal | FileExplorerTab::FindRemote => self.action_find_transfer(
-                TransferOpts::default()
-                    .save_as(file_name)
-                    .check_replace(false),
-            ),
-        }
-        // Reload browsers
-        match self.browser.tab() {
-            FileExplorerTab::Local | FileExplorerTab::FindLocal => {
-                self.update_remote_filelist();
-            }
-            FileExplorerTab::Remote | FileExplorerTab::FindRemote => {
-                self.update_local_filelist();
-            }
-        }
-    }
-
     fn local_send_file(&mut self, opts: TransferOpts) {
         let wrkdir: PathBuf = self.remote().wrkdir.clone();
         match self.get_local_selected_entries() {
             SelectedEntry::One(entry) => {
                 let file_to_check = Self::file_to_check(&entry, opts.save_as.as_ref());
-                if opts.check_replace
-                    && self.config().get_prompt_on_file_replace()
+                if self.config().get_prompt_on_file_replace()
                     && self.remote_file_exists(file_to_check.as_path())
-                {
-                    // Save pending transfer
-                    self.set_pending_transfer(
+                    && !self.should_replace_file(
                         opts.save_as.as_deref().unwrap_or_else(|| entry.name()),
-                    );
-                } else if let Err(err) = self.filetransfer_send(
+                    )
+                {
+                    // Do not replace
+                    return;
+                }
+                if let Err(err) = self.filetransfer_send(
                     TransferPayload::Any(entry.clone()),
                     wrkdir.as_path(),
                     opts.save_as,
@@ -121,7 +83,7 @@ impl FileTransferActivity {
                     dest_path.push(save_as);
                 }
                 // Iter files
-                if opts.check_replace && self.config().get_prompt_on_file_replace() {
+                if self.config().get_prompt_on_file_replace() {
                     // Check which file would be replaced
                     let existing_files: Vec<&Entry> = entries
                         .iter()
@@ -131,12 +93,8 @@ impl FileTransferActivity {
                             )
                         })
                         .collect();
-                    // Save pending transfer
-                    if !existing_files.is_empty() {
-                        self.set_pending_transfer_many(
-                            existing_files,
-                            &dest_path.to_string_lossy().to_owned(),
-                        );
+                    // Check whether to replace files
+                    if !existing_files.is_empty() && !self.should_replace_files(existing_files) {
                         return;
                     }
                 }
@@ -162,15 +120,15 @@ impl FileTransferActivity {
         match self.get_remote_selected_entries() {
             SelectedEntry::One(entry) => {
                 let file_to_check = Self::file_to_check(&entry, opts.save_as.as_ref());
-                if opts.check_replace
-                    && self.config().get_prompt_on_file_replace()
+                if self.config().get_prompt_on_file_replace()
                     && self.local_file_exists(file_to_check.as_path())
-                {
-                    // Save pending transfer
-                    self.set_pending_transfer(
+                    && !self.should_replace_file(
                         opts.save_as.as_deref().unwrap_or_else(|| entry.name()),
-                    );
-                } else if let Err(err) = self.filetransfer_recv(
+                    )
+                {
+                    return;
+                }
+                if let Err(err) = self.filetransfer_recv(
                     TransferPayload::Any(entry.clone()),
                     wrkdir.as_path(),
                     opts.save_as,
@@ -190,7 +148,7 @@ impl FileTransferActivity {
                     dest_path.push(save_as);
                 }
                 // Iter files
-                if opts.check_replace && self.config().get_prompt_on_file_replace() {
+                if self.config().get_prompt_on_file_replace() {
                     // Check which file would be replaced
                     let existing_files: Vec<&Entry> = entries
                         .iter()
@@ -200,12 +158,8 @@ impl FileTransferActivity {
                             )
                         })
                         .collect();
-                    // Save pending transfer
-                    if !existing_files.is_empty() {
-                        self.set_pending_transfer_many(
-                            existing_files,
-                            &dest_path.to_string_lossy().to_owned(),
-                        );
+                    // Check whether to replace files
+                    if !existing_files.is_empty() && !self.should_replace_files(existing_files) {
                         return;
                     }
                 }
@@ -227,21 +181,47 @@ impl FileTransferActivity {
     }
 
     /// Set pending transfer into storage
-    pub(crate) fn set_pending_transfer(&mut self, file_name: &str) {
+    pub(crate) fn should_replace_file(&mut self, file_name: &str) -> bool {
         self.mount_radio_replace(file_name);
-        // Put pending transfer in store
-        self.context_mut()
-            .store_mut()
-            .set_string(STORAGE_PENDING_TRANSFER, file_name.to_string());
+        // Wait for answer
+        trace!("Asking user whether he wants to replace file {}", file_name);
+        if self.wait_for_pending_msg(&[
+            Msg::PendingAction(PendingActionMsg::CloseReplacePopups),
+            Msg::PendingAction(PendingActionMsg::TransferPendingFile),
+        ]) == Msg::PendingAction(PendingActionMsg::TransferPendingFile)
+        {
+            trace!("User wants to replace file");
+            self.umount_radio_replace();
+            true
+        } else {
+            trace!("The user doesn't want replace file");
+            self.umount_radio_replace();
+            false
+        }
     }
 
     /// Set pending transfer for many files into storage and mount radio
-    pub(crate) fn set_pending_transfer_many(&mut self, files: Vec<&Entry>, dest_path: &str) {
+    pub(crate) fn should_replace_files(&mut self, files: Vec<&Entry>) -> bool {
         let file_names: Vec<&str> = files.iter().map(|x| x.name()).collect();
         self.mount_radio_replace_many(file_names.as_slice());
-        self.context_mut()
-            .store_mut()
-            .set_string(STORAGE_PENDING_TRANSFER, dest_path.to_string());
+        // Wait for answer
+        trace!(
+            "Asking user whether he wants to replace files {:?}",
+            file_names
+        );
+        if self.wait_for_pending_msg(&[
+            Msg::PendingAction(PendingActionMsg::CloseReplacePopups),
+            Msg::PendingAction(PendingActionMsg::TransferPendingFile),
+        ]) == Msg::PendingAction(PendingActionMsg::TransferPendingFile)
+        {
+            trace!("User wants to replace files");
+            self.umount_radio_replace();
+            true
+        } else {
+            trace!("The user doesn't want replace file");
+            self.umount_radio_replace();
+            false
+        }
     }
 
     /// Get file to check for path

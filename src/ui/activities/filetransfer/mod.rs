@@ -58,8 +58,6 @@ use tuirealm::{Application, EventListenerCfg, NoUserEvent};
 
 /// Stores the explorer width
 const STORAGE_EXPLORER_WIDTH: &str = "FT_EW";
-/// Stores the filename of the entry to transfer, when the replace file dialog must be shown
-const STORAGE_PENDING_TRANSFER: &str = "FT_PT";
 
 // -- components
 
@@ -108,8 +106,10 @@ enum Msg {
 
 #[derive(Debug, PartialEq)]
 enum PendingActionMsg {
+    CloseReplacePopups,
     CloseSyncBrowsingMkdirPopup,
     MakePendingDirectory,
+    TransferPendingFile,
 }
 
 #[derive(Debug, PartialEq)]
@@ -132,7 +132,6 @@ enum TransferMsg {
     SaveFileAs(String),
     SearchFile(String),
     TransferFile,
-    TransferPendingFile,
 }
 
 #[derive(Debug, PartialEq)]
@@ -155,7 +154,6 @@ enum UiMsg {
     CloseNewFilePopup,
     CloseOpenWithPopup,
     CloseQuitPopup,
-    CloseReplacePopups,
     CloseRenamePopup,
     CloseSaveAsPopup,
     Disconnect,

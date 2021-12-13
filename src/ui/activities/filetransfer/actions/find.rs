@@ -78,15 +78,16 @@ impl FileTransferActivity {
             SelectedEntry::One(entry) => match self.browser.tab() {
                 FileExplorerTab::FindLocal | FileExplorerTab::Local => {
                     let file_to_check = Self::file_to_check(&entry, opts.save_as.as_ref());
-                    if opts.check_replace
-                        && self.config().get_prompt_on_file_replace()
+                    if self.config().get_prompt_on_file_replace()
                         && self.remote_file_exists(file_to_check.as_path())
-                    {
-                        // Save pending transfer
-                        self.set_pending_transfer(
+                        && !self.should_replace_file(
                             opts.save_as.as_deref().unwrap_or_else(|| entry.name()),
-                        );
-                    } else if let Err(err) = self.filetransfer_send(
+                        )
+                    {
+                        // Do not replace
+                        return;
+                    }
+                    if let Err(err) = self.filetransfer_send(
                         TransferPayload::Any(entry),
                         wrkdir.as_path(),
                         opts.save_as,
@@ -99,15 +100,16 @@ impl FileTransferActivity {
                 }
                 FileExplorerTab::FindRemote | FileExplorerTab::Remote => {
                     let file_to_check = Self::file_to_check(&entry, opts.save_as.as_ref());
-                    if opts.check_replace
-                        && self.config().get_prompt_on_file_replace()
+                    if self.config().get_prompt_on_file_replace()
                         && self.local_file_exists(file_to_check.as_path())
-                    {
-                        // Save pending transfer
-                        self.set_pending_transfer(
+                        && !self.should_replace_file(
                             opts.save_as.as_deref().unwrap_or_else(|| entry.name()),
-                        );
-                    } else if let Err(err) = self.filetransfer_recv(
+                        )
+                    {
+                        // Do not replace
+                        return;
+                    }
+                    if let Err(err) = self.filetransfer_recv(
                         TransferPayload::Any(entry),
                         wrkdir.as_path(),
                         opts.save_as,
@@ -128,7 +130,7 @@ impl FileTransferActivity {
                 // Iter files
                 match self.browser.tab() {
                     FileExplorerTab::FindLocal | FileExplorerTab::Local => {
-                        if opts.check_replace && self.config().get_prompt_on_file_replace() {
+                        if self.config().get_prompt_on_file_replace() {
                             // Check which file would be replaced
                             let existing_files: Vec<&Entry> = entries
                                 .iter()
@@ -138,12 +140,10 @@ impl FileTransferActivity {
                                     )
                                 })
                                 .collect();
-                            // Save pending transfer
-                            if !existing_files.is_empty() {
-                                self.set_pending_transfer_many(
-                                    existing_files,
-                                    &dest_path.to_string_lossy().to_owned(),
-                                );
+                            // Check whether to replace files
+                            if !existing_files.is_empty()
+                                && !self.should_replace_files(existing_files)
+                            {
                                 return;
                             }
                         }
@@ -161,7 +161,7 @@ impl FileTransferActivity {
                         }
                     }
                     FileExplorerTab::FindRemote | FileExplorerTab::Remote => {
-                        if opts.check_replace && self.config().get_prompt_on_file_replace() {
+                        if self.config().get_prompt_on_file_replace() {
                             // Check which file would be replaced
                             let existing_files: Vec<&Entry> = entries
                                 .iter()
@@ -171,13 +171,10 @@ impl FileTransferActivity {
                                     )
                                 })
                                 .collect();
-                            // Save pending transfer
-                            // Save pending transfer
-                            if !existing_files.is_empty() {
-                                self.set_pending_transfer_many(
-                                    existing_files,
-                                    &dest_path.to_string_lossy().to_owned(),
-                                );
+                            // Check whether to replace files
+                            if !existing_files.is_empty()
+                                && !self.should_replace_files(existing_files)
+                            {
                                 return;
                             }
                         }

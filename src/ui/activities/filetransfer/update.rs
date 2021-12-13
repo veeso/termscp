@@ -340,10 +340,6 @@ impl FileTransferActivity {
                 }
                 self.update_browser_file_list_swapped();
             }
-            TransferMsg::TransferPendingFile => {
-                self.umount_radio_replace();
-                self.action_finalize_pending_transfer();
-            }
         }
         // Force redraw
         self.redraw = true;
@@ -411,9 +407,6 @@ impl FileTransferActivity {
             UiMsg::CloseOpenWithPopup => self.umount_openwith(),
             UiMsg::CloseQuitPopup => self.umount_quit(),
             UiMsg::CloseRenamePopup => self.umount_rename(),
-            UiMsg::CloseReplacePopups => {
-                self.umount_radio_replace();
-            }
             UiMsg::CloseSaveAsPopup => self.umount_saveas(),
             UiMsg::Disconnect => {
                 self.disconnect();
