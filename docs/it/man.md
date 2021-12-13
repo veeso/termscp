@@ -169,7 +169,7 @@ Per cambiare pannello ti puoi muovere con le frecce, `<LEFT>` per andare sul pan
 | `<O|F4>`      | Modifica file; Vedi text editor                       | Open        |
 | `<Q|F10>`     | Termina termscp                                       | Quit        |
 | `<R|F6>`      | Rinomina file                                         | Rename      |
-| `<S>`         | Salva file con nome                                   | Save        |
+| `<F2|S>`      | Salva file con nome                                   | Save        |
 | `<U>`         | Vai alla directory padre                              | Upper       |
 | `<V|F3>`      | Apri il file con il programma definito dal sistema    | View        |
 | `<W>`         | Apri il file con il programma specificato             | With        |

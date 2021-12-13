@@ -175,7 +175,7 @@ Para cambiar de panel, debe escribir `<LEFT>` para mover el panel del explorador
 | `<O|F4>`      | Editar archivo                                        | Open        |
 | `<Q|F10>`     | Salir de termscp                                      | Quit        |
 | `<R|F6>`      | Renombrar archivo                                     | Rename      |
-| `<S>`         | Guardar archivo como...                               | Save        |
+| `<F2|S>`      | Guardar archivo como...                               | Save        |
 | `<U>`         | Ir al directorio principal                            | Upper       |
 | `<V|F3>`      | Abrir archivo con el programa predeterminado          | View        |
 | `<W>`         | Abrir archivo con el programa proporcionado           | With        |

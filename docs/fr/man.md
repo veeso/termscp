@@ -173,7 +173,7 @@ Pour changer de panneau, vous devez taper `<LEFT>` pour déplacer le panneau de 
 | `<O|F4>`      | Modifier le fichier                                                 | Open        |
 | `<Q|F10>`     | Quitter termscp                                                     | Quit        |
 | `<R|F6>`      | Renommer le fichier                                                 | Rename      |
-| `<S>`         | Enregistrer le fichier sous...                                      | Save        |
+| `<F2|S>`      | Enregistrer le fichier sous...                                      | Save        |
 | `<U>`         | Aller dans le répertoire parent                                     | Upper       |
 | `<V|F3>`      | Ouvrir le fichier avec le programme défaut pour le type de fichier  | View        |
 | `<W>`         | Ouvrir le fichier avec le programme spécifié                        | With        |
