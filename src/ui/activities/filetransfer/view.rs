@@ -31,7 +31,6 @@ use super::{
     components, Context, FileTransferActivity, Id,
 };
 use crate::explorer::FileSorting;
-use crate::ui::store::Store;
 use crate::utils::ui::draw_area_in;
 // Ext
 use remotefs::fs::Entry;
@@ -117,7 +116,6 @@ impl FileTransferActivity {
     pub(super) fn view(&mut self) {
         self.redraw = false;
         let mut context: Context = self.context.take().unwrap();
-        let store: &mut Store = &mut context.store;
         let _ = context.terminal.raw_mut().draw(|f| {
             // Prepare chunks
             let body = Layout::default()
@@ -157,10 +155,6 @@ impl FileTransferActivity {
                 .direction(Direction::Horizontal)
                 .horizontal_margin(1)
                 .split(bottom_chunks[0]);
-            // If width is unset in the storage, set width
-            if !store.isset(super::STORAGE_EXPLORER_WIDTH) {
-                store.set_unsigned(super::STORAGE_EXPLORER_WIDTH, tabs_chunks[0].width as usize);
-            }
             // Draw footer
             self.app.view(&Id::FooterBar, f, body[1]);
             // Draw explorers
