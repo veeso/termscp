@@ -78,6 +78,27 @@ pub enum Id {
 
 #[derive(Debug, PartialEq)]
 pub enum Msg {
+    Form(FormMsg),
+    Ui(UiMsg),
+    None,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum FormMsg {
+    Connect,
+    DeleteBookmark,
+    DeleteRecent,
+    EnterSetup,
+    InstallUpdate,
+    LoadBookmark(usize),
+    LoadRecent(usize),
+    ProtocolChanged(FileTransferProtocol),
+    Quit,
+    SaveBookmark,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum UiMsg {
     AddressBlurDown,
     AddressBlurUp,
     BookmarksListBlur,
@@ -90,13 +111,6 @@ pub enum Msg {
     CloseKeybindingsPopup,
     CloseQuitPopup,
     CloseSaveBookmark,
-    Connect,
-    DeleteBookmark,
-    DeleteRecent,
-    EnterSetup,
-    InstallUpdate,
-    LoadBookmark(usize),
-    LoadRecent(usize),
     ParamsFormBlur,
     PasswordBlurDown,
     PasswordBlurUp,
@@ -104,8 +118,6 @@ pub enum Msg {
     PortBlurUp,
     ProtocolBlurDown,
     ProtocolBlurUp,
-    ProtocolChanged(FileTransferProtocol),
-    Quit,
     RececentsListBlur,
     S3BucketBlurDown,
     S3BucketBlurUp,
@@ -113,7 +125,6 @@ pub enum Msg {
     S3ProfileBlurUp,
     S3RegionBlurDown,
     S3RegionBlurUp,
-    SaveBookmark,
     BookmarkNameBlur,
     SaveBookmarkPasswordBlur,
     ShowDeleteBookmarkPopup,
@@ -124,7 +135,6 @@ pub enum Msg {
     ShowSaveBookmarkPopup,
     UsernameBlurDown,
     UsernameBlurUp,
-    None,
 }
 
 /// Auth form input mask
