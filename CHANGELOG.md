@@ -40,6 +40,7 @@ Released on FIXME:
     - Selected files will now be rendered with **Reversed, underlined and italic** text modifiers instead of being prepended with `*`.
     - **Midnight commander keys**
       - `<F1>`: Show help
+      - `<F2>`: Save file as (actually I invented this)
       - `<F3>`: View file
       - `<F4>`: Open file (with text editor)
       - `<F5>`: Copy file

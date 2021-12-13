@@ -173,7 +173,7 @@ In order to change panel you need to type `<LEFT>` to move the remote explorer p
 | `<O|F4>`      | Edit file; see  Text editor                           | Open        |
 | `<Q|F10>`     | Quit termscp                                          | Quit        |
 | `<R|F6>`      | Rename file                                           | Rename      |
-| `<S>`         | Save file as...                                       | Save        |
+| `<F2|S>`      | Save file as...                                       | Save        |
 | `<U>`         | Go to parent directory                                | Upper       |
 | `<V|F3>`      | Open file with default program for filetype           | View        |
 | `<W>`         | Open file with provided program                       | With        |

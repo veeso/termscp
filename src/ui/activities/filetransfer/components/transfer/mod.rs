@@ -143,7 +143,7 @@ impl Component<Msg, NoUserEvent> for ExplorerFind {
                 modifiers: KeyModifiers::NONE,
             }) => Some(Msg::Ui(UiMsg::ShowFileInfoPopup)),
             Event::Keyboard(KeyEvent {
-                code: Key::Char('s'),
+                code: Key::Char('s') | Key::Function(2),
                 modifiers: KeyModifiers::NONE,
             }) => Some(Msg::Ui(UiMsg::ShowSaveAsPopup)),
             Event::Keyboard(KeyEvent {
@@ -299,7 +299,7 @@ impl Component<Msg, NoUserEvent> for ExplorerLocal {
                 modifiers: KeyModifiers::NONE,
             }) => Some(Msg::Ui(UiMsg::ShowRenamePopup)),
             Event::Keyboard(KeyEvent {
-                code: Key::Char('s'),
+                code: Key::Char('s') | Key::Function(2),
                 modifiers: KeyModifiers::NONE,
             }) => Some(Msg::Ui(UiMsg::ShowSaveAsPopup)),
             Event::Keyboard(KeyEvent {
@@ -467,7 +467,7 @@ impl Component<Msg, NoUserEvent> for ExplorerRemote {
                 modifiers: KeyModifiers::NONE,
             }) => Some(Msg::Ui(UiMsg::ShowRenamePopup)),
             Event::Keyboard(KeyEvent {
-                code: Key::Char('s'),
+                code: Key::Char('s') | Key::Function(2),
                 modifiers: KeyModifiers::NONE,
             }) => Some(Msg::Ui(UiMsg::ShowSaveAsPopup)),
             Event::Keyboard(KeyEvent {

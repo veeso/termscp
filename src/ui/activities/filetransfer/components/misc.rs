@@ -48,6 +48,8 @@ impl FooterBar {
                 TextSpan::from(" Transfer "),
                 TextSpan::from("<ENTER>").bold().fg(key_color),
                 TextSpan::from(" Enter dir "),
+                TextSpan::from("<F2|S>").bold().fg(key_color),
+                TextSpan::from(" Save as "),
                 TextSpan::from("<F3|V>").bold().fg(key_color),
                 TextSpan::from(" View "),
                 TextSpan::from("<F4|O>").bold().fg(key_color),
