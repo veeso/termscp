@@ -1194,6 +1194,7 @@ mod tests {
         assert_eq!(result[1].name(), "examples.csv");
     }
 
+    #[cfg(target_family = "unix")]
     #[test]
     fn should_create_symlink() {
         let tmpdir: tempfile::TempDir = tempfile::TempDir::new().unwrap();
