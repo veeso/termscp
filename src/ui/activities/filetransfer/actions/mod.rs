@@ -46,6 +46,7 @@ mod pending;
 pub(crate) mod rename;
 pub(crate) mod save;
 pub(crate) mod submit;
+pub(crate) mod symlink;
 
 #[derive(Debug)]
 pub(crate) enum SelectedEntry {
@@ -107,6 +108,16 @@ impl FileTransferActivity {
             }
             SelectedEntryIndex::None => SelectedEntry::None,
         }
+    }
+
+    /// Returns whether only one entry is selected on local host
+    pub(crate) fn is_local_selected_one(&self) -> bool {
+        matches!(self.get_local_selected_entries(), SelectedEntry::One(_))
+    }
+
+    /// Returns whether only one entry is selected on remote host
+    pub(crate) fn is_remote_selected_one(&self) -> bool {
+        matches!(self.get_remote_selected_entries(), SelectedEntry::One(_))
     }
 
     /// Get remote file entry

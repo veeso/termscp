@@ -1051,8 +1051,6 @@ impl FileTransferActivity {
                     LogLevel::Info,
                     format!("Changed directory on local: {}", path.display()),
                 );
-                // Reload files
-                self.reload_local_dir();
                 // Push prev_dir to stack
                 if push {
                     self.local_mut().pushd(prev_dir.as_path())

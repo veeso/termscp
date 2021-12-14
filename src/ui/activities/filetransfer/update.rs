@@ -70,6 +70,18 @@ impl FileTransferActivity {
                 // Reload files
                 self.update_browser_file_list()
             }
+            TransferMsg::CreateSymlink(name) => {
+                self.umount_symlink();
+                self.mount_blocking_wait("Creating symlink…");
+                match self.browser.tab() {
+                    FileExplorerTab::Local => self.action_local_symlink(name),
+                    FileExplorerTab::Remote => self.action_remote_symlink(name),
+                    _ => panic!("Found tab doesn't support SYMLINK"),
+                }
+                self.umount_wait();
+                // Reload files
+                self.update_browser_file_list()
+            }
             TransferMsg::DeleteFile => {
                 self.umount_radio_delete();
                 self.mount_blocking_wait("Removing file(s)…");
@@ -408,6 +420,7 @@ impl FileTransferActivity {
             UiMsg::CloseQuitPopup => self.umount_quit(),
             UiMsg::CloseRenamePopup => self.umount_rename(),
             UiMsg::CloseSaveAsPopup => self.umount_saveas(),
+            UiMsg::CloseSymlinkPopup => self.umount_symlink(),
             UiMsg::Disconnect => {
                 self.disconnect();
                 self.umount_disconnect();
@@ -460,6 +473,20 @@ impl FileTransferActivity {
             UiMsg::ShowQuitPopup => self.mount_quit(),
             UiMsg::ShowRenamePopup => self.mount_rename(),
             UiMsg::ShowSaveAsPopup => self.mount_saveas(),
+            UiMsg::ShowSymlinkPopup => {
+                if match self.browser.tab() {
+                    FileExplorerTab::Local => self.is_local_selected_one(),
+                    FileExplorerTab::Remote => self.is_remote_selected_one(),
+                    FileExplorerTab::FindLocal | FileExplorerTab::FindRemote => false,
+                } {
+                    // Only if only one entry is selected
+                    self.mount_symlink();
+                } else {
+                    self.mount_error(
+                        "Symlink cannot be performed if more than one file is selected",
+                    );
+                }
+            }
             UiMsg::ToggleHiddenFiles => match self.browser.tab() {
                 FileExplorerTab::FindLocal | FileExplorerTab::Local => {
                     self.browser.local_mut().toggle_hidden_files();

@@ -29,6 +29,8 @@ Released on FIXME:
 > ❄️ Winter update 2022 ⛄
 
 - **Enhancements**:
+  - **Synchronized browsing**:
+    - From now on, if synchronized browsing is *enabled* and you try to enter a directory that doesn't exist on the other host, you will be asked whether you'd like to create the directory.
   - **Find** feature:
     - A "wait popup" will now be displayed while searching files
     - If find command doesn't return any result show an info dialog and not an empty explorer
@@ -60,11 +62,11 @@ Released on FIXME:
   - The supported parameters are described at <https://github.com/veeso/ssh2-config>.
   - If the field is left empty, **no file will be loaded**.
   - **By default, no file will be used**.
+- **Symlink command**:
+  - You can now create symlinks, pressing `<K>` key on the file explorer.
 - **Less verbose logging**:
   - By default the log level is now set to `INFO`
   - It is now possible to enable the `TRACE` level with the `-D` CLI option.
-- **Synchronized browsing**:
-  - From now on, if synchronized browsing is *enabled* and you try to enter a directory that doesn't exist on the other host, you will be asked whether you'd like to create the directory.
 - Dependencies:
   - Updated `tui-realm` to `1.3.0`
   - Updated `tui-realm-stdlib` to `1.1.4`

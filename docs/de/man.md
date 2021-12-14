@@ -168,6 +168,7 @@ In order to change panel you need to type `<LEFT>` to move the remote explorer p
 | `<F>`         | Search for files (wild match is supported)            | Find        |
 | `<G>`         | Go to supplied path                                   | Go to       |
 | `<H|F1>`      | Show help                                             | Help        |
+| `<K>`         | Create symlink pointing to the currently selected entry | symlinK     |
 | `<I>`         | Show info about selected file or directory            | Info        |
 | `<L>`         | Reload current directory's content / Clear selection  | List        |
 | `<M>`         | Select a file                                         | Mark         |
@@ -175,7 +176,7 @@ In order to change panel you need to type `<LEFT>` to move the remote explorer p
 | `<O|F4>`      | Edit file; see  Text editor                           | Open        |
 | `<Q|F10>`     | Quit termscp                                          | Quit        |
 | `<R|F6>`      | Rename file                                           | Rename      |
-| `<F2|S>`      | Save file as...                                       | Save        |
+| `<S|F2>`      | Save file as...                                       | Save        |
 | `<U>`         | Go to parent directory                                | Upper       |
 | `<V|F3>`      | Open file with default program for filetype           | View        |
 | `<W>`         | Open file with provided program                       | With        |

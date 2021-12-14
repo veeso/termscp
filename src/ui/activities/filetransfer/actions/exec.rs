@@ -34,8 +34,6 @@ impl FileTransferActivity {
             Ok(output) => {
                 // Reload files
                 self.log(LogLevel::Info, format!("\"{}\": {}", input, output));
-                // Reload entries
-                self.reload_local_dir();
             }
             Err(err) => {
                 // Report err
@@ -55,7 +53,6 @@ impl FileTransferActivity {
                     LogLevel::Info,
                     format!("\"{}\" (exitcode: {}): {}", input, rc, output),
                 );
-                self.reload_remote_dir();
             }
             Err(err) => {
                 // Report err

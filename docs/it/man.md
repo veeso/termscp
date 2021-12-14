@@ -163,13 +163,14 @@ Per cambiare pannello ti puoi muovere con le frecce, `<LEFT>` per andare sul pan
 | `<G>`         | Vai al percorso indicato                              | Go to       |
 | `<H|F1>`      | Mostra help                                           | Help        |
 | `<I>`         | Mostra informazioni per il file selezionato           | Info        |
+| `<K>`         | Crea un link simbolico che punta al file selezionato  | symlinK     |
 | `<L>`         | Ricarica posizione corrente / pulisci selezione file  | List        |
-| `<M>`         | Seleziona file                                        | Mark         |
+| `<M>`         | Seleziona file                                        | Mark        |
 | `<N>`         | Crea nuovo file con il nome fornito                   | New         |
 | `<O|F4>`      | Modifica file; Vedi text editor                       | Open        |
 | `<Q|F10>`     | Termina termscp                                       | Quit        |
 | `<R|F6>`      | Rinomina file                                         | Rename      |
-| `<F2|S>`      | Salva file con nome                                   | Save        |
+| `<S|F2>`      | Salva file con nome                                   | Save        |
 | `<U>`         | Vai alla directory padre                              | Upper       |
 | `<V|F3>`      | Apri il file con il programma definito dal sistema    | View        |
 | `<W>`         | Apri il file con il programma specificato             | With        |

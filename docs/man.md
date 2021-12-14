@@ -144,43 +144,44 @@ In order to change panel you need to type `<LEFT>` to move the remote explorer p
 
 ### Keybindings ⌨
 
-| Key           | Command                                               | Reminder    |
-|---------------|-------------------------------------------------------|-------------|
-| `<ESC>`       | Disconnect from remote; return to authentication page |             |
-| `<BACKSPACE>` | Go to previous directory in stack                     |             |
-| `<TAB>`       | Switch explorer tab                                   |             |
-| `<RIGHT>`     | Move to remote explorer tab                           |             |
-| `<LEFT>`      | Move to local explorer tab                            |             |
-| `<UP>`        | Move up in selected list                              |             |
-| `<DOWN>`      | Move down in selected list                            |             |
-| `<PGUP>`      | Move up in selected list by 8 rows                    |             |
-| `<PGDOWN>`    | Move down in selected list by 8 rows                  |             |
-| `<ENTER>`     | Enter directory                                       |             |
-| `<SPACE>`     | Upload / download selected file                       |             |
-| `<BACKTAB>`   | Switch between log tab and explorer                   |             |
-| `<A>`         | Toggle hidden files                                   | All         |
-| `<B>`         | Sort files by                                         | Bubblesort? |
-| `<C|F5>`      | Copy file/directory                                   | Copy        |
-| `<D|F7>`      | Make directory                                        | Directory   |
-| `<E|F8|DEL>`  | Delete file                                           | Erase       |
-| `<F>`         | Search for files (wild match is supported)            | Find        |
-| `<G>`         | Go to supplied path                                   | Go to       |
-| `<H|F1>`      | Show help                                             | Help        |
-| `<I>`         | Show info about selected file or directory            | Info        |
-| `<L>`         | Reload current directory's content / Clear selection  | List        |
-| `<M>`         | Select a file                                         | Mark         |
-| `<N>`         | Create new file with provided name                    | New         |
-| `<O|F4>`      | Edit file; see  Text editor                           | Open        |
-| `<Q|F10>`     | Quit termscp                                          | Quit        |
-| `<R|F6>`      | Rename file                                           | Rename      |
-| `<F2|S>`      | Save file as...                                       | Save        |
-| `<U>`         | Go to parent directory                                | Upper       |
-| `<V|F3>`      | Open file with default program for filetype           | View        |
-| `<W>`         | Open file with provided program                       | With        |
-| `<X>`         | Execute a command                                     | eXecute     |
-| `<Y>`         | Toggle synchronized browsing                          | sYnc        |
-| `<CTRL+A>`    | Select all files                                      |             |
-| `<CTRL+C>`    | Abort file transfer process                           |             |
+| Key           | Command                                                 | Reminder    |
+|---------------|---------------------------------------------------------|-------------|
+| `<ESC>`       | Disconnect from remote; return to authentication page   |             |
+| `<BACKSPACE>` | Go to previous directory in stack                       |             |
+| `<TAB>`       | Switch explorer tab                                     |             |
+| `<RIGHT>`     | Move to remote explorer tab                             |             |
+| `<LEFT>`      | Move to local explorer tab                              |             |
+| `<UP>`        | Move up in selected list                                |             |
+| `<DOWN>`      | Move down in selected list                              |             |
+| `<PGUP>`      | Move up in selected list by 8 rows                      |             |
+| `<PGDOWN>`    | Move down in selected list by 8 rows                    |             |
+| `<ENTER>`     | Enter directory                                         |             |
+| `<SPACE>`     | Upload / download selected file                         |             |
+| `<BACKTAB>`   | Switch between log tab and explorer                     |             |
+| `<A>`         | Toggle hidden files                                     | All         |
+| `<B>`         | Sort files by                                           | Bubblesort? |
+| `<C|F5>`      | Copy file/directory                                     | Copy        |
+| `<D|F7>`      | Make directory                                          | Directory   |
+| `<E|F8|DEL>`  | Delete file                                             | Erase       |
+| `<F>`         | Search for files (wild match is supported)              | Find        |
+| `<G>`         | Go to supplied path                                     | Go to       |
+| `<H|F1>`      | Show help                                               | Help        |
+| `<I>`         | Show info about selected file or directory              | Info        |
+| `<K>`         | Create symlink pointing to the currently selected entry | symlinK     |
+| `<L>`         | Reload current directory's content / Clear selection    | List        |
+| `<M>`         | Select a file                                           | Mark        |
+| `<N>`         | Create new file with provided name                      | New         |
+| `<O|F4>`      | Edit file; see  Text editor                             | Open        |
+| `<Q|F10>`     | Quit termscp                                            | Quit        |
+| `<R|F6>`      | Rename file                                             | Rename      |
+| `<S|F2>`      | Save file as...                                         | Save        |
+| `<U>`         | Go to parent directory                                  | Up          |
+| `<V|F3>`      | Open file with default program for filetype             | View        |
+| `<W>`         | Open file with provided program                         | With        |
+| `<X>`         | Execute a command                                       | eXecute     |
+| `<Y>`         | Toggle synchronized browsing                            | sYnc        |
+| `<CTRL+A>`    | Select all files                                        |             |
+| `<CTRL+C>`    | Abort file transfer process                             |             |
 
 ### Work on multiple files 🥷
 

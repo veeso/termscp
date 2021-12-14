@@ -56,8 +56,6 @@ impl FileTransferActivity {
                 }
             }
         }
-        // Reload entries
-        self.reload_local_dir();
     }
 
     pub(crate) fn action_edit_remote_file(&mut self) {
@@ -80,8 +78,6 @@ impl FileTransferActivity {
                 }
             }
         }
-        // Reload entries
-        self.reload_remote_dir();
     }
 
     /// Edit a file on localhost

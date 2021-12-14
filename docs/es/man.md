@@ -146,43 +146,44 @@ Para cambiar de panel, debe escribir `<LEFT>` para mover el panel del explorador
 
 ### Keybindings ⌨
 
-| Key           | Command                                               | Reminder    |
-|---------------|-------------------------------------------------------|-------------|
-| `<ESC>`       | Desconecte; volver a la página de autenticación       |             |
-| `<BACKSPACE>` | Ir al directorio anterior en la pila                  |             |
-| `<TAB>`       | Cambiar pestaña del explorador                        |             |
-| `<RIGHT>`     | Mover a la pestaña del explorador remoto              |             |
-| `<LEFT>`      | Mover a la pestaña del explorador local               |             |
-| `<UP>`        | Subir en la lista seleccionada                        |             |
-| `<DOWN>`      | Bajar en la lista seleccionada                        |             |
-| `<PGUP>`      | Subir 8 filas en la lista seleccionada                |             |
-| `<PGDOWN>`    | Bajar 8 filas en la lista seleccionada                |             |
-| `<ENTER>`     | Entrar directorio                                     |             |
-| `<SPACE>`     | Cargar / descargar el archivo seleccionado            |             |
-| `<BACKTAB>`   | Cambiar entre la pestaña de registro y el explorador  |             |
-| `<A>`         | Alternar archivos ocultos                             | All         |
-| `<B>`         | Ordenar archivos por                                  | Bubblesort? |
-| `<C|F5>`      | Copiar archivo / directorio                           | Copy        |
-| `<D|F7>`      | Hacer directorio                                      | Directory   |
-| `<E|F8|DEL>`  | Eliminar archivo                                      | Erase       |
-| `<F>`         | Búsqueda de archivos                                  | Find        |
-| `<G>`         | Ir a la ruta proporcionada                            | Go to       |
-| `<H|F1>`      | Mostrar ayuda                                         | Help        |
-| `<I>`         | Mostrar información sobre el archivo                  | Info        |
-| `<L>`         | Recargar contenido del directorio / Borrar selección  | List        |
-| `<M>`         | Seleccione un archivo                                 | Mark        |
-| `<N>`         | Crear un nuevo archivo con el nombre proporcionado    | New         |
-| `<O|F4>`      | Editar archivo                                        | Open        |
-| `<Q|F10>`     | Salir de termscp                                      | Quit        |
-| `<R|F6>`      | Renombrar archivo                                     | Rename      |
-| `<F2|S>`      | Guardar archivo como...                               | Save        |
-| `<U>`         | Ir al directorio principal                            | Upper       |
-| `<V|F3>`      | Abrir archivo con el programa predeterminado          | View        |
-| `<W>`         | Abrir archivo con el programa proporcionado           | With        |
-| `<X>`         | Ejecutar un comando                                   | eXecute     |
-| `<Y>`         | Alternar navegación sincronizada                      | sYnc        |
-| `<CTRL+A>`    | Seleccionar todos los archivos                        |             |
-| `<CTRL+C>`    | Abortar el proceso de transferencia de archivos       |             |
+| Key           | Command                                                                    | Reminder    |
+|---------------|----------------------------------------------------------------------------|-------------|
+| `<ESC>`       | Desconecte; volver a la página de autenticación                            |             |
+| `<BACKSPACE>` | Ir al directorio anterior en la pila                                       |             |
+| `<TAB>`       | Cambiar pestaña del explorador                                             |             |
+| `<RIGHT>`     | Mover a la pestaña del explorador remoto                                   |             |
+| `<LEFT>`      | Mover a la pestaña del explorador local                                    |             |
+| `<UP>`        | Subir en la lista seleccionada                                             |             |
+| `<DOWN>`      | Bajar en la lista seleccionada                                             |             |
+| `<PGUP>`      | Subir 8 filas en la lista seleccionada                                     |             |
+| `<PGDOWN>`    | Bajar 8 filas en la lista seleccionada                                     |             |
+| `<ENTER>`     | Entrar directorio                                                          |             |
+| `<SPACE>`     | Cargar / descargar el archivo seleccionado                                 |             |
+| `<BACKTAB>`   | Cambiar entre la pestaña de registro y el explorador                       |             |
+| `<A>`         | Alternar archivos ocultos                                                  | All         |
+| `<B>`         | Ordenar archivos por                                                       | Bubblesort? |
+| `<C|F5>`      | Copiar archivo / directorio                                                | Copy        |
+| `<D|F7>`      | Hacer directorio                                                           | Directory   |
+| `<E|F8|DEL>`  | Eliminar archivo                                                           | Erase       |
+| `<F>`         | Búsqueda de archivos                                                       | Find        |
+| `<G>`         | Ir a la ruta proporcionada                                                 | Go to       |
+| `<H|F1>`      | Mostrar ayuda                                                              | Help        |
+| `<I>`         | Mostrar información sobre el archivo                                       | Info        |
+| `<K>`         | Crear un enlace simbólico que apunte a la entrada seleccionada actualmente | symlinK     |
+| `<L>`         | Recargar contenido del directorio / Borrar selección                       | List        |
+| `<M>`         | Seleccione un archivo                                                      | Mark        |
+| `<N>`         | Crear un nuevo archivo con el nombre proporcionado                         | New         |
+| `<O|F4>`      | Editar archivo                                                             | Open        |
+| `<Q|F10>`     | Salir de termscp                                                           | Quit        |
+| `<R|F6>`      | Renombrar archivo                                                          | Rename      |
+| `<S|F2>`      | Guardar archivo como...                                                    | Save        |
+| `<U>`         | Ir al directorio principal                                                 | Upper       |
+| `<V|F3>`      | Abrir archivo con el programa predeterminado                               | View        |
+| `<W>`         | Abrir archivo con el programa proporcionado                                | With        |
+| `<X>`         | Ejecutar un comando                                                        | eXecute     |
+| `<Y>`         | Alternar navegación sincronizada                                           | sYnc        |
+| `<CTRL+A>`    | Seleccionar todos los archivos                                             |             |
+| `<CTRL+C>`    | Abortar el proceso de transferencia de archivos                            |             |
 
 ### Trabaja en varios archivos 🥷
 

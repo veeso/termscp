@@ -283,6 +283,10 @@ impl Component<Msg, NoUserEvent> for ExplorerLocal {
                 modifiers: KeyModifiers::NONE,
             }) => Some(Msg::Ui(UiMsg::ShowFileInfoPopup)),
             Event::Keyboard(KeyEvent {
+                code: Key::Char('k'),
+                modifiers: KeyModifiers::NONE,
+            }) => Some(Msg::Ui(UiMsg::ShowSymlinkPopup)),
+            Event::Keyboard(KeyEvent {
                 code: Key::Char('l'),
                 modifiers: KeyModifiers::NONE,
             }) => Some(Msg::Transfer(TransferMsg::ReloadDir)),
@@ -450,6 +454,10 @@ impl Component<Msg, NoUserEvent> for ExplorerRemote {
                 code: Key::Char('i'),
                 modifiers: KeyModifiers::NONE,
             }) => Some(Msg::Ui(UiMsg::ShowFileInfoPopup)),
+            Event::Keyboard(KeyEvent {
+                code: Key::Char('k'),
+                modifiers: KeyModifiers::NONE,
+            }) => Some(Msg::Ui(UiMsg::ShowSymlinkPopup)),
             Event::Keyboard(KeyEvent {
                 code: Key::Char('l'),
                 modifiers: KeyModifiers::NONE,

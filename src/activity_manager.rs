@@ -43,7 +43,7 @@ use std::time::Duration;
 
 /// ### NextActivity
 ///
-/// NextActivity identified the next identity to run once the current has ended
+/// NextActivity identifies the next identity to run once the current has ended
 pub enum NextActivity {
     Authentication,
     FileTransfer,
