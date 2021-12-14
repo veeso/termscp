@@ -216,6 +216,11 @@ impl FileTransferActivity {
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::SaveAsPopup, f, popup);
+            } else if self.app.mounted(&Id::SymlinkPopup) {
+                let popup = draw_area_in(f.size(), 50, 10);
+                f.render_widget(Clear, popup);
+                // make popup
+                self.app.view(&Id::SymlinkPopup, f, popup);
             } else if self.app.mounted(&Id::ExecPopup) {
                 let popup = draw_area_in(f.size(), 40, 10);
                 f.render_widget(Clear, popup);
@@ -797,6 +802,23 @@ impl FileTransferActivity {
             .is_ok());
     }
 
+    pub(super) fn mount_symlink(&mut self) {
+        let input_color = self.theme().misc_input_dialog;
+        assert!(self
+            .app
+            .remount(
+                Id::SymlinkPopup,
+                Box::new(components::SymlinkPopup::new(input_color)),
+                vec![],
+            )
+            .is_ok());
+        assert!(self.app.active(&Id::SymlinkPopup).is_ok());
+    }
+
+    pub(super) fn umount_symlink(&mut self) {
+        let _ = self.app.umount(&Id::SymlinkPopup);
+    }
+
     pub(super) fn mount_sync_browsing_mkdir_popup(&mut self, dir_name: &str) {
         let color = self.theme().misc_info_dialog;
         assert!(self
@@ -969,9 +991,14 @@ impl FileTransferActivity {
                                                                                                 Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
                                                                                                     Id::SyncBrowsingMkdirPopup,
                                                                                                 )))),
-                                                                                                Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
-                                                                                                    Id::WaitPopup,
-                                                                                                )))),
+                                                                                                Box::new(SubClause::And(
+                                                                                                    Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
+                                                                                                        Id::SymlinkPopup,
+                                                                                                    )))),
+                                                                                                    Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
+                                                                                                        Id::WaitPopup,
+                                                                                                    )))),
+                                                                                                )),
                                                                                             )),
                                                                                         )),
                                                                                     )),

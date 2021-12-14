@@ -46,7 +46,7 @@ pub use popups::{
     FindPopup, GoToPopup, KeybindingsPopup, MkdirPopup, NewfilePopup, OpenWithPopup,
     ProgressBarFull, ProgressBarPartial, QuitPopup, RenamePopup, ReplacePopup,
     ReplacingFilesListPopup, SaveAsPopup, SortingPopup, StatusBarLocal, StatusBarRemote,
-    SyncBrowsingMkdirPopup, WaitPopup,
+    SymlinkPopup, SyncBrowsingMkdirPopup, WaitPopup,
 };
 pub use transfer::{ExplorerFind, ExplorerLocal, ExplorerRemote};
 

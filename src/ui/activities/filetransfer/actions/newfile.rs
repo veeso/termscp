@@ -59,8 +59,6 @@ impl FileTransferActivity {
                 format!("Created file \"{}\"", file_path.display()),
             );
         }
-        // Reload files
-        self.reload_local_dir();
     }
 
     pub(crate) fn action_remote_newfile(&mut self, input: String) {
@@ -123,8 +121,6 @@ impl FileTransferActivity {
                                 LogLevel::Info,
                                 format!("Created file \"{}\"", file_path.display()),
                             );
-                            // Reload files
-                            self.reload_remote_dir();
                         }
                     }
                 }

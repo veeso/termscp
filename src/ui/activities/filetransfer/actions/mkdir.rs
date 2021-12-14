@@ -36,8 +36,6 @@ impl FileTransferActivity {
             Ok(_) => {
                 // Reload files
                 self.log(LogLevel::Info, format!("Created directory \"{}\"", input));
-                // Reload entries
-                self.reload_local_dir();
             }
             Err(err) => {
                 // Report err
@@ -56,7 +54,6 @@ impl FileTransferActivity {
             Ok(_) => {
                 // Reload files
                 self.log(LogLevel::Info, format!("Created directory \"{}\"", input));
-                self.reload_remote_dir();
             }
             Err(err) => {
                 // Report err

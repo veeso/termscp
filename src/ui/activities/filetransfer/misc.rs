@@ -213,6 +213,7 @@ impl FileTransferActivity {
 
     /// Update local file list
     pub(super) fn update_local_filelist(&mut self) {
+        self.reload_local_dir();
         // Get width
         let width = self
             .context_mut()
@@ -260,6 +261,7 @@ impl FileTransferActivity {
 
     /// Update remote file list
     pub(super) fn update_remote_filelist(&mut self) {
+        self.reload_remote_dir();
         let width = self
             .context_mut()
             .terminal()

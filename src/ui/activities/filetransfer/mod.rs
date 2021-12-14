@@ -87,6 +87,7 @@ enum Id {
     SortingPopup,
     StatusBarLocal,
     StatusBarRemote,
+    SymlinkPopup,
     SyncBrowsingMkdirPopup,
     WaitPopup,
 }
@@ -111,6 +112,7 @@ enum PendingActionMsg {
 enum TransferMsg {
     AbortTransfer,
     CopyFileTo(String),
+    CreateSymlink(String),
     DeleteFile,
     EnterDirectory,
     ExecuteCmd(String),
@@ -151,6 +153,7 @@ enum UiMsg {
     CloseQuitPopup,
     CloseRenamePopup,
     CloseSaveAsPopup,
+    CloseSymlinkPopup,
     Disconnect,
     ExplorerBackTabbed,
     LogBackTabbed,
@@ -171,6 +174,7 @@ enum UiMsg {
     ShowQuitPopup,
     ShowRenamePopup,
     ShowSaveAsPopup,
+    ShowSymlinkPopup,
     ToggleHiddenFiles,
     ToggleSyncBrowsing,
 }

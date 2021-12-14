@@ -672,6 +672,21 @@ impl Localhost {
         self.iter_search(self.wrkdir.as_path(), &WildMatch::new(search))
     }
 
+    /// Create a symlink at path pointing at target
+    #[cfg(target_family = "unix")]
+    pub fn symlink(&self, path: &Path, target: &Path) -> Result<(), HostError> {
+        let path = self.to_path(path);
+        std::os::unix::fs::symlink(target, path.as_path()).map_err(|e| {
+            error!(
+                "Failed to create symlink at {} pointing at {}: {}",
+                path.display(),
+                target.display(),
+                e
+            );
+            HostError::new(HostErrorType::CouldNotCreateFile, Some(e), path.as_path())
+        })
+    }
+
     // -- privates
 
     /// Recursive call for `find` method.
@@ -1177,6 +1192,24 @@ mod tests {
         assert_eq!(result.len(), 2);
         assert_eq!(result[0].name(), "examples");
         assert_eq!(result[1].name(), "examples.csv");
+    }
+
+    #[test]
+    fn should_create_symlink() {
+        let tmpdir: tempfile::TempDir = tempfile::TempDir::new().unwrap();
+        let dir_path: &Path = tmpdir.path();
+        // Make file
+        assert!(make_file_at(dir_path, "pippo.txt").is_ok());
+        let host: Localhost = Localhost::new(PathBuf::from(dir_path)).ok().unwrap();
+        let mut p = dir_path.to_path_buf();
+        p.push("pippo.txt");
+        // Make symlink
+        assert!(host.symlink(Path::new("link.txt"), p.as_path()).is_ok());
+        // Fail symlink
+        assert!(host.symlink(Path::new("link.txt"), p.as_path()).is_err());
+        assert!(host
+            .symlink(Path::new("/tmp/oooo/aaaa"), p.as_path())
+            .is_err());
     }
 
     #[test]

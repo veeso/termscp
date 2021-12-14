@@ -36,8 +36,6 @@ impl FileTransferActivity {
             SelectedEntry::One(entry) => {
                 // Delete file
                 self.local_remove_file(&entry);
-                // Reload
-                self.reload_local_dir();
             }
             SelectedEntry::Many(entries) => {
                 // Iter files
@@ -45,8 +43,6 @@ impl FileTransferActivity {
                     // Delete file
                     self.local_remove_file(entry);
                 }
-                // Reload entries
-                self.reload_local_dir();
             }
             SelectedEntry::None => {}
         }
@@ -57,8 +53,6 @@ impl FileTransferActivity {
             SelectedEntry::One(entry) => {
                 // Delete file
                 self.remote_remove_file(&entry);
-                // Reload
-                self.reload_remote_dir();
             }
             SelectedEntry::Many(entries) => {
                 // Iter files
@@ -66,8 +60,6 @@ impl FileTransferActivity {
                     // Delete file
                     self.remote_remove_file(entry);
                 }
-                // Reload entries
-                self.reload_remote_dir();
             }
             SelectedEntry::None => {}
         }

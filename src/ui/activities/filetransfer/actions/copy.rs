@@ -38,8 +38,6 @@ impl FileTransferActivity {
             SelectedEntry::One(entry) => {
                 let dest_path: PathBuf = PathBuf::from(input);
                 self.local_copy_file(&entry, dest_path.as_path());
-                // Reload entries
-                self.reload_local_dir();
             }
             SelectedEntry::Many(entries) => {
                 // Try to copy each file to Input/{FILE_NAME}
@@ -50,8 +48,6 @@ impl FileTransferActivity {
                     dest_path.push(entry.name());
                     self.local_copy_file(entry, dest_path.as_path());
                 }
-                // Reload entries
-                self.reload_local_dir();
             }
             SelectedEntry::None => {}
         }
@@ -63,8 +59,6 @@ impl FileTransferActivity {
             SelectedEntry::One(entry) => {
                 let dest_path: PathBuf = PathBuf::from(input);
                 self.remote_copy_file(entry, dest_path.as_path());
-                // Reload entries
-                self.reload_remote_dir();
             }
             SelectedEntry::Many(entries) => {
                 // Try to copy each file to Input/{FILE_NAME}
@@ -75,8 +69,6 @@ impl FileTransferActivity {
                     dest_path.push(entry.name());
                     self.remote_copy_file(entry, dest_path.as_path());
                 }
-                // Reload entries
-                self.reload_remote_dir();
             }
             SelectedEntry::None => {}
         }
