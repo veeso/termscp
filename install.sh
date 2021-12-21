@@ -188,8 +188,13 @@ install_on_bsd() {
 install_on_arch_linux() {
     pkg="$1"
     info "Detected ${YELLOW}${pkg}${NO_COLOR} on your system"
-    confirm "${YELLOW}rust${NO_COLOR} is required to install ${GREEN}termscp${NO_COLOR}; would you like to proceed?"
-    $pkg -S rust
+    # check if rust is already installed
+    has cargo
+    CARGO=$?
+    if [ $CARGO -ne 0 ]; then
+        confirm "${YELLOW}rust${NO_COLOR} is required to install ${GREEN}termscp${NO_COLOR}; would you like to proceed?"
+        $pkg -S rust
+    fi
     info "Installing ${GREEN}termscp${NO_COLOR} AUR package…"
     $pkg -S termscp
 }
