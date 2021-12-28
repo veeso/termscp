@@ -135,6 +135,7 @@ pub enum UiMsg {
     ShowSaveBookmarkPopup,
     UsernameBlurDown,
     UsernameBlurUp,
+    WindowResized,
 }
 
 /// Auth form input mask

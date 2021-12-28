@@ -255,6 +255,9 @@ impl AuthActivity {
             UiMsg::UsernameBlurUp => {
                 assert!(self.app.active(&Id::Port).is_ok());
             }
+            UiMsg::WindowResized => {
+                self.redraw = true;
+            }
         }
 
         None

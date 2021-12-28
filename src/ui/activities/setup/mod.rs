@@ -145,6 +145,7 @@ pub enum CommonMsg {
     ShowKeybindings,
     ShowQuitPopup,
     ShowSavePopup,
+    WindowResized,
 }
 
 #[derive(Debug, Clone, PartialEq)]

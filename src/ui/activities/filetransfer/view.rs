@@ -896,6 +896,7 @@ impl FileTransferActivity {
                         }),
                         Self::no_popup_mounted_clause(),
                     ),
+                    Sub::new(SubEventClause::WindowResize, SubClause::Always)
                 ]
             )
             .is_ok());

@@ -116,6 +116,9 @@ impl SetupActivity {
             CommonMsg::ShowSavePopup => {
                 self.mount_save_popup();
             }
+            CommonMsg::WindowResized => {
+                self.redraw = true;
+            }
         }
         None
     }
