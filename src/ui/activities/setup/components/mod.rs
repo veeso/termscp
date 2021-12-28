@@ -81,6 +81,7 @@ impl Component<Msg, NoUserEvent> for GlobalListener {
                 code: Key::Function(4),
                 modifiers: KeyModifiers::NONE,
             }) => Some(Msg::Common(CommonMsg::ShowSavePopup)),
+            Event::WindowResize(_, _) => Some(Msg::Common(CommonMsg::WindowResized)),
             _ => None,
         }
     }

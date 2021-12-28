@@ -177,6 +177,7 @@ enum UiMsg {
     ShowSymlinkPopup,
     ToggleHiddenFiles,
     ToggleSyncBrowsing,
+    WindowResized,
 }
 
 /// Log level type

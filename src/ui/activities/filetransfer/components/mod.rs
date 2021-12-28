@@ -69,6 +69,7 @@ impl Component<Msg, NoUserEvent> for GlobalListener {
                 code: Key::Char('h') | Key::Function(1),
                 modifiers: KeyModifiers::NONE,
             }) => Some(Msg::Ui(UiMsg::ShowKeybindingsPopup)),
+            Event::WindowResize(_, _) => Some(Msg::Ui(UiMsg::WindowResized)),
             _ => None,
         }
     }

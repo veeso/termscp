@@ -84,6 +84,7 @@ impl Component<Msg, NoUserEvent> for GlobalListener {
                 code: Key::Char('s'),
                 modifiers: KeyModifiers::CONTROL,
             }) => Some(Msg::Ui(UiMsg::ShowSaveBookmarkPopup)),
+            Event::WindowResize(_, _) => Some(Msg::Ui(UiMsg::WindowResized)),
             _ => None,
         }
     }

@@ -503,6 +503,9 @@ impl FileTransferActivity {
                 self.browser.toggle_sync_browsing();
                 self.refresh_remote_status_bar();
             }
+            UiMsg::WindowResized => {
+                self.redraw = true;
+            }
         }
         None
     }
