@@ -895,7 +895,7 @@ impl Component<Msg, NoUserEvent> for InputColor {
             }
             Event::Keyboard(KeyEvent {
                 code: Key::Char(ch),
-                modifiers: KeyModifiers::NONE,
+                modifiers: KeyModifiers::NONE | KeyModifiers::SHIFT,
             }) => {
                 let result = self.perform(Cmd::Type(ch));
                 self.update_color(result)

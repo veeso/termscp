@@ -203,7 +203,7 @@ impl AuthActivity {
                     .app
                     .active(match self.input_mask() {
                         InputMask::Generic => &Id::Password,
-                        InputMask::AwsS3 => &Id::S3Profile,
+                        InputMask::AwsS3 => &Id::S3SessionToken,
                     })
                     .is_ok());
             }
@@ -223,10 +223,34 @@ impl AuthActivity {
                 assert!(self.app.active(&Id::S3Bucket).is_ok());
             }
             UiMsg::S3ProfileBlurDown => {
-                assert!(self.app.active(&Id::Protocol).is_ok());
+                assert!(self.app.active(&Id::S3AccessKey).is_ok());
             }
             UiMsg::S3ProfileBlurUp => {
                 assert!(self.app.active(&Id::S3Region).is_ok());
+            }
+            UiMsg::S3AccessKeyBlurDown => {
+                assert!(self.app.active(&Id::S3SecretAccessKey).is_ok());
+            }
+            UiMsg::S3AccessKeyBlurUp => {
+                assert!(self.app.active(&Id::S3Profile).is_ok());
+            }
+            UiMsg::S3SecretAccessKeyBlurDown => {
+                assert!(self.app.active(&Id::S3SecurityToken).is_ok());
+            }
+            UiMsg::S3SecretAccessKeyBlurUp => {
+                assert!(self.app.active(&Id::S3AccessKey).is_ok());
+            }
+            UiMsg::S3SecurityTokenBlurDown => {
+                assert!(self.app.active(&Id::S3SessionToken).is_ok());
+            }
+            UiMsg::S3SecurityTokenBlurUp => {
+                assert!(self.app.active(&Id::S3SecretAccessKey).is_ok());
+            }
+            UiMsg::S3SessionTokenBlurDown => {
+                assert!(self.app.active(&Id::Protocol).is_ok());
+            }
+            UiMsg::S3SessionTokenBlurUp => {
+                assert!(self.app.active(&Id::S3SecurityToken).is_ok());
             }
             UiMsg::SaveBookmarkPasswordBlur => {
                 assert!(self.app.active(&Id::BookmarkName).is_ok());

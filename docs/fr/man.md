@@ -110,11 +110,14 @@ Le mot de passe peut être fourni de 3 manières lorsque l'argument d'adresse es
 ## Identifiants AWS S3 🦊
 
 Afin de vous connecter à un compartiment Aws S3, vous devez évidemment fournir des informations d'identification.
-Il existe essentiellement deux manières d'y parvenir, et comme vous l'avez probablement déjà remarqué, vous ne pouvez **pas** le faire via le formulaire d'authentification.
+Il existe essentiellement trois manières d'y parvenir.
 Voici donc les moyens de fournir les informations d'identification pour s3 :
 
-1. Utilisez votre fichier d'informations d'identification : configurez simplement l'AWS cli via `aws configure` et vos informations d'identification doivent déjà se trouver dans `~/.aws/credentials`. Si vous utilisez un profil différent de "default", fournissez-le simplement dans le champ profile du formulaire d'authentification.
-2. **Variables d'environnement** : vous pouvez toujours fournir vos informations d'identification en tant que variables d'environnement. Gardez à l'esprit que ces informations d'identification **remplaceront toujours** les informations d'identification situées dans le fichier « credentials ». Voir comment configurer l'environnement ci-dessous :
+1. Authentication form:
+   1. Vous pouvez fournir le `access_key` (devrait être obligatoire), le `secret_access_key` (devrait être obligatoire), `security_token` et le `session_token`
+   2. Si vous enregistrez la connexion s3 en tant que signet, ces informations d'identification seront enregistrées en tant que chaîne AES-256/BASE64 cryptée dans votre fichier de signets (à l'exception du jeton de sécurité et du jeton de session qui sont censés être des informations d'identification temporaires).
+2. Utilisez votre fichier d'informations d'identification : configurez simplement l'AWS cli via `aws configure` et vos informations d'identification doivent déjà se trouver dans `~/.aws/credentials`. Si vous utilisez un profil différent de "default", fournissez-le simplement dans le champ profile du formulaire d'authentification.
+3. **Variables d'environnement** : vous pouvez toujours fournir vos informations d'identification en tant que variables d'environnement. Gardez à l'esprit que ces informations d'identification **remplaceront toujours** les informations d'identification situées dans le fichier « credentials ». Voir comment configurer l'environnement ci-dessous :
 
     Ceux-ci devraient toujours être obligatoires:
 

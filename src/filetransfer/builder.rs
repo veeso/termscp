@@ -77,6 +77,18 @@ impl Builder {
         if let Some(profile) = params.profile {
             client = client.profile(profile);
         }
+        if let Some(access_key) = params.access_key {
+            client = client.access_key(access_key);
+        }
+        if let Some(secret_access_key) = params.secret_access_key {
+            client = client.secret_access_key(secret_access_key);
+        }
+        if let Some(security_token) = params.security_token {
+            client = client.security_token(security_token);
+        }
+        if let Some(session_token) = params.session_token {
+            client = client.session_token(session_token);
+        }
         client
     }
 
@@ -124,7 +136,7 @@ impl Builder {
 
     /// Make ssh storage from `ConfigClient` if possible, empty otherwise (empty is implicit if degraded)
     fn make_ssh_storage(config_client: &ConfigClient) -> SshKeyStorage {
-        SshKeyStorage::storage_from_config(config_client)
+        SshKeyStorage::from(config_client)
     }
 }
 
@@ -138,7 +150,13 @@ mod test {
 
     #[test]
     fn should_build_aws_s3_fs() {
-        let params = ProtocolParams::AwsS3(AwsS3Params::new("omar", "eu-west-1", Some("test")));
+        let params = ProtocolParams::AwsS3(
+            AwsS3Params::new("omar", "eu-west-1", Some("test"))
+                .access_key(Some("pippo"))
+                .secret_access_key(Some("pluto"))
+                .security_token(Some("omar"))
+                .session_token(Some("gerry-scotti")),
+        );
         let config_client = get_config_client();
         let _ = Builder::build(FileTransferProtocol::AwsS3, params, &config_client);
     }
