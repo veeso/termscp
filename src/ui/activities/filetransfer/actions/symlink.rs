@@ -26,7 +26,7 @@
  * SOFTWARE.
  */
 // locals
-use super::{FileTransferActivity, LogLevel, SelectedEntry};
+use super::{FileTransferActivity, LogLevel, SelectedFile};
 
 use std::path::PathBuf;
 
@@ -34,7 +34,7 @@ impl FileTransferActivity {
     /// Create symlink on localhost
     #[cfg(target_family = "unix")]
     pub(crate) fn action_local_symlink(&mut self, name: String) {
-        if let SelectedEntry::One(entry) = self.get_local_selected_entries() {
+        if let SelectedFile::One(entry) = self.get_local_selected_entries() {
             match self
                 .host
                 .symlink(PathBuf::from(name.as_str()).as_path(), entry.path())
@@ -66,7 +66,7 @@ impl FileTransferActivity {
 
     /// Copy file on remote
     pub(crate) fn action_remote_symlink(&mut self, name: String) {
-        if let SelectedEntry::One(entry) = self.get_remote_selected_entries() {
+        if let SelectedFile::One(entry) = self.get_remote_selected_entries() {
             match self
                 .client
                 .symlink(PathBuf::from(name.as_str()).as_path(), entry.path())

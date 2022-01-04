@@ -26,10 +26,10 @@
  * SOFTWARE.
  */
 // locals
-use super::{FileTransferActivity, LogLevel, SelectedEntry, TransferPayload};
+use super::{FileTransferActivity, LogLevel, SelectedFile, TransferPayload};
 
 // ext
-use remotefs::{Entry, File};
+use remotefs::File;
 use std::fs::OpenOptions;
 use std::io::Read;
 use std::path::{Path, PathBuf};
@@ -37,10 +37,10 @@ use std::time::SystemTime;
 
 impl FileTransferActivity {
     pub(crate) fn action_edit_local_file(&mut self) {
-        let entries: Vec<Entry> = match self.get_local_selected_entries() {
-            SelectedEntry::One(entry) => vec![entry],
-            SelectedEntry::Many(entries) => entries,
-            SelectedEntry::None => vec![],
+        let entries: Vec<File> = match self.get_local_selected_entries() {
+            SelectedFile::One(entry) => vec![entry],
+            SelectedFile::Many(entries) => entries,
+            SelectedFile::None => vec![],
         };
         // Edit all entries
         for entry in entries.iter() {
@@ -59,21 +59,21 @@ impl FileTransferActivity {
     }
 
     pub(crate) fn action_edit_remote_file(&mut self) {
-        let entries: Vec<Entry> = match self.get_remote_selected_entries() {
-            SelectedEntry::One(entry) => vec![entry],
-            SelectedEntry::Many(entries) => entries,
-            SelectedEntry::None => vec![],
+        let entries: Vec<File> = match self.get_remote_selected_entries() {
+            SelectedFile::One(entry) => vec![entry],
+            SelectedFile::Many(entries) => entries,
+            SelectedFile::None => vec![],
         };
         // Edit all entries
         for entry in entries.into_iter() {
             // Check if file
-            if let Entry::File(file) = entry {
+            if entry.is_file() {
                 self.log(
                     LogLevel::Info,
-                    format!("Opening file \"{}\"…", file.path.display()),
+                    format!("Opening file \"{}\"…", entry.path().display()),
                 );
                 // Edit file
-                if let Err(err) = self.edit_remote_file(file) {
+                if let Err(err) = self.edit_remote_file(entry) {
                     self.log_and_alert(LogLevel::Error, err);
                 }
             }
@@ -149,8 +149,8 @@ impl FileTransferActivity {
             Err(err) => return Err(err),
         };
         // Download file
-        let file_name = file.name.clone();
-        let file_path = file.path.clone();
+        let file_name = file.name();
+        let file_path = file.path().to_path_buf();
         if let Err(err) = self.filetransfer_recv(
             TransferPayload::File(file),
             tmpfile.as_path(),
@@ -160,7 +160,7 @@ impl FileTransferActivity {
         }
         // Get current file modification time
         let prev_mtime: SystemTime = match self.host.stat(tmpfile.as_path()) {
-            Ok(e) => e.metadata().mtime,
+            Ok(e) => e.metadata().modified.unwrap_or(std::time::UNIX_EPOCH),
             Err(err) => {
                 return Err(format!(
                     "Could not stat \"{}\": {}",
@@ -174,7 +174,7 @@ impl FileTransferActivity {
             return Err(err);
         }
         // Get local fs entry
-        let tmpfile_entry: Entry = match self.host.stat(tmpfile.as_path()) {
+        let tmpfile_entry: File = match self.host.stat(tmpfile.as_path()) {
             Ok(e) => e,
             Err(err) => {
                 return Err(format!(
@@ -185,7 +185,12 @@ impl FileTransferActivity {
             }
         };
         // Check if file has changed
-        match prev_mtime != tmpfile_entry.metadata().mtime {
+        match prev_mtime
+            != tmpfile_entry
+                .metadata()
+                .modified
+                .unwrap_or(std::time::UNIX_EPOCH)
+        {
             true => {
                 self.log(
                     LogLevel::Info,
@@ -196,7 +201,7 @@ impl FileTransferActivity {
                 );
                 // Get local fs entry
                 let tmpfile_entry = match self.host.stat(tmpfile.as_path()) {
-                    Ok(e) => e.unwrap_file(),
+                    Ok(e) => e,
                     Err(err) => {
                         return Err(format!(
                             "Could not stat \"{}\": {}",

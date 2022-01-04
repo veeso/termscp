@@ -27,12 +27,12 @@
  */
 // locals
 use super::{
-    actions::SelectedEntry,
+    actions::SelectedFile,
     browser::{FileExplorerTab, FoundExplorerTab},
     ExitReason, FileTransferActivity, Id, Msg, TransferMsg, TransferOpts, UiMsg,
 };
 // externals
-use remotefs::fs::Entry;
+use remotefs::fs::File;
 use tuirealm::{
     props::{AttrValue, Attribute},
     State, StateValue, Update,
@@ -121,7 +121,7 @@ impl FileTransferActivity {
                 }
             }
             TransferMsg::EnterDirectory if self.browser.tab() == FileExplorerTab::Local => {
-                if let SelectedEntry::One(entry) = self.get_local_selected_entries() {
+                if let SelectedFile::One(entry) = self.get_local_selected_entries() {
                     self.action_submit_local(entry);
                     // Update file list if sync
                     if self.browser.sync_browsing && self.browser.found().is_none() {
@@ -131,7 +131,7 @@ impl FileTransferActivity {
                 }
             }
             TransferMsg::EnterDirectory if self.browser.tab() == FileExplorerTab::Remote => {
-                if let SelectedEntry::One(entry) = self.get_remote_selected_entries() {
+                if let SelectedFile::One(entry) = self.get_remote_selected_entries() {
                     self.action_submit_remote(entry);
                     // Update file list if sync
                     if self.browser.sync_browsing && self.browser.found().is_none() {
@@ -296,7 +296,7 @@ impl FileTransferActivity {
                 // Mount wait
                 self.mount_blocking_wait(format!(r#"Searching for "{}"…"#, search).as_str());
                 // Find
-                let res: Result<Vec<Entry>, String> = match self.browser.tab() {
+                let res: Result<Vec<File>, String> = match self.browser.tab() {
                     FileExplorerTab::Local => self.action_local_find(search.clone()),
                     FileExplorerTab::Remote => self.action_remote_find(search.clone()),
                     _ => panic!("Trying to search for files, while already in a find result"),
@@ -449,17 +449,17 @@ impl FileTransferActivity {
             UiMsg::ShowDisconnectPopup => self.mount_disconnect(),
             UiMsg::ShowExecPopup => self.mount_exec(),
             UiMsg::ShowFileInfoPopup if self.browser.tab() == FileExplorerTab::Local => {
-                if let SelectedEntry::One(file) = self.get_local_selected_entries() {
+                if let SelectedFile::One(file) = self.get_local_selected_entries() {
                     self.mount_file_info(&file);
                 }
             }
             UiMsg::ShowFileInfoPopup if self.browser.tab() == FileExplorerTab::Remote => {
-                if let SelectedEntry::One(file) = self.get_remote_selected_entries() {
+                if let SelectedFile::One(file) = self.get_remote_selected_entries() {
                     self.mount_file_info(&file);
                 }
             }
             UiMsg::ShowFileInfoPopup => {
-                if let SelectedEntry::One(file) = self.get_found_selected_entries() {
+                if let SelectedFile::One(file) = self.get_found_selected_entries() {
                     self.mount_file_info(&file);
                 }
             }

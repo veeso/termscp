@@ -1676,22 +1676,59 @@ checksum = "f497285884f3fcff424ffc933e56d7cbca511def0c9831a7f9b5f6153e3cc89b"
 
 [[package]]
 name = "remotefs"
-version = "0.1.1"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c72915b01014a11d7e21b3a28141ff32b881bd8103c0f65269cc7932a03ae61c"
+checksum = "e8df5d94ca7480505315216544f145f358b7609781beef33a9149ecd9be44a5b"
+dependencies = [
+ "chrono",
+ "log",
+ "thiserror",
+ "wildmatch",
+]
+
+[[package]]
+name = "remotefs-aws-s3"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "36b130b79d6ade3821554c46a87fd54dea024255daa5ecac5e9f68e2a4d3230a"
+dependencies = [
+ "chrono",
+ "log",
+ "path-slash",
+ "remotefs",
+ "rust-s3",
+ "thiserror",
+ "users",
+]
+
+[[package]]
+name = "remotefs-ftp"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "359fd989a6ad50fa6defae771e453695412cbfdb5476f49e42d1bb1d51b5c096"
+dependencies = [
+ "log",
+ "path-slash",
+ "remotefs",
+ "suppaftp",
+ "users",
+]
+
+[[package]]
+name = "remotefs-ssh"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7f2c6959740eeee7e773166e79dd52c7dea41f791456aa5addfb949c61c15b27"
 dependencies = [
  "chrono",
  "lazy_static",
  "log",
  "path-slash",
  "regex",
- "rust-s3",
+ "remotefs",
  "ssh2",
  "ssh2-config",
- "suppaftp",
- "thiserror",
  "users",
- "wildmatch",
 ]
 
 [[package]]
@@ -2095,10 +2132,11 @@ dependencies = [
 
 [[package]]
 name = "ssh2-config"
-version = "0.1.0"
+version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "31e64d0ea4897c9415c34011a4cdf21a0e0168c200595f1f543be1ca807942d8"
+checksum = "0e55cdf8a42b24c57788bc8b85e8d6e7f6e0614b5316322b2e7f455f9d93230e"
 dependencies = [
+ "dirs 4.0.0",
  "thiserror",
  "wildmatch",
 ]
@@ -2236,6 +2274,9 @@ dependencies = [
  "rand 0.8.4",
  "regex",
  "remotefs",
+ "remotefs-aws-s3",
+ "remotefs-ftp",
+ "remotefs-ssh",
  "rpassword",
  "self_update",
  "serde",

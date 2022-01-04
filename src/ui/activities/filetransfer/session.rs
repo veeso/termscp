@@ -32,7 +32,7 @@ use crate::utils::fmt::fmt_millis;
 
 // Ext
 use bytesize::ByteSize;
-use remotefs::fs::{Entry, File, UnixPex, Welcome};
+use remotefs::fs::{File, ReadStream, UnixPex, Welcome, WriteStream};
 use remotefs::{RemoteError, RemoteErrorType};
 use std::fs::File as StdFile;
 use std::io::{Read, Seek, Write};
@@ -59,13 +59,13 @@ enum TransferErrorReason {
 
 /// Represents the entity to send or receive during a transfer.
 /// - File: describes an individual `File` to send
-/// - Any: Can be any kind of `Entry`, but just one
-/// - Many: a list of `Entry`
+/// - Any: Can be any kind of `File`, but just one
+/// - Many: a list of `File`
 #[derive(Debug)]
 pub(super) enum TransferPayload {
     File(File),
-    Any(Entry),
-    Many(Vec<Entry>),
+    Any(File),
+    Many(Vec<File>),
 }
 
 impl FileTransferActivity {
@@ -224,7 +224,7 @@ impl FileTransferActivity {
         // Mount progress bar
         self.mount_progress_bar(format!("Uploading {}…", file.path.display()));
         // Get remote path
-        let file_name: String = file.name.clone();
+        let file_name: String = file.name();
         let mut remote_path: PathBuf = PathBuf::from(curr_remote_path);
         let remote_file_name: PathBuf = match dst_name {
             Some(s) => PathBuf::from(s.as_str()),
@@ -242,7 +242,7 @@ impl FileTransferActivity {
     /// Send a `TransferPayload` of type `Any`
     fn filetransfer_send_any(
         &mut self,
-        entry: &Entry,
+        entry: &File,
         curr_remote_path: &Path,
         dst_name: Option<String>,
     ) -> Result<(), String> {
@@ -263,7 +263,7 @@ impl FileTransferActivity {
     /// Send many entries to remote
     fn filetransfer_send_many(
         &mut self,
-        entries: &[Entry],
+        entries: &[File],
         curr_remote_path: &Path,
     ) -> Result<(), String> {
         // Reset states
@@ -289,15 +289,12 @@ impl FileTransferActivity {
 
     fn filetransfer_send_recurse(
         &mut self,
-        entry: &Entry,
+        entry: &File,
         curr_remote_path: &Path,
         dst_name: Option<String>,
     ) -> Result<(), String> {
         // Write popup
-        let file_name: String = match entry {
-            Entry::Directory(dir) => dir.name.clone(),
-            Entry::File(file) => file.name.clone(),
-        };
+        let file_name = entry.name();
         // Get remote path
         let mut remote_path: PathBuf = PathBuf::from(curr_remote_path);
         let remote_file_name: PathBuf = match dst_name {
@@ -306,107 +303,104 @@ impl FileTransferActivity {
         };
         remote_path.push(remote_file_name);
         // Match entry
-        let result: Result<(), String> = match entry {
-            Entry::File(file) => {
-                match self.filetransfer_send_one(file, remote_path.as_path(), file_name) {
-                    Err(err) => {
-                        // If transfer was abrupted or there was an IO error on remote, remove file
-                        if matches!(
-                            err,
-                            TransferErrorReason::Abrupted | TransferErrorReason::RemoteIoError(_)
-                        ) {
-                            // Stat file on remote and remove it if exists
-                            match self.client.stat(remote_path.as_path()) {
-                                Err(err) => self.log(
-                                    LogLevel::Error,
-                                    format!(
-                                        "Could not remove created file {}: {}",
-                                        remote_path.display(),
-                                        err
-                                    ),
+        let result: Result<(), String> = if entry.is_dir() {
+            // Create directory on remote first
+            match self
+                .client
+                .create_dir(remote_path.as_path(), UnixPex::from(0o755))
+            {
+                Ok(_) => {
+                    self.log(
+                        LogLevel::Info,
+                        format!("Created directory \"{}\"", remote_path.display()),
+                    );
+                }
+                Err(err) if err.kind == RemoteErrorType::DirectoryAlreadyExists => {
+                    self.log(
+                        LogLevel::Info,
+                        format!(
+                            "Directory \"{}\" already exists on remote",
+                            remote_path.display()
+                        ),
+                    );
+                }
+                Err(err) => {
+                    self.log_and_alert(
+                        LogLevel::Error,
+                        format!(
+                            "Failed to create directory \"{}\": {}",
+                            remote_path.display(),
+                            err
+                        ),
+                    );
+                    return Err(err.to_string());
+                }
+            }
+            // Get files in dir
+            match self.host.scan_dir(entry.path()) {
+                Ok(entries) => {
+                    // Iterate over files
+                    for entry in entries.iter() {
+                        // If aborted; break
+                        if self.transfer.aborted() {
+                            break;
+                        }
+                        // Send entry; name is always None after first call
+                        if let Err(err) =
+                            self.filetransfer_send_recurse(entry, remote_path.as_path(), None)
+                        {
+                            return Err(err);
+                        }
+                    }
+                    Ok(())
+                }
+                Err(err) => {
+                    self.log_and_alert(
+                        LogLevel::Error,
+                        format!(
+                            "Could not scan directory \"{}\": {}",
+                            entry.path().display(),
+                            err
+                        ),
+                    );
+                    Err(err.to_string())
+                }
+            }
+        } else {
+            match self.filetransfer_send_one(entry, remote_path.as_path(), file_name) {
+                Err(err) => {
+                    // If transfer was abrupted or there was an IO error on remote, remove file
+                    if matches!(
+                        err,
+                        TransferErrorReason::Abrupted | TransferErrorReason::RemoteIoError(_)
+                    ) {
+                        // Stat file on remote and remove it if exists
+                        match self.client.stat(remote_path.as_path()) {
+                            Err(err) => self.log(
+                                LogLevel::Error,
+                                format!(
+                                    "Could not remove created file {}: {}",
+                                    remote_path.display(),
+                                    err
                                 ),
-                                Ok(entry) => {
-                                    if let Err(err) = self.client.remove_file(entry.path()) {
-                                        self.log(
-                                            LogLevel::Error,
-                                            format!(
-                                                "Could not remove created file {}: {}",
-                                                remote_path.display(),
-                                                err
-                                            ),
-                                        );
-                                    }
+                            ),
+                            Ok(entry) => {
+                                if let Err(err) = self.client.remove_file(entry.path()) {
+                                    self.log(
+                                        LogLevel::Error,
+                                        format!(
+                                            "Could not remove created file {}: {}",
+                                            remote_path.display(),
+                                            err
+                                        ),
+                                    );
                                 }
                             }
                         }
-                        Err(err.to_string())
                     }
-                    Ok(_) => Ok(()),
+                    Err(err.to_string())
                 }
-            }
-            Entry::Directory(dir) => {
-                // Create directory on remote first
-                match self
-                    .client
-                    .create_dir(remote_path.as_path(), UnixPex::from(0o755))
-                {
-                    Ok(_) => {
-                        self.log(
-                            LogLevel::Info,
-                            format!("Created directory \"{}\"", remote_path.display()),
-                        );
-                    }
-                    Err(err) if err.kind == RemoteErrorType::DirectoryAlreadyExists => {
-                        self.log(
-                            LogLevel::Info,
-                            format!(
-                                "Directory \"{}\" already exists on remote",
-                                remote_path.display()
-                            ),
-                        );
-                    }
-                    Err(err) => {
-                        self.log_and_alert(
-                            LogLevel::Error,
-                            format!(
-                                "Failed to create directory \"{}\": {}",
-                                remote_path.display(),
-                                err
-                            ),
-                        );
-                        return Err(err.to_string());
-                    }
-                }
-                // Get files in dir
-                match self.host.scan_dir(dir.path.as_path()) {
-                    Ok(entries) => {
-                        // Iterate over files
-                        for entry in entries.iter() {
-                            // If aborted; break
-                            if self.transfer.aborted() {
-                                break;
-                            }
-                            // Send entry; name is always None after first call
-                            if let Err(err) =
-                                self.filetransfer_send_recurse(entry, remote_path.as_path(), None)
-                            {
-                                return Err(err);
-                            }
-                        }
-                        Ok(())
-                    }
-                    Err(err) => {
-                        self.log_and_alert(
-                            LogLevel::Error,
-                            format!(
-                                "Could not scan directory \"{}\": {}",
-                                dir.path.display(),
-                                err
-                            ),
-                        );
-                        Err(err.to_string())
-                    }
-                }
+                Ok(_) => Ok(()),
             }
         };
         // Scan dir on remote
@@ -458,7 +452,7 @@ impl FileTransferActivity {
         remote: &Path,
         file_name: String,
         mut reader: StdFile,
-        mut writer: Box<dyn Write>,
+        mut writer: WriteStream,
     ) -> Result<(), TransferErrorReason> {
         // Write file
         let file_size: usize = reader.seek(std::io::SeekFrom::End(0)).unwrap_or(0) as usize;
@@ -632,7 +626,7 @@ impl FileTransferActivity {
     /// If entry is a directory, this applies to directory only
     fn filetransfer_recv_any(
         &mut self,
-        entry: &Entry,
+        entry: &File,
         local_path: &Path,
         dst_name: Option<String>,
     ) -> Result<(), String> {
@@ -660,7 +654,7 @@ impl FileTransferActivity {
         // Mount progress bar
         self.mount_progress_bar(format!("Downloading {}…", entry.path.display()));
         // Receive
-        let result = self.filetransfer_recv_one(local_path, entry, entry.name.clone());
+        let result = self.filetransfer_recv_one(local_path, entry, entry.name());
         // Umount progress bar
         self.umount_progress_bar();
         // Return result
@@ -670,7 +664,7 @@ impl FileTransferActivity {
     /// Send many entries to remote
     fn filetransfer_recv_many(
         &mut self,
-        entries: &[Entry],
+        entries: &[File],
         curr_remote_path: &Path,
     ) -> Result<(), String> {
         // Reset states
@@ -696,142 +690,132 @@ impl FileTransferActivity {
 
     fn filetransfer_recv_recurse(
         &mut self,
-        entry: &Entry,
+        entry: &File,
         local_path: &Path,
         dst_name: Option<String>,
     ) -> Result<(), String> {
         // Write popup
-        let file_name: String = match entry {
-            Entry::Directory(dir) => dir.name.clone(),
-            Entry::File(file) => file.name.clone(),
-        };
+        let file_name = entry.name();
         // Match entry
-        let result: Result<(), String> = match entry {
-            Entry::File(file) => {
-                // Get local file
-                let mut local_file_path: PathBuf = PathBuf::from(local_path);
-                let local_file_name: String = match dst_name {
-                    Some(n) => n,
-                    None => file.name.clone(),
-                };
-                local_file_path.push(local_file_name.as_str());
-                // Download file
-                if let Err(err) =
-                    self.filetransfer_recv_one(local_file_path.as_path(), file, file_name)
-                {
-                    // If transfer was abrupted or there was an IO error on remote, remove file
-                    if matches!(
-                        err,
-                        TransferErrorReason::Abrupted | TransferErrorReason::LocalIoError(_)
-                    ) {
-                        // Stat file
-                        match self.host.stat(local_file_path.as_path()) {
-                            Err(err) => self.log(
+        let result: Result<(), String> = if entry.is_dir() {
+            // Get dir name
+            let mut local_dir_path: PathBuf = PathBuf::from(local_path);
+            match dst_name {
+                Some(name) => local_dir_path.push(name),
+                None => local_dir_path.push(entry.name()),
+            }
+            // Create directory on local
+            match self.host.mkdir_ex(local_dir_path.as_path(), true) {
+                Ok(_) => {
+                    // Apply file mode to directory
+                    #[cfg(any(target_family = "unix", target_os = "macos", target_os = "linux"))]
+                    if let Some(mode) = entry.metadata().mode {
+                        if let Err(err) = self.host.chmod(local_dir_path.as_path(), mode) {
+                            self.log(
                                 LogLevel::Error,
                                 format!(
-                                    "Could not remove created file {}: {}",
-                                    local_file_path.display(),
+                                    "Could not apply file mode {:o} to \"{}\": {}",
+                                    u32::from(mode),
+                                    local_dir_path.display(),
                                     err
                                 ),
-                            ),
-                            Ok(entry) => {
-                                if let Err(err) = self.host.remove(&entry) {
-                                    self.log(
-                                        LogLevel::Error,
-                                        format!(
-                                            "Could not remove created file {}: {}",
-                                            local_file_path.display(),
-                                            err
-                                        ),
-                                    );
-                                }
-                            }
+                            );
                         }
                     }
+                    self.log(
+                        LogLevel::Info,
+                        format!("Created directory \"{}\"", local_dir_path.display()),
+                    );
+                    // Get files in dir
+                    match self.client.list_dir(entry.path()) {
+                        Ok(entries) => {
+                            // Iterate over files
+                            for entry in entries.iter() {
+                                // If transfer has been aborted; break
+                                if self.transfer.aborted() {
+                                    break;
+                                }
+                                // Receive entry; name is always None after first call
+                                // Local path becomes local_dir_path
+                                if let Err(err) = self.filetransfer_recv_recurse(
+                                    entry,
+                                    local_dir_path.as_path(),
+                                    None,
+                                ) {
+                                    return Err(err);
+                                }
+                            }
+                            Ok(())
+                        }
+                        Err(err) => {
+                            self.log_and_alert(
+                                LogLevel::Error,
+                                format!(
+                                    "Could not scan directory \"{}\": {}",
+                                    entry.path().display(),
+                                    err
+                                ),
+                            );
+                            Err(err.to_string())
+                        }
+                    }
+                }
+                Err(err) => {
+                    self.log(
+                        LogLevel::Error,
+                        format!(
+                            "Failed to create directory \"{}\": {}",
+                            local_dir_path.display(),
+                            err
+                        ),
+                    );
                     Err(err.to_string())
-                } else {
-                    Ok(())
                 }
             }
-            Entry::Directory(dir) => {
-                // Get dir name
-                let mut local_dir_path: PathBuf = PathBuf::from(local_path);
-                match dst_name {
-                    Some(name) => local_dir_path.push(name),
-                    None => local_dir_path.push(dir.name.as_str()),
-                }
-                // Create directory on local
-                match self.host.mkdir_ex(local_dir_path.as_path(), true) {
-                    Ok(_) => {
-                        // Apply file mode to directory
-                        #[cfg(any(
-                            target_family = "unix",
-                            target_os = "macos",
-                            target_os = "linux"
-                        ))]
-                        if let Some(mode) = dir.metadata.mode {
-                            if let Err(err) = self.host.chmod(local_dir_path.as_path(), mode) {
+        } else {
+            // Get local file
+            let mut local_file_path: PathBuf = PathBuf::from(local_path);
+            let local_file_name: String = match dst_name {
+                Some(n) => n,
+                None => entry.name(),
+            };
+            local_file_path.push(local_file_name.as_str());
+            // Download file
+            if let Err(err) =
+                self.filetransfer_recv_one(local_file_path.as_path(), entry, file_name)
+            {
+                // If transfer was abrupted or there was an IO error on remote, remove file
+                if matches!(
+                    err,
+                    TransferErrorReason::Abrupted | TransferErrorReason::LocalIoError(_)
+                ) {
+                    // Stat file
+                    match self.host.stat(local_file_path.as_path()) {
+                        Err(err) => self.log(
+                            LogLevel::Error,
+                            format!(
+                                "Could not remove created file {}: {}",
+                                local_file_path.display(),
+                                err
+                            ),
+                        ),
+                        Ok(entry) => {
+                            if let Err(err) = self.host.remove(&entry) {
                                 self.log(
                                     LogLevel::Error,
                                     format!(
-                                        "Could not apply file mode {:o} to \"{}\": {}",
-                                        u32::from(mode),
-                                        local_dir_path.display(),
+                                        "Could not remove created file {}: {}",
+                                        local_file_path.display(),
                                         err
                                     ),
                                 );
                             }
                         }
-                        self.log(
-                            LogLevel::Info,
-                            format!("Created directory \"{}\"", local_dir_path.display()),
-                        );
-                        // Get files in dir
-                        match self.client.list_dir(dir.path.as_path()) {
-                            Ok(entries) => {
-                                // Iterate over files
-                                for entry in entries.iter() {
-                                    // If transfer has been aborted; break
-                                    if self.transfer.aborted() {
-                                        break;
-                                    }
-                                    // Receive entry; name is always None after first call
-                                    // Local path becomes local_dir_path
-                                    if let Err(err) = self.filetransfer_recv_recurse(
-                                        entry,
-                                        local_dir_path.as_path(),
-                                        None,
-                                    ) {
-                                        return Err(err);
-                                    }
-                                }
-                                Ok(())
-                            }
-                            Err(err) => {
-                                self.log_and_alert(
-                                    LogLevel::Error,
-                                    format!(
-                                        "Could not scan directory \"{}\": {}",
-                                        dir.path.display(),
-                                        err
-                                    ),
-                                );
-                                Err(err.to_string())
-                            }
-                        }
-                    }
-                    Err(err) => {
-                        self.log(
-                            LogLevel::Error,
-                            format!(
-                                "Failed to create directory \"{}\": {}",
-                                local_dir_path.display(),
-                                err
-                            ),
-                        );
-                        Err(err.to_string())
                     }
                 }
+                Err(err.to_string())
+            } else {
+                Ok(())
             }
         };
         // Reload directory on local
@@ -872,13 +856,13 @@ impl FileTransferActivity {
         }
     }
 
-    /// Receive an `Entry` from remote using stream
+    /// Receive an `File` from remote using stream
     fn filetransfer_recv_one_with_stream(
         &mut self,
         local: &Path,
         remote: &File,
         file_name: String,
-        mut reader: Box<dyn Read>,
+        mut reader: ReadStream,
         mut writer: StdFile,
     ) -> Result<(), TransferErrorReason> {
         let mut total_bytes_written: usize = 0;
@@ -979,7 +963,7 @@ impl FileTransferActivity {
         Ok(())
     }
 
-    /// Receive an `Entry` from remote without using stream
+    /// Receive an `File` from remote without using stream
     fn filetransfer_recv_one_wno_stream(
         &mut self,
         local: &Path,
@@ -1098,7 +1082,7 @@ impl FileTransferActivity {
         let tmpfile: PathBuf = match self.cache.as_ref() {
             Some(cache) => {
                 let mut p: PathBuf = cache.path().to_path_buf();
-                p.push(file.name.as_str());
+                p.push(file.name());
                 p
             }
             None => {
@@ -1111,7 +1095,7 @@ impl FileTransferActivity {
         match self.filetransfer_recv(
             TransferPayload::File(file.clone()),
             tmpfile.as_path(),
-            Some(file.name.clone()),
+            Some(file.name()),
         ) {
             Err(err) => Err(format!(
                 "Could not download {} to temporary file: {}",
@@ -1125,48 +1109,54 @@ impl FileTransferActivity {
     // -- transfer sizes
 
     /// Get total size of transfer for localhost
-    fn get_total_transfer_size_local(&mut self, entry: &Entry) -> usize {
-        match entry {
-            Entry::File(file) => file.metadata.size as usize,
-            Entry::Directory(dir) => {
-                // List dir
-                match self.host.scan_dir(dir.path.as_path()) {
-                    Ok(files) => files
-                        .iter()
-                        .map(|x| self.get_total_transfer_size_local(x))
-                        .sum(),
-                    Err(err) => {
-                        self.log(
-                            LogLevel::Error,
-                            format!("Could not list directory {}: {}", dir.path.display(), err),
-                        );
-                        0
-                    }
+    fn get_total_transfer_size_local(&mut self, entry: &File) -> usize {
+        if entry.is_dir() {
+            // List dir
+            match self.host.scan_dir(entry.path()) {
+                Ok(files) => files
+                    .iter()
+                    .map(|x| self.get_total_transfer_size_local(x))
+                    .sum(),
+                Err(err) => {
+                    self.log(
+                        LogLevel::Error,
+                        format!(
+                            "Could not list directory {}: {}",
+                            entry.path().display(),
+                            err
+                        ),
+                    );
+                    0
                 }
             }
+        } else {
+            entry.metadata.size as usize
         }
     }
 
     /// Get total size of transfer for remote host
-    fn get_total_transfer_size_remote(&mut self, entry: &Entry) -> usize {
-        match entry {
-            Entry::File(file) => file.metadata.size as usize,
-            Entry::Directory(dir) => {
-                // List directory
-                match self.client.list_dir(dir.path.as_path()) {
-                    Ok(files) => files
-                        .iter()
-                        .map(|x| self.get_total_transfer_size_remote(x))
-                        .sum(),
-                    Err(err) => {
-                        self.log(
-                            LogLevel::Error,
-                            format!("Could not list directory {}: {}", dir.path.display(), err),
-                        );
-                        0
-                    }
+    fn get_total_transfer_size_remote(&mut self, entry: &File) -> usize {
+        if entry.is_dir() {
+            // List directory
+            match self.client.list_dir(entry.path()) {
+                Ok(files) => files
+                    .iter()
+                    .map(|x| self.get_total_transfer_size_remote(x))
+                    .sum(),
+                Err(err) => {
+                    self.log(
+                        LogLevel::Error,
+                        format!(
+                            "Could not list directory {}: {}",
+                            entry.path().display(),
+                            err
+                        ),
+                    );
+                    0
                 }
             }
+        } else {
+            entry.metadata.size as usize
         }
     }
 

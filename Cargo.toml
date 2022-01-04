@@ -48,7 +48,10 @@ notify-rust = { version = "4.5.3", default-features = false, features = [ "d" ] 
 open = "2.0.1"
 rand = "0.8.4"
 regex = "1.5.4"
-remotefs = { version = "0.1.1", features = [ "aws-s3", "ftp", "ssh" ] }
+remotefs = "^0.2.0"
+remotefs-aws-s3 = "^0.1.0"
+remotefs-ftp = { version = "^0.1.0", features = [ "secure" ] }
+remotefs-ssh = "^0.1.0"
 rpassword = "5.0.1"
 self_update = { version = "0.27.0", features = [ "archive-tar", "archive-zip", "compression-flate2", "compression-zip-deflate" ] }
 serde = { version = "^1.0.0", features = [ "derive" ] }
@@ -74,3 +77,9 @@ with-keyring = [ "keyring" ]
 [target."cfg(target_family = \"unix\")"]
 [target."cfg(target_family = \"unix\")".dependencies]
 users = "0.11.0"
+
+[profile.release]
+incremental = true
+
+[profile.dev]
+incremental = true
