@@ -62,6 +62,7 @@ thiserror = "^1.0.0"
 toml = "0.5.8"
 tui-realm-stdlib = "^1.1.0"
 tuirealm = "^1.2.0"
+unicode-width = "^0.1.8"
 whoami = "1.1.1"
 wildmatch = "2.0.0"
 

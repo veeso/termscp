@@ -38,6 +38,7 @@ use tuirealm::event::{Key, KeyEvent, KeyModifiers};
 use tuirealm::tui::layout::{Constraint, Direction, Layout};
 use tuirealm::tui::widgets::Clear;
 use tuirealm::{Sub, SubClause, SubEventClause};
+use unicode_width::UnicodeWidthStr;
 
 impl FileTransferActivity {
     // -- init
@@ -292,12 +293,22 @@ impl FileTransferActivity {
                 // make popup
                 self.app.view(&Id::SortingPopup, f, popup);
             } else if self.app.mounted(&Id::ErrorPopup) {
-                let popup = draw_area_in(f.size(), 50, 10);
+                // TODO: inject dynamic height here
+                let popup = draw_area_in(
+                    f.size(),
+                    50,
+                    self.calc_popup_height(Id::ErrorPopup, f.size().width, f.size().height),
+                );
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::ErrorPopup, f, popup);
             } else if self.app.mounted(&Id::FatalPopup) {
-                let popup = draw_area_in(f.size(), 50, 10);
+                // TODO: inject dynamic height here
+                let popup = draw_area_in(
+                    f.size(),
+                    50,
+                    self.calc_popup_height(Id::FatalPopup, f.size().width, f.size().height),
+                );
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::FatalPopup, f, popup);
@@ -853,6 +864,39 @@ impl FileTransferActivity {
     pub(super) fn umount_help(&mut self) {
         let _ = self.app.umount(&Id::KeybindingsPopup);
     }
+
+    // -- dynamic size
+
+    /// Given the id of the component to display and the width and height of the total area,
+    /// returns the height in percentage to the entire area height, that the popup should have
+    fn calc_popup_height(&self, id: Id, width: u16, height: u16) -> u16 {
+        // Get current text width
+        let text_width = self
+            .app
+            .query(&id, tuirealm::Attribute::Text)
+            .ok()
+            .flatten()
+            .map(|x| {
+                x.unwrap_payload()
+                    .unwrap_vec()
+                    .into_iter()
+                    .map(|x| x.unwrap_text_span().content)
+                    .collect::<Vec<String>>()
+                    .join("")
+                    .width() as u16
+            })
+            .unwrap_or(0);
+        // Calc real width of a row in the popup
+        let row_width = (width / 2).saturating_sub(2);
+        // Calc row height in percentage (1 : height = x : 100)
+        let row_height_p = (100.0 / (height as f64)).ceil() as u16;
+        // Get amount of required rows NOTE: + 2 because of margins
+        let display_rows = ((text_width as f64) / (row_width as f64)).ceil() as u16 + 2;
+        // Return height (row_height_p * display_rows)
+        display_rows * row_height_p
+    }
+
+    // -- global listener
 
     fn mount_global_listener(&mut self) {
         assert!(self

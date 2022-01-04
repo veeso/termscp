@@ -2288,6 +2288,7 @@ dependencies = [
  "toml",
  "tui-realm-stdlib",
  "tuirealm",
+ "unicode-width",
  "users",
  "whoami",
  "wildmatch",
