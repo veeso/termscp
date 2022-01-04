@@ -139,61 +139,12 @@ impl InputAddress {
 
 impl Component<Msg, NoUserEvent> for InputAddress {
     fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
-        match ev {
-            Event::Keyboard(KeyEvent {
-                code: Key::Left, ..
-            }) => {
-                self.perform(Cmd::Move(Direction::Left));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Right, ..
-            }) => {
-                self.perform(Cmd::Move(Direction::Right));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Home, ..
-            }) => {
-                self.perform(Cmd::GoTo(Position::Begin));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent { code: Key::End, .. }) => {
-                self.perform(Cmd::GoTo(Position::End));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Delete, ..
-            }) => {
-                self.perform(Cmd::Cancel);
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Backspace,
-                ..
-            }) => {
-                self.perform(Cmd::Delete);
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Char(ch),
-                modifiers: KeyModifiers::NONE | KeyModifiers::SHIFT,
-            }) => {
-                self.perform(Cmd::Type(ch));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Enter, ..
-            }) => Some(Msg::Form(FormMsg::Connect)),
-            Event::Keyboard(KeyEvent {
-                code: Key::Down, ..
-            }) => Some(Msg::Ui(UiMsg::AddressBlurDown)),
-            Event::Keyboard(KeyEvent { code: Key::Up, .. }) => Some(Msg::Ui(UiMsg::AddressBlurUp)),
-            Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => {
-                Some(Msg::Ui(UiMsg::ParamsFormBlur))
-            }
-            _ => None,
-        }
+        handle_input_ev(
+            self,
+            ev,
+            Msg::Ui(UiMsg::AddressBlurDown),
+            Msg::Ui(UiMsg::AddressBlurUp),
+        )
     }
 }
 
@@ -225,61 +176,12 @@ impl InputPort {
 
 impl Component<Msg, NoUserEvent> for InputPort {
     fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
-        match ev {
-            Event::Keyboard(KeyEvent {
-                code: Key::Left, ..
-            }) => {
-                self.perform(Cmd::Move(Direction::Left));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Right, ..
-            }) => {
-                self.perform(Cmd::Move(Direction::Right));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Home, ..
-            }) => {
-                self.perform(Cmd::GoTo(Position::Begin));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent { code: Key::End, .. }) => {
-                self.perform(Cmd::GoTo(Position::End));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Delete, ..
-            }) => {
-                self.perform(Cmd::Cancel);
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Backspace,
-                ..
-            }) => {
-                self.perform(Cmd::Delete);
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Char(ch),
-                modifiers: KeyModifiers::NONE | KeyModifiers::SHIFT,
-            }) => {
-                self.perform(Cmd::Type(ch));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Enter, ..
-            }) => Some(Msg::Form(FormMsg::Connect)),
-            Event::Keyboard(KeyEvent {
-                code: Key::Down, ..
-            }) => Some(Msg::Ui(UiMsg::PortBlurDown)),
-            Event::Keyboard(KeyEvent { code: Key::Up, .. }) => Some(Msg::Ui(UiMsg::PortBlurUp)),
-            Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => {
-                Some(Msg::Ui(UiMsg::ParamsFormBlur))
-            }
-            _ => None,
-        }
+        handle_input_ev(
+            self,
+            ev,
+            Msg::Ui(UiMsg::PortBlurDown),
+            Msg::Ui(UiMsg::PortBlurUp),
+        )
     }
 }
 
@@ -310,61 +212,12 @@ impl InputUsername {
 
 impl Component<Msg, NoUserEvent> for InputUsername {
     fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
-        match ev {
-            Event::Keyboard(KeyEvent {
-                code: Key::Left, ..
-            }) => {
-                self.perform(Cmd::Move(Direction::Left));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Right, ..
-            }) => {
-                self.perform(Cmd::Move(Direction::Right));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Home, ..
-            }) => {
-                self.perform(Cmd::GoTo(Position::Begin));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent { code: Key::End, .. }) => {
-                self.perform(Cmd::GoTo(Position::End));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Delete, ..
-            }) => {
-                self.perform(Cmd::Cancel);
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Backspace,
-                ..
-            }) => {
-                self.perform(Cmd::Delete);
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Char(ch),
-                modifiers: KeyModifiers::NONE | KeyModifiers::SHIFT,
-            }) => {
-                self.perform(Cmd::Type(ch));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Enter, ..
-            }) => Some(Msg::Form(FormMsg::Connect)),
-            Event::Keyboard(KeyEvent {
-                code: Key::Down, ..
-            }) => Some(Msg::Ui(UiMsg::UsernameBlurDown)),
-            Event::Keyboard(KeyEvent { code: Key::Up, .. }) => Some(Msg::Ui(UiMsg::UsernameBlurUp)),
-            Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => {
-                Some(Msg::Ui(UiMsg::ParamsFormBlur))
-            }
-            _ => None,
-        }
+        handle_input_ev(
+            self,
+            ev,
+            Msg::Ui(UiMsg::UsernameBlurDown),
+            Msg::Ui(UiMsg::UsernameBlurUp),
+        )
     }
 }
 
@@ -394,61 +247,12 @@ impl InputPassword {
 
 impl Component<Msg, NoUserEvent> for InputPassword {
     fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
-        match ev {
-            Event::Keyboard(KeyEvent {
-                code: Key::Left, ..
-            }) => {
-                self.perform(Cmd::Move(Direction::Left));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Right, ..
-            }) => {
-                self.perform(Cmd::Move(Direction::Right));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Home, ..
-            }) => {
-                self.perform(Cmd::GoTo(Position::Begin));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent { code: Key::End, .. }) => {
-                self.perform(Cmd::GoTo(Position::End));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Delete, ..
-            }) => {
-                self.perform(Cmd::Cancel);
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Backspace,
-                ..
-            }) => {
-                self.perform(Cmd::Delete);
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Char(ch),
-                modifiers: KeyModifiers::NONE | KeyModifiers::SHIFT,
-            }) => {
-                self.perform(Cmd::Type(ch));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Enter, ..
-            }) => Some(Msg::Form(FormMsg::Connect)),
-            Event::Keyboard(KeyEvent {
-                code: Key::Down, ..
-            }) => Some(Msg::Ui(UiMsg::PasswordBlurDown)),
-            Event::Keyboard(KeyEvent { code: Key::Up, .. }) => Some(Msg::Ui(UiMsg::PasswordBlurUp)),
-            Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => {
-                Some(Msg::Ui(UiMsg::ParamsFormBlur))
-            }
-            _ => None,
-        }
+        handle_input_ev(
+            self,
+            ev,
+            Msg::Ui(UiMsg::PasswordBlurDown),
+            Msg::Ui(UiMsg::PasswordBlurUp),
+        )
     }
 }
 
@@ -479,61 +283,12 @@ impl InputS3Bucket {
 
 impl Component<Msg, NoUserEvent> for InputS3Bucket {
     fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
-        match ev {
-            Event::Keyboard(KeyEvent {
-                code: Key::Left, ..
-            }) => {
-                self.perform(Cmd::Move(Direction::Left));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Right, ..
-            }) => {
-                self.perform(Cmd::Move(Direction::Right));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Home, ..
-            }) => {
-                self.perform(Cmd::GoTo(Position::Begin));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent { code: Key::End, .. }) => {
-                self.perform(Cmd::GoTo(Position::End));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Delete, ..
-            }) => {
-                self.perform(Cmd::Cancel);
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Backspace,
-                ..
-            }) => {
-                self.perform(Cmd::Delete);
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Char(ch),
-                modifiers: KeyModifiers::NONE | KeyModifiers::SHIFT,
-            }) => {
-                self.perform(Cmd::Type(ch));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Enter, ..
-            }) => Some(Msg::Form(FormMsg::Connect)),
-            Event::Keyboard(KeyEvent {
-                code: Key::Down, ..
-            }) => Some(Msg::Ui(UiMsg::S3BucketBlurDown)),
-            Event::Keyboard(KeyEvent { code: Key::Up, .. }) => Some(Msg::Ui(UiMsg::S3BucketBlurUp)),
-            Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => {
-                Some(Msg::Ui(UiMsg::ParamsFormBlur))
-            }
-            _ => None,
-        }
+        handle_input_ev(
+            self,
+            ev,
+            Msg::Ui(UiMsg::S3BucketBlurDown),
+            Msg::Ui(UiMsg::S3BucketBlurUp),
+        )
     }
 }
 
@@ -564,61 +319,12 @@ impl InputS3Region {
 
 impl Component<Msg, NoUserEvent> for InputS3Region {
     fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
-        match ev {
-            Event::Keyboard(KeyEvent {
-                code: Key::Left, ..
-            }) => {
-                self.perform(Cmd::Move(Direction::Left));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Right, ..
-            }) => {
-                self.perform(Cmd::Move(Direction::Right));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Home, ..
-            }) => {
-                self.perform(Cmd::GoTo(Position::Begin));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent { code: Key::End, .. }) => {
-                self.perform(Cmd::GoTo(Position::End));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Delete, ..
-            }) => {
-                self.perform(Cmd::Cancel);
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Backspace,
-                ..
-            }) => {
-                self.perform(Cmd::Delete);
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Char(ch),
-                modifiers: KeyModifiers::NONE | KeyModifiers::SHIFT,
-            }) => {
-                self.perform(Cmd::Type(ch));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Enter, ..
-            }) => Some(Msg::Form(FormMsg::Connect)),
-            Event::Keyboard(KeyEvent {
-                code: Key::Down, ..
-            }) => Some(Msg::Ui(UiMsg::S3RegionBlurDown)),
-            Event::Keyboard(KeyEvent { code: Key::Up, .. }) => Some(Msg::Ui(UiMsg::S3RegionBlurUp)),
-            Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => {
-                Some(Msg::Ui(UiMsg::ParamsFormBlur))
-            }
-            _ => None,
-        }
+        handle_input_ev(
+            self,
+            ev,
+            Msg::Ui(UiMsg::S3RegionBlurDown),
+            Msg::Ui(UiMsg::S3RegionBlurUp),
+        )
     }
 }
 
@@ -649,63 +355,12 @@ impl InputS3Profile {
 
 impl Component<Msg, NoUserEvent> for InputS3Profile {
     fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
-        match ev {
-            Event::Keyboard(KeyEvent {
-                code: Key::Left, ..
-            }) => {
-                self.perform(Cmd::Move(Direction::Left));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Right, ..
-            }) => {
-                self.perform(Cmd::Move(Direction::Right));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Home, ..
-            }) => {
-                self.perform(Cmd::GoTo(Position::Begin));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent { code: Key::End, .. }) => {
-                self.perform(Cmd::GoTo(Position::End));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Delete, ..
-            }) => {
-                self.perform(Cmd::Cancel);
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Backspace,
-                ..
-            }) => {
-                self.perform(Cmd::Delete);
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Char(ch),
-                modifiers: KeyModifiers::NONE | KeyModifiers::SHIFT,
-            }) => {
-                self.perform(Cmd::Type(ch));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Enter, ..
-            }) => Some(Msg::Form(FormMsg::Connect)),
-            Event::Keyboard(KeyEvent {
-                code: Key::Down, ..
-            }) => Some(Msg::Ui(UiMsg::S3ProfileBlurDown)),
-            Event::Keyboard(KeyEvent { code: Key::Up, .. }) => {
-                Some(Msg::Ui(UiMsg::S3ProfileBlurUp))
-            }
-            Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => {
-                Some(Msg::Ui(UiMsg::ParamsFormBlur))
-            }
-            _ => None,
-        }
+        handle_input_ev(
+            self,
+            ev,
+            Msg::Ui(UiMsg::S3ProfileBlurDown),
+            Msg::Ui(UiMsg::S3ProfileBlurUp),
+        )
     }
 }
 
@@ -736,63 +391,12 @@ impl InputS3AccessKey {
 
 impl Component<Msg, NoUserEvent> for InputS3AccessKey {
     fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
-        match ev {
-            Event::Keyboard(KeyEvent {
-                code: Key::Left, ..
-            }) => {
-                self.perform(Cmd::Move(Direction::Left));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Right, ..
-            }) => {
-                self.perform(Cmd::Move(Direction::Right));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Home, ..
-            }) => {
-                self.perform(Cmd::GoTo(Position::Begin));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent { code: Key::End, .. }) => {
-                self.perform(Cmd::GoTo(Position::End));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Delete, ..
-            }) => {
-                self.perform(Cmd::Cancel);
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Backspace,
-                ..
-            }) => {
-                self.perform(Cmd::Delete);
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Char(ch),
-                modifiers: KeyModifiers::NONE | KeyModifiers::SHIFT,
-            }) => {
-                self.perform(Cmd::Type(ch));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Enter, ..
-            }) => Some(Msg::Form(FormMsg::Connect)),
-            Event::Keyboard(KeyEvent {
-                code: Key::Down, ..
-            }) => Some(Msg::Ui(UiMsg::S3AccessKeyBlurDown)),
-            Event::Keyboard(KeyEvent { code: Key::Up, .. }) => {
-                Some(Msg::Ui(UiMsg::S3AccessKeyBlurUp))
-            }
-            Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => {
-                Some(Msg::Ui(UiMsg::ParamsFormBlur))
-            }
-            _ => None,
-        }
+        handle_input_ev(
+            self,
+            ev,
+            Msg::Ui(UiMsg::S3AccessKeyBlurDown),
+            Msg::Ui(UiMsg::S3AccessKeyBlurUp),
+        )
     }
 }
 
@@ -820,63 +424,12 @@ impl InputS3SecretAccessKey {
 
 impl Component<Msg, NoUserEvent> for InputS3SecretAccessKey {
     fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
-        match ev {
-            Event::Keyboard(KeyEvent {
-                code: Key::Left, ..
-            }) => {
-                self.perform(Cmd::Move(Direction::Left));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Right, ..
-            }) => {
-                self.perform(Cmd::Move(Direction::Right));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Home, ..
-            }) => {
-                self.perform(Cmd::GoTo(Position::Begin));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent { code: Key::End, .. }) => {
-                self.perform(Cmd::GoTo(Position::End));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Delete, ..
-            }) => {
-                self.perform(Cmd::Cancel);
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Backspace,
-                ..
-            }) => {
-                self.perform(Cmd::Delete);
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Char(ch),
-                modifiers: KeyModifiers::NONE | KeyModifiers::SHIFT,
-            }) => {
-                self.perform(Cmd::Type(ch));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Enter, ..
-            }) => Some(Msg::Form(FormMsg::Connect)),
-            Event::Keyboard(KeyEvent {
-                code: Key::Down, ..
-            }) => Some(Msg::Ui(UiMsg::S3SecretAccessKeyBlurDown)),
-            Event::Keyboard(KeyEvent { code: Key::Up, .. }) => {
-                Some(Msg::Ui(UiMsg::S3SecretAccessKeyBlurUp))
-            }
-            Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => {
-                Some(Msg::Ui(UiMsg::ParamsFormBlur))
-            }
-            _ => None,
-        }
+        handle_input_ev(
+            self,
+            ev,
+            Msg::Ui(UiMsg::S3SecretAccessKeyBlurDown),
+            Msg::Ui(UiMsg::S3SecretAccessKeyBlurUp),
+        )
     }
 }
 
@@ -904,63 +457,12 @@ impl InputS3SecurityToken {
 
 impl Component<Msg, NoUserEvent> for InputS3SecurityToken {
     fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
-        match ev {
-            Event::Keyboard(KeyEvent {
-                code: Key::Left, ..
-            }) => {
-                self.perform(Cmd::Move(Direction::Left));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Right, ..
-            }) => {
-                self.perform(Cmd::Move(Direction::Right));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Home, ..
-            }) => {
-                self.perform(Cmd::GoTo(Position::Begin));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent { code: Key::End, .. }) => {
-                self.perform(Cmd::GoTo(Position::End));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Delete, ..
-            }) => {
-                self.perform(Cmd::Cancel);
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Backspace,
-                ..
-            }) => {
-                self.perform(Cmd::Delete);
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Char(ch),
-                modifiers: KeyModifiers::NONE | KeyModifiers::SHIFT,
-            }) => {
-                self.perform(Cmd::Type(ch));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Enter, ..
-            }) => Some(Msg::Form(FormMsg::Connect)),
-            Event::Keyboard(KeyEvent {
-                code: Key::Down, ..
-            }) => Some(Msg::Ui(UiMsg::S3SecurityTokenBlurDown)),
-            Event::Keyboard(KeyEvent { code: Key::Up, .. }) => {
-                Some(Msg::Ui(UiMsg::S3SecurityTokenBlurUp))
-            }
-            Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => {
-                Some(Msg::Ui(UiMsg::ParamsFormBlur))
-            }
-            _ => None,
-        }
+        handle_input_ev(
+            self,
+            ev,
+            Msg::Ui(UiMsg::S3SecurityTokenBlurDown),
+            Msg::Ui(UiMsg::S3SecurityTokenBlurUp),
+        )
     }
 }
 
@@ -988,62 +490,72 @@ impl InputS3SessionToken {
 
 impl Component<Msg, NoUserEvent> for InputS3SessionToken {
     fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
-        match ev {
-            Event::Keyboard(KeyEvent {
-                code: Key::Left, ..
-            }) => {
-                self.perform(Cmd::Move(Direction::Left));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Right, ..
-            }) => {
-                self.perform(Cmd::Move(Direction::Right));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Home, ..
-            }) => {
-                self.perform(Cmd::GoTo(Position::Begin));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent { code: Key::End, .. }) => {
-                self.perform(Cmd::GoTo(Position::End));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Delete, ..
-            }) => {
-                self.perform(Cmd::Cancel);
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Backspace,
-                ..
-            }) => {
-                self.perform(Cmd::Delete);
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Char(ch),
-                modifiers: KeyModifiers::NONE | KeyModifiers::SHIFT,
-            }) => {
-                self.perform(Cmd::Type(ch));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Enter, ..
-            }) => Some(Msg::Form(FormMsg::Connect)),
-            Event::Keyboard(KeyEvent {
-                code: Key::Down, ..
-            }) => Some(Msg::Ui(UiMsg::S3SessionTokenBlurDown)),
-            Event::Keyboard(KeyEvent { code: Key::Up, .. }) => {
-                Some(Msg::Ui(UiMsg::S3SessionTokenBlurUp))
-            }
-            Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => {
-                Some(Msg::Ui(UiMsg::ParamsFormBlur))
-            }
-            _ => None,
+        handle_input_ev(
+            self,
+            ev,
+            Msg::Ui(UiMsg::S3SessionTokenBlurDown),
+            Msg::Ui(UiMsg::S3SessionTokenBlurUp),
+        )
+    }
+}
+
+fn handle_input_ev(
+    component: &mut dyn Component<Msg, NoUserEvent>,
+    ev: Event<NoUserEvent>,
+    on_key_down: Msg,
+    on_key_up: Msg,
+) -> Option<Msg> {
+    match ev {
+        Event::Keyboard(KeyEvent {
+            code: Key::Left, ..
+        }) => {
+            component.perform(Cmd::Move(Direction::Left));
+            Some(Msg::None)
         }
+        Event::Keyboard(KeyEvent {
+            code: Key::Right, ..
+        }) => {
+            component.perform(Cmd::Move(Direction::Right));
+            Some(Msg::None)
+        }
+        Event::Keyboard(KeyEvent {
+            code: Key::Home, ..
+        }) => {
+            component.perform(Cmd::GoTo(Position::Begin));
+            Some(Msg::None)
+        }
+        Event::Keyboard(KeyEvent { code: Key::End, .. }) => {
+            component.perform(Cmd::GoTo(Position::End));
+            Some(Msg::None)
+        }
+        Event::Keyboard(KeyEvent {
+            code: Key::Delete, ..
+        }) => {
+            component.perform(Cmd::Cancel);
+            Some(Msg::None)
+        }
+        Event::Keyboard(KeyEvent {
+            code: Key::Backspace,
+            ..
+        }) => {
+            component.perform(Cmd::Delete);
+            Some(Msg::None)
+        }
+        Event::Keyboard(KeyEvent {
+            code: Key::Enter, ..
+        }) => Some(Msg::Form(FormMsg::Connect)),
+        Event::Keyboard(KeyEvent {
+            code: Key::Char(ch),
+            modifiers: KeyModifiers::NONE | KeyModifiers::SHIFT,
+        }) => {
+            component.perform(Cmd::Type(ch));
+            Some(Msg::None)
+        }
+        Event::Keyboard(KeyEvent {
+            code: Key::Down, ..
+        }) => Some(on_key_down),
+        Event::Keyboard(KeyEvent { code: Key::Up, .. }) => Some(on_key_up),
+        Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => Some(Msg::Ui(UiMsg::ParamsFormBlur)),
+        _ => None,
     }
 }
