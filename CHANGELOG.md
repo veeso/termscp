@@ -56,6 +56,7 @@ Released on FIXME:
   - **Tui-realm migration**:
     - migrated application to tui-realm 1.x
     - Improved application performance
+  - Changed the buffer size to **65535** (was 65536) for transfer I/O
 - **SSH Config**
   - Added `ssh config` parameter in configuration
   - It is now possible to specify the ssh configuration file to use

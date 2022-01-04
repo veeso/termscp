@@ -40,6 +40,9 @@ use std::path::{Path, PathBuf};
 use std::time::Instant;
 use thiserror::Error;
 
+/// Buffer size for remote I/O
+const BUFSIZE: usize = 65535;
+
 /// Describes the reason that caused an error during a file transfer
 #[derive(Error, Debug)]
 enum TransferErrorReason {
@@ -483,7 +486,7 @@ impl FileTransferActivity {
                 last_input_event_fetch = Some(Instant::now());
             }
             // Read till you can
-            let mut buffer: [u8; 65536] = [0; 65536];
+            let mut buffer: [u8; BUFSIZE] = [0; BUFSIZE];
             let delta: usize = match reader.read(&mut buffer) {
                 Ok(bytes_read) => {
                     total_bytes_written += bytes_read;
@@ -888,7 +891,7 @@ impl FileTransferActivity {
                 last_input_event_fetch = Some(Instant::now());
             }
             // Read till you can
-            let mut buffer: [u8; 65536] = [0; 65536];
+            let mut buffer: [u8; BUFSIZE] = [0; BUFSIZE];
             let delta: usize = match reader.read(&mut buffer) {
                 Ok(bytes_read) => {
                     total_bytes_written += bytes_read;
