@@ -106,6 +106,7 @@ impl ProtocolParams {
         }
     }
 
+    /// Get a mutable reference to the inner generic protocol params
     pub fn mut_generic_params(&mut self) -> Option<&mut GenericProtocolParams> {
         match self {
             ProtocolParams::Generic(params) => Some(params),
