@@ -40,6 +40,7 @@ Released on FIXME:
   - **Ui**:
     - Transfer abortion is now more responsive
     - Selected files will now be rendered with **Reversed, underlined and italic** text modifiers instead of being prepended with `*`.
+    - Error popup message height is now calculated based on the content it must display.
     - **Midnight commander keys**
       - `<F1>`: Show help
       - `<F2>`: Save file as (actually I invented this)
@@ -74,7 +75,8 @@ Released on FIXME:
   - By default the log level is now set to `INFO`
   - It is now possible to enable the `TRACE` level with the `-D` CLI option.
 - Dependencies:
-  - Updated `tui-realm` to `1.3.0`
+  - Added `unicode-width 0.1.8`
+  - Updated `tui-realm` to `1.4.2`
   - Updated `tui-realm-stdlib` to `1.1.4`
   - Removed `rust-s3`, `ssh2`, `suppaftp`; replaced by `remotefs 0.2.0`, `remotefs-aws-s3 0.1.0`, `remotefs-ftp 0.1.0` and `remotefs-ssh 0.1.0`
   - Removed `crossterm` (since bridged by tui-realm)
