@@ -421,6 +421,8 @@ mod tests {
         assert_eq!(s3.bucket.as_str(), "veeso");
         assert_eq!(s3.region.as_str(), "eu-west-1");
         assert_eq!(s3.profile.as_deref().unwrap(), "default");
+        assert_eq!(s3.access_key.as_deref().unwrap(), "pippo");
+        assert_eq!(s3.secret_access_key.as_deref().unwrap(), "pluto");
     }
 
     #[test]
@@ -470,6 +472,8 @@ mod tests {
                     bucket: "veeso".to_string(),
                     region: "eu-west-1".to_string(),
                     profile: None,
+                    access_key: None,
+                    secret_access_key: None,
                 }),
             },
         );
@@ -531,6 +535,8 @@ mod tests {
         bucket = "veeso"
         region = "eu-west-1"
         profile = "default"
+        access_key = "pippo"
+        secret_access_key = "pluto"
 
         [recents]
         ISO20201215T094000Z = { address = "172.16.104.10", port = 22, protocol = "SCP", username = "root" }

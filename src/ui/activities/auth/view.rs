@@ -27,7 +27,7 @@
  */
 // Locals
 use super::{components, AuthActivity, Context, FileTransferProtocol, Id, InputMask};
-use crate::filetransfer::params::ProtocolParams;
+use crate::filetransfer::params::{AwsS3Params, GenericProtocolParams, ProtocolParams};
 use crate::filetransfer::FileTransferParams;
 use crate::utils::ui::draw_area_in;
 
@@ -74,6 +74,10 @@ impl AuthActivity {
         self.mount_s3_bucket("");
         self.mount_s3_profile("");
         self.mount_s3_region("");
+        self.mount_s3_access_key("");
+        self.mount_s3_secret_access_key("");
+        self.mount_s3_security_token("");
+        self.mount_s3_session_token("");
         // Version notice
         if let Some(version) = self
             .context()
@@ -158,6 +162,7 @@ impl AuthActivity {
                             Constraint::Length(3), // bucket
                             Constraint::Length(3), // region
                             Constraint::Length(3), // profile
+                            Constraint::Length(3), // access_key
                         ]
                         .as_ref(),
                     )
@@ -190,9 +195,11 @@ impl AuthActivity {
             // Render input mask
             match self.input_mask() {
                 InputMask::AwsS3 => {
-                    self.app.view(&Id::S3Bucket, f, input_mask[0]);
-                    self.app.view(&Id::S3Region, f, input_mask[1]);
-                    self.app.view(&Id::S3Profile, f, input_mask[2]);
+                    let s3_view_ids = self.get_s3_view();
+                    self.app.view(&s3_view_ids[0], f, input_mask[0]);
+                    self.app.view(&s3_view_ids[1], f, input_mask[1]);
+                    self.app.view(&s3_view_ids[2], f, input_mask[2]);
+                    self.app.view(&s3_view_ids[3], f, input_mask[3]);
                 }
                 InputMask::Generic => {
                     self.app.view(&Id::Address, f, input_mask[0]);
@@ -653,23 +660,83 @@ impl AuthActivity {
             .is_ok());
     }
 
+    pub(crate) fn mount_s3_access_key(&mut self, key: &str) {
+        let password_color = self.theme().auth_password;
+        assert!(self
+            .app
+            .remount(
+                Id::S3AccessKey,
+                Box::new(components::InputS3AccessKey::new(key, password_color)),
+                vec![]
+            )
+            .is_ok());
+    }
+
+    pub(crate) fn mount_s3_secret_access_key(&mut self, key: &str) {
+        let addr_color = self.theme().auth_address;
+        assert!(self
+            .app
+            .remount(
+                Id::S3SecretAccessKey,
+                Box::new(components::InputS3SecretAccessKey::new(key, addr_color)),
+                vec![]
+            )
+            .is_ok());
+    }
+
+    pub(crate) fn mount_s3_security_token(&mut self, token: &str) {
+        let port_color = self.theme().auth_port;
+        assert!(self
+            .app
+            .remount(
+                Id::S3SecurityToken,
+                Box::new(components::InputS3SecurityToken::new(token, port_color)),
+                vec![]
+            )
+            .is_ok());
+    }
+
+    pub(crate) fn mount_s3_session_token(&mut self, token: &str) {
+        let username_color = self.theme().auth_username;
+        assert!(self
+            .app
+            .remount(
+                Id::S3SessionToken,
+                Box::new(components::InputS3SessionToken::new(token, username_color)),
+                vec![]
+            )
+            .is_ok());
+    }
+
     // -- query
 
     /// Collect input values from view
-    pub(super) fn get_generic_params_input(&self) -> (String, u16, String, String) {
+    pub(super) fn get_generic_params_input(&self) -> GenericProtocolParams {
         let addr: String = self.get_input_addr();
         let port: u16 = self.get_input_port();
-        let username: String = self.get_input_username();
-        let password: String = self.get_input_password();
-        (addr, port, username, password)
+        let username = self.get_input_username();
+        let password = self.get_input_password();
+        GenericProtocolParams::default()
+            .address(addr)
+            .port(port)
+            .username(username)
+            .password(password)
     }
 
     /// Collect s3 input values from view
-    pub(super) fn get_s3_params_input(&self) -> (String, String, Option<String>) {
+    pub(super) fn get_s3_params_input(&self) -> AwsS3Params {
         let bucket: String = self.get_input_s3_bucket();
         let region: String = self.get_input_s3_region();
         let profile: Option<String> = self.get_input_s3_profile();
-        (bucket, region, profile)
+        let access_key = self.get_input_s3_access_key();
+        let secret_access_key = self.get_input_s3_secret_access_key();
+        let security_token = self.get_input_s3_security_token();
+        let session_token = self.get_input_s3_session_token();
+        AwsS3Params::new(bucket, region, profile)
+            .access_key(access_key)
+            .secret_access_key(secret_access_key)
+            .security_token(security_token)
+            .session_token(session_token)
     }
 
     pub(super) fn get_input_addr(&self) -> String {
@@ -689,17 +756,17 @@ impl AuthActivity {
         }
     }
 
-    pub(super) fn get_input_username(&self) -> String {
+    pub(super) fn get_input_username(&self) -> Option<String> {
         match self.app.state(&Id::Username) {
-            Ok(State::One(StateValue::String(x))) => x,
-            _ => String::new(),
+            Ok(State::One(StateValue::String(x))) if !x.is_empty() => Some(x),
+            _ => None,
         }
     }
 
-    pub(super) fn get_input_password(&self) -> String {
+    pub(super) fn get_input_password(&self) -> Option<String> {
         match self.app.state(&Id::Password) {
-            Ok(State::One(StateValue::String(x))) => x,
-            _ => String::new(),
+            Ok(State::One(StateValue::String(x))) if !x.is_empty() => Some(x),
+            _ => None,
         }
     }
 
@@ -719,6 +786,34 @@ impl AuthActivity {
 
     pub(super) fn get_input_s3_profile(&self) -> Option<String> {
         match self.app.state(&Id::S3Profile) {
+            Ok(State::One(StateValue::String(x))) if !x.is_empty() => Some(x),
+            _ => None,
+        }
+    }
+
+    pub(super) fn get_input_s3_access_key(&self) -> Option<String> {
+        match self.app.state(&Id::S3AccessKey) {
+            Ok(State::One(StateValue::String(x))) if !x.is_empty() => Some(x),
+            _ => None,
+        }
+    }
+
+    pub(super) fn get_input_s3_secret_access_key(&self) -> Option<String> {
+        match self.app.state(&Id::S3SecretAccessKey) {
+            Ok(State::One(StateValue::String(x))) if !x.is_empty() => Some(x),
+            _ => None,
+        }
+    }
+
+    pub(super) fn get_input_s3_security_token(&self) -> Option<String> {
+        match self.app.state(&Id::S3SecurityToken) {
+            Ok(State::One(StateValue::String(x))) if !x.is_empty() => Some(x),
+            _ => None,
+        }
+    }
+
+    pub(super) fn get_input_s3_session_token(&self) -> Option<String> {
+        match self.app.state(&Id::S3SessionToken) {
             Ok(State::One(StateValue::String(x))) if !x.is_empty() => Some(x),
             _ => None,
         }
@@ -745,7 +840,7 @@ impl AuthActivity {
     /// Returns the input mask size based on current input mask
     pub(super) fn input_mask_size(&self) -> u16 {
         match self.input_mask() {
-            InputMask::AwsS3 => 9,
+            InputMask::AwsS3 => 12,
             InputMask::Generic => 12,
         }
     }
@@ -782,6 +877,19 @@ impl AuthActivity {
                     protocol, username, params.address, params.port
                 )
             }
+        }
+    }
+
+    /// Get the visible element in the aws-s3 form, based on current focus
+    fn get_s3_view(&self) -> [Id; 4] {
+        match self.app.focus() {
+            Some(&Id::S3SecretAccessKey | &Id::S3SecurityToken | &Id::S3SessionToken) => [
+                Id::S3AccessKey,
+                Id::S3SecretAccessKey,
+                Id::S3SecurityToken,
+                Id::S3SessionToken,
+            ],
+            _ => [Id::S3Bucket, Id::S3Region, Id::S3Profile, Id::S3AccessKey],
         }
     }
 

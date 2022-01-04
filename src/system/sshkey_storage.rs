@@ -37,32 +37,6 @@ pub struct SshKeyStorage {
 }
 
 impl SshKeyStorage {
-    /// Create a `SshKeyStorage` starting from a `ConfigClient`
-    pub fn storage_from_config(cfg_client: &ConfigClient) -> Self {
-        let mut hosts: HashMap<String, PathBuf> =
-            HashMap::with_capacity(cfg_client.iter_ssh_keys().count());
-        debug!("Setting up SSH key storage");
-        // Iterate over keys
-        for key in cfg_client.iter_ssh_keys() {
-            match cfg_client.get_ssh_key(key) {
-                Ok(host) => match host {
-                    Some((addr, username, rsa_key_path)) => {
-                        let key_name: String = Self::make_mapkey(&addr, &username);
-                        hosts.insert(key_name, rsa_key_path);
-                    }
-                    None => continue,
-                },
-                Err(err) => {
-                    error!("Failed to get SSH key for {}: {}", key, err);
-                    continue;
-                }
-            }
-            info!("Got SSH key for {}", key);
-        }
-        // Return storage
-        SshKeyStorage { hosts }
-    }
-
     /// Create an empty ssh key storage; used in case `ConfigClient` is not available
     #[cfg(test)]
     pub fn empty() -> Self {
@@ -92,6 +66,33 @@ impl SshKeyStorageT for SshKeyStorage {
     }
 }
 
+impl From<&ConfigClient> for SshKeyStorage {
+    fn from(cfg_client: &ConfigClient) -> Self {
+        let mut hosts: HashMap<String, PathBuf> =
+            HashMap::with_capacity(cfg_client.iter_ssh_keys().count());
+        debug!("Setting up SSH key storage");
+        // Iterate over keys
+        for key in cfg_client.iter_ssh_keys() {
+            match cfg_client.get_ssh_key(key) {
+                Ok(host) => match host {
+                    Some((addr, username, rsa_key_path)) => {
+                        let key_name: String = Self::make_mapkey(&addr, &username);
+                        hosts.insert(key_name, rsa_key_path);
+                    }
+                    None => continue,
+                },
+                Err(err) => {
+                    error!("Failed to get SSH key for {}: {}", key, err);
+                    continue;
+                }
+            }
+            info!("Got SSH key for {}", key);
+        }
+        // Return storage
+        SshKeyStorage { hosts }
+    }
+}
+
 #[cfg(test)]
 mod tests {
 
@@ -113,7 +114,7 @@ mod tests {
             .add_ssh_key("192.168.1.31", "pi", "piroporopero")
             .is_ok());
         // Create ssh key storage
-        let storage: SshKeyStorage = SshKeyStorage::storage_from_config(&client);
+        let storage: SshKeyStorage = SshKeyStorage::from(&client);
         // Verify key exists
         let mut exp_key_path: PathBuf = key_path.clone();
         exp_key_path.push("pi@192.168.1.31.key");

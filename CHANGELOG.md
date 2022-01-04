@@ -57,6 +57,11 @@ Released on FIXME:
     - migrated application to tui-realm 1.x
     - Improved application performance
   - Changed the buffer size to **65535** (was 65536) for transfer I/O
+- **Aws s3 connection parameters extension** 🦊:
+  - Added `Access Key` to Aws-s3 connection parameters
+  - Added `Security Access Key` to Aws-s3 connection parameters
+  - Added `Security token` to Aws-s3 connection parameters
+  - Added `Session token` to Aws-s3 connection parameters
 - **SSH Config**
   - Added `ssh config` parameter in configuration
   - It is now possible to specify the ssh configuration file to use

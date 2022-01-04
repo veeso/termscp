@@ -346,7 +346,7 @@ impl BookmarkSavePassword {
                 .value(0)
                 .rewind(true)
                 .foreground(color)
-                .title("Save password?", Alignment::Center),
+                .title("Save secrets?", Alignment::Center),
         }
     }
 }

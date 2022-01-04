@@ -107,11 +107,14 @@ Quando si usa l'argomento indirizzo non è possibile fornire la password diretta
 ## Credenziali Aws S3 🦊
 
 Per connettersi ad un bucket S3 devi come già saprai fornire le credenziali fornite da AWS.
-Ci sono due modi per passare queste credenziali a termscp e come avrai già notato **non puoi** farlo dal form di autenticazione.
-Questi sono quindi i due modi per passare le chiavi:
+Ci sono tre modi per passare queste credenziali a termscp.
+Questi sono quindi i tre modi per passare le chiavi:
 
-1. Utilizza il file delle credenziali s3: configurando aws via `aws configure` le tue credenziali dovrebbero già venir salvate in  `~/.aws/credentials`. Nel caso tu debba usare un profile diverso da `default`, puoi fornire un profilo diverso nell'authentication form.
-2. **Variabili d'ambiente**: nel caso il primo metodo non sia utilizzabile, puoi comunque fornirle come variabili d'ambiente. Considera però che queste variabili sovrascriveranno sempre le credenziali situate nel file credentials. Vediamo come impostarle:
+1. Form di autenticazione:
+   1. Puoi fornire la `access_key` (dovrebbe essere obbligatoria), la `secret_access_key` (dovrebbe essere obbligatoria), il `security_token` ed il `session_token`
+   2. Se salvi la connessione s3 come segnalibro e decidi di salvare la password, questi parametri verranno salvati nel file dei segnalibri criptati con AES-256/BASE64; ad eccezion fatta per i due token, che dovrebbero essere credenziali temporanee, quindi inutili da salvare.
+2. Utilizza il file delle credenziali s3: configurando aws via `aws configure` le tue credenziali dovrebbero già venir salvate in  `~/.aws/credentials`. Nel caso tu debba usare un profile diverso da `default`, puoi fornire un profilo diverso nell'authentication form.
+3. **Variabili d'ambiente**: nel caso il primo metodo non sia utilizzabile, puoi comunque fornirle come variabili d'ambiente. Considera però che queste variabili sovrascriveranno sempre le credenziali situate nel file credentials. Vediamo come impostarle:
 
     Queste sono sempre obbligatorie:
 
