@@ -31,13 +31,14 @@ use crate::utils::path::diff_paths;
 // Ext
 use bytesize::ByteSize;
 use regex::Regex;
-use remotefs::Entry;
+use remotefs::File;
 use std::path::PathBuf;
+use std::time::UNIX_EPOCH;
 #[cfg(target_family = "unix")]
 use users::{get_group_by_gid, get_user_by_uid};
 // Types
-// FmtCallback: Formatter, fsentry: &Entry, cur_str, prefix, length, extra
-type FmtCallback = fn(&Formatter, &Entry, &str, &str, Option<&usize>, Option<&String>) -> String;
+// FmtCallback: Formatter, fsentry: &File, cur_str, prefix, length, extra
+type FmtCallback = fn(&Formatter, &File, &str, &str, Option<&usize>, Option<&String>) -> String;
 
 // Keys
 const FMT_KEY_ATIME: &str = "ATIME";
@@ -64,7 +65,7 @@ lazy_static! {
     static ref FMT_ATTR_REGEX: Regex = Regex::new(r"(?:([A-Z]+))(:?([0-9]+))?(:?(.+))?").ok().unwrap();
 }
 
-/// Call Chain block is a block in a chain of functions which are called in order to format the Entry.
+/// Call Chain block is a block in a chain of functions which are called in order to format the File.
 /// A callChain is instantiated starting from the Formatter syntax and the regex, once the groups are found
 /// a chain of function is made using the Formatters method.
 /// This method provides an extremely fast way to format fs entries
@@ -99,7 +100,7 @@ impl CallChainBlock {
     }
 
     /// Call next callback in the CallChain
-    pub fn next(&self, fmt: &Formatter, fsentry: &Entry, cur_str: &str) -> String {
+    pub fn next(&self, fmt: &Formatter, fsentry: &File, cur_str: &str) -> String {
         // Call func
         let new_str: String = (self.func)(
             fmt,
@@ -161,7 +162,7 @@ impl Formatter {
     }
 
     /// Format fsentry
-    pub fn fmt(&self, fsentry: &Entry) -> String {
+    pub fn fmt(&self, fsentry: &File) -> String {
         // Execute callchain blocks
         self.call_chain.next(self, fsentry, "")
     }
@@ -171,7 +172,7 @@ impl Formatter {
     /// Format last access time
     fn fmt_atime(
         &self,
-        fsentry: &Entry,
+        fsentry: &File,
         cur_str: &str,
         prefix: &str,
         fmt_len: Option<&usize>,
@@ -179,7 +180,7 @@ impl Formatter {
     ) -> String {
         // Get date (use extra args as format or default "%b %d %Y %H:%M")
         let datetime: String = fmt_time(
-            fsentry.metadata().atime,
+            fsentry.metadata().accessed.unwrap_or(UNIX_EPOCH),
             match fmt_extra {
                 Some(fmt) => fmt.as_ref(),
                 None => "%b %d %Y %H:%M",
@@ -198,7 +199,7 @@ impl Formatter {
     /// Format creation time
     fn fmt_ctime(
         &self,
-        fsentry: &Entry,
+        fsentry: &File,
         cur_str: &str,
         prefix: &str,
         fmt_len: Option<&usize>,
@@ -206,7 +207,7 @@ impl Formatter {
     ) -> String {
         // Get date
         let datetime: String = fmt_time(
-            fsentry.metadata().ctime,
+            fsentry.metadata().created.unwrap_or(UNIX_EPOCH),
             match fmt_extra {
                 Some(fmt) => fmt.as_ref(),
                 None => "%b %d %Y %H:%M",
@@ -225,7 +226,7 @@ impl Formatter {
     /// Format owner group
     fn fmt_group(
         &self,
-        fsentry: &Entry,
+        fsentry: &File,
         cur_str: &str,
         prefix: &str,
         fmt_len: Option<&usize>,
@@ -258,7 +259,7 @@ impl Formatter {
     /// Format last change time
     fn fmt_mtime(
         &self,
-        fsentry: &Entry,
+        fsentry: &File,
         cur_str: &str,
         prefix: &str,
         fmt_len: Option<&usize>,
@@ -266,7 +267,7 @@ impl Formatter {
     ) -> String {
         // Get date
         let datetime: String = fmt_time(
-            fsentry.metadata().mtime,
+            fsentry.metadata().modified.unwrap_or(UNIX_EPOCH),
             match fmt_extra {
                 Some(fmt) => fmt.as_ref(),
                 None => "%b %d %Y %H:%M",
@@ -285,7 +286,7 @@ impl Formatter {
     /// Format file name
     fn fmt_name(
         &self,
-        fsentry: &Entry,
+        fsentry: &File,
         cur_str: &str,
         prefix: &str,
         fmt_len: Option<&usize>,
@@ -296,14 +297,14 @@ impl Formatter {
             Some(l) => *l,
             None => 24,
         };
-        let name: &str = fsentry.name();
+        let name = fsentry.name();
         let last_idx: usize = match fsentry.is_dir() {
             // NOTE: For directories is l - 2, since we push '/' to name
             true => file_len - 2,
             false => file_len - 1,
         };
         let mut name: String = match name.len() >= file_len {
-            false => name.to_string(),
+            false => name,
             true => format!("{}…", &name[0..last_idx]),
         };
         if fsentry.is_dir() {
@@ -316,7 +317,7 @@ impl Formatter {
     /// Format path
     fn fmt_path(
         &self,
-        fsentry: &Entry,
+        fsentry: &File,
         cur_str: &str,
         prefix: &str,
         fmt_len: Option<&usize>,
@@ -341,7 +342,7 @@ impl Formatter {
     /// Format file permissions
     fn fmt_pex(
         &self,
-        fsentry: &Entry,
+        fsentry: &File,
         cur_str: &str,
         prefix: &str,
         _fmt_len: Option<&usize>,
@@ -376,7 +377,7 @@ impl Formatter {
     /// Format file size
     fn fmt_size(
         &self,
-        fsentry: &Entry,
+        fsentry: &File,
         cur_str: &str,
         prefix: &str,
         _fmt_len: Option<&usize>,
@@ -387,6 +388,17 @@ impl Formatter {
             let size: ByteSize = ByteSize(fsentry.metadata().size);
             // Add to cur str, prefix and the key value
             format!("{}{}{:10}", cur_str, prefix, size.to_string())
+        } else if fsentry.metadata().symlink.is_some() {
+            let size = ByteSize(
+                fsentry
+                    .metadata()
+                    .symlink
+                    .as_ref()
+                    .unwrap()
+                    .to_string_lossy()
+                    .len() as u64,
+            );
+            format!("{}{}{:10}", cur_str, prefix, size.to_string())
         } else {
             // Add to cur str, prefix and the key value
             format!("{}{}          ", cur_str, prefix)
@@ -396,7 +408,7 @@ impl Formatter {
     /// Format file symlink (if any)
     fn fmt_symlink(
         &self,
-        fsentry: &Entry,
+        fsentry: &File,
         cur_str: &str,
         prefix: &str,
         fmt_len: Option<&usize>,
@@ -423,7 +435,7 @@ impl Formatter {
     /// Format owner user
     fn fmt_user(
         &self,
-        fsentry: &Entry,
+        fsentry: &File,
         cur_str: &str,
         prefix: &str,
         _fmt_len: Option<&usize>,
@@ -451,7 +463,7 @@ impl Formatter {
     /// It does nothing, just returns cur_str
     fn fmt_fallback(
         &self,
-        _fsentry: &Entry,
+        _fsentry: &File,
         cur_str: &str,
         prefix: &str,
         _fmt_len: Option<&usize>,
@@ -536,7 +548,7 @@ mod tests {
     use super::*;
 
     use pretty_assertions::assert_eq;
-    use remotefs::fs::{Directory, File, Metadata, UnixPex};
+    use remotefs::fs::{File, FileType, Metadata, UnixPex};
     use std::path::PathBuf;
     use std::time::SystemTime;
 
@@ -546,21 +558,20 @@ mod tests {
         let dummy_formatter: Formatter = Formatter::new("");
         // Make a dummy entry
         let t: SystemTime = SystemTime::now();
-        let dummy_entry: Entry = Entry::File(File {
-            name: String::from("bar.txt"),
+        let dummy_entry = File {
             path: PathBuf::from("/bar.txt"),
-            extension: Some(String::from("txt")),
             metadata: Metadata {
-                atime: t,
-                ctime: t,
-                mtime: t,
+                accessed: Some(t),
+                created: Some(t),
+                modified: Some(t),
+                file_type: FileType::File,
                 size: 8192,
                 symlink: None,
                 uid: Some(0),
                 gid: Some(0),
                 mode: Some(UnixPex::from(0o644)),
             },
-        });
+        };
         let prefix: String = String::from("h");
         let mut callchain: CallChainBlock = CallChainBlock::new(dummy_fmt, prefix, None, None);
         assert!(callchain.next_block.is_none());
@@ -588,21 +599,20 @@ mod tests {
         let formatter: Formatter = Formatter::default();
         // Experiments :D
         let t: SystemTime = SystemTime::now();
-        let entry: Entry = Entry::File(File {
-            name: String::from("bar.txt"),
+        let entry = File {
             path: PathBuf::from("/bar.txt"),
-            extension: Some(String::from("txt")),
             metadata: Metadata {
-                atime: t,
-                ctime: t,
-                mtime: t,
+                accessed: Some(t),
+                created: Some(t),
+                modified: Some(t),
+                file_type: FileType::File,
                 size: 8192,
                 symlink: None,
                 uid: Some(0),
                 gid: Some(0),
                 mode: Some(UnixPex::from(0o644)),
             },
-        });
+        };
         #[cfg(target_family = "unix")]
         assert_eq!(
             formatter.fmt(&entry),
@@ -620,21 +630,20 @@ mod tests {
             )
         );
         // Elide name
-        let entry: Entry = Entry::File(File {
-            name: String::from("piroparoporoperoperupupu.txt"),
-            path: PathBuf::from("/bar.txt"),
-            extension: Some(String::from("txt")),
+        let entry = File {
+            path: PathBuf::from("/piroparoporoperoperupupu.txt"),
             metadata: Metadata {
-                atime: t,
-                ctime: t,
-                mtime: t,
+                accessed: Some(t),
+                created: Some(t),
+                modified: Some(t),
+                file_type: FileType::File,
                 size: 8192,
                 symlink: None,
                 uid: Some(0),
                 gid: Some(0),
                 mode: Some(UnixPex::from(0o644)),
             },
-        });
+        };
         #[cfg(target_family = "unix")]
         assert_eq!(
             formatter.fmt(&entry),
@@ -652,21 +661,20 @@ mod tests {
             )
         );
         // No pex
-        let entry: Entry = Entry::File(File {
-            name: String::from("bar.txt"),
+        let entry = File {
             path: PathBuf::from("/bar.txt"),
-            extension: Some(String::from("txt")),
             metadata: Metadata {
-                atime: t,
-                ctime: t,
-                mtime: t,
+                accessed: Some(t),
+                created: Some(t),
+                modified: Some(t),
+                file_type: FileType::File,
                 size: 8192,
                 symlink: None,
                 uid: Some(0),
                 gid: Some(0),
                 mode: None,
             },
-        });
+        };
         #[cfg(target_family = "unix")]
         assert_eq!(
             formatter.fmt(&entry),
@@ -684,21 +692,20 @@ mod tests {
             )
         );
         // No user
-        let entry: Entry = Entry::File(File {
-            name: String::from("bar.txt"),
+        let entry = File {
             path: PathBuf::from("/bar.txt"),
-            extension: Some(String::from("txt")),
             metadata: Metadata {
-                atime: t,
-                ctime: t,
-                mtime: t,
+                accessed: Some(t),
+                created: Some(t),
+                modified: Some(t),
+                file_type: FileType::File,
                 size: 8192,
                 symlink: None,
                 uid: None,
                 gid: Some(0),
                 mode: None,
             },
-        });
+        };
         #[cfg(target_family = "unix")]
         assert_eq!(
             formatter.fmt(&entry),
@@ -723,20 +730,20 @@ mod tests {
         let formatter: Formatter = Formatter::default();
         // Experiments :D
         let t: SystemTime = SystemTime::now();
-        let entry: Entry = Entry::Directory(Directory {
-            name: String::from("projects"),
+        let entry = File {
             path: PathBuf::from("/home/cvisintin/projects"),
             metadata: Metadata {
-                atime: t,
-                ctime: t,
-                mtime: t,
+                accessed: Some(t),
+                created: Some(t),
+                modified: Some(t),
+                file_type: FileType::Directory,
                 size: 4096,
                 symlink: None,
                 uid: Some(0),
                 gid: Some(0),
                 mode: Some(UnixPex::from(0o755)),
             },
-        });
+        };
         #[cfg(target_family = "unix")]
         assert_eq!(
             formatter.fmt(&entry),
@@ -754,20 +761,20 @@ mod tests {
             )
         );
         // No pex, no user
-        let entry: Entry = Entry::Directory(Directory {
-            name: String::from("projects"),
+        let entry = File {
             path: PathBuf::from("/home/cvisintin/projects"),
             metadata: Metadata {
-                atime: t,
-                ctime: t,
-                mtime: t,
+                accessed: Some(t),
+                created: Some(t),
+                modified: Some(t),
+                file_type: FileType::Directory,
                 size: 4096,
                 symlink: None,
                 uid: None,
                 gid: Some(0),
                 mode: None,
             },
-        });
+        };
         #[cfg(target_family = "unix")]
         assert_eq!(
             formatter.fmt(&entry),
@@ -792,41 +799,41 @@ mod tests {
             Formatter::new("{NAME:16} {SYMLINK:12} {GROUP} {USER} {PEX} {SIZE} {ATIME:20:%a %b %d %Y %H:%M} {CTIME:20:%a %b %d %Y %H:%M} {MTIME:20:%a %b %d %Y %H:%M}");
         // Directory (with symlink)
         let t: SystemTime = SystemTime::now();
-        let entry: Entry = Entry::Directory(Directory {
-            name: String::from("projects"),
-            path: PathBuf::from("/home/cvisintin/project"),
+        let entry = File {
+            path: PathBuf::from("/home/cvisintin/projects"),
             metadata: Metadata {
-                atime: t,
-                ctime: t,
-                mtime: t,
+                accessed: Some(t),
+                created: Some(t),
+                modified: Some(t),
+                file_type: FileType::Symlink,
                 size: 4096,
                 symlink: Some(PathBuf::from("project.info")),
                 uid: None,
                 gid: None,
                 mode: Some(UnixPex::from(0o755)),
             },
-        });
+        };
         assert_eq!(formatter.fmt(&entry), format!(
-            "projects/        -> project.info 0            0            lrwxr-xr-x            {} {} {}",
+            "projects         -> project.info 0            0            lrwxr-xr-x 12 B       {} {} {}",
             fmt_time(t, "%a %b %d %Y %H:%M"), 
             fmt_time(t, "%a %b %d %Y %H:%M"), 
             fmt_time(t, "%a %b %d %Y %H:%M"), 
         ));
         // Directory without symlink
-        let entry: Entry = Entry::Directory(Directory {
-            name: String::from("projects"),
-            path: PathBuf::from("/home/cvisintin/project"),
+        let entry = File {
+            path: PathBuf::from("/home/cvisintin/projects"),
             metadata: Metadata {
-                atime: t,
-                ctime: t,
-                mtime: t,
+                accessed: Some(t),
+                created: Some(t),
+                modified: Some(t),
+                file_type: FileType::Directory,
                 size: 4096,
                 symlink: None,
                 uid: None,
                 gid: None,
                 mode: Some(UnixPex::from(0o755)),
             },
-        });
+        };
         assert_eq!(formatter.fmt(&entry), format!(
             "projects/                                 0            0            drwxr-xr-x            {} {} {}",
             fmt_time(t, "%a %b %d %Y %H:%M"), 
@@ -834,43 +841,41 @@ mod tests {
             fmt_time(t, "%a %b %d %Y %H:%M"), 
         ));
         // File with symlink
-        let entry: Entry = Entry::File(File {
-            name: String::from("bar.txt"),
+        let entry = File {
             path: PathBuf::from("/bar.txt"),
-            extension: Some(String::from("txt")),
             metadata: Metadata {
-                atime: t,
-                ctime: t,
-                mtime: t,
+                accessed: Some(t),
+                created: Some(t),
+                modified: Some(t),
+                file_type: FileType::Symlink,
                 size: 8192,
                 symlink: Some(PathBuf::from("project.info")),
                 uid: None,
                 gid: None,
                 mode: Some(UnixPex::from(0o644)),
             },
-        });
+        };
         assert_eq!(formatter.fmt(&entry), format!(
-            "bar.txt          -> project.info 0            0            lrw-r--r-- 8.2 KB     {} {} {}",
+            "bar.txt          -> project.info 0            0            lrw-r--r-- 12 B       {} {} {}",
             fmt_time(t, "%a %b %d %Y %H:%M"), 
             fmt_time(t, "%a %b %d %Y %H:%M"), 
             fmt_time(t, "%a %b %d %Y %H:%M"), 
         ));
         // File without symlink
-        let entry: Entry = Entry::File(File {
-            name: String::from("bar.txt"),
+        let entry = File {
             path: PathBuf::from("/bar.txt"),
-            extension: Some(String::from("txt")),
             metadata: Metadata {
-                atime: t,
-                ctime: t,
-                mtime: t,
+                accessed: Some(t),
+                created: Some(t),
+                modified: Some(t),
+                file_type: FileType::File,
                 size: 8192,
                 symlink: None,
                 uid: None,
                 gid: None,
                 mode: Some(UnixPex::from(0o644)),
             },
-        });
+        };
         assert_eq!(formatter.fmt(&entry), format!(
             "bar.txt                                   0            0            -rw-r--r-- 8.2 KB     {} {} {}",
             fmt_time(t, "%a %b %d %Y %H:%M"), 
@@ -883,21 +888,20 @@ mod tests {
     #[cfg(target_family = "unix")]
     fn should_fmt_path() {
         let t: SystemTime = SystemTime::now();
-        let entry: Entry = Entry::File(File {
-            name: String::from("bar.txt"),
+        let entry = File {
             path: PathBuf::from("/tmp/a/b/c/bar.txt"),
-            extension: Some(String::from("txt")),
             metadata: Metadata {
-                atime: t,
-                ctime: t,
-                mtime: t,
+                accessed: Some(t),
+                created: Some(t),
+                modified: Some(t),
+                file_type: FileType::Symlink,
                 size: 8192,
                 symlink: Some(PathBuf::from("project.info")),
                 uid: None,
                 gid: None,
                 mode: Some(UnixPex::from(0o644)),
             },
-        });
+        };
         let formatter: Formatter = Formatter::new("File path: {PATH}");
         assert_eq!(
             formatter.fmt(&entry).as_str(),
@@ -915,7 +919,7 @@ mod tests {
     /// Dummy formatter, just yelds an 'A' at the end of the current string
     fn dummy_fmt(
         _fmt: &Formatter,
-        _entry: &Entry,
+        _entry: &File,
         cur_str: &str,
         prefix: &str,
         _fmt_len: Option<&usize>,

@@ -26,17 +26,17 @@
  * SOFTWARE.
  */
 // locals
-use super::{Entry, FileTransferActivity, LogLevel, SelectedEntry, TransferPayload};
+use super::{File, FileTransferActivity, LogLevel, SelectedFile, TransferPayload};
 // ext
 use std::path::{Path, PathBuf};
 
 impl FileTransferActivity {
     /// Open local file
     pub(crate) fn action_open_local(&mut self) {
-        let entries: Vec<Entry> = match self.get_local_selected_entries() {
-            SelectedEntry::One(entry) => vec![entry],
-            SelectedEntry::Many(entries) => entries,
-            SelectedEntry::None => vec![],
+        let entries: Vec<File> = match self.get_local_selected_entries() {
+            SelectedFile::One(entry) => vec![entry],
+            SelectedFile::Many(entries) => entries,
+            SelectedFile::None => vec![],
         };
         entries
             .iter()
@@ -45,10 +45,10 @@ impl FileTransferActivity {
 
     /// Open local file
     pub(crate) fn action_open_remote(&mut self) {
-        let entries: Vec<Entry> = match self.get_remote_selected_entries() {
-            SelectedEntry::One(entry) => vec![entry],
-            SelectedEntry::Many(entries) => entries,
-            SelectedEntry::None => vec![],
+        let entries: Vec<File> = match self.get_remote_selected_entries() {
+            SelectedFile::One(entry) => vec![entry],
+            SelectedFile::Many(entries) => entries,
+            SelectedFile::None => vec![],
         };
         entries
             .iter()
@@ -56,20 +56,21 @@ impl FileTransferActivity {
     }
 
     /// Perform open lopcal file
-    pub(crate) fn action_open_local_file(&mut self, entry: &Entry, open_with: Option<&str>) {
+    pub(crate) fn action_open_local_file(&mut self, entry: &File, open_with: Option<&str>) {
         self.open_path_with(entry.path(), open_with);
     }
 
     /// Open remote file. The file is first downloaded to a temporary directory on localhost
-    pub(crate) fn action_open_remote_file(&mut self, entry: &Entry, open_with: Option<&str>) {
+    pub(crate) fn action_open_remote_file(&mut self, entry: &File, open_with: Option<&str>) {
         // Download file
-        let tmpfile: String = match self.get_cache_tmp_name(entry.name(), entry.extension()) {
-            None => {
-                self.log(LogLevel::Error, String::from("Could not create tempdir"));
-                return;
-            }
-            Some(p) => p,
-        };
+        let tmpfile: String =
+            match self.get_cache_tmp_name(&entry.name(), entry.extension().as_deref()) {
+                None => {
+                    self.log(LogLevel::Error, String::from("Could not create tempdir"));
+                    return;
+                }
+                Some(p) => p,
+            };
         let cache: PathBuf = match self.cache.as_ref() {
             None => {
                 self.log(LogLevel::Error, String::from("Could not create tempdir"));
@@ -101,10 +102,10 @@ impl FileTransferActivity {
 
     /// Open selected file with provided application
     pub(crate) fn action_local_open_with(&mut self, with: &str) {
-        let entries: Vec<Entry> = match self.get_local_selected_entries() {
-            SelectedEntry::One(entry) => vec![entry],
-            SelectedEntry::Many(entries) => entries,
-            SelectedEntry::None => vec![],
+        let entries: Vec<File> = match self.get_local_selected_entries() {
+            SelectedFile::One(entry) => vec![entry],
+            SelectedFile::Many(entries) => entries,
+            SelectedFile::None => vec![],
         };
         // Open all entries
         entries
@@ -114,10 +115,10 @@ impl FileTransferActivity {
 
     /// Open selected file with provided application
     pub(crate) fn action_remote_open_with(&mut self, with: &str) {
-        let entries: Vec<Entry> = match self.get_remote_selected_entries() {
-            SelectedEntry::One(entry) => vec![entry],
-            SelectedEntry::Many(entries) => entries,
-            SelectedEntry::None => vec![],
+        let entries: Vec<File> = match self.get_remote_selected_entries() {
+            SelectedFile::One(entry) => vec![entry],
+            SelectedFile::Many(entries) => entries,
+            SelectedFile::None => vec![],
         };
         // Open all entries
         entries

@@ -26,7 +26,7 @@
  * SOFTWARE.
  */
 // locals
-use super::{Entry, FileTransferActivity, LogLevel, SelectedEntry};
+use super::{File, FileTransferActivity, LogLevel, SelectedFile};
 
 use remotefs::RemoteErrorType;
 use std::path::{Path, PathBuf};
@@ -34,11 +34,11 @@ use std::path::{Path, PathBuf};
 impl FileTransferActivity {
     pub(crate) fn action_local_rename(&mut self, input: String) {
         match self.get_local_selected_entries() {
-            SelectedEntry::One(entry) => {
+            SelectedFile::One(entry) => {
                 let dest_path: PathBuf = PathBuf::from(input);
                 self.local_rename_file(&entry, dest_path.as_path());
             }
-            SelectedEntry::Many(entries) => {
+            SelectedFile::Many(entries) => {
                 // Try to copy each file to Input/{FILE_NAME}
                 let base_path: PathBuf = PathBuf::from(input);
                 // Iter files
@@ -48,17 +48,17 @@ impl FileTransferActivity {
                     self.local_rename_file(entry, dest_path.as_path());
                 }
             }
-            SelectedEntry::None => {}
+            SelectedFile::None => {}
         }
     }
 
     pub(crate) fn action_remote_rename(&mut self, input: String) {
         match self.get_remote_selected_entries() {
-            SelectedEntry::One(entry) => {
+            SelectedFile::One(entry) => {
                 let dest_path: PathBuf = PathBuf::from(input);
                 self.remote_rename_file(&entry, dest_path.as_path());
             }
-            SelectedEntry::Many(entries) => {
+            SelectedFile::Many(entries) => {
                 // Try to copy each file to Input/{FILE_NAME}
                 let base_path: PathBuf = PathBuf::from(input);
                 // Iter files
@@ -68,11 +68,11 @@ impl FileTransferActivity {
                     self.remote_rename_file(entry, dest_path.as_path());
                 }
             }
-            SelectedEntry::None => {}
+            SelectedFile::None => {}
         }
     }
 
-    fn local_rename_file(&mut self, entry: &Entry, dest: &Path) {
+    fn local_rename_file(&mut self, entry: &File, dest: &Path) {
         match self.host.rename(entry, dest) {
             Ok(_) => {
                 self.log(
@@ -96,7 +96,7 @@ impl FileTransferActivity {
         }
     }
 
-    fn remote_rename_file(&mut self, entry: &Entry, dest: &Path) {
+    fn remote_rename_file(&mut self, entry: &File, dest: &Path) {
         match self.client.as_mut().mov(entry.path(), dest) {
             Ok(_) => {
                 self.log(
@@ -125,7 +125,7 @@ impl FileTransferActivity {
 
     /// Tricky move will be used whenever copy command is not available on remote host.
     /// It basically uses the tricky_copy function, then it just deletes the previous entry (`entry`)
-    fn tricky_move(&mut self, entry: &Entry, dest: &Path) {
+    fn tricky_move(&mut self, entry: &File, dest: &Path) {
         debug!(
             "Using tricky-move to move entry {} to {}",
             entry.path().display(),

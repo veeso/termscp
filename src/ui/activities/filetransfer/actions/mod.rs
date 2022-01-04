@@ -29,7 +29,7 @@ pub(self) use super::{
     browser::FileExplorerTab, FileTransferActivity, Id, LogLevel, Msg, PendingActionMsg,
     TransferOpts, TransferPayload,
 };
-pub(self) use remotefs::Entry;
+pub(self) use remotefs::File;
 use tuirealm::{State, StateValue};
 
 // actions
@@ -49,100 +49,100 @@ pub(crate) mod submit;
 pub(crate) mod symlink;
 
 #[derive(Debug)]
-pub(crate) enum SelectedEntry {
-    One(Entry),
-    Many(Vec<Entry>),
+pub(crate) enum SelectedFile {
+    One(File),
+    Many(Vec<File>),
     None,
 }
 
 #[derive(Debug)]
-enum SelectedEntryIndex {
+enum SelectedFileIndex {
     One(usize),
     Many(Vec<usize>),
     None,
 }
 
-impl From<Option<&Entry>> for SelectedEntry {
-    fn from(opt: Option<&Entry>) -> Self {
+impl From<Option<&File>> for SelectedFile {
+    fn from(opt: Option<&File>) -> Self {
         match opt {
-            Some(e) => SelectedEntry::One(e.clone()),
-            None => SelectedEntry::None,
+            Some(e) => SelectedFile::One(e.clone()),
+            None => SelectedFile::None,
         }
     }
 }
 
-impl From<Vec<&Entry>> for SelectedEntry {
-    fn from(files: Vec<&Entry>) -> Self {
-        SelectedEntry::Many(files.into_iter().cloned().collect())
+impl From<Vec<&File>> for SelectedFile {
+    fn from(files: Vec<&File>) -> Self {
+        SelectedFile::Many(files.into_iter().cloned().collect())
     }
 }
 
 impl FileTransferActivity {
     /// Get local file entry
-    pub(crate) fn get_local_selected_entries(&self) -> SelectedEntry {
+    pub(crate) fn get_local_selected_entries(&self) -> SelectedFile {
         match self.get_selected_index(&Id::ExplorerLocal) {
-            SelectedEntryIndex::One(idx) => SelectedEntry::from(self.local().get(idx)),
-            SelectedEntryIndex::Many(files) => {
-                let files: Vec<&Entry> = files
+            SelectedFileIndex::One(idx) => SelectedFile::from(self.local().get(idx)),
+            SelectedFileIndex::Many(files) => {
+                let files: Vec<&File> = files
                     .iter()
-                    .map(|x| self.local().get(*x)) // Usize to Option<Entry>
+                    .map(|x| self.local().get(*x)) // Usize to Option<File>
                     .flatten()
                     .collect();
-                SelectedEntry::from(files)
+                SelectedFile::from(files)
             }
-            SelectedEntryIndex::None => SelectedEntry::None,
+            SelectedFileIndex::None => SelectedFile::None,
         }
     }
 
     /// Get remote file entry
-    pub(crate) fn get_remote_selected_entries(&self) -> SelectedEntry {
+    pub(crate) fn get_remote_selected_entries(&self) -> SelectedFile {
         match self.get_selected_index(&Id::ExplorerRemote) {
-            SelectedEntryIndex::One(idx) => SelectedEntry::from(self.remote().get(idx)),
-            SelectedEntryIndex::Many(files) => {
-                let files: Vec<&Entry> = files
+            SelectedFileIndex::One(idx) => SelectedFile::from(self.remote().get(idx)),
+            SelectedFileIndex::Many(files) => {
+                let files: Vec<&File> = files
                     .iter()
-                    .map(|x| self.remote().get(*x)) // Usize to Option<Entry>
+                    .map(|x| self.remote().get(*x)) // Usize to Option<File>
                     .flatten()
                     .collect();
-                SelectedEntry::from(files)
+                SelectedFile::from(files)
             }
-            SelectedEntryIndex::None => SelectedEntry::None,
+            SelectedFileIndex::None => SelectedFile::None,
         }
     }
 
     /// Returns whether only one entry is selected on local host
     pub(crate) fn is_local_selected_one(&self) -> bool {
-        matches!(self.get_local_selected_entries(), SelectedEntry::One(_))
+        matches!(self.get_local_selected_entries(), SelectedFile::One(_))
     }
 
     /// Returns whether only one entry is selected on remote host
     pub(crate) fn is_remote_selected_one(&self) -> bool {
-        matches!(self.get_remote_selected_entries(), SelectedEntry::One(_))
+        matches!(self.get_remote_selected_entries(), SelectedFile::One(_))
     }
 
     /// Get remote file entry
-    pub(crate) fn get_found_selected_entries(&self) -> SelectedEntry {
+    pub(crate) fn get_found_selected_entries(&self) -> SelectedFile {
         match self.get_selected_index(&Id::ExplorerFind) {
-            SelectedEntryIndex::One(idx) => {
-                SelectedEntry::from(self.found().as_ref().unwrap().get(idx))
+            SelectedFileIndex::One(idx) => {
+                SelectedFile::from(self.found().as_ref().unwrap().get(idx))
             }
-            SelectedEntryIndex::Many(files) => {
-                let files: Vec<&Entry> = files
+            SelectedFileIndex::Many(files) => {
+                let files: Vec<&File> = files
                     .iter()
-                    .map(|x| self.found().as_ref().unwrap().get(*x)) // Usize to Option<Entry>
+                    .map(|x| self.found().as_ref().unwrap().get(*x)) // Usize to Option<File>
                     .flatten()
                     .collect();
-                SelectedEntry::from(files)
+                SelectedFile::from(files)
             }
-            SelectedEntryIndex::None => SelectedEntry::None,
+            SelectedFileIndex::None => SelectedFile::None,
         }
     }
 
     // -- private
 
-    fn get_selected_index(&self, id: &Id) -> SelectedEntryIndex {
+    fn get_selected_index(&self, id: &Id) -> SelectedFileIndex {
         match self.app.state(id) {
-            Ok(State::One(StateValue::Usize(idx))) => SelectedEntryIndex::One(idx),
+            Ok(State::One(StateValue::Usize(idx))) => SelectedFileIndex::One(idx),
             Ok(State::Vec(files)) => {
                 let list: Vec<usize> = files
                     .iter()
@@ -151,9 +151,9 @@ impl FileTransferActivity {
                         _ => 0,
                     })
                     .collect();
-                SelectedEntryIndex::Many(list)
+                SelectedFileIndex::Many(list)
             }
-            _ => SelectedEntryIndex::None,
+            _ => SelectedFileIndex::None,
         }
     }
 }

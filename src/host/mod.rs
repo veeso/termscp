@@ -28,17 +28,16 @@
 // ext
 #[cfg(target_family = "unix")]
 use remotefs::fs::UnixPex;
-use remotefs::fs::{Directory, Entry, File, Metadata};
+use remotefs::fs::{File, FileType, Metadata};
 use std::fs::{self, File as StdFile, OpenOptions};
 use std::path::{Path, PathBuf};
-use std::time::SystemTime;
 use thiserror::Error;
 use wildmatch::WildMatch;
 // Metadata ext
 #[cfg(target_family = "unix")]
 use std::fs::set_permissions;
 #[cfg(target_family = "unix")]
-use std::os::unix::fs::{MetadataExt, PermissionsExt};
+use std::os::unix::fs::PermissionsExt;
 
 // Locals
 use crate::utils::path;
@@ -112,7 +111,7 @@ impl std::fmt::Display for HostError {
 /// It provides functions to navigate across the local host file system
 pub struct Localhost {
     wrkdir: PathBuf,
-    files: Vec<Entry>,
+    files: Vec<File>,
 }
 
 impl Localhost {
@@ -157,7 +156,7 @@ impl Localhost {
 
     /// List files in current directory
     #[allow(dead_code)]
-    pub fn list_dir(&self) -> Vec<Entry> {
+    pub fn list_dir(&self) -> Vec<File> {
         self.files.clone()
     }
 
@@ -245,71 +244,68 @@ impl Localhost {
     }
 
     /// Remove file entry
-    pub fn remove(&mut self, entry: &Entry) -> Result<(), HostError> {
-        match entry {
-            Entry::Directory(dir) => {
-                // If file doesn't exist; return error
-                debug!("Removing directory {}", dir.path.display());
-                if !dir.path.as_path().exists() {
-                    error!("Directory doesn't exist");
-                    return Err(HostError::new(
-                        HostErrorType::NoSuchFileOrDirectory,
-                        None,
-                        dir.path.as_path(),
-                    ));
+    pub fn remove(&mut self, entry: &File) -> Result<(), HostError> {
+        if entry.is_dir() {
+            // If file doesn't exist; return error
+            debug!("Removing directory {}", entry.path().display());
+            if !entry.path().exists() {
+                error!("Directory doesn't exist");
+                return Err(HostError::new(
+                    HostErrorType::NoSuchFileOrDirectory,
+                    None,
+                    entry.path(),
+                ));
+            }
+            // Remove
+            match std::fs::remove_dir_all(entry.path()) {
+                Ok(_) => {
+                    // Update dir
+                    self.files = self.scan_dir(self.wrkdir.as_path())?;
+                    info!("Removed directory {}", entry.path().display());
+                    Ok(())
                 }
-                // Remove
-                match std::fs::remove_dir_all(dir.path.as_path()) {
-                    Ok(_) => {
-                        // Update dir
-                        self.files = self.scan_dir(self.wrkdir.as_path())?;
-                        info!("Removed directory {}", dir.path.display());
-                        Ok(())
-                    }
-                    Err(err) => {
-                        error!("Could not remove directory: {}", err);
-                        Err(HostError::new(
-                            HostErrorType::DeleteFailed,
-                            Some(err),
-                            dir.path.as_path(),
-                        ))
-                    }
+                Err(err) => {
+                    error!("Could not remove directory: {}", err);
+                    Err(HostError::new(
+                        HostErrorType::DeleteFailed,
+                        Some(err),
+                        entry.path(),
+                    ))
                 }
             }
-            Entry::File(file) => {
-                // If file doesn't exist; return error
-                debug!("Removing file {}", file.path.display());
-                if !file.path.as_path().exists() {
-                    error!("File doesn't exist");
-                    return Err(HostError::new(
-                        HostErrorType::NoSuchFileOrDirectory,
-                        None,
-                        file.path.as_path(),
-                    ));
+        } else {
+            // If file doesn't exist; return error
+            debug!("Removing file {}", entry.path().display());
+            if !entry.path().exists() {
+                error!("File doesn't exist");
+                return Err(HostError::new(
+                    HostErrorType::NoSuchFileOrDirectory,
+                    None,
+                    entry.path(),
+                ));
+            }
+            // Remove
+            match std::fs::remove_file(entry.path()) {
+                Ok(_) => {
+                    // Update dir
+                    self.files = self.scan_dir(self.wrkdir.as_path())?;
+                    info!("Removed file {}", entry.path().display());
+                    Ok(())
                 }
-                // Remove
-                match std::fs::remove_file(file.path.as_path()) {
-                    Ok(_) => {
-                        // Update dir
-                        self.files = self.scan_dir(self.wrkdir.as_path())?;
-                        info!("Removed file {}", file.path.display());
-                        Ok(())
-                    }
-                    Err(err) => {
-                        error!("Could not remove file: {}", err);
-                        Err(HostError::new(
-                            HostErrorType::DeleteFailed,
-                            Some(err),
-                            file.path.as_path(),
-                        ))
-                    }
+                Err(err) => {
+                    error!("Could not remove file: {}", err);
+                    Err(HostError::new(
+                        HostErrorType::DeleteFailed,
+                        Some(err),
+                        entry.path(),
+                    ))
                 }
             }
         }
     }
 
     /// Rename file or directory to new name
-    pub fn rename(&mut self, entry: &Entry, dst_path: &Path) -> Result<(), HostError> {
+    pub fn rename(&mut self, entry: &File, dst_path: &Path) -> Result<(), HostError> {
         match std::fs::rename(entry.path(), dst_path) {
             Ok(_) => {
                 // Scan dir
@@ -338,7 +334,7 @@ impl Localhost {
     }
 
     /// Copy file to destination path
-    pub fn copy(&mut self, entry: &Entry, dst: &Path) -> Result<(), HostError> {
+    pub fn copy(&mut self, entry: &File, dst: &Path) -> Result<(), HostError> {
         // Get absolute path of dest
         let dst: PathBuf = self.to_path(dst);
         info!(
@@ -347,46 +343,43 @@ impl Localhost {
             dst.display()
         );
         // Match entry
-        match entry {
-            Entry::File(file) => {
-                // Copy file
-                // If destination path is a directory, push file name
-                let dst: PathBuf = match dst.as_path().is_dir() {
-                    true => {
-                        let mut p: PathBuf = dst.clone();
-                        p.push(file.name.as_str());
-                        p
-                    }
-                    false => dst.clone(),
-                };
-                // Copy entry path to dst path
-                if let Err(err) = std::fs::copy(file.path.as_path(), dst.as_path()) {
-                    error!("Failed to copy file: {}", err);
-                    return Err(HostError::new(
-                        HostErrorType::CouldNotCreateFile,
-                        Some(err),
-                        file.path.as_path(),
-                    ));
-                }
-                info!("File copied");
+        if entry.is_dir() {
+            // If destination path doesn't exist, create destination
+            if !dst.exists() {
+                debug!("Directory {} doesn't exist; creating it", dst.display());
+                self.mkdir(dst.as_path())?;
             }
-            Entry::Directory(dir) => {
-                // If destination path doesn't exist, create destination
-                if !dst.exists() {
-                    debug!("Directory {} doesn't exist; creating it", dst.display());
-                    self.mkdir(dst.as_path())?;
-                }
-                // Scan dir
-                let dir_files: Vec<Entry> = self.scan_dir(dir.path.as_path())?;
-                // Iterate files
-                for dir_entry in dir_files.iter() {
-                    // Calculate dst
-                    let mut sub_dst: PathBuf = dst.clone();
-                    sub_dst.push(dir_entry.name());
-                    // Call function recursively
-                    self.copy(dir_entry, sub_dst.as_path())?;
-                }
+            // Scan dir
+            let dir_files: Vec<File> = self.scan_dir(entry.path())?;
+            // Iterate files
+            for dir_entry in dir_files.iter() {
+                // Calculate dst
+                let mut sub_dst: PathBuf = dst.clone();
+                sub_dst.push(dir_entry.name());
+                // Call function recursively
+                self.copy(dir_entry, sub_dst.as_path())?;
             }
+        } else {
+            // Copy file
+            // If destination path is a directory, push file name
+            let dst: PathBuf = match dst.as_path().is_dir() {
+                true => {
+                    let mut p: PathBuf = dst.clone();
+                    p.push(entry.name().as_str());
+                    p
+                }
+                false => dst.clone(),
+            };
+            // Copy entry path to dst path
+            if let Err(err) = std::fs::copy(entry.path(), dst.as_path()) {
+                error!("Failed to copy file: {}", err);
+                return Err(HostError::new(
+                    HostErrorType::CouldNotCreateFile,
+                    Some(err),
+                    entry.path(),
+                ));
+            }
+            info!("File copied");
         }
         // Reload directory if dst is pwd
         match dst.is_dir() {
@@ -412,9 +405,8 @@ impl Localhost {
         Ok(())
     }
 
-    /// Stat file and create a Entry
-    #[cfg(target_family = "unix")]
-    pub fn stat(&self, path: &Path) -> Result<Entry, HostError> {
+    /// Stat file and create a File
+    pub fn stat(&self, path: &Path) -> Result<File, HostError> {
         info!("Stating file {}", path.display());
         let path: PathBuf = self.to_path(path);
         let attr = match fs::metadata(path.as_path()) {
@@ -428,90 +420,13 @@ impl Localhost {
                 ));
             }
         };
-        let name = String::from(path.file_name().unwrap().to_str().unwrap_or(""));
+        let mut metadata = Metadata::from(attr);
+        if let Ok(symlink) = fs::read_link(path.as_path()) {
+            metadata.set_symlink(symlink);
+            metadata.file_type = FileType::Symlink;
+        }
         // Match dir / file
-        let metadata = Metadata {
-            atime: attr.accessed().unwrap_or(SystemTime::UNIX_EPOCH),
-            ctime: attr.created().unwrap_or(SystemTime::UNIX_EPOCH),
-            gid: Some(attr.gid()),
-            mode: Some(UnixPex::from(attr.mode())),
-            mtime: attr.modified().unwrap_or(SystemTime::UNIX_EPOCH),
-            size: if path.is_dir() {
-                attr.blksize()
-            } else {
-                attr.len()
-            },
-            symlink: fs::read_link(path.as_path()).ok(),
-            uid: Some(attr.uid()),
-        };
-        Ok(match path.is_dir() {
-            true => Entry::Directory(Directory {
-                name,
-                path,
-                metadata,
-            }),
-            false => {
-                // Is File
-                let extension = path
-                    .extension()
-                    .map(|s| String::from(s.to_str().unwrap_or("")));
-                Entry::File(File {
-                    name,
-                    path,
-                    extension,
-                    metadata,
-                })
-            }
-        })
-    }
-
-    /// Stat file and create a Entry
-    #[cfg(target_os = "windows")]
-    pub fn stat(&self, path: &Path) -> Result<Entry, HostError> {
-        let path: PathBuf = self.to_path(path);
-        info!("Stating file {}", path.display());
-        let attr = match fs::metadata(path.as_path()) {
-            Ok(metadata) => metadata,
-            Err(err) => {
-                error!("Could not read file metadata: {}", err);
-                return Err(HostError::new(
-                    HostErrorType::FileNotAccessible,
-                    Some(err),
-                    path.as_path(),
-                ));
-            }
-        };
-        let name = String::from(path.file_name().unwrap().to_str().unwrap_or(""));
-        let metadata = Metadata {
-            atime: attr.accessed().unwrap_or(SystemTime::UNIX_EPOCH),
-            ctime: attr.created().unwrap_or(SystemTime::UNIX_EPOCH),
-            mtime: attr.modified().unwrap_or(SystemTime::UNIX_EPOCH),
-            size: if path.is_dir() { 0 } else { attr.len() },
-            symlink: fs::read_link(path.as_path()).ok(),
-            uid: None,
-            gid: None,
-            mode: None,
-        };
-        // Match dir / file
-        Ok(match path.is_dir() {
-            true => Entry::Directory(Directory {
-                name,
-                path,
-                metadata,
-            }),
-            false => {
-                // Is File
-                let extension = path
-                    .extension()
-                    .map(|s| String::from(s.to_str().unwrap_or("")));
-                Entry::File(File {
-                    name,
-                    path,
-                    extension,
-                    metadata,
-                })
-            }
-        })
+        Ok(File { path, metadata })
     }
 
     /// Execute a command on localhost
@@ -644,11 +559,11 @@ impl Localhost {
     }
 
     /// Get content of the current directory as a list of fs entry
-    pub fn scan_dir(&self, dir: &Path) -> Result<Vec<Entry>, HostError> {
+    pub fn scan_dir(&self, dir: &Path) -> Result<Vec<File>, HostError> {
         info!("Reading directory {}", dir.display());
         match std::fs::read_dir(dir) {
             Ok(e) => {
-                let mut fs_entries: Vec<Entry> = Vec::new();
+                let mut fs_entries: Vec<File> = Vec::new();
                 for entry in e.flatten() {
                     // NOTE: 0.4.1, don't fail if stat for one file fails
                     match self.stat(entry.path().as_path()) {
@@ -668,7 +583,7 @@ impl Localhost {
 
     /// Find files matching `search` on localhost starting from current directory. Search supports recursive search of course.
     /// The `search` argument supports wilcards ('*', '?')
-    pub fn find(&self, search: &str) -> Result<Vec<Entry>, HostError> {
+    pub fn find(&self, search: &str) -> Result<Vec<File>, HostError> {
         self.iter_search(self.wrkdir.as_path(), &WildMatch::new(search))
     }
 
@@ -692,9 +607,9 @@ impl Localhost {
     /// Recursive call for `find` method.
     /// Search in current directory for files which match `filter`.
     /// If a directory is found in current directory, `iter_search` will be called using that dir as argument.
-    fn iter_search(&self, dir: &Path, filter: &WildMatch) -> Result<Vec<Entry>, HostError> {
+    fn iter_search(&self, dir: &Path, filter: &WildMatch) -> Result<Vec<File>, HostError> {
         // Scan directory
-        let mut drained: Vec<Entry> = Vec::new();
+        let mut drained: Vec<File> = Vec::new();
         match self.scan_dir(dir) {
             Err(err) => Err(err),
             Ok(entries) => {
@@ -705,20 +620,16 @@ impl Localhost {
                 - if is file: check if it matches `filter`
                     - if it matches `filter`: push to to filter
                 */
-                for entry in entries.iter() {
-                    match entry {
-                        Entry::Directory(dir) => {
-                            // If directory matches; push directory to drained
-                            if filter.matches(dir.name.as_str()) {
-                                drained.push(Entry::Directory(dir.clone()));
-                            }
-                            drained.append(&mut self.iter_search(dir.path.as_path(), filter)?);
+                for entry in entries.into_iter() {
+                    if entry.is_dir() {
+                        // If directory matches; push directory to drained
+                        let next_path = entry.path().to_path_buf();
+                        if filter.matches(entry.name().as_str()) {
+                            drained.push(entry);
                         }
-                        Entry::File(file) => {
-                            if filter.matches(file.name.as_str()) {
-                                drained.push(Entry::File(file.clone()));
-                            }
-                        }
+                        drained.append(&mut self.iter_search(next_path.as_path(), filter)?);
+                    } else if filter.matches(entry.name().as_str()) {
+                        drained.push(entry);
                     }
                 }
                 Ok(drained)
@@ -902,37 +813,27 @@ mod tests {
         .is_ok());
         // Get dir
         let host: Localhost = Localhost::new(PathBuf::from(tmpdir.path())).ok().unwrap();
-        let files: Vec<Entry> = host.list_dir();
+        let files: Vec<File> = host.list_dir();
         // Verify files
-        let file_0: &Entry = files.get(0).unwrap();
-        match file_0 {
-            Entry::File(file_0) => {
-                if file_0.name == String::from("foo.txt") {
-                    assert!(file_0.metadata.symlink.is_none());
-                } else {
-                    assert_eq!(
-                        file_0.metadata.symlink.as_ref().unwrap(),
-                        &PathBuf::from(format!("{}/foo.txt", tmpdir.path().display()))
-                    );
-                }
-            }
-            _ => panic!("expected entry 0 to be file: {:?}", file_0),
-        };
+        let file_0: &File = files.get(0).unwrap();
+        if file_0.name() == String::from("foo.txt") {
+            assert!(file_0.metadata.symlink.is_none());
+        } else {
+            assert_eq!(
+                file_0.metadata.symlink.as_ref().unwrap(),
+                &PathBuf::from(format!("{}/foo.txt", tmpdir.path().display()))
+            );
+        }
         // Verify simlink
-        let file_1: &Entry = files.get(1).unwrap();
-        match file_1 {
-            Entry::File(file_1) => {
-                if file_1.name == String::from("bar.txt") {
-                    assert_eq!(
-                        file_1.metadata.symlink.as_ref().unwrap(),
-                        &PathBuf::from(format!("{}/foo.txt", tmpdir.path().display()))
-                    );
-                } else {
-                    assert!(file_1.metadata.symlink.is_none());
-                }
-            }
-            _ => panic!("expected entry 0 to be file: {:?}", file_1),
-        };
+        let file_1: &File = files.get(1).unwrap();
+        if file_1.name() == String::from("bar.txt") {
+            assert_eq!(
+                file_1.metadata.symlink.as_ref().unwrap(),
+                &PathBuf::from(format!("{}/foo.txt", tmpdir.path().display()))
+            );
+        } else {
+            assert!(file_1.metadata.symlink.is_none());
+        }
     }
 
     #[test]
@@ -940,10 +841,10 @@ mod tests {
     fn test_host_localhost_mkdir() {
         let tmpdir: tempfile::TempDir = tempfile::TempDir::new().unwrap();
         let mut host: Localhost = Localhost::new(PathBuf::from(tmpdir.path())).ok().unwrap();
-        let files: Vec<Entry> = host.list_dir();
+        let files: Vec<File> = host.list_dir();
         assert_eq!(files.len(), 0); // There should be 0 files now
         assert!(host.mkdir(PathBuf::from("test_dir").as_path()).is_ok());
-        let files: Vec<Entry> = host.list_dir();
+        let files: Vec<File> = host.list_dir();
         assert_eq!(files.len(), 1); // There should be 1 file now
                                     // Try to re-create directory
         assert!(host.mkdir(PathBuf::from("test_dir").as_path()).is_err());
@@ -967,17 +868,17 @@ mod tests {
         // Create sample file
         assert!(StdFile::create(format!("{}/foo.txt", tmpdir.path().display()).as_str()).is_ok());
         let mut host: Localhost = Localhost::new(PathBuf::from(tmpdir.path())).ok().unwrap();
-        let files: Vec<Entry> = host.list_dir();
+        let files: Vec<File> = host.list_dir();
         assert_eq!(files.len(), 1); // There should be 1 file now
                                     // Remove file
         assert!(host.remove(files.get(0).unwrap()).is_ok());
         // There should be 0 files now
-        let files: Vec<Entry> = host.list_dir();
+        let files: Vec<File> = host.list_dir();
         assert_eq!(files.len(), 0); // There should be 0 files now
                                     // Create directory
         assert!(host.mkdir(PathBuf::from("test_dir").as_path()).is_ok());
         // Delete directory
-        let files: Vec<Entry> = host.list_dir();
+        let files: Vec<File> = host.list_dir();
         assert_eq!(files.len(), 1); // There should be 1 file now
         assert!(host.remove(files.get(0).unwrap()).is_ok());
         // Remove unexisting directory
@@ -998,7 +899,7 @@ mod tests {
             PathBuf::from(format!("{}/foo.txt", tmpdir.path().display()).as_str());
         assert!(StdFile::create(src_path.as_path()).is_ok());
         let mut host: Localhost = Localhost::new(PathBuf::from(tmpdir.path())).ok().unwrap();
-        let files: Vec<Entry> = host.list_dir();
+        let files: Vec<File> = host.list_dir();
         assert_eq!(files.len(), 1); // There should be 1 file now
         assert_eq!(files.get(0).unwrap().name(), "foo.txt");
         // Rename file
@@ -1008,7 +909,7 @@ mod tests {
             .rename(files.get(0).unwrap(), dst_path.as_path())
             .is_ok());
         // There should be still 1 file now, but named bar.txt
-        let files: Vec<Entry> = host.list_dir();
+        let files: Vec<File> = host.list_dir();
         assert_eq!(files.len(), 1); // There should be 0 files now
         assert_eq!(files.get(0).unwrap().name(), "bar.txt");
         // Fail
@@ -1052,7 +953,7 @@ mod tests {
         file2_path.push("bar.txt");
         // Create host
         let mut host: Localhost = Localhost::new(PathBuf::from(tmpdir.path())).ok().unwrap();
-        let file1_entry: Entry = host.files.get(0).unwrap().clone();
+        let file1_entry: File = host.files.get(0).unwrap().clone();
         assert_eq!(file1_entry.name(), String::from("foo.txt"));
         // Copy
         assert!(host.copy(&file1_entry, file2_path.as_path()).is_ok());
@@ -1081,7 +982,7 @@ mod tests {
         let file2_path: PathBuf = PathBuf::from("bar.txt");
         // Create host
         let mut host: Localhost = Localhost::new(PathBuf::from(tmpdir.path())).ok().unwrap();
-        let file1_entry: Entry = host.files.get(0).unwrap().clone();
+        let file1_entry: File = host.files.get(0).unwrap().clone();
         assert_eq!(file1_entry.name(), String::from("foo.txt"));
         // Copy
         assert!(host.copy(&file1_entry, file2_path.as_path()).is_ok());
@@ -1108,7 +1009,7 @@ mod tests {
         dir_dest.push("test_dest_dir/");
         // Create host
         let mut host: Localhost = Localhost::new(PathBuf::from(tmpdir.path())).ok().unwrap();
-        let dir_src_entry: Entry = host.files.get(0).unwrap().clone();
+        let dir_src_entry: File = host.files.get(0).unwrap().clone();
         assert_eq!(dir_src_entry.name(), String::from("test_dir"));
         // Copy
         assert!(host.copy(&dir_src_entry, dir_dest.as_path()).is_ok());
@@ -1138,7 +1039,7 @@ mod tests {
         let dir_dest: PathBuf = PathBuf::from("test_dest_dir/");
         // Create host
         let mut host: Localhost = Localhost::new(PathBuf::from(tmpdir.path())).ok().unwrap();
-        let dir_src_entry: Entry = host.files.get(0).unwrap().clone();
+        let dir_src_entry: File = host.files.get(0).unwrap().clone();
         assert_eq!(dir_src_entry.name(), String::from("test_dir"));
         // Copy
         assert!(host.copy(&dir_src_entry, dir_dest.as_path()).is_ok());
@@ -1178,8 +1079,8 @@ mod tests {
         assert!(make_file_at(subdir.as_path(), "examples.csv").is_ok());
         let host: Localhost = Localhost::new(PathBuf::from(dir_path)).ok().unwrap();
         // Find txt files
-        let mut result: Vec<Entry> = host.find("*.txt").ok().unwrap();
-        result.sort_by_key(|x: &Entry| x.name().to_lowercase());
+        let mut result: Vec<File> = host.find("*.txt").ok().unwrap();
+        result.sort_by_key(|x: &File| x.name().to_lowercase());
         // There should be 3 entries
         assert_eq!(result.len(), 3);
         // Check names (they should be sorted alphabetically already; NOTE: examples/ comes before pippo.txt)
@@ -1187,8 +1088,8 @@ mod tests {
         assert_eq!(result[1].name(), "omar.txt");
         assert_eq!(result[2].name(), "pippo.txt");
         // Search for directory
-        let mut result: Vec<Entry> = host.find("examples*").ok().unwrap();
-        result.sort_by_key(|x: &Entry| x.name().to_lowercase());
+        let mut result: Vec<File> = host.find("examples*").ok().unwrap();
+        result.sort_by_key(|x: &File| x.name().to_lowercase());
         assert_eq!(result.len(), 2);
         assert_eq!(result[0].name(), "examples");
         assert_eq!(result[1].name(), "examples.csv");

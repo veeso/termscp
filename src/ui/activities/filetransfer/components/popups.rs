@@ -31,7 +31,8 @@ use crate::explorer::FileSorting;
 use crate::utils::fmt::fmt_time;
 
 use bytesize::ByteSize;
-use remotefs::Entry;
+use remotefs::File;
+use std::time::UNIX_EPOCH;
 
 use tui_realm_stdlib::{Input, List, Paragraph, ProgressBar, Radio, Span};
 use tuirealm::command::{Cmd, CmdResult, Direction, Position};
@@ -399,7 +400,7 @@ pub struct FileInfoPopup {
 }
 
 impl FileInfoPopup {
-    pub fn new(file: &Entry) -> Self {
+    pub fn new(file: &File) -> Self {
         let mut texts: TableBuilder = TableBuilder::default();
         // Abs path
         let real_path = file.metadata().symlink.as_deref();
@@ -422,9 +423,18 @@ impl FileInfoPopup {
             .add_row()
             .add_col(TextSpan::from("Size: "))
             .add_col(TextSpan::new(format!("{} ({})", bsize, size).as_str()).fg(Color::Cyan));
-        let atime: String = fmt_time(file.metadata().atime, "%b %d %Y %H:%M:%S");
-        let ctime: String = fmt_time(file.metadata().ctime, "%b %d %Y %H:%M:%S");
-        let mtime: String = fmt_time(file.metadata().mtime, "%b %d %Y %H:%M:%S");
+        let atime: String = fmt_time(
+            file.metadata().accessed.unwrap_or(UNIX_EPOCH),
+            "%b %d %Y %H:%M:%S",
+        );
+        let ctime: String = fmt_time(
+            file.metadata().created.unwrap_or(UNIX_EPOCH),
+            "%b %d %Y %H:%M:%S",
+        );
+        let mtime: String = fmt_time(
+            file.metadata().modified.unwrap_or(UNIX_EPOCH),
+            "%b %d %Y %H:%M:%S",
+        );
         texts
             .add_row()
             .add_col(TextSpan::from("Creation time: "))
@@ -1373,7 +1383,7 @@ pub struct ReplacingFilesListPopup {
 }
 
 impl ReplacingFilesListPopup {
-    pub fn new(files: &[&str], color: Color) -> Self {
+    pub fn new(files: &[String], color: Color) -> Self {
         Self {
             component: List::default()
                 .borders(

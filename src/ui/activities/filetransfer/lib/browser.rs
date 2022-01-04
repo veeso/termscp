@@ -28,7 +28,7 @@
 use crate::explorer::{builder::FileExplorerBuilder, FileExplorer, FileSorting, GroupDirs};
 use crate::system::config_client::ConfigClient;
 
-use remotefs::Entry;
+use remotefs::File;
 use std::path::Path;
 
 /// File explorer tab
@@ -92,7 +92,7 @@ impl Browser {
         self.found.as_mut().map(|x| &mut x.1)
     }
 
-    pub fn set_found(&mut self, tab: FoundExplorerTab, files: Vec<Entry>, wrkdir: &Path) {
+    pub fn set_found(&mut self, tab: FoundExplorerTab, files: Vec<File>, wrkdir: &Path) {
         let mut explorer = Self::build_found_explorer(wrkdir);
         explorer.set_files(files);
         self.found = Some((tab, explorer));

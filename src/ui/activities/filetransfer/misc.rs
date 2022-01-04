@@ -191,7 +191,8 @@ impl FileTransferActivity {
             TransferPayload::File(file) => {
                 format!(
                     "File \"{}\" has been successfully transferred ({})",
-                    file.name, transfer_stats
+                    file.name(),
+                    transfer_stats
                 )
             }
             TransferPayload::Any(entry) => {

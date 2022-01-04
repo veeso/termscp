@@ -26,20 +26,20 @@
  * SOFTWARE.
  */
 // locals
-use super::{FileTransferActivity, LogLevel, SelectedEntry, TransferPayload};
+use super::{FileTransferActivity, LogLevel, SelectedFile, TransferPayload};
 
-use remotefs::{Entry, RemoteErrorType};
+use remotefs::{File, RemoteErrorType};
 use std::path::{Path, PathBuf};
 
 impl FileTransferActivity {
     /// Copy file on local
     pub(crate) fn action_local_copy(&mut self, input: String) {
         match self.get_local_selected_entries() {
-            SelectedEntry::One(entry) => {
+            SelectedFile::One(entry) => {
                 let dest_path: PathBuf = PathBuf::from(input);
                 self.local_copy_file(&entry, dest_path.as_path());
             }
-            SelectedEntry::Many(entries) => {
+            SelectedFile::Many(entries) => {
                 // Try to copy each file to Input/{FILE_NAME}
                 let base_path: PathBuf = PathBuf::from(input);
                 // Iter files
@@ -49,18 +49,18 @@ impl FileTransferActivity {
                     self.local_copy_file(entry, dest_path.as_path());
                 }
             }
-            SelectedEntry::None => {}
+            SelectedFile::None => {}
         }
     }
 
     /// Copy file on remote
     pub(crate) fn action_remote_copy(&mut self, input: String) {
         match self.get_remote_selected_entries() {
-            SelectedEntry::One(entry) => {
+            SelectedFile::One(entry) => {
                 let dest_path: PathBuf = PathBuf::from(input);
                 self.remote_copy_file(entry, dest_path.as_path());
             }
-            SelectedEntry::Many(entries) => {
+            SelectedFile::Many(entries) => {
                 // Try to copy each file to Input/{FILE_NAME}
                 let base_path: PathBuf = PathBuf::from(input);
                 // Iter files
@@ -70,11 +70,11 @@ impl FileTransferActivity {
                     self.remote_copy_file(entry, dest_path.as_path());
                 }
             }
-            SelectedEntry::None => {}
+            SelectedFile::None => {}
         }
     }
 
-    fn local_copy_file(&mut self, entry: &Entry, dest: &Path) {
+    fn local_copy_file(&mut self, entry: &File, dest: &Path) {
         match self.host.copy(entry, dest) {
             Ok(_) => {
                 self.log(
@@ -98,7 +98,7 @@ impl FileTransferActivity {
         }
     }
 
-    fn remote_copy_file(&mut self, entry: Entry, dest: &Path) {
+    fn remote_copy_file(&mut self, entry: File, dest: &Path) {
         match self.client.as_mut().copy(entry.path(), dest) {
             Ok(_) => {
                 self.log(
@@ -129,123 +129,121 @@ impl FileTransferActivity {
     }
 
     /// Tricky copy will be used whenever copy command is not available on remote host
-    pub(super) fn tricky_copy(&mut self, entry: Entry, dest: &Path) -> Result<(), String> {
+    pub(super) fn tricky_copy(&mut self, entry: File, dest: &Path) -> Result<(), String> {
         // NOTE: VERY IMPORTANT; wait block must be umounted or something really bad will happen
         self.umount_wait();
         // match entry
-        match entry {
-            Entry::File(entry) => {
-                // Create tempfile
-                let tmpfile: tempfile::NamedTempFile = match tempfile::NamedTempFile::new() {
-                    Ok(f) => f,
-                    Err(err) => {
-                        self.log_and_alert(
-                            LogLevel::Error,
-                            format!("Copy failed: could not create temporary file: {}", err),
-                        );
-                        return Err(String::from("Could not create temporary file"));
-                    }
-                };
-                // Download file
-                let name = entry.name.clone();
-                let entry_path = entry.path.clone();
-                if let Err(err) =
-                    self.filetransfer_recv(TransferPayload::File(entry), tmpfile.path(), Some(name))
-                {
+        if entry.is_dir() {
+            let tempdir: tempfile::TempDir = match tempfile::TempDir::new() {
+                Ok(d) => d,
+                Err(err) => {
                     self.log_and_alert(
                         LogLevel::Error,
-                        format!("Copy failed: could not download to temporary file: {}", err),
+                        format!("Copy failed: could not create temporary directory: {}", err),
                     );
-                    return Err(err);
+                    return Err(err.to_string());
                 }
-                // Get local fs entry
-                let tmpfile_entry = match self.host.stat(tmpfile.path()) {
-                    Ok(e) => e.unwrap_file(),
-                    Err(err) => {
-                        self.log_and_alert(
-                            LogLevel::Error,
-                            format!(
-                                "Copy failed: could not stat \"{}\": {}",
-                                tmpfile.path().display(),
-                                err
-                            ),
-                        );
-                        return Err(err.to_string());
-                    }
-                };
-                // Upload file to destination
-                let wrkdir = self.remote().wrkdir.clone();
-                if let Err(err) = self.filetransfer_send(
-                    TransferPayload::File(tmpfile_entry),
-                    wrkdir.as_path(),
-                    Some(String::from(dest.to_string_lossy())),
-                ) {
+            };
+            // Get path of dest
+            let mut tempdir_path: PathBuf = tempdir.path().to_path_buf();
+            tempdir_path.push(entry.name());
+            // Download file
+            if let Err(err) =
+                self.filetransfer_recv(TransferPayload::Any(entry), tempdir.path(), None)
+            {
+                self.log_and_alert(
+                    LogLevel::Error,
+                    format!("Copy failed: failed to download file: {}", err),
+                );
+                return Err(err);
+            }
+            // Stat dir
+            let tempdir_entry = match self.host.stat(tempdir_path.as_path()) {
+                Ok(e) => e,
+                Err(err) => {
                     self.log_and_alert(
                         LogLevel::Error,
                         format!(
-                            "Copy failed: could not write file {}: {}",
-                            entry_path.display(),
+                            "Copy failed: could not stat \"{}\": {}",
+                            tempdir.path().display(),
                             err
                         ),
                     );
-                    return Err(err);
+                    return Err(err.to_string());
                 }
-                Ok(())
+            };
+            // Upload to destination
+            let wrkdir: PathBuf = self.remote().wrkdir.clone();
+            if let Err(err) = self.filetransfer_send(
+                TransferPayload::Any(tempdir_entry),
+                wrkdir.as_path(),
+                Some(String::from(dest.to_string_lossy())),
+            ) {
+                self.log_and_alert(
+                    LogLevel::Error,
+                    format!("Copy failed: failed to send file: {}", err),
+                );
+                return Err(err);
             }
-            Entry::Directory(_) => {
-                let tempdir: tempfile::TempDir = match tempfile::TempDir::new() {
-                    Ok(d) => d,
-                    Err(err) => {
-                        self.log_and_alert(
-                            LogLevel::Error,
-                            format!("Copy failed: could not create temporary directory: {}", err),
-                        );
-                        return Err(err.to_string());
-                    }
-                };
-                // Get path of dest
-                let mut tempdir_path: PathBuf = tempdir.path().to_path_buf();
-                tempdir_path.push(entry.name());
-                // Download file
-                if let Err(err) =
-                    self.filetransfer_recv(TransferPayload::Any(entry), tempdir.path(), None)
-                {
+            Ok(())
+        } else {
+            // Create tempfile
+            let tmpfile: tempfile::NamedTempFile = match tempfile::NamedTempFile::new() {
+                Ok(f) => f,
+                Err(err) => {
                     self.log_and_alert(
                         LogLevel::Error,
-                        format!("Copy failed: failed to download file: {}", err),
+                        format!("Copy failed: could not create temporary file: {}", err),
                     );
-                    return Err(err);
+                    return Err(String::from("Could not create temporary file"));
                 }
-                // Stat dir
-                let tempdir_entry = match self.host.stat(tempdir_path.as_path()) {
-                    Ok(e) => e,
-                    Err(err) => {
-                        self.log_and_alert(
-                            LogLevel::Error,
-                            format!(
-                                "Copy failed: could not stat \"{}\": {}",
-                                tempdir.path().display(),
-                                err
-                            ),
-                        );
-                        return Err(err.to_string());
-                    }
-                };
-                // Upload to destination
-                let wrkdir: PathBuf = self.remote().wrkdir.clone();
-                if let Err(err) = self.filetransfer_send(
-                    TransferPayload::Any(tempdir_entry),
-                    wrkdir.as_path(),
-                    Some(String::from(dest.to_string_lossy())),
-                ) {
+            };
+            // Download file
+            let name = entry.name();
+            let entry_path = entry.path().to_path_buf();
+            if let Err(err) =
+                self.filetransfer_recv(TransferPayload::File(entry), tmpfile.path(), Some(name))
+            {
+                self.log_and_alert(
+                    LogLevel::Error,
+                    format!("Copy failed: could not download to temporary file: {}", err),
+                );
+                return Err(err);
+            }
+            // Get local fs entry
+            let tmpfile_entry = match self.host.stat(tmpfile.path()) {
+                Ok(e) if e.is_file() => e,
+                Ok(_) => panic!("{} is not a file", tmpfile.path().display()),
+                Err(err) => {
                     self.log_and_alert(
                         LogLevel::Error,
-                        format!("Copy failed: failed to send file: {}", err),
+                        format!(
+                            "Copy failed: could not stat \"{}\": {}",
+                            tmpfile.path().display(),
+                            err
+                        ),
                     );
-                    return Err(err);
+                    return Err(err.to_string());
                 }
-                Ok(())
+            };
+            // Upload file to destination
+            let wrkdir = self.remote().wrkdir.clone();
+            if let Err(err) = self.filetransfer_send(
+                TransferPayload::File(tmpfile_entry),
+                wrkdir.as_path(),
+                Some(String::from(dest.to_string_lossy())),
+            ) {
+                self.log_and_alert(
+                    LogLevel::Error,
+                    format!(
+                        "Copy failed: could not write file {}: {}",
+                        entry_path.display(),
+                        err
+                    ),
+                );
+                return Err(err);
             }
+            Ok(())
         }
     }
 }

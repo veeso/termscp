@@ -26,46 +26,46 @@
  * SOFTWARE.
  */
 // locals
-use super::{FileTransferActivity, LogLevel, SelectedEntry};
+use super::{FileTransferActivity, LogLevel, SelectedFile};
 
-use remotefs::Entry;
+use remotefs::File;
 
 impl FileTransferActivity {
     pub(crate) fn action_local_delete(&mut self) {
         match self.get_local_selected_entries() {
-            SelectedEntry::One(entry) => {
+            SelectedFile::One(entry) => {
                 // Delete file
                 self.local_remove_file(&entry);
             }
-            SelectedEntry::Many(entries) => {
+            SelectedFile::Many(entries) => {
                 // Iter files
                 for entry in entries.iter() {
                     // Delete file
                     self.local_remove_file(entry);
                 }
             }
-            SelectedEntry::None => {}
+            SelectedFile::None => {}
         }
     }
 
     pub(crate) fn action_remote_delete(&mut self) {
         match self.get_remote_selected_entries() {
-            SelectedEntry::One(entry) => {
+            SelectedFile::One(entry) => {
                 // Delete file
                 self.remote_remove_file(&entry);
             }
-            SelectedEntry::Many(entries) => {
+            SelectedFile::Many(entries) => {
                 // Iter files
                 for entry in entries.iter() {
                     // Delete file
                     self.remote_remove_file(entry);
                 }
             }
-            SelectedEntry::None => {}
+            SelectedFile::None => {}
         }
     }
 
-    pub(crate) fn local_remove_file(&mut self, entry: &Entry) {
+    pub(crate) fn local_remove_file(&mut self, entry: &File) {
         match self.host.remove(entry) {
             Ok(_) => {
                 // Log
@@ -87,7 +87,7 @@ impl FileTransferActivity {
         }
     }
 
-    pub(crate) fn remote_remove_file(&mut self, entry: &Entry) {
+    pub(crate) fn remote_remove_file(&mut self, entry: &File) {
         match self.client.remove_dir_all(entry.path()) {
             Ok(_) => {
                 self.log(
