@@ -112,11 +112,14 @@ La contraseña se puede proporcionar básicamente a través de 3 formas cuando s
 ## Credenciales de AWS S3 🦊
 
 Para conectarse a un bucket de Aws S3, obviamente debe proporcionar algunas credenciales.
-Básicamente, hay dos formas de lograr esto, y como probablemente ya hayas notado, **no puedes** hacerlo a través del formulario de autenticación.
+Básicamente, hay tres formas de lograr esto.
 Entonces, estas son las formas en que puede proporcionar las credenciales para s3:
 
-1. Use su archivo de credenciales: simplemente configure la cli de AWS a través de `aws configure` y sus credenciales ya deberían estar ubicadas en`~/.aws/credentials`. En caso de que esté usando un perfil diferente al "predeterminado", simplemente proporciónelo en el campo de perfil en el formulario de autenticación.
-2. **Variables de entorno**: siempre puede proporcionar sus credenciales como variables de entorno. Tenga en cuenta que estas credenciales **siempre anularán** las credenciales ubicadas en el archivo `credentials`. Vea cómo configurar el entorno a continuación:
+1. Authentication form:
+   1. Puede proporcionar la `access_key` (debería ser obligatoria), la `secret_access_kedy` (debería ser obligatoria), el `security_token` y el `session_token`
+   2. Si guarda la conexión s3 como marcador, estas credenciales se guardarán como una cadena AES-256 / BASE64 cifrada en su archivo de marcadores (excepto el token de seguridad y el token de sesión, que deben ser credenciales temporales).
+2. Use su archivo de credenciales: simplemente configure la cli de AWS a través de `aws configure` y sus credenciales ya deberían estar ubicadas en`~/.aws/credentials`. En caso de que esté usando un perfil diferente al "predeterminado", simplemente proporciónelo en el campo de perfil en el formulario de autenticación.
+3. **Variables de entorno**: siempre puede proporcionar sus credenciales como variables de entorno. Tenga en cuenta que estas credenciales **siempre anularán** las credenciales ubicadas en el archivo `credentials`. Vea cómo configurar el entorno a continuación:
 
     Estos siempre deben ser obligatorios:
 

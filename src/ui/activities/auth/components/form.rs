@@ -177,7 +177,7 @@ impl Component<Msg, NoUserEvent> for InputAddress {
             }
             Event::Keyboard(KeyEvent {
                 code: Key::Char(ch),
-                modifiers: KeyModifiers::NONE,
+                modifiers: KeyModifiers::NONE | KeyModifiers::SHIFT,
             }) => {
                 self.perform(Cmd::Type(ch));
                 Some(Msg::None)
@@ -263,7 +263,7 @@ impl Component<Msg, NoUserEvent> for InputPort {
             }
             Event::Keyboard(KeyEvent {
                 code: Key::Char(ch),
-                modifiers: KeyModifiers::NONE,
+                modifiers: KeyModifiers::NONE | KeyModifiers::SHIFT,
             }) => {
                 self.perform(Cmd::Type(ch));
                 Some(Msg::None)
@@ -348,7 +348,7 @@ impl Component<Msg, NoUserEvent> for InputUsername {
             }
             Event::Keyboard(KeyEvent {
                 code: Key::Char(ch),
-                modifiers: KeyModifiers::NONE,
+                modifiers: KeyModifiers::NONE | KeyModifiers::SHIFT,
             }) => {
                 self.perform(Cmd::Type(ch));
                 Some(Msg::None)
@@ -432,7 +432,7 @@ impl Component<Msg, NoUserEvent> for InputPassword {
             }
             Event::Keyboard(KeyEvent {
                 code: Key::Char(ch),
-                modifiers: KeyModifiers::NONE,
+                modifiers: KeyModifiers::NONE | KeyModifiers::SHIFT,
             }) => {
                 self.perform(Cmd::Type(ch));
                 Some(Msg::None)
@@ -517,7 +517,7 @@ impl Component<Msg, NoUserEvent> for InputS3Bucket {
             }
             Event::Keyboard(KeyEvent {
                 code: Key::Char(ch),
-                modifiers: KeyModifiers::NONE,
+                modifiers: KeyModifiers::NONE | KeyModifiers::SHIFT,
             }) => {
                 self.perform(Cmd::Type(ch));
                 Some(Msg::None)
@@ -537,7 +537,7 @@ impl Component<Msg, NoUserEvent> for InputS3Bucket {
     }
 }
 
-// -- s3 bucket
+// -- s3 region
 
 #[derive(MockComponent)]
 pub struct InputS3Region {
@@ -602,7 +602,7 @@ impl Component<Msg, NoUserEvent> for InputS3Region {
             }
             Event::Keyboard(KeyEvent {
                 code: Key::Char(ch),
-                modifiers: KeyModifiers::NONE,
+                modifiers: KeyModifiers::NONE | KeyModifiers::SHIFT,
             }) => {
                 self.perform(Cmd::Type(ch));
                 Some(Msg::None)
@@ -622,7 +622,7 @@ impl Component<Msg, NoUserEvent> for InputS3Region {
     }
 }
 
-// -- s3 bucket
+// -- s3 profile
 
 #[derive(MockComponent)]
 pub struct InputS3Profile {
@@ -687,7 +687,7 @@ impl Component<Msg, NoUserEvent> for InputS3Profile {
             }
             Event::Keyboard(KeyEvent {
                 code: Key::Char(ch),
-                modifiers: KeyModifiers::NONE,
+                modifiers: KeyModifiers::NONE | KeyModifiers::SHIFT,
             }) => {
                 self.perform(Cmd::Type(ch));
                 Some(Msg::None)
@@ -700,6 +700,345 @@ impl Component<Msg, NoUserEvent> for InputS3Profile {
             }) => Some(Msg::Ui(UiMsg::S3ProfileBlurDown)),
             Event::Keyboard(KeyEvent { code: Key::Up, .. }) => {
                 Some(Msg::Ui(UiMsg::S3ProfileBlurUp))
+            }
+            Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => {
+                Some(Msg::Ui(UiMsg::ParamsFormBlur))
+            }
+            _ => None,
+        }
+    }
+}
+
+// -- s3 access key
+
+#[derive(MockComponent)]
+pub struct InputS3AccessKey {
+    component: Input,
+}
+
+impl InputS3AccessKey {
+    pub fn new(access_key: &str, color: Color) -> Self {
+        Self {
+            component: Input::default()
+                .borders(
+                    Borders::default()
+                        .color(color)
+                        .modifiers(BorderType::Rounded),
+                )
+                .foreground(color)
+                .placeholder("AKIA...", Style::default().fg(Color::Rgb(128, 128, 128)))
+                .title("Access key", Alignment::Left)
+                .input_type(InputType::Text)
+                .value(access_key),
+        }
+    }
+}
+
+impl Component<Msg, NoUserEvent> for InputS3AccessKey {
+    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+        match ev {
+            Event::Keyboard(KeyEvent {
+                code: Key::Left, ..
+            }) => {
+                self.perform(Cmd::Move(Direction::Left));
+                Some(Msg::None)
+            }
+            Event::Keyboard(KeyEvent {
+                code: Key::Right, ..
+            }) => {
+                self.perform(Cmd::Move(Direction::Right));
+                Some(Msg::None)
+            }
+            Event::Keyboard(KeyEvent {
+                code: Key::Home, ..
+            }) => {
+                self.perform(Cmd::GoTo(Position::Begin));
+                Some(Msg::None)
+            }
+            Event::Keyboard(KeyEvent { code: Key::End, .. }) => {
+                self.perform(Cmd::GoTo(Position::End));
+                Some(Msg::None)
+            }
+            Event::Keyboard(KeyEvent {
+                code: Key::Delete, ..
+            }) => {
+                self.perform(Cmd::Cancel);
+                Some(Msg::None)
+            }
+            Event::Keyboard(KeyEvent {
+                code: Key::Backspace,
+                ..
+            }) => {
+                self.perform(Cmd::Delete);
+                Some(Msg::None)
+            }
+            Event::Keyboard(KeyEvent {
+                code: Key::Char(ch),
+                modifiers: KeyModifiers::NONE | KeyModifiers::SHIFT,
+            }) => {
+                self.perform(Cmd::Type(ch));
+                Some(Msg::None)
+            }
+            Event::Keyboard(KeyEvent {
+                code: Key::Enter, ..
+            }) => Some(Msg::Form(FormMsg::Connect)),
+            Event::Keyboard(KeyEvent {
+                code: Key::Down, ..
+            }) => Some(Msg::Ui(UiMsg::S3AccessKeyBlurDown)),
+            Event::Keyboard(KeyEvent { code: Key::Up, .. }) => {
+                Some(Msg::Ui(UiMsg::S3AccessKeyBlurUp))
+            }
+            Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => {
+                Some(Msg::Ui(UiMsg::ParamsFormBlur))
+            }
+            _ => None,
+        }
+    }
+}
+
+#[derive(MockComponent)]
+pub struct InputS3SecretAccessKey {
+    component: Input,
+}
+
+impl InputS3SecretAccessKey {
+    pub fn new(secret_access_key: &str, color: Color) -> Self {
+        Self {
+            component: Input::default()
+                .borders(
+                    Borders::default()
+                        .color(color)
+                        .modifiers(BorderType::Rounded),
+                )
+                .foreground(color)
+                .title("Secret access key", Alignment::Left)
+                .input_type(InputType::Password('*'))
+                .value(secret_access_key),
+        }
+    }
+}
+
+impl Component<Msg, NoUserEvent> for InputS3SecretAccessKey {
+    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+        match ev {
+            Event::Keyboard(KeyEvent {
+                code: Key::Left, ..
+            }) => {
+                self.perform(Cmd::Move(Direction::Left));
+                Some(Msg::None)
+            }
+            Event::Keyboard(KeyEvent {
+                code: Key::Right, ..
+            }) => {
+                self.perform(Cmd::Move(Direction::Right));
+                Some(Msg::None)
+            }
+            Event::Keyboard(KeyEvent {
+                code: Key::Home, ..
+            }) => {
+                self.perform(Cmd::GoTo(Position::Begin));
+                Some(Msg::None)
+            }
+            Event::Keyboard(KeyEvent { code: Key::End, .. }) => {
+                self.perform(Cmd::GoTo(Position::End));
+                Some(Msg::None)
+            }
+            Event::Keyboard(KeyEvent {
+                code: Key::Delete, ..
+            }) => {
+                self.perform(Cmd::Cancel);
+                Some(Msg::None)
+            }
+            Event::Keyboard(KeyEvent {
+                code: Key::Backspace,
+                ..
+            }) => {
+                self.perform(Cmd::Delete);
+                Some(Msg::None)
+            }
+            Event::Keyboard(KeyEvent {
+                code: Key::Char(ch),
+                modifiers: KeyModifiers::NONE | KeyModifiers::SHIFT,
+            }) => {
+                self.perform(Cmd::Type(ch));
+                Some(Msg::None)
+            }
+            Event::Keyboard(KeyEvent {
+                code: Key::Enter, ..
+            }) => Some(Msg::Form(FormMsg::Connect)),
+            Event::Keyboard(KeyEvent {
+                code: Key::Down, ..
+            }) => Some(Msg::Ui(UiMsg::S3SecretAccessKeyBlurDown)),
+            Event::Keyboard(KeyEvent { code: Key::Up, .. }) => {
+                Some(Msg::Ui(UiMsg::S3SecretAccessKeyBlurUp))
+            }
+            Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => {
+                Some(Msg::Ui(UiMsg::ParamsFormBlur))
+            }
+            _ => None,
+        }
+    }
+}
+
+#[derive(MockComponent)]
+pub struct InputS3SecurityToken {
+    component: Input,
+}
+
+impl InputS3SecurityToken {
+    pub fn new(security_token: &str, color: Color) -> Self {
+        Self {
+            component: Input::default()
+                .borders(
+                    Borders::default()
+                        .color(color)
+                        .modifiers(BorderType::Rounded),
+                )
+                .foreground(color)
+                .title("Security token", Alignment::Left)
+                .input_type(InputType::Password('*'))
+                .value(security_token),
+        }
+    }
+}
+
+impl Component<Msg, NoUserEvent> for InputS3SecurityToken {
+    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+        match ev {
+            Event::Keyboard(KeyEvent {
+                code: Key::Left, ..
+            }) => {
+                self.perform(Cmd::Move(Direction::Left));
+                Some(Msg::None)
+            }
+            Event::Keyboard(KeyEvent {
+                code: Key::Right, ..
+            }) => {
+                self.perform(Cmd::Move(Direction::Right));
+                Some(Msg::None)
+            }
+            Event::Keyboard(KeyEvent {
+                code: Key::Home, ..
+            }) => {
+                self.perform(Cmd::GoTo(Position::Begin));
+                Some(Msg::None)
+            }
+            Event::Keyboard(KeyEvent { code: Key::End, .. }) => {
+                self.perform(Cmd::GoTo(Position::End));
+                Some(Msg::None)
+            }
+            Event::Keyboard(KeyEvent {
+                code: Key::Delete, ..
+            }) => {
+                self.perform(Cmd::Cancel);
+                Some(Msg::None)
+            }
+            Event::Keyboard(KeyEvent {
+                code: Key::Backspace,
+                ..
+            }) => {
+                self.perform(Cmd::Delete);
+                Some(Msg::None)
+            }
+            Event::Keyboard(KeyEvent {
+                code: Key::Char(ch),
+                modifiers: KeyModifiers::NONE | KeyModifiers::SHIFT,
+            }) => {
+                self.perform(Cmd::Type(ch));
+                Some(Msg::None)
+            }
+            Event::Keyboard(KeyEvent {
+                code: Key::Enter, ..
+            }) => Some(Msg::Form(FormMsg::Connect)),
+            Event::Keyboard(KeyEvent {
+                code: Key::Down, ..
+            }) => Some(Msg::Ui(UiMsg::S3SecurityTokenBlurDown)),
+            Event::Keyboard(KeyEvent { code: Key::Up, .. }) => {
+                Some(Msg::Ui(UiMsg::S3SecurityTokenBlurUp))
+            }
+            Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => {
+                Some(Msg::Ui(UiMsg::ParamsFormBlur))
+            }
+            _ => None,
+        }
+    }
+}
+
+#[derive(MockComponent)]
+pub struct InputS3SessionToken {
+    component: Input,
+}
+
+impl InputS3SessionToken {
+    pub fn new(session_token: &str, color: Color) -> Self {
+        Self {
+            component: Input::default()
+                .borders(
+                    Borders::default()
+                        .color(color)
+                        .modifiers(BorderType::Rounded),
+                )
+                .foreground(color)
+                .title("Session token", Alignment::Left)
+                .input_type(InputType::Password('*'))
+                .value(session_token),
+        }
+    }
+}
+
+impl Component<Msg, NoUserEvent> for InputS3SessionToken {
+    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+        match ev {
+            Event::Keyboard(KeyEvent {
+                code: Key::Left, ..
+            }) => {
+                self.perform(Cmd::Move(Direction::Left));
+                Some(Msg::None)
+            }
+            Event::Keyboard(KeyEvent {
+                code: Key::Right, ..
+            }) => {
+                self.perform(Cmd::Move(Direction::Right));
+                Some(Msg::None)
+            }
+            Event::Keyboard(KeyEvent {
+                code: Key::Home, ..
+            }) => {
+                self.perform(Cmd::GoTo(Position::Begin));
+                Some(Msg::None)
+            }
+            Event::Keyboard(KeyEvent { code: Key::End, .. }) => {
+                self.perform(Cmd::GoTo(Position::End));
+                Some(Msg::None)
+            }
+            Event::Keyboard(KeyEvent {
+                code: Key::Delete, ..
+            }) => {
+                self.perform(Cmd::Cancel);
+                Some(Msg::None)
+            }
+            Event::Keyboard(KeyEvent {
+                code: Key::Backspace,
+                ..
+            }) => {
+                self.perform(Cmd::Delete);
+                Some(Msg::None)
+            }
+            Event::Keyboard(KeyEvent {
+                code: Key::Char(ch),
+                modifiers: KeyModifiers::NONE | KeyModifiers::SHIFT,
+            }) => {
+                self.perform(Cmd::Type(ch));
+                Some(Msg::None)
+            }
+            Event::Keyboard(KeyEvent {
+                code: Key::Enter, ..
+            }) => Some(Msg::Form(FormMsg::Connect)),
+            Event::Keyboard(KeyEvent {
+                code: Key::Down, ..
+            }) => Some(Msg::Ui(UiMsg::S3SessionTokenBlurDown)),
+            Event::Keyboard(KeyEvent { code: Key::Up, .. }) => {
+                Some(Msg::Ui(UiMsg::S3SessionTokenBlurUp))
             }
             Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => {
                 Some(Msg::Ui(UiMsg::ParamsFormBlur))

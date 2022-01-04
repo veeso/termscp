@@ -240,7 +240,7 @@ impl Component<Msg, NoUserEvent> for SshHost {
             }
             Event::Keyboard(KeyEvent {
                 code: Key::Char(ch),
-                modifiers: KeyModifiers::NONE,
+                modifiers: KeyModifiers::NONE | KeyModifiers::SHIFT,
             }) => {
                 self.perform(Cmd::Type(ch));
                 Some(Msg::None)
@@ -319,7 +319,7 @@ impl Component<Msg, NoUserEvent> for SshUsername {
             }
             Event::Keyboard(KeyEvent {
                 code: Key::Char(ch),
-                modifiers: KeyModifiers::NONE,
+                modifiers: KeyModifiers::NONE | KeyModifiers::SHIFT,
             }) => {
                 self.perform(Cmd::Type(ch));
                 Some(Msg::None)

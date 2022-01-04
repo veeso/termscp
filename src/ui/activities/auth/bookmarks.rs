@@ -229,5 +229,9 @@ impl AuthActivity {
         self.mount_s3_bucket(params.bucket_name.as_str());
         self.mount_s3_region(params.region.as_str());
         self.mount_s3_profile(params.profile.as_deref().unwrap_or(""));
+        self.mount_s3_access_key(params.access_key.as_deref().unwrap_or(""));
+        self.mount_s3_secret_access_key(params.secret_access_key.as_deref().unwrap_or(""));
+        self.mount_s3_security_token(params.security_token.as_deref().unwrap_or(""));
+        self.mount_s3_session_token(params.session_token.as_deref().unwrap_or(""));
     }
 }

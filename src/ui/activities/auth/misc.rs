@@ -26,7 +26,7 @@
  * SOFTWARE.
  */
 use super::{AuthActivity, FileTransferParams, FileTransferProtocol};
-use crate::filetransfer::params::{AwsS3Params, GenericProtocolParams, ProtocolParams};
+use crate::filetransfer::params::ProtocolParams;
 use crate::system::auto_update::{Release, Update, UpdateStatus};
 use crate::system::notifications::Notification;
 
@@ -68,46 +68,32 @@ impl AuthActivity {
         &self,
         protocol: FileTransferProtocol,
     ) -> Result<FileTransferParams, &'static str> {
-        let (address, port, username, password): (String, u16, String, String) =
-            self.get_generic_params_input();
-        if address.is_empty() {
+        let params = self.get_generic_params_input();
+        if params.address.is_empty() {
             return Err("Invalid host");
         }
-        if port == 0 {
+        if params.port == 0 {
             return Err("Invalid port");
         }
         Ok(FileTransferParams {
             protocol,
-            params: ProtocolParams::Generic(
-                GenericProtocolParams::default()
-                    .address(address)
-                    .port(port)
-                    .username(match username.is_empty() {
-                        true => None,
-                        false => Some(username),
-                    })
-                    .password(match password.is_empty() {
-                        true => None,
-                        false => Some(password),
-                    }),
-            ),
+            params: ProtocolParams::Generic(params),
             entry_directory: None,
         })
     }
 
     /// Get input values from fields or return an error if fields are invalid to work as aws s3
     pub(super) fn collect_s3_host_params(&self) -> Result<FileTransferParams, &'static str> {
-        let (bucket, region, profile): (String, String, Option<String>) =
-            self.get_s3_params_input();
-        if bucket.is_empty() {
+        let params = self.get_s3_params_input();
+        if params.bucket_name.is_empty() {
             return Err("Invalid bucket");
         }
-        if region.is_empty() {
+        if params.region.is_empty() {
             return Err("Invalid region");
         }
         Ok(FileTransferParams {
             protocol: FileTransferProtocol::AwsS3,
-            params: ProtocolParams::AwsS3(AwsS3Params::new(bucket, region, profile)),
+            params: ProtocolParams::AwsS3(params),
             entry_directory: None,
         })
     }

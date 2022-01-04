@@ -112,11 +112,14 @@ Password can be basically provided through 3 ways when address argument is provi
 ## Aws S3 credentials 🦊
 
 In order to connect to an Aws S3 bucket you must obviously provide some credentials.
-There are basically two ways to achieve this, and as you've probably already noticed you **can't** do that via the authentication form.
+There are basically three ways to achieve this.
 So these are the ways you can provide the credentials for s3:
 
-1. Use your credentials file: just configure the AWS cli via `aws configure` and your credentials should already be located at `~/.aws/credentials`. In case you're using a profile different from `default`, just provide it in the profile field in the authentication form.
-2. **Environment variables**: you can always provide your credentials as environment variables. Keep in mind that these credentials **will always override** the credentials located in the `credentials` file. See how to configure the environment below:
+1. Authentication form:
+   1. You can provide the `access_key` (should be mandatory), the `secret_access_key` (should be mandatory), `security_token` and the `session_token`
+   2. If you save the s3 connection as a bookmark, these credentials will be saved as an encrypted AES-256/BASE64 string in your bookmarks file (except for the security token and session token which are meant to be temporary credentials).
+2. Use your credentials file: just configure the AWS cli via `aws configure` and your credentials should already be located at `~/.aws/credentials`. In case you're using a profile different from `default`, just provide it in the profile field in the authentication form.
+3. **Environment variables**: you can always provide your credentials as environment variables. Keep in mind that these credentials **will always override** the credentials located in the `credentials` file. See how to configure the environment below:
 
     These should always be mandatory:
 

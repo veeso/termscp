@@ -228,6 +228,7 @@ fn read_password(run_opts: &mut RunOpts) -> Result<(), String> {
     // Initialize client if necessary
     if let Some(remote) = run_opts.remote.as_mut() {
         if let Some(mut params) = remote.params.mut_generic_params() {
+            // Ask password only if generic protocol params
             if params.password.is_none() {
                 // Ask password if unspecified
                 params.password = match rpassword::read_password_from_tty(Some("Password: ")) {

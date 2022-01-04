@@ -167,7 +167,38 @@ impl BookmarksClient {
                     *pwd = decrypted_pwd;
                 }
                 Err(err) => {
-                    error!("Failed to decrypt password for bookmark: {}", err);
+                    error!("Failed to decrypt `password` for bookmark {}: {}", key, err);
+                }
+            }
+        }
+        // Decrypt AWS-S3 params
+        if let Some(s3) = entry.s3.as_mut() {
+            // Access key
+            if let Some(access_key) = s3.access_key.as_mut() {
+                match self.decrypt_str(access_key.as_str()) {
+                    Ok(plain) => {
+                        *access_key = plain;
+                    }
+                    Err(err) => {
+                        error!(
+                            "Failed to decrypt `access_key` for bookmark {}: {}",
+                            key, err
+                        );
+                    }
+                }
+            }
+            // Secret access key
+            if let Some(secret_access_key) = s3.secret_access_key.as_mut() {
+                match self.decrypt_str(secret_access_key.as_str()) {
+                    Ok(plain) => {
+                        *secret_access_key = plain;
+                    }
+                    Err(err) => {
+                        error!(
+                            "Failed to decrypt `secret_access_key` for bookmark {}: {}",
+                            key, err
+                        );
+                    }
                 }
             }
         }
@@ -190,9 +221,13 @@ impl BookmarksClient {
         // Make bookmark
         info!("Added bookmark {}", name);
         let mut host: Bookmark = self.make_bookmark(params);
-        // If not save_password, set password to `None`
+        // If not save_password, set secrets to `None`
         if !save_password {
             host.password = None;
+            if let Some(s3) = host.s3.as_mut() {
+                s3.access_key = None;
+                s3.secret_access_key = None;
+            }
         }
         self.hosts.bookmarks.insert(name, host);
     }
@@ -221,6 +256,10 @@ impl BookmarksClient {
         let mut host: Bookmark = self.make_bookmark(params);
         // Null password for recents
         host.password = None;
+        if let Some(s3) = host.s3.as_mut() {
+            s3.access_key = None;
+            s3.secret_access_key = None;
+        }
         // Check if duplicated
         for (key, value) in &self.hosts.recents {
             if *value == host {
@@ -321,6 +360,15 @@ impl BookmarksClient {
         if let Some(pwd) = bookmark.password {
             bookmark.password = Some(self.encrypt_str(pwd.as_str()));
         }
+        // Encrypt aws s3 params
+        if let Some(s3) = bookmark.s3.as_mut() {
+            if let Some(access_key) = s3.access_key.as_mut() {
+                *access_key = self.encrypt_str(access_key.as_str());
+            }
+            if let Some(secret_access_key) = s3.secret_access_key.as_mut() {
+                *secret_access_key = self.encrypt_str(secret_access_key.as_str());
+            }
+        }
         bookmark
     }
 
@@ -346,7 +394,7 @@ impl BookmarksClient {
 mod tests {
 
     use super::*;
-    use crate::filetransfer::params::GenericProtocolParams;
+    use crate::filetransfer::params::{AwsS3Params, GenericProtocolParams};
     use crate::filetransfer::{FileTransferProtocol, ProtocolParams};
 
     use pretty_assertions::assert_eq;
@@ -439,6 +487,69 @@ mod tests {
         assert_eq!(bookmark.2, FileTransferProtocol::Sftp);
         assert_eq!(bookmark.3, String::from("pi"));
         assert_eq!(bookmark.4, None);
+    }
+
+    #[test]
+    fn should_make_s3_bookmark_with_secrets() {
+        let tmp_dir: tempfile::TempDir = TempDir::new().ok().unwrap();
+        let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
+        // Initialize a new bookmarks client
+        let mut client: BookmarksClient =
+            BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16).unwrap();
+        // Add s3 bookmark
+        client.add_bookmark("my-bucket", make_s3_ftparams(), true);
+        // Verify bookmark
+        let bookmark = client.get_bookmark("my-bucket").unwrap();
+        assert_eq!(bookmark.protocol, FileTransferProtocol::AwsS3);
+        let params = bookmark.params.s3_params().unwrap();
+        assert_eq!(params.access_key.as_deref().unwrap(), "pippo");
+        assert_eq!(params.profile.as_deref().unwrap(), "test");
+        assert_eq!(params.secret_access_key.as_deref().unwrap(), "pluto");
+        assert_eq!(params.bucket_name.as_str(), "omar");
+        assert_eq!(params.region.as_str(), "eu-west-1");
+    }
+
+    #[test]
+    fn should_make_s3_bookmark_without_secrets() {
+        let tmp_dir: tempfile::TempDir = TempDir::new().ok().unwrap();
+        let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
+        // Initialize a new bookmarks client
+        let mut client: BookmarksClient =
+            BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16).unwrap();
+        // Add s3 bookmark
+        client.add_bookmark("my-bucket", make_s3_ftparams(), false);
+        // Verify bookmark
+        let bookmark = client.get_bookmark("my-bucket").unwrap();
+        assert_eq!(bookmark.protocol, FileTransferProtocol::AwsS3);
+        let params = bookmark.params.s3_params().unwrap();
+        assert_eq!(params.profile.as_deref().unwrap(), "test");
+        assert_eq!(params.bucket_name.as_str(), "omar");
+        assert_eq!(params.region.as_str(), "eu-west-1");
+        // secrets
+        assert_eq!(params.access_key, None);
+        assert_eq!(params.secret_access_key, None);
+    }
+
+    #[test]
+    fn should_make_s3_recent() {
+        let tmp_dir: tempfile::TempDir = TempDir::new().ok().unwrap();
+        let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
+        // Initialize a new bookmarks client
+        let mut client: BookmarksClient =
+            BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16).unwrap();
+        // Add s3 bookmark
+        client.add_recent(make_s3_ftparams());
+        // Verify bookmark
+        let bookmark = client.iter_recents().next().unwrap();
+        let bookmark = client.get_recent(bookmark).unwrap();
+        assert_eq!(bookmark.protocol, FileTransferProtocol::AwsS3);
+        let params = bookmark.params.s3_params().unwrap();
+        assert_eq!(params.profile.as_deref().unwrap(), "test");
+        assert_eq!(params.bucket_name.as_str(), "omar");
+        assert_eq!(params.region.as_str(), "eu-west-1");
+        // secrets
+        assert_eq!(params.access_key, None);
+        assert_eq!(params.secret_access_key, None);
     }
 
     #[test]
@@ -732,6 +843,19 @@ mod tests {
                 .password(password),
         );
         FileTransferParams::new(protocol, params)
+    }
+
+    fn make_s3_ftparams() -> FileTransferParams {
+        FileTransferParams::new(
+            FileTransferProtocol::AwsS3,
+            ProtocolParams::AwsS3(
+                AwsS3Params::new("omar", "eu-west-1", Some("test"))
+                    .access_key(Some("pippo"))
+                    .secret_access_key(Some("pluto"))
+                    .security_token(Some("omar"))
+                    .session_token(Some("gerry-scotti")),
+            ),
+        )
     }
 
     fn ftparams_to_tup(

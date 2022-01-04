@@ -2021,7 +2021,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e0bccbcf40c8938196944a3da0e133e031a33f4d6b72db3bda3cc556e361905d"
 dependencies = [
  "lazy_static",
- "parking_lot 0.11.2",
+ "parking_lot 0.10.2",
  "serial_test_derive",
 ]
 
@@ -2479,9 +2479,9 @@ dependencies = [
 
 [[package]]
 name = "tuirealm"
-version = "1.3.0"
+version = "1.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "69e5c7137a0bd92feadea98033a1849fe51c83d23f7761b866e8700a3d6f1de7"
+checksum = "8b1919cf08ce9eda3b968870ecab04267d684adc22f2cdc13bb4a3846c89eab4"
 dependencies = [
  "bitflags 1.3.2",
  "crossterm",
