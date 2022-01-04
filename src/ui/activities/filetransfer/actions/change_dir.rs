@@ -28,7 +28,7 @@
 // locals
 use super::{FileExplorerTab, FileTransferActivity, LogLevel, Msg, PendingActionMsg};
 
-use remotefs::Directory;
+use remotefs::File;
 use std::path::PathBuf;
 
 /// Describes destination for sync browsing
@@ -40,18 +40,18 @@ enum SyncBrowsingDestination {
 
 impl FileTransferActivity {
     /// Enter a directory on local host from entry
-    pub(crate) fn action_enter_local_dir(&mut self, dir: Directory) {
-        self.local_changedir(dir.path.as_path(), true);
+    pub(crate) fn action_enter_local_dir(&mut self, dir: File) {
+        self.local_changedir(dir.path(), true);
         if self.browser.sync_browsing && self.browser.found().is_none() {
-            self.synchronize_browsing(SyncBrowsingDestination::Path(dir.name));
+            self.synchronize_browsing(SyncBrowsingDestination::Path(dir.name()));
         }
     }
 
     /// Enter a directory on local host from entry
-    pub(crate) fn action_enter_remote_dir(&mut self, dir: Directory) {
-        self.remote_changedir(dir.path.as_path(), true);
+    pub(crate) fn action_enter_remote_dir(&mut self, dir: File) {
+        self.remote_changedir(dir.path(), true);
         if self.browser.sync_browsing && self.browser.found().is_none() {
-            self.synchronize_browsing(SyncBrowsingDestination::Path(dir.name));
+            self.synchronize_browsing(SyncBrowsingDestination::Path(dir.name()));
         }
     }
 

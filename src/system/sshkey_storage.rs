@@ -28,7 +28,7 @@
 // Locals
 use super::config_client::ConfigClient;
 // Ext
-use remotefs::client::ssh::SshKeyStorage as SshKeyStorageT;
+use remotefs_ssh::SshKeyStorage as SshKeyStorageT;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 

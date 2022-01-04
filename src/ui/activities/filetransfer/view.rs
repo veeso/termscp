@@ -33,7 +33,7 @@ use super::{
 use crate::explorer::FileSorting;
 use crate::utils::ui::draw_area_in;
 // Ext
-use remotefs::fs::Entry;
+use remotefs::fs::File;
 use tuirealm::event::{Key, KeyEvent, KeyModifiers};
 use tuirealm::tui::layout::{Constraint, Direction, Layout};
 use tuirealm::tui::widgets::Clear;
@@ -719,7 +719,7 @@ impl FileTransferActivity {
         assert!(self.app.active(&Id::ReplacePopup).is_ok());
     }
 
-    pub(super) fn mount_radio_replace_many(&mut self, files: &[&str]) {
+    pub(super) fn mount_radio_replace_many(&mut self, files: &[String]) {
         let warn_color = self.theme().misc_warn_dialog;
         assert!(self
             .app
@@ -750,7 +750,7 @@ impl FileTransferActivity {
         let _ = self.app.umount(&Id::ReplacingFilesListPopup); // NOTE: replace anyway
     }
 
-    pub(super) fn mount_file_info(&mut self, file: &Entry) {
+    pub(super) fn mount_file_info(&mut self, file: &File) {
         assert!(self
             .app
             .remount(

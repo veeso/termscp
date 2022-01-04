@@ -30,12 +30,10 @@ use super::{FileTransferProtocol, ProtocolParams};
 use crate::system::config_client::ConfigClient;
 use crate::system::sshkey_storage::SshKeyStorage;
 
-use remotefs::client::{
-    aws_s3::AwsS3Fs,
-    ftp::FtpFs,
-    ssh::{ScpFs, SftpFs, SshOpts},
-};
 use remotefs::RemoteFs;
+use remotefs_aws_s3::AwsS3Fs;
+use remotefs_ftp::FtpFs;
+use remotefs_ssh::{ScpFs, SftpFs, SshOpts};
 use std::path::PathBuf;
 
 /// Remotefs builder

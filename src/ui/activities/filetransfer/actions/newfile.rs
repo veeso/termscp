@@ -26,8 +26,8 @@
  * SOFTWARE.
  */
 // locals
-use super::{Entry, FileTransferActivity, LogLevel};
-use std::fs::File;
+use super::{File, FileTransferActivity, LogLevel};
+use std::fs::File as StdFile;
 use std::path::PathBuf;
 
 impl FileTransferActivity {
@@ -86,7 +86,7 @@ impl FileTransferActivity {
             ),
             Ok(tfile) => {
                 // Stat tempfile
-                let local_file: Entry = match self.host.stat(tfile.path()) {
+                let local_file: File = match self.host.stat(tfile.path()) {
                     Err(err) => {
                         self.log_and_alert(
                             LogLevel::Error,
@@ -96,9 +96,9 @@ impl FileTransferActivity {
                     }
                     Ok(f) => f,
                 };
-                if let Entry::File(local_file) = local_file {
+                if local_file.is_file() {
                     // Create file
-                    let reader = Box::new(match File::open(tfile.path()) {
+                    let reader = Box::new(match StdFile::open(tfile.path()) {
                         Ok(f) => f,
                         Err(err) => {
                             self.log_and_alert(

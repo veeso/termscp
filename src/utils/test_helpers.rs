@@ -25,7 +25,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-use remotefs::fs::{Directory, Entry, File, Metadata};
+use remotefs::fs::{File, FileType, Metadata};
 // ext
 use std::fs::File as StdFile;
 use std::io::Write;
@@ -37,14 +37,7 @@ pub fn create_sample_file_entry() -> (File, NamedTempFile) {
     let tmpfile = create_sample_file();
     (
         File {
-            name: tmpfile
-                .path()
-                .file_name()
-                .unwrap()
-                .to_string_lossy()
-                .to_string(),
             path: tmpfile.path().to_path_buf(),
-            extension: None,
             metadata: Metadata::default(),
         },
         tmpfile,
@@ -85,20 +78,15 @@ pub fn make_dir_at(dir: &Path, dirname: &str) -> std::io::Result<()> {
     std::fs::create_dir(p.as_path())
 }
 
-/// Create a Entry at specified path
-pub fn make_fsentry<P: AsRef<Path>>(path: P, is_dir: bool) -> Entry {
+/// Create a File at specified path
+pub fn make_fsentry<P: AsRef<Path>>(path: P, is_dir: bool) -> File {
     let path: PathBuf = path.as_ref().to_path_buf();
-    match is_dir {
-        true => Entry::Directory(Directory {
-            name: path.file_name().unwrap().to_string_lossy().to_string(),
-            path,
-            metadata: Metadata::default(),
-        }),
-        false => Entry::File(File {
-            name: path.file_name().unwrap().to_string_lossy().to_string(),
-            path,
-            extension: None,
-            metadata: Metadata::default(),
+    File {
+        path,
+        metadata: Metadata::default().file_type(if is_dir {
+            FileType::Directory
+        } else {
+            FileType::File
         }),
     }
 }
@@ -127,15 +115,13 @@ mod test {
     fn test_utils_test_helpers_make_fsentry() {
         assert_eq!(
             make_fsentry(PathBuf::from("/tmp/omar.txt"), false)
-                .unwrap_file()
-                .name
+                .name()
                 .as_str(),
             "omar.txt"
         );
         assert_eq!(
             make_fsentry(PathBuf::from("/tmp/cards"), true)
-                .unwrap_dir()
-                .name
+                .name()
                 .as_str(),
             "cards"
         );

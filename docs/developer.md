@@ -24,7 +24,7 @@ termscp is basically made up of 4 components:
 In addition to the 4 main components, other have been added through the time:
 
 - **config**: this module provides the configuration schema and serialization methods for it.
-- **fs**: this modules exposes the FsEntry entity and the explorers. The explorers are structs which hold the content of the current directory; they also they take of filtering files up to your preferences and format file entries based on your configuration.
+- **fs**: this modules exposes the FsFile entity and the explorers. The explorers are structs which hold the content of the current directory; they also they take of filtering files up to your preferences and format file entries based on your configuration.
 - **system**: the system module provides a way to actually interact with the configuration, the ssh key storage and with the bookmarks.
 - **utils**: contains the utilities used by pretty much all the project.
 
