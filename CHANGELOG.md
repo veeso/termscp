@@ -24,7 +24,7 @@
 
 ## 0.8.0
 
-Released on FIXME:
+Released on 06/01/2022
 
 > ❄️ Winter update 2022 ⛄
 
@@ -76,6 +76,8 @@ Released on FIXME:
   - It is now possible to enable the `TRACE` level with the `-D` CLI option.
 - Dependencies:
   - Added `unicode-width 0.1.8`
+  - Updated `argh` to `0.1.7`
+  - Updated `keyring` to `1.0.0`
   - Updated `tui-realm` to `1.4.2`
   - Updated `tui-realm-stdlib` to `1.1.4`
   - Removed `rust-s3`, `ssh2`, `suppaftp`; replaced by `remotefs 0.2.0`, `remotefs-aws-s3 0.1.0`, `remotefs-ftp 0.1.0` and `remotefs-ssh 0.1.0`

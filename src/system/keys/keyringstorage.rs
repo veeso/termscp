@@ -28,7 +28,7 @@
 // Local
 use super::{KeyStorage, KeyStorageError};
 // Ext
-use keyring::{Keyring, KeyringError};
+use keyring::{Entry as Keyring, Error as KeyringError};
 
 /// provides a `KeyStorage` implementation using the keyring crate
 pub struct KeyringStorage {
@@ -53,15 +53,13 @@ impl KeyStorage for KeyringStorage {
         match storage.get_password() {
             Ok(s) => Ok(s),
             Err(e) => match e {
-                KeyringError::NoPasswordFound => Err(KeyStorageError::NoSuchKey),
-                #[cfg(target_os = "windows")]
-                KeyringError::WindowsVaultError => Err(KeyStorageError::NoSuchKey),
-                #[cfg(target_os = "macos")]
-                KeyringError::MacOsKeychainError(_) => Err(KeyStorageError::NoSuchKey),
-                #[cfg(target_os = "linux")]
-                KeyringError::SecretServiceError(_) => Err(KeyStorageError::ProviderError),
-                KeyringError::Parse(_) => Err(KeyStorageError::BadSytax),
-                _ => Err(KeyStorageError::ProviderError),
+                KeyringError::NoEntry => Err(KeyStorageError::NoSuchKey),
+                KeyringError::PlatformFailure(_)
+                | KeyringError::NoStorageAccess(_)
+                | KeyringError::WrongCredentialPlatform => Err(KeyStorageError::ProviderError),
+                KeyringError::BadEncoding(_) | KeyringError::TooLong(_, _) => {
+                    Err(KeyStorageError::BadSytax)
+                }
             },
         }
     }
@@ -84,13 +82,8 @@ impl KeyStorage for KeyringStorage {
         // Check what kind of error is returned
         match storage.get_password() {
             Ok(_) => true,
-            #[cfg(not(target_os = "linux"))]
-            Err(err) => !matches!(err, KeyringError::NoBackendFound),
-            #[cfg(target_os = "linux")]
-            Err(err) => !matches!(
-                err,
-                KeyringError::NoBackendFound | KeyringError::SecretServiceError(_)
-            ),
+            Err(KeyringError::NoStorageAccess(_) | KeyringError::PlatformFailure(_)) => false,
+            Err(_) => true,
         }
     }
 }
