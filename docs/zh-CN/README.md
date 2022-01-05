@@ -63,7 +63,7 @@
 </p>
 
 <p align="center">由 <a href="https://veeso.github.io/" target="_blank">@veeso</a> 开发</p>
-<p align="center">当前版本： 0.8.0 (12/10/2021)</p>
+<p align="center">当前版本： 0.8.0 (06/01/2022)</p>
 
 <p align="center">
   <a href="https://opensource.org/licenses/MIT"
@@ -233,12 +233,6 @@ choco install termscp
 
 ---
 
-## 已知的问题 🧻
-
-- `NoSuchFileOrDirectory` 连接时 (WSL1): 我知道这个问题，我猜这是 WSL 的一个小故障。 别担心，只需将 termscp 可执行文件移动到另一个 PATH 位置，例如`/usr/bin`，或者通过适当的包格式（例如 deb）安装它。
-
----
-
 ## 贡献和问题 🤝🏻
 
 欢迎贡献、错误报告、新功能和问题！ 😉
@@ -268,7 +262,6 @@ termscp 由这些很棒的项目提供支持：
 - [self_update](https://github.com/jaemk/self_update)
 - [ssh2-rs](https://github.com/alexcrichton/ssh2-rs)
 - [suppaftp](https://github.com/veeso/suppaftp)
-- [textwrap](https://github.com/mgeisler/textwrap)
 - [tui-rs](https://github.com/fdehau/tui-rs)
 - [tui-realm](https://github.com/veeso/tui-realm)
 - [whoami](https://github.com/libcala/whoami)
