@@ -78,10 +78,19 @@ Released on 06/01/2022
   - Added `unicode-width 0.1.8`
   - Updated `argh` to `0.1.7`
   - Updated `keyring` to `1.0.0`
+  - Updated `magic-crypt` to `3.1.9`
+  - Updated `open` to `2.0.2`
+  - Updated `notify-rust` to `4.5.5`
+  - Updated `self_update` to `0.28.0`
+  - Updated `simplelog` to `0.11.1`
+  - Updated `tempfile` to `3.2.0`
   - Updated `tui-realm` to `1.4.2`
-  - Updated `tui-realm-stdlib` to `1.1.4`
+  - Updated `tui-realm-stdlib` to `1.1.5`
+  - Updated `whoami` to `1.2.1`
+  - Updated `wildmatch` to `2.1.0`
   - Removed `rust-s3`, `ssh2`, `suppaftp`; replaced by `remotefs 0.2.0`, `remotefs-aws-s3 0.1.0`, `remotefs-ftp 0.1.0` and `remotefs-ssh 0.1.0`
   - Removed `crossterm` (since bridged by tui-realm)
+  - Removed `textwrap` (unused)
 
 ## 0.7.0
 
