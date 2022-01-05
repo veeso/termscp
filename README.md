@@ -63,7 +63,7 @@
 </p>
 
 <p align="center">Developed by <a href="https://veeso.github.io/" target="_blank">@veeso</a></p>
-<p align="center">Current version: 0.8.0 (12/10/2021)</p>
+<p align="center">Current version: 0.8.0 (06/01/2022)</p>
 
 <p align="center">
   <a href="https://opensource.org/licenses/MIT"
@@ -231,19 +231,16 @@ The developer documentation can be found on Rust Docs at <https://docs.rs/termsc
 
 ---
 
-## Known issues 🧻
-
-- `NoSuchFileOrDirectory` on connect (WSL1): I know about this issue and it's a glitch of WSL I guess. Don't worry about it, just move the termscp executable into another PATH location, such as `/usr/bin`, or install it through the appropriate package format (e.g. deb).
-
----
-
 ## Upcoming Features 🧪
 
-Major termscp releases will now be seasonal, so expect 4 major updates during the year.
+For **2022** there will be two major updates during the year.
 
-Planned for *❄️ Winter update 2021 ⛄*:
+Planned for *🍓 Spring update 2022 🌹*:
 
 - **File system watcher 🔭**: The feature consists in the possibility to track some files in order to automatically sync them with remote host. For the implementation [notify](https://github.com/notify-rs/notify) will be used.
+
+Planned for *future updates ⏲️*:
+
 - **Translations 🌐**: The feature consists in the possibility for the user to install the language pack for the language he prefers in order to replace the default English interface. The following language will be provided along to English:
   - 🇨🇳 Chinese
   - 🇫🇷 French
@@ -251,10 +248,6 @@ Planned for *❄️ Winter update 2021 ⛄*:
   - 🇮🇹 Italian
   - 🇳🇱 Dutch
   - 🇪🇸 Spanish
-
-Planned for *🍓 Spring update 2022 🌹*:
-
-- **SMB Support 🎉**: This will require a long time to be implemented, since I'm currently working on a Rust native SMB library, since I don't want to add new C-bindings. ~~Fear the 🦚~~
 - **Configuration profile for bookmarks 📚**: Basically this feature adds the possibility to have a specific setup for a certain host, instead of having only one global configuration. (Maybe will be postponed to spring 2022).
 
 Along to new features, termscp developments is now focused on UX and performance improvements, so if you have any suggestion, feel free to open an issue.
@@ -290,7 +283,6 @@ termscp is powered by these awesome projects:
 - [remotefs](https://github.com/veeso/remotefs-rs)
 - [rpassword](https://github.com/conradkleinespel/rpassword)
 - [self_update](https://github.com/jaemk/self_update)
-- [textwrap](https://github.com/mgeisler/textwrap)
 - [tui-rs](https://github.com/fdehau/tui-rs)
 - [tui-realm](https://github.com/veeso/tui-realm)
 - [whoami](https://github.com/libcala/whoami)

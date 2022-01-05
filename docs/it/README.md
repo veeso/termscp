@@ -63,7 +63,7 @@
 </p>
 
 <p align="center">Sviluppato da <a href="https://veeso.github.io/" target="_blank">@veeso</a></p>
-<p align="center">Versione corrente: 0.8.0 (12/10/2021)</p>
+<p align="center">Versione corrente: 0.8.0 (06/01/2022)</p>
 
 <p align="center">
   <a href="https://opensource.org/licenses/MIT"
@@ -231,12 +231,6 @@ La documentazione per sviluppatori la puoi trovare su Rust Docs <https://docs.rs
 
 ---
 
-## Problemi noti 🧻
-
-- `NoSuchFileOrDirectory` alla connessione (WSL1): Dovrebbe essere sufficiente non installare termscp con Cargo, ma piuttosto con uno dei pacchetti forniti tramite lo script di installazione `install.sh`. Si tratta di un problema legato esclusivamente a WSL1 e non è chiaro cosa accada alla connessione, ma è sicuramente legato al percorso del file.
-
----
-
 ## Contributi e issues 🤝🏻
 
 Contributi, report di bug, nuove funzionalità e domande sono i benvenuti! 😉
@@ -266,7 +260,6 @@ se termscp esiste, è anche grazie a questi fantastici progetti:
 - [self_update](https://github.com/jaemk/self_update)
 - [ssh2-rs](https://github.com/alexcrichton/ssh2-rs)
 - [suppaftp](https://github.com/veeso/suppaftp)
-- [textwrap](https://github.com/mgeisler/textwrap)
 - [tui-rs](https://github.com/fdehau/tui-rs)
 - [tui-realm](https://github.com/veeso/tui-realm)
 - [whoami](https://github.com/libcala/whoami)

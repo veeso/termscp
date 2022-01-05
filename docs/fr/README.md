@@ -63,7 +63,7 @@
 </p>
 
 <p align="center">Développé par <a href="https://veeso.github.io/" target="_blank">@veeso</a></p>
-<p align="center">Version actuelle: 0.8.0 (12/10/2021)</p>
+<p align="center">Version actuelle: 0.8.0 (06/01/2022)</p>
 
 <p align="center">
   <a href="https://opensource.org/licenses/MIT"
@@ -231,12 +231,6 @@ La documentation peut être trouvé sur Rust Docs <https://docs.rs/termscp>
 
 ---
 
-## Problèmes connus 🧻
-
-- `NoSuchFileOrDirectory` à la connexion (WSL1): Je connais ce problème et c'est un problème de WSL je suppose. Ne te inquiéte pas, déplace simplement l'exécutable termscp dans un autre emplacement PATH, tel que `/usr/bin`, ou installe-le via le format de package approprié (par exemple, deb).
-
----
-
 ## Contribution et enjeux 🤝🏻
 
 Les contributions, les rapports de bugs, les nouvelles fonctionnalités et les questions sont les bienvenus ! 😉
@@ -266,7 +260,6 @@ termscp est soutenu par ces projets impressionnants:
 - [self_update](https://github.com/jaemk/self_update)
 - [ssh2-rs](https://github.com/alexcrichton/ssh2-rs)
 - [suppaftp](https://github.com/veeso/suppaftp)
-- [textwrap](https://github.com/mgeisler/textwrap)
 - [tui-rs](https://github.com/fdehau/tui-rs)
 - [tui-realm](https://github.com/veeso/tui-realm)
 - [whoami](https://github.com/libcala/whoami)
