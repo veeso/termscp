@@ -1,16 +1,1 @@
-<?xml version="1.0" encoding="utf-8"?>
-<svg viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
-  <circle style="fill: rgb(49, 54, 59);" cx="250" cy="250" r="250"/>
-  <circle style="fill:#ea4444" cx="225" cy="40" r="7.344"/>
-  <circle style="fill:#eac944" cx="58.177" cy="22.745" r="7.344" transform="matrix(1, 0, 0, 1.031863, 191.822998, 16.530386)"/>
-  <circle style="fill:#34b938" cx="57.564" cy="22.269" r="7.344" transform="matrix(1, 0, 0, 1.031863, 217.43605, 17.021263)"/>
-  <polygon style="stroke: rgb(0, 0, 0); fill: rgb(240, 240, 240);" points="83.462 135.575 200 252.112 87.687 364.425 48.108 324.846 122.07 250.881 45.738 174.55"/>
-  <g transform="matrix(0.408921, 0, 0, 0.408921, 241.338654, 169.687912)" style="">
-    <polygon style="fill:#f0f0f0" points="196.4 0 292 49.2 388 98 292 147.2 196.4 196.4 100.8 147.2 4.8 98 100.8 49.2"/>
-    <polygon style="fill:#31363b" points="316 179.6 316 135.2 268 159.6 268 204 294.4 171.6"/>
-    <polygon style="fill:#f0f0f0" points="196.4 196.4 196.4 392.8 388 294.8 388 98 316 135.2 314.4 136 314.4 179.2 294.4 171.6 268 204 268 159.6"/>
-    <polygon style="fill:#f0f0f0" points="196.4 392.8 196.4 196.4 100.8 147.2 4.8 98 4.8 294.8"/>
-    <polygon style="fill:#31363b" points="76.8 61.2 268 159.6 314.4 136 316 135.2 124.8 36.8 100.8 49.2"/>
-  </g>
-  <rect style="fill: rgb(240, 240, 240);" width="200" height="35.702" x="222.229" y="364.298" rx="10" ry="10"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500"><circle style="fill:#31363b" cx="250" cy="250" r="250"/><circle style="fill:#ea4444" cx="225" cy="40" r="7.344"/><circle style="fill:#eac944" cx="58.177" cy="22.745" r="7.344" transform="matrix(1, 0, 0, 1.031863, 191.822998, 16.530386)"/><circle style="fill:#34b938" cx="57.564" cy="22.269" r="7.344" transform="matrix(1, 0, 0, 1.031863, 217.43605, 17.021263)"/><polygon style="stroke:#000;fill:#f0f0f0" points="83.462 135.575 200 252.112 87.687 364.425 48.108 324.846 122.07 250.881 45.738 174.55"/><g transform="matrix(0.408921, 0, 0, 0.408921, 241.338654, 169.687912)"><polygon style="fill:#f0f0f0" points="196.4 0 292 49.2 388 98 292 147.2 196.4 196.4 100.8 147.2 4.8 98 100.8 49.2"/><polygon style="fill:#31363b" points="316 179.6 316 135.2 268 159.6 268 204 294.4 171.6"/><polygon style="fill:#f0f0f0" points="196.4 196.4 196.4 392.8 388 294.8 388 98 316 135.2 314.4 136 314.4 179.2 294.4 171.6 268 204 268 159.6"/><polygon style="fill:#f0f0f0" points="196.4 392.8 196.4 196.4 100.8 147.2 4.8 98 4.8 294.8"/><polygon style="fill:#31363b" points="76.8 61.2 268 159.6 314.4 136 316 135.2 124.8 36.8 100.8 49.2"/></g><rect style="fill:#f0f0f0" width="200" height="35.702" x="222.229" y="364.298" rx="10" ry="10"/></svg>
