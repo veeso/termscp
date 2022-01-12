@@ -61,7 +61,7 @@ impl FooterBar {
                 TextSpan::from("<F7|D>").bold().fg(key_color),
                 TextSpan::from(" Make dir "),
                 TextSpan::from("<F8|DEL>").bold().fg(key_color),
-                TextSpan::from(" Make dir "),
+                TextSpan::from(" Delete "),
                 TextSpan::from("<F10|Q>").bold().fg(key_color),
                 TextSpan::from(" Quit "),
             ]),
