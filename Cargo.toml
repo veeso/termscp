@@ -2,7 +2,6 @@
 authors = ["Christian Visintin"]
 categories = ["command-line-utilities"]
 description = "termscp is a feature rich terminal file transfer and explorer with support for SCP/SFTP/FTP/S3"
-documentation = "https://docs.rs/termscp"
 edition = "2021"
 homepage = "https://veeso.github.io/termscp/"
 include = ["src/**/*", "LICENSE", "README.md", "CHANGELOG.md"]
@@ -11,7 +10,7 @@ license = "MIT"
 name = "termscp"
 readme = "README.md"
 repository = "https://github.com/veeso/termscp"
-version = "0.8.0"
+version = "0.8.1"
 
 [package.metadata.rpm]
 package = "termscp"

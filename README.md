@@ -63,7 +63,7 @@
 </p>
 
 <p align="center">Developed by <a href="https://veeso.github.io/" target="_blank">@veeso</a></p>
-<p align="center">Current version: 0.8.0 (06/01/2022)</p>
+<p align="center">Current version: 0.8.1 (06/01/2022)</p>
 
 <p align="center">
   <a href="https://opensource.org/licenses/MIT"
@@ -117,11 +117,6 @@
     ><img
       src="https://coveralls.io/repos/github/veeso/termscp/badge.svg"
       alt="Coveralls"
-  /></a>
-  <a href="https://docs.rs/termscp"
-    ><img
-      src="https://docs.rs/termscp/badge.svg"
-      alt="Docs"
   /></a>
 </p>
 
@@ -223,11 +218,9 @@ You can make a donation with one of these platforms:
 
 ---
 
-## User manual and Documentation 📚
+## User manual 📚
 
 The user manual can be found on the [termscp's website](https://veeso.github.io/termscp/#user-manual) or on [Github](docs/man.md).
-
-The developer documentation can be found on Rust Docs at <https://docs.rs/termscp>
 
 ---
 

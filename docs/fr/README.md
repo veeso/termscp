@@ -63,7 +63,7 @@
 </p>
 
 <p align="center">Développé par <a href="https://veeso.github.io/" target="_blank">@veeso</a></p>
-<p align="center">Version actuelle: 0.8.0 (06/01/2022)</p>
+<p align="center">Version actuelle: 0.8.1 (06/01/2022)</p>
 
 <p align="center">
   <a href="https://opensource.org/licenses/MIT"
@@ -117,11 +117,6 @@
     ><img
       src="https://coveralls.io/repos/github/veeso/termscp/badge.svg"
       alt="Coveralls"
-  /></a>
-  <a href="https://docs.rs/termscp"
-    ><img
-      src="https://docs.rs/termscp/badge.svg"
-      alt="Docs"
   /></a>
 </p>
 

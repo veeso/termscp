@@ -95,8 +95,6 @@ Said so, follow these steps:
 - Open an issue using the `feature request` template describing with accuracy your suggestion
 - Wait for the maintainer feedback on your idea
 
-If you want to implement the feature by yourself and your suggestion gets approved, start writing the code. Remember that on [docs.rs](https://docs.rs/termscp) there is the documentation for the project. Open a PR related to your issue. See [Pull request process for more details](#pull-request-process)
-
 It is very important to follow these steps, since it will prevent you from working on a feature that will be rejected and trust me, none of us wants to deal with this situation.
 
 Always mind that your suggestion, may be rejected: I'll always provide a feedback on the reasons that brought me to reject your feature, just try not to get mad about that.
