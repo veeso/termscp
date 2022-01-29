@@ -194,9 +194,6 @@ impl SetupActivity {
         }
         // Restore terminal
         if let Some(ctx) = self.context.as_mut() {
-            if let Err(err) = ctx.terminal().clear_screen() {
-                error!("Could not clear screen screen: {}", err);
-            }
             // Enter alternate mode
             if let Err(err) = ctx.terminal().enter_alternate_screen() {
                 error!("Could not enter alternate screen: {}", err);
@@ -204,6 +201,9 @@ impl SetupActivity {
             // Re-enable raw mode
             if let Err(err) = ctx.terminal().enable_raw_mode() {
                 error!("Failed to enter raw mode: {}", err);
+            }
+            if let Err(err) = ctx.terminal().clear_screen() {
+                error!("Could not clear screen screen: {}", err);
             }
             // Unlock ports
             assert!(self.app.unlock_ports().is_ok());
