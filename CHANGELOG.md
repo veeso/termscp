@@ -27,6 +27,9 @@
 
 Released on ??
 
+- Bugfix:
+  - [Issue 92](https://github.com/veeso/termscp/issues/92): updated ssh2-config to 0.1.3, which solves this issue.
+
 ## 0.8.0
 
 Released on 06/01/2022
