@@ -9,7 +9,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: FreeBSD build
         id: test
-        uses: vmactions/freebsd-vm@v0.1.4
+        uses: vmactions/freebsd-vm@v0.1.6
         with:
           usesh: true
           prepare: pkg install -y curl wget libssh gcc vim dbus pkgconf
