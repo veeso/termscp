@@ -98,7 +98,7 @@ impl std::fmt::Display for HostError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         let p_str: String = match self.path.as_ref() {
             None => String::new(),
-            Some(p) => format!(" ({})", p.display().to_string()),
+            Some(p) => format!(" ({})", p.display()),
         };
         match &self.ioerr {
             Some(err) => write!(f, "{}: {}{}", self.error, err, p_str),
