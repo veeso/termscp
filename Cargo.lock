@@ -1794,9 +1794,9 @@ dependencies = [
 
 [[package]]
 name = "remotefs-aws-s3"
-version = "0.1.0"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "36b130b79d6ade3821554c46a87fd54dea024255daa5ecac5e9f68e2a4d3230a"
+checksum = "9939849e0b3895b07f258458d0fa5cd4632c78ffc517e66e1f758ddf23990542"
 dependencies = [
  "chrono",
  "log",

@@ -419,10 +419,12 @@ mod tests {
         assert_eq!(host.protocol, FileTransferProtocol::AwsS3);
         let s3 = host.s3.as_ref().unwrap();
         assert_eq!(s3.bucket.as_str(), "veeso");
-        assert_eq!(s3.region.as_str(), "eu-west-1");
+        assert_eq!(s3.region.as_deref().unwrap(), "eu-west-1");
         assert_eq!(s3.profile.as_deref().unwrap(), "default");
+        assert_eq!(s3.endpoint.as_deref().unwrap(), "http://localhost:9000");
         assert_eq!(s3.access_key.as_deref().unwrap(), "pippo");
         assert_eq!(s3.secret_access_key.as_deref().unwrap(), "pluto");
+        assert_eq!(s3.new_path_style.unwrap(), true);
     }
 
     #[test]
@@ -470,10 +472,12 @@ mod tests {
                 password: None,
                 s3: Some(S3Params {
                     bucket: "veeso".to_string(),
-                    region: "eu-west-1".to_string(),
+                    region: Some("eu-west-1".to_string()),
+                    endpoint: None,
                     profile: None,
                     access_key: None,
                     secret_access_key: None,
+                    new_path_style: None,
                 }),
             },
         );
@@ -534,9 +538,11 @@ mod tests {
         [bookmarks.my-bucket.s3]
         bucket = "veeso"
         region = "eu-west-1"
+        endpoint = "http://localhost:9000"
         profile = "default"
         access_key = "pippo"
         secret_access_key = "pluto"
+        new_path_style = true
 
         [recents]
         ISO20201215T094000Z = { address = "172.16.104.10", port = 22, protocol = "SCP", username = "root" }

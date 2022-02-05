@@ -73,9 +73,15 @@ impl Builder {
 
     /// Build aws s3 client from parameters
     fn aws_s3_client(params: AwsS3Params) -> AwsS3Fs {
-        let mut client = AwsS3Fs::new(params.bucket_name, params.region);
+        let mut client = AwsS3Fs::new(params.bucket_name).new_path_style(params.new_path_style);
+        if let Some(region) = params.region {
+            client = client.region(region);
+        }
         if let Some(profile) = params.profile {
             client = client.profile(profile);
+        }
+        if let Some(endpoint) = params.endpoint {
+            client = client.endpoint(endpoint);
         }
         if let Some(access_key) = params.access_key {
             client = client.access_key(access_key);
@@ -151,7 +157,9 @@ mod test {
     #[test]
     fn should_build_aws_s3_fs() {
         let params = ProtocolParams::AwsS3(
-            AwsS3Params::new("omar", "eu-west-1", Some("test"))
+            AwsS3Params::new("omar", Some("eu-west-1"), Some("test"))
+                .endpoint(Some("http://localhost:9000"))
+                .new_path_style(true)
                 .access_key(Some("pippo"))
                 .secret_access_key(Some("pluto"))
                 .security_token(Some("omar"))

@@ -506,7 +506,7 @@ mod tests {
         assert_eq!(params.profile.as_deref().unwrap(), "test");
         assert_eq!(params.secret_access_key.as_deref().unwrap(), "pluto");
         assert_eq!(params.bucket_name.as_str(), "omar");
-        assert_eq!(params.region.as_str(), "eu-west-1");
+        assert_eq!(params.region.as_deref().unwrap(), "eu-west-1");
     }
 
     #[test]
@@ -524,7 +524,7 @@ mod tests {
         let params = bookmark.params.s3_params().unwrap();
         assert_eq!(params.profile.as_deref().unwrap(), "test");
         assert_eq!(params.bucket_name.as_str(), "omar");
-        assert_eq!(params.region.as_str(), "eu-west-1");
+        assert_eq!(params.region.as_deref().unwrap(), "eu-west-1");
         // secrets
         assert_eq!(params.access_key, None);
         assert_eq!(params.secret_access_key, None);
@@ -546,7 +546,7 @@ mod tests {
         let params = bookmark.params.s3_params().unwrap();
         assert_eq!(params.profile.as_deref().unwrap(), "test");
         assert_eq!(params.bucket_name.as_str(), "omar");
-        assert_eq!(params.region.as_str(), "eu-west-1");
+        assert_eq!(params.region.as_deref().unwrap(), "eu-west-1");
         // secrets
         assert_eq!(params.access_key, None);
         assert_eq!(params.secret_access_key, None);
@@ -849,7 +849,9 @@ mod tests {
         FileTransferParams::new(
             FileTransferProtocol::AwsS3,
             ProtocolParams::AwsS3(
-                AwsS3Params::new("omar", "eu-west-1", Some("test"))
+                AwsS3Params::new("omar", Some("eu-west-1"), Some("test"))
+                    .endpoint(Some("http://localhost:9000"))
+                    .new_path_style(false)
                     .access_key(Some("pippo"))
                     .secret_access_key(Some("pluto"))
                     .security_token(Some("omar"))

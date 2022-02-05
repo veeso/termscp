@@ -49,7 +49,7 @@ impl ProtocolRadio {
                         .color(color)
                         .modifiers(BorderType::Rounded),
                 )
-                .choices(&["SFTP", "SCP", "FTP", "FTPS", "AWS S3"])
+                .choices(&["SFTP", "SCP", "FTP", "FTPS", "S3"])
                 .foreground(color)
                 .rewind(true)
                 .title("Protocol", Alignment::Left)
@@ -325,6 +325,102 @@ impl Component<Msg, NoUserEvent> for InputS3Region {
             Msg::Ui(UiMsg::S3RegionBlurDown),
             Msg::Ui(UiMsg::S3RegionBlurUp),
         )
+    }
+}
+
+// -- s3 endpoint
+
+#[derive(MockComponent)]
+pub struct InputS3Endpoint {
+    component: Input,
+}
+
+impl InputS3Endpoint {
+    pub fn new(endpoint: &str, color: Color) -> Self {
+        Self {
+            component: Input::default()
+                .borders(
+                    Borders::default()
+                        .color(color)
+                        .modifiers(BorderType::Rounded),
+                )
+                .foreground(color)
+                .placeholder(
+                    "http://localhost:9000",
+                    Style::default().fg(Color::Rgb(128, 128, 128)),
+                )
+                .title("Endpoint", Alignment::Left)
+                .input_type(InputType::Text)
+                .value(endpoint),
+        }
+    }
+}
+
+impl Component<Msg, NoUserEvent> for InputS3Endpoint {
+    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+        handle_input_ev(
+            self,
+            ev,
+            Msg::Ui(UiMsg::S3EndpointBlurDown),
+            Msg::Ui(UiMsg::S3EndpointBlurUp),
+        )
+    }
+}
+
+// -- s3 new path style
+
+#[derive(MockComponent)]
+pub struct RadioS3NewPathStyle {
+    component: Radio,
+}
+
+impl RadioS3NewPathStyle {
+    pub fn new(new_path_style: bool, color: Color) -> Self {
+        Self {
+            component: Radio::default()
+                .borders(
+                    Borders::default()
+                        .color(color)
+                        .modifiers(BorderType::Rounded),
+                )
+                .choices(&["Yes", "No"])
+                .foreground(color)
+                .rewind(true)
+                .title("New path style", Alignment::Left)
+                .value(if new_path_style { 0 } else { 1 }),
+        }
+    }
+}
+
+impl Component<Msg, NoUserEvent> for RadioS3NewPathStyle {
+    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+        match ev {
+            Event::Keyboard(KeyEvent {
+                code: Key::Left, ..
+            }) => {
+                self.perform(Cmd::Move(Direction::Left));
+                Some(Msg::None)
+            }
+            Event::Keyboard(KeyEvent {
+                code: Key::Right, ..
+            }) => {
+                self.perform(Cmd::Move(Direction::Right));
+                Some(Msg::None)
+            }
+            Event::Keyboard(KeyEvent {
+                code: Key::Enter, ..
+            }) => Some(Msg::Form(FormMsg::Connect)),
+            Event::Keyboard(KeyEvent {
+                code: Key::Down, ..
+            }) => Some(Msg::Ui(UiMsg::S3NewPathStyleBlurDown)),
+            Event::Keyboard(KeyEvent { code: Key::Up, .. }) => {
+                Some(Msg::Ui(UiMsg::S3NewPathStyleBlurUp))
+            }
+            Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => {
+                Some(Msg::Ui(UiMsg::ParamsFormBlur))
+            }
+            _ => None,
+        }
     }
 }
 
