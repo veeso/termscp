@@ -86,7 +86,7 @@ impl DefaultProtocol {
                         .color(Color::Cyan)
                         .modifiers(BorderType::Rounded),
                 )
-                .choices(&["SFTP", "SCP", "FTP", "FTPS", "AWS S3"])
+                .choices(&["SFTP", "SCP", "FTP", "FTPS", "S3"])
                 .foreground(Color::Cyan)
                 .rewind(true)
                 .title("Default protocol", Alignment::Left)

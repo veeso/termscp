@@ -49,7 +49,7 @@ impl ProtocolRadio {
                         .color(color)
                         .modifiers(BorderType::Rounded),
                 )
-                .choices(&["SFTP", "SCP", "FTP", "FTPS", "AWS S3"])
+                .choices(&["SFTP", "SCP", "FTP", "FTPS", "S3"])
                 .foreground(color)
                 .rewind(true)
                 .title("Protocol", Alignment::Left)
