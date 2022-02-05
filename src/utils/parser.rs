@@ -243,7 +243,7 @@ fn parse_s3_remote_opt(s: &str) -> Result<FileTransferParams, String> {
                 groups.get(4).map(|group| PathBuf::from(group.as_str()));
             Ok(FileTransferParams::new(
                 FileTransferProtocol::AwsS3,
-                ProtocolParams::AwsS3(AwsS3Params::new(bucket, region, profile)),
+                ProtocolParams::AwsS3(AwsS3Params::new(bucket, Some(region), profile)),
             )
             .entry_directory(entry_directory))
         }
@@ -500,7 +500,7 @@ mod tests {
         assert_eq!(result.protocol, FileTransferProtocol::AwsS3);
         assert_eq!(result.entry_directory, None);
         assert_eq!(params.bucket_name.as_str(), "mybucket");
-        assert_eq!(params.region.as_str(), "eu-central-1");
+        assert_eq!(params.region.as_deref().unwrap(), "eu-central-1");
         assert_eq!(params.profile, None);
         // With profile
         let result: FileTransferParams =
@@ -511,7 +511,7 @@ mod tests {
         assert_eq!(result.protocol, FileTransferProtocol::AwsS3);
         assert_eq!(result.entry_directory, None);
         assert_eq!(params.bucket_name.as_str(), "mybucket");
-        assert_eq!(params.region.as_str(), "eu-central-1");
+        assert_eq!(params.region.as_deref().unwrap(), "eu-central-1");
         assert_eq!(params.profile.as_deref(), Some("default"));
         // With wrkdir only
         let result: FileTransferParams =
@@ -522,7 +522,7 @@ mod tests {
         assert_eq!(result.protocol, FileTransferProtocol::AwsS3);
         assert_eq!(result.entry_directory, Some(PathBuf::from("/foobar")));
         assert_eq!(params.bucket_name.as_str(), "mybucket");
-        assert_eq!(params.region.as_str(), "eu-central-1");
+        assert_eq!(params.region.as_deref().unwrap(), "eu-central-1");
         assert_eq!(params.profile, None);
         // With all arguments
         let result: FileTransferParams =
@@ -533,7 +533,7 @@ mod tests {
         assert_eq!(result.protocol, FileTransferProtocol::AwsS3);
         assert_eq!(result.entry_directory, Some(PathBuf::from("/foobar")));
         assert_eq!(params.bucket_name.as_str(), "mybucket");
-        assert_eq!(params.region.as_str(), "eu-central-1");
+        assert_eq!(params.region.as_deref().unwrap(), "eu-central-1");
         assert_eq!(params.profile.as_deref(), Some("default"));
         // -- bad args
         assert!(parse_remote_opt(&String::from("s3://mybucket:default:/foobar")).is_err());

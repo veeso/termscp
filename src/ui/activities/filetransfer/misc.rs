@@ -147,8 +147,10 @@ impl FileTransferActivity {
             }
             ProtocolParams::AwsS3(params) => {
                 info!(
-                    "Client is not connected to remote; connecting to {} ({})",
-                    params.bucket_name, params.region
+                    "Client is not connected to remote; connecting to {}{} ({})",
+                    params.endpoint.as_deref().unwrap_or(""),
+                    params.bucket_name,
+                    params.region.as_deref().unwrap_or("custom")
                 );
                 format!("Connecting to {}…", params.bucket_name)
             }

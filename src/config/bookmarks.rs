@@ -64,10 +64,13 @@ pub struct Bookmark {
 #[derive(Clone, Deserialize, Serialize, Debug, PartialEq, Default)]
 pub struct S3Params {
     pub bucket: String,
-    pub region: String,
+    pub region: Option<String>,
+    pub endpoint: Option<String>,
     pub profile: Option<String>,
     pub access_key: Option<String>,
     pub secret_access_key: Option<String>,
+    /// NOTE: there are no session token and security token since they are always temporary
+    pub new_path_style: Option<bool>,
 }
 
 // -- impls
@@ -123,9 +126,11 @@ impl From<AwsS3Params> for S3Params {
         S3Params {
             bucket: params.bucket_name,
             region: params.region,
+            endpoint: params.endpoint,
             profile: params.profile,
             access_key: params.access_key,
             secret_access_key: params.secret_access_key,
+            new_path_style: Some(params.new_path_style),
         }
     }
 }
@@ -133,8 +138,10 @@ impl From<AwsS3Params> for S3Params {
 impl From<S3Params> for AwsS3Params {
     fn from(params: S3Params) -> Self {
         AwsS3Params::new(params.bucket, params.region, params.profile)
+            .endpoint(params.endpoint)
             .access_key(params.access_key)
             .secret_access_key(params.secret_access_key)
+            .new_path_style(params.new_path_style.unwrap_or(false))
     }
 }
 
@@ -234,7 +241,7 @@ mod tests {
     #[test]
     fn bookmark_from_s3_ftparams() {
         let params = ProtocolParams::AwsS3(
-            AwsS3Params::new("omar", "eu-west-1", Some("test"))
+            AwsS3Params::new("omar", Some("eu-west-1"), Some("test"))
                 .access_key(Some("pippo"))
                 .secret_access_key(Some("pluto")),
         );
@@ -248,7 +255,7 @@ mod tests {
         assert!(bookmark.password.is_none());
         let s3: &S3Params = bookmark.s3.as_ref().unwrap();
         assert_eq!(s3.bucket.as_str(), "omar");
-        assert_eq!(s3.region.as_str(), "eu-west-1");
+        assert_eq!(s3.region.as_deref().unwrap(), "eu-west-1");
         assert_eq!(s3.profile.as_deref().unwrap(), "test");
         assert_eq!(s3.access_key.as_deref().unwrap(), "pippo");
         assert_eq!(s3.secret_access_key.as_deref().unwrap(), "pluto");
@@ -283,19 +290,23 @@ mod tests {
             password: None,
             s3: Some(S3Params {
                 bucket: String::from("veeso"),
-                region: String::from("eu-west-1"),
+                region: Some(String::from("eu-west-1")),
+                endpoint: Some(String::from("omar")),
                 profile: Some(String::from("default")),
                 access_key: Some(String::from("pippo")),
                 secret_access_key: Some(String::from("pluto")),
+                new_path_style: Some(true),
             }),
         };
         let params = FileTransferParams::from(bookmark);
         assert_eq!(params.protocol, FileTransferProtocol::AwsS3);
         let gparams = params.params.s3_params().unwrap();
         assert_eq!(gparams.bucket_name.as_str(), "veeso");
-        assert_eq!(gparams.region.as_str(), "eu-west-1");
+        assert_eq!(gparams.region.as_deref().unwrap(), "eu-west-1");
+        assert_eq!(gparams.endpoint.as_deref().unwrap(), "omar");
         assert_eq!(gparams.profile.as_deref().unwrap(), "default");
         assert_eq!(gparams.access_key.as_deref().unwrap(), "pippo");
         assert_eq!(gparams.secret_access_key.as_deref().unwrap(), "pluto");
+        assert_eq!(gparams.new_path_style, true);
     }
 }

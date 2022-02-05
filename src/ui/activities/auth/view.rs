@@ -726,12 +726,13 @@ impl AuthActivity {
     /// Collect s3 input values from view
     pub(super) fn get_s3_params_input(&self) -> AwsS3Params {
         let bucket: String = self.get_input_s3_bucket();
-        let region: String = self.get_input_s3_region();
+        let region: Option<String> = self.get_input_s3_region();
         let profile: Option<String> = self.get_input_s3_profile();
         let access_key = self.get_input_s3_access_key();
         let secret_access_key = self.get_input_s3_secret_access_key();
         let security_token = self.get_input_s3_security_token();
         let session_token = self.get_input_s3_session_token();
+        // TODO: collect
         AwsS3Params::new(bucket, region, profile)
             .access_key(access_key)
             .secret_access_key(secret_access_key)
@@ -777,10 +778,10 @@ impl AuthActivity {
         }
     }
 
-    pub(super) fn get_input_s3_region(&self) -> String {
+    pub(super) fn get_input_s3_region(&self) -> Option<String> {
         match self.app.state(&Id::S3Region) {
-            Ok(State::One(StateValue::String(x))) => x,
-            _ => String::new(),
+            Ok(State::One(StateValue::String(x))) if !x.is_empty() => Some(x),
+            _ => None,
         }
     }
 
@@ -863,8 +864,12 @@ impl AuthActivity {
                     None => String::default(),
                 };
                 format!(
-                    "{}://{} ({}) {}",
-                    protocol, s3.bucket_name, s3.region, profile
+                    "{}://{}{} ({}) {}",
+                    protocol,
+                    s3.endpoint.unwrap_or_default(),
+                    s3.bucket_name,
+                    s3.region.as_deref().unwrap_or("custom"),
+                    profile
                 )
             }
             ProtocolParams::Generic(params) => {

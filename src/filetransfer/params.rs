@@ -59,12 +59,14 @@ pub struct GenericProtocolParams {
 #[derive(Debug, Clone)]
 pub struct AwsS3Params {
     pub bucket_name: String,
-    pub region: String,
+    pub region: Option<String>,
+    pub endpoint: Option<String>,
     pub profile: Option<String>,
     pub access_key: Option<String>,
     pub secret_access_key: Option<String>,
     pub security_token: Option<String>,
     pub session_token: Option<String>,
+    pub new_path_style: bool,
 }
 
 impl FileTransferParams {
@@ -167,16 +169,24 @@ impl GenericProtocolParams {
 
 impl AwsS3Params {
     /// Instantiates a new `AwsS3Params` struct
-    pub fn new<S: AsRef<str>>(bucket: S, region: S, profile: Option<S>) -> Self {
+    pub fn new<S: AsRef<str>>(bucket: S, region: Option<S>, profile: Option<S>) -> Self {
         Self {
             bucket_name: bucket.as_ref().to_string(),
-            region: region.as_ref().to_string(),
+            region: region.map(|x| x.as_ref().to_string()),
             profile: profile.map(|x| x.as_ref().to_string()),
+            endpoint: None,
             access_key: None,
             secret_access_key: None,
             security_token: None,
             session_token: None,
+            new_path_style: false,
         }
+    }
+
+    /// Construct aws s3 params with specified endpoint
+    pub fn endpoint<S: AsRef<str>>(mut self, endpoint: Option<S>) -> Self {
+        self.endpoint = endpoint.map(|x| x.as_ref().to_string());
+        self
     }
 
     /// Construct aws s3 params with provided access key
@@ -200,6 +210,12 @@ impl AwsS3Params {
     /// Construct aws s3 params with provided session_token
     pub fn session_token<S: AsRef<str>>(mut self, key: Option<S>) -> Self {
         self.session_token = key.map(|x| x.as_ref().to_string());
+        self
+    }
+
+    /// Specify new path style when constructing aws s3 params
+    pub fn new_path_style(mut self, new_path_style: bool) -> Self {
+        self.new_path_style = new_path_style;
         self
     }
 }
@@ -240,35 +256,42 @@ mod test {
 
     #[test]
     fn should_init_aws_s3_params() {
-        let params: AwsS3Params = AwsS3Params::new("omar", "eu-west-1", Some("test"));
+        let params: AwsS3Params = AwsS3Params::new("omar", Some("eu-west-1"), Some("test"));
         assert_eq!(params.bucket_name.as_str(), "omar");
-        assert_eq!(params.region.as_str(), "eu-west-1");
+        assert_eq!(params.region.as_deref().unwrap(), "eu-west-1");
         assert_eq!(params.profile.as_deref().unwrap(), "test");
+        assert!(params.endpoint.is_none());
         assert!(params.access_key.is_none());
         assert!(params.secret_access_key.is_none());
         assert!(params.security_token.is_none());
         assert!(params.session_token.is_none());
+        assert_eq!(params.new_path_style, false);
     }
 
     #[test]
     fn should_init_aws_s3_params_with_optionals() {
-        let params: AwsS3Params = AwsS3Params::new("omar", "eu-west-1", Some("test"))
+        let params: AwsS3Params = AwsS3Params::new("omar", Some("eu-west-1"), Some("test"))
+            .endpoint(Some("http://omar.it"))
             .access_key(Some("pippo"))
             .secret_access_key(Some("pluto"))
             .security_token(Some("omar"))
-            .session_token(Some("gerry-scotti"));
+            .session_token(Some("gerry-scotti"))
+            .new_path_style(true);
         assert_eq!(params.bucket_name.as_str(), "omar");
-        assert_eq!(params.region.as_str(), "eu-west-1");
+        assert_eq!(params.region.as_deref().unwrap(), "eu-west-1");
         assert_eq!(params.profile.as_deref().unwrap(), "test");
+        assert_eq!(params.endpoint.as_deref().unwrap(), "http://omar.it");
         assert_eq!(params.access_key.as_deref().unwrap(), "pippo");
         assert_eq!(params.secret_access_key.as_deref().unwrap(), "pluto");
         assert_eq!(params.security_token.as_deref().unwrap(), "omar");
         assert_eq!(params.session_token.as_deref().unwrap(), "gerry-scotti");
+        assert_eq!(params.new_path_style, true);
     }
 
     #[test]
     fn references() {
-        let mut params = ProtocolParams::AwsS3(AwsS3Params::new("omar", "eu-west-1", Some("test")));
+        let mut params =
+            ProtocolParams::AwsS3(AwsS3Params::new("omar", Some("eu-west-1"), Some("test")));
         assert!(params.s3_params().is_some());
         assert!(params.generic_params().is_none());
         assert!(params.mut_generic_params().is_none());

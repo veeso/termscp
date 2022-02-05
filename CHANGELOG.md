@@ -27,9 +27,13 @@
 
 Released on ??
 
+- **Added support for S3 compatible backends**
+  - Changed `AWS S3` to `S3` in ui
+  - Added new `endpoint` and `new-path-style` to s3 connection parameters
 - Bugfix:
   - [Issue 92](https://github.com/veeso/termscp/issues/92): updated ssh2-config to 0.1.3, which solves this issue.
 - Dependencies:
+  - Updated `remotefs-rs-aws-s3` to `0.2.0`
   - Updated `tui-realm-stdlib` to `1.1.6`
 
 ## 0.8.0

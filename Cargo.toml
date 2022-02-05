@@ -48,7 +48,7 @@ open = "2.0.2"
 rand = "0.8.4"
 regex = "1.5.4"
 remotefs = "^0.2.0"
-remotefs-aws-s3 = "^0.1.0"
+remotefs-aws-s3 = "^0.2.0"
 remotefs-ftp = { version = "^0.1.0", features = [ "secure" ] }
 remotefs-ssh = "^0.1.0"
 rpassword = "5.0.1"
