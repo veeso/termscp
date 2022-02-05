@@ -88,9 +88,6 @@ impl AuthActivity {
         if params.bucket_name.is_empty() {
             return Err("Invalid bucket");
         }
-        if params.region.is_empty() {
-            return Err("Invalid region");
-        }
         Ok(FileTransferParams {
             protocol: FileTransferProtocol::AwsS3,
             params: ProtocolParams::AwsS3(params),
