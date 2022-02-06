@@ -74,10 +74,12 @@ impl AuthActivity {
         self.mount_s3_bucket("");
         self.mount_s3_profile("");
         self.mount_s3_region("");
+        self.mount_s3_endpoint("");
         self.mount_s3_access_key("");
         self.mount_s3_secret_access_key("");
         self.mount_s3_security_token("");
         self.mount_s3_session_token("");
+        self.mount_s3_new_path_style(false);
         // Version notice
         if let Some(version) = self
             .context()
@@ -648,61 +650,85 @@ impl AuthActivity {
             .is_ok());
     }
 
-    pub(crate) fn mount_s3_profile(&mut self, profile: &str) {
+    pub(crate) fn mount_s3_endpoint(&mut self, endpoint: &str) {
         let username_color = self.theme().auth_username;
         assert!(self
             .app
             .remount(
+                Id::S3Endpoint,
+                Box::new(components::InputS3Endpoint::new(endpoint, username_color)),
+                vec![]
+            )
+            .is_ok());
+    }
+
+    pub(crate) fn mount_s3_profile(&mut self, profile: &str) {
+        let color = self.theme().auth_password;
+        assert!(self
+            .app
+            .remount(
                 Id::S3Profile,
-                Box::new(components::InputS3Profile::new(profile, username_color)),
+                Box::new(components::InputS3Profile::new(profile, color)),
                 vec![]
             )
             .is_ok());
     }
 
     pub(crate) fn mount_s3_access_key(&mut self, key: &str) {
-        let password_color = self.theme().auth_password;
+        let color = self.theme().auth_address;
         assert!(self
             .app
             .remount(
                 Id::S3AccessKey,
-                Box::new(components::InputS3AccessKey::new(key, password_color)),
+                Box::new(components::InputS3AccessKey::new(key, color)),
                 vec![]
             )
             .is_ok());
     }
 
     pub(crate) fn mount_s3_secret_access_key(&mut self, key: &str) {
-        let addr_color = self.theme().auth_address;
+        let color = self.theme().auth_port;
         assert!(self
             .app
             .remount(
                 Id::S3SecretAccessKey,
-                Box::new(components::InputS3SecretAccessKey::new(key, addr_color)),
+                Box::new(components::InputS3SecretAccessKey::new(key, color)),
                 vec![]
             )
             .is_ok());
     }
 
     pub(crate) fn mount_s3_security_token(&mut self, token: &str) {
-        let port_color = self.theme().auth_port;
+        let color = self.theme().auth_username;
         assert!(self
             .app
             .remount(
                 Id::S3SecurityToken,
-                Box::new(components::InputS3SecurityToken::new(token, port_color)),
+                Box::new(components::InputS3SecurityToken::new(token, color)),
                 vec![]
             )
             .is_ok());
     }
 
     pub(crate) fn mount_s3_session_token(&mut self, token: &str) {
-        let username_color = self.theme().auth_username;
+        let color = self.theme().auth_password;
         assert!(self
             .app
             .remount(
                 Id::S3SessionToken,
-                Box::new(components::InputS3SessionToken::new(token, username_color)),
+                Box::new(components::InputS3SessionToken::new(token, color)),
+                vec![]
+            )
+            .is_ok());
+    }
+
+    pub(crate) fn mount_s3_new_path_style(&mut self, new_path_style: bool) {
+        let color = self.theme().auth_address;
+        assert!(self
+            .app
+            .remount(
+                Id::S3NewPathStyle,
+                Box::new(components::RadioS3NewPathStyle::new(new_path_style, color)),
                 vec![]
             )
             .is_ok());
@@ -727,17 +753,20 @@ impl AuthActivity {
     pub(super) fn get_s3_params_input(&self) -> AwsS3Params {
         let bucket: String = self.get_input_s3_bucket();
         let region: Option<String> = self.get_input_s3_region();
+        let endpoint = self.get_input_s3_endpoint();
         let profile: Option<String> = self.get_input_s3_profile();
         let access_key = self.get_input_s3_access_key();
         let secret_access_key = self.get_input_s3_secret_access_key();
         let security_token = self.get_input_s3_security_token();
         let session_token = self.get_input_s3_session_token();
-        // TODO: collect
+        let new_path_style = self.get_input_s3_new_path_style();
         AwsS3Params::new(bucket, region, profile)
+            .endpoint(endpoint)
             .access_key(access_key)
             .secret_access_key(secret_access_key)
             .security_token(security_token)
             .session_token(session_token)
+            .new_path_style(new_path_style)
     }
 
     pub(super) fn get_input_addr(&self) -> String {
@@ -785,6 +814,13 @@ impl AuthActivity {
         }
     }
 
+    pub(super) fn get_input_s3_endpoint(&self) -> Option<String> {
+        match self.app.state(&Id::S3Endpoint) {
+            Ok(State::One(StateValue::String(x))) if !x.is_empty() => Some(x),
+            _ => None,
+        }
+    }
+
     pub(super) fn get_input_s3_profile(&self) -> Option<String> {
         match self.app.state(&Id::S3Profile) {
             Ok(State::One(StateValue::String(x))) if !x.is_empty() => Some(x),
@@ -818,6 +854,13 @@ impl AuthActivity {
             Ok(State::One(StateValue::String(x))) if !x.is_empty() => Some(x),
             _ => None,
         }
+    }
+
+    pub(super) fn get_input_s3_new_path_style(&self) -> bool {
+        matches!(
+            self.app.state(&Id::S3NewPathStyle),
+            Ok(State::One(StateValue::Usize(0)))
+        )
     }
 
     /// Get new bookmark params
@@ -888,13 +931,24 @@ impl AuthActivity {
     /// Get the visible element in the aws-s3 form, based on current focus
     fn get_s3_view(&self) -> [Id; 4] {
         match self.app.focus() {
-            Some(&Id::S3SecretAccessKey | &Id::S3SecurityToken | &Id::S3SessionToken) => [
+            Some(&Id::S3AccessKey) => [
                 Id::S3AccessKey,
                 Id::S3SecretAccessKey,
                 Id::S3SecurityToken,
                 Id::S3SessionToken,
             ],
-            _ => [Id::S3Bucket, Id::S3Region, Id::S3Profile, Id::S3AccessKey],
+            Some(
+                &Id::S3SecretAccessKey
+                | &Id::S3SecurityToken
+                | &Id::S3SessionToken
+                | &Id::S3NewPathStyle,
+            ) => [
+                Id::S3SecretAccessKey,
+                Id::S3SecurityToken,
+                Id::S3SessionToken,
+                Id::S3NewPathStyle,
+            ],
+            _ => [Id::S3Bucket, Id::S3Region, Id::S3Endpoint, Id::S3Profile],
         }
     }
 
