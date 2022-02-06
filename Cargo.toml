@@ -58,14 +58,14 @@ simplelog = "0.11.1"
 tempfile = "3.2.0"
 thiserror = "^1.0.0"
 toml = "0.5.8"
-tui-realm-stdlib = "1.1.5"
+tui-realm-stdlib = "1.1.6"
 tuirealm = "1.4.2"
 unicode-width = "0.1.8"
 whoami = "1.2.1"
 wildmatch = "2.1.0"
 
 [dev-dependencies]
-pretty_assertions = "0.7.2"
+pretty_assertions = "1.1.0"
 serial_test = "^0.5.1"
 
 [features]

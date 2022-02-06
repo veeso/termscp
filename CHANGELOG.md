@@ -29,6 +29,8 @@ Released on ??
 
 - Bugfix:
   - [Issue 92](https://github.com/veeso/termscp/issues/92): updated ssh2-config to 0.1.3, which solves this issue.
+- Dependencies:
+  - Updated `tui-realm-stdlib` to `1.1.6`
 
 ## 0.8.0
 
