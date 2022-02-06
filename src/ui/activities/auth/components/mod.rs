@@ -37,9 +37,9 @@ pub use bookmarks::{
     RecentsList,
 };
 pub use form::{
-    InputAddress, InputPassword, InputPort, InputS3AccessKey, InputS3Bucket, InputS3Profile,
-    InputS3Region, InputS3SecretAccessKey, InputS3SecurityToken, InputS3SessionToken,
-    InputUsername, ProtocolRadio,
+    InputAddress, InputPassword, InputPort, InputS3AccessKey, InputS3Bucket, InputS3Endpoint,
+    InputS3Profile, InputS3Region, InputS3SecretAccessKey, InputS3SecurityToken,
+    InputS3SessionToken, InputUsername, ProtocolRadio, RadioS3NewPathStyle,
 };
 pub use popup::{
     ErrorPopup, InfoPopup, InstallUpdatePopup, Keybindings, QuitPopup, ReleaseNotes, WaitPopup,
