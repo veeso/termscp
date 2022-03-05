@@ -5,7 +5,8 @@
     - [地址参数](#地址参数)
       - [AWS S3 地址参数](#aws-s3-地址参数)
       - [如何输入密码](#如何输入密码)
-  - [Aws S3 凭证](#aws-s3-凭证)
+  - [S3 连接参数](#s3-连接参数)
+    - [Aws S3 凭证](#aws-s3-凭证)
   - [文件浏览](#文件浏览)
     - [快捷键](#快捷键)
     - [处理多个文件](#处理多个文件)
@@ -105,7 +106,27 @@ s3://buckethead@eu-central-1:default:/assets
 
 ---
 
-## Aws S3 凭证
+## S3 连接参数
+
+这些参数是连接到 aws s3 和其他 s3 兼容服务器所必需的：
+
+- AWS S3:
+  - **bucket name**
+  - **region**
+  - *profile* (如果未提供：“default”)
+  - *access key* (除非公开)
+  - *secret access key* (除非公开)
+  - *security token* (如果需要的话)
+  - *session token* (如果需要的话)
+  - new path style: **NO**
+- 其他 S3 端点:
+  - **bucket name**
+  - **endpoint**
+  - *access key* (如果需要的话)
+  - *secret access key* (如果需要的话)
+  - new path style: **YES**
+
+### Aws S3 凭证
 
 为了连接到 Aws S3 存储桶，您显然必须提供一些凭据。
 因此，您可以通过以下方式为 s3 提供凭据：

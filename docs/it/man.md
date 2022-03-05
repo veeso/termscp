@@ -5,7 +5,8 @@
     - [Argomento indirizzo 🌎](#argomento-indirizzo-)
       - [Argomento indirizzo per AWS S3](#argomento-indirizzo-per-aws-s3)
       - [Come fornire la password 🔐](#come-fornire-la-password-)
-  - [Credenziali Aws S3 🦊](#credenziali-aws-s3-)
+  - [Parametri di connessione S3](#parametri-di-connessione-s3)
+    - [Credenziali S3 🦊](#credenziali-s3-)
   - [File explorer 📂](#file-explorer-)
     - [Abbinamento tasti ⌨](#abbinamento-tasti-)
     - [Lavora su più file 🥷](#lavora-su-più-file-)
@@ -104,7 +105,27 @@ Quando si usa l'argomento indirizzo non è possibile fornire la password diretta
 
 ---
 
-## Credenziali Aws S3 🦊
+## Parametri di connessione S3
+
+Questi parametri sono necessari per connettersi ad un bucket Aws s3 o ad uno storage compatibile:
+
+- AWS S3:
+  - **bucket name**
+  - **region**
+  - *profile* (se non fornito: "default")
+  - *access key* (a meno che non sia pubblico)
+  - *secret access key* (a meno che non sia pubblico)
+  - *security token* (se necessario)
+  - *session token* (se necessario)
+  - new path style: **NO**
+- Other S3 endpoints:
+  - **bucket name**
+  - **endpoint**
+  - *access key* (a meno che non sia pubblico)
+  - *secret access key* (a meno che non sia pubblico)
+  - new path style: **YES**
+
+### Credenziali S3 🦊
 
 Per connettersi ad un bucket S3 devi come già saprai fornire le credenziali fornite da AWS.
 Ci sono tre modi per passare queste credenziali a termscp.

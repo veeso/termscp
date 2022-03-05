@@ -136,7 +136,7 @@ Termscp es un explorador y transferencia de archivos de terminal rico en funcion
   - **SFTP**
   - **SCP**
   - **FTP** y **FTPS**
-  - **Aws S3**
+  - **S3**
 - 🖥  Explore y opere en el sistema de archivos de la máquina local y remota con una interfaz de usuario práctica
   - Cree, elimine, cambie el nombre, busque, vea y edite archivos
 - ⭐  Conéctese a sus hosts favoritos y conexiones recientes
