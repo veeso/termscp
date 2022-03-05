@@ -85,8 +85,7 @@ impl FileTransferActivity {
             SelectedFileIndex::Many(files) => {
                 let files: Vec<&File> = files
                     .iter()
-                    .map(|x| self.local().get(*x)) // Usize to Option<File>
-                    .flatten()
+                    .filter_map(|x| self.local().get(*x)) // Usize to Option<File>
                     .collect();
                 SelectedFile::from(files)
             }
@@ -101,8 +100,7 @@ impl FileTransferActivity {
             SelectedFileIndex::Many(files) => {
                 let files: Vec<&File> = files
                     .iter()
-                    .map(|x| self.remote().get(*x)) // Usize to Option<File>
-                    .flatten()
+                    .filter_map(|x| self.remote().get(*x)) // Usize to Option<File>
                     .collect();
                 SelectedFile::from(files)
             }
@@ -129,8 +127,7 @@ impl FileTransferActivity {
             SelectedFileIndex::Many(files) => {
                 let files: Vec<&File> = files
                     .iter()
-                    .map(|x| self.found().as_ref().unwrap().get(*x)) // Usize to Option<File>
-                    .flatten()
+                    .filter_map(|x| self.found().as_ref().unwrap().get(*x)) // Usize to Option<File>
                     .collect();
                 SelectedFile::from(files)
             }
