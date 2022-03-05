@@ -23,9 +23,9 @@ RUN git clone --branch $branch https://github.com/veeso/termscp.git
 # Set workdir to termscp
 WORKDIR /usr/src/termscp/
 # Install cargo deb
-RUN . $HOME/.cargo/env && cargo install cargo-deb cargo-strip
+RUN . $HOME/.cargo/env && cargo install cargo-deb
 # Build for x86_64
-RUN . $HOME/.cargo/env && cargo build --release && cargo strip
+RUN . $HOME/.cargo/env && cargo build --release
 # Build pkgs
 RUN . $HOME/.cargo/env && cargo deb
 

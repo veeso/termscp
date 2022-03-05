@@ -79,3 +79,6 @@ users = "0.11.0"
 
 [profile.dev]
 incremental = true
+
+[profile.release]
+strip = "symbols"

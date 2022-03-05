@@ -18,7 +18,7 @@ if [ ! -f Cargo.toml ]; then
 fi
 
 # Build release
-cargo build --release && cargo strip
+cargo build --release
 # Make pkg
 cd target/release/
 PKG="termscp-v${VERSION}-x86_64-apple-darwin.tar.gz"
