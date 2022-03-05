@@ -5,7 +5,8 @@
     - [Argument d'adresse 🌎](#argument-dadresse-)
       - [Argument d'adresse AWS S3](#argument-dadresse-aws-s3)
       - [Comment le mot de passe peut être fourni 🔐](#comment-le-mot-de-passe-peut-être-fourni-)
-  - [Identifiants AWS S3 🦊](#identifiants-aws-s3-)
+  - [S3 paramètres de connexion](#s3-paramètres-de-connexion)
+    - [Identifiants S3 🦊](#identifiants-s3-)
   - [Explorateur de fichiers 📂](#explorateur-de-fichiers-)
     - [Raccourcis clavier ⌨](#raccourcis-clavier-)
     - [Travailler sur plusieurs fichiers 🥷](#travailler-sur-plusieurs-fichiers-)
@@ -107,7 +108,27 @@ Le mot de passe peut être fourni de 3 manières lorsque l'argument d'adresse es
 
 ---
 
-## Identifiants AWS S3 🦊
+## S3 paramètres de connexion
+
+Ces paramètres sont requis pour se connecter à aws s3 et à d'autres serveurs compatibles s3 :
+
+- AWS S3:
+  - **bucket name**
+  - **region**
+  - *profile* (si non fourni : "par défaut")
+  - *access key* (sauf si public)
+  - *secret access key* (sauf si public)
+  - *security token* (si nécessaire)
+  - *session token* (si nécessaire)
+  - new path style: **NO**
+- Autres points de terminaison S3:
+  - **bucket name**
+  - **endpoint**
+  - *access key* (sauf si public)
+  - *secret access key* (sauf si public)
+  - new path style: **YES**
+
+### Identifiants S3 🦊
 
 Afin de vous connecter à un compartiment Aws S3, vous devez évidemment fournir des informations d'identification.
 Il existe essentiellement trois manières d'y parvenir.

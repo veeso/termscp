@@ -5,7 +5,8 @@
     - [Argumento dirección 🌎](#argumento-dirección-)
       - [Argumento dirección por AWS S3](#argumento-dirección-por-aws-s3)
       - [Cómo se puede proporcionar la contraseña 🔐](#cómo-se-puede-proporcionar-la-contraseña-)
-  - [Credenciales de AWS S3 🦊](#credenciales-de-aws-s3-)
+  - [S3 parámetros de conexión](#s3-parámetros-de-conexión)
+    - [Credenciales de S3 🦊](#credenciales-de-s3-)
   - [Explorador de archivos 📂](#explorador-de-archivos-)
     - [Keybindings ⌨](#keybindings-)
     - [Trabaja en varios archivos 🥷](#trabaja-en-varios-archivos-)
@@ -109,7 +110,27 @@ La contraseña se puede proporcionar básicamente a través de 3 formas cuando s
 
 ---
 
-## Credenciales de AWS S3 🦊
+## S3 parámetros de conexión
+
+Estos parámetros son necesarios para conectarse a aws s3 y otros servidores compatibles con s3:
+
+- AWS S3:
+  - **bucket name**
+  - **region**
+  - *profile* (si no se proporciona: "default")
+  - *access key* (A menos que sea pública)
+  - *secret access key* (A menos que sea pública)
+  - *security token* (si es requerido)
+  - *session token* (si es requerido)
+  - new path style: **NO**
+- Otros puntos finales de S3:
+  - **bucket name**
+  - **endpoint**
+  - *access key* (A menos que sea pública)
+  - *secret access key* (A menos que sea pública)
+  - new path style: **YES**
+
+### Credenciales de S3 🦊
 
 Para conectarse a un bucket de Aws S3, obviamente debe proporcionar algunas credenciales.
 Básicamente, hay tres formas de lograr esto.

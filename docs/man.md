@@ -5,7 +5,8 @@
     - [Address argument 🌎](#address-argument-)
       - [AWS S3 address argument](#aws-s3-address-argument)
       - [How Password can be provided 🔐](#how-password-can-be-provided-)
-  - [Aws S3 credentials 🦊](#aws-s3-credentials-)
+  - [S3 connection parameters](#s3-connection-parameters)
+    - [S3 credentials 🦊](#s3-credentials-)
   - [File explorer 📂](#file-explorer-)
     - [Keybindings ⌨](#keybindings-)
     - [Work on multiple files 🥷](#work-on-multiple-files-)
@@ -107,7 +108,27 @@ Password can be basically provided through 3 ways when address argument is provi
 
 ---
 
-## Aws S3 credentials 🦊
+## S3 connection parameters
+
+These parameters are required to connect to aws s3 and other s3 compatible servers:
+
+- AWS S3:
+  - **bucket name**
+  - **region**
+  - *profile* (if not provided: "default")
+  - *access key* (unless if public)
+  - *secret access key* (unless if public)
+  - *security token* (if required)
+  - *session token* (if required)
+  - new path style: **NO**
+- Other S3 endpoints:
+  - **bucket name**
+  - **endpoint**
+  - *access key* (unless if public)
+  - *secret access key* (unless if public)
+  - new path style: **YES**
+
+### S3 credentials 🦊
 
 In order to connect to an Aws S3 bucket you must obviously provide some credentials.
 There are basically three ways to achieve this:
