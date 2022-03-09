@@ -34,7 +34,13 @@ Released on ??
   - [Issue 92](https://github.com/veeso/termscp/issues/92): updated ssh2-config to 0.1.3, which solves this issue.
   - [Issue 99](https://github.com/veeso/termscp/issues/99): Fixed AltGr characters not allowed in auth form
 - Dependencies:
+  - Updated `keyring` to `1.1.2`
+  - Updated `notify-rust` to `4.5.6`
+  - Updated `open` to `2.0.3`
+  - Updated `rand` to `0.8.5`
+  - Updated `regex` to `1.5.5`
   - Updated `remotefs-rs-aws-s3` to `0.2.0`
+  - Updated `tui-realm` to `1.5.0`
   - Updated `tui-realm-stdlib` to `1.1.6`
 
 ## 0.8.0
