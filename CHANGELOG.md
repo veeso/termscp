@@ -32,6 +32,7 @@ Released on ??
   - Added new `endpoint` and `new-path-style` to s3 connection parameters
 - Bugfix:
   - [Issue 92](https://github.com/veeso/termscp/issues/92): updated ssh2-config to 0.1.3, which solves this issue.
+  - [Issue 99](https://github.com/veeso/termscp/issues/99): Fixed AltGr characters not allowed in auth form
 - Dependencies:
   - Updated `remotefs-rs-aws-s3` to `0.2.0`
   - Updated `tui-realm-stdlib` to `1.1.6`
