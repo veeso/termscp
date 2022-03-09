@@ -484,8 +484,13 @@ fn handle_input_ev(
             Some(Msg::None)
         }
         Event::Keyboard(KeyEvent {
+            // NOTE: escaped control sequence
+            code: Key::Char('h') | Key::Char('r') | Key::Char('s'),
+            modifiers: KeyModifiers::CONTROL,
+        }) => Some(Msg::None),
+        Event::Keyboard(KeyEvent {
             code: Key::Char(ch),
-            modifiers: KeyModifiers::NONE | KeyModifiers::SHIFT,
+            ..
         }) => {
             component.perform(Cmd::Type(ch));
             Some(Msg::Config(ConfigMsg::ConfigChanged))

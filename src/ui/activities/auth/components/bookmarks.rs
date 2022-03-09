@@ -29,7 +29,7 @@ use super::{FormMsg, Msg, UiMsg};
 
 use tui_realm_stdlib::{Input, List, Radio};
 use tuirealm::command::{Cmd, CmdResult, Direction, Position};
-use tuirealm::event::{Key, KeyEvent, KeyModifiers};
+use tuirealm::event::{Key, KeyEvent};
 use tuirealm::props::{Alignment, BorderSides, BorderType, Borders, Color, InputType, TextSpan};
 use tuirealm::{Component, Event, MockComponent, NoUserEvent, State, StateValue};
 
@@ -447,7 +447,7 @@ impl Component<Msg, NoUserEvent> for BookmarkName {
             }
             Event::Keyboard(KeyEvent {
                 code: Key::Char(ch),
-                modifiers: KeyModifiers::NONE,
+                ..
             }) => {
                 self.perform(Cmd::Type(ch));
                 Some(Msg::None)
