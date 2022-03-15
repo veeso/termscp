@@ -7,12 +7,13 @@ make_pkg() {
     if [ -z "$TARGET_DIR" ]; then
         TARGET_DIR=target/release/
     fi
+    ROOT_DIR=$(pwd)
     cd $TARGET_DIR
     PKG="termscp-v${VERSION}-${ARCH}-apple-darwin.tar.gz"
     tar czf $PKG termscp
     HASH=$(sha256sum $PKG)
-    mkdir -p ../../dist/pkgs/macos/
-    mv $PKG ../../dist/pkgs/macos/$PKG
+    mkdir -p ${ROOT_DIR}/dist/pkgs/macos/
+    mv $PKG ${ROOT_DIR}/dist/pkgs/macos/$PKG
     cd -
     echo "$HASH"
 }
