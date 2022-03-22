@@ -25,7 +25,7 @@
 
 ## 0.8.1
 
-Released on ??
+Released on 22/03/2022
 
 - **Added support for S3 compatible backends**
   - Changed `AWS S3` to `S3` in ui
