@@ -1,11 +1,11 @@
-//! ## Utils
+//! # String
 //!
-//! `utils` is the module which provides utilities of different kind
+//! String related utilities
 
 /**
  * MIT License
  *
- * termscp - Copyright (c) 2021 Christian Visintin
+ * termscp - Copyright (c) 2022 Christian Visintin
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,16 +25,21 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-// modules
-pub mod crypto;
-pub mod file;
-pub mod fmt;
-pub mod parser;
-pub mod path;
-pub mod random;
-pub mod string;
-pub mod ui;
+
+/// Get a substring considering utf8 characters
+pub fn secure_substring(string: &str, start: usize, end: usize) -> String {
+    assert!(end >= start);
+    string.chars().take(end).skip(start).collect()
+}
 
 #[cfg(test)]
-#[allow(dead_code)]
-pub mod test_helpers;
+mod test {
+
+    use super::*;
+
+    #[test]
+    fn should_get_secure_substring() {
+        assert_eq!(secure_substring("christian", 2, 5).as_str(), "ris");
+        assert_eq!(secure_substring("россия", 3, 5).as_str(), "си");
+    }
+}

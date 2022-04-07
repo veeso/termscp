@@ -28,12 +28,14 @@
 // Locals
 use crate::utils::fmt::{fmt_path_elide, fmt_pex, fmt_time};
 use crate::utils::path::diff_paths;
+use crate::utils::string::secure_substring;
 // Ext
 use bytesize::ByteSize;
 use regex::Regex;
 use remotefs::File;
 use std::path::PathBuf;
 use std::time::UNIX_EPOCH;
+use unicode_width::UnicodeWidthStr;
 #[cfg(target_family = "unix")]
 use users::{get_group_by_gid, get_user_by_uid};
 // Types
@@ -303,9 +305,9 @@ impl Formatter {
             true => file_len - 2,
             false => file_len - 1,
         };
-        let mut name: String = match name.len() >= file_len {
+        let mut name: String = match name.width() >= file_len {
             false => name,
-            true => format!("{}…", &name[0..last_idx]),
+            true => format!("{}…", secure_substring(&name, 0, last_idx)),
         };
         if fsentry.is_dir() {
             name.push('/');
@@ -914,6 +916,113 @@ mod tests {
         );
         let formatter: Formatter = Formatter::new("File path: {PATH:128:/tmp/a/b}");
         assert_eq!(formatter.fmt(&entry).as_str(), "File path: c/bar.txt");
+    }
+
+    #[test]
+    #[cfg(target_family = "unix")]
+    fn should_fmt_utf8_path() {
+        let t: SystemTime = SystemTime::now();
+        let entry = File {
+            path: PathBuf::from("/tmp/a/b/c/россия"),
+            metadata: Metadata {
+                accessed: Some(t),
+                created: Some(t),
+                modified: Some(t),
+                file_type: FileType::Symlink,
+                size: 8192,
+                symlink: Some(PathBuf::from("project.info")),
+                uid: None,
+                gid: None,
+                mode: Some(UnixPex::from(0o644)),
+            },
+        };
+        let formatter: Formatter = Formatter::new("File path: {PATH}");
+        assert_eq!(
+            formatter.fmt(&entry).as_str(),
+            "File path: /tmp/a/b/c/россия"
+        );
+        let formatter: Formatter = Formatter::new("File path: {PATH:8}");
+        assert_eq!(formatter.fmt(&entry).as_str(), "File path: /tmp/…/c/россия");
+    }
+
+    #[test]
+    fn should_fmt_short_ascii_name() {
+        let entry = File {
+            path: PathBuf::from("/tmp/foo.txt"),
+            metadata: Metadata {
+                accessed: None,
+                created: None,
+                modified: None,
+                file_type: FileType::File,
+                size: 8192,
+                symlink: None,
+                uid: None,
+                gid: None,
+                mode: None,
+            },
+        };
+        let formatter: Formatter = Formatter::new("{NAME:8}");
+        assert_eq!(formatter.fmt(&entry).as_str(), "foo.txt ");
+    }
+
+    #[test]
+    fn should_fmt_exceeding_length_ascii_name() {
+        let entry = File {
+            path: PathBuf::from("/tmp/christian-visintin.txt"),
+            metadata: Metadata {
+                accessed: None,
+                created: None,
+                modified: None,
+                file_type: FileType::File,
+                size: 8192,
+                symlink: None,
+                uid: None,
+                gid: None,
+                mode: None,
+            },
+        };
+        let formatter: Formatter = Formatter::new("{NAME:8}");
+        assert_eq!(formatter.fmt(&entry).as_str(), "christi…");
+    }
+
+    #[test]
+    fn should_fmt_short_utf8_name() {
+        let entry = File {
+            path: PathBuf::from("/tmp/россия"),
+            metadata: Metadata {
+                accessed: None,
+                created: None,
+                modified: None,
+                file_type: FileType::File,
+                size: 8192,
+                symlink: None,
+                uid: None,
+                gid: None,
+                mode: None,
+            },
+        };
+        let formatter: Formatter = Formatter::new("{NAME:8}");
+        assert_eq!(formatter.fmt(&entry).as_str(), "россия  ");
+    }
+
+    #[test]
+    fn should_fmt_long_utf8_name() {
+        let entry = File {
+            path: PathBuf::from("/tmp/喵喵喵喵喵喵喵喵喵喵喵喵喵喵喵喵喵喵喵喵喵喵"),
+            metadata: Metadata {
+                accessed: None,
+                created: None,
+                modified: None,
+                file_type: FileType::File,
+                size: 8192,
+                symlink: None,
+                uid: None,
+                gid: None,
+                mode: None,
+            },
+        };
+        let formatter: Formatter = Formatter::new("{NAME:8}");
+        assert_eq!(formatter.fmt(&entry).as_str(), "喵喵喵喵喵喵喵…");
     }
 
     /// Dummy formatter, just yelds an 'A' at the end of the current string

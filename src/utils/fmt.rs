@@ -31,6 +31,7 @@ use chrono::prelude::*;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime};
 use tuirealm::tui::style::Color;
+use unicode_width::UnicodeWidthStr;
 
 /// ### fmt_pex
 ///
@@ -85,7 +86,7 @@ pub fn fmt_path_elide(p: &Path, width: usize) -> String {
 /// This function allows to specify an extra length to consider to elide path
 pub fn fmt_path_elide_ex(p: &Path, width: usize, extra_len: usize) -> String {
     let fmt_path: String = format!("{}", p.display());
-    match fmt_path.len() + extra_len > width as usize {
+    match fmt_path.width() + extra_len > width as usize {
         false => fmt_path,
         true => {
             // Elide

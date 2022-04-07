@@ -30,6 +30,8 @@ Released on ??
 
 - **Enhancements**
   - Write exitcode to log when termscp terminates
+- Bugfix:
+  - [Issue 104](https://github.com/veeso/termscp/issues/104): Fixed termscp panics when displaying long non-ascii filenames
 
 ## 0.8.1
 
