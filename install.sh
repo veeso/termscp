@@ -267,7 +267,7 @@ install_on_linux() {
 install_on_macos() {
     if has brew; then
         # get homebrew formula name
-        if [ "${ARCH}" != "x86_64" ]; then
+        if [ "${ARCH}" == "x86_64" ]; then
             FORMULA="termscp"
         else
             FORMULA="termscp-m1"
