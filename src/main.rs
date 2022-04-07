@@ -150,7 +150,7 @@ fn main() {
     // Run
     info!("Starting activity manager...");
     let rc: i32 = run(run_opts);
-    info!("termscp terminated");
+    info!("termscp terminated with exitcode {}", rc);
     // Then return
     std::process::exit(rc);
 }
