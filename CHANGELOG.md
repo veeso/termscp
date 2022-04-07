@@ -1,6 +1,7 @@
 # Changelog
 
 - [Changelog](#changelog)
+  - [0.8.2](#082)
   - [0.8.1](#081)
   - [0.8.0](#080)
   - [0.7.0](#070)
@@ -22,6 +23,13 @@
   - [0.1.0](#010)
 
 ---
+
+## 0.8.2
+
+Released on ??
+
+- **Enhancements**
+  - Write exitcode to log when termscp terminates
 
 ## 0.8.1
 
