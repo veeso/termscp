@@ -389,7 +389,7 @@ impl Formatter {
             // Get byte size
             let size: ByteSize = ByteSize(fsentry.metadata().size);
             // Add to cur str, prefix and the key value
-            format!("{}{}{:10}", cur_str, prefix, size.to_string())
+            format!("{}{}{:10}", cur_str, prefix, size)
         } else if fsentry.metadata().symlink.is_some() {
             let size = ByteSize(
                 fsentry
@@ -400,7 +400,7 @@ impl Formatter {
                     .to_string_lossy()
                     .len() as u64,
             );
-            format!("{}{}{:10}", cur_str, prefix, size.to_string())
+            format!("{}{}{:10}", cur_str, prefix, size)
         } else {
             // Add to cur str, prefix and the key value
             format!("{}{}          ", cur_str, prefix)
