@@ -26,7 +26,7 @@
 
 ## 0.8.2
 
-Released on ??
+Released on 26/04/2022
 
 - **Enhancements**
   - Write exitcode to log when termscp terminates
