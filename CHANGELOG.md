@@ -1,6 +1,7 @@
 # Changelog
 
 - [Changelog](#changelog)
+  - [0.9.0](#090)
   - [0.8.2](#082)
   - [0.8.1](#081)
   - [0.8.0](#080)
@@ -23,6 +24,23 @@
   - [0.1.0](#010)
 
 ---
+
+## 0.9.0
+
+Released on FIXME:
+
+> 🏖️ Tenerife Update 🍹
+
+- **Bookmark name as hostname for CLI arguments**
+  - It is now possible to provide the name of the bookmark you want to connect to, instead of the address in command line arguments
+  
+    To do so it is enough to run termscp as follows:
+
+    ```sh
+    termscp -b <bookmark-name>
+    ```
+
+    If the password is stored in the bookmark, it will be used, otherwise you will be prompted to type the password in.
 
 ## 0.8.2
 

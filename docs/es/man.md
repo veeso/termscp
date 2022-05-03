@@ -37,7 +37,12 @@ termscp se puede iniciar con las siguientes opciones:
 
 `termscp [options]... [protocol://user@address:port:wrkdir] [local-wrkdir]`
 
+OR
+
+`termscp [options]... -b [bookmark-name] [local-wrkdir]`
+
 - `-P, --password <password>` si se proporciona la dirección, la contraseña será este argumento
+- `-b, --address-as-bookmark` resuelve el argumento de la dirección como un nombre de marcador
 - `-c, --config` Abrir termscp comenzando desde la página de configuración
 - `-q, --quiet` Deshabilitar el registro
 - `-t, --theme <path>` Importar tema especificado

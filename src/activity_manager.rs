@@ -37,6 +37,8 @@ use crate::ui::activities::{
     ExitReason,
 };
 use crate::ui::context::Context;
+use crate::utils::fmt;
+use crate::utils::tty;
 
 // Namespaces
 use std::path::{Path, PathBuf};
@@ -65,7 +67,7 @@ impl ActivityManager {
     pub fn new(local_dir: &Path, ticks: Duration) -> Result<ActivityManager, HostError> {
         // Prepare Context
         // Initialize configuration client
-        let (config_client, error): (ConfigClient, Option<String>) =
+        let (config_client, error_config): (ConfigClient, Option<String>) =
             match Self::init_config_client() {
                 Ok(cli) => (cli, None),
                 Err(err) => {
@@ -73,10 +75,11 @@ impl ActivityManager {
                     (ConfigClient::degraded(), Some(err))
                 }
             };
-        let (bookmarks_client, error) = match Self::init_bookmarks_client() {
+        let (bookmarks_client, error_bookmark) = match Self::init_bookmarks_client() {
             Ok(cli) => (cli, None),
             Err(err) => (None, Some(err)),
         };
+        let error = error_config.or(error_bookmark);
         let theme_provider: ThemeProvider = Self::init_theme_provider();
         let ctx: Context = Context::new(bookmarks_client, config_client, theme_provider, error);
         Ok(ActivityManager {
@@ -87,9 +90,32 @@ impl ActivityManager {
     }
 
     /// Set file transfer params
-    pub fn set_filetransfer_params(&mut self, params: FileTransferParams) {
+    pub fn set_filetransfer_params(
+        &mut self,
+        mut params: FileTransferParams,
+        password: Option<&str>,
+    ) -> Result<(), String> {
+        // Set password if provided
+        if params.password_missing() {
+            if let Some(password) = password {
+                params.set_default_secret(password.to_string());
+            } else {
+                match tty::read_secret_from_tty("Password: ") {
+                    Err(err) => return Err(format!("Could not read password: {}", err)),
+                    Ok(Some(secret)) => {
+                        debug!(
+                            "Read password from tty: {}",
+                            fmt::shadow_password(secret.as_str())
+                        );
+                        params.set_default_secret(secret);
+                    }
+                    Ok(None) => {}
+                }
+            }
+        }
         // Put params into the context
         self.context.as_mut().unwrap().set_ftparams(params);
+        Ok(())
     }
 
     /// Resolve provided bookmark name and set it as file transfer params.
@@ -105,12 +131,7 @@ impl ActivityManager {
                     r#"Could not resolve bookmark name: "{}" no such bookmark"#,
                     bookmark_name
                 )),
-                Some(params) => {
-                    self.context.as_mut().unwrap().set_ftparams(params);
-                    // Set password if provided
-                    // TODO: move read password from tty to utils and create a method to check whether ft params require password
-                    Ok(())
-                }
+                Some(params) => self.set_filetransfer_params(params, password),
             }
         } else {
             Err(String::from(

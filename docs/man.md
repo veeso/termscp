@@ -35,7 +35,12 @@ termscp can be started with the following options:
 
 `termscp [options]... [protocol://user@address:port:wrkdir] [local-wrkdir]`
 
+OR
+
+`termscp [options]... -b [bookmark-name] [local-wrkdir]`
+
 - `-P, --password <password>` if address is provided, password will be this argument
+- `-b, --address-as-bookmark` resolve address argument as a bookmark name
 - `-c, --config` Open termscp starting from the configuration page
 - `-q, --quiet` Disable logging
 - `-t, --theme <path>` Import specified theme
@@ -43,11 +48,11 @@ termscp can be started with the following options:
 - `-v, --version` Print version info
 - `-h, --help` Print help page
 
-termscp can be started in two different mode, if no extra arguments is provided, termscp will show the authentication form, where the user will be able to provide the parameters required to connect to the remote peer.
+termscp can be started in three different modes, if no extra arguments is provided, termscp will show the authentication form, where the user will be able to provide the parameters required to connect to the remote peer.
 
 Alternatively, the user can provide an address as argument to skip the authentication form and starting directly the connection to the remote server.
 
-If address argument is provided you can also provide the start working directory for local host
+If address argument or bookmark name is provided you can also provide the start working directory for local host
 
 ### Address argument 🌎
 

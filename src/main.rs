@@ -26,7 +26,6 @@ const TERMSCP_VERSION: &str = env!("CARGO_PKG_VERSION");
 const TERMSCP_AUTHORS: &str = env!("CARGO_PKG_AUTHORS");
 
 // Crates
-extern crate argh;
 #[macro_use]
 extern crate bitflags;
 #[macro_use]
@@ -37,13 +36,13 @@ extern crate log;
 extern crate magic_crypt;
 
 // External libs
-use argh::FromArgs;
 use std::env;
 use std::path::PathBuf;
 use std::time::Duration;
 
 // Include
 mod activity_manager;
+mod cli_opts;
 mod config;
 mod explorer;
 mod filetransfer;
@@ -55,108 +54,14 @@ mod utils;
 
 // namespaces
 use activity_manager::{ActivityManager, NextActivity};
+use cli_opts::{Args, BookmarkParams, HostParams, Remote, RunOpts, Task};
 use filetransfer::FileTransferParams;
 use system::logging::{self, LogLevel};
-
-enum Task {
-    Activity(NextActivity),
-    ImportTheme(PathBuf),
-    InstallUpdate,
-}
-
-#[derive(FromArgs)]
-#[argh(description = "
-where positional can be: [address] [local-wrkdir]
-
-Address syntax can be:
-
-    - `protocol://user@address:port:wrkdir` for protocols such as Sftp, Scp, Ftp
-    - `s3://bucket-name@region:profile:/wrkdir` for Aws S3 protocol
-
-Please, report issues to <https://github.com/veeso/termscp>
-Please, consider supporting the author <https://ko-fi.com/veeso>")]
-struct Args {
-    #[argh(
-        switch,
-        short = 'b',
-        description = "resolve address argument as a bookmark name"
-    )]
-    address_as_bookmark: bool,
-    #[argh(switch, short = 'c', description = "open termscp configuration")]
-    config: bool,
-    #[argh(switch, short = 'D', description = "enable TRACE log level")]
-    debug: bool,
-    #[argh(option, short = 'P', description = "provide password from CLI")]
-    password: Option<String>,
-    #[argh(switch, short = 'q', description = "disable logging")]
-    quiet: bool,
-    #[argh(option, short = 't', description = "import specified theme")]
-    theme: Option<String>,
-    #[argh(
-        switch,
-        short = 'u',
-        description = "update termscp to the latest version"
-    )]
-    update: bool,
-    #[argh(
-        option,
-        short = 'T',
-        default = "10",
-        description = "set UI ticks; default 10ms"
-    )]
-    ticks: u64,
-    #[argh(switch, short = 'v', description = "print version")]
-    version: bool,
-    // -- positional
-    #[argh(
-        positional,
-        description = "protocol://user@address:port:wrkdir local-wrkdir"
-    )]
-    positional: Vec<String>,
-}
-
-struct RunOpts {
-    remote: Remote,
-    ticks: Duration,
-    log_level: LogLevel,
-    task: Task,
-}
-
-impl Default for RunOpts {
-    fn default() -> Self {
-        Self {
-            remote: Remote::None,
-            ticks: Duration::from_millis(10),
-            log_level: LogLevel::Info,
-            task: Task::Activity(NextActivity::Authentication),
-        }
-    }
-}
-
-enum Remote {
-    Bookmark(BookmarkParams),
-    Host(FileTransferParams),
-    None,
-}
-
-struct BookmarkParams {
-    name: String,
-    password: Option<String>,
-}
-
-impl BookmarkParams {
-    pub fn new<S: AsRef<str>>(name: S, password: Option<S>) -> Self {
-        Self {
-            name: name.as_ref().to_string(),
-            password: password.map(|x| x.as_ref().to_string()),
-        }
-    }
-}
 
 fn main() {
     let args: Args = argh::from_env();
     // Parse args
-    let mut run_opts: RunOpts = match parse_args(args) {
+    let run_opts: RunOpts = match parse_args(args) {
         Ok(opts) => opts,
         Err(err) => {
             eprintln!("{}", err);
@@ -167,15 +72,10 @@ fn main() {
     if let Err(err) = logging::init(run_opts.log_level) {
         eprintln!("Failed to initialize logging: {}", err);
     }
-    // Read password from remote
-    if let Err(err) = read_password(&mut run_opts) {
-        eprintln!("{}", err);
-        std::process::exit(255);
-    }
     info!("termscp {} started!", TERMSCP_VERSION);
     // Run
     info!("Starting activity manager...");
-    let rc: i32 = run(run_opts);
+    let rc = run(run_opts);
     info!("termscp terminated with exitcode {}", rc);
     // Then return
     std::process::exit(rc);
@@ -246,7 +146,8 @@ fn parse_address_arg(args: &Args) -> Result<Remote, String> {
             )))
         } else {
             // Parse address
-            parse_remote_address(remote.as_str(), args.password.as_deref()).map(Remote::Host)
+            parse_remote_address(remote.as_str())
+                .map(|x| Remote::Host(HostParams::new(x, args.password.as_deref())))
         }
     } else {
         Ok(Remote::None)
@@ -254,59 +155,14 @@ fn parse_address_arg(args: &Args) -> Result<Remote, String> {
 }
 
 /// Parse remote address
-fn parse_remote_address(
-    remote: &str,
-    password: Option<&str>,
-) -> Result<FileTransferParams, String> {
-    match utils::parser::parse_remote_opt(remote) {
-        Ok(mut remote) => {
-            // If password is provided, set password
-            if let Some(passwd) = password {
-                if let Some(mut params) = remote.params.mut_generic_params() {
-                    params.password = Some(passwd.to_string());
-                }
-            }
-            Ok(remote)
-        }
-        Err(err) => Err(format!("Bad address option: {}", err)),
-    }
-}
-
-/// Read password from tty if address is specified
-fn read_password(run_opts: &mut RunOpts) -> Result<(), String> {
-    // Initialize client if necessary
-    if let Some(remote) = run_opts.remote.as_mut() {
-        // Ask password for generic params
-        if let Some(mut params) = remote.params.mut_generic_params() {
-            // Ask password only if generic protocol params
-            if params.password.is_none() {
-                // Ask password if unspecified
-                params.password = match rpassword::read_password_from_tty(Some("Password: ")) {
-                    Ok(p) => {
-                        if p.is_empty() {
-                            None
-                        } else {
-                            debug!(
-                                "Read password from tty: {}",
-                                utils::fmt::shadow_password(p.as_str())
-                            );
-                            Some(p)
-                        }
-                    }
-                    Err(_) => {
-                        return Err("Could not read password from prompt".to_string());
-                    }
-                };
-            }
-        }
-    }
-    Ok(())
+fn parse_remote_address(remote: &str) -> Result<FileTransferParams, String> {
+    utils::parser::parse_remote_opt(remote).map_err(|e| format!("Bad address option: {}", e))
 }
 
 /// ### run
 ///
 /// Run task and return rc
-fn run(mut run_opts: RunOpts) -> i32 {
+fn run(run_opts: RunOpts) -> i32 {
     match run_opts.task {
         Task::ImportTheme(theme) => match support::import_theme(theme.as_path()) {
             Ok(_) => {
@@ -344,10 +200,21 @@ fn run(mut run_opts: RunOpts) -> i32 {
                     }
                 };
             // Set file transfer params if set
-            if let Some(remote) = run_opts.remote.take() {
-                manager.set_filetransfer_params(remote);
+            match run_opts.remote {
+                Remote::Bookmark(BookmarkParams { name, password }) => {
+                    if let Err(err) = manager.resolve_bookmark_name(&name, password.as_deref()) {
+                        eprintln!("{}", err);
+                        return 1;
+                    }
+                }
+                Remote::Host(HostParams { params, password }) => {
+                    if let Err(err) = manager.set_filetransfer_params(params, password.as_deref()) {
+                        eprintln!("{}", err);
+                        return 1;
+                    }
+                }
+                Remote::None => {}
             }
-            // TODO: resolve bookmark name
             manager.run(activity);
             0
         }

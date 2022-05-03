@@ -223,10 +223,6 @@ The user manual can be found on the [termscp's website](https://veeso.github.io/
 
 For **2022** there will be two major updates during the year.
 
-Planned for *Summer update 2022*:
-
-- **File system watcher 🔭**: The feature consists in the possibility to track some files in order to automatically sync them with remote host. For the implementation [notify](https://github.com/notify-rs/notify) will be used.
-
 Planned for *future updates ⏲️*:
 
 - **Translations 🌐**: The feature consists in the possibility for the user to install the language pack for the language he prefers in order to replace the default English interface. The following language will be provided along to English:

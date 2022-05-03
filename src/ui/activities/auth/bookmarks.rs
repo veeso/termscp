@@ -32,11 +32,11 @@ use crate::filetransfer::params::{AwsS3Params, GenericProtocolParams, ProtocolPa
 impl AuthActivity {
     /// Delete bookmark
     pub(super) fn del_bookmark(&mut self, idx: usize) {
+        let name = self.bookmarks_list.get(idx).cloned();
         if let Some(bookmarks_cli) = self.bookmarks_client_mut() {
             // Iterate over kyes
-            let name: Option<&String> = self.bookmarks_list.get(idx);
             if let Some(name) = name {
-                bookmarks_cli.del_bookmark(name);
+                bookmarks_cli.del_bookmark(&name);
                 // Write bookmarks
                 self.write_bookmarks();
             }
@@ -80,10 +80,10 @@ impl AuthActivity {
     }
     /// Delete recent
     pub(super) fn del_recent(&mut self, idx: usize) {
+        let name = self.recents_list.get(idx).cloned();
         if let Some(client) = self.bookmarks_client_mut() {
-            let name: Option<&String> = self.recents_list.get(idx);
             if let Some(name) = name {
-                client.del_recent(name);
+                client.del_recent(&name);
                 // Write bookmarks
                 self.write_bookmarks();
             }

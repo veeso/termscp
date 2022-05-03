@@ -84,6 +84,23 @@ impl FileTransferParams {
         self.entry_directory = dir.map(|x| x.as_ref().to_path_buf());
         self
     }
+
+    /// Returns whether a password is supposed to be required for this protocol params.
+    /// The result true is returned ONLY if the supposed secret is MISSING!!!
+    pub fn password_missing(&self) -> bool {
+        match &self.params {
+            ProtocolParams::AwsS3(params) => params.password_missing(),
+            ProtocolParams::Generic(params) => params.password_missing(),
+        }
+    }
+
+    /// Set the secret to ft params for the default secret field for this protocol
+    pub fn set_default_secret(&mut self, secret: String) {
+        match &mut self.params {
+            ProtocolParams::AwsS3(params) => params.set_default_secret(secret),
+            ProtocolParams::Generic(params) => params.set_default_secret(secret),
+        }
+    }
 }
 
 impl Default for FileTransferParams {
@@ -108,6 +125,7 @@ impl ProtocolParams {
         }
     }
 
+    #[cfg(test)]
     /// Get a mutable reference to the inner generic protocol params
     pub fn mut_generic_params(&mut self) -> Option<&mut GenericProtocolParams> {
         match self {
@@ -163,6 +181,17 @@ impl GenericProtocolParams {
         self.password = password.map(|x| x.as_ref().to_string());
         self
     }
+
+    /// Returns whether a password is supposed to be required for this protocol params.
+    /// The result true is returned ONLY if the supposed secret is MISSING!!!
+    pub fn password_missing(&self) -> bool {
+        self.password.is_none()
+    }
+
+    /// Set password
+    pub fn set_default_secret(&mut self, secret: String) {
+        self.password = Some(secret);
+    }
 }
 
 // -- S3 params
@@ -217,6 +246,17 @@ impl AwsS3Params {
     pub fn new_path_style(mut self, new_path_style: bool) -> Self {
         self.new_path_style = new_path_style;
         self
+    }
+
+    /// Returns whether a password is supposed to be required for this protocol params.
+    /// The result true is returned ONLY if the supposed secret is MISSING!!!
+    pub fn password_missing(&self) -> bool {
+        self.secret_access_key.is_none() && self.security_token.is_none()
+    }
+
+    /// Set password
+    pub fn set_default_secret(&mut self, secret: String) {
+        self.secret_access_key = Some(secret);
     }
 }
 
@@ -299,5 +339,84 @@ mod test {
         assert!(params.s3_params().is_none());
         assert!(params.generic_params().is_some());
         assert!(params.mut_generic_params().is_some());
+    }
+
+    #[test]
+    fn password_missing() {
+        assert!(FileTransferParams::new(
+            FileTransferProtocol::Scp,
+            ProtocolParams::AwsS3(AwsS3Params::new("omar", Some("eu-west-1"), Some("test")))
+        )
+        .password_missing());
+        assert_eq!(
+            FileTransferParams::new(
+                FileTransferProtocol::Scp,
+                ProtocolParams::AwsS3(
+                    AwsS3Params::new("omar", Some("eu-west-1"), Some("test"))
+                        .secret_access_key(Some("test"))
+                )
+            )
+            .password_missing(),
+            false
+        );
+        assert_eq!(
+            FileTransferParams::new(
+                FileTransferProtocol::Scp,
+                ProtocolParams::AwsS3(
+                    AwsS3Params::new("omar", Some("eu-west-1"), Some("test"))
+                        .security_token(Some("test"))
+                )
+            )
+            .password_missing(),
+            false
+        );
+        assert!(
+            FileTransferParams::new(FileTransferProtocol::Scp, ProtocolParams::default())
+                .password_missing()
+        );
+        assert_eq!(
+            FileTransferParams::new(
+                FileTransferProtocol::Scp,
+                ProtocolParams::Generic(GenericProtocolParams::default().password(Some("Hello")))
+            )
+            .password_missing(),
+            false
+        );
+    }
+
+    #[test]
+    fn set_default_secret_aws_s3() {
+        let mut params = FileTransferParams::new(
+            FileTransferProtocol::Scp,
+            ProtocolParams::AwsS3(AwsS3Params::new("omar", Some("eu-west-1"), Some("test"))),
+        );
+        params.set_default_secret(String::from("secret"));
+        assert_eq!(
+            params
+                .params
+                .s3_params()
+                .unwrap()
+                .secret_access_key
+                .as_deref()
+                .unwrap(),
+            "secret"
+        );
+    }
+
+    #[test]
+    fn set_default_secret_generic() {
+        let mut params =
+            FileTransferParams::new(FileTransferProtocol::Scp, ProtocolParams::default());
+        params.set_default_secret(String::from("secret"));
+        assert_eq!(
+            params
+                .params
+                .generic_params()
+                .unwrap()
+                .password
+                .as_deref()
+                .unwrap(),
+            "secret"
+        );
     }
 }
