@@ -112,6 +112,42 @@ impl Component<Msg, NoUserEvent> for ProtocolRadio {
     }
 }
 
+// -- remote directory
+
+#[derive(MockComponent)]
+pub struct InputRemoteDirectory {
+    component: Input,
+}
+
+impl InputRemoteDirectory {
+    pub fn new(remote_dir: &str, color: Color) -> Self {
+        Self {
+            component: Input::default()
+                .borders(
+                    Borders::default()
+                        .color(color)
+                        .modifiers(BorderType::Rounded),
+                )
+                .foreground(color)
+                .placeholder("/home/foo", Style::default().fg(Color::Rgb(128, 128, 128)))
+                .title("Default remote directory", Alignment::Left)
+                .input_type(InputType::Text)
+                .value(remote_dir),
+        }
+    }
+}
+
+impl Component<Msg, NoUserEvent> for InputRemoteDirectory {
+    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+        handle_input_ev(
+            self,
+            ev,
+            Msg::Ui(UiMsg::RemoteDirectoryBlurDown),
+            Msg::Ui(UiMsg::RemoteDirectoryBlurUp),
+        )
+    }
+}
+
 // -- address
 
 #[derive(MockComponent)]

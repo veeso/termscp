@@ -78,7 +78,7 @@ impl AuthActivity {
         Ok(FileTransferParams {
             protocol,
             params: ProtocolParams::Generic(params),
-            entry_directory: None,
+            entry_directory: self.get_input_remote_directory(),
         })
     }
 
@@ -91,7 +91,7 @@ impl AuthActivity {
         Ok(FileTransferParams {
             protocol: FileTransferProtocol::AwsS3,
             params: ProtocolParams::AwsS3(params),
-            entry_directory: None,
+            entry_directory: self.get_input_remote_directory(),
         })
     }
 

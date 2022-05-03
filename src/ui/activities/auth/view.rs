@@ -31,6 +31,7 @@ use crate::filetransfer::params::{AwsS3Params, GenericProtocolParams, ProtocolPa
 use crate::filetransfer::FileTransferParams;
 use crate::utils::ui::draw_area_in;
 
+use std::path::PathBuf;
 use std::str::FromStr;
 use tuirealm::tui::layout::{Constraint, Direction, Layout};
 use tuirealm::tui::widgets::Clear;
@@ -67,6 +68,7 @@ impl AuthActivity {
         let default_protocol: FileTransferProtocol = self.context().config().get_default_protocol();
         // Auth form
         self.mount_protocol(default_protocol);
+        self.mount_remote_directory("");
         self.mount_address("");
         self.mount_port(Self::get_default_port_for_protocol(default_protocol));
         self.mount_username("");
@@ -165,6 +167,7 @@ impl AuthActivity {
                             Constraint::Length(3), // region
                             Constraint::Length(3), // profile
                             Constraint::Length(3), // access_key
+                            Constraint::Length(3), // remote directory
                         ]
                         .as_ref(),
                     )
@@ -177,6 +180,7 @@ impl AuthActivity {
                             Constraint::Length(3), // port
                             Constraint::Length(3), // username
                             Constraint::Length(3), // password
+                            Constraint::Length(3), // remote directory
                         ]
                         .as_ref(),
                     )
@@ -197,17 +201,18 @@ impl AuthActivity {
             // Render input mask
             match self.input_mask() {
                 InputMask::AwsS3 => {
-                    let s3_view_ids = self.get_s3_view();
-                    self.app.view(&s3_view_ids[0], f, input_mask[0]);
-                    self.app.view(&s3_view_ids[1], f, input_mask[1]);
-                    self.app.view(&s3_view_ids[2], f, input_mask[2]);
-                    self.app.view(&s3_view_ids[3], f, input_mask[3]);
+                    let view_ids = self.get_s3_view();
+                    self.app.view(&view_ids[0], f, input_mask[0]);
+                    self.app.view(&view_ids[1], f, input_mask[1]);
+                    self.app.view(&view_ids[2], f, input_mask[2]);
+                    self.app.view(&view_ids[3], f, input_mask[3]);
                 }
                 InputMask::Generic => {
-                    self.app.view(&Id::Address, f, input_mask[0]);
-                    self.app.view(&Id::Port, f, input_mask[1]);
-                    self.app.view(&Id::Username, f, input_mask[2]);
-                    self.app.view(&Id::Password, f, input_mask[3]);
+                    let view_ids = self.get_generic_params_view();
+                    self.app.view(&view_ids[0], f, input_mask[0]);
+                    self.app.view(&view_ids[1], f, input_mask[1]);
+                    self.app.view(&view_ids[2], f, input_mask[2]);
+                    self.app.view(&view_ids[3], f, input_mask[3]);
                 }
             }
             // Bookmark chunks
@@ -563,6 +568,21 @@ impl AuthActivity {
             .is_ok());
     }
 
+    pub(super) fn mount_remote_directory<S: AsRef<str>>(&mut self, entry_directory: S) {
+        let protocol_color = self.theme().auth_protocol;
+        assert!(self
+            .app
+            .remount(
+                Id::RemoteDirectory,
+                Box::new(components::InputRemoteDirectory::new(
+                    entry_directory.as_ref(),
+                    protocol_color
+                )),
+                vec![]
+            )
+            .is_ok());
+    }
+
     pub(super) fn mount_address(&mut self, address: &str) {
         let addr_color = self.theme().auth_address;
         assert!(self
@@ -754,6 +774,15 @@ impl AuthActivity {
             .new_path_style(new_path_style)
     }
 
+    pub(super) fn get_input_remote_directory(&self) -> Option<PathBuf> {
+        match self.app.state(&Id::RemoteDirectory) {
+            Ok(State::One(StateValue::String(x))) if !x.is_empty() => {
+                Some(PathBuf::from(x.as_str()))
+            }
+            _ => None,
+        }
+    }
+
     pub(super) fn get_input_addr(&self) -> String {
         match self.app.state(&Id::Address) {
             Ok(State::One(StateValue::String(x))) => x,
@@ -913,25 +942,51 @@ impl AuthActivity {
         }
     }
 
+    /// Get the visible element in the generic params form, based on current focus
+    fn get_generic_params_view(&self) -> [Id; 4] {
+        match self.app.focus() {
+            Some(&Id::RemoteDirectory) => {
+                [Id::Port, Id::Username, Id::Password, Id::RemoteDirectory]
+            }
+            _ => [Id::Address, Id::Port, Id::Username, Id::Password],
+        }
+    }
+
     /// Get the visible element in the aws-s3 form, based on current focus
     fn get_s3_view(&self) -> [Id; 4] {
         match self.app.focus() {
-            Some(&Id::S3AccessKey) => [
+            Some(&Id::S3AccessKey) => {
+                [Id::S3Region, Id::S3Endpoint, Id::S3Profile, Id::S3AccessKey]
+            }
+            Some(&Id::S3SecretAccessKey) => [
+                Id::S3Endpoint,
+                Id::S3Profile,
+                Id::S3AccessKey,
+                Id::S3SecretAccessKey,
+            ],
+            Some(&Id::S3SecurityToken) => [
+                Id::S3Profile,
+                Id::S3AccessKey,
+                Id::S3SecretAccessKey,
+                Id::S3SecurityToken,
+            ],
+            Some(&Id::S3SessionToken) => [
                 Id::S3AccessKey,
                 Id::S3SecretAccessKey,
                 Id::S3SecurityToken,
                 Id::S3SessionToken,
             ],
-            Some(
-                &Id::S3SecretAccessKey
-                | &Id::S3SecurityToken
-                | &Id::S3SessionToken
-                | &Id::S3NewPathStyle,
-            ) => [
+            Some(&Id::S3NewPathStyle) => [
                 Id::S3SecretAccessKey,
                 Id::S3SecurityToken,
                 Id::S3SessionToken,
                 Id::S3NewPathStyle,
+            ],
+            Some(&Id::RemoteDirectory) => [
+                Id::S3SecurityToken,
+                Id::S3SessionToken,
+                Id::S3NewPathStyle,
+                Id::RemoteDirectory,
             ],
             _ => [Id::S3Bucket, Id::S3Region, Id::S3Endpoint, Id::S3Profile],
         }
