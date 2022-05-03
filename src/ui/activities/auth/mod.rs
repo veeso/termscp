@@ -172,7 +172,6 @@ const STORE_KEY_RELEASE_NOTES: &str = "AUTH_RELEASE_NOTES";
 /// AuthActivity is the data holder for the authentication activity
 pub struct AuthActivity {
     app: Application<Id, Msg, NoUserEvent>,
-    bookmarks_client: Option<BookmarksClient>,
     /// List of bookmarks
     bookmarks_list: Vec<String>,
     /// List of recent hosts
@@ -196,7 +195,6 @@ impl AuthActivity {
                     .poll_timeout(ticks),
             ),
             context: None,
-            bookmarks_client: None,
             bookmarks_list: Vec::new(),
             exit_reason: None,
             recents_list: Vec::new(),
@@ -218,6 +216,14 @@ impl AuthActivity {
     /// Returns config client reference
     fn config(&self) -> &ConfigClient {
         self.context().config()
+    }
+
+    fn bookmarks_client(&self) -> Option<&BookmarksClient> {
+        self.context().bookmarks_client()
+    }
+
+    fn bookmarks_client_mut(&mut self) -> Option<&mut BookmarksClient> {
+        self.context_mut().bookmarks_client_mut()
     }
 
     /// Returns a reference to theme
@@ -259,9 +265,8 @@ impl Activity for AuthActivity {
         // Initialize view
         self.init();
         // Init bookmarks client
-        if self.bookmarks_client.is_none() {
+        if self.bookmarks_client().is_some() {
             self.init_bookmarks_client();
-            // View bookarmsk
             self.view_bookmarks();
             self.view_recent_connections();
         }

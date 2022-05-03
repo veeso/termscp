@@ -28,6 +28,7 @@
 // Locals
 use super::store::Store;
 use crate::filetransfer::FileTransferParams;
+use crate::system::bookmarks_client::BookmarksClient;
 use crate::system::config_client::ConfigClient;
 use crate::system::theme_provider::ThemeProvider;
 
@@ -36,6 +37,7 @@ use tuirealm::terminal::TerminalBridge;
 /// Context holds data structures shared by the activities
 pub struct Context {
     ft_params: Option<FileTransferParams>,
+    bookmarks_client: Option<BookmarksClient>,
     config_client: ConfigClient,
     pub(crate) store: Store,
     pub(crate) terminal: TerminalBridge,
@@ -46,13 +48,15 @@ pub struct Context {
 impl Context {
     /// Instantiates a new Context
     pub fn new(
+        bookmarks_client: Option<BookmarksClient>,
         config_client: ConfigClient,
         theme_provider: ThemeProvider,
         error: Option<String>,
     ) -> Context {
         Context {
-            ft_params: None,
+            bookmarks_client,
             config_client,
+            ft_params: None,
             store: Store::init(),
             terminal: TerminalBridge::new().expect("Could not initialize terminal"),
             theme_provider,
@@ -64,6 +68,14 @@ impl Context {
 
     pub fn ft_params(&self) -> Option<&FileTransferParams> {
         self.ft_params.as_ref()
+    }
+
+    pub fn bookmarks_client(&self) -> Option<&BookmarksClient> {
+        self.bookmarks_client.as_ref()
+    }
+
+    pub fn bookmarks_client_mut(&mut self) -> Option<&mut BookmarksClient> {
+        self.bookmarks_client.as_mut()
     }
 
     pub fn config(&self) -> &ConfigClient {

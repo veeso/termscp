@@ -1,11 +1,11 @@
 //! ## Utils
 //!
-//! `utils` is the module which provides utilities of different kind
+//! `Utils` implements utilities functions to work with layouts
 
 /**
  * MIT License
  *
- * termscp - Copyright (c) 2021 Christian Visintin
+ * termscp - Copyright (c) 2022 Christian Visintin
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,17 +25,12 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-// modules
-pub mod crypto;
-pub mod file;
-pub mod fmt;
-pub mod parser;
-pub mod path;
-pub mod random;
-pub mod string;
-pub mod tty;
-pub mod ui;
 
-#[cfg(test)]
-#[allow(dead_code)]
-pub mod test_helpers;
+/// Read a secret from tty with customisable prompt
+pub fn read_secret_from_tty(prompt: &str) -> std::io::Result<Option<String>> {
+    match rpassword::read_password_from_tty(Some(prompt)) {
+        Ok(p) if p.is_empty() => Ok(None),
+        Ok(p) => Ok(Some(p)),
+        Err(err) => Err(err),
+    }
+}

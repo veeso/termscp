@@ -35,7 +35,12 @@ termscp peut être démarré avec les options suivantes :
 
 `termscp [options]... [protocol://user@address:port:wrkdir] [local-wrkdir]`
 
+ou
+
+`termscp [options]... -b [bookmark-name] [local-wrkdir]`
+
 - `-P, --password <password>` si l'adresse est fournie, le mot de passe sera cet argument
+- `-b, --address-as-bookmark` résoudre l'argument d'adresse en tant que nom de signet
 - `-c, --config` Ouvrir termscp à partir de la page de configuration
 - `-q, --quiet` Désactiver la journalisation
 - `-t, --theme <path>` Importer le thème spécifié

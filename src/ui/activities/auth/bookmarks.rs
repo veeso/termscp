@@ -28,20 +28,15 @@
 // Locals
 use super::{AuthActivity, FileTransferParams};
 use crate::filetransfer::params::{AwsS3Params, GenericProtocolParams, ProtocolParams};
-use crate::system::bookmarks_client::BookmarksClient;
-use crate::system::environment;
-
-// Ext
-use std::path::PathBuf;
 
 impl AuthActivity {
     /// Delete bookmark
     pub(super) fn del_bookmark(&mut self, idx: usize) {
-        if let Some(bookmarks_cli) = self.bookmarks_client.as_mut() {
+        let name = self.bookmarks_list.get(idx).cloned();
+        if let Some(bookmarks_cli) = self.bookmarks_client_mut() {
             // Iterate over kyes
-            let name: Option<&String> = self.bookmarks_list.get(idx);
             if let Some(name) = name {
-                bookmarks_cli.del_bookmark(name);
+                bookmarks_cli.del_bookmark(&name);
                 // Write bookmarks
                 self.write_bookmarks();
             }
@@ -52,7 +47,7 @@ impl AuthActivity {
 
     /// Load selected bookmark (at index) to input fields
     pub(super) fn load_bookmark(&mut self, idx: usize) {
-        if let Some(bookmarks_cli) = self.bookmarks_client.as_ref() {
+        if let Some(bookmarks_cli) = self.bookmarks_client() {
             // Iterate over bookmarks
             if let Some(key) = self.bookmarks_list.get(idx) {
                 if let Some(bookmark) = bookmarks_cli.get_bookmark(key) {
@@ -72,7 +67,7 @@ impl AuthActivity {
                 return;
             }
         };
-        if let Some(bookmarks_cli) = self.bookmarks_client.as_mut() {
+        if let Some(bookmarks_cli) = self.bookmarks_client_mut() {
             bookmarks_cli.add_bookmark(name.clone(), params, save_password);
             // Save bookmarks
             self.write_bookmarks();
@@ -85,10 +80,10 @@ impl AuthActivity {
     }
     /// Delete recent
     pub(super) fn del_recent(&mut self, idx: usize) {
-        if let Some(client) = self.bookmarks_client.as_mut() {
-            let name: Option<&String> = self.recents_list.get(idx);
+        let name = self.recents_list.get(idx).cloned();
+        if let Some(client) = self.bookmarks_client_mut() {
             if let Some(name) = name {
-                client.del_recent(name);
+                client.del_recent(&name);
                 // Write bookmarks
                 self.write_bookmarks();
             }
@@ -99,7 +94,7 @@ impl AuthActivity {
 
     /// Load selected recent (at index) to input fields
     pub(super) fn load_recent(&mut self, idx: usize) {
-        if let Some(client) = self.bookmarks_client.as_ref() {
+        if let Some(client) = self.bookmarks_client() {
             // Iterate over bookmarks
             if let Some(key) = self.recents_list.get(idx) {
                 if let Some(bookmark) = client.get_recent(key) {
@@ -119,7 +114,7 @@ impl AuthActivity {
                 return;
             }
         };
-        if let Some(bookmarks_cli) = self.bookmarks_client.as_mut() {
+        if let Some(bookmarks_cli) = self.bookmarks_client_mut() {
             bookmarks_cli.add_recent(params);
             // Save bookmarks
             self.write_bookmarks();
@@ -128,7 +123,7 @@ impl AuthActivity {
 
     /// Write bookmarks to file
     fn write_bookmarks(&mut self) {
-        if let Some(bookmarks_cli) = self.bookmarks_client.as_ref() {
+        if let Some(bookmarks_cli) = self.bookmarks_client() {
             if let Err(err) = bookmarks_cli.write_bookmarks() {
                 self.mount_error(format!("Could not write bookmarks: {}", err).as_str());
             }
@@ -137,58 +132,22 @@ impl AuthActivity {
 
     /// Initialize bookmarks client
     pub(super) fn init_bookmarks_client(&mut self) {
-        // Get config dir
-        match environment::init_config_dir() {
-            Ok(path) => {
-                // If some configure client, otherwise do nothing; don't bother users telling them that bookmarks are not supported on their system.
-                if let Some(config_dir_path) = path {
-                    let bookmarks_file: PathBuf =
-                        environment::get_bookmarks_paths(config_dir_path.as_path());
-                    // Initialize client
-                    match BookmarksClient::new(
-                        bookmarks_file.as_path(),
-                        config_dir_path.as_path(),
-                        16,
-                    ) {
-                        Ok(cli) => {
-                            // Load bookmarks into list
-                            let mut bookmarks_list: Vec<String> =
-                                Vec::with_capacity(cli.iter_bookmarks().count());
-                            for bookmark in cli.iter_bookmarks() {
-                                bookmarks_list.push(bookmark.clone());
-                            }
-                            // Load recents into list
-                            let mut recents_list: Vec<String> =
-                                Vec::with_capacity(cli.iter_recents().count());
-                            for recent in cli.iter_recents() {
-                                recents_list.push(recent.clone());
-                            }
-                            self.bookmarks_client = Some(cli);
-                            self.bookmarks_list = bookmarks_list;
-                            self.recents_list = recents_list;
-                            // Sort bookmark list
-                            self.sort_bookmarks();
-                            self.sort_recents();
-                        }
-                        Err(err) => {
-                            self.mount_error(
-                                format!(
-                                    "Could not initialize bookmarks (at \"{}\", \"{}\"): {}",
-                                    bookmarks_file.display(),
-                                    config_dir_path.display(),
-                                    err
-                                )
-                                .as_str(),
-                            );
-                        }
-                    }
-                }
+        if let Some(cli) = self.bookmarks_client_mut() {
+            // Load bookmarks into list
+            let mut bookmarks_list: Vec<String> = Vec::with_capacity(cli.iter_bookmarks().count());
+            for bookmark in cli.iter_bookmarks() {
+                bookmarks_list.push(bookmark.clone());
             }
-            Err(err) => {
-                self.mount_error(
-                    format!("Could not initialize configuration directory: {}", err).as_str(),
-                );
+            // Load recents into list
+            let mut recents_list: Vec<String> = Vec::with_capacity(cli.iter_recents().count());
+            for recent in cli.iter_recents() {
+                recents_list.push(recent.clone());
             }
+            self.bookmarks_list = bookmarks_list;
+            self.recents_list = recents_list;
+            // Sort bookmark list
+            self.sort_bookmarks();
+            self.sort_recents();
         }
     }
 
