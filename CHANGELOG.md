@@ -41,6 +41,12 @@ Released on FIXME:
     ```
 
     If the password is stored in the bookmark, it will be used, otherwise you will be prompted to type the password in.
+- **Remote directory path in authentication form and in bookmarks parameters**:
+  - It is now possible to configure the directory path you want to enter when you connect to the remote host from the authentication form
+  - This parameter can be stored into bookmarks as you already do with the other parameters
+  - You can find this field scrolling down in the authentication form
+- **Enhancements**:
+  - Improved s3 auth form scrolling
 - Dependencies:
   - Updated `tui-realm` to `1.6.0`
 

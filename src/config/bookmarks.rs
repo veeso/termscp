@@ -30,6 +30,7 @@ use crate::filetransfer::{FileTransferParams, FileTransferProtocol};
 
 use serde::{de::Error as DeError, Deserialize, Deserializer, Serialize, Serializer};
 use std::collections::HashMap;
+use std::path::PathBuf;
 use std::str::FromStr;
 
 /// UserHosts contains all the hosts saved by the user in the data storage
@@ -56,6 +57,8 @@ pub struct Bookmark {
     pub username: Option<String>,
     /// Password is optional; base64, aes-128 encrypted password
     pub password: Option<String>,
+    /// Remote folder to connect to
+    pub directory: Option<PathBuf>,
     /// S3 params; optional. When used other fields are empty for sure
     pub s3: Option<S3Params>,
 }
@@ -77,7 +80,8 @@ pub struct S3Params {
 
 impl From<FileTransferParams> for Bookmark {
     fn from(params: FileTransferParams) -> Self {
-        let protocol: FileTransferProtocol = params.protocol;
+        let protocol = params.protocol;
+        let directory = params.entry_directory;
         // Create generic or others
         match params.params {
             ProtocolParams::Generic(params) => Self {
@@ -86,6 +90,7 @@ impl From<FileTransferParams> for Bookmark {
                 port: Some(params.port),
                 username: params.username,
                 password: params.password,
+                directory,
                 s3: None,
             },
             ProtocolParams::AwsS3(params) => Self {
@@ -94,6 +99,7 @@ impl From<FileTransferParams> for Bookmark {
                 port: None,
                 username: None,
                 password: None,
+                directory,
                 s3: Some(S3Params::from(params)),
             },
         }
@@ -109,15 +115,18 @@ impl From<Bookmark> for FileTransferParams {
                 let params = AwsS3Params::from(params);
                 Self::new(FileTransferProtocol::AwsS3, ProtocolParams::AwsS3(params))
             }
-            protocol => {
+            FileTransferProtocol::Ftp(_)
+            | FileTransferProtocol::Scp
+            | FileTransferProtocol::Sftp => {
                 let params = GenericProtocolParams::default()
                     .address(bookmark.address.unwrap_or_default())
                     .port(bookmark.port.unwrap_or(22))
                     .username(bookmark.username)
                     .password(bookmark.password);
-                Self::new(protocol, ProtocolParams::Generic(params))
+                Self::new(bookmark.protocol, ProtocolParams::Generic(params))
             }
         }
+        .entry_directory(bookmark.directory) // Set entry directory
     }
 }
 
@@ -187,6 +196,7 @@ mod tests {
             protocol: FileTransferProtocol::Sftp,
             username: Some(String::from("root")),
             password: Some(String::from("password")),
+            directory: Some(PathBuf::from("/tmp")),
             s3: None,
         };
         let recent: Bookmark = Bookmark {
@@ -195,6 +205,7 @@ mod tests {
             protocol: FileTransferProtocol::Scp,
             username: Some(String::from("admin")),
             password: Some(String::from("password")),
+            directory: Some(PathBuf::from("/home")),
             s3: None,
         };
         let mut bookmarks: HashMap<String, Bookmark> = HashMap::with_capacity(1);
@@ -209,6 +220,10 @@ mod tests {
         assert_eq!(bookmark.protocol, FileTransferProtocol::Sftp);
         assert_eq!(bookmark.username.as_deref().unwrap(), "root");
         assert_eq!(bookmark.password.as_deref().unwrap(), "password");
+        assert_eq!(
+            bookmark.directory.as_deref().unwrap(),
+            std::path::Path::new("/tmp")
+        );
         let bookmark: &Bookmark = hosts
             .recents
             .get(&String::from("ISO20201218T181432"))
@@ -218,6 +233,10 @@ mod tests {
         assert_eq!(bookmark.protocol, FileTransferProtocol::Scp);
         assert_eq!(bookmark.username.as_deref().unwrap(), "admin");
         assert_eq!(bookmark.password.as_deref().unwrap(), "password");
+        assert_eq!(
+            bookmark.directory.as_deref().unwrap(),
+            std::path::Path::new("/home")
+        );
     }
 
     #[test]
@@ -228,13 +247,18 @@ mod tests {
             username: Some(String::from("root")),
             password: Some(String::from("omar")),
         });
-        let params: FileTransferParams = FileTransferParams::new(FileTransferProtocol::Scp, params);
+        let params: FileTransferParams = FileTransferParams::new(FileTransferProtocol::Scp, params)
+            .entry_directory(Some(PathBuf::from("/home")));
         let bookmark = Bookmark::from(params);
         assert_eq!(bookmark.protocol, FileTransferProtocol::Scp);
         assert_eq!(bookmark.address.as_deref().unwrap(), "127.0.0.1");
         assert_eq!(bookmark.port.unwrap(), 10222);
         assert_eq!(bookmark.username.as_deref().unwrap(), "root");
         assert_eq!(bookmark.password.as_deref().unwrap(), "omar");
+        assert_eq!(
+            bookmark.directory.as_deref().unwrap(),
+            std::path::Path::new("/home")
+        );
         assert!(bookmark.s3.is_none());
     }
 
@@ -269,10 +293,15 @@ mod tests {
             protocol: FileTransferProtocol::Sftp,
             username: Some(String::from("root")),
             password: Some(String::from("password")),
+            directory: Some(PathBuf::from("/tmp")),
             s3: None,
         };
         let params = FileTransferParams::from(bookmark);
         assert_eq!(params.protocol, FileTransferProtocol::Sftp);
+        assert_eq!(
+            params.entry_directory.as_deref().unwrap(),
+            std::path::Path::new("/tmp")
+        );
         let gparams = params.params.generic_params().unwrap();
         assert_eq!(gparams.address.as_str(), "192.168.1.1");
         assert_eq!(gparams.port, 22);
@@ -288,6 +317,7 @@ mod tests {
             port: None,
             username: None,
             password: None,
+            directory: Some(PathBuf::from("/tmp")),
             s3: Some(S3Params {
                 bucket: String::from("veeso"),
                 region: Some(String::from("eu-west-1")),
@@ -300,6 +330,10 @@ mod tests {
         };
         let params = FileTransferParams::from(bookmark);
         assert_eq!(params.protocol, FileTransferProtocol::AwsS3);
+        assert_eq!(
+            params.entry_directory.as_deref().unwrap(),
+            std::path::Path::new("/tmp")
+        );
         let gparams = params.params.s3_params().unwrap();
         assert_eq!(gparams.bucket_name.as_str(), "veeso");
         assert_eq!(gparams.region.as_deref().unwrap(), "eu-west-1");

@@ -178,7 +178,7 @@ impl AuthActivity {
                 assert!(self.app.active(&Id::BookmarksList).is_ok());
             }
             UiMsg::PasswordBlurDown => {
-                assert!(self.app.active(&Id::Protocol).is_ok());
+                assert!(self.app.active(&Id::RemoteDirectory).is_ok());
             }
             UiMsg::PasswordBlurUp => {
                 assert!(self.app.active(&Id::Username).is_ok());
@@ -199,6 +199,15 @@ impl AuthActivity {
                     .is_ok());
             }
             UiMsg::ProtocolBlurUp => {
+                assert!(self.app.active(&Id::RemoteDirectory).is_ok());
+            }
+            UiMsg::RececentsListBlur => {
+                assert!(self.app.active(&Id::BookmarksList).is_ok());
+            }
+            UiMsg::RemoteDirectoryBlurDown => {
+                assert!(self.app.active(&Id::Protocol).is_ok());
+            }
+            UiMsg::RemoteDirectoryBlurUp => {
                 assert!(self
                     .app
                     .active(match self.input_mask() {
@@ -206,9 +215,6 @@ impl AuthActivity {
                         InputMask::AwsS3 => &Id::S3NewPathStyle,
                     })
                     .is_ok());
-            }
-            UiMsg::RececentsListBlur => {
-                assert!(self.app.active(&Id::BookmarksList).is_ok());
             }
             UiMsg::S3BucketBlurDown => {
                 assert!(self.app.active(&Id::S3Region).is_ok());
@@ -259,7 +265,7 @@ impl AuthActivity {
                 assert!(self.app.active(&Id::S3SecurityToken).is_ok());
             }
             UiMsg::S3NewPathStyleBlurDown => {
-                assert!(self.app.active(&Id::Protocol).is_ok());
+                assert!(self.app.active(&Id::RemoteDirectory).is_ok());
             }
             UiMsg::S3NewPathStyleBlurUp => {
                 assert!(self.app.active(&Id::S3SessionToken).is_ok());

@@ -171,6 +171,12 @@ impl AuthActivity {
         // Load parameters into components
         self.protocol = bookmark.protocol;
         self.mount_protocol(bookmark.protocol);
+        self.mount_remote_directory(
+            bookmark
+                .entry_directory
+                .map(|x| x.to_string_lossy().to_string())
+                .unwrap_or_default(),
+        );
         match bookmark.params {
             ProtocolParams::AwsS3(params) => self.load_bookmark_s3_into_gui(params),
             ProtocolParams::Generic(params) => self.load_bookmark_generic_into_gui(params),
