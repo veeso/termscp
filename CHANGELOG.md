@@ -41,6 +41,8 @@ Released on FIXME:
     ```
 
     If the password is stored in the bookmark, it will be used, otherwise you will be prompted to type the password in.
+- Dependencies:
+  - Updated `tui-realm` to `1.6.0`
 
 ## 0.8.2
 
