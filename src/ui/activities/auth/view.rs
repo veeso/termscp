@@ -299,14 +299,7 @@ impl AuthActivity {
             .bookmarks_list
             .iter()
             .map(|x| {
-                Self::fmt_bookmark(
-                    x,
-                    self.bookmarks_client
-                        .as_ref()
-                        .unwrap()
-                        .get_bookmark(x)
-                        .unwrap(),
-                )
+                Self::fmt_bookmark(x, self.bookmarks_client().unwrap().get_bookmark(x).unwrap())
             })
             .collect();
         let bookmarks_color = self.theme().auth_bookmarks;
@@ -325,15 +318,7 @@ impl AuthActivity {
         let bookmarks: Vec<String> = self
             .recents_list
             .iter()
-            .map(|x| {
-                Self::fmt_recent(
-                    self.bookmarks_client
-                        .as_ref()
-                        .unwrap()
-                        .get_recent(x)
-                        .unwrap(),
-                )
-            })
+            .map(|x| Self::fmt_recent(self.bookmarks_client().unwrap().get_recent(x).unwrap()))
             .collect();
         let recents_color = self.theme().auth_recents;
         assert!(self

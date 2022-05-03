@@ -76,6 +76,12 @@ Address syntax can be:
 Please, report issues to <https://github.com/veeso/termscp>
 Please, consider supporting the author <https://ko-fi.com/veeso>")]
 struct Args {
+    #[argh(
+        switch,
+        short = 'b',
+        description = "resolve address argument as a bookmark name"
+    )]
+    address_as_bookmark: bool,
     #[argh(switch, short = 'c', description = "open termscp configuration")]
     config: bool,
     #[argh(switch, short = 'D', description = "enable TRACE log level")]
@@ -110,7 +116,7 @@ struct Args {
 }
 
 struct RunOpts {
-    remote: Option<FileTransferParams>,
+    remote: Remote,
     ticks: Duration,
     log_level: LogLevel,
     task: Task,
@@ -119,10 +125,30 @@ struct RunOpts {
 impl Default for RunOpts {
     fn default() -> Self {
         Self {
-            remote: None,
+            remote: Remote::None,
             ticks: Duration::from_millis(10),
             log_level: LogLevel::Info,
             task: Task::Activity(NextActivity::Authentication),
+        }
+    }
+}
+
+enum Remote {
+    Bookmark(BookmarkParams),
+    Host(FileTransferParams),
+    None,
+}
+
+struct BookmarkParams {
+    name: String,
+    password: Option<String>,
+}
+
+impl BookmarkParams {
+    pub fn new<S: AsRef<str>>(name: S, password: Option<S>) -> Self {
+        Self {
+            name: name.as_ref().to_string(),
+            password: password.map(|x| x.as_ref().to_string()),
         }
     }
 }
@@ -155,8 +181,6 @@ fn main() {
     std::process::exit(rc);
 }
 
-/// ### parse_args
-///
 /// Parse arguments
 /// In case of success returns `RunOpts`
 /// in case something is wrong returns the error message
@@ -182,7 +206,7 @@ fn parse_args(args: Args) -> Result<RunOpts, String> {
     // Match ticks
     run_opts.ticks = Duration::from_millis(args.ticks);
     // @! extra modes
-    if let Some(theme) = args.theme {
+    if let Some(theme) = args.theme.as_deref() {
         run_opts.task = Task::ImportTheme(PathBuf::from(theme));
     }
     if args.update {
@@ -190,26 +214,17 @@ fn parse_args(args: Args) -> Result<RunOpts, String> {
     }
     // @! Ordinary mode
     // Remote argument
-    if let Some(remote) = args.positional.get(0) {
-        // Parse address
-        match utils::parser::parse_remote_opt(remote.as_str()) {
-            Ok(mut remote) => {
-                // If password is provided, set password
-                if let Some(passwd) = args.password {
-                    if let Some(mut params) = remote.params.mut_generic_params() {
-                        params.password = Some(passwd);
-                    }
-                }
-                // Set params
-                run_opts.remote = Some(remote);
-                // In this case the first activity will be FileTransfer
-                run_opts.task = Task::Activity(NextActivity::FileTransfer);
-            }
-            Err(err) => {
-                return Err(format!("Bad address option: {}", err));
-            }
+    match parse_address_arg(&args) {
+        Err(err) => return Err(err),
+        Ok(Remote::None) => {}
+        Ok(remote) => {
+            // Set params
+            run_opts.remote = remote;
+            // In this case the first activity will be FileTransfer
+            run_opts.task = Task::Activity(NextActivity::FileTransfer);
         }
     }
+
     // Local directory
     if let Some(localdir) = args.positional.get(1) {
         // Change working directory if local dir is set
@@ -221,8 +236,42 @@ fn parse_args(args: Args) -> Result<RunOpts, String> {
     Ok(run_opts)
 }
 
-/// ### read_password
-///
+/// Parse address argument from cli args
+fn parse_address_arg(args: &Args) -> Result<Remote, String> {
+    if let Some(remote) = args.positional.get(0) {
+        if args.address_as_bookmark {
+            Ok(Remote::Bookmark(BookmarkParams::new(
+                remote,
+                args.password.as_ref(),
+            )))
+        } else {
+            // Parse address
+            parse_remote_address(remote.as_str(), args.password.as_deref()).map(Remote::Host)
+        }
+    } else {
+        Ok(Remote::None)
+    }
+}
+
+/// Parse remote address
+fn parse_remote_address(
+    remote: &str,
+    password: Option<&str>,
+) -> Result<FileTransferParams, String> {
+    match utils::parser::parse_remote_opt(remote) {
+        Ok(mut remote) => {
+            // If password is provided, set password
+            if let Some(passwd) = password {
+                if let Some(mut params) = remote.params.mut_generic_params() {
+                    params.password = Some(passwd.to_string());
+                }
+            }
+            Ok(remote)
+        }
+        Err(err) => Err(format!("Bad address option: {}", err)),
+    }
+}
+
 /// Read password from tty if address is specified
 fn read_password(run_opts: &mut RunOpts) -> Result<(), String> {
     // Initialize client if necessary
@@ -298,6 +347,7 @@ fn run(mut run_opts: RunOpts) -> i32 {
             if let Some(remote) = run_opts.remote.take() {
                 manager.set_filetransfer_params(remote);
             }
+            // TODO: resolve bookmark name
             manager.run(activity);
             0
         }

@@ -28,6 +28,7 @@
 // Deps
 use crate::filetransfer::FileTransferParams;
 use crate::host::{HostError, Localhost};
+use crate::system::bookmarks_client::BookmarksClient;
 use crate::system::config_client::ConfigClient;
 use crate::system::environment;
 use crate::system::theme_provider::ThemeProvider;
@@ -72,8 +73,12 @@ impl ActivityManager {
                     (ConfigClient::degraded(), Some(err))
                 }
             };
+        let (bookmarks_client, error) = match Self::init_bookmarks_client() {
+            Ok(cli) => (cli, None),
+            Err(err) => (None, Some(err)),
+        };
         let theme_provider: ThemeProvider = Self::init_theme_provider();
-        let ctx: Context = Context::new(config_client, theme_provider, error);
+        let ctx: Context = Context::new(bookmarks_client, config_client, theme_provider, error);
         Ok(ActivityManager {
             context: Some(ctx),
             local_dir: local_dir.to_path_buf(),
@@ -85,6 +90,33 @@ impl ActivityManager {
     pub fn set_filetransfer_params(&mut self, params: FileTransferParams) {
         // Put params into the context
         self.context.as_mut().unwrap().set_ftparams(params);
+    }
+
+    /// Resolve provided bookmark name and set it as file transfer params.
+    /// Returns error if bookmark is not found
+    pub fn resolve_bookmark_name(
+        &mut self,
+        bookmark_name: &str,
+        password: Option<&str>,
+    ) -> Result<(), String> {
+        if let Some(bookmarks_client) = self.context.as_mut().unwrap().bookmarks_client_mut() {
+            match bookmarks_client.get_bookmark(bookmark_name) {
+                None => Err(format!(
+                    r#"Could not resolve bookmark name: "{}" no such bookmark"#,
+                    bookmark_name
+                )),
+                Some(params) => {
+                    self.context.as_mut().unwrap().set_ftparams(params);
+                    // Set password if provided
+                    // TODO: move read password from tty to utils and create a method to check whether ft params require password
+                    Ok(())
+                }
+            }
+        } else {
+            Err(String::from(
+                "Could not resolve bookmark name: bookmarks client not initialized",
+            ))
+        }
     }
 
     ///
@@ -255,6 +287,33 @@ impl ActivityManager {
     }
 
     // -- misc
+
+    fn init_bookmarks_client() -> Result<Option<BookmarksClient>, String> {
+        // Get config dir
+        match environment::init_config_dir() {
+            Ok(path) => {
+                // If some configure client, otherwise do nothing; don't bother users telling them that bookmarks are not supported on their system.
+                if let Some(config_dir_path) = path {
+                    let bookmarks_file: PathBuf =
+                        environment::get_bookmarks_paths(config_dir_path.as_path());
+                    // Initialize client
+                    BookmarksClient::new(bookmarks_file.as_path(), config_dir_path.as_path(), 16)
+                        .map(Option::Some)
+                        .map_err(|e| {
+                            format!(
+                                "Could not initialize bookmarks (at \"{}\", \"{}\"): {}",
+                                bookmarks_file.display(),
+                                config_dir_path.display(),
+                                e
+                            )
+                        })
+                } else {
+                    Ok(None)
+                }
+            }
+            Err(err) => Err(err),
+        }
+    }
 
     /// Initialize configuration client
     fn init_config_client() -> Result<ConfigClient, String> {
