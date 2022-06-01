@@ -16,8 +16,26 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::mpsc::{channel, Receiver, RecvTimeoutError};
 use std::time::Duration;
+use thiserror::Error;
 
-type FsWatcherResult<T> = Result<T, WatcherError>;
+type FsWatcherResult<T> = Result<T, FsWatcherError>;
+
+/// Describes an error returned by the `FsWatcher`
+#[derive(Debug, Error)]
+pub enum FsWatcherError {
+    #[error("unable to unwatch this path, since is not currently watched")]
+    PathNotWatched,
+    #[error("unable to watch path, since it's already watched")]
+    PathAlreadyWatched,
+    #[error("worker error: {0}")]
+    WorkerError(WatcherError),
+}
+
+impl From<WatcherError> for FsWatcherError {
+    fn from(err: WatcherError) -> Self {
+        Self::WorkerError(err)
+    }
+}
 
 /// File system watcher
 pub struct FsWatcher {
@@ -28,13 +46,13 @@ pub struct FsWatcher {
 
 impl FsWatcher {
     /// Initialize a new `FsWatcher`
-    pub fn init() -> FsWatcherResult<Self> {
+    pub fn init(delay: Duration) -> FsWatcherResult<Self> {
         let (tx, receiver) = channel();
 
         Ok(Self {
             paths: HashMap::default(),
             receiver,
-            watcher: watcher(tx, Duration::from_secs(5))?,
+            watcher: watcher(tx, delay)?,
         })
     }
 
@@ -42,19 +60,18 @@ impl FsWatcher {
     pub fn poll(&self) -> FsWatcherResult<Option<FsChange>> {
         match self.receiver.recv_timeout(Duration::from_millis(1)) {
             Ok(DebouncedEvent::Rename(source, dest)) => Ok(self.build_fs_move(source, dest)),
-            Ok(DebouncedEvent::NoticeRemove(p) | DebouncedEvent::Remove(p)) => {
-                Ok(self.build_fs_remove(p))
+            Ok(DebouncedEvent::Remove(p)) => Ok(self.build_fs_remove(p)),
+            Ok(DebouncedEvent::Chmod(p) | DebouncedEvent::Create(p) | DebouncedEvent::Write(p)) => {
+                Ok(self.build_fs_update(p))
             }
             Ok(
-                DebouncedEvent::Chmod(p)
-                | DebouncedEvent::Create(p)
-                | DebouncedEvent::NoticeWrite(p)
-                | DebouncedEvent::Write(p),
-            ) => Ok(self.build_fs_update(p)),
-            Ok(DebouncedEvent::Rescan) => Ok(None),
+                DebouncedEvent::Rescan
+                | DebouncedEvent::NoticeRemove(_)
+                | DebouncedEvent::NoticeWrite(_),
+            ) => Ok(None),
             Ok(DebouncedEvent::Error(e, _)) => {
                 error!("FsWatcher reported error: {}", e);
-                Err(e)
+                Err(e.into())
             }
             Err(RecvTimeoutError::Timeout) => Ok(None),
             Err(RecvTimeoutError::Disconnected) => panic!("File watcher died"),
@@ -68,8 +85,10 @@ impl FsWatcher {
             self.watcher.watch(local, RecursiveMode::Recursive)?;
             // Insert new path to paths
             self.paths.insert(local.to_path_buf(), remote.to_path_buf());
+            Ok(())
+        } else {
+            Err(FsWatcherError::PathAlreadyWatched)
         }
-        Ok(())
     }
 
     /// Returns whether `path` is currently watched.
@@ -88,8 +107,10 @@ impl FsWatcher {
         if let Some(watched_path) = watched_path {
             self.watcher.unwatch(watched_path.as_path())?;
             self.paths.remove(watched_path.as_path());
+            Ok(())
+        } else {
+            Err(FsWatcherError::PathNotWatched)
         }
-        Ok(())
     }
 
     /// Given a certain path, returns the path data associated to the path which
@@ -139,5 +160,205 @@ impl FsWatcher {
         } else {
             None
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+
+    use super::*;
+    use crate::utils::test_helpers;
+
+    use pretty_assertions::assert_eq;
+    use tempfile::TempDir;
+
+    #[test]
+    fn should_init_fswatcher() {
+        let watcher = FsWatcher::init(Duration::from_secs(5)).unwrap();
+        assert!(watcher.paths.is_empty());
+    }
+
+    #[test]
+    fn should_watch_path() {
+        let mut watcher = FsWatcher::init(Duration::from_secs(5)).unwrap();
+        let tempdir = TempDir::new().unwrap();
+        assert!(watcher
+            .watch(tempdir.path(), Path::new("/tmp/test"))
+            .is_ok());
+        // check if in paths
+        assert_eq!(
+            watcher.paths.get(tempdir.path()).unwrap(),
+            Path::new("/tmp/test")
+        );
+        // close tempdir
+        assert!(tempdir.close().is_ok());
+    }
+
+    #[test]
+    fn should_not_watch_path_if_subdir_of_watched_path() {
+        let mut watcher = FsWatcher::init(Duration::from_secs(5)).unwrap();
+        let tempdir = TempDir::new().unwrap();
+        assert!(watcher
+            .watch(tempdir.path(), Path::new("/tmp/test"))
+            .is_ok());
+        // watch subdir
+        let mut subdir = tempdir.path().to_path_buf();
+        subdir.push("abc/def");
+        // should return already watched
+        assert!(watcher
+            .watch(subdir.as_path(), Path::new("/tmp/test/abc/def"))
+            .is_err());
+        // close tempdir
+        assert!(tempdir.close().is_ok());
+    }
+
+    #[test]
+    fn should_unwatch_path() {
+        let mut watcher = FsWatcher::init(Duration::from_secs(5)).unwrap();
+        let tempdir = TempDir::new().unwrap();
+        assert!(watcher
+            .watch(tempdir.path(), Path::new("/tmp/test"))
+            .is_ok());
+        // unwatch
+        assert!(watcher.unwatch(tempdir.path()).is_ok());
+        assert!(watcher.paths.get(tempdir.path()).is_none());
+        // close tempdir
+        assert!(tempdir.close().is_ok());
+    }
+
+    #[test]
+    fn should_unwatch_path_when_subdir() {
+        let mut watcher = FsWatcher::init(Duration::from_secs(5)).unwrap();
+        let tempdir = TempDir::new().unwrap();
+        assert!(watcher
+            .watch(tempdir.path(), Path::new("/tmp/test"))
+            .is_ok());
+        // unwatch
+        let mut subdir = tempdir.path().to_path_buf();
+        subdir.push("abc/def");
+        assert!(watcher.unwatch(subdir.as_path()).is_ok());
+        assert!(watcher.paths.get(tempdir.path()).is_none());
+        // close tempdir
+        assert!(tempdir.close().is_ok());
+    }
+
+    #[test]
+    fn should_return_err_when_unwatching_unwatched_path() {
+        let mut watcher = FsWatcher::init(Duration::from_secs(5)).unwrap();
+        assert!(watcher.unwatch(Path::new("/tmp")).is_err());
+    }
+
+    #[test]
+    fn should_tell_whether_path_is_watched() {
+        let mut watcher = FsWatcher::init(Duration::from_secs(5)).unwrap();
+        let tempdir = TempDir::new().unwrap();
+        assert!(watcher
+            .watch(tempdir.path(), Path::new("/tmp/test"))
+            .is_ok());
+        assert_eq!(watcher.watched(tempdir.path()), true);
+        let mut subdir = tempdir.path().to_path_buf();
+        subdir.push("abc/def");
+        assert_eq!(watcher.watched(subdir.as_path()), true);
+        assert_eq!(watcher.watched(Path::new("/tmp")), false);
+        // close tempdir
+        assert!(tempdir.close().is_ok());
+    }
+
+    #[test]
+    fn should_poll_file_update() {
+        let mut watcher = FsWatcher::init(Duration::from_millis(100)).unwrap();
+        let tempdir = TempDir::new().unwrap();
+        let tempdir_path = PathBuf::from(format!("/private{}", tempdir.path().display()));
+        assert!(watcher
+            .watch(tempdir_path.as_path(), Path::new("/tmp/test"))
+            .is_ok());
+        // create file
+        let file_path = test_helpers::make_file_at(tempdir_path.as_path(), "test.txt").unwrap();
+        // wait
+        std::thread::sleep(Duration::from_millis(500));
+        // wait till update
+        loop {
+            let fs_change = watcher.poll().unwrap();
+            if let Some(FsChange::Update(_)) = fs_change {
+                break;
+            }
+            std::thread::sleep(Duration::from_millis(500));
+        }
+        assert!(std::fs::remove_file(file_path.as_path()).is_ok());
+        // close tempdir
+        assert!(tempdir.close().is_ok());
+    }
+
+    #[test]
+    fn should_poll_file_removed() {
+        let mut watcher = FsWatcher::init(Duration::from_millis(100)).unwrap();
+        let tempdir = TempDir::new().unwrap();
+        let tempdir_path = PathBuf::from(format!("/private{}", tempdir.path().display()));
+        assert!(watcher
+            .watch(tempdir_path.as_path(), Path::new("/tmp/test"))
+            .is_ok());
+        // create file
+        let file_path = test_helpers::make_file_at(tempdir_path.as_path(), "test.txt").unwrap();
+        std::thread::sleep(Duration::from_millis(500));
+        // wait
+        assert!(std::fs::remove_file(file_path.as_path()).is_ok());
+        // poll till remove
+        loop {
+            let fs_change = watcher.poll().unwrap();
+            if let Some(FsChange::Remove(remove)) = fs_change {
+                assert_eq!(remove.path(), Path::new("/tmp/test/test.txt"));
+                break;
+            }
+            std::thread::sleep(Duration::from_millis(500));
+        }
+        // close tempdir
+        assert!(tempdir.close().is_ok());
+    }
+
+    /*
+    #[test]
+    fn should_poll_file_moved() {
+        let mut watcher = FsWatcher::init(Duration::from_millis(100)).unwrap();
+        let tempdir = TempDir::new().unwrap();
+        let tempdir_path = PathBuf::from(format!("/private{}", tempdir.path().display()));
+        assert!(watcher
+            .watch(tempdir_path.as_path(), Path::new("/tmp/test"))
+            .is_ok());
+        // create file
+        let file_path = test_helpers::make_file_at(tempdir_path.as_path(), "test.txt").unwrap();
+        // wait
+        std::thread::sleep(Duration::from_millis(500));
+        // move file
+        let mut new_file_path = tempdir.path().to_path_buf();
+        new_file_path.push("new.txt");
+        assert!(std::fs::rename(file_path.as_path(), new_file_path.as_path()).is_ok());
+        std::thread::sleep(Duration::from_millis(500));
+        // wait till rename
+        loop {
+            let fs_change = watcher.poll().unwrap();
+            if let Some(FsChange::Move(mov)) = fs_change {
+                assert_eq!(mov.source(), Path::new("/tmp/test/test.txt"));
+                assert_eq!(mov.destination(), Path::new("/tmp/test/new.txt"));
+                break;
+            }
+            std::thread::sleep(Duration::from_millis(500));
+        }
+        // remove file
+        assert!(std::fs::remove_file(new_file_path.as_path()).is_ok());
+        // close tempdir
+        assert!(tempdir.close().is_ok());
+    }
+     */
+
+    #[test]
+    fn should_poll_nothing() {
+        let mut watcher = FsWatcher::init(Duration::from_secs(5)).unwrap();
+        let tempdir = TempDir::new().unwrap();
+        assert!(watcher
+            .watch(tempdir.path(), Path::new("/tmp/test"))
+            .is_ok());
+        assert!(watcher.poll().ok().unwrap().is_none());
+        // close tempdir
+        assert!(tempdir.close().is_ok());
     }
 }

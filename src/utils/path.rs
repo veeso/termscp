@@ -83,10 +83,7 @@ where
 
 /// Returns whether `p` is child (direct/indirect) of ancestor `ancestor`
 pub fn is_child_of<P: AsRef<Path>>(p: P, ancestor: P) -> bool {
-    p.as_ref()
-        .ancestors()
-        .find(|x| *x == ancestor.as_ref())
-        .is_some()
+    p.as_ref().ancestors().any(|x| x == ancestor.as_ref())
 }
 
 #[cfg(test)]

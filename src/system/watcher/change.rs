@@ -171,7 +171,7 @@ fn remote_relative_path(
     local_watched_path: &Path,
     remote_synced_path: &Path,
 ) -> PathBuf {
-    let local_diff = path_utils::diff_paths(local_watched_path, target);
+    let local_diff = path_utils::diff_paths(target, local_watched_path);
     // get absolute path to remote file associated to local file
     match local_diff {
         None => remote_synced_path.to_path_buf(),
@@ -191,12 +191,38 @@ mod test {
     use pretty_assertions::assert_eq;
 
     #[test]
+    fn should_get_remote_relative_path_from_subdir() {
+        assert_eq!(
+            remote_relative_path(
+                Path::new("/tmp/abc/test.txt"),
+                Path::new("/tmp"),
+                Path::new("/home/foo")
+            )
+            .as_path(),
+            Path::new("/home/foo/abc/test.txt")
+        );
+    }
+
+    #[test]
+    fn should_get_remote_relative_path_same_path() {
+        assert_eq!(
+            remote_relative_path(
+                Path::new("/tmp/abc/test.txt"),
+                Path::new("/tmp/abc/test.txt"),
+                Path::new("/home/foo/test.txt")
+            )
+            .as_path(),
+            Path::new("/home/foo/test.txt")
+        );
+    }
+
+    #[test]
     fn should_make_fs_change_move_from_same_directory() {
         let change = FsChange::mov(
             PathBuf::from("/tmp/foo.txt"),
             PathBuf::from("/tmp/bar.txt"),
-            Path::new("/tmp/foo.txt"),
-            Path::new("/home/foo/foo.txt"),
+            Path::new("/tmp"),
+            Path::new("/home/foo"),
         );
         if let FsChange::Move(change) = change {
             assert_eq!(change.source(), Path::new("/home/foo/foo.txt"));
@@ -209,14 +235,14 @@ mod test {
     #[test]
     fn should_make_fs_change_move_from_subdirectory() {
         let change = FsChange::mov(
-            PathBuf::from("/tmp/foo.txt"),
-            PathBuf::from("/tmp/bar.txt"),
+            PathBuf::from("/tmp/abc/foo.txt"),
+            PathBuf::from("/tmp/abc/bar.txt"),
             Path::new("/tmp/abc"),
             Path::new("/home/foo"),
         );
         if let FsChange::Move(change) = change {
-            assert_eq!(change.source(), Path::new("/home/foo/abc/foo.txt"));
-            assert_eq!(change.destination(), Path::new("/home/foo/abc/bar.txt"));
+            assert_eq!(change.source(), Path::new("/home/foo/foo.txt"));
+            assert_eq!(change.destination(), Path::new("/home/foo/bar.txt"));
         } else {
             panic!("not a Move");
         }
@@ -244,7 +270,7 @@ mod test {
             Path::new("/home/foo"),
         );
         if let FsChange::Remove(change) = change {
-            assert_eq!(change.path(), Path::new("/home/foo/abc/bar.txt"));
+            assert_eq!(change.path(), Path::new("/home/foo/bar.txt"));
         } else {
             panic!("not a remove");
         }
