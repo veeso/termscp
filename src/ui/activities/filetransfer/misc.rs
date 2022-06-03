@@ -81,6 +81,8 @@ impl FileTransferActivity {
         self.log_records.push_front(record);
         // Update log
         self.update_logbox();
+        // flag redraw
+        self.redraw = true;
     }
 
     /// Add message to log events and also display it as an alert

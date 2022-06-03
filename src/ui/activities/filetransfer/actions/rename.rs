@@ -96,7 +96,7 @@ impl FileTransferActivity {
         }
     }
 
-    fn remote_rename_file(&mut self, entry: &File, dest: &Path) {
+    pub(crate) fn remote_rename_file(&mut self, entry: &File, dest: &Path) {
         match self.client.as_mut().mov(entry.path(), dest) {
             Ok(_) => {
                 self.log(

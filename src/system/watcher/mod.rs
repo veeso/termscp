@@ -100,14 +100,20 @@ impl FsWatcher {
         self.find_watched_path(path).is_some()
     }
 
+    /// Returns the list of watched paths
+    pub fn watched_paths(&self) -> Vec<&Path> {
+        Vec::from_iter(self.paths.keys().map(|x| x.as_path()))
+    }
+
     /// Unwatch provided path.
-    /// When unwatching the path, it searches for the ancestor watched path if any
-    pub fn unwatch(&mut self, path: &Path) -> FsWatcherResult<()> {
+    /// When unwatching the path, it searches for the ancestor watched path if any.
+    /// Returns the unwatched resolved path
+    pub fn unwatch(&mut self, path: &Path) -> FsWatcherResult<PathBuf> {
         let watched_path = self.find_watched_path(path).map(|x| x.0.to_path_buf());
         if let Some(watched_path) = watched_path {
             self.watcher.unwatch(watched_path.as_path())?;
             self.paths.remove(watched_path.as_path());
-            Ok(())
+            Ok(watched_path)
         } else {
             Err(FsWatcherError::PathNotWatched)
         }
@@ -236,7 +242,10 @@ mod test {
         // unwatch
         let mut subdir = tempdir.path().to_path_buf();
         subdir.push("abc/def");
-        assert!(watcher.unwatch(subdir.as_path()).is_ok());
+        assert_eq!(
+            watcher.unwatch(subdir.as_path()).unwrap().as_path(),
+            Path::new(tempdir.path())
+        );
         assert!(watcher.paths.get(tempdir.path()).is_none());
         // close tempdir
         assert!(tempdir.close().is_ok());
@@ -360,5 +369,17 @@ mod test {
         assert!(watcher.poll().ok().unwrap().is_none());
         // close tempdir
         assert!(tempdir.close().is_ok());
+    }
+
+    #[test]
+    fn should_get_watched_paths() {
+        let mut watcher = FsWatcher::init(Duration::from_secs(5)).unwrap();
+        assert!(watcher.watch(Path::new("/tmp"), Path::new("/tmp")).is_ok());
+        assert!(watcher
+            .watch(Path::new("/home"), Path::new("/home"))
+            .is_ok());
+        let mut watched_paths = watcher.watched_paths();
+        watched_paths.sort();
+        assert_eq!(watched_paths, vec![Path::new("/home"), Path::new("/tmp")]);
     }
 }

@@ -683,6 +683,7 @@ impl KeybindingsPopup {
                 .step(8)
                 .highlighted_str("? ")
                 .title("Keybindings", Alignment::Center)
+                .rewind(true)
                 .rows(
                     TableBuilder::default()
                         .add_col(TextSpan::new("<ESC>").bold().fg(key_color))
@@ -759,8 +760,11 @@ impl KeybindingsPopup {
                         .add_col(TextSpan::new("<R|F6>").bold().fg(key_color))
                         .add_col(TextSpan::from("            Rename file"))
                         .add_row()
-                        .add_col(TextSpan::new("<F2|S>").bold().fg(key_color))
+                        .add_col(TextSpan::new("<S|F2>").bold().fg(key_color))
                         .add_col(TextSpan::from("            Save file as"))
+                        .add_row()
+                        .add_col(TextSpan::new("<T>").bold().fg(key_color))
+                        .add_col(TextSpan::from("               Watch/unwatch file changes"))
                         .add_row()
                         .add_col(TextSpan::new("<U>").bold().fg(key_color))
                         .add_col(TextSpan::from("               Go to parent directory"))
@@ -1850,5 +1854,70 @@ impl WaitPopup {
 impl Component<Msg, NoUserEvent> for WaitPopup {
     fn on(&mut self, _ev: Event<NoUserEvent>) -> Option<Msg> {
         None
+    }
+}
+
+#[derive(MockComponent)]
+pub struct WatcherPopup {
+    component: Radio,
+}
+
+impl WatcherPopup {
+    pub fn new(watched: bool, local: &str, remote: &str, color: Color) -> Self {
+        let text = format!(
+            r#"{} changes from "{}" to "{}"?"#,
+            match watched {
+                false => "synchronize",
+                true => "stop synchronizing",
+            },
+            local,
+            remote,
+        );
+        Self {
+            component: Radio::default()
+                .borders(
+                    Borders::default()
+                        .color(color)
+                        .modifiers(BorderType::Rounded),
+                )
+                .foreground(color)
+                .choices(&["Yes", "No"])
+                .title(text, Alignment::Center),
+        }
+    }
+}
+
+impl Component<Msg, NoUserEvent> for WatcherPopup {
+    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+        match ev {
+            Event::Keyboard(KeyEvent {
+                code: Key::Left, ..
+            }) => {
+                self.perform(Cmd::Move(Direction::Left));
+                Some(Msg::None)
+            }
+            Event::Keyboard(KeyEvent {
+                code: Key::Right, ..
+            }) => {
+                self.perform(Cmd::Move(Direction::Right));
+                Some(Msg::None)
+            }
+            Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
+                Some(Msg::Ui(UiMsg::CloseWatcherPopup))
+            }
+            Event::Keyboard(KeyEvent {
+                code: Key::Enter, ..
+            }) => {
+                if matches!(
+                    self.perform(Cmd::Submit),
+                    CmdResult::Submit(State::One(StateValue::Usize(0)))
+                ) {
+                    Some(Msg::Transfer(TransferMsg::ToggleWatch))
+                } else {
+                    Some(Msg::Ui(UiMsg::CloseWatcherPopup))
+                }
+            }
+            _ => None,
+        }
     }
 }
