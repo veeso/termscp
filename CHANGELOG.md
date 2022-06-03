@@ -45,6 +45,12 @@ Released on FIXME:
   - It is now possible to configure the directory path you want to enter when you connect to the remote host from the authentication form
   - This parameter can be stored into bookmarks as you already do with the other parameters
   - You can find this field scrolling down in the authentication form
+- **File system watcher**:
+  - It is now possible to synchronize changes from a local path to the remote host
+  - Press `<T>` to start synchronizing changes from the selected directory/file to the remote directory
+    - The changes will be automatically applied to the remote host with a maximum delay of 5 seconds
+    - These changes are (if possible) applied: file removed, file changed, file renamed
+  - Press `<CTRL+T>` to show all the currently synchronized files
 - **Enhancements**:
   - Improved s3 auth form scrolling
 - Dependencies:

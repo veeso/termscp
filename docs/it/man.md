@@ -28,6 +28,7 @@
   - [Editor di testo ✏](#editor-di-testo-)
   - [Logging 🩺](#logging-)
   - [Notifiche 📫](#notifiche-)
+  - [File watcher 🔭](#file-watcher-)
 
 ## Argomenti da linea di comando ❓
 
@@ -200,6 +201,7 @@ Per cambiare pannello ti puoi muovere con le frecce, `<LEFT>` per andare sul pan
 | `<Q|F10>`     | Termina termscp                                       | Quit        |
 | `<R|F6>`      | Rinomina file                                         | Rename      |
 | `<S|F2>`      | Salva file con nome                                   | Save        |
+| `<T>`         | Sincronizza il percorso locale con l'host remoto      | Track       |
 | `<U>`         | Vai alla directory padre                              | Upper       |
 | `<V|F3>`      | Apri il file con il programma definito dal sistema    | View        |
 | `<W>`         | Apri il file con il programma specificato             | With        |
@@ -207,6 +209,7 @@ Per cambiare pannello ti puoi muovere con le frecce, `<LEFT>` per andare sul pan
 | `<Y>`         | Abilita/disabilita Sync-Browsing                      | sYnc        |
 | `<CTRL+A>`    | Seleziona tutti i file                                |             |
 | `<CTRL+C>`    | Annulla trasferimento file                            |             |
+| `<CTRL+T>`    | Visualizza tutti i percorsi sincronizzati             | Track       |
 
 ### Lavora su più file 🥷
 
@@ -508,3 +511,26 @@ termscp invierà notifiche destkop per i seguenti eventi:
 
 ❗ Se vuoi disabilitare le notifiche, è sufficiente andare in configurazione ed impostare `Enable notifications?` a `No` 😉.  
 ❗ Se vuoi modificare la soglia minima per le notifiche dei trasferimenti, puoi impostare il valore di `Notifications: minimum transfer size` in configurazione 🙂.
+
+## File watcher 🔭
+
+Il file watcher ti permette di impostare una lista di percorsi da sincronizzare con l'host remoto.
+Ciò implica che ogni volta che una modifica verrà rilevata al percorso sincronizzato, la modifica verrà automaticamente sincronizzata con l'host remoto, entro 5 secondi.
+
+Puoi impostare quanti percorsi preferisci da sincronizzare:
+
+1. Porta il cursore dell'explorer sulla cartella/file che vuoi sincronizzare
+2. Vai alla directory sull'explorer remoto dove vuoi riportare le modifiche
+3. Premi `<T>`
+4. Rispondi `<YES>` alla domanda se vuoi sincronizzare il percorso
+
+Per terminare la sincronizzazione, premi `<T>`, al percorso locale sincronizzato (od in qualsiasi sua sottocartella)
+OPPURE, puoi semplicemente premere `<CTRL+T>` e premi `<ENTER>` sul percorso che vuoi desincronizzare.
+
+Queste modifiche verranno applicate sull'host remoto:
+
+- Nuovi file, modifiche
+- File spostati o rinominati
+- File rimossi
+
+> ❗ Il watcher funziona solo in maniera unidirezionale locale > remoto. NON è possibile tracciare le modifiche da remoto a locale.
