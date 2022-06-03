@@ -27,7 +27,7 @@
  */
 pub(self) use super::{
     browser::FileExplorerTab, FileTransferActivity, Id, LogLevel, Msg, PendingActionMsg,
-    TransferOpts, TransferPayload,
+    TransferMsg, TransferOpts, TransferPayload, UiMsg,
 };
 pub(self) use remotefs::File;
 use tuirealm::{State, StateValue};

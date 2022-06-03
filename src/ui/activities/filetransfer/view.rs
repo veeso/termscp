@@ -287,6 +287,11 @@ impl FileTransferActivity {
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::QuitPopup, f, popup);
+            } else if self.app.mounted(&Id::WatchedPathsList) {
+                let popup = draw_area_in(f.size(), 60, 50);
+                f.render_widget(Clear, popup);
+                // make popup
+                self.app.view(&Id::WatchedPathsList, f, popup);
             } else if self.app.mounted(&Id::WatcherPopup) {
                 let popup = draw_area_in(f.size(), 60, 10);
                 f.render_widget(Clear, popup);
@@ -739,6 +744,23 @@ impl FileTransferActivity {
         let _ = self.app.umount(&Id::WatcherPopup);
     }
 
+    pub(super) fn mount_watched_paths_list(&mut self, paths: &[std::path::PathBuf]) {
+        let info_color = self.theme().misc_info_dialog;
+        assert!(self
+            .app
+            .remount(
+                Id::WatchedPathsList,
+                Box::new(components::WatchedPathsList::new(paths, info_color)),
+                vec![],
+            )
+            .is_ok());
+        assert!(self.app.active(&Id::WatchedPathsList).is_ok());
+    }
+
+    pub(super) fn umount_watched_paths_list(&mut self) {
+        let _ = self.app.umount(&Id::WatchedPathsList);
+    }
+
     pub(super) fn mount_radio_replace(&mut self, file_name: &str) {
         let warn_color = self.theme().misc_warn_dialog;
         assert!(self
@@ -1066,9 +1088,14 @@ impl FileTransferActivity {
                                                                                                         Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
                                                                                                             Id::WatcherPopup,
                                                                                                         )))),
-                                                                                                        Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
-                                                                                                            Id::WaitPopup,
-                                                                                                        )))),
+                                                                                                        Box::new(SubClause::And(
+                                                                                                            Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
+                                                                                                                Id::WatchedPathsList,
+                                                                                                            )))),
+                                                                                                            Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
+                                                                                                                Id::WaitPopup,
+                                                                                                            )))),
+                                                                                                        )),
                                                                                                     )),
                                                                                                 )),
                                                                                             )),

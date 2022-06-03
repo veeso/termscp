@@ -2,7 +2,7 @@
 //!
 //! actions associated to the file watcher
 
-use super::{FileTransferActivity, LogLevel, SelectedFile};
+use super::{FileTransferActivity, LogLevel, Msg, SelectedFile, TransferMsg, UiMsg};
 
 use std::path::{Path, PathBuf};
 
@@ -22,6 +22,17 @@ impl FileTransferActivity {
         }
     }
 
+    pub fn action_show_watched_paths_list(&mut self) {
+        // return if fswatcher is not working
+        if self.fswatcher.is_none() {
+            return;
+        }
+        let watched_paths: Vec<PathBuf> = self
+            .map_on_fswatcher(|w| w.watched_paths().iter().map(|p| p.to_path_buf()).collect())
+            .unwrap_or_default();
+        self.mount_watched_paths_list(watched_paths.as_slice());
+    }
+
     pub fn action_toggle_watch(&mut self) {
         // umount radio
         self.umount_radio_watcher();
@@ -36,6 +47,33 @@ impl FileTransferActivity {
         }
     }
 
+    pub fn action_toggle_watch_for(&mut self, index: usize) {
+        // umount
+        self.umount_watched_paths_list();
+        // return if fswatcher is not working
+        if self.fswatcher.is_none() {
+            return;
+        }
+        // get path
+        if let Some(path) = self
+            .map_on_fswatcher(|w| w.watched_paths().get(index).map(|p| p.to_path_buf()))
+            .flatten()
+        {
+            // ask whether to unwatch
+            self.mount_radio_watch(true, path.to_string_lossy().to_string().as_str(), "");
+            // wait for response
+            if let Msg::Transfer(TransferMsg::ToggleWatch) = self.wait_for_pending_msg(&[
+                Msg::Ui(UiMsg::CloseWatcherPopup),
+                Msg::Transfer(TransferMsg::ToggleWatch),
+            ]) {
+                // unwatch path
+                self.unwatch_path(&path);
+            }
+            self.umount_radio_watcher();
+        }
+        self.action_show_watched_paths_list();
+    }
+
     fn watch_path(&mut self, local: &Path, remote: &Path) {
         debug!(
             "tracking changes at {} to {}",
@@ -47,7 +85,7 @@ impl FileTransferActivity {
                 self.log(
                     LogLevel::Info,
                     format!(
-                        "changes to {} will now be synced with {}",
+                        "changes to {} will now be synched with {}",
                         local.display(),
                         remote.display()
                     ),

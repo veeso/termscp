@@ -115,7 +115,7 @@ impl FileTransferActivity {
                 self.log(
                     LogLevel::Info,
                     format!(
-                        "synced watched file {} with {}",
+                        "synched watched file {} with {}",
                         local.display(),
                         remote.display()
                     ),

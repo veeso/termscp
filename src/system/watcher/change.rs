@@ -23,13 +23,13 @@ impl FsChange {
         source: PathBuf,
         destination: PathBuf,
         local_watched_path: &Path,
-        remote_synced_path: &Path,
+        remote_synched_path: &Path,
     ) -> Self {
         Self::Move(FileToRename::new(
             source,
             destination,
             local_watched_path,
-            remote_synced_path,
+            remote_synched_path,
         ))
     }
 
@@ -37,12 +37,12 @@ impl FsChange {
     pub fn remove(
         removed_path: PathBuf,
         local_watched_path: &Path,
-        remote_synced_path: &Path,
+        remote_synched_path: &Path,
     ) -> Self {
         Self::Remove(FileToRemove::new(
             removed_path,
             local_watched_path,
-            remote_synced_path,
+            remote_synched_path,
         ))
     }
 
@@ -50,12 +50,12 @@ impl FsChange {
     pub fn update(
         changed_path: PathBuf,
         local_watched_path: &Path,
-        remote_synced_path: &Path,
+        remote_synched_path: &Path,
     ) -> Self {
         Self::Update(FileUpdate::new(
             changed_path,
             local_watched_path,
-            remote_synced_path,
+            remote_synched_path,
         ))
     }
 }
@@ -75,18 +75,22 @@ impl FileToRename {
     /// - the path of the source on local fs
     /// - the path of the destination on local fs
     /// - the path of the file/directory watched on the local fs
-    /// - the path of the remote file/directory synced with the local fs
+    /// - the path of the remote file/directory synched with the local fs
     ///
-    /// the `remote` is resolved pushing to `remote_synced_path` the diff between `changed_path` and `local_watched_path`
+    /// the `remote` is resolved pushing to `remote_synched_path` the diff between `changed_path` and `local_watched_path`
     fn new(
         source: PathBuf,
         destination: PathBuf,
         local_watched_path: &Path,
-        remote_synced_path: &Path,
+        remote_synched_path: &Path,
     ) -> Self {
         Self {
-            source: remote_relative_path(&source, local_watched_path, remote_synced_path),
-            destination: remote_relative_path(&destination, local_watched_path, remote_synced_path),
+            source: remote_relative_path(&source, local_watched_path, remote_synched_path),
+            destination: remote_relative_path(
+                &destination,
+                local_watched_path,
+                remote_synched_path,
+            ),
         }
     }
 
@@ -113,12 +117,12 @@ impl FileToRemove {
     ///
     /// - the path of the file which has been removed on localhost
     /// - the path of the file/directory watched on the local fs
-    /// - the path of the remote file/directory synced with the local fs
+    /// - the path of the remote file/directory synched with the local fs
     ///
-    /// the `remote` is resolved pushing to `remote_synced_path` the diff between `removed_path` and `local_watched_path`
-    fn new(removed_path: PathBuf, local_watched_path: &Path, remote_synced_path: &Path) -> Self {
+    /// the `remote` is resolved pushing to `remote_synched_path` the diff between `removed_path` and `local_watched_path`
+    fn new(removed_path: PathBuf, local_watched_path: &Path, remote_synched_path: &Path) -> Self {
         Self {
-            path: remote_relative_path(&removed_path, local_watched_path, remote_synced_path),
+            path: remote_relative_path(&removed_path, local_watched_path, remote_synched_path),
         }
     }
 
@@ -142,12 +146,12 @@ impl FileUpdate {
     ///
     /// - the path of the file which has changed
     /// - the path of the file/directory watched on the local fs
-    /// - the path of the remote file/directory synced with the local fs
+    /// - the path of the remote file/directory synched with the local fs
     ///
-    /// the `remote` is resolved pushing to `remote_synced_path` the diff between `changed_path` and `local_watched_path`
-    fn new(changed_path: PathBuf, local_watched_path: &Path, remote_synced_path: &Path) -> Self {
+    /// the `remote` is resolved pushing to `remote_synched_path` the diff between `changed_path` and `local_watched_path`
+    fn new(changed_path: PathBuf, local_watched_path: &Path, remote_synched_path: &Path) -> Self {
         Self {
-            remote: remote_relative_path(&changed_path, local_watched_path, remote_synced_path),
+            remote: remote_relative_path(&changed_path, local_watched_path, remote_synched_path),
             local: changed_path,
         }
     }
@@ -165,18 +169,18 @@ impl FileUpdate {
 
 // -- utils
 
-/// Get remote relative path, given the local target, the path of the local watched path and the path of the remote synced directory/file
+/// Get remote relative path, given the local target, the path of the local watched path and the path of the remote synched directory/file
 fn remote_relative_path(
     target: &Path,
     local_watched_path: &Path,
-    remote_synced_path: &Path,
+    remote_synched_path: &Path,
 ) -> PathBuf {
     let local_diff = path_utils::diff_paths(target, local_watched_path);
     // get absolute path to remote file associated to local file
     match local_diff {
-        None => remote_synced_path.to_path_buf(),
+        None => remote_synched_path.to_path_buf(),
         Some(p) => {
-            let mut remote = remote_synced_path.to_path_buf();
+            let mut remote = remote_synched_path.to_path_buf();
             remote.push(p);
             remote
         }

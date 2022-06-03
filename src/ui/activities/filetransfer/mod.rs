@@ -92,6 +92,7 @@ enum Id {
     SymlinkPopup,
     SyncBrowsingMkdirPopup,
     WaitPopup,
+    WatchedPathsList,
     WatcherPopup,
 }
 
@@ -132,6 +133,7 @@ enum TransferMsg {
     SaveFileAs(String),
     SearchFile(String),
     ToggleWatch,
+    ToggleWatchFor(usize),
     TransferFile,
 }
 
@@ -158,6 +160,7 @@ enum UiMsg {
     CloseRenamePopup,
     CloseSaveAsPopup,
     CloseSymlinkPopup,
+    CloseWatchedPathsList,
     CloseWatcherPopup,
     Disconnect,
     ExplorerBackTabbed,
@@ -180,6 +183,7 @@ enum UiMsg {
     ShowRenamePopup,
     ShowSaveAsPopup,
     ShowSymlinkPopup,
+    ShowWatchedPathsList,
     ShowWatcherPopup,
     ToggleHiddenFiles,
     ToggleSyncBrowsing,
