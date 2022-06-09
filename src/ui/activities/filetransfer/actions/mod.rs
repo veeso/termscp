@@ -27,7 +27,7 @@
  */
 pub(self) use super::{
     browser::FileExplorerTab, FileTransferActivity, Id, LogLevel, Msg, PendingActionMsg,
-    TransferOpts, TransferPayload,
+    TransferMsg, TransferOpts, TransferPayload, UiMsg,
 };
 pub(self) use remotefs::File;
 use tuirealm::{State, StateValue};
@@ -47,6 +47,7 @@ pub(crate) mod rename;
 pub(crate) mod save;
 pub(crate) mod submit;
 pub(crate) mod symlink;
+pub(crate) mod watcher;
 
 #[derive(Debug)]
 pub(crate) enum SelectedFile {

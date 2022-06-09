@@ -28,6 +28,7 @@
   - [Éditeur de texte ✏](#éditeur-de-texte-)
   - [Fichier Journal 🩺](#fichier-journal-)
   - [Notifications 📫](#notifications-)
+  - [Observateur de fichiers 🔭](#observateur-de-fichiers-)
 
 ## Usage ❓
 
@@ -204,6 +205,7 @@ Pour changer de panneau, vous devez taper `<LEFT>` pour déplacer le panneau de 
 | `<Q|F10>`     | Quitter termscp                                                           | Quit        |
 | `<R|F6>`      | Renommer le fichier                                                       | Rename      |
 | `<S|F2>`      | Enregistrer le fichier sous...                                            | Save        |
+| `<T>`         | Synchroniser les modifications apportées au chemin sélectionné            | Track       |
 | `<U>`         | Aller dans le répertoire parent                                           | Upper       |
 | `<V|F3>`      | Ouvrir le fichier avec le programme défaut pour le type de fichier        | View        |
 | `<W>`         | Ouvrir le fichier avec le programme spécifié                              | With        |
@@ -211,6 +213,7 @@ Pour changer de panneau, vous devez taper `<LEFT>` pour déplacer le panneau de 
 | `<Y>`         | Basculer la navigation synchronisée                                       | sYnc        |
 | `<CTRL+A>`    | Sélectionner tous les fichiers                                            |             |
 | `<CTRL+C>`    | Abandonner le processus de transfert de fichiers                          |             |
+| `<CTRL+T>`    | Afficher tous les chemins synchronisés                                    | Track       |
 
 ### Travailler sur plusieurs fichiers 🥷
 
@@ -510,3 +513,26 @@ Termscp enverra des notifications de bureau pour ce type d'événements :
 
 ❗ Si vous préférez désactiver les notifications, vous pouvez simplement accéder à la configuration et définir `Enable notifications?` sur `No` 😉.  
 ❗ Si vous souhaitez modifier la taille de transfert minimale pour afficher les notifications, vous pouvez modifier la valeur dans la configuration avec la touche `Notifications: minimum transfer size` et la définir sur ce qui vous convient le mieux 🙂.
+
+## Observateur de fichiers 🔭
+
+L'observateur de fichiers vous permet de configurer une liste de chemins à synchroniser avec les hôtes distants.
+Cela signifie que chaque fois qu'un changement sur le système de fichiers local sera détecté sur le chemin synchronisé, le changement sera automatiquement signalé au chemin de l'hôte distant configuré, dans les 5 secondes.
+
+Vous pouvez définir autant de chemins à synchroniser que vous préférez :
+
+1. Placez le curseur de l'explorateur local sur le répertoire/fichier que vous souhaitez conserver synchronisé
+2. Accédez au répertoire dans lequel vous souhaitez que les modifications soient signalées sur l'hôte distant
+3. Appuyez sur `<T>`
+4. Répondez `<YES>` à la fenêtre contextuelle de la radio
+
+Pour annuler la surveillance, appuyez simplement sur `<T>` sur le chemin synchronisé local (ou sur l'un de ses sous-dossiers)
+OU vous pouvez simplement appuyer sur `<CTRL + T>` et appuyer sur `<ENTER>` jusqu'au chemin synchronisé que vous souhaitez désactiver.
+
+Ces modifications seront signalées à l'hôte distant :
+
+- Nouveaux fichiers, modifications de fichiers
+- Fichier déplacé / renommé
+- Fichier supprimé / dissocié
+
+> ❗ Le watcher ne fonctionne que dans un sens (local > distant). Il n'est PAS possible de synchroniser automatiquement les changements de distant à local.

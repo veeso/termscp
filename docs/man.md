@@ -28,6 +28,7 @@
   - [Text Editor ✏](#text-editor-)
   - [Logging 🩺](#logging-)
   - [Notifications 📫](#notifications-)
+  - [File watcher 🔭](#file-watcher-)
 
 ## Usage ❓
 
@@ -204,6 +205,7 @@ In order to change panel you need to type `<LEFT>` to move the remote explorer p
 | `<Q|F10>`     | Quit termscp                                            | Quit        |
 | `<R|F6>`      | Rename file                                             | Rename      |
 | `<S|F2>`      | Save file as...                                         | Save        |
+| `<T>`         | Synchronize changes to selected path to remote          | Track       |
 | `<U>`         | Go to parent directory                                  | Up          |
 | `<V|F3>`      | Open file with default program for filetype             | View        |
 | `<W>`         | Open file with provided program                         | With        |
@@ -211,6 +213,7 @@ In order to change panel you need to type `<LEFT>` to move the remote explorer p
 | `<Y>`         | Toggle synchronized browsing                            | sYnc        |
 | `<CTRL+A>`    | Select all files                                        |             |
 | `<CTRL+C>`    | Abort file transfer process                             |             |
+| `<CTRL+T>`    | Show all synchronized paths                             | Track       |
 
 ### Work on multiple files 🥷
 
@@ -510,3 +513,28 @@ Termscp will send Desktop notifications for these kind of events:
 
 ❗ If you prefer to keep notifications turned off, you can just enter setup and set `Enable notifications?` to `No` 😉.  
 ❗ If you want to change the minimum transfer size to display notifications, you can change the value in the configuration with key `Notifications: minimum transfer size` and set it to whatever suits better for you 🙂.
+
+---
+
+## File watcher 🔭
+
+The file watcher allows you to setup a list of paths to synchronize with the remote hosts.
+This means that whenever a change on the local file system will be detected on the synchronized path, the change will be automatically reported to the configured remote host path, within 5 seconds.
+
+You can set as many paths to synchronize as you prefer:
+
+1. Put the cursor on the local explorer on the directory/file you want to keep synchronized
+2. Go to the directory you want the changes to be reported to on the remote host
+3. Press `<T>`
+4. Answer `<YES>` to the radio popup
+
+To unwatch, just press `<T>` on the local synchronized path (or to any of its subfolders)
+OR you can just press `<CTRL+T>` and press `<ENTER>` to the synchronized path you want to unwatch.
+
+These changes will be reported to the remote host:
+
+- New files, file changes
+- File moved/renamed
+- File removed/unlinked
+
+> ❗ The watcher works only in one direction (local > remote). It is NOT possible to synchronize automatically the changes from remote to local.

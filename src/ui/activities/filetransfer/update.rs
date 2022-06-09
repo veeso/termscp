@@ -342,6 +342,8 @@ impl FileTransferActivity {
                     }
                 }
             }
+            TransferMsg::ToggleWatch => self.action_toggle_watch(),
+            TransferMsg::ToggleWatchFor(index) => self.action_toggle_watch_for(index),
             TransferMsg::TransferFile => {
                 match self.browser.tab() {
                     FileExplorerTab::Local => self.action_local_send(),
@@ -421,6 +423,8 @@ impl FileTransferActivity {
             UiMsg::CloseRenamePopup => self.umount_rename(),
             UiMsg::CloseSaveAsPopup => self.umount_saveas(),
             UiMsg::CloseSymlinkPopup => self.umount_symlink(),
+            UiMsg::CloseWatchedPathsList => self.umount_watched_paths_list(),
+            UiMsg::CloseWatcherPopup => self.umount_radio_watcher(),
             UiMsg::Disconnect => {
                 self.disconnect();
                 self.umount_disconnect();
@@ -487,6 +491,8 @@ impl FileTransferActivity {
                     );
                 }
             }
+            UiMsg::ShowWatchedPathsList => self.action_show_watched_paths_list(),
+            UiMsg::ShowWatcherPopup => self.action_show_radio_watch(),
             UiMsg::ToggleHiddenFiles => match self.browser.tab() {
                 FileExplorerTab::FindLocal | FileExplorerTab::Local => {
                     self.browser.local_mut().toggle_hidden_files();

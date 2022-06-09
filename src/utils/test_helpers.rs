@@ -58,7 +58,7 @@ pub fn create_sample_file() -> NamedTempFile {
 /// ### make_file_at
 ///
 /// Make a file with `name` at specified path
-pub fn make_file_at(dir: &Path, filename: &str) -> std::io::Result<()> {
+pub fn make_file_at(dir: &Path, filename: &str) -> std::io::Result<PathBuf> {
     let mut p: PathBuf = PathBuf::from(dir);
     p.push(filename);
     let mut file = StdFile::create(p.as_path())?;
@@ -66,7 +66,7 @@ pub fn make_file_at(dir: &Path, filename: &str) -> std::io::Result<()> {
         file,
         "Lorem ipsum dolor sit amet, consectetur adipiscing elit.Mauris ultricies consequat eros,nec scelerisque magna imperdiet metus."
     )?;
-    Ok(())
+    Ok(p)
 }
 
 /// ### make_dir_at

@@ -307,6 +307,14 @@ impl Component<Msg, NoUserEvent> for ExplorerLocal {
                 modifiers: KeyModifiers::NONE,
             }) => Some(Msg::Ui(UiMsg::ShowSaveAsPopup)),
             Event::Keyboard(KeyEvent {
+                code: Key::Char('t'),
+                modifiers: KeyModifiers::NONE,
+            }) => Some(Msg::Ui(UiMsg::ShowWatcherPopup)),
+            Event::Keyboard(KeyEvent {
+                code: Key::Char('t'),
+                modifiers: KeyModifiers::CONTROL,
+            }) => Some(Msg::Ui(UiMsg::ShowWatchedPathsList)),
+            Event::Keyboard(KeyEvent {
                 code: Key::Char('u'),
                 modifiers: KeyModifiers::NONE,
             }) => Some(Msg::Transfer(TransferMsg::GoToParentDirectory)),
@@ -478,6 +486,14 @@ impl Component<Msg, NoUserEvent> for ExplorerRemote {
                 code: Key::Char('s') | Key::Function(2),
                 modifiers: KeyModifiers::NONE,
             }) => Some(Msg::Ui(UiMsg::ShowSaveAsPopup)),
+            Event::Keyboard(KeyEvent {
+                code: Key::Char('t'),
+                modifiers: KeyModifiers::NONE,
+            }) => Some(Msg::Ui(UiMsg::ShowWatcherPopup)),
+            Event::Keyboard(KeyEvent {
+                code: Key::Char('t'),
+                modifiers: KeyModifiers::CONTROL,
+            }) => Some(Msg::Ui(UiMsg::ShowWatchedPathsList)),
             Event::Keyboard(KeyEvent {
                 code: Key::Char('u'),
                 modifiers: KeyModifiers::NONE,

@@ -35,3 +35,4 @@ pub mod logging;
 pub mod notifications;
 pub mod sshkey_storage;
 pub mod theme_provider;
+pub mod watcher;

@@ -28,6 +28,7 @@
   - [Text Editor ✏](#text-editor-)
   - [Logging 🩺](#logging-)
   - [Notificaciones 📫](#notificaciones-)
+  - [Observador de archivos 🔭](#observador-de-archivos-)
 
 > ❗ Este documento ha sido traducido con Google Translator (y luego lo he revisado a grandes rasgos, pero no puedo hablar el idioma muy bien). Si habla l'idioma, abra un [issue](https://github.com/veeso/termscp/issues/new/choose) utilizando la label COPY o abra un PR 🙏
 
@@ -206,6 +207,7 @@ Para cambiar de panel, debe escribir `<LEFT>` para mover el panel del explorador
 | `<Q|F10>`     | Salir de termscp                                                           | Quit        |
 | `<R|F6>`      | Renombrar archivo                                                          | Rename      |
 | `<S|F2>`      | Guardar archivo como...                                                    | Save        |
+| `<T>`         | Sincronizar los cambios en la ruta seleccionada con el control remoto      | Track       |
 | `<U>`         | Ir al directorio principal                                                 | Upper       |
 | `<V|F3>`      | Abrir archivo con el programa predeterminado                               | View        |
 | `<W>`         | Abrir archivo con el programa proporcionado                                | With        |
@@ -213,6 +215,7 @@ Para cambiar de panel, debe escribir `<LEFT>` para mover el panel del explorador
 | `<Y>`         | Alternar navegación sincronizada                                           | sYnc        |
 | `<CTRL+A>`    | Seleccionar todos los archivos                                             |             |
 | `<CTRL+C>`    | Abortar el proceso de transferencia de archivos                            |             |
+| `<CTRL+T>`    | Mostrar todas las rutas sincronizadas                                      | Track       |
 
 ### Trabaja en varios archivos 🥷
 
@@ -511,3 +514,26 @@ Termscp enviará notificaciones de escritorio para este tipo de eventos:
 
 ❗ Si prefiere mantener las notificaciones desactivadas, puede simplemente ingresar a la configuración y configurar `Enable notifications?` En `No` 😉.  
 ❗ Si desea cambiar el tamaño mínimo de transferencia para mostrar notificaciones, puede cambiar el valor en la configuración con la tecla `Notifications: minimum transfer size` y configurarlo como mejor le convenga 🙂.
+
+## Observador de archivos 🔭
+
+El observador de archivos le permite configurar una lista de rutas para sincronizar con los hosts remotos.
+Esto significa que siempre que se detecte un cambio en el sistema de archivos local en la ruta sincronizada, el cambio se informará automáticamente a la ruta del host remoto configurado, dentro de los 5 segundos.
+
+Puede establecer tantas rutas para sincronizar como prefiera:
+
+1. Coloque el cursor en el explorador local en el directorio/archivo que desea mantener sincronizado
+2. Vaya al directorio en el que desea que se informen los cambios en el host remoto
+3. Presione `<T>`
+4. Responda `<YES>` a la ventana emergente de radio
+
+Para dejar de mirar, simplemente presione `<T>` en la ruta sincronizada local (o en cualquiera de sus subcarpetas)
+O simplemente puede presionar `<CTRL + T>` y presionar `<ENTER>` en la ruta sincronizada que desea dejar de ver.
+
+Estos cambios se informarán al host remoto:
+
+- Nuevos archivos, cambios de archivos
+- Archivo movido / renombrado
+- Archivo eliminado/desvinculado
+
+> ❗ El vigilante trabaja solo en una dirección (local > remota). NO es posible sincronizar automáticamente los cambios de remoto a local.

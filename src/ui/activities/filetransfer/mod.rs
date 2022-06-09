@@ -28,6 +28,7 @@
 // This module is split into files, cause it's just too big
 mod actions;
 mod components;
+mod fswatcher;
 mod lib;
 mod misc;
 mod session;
@@ -41,6 +42,7 @@ use crate::explorer::{FileExplorer, FileSorting};
 use crate::filetransfer::{Builder, FileTransferParams};
 use crate::host::Localhost;
 use crate::system::config_client::ConfigClient;
+use crate::system::watcher::FsWatcher;
 pub(self) use lib::browser;
 use lib::browser::Browser;
 use lib::transfer::{TransferOpts, TransferStates};
@@ -90,6 +92,8 @@ enum Id {
     SymlinkPopup,
     SyncBrowsingMkdirPopup,
     WaitPopup,
+    WatchedPathsList,
+    WatcherPopup,
 }
 
 #[derive(Debug, PartialEq)]
@@ -128,6 +132,8 @@ enum TransferMsg {
     RenameFile(String),
     SaveFileAs(String),
     SearchFile(String),
+    ToggleWatch,
+    ToggleWatchFor(usize),
     TransferFile,
 }
 
@@ -154,6 +160,8 @@ enum UiMsg {
     CloseRenamePopup,
     CloseSaveAsPopup,
     CloseSymlinkPopup,
+    CloseWatchedPathsList,
+    CloseWatcherPopup,
     Disconnect,
     ExplorerBackTabbed,
     LogBackTabbed,
@@ -175,6 +183,8 @@ enum UiMsg {
     ShowRenamePopup,
     ShowSaveAsPopup,
     ShowSymlinkPopup,
+    ShowWatchedPathsList,
+    ShowWatcherPopup,
     ToggleHiddenFiles,
     ToggleSyncBrowsing,
     WindowResized,
@@ -226,6 +236,8 @@ pub struct FileTransferActivity {
     transfer: TransferStates,
     /// Temporary directory where to store temporary stuff
     cache: Option<TempDir>,
+    /// Fs watcher
+    fswatcher: Option<FsWatcher>,
 }
 
 impl FileTransferActivity {
@@ -250,6 +262,13 @@ impl FileTransferActivity {
             cache: match TempDir::new() {
                 Ok(d) => Some(d),
                 Err(_) => None,
+            },
+            fswatcher: match FsWatcher::init(Duration::from_secs(5)) {
+                Ok(w) => Some(w),
+                Err(e) => {
+                    error!("failed to initialize fs watcher: {}", e);
+                    None
+                }
             },
         }
     }
@@ -315,6 +334,14 @@ impl FileTransferActivity {
     fn theme(&self) -> &Theme {
         self.context().theme_provider().theme()
     }
+
+    /// Map a function to fs watcher if any
+    fn map_on_fswatcher<F, T>(&mut self, mapper: F) -> Option<T>
+    where
+        F: FnOnce(&mut FsWatcher) -> T,
+    {
+        self.fswatcher.as_mut().map(mapper)
+    }
 }
 
 /**
@@ -377,6 +404,8 @@ impl Activity for FileTransferActivity {
             self.redraw = true;
         }
         self.tick();
+        // poll
+        self.poll_watcher();
         // View
         if self.redraw {
             self.view();

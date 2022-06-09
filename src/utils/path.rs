@@ -37,10 +37,9 @@ pub fn absolutize(wrkdir: &Path, target: &Path) -> PathBuf {
 ///
 /// This function has been written by <https://github.com/Manishearth>
 /// and is licensed under the APACHE-2/MIT license <https://github.com/Manishearth/pathdiff>
-pub fn diff_paths<P, B>(path: P, base: B) -> Option<PathBuf>
+pub fn diff_paths<P>(path: P, base: P) -> Option<PathBuf>
 where
     P: AsRef<Path>,
-    B: AsRef<Path>,
 {
     let path = path.as_ref();
     let base = base.as_ref();
@@ -82,6 +81,11 @@ where
     }
 }
 
+/// Returns whether `p` is child (direct/indirect) of ancestor `ancestor`
+pub fn is_child_of<P: AsRef<Path>>(p: P, ancestor: P) -> bool {
+    p.as_ref().ancestors().any(|x| x == ancestor.as_ref())
+}
+
 #[cfg(test)]
 mod test {
 
@@ -118,6 +122,29 @@ mod test {
                 .unwrap()
                 .as_path(),
             Path::new("foo/bar/chiedo.gif")
+        );
+    }
+
+    #[test]
+    fn should_tell_whether_path_is_child_of() {
+        assert_eq!(
+            is_child_of(Path::new("/home/foo/foo.txt"), Path::new("/home"),),
+            true
+        );
+        assert_eq!(
+            is_child_of(Path::new("/home/foo/foo.txt"), Path::new("/home/foo/"),),
+            true
+        );
+        assert_eq!(
+            is_child_of(
+                Path::new("/home/foo/foo.txt"),
+                Path::new("/home/foo/foo.txt"),
+            ),
+            true
+        );
+        assert_eq!(
+            is_child_of(Path::new("/home/foo/foo.txt"), Path::new("/tmp"),),
+            false
         );
     }
 }
