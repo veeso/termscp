@@ -8,7 +8,7 @@ Features:
   - SFTP
   - SCP
   - FTP and FTPS
-  - Aws S3
+  - S3
 - 🖥  Explore and operate on the remote and on the local machine file system with a handy UI
   - Create, remove, rename, search, view and edit files
 - ⭐  Connect to your favourite hosts through built-in bookmarks and recent connections
