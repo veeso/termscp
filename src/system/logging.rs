@@ -30,9 +30,7 @@ pub fn init(level: LogLevel) -> Result<(), String> {
     let file: File = open_file(log_file_path.as_path(), true, true, false)
         .map_err(|e| format!("Failed to open file {}: {}", log_file_path.display(), e))?;
     // Prepare log config
-    let config = ConfigBuilder::new()
-        .set_time_format_str("%Y-%m-%dT%H:%M:%S%z")
-        .build();
+    let config = ConfigBuilder::new().set_time_format_rfc3339().build();
     // Make logger
     WriteLogger::init(level, config, file)
         .map_err(|e| format!("Failed to initialize logger: {}", e))

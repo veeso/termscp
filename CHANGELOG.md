@@ -53,7 +53,18 @@ Released on FIXME:
   - Press `<CTRL+T>` to show all the currently synchronized files
 - **Enhancements**:
   - Improved s3 auth form scrolling
+- **Bugfix**:
+  - Fixed SSH key list showing `{hostname} at {username}` instead of `{username} at {hostname}`
 - Dependencies:
+  - Updated `edit` to `0.1.4`
+  - Updated `log` to `0.4.17`
+  - Updated `magic-crypt` to `3.1.10`
+  - Updated `open` to `2.1.3`
+  - Updated `regex` to `1.5.6`
+  - Updated `rpassword` to `6.0.1`
+  - Updated `self_update` to `0.30.0`
+  - Updated `simplelog` to `0.12.0`
+  - Updated `toml` to `0.5.9`
   - Updated `tui-realm` to `1.6.0`
 
 ## 0.8.2

@@ -398,7 +398,7 @@ impl ConfigClient {
     /// Returns: (host, username)
     fn get_ssh_tokens(host_key: &str) -> (String, String) {
         let tokens: Vec<&str> = host_key.split('@').collect();
-        assert_eq!(tokens.len(), 2);
+        assert!(tokens.len() >= 2);
         (String::from(tokens[1]), String::from(tokens[0]))
     }
 
