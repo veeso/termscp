@@ -145,6 +145,7 @@ Termscp is a feature rich terminal file transfer and explorer, with support for 
   - Customizable file sorting
   - and many other parameters...
 - 📫  Get notified via Desktop Notifications when a large file has been transferred
+- 🔭  Keep file changes synchronized with the remote host
 - 🔐  Save your password in your operating system key vault
 - 🦀  Rust-powered
 - 👀  Developed keeping an eye on performance

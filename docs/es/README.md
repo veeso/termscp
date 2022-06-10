@@ -150,6 +150,7 @@ Termscp es un explorador y transferencia de archivos de terminal rico en funcion
   - Clasificación de archivos personalizable
   - y muchos otros parámetros ...
 - 📫  Reciba una notificación cuando se haya transferido un archivo grande
+- 🔭  Mantenga los cambios de archivos sincronizados con el host remoto
 - 🔐  Guarde su contraseña en el almacén de claves de su sistema operativo
 - 🦀  Rust-powered
 - 👀  Desarrollado sin perder de vista el rendimiento

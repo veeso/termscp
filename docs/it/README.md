@@ -150,6 +150,7 @@ Termscp è un file transfer ed explorer ricco di funzionalità, con supporto a S
   - Imposta l'ordinamento di file e cartelle
   - e tanto altro...
 - 📫  Ricevi notifiche desktop quando un file di cospicue dimensioni è stato trasferito
+- 🔭  Mantieni sincronizzate le modifiche con l'host remoto
 - 🔐  Salva le password degli host remoti nel keyring predefinito dal tuo sistema operativo
 - 🦀  Rust-powered
 - 👀  Progettato tenendo conto delle performance
