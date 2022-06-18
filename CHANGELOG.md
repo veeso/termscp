@@ -27,7 +27,7 @@
 
 ## 0.9.0
 
-Released on 09/06/2022
+Released on 18/06/2022
 
 > 🏖️ Tenerife Update 🍹
 
@@ -69,7 +69,7 @@ Released on 09/06/2022
 
 ## 0.8.2
 
-Released on 09/06/2022
+Released on 26/04/2022
 
 - **Enhancements**
   - Write exitcode to log when termscp terminates
