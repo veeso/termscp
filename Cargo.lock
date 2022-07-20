@@ -1620,6 +1620,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ff011a302c396a5197692431fc1948019154afc178baf7d8e37367442a4601cf"
 
 [[package]]
+name = "openssl-src"
+version = "111.22.0+1.1.1q"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8f31f0d509d1c1ae9cada2f9539ff8f37933831fd5098879e482aa687d659853"
+dependencies = [
+ "cc",
+]
+
+[[package]]
 name = "openssl-sys"
 version = "0.9.74"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1628,6 +1637,7 @@ dependencies = [
  "autocfg",
  "cc",
  "libc",
+ "openssl-src",
  "pkg-config",
  "vcpkg",
 ]
@@ -1951,9 +1961,9 @@ dependencies = [
 
 [[package]]
 name = "remotefs-ssh"
-version = "0.1.0"
+version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7f2c6959740eeee7e773166e79dd52c7dea41f791456aa5addfb949c61c15b27"
+checksum = "ea2ac5a7f475c1b63ffd2aaab57ca4e37e6a6ed23461046d4fb1554835e6088a"
 dependencies = [
  "chrono",
  "lazy_static",

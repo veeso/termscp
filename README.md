@@ -179,11 +179,9 @@ For more information or other platforms, please visit [veeso.github.io](https://
 ### Requirements ❗
 
 - **Linux** users:
-  - libssh
   - libdbus-1
   - pkg-config
 - **FreeBSD** users:
-  - libssh
   - dbus
   - pkgconf
 

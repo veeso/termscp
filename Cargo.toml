@@ -51,7 +51,7 @@ regex = "1.5.6"
 remotefs = "^0.2.0"
 remotefs-aws-s3 = "^0.2.0"
 remotefs-ftp = { version = "^0.1.0", features = [ "secure" ] }
-remotefs-ssh = "^0.1.0"
+remotefs-ssh = { version = "^0.1.1", features = [ "ssh2-vendored" ] }
 rpassword = "6.0.1"
 self_update = { version = "0.30.0", features = [ "archive-tar", "archive-zip", "compression-flate2", "compression-zip-deflate" ] }
 serde = { version = "^1.0.0", features = [ "derive" ] }
