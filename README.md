@@ -164,9 +164,11 @@ If you are a Linux, a FreeBSD or a MacOS user this simple shell script will inst
 curl --proto '=https' --tlsv1.2 -sSLf "https://git.io/JBhDb" | sh
 ```
 
+> ❗ MacOs installation requires [Homebrew](https://brew.sh/), otherwise the Rust compiler will be installed
+
 while if you're a Windows user, you can install termscp with [Chocolatey](https://chocolatey.org/):
 
-```sh
+```ps
 choco install termscp
 ```
 
