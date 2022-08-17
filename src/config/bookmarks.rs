@@ -19,7 +19,7 @@ pub struct UserHosts {
 }
 
 /// Bookmark describes a single bookmark entry in the user hosts storage
-#[derive(Clone, Deserialize, Serialize, Debug, PartialEq)]
+#[derive(Clone, Deserialize, Serialize, Debug, PartialEq, Eq)]
 pub struct Bookmark {
     #[serde(
         deserialize_with = "deserialize_protocol",
@@ -41,7 +41,7 @@ pub struct Bookmark {
 }
 
 /// Connection parameters for Aws s3 protocol
-#[derive(Clone, Deserialize, Serialize, Debug, PartialEq, Default)]
+#[derive(Clone, Deserialize, Serialize, Debug, PartialEq, Eq, Default)]
 pub struct S3Params {
     pub bucket: String,
     pub region: Option<String>,

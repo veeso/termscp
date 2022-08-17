@@ -99,7 +99,7 @@ pub enum IdTheme {
     TransferTitle2,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Msg {
     Common(CommonMsg),
     Config(ConfigMsg),
@@ -108,7 +108,7 @@ pub enum Msg {
     None,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CommonMsg {
     ChangeLayout,
     CloseErrorPopup,
@@ -125,7 +125,7 @@ pub enum CommonMsg {
     WindowResized,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ConfigMsg {
     CheckUpdatesBlurDown,
     CheckUpdatesBlurUp,
@@ -152,7 +152,7 @@ pub enum ConfigMsg {
     TextEditorBlurUp,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SshMsg {
     CloseDelSshKeyPopup,
     CloseNewSshKeyPopup,
@@ -165,7 +165,7 @@ pub enum SshMsg {
     SshUsernameBlur,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ThemeMsg {
     AuthAddressBlurDown,
     AuthAddressBlurUp,
@@ -230,7 +230,7 @@ const STORE_CONFIG_CHANGED: &str = "SETUP_CONFIG_CHANGED";
 /// ### ViewLayout
 ///
 /// Current view layout
-#[derive(PartialEq)]
+#[derive(PartialEq, Eq)]
 pub enum ViewLayout {
     SetupForm,
     SshKeys,

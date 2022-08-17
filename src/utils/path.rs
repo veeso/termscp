@@ -94,11 +94,11 @@ mod test {
     #[test]
     fn absolutize_path() {
         assert_eq!(
-            absolutize(&Path::new("/home/omar"), &Path::new("readme.txt")).as_path(),
+            absolutize(Path::new("/home/omar"), Path::new("readme.txt")).as_path(),
             Path::new("/home/omar/readme.txt")
         );
         assert_eq!(
-            absolutize(&Path::new("/home/omar"), &Path::new("/tmp/readme.txt")).as_path(),
+            absolutize(Path::new("/home/omar"), Path::new("/tmp/readme.txt")).as_path(),
             Path::new("/tmp/readme.txt")
         );
     }

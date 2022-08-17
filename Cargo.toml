@@ -1,5 +1,5 @@
 [package]
-authors = ["Christian Visintin"]
+authors = ["Christian Visintin <christian.visintin1997@gmail.com>"]
 categories = ["command-line-utilities"]
 description = "termscp is a feature rich terminal file transfer and explorer with support for SCP/SFTP/FTP/S3"
 edition = "2021"

@@ -10,7 +10,7 @@ pub mod keyringstorage;
 use thiserror::Error;
 
 /// defines the error type for the `KeyStorage`
-#[derive(Debug, Error, PartialEq)]
+#[derive(Debug, Error, PartialEq, Eq)]
 pub enum KeyStorageError {
     #[cfg(feature = "with-keyring")]
     #[error("Key has a bad syntax")]

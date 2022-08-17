@@ -96,7 +96,7 @@ mod tests {
 
     #[test]
     fn test_system_keys_filestorage_make_dir() {
-        let storage: FileStorage = FileStorage::new(&Path::new("/tmp/"));
+        let storage: FileStorage = FileStorage::new(Path::new("/tmp/"));
         assert_eq!(
             storage.make_file_path("bookmarks").as_path(),
             Path::new("/tmp/.bookmarks.key")

@@ -93,7 +93,7 @@ mod tests {
         // Create ssh key storage
         let storage: SshKeyStorage = SshKeyStorage::from(&client);
         // Verify key exists
-        let mut exp_key_path: PathBuf = key_path.clone();
+        let mut exp_key_path: PathBuf = key_path;
         exp_key_path.push("pi@192.168.1.31.key");
         assert_eq!(
             *storage.resolve("192.168.1.31", "pi").unwrap(),

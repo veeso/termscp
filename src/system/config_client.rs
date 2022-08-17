@@ -491,7 +491,7 @@ mod tests {
         // Verify client has updated parameters
         assert_eq!(client.get_default_protocol(), FileTransferProtocol::Scp);
         assert_eq!(client.get_text_editor(), PathBuf::from("/usr/bin/vim"));
-        let mut expected_key_path: PathBuf = key_path.clone();
+        let mut expected_key_path: PathBuf = key_path;
         expected_key_path.push("pi@192.168.1.31.key");
         assert_eq!(
             client.get_ssh_key("pi@192.168.1.31").unwrap().unwrap(),

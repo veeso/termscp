@@ -278,7 +278,7 @@ impl NotificationsThreshold {
             parse_bytesize(bytes).is_some()
         }
         fn char_valid(_input: &str, incoming: char) -> bool {
-            incoming.is_digit(10) || ['B', 'K', 'M', 'G', 'T', 'P'].contains(&incoming)
+            incoming.is_ascii_digit() || ['B', 'K', 'M', 'G', 'T', 'P'].contains(&incoming)
         }
         Self {
             component: Input::default()

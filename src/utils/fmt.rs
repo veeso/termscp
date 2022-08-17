@@ -300,7 +300,7 @@ mod tests {
 
     #[test]
     fn test_utils_fmt_time() {
-        let system_time: SystemTime = SystemTime::from(SystemTime::UNIX_EPOCH);
+        let system_time: SystemTime = SystemTime::UNIX_EPOCH;
         assert_eq!(
             fmt_time(system_time, "%Y-%m-%d"),
             String::from("1970-01-01")
@@ -326,12 +326,12 @@ mod tests {
     #[test]
     #[cfg(target_family = "unix")]
     fn test_utils_fmt_path_elide() {
-        let p: &Path = &Path::new("/develop/pippo");
+        let p: &Path = Path::new("/develop/pippo");
         // Under max size
         assert_eq!(fmt_path_elide(p, 16), String::from("/develop/pippo"));
         // Above max size, only one ancestor
         assert_eq!(fmt_path_elide(p, 8), String::from("/develop/pippo"));
-        let p: &Path = &Path::new("/develop/pippo/foo/bar");
+        let p: &Path = Path::new("/develop/pippo/foo/bar");
         assert_eq!(fmt_path_elide(p, 16), String::from("/develop/…/foo/bar"));
     }
 

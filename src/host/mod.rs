@@ -654,7 +654,7 @@ mod tests {
         let entries = std::fs::read_dir(PathBuf::from("/dev").as_path()).unwrap();
         let mut counter: usize = 0;
         for _ in entries {
-            counter = counter + 1;
+            counter += 1;
         }
         assert_eq!(host.files.len(), counter);
     }
@@ -696,7 +696,7 @@ mod tests {
         let entries = std::fs::read_dir(PathBuf::from("/dev").as_path()).unwrap();
         let mut counter: usize = 0;
         for _ in entries {
-            counter = counter + 1;
+            counter += 1;
         }
         assert_eq!(host.list_dir().len(), counter);
     }
@@ -709,10 +709,10 @@ mod tests {
         assert!(host.change_wrkdir(new_dir.as_path()).is_ok());
         // Verify new files
         // Scan dir
-        let entries = std::fs::read_dir(PathBuf::from(new_dir).as_path()).unwrap();
+        let entries = std::fs::read_dir(new_dir.as_path()).unwrap();
         let mut counter: usize = 0;
         for _ in entries {
-            counter = counter + 1;
+            counter += 1;
         }
         assert_eq!(host.files.len(), counter);
     }
@@ -793,7 +793,7 @@ mod tests {
         let files: Vec<File> = host.list_dir();
         // Verify files
         let file_0: &File = files.get(0).unwrap();
-        if file_0.name() == String::from("foo.txt") {
+        if file_0.name() == *"foo.txt" {
             assert!(file_0.metadata.symlink.is_none());
         } else {
             assert_eq!(
@@ -803,7 +803,7 @@ mod tests {
         }
         // Verify simlink
         let file_1: &File = files.get(1).unwrap();
-        if file_1.name() == String::from("bar.txt") {
+        if file_1.name() == *"bar.txt" {
             assert_eq!(
                 file_1.metadata.symlink.as_ref().unwrap(),
                 &PathBuf::from(format!("{}/foo.txt", tmpdir.path().display()))
