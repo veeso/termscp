@@ -33,8 +33,14 @@ Released on ??
 > ⭐ 500 stars update 🌟
 
 - Dependencies:
+  - Bump `argh` to `0.1.8`
+  - Bump `chrono` to `0.4.22`
+  - Bump `keyring` to `1.2.0`
+  - Bump `open` to `3.0.2`
   - Changed `regex` to `lazy-regex 2.3.0`
   - Bump `tuirealm` to `1.8.0`
+  - Bump `tui-realm-stdlib` to `1.1.7`
+  - Bump `wildmatch` to `2.1.1`
 
 ## 0.9.0
 
