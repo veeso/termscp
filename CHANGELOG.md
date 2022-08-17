@@ -1,6 +1,7 @@
 # Changelog
 
 - [Changelog](#changelog)
+  - [0.10.0](#0100)
   - [0.9.0](#090)
   - [0.8.2](#082)
   - [0.8.1](#081)
@@ -24,6 +25,16 @@
   - [0.1.0](#010)
 
 ---
+
+## 0.10.0
+
+Released on ??
+
+> ⭐ 500 stars update 🌟
+
+- Dependencies:
+  - Changed `regex` to `lazy-regex 2.3.0`
+  - Bump `tuirealm` to `1.8.0`
 
 ## 0.9.0
 

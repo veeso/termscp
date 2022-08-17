@@ -14,56 +14,57 @@ use crate::system::environment;
 
 // Ext
 use bytesize::ByteSize;
-use regex::Regex;
+use lazy_regex::{Lazy, Regex};
 use std::path::PathBuf;
 use std::str::FromStr;
 use tuirealm::tui::style::Color;
 use tuirealm::utils::parser as tuirealm_parser;
 
 // Regex
-lazy_static! {
 
-    /**
-     * This regex matches the protocol used as option
-     * Regex matches:
-     * - group 1: Some(protocol) | None
-     * - group 2: Some(other args)
-    */
-    static ref REMOTE_OPT_PROTOCOL_REGEX: Regex = Regex::new(r"(?:([a-z0-9]+)://)?(?:(.+))").unwrap();
+/**
+ * This regex matches the protocol used as option
+ * Regex matches:
+ * - group 1: Some(protocol) | None
+ * - group 2: Some(other args)
+ */
+static REMOTE_OPT_PROTOCOL_REGEX: Lazy<Regex> = lazy_regex!(r"(?:([a-z0-9]+)://)?(?:(.+))");
 
-    /**
-     * Regex matches:
-     *  - group 1: Some(user) | None
-     *  - group 2: Address
-     *  - group 3: Some(port) | None
-     *  - group 4: Some(path) | None
-     */
-    static ref REMOTE_GENERIC_OPT_REGEX: Regex = Regex::new(r"(?:([^@]+)@)?(?:([^:]+))(?::((?:[0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])(?:[0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])))?(?::([^:]+))?").ok().unwrap();
+/**
+ * Regex matches:
+ *  - group 1: Some(user) | None
+ *  - group 2: Address
+ *  - group 3: Some(port) | None
+ *  - group 4: Some(path) | None
+ */
+static REMOTE_GENERIC_OPT_REGEX: Lazy<Regex> = lazy_regex!(
+    r"(?:([^@]+)@)?(?:([^:]+))(?::((?:[0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])(?:[0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])))?(?::([^:]+))?"
+);
 
-    /**
-     * Regex matches:
-     * - group 1: Bucket
-     * - group 2: Region
-     * - group 3: Some(profile) | None
-     * - group 4: Some(path) | None
-     */
-    static ref REMOTE_S3_OPT_REGEX: Regex = Regex::new(r"(?:([^@]+)@)(?:([^:]+))(?::([a-zA-Z0-9][^:]+))?(?::([^:]+))?").unwrap();
+/**
+ * Regex matches:
+ * - group 1: Bucket
+ * - group 2: Region
+ * - group 3: Some(profile) | None
+ * - group 4: Some(path) | None
+ */
+static REMOTE_S3_OPT_REGEX: Lazy<Regex> =
+    lazy_regex!(r"(?:([^@]+)@)(?:([^:]+))(?::([a-zA-Z0-9][^:]+))?(?::([^:]+))?");
 
-    /**
-     * Regex matches:
-     * - group 1: Version
-     * E.g. termscp-0.3.2 => 0.3.2
-     *      v0.4.0 => 0.4.0
-     */
-    static ref SEMVER_REGEX: Regex = Regex::new(r".*(:?[0-9]\.[0-9]\.[0-9])").unwrap();
+/**
+ * Regex matches:
+ * - group 1: Version
+ * E.g. termscp-0.3.2 => 0.3.2
+ *      v0.4.0 => 0.4.0
+ */
+static SEMVER_REGEX: Lazy<Regex> = lazy_regex!(r".*(:?[0-9]\.[0-9]\.[0-9])");
 
-    /**
-     * Regex matches:
-     * - group 1: amount (number)
-     * - group 4: unit (K, M, G, T, P)
-     */
-    static ref BYTESIZE_REGEX: Regex = Regex::new(r"(:?([0-9])+)( )*(:?[KMGTP])?B$").unwrap();
-}
+/**
+ * Regex matches:
+ * - group 1: amount (number)
+ * - group 4: unit (K, M, G, T, P)
+ */
+static BYTESIZE_REGEX: Lazy<Regex> = lazy_regex!(r"(:?([0-9])+)( )*(:?[KMGTP])?B$");
 
 // -- remote opts
 

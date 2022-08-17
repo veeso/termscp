@@ -5,6 +5,8 @@ const TERMSCP_AUTHORS: &str = env!("CARGO_PKG_AUTHORS");
 #[macro_use]
 extern crate bitflags;
 #[macro_use]
+extern crate lazy_regex;
+#[macro_use]
 extern crate lazy_static;
 #[macro_use]
 extern crate log;

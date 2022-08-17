@@ -8,7 +8,7 @@ use crate::utils::path::diff_paths;
 use crate::utils::string::secure_substring;
 // Ext
 use bytesize::ByteSize;
-use regex::Regex;
+use lazy_regex::{Lazy, Regex};
 use remotefs::File;
 use std::path::PathBuf;
 use std::time::UNIX_EPOCH;
@@ -32,17 +32,14 @@ const FMT_KEY_SYMLINK: &str = "SYMLINK";
 const FMT_KEY_USER: &str = "USER";
 // Default
 const FMT_DEFAULT_STX: &str = "{NAME} {PEX} {USER} {SIZE} {MTIME}";
-// Regex
-lazy_static! {
-    /**
-     * Regex matches:
-     *  - group 0: KEY NAME
-     *  - group 1?: LENGTH
-     *  - group 2?: EXTRA
-     */
-    static ref FMT_KEY_REGEX: Regex = Regex::new(r"\{(.*?)\}").ok().unwrap();
-    static ref FMT_ATTR_REGEX: Regex = Regex::new(r"(?:([A-Z]+))(:?([0-9]+))?(:?(.+))?").ok().unwrap();
-}
+/**
+ * Regex matches:
+ *  - group 0: KEY NAME
+ *  - group 1?: LENGTH
+ *  - group 2?: EXTRA
+ */
+static FMT_KEY_REGEX: Lazy<Regex> = lazy_regex!(r"\{(.*?)\}");
+static FMT_ATTR_REGEX: Lazy<Regex> = lazy_regex!(r"(?:([A-Z]+))(:?([0-9]+))?(:?(.+))?");
 
 /// Call Chain block is a block in a chain of functions which are called in order to format the File.
 /// A callChain is instantiated starting from the Formatter syntax and the regex, once the groups are found
