@@ -59,6 +59,14 @@ impl Component<Msg, NoUserEvent> for DelSshKeyPopup {
                 Some(Msg::None)
             }
             Event::Keyboard(KeyEvent {
+                code: Key::Char('y'),
+                modifiers: KeyModifiers::NONE,
+            }) => Some(Msg::Ssh(SshMsg::DeleteSshKey)),
+            Event::Keyboard(KeyEvent {
+                code: Key::Char('n'),
+                modifiers: KeyModifiers::NONE,
+            }) => Some(Msg::Ssh(SshMsg::CloseDelSshKeyPopup)),
+            Event::Keyboard(KeyEvent {
                 code: Key::Enter, ..
             }) => {
                 if matches!(

@@ -6,7 +6,7 @@ use super::{FormMsg, Msg, UiMsg};
 
 use tui_realm_stdlib::{List, Paragraph, Radio, Textarea};
 use tuirealm::command::{Cmd, CmdResult, Direction, Position};
-use tuirealm::event::{Key, KeyEvent};
+use tuirealm::event::{Key, KeyEvent, KeyModifiers};
 use tuirealm::props::{Alignment, BorderType, Borders, Color, TableBuilder, TextSpan};
 use tuirealm::{Component, Event, MockComponent, NoUserEvent, State, StateValue};
 
@@ -187,6 +187,14 @@ impl Component<Msg, NoUserEvent> for QuitPopup {
                 Some(Msg::None)
             }
             Event::Keyboard(KeyEvent {
+                code: Key::Char('y'),
+                modifiers: KeyModifiers::NONE,
+            }) => Some(Msg::Form(FormMsg::Quit)),
+            Event::Keyboard(KeyEvent {
+                code: Key::Char('n'),
+                modifiers: KeyModifiers::NONE,
+            }) => Some(Msg::Ui(UiMsg::CloseQuitPopup)),
+            Event::Keyboard(KeyEvent {
                 code: Key::Enter, ..
             }) => {
                 if matches!(
@@ -245,6 +253,14 @@ impl Component<Msg, NoUserEvent> for InstallUpdatePopup {
                 self.perform(Cmd::Move(Direction::Right));
                 Some(Msg::None)
             }
+            Event::Keyboard(KeyEvent {
+                code: Key::Char('y'),
+                modifiers: KeyModifiers::NONE,
+            }) => Some(Msg::Form(FormMsg::InstallUpdate)),
+            Event::Keyboard(KeyEvent {
+                code: Key::Char('n'),
+                modifiers: KeyModifiers::NONE,
+            }) => Some(Msg::Ui(UiMsg::CloseInstallUpdatePopup)),
             Event::Keyboard(KeyEvent {
                 code: Key::Enter, ..
             }) => {

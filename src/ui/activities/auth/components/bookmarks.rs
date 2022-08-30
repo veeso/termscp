@@ -6,7 +6,7 @@ use super::{FormMsg, Msg, UiMsg};
 
 use tui_realm_stdlib::{Input, List, Radio};
 use tuirealm::command::{Cmd, CmdResult, Direction, Position};
-use tuirealm::event::{Key, KeyEvent};
+use tuirealm::event::{Key, KeyEvent, KeyModifiers};
 use tuirealm::props::{Alignment, BorderSides, BorderType, Borders, Color, InputType, TextSpan};
 use tuirealm::{Component, Event, MockComponent, NoUserEvent, State, StateValue};
 
@@ -224,6 +224,14 @@ impl Component<Msg, NoUserEvent> for DeleteBookmarkPopup {
                 Some(Msg::None)
             }
             Event::Keyboard(KeyEvent {
+                code: Key::Char('y'),
+                modifiers: KeyModifiers::NONE,
+            }) => Some(Msg::Form(FormMsg::DeleteBookmark)),
+            Event::Keyboard(KeyEvent {
+                code: Key::Char('n'),
+                modifiers: KeyModifiers::NONE,
+            }) => Some(Msg::Ui(UiMsg::CloseDeleteBookmark)),
+            Event::Keyboard(KeyEvent {
                 code: Key::Enter, ..
             }) => {
                 if matches!(
@@ -283,6 +291,14 @@ impl Component<Msg, NoUserEvent> for DeleteRecentPopup {
                 self.perform(Cmd::Move(Direction::Right));
                 Some(Msg::None)
             }
+            Event::Keyboard(KeyEvent {
+                code: Key::Char('y'),
+                modifiers: KeyModifiers::NONE,
+            }) => Some(Msg::Form(FormMsg::DeleteRecent)),
+            Event::Keyboard(KeyEvent {
+                code: Key::Char('n'),
+                modifiers: KeyModifiers::NONE,
+            }) => Some(Msg::Ui(UiMsg::CloseDeleteRecent)),
             Event::Keyboard(KeyEvent {
                 code: Key::Enter, ..
             }) => {

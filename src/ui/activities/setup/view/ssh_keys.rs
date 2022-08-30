@@ -20,8 +20,6 @@ impl SetupActivity {
         self.new_app(ViewLayout::SshKeys);
         // Load keys
         self.reload_ssh_keys();
-        // Give focus
-        assert!(self.app.active(&Id::Ssh(IdSsh::SshKeys)).is_ok());
     }
 
     pub(crate) fn view_ssh_keys(&mut self) {
@@ -137,5 +135,6 @@ impl SetupActivity {
                 vec![]
             )
             .is_ok());
+        assert!(self.app.active(&Id::Ssh(IdSsh::SshKeys)).is_ok());
     }
 }

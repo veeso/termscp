@@ -32,6 +32,7 @@ Released on ??
 
 > ⭐ 500 stars update 🌟
 
+- **Yes/No dialogs** are now answerable by pressing `Y` or `N` on your keyboard ([Issue 121](https://github.com/veeso/termscp/issues/121))
 - **Bugfix**
   - Fixed [Issue 122](https://github.com/veeso/termscp/issues/122)
 - Dependencies:
