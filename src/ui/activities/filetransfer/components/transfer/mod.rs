@@ -82,14 +82,11 @@ impl Component<Msg, NoUserEvent> for ExplorerFind {
                 Some(Msg::None)
             }
             // -- comp msg
-            Event::Keyboard(KeyEvent {
-                code: Key::BackTab, ..
-            }) => Some(Msg::Ui(UiMsg::ExplorerBackTabbed)),
             Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
                 Some(Msg::Ui(UiMsg::CloseFindExplorer))
             }
             Event::Keyboard(KeyEvent {
-                code: Key::Left | Key::Right | Key::Tab,
+                code: Key::Left | Key::Right | Key::Tab | Key::BackTab,
                 ..
             }) => Some(Msg::Ui(UiMsg::ChangeTransferWindow)),
             Event::Keyboard(KeyEvent {
@@ -206,14 +203,11 @@ impl Component<Msg, NoUserEvent> for ExplorerLocal {
                 Some(Msg::None)
             }
             // -- comp msg
-            Event::Keyboard(KeyEvent {
-                code: Key::BackTab, ..
-            }) => Some(Msg::Ui(UiMsg::ExplorerBackTabbed)),
             Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
                 Some(Msg::Ui(UiMsg::ShowDisconnectPopup))
             }
             Event::Keyboard(KeyEvent {
-                code: Key::Right | Key::Tab,
+                code: Key::Right | Key::Tab | Key::BackTab,
                 ..
             }) => Some(Msg::Ui(UiMsg::ChangeTransferWindow)),
             Event::Keyboard(KeyEvent {
@@ -275,6 +269,10 @@ impl Component<Msg, NoUserEvent> for ExplorerLocal {
                 code: Key::Char('o') | Key::Function(4),
                 modifiers: KeyModifiers::NONE,
             }) => Some(Msg::Transfer(TransferMsg::OpenTextFile)),
+            Event::Keyboard(KeyEvent {
+                code: Key::Char('p'),
+                modifiers: KeyModifiers::NONE,
+            }) => Some(Msg::Ui(UiMsg::ShowLogPanel)),
             Event::Keyboard(KeyEvent {
                 code: Key::Char('r') | Key::Function(6),
                 modifiers: KeyModifiers::NONE,
@@ -386,14 +384,11 @@ impl Component<Msg, NoUserEvent> for ExplorerRemote {
                 Some(Msg::None)
             }
             // -- comp msg
-            Event::Keyboard(KeyEvent {
-                code: Key::BackTab, ..
-            }) => Some(Msg::Ui(UiMsg::ExplorerBackTabbed)),
             Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
                 Some(Msg::Ui(UiMsg::ShowDisconnectPopup))
             }
             Event::Keyboard(KeyEvent {
-                code: Key::Left | Key::Tab,
+                code: Key::Left | Key::Tab | Key::BackTab,
                 ..
             }) => Some(Msg::Ui(UiMsg::ChangeTransferWindow)),
             Event::Keyboard(KeyEvent {
@@ -455,6 +450,10 @@ impl Component<Msg, NoUserEvent> for ExplorerRemote {
                 code: Key::Char('o') | Key::Function(4),
                 modifiers: KeyModifiers::NONE,
             }) => Some(Msg::Transfer(TransferMsg::OpenTextFile)),
+            Event::Keyboard(KeyEvent {
+                code: Key::Char('p'),
+                modifiers: KeyModifiers::NONE,
+            }) => Some(Msg::Ui(UiMsg::ShowLogPanel)),
             Event::Keyboard(KeyEvent {
                 code: Key::Char('r') | Key::Function(6),
                 modifiers: KeyModifiers::NONE,

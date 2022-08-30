@@ -406,7 +406,7 @@ impl FileTransferActivity {
                 self.disconnect();
                 self.umount_disconnect();
             }
-            UiMsg::ExplorerBackTabbed => {
+            UiMsg::ShowLogPanel => {
                 assert!(self.app.active(&Id::Log).is_ok());
             }
             UiMsg::LogBackTabbed => {

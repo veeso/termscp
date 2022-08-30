@@ -204,6 +204,7 @@ Para cambiar de panel, debe escribir `<LEFT>` para mover el panel del explorador
 | `<M>`         | Seleccione un archivo                                                      | Mark        |
 | `<N>`         | Crear un nuevo archivo con el nombre proporcionado                         | New         |
 | `<O|F4>`      | Editar archivo                                                             | Open        |
+| `<P>`         | Open log panel                                          | Panel       |
 | `<Q|F10>`     | Salir de termscp                                                           | Quit        |
 | `<R|F6>`      | Renombrar archivo                                                          | Rename      |
 | `<S|F2>`      | Guardar archivo como...                                                    | Save        |

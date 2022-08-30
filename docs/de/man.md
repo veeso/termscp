@@ -204,6 +204,7 @@ In order to change panel you need to type `<LEFT>` to move the remote explorer p
 | `<M>`         | Select a file                                         | Mark         |
 | `<N>`         | Create new file with provided name                    | New         |
 | `<O|F4>`      | Edit file; see  Text editor                           | Open        |
+| `<P>`         | Open log panel                                          | Panel       |
 | `<Q|F10>`     | Quit termscp                                          | Quit        |
 | `<R|F6>`      | Rename file                                           | Rename      |
 | `<S|F2>`      | Save file as...                                       | Save        |

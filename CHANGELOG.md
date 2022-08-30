@@ -32,6 +32,8 @@ Released on ??
 
 > ⭐ 500 stars update 🌟
 
+- **Changed keybindings for BACKTAB**: backtab will now change the explorer tab
+  - To active the LOG PANEL, use `P`
 - **Yes/No dialogs** are now answerable by pressing `Y` or `N` on your keyboard ([Issue 121](https://github.com/veeso/termscp/issues/121))
 - **Bugfix**
   - Fixed [Issue 122](https://github.com/veeso/termscp/issues/122)
