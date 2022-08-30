@@ -62,6 +62,7 @@ toml = "0.5.0"
 tui-realm-stdlib = "1.1.7"
 tuirealm = "1.8.0"
 unicode-width = "0.1.8"
+version-compare = "0.1.0"
 whoami = "1.2.1"
 wildmatch = "2.1.1"
 

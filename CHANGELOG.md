@@ -37,6 +37,7 @@ Released on ??
 - **Yes/No dialogs** are now answerable by pressing `Y` or `N` on your keyboard ([Issue 121](https://github.com/veeso/termscp/issues/121))
 - **Bugfix**
   - Fixed [Issue 122](https://github.com/veeso/termscp/issues/122)
+  - Fixed version comparison when going above 0.9
 - Dependencies:
   - Bump `argh` to `0.1.8`
   - Bump `chrono` to `0.4.22`
@@ -45,6 +46,7 @@ Released on ??
   - Changed `regex` to `lazy-regex 2.3.0`
   - Bump `tuirealm` to `1.8.0`
   - Bump `tui-realm-stdlib` to `1.1.7`
+  - Added `version-compare 0.1.0`
   - Bump `wildmatch` to `2.1.1`
 
 ## 0.9.0
