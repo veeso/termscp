@@ -1720,6 +1720,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "498a099351efa4becc6a19c72aa9270598e8fd274ca47052e37455241c88b696"
 
 [[package]]
+name = "path-slash"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1e91099d4268b0e11973f036e885d652fb0b21fedcf69738c627f94db6a44f42"
+
+[[package]]
 name = "pathdiff"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1938,7 +1944,7 @@ checksum = "9939849e0b3895b07f258458d0fa5cd4632c78ffc517e66e1f758ddf23990542"
 dependencies = [
  "chrono",
  "log",
- "path-slash",
+ "path-slash 0.1.5",
  "remotefs",
  "rust-s3",
  "thiserror",
@@ -1952,7 +1958,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "359fd989a6ad50fa6defae771e453695412cbfdb5476f49e42d1bb1d51b5c096"
 dependencies = [
  "log",
- "path-slash",
+ "path-slash 0.1.5",
  "remotefs",
  "suppaftp",
  "users",
@@ -1960,14 +1966,14 @@ dependencies = [
 
 [[package]]
 name = "remotefs-ssh"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ea2ac5a7f475c1b63ffd2aaab57ca4e37e6a6ed23461046d4fb1554835e6088a"
+checksum = "190106b53b839cf094172d2f1bc14e8d2846a69de06b239f11c2fc353080e9e0"
 dependencies = [
  "chrono",
  "lazy_static",
  "log",
- "path-slash",
+ "path-slash 0.2.1",
  "regex",
  "remotefs",
  "ssh2",
@@ -2511,6 +2517,7 @@ dependencies = [
  "serde",
  "serial_test",
  "simplelog",
+ "ssh2-config",
  "tempfile",
  "thiserror",
  "toml",

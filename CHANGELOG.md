@@ -35,6 +35,7 @@ Released on ??
 - **Changed keybindings for BACKTAB**: backtab will now change the explorer tab
   - To active the LOG PANEL, use `P`
 - **Yes/No dialogs** are now answerable by pressing `Y` or `N` on your keyboard ([Issue 121](https://github.com/veeso/termscp/issues/121))
+- **Use ssh2 config IdentityFile** as fallback for key based authentication
 - **Bugfix**
   - Fixed [Issue 122](https://github.com/veeso/termscp/issues/122)
   - Fixed version comparison when going above 0.9
@@ -44,6 +45,8 @@ Released on ??
   - Bump `keyring` to `1.2.0`
   - Bump `open` to `3.0.2`
   - Changed `regex` to `lazy-regex 2.3.0`
+  - Bump `remotefs-ssh` to `0.1.2`
+  - Bump `ssh2-config` to `0.1.3`
   - Bump `tuirealm` to `1.8.0`
   - Bump `tui-realm-stdlib` to `1.1.7`
   - Added `version-compare 0.1.0`
