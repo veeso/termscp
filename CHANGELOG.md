@@ -32,6 +32,8 @@ Released on ??
 
 > ⭐ 500 stars update 🌟
 
+- **Bugfix**
+  - Fixed [Issue 122](https://github.com/veeso/termscp/issues/122)
 - Dependencies:
   - Bump `argh` to `0.1.8`
   - Bump `chrono` to `0.4.22`

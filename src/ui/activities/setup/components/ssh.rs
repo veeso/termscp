@@ -143,7 +143,8 @@ impl Component<Msg, NoUserEvent> for SshKeys {
                 _ => Some(Msg::None),
             },
             Event::Keyboard(KeyEvent {
-                code: Key::Delete, ..
+                code: Key::Delete | Key::Char('e'),
+                ..
             }) => Some(Msg::Ssh(SshMsg::ShowDelSshKeyPopup)),
             Event::Keyboard(KeyEvent {
                 code: Key::Char('n'),
