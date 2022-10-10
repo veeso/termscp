@@ -296,7 +296,7 @@ install_bsd_cargo_deps() {
 }
 
 install_linux_cargo_deps() {
-    local debian_deps="gcc pkg-config libssl-dev libssh2-1-dev libdbus-1-dev"
+    local debian_deps="gcc pkg-config libdbus-1-dev"
     local rpm_deps="gcc openssl pkgconfig libdbus-devel openssl-devel"
     local arch_deps="gcc openssl pkg-config dbus"
     local deps_cmd=""

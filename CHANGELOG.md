@@ -45,12 +45,14 @@ Released on ??
   - Bump `keyring` to `1.2.0`
   - Bump `open` to `3.0.2`
   - Changed `regex` to `lazy-regex 2.3.0`
+  - Bump `remotefs-ftp` to `0.1.2`
   - Bump `remotefs-ssh` to `0.1.2`
   - Bump `ssh2-config` to `0.1.3`
   - Bump `tuirealm` to `1.8.0`
   - Bump `tui-realm-stdlib` to `1.1.7`
   - Added `version-compare 0.1.0`
   - Bump `wildmatch` to `2.1.1`
+  - Removed libssl dependency
 
 ## 0.9.0
 
