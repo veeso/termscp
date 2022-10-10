@@ -8,8 +8,6 @@ RUN apt update && apt install -y \
   git \
   gcc \
   pkg-config \
-  libssl-dev \
-  libssh2-1-dev \
   libdbus-1-dev \
   bash \
   curl

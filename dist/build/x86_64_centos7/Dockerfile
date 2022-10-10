@@ -7,10 +7,8 @@ WORKDIR /usr/src/
 RUN yum -y install \
     git \
     gcc \
-    openssl \
     pkgconfig \
     dbus-devel \
-    openssl-devel \
     bash
 # Install rust
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > /tmp/rust.sh && \
