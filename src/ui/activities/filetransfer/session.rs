@@ -326,11 +326,7 @@ impl FileTransferActivity {
                             break;
                         }
                         // Send entry; name is always None after first call
-                        if let Err(err) =
-                            self.filetransfer_send_recurse(entry, remote_path.as_path(), None)
-                        {
-                            return Err(err);
-                        }
+                        self.filetransfer_send_recurse(entry, remote_path.as_path(), None)?
                     }
                     Ok(())
                 }
@@ -717,13 +713,11 @@ impl FileTransferActivity {
                                 }
                                 // Receive entry; name is always None after first call
                                 // Local path becomes local_dir_path
-                                if let Err(err) = self.filetransfer_recv_recurse(
+                                self.filetransfer_recv_recurse(
                                     entry,
                                     local_dir_path.as_path(),
                                     None,
-                                ) {
-                                    return Err(err);
-                                }
+                                )?
                             }
                             Ok(())
                         }

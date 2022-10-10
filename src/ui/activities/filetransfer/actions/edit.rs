@@ -148,9 +148,7 @@ impl FileTransferActivity {
             }
         };
         // Edit file
-        if let Err(err) = self.edit_local_file(tmpfile.as_path()) {
-            return Err(err);
-        }
+        self.edit_local_file(tmpfile.as_path())?;
         // Get local fs entry
         let tmpfile_entry: File = match self.host.stat(tmpfile.as_path()) {
             Ok(e) => e,
