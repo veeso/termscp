@@ -9,6 +9,7 @@ RUN apt update && apt install -y \
   gcc \
   pkg-config \
   libdbus-1-dev \
+  build-essential \
   bash \
   curl
 
