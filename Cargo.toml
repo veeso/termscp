@@ -50,8 +50,7 @@ open = "3.0.3"
 rand = "0.8.5"
 remotefs = "^0.2.0"
 remotefs-aws-s3 = { version = "^0.2.1", default-features = false, features = [ "find", "rustls" ] }
-remotefs-ftp = { version = "^0.1.2", features = [ "vendored", "native-tls" ] }
-remotefs-ssh = { version = "^0.1.2", features = [ "ssh2-vendored" ] }
+
 rpassword = "7.0.0"
 self_update = { version = "0.32.0", default-features = false, features = [ "rustls", "archive-tar", "archive-zip", "compression-flate2", "compression-zip-deflate" ] }
 serde = { version = "^1", features = [ "derive" ] }
@@ -76,8 +75,15 @@ default = [ "with-keyring" ]
 github-actions = [ ]
 with-keyring = [ "keyring" ]
 
+[target."cfg(target_family = \"windows\")"]
+[target."cfg(target_family = \"windows\")".dependencies]
+remotefs-ftp = { version = "^0.1.2", features = [ "native-tls" ] }
+remotefs-ssh = "^0.1.2"
+
 [target."cfg(target_family = \"unix\")"]
 [target."cfg(target_family = \"unix\")".dependencies]
+remotefs-ftp = { version = "^0.1.2", features = [ "vendored", "native-tls" ] }
+remotefs-ssh = { version = "^0.1.2", features = [ "ssh2-vendored" ] }
 users = "0.11.0"
 
 [profile.dev]

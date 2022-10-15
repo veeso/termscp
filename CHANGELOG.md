@@ -28,7 +28,7 @@
 
 ## 0.10.0
 
-Released on ??
+Released on 15/10/2022
 
 > ⭐ 500 stars update ⭐
 > Thank you for supporting termscp and make it reaching 500 stars on Github
