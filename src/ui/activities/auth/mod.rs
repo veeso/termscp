@@ -60,14 +60,14 @@ pub enum Id {
     WindowSizeError,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Eq, PartialEq)]
 pub enum Msg {
     Form(FormMsg),
     Ui(UiMsg),
     None,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum FormMsg {
     Connect,
     DeleteBookmark,
@@ -81,7 +81,7 @@ pub enum FormMsg {
     SaveBookmark,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum UiMsg {
     AddressBlurDown,
     AddressBlurUp,

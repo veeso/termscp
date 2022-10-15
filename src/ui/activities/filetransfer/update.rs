@@ -102,7 +102,7 @@ impl FileTransferActivity {
                     self.action_submit_local(entry);
                     // Update file list if sync
                     if self.browser.sync_browsing && self.browser.found().is_none() {
-                        let _ = self.update_remote_filelist();
+                        self.update_remote_filelist();
                     }
                     self.update_local_filelist();
                 }
@@ -112,7 +112,7 @@ impl FileTransferActivity {
                     self.action_submit_remote(entry);
                     // Update file list if sync
                     if self.browser.sync_browsing && self.browser.found().is_none() {
-                        let _ = self.update_local_filelist();
+                        self.update_local_filelist();
                     }
                     self.update_remote_filelist();
                 }
@@ -161,7 +161,7 @@ impl FileTransferActivity {
                     FileExplorerTab::Local => {
                         self.action_go_to_local_upper_dir();
                         if self.browser.sync_browsing && self.browser.found().is_none() {
-                            let _ = self.update_remote_filelist();
+                            self.update_remote_filelist();
                         }
                         // Reload file list component
                         self.update_local_filelist()
@@ -169,7 +169,7 @@ impl FileTransferActivity {
                     FileExplorerTab::Remote => {
                         self.action_go_to_remote_upper_dir();
                         if self.browser.sync_browsing && self.browser.found().is_none() {
-                            let _ = self.update_local_filelist();
+                            self.update_local_filelist();
                         }
                         // Reload file list component
                         self.update_remote_filelist()
@@ -182,7 +182,7 @@ impl FileTransferActivity {
                     FileExplorerTab::Local => {
                         self.action_go_to_previous_local_dir();
                         if self.browser.sync_browsing && self.browser.found().is_none() {
-                            let _ = self.update_remote_filelist();
+                            self.update_remote_filelist();
                         }
                         // Reload file list component
                         self.update_local_filelist()
@@ -190,7 +190,7 @@ impl FileTransferActivity {
                     FileExplorerTab::Remote => {
                         self.action_go_to_previous_remote_dir();
                         if self.browser.sync_browsing && self.browser.found().is_none() {
-                            let _ = self.update_local_filelist();
+                            self.update_local_filelist();
                         }
                         // Reload file list component
                         self.update_remote_filelist()
@@ -406,7 +406,7 @@ impl FileTransferActivity {
                 self.disconnect();
                 self.umount_disconnect();
             }
-            UiMsg::ExplorerBackTabbed => {
+            UiMsg::ShowLogPanel => {
                 assert!(self.app.active(&Id::Log).is_ok());
             }
             UiMsg::LogBackTabbed => {

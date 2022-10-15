@@ -11,7 +11,7 @@ pub use params::{FileTransferParams, ProtocolParams};
 
 /// This enum defines the different transfer protocol available in termscp
 
-#[derive(PartialEq, Debug, Clone, Copy)]
+#[derive(PartialEq, Eq, Debug, Clone, Copy)]
 pub enum FileTransferProtocol {
     Sftp,
     Scp,

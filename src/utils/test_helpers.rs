@@ -21,14 +21,15 @@ pub fn create_sample_file_entry() -> (File, NamedTempFile) {
     )
 }
 
+/// Create sample file with default lorem ipsum content
 pub fn create_sample_file() -> NamedTempFile {
-    // Write
+    create_sample_file_with_content("Lorem ipsum dolor sit amet, consectetur adipiscing elit.Mauris ultricies consequat eros,nec scelerisque magna imperdiet metus.")
+}
+
+/// Create sample file with provided content
+pub fn create_sample_file_with_content(content: impl std::fmt::Display) -> NamedTempFile {
     let mut tmpfile: tempfile::NamedTempFile = tempfile::NamedTempFile::new().unwrap();
-    writeln!(
-        tmpfile,
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit.Mauris ultricies consequat eros,nec scelerisque magna imperdiet metus."
-    )
-    .unwrap();
+    writeln!(tmpfile, "{}", content).unwrap();
     tmpfile
 }
 

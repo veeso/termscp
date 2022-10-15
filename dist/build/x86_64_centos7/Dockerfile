@@ -7,11 +7,12 @@ WORKDIR /usr/src/
 RUN yum -y install \
     git \
     gcc \
-    openssl \
     pkgconfig \
+    gcc \
+    make \
     dbus-devel \
-    openssl-devel \
-    bash
+    bash \
+    rpm-build
 # Install rust
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > /tmp/rust.sh && \
     chmod +x /tmp/rust.sh && \
@@ -20,10 +21,10 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > /tmp/rust.sh && 
 RUN git clone --branch $branch https://github.com/veeso/termscp.git
 # Set workdir to termscp
 WORKDIR /usr/src/termscp/
-# Install cargo arxch
-RUN source $HOME/.cargo/env && cargo install cargo-rpm
 # Build for x86_64
 RUN source $HOME/.cargo/env && cargo build --release
+# Install cargo rpm
+RUN source $HOME/.cargo/env && cargo install cargo-rpm
 # Build pkgs
-RUN source $HOME/.cargo/env && yum -y install rpm-build && cargo rpm init && cargo rpm build
+RUN source $HOME/.cargo/env && cargo rpm init && cargo rpm build
 CMD ["sh"]

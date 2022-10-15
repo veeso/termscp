@@ -208,7 +208,7 @@ impl FileTransferActivity {
             Ok(h) => {
                 let hostname: String = h.as_os_str().to_string_lossy().to_string();
                 let tokens: Vec<&str> = hostname.split('.').collect();
-                String::from(*tokens.get(0).unwrap_or(&"localhost"))
+                String::from(*tokens.first().unwrap_or(&"localhost"))
             }
             Err(_) => String::from("localhost"),
         };

@@ -1,6 +1,7 @@
 # Changelog
 
 - [Changelog](#changelog)
+  - [0.10.0](#0100)
   - [0.9.0](#090)
   - [0.8.2](#082)
   - [0.8.1](#081)
@@ -24,6 +25,40 @@
   - [0.1.0](#010)
 
 ---
+
+## 0.10.0
+
+Released on 15/10/2022
+
+> ⭐ 500 stars update ⭐
+> Thank you for supporting termscp and make it reaching 500 stars on Github
+
+- **Changed keybindings for BACKTAB**: backtab will now change the explorer tab
+  - To active the LOG PANEL, use `P`
+- **Yes/No dialogs** are now answerable by pressing `Y` or `N` on your keyboard ([Issue 121](https://github.com/veeso/termscp/issues/121))
+- **Use ssh2 config IdentityFile** as fallback for key based authentication
+- **Bugfix**
+  - Fixed [Issue 122](https://github.com/veeso/termscp/issues/122)
+  - Fixed version comparison when going above 0.9
+- Dependencies:
+  - Bump `argh` to `0.1.9`
+  - Bump `chrono` to `0.4.22`
+  - Bump `keyring` to `1.2.0`
+  - Bump `notify-rust` to `4.5.10`
+  - Bump `open` to `3.0.3`
+  - Bump `rpassword` to `7.0.0`
+  - Changed `regex` to `lazy-regex 2.3.0`
+  - Bump `remotefs-ftp` to `0.1.2`
+  - Bump `remotefs-ssh` to `0.1.2`
+  - Bump `self_update` to `0.32`
+  - Bump `ssh2-config` to `0.1.3`
+  - Bump `tuirealm` to `1.8.0`
+  - Bump `tui-realm-stdlib` to `1.1.7`
+  - Bump `unicode-width` to `0.1.10`
+  - Added `version-compare 0.1.0`
+  - Bump `whoami` to `1.2.3`
+  - Bump `wildmatch` to `2.1.1`
+  - Removed libssl dependency
 
 ## 0.9.0
 

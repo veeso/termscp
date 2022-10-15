@@ -148,6 +148,14 @@ impl Component<Msg, NoUserEvent> for DeletePopup {
                 Some(Msg::Ui(UiMsg::CloseDeletePopup))
             }
             Event::Keyboard(KeyEvent {
+                code: Key::Char('y'),
+                modifiers: KeyModifiers::NONE,
+            }) => Some(Msg::Transfer(TransferMsg::DeleteFile)),
+            Event::Keyboard(KeyEvent {
+                code: Key::Char('n'),
+                modifiers: KeyModifiers::NONE,
+            }) => Some(Msg::Ui(UiMsg::CloseDeletePopup)),
+            Event::Keyboard(KeyEvent {
                 code: Key::Enter, ..
             }) => {
                 if matches!(
@@ -203,6 +211,14 @@ impl Component<Msg, NoUserEvent> for DisconnectPopup {
             Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
                 Some(Msg::Ui(UiMsg::CloseDisconnectPopup))
             }
+            Event::Keyboard(KeyEvent {
+                code: Key::Char('y'),
+                modifiers: KeyModifiers::NONE,
+            }) => Some(Msg::Ui(UiMsg::Disconnect)),
+            Event::Keyboard(KeyEvent {
+                code: Key::Char('n'),
+                modifiers: KeyModifiers::NONE,
+            }) => Some(Msg::Ui(UiMsg::CloseDisconnectPopup)),
             Event::Keyboard(KeyEvent {
                 code: Key::Enter, ..
             }) => {
@@ -1196,6 +1212,14 @@ impl Component<Msg, NoUserEvent> for QuitPopup {
                 Some(Msg::Ui(UiMsg::CloseQuitPopup))
             }
             Event::Keyboard(KeyEvent {
+                code: Key::Char('y'),
+                modifiers: KeyModifiers::NONE,
+            }) => Some(Msg::Ui(UiMsg::Quit)),
+            Event::Keyboard(KeyEvent {
+                code: Key::Char('n'),
+                modifiers: KeyModifiers::NONE,
+            }) => Some(Msg::Ui(UiMsg::CloseQuitPopup)),
+            Event::Keyboard(KeyEvent {
                 code: Key::Enter, ..
             }) => {
                 if matches!(
@@ -1344,6 +1368,14 @@ impl Component<Msg, NoUserEvent> for ReplacePopup {
             Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
                 Some(Msg::PendingAction(PendingActionMsg::CloseReplacePopups))
             }
+            Event::Keyboard(KeyEvent {
+                code: Key::Char('y'),
+                modifiers: KeyModifiers::NONE,
+            }) => Some(Msg::PendingAction(PendingActionMsg::TransferPendingFile)),
+            Event::Keyboard(KeyEvent {
+                code: Key::Char('n'),
+                modifiers: KeyModifiers::NONE,
+            }) => Some(Msg::PendingAction(PendingActionMsg::CloseReplacePopups)),
             Event::Keyboard(KeyEvent {
                 code: Key::Enter, ..
             }) => {
@@ -1791,6 +1823,16 @@ impl Component<Msg, NoUserEvent> for SyncBrowsingMkdirPopup {
                 PendingActionMsg::CloseSyncBrowsingMkdirPopup,
             )),
             Event::Keyboard(KeyEvent {
+                code: Key::Char('y'),
+                modifiers: KeyModifiers::NONE,
+            }) => Some(Msg::PendingAction(PendingActionMsg::MakePendingDirectory)),
+            Event::Keyboard(KeyEvent {
+                code: Key::Char('n'),
+                modifiers: KeyModifiers::NONE,
+            }) => Some(Msg::PendingAction(
+                PendingActionMsg::CloseSyncBrowsingMkdirPopup,
+            )),
+            Event::Keyboard(KeyEvent {
                 code: Key::Enter, ..
             }) => {
                 if matches!(
@@ -1967,6 +2009,14 @@ impl Component<Msg, NoUserEvent> for WatcherPopup {
             Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
                 Some(Msg::Ui(UiMsg::CloseWatcherPopup))
             }
+            Event::Keyboard(KeyEvent {
+                code: Key::Char('y'),
+                modifiers: KeyModifiers::NONE,
+            }) => Some(Msg::Transfer(TransferMsg::ToggleWatch)),
+            Event::Keyboard(KeyEvent {
+                code: Key::Char('n'),
+                modifiers: KeyModifiers::NONE,
+            }) => Some(Msg::Ui(UiMsg::CloseWatcherPopup)),
             Event::Keyboard(KeyEvent {
                 code: Key::Enter, ..
             }) => {

@@ -80,8 +80,8 @@ impl FileTransferActivity {
         self.refresh_local_status_bar();
         self.refresh_remote_status_bar();
         // Update components
-        let _ = self.update_local_filelist();
-        let _ = self.update_remote_filelist();
+        self.update_local_filelist();
+        self.update_remote_filelist();
         // Global listener
         self.mount_global_listener();
         // Give focus to local explorer

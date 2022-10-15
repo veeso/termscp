@@ -32,7 +32,7 @@ mod tests {
     fn test_utils_crypto_aes128() {
         let key: &str = "MYSUPERSECRETKEY";
         let input: &str = "Hello world!";
-        let secret: String = aes128_b64_crypt(&key, input);
+        let secret: String = aes128_b64_crypt(key, input);
         assert_eq!(secret.as_str(), "z4Z6LpcpYqBW4+bkIok+5A==");
         assert_eq!(
             aes128_b64_decrypt(key, secret.as_str())

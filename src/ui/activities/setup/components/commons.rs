@@ -6,7 +6,7 @@ use super::{CommonMsg, Msg, ViewLayout};
 
 use tui_realm_stdlib::{List, Paragraph, Radio, Span};
 use tuirealm::command::{Cmd, CmdResult, Direction, Position};
-use tuirealm::event::{Key, KeyEvent};
+use tuirealm::event::{Key, KeyEvent, KeyModifiers};
 use tuirealm::props::{Alignment, BorderSides, BorderType, Borders, Color, TableBuilder, TextSpan};
 use tuirealm::{Component, Event, MockComponent, NoUserEvent, State, StateValue};
 
@@ -296,6 +296,14 @@ impl Component<Msg, NoUserEvent> for SavePopup {
                 self.perform(Cmd::Move(Direction::Right));
                 Some(Msg::None)
             }
+            Event::Keyboard(KeyEvent {
+                code: Key::Char('y'),
+                modifiers: KeyModifiers::NONE,
+            }) => Some(Msg::Common(CommonMsg::SaveConfig)),
+            Event::Keyboard(KeyEvent {
+                code: Key::Char('n'),
+                modifiers: KeyModifiers::NONE,
+            }) => Some(Msg::Common(CommonMsg::CloseSavePopup)),
             Event::Keyboard(KeyEvent {
                 code: Key::Enter, ..
             }) => {

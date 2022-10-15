@@ -106,7 +106,7 @@ mod tests {
         assert_eq!(ui.file_fmt, Some(String::from("{NAME}")));
         let cfg: UserConfig = UserConfig {
             user_interface: ui,
-            remote: remote,
+            remote,
         };
         assert_eq!(
             *cfg.remote

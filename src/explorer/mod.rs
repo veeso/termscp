@@ -25,7 +25,7 @@ bitflags! {
 }
 
 /// FileSorting defines the criteria for sorting files
-#[derive(Copy, Clone, PartialEq, std::fmt::Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, std::fmt::Debug)]
 pub enum FileSorting {
     Name,
     ModifyTime,
@@ -34,7 +34,7 @@ pub enum FileSorting {
 }
 
 /// GroupDirs defines how directories should be grouped in sorting files
-#[derive(PartialEq, std::fmt::Debug)]
+#[derive(PartialEq, Eq, std::fmt::Debug)]
 pub enum GroupDirs {
     First,
     Last,
@@ -318,8 +318,8 @@ mod tests {
         explorer.stack_size = 2;
         explorer.dirstack = VecDeque::with_capacity(2);
         // Push dir
-        explorer.pushd(&Path::new("/tmp"));
-        explorer.pushd(&Path::new("/home/omar"));
+        explorer.pushd(Path::new("/tmp"));
+        explorer.pushd(Path::new("/home/omar"));
         // Pop
         assert_eq!(explorer.popd().unwrap(), PathBuf::from("/home/omar"));
         assert_eq!(explorer.dirstack.len(), 1);
@@ -328,9 +328,9 @@ mod tests {
         // Dirstack is empty now
         assert!(explorer.popd().is_none());
         // Exceed limit
-        explorer.pushd(&Path::new("/tmp"));
-        explorer.pushd(&Path::new("/home/omar"));
-        explorer.pushd(&Path::new("/dev"));
+        explorer.pushd(Path::new("/tmp"));
+        explorer.pushd(Path::new("/home/omar"));
+        explorer.pushd(Path::new("/dev"));
         assert_eq!(explorer.dirstack.len(), 2);
         assert_eq!(*explorer.dirstack.get(1).unwrap(), PathBuf::from("/dev"));
         assert_eq!(

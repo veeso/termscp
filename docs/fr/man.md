@@ -202,6 +202,7 @@ Pour changer de panneau, vous devez taper `<LEFT>` pour déplacer le panneau de 
 | `<M>`         | Sélectionner un fichier                                                   | Mark        |
 | `<N>`         | Créer un nouveau fichier avec le nom fourni                               | New         |
 | `<O|F4>`      | Modifier le fichier                                                       | Open        |
+| `<P>`         | Ouvre le panel de journals                                                | Panel       |
 | `<Q|F10>`     | Quitter termscp                                                           | Quit        |
 | `<R|F6>`      | Renommer le fichier                                                       | Rename      |
 | `<S|F2>`      | Enregistrer le fichier sous...                                            | Save        |

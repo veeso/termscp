@@ -126,7 +126,7 @@ mod tests {
     #[serial]
     fn test_system_environment_get_bookmarks_paths() {
         assert_eq!(
-            get_bookmarks_paths(&Path::new("/home/omar/.config/termscp/")),
+            get_bookmarks_paths(Path::new("/home/omar/.config/termscp/")),
             PathBuf::from("/home/omar/.config/termscp/bookmarks.toml"),
         );
     }
@@ -135,7 +135,7 @@ mod tests {
     #[serial]
     fn test_system_environment_get_config_paths() {
         assert_eq!(
-            get_config_paths(&Path::new("/home/omar/.config/termscp/")),
+            get_config_paths(Path::new("/home/omar/.config/termscp/")),
             (
                 PathBuf::from("/home/omar/.config/termscp/config.toml"),
                 PathBuf::from("/home/omar/.config/termscp/.ssh/")
@@ -147,7 +147,7 @@ mod tests {
     #[serial]
     fn test_system_environment_get_log_paths() {
         assert_eq!(
-            get_log_paths(&Path::new("/home/omar/.config/termscp/")),
+            get_log_paths(Path::new("/home/omar/.config/termscp/")),
             PathBuf::from("/home/omar/.config/termscp/termscp.log"),
         );
     }
@@ -156,7 +156,7 @@ mod tests {
     #[serial]
     fn test_system_environment_get_theme_path() {
         assert_eq!(
-            get_theme_path(&Path::new("/home/omar/.config/termscp/")),
+            get_theme_path(Path::new("/home/omar/.config/termscp/")),
             PathBuf::from("/home/omar/.config/termscp/theme.toml"),
         );
     }

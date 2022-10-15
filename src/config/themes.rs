@@ -12,7 +12,7 @@ use tuirealm::tui::style::Color;
 /// ### Theme
 ///
 /// Theme contains all the colors lookup table for termscp
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq, Serialize)]
 pub struct Theme {
     // -- auth
     #[serde(

@@ -63,7 +63,7 @@
 </p>
 
 <p align="center">Developed by <a href="https://veeso.github.io/" target="_blank">@veeso</a></p>
-<p align="center">Current version: 0.9.0 (18/06/2022)</p>
+<p align="center">Current version: 0.10.0 (15/10/2022)</p>
 
 <p align="center">
   <a href="https://opensource.org/licenses/MIT"
@@ -224,7 +224,7 @@ The user manual can be found on the [termscp's website](https://veeso.github.io/
 
 ## Upcoming Features 🧪
 
-For **2022** there will be two major updates during the year.
+For **2023** there will be two major updates during the year.
 
 Planned for *future updates ⏲️*:
 
@@ -233,9 +233,8 @@ Planned for *future updates ⏲️*:
   - 🇫🇷 French
   - 🇩🇪 German
   - 🇮🇹 Italian
-  - 🇳🇱 Dutch
   - 🇪🇸 Spanish
-- **Configuration profile for bookmarks 📚**: Basically this feature adds the possibility to have a specific setup for a certain host, instead of having only one global configuration. (Maybe will be postponed to spring 2022).
+- **Configuration profile for bookmarks 📚**: Basically this feature adds the possibility to have a specific setup for a certain host, instead of having only one global configuration.
 
 Along to new features, termscp developments is now focused on UX and performance improvements, so if you have any suggestion, feel free to open an issue.
 

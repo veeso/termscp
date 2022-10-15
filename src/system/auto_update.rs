@@ -96,7 +96,7 @@ impl Update {
                     new_version,
                     cargo_crate_version!()
                 );
-                if new_version.as_str() > cargo_crate_version!() {
+                if Self::is_new_version_higher(new_version.as_str(), cargo_crate_version!()) {
                     Some(r) // New version is available
                 } else {
                     None // No new version
@@ -104,6 +104,12 @@ impl Update {
             }
             None => None,
         }
+    }
+
+    /// Check wether new version is higher than new version
+    fn is_new_version_higher(new_version: &str, current_version: &str) -> bool {
+        version_compare::compare(new_version, current_version).unwrap_or(version_compare::Cmp::Lt)
+            == version_compare::Cmp::Gt
     }
 }
 impl From<Status> for UpdateStatus {
@@ -192,5 +198,14 @@ mod test {
         let release: Release = Release::from(release);
         assert_eq!(release.body.as_str(), "fixed everything");
         assert_eq!(release.version.as_str(), "0.7.0");
+    }
+
+    #[test]
+    fn should_tell_that_version_is_higher() {
+        assert!(Update::is_new_version_higher("0.10.0", "0.9.0"));
+        assert!(Update::is_new_version_higher("0.20.0", "0.19.0"));
+        assert!(!Update::is_new_version_higher("0.9.0", "0.10.0"));
+        assert!(!Update::is_new_version_higher("0.9.9", "0.10.1"));
+        assert!(!Update::is_new_version_higher("0.10.9", "0.11.0"));
     }
 }

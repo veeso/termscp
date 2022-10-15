@@ -8,7 +8,7 @@
 #   -f, -y, --force, --yes
 #     Skip the confirmation prompt during installation
 
-TERMSCP_VERSION="0.9.0"
+TERMSCP_VERSION="0.10.0"
 GITHUB_URL="https://github.com/veeso/termscp/releases/download/v${TERMSCP_VERSION}"
 DEB_URL="${GITHUB_URL}/termscp_${TERMSCP_VERSION}_amd64.deb"
 RPM_URL="${GITHUB_URL}/termscp-${TERMSCP_VERSION}-1.x86_64.rpm"
@@ -296,7 +296,7 @@ install_bsd_cargo_deps() {
 }
 
 install_linux_cargo_deps() {
-    local debian_deps="gcc pkg-config libssl-dev libssh2-1-dev libdbus-1-dev"
+    local debian_deps="gcc pkg-config libdbus-1-dev"
     local rpm_deps="gcc openssl pkgconfig libdbus-devel openssl-devel"
     local arch_deps="gcc openssl pkg-config dbus"
     local deps_cmd=""

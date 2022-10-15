@@ -198,6 +198,7 @@ Per cambiare pannello ti puoi muovere con le frecce, `<LEFT>` per andare sul pan
 | `<M>`         | Seleziona file                                        | Mark        |
 | `<N>`         | Crea nuovo file con il nome fornito                   | New         |
 | `<O|F4>`      | Modifica file; Vedi text editor                       | Open        |
+| `<P>`         | Apri pannello log                                     | Panel       |
 | `<Q|F10>`     | Termina termscp                                       | Quit        |
 | `<R|F6>`      | Rinomina file                                         | Rename      |
 | `<S|F2>`      | Salva file con nome                                   | Save        |

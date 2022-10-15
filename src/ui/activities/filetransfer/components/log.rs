@@ -192,7 +192,8 @@ impl Component<Msg, NoUserEvent> for Log {
             }
             // -- comp msg
             Event::Keyboard(KeyEvent {
-                code: Key::BackTab, ..
+                code: Key::BackTab | Key::Tab | Key::Char('p'),
+                ..
             }) => Some(Msg::Ui(UiMsg::LogBackTabbed)),
             _ => None,
         }
