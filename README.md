@@ -119,7 +119,7 @@
 
 ## About termscp 🖥
 
-Termscp is a feature rich terminal file transfer and explorer, with support for SCP/SFTP/FTP/S3. So basically is a terminal utility with an TUI to connect to a remote server to retrieve and upload files and to interact with the local file system. It is **Linux**, **MacOS**, **FreeBSD** and **Windows** compatible.
+Termscp is a feature rich terminal file transfer and explorer, with support for SCP/SFTP/FTP/S3. So basically is a terminal utility with an TUI to connect to a remote server to retrieve and upload files and to interact with the local file system. It is **Linux**, **MacOS**, **FreeBSD**, **NetBSD** and **Windows** compatible.
 
 ![Explorer](assets/images/explorer.gif)
 
@@ -137,7 +137,7 @@ Termscp is a feature rich terminal file transfer and explorer, with support for 
 - ⭐  Connect to your favourite hosts through built-in bookmarks and recent connections
 - 📝  View and edit files with your favourite applications
 - 💁  SFTP/SCP authentication with SSH keys and username/password
-- 🐧  Compatible with Windows, Linux, FreeBSD and MacOS
+- 🐧  Compatible with Windows, Linux, FreeBSD, NetBSD and MacOS
 - 🎨  Make it yours!
   - Themes
   - Custom file explorer format
@@ -172,6 +172,11 @@ while if you're a Windows user, you can install termscp with [Chocolatey](https:
 choco install termscp
 ```
 
+NetBSD users can install termscp from the official repositories.
+```sh
+pkgin install termscp
+```
+
 For more information or other platforms, please visit [veeso.github.io](https://veeso.github.io/termscp/#get-started) to view all installation methods.
 
 ⚠️ If you're looking on how to update termscp just run termscp from CLI with: `(sudo) termscp --update` ⚠️
@@ -181,7 +186,7 @@ For more information or other platforms, please visit [veeso.github.io](https://
 - **Linux** users:
   - libdbus-1
   - pkg-config
-- **FreeBSD** users:
+- **FreeBSD** or, **NetBSD** users:
   - dbus
   - pkgconf
 
