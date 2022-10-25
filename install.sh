@@ -153,11 +153,6 @@ detect_arch() {
         arch="arm"
     fi
     
-    if [ "${arch}" != "x86_64" ]; then
-        error "Unsupported arch ${arch}"
-        return 1
-    fi
-    
     printf '%s' "${arch}"
 }
 
@@ -269,8 +264,11 @@ install_on_macos() {
         # get homebrew formula name
         if [ "${ARCH}" == "x86_64" ]; then
             FORMULA="termscp"
-        else
+        elif [ "$ARCH" == "aarch64" ] then
             FORMULA="termscp-m1"
+        else
+            error "unsupported arch: $ARCH"
+            exit 1
         fi
         if has termscp; then
             info "Upgrading ${GREEN}termscp${NO_COLOR}…"
