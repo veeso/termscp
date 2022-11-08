@@ -264,7 +264,7 @@ install_on_macos() {
         # get homebrew formula name
         if [ "${ARCH}" == "x86_64" ]; then
             FORMULA="termscp"
-        elif [ "$ARCH" == "aarch64" ] then
+        elif [ "$ARCH" == "aarch64" ]; then
             FORMULA="termscp-m1"
         else
             error "unsupported arch: $ARCH"
