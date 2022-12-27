@@ -1,0 +1,114 @@
+{
+  "menu": {
+    "desc": "功能丰富的终端文件传输",
+    "intro": "介绍",
+    "getStarted": "开始",
+    "updates": "安装更新",
+    "manual": "用户手册",
+    "changelog": "发布历史",
+    "author": "关于作者",
+    "support": "支持我"
+  },
+  "intro": {
+    "caption": "功能丰富的终端 UI 文件传输和浏览器，支持 SCP/SFTP/FTP/S3",
+    "getStarted": "开始 →",
+    "versionAlert": "termscp 0.8.2 现已发布！ 从下载",
+    "here": "这里",
+    "features": {
+      "handy": {
+        "title": "方便的用户界面",
+        "body": "使用方便的 UI 在远程和本地机器文件系统上探索和操作。"
+      },
+      "crossPlatform": {
+        "title": "跨平台",
+        "body": "在 Windows、MacOS、Linux 和 FreeBSD 上运行"
+      },
+      "customizable": {
+        "title": "可定制",
+        "body": "自定义文件浏览器、UI 和许多其他参数..."
+      },
+      "bookmarks": {
+        "title": "书签",
+        "body": "通过内置书签和最近的连接连接到您最喜欢的主机"
+      },
+      "security": {
+        "title": "安全第一",
+        "body": "将您的密码保存到您的操作系统密钥保管库中"
+      },
+      "performance": {
+        "title": "关注性能",
+        "body": "已经开发了 termscp 关注性能以防止高 CPU 使用率"
+      }
+    },
+    "footer": {
+      "getStarted": "开始",
+      "manual": "用户手册",
+      "updates": "安装更新"
+    }
+  },
+  "getStarted": {
+    "title": "开始",
+    "quickSetup": "快速设置",
+    "suggested": "我们强烈建议使用这种方法来安装termscp",
+    "posixUsers": "如果您是 Linux、FreeBSD 或 MacOS 用户，您可以通过这个简单的命令安装 termscp，它将使用 shell 脚本安装程序：",
+    "windows": {
+      "title": "Windows 用户",
+      "intro": "安装",
+      "moderation": "考虑到 Chocolatey 审核自上次发布以来可能需要长达数周的时间，因此如果最新版本尚不可用，您可以从以下位置下载 ZIP 文件进行安装",
+      "then": "然后，从 ZIP 目录，安装它"
+    },
+    "linuxUsers": "Linux 用户",
+    "notConfident": "如果您对使用 shell 脚本没有信心，请选择这些方法",
+    "noBinary": "如果您的平台的二进制文件不可用，请改用此方法",
+    "arch": {
+      "title": "Arch派生用户",
+      "intro": "在基于 Arch Linux 的发行版上，您可以使用 AUR 包管理器安装 termscp，例如",
+      "then": "然后运行"
+    },
+    "debian": {
+      "title": "Debian派生用户",
+      "body": "在基于 Debian 的发行版上，您可以通过以下方式使用 Deb 包安装 termscp："
+    },
+    "redhat": {
+      "title": "Redhat派生用户",
+      "body": "在基于 RedHat 的发行版上，您可以通过以下方式使用 RPM 包安装 termscp："
+    },
+    "macos": {
+      "title": "MacOS 用户",
+      "install": "通过以下方式安装termscp："
+    },
+    "cargo": {
+      "title": "使用“Cargo”安装",
+      "body": "如果您的系统没有可用的软件包，您可以选择通过以下方式安装 termscp：",
+      "requirements": "要通过 Cargo 安装termscp，必须满足这些要求",
+      "install": "然后你可以通过安装termscp",
+      "noKeyring": "或者，如果您不想支持密钥环，或者您正在构建 *BSD："
+    }
+  },
+  "updates": {
+    "title": "使termscp保持最新",
+    "disclaimer": " 使用此方法更新 termscp 仅适用于 0.7.x 版本或更高版本。 如果您有旧版本，则必须使用",
+    "reasons": {
+      "title": "为什么要安装更新",
+      "wallOfText": "termscp 是一个仍处于早期开发阶段的应用程序，第一个版本已于 2020 年 12 月发布，实际上只有一个人在开发它，为了改进它并使其成功，还有很多工作要做快速可靠。除此之外，您还应该考虑到，由于它是一个使用网络协议的应用程序，旨在操纵机密和凭据，因此可能始终存在安全问题。我不能保证我这几个月发布的版本没有安全问题，如果有，它们甚至可能不是我的错，但它们可能包含在 termscp 依赖的库中。因此，保持termscp 最新总是非常重要的。为了证明我有多关心它，请考虑一下我已经实现了许多其他开源应用程序不会做的事情：更新检查。每当您启动termscp（除非在配置中停用）termscp 将始终检查是否有新版本可用并立即通知您。除了安全问题，每次重大更新都会带来许多很棒的功能🦄你不能错过，每次更新后应用程序都变得更加可靠和稳定😄",
+      "tldr": "可能的安全问题； 新的很棒的功能； 性能和稳定性； Bug修复"
+    },
+    "gui": {
+      "title": "图形用户界面方式",
+      "body": "GUI 方法只包括启动没有选项的 termscp，然后您应该位于身份验证表单的前面。 如果有可用更新，则会显示类似\"termscp x.y.z is OUT! Update and read release notes with CTRL+R\"之类的消息。 此时更新termscp所需要做的就是：",
+      "steps": {
+        "st": "按 CTRL+R。 现在应该显示发行说明",
+        "nd": "在 \"Install update?\" 单选输入中选择 \"YES\"",
+        "rd": "按 \"Enter\""
+      },
+      "then": "termscp x.y.z has been installed！”。 只需重新启动termscp并享受更新😄",
+      "pex": " 如果您之前已经通过 Deb/RPM 包安装了 termscp，您可能需要使用 CLI 方法通过 sudo 运行 termscp"
+    },
+    "cli": {
+      "title": "命令行方式",
+      "body": "如果您愿意，可以仅使用专用 CLI 选项安装新更新：",
+      "pex": "如有必要，使用 sudo 运行（使用 RPM/DEB 安装）",
+      "then": "启动后，系统将提示您是否安装更新。 确认安装和 ta-dah，新版本的termscp 现在应该可以在你的机器上使用了"
+    }
+  }
+}

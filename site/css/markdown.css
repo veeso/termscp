@@ -1,0 +1,97 @@
+.markdown {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.markdown a {
+  color: dodgerblue;
+  text-decoration: none;
+}
+
+.markdown a:hover {
+  text-decoration: underline;
+}
+
+.markdown p {
+  color: #202020;
+  font-size: 1.1em;
+}
+
+.markdown h1 {
+  font-size: 2em;
+}
+
+.markdown h2 {
+  font-size: 1.6em;
+}
+
+.markdown h3 {
+  font-size: 1.4em;
+}
+
+.markdown h4 {
+  font-size: 1.2em;
+}
+
+.markdown img {
+  display: none;
+}
+
+@media (min-width: 600px) {
+  .markdown img {
+    display: block;
+    width: 60%;
+    margin-left: 20%;
+  }
+}
+
+.markdown blockquote {
+  border-left: 0.25em solid #ccc;
+  color: #606060;
+  font-size: 90%;
+  padding: 0.1em;
+  padding-left: 0.5em;
+}
+
+.markdown blockquote p {
+  color: #606060;
+}
+
+.markdown pre code {
+  background-color: inherit;
+  font-size: 100%;
+}
+
+.markdown code {
+  background-color: #eee;
+  border-radius: 6px;
+  font-size: 85%;
+  padding: 0.2em 0.4em;
+}
+
+.markdown table {
+  border-collapse: collapse;
+  border-spacing: 0;
+  display: block;
+  height: fit-content;
+  max-width: 100%;
+  overflow: auto;
+  width: max-content;
+}
+
+.markdown table tr {
+  border-top: 1px solid #c6cbd1;
+}
+
+.markdown table tr {
+  background-color: white;
+}
+
+.markdown table tr:nth-child(even) {
+  background-color: #dfe2e5;
+}
+
+.markdown table td,
+.markdown table th {
+  border: 1px solid #c6cbd1;
+  padding: 6px 13px;
+}

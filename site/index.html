@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="minimum-scale=1, initial-scale=1, width=device-width"
+    />
+    <meta
+      property="og:image"
+      content="https://termscp.veeso.dev/assets/images/og_preview.jpg"
+    />
+    <meta property="og:image:type" content="image/jpg" />
+    <meta property="og:image:width" content="1024" />
+    <meta property="og:image:height" content="820" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://termscp.veeso.dev" />
+    <meta property="og:title" content="termscp" />
+    <meta property="og:description" content="terminal UI file transfer" />
+    <!-- Pure.css -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/purecss@2.0.5/build/pure-min.css"
+    />
+    <!-- Icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/gh/devicons/devicon@v2.11.0/devicon.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"
+      integrity="sha512-iBBXm8fW90+nuLcSKlbmrPcLa0OT92xO1BIsZ+ywDWZCvqsWgccV3gFoRBv0z+8dLJgyAHIhR35VZc2oM/gI1w=="
+      crossorigin="anonymous"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/fontawesome.min.css"
+      integrity="sha512-OdEXQYCOldjqUEsuMKsZRj93Ht23QRlhIb8E/X0sbwZhme8eUw6g8q7AdxGJKakcBbv7+/PX0Gc2btf7Ru8cZA=="
+      crossorigin="anonymous"
+    />
+    <!-- Main -->
+    <link rel="stylesheet" href="css/markdown.css" />
+    <link rel="stylesheet" href="css/menu.css" />
+    <link rel="stylesheet" href="css/main.css" />
+    <!-- Favicons -->
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="96x96"
+      href="assets/images/favicon-96x96.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      href="assets/images/favicon-32x32.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="16x16"
+      href="assets/images/favicon-16x16.png"
+    />
+    <title>termscp: terminal UI file transfer</title>
+  </head>
+  <body>
+    <div id="layout">
+      <!-- Menu toggle -->
+      <a href="#menu" id="menu-burger" class="menu-link">
+        <!-- Hamburger icon -->
+        <span></span>
+      </a>
+      <!-- Menu -->
+      <header id="menu">
+        <div class="pure-menu">
+          <div class="pure-menu-heading">
+            <div class="pic-box">
+              <img class="avatar" alt="logo" src="assets/images/termscp.webp" />
+            </div>
+            <h1>termscp</h1>
+            <p translate="menu.desc">A feature rich terminal UI file transfer</p>
+            <a href="https://github.com/veeso/termscp/stargazers/">
+              <img
+                src="https://img.shields.io/github/stars/veeso/termscp.svg?style=social&label=Star&maxAge=2592000"
+              />
+            </a>
+          </div>
+          <ul class="pure-menu-list">
+            <li class="pure-menu-item pure-menu-selected">
+              <a href="#intro" class="pure-menu-link" translate="menu.intro">Intro</a>
+            </li>
+            <li class="pure-menu-item">
+              <a href="#get-started" class="pure-menu-link" translate="menu.getStarted">Get started</a>
+            </li>
+            <li class="pure-menu-item">
+              <a href="#updates" class="pure-menu-link" translate="menu.updates">Install updates</a>
+            </li>
+            <li class="pure-menu-item">
+              <a href="#user-manual" class="pure-menu-link" translate="menu.manual">User manual</a>
+            </li>
+            <li class="pure-menu-item">
+              <a href="#changelog" class="pure-menu-link" translate="menu.changelog">Release history</a>
+            </li>
+            <li class="pure-menu-item">
+              <a
+                href="https://github.com/veeso/termscp"
+                class="pure-menu-link"
+                target="_blank"
+                >Github&nbsp;<i class="fas fa-external-link-alt"></i
+              ></a>
+            </li>
+            <li class="pure-menu-item">
+              <a
+                href="https://veeso.dev/"
+                class="pure-menu-link"
+                target="_blank"
+                ><span  translate="menu.author">About the author</span>&nbsp;<i class="fas fa-external-link-alt"></i
+              ></a>
+            </li>
+            <li class="pure-menu-item">
+              <a
+                href="https://ko-fi.com/veeso"
+                class="pure-menu-link"
+                target="_blank"
+                ><span  translate="menu.support">Support me</span>&nbsp;<i class="fas fa-external-link-alt"></i
+              ></a>
+            </li>
+          </ul>
+          <div class="pure-menu-bottom">
+            <ul>
+              <li>
+                <a href="https://github.com/veeso/termscp" target="_blank"
+                  ><i class="devicon-github-original"></i
+                ></a>
+              </li>
+              <li>
+                <a href="https://crates.io/crates/termscp" target="_blank"
+                  ><i class="devicon-rust-plain"></i
+                ></a>
+              </li>
+              <li>
+                <a
+                  href="https://community.chocolatey.org/packages/termscp"
+                  target="_blank"
+                  ><i class="devicon-windows8-plain"></i
+                ></a>
+              </li>
+              <li>
+                <a href="https://ko-fi.com/veeso" target="_blank"
+                  ><i class="fa fa-coffee"></i
+                ></a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </header>
+      <main>
+        <div id="main"></div>
+      </main>
+      <footer>
+        <div class="container">
+          <ul class="contacts">
+            <li>
+              <a href="https://github.com/veeso/termscp" target="_blank"
+                ><i class="devicon-github-original"></i
+              ></a>
+            </li>
+            <li>
+              <a href="https://crates.io/crates/termscp" target="_blank"
+                ><i class="devicon-rust-plain"></i
+              ></a>
+            </li>
+            <li>
+              <a
+                href="https://community.chocolatey.org/packages/termscp"
+                target="_blank"
+                ><i class="devicon-windows8-plain"></i
+              ></a>
+            </li>
+            <li>
+              <a href="https://ko-fi.com/veeso" target="_blank"
+                ><i class="fa fa-coffee"></i
+              ></a>
+            </li>
+          </ul>
+          <!-- Copyright -->
+          <p class="copyright">
+            <span>Christian Visintin © All Rights Reserved | </span
+            ><span resolve-copyright></span>
+          </p>
+        </div>
+      </footer>
+    </div>
+    <!-- Scripts -->
+    <!-- jQuery -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <!-- Showdown JS-->
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/showdown/1.9.1/showdown.min.js"
+      integrity="sha512-L03kznCrNOfVxOUovR6ESfCz9Gfny7gihUX/huVbQB9zjODtYpxaVtIaAkpetoiyV2eqWbvxMH9fiSv5enX7bw=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+    <!-- Local -->
+    <script src="js/lang.min.js"></script>
+    <script src="js/core.js"></script>
+    <script src="js/events.js"></script>
+    <script src="js/resolvers.js"></script>
+    <!-- ko-fi -->
+    <script src='https://storage.ko-fi.com/cdn/scripts/overlay-widget.js'></script>
+    <script>
+      kofiWidgetOverlay.draw('veeso', {
+        'type': 'floating-chat',
+        'floating-chat.donateButton.text': 'Support me',
+        'floating-chat.donateButton.background-color': '#323842',
+        'floating-chat.donateButton.text-color': '#fff'
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,114 @@
+{
+  "menu": {
+    "desc": "Una transferencia de archivos de terminal rica en funciones",
+    "intro": "Sobre termscp",
+    "getStarted": "Para iniciar",
+    "updates": "Actualizaciones",
+    "manual": "Manual de usuario",
+    "changelog": "Historial de versiones",
+    "author": "Sobre el autor",
+    "support": "Apoyame"
+  },
+  "intro": {
+    "caption": "Un explorador y transferencia de archivos de terminal rico en funciones, con apoyo para SCP/SFTP/FTP/S3",
+    "getStarted": "Para iniciar →",
+    "versionAlert": "termscp 0.8.2 ya está disponible! Descárgalo desde",
+    "here": "aquì",
+    "features": {
+      "handy": {
+        "title": "Interfaz de usuario práctica",
+        "body": "Explore y opere en el sistema de archivos de la máquina local y remota con una interfaz de usuario práctica."
+      },
+      "crossPlatform": {
+        "title": "Multiplataforma",
+        "body": "Funciona en Windows, MacOS, Linux y FreeBSD"
+      },
+      "customizable": {
+        "title": "Personalizable",
+        "body": "Personalice el explorador de archivos, la interfaz de usuario y muchos otros parámetros ..."
+      },
+      "bookmarks": {
+        "title": "Marcadores",
+        "body": "Conéctese a sus hosts favoritos a través de marcadores integrados y conexiones recientes"
+      },
+      "security": {
+        "title": "Seguridad primero",
+        "body": "Guarde sus contraseñas en la bóveda de claves de su sistema operativo"
+      },
+      "performance": {
+        "title": "Ojo en el rendimiento",
+        "body": "termscp se ha desarrollado teniendo en cuenta el rendimiento para evitar un uso elevado de la CPU"
+      }
+    },
+    "footer": {
+      "getStarted": "Para iniciar",
+      "manual": "Manual de usuario",
+      "updates": "Actualizaciones"
+    }
+  },
+  "getStarted": {
+    "title": "Para iniciar",
+    "quickSetup": "Configuración rápida",
+    "suggested": "Recomendamos encarecidamente este método para instalar termscp",
+    "posixUsers": "Si es un usuario de Linux, FreeBSD o MacOS, puede instalar termscp a través de este sencillo comando, que utilizará un instalador de scripts de shell:",
+    "windows": {
+      "title": "Usuarios Windows",
+      "intro": "Puede instalar termscp en Windows a través de",
+      "moderation": "Tenga en cuenta que la moderación de Chocolatey puede tardar hasta algunas semanas desde la última versión, por lo que si la última versión aún no está disponible, puede instalarla descargando el archivo ZIP de",
+      "then": "y luego, desde el directorio ZIP, instálelo a través de"
+    },
+    "linuxUsers": "Usuarios Linux",
+    "notConfident": "En su lugar, opte por estos métodos si no se siente seguro al usar el script de shell",
+    "noBinary": "Opte por este método en su lugar si los binarios para su plataforma no están disponibles",
+    "arch": {
+      "title": "Usuarios derivadas Arch",
+      "intro": "En las distribuciones basadas en Arch Linux, puede instalar termscp usando un administrador de paquetes AUR como",
+      "then": "then run"
+    },
+    "debian": {
+      "title": "Usuarios derivadas Debian",
+      "body": "En las distribuciones basadas en Debian, puede instalar termscp usando el paquete Deb a través de:"
+    },
+    "redhat": {
+      "title": "Usuarios derivadas RedHat",
+      "body": "En las distribuciones basadas en RedHat, puede instalar termscp usando el paquete RPM a través de:"
+    },
+    "macos": {
+      "title": "Usuarios MacOS",
+      "install": "Instalar termscp a través de"
+    },
+    "cargo": {
+      "title": "Instalar con Cargo",
+      "body": "Si un paquete no está disponible para su sistema, puede optar por instalar termscp a través de",
+      "requirements": "Para instalar termscp a través de Cargo, se deben cumplir estos requisitos",
+      "install": "Entonces puedes instalar termscp a través de",
+      "noKeyring": "O si no desea tener soporte para llavero o está construyendo sobre *BSD:"
+    }
+  },
+  "updates": {
+    "title": "Mantener termscp actualizado",
+    "disclaimer": " La actualización de termscp con este método solo está disponible para las versiones 0.7.xo superiores. Si tiene una versión anterior, debe instalar actualizaciones utilizando el",
+    "reasons": {
+      "title": "Why you should install updates",
+      "wallOfText": "Termscp es una aplicación que aún se encuentra en su etapa inicial de desarrollo, la primera versión se lanzó en diciembre de 2020 y prácticamente solo hay un chico trabajando en ella y aún hay mucho trabajo por hacer para mejorarla y hacerla. rápido y confiable. Junto con esto, también debe considerar que, dado que es una aplicación que funciona con protocolos de red y está destinada a manipular secretos y credenciales, siempre puede haber un problema de seguridad. No puedo garantizar que no haya problemas de seguridad en las versiones que lancé en estos meses, y si los hay, puede que ni siquiera sea mi culpa, pero pueden estar contenidos en las bibliotecas en las que se basa termscp. Debido a esto, siempre es MUY importante mantener el termcp actualizado. Para demostrar cuánto me importa, solo considere que he implementado algo que muchas otras aplicaciones de código abierto no harán: la verificación de actualizaciones. Siempre que inicie termscp (a menos que esté desactivado en la configuración), termscp siempre comprobará si hay una nueva versión disponible y le notificará inmediatamente. Además de las preocupaciones de seguridad, cada actualización importante traerá muchas características increíbles 🦄 no puede perderse y la aplicación se vuelve más confiable y estable después de cada actualización 😄",
+      "tldr": "Posibles problemas de seguridad; nuevas funciones asombrosas; rendimiento y estabilidad; Corrección de errores"
+    },
+    "gui": {
+      "title": "Método GUI",
+      "body": "El método GUI solo consiste en iniciar termscp sin opciones, luego debe estar frente al formulario de autenticación. Si hay una actualización disponible, aparecerá un mensaje como \"termscp x.y.z is OUT! Install update and read release notes with <CTRL + R>\". Todo lo que tiene que hacer en este punto para actualizar termscp es:",
+      "steps": {
+        "st": "presione CTRL + R. Las notas de la versión deberían mostrarse ahora",
+        "nd": "Seleccione \"Yes\" en la entrada de radio \"Install update? \"",
+        "rd": "presione \"Enter\""
+      },
+      "then": "If everything worked correctly a green message \"termscp x.y.z has been installed!\" will be displayed. Just restart termscp and enjoy the update 😄",
+      "pex": " Si ha instalado previamente termscp a través del paquete Deb / RPM, es posible que deba utilizar el método CLI ejecutando termscp con sudo"
+    },
+    "cli": {
+      "title": "Método CLI",
+      "body": "Si lo prefiere, puede instalar una nueva actualización simplemente usando la opción CLI dedicada:",
+      "pex": "Ejecute con sudo si es necesario (instalado con RPM / DEB)",
+      "then": "Una vez iniciado, se le preguntará si desea instalar o no la actualización. Confirme la instalación y ta-dah, la nueva versión de termscp ahora debería estar disponible en su máquina"
+    }
+  }
+}
