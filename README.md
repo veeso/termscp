@@ -173,6 +173,7 @@ choco install termscp
 ```
 
 NetBSD users can install termscp from the official repositories.
+
 ```sh
 pkgin install termscp
 ```
@@ -217,7 +218,6 @@ You can make a donation with one of these platforms:
 [![ko-fi](https://img.shields.io/badge/Ko--fi-F16061?style=for-the-badge&logo=ko-fi&logoColor=white)](https://ko-fi.com/veeso)
 [![PayPal](https://img.shields.io/badge/PayPal-00457C?style=for-the-badge&logo=paypal&logoColor=white)](https://www.paypal.me/chrisintin)
 [![bitcoin](https://img.shields.io/badge/Bitcoin-ff9416?style=for-the-badge&logo=bitcoin&logoColor=white)](https://btc.com/bc1qvlmykjn7htz0vuprmjrlkwtv9m9pan6kylsr8w)
-[![litecoin](https://img.shields.io/badge/Litecoin-345d9d?style=for-the-badge&logo=Litecoin&logoColor=white)](https://blockchair.com/litecoin/address/ltc1q89a7f859gt7nuekvnuuc25wapkq2f8ny78mp8l)
 
 ---
 
@@ -233,13 +233,8 @@ For **2023** there will be two major updates during the year.
 
 Planned for *future updates ⏲️*:
 
-- **Translations 🌐**: The feature consists in the possibility for the user to install the language pack for the language he prefers in order to replace the default English interface. The following language will be provided along to English:
-  - 🇨🇳 Chinese
-  - 🇫🇷 French
-  - 🇩🇪 German
-  - 🇮🇹 Italian
-  - 🇪🇸 Spanish
-- **Configuration profile for bookmarks 📚**: Basically this feature adds the possibility to have a specific setup for a certain host, instead of having only one global configuration.
+- **Resuming**:  allow resuming download if a file already exists
+- **Use default id_rsa** to authenticate to remote hosts.
 
 Along to new features, termscp developments is now focused on UX and performance improvements, so if you have any suggestion, feel free to open an issue.
 
