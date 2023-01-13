@@ -3,14 +3,14 @@ authors = ["Christian Visintin <christian.visintin1997@gmail.com>"]
 categories = ["command-line-utilities"]
 description = "termscp is a feature rich terminal file transfer and explorer with support for SCP/SFTP/FTP/S3"
 edition = "2021"
-homepage = "https://veeso.github.io/termscp/"
+homepage = "https://termscp.veeso.dev"
 include = ["src/**/*", "LICENSE", "README.md", "CHANGELOG.md"]
 keywords = ["scp-client", "sftp-client", "ftp-client", "winscp", "command-line-utility"]
 license = "MIT"
 name = "termscp"
 readme = "README.md"
 repository = "https://github.com/veeso/termscp"
-version = "0.10.0"
+version = "0.11.0"
 
 [package.metadata.rpm]
 package = "termscp"
@@ -31,40 +31,39 @@ name = "termscp"
 path = "src/main.rs"
 
 [dependencies]
-argh = "0.1.9"
-bitflags = "1.3.2"
-bytesize = "1.1.0"
-chrono = "0.4.22"
-content_inspector = "0.2.4"
-dirs = "4.0.0"
-edit = "0.1.4"
-hostname = "0.3.1"
-keyring = { version = "1.2.0", optional = true }
-lazy-regex = "^2.3.0"
-lazy_static = "1.4.0"
-log = "0.4.17"
-magic-crypt = "3.1.10"
-notify = "4.0.17"
-notify-rust = { version = "4.5.10", default-features = false, features = [ "d" ] }
-open = "3.0.3"
-rand = "0.8.5"
+argh = "^0.1"
+bitflags = "^1.3"
+bytesize = "^1.1"
+chrono = "^0.4"
+content_inspector = "^0.2"
+dirs = "^4.0"
+edit = "^0.1"
+hostname = "^0.3"
+keyring = { version = "^1.2", optional = true }
+lazy-regex = "^2.4"
+lazy_static = "^1.4"
+log = "^0.4"
+magic-crypt = "^3.1"
+notify = "^4.0"
+notify-rust = { version = "^4.5", default-features = false, features = [ "d" ] }
+open = "^3.0"
+rand = "^0.8.5"
 remotefs = "^0.2.0"
 remotefs-aws-s3 = { version = "^0.2.1", default-features = false, features = [ "find", "rustls" ] }
-
-rpassword = "7.0.0"
-self_update = { version = "0.32.0", default-features = false, features = [ "rustls", "archive-tar", "archive-zip", "compression-flate2", "compression-zip-deflate" ] }
+rpassword = "^7.0"
+self_update = { version = "^0.32", default-features = false, features = [ "rustls", "archive-tar", "archive-zip", "compression-flate2", "compression-zip-deflate" ] }
 serde = { version = "^1", features = [ "derive" ] }
-simplelog = "0.12.0"
+simplelog = "^0.12"
 ssh2-config = "^0.1.3"
-tempfile = "3.2.0"
+tempfile = "^3.2"
 thiserror = "^1"
-toml = "0.5.0"
-tui-realm-stdlib = "1.1.7"
-tuirealm = "1.8.0"
-unicode-width = "0.1.10"
-version-compare = "0.1.0"
-whoami = "1.2.3"
-wildmatch = "2.1.1"
+toml = "^0.5"
+tui-realm-stdlib = "^1.2"
+tuirealm = "^1.8.0"
+unicode-width = "^0.1"
+version-compare = "^0.1"
+whoami = "^1.2"
+wildmatch = "^2.1"
 
 [dev-dependencies]
 pretty_assertions = "^1.3"
