@@ -67,7 +67,7 @@ impl SetupActivity {
             .app
             .remount(
                 Id::Common(IdCommon::QuitPopup),
-                Box::new(components::QuitPopup::default()),
+                Box::<components::QuitPopup>::default(),
                 vec![],
             )
             .is_ok());
@@ -85,7 +85,7 @@ impl SetupActivity {
             .app
             .remount(
                 Id::Common(IdCommon::SavePopup),
-                Box::new(components::SavePopup::default()),
+                Box::<components::SavePopup>::default(),
                 vec![],
             )
             .is_ok());
@@ -103,7 +103,7 @@ impl SetupActivity {
             .app
             .remount(
                 Id::Common(IdCommon::Keybindings),
-                Box::new(components::Keybindings::default()),
+                Box::<components::Keybindings>::default(),
                 vec![],
             )
             .is_ok());
@@ -162,7 +162,7 @@ impl SetupActivity {
             .app
             .remount(
                 Id::Common(IdCommon::Footer),
-                Box::new(components::Footer::default()),
+                Box::<components::Footer>::default(),
                 vec![],
             )
             .is_ok());
@@ -174,7 +174,7 @@ impl SetupActivity {
             .app
             .mount(
                 Id::Common(IdCommon::GlobalListener),
-                Box::new(components::GlobalListener::default()),
+                Box::<components::GlobalListener>::default(),
                 vec![
                     Sub::new(
                         SubEventClause::Keyboard(KeyEvent {

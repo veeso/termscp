@@ -400,7 +400,7 @@ impl RadioS3NewPathStyle {
                 .foreground(color)
                 .rewind(true)
                 .title("New path style", Alignment::Left)
-                .value(if new_path_style { 0 } else { 1 }),
+                .value(usize::from(!new_path_style)),
         }
     }
 }

@@ -924,7 +924,7 @@ impl FileTransferActivity {
             .app
             .mount(
                 Id::GlobalListener,
-                Box::new(components::GlobalListener::default()),
+                Box::<components::GlobalListener>::default(),
                 vec![
                     Sub::new(
                         SubEventClause::Keyboard(KeyEvent {

@@ -33,7 +33,7 @@ impl CheckUpdates {
                 .foreground(Color::LightYellow)
                 .rewind(true)
                 .title("Check for updates?", Alignment::Left)
-                .value(if enabled { 0 } else { 1 }),
+                .value(usize::from(!enabled)),
         }
     }
 }
@@ -145,7 +145,7 @@ impl HiddenFiles {
                 .foreground(Color::LightRed)
                 .rewind(true)
                 .title("Show hidden files? (by default)", Alignment::Left)
-                .value(if enabled { 0 } else { 1 }),
+                .value(usize::from(!enabled)),
         }
     }
 }
@@ -179,7 +179,7 @@ impl NotificationsEnabled {
                 .foreground(Color::LightRed)
                 .rewind(true)
                 .title("Enable notifications?", Alignment::Left)
-                .value(if enabled { 0 } else { 1 }),
+                .value(usize::from(!enabled)),
         }
     }
 }
@@ -213,7 +213,7 @@ impl PromptOnFileReplace {
                 .foreground(Color::LightBlue)
                 .rewind(true)
                 .title("Prompt when replacing existing files?", Alignment::Left)
-                .value(if enabled { 0 } else { 1 }),
+                .value(usize::from(!enabled)),
         }
     }
 }

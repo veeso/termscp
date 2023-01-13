@@ -78,7 +78,7 @@ impl SetupActivity {
             .app
             .remount(
                 Id::Ssh(IdSsh::DelSshKeyPopup),
-                Box::new(components::DelSshKeyPopup::default()),
+                Box::<components::DelSshKeyPopup>::default(),
                 vec![]
             )
             .is_ok());
@@ -96,7 +96,7 @@ impl SetupActivity {
             .app
             .remount(
                 Id::Ssh(IdSsh::SshHost),
-                Box::new(components::SshHost::default()),
+                Box::<components::SshHost>::default(),
                 vec![]
             )
             .is_ok());
@@ -104,7 +104,7 @@ impl SetupActivity {
             .app
             .remount(
                 Id::Ssh(IdSsh::SshUsername),
-                Box::new(components::SshUsername::default()),
+                Box::<components::SshUsername>::default(),
                 vec![]
             )
             .is_ok());
