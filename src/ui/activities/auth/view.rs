@@ -22,15 +22,11 @@ impl AuthActivity {
         // Headers
         assert!(self
             .app
-            .mount(Id::Title, Box::new(components::Title::default()), vec![])
+            .mount(Id::Title, Box::<components::Title>::default(), vec![])
             .is_ok());
         assert!(self
             .app
-            .mount(
-                Id::Subtitle,
-                Box::new(components::Subtitle::default()),
-                vec![]
-            )
+            .mount(Id::Subtitle, Box::<components::Subtitle>::default(), vec![])
             .is_ok());
         // Footer
         assert!(self
@@ -975,7 +971,7 @@ impl AuthActivity {
             .app
             .mount(
                 Id::GlobalListener,
-                Box::new(components::GlobalListener::default()),
+                Box::<components::GlobalListener>::default(),
                 vec![
                     Sub::new(
                         SubEventClause::Keyboard(KeyEvent {

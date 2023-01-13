@@ -246,7 +246,7 @@ impl SetupActivity {
             .app
             .remount(
                 Id::Theme(IdTheme::AuthTitle),
-                Box::new(components::AuthTitle::default()),
+                Box::<components::AuthTitle>::default(),
                 vec![]
             )
             .is_ok());
@@ -254,7 +254,7 @@ impl SetupActivity {
             .app
             .remount(
                 Id::Theme(IdTheme::MiscTitle),
-                Box::new(components::MiscTitle::default()),
+                Box::<components::MiscTitle>::default(),
                 vec![]
             )
             .is_ok());
@@ -262,7 +262,7 @@ impl SetupActivity {
             .app
             .remount(
                 Id::Theme(IdTheme::TransferTitle),
-                Box::new(components::TransferTitle::default()),
+                Box::<components::TransferTitle>::default(),
                 vec![]
             )
             .is_ok());
@@ -270,7 +270,7 @@ impl SetupActivity {
             .app
             .remount(
                 Id::Theme(IdTheme::TransferTitle2),
-                Box::new(components::TransferTitle2::default()),
+                Box::<components::TransferTitle2>::default(),
                 vec![]
             )
             .is_ok());
