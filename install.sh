@@ -177,7 +177,7 @@ confirm() {
 # Installers
 
 install_on_bsd() {
-    try_with_cargo "packages for freeBSD are distribuited no more. Only cargo installations are supported."
+    try_with_cargo "packages for freeBSD are distribuited no more. Only cargo installations are supported." "freebsd"
 }
 
 install_on_arch_linux() {
@@ -212,7 +212,7 @@ install_on_linux() {
         install_on_arch_linux pikaur
     elif has dpkg; then
         if [ "${ARCH}" != "x86_64" ]; then # It's okay on AUR; not on other distros
-            try_with_cargo "we don't distribute packages for ${ARCH} at the moment"
+            try_with_cargo "we don't distribute packages for ${ARCH} at the moment" "linux"
         else
             info "Detected dpkg on your system"
             info "Installing ${GREEN}termscp${NO_COLOR} via Debian package"
@@ -234,7 +234,7 @@ install_on_linux() {
         fi
     elif has rpm; then
         if [ "${ARCH}" != "x86_64" ]; then # It's okay on AUR; not on other distros
-            try_with_cargo "we don't distribute packages for ${ARCH} at the moment"
+            try_with_cargo "we don't distribute packages for ${ARCH} at the moment" "linux"
         else
             info "Detected rpm on your system"
             info "Installing ${GREEN}termscp${NO_COLOR} via RPM package"
@@ -255,7 +255,7 @@ install_on_linux() {
             rm -f ${archive}
         fi
     else
-        try_with_cargo "No suitable installation method found for your Linux distribution; if you're running on Arch linux, please install an AUR package manager (such as yay). Currently only Arch, Debian based and Red Hat based distros are supported"
+        try_with_cargo "No suitable installation method found for your Linux distribution; if you're running on Arch linux, please install an AUR package manager (such as yay). Currently only Arch, Debian based and Red Hat based distros are supported" "linux"
     fi
 }
 
@@ -279,7 +279,7 @@ install_on_macos() {
             brew install veeso/termscp/${FORMULA}
         fi
     else
-        try_with_cargo "brew is missing on your system; please install it from <https://brew.sh/>"
+        try_with_cargo "brew is missing on your system; please install it from <https://brew.sh/>" "macos"
     fi
 }
 
@@ -350,11 +350,12 @@ install_cargo() {
 
 try_with_cargo() {
     err="$1"
+    platform="$2"
     # Install cargo
     install_cargo
     if has cargo; then
         info "Installing ${GREEN}termscp${NO_COLOR} via Cargo…"
-        case $PLATFORM in
+        case $platform in
             "freebsd")
                 install_bsd_cargo_deps
                 cargo install --locked --no-default-features termscp
