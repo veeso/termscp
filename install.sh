@@ -13,6 +13,8 @@ GITHUB_URL="https://github.com/veeso/termscp/releases/download/v${TERMSCP_VERSIO
 DEB_URL="${GITHUB_URL}/termscp_${TERMSCP_VERSION}_amd64.deb"
 RPM_URL="${GITHUB_URL}/termscp-${TERMSCP_VERSION}-1.x86_64.rpm"
 
+PATH="$PATH:/usr/sbin"
+
 set -eu
 printf "\n"
 
@@ -92,16 +94,20 @@ test_writeable() {
 }
 
 elevate_priv() {
-    if ! has sudo; then
-        error 'Could not find the command "sudo", needed to install termscp on your system.'
-        info "If you are on Windows, please run your shell as an administrator, then"
-        info "rerun this script. Otherwise, please run this script as root, or install"
-        info "sudo."
-        exit 1
-    fi
-    if ! sudo -v; then
+    if has sudo; then
+      if ! sudo -v; then
         error "Superuser not granted, aborting installation"
         exit 1
+      fi
+      sudo="sudo"
+    elif has doas; then
+      sudo="doas"
+    else
+      error 'Could not find the commands "sudo" or "doas", needed to install termscp on your system.'
+      info "If you are on Windows, please run your shell as an administrator, then"
+      info "rerun this script. Otherwise, please run this script as root, or install"
+      info "sudo or doas."
+      exit 1
     fi
 }
 
@@ -110,9 +116,7 @@ elevate_priv_ex() {
     if test_writeable "$check_dir"; then
         sudo=""
     else
-        warn "Root permissions are required to install dependecies"
         elevate_priv
-        sudo="sudo"
     fi
     echo $sudo
 }
