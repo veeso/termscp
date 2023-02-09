@@ -8,7 +8,7 @@ pub mod ssh_keys;
 pub mod theme;
 
 use super::*;
-use crate::utils::ui::draw_area_in;
+use crate::utils::ui::{Popup, Size};
 pub use setup::*;
 pub use ssh_keys::*;
 pub use theme::*;
@@ -117,23 +117,23 @@ impl SetupActivity {
 
     pub(super) fn view_popups(&mut self, f: &mut Frame) {
         if self.app.mounted(&Id::Common(IdCommon::ErrorPopup)) {
-            let popup = draw_area_in(f.size(), 50, 10);
+            let popup = Popup(Size::Percentage(50), Size::Unit(3)).draw_in(f.size());
             f.render_widget(Clear, popup);
             // make popup
             self.app.view(&Id::Common(IdCommon::ErrorPopup), f, popup);
         } else if self.app.mounted(&Id::Common(IdCommon::QuitPopup)) {
             // make popup
-            let popup = draw_area_in(f.size(), 40, 10);
+            let popup = Popup(Size::Percentage(40), Size::Unit(3)).draw_in(f.size());
             f.render_widget(Clear, popup);
             self.app.view(&Id::Common(IdCommon::QuitPopup), f, popup);
         } else if self.app.mounted(&Id::Common(IdCommon::Keybindings)) {
             // make popup
-            let popup = draw_area_in(f.size(), 50, 70);
+            let popup = Popup(Size::Percentage(50), Size::Percentage(70)).draw_in(f.size());
             f.render_widget(Clear, popup);
             self.app.view(&Id::Common(IdCommon::Keybindings), f, popup);
         } else if self.app.mounted(&Id::Common(IdCommon::SavePopup)) {
             // make popup
-            let popup = draw_area_in(f.size(), 30, 10);
+            let popup = Popup(Size::Percentage(30), Size::Unit(3)).draw_in(f.size());
             f.render_widget(Clear, popup);
             self.app.view(&Id::Common(IdCommon::SavePopup), f, popup);
         }

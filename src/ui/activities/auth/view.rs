@@ -6,7 +6,7 @@
 use super::{components, AuthActivity, Context, FileTransferProtocol, Id, InputMask};
 use crate::filetransfer::params::{AwsS3Params, GenericProtocolParams, ProtocolParams};
 use crate::filetransfer::FileTransferParams;
-use crate::utils::ui::draw_area_in;
+use crate::utils::ui::{Popup, Size};
 
 use std::path::PathBuf;
 use std::str::FromStr;
@@ -193,43 +193,43 @@ impl AuthActivity {
             self.app.view(&Id::RecentsList, f, bookmark_chunks[1]);
             // Popups
             if self.app.mounted(&Id::ErrorPopup) {
-                let popup = draw_area_in(f.size(), 50, 10);
+                let popup = Popup(Size::Percentage(50), Size::Unit(3)).draw_in(f.size());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::ErrorPopup, f, popup);
             } else if self.app.mounted(&Id::InfoPopup) {
-                let popup = draw_area_in(f.size(), 50, 10);
+                let popup = Popup(Size::Percentage(50), Size::Unit(3)).draw_in(f.size());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::InfoPopup, f, popup);
             } else if self.app.mounted(&Id::WaitPopup) {
-                let popup = draw_area_in(f.size(), 50, 10);
+                let popup = Popup(Size::Percentage(50), Size::Unit(3)).draw_in(f.size());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::WaitPopup, f, popup);
             } else if self.app.mounted(&Id::WindowSizeError) {
-                let popup = draw_area_in(f.size(), 80, 20);
+                let popup = Popup(Size::Percentage(80), Size::Percentage(20)).draw_in(f.size());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::WindowSizeError, f, popup);
             } else if self.app.mounted(&Id::QuitPopup) {
                 // make popup
-                let popup = draw_area_in(f.size(), 30, 10);
+                let popup = Popup(Size::Percentage(30), Size::Unit(3)).draw_in(f.size());
                 f.render_widget(Clear, popup);
                 self.app.view(&Id::QuitPopup, f, popup);
             } else if self.app.mounted(&Id::DeleteBookmarkPopup) {
                 // make popup
-                let popup = draw_area_in(f.size(), 30, 10);
+                let popup = Popup(Size::Percentage(30), Size::Unit(3)).draw_in(f.size());
                 f.render_widget(Clear, popup);
                 self.app.view(&Id::DeleteBookmarkPopup, f, popup);
             } else if self.app.mounted(&Id::DeleteRecentPopup) {
                 // make popup
-                let popup = draw_area_in(f.size(), 30, 10);
+                let popup = Popup(Size::Percentage(30), Size::Unit(3)).draw_in(f.size());
                 f.render_widget(Clear, popup);
                 self.app.view(&Id::DeleteRecentPopup, f, popup);
             } else if self.app.mounted(&Id::NewVersionChangelog) {
                 // make popup
-                let popup = draw_area_in(f.size(), 90, 85);
+                let popup = Popup(Size::Percentage(90), Size::Percentage(85)).draw_in(f.size());
                 f.render_widget(Clear, popup);
                 let popup_chunks = Layout::default()
                     .direction(Direction::Vertical)
@@ -245,12 +245,12 @@ impl AuthActivity {
                 self.app.view(&Id::InstallUpdatePopup, f, popup_chunks[1]);
             } else if self.app.mounted(&Id::Keybindings) {
                 // make popup
-                let popup = draw_area_in(f.size(), 50, 70);
+                let popup = Popup(Size::Percentage(50), Size::Percentage(70)).draw_in(f.size());
                 f.render_widget(Clear, popup);
                 self.app.view(&Id::Keybindings, f, popup);
             } else if self.app.mounted(&Id::BookmarkSavePassword) {
                 // make popup
-                let popup = draw_area_in(f.size(), 20, 20);
+                let popup = Popup(Size::Percentage(20), Size::Percentage(20)).draw_in(f.size());
                 f.render_widget(Clear, popup);
                 let popup_chunks = Layout::default()
                     .direction(Direction::Vertical)
