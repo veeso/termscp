@@ -40,9 +40,7 @@ impl Builder {
             }
             (protocol, params) => {
                 error!("Invalid params for protocol '{:?}'", protocol);
-                panic!(
-                    "Invalid protocol '{protocol:?}' with parameters of type {params:?}"
-                )
+                panic!("Invalid protocol '{protocol:?}' with parameters of type {params:?}")
             }
         }
     }
