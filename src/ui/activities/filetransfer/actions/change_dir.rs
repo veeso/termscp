@@ -158,9 +158,7 @@ impl FileTransferActivity {
                 trace!("The user doesn't want to create the directory; disabling synchronized browsing");
                 self.log(
                     LogLevel::Warn,
-                    format!(
-                        "Refused to create '{name}'; synchronized browsing disabled"
-                    ),
+                    format!("Refused to create '{name}'; synchronized browsing disabled"),
                 );
                 self.browser.toggle_sync_browsing();
                 self.refresh_remote_status_bar();
