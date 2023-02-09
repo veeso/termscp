@@ -5,7 +5,7 @@
 
 // Locals
 use super::{components, Context, Id, IdCommon, IdSsh, SetupActivity, ViewLayout};
-use crate::utils::ui::draw_area_in;
+use crate::utils::ui::{Popup, Size};
 
 // Ext
 use tuirealm::tui::layout::{Constraint, Direction, Layout};
@@ -45,11 +45,11 @@ impl SetupActivity {
             // Popups
             self.view_popups(f);
             if self.app.mounted(&Id::Ssh(IdSsh::DelSshKeyPopup)) {
-                let popup = draw_area_in(f.size(), 30, 10);
+                let popup = Popup(Size::Percentage(30), Size::Unit(3)).draw_in(f.size());
                 f.render_widget(Clear, popup);
                 self.app.view(&Id::Ssh(IdSsh::DelSshKeyPopup), f, popup);
             } else if self.app.mounted(&Id::Ssh(IdSsh::SshHost)) {
-                let popup = draw_area_in(f.size(), 50, 20);
+                let popup = Popup(Size::Percentage(50), Size::Percentage(20)).draw_in(f.size());
                 f.render_widget(Clear, popup);
                 let popup_chunks = Layout::default()
                     .direction(Direction::Vertical)
