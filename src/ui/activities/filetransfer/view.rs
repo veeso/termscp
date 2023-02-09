@@ -8,7 +8,7 @@ use super::{
     components, Context, FileTransferActivity, Id,
 };
 use crate::explorer::FileSorting;
-use crate::utils::ui::draw_area_in;
+use crate::utils::ui::{Popup, Size};
 // Ext
 use remotefs::fs::File;
 use tuirealm::event::{Key, KeyEvent, KeyModifiers};
@@ -155,62 +155,62 @@ impl FileTransferActivity {
             self.app.view(&Id::StatusBarRemote, f, status_bar_chunks[1]);
             // @! Draw popups
             if self.app.mounted(&Id::CopyPopup) {
-                let popup = draw_area_in(f.size(), 40, 10);
+                let popup = Popup(Size::Percentage(40), Size::Unit(3)).draw_in(f.size());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::CopyPopup, f, popup);
             } else if self.app.mounted(&Id::FindPopup) {
-                let popup = draw_area_in(f.size(), 40, 10);
+                let popup = Popup(Size::Percentage(40), Size::Unit(3)).draw_in(f.size());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::FindPopup, f, popup);
             } else if self.app.mounted(&Id::GotoPopup) {
-                let popup = draw_area_in(f.size(), 40, 10);
+                let popup = Popup(Size::Percentage(40), Size::Unit(3)).draw_in(f.size());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::GotoPopup, f, popup);
             } else if self.app.mounted(&Id::MkdirPopup) {
-                let popup = draw_area_in(f.size(), 40, 10);
+                let popup = Popup(Size::Percentage(40), Size::Unit(3)).draw_in(f.size());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::MkdirPopup, f, popup);
             } else if self.app.mounted(&Id::NewfilePopup) {
-                let popup = draw_area_in(f.size(), 40, 10);
+                let popup = Popup(Size::Percentage(40), Size::Unit(3)).draw_in(f.size());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::NewfilePopup, f, popup);
             } else if self.app.mounted(&Id::OpenWithPopup) {
-                let popup = draw_area_in(f.size(), 40, 10);
+                let popup = Popup(Size::Percentage(40), Size::Unit(3)).draw_in(f.size());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::OpenWithPopup, f, popup);
             } else if self.app.mounted(&Id::RenamePopup) {
-                let popup = draw_area_in(f.size(), 40, 10);
+                let popup = Popup(Size::Percentage(40), Size::Unit(3)).draw_in(f.size());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::RenamePopup, f, popup);
             } else if self.app.mounted(&Id::SaveAsPopup) {
-                let popup = draw_area_in(f.size(), 40, 10);
+                let popup = Popup(Size::Percentage(40), Size::Unit(3)).draw_in(f.size());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::SaveAsPopup, f, popup);
             } else if self.app.mounted(&Id::SymlinkPopup) {
-                let popup = draw_area_in(f.size(), 50, 10);
+                let popup = Popup(Size::Percentage(50), Size::Unit(3)).draw_in(f.size());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::SymlinkPopup, f, popup);
             } else if self.app.mounted(&Id::ExecPopup) {
-                let popup = draw_area_in(f.size(), 40, 10);
+                let popup = Popup(Size::Percentage(40), Size::Unit(3)).draw_in(f.size());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::ExecPopup, f, popup);
             } else if self.app.mounted(&Id::FileInfoPopup) {
-                let popup = draw_area_in(f.size(), 50, 50);
+                let popup = Popup(Size::Percentage(50), Size::Percentage(50)).draw_in(f.size());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::FileInfoPopup, f, popup);
             } else if self.app.mounted(&Id::ProgressBarPartial) {
-                let popup = draw_area_in(f.size(), 50, 20);
+                let popup = Popup(Size::Percentage(50), Size::Percentage(20)).draw_in(f.size());
                 f.render_widget(Clear, popup);
                 // make popup
                 let popup_chunks = Layout::default()
@@ -226,14 +226,14 @@ impl FileTransferActivity {
                 self.app.view(&Id::ProgressBarFull, f, popup_chunks[0]);
                 self.app.view(&Id::ProgressBarPartial, f, popup_chunks[1]);
             } else if self.app.mounted(&Id::DeletePopup) {
-                let popup = draw_area_in(f.size(), 30, 10);
+                let popup = Popup(Size::Percentage(30), Size::Unit(3)).draw_in(f.size());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::DeletePopup, f, popup);
             } else if self.app.mounted(&Id::ReplacePopup) {
                 // NOTE: handle extended / normal modes
                 if self.is_radio_replace_extended() {
-                    let popup = draw_area_in(f.size(), 50, 50);
+                    let popup = Popup(Size::Percentage(50), Size::Percentage(50)).draw_in(f.size());
                     f.render_widget(Clear, popup);
                     let popup_chunks = Layout::default()
                         .direction(Direction::Vertical)
@@ -249,66 +249,66 @@ impl FileTransferActivity {
                         .view(&Id::ReplacingFilesListPopup, f, popup_chunks[0]);
                     self.app.view(&Id::ReplacePopup, f, popup_chunks[1]);
                 } else {
-                    let popup = draw_area_in(f.size(), 50, 10);
+                    let popup = Popup(Size::Percentage(50), Size::Unit(3)).draw_in(f.size());
                     f.render_widget(Clear, popup);
                     // make popup
                     self.app.view(&Id::ReplacePopup, f, popup);
                 }
             } else if self.app.mounted(&Id::DisconnectPopup) {
-                let popup = draw_area_in(f.size(), 30, 10);
+                let popup = Popup(Size::Percentage(30), Size::Unit(3)).draw_in(f.size());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::DisconnectPopup, f, popup);
             } else if self.app.mounted(&Id::QuitPopup) {
-                let popup = draw_area_in(f.size(), 30, 10);
+                let popup = Popup(Size::Percentage(30), Size::Unit(3)).draw_in(f.size());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::QuitPopup, f, popup);
             } else if self.app.mounted(&Id::WatchedPathsList) {
-                let popup = draw_area_in(f.size(), 60, 50);
+                let popup = Popup(Size::Percentage(60), Size::Percentage(50)).draw_in(f.size());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::WatchedPathsList, f, popup);
             } else if self.app.mounted(&Id::WatcherPopup) {
-                let popup = draw_area_in(f.size(), 60, 10);
+                let popup = Popup(Size::Percentage(60), Size::Unit(3)).draw_in(f.size());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::WatcherPopup, f, popup);
             } else if self.app.mounted(&Id::SortingPopup) {
-                let popup = draw_area_in(f.size(), 50, 10);
+                let popup = Popup(Size::Percentage(50), Size::Unit(3)).draw_in(f.size());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::SortingPopup, f, popup);
             } else if self.app.mounted(&Id::ErrorPopup) {
-                let popup = draw_area_in(
-                    f.size(),
-                    50,
+                let popup = Popup(
+                    Size::Percentage(50),
                     self.calc_popup_height(Id::ErrorPopup, f.size().width, f.size().height),
-                );
+                )
+                .draw_in(f.size());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::ErrorPopup, f, popup);
             } else if self.app.mounted(&Id::FatalPopup) {
-                let popup = draw_area_in(
-                    f.size(),
-                    50,
+                let popup = Popup(
+                    Size::Percentage(50),
                     self.calc_popup_height(Id::FatalPopup, f.size().width, f.size().height),
-                );
+                )
+                .draw_in(f.size());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::FatalPopup, f, popup);
             } else if self.app.mounted(&Id::WaitPopup) {
-                let popup = draw_area_in(f.size(), 50, 10);
+                let popup = Popup(Size::Percentage(50), Size::Unit(3)).draw_in(f.size());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::WaitPopup, f, popup);
             } else if self.app.mounted(&Id::SyncBrowsingMkdirPopup) {
-                let popup = draw_area_in(f.size(), 60, 10);
+                let popup = Popup(Size::Percentage(60), Size::Unit(3)).draw_in(f.size());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::SyncBrowsingMkdirPopup, f, popup);
             } else if self.app.mounted(&Id::KeybindingsPopup) {
-                let popup = draw_area_in(f.size(), 50, 80);
+                let popup = Popup(Size::Percentage(50), Size::Percentage(80)).draw_in(f.size());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::KeybindingsPopup, f, popup);
@@ -890,7 +890,7 @@ impl FileTransferActivity {
 
     /// Given the id of the component to display and the width and height of the total area,
     /// returns the height in percentage to the entire area height, that the popup should have
-    fn calc_popup_height(&self, id: Id, width: u16, height: u16) -> u16 {
+    fn calc_popup_height(&self, id: Id, width: u16, height: u16) -> Size {
         // Get current text width
         let text_width = self
             .app
@@ -914,7 +914,7 @@ impl FileTransferActivity {
         // Get amount of required rows NOTE: + 2 because of margins
         let display_rows = ((text_width as f64) / (row_width as f64)).ceil() as u16 + 2;
         // Return height (row_height_p * display_rows)
-        display_rows * row_height_p
+        Size::Percentage(display_rows * row_height_p)
     }
 
     // -- global listener
