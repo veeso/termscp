@@ -17,10 +17,7 @@ impl FileTransferActivity {
             }
         }
         if file_exists {
-            self.log_and_alert(
-                LogLevel::Warn,
-                format!("File \"{input}\" already exists",),
-            );
+            self.log_and_alert(LogLevel::Warn, format!("File \"{input}\" already exists",));
             return;
         }
         // Create file
@@ -47,20 +44,16 @@ impl FileTransferActivity {
             }
         }
         if file_exists {
-            self.log_and_alert(
-                LogLevel::Warn,
-                format!("File \"{input}\" already exists",),
-            );
+            self.log_and_alert(LogLevel::Warn, format!("File \"{input}\" already exists",));
             return;
         }
         // Get path on remote
         let file_path: PathBuf = PathBuf::from(input.as_str());
         // Create file (on local)
         match tempfile::NamedTempFile::new() {
-            Err(err) => self.log_and_alert(
-                LogLevel::Error,
-                format!("Could not create tempfile: {err}"),
-            ),
+            Err(err) => {
+                self.log_and_alert(LogLevel::Error, format!("Could not create tempfile: {err}"))
+            }
             Ok(tfile) => {
                 // Stat tempfile
                 let local_file: File = match self.host.stat(tfile.path()) {
