@@ -127,12 +127,12 @@ mod tests {
     fn test_config_serialization_errors() {
         let error: SerializerError = SerializerError::new(SerializerErrorKind::Syntax);
         assert!(error.msg.is_none());
-        assert_eq!(format!("{}", error), String::from("Syntax error"));
+        assert_eq!(format!("{error}"), String::from("Syntax error"));
         let error: SerializerError =
             SerializerError::new_ex(SerializerErrorKind::Syntax, String::from("bad syntax"));
         assert!(error.msg.is_some());
         assert_eq!(
-            format!("{}", error),
+            format!("{error}"),
             String::from("Syntax error (bad syntax)")
         );
         // Fmt
@@ -159,7 +159,7 @@ mod tests {
     fn test_config_serialization_params_deserialize_ok() {
         let toml_file: tempfile::NamedTempFile = create_good_toml_bookmarks_params();
         toml_file.as_file().sync_all().unwrap();
-        toml_file.as_file().seek(SeekFrom::Start(0)).unwrap();
+        toml_file.as_file().rewind().unwrap();
         // Parse
         let cfg = deserialize(Box::new(toml_file));
         assert!(cfg.is_ok());
@@ -209,7 +209,7 @@ mod tests {
     fn test_config_serialization_params_deserialize_ok_no_opts() {
         let toml_file: tempfile::NamedTempFile = create_good_toml_bookmarks_params_no_opts();
         toml_file.as_file().sync_all().unwrap();
-        toml_file.as_file().seek(SeekFrom::Start(0)).unwrap();
+        toml_file.as_file().rewind().unwrap();
         // Parse
         let cfg = deserialize(Box::new(toml_file));
         assert!(cfg.is_ok());
@@ -249,7 +249,7 @@ mod tests {
     fn test_config_serialization_params_deserialize_nok() {
         let toml_file: tempfile::NamedTempFile = create_bad_toml_bookmarks_params();
         toml_file.as_file().sync_all().unwrap();
-        toml_file.as_file().seek(SeekFrom::Start(0)).unwrap();
+        toml_file.as_file().rewind().unwrap();
         // Parse
         assert!(deserialize::<UserConfig>(Box::new(toml_file)).is_err());
     }
@@ -268,7 +268,7 @@ mod tests {
         assert!(serialize(&cfg, writer).is_ok());
         // Reload configuration and check if it's ok
         toml_file.as_file().sync_all().unwrap();
-        toml_file.as_file().seek(SeekFrom::Start(0)).unwrap();
+        toml_file.as_file().rewind().unwrap();
         assert!(deserialize::<UserConfig>(Box::new(toml_file)).is_ok());
     }
 
@@ -353,7 +353,7 @@ mod tests {
     fn test_config_serializer_bookmarks_serializer_deserialize_ok() {
         let toml_file: tempfile::NamedTempFile = create_good_toml_bookmarks();
         toml_file.as_file().sync_all().unwrap();
-        toml_file.as_file().seek(SeekFrom::Start(0)).unwrap();
+        toml_file.as_file().rewind().unwrap();
         // Parse
         let hosts = deserialize(Box::new(toml_file));
         assert!(hosts.is_ok());
@@ -412,7 +412,7 @@ mod tests {
     fn test_config_serializer_bookmarks_serializer_deserialize_nok() {
         let toml_file: tempfile::NamedTempFile = create_bad_toml_bookmarks();
         toml_file.as_file().sync_all().unwrap();
-        toml_file.as_file().seek(SeekFrom::Start(0)).unwrap();
+        toml_file.as_file().rewind().unwrap();
         // Parse
         assert!(deserialize::<UserHosts>(Box::new(toml_file)).is_err());
     }
@@ -500,11 +500,11 @@ mod tests {
     fn test_config_serialization_theme_deserialize() {
         let toml_file = create_good_toml_theme();
         toml_file.as_file().sync_all().unwrap();
-        toml_file.as_file().seek(SeekFrom::Start(0)).unwrap();
+        toml_file.as_file().rewind().unwrap();
         assert!(deserialize::<Theme>(Box::new(toml_file)).is_ok());
         let toml_file = create_bad_toml_theme();
         toml_file.as_file().sync_all().unwrap();
-        toml_file.as_file().seek(SeekFrom::Start(0)).unwrap();
+        toml_file.as_file().rewind().unwrap();
         assert!(deserialize::<Theme>(Box::new(toml_file)).is_err());
     }
 

@@ -42,13 +42,13 @@ fn main() {
     let run_opts: RunOpts = match parse_args(args) {
         Ok(opts) => opts,
         Err(err) => {
-            eprintln!("{}", err);
+            eprintln!("{err}");
             std::process::exit(255);
         }
     };
     // Setup logging
     if let Err(err) = logging::init(run_opts.log_level) {
-        eprintln!("Failed to initialize logging: {}", err);
+        eprintln!("Failed to initialize logging: {err}");
     }
     info!("termscp {} started!", TERMSCP_VERSION);
     // Run
@@ -67,8 +67,7 @@ fn parse_args(args: Args) -> Result<RunOpts, String> {
     // Version
     if args.version {
         return Err(format!(
-            "termscp - {} - Developed by {}",
-            TERMSCP_VERSION, TERMSCP_AUTHORS,
+            "termscp - {TERMSCP_VERSION} - Developed by {TERMSCP_AUTHORS}",
         ));
     }
     // Setup activity?
@@ -108,7 +107,7 @@ fn parse_args(args: Args) -> Result<RunOpts, String> {
         // Change working directory if local dir is set
         let localdir: PathBuf = PathBuf::from(localdir);
         if let Err(err) = env::set_current_dir(localdir.as_path()) {
-            return Err(format!("Bad working directory argument: {}", err));
+            return Err(format!("Bad working directory argument: {err}"));
         }
     }
     Ok(run_opts)
@@ -134,7 +133,7 @@ fn parse_address_arg(args: &Args) -> Result<Remote, String> {
 
 /// Parse remote address
 fn parse_remote_address(remote: &str) -> Result<FileTransferParams, String> {
-    utils::parser::parse_remote_opt(remote).map_err(|e| format!("Bad address option: {}", e))
+    utils::parser::parse_remote_opt(remote).map_err(|e| format!("Bad address option: {e}"))
 }
 
 /// ### run
@@ -148,17 +147,17 @@ fn run(run_opts: RunOpts) -> i32 {
                 0
             }
             Err(err) => {
-                eprintln!("{}", err);
+                eprintln!("{err}");
                 1
             }
         },
         Task::InstallUpdate => match support::install_update() {
             Ok(msg) => {
-                println!("{}", msg);
+                println!("{msg}");
                 0
             }
             Err(err) => {
-                eprintln!("Could not install update: {}", err);
+                eprintln!("Could not install update: {err}");
                 1
             }
         },
@@ -173,7 +172,7 @@ fn run(run_opts: RunOpts) -> i32 {
                 match ActivityManager::new(wrkdir.as_path(), run_opts.ticks) {
                     Ok(m) => m,
                     Err(err) => {
-                        eprintln!("Could not start activity manager: {}", err);
+                        eprintln!("Could not start activity manager: {err}");
                         return 1;
                     }
                 };
@@ -181,13 +180,13 @@ fn run(run_opts: RunOpts) -> i32 {
             match run_opts.remote {
                 Remote::Bookmark(BookmarkParams { name, password }) => {
                     if let Err(err) = manager.resolve_bookmark_name(&name, password.as_deref()) {
-                        eprintln!("{}", err);
+                        eprintln!("{err}");
                         return 1;
                     }
                 }
                 Remote::Host(HostParams { params, password }) => {
                     if let Err(err) = manager.set_filetransfer_params(params, password.as_deref()) {
-                        eprintln!("{}", err);
+                        eprintln!("{err}");
                         return 1;
                     }
                 }

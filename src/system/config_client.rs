@@ -249,7 +249,7 @@ impl ConfigClient {
         // Get key path
         let ssh_key_path: PathBuf = {
             let mut p: PathBuf = self.ssh_key_dir.clone();
-            p.push(format!("{}.key", host_name));
+            p.push(format!("{host_name}.key"));
             p
         };
         info!(
@@ -390,7 +390,7 @@ impl ConfigClient {
     /// Hosts are saved as `username@host` into configuration.
     /// This method creates the key name, starting from host and username
     fn make_ssh_host_key(host: &str, username: &str) -> String {
-        format!("{}@{}", username, host)
+        format!("{username}@{host}")
     }
 
     /// Get ssh tokens starting from ssh host key

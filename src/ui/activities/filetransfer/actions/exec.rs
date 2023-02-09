@@ -10,13 +10,13 @@ impl FileTransferActivity {
         match self.host.exec(input.as_str()) {
             Ok(output) => {
                 // Reload files
-                self.log(LogLevel::Info, format!("\"{}\": {}", input, output));
+                self.log(LogLevel::Info, format!("\"{input}\": {output}"));
             }
             Err(err) => {
                 // Report err
                 self.log_and_alert(
                     LogLevel::Error,
-                    format!("Could not execute command \"{}\": {}", input, err),
+                    format!("Could not execute command \"{input}\": {err}"),
                 );
             }
         }
@@ -28,14 +28,14 @@ impl FileTransferActivity {
                 // Reload files
                 self.log(
                     LogLevel::Info,
-                    format!("\"{}\" (exitcode: {}): {}", input, rc, output),
+                    format!("\"{input}\" (exitcode: {rc}): {output}"),
                 );
             }
             Err(err) => {
                 // Report err
                 self.log_and_alert(
                     LogLevel::Error,
-                    format!("Could not execute command \"{}\": {}", input, err),
+                    format!("Could not execute command \"{input}\": {err}"),
                 );
             }
         }

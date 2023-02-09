@@ -46,7 +46,7 @@ impl SetupActivity {
         // Collect input values if in theme form
         if self.layout == ViewLayout::Theme {
             self.collect_styles()
-                .map_err(|e| format!("'{:?}' has an invalid color", e))?;
+                .map_err(|e| format!("'{e:?}' has an invalid color"))?;
         }
         // save theme
         self.save_theme()
@@ -59,7 +59,7 @@ impl SetupActivity {
             ViewLayout::SetupForm => self.collect_input_values(),
             ViewLayout::Theme => self
                 .collect_styles()
-                .map_err(|e| format!("'{:?}' has an invalid color", e))?,
+                .map_err(|e| format!("'{e:?}' has an invalid color"))?,
             _ => {}
         }
         // Update view
@@ -113,7 +113,7 @@ impl SetupActivity {
                     Err(err) => {
                         // Report error
                         self.mount_error(
-                            format!("Could not get ssh key \"{}\": {}", key, err).as_str(),
+                            format!("Could not get ssh key \"{key}\": {err}").as_str(),
                         );
                     }
                 }
@@ -134,7 +134,7 @@ impl SetupActivity {
         };
         // Prepare text editor
         env::set_var("EDITOR", self.config().get_text_editor());
-        let placeholder: String = format!("# Type private SSH key for {}@{}\n", username, host);
+        let placeholder: String = format!("# Type private SSH key for {username}@{host}\n");
         // Put input mode back to normal
         if let Err(err) = self.context_mut().terminal().disable_raw_mode() {
             error!("Could not disable raw mode: {}", err);
@@ -159,14 +159,14 @@ impl SetupActivity {
                         self.add_ssh_key(host.as_str(), username.as_str(), rsa_key.as_str())
                     {
                         self.mount_error(
-                            format!("Could not create new private key: {}", err).as_str(),
+                            format!("Could not create new private key: {err}").as_str(),
                         );
                     }
                 }
             }
             Err(err) => {
                 // Report error
-                self.mount_error(format!("Could not write private key to file: {}", err).as_str());
+                self.mount_error(format!("Could not write private key to file: {err}").as_str());
             }
         }
         // Restore terminal

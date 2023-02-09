@@ -12,13 +12,13 @@ impl FileTransferActivity {
         match self.host.mkdir(PathBuf::from(input.as_str()).as_path()) {
             Ok(_) => {
                 // Reload files
-                self.log(LogLevel::Info, format!("Created directory \"{}\"", input));
+                self.log(LogLevel::Info, format!("Created directory \"{input}\""));
             }
             Err(err) => {
                 // Report err
                 self.log_and_alert(
                     LogLevel::Error,
-                    format!("Could not create directory \"{}\": {}", input, err),
+                    format!("Could not create directory \"{input}\": {err}"),
                 );
             }
         }
@@ -30,13 +30,13 @@ impl FileTransferActivity {
         ) {
             Ok(_) => {
                 // Reload files
-                self.log(LogLevel::Info, format!("Created directory \"{}\"", input));
+                self.log(LogLevel::Info, format!("Created directory \"{input}\""));
             }
             Err(err) => {
                 // Report err
                 self.log_and_alert(
                     LogLevel::Error,
-                    format!("Could not create directory \"{}\": {}", input, err),
+                    format!("Could not create directory \"{input}\": {err}"),
                 );
             }
         }

@@ -12,14 +12,14 @@ impl FileTransferActivity {
     pub(crate) fn action_local_find(&mut self, input: String) -> Result<Vec<File>, String> {
         match self.host.find(input.as_str()) {
             Ok(entries) => Ok(entries),
-            Err(err) => Err(format!("Could not search for files: {}", err)),
+            Err(err) => Err(format!("Could not search for files: {err}")),
         }
     }
 
     pub(crate) fn action_remote_find(&mut self, input: String) -> Result<Vec<File>, String> {
         match self.client.as_mut().find(input.as_str()) {
             Ok(entries) => Ok(entries),
-            Err(err) => Err(format!("Could not search for files: {}", err)),
+            Err(err) => Err(format!("Could not search for files: {err}")),
         }
     }
 
@@ -72,7 +72,7 @@ impl FileTransferActivity {
                     ) {
                         self.log_and_alert(
                             LogLevel::Error,
-                            format!("Could not upload file: {}", err),
+                            format!("Could not upload file: {err}"),
                         );
                     }
                 }
@@ -94,7 +94,7 @@ impl FileTransferActivity {
                     ) {
                         self.log_and_alert(
                             LogLevel::Error,
-                            format!("Could not download file: {}", err),
+                            format!("Could not download file: {err}"),
                         );
                     }
                 }
@@ -133,7 +133,7 @@ impl FileTransferActivity {
                             {
                                 self.log_and_alert(
                                     LogLevel::Error,
-                                    format!("Could not upload file: {}", err),
+                                    format!("Could not upload file: {err}"),
                                 );
                             }
                         }
@@ -163,7 +163,7 @@ impl FileTransferActivity {
                         ) {
                             self.log_and_alert(
                                 LogLevel::Error,
-                                format!("Could not download file: {}", err),
+                                format!("Could not download file: {err}"),
                             );
                         }
                     }

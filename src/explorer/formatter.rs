@@ -287,7 +287,7 @@ impl Formatter {
             name.push('/');
         }
         // Add to cur str, prefix and the key value
-        format!("{}{}{:0width$}", cur_str, prefix, name, width = file_len)
+        format!("{cur_str}{prefix}{name:0file_len$}")
     }
 
     /// Format path
@@ -347,7 +347,7 @@ impl Formatter {
             ),
         }
         // Add to cur str, prefix and the key value
-        format!("{}{}{:10}", cur_str, prefix, pex)
+        format!("{cur_str}{prefix}{pex:10}")
     }
 
     /// Format file size
@@ -363,7 +363,7 @@ impl Formatter {
             // Get byte size
             let size: ByteSize = ByteSize(fsentry.metadata().size);
             // Add to cur str, prefix and the key value
-            format!("{}{}{:10}", cur_str, prefix, size)
+            format!("{cur_str}{prefix}{size:10}")
         } else if fsentry.metadata().symlink.is_some() {
             let size = ByteSize(
                 fsentry
@@ -374,10 +374,10 @@ impl Formatter {
                     .to_string_lossy()
                     .len() as u64,
             );
-            format!("{}{}{:10}", cur_str, prefix, size)
+            format!("{cur_str}{prefix}{size:10}")
         } else {
             // Add to cur str, prefix and the key value
-            format!("{}{}          ", cur_str, prefix)
+            format!("{cur_str}{prefix}          ")
         }
     }
 
@@ -397,7 +397,7 @@ impl Formatter {
         };
         // Replace `FMT_KEY_NAME` with name
         match fsentry.metadata().symlink.as_deref() {
-            None => format!("{}{}                        ", cur_str, prefix),
+            None => format!("{cur_str}{prefix}                        "),
             Some(p) => format!(
                 "{}{}-> {:0width$}",
                 cur_str,
@@ -432,7 +432,7 @@ impl Formatter {
             None => 0.to_string(),
         };
         // Add to cur str, prefix and the key value
-        format!("{}{}{:12}", cur_str, prefix, username)
+        format!("{cur_str}{prefix}{username:12}")
     }
 
     /// Fallback function in case the format key is unknown
@@ -446,7 +446,7 @@ impl Formatter {
         _fmt_extra: Option<&String>,
     ) -> String {
         // Add to cur str and prefix
-        format!("{}{}", cur_str, prefix)
+        format!("{cur_str}{prefix}")
     }
 
     // Static
@@ -1008,6 +1008,6 @@ mod tests {
         _fmt_len: Option<&usize>,
         _fmt_extra: Option<&String>,
     ) -> String {
-        format!("{}{}A", cur_str, prefix)
+        format!("{cur_str}{prefix}A")
     }
 }

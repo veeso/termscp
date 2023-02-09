@@ -490,7 +490,7 @@ impl FileTransferActivity {
             .remount(
                 Id::ExplorerFind,
                 Box::new(components::ExplorerFind::new(
-                    format!(r#"Search results for "{}""#, search),
+                    format!(r#"Search results for "{search}""#),
                     &[],
                     bg,
                     fg,

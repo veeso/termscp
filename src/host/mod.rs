@@ -1099,7 +1099,7 @@ mod tests {
             Path::new("/tmp"),
         );
         assert_eq!(
-            format!("{}", err),
+            format!("{err}"),
             String::from("Could not create file: address in use (/tmp)"),
         );
         assert_eq!(

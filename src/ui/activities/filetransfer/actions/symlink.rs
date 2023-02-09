@@ -29,7 +29,7 @@ impl FileTransferActivity {
                 Err(err) => {
                     self.log_and_alert(
                         LogLevel::Error,
-                        format!("Could not create symlink: {}", err),
+                        format!("Could not create symlink: {err}"),
                     );
                 }
             }

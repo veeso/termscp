@@ -29,7 +29,7 @@ impl SshKeyStorage {
 
     /// Make mapkey from host and username
     fn make_mapkey(host: &str, username: &str) -> String {
-        format!("{}@{}", username, host)
+        format!("{username}@{host}")
     }
 
     #[cfg(test)]
@@ -46,11 +46,11 @@ impl SshKeyStorage {
         use std::io::BufReader;
 
         let mut reader = File::open(path)
-            .map_err(|e| format!("failed to open {}: {}", path, e))
+            .map_err(|e| format!("failed to open {path}: {e}"))
             .map(BufReader::new)?;
         SshConfig::default()
             .parse(&mut reader)
-            .map_err(|e| format!("Failed to parse ssh2 config: {}", e))
+            .map_err(|e| format!("Failed to parse ssh2 config: {e}"))
     }
 
     /// Resolve host via termscp ssh keys storage

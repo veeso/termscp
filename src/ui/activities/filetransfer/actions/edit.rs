@@ -71,12 +71,12 @@ impl FileTransferActivity {
                         }
                     }
                     Err(err) => {
-                        return Err(format!("Could not read file: {}", err));
+                        return Err(format!("Could not read file: {err}"));
                     }
                 }
             }
             Err(err) => {
-                return Err(format!("Could not read file: {}", err));
+                return Err(format!("Could not read file: {err}"));
             }
         }
         // Put input mode back to normal
@@ -98,7 +98,7 @@ impl FileTransferActivity {
                     path.display()
                 ),
             ),
-            Err(err) => return Err(format!("Could not open editor: {}", err)),
+            Err(err) => return Err(format!("Could not open editor: {err}")),
         }
         if let Some(ctx) = self.context.as_mut() {
             // Enter alternate mode
@@ -134,7 +134,7 @@ impl FileTransferActivity {
             tmpfile.as_path(),
             Some(file_name.clone()),
         ) {
-            return Err(format!("Could not open file {}: {}", file_name, err));
+            return Err(format!("Could not open file {file_name}: {err}"));
         }
         // Get current file modification time
         let prev_mtime: SystemTime = match self.host.stat(tmpfile.as_path()) {

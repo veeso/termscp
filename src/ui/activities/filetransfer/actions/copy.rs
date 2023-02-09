@@ -116,7 +116,7 @@ impl FileTransferActivity {
                 Err(err) => {
                     self.log_and_alert(
                         LogLevel::Error,
-                        format!("Copy failed: could not create temporary directory: {}", err),
+                        format!("Copy failed: could not create temporary directory: {err}"),
                     );
                     return Err(err.to_string());
                 }
@@ -130,7 +130,7 @@ impl FileTransferActivity {
             {
                 self.log_and_alert(
                     LogLevel::Error,
-                    format!("Copy failed: failed to download file: {}", err),
+                    format!("Copy failed: failed to download file: {err}"),
                 );
                 return Err(err);
             }
@@ -158,7 +158,7 @@ impl FileTransferActivity {
             ) {
                 self.log_and_alert(
                     LogLevel::Error,
-                    format!("Copy failed: failed to send file: {}", err),
+                    format!("Copy failed: failed to send file: {err}"),
                 );
                 return Err(err);
             }
@@ -170,7 +170,7 @@ impl FileTransferActivity {
                 Err(err) => {
                     self.log_and_alert(
                         LogLevel::Error,
-                        format!("Copy failed: could not create temporary file: {}", err),
+                        format!("Copy failed: could not create temporary file: {err}"),
                     );
                     return Err(String::from("Could not create temporary file"));
                 }
@@ -183,7 +183,7 @@ impl FileTransferActivity {
             {
                 self.log_and_alert(
                     LogLevel::Error,
-                    format!("Copy failed: could not download to temporary file: {}", err),
+                    format!("Copy failed: could not download to temporary file: {err}"),
                 );
                 return Err(err);
             }

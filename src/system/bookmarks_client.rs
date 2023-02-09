@@ -88,7 +88,7 @@ impl BookmarksClient {
                         error!("Failed to set new key into storage: {}", e);
                         return Err(SerializerError::new_ex(
                             SerializerErrorKind::Io,
-                            format!("Could not write key to storage: {}", e),
+                            format!("Could not write key to storage: {e}"),
                         ));
                     }
                     // Return key
@@ -98,7 +98,7 @@ impl BookmarksClient {
                     error!("Failed to get key from storage: {}", e);
                     return Err(SerializerError::new_ex(
                         SerializerErrorKind::Io,
-                        format!("Could not get key from storage: {}", e),
+                        format!("Could not get key from storage: {e}"),
                     ));
                 }
             },

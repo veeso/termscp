@@ -111,7 +111,7 @@ impl FileTransferActivity {
                 );
             }
             Some(Err(err)) => {
-                self.log_and_alert(LogLevel::Error, format!("could not unwatch path: {}", err));
+                self.log_and_alert(LogLevel::Error, format!("could not unwatch path: {err}"));
             }
             None => {}
         }

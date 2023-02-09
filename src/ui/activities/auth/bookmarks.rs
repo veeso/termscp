@@ -102,7 +102,7 @@ impl AuthActivity {
     fn write_bookmarks(&mut self) {
         if let Some(bookmarks_cli) = self.bookmarks_client() {
             if let Err(err) = bookmarks_cli.write_bookmarks() {
-                self.mount_error(format!("Could not write bookmarks: {}", err).as_str());
+                self.mount_error(format!("Could not write bookmarks: {err}").as_str());
             }
         }
     }

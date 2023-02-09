@@ -38,7 +38,7 @@ impl FileTransferActivity {
             Err(err) => {
                 self.log(
                     LogLevel::Error,
-                    format!("error while polling file watcher: {}", err),
+                    format!("error while polling file watcher: {err}"),
                 );
             }
         }
