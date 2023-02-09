@@ -78,7 +78,7 @@ impl ActivityManager {
                 params.set_default_secret(password.to_string());
             } else {
                 match tty::read_secret_from_tty("Password: ") {
-                    Err(err) => return Err(format!("Could not read password: {}", err)),
+                    Err(err) => return Err(format!("Could not read password: {err}")),
                     Ok(Some(secret)) => {
                         debug!(
                             "Read password from tty: {}",
@@ -105,8 +105,7 @@ impl ActivityManager {
         if let Some(bookmarks_client) = self.context.as_mut().unwrap().bookmarks_client_mut() {
             match bookmarks_client.get_bookmark(bookmark_name) {
                 None => Err(format!(
-                    r#"Could not resolve bookmark name: "{}" no such bookmark"#,
-                    bookmark_name
+                    r#"Could not resolve bookmark name: "{bookmark_name}" no such bookmark"#
                 )),
                 Some(params) => self.set_filetransfer_params(params, password),
             }
@@ -217,7 +216,7 @@ impl ActivityManager {
             Err(err) => {
                 // Set error in context
                 error!("Failed to initialize localhost: {}", err);
-                ctx.set_error(format!("Could not initialize localhost: {}", err));
+                ctx.set_error(format!("Could not initialize localhost: {err}"));
                 return None;
             }
         };
@@ -325,7 +324,7 @@ impl ActivityManager {
                             environment::get_config_paths(config_dir.as_path());
                         match ConfigClient::new(config_path.as_path(), ssh_dir.as_path()) {
                             Ok(cli) => Ok(cli),
-                            Err(err) => Err(format!("Could not read configuration: {}", err)),
+                            Err(err) => Err(format!("Could not read configuration: {err}")),
                         }
                     }
                     None => Err(String::from(
@@ -334,8 +333,7 @@ impl ActivityManager {
                 }
             }
             Err(err) => Err(format!(
-                "Could not initialize configuration directory: {}",
-                err
+                "Could not initialize configuration directory: {err}"
             )),
         }
     }

@@ -29,7 +29,7 @@ pub fn create_sample_file() -> NamedTempFile {
 /// Create sample file with provided content
 pub fn create_sample_file_with_content(content: impl std::fmt::Display) -> NamedTempFile {
     let mut tmpfile: tempfile::NamedTempFile = tempfile::NamedTempFile::new().unwrap();
-    writeln!(tmpfile, "{}", content).unwrap();
+    writeln!(tmpfile, "{content}").unwrap();
     tmpfile
 }
 

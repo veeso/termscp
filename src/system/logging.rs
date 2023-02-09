@@ -33,7 +33,7 @@ pub fn init(level: LogLevel) -> Result<(), String> {
     let config = ConfigBuilder::new().set_time_format_rfc3339().build();
     // Make logger
     WriteLogger::init(level, config, file)
-        .map_err(|e| format!("Failed to initialize logger: {}", e))
+        .map_err(|e| format!("Failed to initialize logger: {e}"))
 }
 
 #[cfg(test)]

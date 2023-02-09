@@ -881,7 +881,7 @@ impl AuthActivity {
     /// Format bookmark to display on ui
     fn fmt_bookmark(name: &str, b: FileTransferParams) -> String {
         let addr: String = Self::fmt_recent(b);
-        format!("{} ({})", name, addr)
+        format!("{name} ({addr})")
     }
 
     /// Format recent connection to display on ui
@@ -890,7 +890,7 @@ impl AuthActivity {
         match b.params {
             ProtocolParams::AwsS3(s3) => {
                 let profile: String = match s3.profile {
-                    Some(p) => format!("[{}]", p),
+                    Some(p) => format!("[{p}]"),
                     None => String::default(),
                 };
                 format!(
@@ -905,7 +905,7 @@ impl AuthActivity {
             ProtocolParams::Generic(params) => {
                 let username: String = match params.username {
                     None => String::default(),
-                    Some(u) => format!("{}@", u),
+                    Some(u) => format!("{u}@"),
                 };
                 format!(
                     "{}://{}{}:{}",

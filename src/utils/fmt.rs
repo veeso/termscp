@@ -254,7 +254,7 @@ pub fn fmt_color(color: &Color) -> String {
         Color::Rgb(255, 255, 0) => "yellow".to_string(),
         Color::Rgb(154, 205, 50) => "yellowgreen".to_string(),
         // -- others
-        Color::Rgb(r, g, b) => format!("#{:02x}{:02x}{:02x}", r, g, b),
+        Color::Rgb(r, g, b) => format!("#{r:02x}{g:02x}{b:02x}"),
     }
 }
 
@@ -280,7 +280,7 @@ pub fn fmt_bytes(v: u64) -> String {
     } else if v >= 1024 {
         format!("{} KB", v / 1024)
     } else {
-        format!("{} B", v)
+        format!("{v} B")
     }
 }
 

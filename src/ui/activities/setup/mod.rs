@@ -352,7 +352,7 @@ impl Activity for SetupActivity {
                 }
             }
             Err(err) => {
-                self.mount_error(format!("Application error: {}", err));
+                self.mount_error(format!("Application error: {err}"));
             }
         }
         // View

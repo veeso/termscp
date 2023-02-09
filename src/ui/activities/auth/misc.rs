@@ -107,7 +107,7 @@ impl AuthActivity {
                         // Report error
                         error!("Failed to get latest version: {}", err);
                         self.mount_error(
-                            format!("Could not check for new updates: {}", err).as_str(),
+                            format!("Could not check for new updates: {err}").as_str(),
                         );
                     }
                 }
@@ -136,13 +136,13 @@ impl AuthActivity {
                 if self.config().get_notifications() {
                     Notification::update_installed(ver.as_str());
                 }
-                self.mount_info(format!("termscp has been updated to version {}!", ver))
+                self.mount_info(format!("termscp has been updated to version {ver}!"))
             }
             Err(err) => {
                 if self.config().get_notifications() {
                     Notification::update_failed(err.to_string());
                 }
-                self.mount_error(format!("Could not install update: {}", err))
+                self.mount_error(format!("Could not install update: {err}"))
             }
         }
     }

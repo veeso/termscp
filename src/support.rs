@@ -23,7 +23,7 @@ pub fn import_theme(p: &Path) -> Result<(), String> {
         ));
     }
     // Validate theme file
-    ThemeProvider::new(p).map_err(|e| format!("Invalid theme error: {}", e))?;
+    ThemeProvider::new(p).map_err(|e| format!("Invalid theme error: {e}"))?;
     // get config dir
     let cfg_dir: PathBuf = get_config_dir()?;
     // Get theme directory
@@ -31,7 +31,7 @@ pub fn import_theme(p: &Path) -> Result<(), String> {
     // Copy theme to theme_dir
     fs::copy(p, theme_file.as_path())
         .map(|_| ())
-        .map_err(|e| format!("Could not import theme: {}", e))
+        .map_err(|e| format!("Could not import theme: {e}"))
 }
 
 /// ### install_update
@@ -51,7 +51,7 @@ pub fn install_update() -> Result<String, String> {
             {
                 Notification::update_installed(v.as_str());
             }
-            Ok(format!("termscp has been updated to version {}", v))
+            Ok(format!("termscp has been updated to version {v}"))
         }
         Err(err) => {
             if get_config_client()
@@ -75,8 +75,7 @@ fn get_config_dir() -> Result<PathBuf, String> {
             "Your system doesn't provide a configuration directory",
         )),
         Err(err) => Err(format!(
-            "Could not initialize configuration directory: {}",
-            err
+            "Could not initialize configuration directory: {err}"
         )),
     }
 }

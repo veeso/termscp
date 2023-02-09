@@ -47,7 +47,7 @@ impl FileTransferActivity {
                     {
                         self.log_and_alert(
                             LogLevel::Error,
-                            format!("Could not upload file: {}", err),
+                            format!("Could not upload file: {err}"),
                         );
                     }
                 }
@@ -82,7 +82,7 @@ impl FileTransferActivity {
                     {
                         self.log_and_alert(
                             LogLevel::Error,
-                            format!("Could not upload file: {}", err),
+                            format!("Could not upload file: {err}"),
                         );
                     }
                 }
@@ -111,7 +111,7 @@ impl FileTransferActivity {
                     {
                         self.log_and_alert(
                             LogLevel::Error,
-                            format!("Could not download file: {}", err),
+                            format!("Could not download file: {err}"),
                         );
                     }
                 }
@@ -146,7 +146,7 @@ impl FileTransferActivity {
                     {
                         self.log_and_alert(
                             LogLevel::Error,
-                            format!("Could not download file: {}", err),
+                            format!("Could not download file: {err}"),
                         );
                     }
                 }

@@ -159,8 +159,7 @@ impl FileTransferActivity {
                 self.log(
                     LogLevel::Warn,
                     format!(
-                        "Refused to create '{}'; synchronized browsing disabled",
-                        name
+                        "Refused to create '{name}'; synchronized browsing disabled"
                     ),
                 );
                 self.browser.toggle_sync_browsing();

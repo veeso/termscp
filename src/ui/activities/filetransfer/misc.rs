@@ -35,7 +35,7 @@ impl FileTransferActivity {
                 }
             }
             Err(err) => {
-                self.mount_error(format!("Application error: {}", err));
+                self.mount_error(format!("Application error: {err}"));
             }
         }
     }

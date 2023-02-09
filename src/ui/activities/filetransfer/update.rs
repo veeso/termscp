@@ -131,7 +131,7 @@ impl FileTransferActivity {
             TransferMsg::ExecuteCmd(cmd) => {
                 // Exex command
                 self.umount_exec();
-                self.mount_blocking_wait(format!("Executing '{}'…", cmd).as_str());
+                self.mount_blocking_wait(format!("Executing '{cmd}'…").as_str());
                 match self.browser.tab() {
                     FileExplorerTab::Local => self.action_local_exec(cmd),
                     FileExplorerTab::Remote => self.action_remote_exec(cmd),
@@ -271,7 +271,7 @@ impl FileTransferActivity {
             TransferMsg::SearchFile(search) => {
                 self.umount_find_input();
                 // Mount wait
-                self.mount_blocking_wait(format!(r#"Searching for "{}"…"#, search).as_str());
+                self.mount_blocking_wait(format!(r#"Searching for "{search}"…"#).as_str());
                 // Find
                 let res: Result<Vec<File>, String> = match self.browser.tab() {
                     FileExplorerTab::Local => self.action_local_find(search.clone()),
@@ -289,7 +289,7 @@ impl FileTransferActivity {
                     Ok(files) if files.is_empty() => {
                         // If no file has been found notify user
                         self.mount_info(
-                            format!(r#"Could not find any file matching "{}""#, search).as_str(),
+                            format!(r#"Could not find any file matching "{search}""#).as_str(),
                         );
                     }
                     Ok(files) => {

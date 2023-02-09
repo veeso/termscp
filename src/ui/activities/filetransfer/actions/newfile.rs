@@ -19,7 +19,7 @@ impl FileTransferActivity {
         if file_exists {
             self.log_and_alert(
                 LogLevel::Warn,
-                format!("File \"{}\" already exists", input,),
+                format!("File \"{input}\" already exists",),
             );
             return;
         }
@@ -49,7 +49,7 @@ impl FileTransferActivity {
         if file_exists {
             self.log_and_alert(
                 LogLevel::Warn,
-                format!("File \"{}\" already exists", input,),
+                format!("File \"{input}\" already exists",),
             );
             return;
         }
@@ -59,7 +59,7 @@ impl FileTransferActivity {
         match tempfile::NamedTempFile::new() {
             Err(err) => self.log_and_alert(
                 LogLevel::Error,
-                format!("Could not create tempfile: {}", err),
+                format!("Could not create tempfile: {err}"),
             ),
             Ok(tfile) => {
                 // Stat tempfile
@@ -67,7 +67,7 @@ impl FileTransferActivity {
                     Err(err) => {
                         self.log_and_alert(
                             LogLevel::Error,
-                            format!("Could not stat tempfile: {}", err),
+                            format!("Could not stat tempfile: {err}"),
                         );
                         return;
                     }
@@ -80,7 +80,7 @@ impl FileTransferActivity {
                         Err(err) => {
                             self.log_and_alert(
                                 LogLevel::Error,
-                                format!("Could not open tempfile: {}", err),
+                                format!("Could not open tempfile: {err}"),
                             );
                             return;
                         }

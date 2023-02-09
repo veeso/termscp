@@ -415,7 +415,7 @@ impl FileInfoPopup {
         texts
             .add_row()
             .add_col(TextSpan::from("Size: "))
-            .add_col(TextSpan::new(format!("{} ({})", bsize, size).as_str()).fg(Color::Cyan));
+            .add_col(TextSpan::new(format!("{bsize} ({size})").as_str()).fg(Color::Cyan));
         let atime: String = fmt_time(
             file.metadata().accessed.unwrap_or(UNIX_EPOCH),
             "%b %d %Y %H:%M:%S",
@@ -1330,7 +1330,7 @@ pub struct ReplacePopup {
 impl ReplacePopup {
     pub fn new(filename: Option<&str>, color: Color) -> Self {
         let text = match filename {
-            Some(f) => format!(r#"File "{}" already exists. Overwrite file?"#, f),
+            Some(f) => format!(r#"File "{f}" already exists. Overwrite file?"#),
             None => "Overwrite files?".to_string(),
         };
         Self {
@@ -1795,8 +1795,7 @@ impl SyncBrowsingMkdirPopup {
                 .choices(&["Yes", "No"])
                 .title(
                     format!(
-                        r#"Sync browsing: directory "{}" doesn't exist. Do you want to create it?"#,
-                        dir_name
+                        r#"Sync browsing: directory "{dir_name}" doesn't exist. Do you want to create it?"#
                     ),
                     Alignment::Center,
                 ),
@@ -1974,8 +1973,8 @@ pub struct WatcherPopup {
 impl WatcherPopup {
     pub fn new(watched: bool, local: &str, remote: &str, color: Color) -> Self {
         let text = match watched {
-            false => format!(r#"Synchronize changes from "{}" to "{}"?"#, local, remote),
-            true => format!(r#"Stop synchronizing changes at "{}"?"#, local),
+            false => format!(r#"Synchronize changes from "{local}" to "{remote}"?"#),
+            true => format!(r#"Stop synchronizing changes at "{local}"?"#),
         };
         Self {
             component: Radio::default()

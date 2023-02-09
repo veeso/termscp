@@ -134,7 +134,7 @@ impl FileTransferActivity {
             Err(err) => {
                 self.log_and_alert(
                     LogLevel::Error,
-                    format!("Could not scan current directory: {}", err),
+                    format!("Could not scan current directory: {err}"),
                 );
             }
         }
@@ -150,7 +150,7 @@ impl FileTransferActivity {
             Err(err) => {
                 self.log_and_alert(
                     LogLevel::Error,
-                    format!("Could not scan current directory: {}", err),
+                    format!("Could not scan current directory: {err}"),
                 );
             }
         }
@@ -435,7 +435,7 @@ impl FileTransferActivity {
         // Init transfer
         self.transfer.partial.init(file_size);
         // rewind
-        if let Err(err) = reader.seek(std::io::SeekFrom::Start(0)) {
+        if let Err(err) = reader.rewind() {
             return Err(TransferErrorReason::CouldNotRewind(err));
         }
         // Write remote file
@@ -491,7 +491,7 @@ impl FileTransferActivity {
             // Draw only if a significant progress has been made (performance improvement)
             if last_progress_val < self.transfer.partial.calc_progress() - 0.01 {
                 // Draw
-                self.update_progress_bar(format!("Uploading \"{}\"…", file_name));
+                self.update_progress_bar(format!("Uploading \"{file_name}\"…"));
                 self.view();
                 last_progress_val = self.transfer.partial.calc_progress();
             }
@@ -500,7 +500,7 @@ impl FileTransferActivity {
         if let Err(err) = self.client.on_written(writer) {
             self.log(
                 LogLevel::Warn,
-                format!("Could not finalize remote stream: \"{}\"", err),
+                format!("Could not finalize remote stream: \"{err}\""),
             );
         }
         // if upload was abrupted, return error
@@ -539,11 +539,11 @@ impl FileTransferActivity {
         // Init transfer
         self.transfer.partial.init(file_size);
         // rewind
-        if let Err(err) = reader.seek(std::io::SeekFrom::Start(0)) {
+        if let Err(err) = reader.rewind() {
             return Err(TransferErrorReason::CouldNotRewind(err));
         }
         // Draw before
-        self.update_progress_bar(format!("Uploading \"{}\"…", file_name));
+        self.update_progress_bar(format!("Uploading \"{file_name}\"…"));
         self.view();
         // Send file
         if let Err(err) = self.client.create_file(remote, &metadata, Box::new(reader)) {
@@ -553,7 +553,7 @@ impl FileTransferActivity {
         self.transfer.partial.update_progress(file_size);
         self.transfer.full.update_progress(file_size);
         // Draw again after
-        self.update_progress_bar(format!("Uploading \"{}\"…", file_name));
+        self.update_progress_bar(format!("Uploading \"{file_name}\"…"));
         self.view();
         // log and return Ok
         self.log(
@@ -892,7 +892,7 @@ impl FileTransferActivity {
             // Draw only if a significant progress has been made (performance improvement)
             if last_progress_val < self.transfer.partial.calc_progress() - 0.01 {
                 // Draw
-                self.update_progress_bar(format!("Downloading \"{}\"", file_name));
+                self.update_progress_bar(format!("Downloading \"{file_name}\""));
                 self.view();
                 last_progress_val = self.transfer.partial.calc_progress();
             }
@@ -901,7 +901,7 @@ impl FileTransferActivity {
         if let Err(err) = self.client.on_read(reader) {
             self.log(
                 LogLevel::Warn,
-                format!("Could not finalize remote stream: \"{}\"", err),
+                format!("Could not finalize remote stream: \"{err}\""),
             );
         }
         // If download was abrupted, return Error
@@ -953,7 +953,7 @@ impl FileTransferActivity {
         // Init transfer
         self.transfer.partial.init(remote.metadata.size as usize);
         // Draw before transfer
-        self.update_progress_bar(format!("Downloading \"{}\"", file_name));
+        self.update_progress_bar(format!("Downloading \"{file_name}\""));
         self.view();
         // recv wno stream
         if let Err(err) = self.client.open_file(remote.path.as_path(), reader) {
@@ -967,7 +967,7 @@ impl FileTransferActivity {
             .full
             .update_progress(remote.metadata.size as usize);
         // Draw after transfer
-        self.update_progress_bar(format!("Downloading \"{}\"", file_name));
+        self.update_progress_bar(format!("Downloading \"{file_name}\""));
         self.view();
         // Apply file mode to file
         #[cfg(target_family = "unix")]
@@ -1018,7 +1018,7 @@ impl FileTransferActivity {
                 // Report err
                 self.log_and_alert(
                     LogLevel::Error,
-                    format!("Could not change working directory: {}", err),
+                    format!("Could not change working directory: {err}"),
                 );
             }
         }
@@ -1045,7 +1045,7 @@ impl FileTransferActivity {
                 // Report err
                 self.log_and_alert(
                     LogLevel::Error,
-                    format!("Could not change working directory: {}", err),
+                    format!("Could not change working directory: {err}"),
                 );
             }
         }

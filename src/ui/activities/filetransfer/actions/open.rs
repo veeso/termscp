@@ -71,7 +71,7 @@ impl FileTransferActivity {
             Err(err) => {
                 self.log(
                     LogLevel::Error,
-                    format!("Failed to download remote entry: {}", err),
+                    format!("Failed to download remote entry: {err}"),
                 );
             }
         }

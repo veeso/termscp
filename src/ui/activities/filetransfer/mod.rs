@@ -287,7 +287,7 @@ impl FileTransferActivity {
             );
             match file_type {
                 None => base,
-                Some(file_type) => format!("{}.{}", base, file_type),
+                Some(file_type) => format!("{base}.{file_type}"),
             }
         })
     }

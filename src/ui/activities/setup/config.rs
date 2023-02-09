@@ -15,7 +15,7 @@ impl SetupActivity {
             Ok(_) => Ok(()),
             Err(err) => {
                 error!("Could not save configuration: {}", err);
-                Err(format!("Could not save configuration: {}", err))
+                Err(format!("Could not save configuration: {err}"))
             }
         }
     }
@@ -25,21 +25,21 @@ impl SetupActivity {
     pub(super) fn reset_config_changes(&mut self) -> Result<(), String> {
         self.config_mut()
             .read_config()
-            .map_err(|e| format!("Could not reload configuration: {}", e))
+            .map_err(|e| format!("Could not reload configuration: {e}"))
     }
 
     /// Save theme to file
     pub(super) fn save_theme(&mut self) -> Result<(), String> {
         self.theme_provider()
             .save()
-            .map_err(|e| format!("Could not save theme: {}", e))
+            .map_err(|e| format!("Could not save theme: {e}"))
     }
 
     /// Reset changes committed to theme
     pub(super) fn reset_theme_changes(&mut self) -> Result<(), String> {
         self.theme_provider()
             .load()
-            .map_err(|e| format!("Could not restore theme: {}", e))
+            .map_err(|e| format!("Could not restore theme: {e}"))
     }
 
     /// Delete ssh key from config cli
@@ -47,8 +47,7 @@ impl SetupActivity {
         match self.config_mut().del_ssh_key(host, username) {
             Ok(_) => Ok(()),
             Err(err) => Err(format!(
-                "Could not delete ssh key \"{}@{}\": {}",
-                host, username, err
+                "Could not delete ssh key \"{host}@{username}\": {err}"
             )),
         }
     }
@@ -80,11 +79,11 @@ impl SetupActivity {
                                 Some((_, _, key_path)) => {
                                     match edit::edit_file(key_path.as_path()) {
                                         Ok(_) => Ok(()),
-                                        Err(err) => Err(format!("Could not edit ssh key: {}", err)),
+                                        Err(err) => Err(format!("Could not edit ssh key: {err}")),
                                     }
                                 }
                             },
-                            Err(err) => Err(format!("Could not read ssh key: {}", err)),
+                            Err(err) => Err(format!("Could not read ssh key: {err}")),
                         }
                     }
                     None => Ok(()),
@@ -119,6 +118,6 @@ impl SetupActivity {
     ) -> Result<(), String> {
         self.config_mut()
             .add_ssh_key(host, username, rsa_key)
-            .map_err(|e| format!("Could not add SSH key: {}", e))
+            .map_err(|e| format!("Could not add SSH key: {e}"))
     }
 }

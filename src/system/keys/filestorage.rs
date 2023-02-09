@@ -25,7 +25,7 @@ impl FileStorage {
     /// Make file path for key file from `dir_path` and the application id
     fn make_file_path(&self, storage_id: &str) -> PathBuf {
         let mut p: PathBuf = self.dir_path.clone();
-        let file_name = format!(".{}.key", storage_id);
+        let file_name = format!(".{storage_id}.key");
         p.push(file_name);
         p
     }
