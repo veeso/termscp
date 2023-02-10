@@ -36,6 +36,7 @@ Released on ??
 - **Bugfix**:
   - Fixed [Issue 141](https://github.com/veeso/termcp/issues/141)
 - Dependencies:
+  - Bump `remotefs-ssh` to `0.1.3`
   - Bump `ssh2-config` to `0.1.4`
 
 ## 0.10.0
