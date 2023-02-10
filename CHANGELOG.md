@@ -1,6 +1,7 @@
 # Changelog
 
 - [Changelog](#changelog)
+  - [0.11.0](#0110)
   - [0.10.0](#0100)
   - [0.9.0](#090)
   - [0.8.2](#082)
@@ -25,6 +26,19 @@
   - [0.1.0](#010)
 
 ---
+
+## 0.11.0
+
+Released on ??
+
+> 🦥 The lazy update
+
+- **Bugfix**:
+  - Fixed [Issue 126](https://github.com/veeso/termscp/issues/126)
+  - Fixed [Issue 141](https://github.com/veeso/termscp/issues/141)
+- Dependencies:
+  - Bump `remotefs-ssh` to `0.1.3`
+  - Bump `ssh2-config` to `0.1.4`
 
 ## 0.10.0
 
