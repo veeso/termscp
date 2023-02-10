@@ -34,6 +34,6 @@ docker buildx build --platform linux/arm64 --build-arg branch=${VERSION} --tag t
 cd -
 mkdir -p ${PKGS_DIR}/rpm/
 CONTAINER_NAME=$(docker create termscp-${VERSION}-aarch64_centos7 /bin/bash)
-docker cp ${CONTAINER_NAME}:/usr/src/termscp/target/release/rpmbuild/RPMS/aarch64/termscp-${VERSION}-1.el7.arm64.rpm ${PKGS_DIR}/rpm/termscp-${VERSION}-1.arm64.rpm
+docker cp ${CONTAINER_NAME}:/usr/src/termscp/target/release/rpmbuild/RPMS/aarch64/termscp-${VERSION}-1.el7.aarch64.rpm ${PKGS_DIR}/rpm/termscp-${VERSION}-1.aarch64.rpm
 
 exit $?

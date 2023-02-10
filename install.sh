@@ -10,8 +10,10 @@
 
 TERMSCP_VERSION="0.11.0"
 GITHUB_URL="https://github.com/veeso/termscp/releases/download/v${TERMSCP_VERSION}"
-DEB_URL="${GITHUB_URL}/termscp_${TERMSCP_VERSION}_amd64.deb"
-RPM_URL="${GITHUB_URL}/termscp-${TERMSCP_VERSION}-1.x86_64.rpm"
+DEB_URL_AMD64="${GITHUB_URL}/termscp_${TERMSCP_VERSION}_amd64.deb"
+DEB_URL_AARCH64="${GITHUB_URL}/termscp_${TERMSCP_VERSION}_arm64.deb"
+RPM_URL_AMD64="${GITHUB_URL}/termscp-${TERMSCP_VERSION}-1.x86_64.rpm"
+RPM_URL_AARCH64="${GITHUB_URL}/termscp-${TERMSCP_VERSION}-1.aarch64.rpm"
 
 set -eu
 printf "\n"
@@ -211,49 +213,56 @@ install_on_linux() {
     elif has pikaur; then
         install_on_arch_linux pikaur
     elif has dpkg; then
-        if [ "${ARCH}" != "x86_64" ]; then # It's okay on AUR; not on other distros
+        if [ "${ARCH}" != "x86_64" ] && [ "$ARCH" != "aarch64" ]; then # It's okay on AUR; not on other distros
             try_with_cargo "we don't distribute packages for ${ARCH} at the moment"
+            return 1
+        elif [ "$ARCH" == "x86_64" ]; then
+            DEB_URL="$DEB_URL_AMD64"
         else
-            info "Detected dpkg on your system"
-            info "Installing ${GREEN}termscp${NO_COLOR} via Debian package"
-            archive=$(get_tmpfile "deb")
-            download "${archive}" "${DEB_URL}"
-            info "Downloaded debian package to ${archive}"
-            if test_writeable "/usr/bin"; then
-                sudo=""
-                msg="Installing ${GREEN}termscp${NO_COLOR}, please wait…"
-            else
-                warn "Root permissions are required to install ${GREEN}termscp${NO_COLOR}…"
-                elevate_priv
-                sudo="sudo"
-                msg="Installing ${GREEN}termscp${NO_COLOR} as root, please wait…"
-            fi
-            info "$msg"
-            $sudo dpkg -i "${archive}"
-            rm -f ${archive}
+            DEB_URL="$DEB_URL_AARCH64"
         fi
+        info "Detected dpkg on your system"
+        info "Installing ${GREEN}termscp${NO_COLOR} via Debian package"
+        archive=$(get_tmpfile "deb")
+        download "${archive}" "${DEB_URL}"
+        info "Downloaded debian package to ${archive}"
+        if test_writeable "/usr/bin"; then
+            sudo=""
+            msg="Installing ${GREEN}termscp${NO_COLOR}, please wait…"
+        else
+            warn "Root permissions are required to install ${GREEN}termscp${NO_COLOR}…"
+            elevate_priv
+            sudo="sudo"
+            msg="Installing ${GREEN}termscp${NO_COLOR} as root, please wait…"
+        fi
+        info "$msg"
+        $sudo dpkg -i "${archive}"
+        rm -f ${archive}
     elif has rpm; then
-        if [ "${ARCH}" != "x86_64" ]; then # It's okay on AUR; not on other distros
+        if [ "${ARCH}" != "x86_64" ] && [ "$ARCH" != "aarch64" ]; then # It's okay on AUR; not on other distros
             try_with_cargo "we don't distribute packages for ${ARCH} at the moment"
+        elif [ "$ARCH" == "x86_64" ]; then
+            RPM_URL="$RPM_URL_AMD64"
         else
-            info "Detected rpm on your system"
-            info "Installing ${GREEN}termscp${NO_COLOR} via RPM package"
-            archive=$(get_tmpfile "rpm")
-            download "${archive}" "${RPM_URL}"
-            info "Downloaded rpm package to ${archive}"
-            if test_writeable "/usr/bin"; then
-                sudo=""
-                msg="Installing ${GREEN}termscp${NO_COLOR}, please wait…"
-            else
-                warn "Root permissions are required to install ${GREEN}termscp${NO_COLOR}…"
-                elevate_priv
-                sudo="sudo"
-                msg="Installing ${GREEN}termscp${NO_COLOR} as root, please wait…"
-            fi
-            info "$msg"
-            $sudo rpm -U "${archive}"
-            rm -f ${archive}
+            RPM_URL="$RPM_URL_AARCH64"
         fi
+        info "Detected rpm on your system"
+        info "Installing ${GREEN}termscp${NO_COLOR} via RPM package"
+        archive=$(get_tmpfile "rpm")
+        download "${archive}" "${RPM_URL}"
+        info "Downloaded rpm package to ${archive}"
+        if test_writeable "/usr/bin"; then
+            sudo=""
+            msg="Installing ${GREEN}termscp${NO_COLOR}, please wait…"
+        else
+            warn "Root permissions are required to install ${GREEN}termscp${NO_COLOR}…"
+            elevate_priv
+            sudo="sudo"
+            msg="Installing ${GREEN}termscp${NO_COLOR} as root, please wait…"
+        fi
+        info "$msg"
+        $sudo rpm -U "${archive}"
+        rm -f ${archive}
     else
         try_with_cargo "No suitable installation method found for your Linux distribution; if you're running on Arch linux, please install an AUR package manager (such as yay). Currently only Arch, Debian based and Red Hat based distros are supported"
     fi
