@@ -36,7 +36,7 @@ pub struct UserInterfaceConfig {
     pub notification_threshold: Option<u64>, // @! Since 0.7.0; Default 512MB
 }
 
-#[derive(Deserialize, Serialize, Debug, Default)]
+#[derive(Deserialize, Serialize, Debug)]
 /// Contains configuratio related to remote hosts
 pub struct RemoteConfig {
     /// Ssh configuration path. If NONE, won't be read
@@ -44,6 +44,19 @@ pub struct RemoteConfig {
     /// Association between host name and path to private key
     /// NOTE: this parameter must stay as last: <https://github.com/alexcrichton/toml-rs/issues/142>
     pub ssh_keys: HashMap<String, PathBuf>,
+}
+
+impl Default for RemoteConfig {
+    fn default() -> Self {
+        let home_dir = dirs::home_dir().unwrap_or_else(|| PathBuf::from("/root"));
+        let mut ssh_config_path = "~/.ssh/config".to_string();
+        ssh_config_path = ssh_config_path.replacen('~', &home_dir.to_string_lossy(), 1);
+
+        Self {
+            ssh_config: Some(ssh_config_path),
+            ssh_keys: HashMap::default(),
+        }
+    }
 }
 
 impl Default for UserInterfaceConfig {

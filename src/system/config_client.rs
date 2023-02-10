@@ -651,7 +651,11 @@ mod tests {
         let mut client: ConfigClient = ConfigClient::new(cfg_path.as_path(), key_path.as_path())
             .ok()
             .unwrap();
-        assert_eq!(client.get_ssh_config(), None); // Null ?
+
+        let home_dir = dirs::home_dir().unwrap_or_else(|| PathBuf::from("/root"));
+        let mut ssh_config_path = "~/.ssh/config".to_string();
+        ssh_config_path = ssh_config_path.replacen('~', &home_dir.to_string_lossy(), 1);
+        assert_eq!(client.get_ssh_config(), Some(ssh_config_path.as_str())); // Null ?
         client.set_ssh_config(Some(String::from("/tmp/ssh_config")));
         assert_eq!(client.get_ssh_config(), Some("/tmp/ssh_config"));
         client.set_ssh_config(None);
