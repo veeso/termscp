@@ -53,17 +53,15 @@ impl SshKeyStorage {
 
     /// Resolve host via ssh2 configuration
     fn resolve_host_in_ssh2_configuration(&self, host: &str) -> Option<PathBuf> {
-        self.ssh_config
-            .as_ref()
-            .and_then(|x| {
-                let key = x
-                    .query(host)
-                    .identity_file
-                    .as_ref()
-                    .and_then(|x| x.get(0).cloned());
+        self.ssh_config.as_ref().and_then(|x| {
+            let key = x
+                .query(host)
+                .identity_file
+                .as_ref()
+                .and_then(|x| x.get(0).cloned());
 
-                key
-            })
+            key
+        })
     }
 }
 
