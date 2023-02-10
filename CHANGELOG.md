@@ -34,7 +34,8 @@ Released on ??
 > 🦥 The lazy update
 
 - **Bugfix**:
-  - Fixed [Issue 141](https://github.com/veeso/termcp/issues/141)
+  - Fixed [Issue 126](https://github.com/veeso/termscp/issues/126)
+  - Fixed [Issue 141](https://github.com/veeso/termscp/issues/141)
 - Dependencies:
   - Bump `remotefs-ssh` to `0.1.3`
   - Bump `ssh2-config` to `0.1.4`

@@ -55,7 +55,7 @@ impl SshKeyStorage {
     fn resolve_host_in_ssh2_configuration(&self, host: &str) -> Option<PathBuf> {
         self.ssh_config
             .as_ref()
-            .map(|x| {
+            .and_then(|x| {
                 let key = x
                     .query(host)
                     .identity_file
@@ -64,7 +64,6 @@ impl SshKeyStorage {
 
                 key
             })
-            .flatten()
     }
 }
 
