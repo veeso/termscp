@@ -10,6 +10,7 @@ use ssh2_config::SshConfig;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
+#[derive(Default)]
 pub struct SshKeyStorage {
     /// Association between {user}@{host} and RSA key path
     hosts: HashMap<String, PathBuf>,
@@ -18,15 +19,6 @@ pub struct SshKeyStorage {
 }
 
 impl SshKeyStorage {
-    /// Create an empty ssh key storage; used in case `ConfigClient` is not available
-    #[cfg(test)]
-    pub fn empty() -> Self {
-        SshKeyStorage {
-            hosts: HashMap::new(),
-            ssh_config: None,
-        }
-    }
-
     /// Make mapkey from host and username
     fn make_mapkey(host: &str, username: &str) -> String {
         format!("{username}@{host}")
@@ -61,16 +53,15 @@ impl SshKeyStorage {
 
     /// Resolve host via ssh2 configuration
     fn resolve_host_in_ssh2_configuration(&self, host: &str) -> Option<PathBuf> {
-        if let Some(config) = self.ssh_config.as_ref() {
-            let params = config.query(host);
-            params
+        self.ssh_config.as_ref().and_then(|x| {
+            let key = x
+                .query(host)
                 .identity_file
                 .as_ref()
-                .and_then(|x| x.get(0).cloned())
-        } else {
-            debug!("ssh2 config is not available; no key has been found");
-            None
-        }
+                .and_then(|x| x.get(0).cloned());
+
+            key
+        })
     }
 }
 
@@ -85,7 +76,9 @@ impl SshKeyStorageTrait for SshKeyStorage {
             username, host
         );
         // otherwise search in configuration
-        self.resolve_host_in_ssh2_configuration(host)
+        let key = self.resolve_host_in_ssh2_configuration(host)?;
+        debug!("Found key in SSH config for {host}: {}", key.display());
+        Some(key)
     }
 }
 
@@ -186,13 +179,13 @@ Host test
 
     #[test]
     fn test_system_sshkey_storage_empty() {
-        let storage: SshKeyStorage = SshKeyStorage::empty();
+        let storage: SshKeyStorage = SshKeyStorage::default();
         assert_eq!(storage.hosts.len(), 0);
     }
 
     #[test]
     fn test_system_sshkey_storage_add() {
-        let mut storage: SshKeyStorage = SshKeyStorage::empty();
+        let mut storage: SshKeyStorage = SshKeyStorage::default();
         storage.add_key("deskichup", "veeso", PathBuf::from("/tmp/omar"));
         assert_eq!(
             *storage.resolve("deskichup", "veeso").unwrap(),

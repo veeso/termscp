@@ -119,7 +119,7 @@ mod tests {
 
     use pretty_assertions::assert_eq;
     use std::collections::HashMap;
-    use std::io::{Seek, SeekFrom};
+    use std::io::Seek;
     use std::path::PathBuf;
     use tuirealm::tui::style::Color;
 
