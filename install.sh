@@ -30,6 +30,15 @@ NO_COLOR="$(tput sgr0 2>/dev/null || printf '')"
 
 # Functions
 
+set_termscp_version() {
+    TERMSCP_VERSION="$1"
+    GITHUB_URL="https://github.com/veeso/termscp/releases/download/v${TERMSCP_VERSION}"
+    DEB_URL_AMD64="${GITHUB_URL}/termscp_${TERMSCP_VERSION}_amd64.deb"
+    DEB_URL_AARCH64="${GITHUB_URL}/termscp_${TERMSCP_VERSION}_arm64.deb"
+    RPM_URL_AMD64="${GITHUB_URL}/termscp-${TERMSCP_VERSION}-1.x86_64.rpm"
+    RPM_URL_AARCH64="${GITHUB_URL}/termscp-${TERMSCP_VERSION}-1.aarch64.rpm"
+}
+
 info() {
     printf '%s\n' "${BOLD}${GREY}>${NO_COLOR} $*"
 }
@@ -214,8 +223,8 @@ install_on_linux() {
         install_on_arch_linux pikaur
     elif has dpkg; then
         case "${ARCH}" in
-            x86_64) DEB_URL="$DEB_URL_AARCH64" ;;
-            aarch64) DEB_URL="$DEB_URL_AMD64" ;;
+            x86_64) DEB_URL="$DEB_URL_AMD64" ;;
+            aarch64) DEB_URL="$DEB_URL_AARCH64" ;;
             *) try_with_cargo "we don't distribute packages for ${ARCH} at the moment" && return $? ;;
         esac
         info "Detected dpkg on your system"
@@ -400,6 +409,7 @@ fi
 
 # parse argv variables
 while [ "$#" -gt 0 ]; do
+    echo $1
     case "$1" in
         
         -V | --verbose)
@@ -419,7 +429,7 @@ while [ "$#" -gt 0 ]; do
             shift 1
         ;;
         -v=* | --version=*)
-            TERMSCP_VERSION="${1#*=}"
+            set_termscp_version "${1#*=}"
             shift 1
         ;;
         *)
