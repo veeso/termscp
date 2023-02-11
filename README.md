@@ -63,7 +63,7 @@
 </p>
 
 <p align="center">Developed by <a href="https://veeso.github.io/" target="_blank">@veeso</a></p>
-<p align="center">Current version: 0.11.0 (15/10/2022)</p>
+<p align="center">Current version: 0.11.0 (14/02/2023)</p>
 
 <p align="center">
   <a href="https://opensource.org/licenses/MIT"
@@ -234,7 +234,6 @@ For **2023** there will be two major updates during the year.
 Planned for *future updates ⏲️*:
 
 - **Resuming**:  allow resuming download if a file already exists
-- **Use default id_rsa** to authenticate to remote hosts.
 
 Along to new features, termscp developments is now focused on UX and performance improvements, so if you have any suggestion, feel free to open an issue.
 
