@@ -174,6 +174,9 @@ mod test {
 
     use super::*;
 
+    #[cfg(target_os = "macos")]
+    use crate::utils::test_helpers;
+
     use pretty_assertions::assert_eq;
     use tempfile::TempDir;
 
