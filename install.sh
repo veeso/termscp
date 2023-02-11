@@ -213,14 +213,11 @@ install_on_linux() {
     elif has pikaur; then
         install_on_arch_linux pikaur
     elif has dpkg; then
-        if [ "${ARCH}" != "x86_64" ] && [ "$ARCH" != "aarch64" ]; then # It's okay on AUR; not on other distros
-            try_with_cargo "we don't distribute packages for ${ARCH} at the moment"
-            return 1
-        elif [ "$ARCH" == "x86_64" ]; then
-            DEB_URL="$DEB_URL_AMD64"
-        else
-            DEB_URL="$DEB_URL_AARCH64"
-        fi
+        case "${ARCH}" in
+            x86_64) DEB_URL="$DEB_URL_AARCH64" ;;
+            aarch64) DEB_URL="$DEB_URL_AMD64" ;;
+            *) try_with_cargo "we don't distribute packages for ${ARCH} at the moment" && return $? ;;
+        esac
         info "Detected dpkg on your system"
         info "Installing ${GREEN}termscp${NO_COLOR} via Debian package"
         archive=$(get_tmpfile "deb")
@@ -239,13 +236,11 @@ install_on_linux() {
         $sudo dpkg -i "${archive}"
         rm -f ${archive}
     elif has rpm; then
-        if [ "${ARCH}" != "x86_64" ] && [ "$ARCH" != "aarch64" ]; then # It's okay on AUR; not on other distros
-            try_with_cargo "we don't distribute packages for ${ARCH} at the moment"
-        elif [ "$ARCH" == "x86_64" ]; then
-            RPM_URL="$RPM_URL_AMD64"
-        else
-            RPM_URL="$RPM_URL_AARCH64"
-        fi
+        case "${ARCH}" in
+            x86_64) RPM_URL="$RPM_URL_AMD64" ;;
+            aarch64) RPM_URL="$RPM_URL_AARCH64" ;;
+            *) try_with_cargo "we don't distribute packages for ${ARCH} at the moment" && return $? ;;
+        esac
         info "Detected rpm on your system"
         info "Installing ${GREEN}termscp${NO_COLOR} via RPM package"
         archive=$(get_tmpfile "rpm")
@@ -423,7 +418,10 @@ while [ "$#" -gt 0 ]; do
             FORCE="${1#*=}"
             shift 1
         ;;
-        
+        -v=* | --version=*)
+            TERMSCP_VERSION="${1#*=}"
+            shift 1
+        ;;
         *)
             error "Unknown option: $1"
             exit 1

@@ -173,7 +173,6 @@ impl FsWatcher {
 mod test {
 
     use super::*;
-    use crate::utils::test_helpers;
 
     use pretty_assertions::assert_eq;
     use tempfile::TempDir;
