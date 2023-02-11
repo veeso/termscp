@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ -z "$1" ]; then
-    echo "Usage: docker.sh <version>"
+    echo "Usage: $0 <version>"
     exit 1
 fi
 

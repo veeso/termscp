@@ -35,6 +35,7 @@ Released on ??
 
 - **Default ssh config path**:
   - SSH configuration path is now `~/.ssh/config` by default
+- Added ARM64 Linux builds
 - **Bugfix**:
   - Fixed [Issue 126](https://github.com/veeso/termscp/issues/126)
   - Fixed [Issue 141](https://github.com/veeso/termscp/issues/141)
