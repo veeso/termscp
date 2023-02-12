@@ -9,7 +9,7 @@ use crate::utils::fmt::fmt_millis;
 
 // Ext
 use bytesize::ByteSize;
-use remotefs::fs::{File, ReadStream, UnixPex, Welcome, WriteStream};
+use remotefs::fs::{File, Metadata, ReadStream, UnixPex, Welcome, WriteStream};
 use remotefs::{RemoteError, RemoteErrorType};
 use std::fs::File as StdFile;
 use std::io::{Read, Seek, Write};
@@ -405,6 +405,18 @@ impl FileTransferActivity {
             .stat(local.path.as_path())
             .map_err(TransferErrorReason::HostError)
             .map(|x| x.metadata().clone())?;
+
+        if !self.has_remote_file_changed(remote, &metadata) {
+            self.log(
+                LogLevel::Info,
+                format!(
+                    "file {} won't be transferred since hasn't changed",
+                    local.path().display()
+                ),
+            );
+            self.transfer.full.update_progress(metadata.size as usize);
+            return Ok(());
+        }
         // Upload file
         // Try to open local file
         match self.host.open_file_read(local.path.as_path()) {
@@ -554,7 +566,7 @@ impl FileTransferActivity {
             return Err(TransferErrorReason::FileTransferError(err));
         }
         // set stat
-        if let Err(err) = self.client.setstat(remote, metadata.clone()) {
+        if let Err(err) = self.client.setstat(remote, metadata) {
             error!("failed to set stat for {}: {}", remote.display(), err);
         }
         // Set transfer size ok
@@ -820,6 +832,21 @@ impl FileTransferActivity {
         remote: &File,
         file_name: String,
     ) -> Result<(), TransferErrorReason> {
+        // check if files are equal (in case, don't transfer)
+        if !self.has_local_file_changed(local, remote) {
+            self.log(
+                LogLevel::Info,
+                format!(
+                    "file {} won't be transferred since hasn't changed",
+                    remote.path().display()
+                ),
+            );
+            self.transfer
+                .full
+                .update_progress(remote.metadata().size as usize);
+            return Ok(());
+        }
+
         // Try to open local file
         match self.host.open_file_write(local) {
             Ok(local_file) => {
@@ -1133,6 +1160,30 @@ impl FileTransferActivity {
             }
         } else {
             entry.metadata.size as usize
+        }
+    }
+
+    // file changed
+
+    /// Check whether provided file has changed on local disk, compared to remote file
+    fn has_local_file_changed(&self, local: &Path, remote: &File) -> bool {
+        // check if files are equal (in case, don't transfer)
+        if let Ok(local_file) = self.host.stat(local) {
+            local_file.metadata().modified != remote.metadata().modified
+                || local_file.metadata().size != remote.metadata().size
+        } else {
+            true
+        }
+    }
+
+    /// Checks whether remote file has changed compared to local file
+    fn has_remote_file_changed(&mut self, remote: &Path, local_metadata: &Metadata) -> bool {
+        // check if files are equal (in case, don't transfer)
+        if let Ok(remote_file) = self.client.stat(remote) {
+            local_metadata.modified != remote_file.metadata().modified
+                || local_metadata.size != remote_file.metadata().size
+        } else {
+            true
         }
     }
 
