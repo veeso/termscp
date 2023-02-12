@@ -3,6 +3,7 @@
 //! `host` is the module which provides functionalities to host file system
 
 // ext
+use filetime::{self, FileTime};
 #[cfg(target_family = "unix")]
 use remotefs::fs::UnixPex;
 use remotefs::fs::{File, FileType, Metadata};
@@ -406,6 +407,27 @@ impl Localhost {
         Ok(File { path, metadata })
     }
 
+    /// Set file stat
+    pub fn setstat(&self, path: &Path, metadata: &Metadata) -> Result<(), HostError> {
+        debug!("Setting stat for file at {}", path.display());
+        if let Some(mtime) = metadata.modified {
+            let mtime = FileTime::from_system_time(mtime);
+            debug!("setting mtime {:?}", mtime);
+            filetime::set_file_mtime(path, mtime)
+                .map_err(|e| HostError::new(HostErrorType::FileNotAccessible, Some(e), path))?;
+        }
+        if let Some(atime) = metadata.accessed {
+            let atime = FileTime::from_system_time(atime);
+            filetime::set_file_atime(path, atime)
+                .map_err(|e| HostError::new(HostErrorType::FileNotAccessible, Some(e), path))?;
+        }
+        #[cfg(target_family = "unix")]
+        if let Some(mode) = metadata.mode {
+            self.chmod(path, mode)?;
+        }
+        Ok(())
+    }
+
     /// Execute a command on localhost
     pub fn exec(&self, cmd: &str) -> Result<String, HostError> {
         // Make command
@@ -625,8 +647,8 @@ mod tests {
 
     use super::*;
     #[cfg(target_family = "unix")]
-    use crate::utils::test_helpers::{create_sample_file, make_fsentry};
-    use crate::utils::test_helpers::{make_dir_at, make_file_at};
+    use crate::utils::test_helpers::make_fsentry;
+    use crate::utils::test_helpers::{create_sample_file, make_dir_at, make_file_at};
 
     use pretty_assertions::assert_eq;
     #[cfg(target_family = "unix")]
@@ -636,6 +658,8 @@ mod tests {
 
     #[cfg(target_family = "unix")]
     use std::os::unix::fs::{symlink, PermissionsExt};
+    use std::time::SystemTime;
+    use std::{ops::AddAssign, time::Duration};
 
     #[test]
     fn test_host_error_new() {
@@ -894,6 +918,31 @@ mod tests {
         assert!(host
             .rename(files.get(0).unwrap(), bad_path.as_path())
             .is_err());
+    }
+
+    #[test]
+    fn should_setstat() {
+        let tmpdir: tempfile::TempDir = tempfile::TempDir::new().unwrap();
+        let file: tempfile::NamedTempFile = create_sample_file();
+        let host: Localhost = Localhost::new(PathBuf::from(tmpdir.path())).ok().unwrap();
+        // stat
+        let mut filemeta = host.stat(file.path()).unwrap();
+
+        let mut new_atime = SystemTime::UNIX_EPOCH;
+        new_atime.add_assign(Duration::from_secs(1612164210));
+
+        let mut new_mtime = SystemTime::UNIX_EPOCH;
+        new_mtime.add_assign(Duration::from_secs(1613160210));
+
+        filemeta.metadata.accessed = Some(new_atime);
+        filemeta.metadata.modified = Some(new_mtime);
+
+        // setstat
+        assert!(host.setstat(filemeta.path(), filemeta.metadata()).is_ok());
+        let new_metadata = host.stat(file.path()).unwrap();
+
+        assert_eq!(new_metadata.metadata().accessed, Some(new_atime));
+        assert_eq!(new_metadata.metadata().modified, Some(new_mtime));
     }
 
     #[cfg(target_family = "unix")]

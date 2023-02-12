@@ -33,6 +33,9 @@ Released on 14/02/2023
 
 > 🦥 The lazy update
 
+- **Transfers optimized**:
+  - If local/remote file have the same "last modification time" (`mtime`), the file is not transferred
+  - When the file is exchanged, all times attributes are set (if supported by the protocol)
 - **Default ssh config path**:
   - SSH configuration path is now `~/.ssh/config` by default
 - Added ARM64 Linux builds
