@@ -507,6 +507,10 @@ impl FileTransferActivity {
         if self.transfer.aborted() {
             return Err(TransferErrorReason::Abrupted);
         }
+        // set stat
+        if let Err(err) = self.client.setstat(remote, local.metadata().clone()) {
+            error!("failed to set stat for {}: {}", remote.display(), err);
+        }
         self.log(
             LogLevel::Info,
             format!(
@@ -548,6 +552,10 @@ impl FileTransferActivity {
         // Send file
         if let Err(err) = self.client.create_file(remote, &metadata, Box::new(reader)) {
             return Err(TransferErrorReason::FileTransferError(err));
+        }
+        // set stat
+        if let Err(err) = self.client.setstat(remote, metadata.clone()) {
+            error!("failed to set stat for {}: {}", remote.display(), err);
         }
         // Set transfer size ok
         self.transfer.partial.update_progress(file_size);
@@ -684,19 +692,19 @@ impl FileTransferActivity {
             match self.host.mkdir_ex(local_dir_path.as_path(), true) {
                 Ok(_) => {
                     // Apply file mode to directory
-                    #[cfg(any(target_family = "unix", target_os = "macos", target_os = "linux"))]
-                    if let Some(mode) = entry.metadata().mode {
-                        if let Err(err) = self.host.chmod(local_dir_path.as_path(), mode) {
-                            self.log(
-                                LogLevel::Error,
-                                format!(
-                                    "Could not apply file mode {:o} to \"{}\": {}",
-                                    u32::from(mode),
-                                    local_dir_path.display(),
-                                    err
-                                ),
-                            );
-                        }
+                    if let Err(err) = self
+                        .host
+                        .setstat(local_dir_path.as_path(), entry.metadata())
+                    {
+                        self.log(
+                            LogLevel::Error,
+                            format!(
+                                "Could not set stat to directory {:?} to \"{}\": {}",
+                                entry.metadata(),
+                                local_dir_path.display(),
+                                err
+                            ),
+                        );
                     }
                     self.log(
                         LogLevel::Info,
@@ -909,19 +917,16 @@ impl FileTransferActivity {
             return Err(TransferErrorReason::Abrupted);
         }
         // Apply file mode to file
-        #[cfg(target_family = "unix")]
-        if let Some(mode) = remote.metadata.mode {
-            if let Err(err) = self.host.chmod(local, mode) {
-                self.log(
-                    LogLevel::Error,
-                    format!(
-                        "Could not apply file mode {:o} to \"{}\": {}",
-                        u32::from(mode),
-                        local.display(),
-                        err
-                    ),
-                );
-            }
+        if let Err(err) = self.host.setstat(local, remote.metadata()) {
+            self.log(
+                LogLevel::Error,
+                format!(
+                    "Could not set stat to file {:?} to \"{}\": {}",
+                    remote.metadata(),
+                    local.display(),
+                    err
+                ),
+            );
         }
         // Log
         self.log(
@@ -970,19 +975,16 @@ impl FileTransferActivity {
         self.update_progress_bar(format!("Downloading \"{file_name}\""));
         self.view();
         // Apply file mode to file
-        #[cfg(target_family = "unix")]
-        if let Some(mode) = remote.metadata.mode {
-            if let Err(err) = self.host.chmod(local, mode) {
-                self.log(
-                    LogLevel::Error,
-                    format!(
-                        "Could not apply file mode {:o} to \"{}\": {}",
-                        u32::from(mode),
-                        local.display(),
-                        err
-                    ),
-                );
-            }
+        if let Err(err) = self.host.setstat(local, remote.metadata()) {
+            self.log(
+                LogLevel::Error,
+                format!(
+                    "Could not set stat to file {:?} to \"{}\": {}",
+                    remote.metadata(),
+                    local.display(),
+                    err
+                ),
+            );
         }
         // Log
         self.log(

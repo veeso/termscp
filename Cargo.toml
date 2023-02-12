@@ -38,6 +38,7 @@ chrono = "^0.4"
 content_inspector = "^0.2"
 dirs = "^4.0"
 edit = "^0.1"
+filetime = "^0.2"
 hostname = "^0.3"
 keyring = { version = "^1.2", optional = true }
 lazy-regex = "^2.4"

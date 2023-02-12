@@ -2670,6 +2670,7 @@ dependencies = [
  "content_inspector",
  "dirs",
  "edit",
+ "filetime",
  "hostname",
  "keyring",
  "lazy-regex",
