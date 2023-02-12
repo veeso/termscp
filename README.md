@@ -231,10 +231,6 @@ The user manual can be found on the [termscp's website](https://veeso.github.io/
 
 For **2023** there will be two major updates during the year.
 
-Planned for *future updates ⏲️*:
-
-- **Resuming**:  allow resuming download if a file already exists
-
 Along to new features, termscp developments is now focused on UX and performance improvements, so if you have any suggestion, feel free to open an issue.
 
 ---
