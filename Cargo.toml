@@ -52,13 +52,13 @@ rand = "^0.8.5"
 remotefs = "^0.2.0"
 remotefs-aws-s3 = { version = "^0.2.1", default-features = false, features = [ "find", "rustls" ] }
 rpassword = "^7.0"
-self_update = { version = "^0.32", default-features = false, features = [ "rustls", "archive-tar", "archive-zip", "compression-flate2", "compression-zip-deflate" ] }
+self_update = { version = "^0.35", default-features = false, features = [ "rustls", "archive-tar", "archive-zip", "compression-flate2", "compression-zip-deflate" ] }
 serde = { version = "^1", features = [ "derive" ] }
 simplelog = "^0.12"
 ssh2-config = "^0.1.4"
 tempfile = "^3.2"
 thiserror = "^1"
-toml = "^0.5"
+toml = "^0.7"
 tui-realm-stdlib = "^1.2"
 tuirealm = "^1.8.0"
 unicode-width = "^0.1"

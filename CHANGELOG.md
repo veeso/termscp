@@ -44,7 +44,9 @@ Released on 14/02/2023
   - Fixed [Issue 141](https://github.com/veeso/termscp/issues/141)
 - Dependencies:
   - Bump `remotefs-ssh` to `0.1.3`
+  - Bump `self_update` to `0.35`
   - Bump `ssh2-config` to `0.1.4`
+  - Bump `toml` to `0.7`
 
 ## 0.10.0
 
