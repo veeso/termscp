@@ -135,9 +135,9 @@ fn deserialize_protocol<'de, D>(deserializer: D) -> Result<FileTransferProtocol,
 where
     D: Deserializer<'de>,
 {
-    let s: &str = Deserialize::deserialize(deserializer)?;
+    let s: String = Deserialize::deserialize(deserializer)?;
     // Parse color
-    match FileTransferProtocol::from_str(s) {
+    match FileTransferProtocol::from_str(&s) {
         Err(err) => Err(DeError::custom(err)),
         Ok(protocol) => Ok(protocol),
     }

@@ -29,7 +29,7 @@
 
 ## 0.11.0
 
-Released on 19/02/2023
+Released on 20/02/2023
 
 > 🦥 The lazy update
 

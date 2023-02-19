@@ -194,9 +194,9 @@ fn deserialize_color<'de, D>(deserializer: D) -> Result<Color, D::Error>
 where
     D: Deserializer<'de>,
 {
-    let s: &str = Deserialize::deserialize(deserializer)?;
+    let s: String = Deserialize::deserialize(deserializer)?;
     // Parse color
-    match parse_color(s) {
+    match parse_color(&s) {
         None => Err(DeError::custom("Invalid color")),
         Some(color) => Ok(color),
     }
