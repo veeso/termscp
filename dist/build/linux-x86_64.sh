@@ -1,11 +1,17 @@
 #!/bin/bash
 
 if [ -z "$1" ]; then
-    echo "Usage: $0 <version>"
+    echo "Usage: $0 <version> [branch]"
     exit 1
 fi
 
 VERSION=$1
+
+if [ -z "$2" ]; then
+    BRANCH=$VERSION
+else
+    BRANCH=$2
+fi
 
 set -e # Don't fail
 
@@ -16,7 +22,7 @@ cd -
 mkdir -p ${PKGS_DIR}/
 # Build x86_64_deb
 cd x86_64_debian9/
-docker build --build-arg branch=${VERSION} --tag termscp-${VERSION}-x86_64_debian9 .
+docker build --no-cache --build-arg branch=${BRANCH} --tag termscp-${VERSION}-x86_64_debian9 .
 cd -
 mkdir -p ${PKGS_DIR}/deb/
 mkdir -p ${PKGS_DIR}/x86_64-unknown-linux-gnu/
@@ -30,7 +36,7 @@ rm termscp
 cd -
 # Build x86_64_centos7
 cd x86_64_centos7/
-docker build --build-arg branch=${VERSION} --tag termscp-${VERSION}-x86_64_centos7 .
+docker build --no-cache --build-arg branch=${BRANCH} --tag termscp-${VERSION}-x86_64_centos7 .
 cd -
 mkdir -p ${PKGS_DIR}/rpm/
 CONTAINER_NAME=$(docker create termscp-${VERSION}-x86_64_centos7 /bin/bash)
