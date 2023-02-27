@@ -1,6 +1,7 @@
 # Changelog
 
 - [Changelog](#changelog)
+  - [0.11.1](#0111)
   - [0.11.0](#0110)
   - [0.10.0](#0100)
   - [0.9.0](#090)
@@ -26,6 +27,12 @@
   - [0.1.0](#010)
 
 ---
+
+## 0.11.1
+
+Released on ??
+
+- [Issue 150](https://github.com/veeso/termscp/issues/150): fixed config directory not being created
 
 ## 0.11.0
 
