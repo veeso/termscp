@@ -32,7 +32,9 @@
 
 Released on ??
 
-- [Issue 150](https://github.com/veeso/termscp/issues/150): fixed config directory not being created
+- [Issue 150](https://github.com/veeso/termscp/issues/150)
+  - fixed config directory not being created
+  - before setting default ssh config path; check wheter it actually exists
 
 ## 0.11.0
 
