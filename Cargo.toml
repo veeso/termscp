@@ -56,7 +56,7 @@ self_update = { version = "^0.35", default-features = false, features = [ "rustl
 serde = { version = "^1", features = [ "derive" ] }
 simplelog = "^0.12"
 ssh2-config = "^0.1.4"
-tempfile = "^3.2"
+tempfile = "^3.4"
 thiserror = "^1"
 toml = "^0.7"
 tui-realm-stdlib = "^1.2"
