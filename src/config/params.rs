@@ -52,8 +52,15 @@ impl Default for RemoteConfig {
         let mut ssh_config_path = "~/.ssh/config".to_string();
         ssh_config_path = ssh_config_path.replacen('~', &home_dir.to_string_lossy(), 1);
 
+        // check if ssh config path exists first
+        let ssh_config_path = if PathBuf::from(&ssh_config_path).exists() {
+            Some(ssh_config_path)
+        } else {
+            None
+        };
+
         Self {
-            ssh_config: Some(ssh_config_path),
+            ssh_config: ssh_config_path,
             ssh_keys: HashMap::default(),
         }
     }
