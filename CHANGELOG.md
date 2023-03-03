@@ -37,6 +37,8 @@ Released on ??
   - before setting default ssh config path; check wheter it actually exists
 - Security:
   - removed `remove_dir_all` crate with `tempfile 3.4`
+- Dependencies:
+  - Bump `ssh2-config` to `0.1.6`
 
 ## 0.11.0
 

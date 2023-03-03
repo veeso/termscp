@@ -55,7 +55,7 @@ rpassword = "^7.0"
 self_update = { version = "^0.35", default-features = false, features = [ "rustls", "archive-tar", "archive-zip", "compression-flate2", "compression-zip-deflate" ] }
 serde = { version = "^1", features = [ "derive" ] }
 simplelog = "^0.12"
-ssh2-config = "^0.1.4"
+ssh2-config = "^0.1.6"
 tempfile = "^3.4"
 thiserror = "^1"
 toml = "^0.7"
