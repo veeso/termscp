@@ -17,7 +17,7 @@
   <a href="https://github.com/veeso/termscp"
     ><img
       height="20"
-      src="/assets/images/flags/us.png"
+      src="/assets/images/flags/gb.png"
       alt="English"
   /></a>
   &nbsp;
