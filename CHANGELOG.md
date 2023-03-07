@@ -30,7 +30,7 @@
 
 ## 0.11.1
 
-Released on ??
+Released on 07/03/2022
 
 - [Issue 150](https://github.com/veeso/termscp/issues/150)
   - fixed config directory not being created
