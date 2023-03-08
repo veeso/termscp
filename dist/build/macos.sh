@@ -8,12 +8,12 @@ make_pkg() {
         TARGET_DIR=target/release/
     fi
     ROOT_DIR=$(pwd)
-    cd $TARGET_DIR
+    cd "$TARGET_DIR"
     PKG="termscp-v${VERSION}-${ARCH}-apple-darwin.tar.gz"
-    tar czf $PKG termscp
-    HASH=$(sha256sum $PKG)
-    mkdir -p ${ROOT_DIR}/dist/pkgs/macos/
-    mv $PKG ${ROOT_DIR}/dist/pkgs/macos/$PKG
+    tar czf "$PKG" termscp
+    HASH=$(sha256sum "$PKG")
+    mkdir -p "${ROOT_DIR}/dist/pkgs/macos/"
+    mv "$PKG" "${ROOT_DIR}/dist/pkgs/macos/$PKG"
     cd -
     echo "$HASH"
 }
@@ -24,7 +24,8 @@ if [ -z "$1" ]; then
 fi
 
 VERSION=$1
-export BUILD_ROOT=$(pwd)/../../
+export BUILD_ROOT
+BUILD_ROOT="$(pwd)/../../"
 
 set -e # Don't fail
 
@@ -39,15 +40,18 @@ fi
 # Build release (x86_64)
 cargo build --release
 # Make pkg
-X86_64_HASH=$(make_pkg "x86_64" $VERSION)
+X86_64_HASH=$(make_pkg "x86_64" "$VERSION")
+RET_X86_64=$?
 
-cd $BUILD_ROOT
+cd "$BUILD_ROOT"
 # Build ARM64 pkg
 cargo build --release --target aarch64-apple-darwin
 # Make pkg
-ARM64_HASH=$(make_pkg "arm64" $VERSION "target/aarch64-apple-darwin/release/")
+ARM64_HASH=$(make_pkg "arm64" "$VERSION" "target/aarch64-apple-darwin/release/")
+RET_ARM64=$?
 
 echo "x86_64 hash: $X86_64_HASH"
 echo "arm64  hash: $ARM64_HASH"
 
+[ "$RET_ARM64" -eq 0 ] && [ "$RET_X86_64" -eq 0 ]
 exit $?
