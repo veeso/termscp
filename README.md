@@ -161,7 +161,7 @@ If you want to contribute to this project, don't forget to check out our [contri
 If you are a Linux, a FreeBSD or a MacOS user this simple shell script will install termscp on your system with a single command:
 
 ```sh
-curl --proto '=https' --tlsv1.2 -sSLf "https://git.io/JBhDb" | sh
+curl -sSLf http://get-termscp.veeso.dev | sh
 ```
 
 > ❗ MacOs installation requires [Homebrew](https://brew.sh/), otherwise the Rust compiler will be installed

@@ -166,7 +166,7 @@ Si desea contribuir a este proyecto, no olvide consultar nuestra [guía de contr
 Si tu eres un usuario de Linux, FreeBSD o MacOS, este sencillo script de shell instalará termscp en tu sistema con un solo comando:
 
 ```sh
-curl --proto '=https' --tlsv1.2 -sSLf "https://git.io/JBhDb" | sh
+curl -sSLf http://get-termscp.veeso.dev | sh
 ```
 
 mientras que si eres un usuario de Windows, puedes instalar termscp con [Chocolatey](https://chocolatey.org/):

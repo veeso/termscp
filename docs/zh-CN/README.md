@@ -169,7 +169,7 @@ termscp 是一个功能丰富的终端文件浏览和传输工具，支持 SCP/S
 如果您是 Linux、FreeBSD 或 MacOS 用户，使用以下简单的 shell 脚本通过单行指令在您的系统上安装 termscp：
 
 ```sh
-curl --proto '=https' --tlsv1.2 -sSLf "https://git.io/JBhDb" | sh
+curl -sSLf http://get-termscp.veeso.dev | sh
 ```
 
 如果您是 Windows 用户，则可以使用 [Chocolatey](https://chocolatey.org/) 安装 termscp：
