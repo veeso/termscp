@@ -38,8 +38,8 @@ mkdir -p ${PKGS_DIR}/deb/
 mkdir -p ${PKGS_DIR}/aarch64-unknown-linux-gnu/
 docker run --name "$ARM64_DEB_NAME" -d "$ARM64_DEB_NAME" || docker start "$ARM64_DEB_NAME"
 docker exec -it "$ARM64_DEB_NAME" bash -c ". \$HOME/.cargo/env && git fetch origin && git checkout origin/$BRANCH && cargo build --release && cargo deb"
-docker cp ${CONTAINER_NAME}:/usr/src/termscp/target/debian/termscp_${VERSION}_arm64.deb ${PKGS_DIR}/deb/
-docker cp ${CONTAINER_NAME}:/usr/src/termscp/target/release/termscp ${PKGS_DIR}/aarch64-unknown-linux-gnu/
+docker cp ${ARM64_DEB_NAME}:/usr/src/termscp/target/debian/termscp_${VERSION}_arm64.deb ${PKGS_DIR}/deb/
+docker cp ${ARM64_DEB_NAME}:/usr/src/termscp/target/release/termscp ${PKGS_DIR}/aarch64-unknown-linux-gnu/
 docker stop "$ARM64_DEB_NAME"
 # Make tar.gz
 cd ${PKGS_DIR}/aarch64-unknown-linux-gnu/
@@ -52,7 +52,8 @@ docker buildx build --platform linux/arm64 $CACHE --build-arg branch=${BRANCH} -
 cd -
 mkdir -p ${PKGS_DIR}/rpm/
 docker run --name "$ARM64_RPM_NAME" -d "$ARM64_RPM_NAME" || docker start "$ARM64_RPM_NAME"
-docker exec -it "$ARM64_RPM_NAME" bash -c ". \$HOME/.cargo/env && git fetch origin && git checkout origin/$BRANCH && cargo rpm init && cargo rpm build"
-docker cp ${CONTAINER_NAME}:/usr/src/termscp/target/release/rpmbuild/RPMS/aarch64/termscp-${VERSION}-1.el7.aarch64.rpm ${PKGS_DIR}/rpm/termscp-${VERSION}-1.aarch64.rpm
+docker exec -it "$ARM64_RPM_NAME" bash -c ". \$HOME/.cargo/env && git fetch origin && git checkout origin/$BRANCH; cargo rpm init; cargo rpm build"
+docker cp ${ARM64_RPM_NAME}:/usr/src/termscp/target/release/rpmbuild/RPMS/aarch64/termscp-${VERSION}-1.el7.aarch64.rpm ${PKGS_DIR}/rpm/termscp-${VERSION}-1.aarch64.rpm
+docker stop "$ARM64_RPM_NAME"
 
 exit $?

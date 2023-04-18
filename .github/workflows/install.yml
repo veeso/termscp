@@ -15,5 +15,5 @@ jobs:
         run: sudo apt update && sudo apt install -y curl wget
       - name: Install termscp from script
         run: |
-          ./install.sh -v=0.11.1 -f
+          ./install.sh -v=0.11.2 -f
           which termscp || exit 1
