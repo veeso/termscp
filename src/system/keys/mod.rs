@@ -9,8 +9,11 @@ pub mod keyringstorage;
 // ext
 use thiserror::Error;
 
+#[cfg(feature = "with-keyring")]
+use keyring::Error as KeyringError;
+
 /// defines the error type for the `KeyStorage`
-#[derive(Debug, Error, PartialEq, Eq)]
+#[derive(Debug, Error)]
 pub enum KeyStorageError {
     #[cfg(feature = "with-keyring")]
     #[error("Key has a bad syntax")]
@@ -19,6 +22,16 @@ pub enum KeyStorageError {
     ProviderError,
     #[error("No such key")]
     NoSuchKey,
+    #[cfg(feature = "with-keyring")]
+    #[error("keyring error: {0}")]
+    KeyringError(KeyringError),
+}
+
+#[cfg(feature = "with-keyring")]
+impl From<KeyringError> for KeyStorageError {
+    fn from(e: KeyringError) -> Self {
+        Self::KeyringError(e)
+    }
 }
 
 /// this traits provides the methods to communicate and interact with the key storage.

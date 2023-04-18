@@ -26,24 +26,26 @@ impl KeyStorage for KeyringStorage {
     /// The key might be acccess through an identifier, which identifies
     /// the key in the storage
     fn get_key(&self, storage_id: &str) -> Result<String, KeyStorageError> {
-        let storage: Keyring = Keyring::new(storage_id, self.username.as_str());
+        let storage: Keyring = Keyring::new(storage_id, self.username.as_str())?;
         match storage.get_password() {
             Ok(s) => Ok(s),
             Err(e) => match e {
                 KeyringError::NoEntry => Err(KeyStorageError::NoSuchKey),
                 KeyringError::PlatformFailure(_)
                 | KeyringError::NoStorageAccess(_)
-                | KeyringError::WrongCredentialPlatform => Err(KeyStorageError::ProviderError),
+                | KeyringError::Invalid(_, _)
+                | KeyringError::Ambiguous(_) => Err(KeyStorageError::ProviderError),
                 KeyringError::BadEncoding(_) | KeyringError::TooLong(_, _) => {
                     Err(KeyStorageError::BadSytax)
                 }
+                _ => Err(KeyStorageError::ProviderError),
             },
         }
     }
 
     /// Set the key into the key storage
     fn set_key(&self, storage_id: &str, key: &str) -> Result<(), KeyStorageError> {
-        let storage: Keyring = Keyring::new(storage_id, self.username.as_str());
+        let storage: Keyring = Keyring::new(storage_id, self.username.as_str())?;
         match storage.set_password(key) {
             Ok(_) => Ok(()),
             Err(_) => Err(KeyStorageError::ProviderError),
@@ -55,7 +57,13 @@ impl KeyStorage for KeyringStorage {
     /// Returns whether the key storage is supported on the host system
     fn is_supported(&self) -> bool {
         let dummy: String = String::from("dummy-service");
-        let storage: Keyring = Keyring::new(dummy.as_str(), self.username.as_str());
+        let storage: Keyring = match Keyring::new(dummy.as_str(), self.username.as_str()) {
+            Ok(s) => s,
+            Err(e) => {
+                error!("could not instantiate keyring {e}");
+                return false;
+            }
+        };
         // Check what kind of error is returned
         match storage.get_password() {
             Ok(_) => true,
@@ -79,21 +87,18 @@ mod tests {
         assert!(storage.is_supported());
         let app_name: &str = "termscp-test2";
         let secret: &str = "Th15-15/My-Супер-Секрет";
-        let kring: Keyring = Keyring::new(app_name, username.as_str());
+        let kring: Keyring = Keyring::new(app_name, username.as_str()).unwrap();
         let _ = kring.delete_password();
         drop(kring);
         // Secret should not exist
-        assert_eq!(
-            storage.get_key(app_name).err().unwrap(),
-            KeyStorageError::NoSuchKey
-        );
+        assert!(storage.get_key(app_name).is_err());
         // Write secret
         assert!(storage.set_key(app_name, secret).is_ok());
         // Get secret
         assert_eq!(storage.get_key(app_name).ok().unwrap().as_str(), secret);
 
         // Delete the key manually...
-        let kring: Keyring = Keyring::new(app_name, username.as_str());
+        let kring: Keyring = Keyring::new(app_name, username.as_str()).unwrap();
         assert!(kring.delete_password().is_ok());
     }
 }

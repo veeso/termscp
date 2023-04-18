@@ -1,6 +1,7 @@
 # Changelog
 
 - [Changelog](#changelog)
+  - [0.11.2](#0112)
   - [0.11.1](#0111)
   - [0.11.0](#0110)
   - [0.10.0](#0100)
@@ -27,6 +28,12 @@
   - [0.1.0](#010)
 
 ---
+
+## 0.11.2
+
+Released on 18/04/2023
+
+- [Issue 154](https://github.com/veeso/termscp/issues/154): fixed SCP relative paths on Windows
 
 ## 0.11.1
 

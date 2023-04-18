@@ -113,10 +113,7 @@ mod tests {
         let app_name: &str = "termscp";
         let secret: &str = "Th15-15/My-Супер-Секрет";
         // Secret should not exist
-        assert_eq!(
-            storage.get_key(app_name).err().unwrap(),
-            KeyStorageError::NoSuchKey
-        );
+        assert!(storage.get_key(app_name).is_err());
         // Write secret
         assert!(storage.set_key(app_name, secret).is_ok());
         // Get secret

@@ -16,9 +16,8 @@ use std::str::FromStr;
 use std::string::ToString;
 
 bitflags! {
-    /// ## ExplorerOpts
-    ///
     /// ExplorerOpts are bit options which provides different behaviours to `FileExplorer`
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
     pub(crate) struct ExplorerOpts: u32 {
         const SHOW_HIDDEN_FILES = 0b00000001;
     }
