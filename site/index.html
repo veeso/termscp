@@ -1,11 +1,24 @@
 <!DOCTYPE html>
-<html>
+<html lang="en_US">
   <head>
-    <meta charset="utf-8" />
+    <title>
+      termscp is a terminal file transfer and explorer for SCP/SFTP/FTP/S3
+    </title>
     <meta
-      name="viewport"
-      content="minimum-scale=1, initial-scale=1, width=device-width"
+      property="og:description"
+      content="termscp is a feature rich terminal file transfer and explorer, with support for SCP/SFTP/FTP/S3. It is Linux, MacOS, FreeBSD, NetBSD and Windows compatible"
     />
+    <meta
+      name="description"
+      content="termscp is a feature rich terminal file transfer and explorer, with support for SCP/SFTP/FTP/S3. It is Linux, MacOS, FreeBSD, NetBSD and Windows compatible"
+    />
+    <meta
+      property="og:title"
+      content="termscp is a terminal file transfer and explorer for SCP/SFTP/FTP/S3"
+    />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="index, follow" />
     <meta
       property="og:image"
       content="https://termscp.veeso.dev/assets/images/og_preview.jpg"
@@ -14,9 +27,9 @@
     <meta property="og:image:width" content="1024" />
     <meta property="og:image:height" content="820" />
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="termscp" />
+    <meta property="og:locale" content="en_US" />
     <meta property="og:url" content="https://termscp.veeso.dev" />
-    <meta property="og:title" content="termscp" />
-    <meta property="og:description" content="terminal UI file transfer" />
     <!-- Pure.css -->
     <link
       rel="stylesheet"
@@ -62,7 +75,6 @@
       sizes="16x16"
       href="assets/images/favicon-16x16.png"
     />
-    <title>termscp: terminal UI file transfer</title>
   </head>
   <body>
     <div id="layout">
@@ -79,7 +91,9 @@
               <img class="avatar" alt="logo" src="assets/images/termscp.webp" />
             </div>
             <h1>termscp</h1>
-            <p translate="menu.desc">A feature rich terminal UI file transfer</p>
+            <p translate="menu.desc">
+              A feature rich terminal UI file transfer
+            </p>
             <a href="https://github.com/veeso/termscp/stargazers/">
               <img
                 src="https://img.shields.io/github/stars/veeso/termscp.svg?style=social&label=Star&maxAge=2592000"
@@ -88,19 +102,38 @@
           </div>
           <ul class="pure-menu-list">
             <li class="pure-menu-item pure-menu-selected">
-              <a href="#intro" class="pure-menu-link" translate="menu.intro">Intro</a>
+              <a href="#intro" class="pure-menu-link" translate="menu.intro"
+                >Intro</a
+              >
             </li>
             <li class="pure-menu-item">
-              <a href="#get-started" class="pure-menu-link" translate="menu.getStarted">Get started</a>
+              <a
+                href="#get-started"
+                class="pure-menu-link"
+                translate="menu.getStarted"
+                >Get started</a
+              >
             </li>
             <li class="pure-menu-item">
-              <a href="#updates" class="pure-menu-link" translate="menu.updates">Install updates</a>
+              <a href="#updates" class="pure-menu-link" translate="menu.updates"
+                >Install updates</a
+              >
             </li>
             <li class="pure-menu-item">
-              <a href="#user-manual" class="pure-menu-link" translate="menu.manual">User manual</a>
+              <a
+                href="#user-manual"
+                class="pure-menu-link"
+                translate="menu.manual"
+                >User manual</a
+              >
             </li>
             <li class="pure-menu-item">
-              <a href="#changelog" class="pure-menu-link" translate="menu.changelog">Release history</a>
+              <a
+                href="#changelog"
+                class="pure-menu-link"
+                translate="menu.changelog"
+                >Release history</a
+              >
             </li>
             <li class="pure-menu-item">
               <a
@@ -115,7 +148,9 @@
                 href="https://veeso.dev/"
                 class="pure-menu-link"
                 target="_blank"
-                ><span  translate="menu.author">About the author</span>&nbsp;<i class="fas fa-external-link-alt"></i
+                ><span translate="menu.author">About the author</span>&nbsp;<i
+                  class="fas fa-external-link-alt"
+                ></i
               ></a>
             </li>
             <li class="pure-menu-item">
@@ -123,7 +158,9 @@
                 href="https://ko-fi.com/veeso"
                 class="pure-menu-link"
                 target="_blank"
-                ><span  translate="menu.support">Support me</span>&nbsp;<i class="fas fa-external-link-alt"></i
+                ><span translate="menu.support">Support me</span>&nbsp;<i
+                  class="fas fa-external-link-alt"
+                ></i
               ></a>
             </li>
           </ul>
@@ -184,10 +221,24 @@
               ></a>
             </li>
           </ul>
+          <!-- vat number -->
+          <p class="footer--vat">
+            <span>P.IVA IT03104140300 </span>
+          </p>
+          <p class="footer--address">
+            <span>Via Antonio Marangoni 33, 33100, Udine (UD)</span>
+          </p>
           <!-- Copyright -->
-          <p class="copyright">
-            <span>Christian Visintin © All Rights Reserved | </span
-            ><span resolve-copyright></span>
+          <p class="footer--copyright">
+            <span>Christian Visintin © </span><span resolve-copyright></span>
+            <span>&nbsp;|&nbsp;</span>
+            <a class="footer--link" href="https://veeso.dev/en/privacy" target="_blank"
+              >Privacy policy</a
+            >
+            <span>&nbsp;|&nbsp;</span>
+            <a class="footer--link" href="https://veeso.dev/en/cookie-policy" target="_blank"
+              >Cookie policy</a
+            >
           </p>
         </div>
       </footer>
@@ -208,13 +259,13 @@
     <script src="js/events.js"></script>
     <script src="js/resolvers.js"></script>
     <!-- ko-fi -->
-    <script src='https://storage.ko-fi.com/cdn/scripts/overlay-widget.js'></script>
+    <script src="https://storage.ko-fi.com/cdn/scripts/overlay-widget.js"></script>
     <script>
-      kofiWidgetOverlay.draw('veeso', {
-        'type': 'floating-chat',
-        'floating-chat.donateButton.text': 'Support me',
-        'floating-chat.donateButton.background-color': '#323842',
-        'floating-chat.donateButton.text-color': '#fff'
+      kofiWidgetOverlay.draw("veeso", {
+        type: "floating-chat",
+        "floating-chat.donateButton.text": "Support me",
+        "floating-chat.donateButton.background-color": "#323842",
+        "floating-chat.donateButton.text-color": "#fff",
       });
     </script>
   </body>

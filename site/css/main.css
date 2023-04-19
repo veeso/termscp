@@ -119,13 +119,31 @@ footer .contacts a i {
 }
 
 footer .contacts li a:hover i {
-  color: dodgerblue !important;
+  color: #202020 !important;
 }
 
-footer p.copyright {
+.footer--vat {
   color: #404040;
   font-weight: 300;
   text-align: center;
+}
+
+.footer--address {
+  color: #505050;
+  font-size: 0.8em;
+  font-weight: 300;
+  text-align: center;
+}
+
+.footer--copyright {
+  color: #606060;
+  font-size: 0.7em;
+  font-weight: 300;
+  text-align: center;
+}
+
+.footer--link {
+  color: #606060;
 }
 
 .alert {
