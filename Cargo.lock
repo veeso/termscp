@@ -2891,7 +2891,7 @@ dependencies = [
 
 [[package]]
 name = "termscp"
-version = "0.11.2"
+version = "0.11.3"
 dependencies = [
  "argh",
  "bitflags 2.2.0",

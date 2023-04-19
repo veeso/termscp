@@ -52,7 +52,7 @@ docker build $CACHE --build-arg branch=${BRANCH} --tag "$X86_64_RPM_NAME" .
 cd -
 mkdir -p ${PKGS_DIR}/rpm/
 docker run --name "$X86_64_RPM_NAME" -d "$X86_64_RPM_NAME" || docker start "$X86_64_RPM_NAME"
-docker exec -it "$X86_64_RPM_NAME" bash -c ". \$HOME/.cargo/env && git fetch origin && git checkout origin/$BRANCH && cargo rpm init && cargo rpm build"
+docker exec -it "$X86_64_RPM_NAME" bash -c ". \$HOME/.cargo/env && git fetch origin && git checkout origin/$BRANCH; cargo rpm init; cargo rpm build"
 docker cp ${X86_64_RPM_NAME}:/usr/src/termscp/target/release/rpmbuild/RPMS/x86_64/termscp-${VERSION}-1.el7.x86_64.rpm ${PKGS_DIR}/rpm/termscp-${VERSION}-1.x86_64.rpm
 docker stop "$X86_64_RPM_NAME"
 
