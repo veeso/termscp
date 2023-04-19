@@ -1,5 +1,5 @@
 [package]
-authors = ["Christian Visintin <christian.visintin1997@gmail.com>"]
+authors = ["Christian Visintin <christian.visintin@veeso.dev>"]
 categories = ["command-line-utilities"]
 description = "termscp is a feature rich terminal file transfer and explorer with support for SCP/SFTP/FTP/S3"
 edition = "2021"
@@ -10,7 +10,7 @@ license = "MIT"
 name = "termscp"
 readme = "README.md"
 repository = "https://github.com/veeso/termscp"
-version = "0.11.2"
+version = "0.11.3"
 
 [package.metadata.rpm]
 package = "termscp"
@@ -22,8 +22,8 @@ buildflags = ["--release"]
 termscp = { path = "/usr/bin/termscp" }
 
 [package.metadata.deb]
-maintainer = "Christian Visintin <christian.visintin1997@gmail.com>"
-copyright = "2022, Christian Visintin <christian.visintin1997@gmail.com>"
+maintainer = "Christian Visintin <christian.visintin@veeso.dev>"
+copyright = "2022, Christian Visintin <christian.visintin@veeso.dev>"
 extended-description-file = "docs/misc/README.deb.txt"
 
 [[bin]]
