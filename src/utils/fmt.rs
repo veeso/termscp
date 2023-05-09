@@ -10,8 +10,6 @@ use std::time::{Duration, SystemTime};
 use tuirealm::tui::style::Color;
 use unicode_width::UnicodeWidthStr;
 
-/// ### fmt_pex
-///
 /// Convert permissions bytes of permissions value into ls notation (e.g. rwx,-wx,--x)
 pub fn fmt_pex(pex: UnixPexClass) -> String {
     format!(
@@ -31,16 +29,12 @@ pub fn fmt_pex(pex: UnixPexClass) -> String {
     )
 }
 
-/// ### instant_to_str
-///
 /// Format a `Instant` into a time string
 pub fn fmt_time(time: SystemTime, fmt: &str) -> String {
     let datetime: DateTime<Local> = time.into();
     format!("{}", datetime.format(fmt))
 }
 
-/// ### fmt_millis
-///
 /// Format duration as {secs}.{millis}
 pub fn fmt_millis(duration: Duration) -> String {
     let seconds: u128 = duration.as_millis() / 1000;
@@ -48,16 +42,12 @@ pub fn fmt_millis(duration: Duration) -> String {
     format!("{}.{:0width$}", seconds, millis, width = 3)
 }
 
-/// ### elide_path
-///
 /// Elide a path if longer than width
 /// In this case, the path is formatted to {ANCESTOR[0]}/…/{PARENT[0]}/{BASENAME}
 pub fn fmt_path_elide(p: &Path, width: usize) -> String {
     fmt_path_elide_ex(p, width, 0)
 }
 
-/// ### fmt_path_elide_ex
-///
 /// Elide a path if longer than width
 /// In this case, the path is formatted to {ANCESTOR[0]}/…/{PARENT[0]}/{BASENAME}
 /// This function allows to specify an extra length to consider to elide path
@@ -90,8 +80,6 @@ pub fn fmt_path_elide_ex(p: &Path, width: usize, extra_len: usize) -> String {
     }
 }
 
-/// ### fmt_color
-///
 /// Format color
 pub fn fmt_color(color: &Color) -> String {
     match color {
@@ -258,15 +246,11 @@ pub fn fmt_color(color: &Color) -> String {
     }
 }
 
-/// ### shadow_password
-///
 /// Return a string with the same length of input string, but each character is replaced by '*'
 pub fn shadow_password(s: &str) -> String {
     (0..s.len()).map(|_| '*').collect()
 }
 
-/// ### fmt_bytes
-///
 /// Format bytes
 pub fn fmt_bytes(v: u64) -> String {
     if v >= 1125899906842624 {

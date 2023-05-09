@@ -68,8 +68,6 @@ static BYTESIZE_REGEX: Lazy<Regex> = lazy_regex!(r"(:?([0-9])+)( )*(:?[KMGTP])?B
 
 // -- remote opts
 
-/// ### parse_remote_opt
-///
 /// Parse remote option string. Returns in case of success a RemoteOptions struct
 /// For ssh if username is not provided, current user will be used.
 /// In case of error, message is returned
@@ -115,8 +113,6 @@ pub fn parse_remote_opt(s: &str) -> Result<FileTransferParams, String> {
     }
 }
 
-/// ### parse_remote_opt_protocol
-///
 /// Parse protocol from CLI option. In case of success, return the protocol to be used and the remaining arguments
 fn parse_remote_opt_protocol(
     s: &str,
@@ -147,8 +143,6 @@ fn parse_remote_opt_protocol(
     }
 }
 
-/// ### parse_generic_remote_opt
-///
 /// Parse generic remote options
 fn parse_generic_remote_opt(
     s: &str,
@@ -202,8 +196,6 @@ fn parse_generic_remote_opt(
     }
 }
 
-/// ### parse_s3_remote_opt
-///
 /// Parse remote options for s3 protocol
 fn parse_s3_remote_opt(s: &str) -> Result<FileTransferParams, String> {
     match REMOTE_S3_OPT_REGEX.captures(s) {
@@ -229,8 +221,6 @@ fn parse_s3_remote_opt(s: &str) -> Result<FileTransferParams, String> {
     }
 }
 
-/// ### parse_semver
-///
 /// Parse semver string
 pub fn parse_semver(haystack: &str) -> Option<String> {
     match SEMVER_REGEX.captures(haystack) {
@@ -239,8 +229,6 @@ pub fn parse_semver(haystack: &str) -> Option<String> {
     }
 }
 
-/// ### parse_color
-///
 /// Parse color from string into a `Color` enum.
 ///
 /// Color may be in different format:
@@ -300,8 +288,6 @@ impl FromStr for ByteUnit {
     }
 }
 
-/// ### parse_bytesize
-///
 /// Parse bytes repr (e.g. `24 MB`) into `ByteSize`
 pub fn parse_bytesize<S: AsRef<str>>(bytes: S) -> Option<ByteSize> {
     match BYTESIZE_REGEX.captures(bytes.as_ref()) {

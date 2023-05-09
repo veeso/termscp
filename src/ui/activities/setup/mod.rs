@@ -227,8 +227,6 @@ pub enum ThemeMsg {
 // -- store
 const STORE_CONFIG_CHANGED: &str = "SETUP_CONFIG_CHANGED";
 
-/// ### ViewLayout
-///
 /// Current view layout
 #[derive(PartialEq, Eq)]
 pub enum ViewLayout {

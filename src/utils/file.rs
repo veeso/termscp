@@ -7,8 +7,6 @@ use std::fs::OpenOptions;
 use std::io;
 use std::path::Path;
 
-/// ### open_file
-///
 /// Open file provided as parameter
 pub fn open_file<P>(filename: P, create: bool, write: bool, append: bool) -> io::Result<File>
 where

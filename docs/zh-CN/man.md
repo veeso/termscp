@@ -472,9 +472,9 @@ Termscp有很多功能，你可能已经注意到了，其中之一就是可以�
 
 termscp会为每个会话创建一个日志文件，该文件在
 
-- `$HOME/.config/termscp/termscp.log` -- Linux/BSD
-- `$HOME/Library/Application Support/termscp/termscp.log` -- MacOs
-- `FOLDERID_RoamingAppData\termscp\termscp.log` -- Windows
+- `$HOME/.cache/termscp/termscp.log` -- Linux/BSD
+- `$HOME/Library/Caches/termscp/termscp.log` -- MacOs
+- `FOLDERID_LocalAppData\termscp\termscp.log` -- Windows
 
 日志不会被轮换，但只会在每次启动 termcp 后被截断，因此如果您想报告问题并希望附加您的日志文件，请记住在使用前将日志文件保存在安全的地方 再次termscp。
 默认情况下，日志记录在 *INFO* 级别报告，因此它不是很详细。

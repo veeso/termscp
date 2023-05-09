@@ -2,32 +2,26 @@
 //!
 //! `logging` is the module which initializes the logging system for termscp
 
-// locals
-use crate::system::environment::{get_log_paths, init_config_dir};
+use super::environment::{get_log_paths, init_cache_dir};
 use crate::utils::file::open_file;
-// ext
 pub use simplelog::LevelFilter as LogLevel;
 use simplelog::{ConfigBuilder, WriteLogger};
-use std::fs::File;
-use std::path::PathBuf;
 
-/// ### init
-///
 /// Initialize logger
 pub fn init(level: LogLevel) -> Result<(), String> {
-    // Init config dir
-    let config_dir: PathBuf = match init_config_dir() {
+    // Init cache dir
+    let cache_dir = match init_cache_dir() {
         Ok(Some(p)) => p,
         Ok(None) => {
             return Err(String::from(
-                "This system doesn't seem to support CONFIG_DIR",
+                "This system doesn't seem to support CACHE_DIR",
             ))
         }
         Err(err) => return Err(err),
     };
-    let log_file_path: PathBuf = get_log_paths(config_dir.as_path());
+    let log_file_path = get_log_paths(cache_dir.as_path());
     // Open log file
-    let file: File = open_file(log_file_path.as_path(), true, true, false)
+    let file = open_file(log_file_path.as_path(), true, true, false)
         .map_err(|e| format!("Failed to open file {}: {}", log_file_path.display(), e))?;
     // Prepare log config
     let config = ConfigBuilder::new().set_time_format_rfc3339().build();

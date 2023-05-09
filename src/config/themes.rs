@@ -9,8 +9,6 @@ use crate::utils::parser::parse_color;
 use serde::{de::Error as DeError, Deserialize, Deserializer, Serialize, Serializer};
 use tuirealm::tui::style::Color;
 
-/// ### Theme
-///
 /// Theme contains all the colors lookup table for termscp
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq, Serialize)]
 pub struct Theme {

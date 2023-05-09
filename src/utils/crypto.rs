@@ -5,16 +5,12 @@
 // Ext
 use magic_crypt::MagicCryptTrait;
 
-/// ### aes128_b64_crypt
-///
 /// Crypt a string using AES128; output is returned as a BASE64 string
 pub fn aes128_b64_crypt(key: &str, input: &str) -> String {
     let crypter = new_magic_crypt!(key, 128);
     crypter.encrypt_str_to_base64(input)
 }
 
-/// ### aes128_b64_decrypt
-///
 /// Decrypt a string using AES128
 pub fn aes128_b64_decrypt(key: &str, secret: &str) -> Result<String, magic_crypt::MagicCryptError> {
     let crypter = new_magic_crypt!(key, 128);

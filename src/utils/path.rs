@@ -4,8 +4,6 @@
 
 use std::path::{Component, Path, PathBuf};
 
-/// ### absolutize
-///
 /// Absolutize target path if relative.
 /// For example:
 ///
@@ -24,8 +22,6 @@ pub fn absolutize(wrkdir: &Path, target: &Path) -> PathBuf {
     }
 }
 
-/// ### diff_paths
-///
 /// This function will get the difference from path `path` to `base`. Basically will remove `base` from `path`
 ///
 /// For example:

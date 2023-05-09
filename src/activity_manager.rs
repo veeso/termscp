@@ -21,8 +21,6 @@ use crate::utils::tty;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
-/// ### NextActivity
-///
 /// NextActivity identifies the next identity to run once the current has ended
 pub enum NextActivity {
     Authentication,
@@ -30,8 +28,6 @@ pub enum NextActivity {
     SetupActivity,
 }
 
-/// ### ActivityManager
-///
 /// The activity manager takes care of running activities and handling them until the application has ended
 pub struct ActivityManager {
     context: Option<Context>,
