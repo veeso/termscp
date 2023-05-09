@@ -1,6 +1,10 @@
 name: Install.sh
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [main]
+    tags:
+      - "v*"
 
 env:
   CARGO_TERM_COLOR: always
@@ -15,5 +19,5 @@ jobs:
         run: sudo apt update && sudo apt install -y curl wget
       - name: Install termscp from script
         run: |
-          ./install.sh -v=0.11.3 -f
+          ./install.sh -v=0.12.0 -f
           which termscp || exit 1

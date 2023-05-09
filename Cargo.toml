@@ -10,7 +10,7 @@ license = "MIT"
 name = "termscp"
 readme = "README.md"
 repository = "https://github.com/veeso/termscp"
-version = "0.11.3"
+version = "0.12.0"
 
 [package.metadata.rpm]
 package = "termscp"
