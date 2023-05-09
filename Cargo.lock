@@ -2261,9 +2261,9 @@ dependencies = [
 
 [[package]]
 name = "remotefs-ssh"
-version = "0.1.6"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "abb129fa52cebd0cc979b30ab80c4db7a1e37486c7bea9d5c81cc9e19f94d7ab"
+checksum = "6b9bebc0c117c79679d55bd3bbe857ecc2f398eed678b593a9440138a1e6c05b"
 dependencies = [
  "chrono",
  "lazy_static",
@@ -2768,11 +2768,12 @@ dependencies = [
 
 [[package]]
 name = "ssh2-config"
-version = "0.1.6"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "65a664be1af7787264859a2a9272596fac07f0aeea6de56ca96f75aa82932a0f"
+checksum = "e31d9bb8e97972d6541ccf32ed51294e4e16feeef06a0e77a6272d041f0f5bc7"
 dependencies = [
- "dirs 4.0.0",
+ "bitflags 2.2.0",
+ "dirs 5.0.0",
  "thiserror",
  "wildmatch",
 ]

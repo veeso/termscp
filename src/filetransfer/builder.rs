@@ -7,7 +7,7 @@ use std::path::PathBuf;
 use remotefs::RemoteFs;
 use remotefs_aws_s3::AwsS3Fs;
 use remotefs_ftp::FtpFs;
-use remotefs_ssh::{ScpFs, SftpFs, SshOpts};
+use remotefs_ssh::{ScpFs, SftpFs, SshConfigParseRule, SshOpts};
 
 use super::params::{AwsS3Params, GenericProtocolParams};
 use super::{FileTransferProtocol, ProtocolParams};
@@ -110,7 +110,10 @@ impl Builder {
             opts = opts.password(password);
         }
         if let Some(config_path) = config_client.get_ssh_config() {
-            opts = opts.config_file(PathBuf::from(config_path));
+            opts = opts.config_file(
+                PathBuf::from(config_path),
+                SshConfigParseRule::ALLOW_UNKNOWN_FIELDS,
+            );
         }
         opts
     }
