@@ -3,9 +3,11 @@
 //! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
 
 // locals
-use super::{FileTransferActivity, LogLevel};
-use remotefs::fs::UnixPex;
 use std::path::PathBuf;
+
+use remotefs::fs::UnixPex;
+
+use super::{FileTransferActivity, LogLevel};
 
 impl FileTransferActivity {
     pub(crate) fn action_local_mkdir(&mut self, input: String) {

@@ -2,9 +2,9 @@
 //!
 //! Update impl
 
-use super::{AuthActivity, ExitReason, FormMsg, Id, InputMask, Msg, UiMsg, Update};
-
 use tuirealm::{State, StateValue};
+
+use super::{AuthActivity, ExitReason, FormMsg, Id, InputMask, Msg, UiMsg, Update};
 
 impl Update<Msg> for AuthActivity {
     fn update(&mut self, msg: Option<Msg>) -> Option<Msg> {

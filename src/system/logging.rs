@@ -2,10 +2,11 @@
 //!
 //! `logging` is the module which initializes the logging system for termscp
 
-use super::environment::{get_log_paths, init_cache_dir};
-use crate::utils::file::open_file;
 pub use simplelog::LevelFilter as LogLevel;
 use simplelog::{ConfigBuilder, WriteLogger};
+
+use super::environment::{get_log_paths, init_cache_dir};
+use crate::utils::file::open_file;
 
 /// Initialize logger
 pub fn init(level: LogLevel) -> Result<(), String> {

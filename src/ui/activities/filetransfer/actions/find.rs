@@ -3,10 +3,10 @@
 //! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
 
 // locals
+use std::path::PathBuf;
+
 use super::super::browser::FileExplorerTab;
 use super::{File, FileTransferActivity, LogLevel, SelectedFile, TransferOpts, TransferPayload};
-
-use std::path::PathBuf;
 
 impl FileTransferActivity {
     pub(crate) fn action_local_find(&mut self, input: String) -> Result<Vec<File>, String> {

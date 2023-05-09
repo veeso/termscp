@@ -7,10 +7,9 @@ pub mod filestorage;
 #[cfg(feature = "with-keyring")]
 pub mod keyringstorage;
 // ext
-use thiserror::Error;
-
 #[cfg(feature = "with-keyring")]
 use keyring::Error as KeyringError;
+use thiserror::Error;
 
 /// defines the error type for the `KeyStorage`
 #[derive(Debug, Error)]
@@ -53,9 +52,9 @@ pub trait KeyStorage {
 #[cfg(test)]
 mod tests {
 
-    use super::*;
-
     use pretty_assertions::assert_eq;
+
+    use super::*;
 
     #[test]
     fn test_system_keys_mod_errors() {

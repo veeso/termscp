@@ -23,7 +23,6 @@ pub use popup::{
     WindowSizeError,
 };
 pub use text::{HelpFooter, NewVersionDisclaimer, Subtitle, Title};
-
 use tui_realm_stdlib::Phantom;
 use tuirealm::event::{Event, Key, KeyEvent, KeyModifiers, NoUserEvent};
 use tuirealm::{Component, MockComponent};

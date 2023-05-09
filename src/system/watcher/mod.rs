@@ -5,18 +5,18 @@
 mod change;
 
 // -- export
-pub use change::FsChange;
-
-use crate::utils::path as path_utils;
-
-use notify::{
-    watcher, DebouncedEvent, Error as WatcherError, RecommendedWatcher, RecursiveMode, Watcher,
-};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::mpsc::{channel, Receiver, RecvTimeoutError};
 use std::time::Duration;
+
+pub use change::FsChange;
+use notify::{
+    watcher, DebouncedEvent, Error as WatcherError, RecommendedWatcher, RecursiveMode, Watcher,
+};
 use thiserror::Error;
+
+use crate::utils::path as path_utils;
 
 type FsWatcherResult<T> = Result<T, FsWatcherError>;
 
@@ -172,13 +172,12 @@ impl FsWatcher {
 #[cfg(test)]
 mod test {
 
-    use super::*;
-
-    #[cfg(target_os = "macos")]
-    use crate::utils::test_helpers;
-
     use pretty_assertions::assert_eq;
     use tempfile::TempDir;
+
+    use super::*;
+    #[cfg(target_os = "macos")]
+    use crate::utils::test_helpers;
 
     #[test]
     fn should_init_fswatcher() {

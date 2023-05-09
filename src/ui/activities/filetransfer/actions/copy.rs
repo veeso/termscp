@@ -3,10 +3,11 @@
 //! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
 
 // locals
-use super::{FileTransferActivity, LogLevel, SelectedFile, TransferPayload};
+use std::path::{Path, PathBuf};
 
 use remotefs::{File, RemoteErrorType};
-use std::path::{Path, PathBuf};
+
+use super::{FileTransferActivity, LogLevel, SelectedFile, TransferPayload};
 
 impl FileTransferActivity {
     /// Copy file on local

@@ -2,8 +2,7 @@
 //!
 //! `file` is the module which exposes file related utilities
 
-use std::fs::File;
-use std::fs::OpenOptions;
+use std::fs::{File, OpenOptions};
 use std::io;
 use std::path::Path;
 

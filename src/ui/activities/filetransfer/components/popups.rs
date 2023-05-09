@@ -2,15 +2,10 @@
 //!
 //! popups components
 
-use super::super::Browser;
-use super::{Msg, PendingActionMsg, TransferMsg, UiMsg};
-use crate::explorer::FileSorting;
-use crate::utils::fmt::fmt_time;
+use std::time::UNIX_EPOCH;
 
 use bytesize::ByteSize;
 use remotefs::File;
-use std::time::UNIX_EPOCH;
-
 use tui_realm_stdlib::{Input, List, Paragraph, ProgressBar, Radio, Span};
 use tuirealm::command::{Cmd, CmdResult, Direction, Position};
 use tuirealm::event::{Key, KeyEvent, KeyModifiers};
@@ -20,6 +15,11 @@ use tuirealm::props::{
 use tuirealm::{Component, Event, MockComponent, NoUserEvent, State, StateValue};
 #[cfg(target_family = "unix")]
 use users::{get_group_by_gid, get_user_by_uid};
+
+use super::super::Browser;
+use super::{Msg, PendingActionMsg, TransferMsg, UiMsg};
+use crate::explorer::FileSorting;
+use crate::utils::fmt::fmt_time;
 
 #[derive(MockComponent)]
 pub struct CopyPopup {

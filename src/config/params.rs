@@ -3,12 +3,13 @@
 //! `config` is the module which provides access to termscp configuration
 
 // Locals
-use crate::filetransfer::FileTransferProtocol;
+use std::collections::HashMap;
+use std::path::PathBuf;
 
 // Ext
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::path::PathBuf;
+
+use crate::filetransfer::FileTransferProtocol;
 
 pub const DEFAULT_NOTIFICATION_TRANSFER_THRESHOLD: u64 = 536870912; // 512MB
 
@@ -91,8 +92,9 @@ impl Default for UserInterfaceConfig {
 #[cfg(test)]
 mod tests {
 
-    use super::*;
     use pretty_assertions::assert_eq;
+
+    use super::*;
 
     #[test]
     fn test_config_mod_new() {

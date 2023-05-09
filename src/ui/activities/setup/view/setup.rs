@@ -4,15 +4,16 @@
 //! work on termscp configuration
 
 // Locals
+// Ext
+use std::path::PathBuf;
+
+use tuirealm::tui::layout::{Constraint, Direction, Layout};
+use tuirealm::{State, StateValue};
+
 use super::{components, Context, Id, IdCommon, IdConfig, SetupActivity, ViewLayout};
 use crate::explorer::GroupDirs;
 use crate::filetransfer::FileTransferProtocol;
 use crate::utils::fmt::fmt_bytes;
-
-// Ext
-use std::path::PathBuf;
-use tuirealm::tui::layout::{Constraint, Direction, Layout};
-use tuirealm::{State, StateValue};
 
 impl SetupActivity {
     // -- view

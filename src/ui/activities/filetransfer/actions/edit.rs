@@ -3,14 +3,15 @@
 //! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
 
 // locals
-use super::{FileTransferActivity, LogLevel, SelectedFile, TransferPayload};
-
-// ext
-use remotefs::File;
 use std::fs::OpenOptions;
 use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
+
+// ext
+use remotefs::File;
+
+use super::{FileTransferActivity, LogLevel, SelectedFile, TransferPayload};
 
 impl FileTransferActivity {
     pub(crate) fn action_edit_local_file(&mut self) {

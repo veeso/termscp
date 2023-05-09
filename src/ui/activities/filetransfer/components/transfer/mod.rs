@@ -6,7 +6,6 @@ use super::{Msg, TransferMsg, UiMsg};
 
 mod file_list;
 use file_list::FileList;
-
 use tuirealm::command::{Cmd, Direction, Position};
 use tuirealm::event::{Key, KeyEvent, KeyModifiers};
 use tuirealm::props::{Alignment, Borders, Color, TextSpan};

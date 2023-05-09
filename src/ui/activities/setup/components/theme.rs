@@ -2,9 +2,6 @@
 //!
 //! theme tab components
 
-use super::{Msg, ThemeMsg};
-use crate::ui::activities::setup::IdTheme;
-
 use tui_realm_stdlib::{Input, Label};
 use tuirealm::command::{Cmd, CmdResult, Direction, Position};
 use tuirealm::event::{Key, KeyEvent, KeyModifiers};
@@ -12,6 +9,9 @@ use tuirealm::props::{Alignment, BorderType, Borders, Color, InputType, Style, T
 use tuirealm::{
     AttrValue, Attribute, Component, Event, MockComponent, NoUserEvent, State, StateValue,
 };
+
+use super::{Msg, ThemeMsg};
+use crate::ui::activities::setup::IdTheme;
 
 // -- components
 

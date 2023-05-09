@@ -3,12 +3,6 @@
 //! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
 
 // locals
-use super::{
-    browser::{FileExplorerTab, FoundExplorerTab},
-    components, Context, FileTransferActivity, Id,
-};
-use crate::explorer::FileSorting;
-use crate::utils::ui::{Popup, Size};
 // Ext
 use remotefs::fs::File;
 use tuirealm::event::{Key, KeyEvent, KeyModifiers};
@@ -16,6 +10,11 @@ use tuirealm::tui::layout::{Constraint, Direction, Layout};
 use tuirealm::tui::widgets::Clear;
 use tuirealm::{Sub, SubClause, SubEventClause};
 use unicode_width::UnicodeWidthStr;
+
+use super::browser::{FileExplorerTab, FoundExplorerTab};
+use super::{components, Context, FileTransferActivity, Id};
+use crate::explorer::FileSorting;
+use crate::utils::ui::{Popup, Size};
 
 impl FileTransferActivity {
     // -- init

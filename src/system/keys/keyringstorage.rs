@@ -3,9 +3,10 @@
 //! `keyringstorage` provides an implementation of the `KeyStorage` trait using the OS keyring
 
 // Local
-use super::{KeyStorage, KeyStorageError};
 // Ext
 use keyring::{Entry as Keyring, Error as KeyringError};
+
+use super::{KeyStorage, KeyStorageError};
 
 /// provides a `KeyStorage` implementation using the keyring crate
 pub struct KeyringStorage {
@@ -75,10 +76,10 @@ impl KeyStorage for KeyringStorage {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     use pretty_assertions::assert_eq;
     use whoami::username;
+
+    use super::*;
 
     #[test]
     fn test_system_keys_keyringstorage() {

@@ -3,17 +3,14 @@
 //! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
 
 // locals
-use super::{
-    actions::SelectedFile,
-    browser::{FileExplorerTab, FoundExplorerTab},
-    ExitReason, FileTransferActivity, Id, Msg, TransferMsg, TransferOpts, UiMsg,
-};
 // externals
 use remotefs::fs::File;
-use tuirealm::{
-    props::{AttrValue, Attribute},
-    State, StateValue, Update,
-};
+use tuirealm::props::{AttrValue, Attribute};
+use tuirealm::{State, StateValue, Update};
+
+use super::actions::SelectedFile;
+use super::browser::{FileExplorerTab, FoundExplorerTab};
+use super::{ExitReason, FileTransferActivity, Id, Msg, TransferMsg, TransferOpts, UiMsg};
 
 impl Update<Msg> for FileTransferActivity {
     fn update(&mut self, msg: Option<Msg>) -> Option<Msg> {

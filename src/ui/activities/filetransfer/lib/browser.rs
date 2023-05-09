@@ -2,11 +2,13 @@
 //!
 //! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
 
-use crate::explorer::{builder::FileExplorerBuilder, FileExplorer, FileSorting, GroupDirs};
-use crate::system::config_client::ConfigClient;
+use std::path::Path;
 
 use remotefs::File;
-use std::path::Path;
+
+use crate::explorer::builder::FileExplorerBuilder;
+use crate::explorer::{FileExplorer, FileSorting, GroupDirs};
+use crate::system::config_client::ConfigClient;
 
 /// File explorer tab
 #[derive(Clone, Copy, PartialEq, Eq)]

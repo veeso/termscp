@@ -2,13 +2,13 @@
 //!
 //! auth activity components for file transfer params form
 
-use super::{FileTransferProtocol, FormMsg, Msg, UiMsg};
-
 use tui_realm_stdlib::{Input, Radio};
 use tuirealm::command::{Cmd, CmdResult, Direction, Position};
 use tuirealm::event::{Key, KeyEvent, KeyModifiers};
 use tuirealm::props::{Alignment, BorderType, Borders, Color, InputType, Style};
 use tuirealm::{Component, Event, MockComponent, NoUserEvent, State, StateValue};
+
+use super::{FileTransferProtocol, FormMsg, Msg, UiMsg};
 
 // -- protocol
 

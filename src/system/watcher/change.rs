@@ -2,9 +2,9 @@
 //!
 //! this module exposes the types to describe a change to sync on the remote file system
 
-use crate::utils::path as path_utils;
-
 use std::path::{Path, PathBuf};
+
+use crate::utils::path as path_utils;
 
 /// Describes an operation on the remote file system to sync
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -190,9 +190,9 @@ fn remote_relative_path(
 #[cfg(test)]
 mod test {
 
-    use super::*;
-
     use pretty_assertions::assert_eq;
+
+    use super::*;
 
     #[test]
     fn should_get_remote_relative_path_from_subdir() {

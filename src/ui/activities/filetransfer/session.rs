@@ -3,19 +3,20 @@
 //! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
 
 // Locals
-use super::{FileTransferActivity, LogLevel};
-use crate::host::HostError;
-use crate::utils::fmt::fmt_millis;
+use std::fs::File as StdFile;
+use std::io::{Read, Seek, Write};
+use std::path::{Path, PathBuf};
+use std::time::Instant;
 
 // Ext
 use bytesize::ByteSize;
 use remotefs::fs::{File, Metadata, ReadStream, UnixPex, Welcome, WriteStream};
 use remotefs::{RemoteError, RemoteErrorType};
-use std::fs::File as StdFile;
-use std::io::{Read, Seek, Write};
-use std::path::{Path, PathBuf};
-use std::time::Instant;
 use thiserror::Error;
+
+use super::{FileTransferActivity, LogLevel};
+use crate::host::HostError;
+use crate::utils::fmt::fmt_millis;
 
 /// Buffer size for remote I/O
 const BUFSIZE: usize = 65535;

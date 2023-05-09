@@ -2,9 +2,9 @@
 //!
 //! actions associated to the file watcher
 
-use super::{FileTransferActivity, LogLevel, Msg, SelectedFile, TransferMsg, UiMsg};
-
 use std::path::{Path, PathBuf};
+
+use super::{FileTransferActivity, LogLevel, Msg, SelectedFile, TransferMsg, UiMsg};
 
 impl FileTransferActivity {
     pub fn action_show_radio_watch(&mut self) {

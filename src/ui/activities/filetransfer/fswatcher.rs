@@ -1,7 +1,7 @@
+use std::path::Path;
+
 use super::{FileTransferActivity, LogLevel, TransferPayload};
 use crate::system::watcher::FsChange;
-
-use std::path::Path;
 
 impl FileTransferActivity {
     /// poll file watcher

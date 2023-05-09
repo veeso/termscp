@@ -2,8 +2,6 @@
 //!
 //! ssh components
 
-use super::{Msg, SshMsg};
-
 use tui_realm_stdlib::{Input, List, Radio};
 use tuirealm::command::{Cmd, CmdResult, Direction, Position};
 use tuirealm::event::{Key, KeyEvent, KeyModifiers};
@@ -11,6 +9,8 @@ use tuirealm::props::{
     Alignment, BorderSides, BorderType, Borders, Color, InputType, Style, TextSpan,
 };
 use tuirealm::{Component, Event, MockComponent, NoUserEvent, State, StateValue};
+
+use super::{Msg, SshMsg};
 
 /* DelSshKeyPopup,
 SshHost,

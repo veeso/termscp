@@ -2,9 +2,10 @@
 //!
 //! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
 
-use bytesize::ByteSize;
 use std::fmt;
 use std::time::Instant;
+
+use bytesize::ByteSize;
 
 // -- States and progress
 
@@ -173,10 +174,11 @@ impl TransferOpts {
 #[cfg(test)]
 mod test {
 
-    use super::*;
+    use std::time::Duration;
 
     use pretty_assertions::assert_eq;
-    use std::time::Duration;
+
+    use super::*;
 
     #[test]
     fn test_ui_activities_filetransfer_lib_transfer_progress_states() {

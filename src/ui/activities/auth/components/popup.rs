@@ -2,13 +2,13 @@
 //!
 //! auth activity popups
 
-use super::{FormMsg, Msg, UiMsg};
-
 use tui_realm_stdlib::{List, Paragraph, Radio, Textarea};
 use tuirealm::command::{Cmd, CmdResult, Direction, Position};
 use tuirealm::event::{Key, KeyEvent, KeyModifiers};
 use tuirealm::props::{Alignment, BorderType, Borders, Color, TableBuilder, TextSpan};
 use tuirealm::{Component, Event, MockComponent, NoUserEvent, State, StateValue};
+
+use super::{FormMsg, Msg, UiMsg};
 
 // -- error popup
 

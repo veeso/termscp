@@ -4,10 +4,10 @@
 //! work on termscp configuration
 
 // Locals
-use super::{components, Context, Id, IdCommon, IdTheme, SetupActivity, Theme, ViewLayout};
-
 // Ext
 use tuirealm::tui::layout::{Constraint, Direction, Layout};
+
+use super::{components, Context, Id, IdCommon, IdTheme, SetupActivity, Theme, ViewLayout};
 
 impl SetupActivity {
     // -- view

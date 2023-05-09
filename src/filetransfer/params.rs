@@ -2,9 +2,9 @@
 //!
 //! file transfer parameters
 
-use super::FileTransferProtocol;
-
 use std::path::{Path, PathBuf};
+
+use super::FileTransferProtocol;
 
 /// Holds connection parameters for file transfers
 #[derive(Debug, Clone)]
@@ -238,8 +238,9 @@ impl AwsS3Params {
 #[cfg(test)]
 mod test {
 
-    use super::*;
     use pretty_assertions::assert_eq;
+
+    use super::*;
 
     #[test]
     fn test_filetransfer_params() {

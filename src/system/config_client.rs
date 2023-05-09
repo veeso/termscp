@@ -3,18 +3,17 @@
 //! `config_client` is the module which provides an API between the Config module and the system
 
 // Locals
-use crate::config::{
-    params::{UserConfig, DEFAULT_NOTIFICATION_TRANSFER_THRESHOLD},
-    serialization::{deserialize, serialize, SerializerError, SerializerErrorKind},
-};
-use crate::explorer::GroupDirs;
-use crate::filetransfer::FileTransferProtocol;
 // Ext
 use std::fs::{create_dir, remove_file, File, OpenOptions};
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use std::string::ToString;
+
+use crate::config::params::{UserConfig, DEFAULT_NOTIFICATION_TRANSFER_THRESHOLD};
+use crate::config::serialization::{deserialize, serialize, SerializerError, SerializerErrorKind};
+use crate::explorer::GroupDirs;
+use crate::filetransfer::FileTransferProtocol;
 
 // Types
 pub type SshHost = (String, String, PathBuf); // 0: host, 1: username, 2: RSA key path
@@ -414,13 +413,14 @@ impl ConfigClient {
 #[cfg(test)]
 mod tests {
 
+    use std::io::Read;
+
+    use pretty_assertions::assert_eq;
+    use tempfile::TempDir;
+
     use super::*;
     use crate::config::UserConfig;
     use crate::utils::random::random_alphanumeric_with_len;
-
-    use pretty_assertions::assert_eq;
-    use std::io::Read;
-    use tempfile::TempDir;
 
     #[test]
     fn test_system_config_new() {

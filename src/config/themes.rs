@@ -3,11 +3,12 @@
 //! `themes` is the module which provides the themes configurations and the serializers
 
 // locals
-use crate::utils::fmt::fmt_color;
-use crate::utils::parser::parse_color;
 // ext
 use serde::{de::Error as DeError, Deserialize, Deserializer, Serialize, Serializer};
 use tuirealm::tui::style::Color;
+
+use crate::utils::fmt::fmt_color;
+use crate::utils::parser::parse_color;
 
 /// Theme contains all the colors lookup table for termscp
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq, Serialize)]
@@ -211,9 +212,9 @@ where
 
 #[cfg(test)]
 mod test {
-    use super::*;
-
     use pretty_assertions::assert_eq;
+
+    use super::*;
 
     #[test]
     fn test_config_themes_default() {

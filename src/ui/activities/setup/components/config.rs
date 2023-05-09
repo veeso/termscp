@@ -2,16 +2,16 @@
 //!
 //! config tab components
 
-use super::{ConfigMsg, Msg};
-use crate::explorer::GroupDirs as GroupDirsEnum;
-use crate::filetransfer::FileTransferProtocol;
-use crate::utils::parser::parse_bytesize;
-
 use tui_realm_stdlib::{Input, Radio};
 use tuirealm::command::{Cmd, Direction, Position};
 use tuirealm::event::{Key, KeyEvent, KeyModifiers};
 use tuirealm::props::{Alignment, BorderType, Borders, Color, InputType, Style};
 use tuirealm::{Component, Event, MockComponent, NoUserEvent};
+
+use super::{ConfigMsg, Msg};
+use crate::explorer::GroupDirs as GroupDirsEnum;
+use crate::filetransfer::FileTransferProtocol;
+use crate::utils::parser::parse_bytesize;
 
 // -- components
 

@@ -3,11 +3,12 @@
 //! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
 
 // locals
+use std::path::{Path, PathBuf};
+
 use super::{
     File, FileTransferActivity, LogLevel, Msg, PendingActionMsg, SelectedFile, TransferOpts,
     TransferPayload,
 };
-use std::path::{Path, PathBuf};
 
 impl FileTransferActivity {
     pub(crate) fn action_local_saveas(&mut self, input: String) {

@@ -2,13 +2,12 @@
 //!
 //! Automatic update module. This module is used to upgrade the current version of termscp to the latest available on Github
 
-use crate::utils::parser::parse_semver;
-
+use self_update::backends::github::Update as GithubUpdater;
 pub use self_update::errors::Error as UpdateError;
-use self_update::{
-    backends::github::Update as GithubUpdater, cargo_crate_version, update::Release as UpdRelease,
-    Status,
-};
+use self_update::update::Release as UpdRelease;
+use self_update::{cargo_crate_version, Status};
+
+use crate::utils::parser::parse_semver;
 
 /// The status of the update in case of success
 #[derive(Debug, Eq, PartialEq)]
@@ -131,9 +130,9 @@ impl From<UpdRelease> for Release {
 #[cfg(test)]
 mod test {
 
-    use super::*;
-
     use pretty_assertions::assert_eq;
+
+    use super::*;
 
     #[test]
     fn auto_update_default() {

@@ -11,15 +11,18 @@ mod update;
 mod view;
 
 // Locals
+// Ext
+use std::time::Duration;
+
+use tuirealm::application::PollStrategy;
+use tuirealm::listener::EventListenerCfg;
+use tuirealm::props::Color;
+use tuirealm::{Application, NoUserEvent, Update};
+
 use super::{Activity, Context, ExitReason};
 use crate::config::themes::Theme;
 use crate::system::config_client::ConfigClient;
 use crate::system::theme_provider::ThemeProvider;
-// Ext
-use std::time::Duration;
-use tuirealm::listener::EventListenerCfg;
-use tuirealm::props::Color;
-use tuirealm::{application::PollStrategy, Application, NoUserEvent, Update};
 
 // -- components
 #[derive(Debug, Eq, PartialEq, Clone, Hash)]

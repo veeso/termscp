@@ -4,12 +4,12 @@
 //! work on termscp configuration
 
 // Locals
-use super::{components, Context, Id, IdCommon, IdSsh, SetupActivity, ViewLayout};
-use crate::utils::ui::{Popup, Size};
-
 // Ext
 use tuirealm::tui::layout::{Constraint, Direction, Layout};
 use tuirealm::tui::widgets::Clear;
+
+use super::{components, Context, Id, IdCommon, IdSsh, SetupActivity, ViewLayout};
+use crate::utils::ui::{Popup, Size};
 
 impl SetupActivity {
     // -- view

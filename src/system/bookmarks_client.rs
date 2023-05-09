@@ -3,9 +3,16 @@
 //! `bookmarks_client` is the module which provides an API between the Bookmarks module and the system
 
 // Crate
+// Ext
+use std::fs::OpenOptions;
+use std::path::{Path, PathBuf};
+use std::string::ToString;
+use std::time::SystemTime;
+
+use super::keys::filestorage::FileStorage;
 #[cfg(feature = "with-keyring")]
 use super::keys::keyringstorage::KeyringStorage;
-use super::keys::{filestorage::FileStorage, KeyStorage, KeyStorageError};
+use super::keys::{KeyStorage, KeyStorageError};
 // Local
 use crate::config::{
     bookmarks::{Bookmark, UserHosts},
@@ -15,11 +22,6 @@ use crate::filetransfer::FileTransferParams;
 use crate::utils::crypto;
 use crate::utils::fmt::fmt_time;
 use crate::utils::random::random_alphanumeric_with_len;
-// Ext
-use std::fs::OpenOptions;
-use std::path::{Path, PathBuf};
-use std::string::ToString;
-use std::time::SystemTime;
 
 /// BookmarksClient provides a layer between the host system and the bookmarks module
 pub struct BookmarksClient {
@@ -370,14 +372,15 @@ impl BookmarksClient {
 #[cfg(not(target_os = "macos"))] // CI/CD blocks
 mod tests {
 
+    use std::thread::sleep;
+    use std::time::Duration;
+
+    use pretty_assertions::assert_eq;
+    use tempfile::TempDir;
+
     use super::*;
     use crate::filetransfer::params::{AwsS3Params, GenericProtocolParams};
     use crate::filetransfer::{FileTransferProtocol, ProtocolParams};
-
-    use pretty_assertions::assert_eq;
-    use std::thread::sleep;
-    use std::time::Duration;
-    use tempfile::TempDir;
 
     #[test]
 

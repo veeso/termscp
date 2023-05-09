@@ -4,13 +4,13 @@
 //! work on termscp configuration
 
 // locals
+// ext
+use tuirealm::Update;
+
 use super::{
     CommonMsg, ConfigMsg, Id, IdConfig, IdSsh, IdTheme, Msg, SetupActivity, SshMsg, ThemeMsg,
     ViewLayout,
 };
-
-// ext
-use tuirealm::Update;
 
 impl Update<Msg> for SetupActivity {
     /// Update auth activity model based on msg

@@ -2,11 +2,11 @@
 //!
 //! `fmt` is the module which provides utilities for formatting
 
-use remotefs::fs::UnixPexClass;
-
-use chrono::prelude::*;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime};
+
+use chrono::prelude::*;
+use remotefs::fs::UnixPexClass;
 use tuirealm::tui::style::Color;
 use unicode_width::UnicodeWidthStr;
 
@@ -271,9 +271,9 @@ pub fn fmt_bytes(v: u64) -> String {
 #[cfg(test)]
 mod tests {
 
-    use super::*;
-
     use pretty_assertions::assert_eq;
+
+    use super::*;
 
     #[test]
     fn test_utils_fmt_pex() {

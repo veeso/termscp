@@ -3,14 +3,13 @@
 //! `theme_provider` is the module which provides an API between the theme configuration and the system
 
 // Locals
-use crate::config::{
-    serialization::{deserialize, serialize, SerializerError, SerializerErrorKind},
-    themes::Theme,
-};
 // Ext
 use std::fs::OpenOptions;
 use std::path::{Path, PathBuf};
 use std::string::ToString;
+
+use crate::config::serialization::{deserialize, serialize, SerializerError, SerializerErrorKind};
+use crate::config::themes::Theme;
 
 /// ThemeProvider provides a high level API to communicate with the termscp theme
 pub struct ThemeProvider {
@@ -142,11 +141,11 @@ impl ThemeProvider {
 
 #[cfg(test)]
 mod test {
-    use super::*;
-
     use pretty_assertions::assert_eq;
     use tempfile::TempDir;
     use tuirealm::tui::style::Color;
+
+    use super::*;
 
     #[test]
     fn test_system_theme_provider_new() {

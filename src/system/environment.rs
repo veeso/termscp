@@ -101,12 +101,13 @@ pub fn get_theme_path(config_dir: &Path) -> PathBuf {
 #[cfg(test)]
 mod tests {
 
-    use super::*;
+    use std::fs::{File, OpenOptions};
+    use std::io::Write;
 
     use pretty_assertions::assert_eq;
     use serial_test::serial;
-    use std::fs::{File, OpenOptions};
-    use std::io::Write;
+
+    use super::*;
 
     #[test]
     #[serial]

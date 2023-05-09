@@ -7,17 +7,15 @@ pub mod setup;
 pub mod ssh_keys;
 pub mod theme;
 
-use super::*;
-use crate::utils::ui::{Popup, Size};
 pub use setup::*;
 pub use ssh_keys::*;
 pub use theme::*;
-
+use tuirealm::event::{Key, KeyEvent, KeyModifiers};
 use tuirealm::tui::widgets::Clear;
-use tuirealm::{
-    event::{Key, KeyEvent, KeyModifiers},
-    Frame, Sub, SubClause, SubEventClause,
-};
+use tuirealm::{Frame, Sub, SubClause, SubEventClause};
+
+use super::*;
+use crate::utils::ui::{Popup, Size};
 
 impl SetupActivity {
     // -- view

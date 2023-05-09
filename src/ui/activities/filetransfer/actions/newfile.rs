@@ -3,9 +3,10 @@
 //! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
 
 // locals
-use super::{File, FileTransferActivity, LogLevel};
 use std::fs::File as StdFile;
 use std::path::PathBuf;
+
+use super::{File, FileTransferActivity, LogLevel};
 
 impl FileTransferActivity {
     pub(crate) fn action_local_newfile(&mut self, input: String) {

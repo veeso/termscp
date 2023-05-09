@@ -2,11 +2,12 @@
 //!
 //! contains helper functions for tests
 
-use remotefs::fs::{File, FileType, Metadata};
 // ext
 use std::fs::File as StdFile;
 use std::io::Write;
 use std::path::{Path, PathBuf};
+
+use remotefs::fs::{File, FileType, Metadata};
 use tempfile::NamedTempFile;
 
 pub fn create_sample_file_entry() -> (File, NamedTempFile) {
@@ -74,9 +75,9 @@ pub fn create_file_ioers(p: &Path) -> (StdFile, StdFile) {
 }
 
 mod test {
-    use super::*;
-
     use pretty_assertions::assert_eq;
+
+    use super::*;
 
     #[test]
     fn test_utils_test_helpers_sample_file() {

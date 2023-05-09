@@ -2,8 +2,10 @@
 //!
 //! `serialization` provides serialization and deserialization for configurations
 
-use serde::{de::DeserializeOwned, Serialize};
 use std::io::{Read, Write};
+
+use serde::de::DeserializeOwned;
+use serde::Serialize;
 use thiserror::Error;
 
 /// Contains the error for serializer/deserializer
@@ -105,19 +107,19 @@ where
 #[cfg(test)]
 mod tests {
 
-    use super::*;
+    use std::collections::HashMap;
+    use std::io::Seek;
+    use std::path::PathBuf;
 
+    use pretty_assertions::assert_eq;
+    use tuirealm::tui::style::Color;
+
+    use super::*;
     use crate::config::bookmarks::{Bookmark, S3Params, UserHosts};
     use crate::config::params::UserConfig;
     use crate::config::themes::Theme;
     use crate::filetransfer::FileTransferProtocol;
     use crate::utils::test_helpers::create_file_ioers;
-
-    use pretty_assertions::assert_eq;
-    use std::collections::HashMap;
-    use std::io::Seek;
-    use std::path::PathBuf;
-    use tuirealm::tui::style::Color;
 
     #[test]
     fn test_config_serialization_errors() {

@@ -3,10 +3,11 @@
 //! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
 
 // locals
-use super::{FileExplorerTab, FileTransferActivity, LogLevel, Msg, PendingActionMsg};
+use std::path::PathBuf;
 
 use remotefs::File;
-use std::path::PathBuf;
+
+use super::{FileExplorerTab, FileTransferActivity, LogLevel, Msg, PendingActionMsg};
 
 /// Describes destination for sync browsing
 enum SyncBrowsingDestination {

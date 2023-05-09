@@ -3,13 +3,13 @@
 //! `Context` is the module which provides all the functionalities related to the UI data holder, called Context
 
 // Locals
+use tuirealm::terminal::TerminalBridge;
+
 use super::store::Store;
 use crate::filetransfer::FileTransferParams;
 use crate::system::bookmarks_client::BookmarksClient;
 use crate::system::config_client::ConfigClient;
 use crate::system::theme_provider::ThemeProvider;
-
-use tuirealm::terminal::TerminalBridge;
 
 /// Context holds data structures shared by the activities
 pub struct Context {

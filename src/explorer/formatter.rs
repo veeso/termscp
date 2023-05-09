@@ -3,18 +3,20 @@
 //! `formatter` is the module which provides formatting utilities for `FileExplorer`
 
 // Locals
-use crate::utils::fmt::{fmt_path_elide, fmt_pex, fmt_time};
-use crate::utils::path::diff_paths;
-use crate::utils::string::secure_substring;
+use std::path::PathBuf;
+use std::time::UNIX_EPOCH;
+
 // Ext
 use bytesize::ByteSize;
 use lazy_regex::{Lazy, Regex};
 use remotefs::File;
-use std::path::PathBuf;
-use std::time::UNIX_EPOCH;
 use unicode_width::UnicodeWidthStr;
 #[cfg(target_family = "unix")]
 use users::{get_group_by_gid, get_user_by_uid};
+
+use crate::utils::fmt::{fmt_path_elide, fmt_pex, fmt_time};
+use crate::utils::path::diff_paths;
+use crate::utils::string::secure_substring;
 // Types
 // FmtCallback: Formatter, fsentry: &File, cur_str, prefix, length, extra
 type FmtCallback = fn(&Formatter, &File, &str, &str, Option<&usize>, Option<&String>) -> String;
@@ -521,12 +523,13 @@ impl Formatter {
 #[cfg(test)]
 mod tests {
 
-    use super::*;
+    use std::path::PathBuf;
+    use std::time::SystemTime;
 
     use pretty_assertions::assert_eq;
     use remotefs::fs::{File, FileType, Metadata, UnixPex};
-    use std::path::PathBuf;
-    use std::time::SystemTime;
+
+    use super::*;
 
     #[test]
     fn test_fs_explorer_formatter_callchain() {

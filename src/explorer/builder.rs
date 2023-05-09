@@ -3,10 +3,11 @@
 //! `builder` is the module which provides a builder for FileExplorer
 
 // Locals
-use super::formatter::Formatter;
-use super::{ExplorerOpts, FileExplorer, FileSorting, GroupDirs};
 // Ext
 use std::collections::VecDeque;
+
+use super::formatter::Formatter;
+use super::{ExplorerOpts, FileExplorer, FileSorting, GroupDirs};
 
 /// Struct used to create a `FileExplorer`
 pub struct FileExplorerBuilder {
@@ -76,9 +77,9 @@ impl FileExplorerBuilder {
 #[cfg(test)]
 mod tests {
 
-    use super::*;
-
     use pretty_assertions::assert_eq;
+
+    use super::*;
 
     #[test]
     fn test_fs_explorer_builder_new_default() {

@@ -2,12 +2,14 @@
 //!
 //! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
 
-pub(self) use super::{
-    browser::FileExplorerTab, FileTransferActivity, Id, LogLevel, Msg, PendingActionMsg,
-    TransferMsg, TransferOpts, TransferPayload, UiMsg,
-};
 pub(self) use remotefs::File;
 use tuirealm::{State, StateValue};
+
+pub(self) use super::browser::FileExplorerTab;
+pub(self) use super::{
+    FileTransferActivity, Id, LogLevel, Msg, PendingActionMsg, TransferMsg, TransferOpts,
+    TransferPayload, UiMsg,
+};
 
 // actions
 pub(crate) mod change_dir;

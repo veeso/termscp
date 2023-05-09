@@ -3,23 +3,22 @@
 //! `activity_manager` is the module which provides run methods and handling for activities
 
 // Deps
+// Namespaces
+use std::path::{Path, PathBuf};
+use std::time::Duration;
+
 use crate::filetransfer::FileTransferParams;
 use crate::host::{HostError, Localhost};
 use crate::system::bookmarks_client::BookmarksClient;
 use crate::system::config_client::ConfigClient;
 use crate::system::environment;
 use crate::system::theme_provider::ThemeProvider;
-use crate::ui::activities::{
-    auth::AuthActivity, filetransfer::FileTransferActivity, setup::SetupActivity, Activity,
-    ExitReason,
-};
+use crate::ui::activities::auth::AuthActivity;
+use crate::ui::activities::filetransfer::FileTransferActivity;
+use crate::ui::activities::setup::SetupActivity;
+use crate::ui::activities::{Activity, ExitReason};
 use crate::ui::context::Context;
-use crate::utils::fmt;
-use crate::utils::tty;
-
-// Namespaces
-use std::path::{Path, PathBuf};
-use std::time::Duration;
+use crate::utils::{fmt, tty};
 
 /// NextActivity identifies the next identity to run once the current has ended
 pub enum NextActivity {

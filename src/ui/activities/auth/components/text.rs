@@ -2,11 +2,11 @@
 //!
 //! auth activity texts
 
-use super::Msg;
-
 use tui_realm_stdlib::{Label, Span};
 use tuirealm::props::{Color, TextModifiers, TextSpan};
 use tuirealm::{Component, Event, MockComponent, NoUserEvent};
+
+use super::Msg;
 
 // -- Title
 

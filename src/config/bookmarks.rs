@@ -2,13 +2,15 @@
 //!
 //! `bookmarks` is the module which provides data types and de/serializer for bookmarks
 
-use crate::filetransfer::params::{AwsS3Params, GenericProtocolParams, ProtocolParams};
-use crate::filetransfer::{FileTransferParams, FileTransferProtocol};
-
-use serde::{de::Error as DeError, Deserialize, Deserializer, Serialize, Serializer};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::str::FromStr;
+
+use serde::de::Error as DeError;
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
+use crate::filetransfer::params::{AwsS3Params, GenericProtocolParams, ProtocolParams};
+use crate::filetransfer::{FileTransferParams, FileTransferProtocol};
 
 /// UserHosts contains all the hosts saved by the user in the data storage
 /// It contains both `Bookmark`
@@ -155,8 +157,9 @@ where
 #[cfg(test)]
 mod tests {
 
-    use super::*;
     use pretty_assertions::assert_eq;
+
+    use super::*;
 
     #[test]
     fn test_bookmarks_default() {

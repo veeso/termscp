@@ -3,9 +3,9 @@
 //! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
 
 // locals
-use super::{FileTransferActivity, LogLevel, SelectedFile};
-
 use remotefs::File;
+
+use super::{FileTransferActivity, LogLevel, SelectedFile};
 
 impl FileTransferActivity {
     pub(crate) fn action_local_delete(&mut self) {

@@ -2,13 +2,13 @@
 //!
 //! config tab components
 
-use super::{CommonMsg, Msg, ViewLayout};
-
 use tui_realm_stdlib::{List, Paragraph, Radio, Span};
 use tuirealm::command::{Cmd, CmdResult, Direction, Position};
 use tuirealm::event::{Key, KeyEvent, KeyModifiers};
 use tuirealm::props::{Alignment, BorderSides, BorderType, Borders, Color, TableBuilder, TextSpan};
 use tuirealm::{Component, Event, MockComponent, NoUserEvent, State, StateValue};
+
+use super::{CommonMsg, Msg, ViewLayout};
 
 #[derive(MockComponent)]
 pub struct ErrorPopup {

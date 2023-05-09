@@ -2,11 +2,11 @@
 //!
 //! file transfer activity components
 
-use super::Msg;
-
 use tui_realm_stdlib::Span;
 use tuirealm::props::{Color, TextSpan};
 use tuirealm::{Component, Event, MockComponent, NoUserEvent};
+
+use super::Msg;
 
 #[derive(MockComponent)]
 pub struct FooterBar {

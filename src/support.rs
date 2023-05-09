@@ -3,15 +3,14 @@
 //! this module exposes some extra run modes for termscp, meant to be used for "support", such as installing themes
 
 // mod
-use crate::system::{
-    auto_update::{Update, UpdateStatus},
-    config_client::ConfigClient,
-    environment,
-    notifications::Notification,
-    theme_provider::ThemeProvider,
-};
 use std::fs;
 use std::path::{Path, PathBuf};
+
+use crate::system::auto_update::{Update, UpdateStatus};
+use crate::system::config_client::ConfigClient;
+use crate::system::environment;
+use crate::system::notifications::Notification;
+use crate::system::theme_provider::ThemeProvider;
 
 /// Import theme at provided path into termscp
 pub fn import_theme(p: &Path) -> Result<(), String> {

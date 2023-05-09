@@ -3,19 +3,20 @@
 //! `host` is the module which provides functionalities to host file system
 
 // ext
+// Metadata ext
+#[cfg(target_family = "unix")]
+use std::fs::set_permissions;
+use std::fs::{self, File as StdFile, OpenOptions};
+#[cfg(target_family = "unix")]
+use std::os::unix::fs::PermissionsExt;
+use std::path::{Path, PathBuf};
+
 use filetime::{self, FileTime};
 #[cfg(target_family = "unix")]
 use remotefs::fs::UnixPex;
 use remotefs::fs::{File, FileType, Metadata};
-use std::fs::{self, File as StdFile, OpenOptions};
-use std::path::{Path, PathBuf};
 use thiserror::Error;
 use wildmatch::WildMatch;
-// Metadata ext
-#[cfg(target_family = "unix")]
-use std::fs::set_permissions;
-#[cfg(target_family = "unix")]
-use std::os::unix::fs::PermissionsExt;
 
 // Locals
 use crate::utils::path;
@@ -643,21 +644,21 @@ impl Localhost {
 #[cfg(test)]
 mod tests {
 
-    use super::*;
-    #[cfg(target_family = "unix")]
-    use crate::utils::test_helpers::make_fsentry;
-    use crate::utils::test_helpers::{create_sample_file, make_dir_at, make_file_at};
-
-    use pretty_assertions::assert_eq;
     #[cfg(target_family = "unix")]
     use std::fs::File as StdFile;
     #[cfg(target_family = "unix")]
     use std::io::Write;
-
+    use std::ops::AddAssign;
     #[cfg(target_family = "unix")]
     use std::os::unix::fs::{symlink, PermissionsExt};
-    use std::time::SystemTime;
-    use std::{ops::AddAssign, time::Duration};
+    use std::time::{Duration, SystemTime};
+
+    use pretty_assertions::assert_eq;
+
+    use super::*;
+    #[cfg(target_family = "unix")]
+    use crate::utils::test_helpers::make_fsentry;
+    use crate::utils::test_helpers::{create_sample_file, make_dir_at, make_file_at};
 
     #[test]
     fn test_host_error_new() {

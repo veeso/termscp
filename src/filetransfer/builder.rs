@@ -2,16 +2,17 @@
 //!
 //! Remotefs client builder
 
-use super::params::{AwsS3Params, GenericProtocolParams};
-use super::{FileTransferProtocol, ProtocolParams};
-use crate::system::config_client::ConfigClient;
-use crate::system::sshkey_storage::SshKeyStorage;
+use std::path::PathBuf;
 
 use remotefs::RemoteFs;
 use remotefs_aws_s3::AwsS3Fs;
 use remotefs_ftp::FtpFs;
 use remotefs_ssh::{ScpFs, SftpFs, SshOpts};
-use std::path::PathBuf;
+
+use super::params::{AwsS3Params, GenericProtocolParams};
+use super::{FileTransferProtocol, ProtocolParams};
+use crate::system::config_client::ConfigClient;
+use crate::system::sshkey_storage::SshKeyStorage;
 
 /// Remotefs builder
 pub struct Builder;
@@ -123,10 +124,11 @@ impl Builder {
 #[cfg(test)]
 mod test {
 
-    use super::*;
-
     use std::path::{Path, PathBuf};
+
     use tempfile::TempDir;
+
+    use super::*;
 
     #[test]
     fn should_build_aws_s3_fs() {

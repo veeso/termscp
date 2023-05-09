@@ -4,9 +4,10 @@
 //! work on termscp configuration
 
 // Locals
-use super::SetupActivity;
 // Ext
 use std::env;
+
+use super::SetupActivity;
 
 impl SetupActivity {
     /// Save configuration

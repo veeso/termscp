@@ -3,22 +3,21 @@
 //! `parser` is the module which provides utilities for parsing different kind of stuff
 
 // Locals
-use crate::filetransfer::{
-    params::{AwsS3Params, GenericProtocolParams, ProtocolParams},
-    FileTransferParams, FileTransferProtocol,
-};
-#[cfg(not(test))] // NOTE: don't use configuration during tests
-use crate::system::config_client::ConfigClient;
-#[cfg(not(test))] // NOTE: don't use configuration during tests
-use crate::system::environment;
+use std::path::PathBuf;
+use std::str::FromStr;
 
 // Ext
 use bytesize::ByteSize;
 use lazy_regex::{Lazy, Regex};
-use std::path::PathBuf;
-use std::str::FromStr;
 use tuirealm::tui::style::Color;
 use tuirealm::utils::parser as tuirealm_parser;
+
+use crate::filetransfer::params::{AwsS3Params, GenericProtocolParams, ProtocolParams};
+use crate::filetransfer::{FileTransferParams, FileTransferProtocol};
+#[cfg(not(test))] // NOTE: don't use configuration during tests
+use crate::system::config_client::ConfigClient;
+#[cfg(not(test))] // NOTE: don't use configuration during tests
+use crate::system::environment;
 
 // Regex
 
@@ -314,9 +313,9 @@ pub fn parse_bytesize<S: AsRef<str>>(bytes: S) -> Option<ByteSize> {
 #[cfg(test)]
 mod tests {
 
-    use super::*;
-
     use pretty_assertions::assert_eq;
+
+    use super::*;
 
     #[test]
     fn test_utils_parse_remote_opt() {

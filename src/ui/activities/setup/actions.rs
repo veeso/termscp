@@ -4,12 +4,14 @@
 //! work on termscp configuration
 
 // Locals
+use std::env;
+
+use tuirealm::tui::style::Color;
+use tuirealm::{State, StateValue};
+
 use super::{Id, IdSsh, IdTheme, SetupActivity, ViewLayout};
 // Ext
 use crate::config::themes::Theme;
-use std::env;
-use tuirealm::tui::style::Color;
-use tuirealm::{State, StateValue};
 
 impl SetupActivity {
     /// On <ESC>, if there are changes in the configuration, the quit dialog must be shown, otherwise

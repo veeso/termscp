@@ -3,12 +3,14 @@
 //! `SshKeyStorage` is the module which behaves a storage for ssh keys
 
 // Locals
-use super::config_client::ConfigClient;
+use std::collections::HashMap;
+use std::path::{Path, PathBuf};
+
 // Ext
 use remotefs_ssh::SshKeyStorage as SshKeyStorageTrait;
 use ssh2_config::SshConfig;
-use std::collections::HashMap;
-use std::path::{Path, PathBuf};
+
+use super::config_client::ConfigClient;
 
 #[derive(Default)]
 pub struct SshKeyStorage {
@@ -117,12 +119,13 @@ impl From<&ConfigClient> for SshKeyStorage {
 #[cfg(test)]
 mod tests {
 
+    use std::path::Path;
+
+    use pretty_assertions::assert_eq;
+
     use super::*;
     use crate::system::config_client::ConfigClient;
     use crate::utils::test_helpers;
-
-    use pretty_assertions::assert_eq;
-    use std::path::Path;
 
     #[test]
     fn test_system_sshkey_storage_new() {

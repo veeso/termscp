@@ -13,6 +13,19 @@ mod update;
 mod view;
 
 // locals
+use std::collections::VecDeque;
+use std::time::Duration;
+
+// Includes
+use chrono::{DateTime, Local};
+pub(self) use lib::browser;
+use lib::browser::Browser;
+use lib::transfer::{TransferOpts, TransferStates};
+use remotefs::RemoteFs;
+pub(self) use session::TransferPayload;
+use tempfile::TempDir;
+use tuirealm::{Application, EventListenerCfg, NoUserEvent};
+
 use super::{Activity, Context, ExitReason};
 use crate::config::themes::Theme;
 use crate::explorer::{FileExplorer, FileSorting};
@@ -20,18 +33,6 @@ use crate::filetransfer::{Builder, FileTransferParams};
 use crate::host::Localhost;
 use crate::system::config_client::ConfigClient;
 use crate::system::watcher::FsWatcher;
-pub(self) use lib::browser;
-use lib::browser::Browser;
-use lib::transfer::{TransferOpts, TransferStates};
-pub(self) use session::TransferPayload;
-
-// Includes
-use chrono::{DateTime, Local};
-use remotefs::RemoteFs;
-use std::collections::VecDeque;
-use std::time::Duration;
-use tempfile::TempDir;
-use tuirealm::{Application, EventListenerCfg, NoUserEvent};
 
 // -- components
 

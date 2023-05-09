@@ -3,11 +3,12 @@
 //! `filestorage` provides an implementation of the `KeyStorage` trait using a file
 
 // Local
-use super::{KeyStorage, KeyStorageError};
 // Ext
 use std::fs::{OpenOptions, Permissions};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
+
+use super::{KeyStorage, KeyStorageError};
 
 /// File storage is an implementation o the `KeyStorage` which uses a file to store the key
 pub struct FileStorage {
@@ -90,9 +91,9 @@ impl KeyStorage for FileStorage {
 #[cfg(test)]
 mod tests {
 
-    use super::*;
-
     use pretty_assertions::assert_eq;
+
+    use super::*;
 
     #[test]
     fn test_system_keys_filestorage_make_dir() {

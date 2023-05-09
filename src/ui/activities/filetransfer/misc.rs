@@ -1,21 +1,21 @@
 // Locals
-use super::{
-    browser::FileExplorerTab, ConfigClient, FileTransferActivity, Id, LogLevel, LogRecord,
-    TransferPayload,
+use std::env;
+use std::path::{Path, PathBuf};
+
+// Ext
+use bytesize::ByteSize;
+use tuirealm::props::{
+    Alignment, AttrValue, Attribute, Color, PropPayload, PropValue, TableBuilder, TextSpan,
 };
+use tuirealm::{PollStrategy, Update};
+
+use super::browser::FileExplorerTab;
+use super::{ConfigClient, FileTransferActivity, Id, LogLevel, LogRecord, TransferPayload};
 use crate::filetransfer::ProtocolParams;
 use crate::system::environment;
 use crate::system::notifications::Notification;
 use crate::utils::fmt::{fmt_millis, fmt_path_elide_ex};
 use crate::utils::path;
-// Ext
-use bytesize::ByteSize;
-use std::env;
-use std::path::{Path, PathBuf};
-use tuirealm::props::{
-    Alignment, AttrValue, Attribute, Color, PropPayload, PropValue, TableBuilder, TextSpan,
-};
-use tuirealm::{PollStrategy, Update};
 
 const LOG_CAPACITY: usize = 256;
 

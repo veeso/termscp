@@ -20,9 +20,9 @@ pub fn aes128_b64_decrypt(key: &str, secret: &str) -> Result<String, magic_crypt
 #[cfg(test)]
 mod tests {
 
-    use super::*;
-
     use pretty_assertions::assert_eq;
+
+    use super::*;
 
     #[test]
     fn test_utils_crypto_aes128() {

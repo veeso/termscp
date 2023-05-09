@@ -3,10 +3,11 @@
 //! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
 
 // locals
-use super::{File, FileTransferActivity, LogLevel, SelectedFile};
+use std::path::{Path, PathBuf};
 
 use remotefs::RemoteErrorType;
-use std::path::{Path, PathBuf};
+
+use super::{File, FileTransferActivity, LogLevel, SelectedFile};
 
 impl FileTransferActivity {
     pub(crate) fn action_local_rename(&mut self, input: String) {

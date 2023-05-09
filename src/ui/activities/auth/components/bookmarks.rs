@@ -2,13 +2,13 @@
 //!
 //! auth activity bookmarks components
 
-use super::{FormMsg, Msg, UiMsg};
-
 use tui_realm_stdlib::{Input, List, Radio};
 use tuirealm::command::{Cmd, CmdResult, Direction, Position};
 use tuirealm::event::{Key, KeyEvent, KeyModifiers};
 use tuirealm::props::{Alignment, BorderSides, BorderType, Borders, Color, InputType, TextSpan};
 use tuirealm::{Component, Event, MockComponent, NoUserEvent, State, StateValue};
+
+use super::{FormMsg, Msg, UiMsg};
 
 // -- bookmark list
 

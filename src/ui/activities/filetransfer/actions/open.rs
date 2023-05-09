@@ -3,9 +3,10 @@
 //! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
 
 // locals
-use super::{File, FileTransferActivity, LogLevel, SelectedFile, TransferPayload};
 // ext
 use std::path::{Path, PathBuf};
+
+use super::{File, FileTransferActivity, LogLevel, SelectedFile, TransferPayload};
 
 impl FileTransferActivity {
     /// Open local file

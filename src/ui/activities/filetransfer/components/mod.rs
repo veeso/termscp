@@ -2,13 +2,11 @@
 //!
 //! file transfer activity components
 
-use super::{Msg, PendingActionMsg, TransferMsg, UiMsg};
-
 use tui_realm_stdlib::Phantom;
-use tuirealm::{
-    event::{Event, Key, KeyEvent, KeyModifiers},
-    Component, MockComponent, NoUserEvent,
-};
+use tuirealm::event::{Event, Key, KeyEvent, KeyModifiers};
+use tuirealm::{Component, MockComponent, NoUserEvent};
+
+use super::{Msg, PendingActionMsg, TransferMsg, UiMsg};
 
 // -- export
 mod log;
@@ -16,7 +14,6 @@ mod misc;
 mod popups;
 mod transfer;
 
-pub use self::log::Log;
 pub use misc::FooterBar;
 pub use popups::{
     CopyPopup, DeletePopup, DisconnectPopup, ErrorPopup, ExecPopup, FatalPopup, FileInfoPopup,
@@ -26,6 +23,8 @@ pub use popups::{
     SymlinkPopup, SyncBrowsingMkdirPopup, WaitPopup, WatchedPathsList, WatcherPopup,
 };
 pub use transfer::{ExplorerFind, ExplorerLocal, ExplorerRemote};
+
+pub use self::log::Log;
 
 #[derive(Default, MockComponent)]
 pub struct GlobalListener {

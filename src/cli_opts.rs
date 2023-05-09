@@ -2,14 +2,14 @@
 //!
 //! defines the types for main.rs types
 
+use std::path::PathBuf;
+use std::time::Duration;
+
 use argh::FromArgs;
 
 use crate::activity_manager::NextActivity;
 use crate::filetransfer::FileTransferParams;
 use crate::system::logging::LogLevel;
-
-use std::path::PathBuf;
-use std::time::Duration;
 
 pub enum Task {
     Activity(NextActivity),

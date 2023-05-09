@@ -2,14 +2,14 @@
 //!
 //! log tab component
 
-use super::{Msg, UiMsg};
-
 use tuirealm::command::{Cmd, CmdResult, Direction, Position};
 use tuirealm::event::{Key, KeyEvent};
 use tuirealm::props::{Alignment, AttrValue, Attribute, Borders, Color, Style, Table};
 use tuirealm::tui::layout::Corner;
 use tuirealm::tui::widgets::{List as TuiList, ListItem, ListState};
 use tuirealm::{Component, Event, MockComponent, NoUserEvent, Props, State, StateValue};
+
+use super::{Msg, UiMsg};
 
 pub struct Log {
     props: Props,

@@ -3,16 +3,17 @@
 //! `auth_activity` is the module which implements the authentication activity
 
 // Locals
+use std::path::PathBuf;
+use std::str::FromStr;
+
+use tuirealm::tui::layout::{Constraint, Direction, Layout};
+use tuirealm::tui::widgets::Clear;
+use tuirealm::{State, StateValue, Sub, SubClause, SubEventClause};
+
 use super::{components, AuthActivity, Context, FileTransferProtocol, Id, InputMask};
 use crate::filetransfer::params::{AwsS3Params, GenericProtocolParams, ProtocolParams};
 use crate::filetransfer::FileTransferParams;
 use crate::utils::ui::{Popup, Size};
-
-use std::path::PathBuf;
-use std::str::FromStr;
-use tuirealm::tui::layout::{Constraint, Direction, Layout};
-use tuirealm::tui::widgets::Clear;
-use tuirealm::{State, StateValue, Sub, SubClause, SubEventClause};
 
 impl AuthActivity {
     /// Initialize view, mounting all startup components inside the view

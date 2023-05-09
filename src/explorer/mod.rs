@@ -6,14 +6,15 @@
 pub(crate) mod builder;
 mod formatter;
 // Locals
-use formatter::Formatter;
-// Ext
-use remotefs::fs::File;
 use std::cmp::Reverse;
 use std::collections::VecDeque;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use std::string::ToString;
+
+use formatter::Formatter;
+// Ext
+use remotefs::fs::File;
 
 bitflags! {
     /// ExplorerOpts are bit options which provides different behaviours to `FileExplorer`
@@ -289,13 +290,14 @@ impl FromStr for GroupDirs {
 #[cfg(test)]
 mod tests {
 
-    use super::*;
-    use crate::utils::fmt::fmt_time;
+    use std::thread::sleep;
+    use std::time::{Duration, SystemTime};
 
     use pretty_assertions::assert_eq;
     use remotefs::fs::{File, FileType, Metadata, UnixPex};
-    use std::thread::sleep;
-    use std::time::{Duration, SystemTime};
+
+    use super::*;
+    use crate::utils::fmt::fmt_time;
 
     #[test]
     fn test_fs_explorer_new() {
