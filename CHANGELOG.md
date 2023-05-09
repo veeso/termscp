@@ -1,6 +1,7 @@
 # Changelog
 
 - [Changelog](#changelog)
+  - [0.12.0](#0120)
   - [0.11.3](#0113)
   - [0.11.2](#0112)
   - [0.11.1](#0111)
@@ -29,6 +30,13 @@
   - [0.1.0](#010)
 
 ---
+
+## 0.12.0
+
+Released on ??
+
+- [Issue 153](https://github.com/veeso/termscp/issues/153): show a loading message when loading directory's content
+- [Issue 176](https://github.com/veeso/termscp/issues/176): debug log is now written to CACHE_DIR
 
 ## 0.11.3
 
