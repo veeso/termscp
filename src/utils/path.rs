@@ -123,24 +123,20 @@ mod test {
 
     #[test]
     fn should_tell_whether_path_is_child_of() {
-        assert_eq!(
-            is_child_of(Path::new("/home/foo/foo.txt"), Path::new("/home"),),
-            true
+        assert!(
+            is_child_of(Path::new("/home/foo/foo.txt"), Path::new("/home"),)
         );
-        assert_eq!(
-            is_child_of(Path::new("/home/foo/foo.txt"), Path::new("/home/foo/"),),
-            true
+        assert!(
+            is_child_of(Path::new("/home/foo/foo.txt"), Path::new("/home/foo/"),)
         );
-        assert_eq!(
+        assert!(
             is_child_of(
                 Path::new("/home/foo/foo.txt"),
                 Path::new("/home/foo/foo.txt"),
-            ),
-            true
+            )
         );
-        assert_eq!(
-            is_child_of(Path::new("/home/foo/foo.txt"), Path::new("/tmp"),),
-            false
+        assert!(
+            !is_child_of(Path::new("/home/foo/foo.txt"), Path::new("/tmp"),)
         );
     }
 }

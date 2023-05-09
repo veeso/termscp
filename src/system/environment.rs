@@ -19,7 +19,7 @@ pub fn init_config_dir() -> Result<Option<PathBuf>, String> {
     }
 
     if let Some(dir) = CONF_DIR.as_deref() {
-        init_dir(&dir).map(Option::Some)
+        init_dir(dir).map(Option::Some)
     } else {
         Ok(None)
     }
@@ -39,7 +39,7 @@ pub fn init_cache_dir() -> Result<Option<PathBuf>, String> {
     }
 
     if let Some(dir) = CACHE_DIR.as_deref() {
-        init_dir(&dir).map(Option::Some)
+        init_dir(dir).map(Option::Some)
     } else {
         Ok(None)
     }
