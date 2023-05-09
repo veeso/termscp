@@ -478,9 +478,9 @@ Nel caso il file si trovi su host remoto, il file verrà prima scaricato tempora
 
 termscp scrive un file di log per ogni sessione, nel percorso seguente:
 
-- `$HOME/.config/termscp/termscp.log` su Linux/BSD
-- `$HOME/Library/Application Support/termscp/termscp.log` su MacOs
-- `FOLDERID_RoamingAppData\termscp\termscp.log` su Windows
+- `$HOME/.cache/termscp/termscp.log` su Linux/BSD
+- `$HOME/Library/Caches/termscp/termscp.log` su MacOs
+- `FOLDERID_LocalAppData\termscp\termscp.log` su Windows
 
 Il log non viene ruotato, ma viene troncato ad ogni lancio di termscp, quindi se devi riportare un issue, non avviare termscp fino a che non avrai salvato il file di log.
 I log sono di default riportati a livello *INFO*, quindi non sono particolarmente parlanti.

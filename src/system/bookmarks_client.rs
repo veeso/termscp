@@ -730,7 +730,7 @@ mod tests {
         // Limit is 2
         assert_eq!(client.iter_recents().count(), 2);
         // Check that 192.168.1.1 has been removed
-        let key: String = client.iter_recents().nth(0).unwrap().to_string();
+        let key: String = client.iter_recents().next().unwrap().to_string();
         assert!(matches!(
             client
                 .hosts

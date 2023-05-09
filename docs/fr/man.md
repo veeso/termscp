@@ -479,9 +479,9 @@ Si le fichier se trouve sur l'hôte distant, le fichier sera d'abord télécharg
 
 termscp écrit un fichier journal pour chaque session, qui est écrit à
 
-- `$HOME/.config/termscp/termscp.log` sous Linux/BSD
-- `$HOME/Library/Application Support/termscp/termscp.log` sous MacOs
-- `FOLDERID_RoamingAppData\termscp\termscp.log` sous Windows
+- `$HOME/.cache/termscp/termscp.log` sous Linux/BSD
+- `$HOME/Library/Caches/termscp/termscp.log` sous MacOs
+- `FOLDERID_LocalAppData\termscp\termscp.log` sous Windows
 
 le journal ne sera pas tourné, mais sera simplement tronqué après chaque lancement de termscp, donc si vous souhaitez signaler un problème et que vous souhaitez joindre votre fichier journal, n'oubliez pas de sauvegarder le fichier journal dans un endroit sûr avant de l'utiliser termescp à nouveau.
 

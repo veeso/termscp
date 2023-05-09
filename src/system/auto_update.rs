@@ -10,8 +10,6 @@ use self_update::{
     Status,
 };
 
-/// ### UpdateStatus
-///
 /// The status of the update in case of success
 #[derive(Debug, Eq, PartialEq)]
 pub enum UpdateStatus {

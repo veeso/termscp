@@ -13,8 +13,6 @@ use crate::system::{
 use std::fs;
 use std::path::{Path, PathBuf};
 
-/// ### import_theme
-///
 /// Import theme at provided path into termscp
 pub fn import_theme(p: &Path) -> Result<(), String> {
     if !p.exists() {
@@ -34,8 +32,6 @@ pub fn import_theme(p: &Path) -> Result<(), String> {
         .map_err(|e| format!("Could not import theme: {e}"))
 }
 
-/// ### install_update
-///
 /// Install latest version of termscp if an update is available
 pub fn install_update() -> Result<String, String> {
     match Update::default()
@@ -65,8 +61,6 @@ pub fn install_update() -> Result<String, String> {
     }
 }
 
-/// ### get_config_dir
-///
 /// Get configuration directory
 fn get_config_dir() -> Result<PathBuf, String> {
     match environment::init_config_dir() {
@@ -80,8 +74,6 @@ fn get_config_dir() -> Result<PathBuf, String> {
     }
 }
 
-/// ### get_config_client
-///
 /// Get configuration client
 fn get_config_client() -> Option<ConfigClient> {
     match get_config_dir() {

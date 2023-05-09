@@ -481,9 +481,9 @@ En caso de que el archivo esté ubicado en un host remoto, el archivo se descarg
 
 termscp escribe un archivo de registro para cada sesión, que se escribe en
 
-- `$HOME/.config/termscp/termscp.log` en Linux/BSD
-- `$HOME/Library/Application Support/termscp/termscp.log` en MacOs
-- `FOLDERID_RoamingAppData\termscp\termscp.log` en Windows
+- `$HOME/.cache/termscp/termscp.log` en Linux/BSD
+- `$HOME/Library/Caches/termscp/termscp.log` en MacOs
+- `FOLDERID_LocalAppData\termscp\termscp.log` en Windows
 
 el registro no se rotará, sino que se truncará después de cada lanzamiento de termscp, por lo que si desea informar un problema y desea adjuntar su archivo de registro, recuerde guardar el archivo de registro en un lugar seguro antes de usar termscp de nuevo.
 El registro por defecto informa en el nivel *INFO*, por lo que no es muy detallado.

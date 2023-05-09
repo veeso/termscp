@@ -4,8 +4,6 @@
 
 use std::path::{Component, Path, PathBuf};
 
-/// ### absolutize
-///
 /// Absolutize target path if relative.
 /// For example:
 ///
@@ -24,8 +22,6 @@ pub fn absolutize(wrkdir: &Path, target: &Path) -> PathBuf {
     }
 }
 
-/// ### diff_paths
-///
 /// This function will get the difference from path `path` to `base`. Basically will remove `base` from `path`
 ///
 /// For example:
@@ -127,24 +123,21 @@ mod test {
 
     #[test]
     fn should_tell_whether_path_is_child_of() {
-        assert_eq!(
-            is_child_of(Path::new("/home/foo/foo.txt"), Path::new("/home"),),
-            true
-        );
-        assert_eq!(
-            is_child_of(Path::new("/home/foo/foo.txt"), Path::new("/home/foo/"),),
-            true
-        );
-        assert_eq!(
-            is_child_of(
-                Path::new("/home/foo/foo.txt"),
-                Path::new("/home/foo/foo.txt"),
-            ),
-            true
-        );
-        assert_eq!(
-            is_child_of(Path::new("/home/foo/foo.txt"), Path::new("/tmp"),),
-            false
-        );
+        assert!(is_child_of(
+            Path::new("/home/foo/foo.txt"),
+            Path::new("/home"),
+        ));
+        assert!(is_child_of(
+            Path::new("/home/foo/foo.txt"),
+            Path::new("/home/foo/"),
+        ));
+        assert!(is_child_of(
+            Path::new("/home/foo/foo.txt"),
+            Path::new("/home/foo/foo.txt"),
+        ));
+        assert!(!is_child_of(
+            Path::new("/home/foo/foo.txt"),
+            Path::new("/tmp"),
+        ));
     }
 }

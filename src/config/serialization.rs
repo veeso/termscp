@@ -49,8 +49,6 @@ impl std::fmt::Display for SerializerError {
     }
 }
 
-/// ### serialize
-///
 /// Serialize `UserHosts` into TOML and write content to writable
 pub fn serialize<S>(serializable: &S, mut writable: Box<dyn Write>) -> Result<(), SerializerError>
 where
@@ -77,8 +75,6 @@ where
     }
 }
 
-/// ### deserialize
-///
 /// Read data from readable and deserialize its content as TOML
 pub fn deserialize<S>(mut readable: Box<dyn Read>) -> Result<S, SerializerError>
 where

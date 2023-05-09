@@ -6,8 +6,6 @@ use super::FileTransferProtocol;
 
 use std::path::{Path, PathBuf};
 
-/// ### FileTransferParams
-///
 /// Holds connection parameters for file transfers
 #[derive(Debug, Clone)]
 pub struct FileTransferParams {

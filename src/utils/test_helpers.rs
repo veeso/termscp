@@ -33,8 +33,6 @@ pub fn create_sample_file_with_content(content: impl std::fmt::Display) -> Named
     tmpfile
 }
 
-/// ### make_file_at
-///
 /// Make a file with `name` at specified path
 pub fn make_file_at(dir: &Path, filename: &str) -> std::io::Result<PathBuf> {
     let mut p: PathBuf = PathBuf::from(dir);
@@ -47,8 +45,6 @@ pub fn make_file_at(dir: &Path, filename: &str) -> std::io::Result<PathBuf> {
     Ok(p)
 }
 
-/// ### make_dir_at
-///
 /// Make a directory in `dir`
 pub fn make_dir_at(dir: &Path, dirname: &str) -> std::io::Result<()> {
     let mut p: PathBuf = PathBuf::from(dir);
@@ -69,8 +65,6 @@ pub fn make_fsentry<P: AsRef<Path>>(path: P, is_dir: bool) -> File {
     }
 }
 
-/// ### create_file_ioers
-///
 /// Open a file with two handlers, the first is to read, the second is to write
 pub fn create_file_ioers(p: &Path) -> (StdFile, StdFile) {
     (

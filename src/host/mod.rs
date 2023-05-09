@@ -41,8 +41,6 @@ pub enum HostErrorType {
     DeleteFailed,
 }
 
-/// ### HostError
-///
 /// HostError is a wrapper for the error type and the exact io error
 #[derive(Debug)]
 pub struct HostError {

@@ -136,8 +136,6 @@ fn parse_remote_address(remote: &str) -> Result<FileTransferParams, String> {
     utils::parser::parse_remote_opt(remote).map_err(|e| format!("Bad address option: {e}"))
 }
 
-/// ### run
-///
 /// Run task and return rc
 fn run(run_opts: RunOpts) -> i32 {
     match run_opts.task {

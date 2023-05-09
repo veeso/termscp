@@ -8,8 +8,6 @@ use std::time::Instant;
 
 // -- States and progress
 
-/// ### TransferStates
-///
 /// TransferStates contains the states related to the transfer process
 pub struct TransferStates {
     aborted: bool,               // Describes whether the transfer process has been aborted
@@ -17,8 +15,6 @@ pub struct TransferStates {
     pub partial: ProgressStates, // Partial transfer states
 }
 
-/// ### ProgressStates
-///
 /// Progress states describes the states for the progress of a single transfer part
 pub struct ProgressStates {
     started: Instant,

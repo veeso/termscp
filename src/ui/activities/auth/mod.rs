@@ -147,8 +147,6 @@ enum InputMask {
 const STORE_KEY_LATEST_VERSION: &str = "AUTH_LATEST_VERSION";
 const STORE_KEY_RELEASE_NOTES: &str = "AUTH_RELEASE_NOTES";
 
-/// ### AuthActivity
-///
 /// AuthActivity is the data holder for the authentication activity
 pub struct AuthActivity {
     app: Application<Id, Msg, NoUserEvent>,

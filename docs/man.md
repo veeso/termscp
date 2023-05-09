@@ -480,9 +480,9 @@ In case the file is located on remote host, the file will be first downloaded in
 
 termscp writes a log file for each session, which is written at
 
-- `$HOME/.config/termscp/termscp.log` on Linux/BSD
-- `$HOME/Library/Application Support/termscp/termscp.log` on MacOs
-- `FOLDERID_RoamingAppData\termscp\termscp.log` on Windows
+- `$HOME/.cache/termscp/termscp.log` on Linux/BSD
+- `$HOME/Library/Caches/termscp/termscp.log` on MacOs
+- `FOLDERID_LocalAppData\termscp\termscp.log` on Windows
 
 the log won't be rotated, but will just be truncated after each launch of termscp, so if you want to report an issue and you want to attach your log file, keep in mind to save the log file in a safe place before using termscp again.
 The logging by default reports in *INFO* level, so it is not very verbose.
