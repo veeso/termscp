@@ -112,17 +112,25 @@ impl FileTransferActivity {
     pub(super) fn reload_remote_dir(&mut self) {
         // Get current entries
         if let Ok(wrkdir) = self.client.pwd() {
+            self.mount_blocking_wait("Loading remote directory...");
+
             self.remote_scan(wrkdir.as_path());
             // Set wrkdir
             self.remote_mut().wrkdir = wrkdir;
+
+            self.umount_wait();
         }
     }
 
     /// Reload local directory entries and update browser
     pub(super) fn reload_local_dir(&mut self) {
+        self.mount_blocking_wait("Loading local directory...");
+
         let wrkdir: PathBuf = self.host.pwd();
         self.local_scan(wrkdir.as_path());
         self.local_mut().wrkdir = wrkdir;
+
+        self.umount_wait();
     }
 
     /// Scan current local directory
