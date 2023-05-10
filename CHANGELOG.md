@@ -35,6 +35,8 @@
 
 Released on ??
 
+- **Change file permissions**: you can now change file permissions easily with the permissions popup pressing `Z` in the explorer.
+  - [Issue 172](https://github.com/veeso/termscp/issues/172)
 - [Issue 153](https://github.com/veeso/termscp/issues/153): show a loading message when loading directory's content
 - [Issue 176](https://github.com/veeso/termscp/issues/176): debug log is now written to CACHE_DIR
 - [Issue 173](https://github.com/veeso/termscp/issues/173): allow unknown fields in ssh2 configuration file

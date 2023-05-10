@@ -127,6 +127,10 @@ impl Component<Msg, NoUserEvent> for ExplorerFind {
                 code: Key::Char('w'),
                 modifiers: KeyModifiers::NONE,
             }) => Some(Msg::Ui(UiMsg::ShowOpenWithPopup)),
+            Event::Keyboard(KeyEvent {
+                code: Key::Char('z'),
+                modifiers: KeyModifiers::NONE,
+            }) => Some(Msg::Ui(UiMsg::ShowChmodPopup)),
             _ => None,
         }
     }
@@ -308,6 +312,10 @@ impl Component<Msg, NoUserEvent> for ExplorerLocal {
                 code: Key::Char('w'),
                 modifiers: KeyModifiers::NONE,
             }) => Some(Msg::Ui(UiMsg::ShowOpenWithPopup)),
+            Event::Keyboard(KeyEvent {
+                code: Key::Char('z'),
+                modifiers: KeyModifiers::NONE,
+            }) => Some(Msg::Ui(UiMsg::ShowChmodPopup)),
             _ => None,
         }
     }
@@ -489,6 +497,10 @@ impl Component<Msg, NoUserEvent> for ExplorerRemote {
                 code: Key::Char('w'),
                 modifiers: KeyModifiers::NONE,
             }) => Some(Msg::Ui(UiMsg::ShowOpenWithPopup)),
+            Event::Keyboard(KeyEvent {
+                code: Key::Char('z'),
+                modifiers: KeyModifiers::NONE,
+            }) => Some(Msg::Ui(UiMsg::ShowChmodPopup)),
             _ => None,
         }
     }

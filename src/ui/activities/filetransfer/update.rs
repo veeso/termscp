@@ -32,6 +32,18 @@ impl FileTransferActivity {
             TransferMsg::AbortTransfer => {
                 self.transfer.abort();
             }
+            TransferMsg::Chmod(mode) => {
+                self.umount_chmod();
+                self.mount_blocking_wait("Applying new file mode…");
+                match self.browser.tab() {
+                    FileExplorerTab::Local => self.action_local_chmod(mode),
+                    FileExplorerTab::Remote => self.action_remote_chmod(mode),
+                    FileExplorerTab::FindLocal => self.action_find_local_chmod(mode),
+                    FileExplorerTab::FindRemote => self.action_find_remote_chmod(mode),
+                }
+                self.umount_wait();
+                self.update_browser_file_list();
+            }
             TransferMsg::CopyFileTo(dest) => {
                 self.umount_copy();
                 self.mount_blocking_wait("Copying file(s)…");
@@ -336,6 +348,7 @@ impl FileTransferActivity {
 
     fn update_ui(&mut self, msg: UiMsg) -> Option<Msg> {
         match msg {
+            UiMsg::CloseChmodPopup => self.umount_chmod(),
             UiMsg::ChangeFileSorting(sorting) => {
                 match self.browser.tab() {
                     FileExplorerTab::Local | FileExplorerTab::FindLocal => {
@@ -420,6 +433,29 @@ impl FileTransferActivity {
                     assert!(self.app.active(&Id::ReplacingFilesListPopup).is_ok());
                 } else {
                     assert!(self.app.active(&Id::ReplacePopup).is_ok());
+                }
+            }
+            UiMsg::ShowChmodPopup => {
+                let selected_file = match self.browser.tab() {
+                    FileExplorerTab::Local => self.get_local_selected_entries(),
+                    FileExplorerTab::Remote => self.get_remote_selected_entries(),
+                    FileExplorerTab::FindLocal | FileExplorerTab::FindRemote => {
+                        self.get_found_selected_entries()
+                    }
+                };
+                if let Some(mode) = selected_file.unix_pex() {
+                    self.mount_chmod(
+                        mode,
+                        match selected_file {
+                            SelectedFile::Many(files) => {
+                                format!("changing mode for {} files…", files.len())
+                            }
+                            SelectedFile::One(file) => {
+                                format!("changing mode for {}…", file.name())
+                            }
+                            SelectedFile::None => "".to_string(),
+                        },
+                    );
                 }
             }
             UiMsg::ShowCopyPopup => self.mount_copy(),

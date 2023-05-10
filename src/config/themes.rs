@@ -4,7 +4,8 @@
 
 // locals
 // ext
-use serde::{de::Error as DeError, Deserialize, Deserializer, Serialize, Serializer};
+use serde::de::Error as DeError;
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use tuirealm::tui::style::Color;
 
 use crate::utils::fmt::fmt_color;

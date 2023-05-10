@@ -38,6 +38,7 @@ use crate::system::watcher::FsWatcher;
 
 #[derive(Debug, Eq, PartialEq, Clone, Hash)]
 enum Id {
+    ChmodPopup,
     CopyPopup,
     DeletePopup,
     DisconnectPopup,
@@ -93,6 +94,7 @@ enum PendingActionMsg {
 #[derive(Debug, PartialEq)]
 enum TransferMsg {
     AbortTransfer,
+    Chmod(remotefs::fs::UnixPex),
     CopyFileTo(String),
     CreateSymlink(String),
     DeleteFile,
@@ -119,6 +121,7 @@ enum TransferMsg {
 enum UiMsg {
     ChangeFileSorting(FileSorting),
     ChangeTransferWindow,
+    CloseChmodPopup,
     CloseCopyPopup,
     CloseDeletePopup,
     CloseDisconnectPopup,
@@ -144,6 +147,7 @@ enum UiMsg {
     LogBackTabbed,
     Quit,
     ReplacePopupTabbed,
+    ShowChmodPopup,
     ShowCopyPopup,
     ShowDeletePopup,
     ShowDisconnectPopup,

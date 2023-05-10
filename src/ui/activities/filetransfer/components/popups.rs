@@ -21,6 +21,10 @@ use super::{Msg, PendingActionMsg, TransferMsg, UiMsg};
 use crate::explorer::FileSorting;
 use crate::utils::fmt::fmt_time;
 
+mod chmod;
+
+pub use chmod::ChmodPopup;
+
 #[derive(MockComponent)]
 pub struct CopyPopup {
     component: Input,
@@ -746,6 +750,8 @@ impl KeybindingsPopup {
                         .add_col(TextSpan::from(
                             "            Open text file with preferred editor",
                         ))
+                        .add_col(TextSpan::new("<P>").bold().fg(key_color))
+                        .add_col(TextSpan::from("               Toggle log panel"))
                         .add_row()
                         .add_col(TextSpan::new("<Q|F10>").bold().fg(key_color))
                         .add_col(TextSpan::from("           Quit termscp"))
@@ -779,6 +785,8 @@ impl KeybindingsPopup {
                         .add_col(TextSpan::from(
                             "               Toggle synchronized browsing",
                         ))
+                        .add_col(TextSpan::new("<Z>").bold().fg(key_color))
+                        .add_col(TextSpan::from("               Change file permissions"))
                         .add_row()
                         .add_col(TextSpan::new("<DEL|F8|E>").bold().fg(key_color))
                         .add_col(TextSpan::from("        Delete selected file"))
