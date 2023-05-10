@@ -3,6 +3,7 @@ use remotefs::fs::UnixPex;
 use super::{FileTransferActivity, LogLevel};
 
 impl FileTransferActivity {
+    #[cfg(target_family = "unix")]
     pub fn action_local_chmod(&mut self, mode: UnixPex) {
         let files = self.get_local_selected_entries().get_files();
 
@@ -50,6 +51,7 @@ impl FileTransferActivity {
         }
     }
 
+    #[cfg(target_family = "unix")]
     pub fn action_find_local_chmod(&mut self, mode: UnixPex) {
         let files = self.get_found_selected_entries().get_files();
 

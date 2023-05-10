@@ -36,10 +36,14 @@ impl FileTransferActivity {
                 self.umount_chmod();
                 self.mount_blocking_wait("Applying new file mode…");
                 match self.browser.tab() {
+                    #[cfg(target_family = "unix")]
                     FileExplorerTab::Local => self.action_local_chmod(mode),
-                    FileExplorerTab::Remote => self.action_remote_chmod(mode),
+                    #[cfg(target_family = "unix")]
                     FileExplorerTab::FindLocal => self.action_find_local_chmod(mode),
+                    FileExplorerTab::Remote => self.action_remote_chmod(mode),
                     FileExplorerTab::FindRemote => self.action_find_remote_chmod(mode),
+                    #[cfg(target_family = "windows")]
+                    FileExplorerTab::Local | FileExplorerTab::FindLocal => {}
                 }
                 self.umount_wait();
                 self.update_browser_file_list();
@@ -437,11 +441,14 @@ impl FileTransferActivity {
             }
             UiMsg::ShowChmodPopup => {
                 let selected_file = match self.browser.tab() {
+                    #[cfg(target_family = "unix")]
                     FileExplorerTab::Local => self.get_local_selected_entries(),
+                    #[cfg(target_family = "unix")]
+                    FileExplorerTab::FindLocal => self.get_found_selected_entries(),
                     FileExplorerTab::Remote => self.get_remote_selected_entries(),
-                    FileExplorerTab::FindLocal | FileExplorerTab::FindRemote => {
-                        self.get_found_selected_entries()
-                    }
+                    FileExplorerTab::FindRemote => self.get_found_selected_entries(),
+                    #[cfg(target_family = "windows")]
+                    FileExplorerTab::Local | FileExplorerTab::FindLocal => SelectedFile::None,
                 };
                 if let Some(mode) = selected_file.unix_pex() {
                     self.mount_chmod(
