@@ -208,6 +208,7 @@ Per cambiare pannello ti puoi muovere con le frecce, `<LEFT>` per andare sul pan
 | `<W>`         | Apri il file con il programma specificato             | With        |
 | `<X>`         | Esegui comando shell                                  | eXecute     |
 | `<Y>`         | Abilita/disabilita Sync-Browsing                      | sYnc        |
+| `<Z>`         | Modifica permessi file                                |             |
 | `<CTRL+A>`    | Seleziona tutti i file                                |             |
 | `<CTRL+C>`    | Annulla trasferimento file                            |             |
 | `<CTRL+T>`    | Visualizza tutti i percorsi sincronizzati             | Track       |

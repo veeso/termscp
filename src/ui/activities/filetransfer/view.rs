@@ -4,7 +4,7 @@
 
 // locals
 // Ext
-use remotefs::fs::File;
+use remotefs::fs::{File, UnixPex};
 use tuirealm::event::{Key, KeyEvent, KeyModifiers};
 use tuirealm::tui::layout::{Constraint, Direction, Layout};
 use tuirealm::tui::widgets::Clear;
@@ -158,6 +158,11 @@ impl FileTransferActivity {
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::CopyPopup, f, popup);
+            } else if self.app.mounted(&Id::ChmodPopup) {
+                let popup = Popup(Size::Percentage(50), Size::Unit(12)).draw_in(f.size());
+                f.render_widget(Clear, popup);
+                // make popup
+                self.app.view(&Id::ChmodPopup, f, popup);
             } else if self.app.mounted(&Id::FindPopup) {
                 let popup = Popup(Size::Percentage(40), Size::Unit(3)).draw_in(f.size());
                 f.render_widget(Clear, popup);
@@ -433,6 +438,24 @@ impl FileTransferActivity {
     /// Umount disconnect popup
     pub(super) fn umount_disconnect(&mut self) {
         let _ = self.app.umount(&Id::DisconnectPopup);
+    }
+
+    pub(super) fn mount_chmod(&mut self, mode: UnixPex, title: String) {
+        // Mount
+        let color = self.theme().misc_input_dialog;
+        assert!(self
+            .app
+            .remount(
+                Id::ChmodPopup,
+                Box::new(components::ChmodPopup::new(mode, color, title)),
+                vec![],
+            )
+            .is_ok());
+        assert!(self.app.active(&Id::ChmodPopup).is_ok());
+    }
+
+    pub(super) fn umount_chmod(&mut self) {
+        let _ = self.app.umount(&Id::ChmodPopup);
     }
 
     pub(super) fn mount_copy(&mut self) {
@@ -1068,9 +1091,14 @@ impl FileTransferActivity {
                                                                                                             Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
                                                                                                                 Id::WatchedPathsList,
                                                                                                             )))),
-                                                                                                            Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
-                                                                                                                Id::WaitPopup,
-                                                                                                            )))),
+                                                                                                            Box::new(SubClause::And(
+                                                                                                                Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
+                                                                                                                    Id::ChmodPopup,
+                                                                                                                )))),
+                                                                                                                Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
+                                                                                                                    Id::WaitPopup,
+                                                                                                                )))),
+                                                                                                            )),
                                                                                                         )),
                                                                                                     )),
                                                                                                 )),

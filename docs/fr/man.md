@@ -212,6 +212,7 @@ Pour changer de panneau, vous devez taper `<LEFT>` pour déplacer le panneau de 
 | `<W>`         | Ouvrir le fichier avec le programme spécifié                              | With        |
 | `<X>`         | Exécuter une commande                                                     | eXecute     |
 | `<Y>`         | Basculer la navigation synchronisée                                       | sYnc        |
+| `<Z>`         | Changer permissions de fichier                                            |             |
 | `<CTRL+A>`    | Sélectionner tous les fichiers                                            |             |
 | `<CTRL+C>`    | Abandonner le processus de transfert de fichiers                          |             |
 | `<CTRL+T>`    | Afficher tous les chemins synchronisés                                    | Track       |

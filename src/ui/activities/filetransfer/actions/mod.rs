@@ -2,6 +2,7 @@
 //!
 //! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
 
+use remotefs::fs::UnixPex;
 pub(self) use remotefs::File;
 use tuirealm::{State, StateValue};
 
@@ -13,6 +14,7 @@ pub(self) use super::{
 
 // actions
 pub(crate) mod change_dir;
+pub(crate) mod chmod;
 pub(crate) mod copy;
 pub(crate) mod delete;
 pub(crate) mod edit;
@@ -33,6 +35,27 @@ pub(crate) enum SelectedFile {
     One(File),
     Many(Vec<File>),
     None,
+}
+
+impl SelectedFile {
+    /// Get file mode for `SelectedFile`
+    /// In case is `Many` the first item mode is returned
+    pub fn unix_pex(&self) -> Option<UnixPex> {
+        match self {
+            Self::Many(files) => files.iter().next().and_then(|file| file.metadata().mode),
+            Self::One(file) => file.metadata().mode,
+            Self::None => None,
+        }
+    }
+
+    /// Get files as vec
+    pub fn get_files(self) -> Vec<File> {
+        match self {
+            Self::One(file) => vec![file],
+            Self::Many(files) => files,
+            Self::None => vec![],
+        }
+    }
 }
 
 #[derive(Debug)]
