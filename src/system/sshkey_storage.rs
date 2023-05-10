@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 // Ext
-use remotefs_ssh::SshKeyStorage as SshKeyStorageTrait;
+use remotefs_ssh::{SshConfigParseRule, SshKeyStorage as SshKeyStorageTrait};
 use ssh2_config::SshConfig;
 
 use super::config_client::ConfigClient;
@@ -43,7 +43,7 @@ impl SshKeyStorage {
             .map_err(|e| format!("failed to open {path}: {e}"))
             .map(BufReader::new)?;
         SshConfig::default()
-            .parse(&mut reader)
+            .parse(&mut reader, SshConfigParseRule::ALLOW_UNKNOWN_FIELDS)
             .map_err(|e| format!("Failed to parse ssh2 config: {e}"))
     }
 

@@ -37,6 +37,7 @@ Released on ??
 
 - [Issue 153](https://github.com/veeso/termscp/issues/153): show a loading message when loading directory's content
 - [Issue 176](https://github.com/veeso/termscp/issues/176): debug log is now written to CACHE_DIR
+- [Issue 173](https://github.com/veeso/termscp/issues/173): allow unknown fields in ssh2 configuration file
 
 ## 0.11.3
 
