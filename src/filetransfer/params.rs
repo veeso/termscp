@@ -19,6 +19,7 @@ pub struct FileTransferParams {
 pub enum ProtocolParams {
     Generic(GenericProtocolParams),
     AwsS3(AwsS3Params),
+    Smb(SmbParams),
 }
 
 /// Protocol params used by most common protocols
@@ -44,6 +45,20 @@ pub struct AwsS3Params {
     pub new_path_style: bool,
 }
 
+/// Connection parameters for SMB protocol
+#[derive(Debug, Clone)]
+pub struct SmbParams {
+    pub address: String,
+    pub port: u16,
+    pub share: String,
+    #[cfg(target_family = "unix")]
+    pub username: Option<String>,
+    #[cfg(target_family = "unix")]
+    pub password: Option<String>,
+    #[cfg(target_family = "unix")]
+    pub workgroup: Option<String>,
+}
+
 impl FileTransferParams {
     /// Instantiates a new `FileTransferParams`
     pub fn new(protocol: FileTransferProtocol, params: ProtocolParams) -> Self {
@@ -66,6 +81,7 @@ impl FileTransferParams {
         match &self.params {
             ProtocolParams::AwsS3(params) => params.password_missing(),
             ProtocolParams::Generic(params) => params.password_missing(),
+            ProtocolParams::Smb(params) => params.password_missing(),
         }
     }
 
@@ -74,6 +90,7 @@ impl FileTransferParams {
         match &mut self.params {
             ProtocolParams::AwsS3(params) => params.set_default_secret(secret),
             ProtocolParams::Generic(params) => params.set_default_secret(secret),
+            ProtocolParams::Smb(params) => params.set_default_secret(secret),
         }
     }
 }
@@ -114,6 +131,15 @@ impl ProtocolParams {
     pub fn s3_params(&self) -> Option<&AwsS3Params> {
         match self {
             ProtocolParams::AwsS3(params) => Some(params),
+            _ => None,
+        }
+    }
+
+    #[cfg(test)]
+    /// Retrieve SMB parameters if any
+    pub fn smb_params(&self) -> Option<&SmbParams> {
+        match self {
+            ProtocolParams::Smb(params) => Some(params),
             _ => None,
         }
     }
@@ -235,6 +261,62 @@ impl AwsS3Params {
     }
 }
 
+// -- SMB params
+
+impl SmbParams {
+    /// Instantiates a new `AwsS3Params` struct
+    pub fn new<S: AsRef<str>>(address: S, port: u16, share: S) -> Self {
+        Self {
+            address: address.as_ref().to_string(),
+            port,
+            share: share.as_ref().to_string(),
+            #[cfg(target_family = "unix")]
+            username: None,
+            #[cfg(target_family = "unix")]
+            password: None,
+            #[cfg(target_family = "unix")]
+            workgroup: None,
+        }
+    }
+
+    #[cfg(target_family = "unix")]
+    pub fn username(mut self, username: Option<impl ToString>) -> Self {
+        self.username = username.map(|x| x.to_string());
+        self
+    }
+
+    #[cfg(target_family = "unix")]
+    pub fn password(mut self, password: Option<impl ToString>) -> Self {
+        self.password = password.map(|x| x.to_string());
+        self
+    }
+
+    #[cfg(target_family = "unix")]
+    pub fn workgroup(mut self, workgroup: Option<impl ToString>) -> Self {
+        self.workgroup = workgroup.map(|x| x.to_string());
+        self
+    }
+
+    /// Returns whether a password is supposed to be required for this protocol params.
+    /// The result true is returned ONLY if the supposed secret is MISSING!!!
+    pub fn password_missing(&self) -> bool {
+        if cfg!(target_family = "unix") {
+            self.password.is_none()
+        } else {
+            false
+        }
+    }
+
+    /// Set password
+    #[cfg(target_family = "unix")]
+    pub fn set_default_secret(&mut self, secret: String) {
+        self.password = Some(secret);
+    }
+
+    #[cfg(target_family = "windows")]
+    pub fn set_default_secret(&mut self, _secret: String) {}
+}
+
 #[cfg(test)]
 mod test {
 
@@ -302,6 +384,37 @@ mod test {
         assert_eq!(params.security_token.as_deref().unwrap(), "omar");
         assert_eq!(params.session_token.as_deref().unwrap(), "gerry-scotti");
         assert_eq!(params.new_path_style, true);
+    }
+
+    #[test]
+    fn should_init_smb_params() {
+        let params = SmbParams::new("localhost", 3456, "temp");
+        assert_eq!(&params.address, "localhost");
+        assert_eq!(params.port, 3456);
+        assert_eq!(&params.share, "temp");
+
+        #[cfg(target_family = "unix")]
+        assert!(params.username.is_none());
+        #[cfg(target_family = "unix")]
+        assert!(params.password.is_none());
+        #[cfg(target_family = "unix")]
+        assert!(params.workgroup.is_none());
+    }
+
+    #[test]
+    #[cfg(target_family = "unix")]
+    fn should_init_smb_params_with_optionals() {
+        let params = SmbParams::new("localhost", 3456, "temp")
+            .username(Some("foo"))
+            .password(Some("bar"))
+            .workgroup(Some("baz"));
+
+        assert_eq!(&params.address, "localhost");
+        assert_eq!(params.port, 3456);
+        assert_eq!(&params.share, "temp");
+        assert_eq!(params.username.as_deref().unwrap(), "foo");
+        assert_eq!(params.password.as_deref().unwrap(), "bar");
+        assert_eq!(params.workgroup.as_deref().unwrap(), "baz");
     }
 
     #[test]

@@ -13,10 +13,11 @@ pub use params::{FileTransferParams, ProtocolParams};
 
 #[derive(PartialEq, Eq, Debug, Clone, Copy)]
 pub enum FileTransferProtocol {
-    Sftp,
-    Scp,
-    Ftp(bool), // Bool is for secure (true => ftps)
     AwsS3,
+    Ftp(bool), // Bool is for secure (true => ftps)
+    Scp,
+    Sftp,
+    Smb,
 }
 
 // Traits
@@ -24,13 +25,14 @@ pub enum FileTransferProtocol {
 impl std::string::ToString for FileTransferProtocol {
     fn to_string(&self) -> String {
         String::from(match self {
+            FileTransferProtocol::AwsS3 => "S3",
             FileTransferProtocol::Ftp(secure) => match secure {
                 true => "FTPS",
                 false => "FTP",
             },
             FileTransferProtocol::Scp => "SCP",
             FileTransferProtocol::Sftp => "SFTP",
-            FileTransferProtocol::AwsS3 => "S3",
+            FileTransferProtocol::Smb => "SMB",
         })
     }
 }
@@ -41,9 +43,10 @@ impl std::str::FromStr for FileTransferProtocol {
         match s.to_ascii_uppercase().as_str() {
             "FTP" => Ok(FileTransferProtocol::Ftp(false)),
             "FTPS" => Ok(FileTransferProtocol::Ftp(true)),
+            "S3" => Ok(FileTransferProtocol::AwsS3),
             "SCP" => Ok(FileTransferProtocol::Scp),
             "SFTP" => Ok(FileTransferProtocol::Sftp),
-            "S3" => Ok(FileTransferProtocol::AwsS3),
+            "SMB" => Ok(FileTransferProtocol::Smb),
             _ => Err(s.to_string()),
         }
     }
@@ -105,6 +108,14 @@ mod tests {
             FileTransferProtocol::Scp
         );
         assert_eq!(
+            FileTransferProtocol::from_str("SMB").ok().unwrap(),
+            FileTransferProtocol::Smb
+        );
+        assert_eq!(
+            FileTransferProtocol::from_str("smb").ok().unwrap(),
+            FileTransferProtocol::Smb
+        );
+        assert_eq!(
             FileTransferProtocol::from_str("S3").ok().unwrap(),
             FileTransferProtocol::AwsS3
         );
@@ -126,5 +137,6 @@ mod tests {
         assert_eq!(FileTransferProtocol::Scp.to_string(), String::from("SCP"));
         assert_eq!(FileTransferProtocol::Sftp.to_string(), String::from("SFTP"));
         assert_eq!(FileTransferProtocol::AwsS3.to_string(), String::from("S3"));
+        assert_eq!(FileTransferProtocol::Smb.to_string(), String::from("SMB"));
     }
 }

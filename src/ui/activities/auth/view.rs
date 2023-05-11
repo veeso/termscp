@@ -56,6 +56,9 @@ impl AuthActivity {
         self.mount_s3_security_token("");
         self.mount_s3_session_token("");
         self.mount_s3_new_path_style(false);
+        self.mount_smb_share("");
+        #[cfg(target_family = "unix")]
+        self.mount_smb_workgroup("");
         // Version notice
         if let Some(version) = self
             .context()
@@ -150,10 +153,39 @@ impl AuthActivity {
                 InputMask::Generic => Layout::default()
                     .constraints(
                         [
-                            Constraint::Length(3), // host
+                            Constraint::Length(3), // address
                             Constraint::Length(3), // port
                             Constraint::Length(3), // username
                             Constraint::Length(3), // password
+                            Constraint::Length(3), // remote directory
+                        ]
+                        .as_ref(),
+                    )
+                    .direction(Direction::Vertical)
+                    .split(auth_chunks[4]),
+                #[cfg(target_family = "unix")]
+                InputMask::Smb => Layout::default()
+                    .constraints(
+                        [
+                            Constraint::Length(3), // address
+                            Constraint::Length(3), // port
+                            Constraint::Length(3), // share
+                            Constraint::Length(3), // username
+                            Constraint::Length(3), // password
+                            Constraint::Length(3), // workgroup
+                            Constraint::Length(3), // remote directory
+                        ]
+                        .as_ref(),
+                    )
+                    .direction(Direction::Vertical)
+                    .split(auth_chunks[4]),
+                #[cfg(target_family = "windows")]
+                InputMask::Smb => Layout::default()
+                    .constraints(
+                        [
+                            Constraint::Length(3), // address
+                            Constraint::Length(3), // port
+                            Constraint::Length(3), // share
                             Constraint::Length(3), // remote directory
                         ]
                         .as_ref(),
@@ -183,6 +215,13 @@ impl AuthActivity {
                 }
                 InputMask::Generic => {
                     let view_ids = self.get_generic_params_view();
+                    self.app.view(&view_ids[0], f, input_mask[0]);
+                    self.app.view(&view_ids[1], f, input_mask[1]);
+                    self.app.view(&view_ids[2], f, input_mask[2]);
+                    self.app.view(&view_ids[3], f, input_mask[3]);
+                }
+                InputMask::Smb => {
+                    let view_ids = self.get_smb_view();
                     self.app.view(&view_ids[0], f, input_mask[0]);
                     self.app.view(&view_ids[1], f, input_mask[1]);
                     self.app.view(&view_ids[2], f, input_mask[2]);
@@ -713,6 +752,31 @@ impl AuthActivity {
             .is_ok());
     }
 
+    pub(crate) fn mount_smb_share(&mut self, share: &str) {
+        let color = self.theme().auth_password;
+        assert!(self
+            .app
+            .remount(
+                Id::SmbShare,
+                Box::new(components::InputSmbShare::new(share, color)),
+                vec![]
+            )
+            .is_ok());
+    }
+
+    #[cfg(target_family = "unix")]
+    pub(crate) fn mount_smb_workgroup(&mut self, workgroup: &str) {
+        let color = self.theme().auth_address;
+        assert!(self
+            .app
+            .remount(
+                Id::SmbWorkgroup,
+                Box::new(components::InputSmbWorkgroup::new(workgroup, color)),
+                vec![]
+            )
+            .is_ok());
+    }
+
     // -- query
 
     /// Collect input values from view
@@ -874,6 +938,7 @@ impl AuthActivity {
         match self.input_mask() {
             InputMask::AwsS3 => 12,
             InputMask::Generic => 12,
+            InputMask::Smb => 12,
         }
     }
 
@@ -912,6 +977,9 @@ impl AuthActivity {
                     "{}://{}{}:{}",
                     protocol, username, params.address, params.port
                 )
+            }
+            ProtocolParams::Smb(params) => {
+                format!("\\\\{}:{}\\{}", params.address, params.port, params.share)
             }
         }
     }
@@ -964,6 +1032,29 @@ impl AuthActivity {
             ],
             _ => [Id::S3Bucket, Id::S3Region, Id::S3Endpoint, Id::S3Profile],
         }
+    }
+
+    #[cfg(target_family = "unix")]
+    fn get_smb_view(&self) -> [Id; 4] {
+        match self.app.focus() {
+            Some(&Id::Address | &Id::Port | &Id::SmbShare | &Id::Username) => {
+                [Id::Address, Id::Port, Id::SmbShare, Id::Username]
+            }
+            Some(&Id::Password) => [Id::Port, Id::SmbShare, Id::Username, Id::Password],
+            Some(&Id::SmbWorkgroup) => [Id::SmbShare, Id::Username, Id::Password, Id::SmbWorkgroup],
+            Some(&Id::RemoteDirectory) => [
+                Id::Username,
+                Id::Password,
+                Id::SmbWorkgroup,
+                Id::RemoteDirectory,
+            ],
+            _ => [Id::Address, Id::Port, Id::SmbShare, Id::Username],
+        }
+    }
+
+    #[cfg(target_family = "windows")]
+    fn get_smb_view(&self) -> [Id; 4] {
+        [Id::Address, Id::Port, Id::SmbShare, Id::RemoteDirectory]
     }
 
     fn init_global_listener(&mut self) {

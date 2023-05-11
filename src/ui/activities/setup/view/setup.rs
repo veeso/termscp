@@ -13,6 +13,10 @@ use tuirealm::{State, StateValue};
 use super::{components, Context, Id, IdCommon, IdConfig, SetupActivity, ViewLayout};
 use crate::explorer::GroupDirs;
 use crate::filetransfer::FileTransferProtocol;
+use crate::ui::activities::setup::{
+    RADIO_PROTOCOL_FTP, RADIO_PROTOCOL_FTPS, RADIO_PROTOCOL_S3, RADIO_PROTOCOL_SCP,
+    RADIO_PROTOCOL_SMB,
+};
 use crate::utils::fmt::fmt_bytes;
 
 impl SetupActivity {
@@ -268,10 +272,11 @@ impl SetupActivity {
             self.app.state(&Id::Config(IdConfig::DefaultProtocol))
         {
             let protocol: FileTransferProtocol = match protocol {
-                1 => FileTransferProtocol::Scp,
-                2 => FileTransferProtocol::Ftp(false),
-                3 => FileTransferProtocol::Ftp(true),
-                4 => FileTransferProtocol::AwsS3,
+                RADIO_PROTOCOL_SCP => FileTransferProtocol::Scp,
+                RADIO_PROTOCOL_FTP => FileTransferProtocol::Ftp(false),
+                RADIO_PROTOCOL_FTPS => FileTransferProtocol::Ftp(true),
+                RADIO_PROTOCOL_S3 => FileTransferProtocol::AwsS3,
+                RADIO_PROTOCOL_SMB => FileTransferProtocol::Smb,
                 _ => FileTransferProtocol::Sftp,
             };
             self.config_mut().set_default_protocol(protocol);

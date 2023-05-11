@@ -8,6 +8,11 @@ use tuirealm::event::{Key, KeyEvent, KeyModifiers};
 use tuirealm::props::{Alignment, BorderType, Borders, Color, InputType, Style};
 use tuirealm::{Component, Event, MockComponent, NoUserEvent, State, StateValue};
 
+use crate::ui::activities::auth::{
+    RADIO_PROTOCOL_FTP, RADIO_PROTOCOL_FTPS, RADIO_PROTOCOL_S3, RADIO_PROTOCOL_SCP,
+    RADIO_PROTOCOL_SFTP, RADIO_PROTOCOL_SMB,
+};
+
 use super::{FileTransferProtocol, FormMsg, Msg, UiMsg};
 
 // -- protocol
@@ -26,7 +31,7 @@ impl ProtocolRadio {
                         .color(color)
                         .modifiers(BorderType::Rounded),
                 )
-                .choices(&["SFTP", "SCP", "FTP", "FTPS", "S3"])
+                .choices(&["SFTP", "SCP", "FTP", "FTPS", "S3", "SMB"])
                 .foreground(color)
                 .rewind(true)
                 .title("Protocol", Alignment::Left)
@@ -37,10 +42,11 @@ impl ProtocolRadio {
     /// Convert radio index for protocol into a `FileTransferProtocol`
     fn protocol_opt_to_enum(protocol: usize) -> FileTransferProtocol {
         match protocol {
-            1 => FileTransferProtocol::Scp,
-            2 => FileTransferProtocol::Ftp(false),
-            3 => FileTransferProtocol::Ftp(true),
-            4 => FileTransferProtocol::AwsS3,
+            RADIO_PROTOCOL_SCP => FileTransferProtocol::Scp,
+            RADIO_PROTOCOL_FTP => FileTransferProtocol::Ftp(false),
+            RADIO_PROTOCOL_FTPS => FileTransferProtocol::Ftp(true),
+            RADIO_PROTOCOL_S3 => FileTransferProtocol::AwsS3,
+            RADIO_PROTOCOL_SMB => FileTransferProtocol::Smb,
             _ => FileTransferProtocol::Sftp,
         }
     }
@@ -48,11 +54,12 @@ impl ProtocolRadio {
     /// Convert `FileTransferProtocol` enum into radio group index
     fn protocol_enum_to_opt(protocol: FileTransferProtocol) -> usize {
         match protocol {
-            FileTransferProtocol::Sftp => 0,
-            FileTransferProtocol::Scp => 1,
-            FileTransferProtocol::Ftp(false) => 2,
-            FileTransferProtocol::Ftp(true) => 3,
-            FileTransferProtocol::AwsS3 => 4,
+            FileTransferProtocol::Sftp => RADIO_PROTOCOL_SFTP,
+            FileTransferProtocol::Scp => RADIO_PROTOCOL_SCP,
+            FileTransferProtocol::Ftp(false) => RADIO_PROTOCOL_FTP,
+            FileTransferProtocol::Ftp(true) => RADIO_PROTOCOL_FTPS,
+            FileTransferProtocol::AwsS3 => RADIO_PROTOCOL_S3,
+            FileTransferProtocol::Smb => RADIO_PROTOCOL_SMB,
         }
     }
 }
@@ -671,5 +678,74 @@ fn handle_input_ev(
         Event::Keyboard(KeyEvent { code: Key::Up, .. }) => Some(on_key_up),
         Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => Some(Msg::Ui(UiMsg::ParamsFormBlur)),
         _ => None,
+    }
+}
+
+#[derive(MockComponent)]
+pub struct InputSmbShare {
+    component: Input,
+}
+
+impl InputSmbShare {
+    pub fn new(host: &str, color: Color) -> Self {
+        Self {
+            component: Input::default()
+                .borders(
+                    Borders::default()
+                        .color(color)
+                        .modifiers(BorderType::Rounded),
+                )
+                .foreground(color)
+                .title("Share", Alignment::Left)
+                .input_type(InputType::Text)
+                .value(host),
+        }
+    }
+}
+
+impl Component<Msg, NoUserEvent> for InputSmbShare {
+    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+        handle_input_ev(
+            self,
+            ev,
+            Msg::Ui(UiMsg::SmbShareBlurDown),
+            Msg::Ui(UiMsg::SmbShareBlurUp),
+        )
+    }
+}
+
+#[cfg(target_family = "unix")]
+#[derive(MockComponent)]
+pub struct InputSmbWorkgroup {
+    component: Input,
+}
+
+#[cfg(target_family = "unix")]
+impl InputSmbWorkgroup {
+    pub fn new(host: &str, color: Color) -> Self {
+        Self {
+            component: Input::default()
+                .borders(
+                    Borders::default()
+                        .color(color)
+                        .modifiers(BorderType::Rounded),
+                )
+                .foreground(color)
+                .title("Workgroup", Alignment::Left)
+                .input_type(InputType::Text)
+                .value(host),
+        }
+    }
+}
+
+#[cfg(target_family = "unix")]
+impl Component<Msg, NoUserEvent> for InputSmbWorkgroup {
+    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+        handle_input_ev(
+            self,
+            ev,
+            Msg::Ui(UiMsg::SmbWorkgroupDown),
+            Msg::Ui(UiMsg::SmbWorkgroupUp),
+        )
     }
 }

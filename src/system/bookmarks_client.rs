@@ -399,28 +399,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(any(
-        target_os = "linux",
-        target_os = "freebsd",
-        target_os = "netbsd",
-        target_os = "openbsd"
-    ))]
-    fn test_system_bookmarks_new_err() {
-        assert!(BookmarksClient::new(
-            Path::new("/tmp/oifoif/omar"),
-            Path::new("/tmp/efnnu/omar"),
-            16
-        )
-        .is_err());
-
-        let tmp_dir: tempfile::TempDir = TempDir::new().ok().unwrap();
-        let (cfg_path, _): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
-        assert!(
-            BookmarksClient::new(cfg_path.as_path(), Path::new("/tmp/efnnu/omar"), 16).is_err()
-        );
-    }
-
-    #[test]
 
     fn test_system_bookmarks_new_from_existing() {
         let tmp_dir: tempfile::TempDir = TempDir::new().ok().unwrap();

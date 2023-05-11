@@ -14,6 +14,7 @@ impl AuthActivity {
             FileTransferProtocol::Sftp | FileTransferProtocol::Scp => 22,
             FileTransferProtocol::Ftp(_) => 21,
             FileTransferProtocol::AwsS3 => 22, // Doesn't matter, since not used
+            FileTransferProtocol::Smb => 445,
         }
     }
 

@@ -23,6 +23,14 @@ use crate::filetransfer::{FileTransferParams, FileTransferProtocol};
 use crate::system::bookmarks_client::BookmarksClient;
 use crate::system::config_client::ConfigClient;
 
+// radio
+const RADIO_PROTOCOL_SFTP: usize = 0;
+const RADIO_PROTOCOL_SCP: usize = 1;
+const RADIO_PROTOCOL_FTP: usize = 2;
+const RADIO_PROTOCOL_FTPS: usize = 3;
+const RADIO_PROTOCOL_S3: usize = 4;
+const RADIO_PROTOCOL_SMB: usize = 5;
+
 // -- components
 #[derive(Debug, Eq, PartialEq, Clone, Hash)]
 pub enum Id {
@@ -55,6 +63,9 @@ pub enum Id {
     S3SecretAccessKey,
     S3SecurityToken,
     S3SessionToken,
+    SmbShare,
+    #[cfg(target_family = "unix")]
+    SmbWorkgroup,
     Subtitle,
     Title,
     Username,
@@ -125,6 +136,12 @@ pub enum UiMsg {
     S3SecurityTokenBlurUp,
     S3SessionTokenBlurDown,
     S3SessionTokenBlurUp,
+    SmbShareBlurDown,
+    SmbShareBlurUp,
+    #[cfg(target_family = "unix")]
+    SmbWorkgroupDown,
+    #[cfg(target_family = "unix")]
+    SmbWorkgroupUp,
     BookmarkNameBlur,
     SaveBookmarkPasswordBlur,
     ShowDeleteBookmarkPopup,
@@ -143,6 +160,7 @@ pub enum UiMsg {
 enum InputMask {
     Generic,
     AwsS3,
+    Smb,
 }
 
 // Store keys
@@ -218,6 +236,7 @@ impl AuthActivity {
             FileTransferProtocol::Ftp(_)
             | FileTransferProtocol::Scp
             | FileTransferProtocol::Sftp => InputMask::Generic,
+            FileTransferProtocol::Smb => InputMask::Smb,
         }
     }
 }

@@ -111,6 +111,7 @@ impl FileTransferActivity {
         match &ft_params.params {
             ProtocolParams::Generic(params) => params.address.clone(),
             ProtocolParams::AwsS3(params) => params.bucket_name.clone(),
+            ProtocolParams::Smb(params) => params.address.clone(),
         }
     }
 
@@ -132,6 +133,13 @@ impl FileTransferActivity {
                     params.region.as_deref().unwrap_or("custom")
                 );
                 format!("Connecting to {}…", params.bucket_name)
+            }
+            ProtocolParams::Smb(params) => {
+                info!(
+                    "Client is not connected to remote; connecting to {}:{}",
+                    params.address, params.share
+                );
+                format!("Connecting to \\\\{}\\{}…", params.address, params.share)
             }
         }
     }

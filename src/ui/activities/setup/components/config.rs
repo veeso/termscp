@@ -11,6 +11,10 @@ use tuirealm::{Component, Event, MockComponent, NoUserEvent};
 use super::{ConfigMsg, Msg};
 use crate::explorer::GroupDirs as GroupDirsEnum;
 use crate::filetransfer::FileTransferProtocol;
+use crate::ui::activities::setup::{
+    RADIO_PROTOCOL_FTP, RADIO_PROTOCOL_FTPS, RADIO_PROTOCOL_S3, RADIO_PROTOCOL_SCP,
+    RADIO_PROTOCOL_SFTP, RADIO_PROTOCOL_SMB,
+};
 use crate::utils::parser::parse_bytesize;
 
 // -- components
@@ -63,16 +67,17 @@ impl DefaultProtocol {
                         .color(Color::Cyan)
                         .modifiers(BorderType::Rounded),
                 )
-                .choices(&["SFTP", "SCP", "FTP", "FTPS", "S3"])
+                .choices(&["SFTP", "SCP", "FTP", "FTPS", "S3", "SMB"])
                 .foreground(Color::Cyan)
                 .rewind(true)
                 .title("Default protocol", Alignment::Left)
                 .value(match protocol {
-                    FileTransferProtocol::AwsS3 => 4,
-                    FileTransferProtocol::Ftp(true) => 3,
-                    FileTransferProtocol::Ftp(false) => 2,
-                    FileTransferProtocol::Scp => 1,
-                    FileTransferProtocol::Sftp => 0,
+                    FileTransferProtocol::Sftp => RADIO_PROTOCOL_SFTP,
+                    FileTransferProtocol::Scp => RADIO_PROTOCOL_SCP,
+                    FileTransferProtocol::Ftp(false) => RADIO_PROTOCOL_FTP,
+                    FileTransferProtocol::Ftp(true) => RADIO_PROTOCOL_FTPS,
+                    FileTransferProtocol::AwsS3 => RADIO_PROTOCOL_S3,
+                    FileTransferProtocol::Smb => RADIO_PROTOCOL_SMB,
                 }),
         }
     }

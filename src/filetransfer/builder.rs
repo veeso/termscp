@@ -7,9 +7,10 @@ use std::path::PathBuf;
 use remotefs::RemoteFs;
 use remotefs_aws_s3::AwsS3Fs;
 use remotefs_ftp::FtpFs;
+use remotefs_smb::SmbFs;
 use remotefs_ssh::{ScpFs, SftpFs, SshConfigParseRule, SshOpts};
 
-use super::params::{AwsS3Params, GenericProtocolParams};
+use super::params::{AwsS3Params, GenericProtocolParams, SmbParams};
 use super::{FileTransferProtocol, ProtocolParams};
 use crate::system::config_client::ConfigClient;
 use crate::system::sshkey_storage::SshKeyStorage;
@@ -38,6 +39,9 @@ impl Builder {
             }
             (FileTransferProtocol::Sftp, ProtocolParams::Generic(params)) => {
                 Box::new(Self::sftp_client(params, config_client))
+            }
+            (FileTransferProtocol::Smb, ProtocolParams::Smb(params)) => {
+                Box::new(Self::smb_client(params))
             }
             (protocol, params) => {
                 error!("Invalid params for protocol '{:?}'", protocol);
@@ -96,6 +100,43 @@ impl Builder {
     /// Build sftp client
     fn sftp_client(params: GenericProtocolParams, config_client: &ConfigClient) -> SftpFs {
         Self::build_ssh_opts(params, config_client).into()
+    }
+
+    #[cfg(target_family = "unix")]
+    fn smb_client(params: SmbParams) -> SmbFs {
+        use remotefs_smb::{SmbCredentials, SmbOptions};
+
+        let mut credentials = SmbCredentials::default()
+            .server(format!("{}:{}", params.address, params.port))
+            .share(params.share);
+
+        if let Some(username) = params.username {
+            credentials = credentials.username(username);
+        }
+        if let Some(password) = params.password {
+            credentials = credentials.password(password);
+        }
+        if let Some(workgroup) = params.workgroup {
+            credentials = credentials.workgroup(workgroup);
+        }
+
+        match SmbFs::try_new(
+            credentials,
+            SmbOptions::default()
+                .encryption_level(remotefs_smb::SmbEncryptionLevel::Request)
+                .case_sensitive(false),
+        ) {
+            Ok(fs) => fs,
+            Err(e) => {
+                error!("Invalid params for protocol SMB: {e}");
+                panic!("Invalid params for protocol SMB: {e}")
+            }
+        }
+    }
+
+    #[cfg(target_family = "windows")]
+    fn smb_client(params: SmbParams) -> SmbFs {
+        todo!()
     }
 
     /// Build ssh options from generic protocol params and client configuration
