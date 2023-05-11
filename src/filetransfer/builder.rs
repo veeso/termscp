@@ -107,7 +107,7 @@ impl Builder {
         use remotefs_smb::{SmbCredentials, SmbOptions};
 
         let mut credentials = SmbCredentials::default()
-            .server(format!("{}:{}", params.address, params.port))
+            .server(format!("smb://{}:{}", params.address, params.port))
             .share(params.share);
 
         if let Some(username) = params.username {
@@ -123,7 +123,7 @@ impl Builder {
         match SmbFs::try_new(
             credentials,
             SmbOptions::default()
-                .encryption_level(remotefs_smb::SmbEncryptionLevel::Request)
+                .one_share_per_server(true)
                 .case_sensitive(false),
         ) {
             Ok(fs) => fs,

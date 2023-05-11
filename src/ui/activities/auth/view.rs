@@ -11,7 +11,7 @@ use tuirealm::tui::widgets::Clear;
 use tuirealm::{State, StateValue, Sub, SubClause, SubEventClause};
 
 use super::{components, AuthActivity, Context, FileTransferProtocol, Id, InputMask};
-use crate::filetransfer::params::{AwsS3Params, GenericProtocolParams, ProtocolParams};
+use crate::filetransfer::params::{AwsS3Params, GenericProtocolParams, ProtocolParams, SmbParams};
 use crate::filetransfer::FileTransferParams;
 use crate::utils::ui::{Popup, Size};
 
@@ -812,6 +812,33 @@ impl AuthActivity {
             .new_path_style(new_path_style)
     }
 
+    /// Collect s3 input values from view
+    #[cfg(target_family = "unix")]
+    pub(super) fn get_smb_params_input(&self) -> SmbParams {
+        let share: String = self.get_input_smb_share();
+        let workgroup: Option<String> = self.get_input_smb_workgroup();
+
+        let address: String = self.get_input_addr();
+        let port: u16 = self.get_input_port();
+        let username = self.get_input_username();
+        let password = self.get_input_password();
+
+        SmbParams::new(address, port, share)
+            .username(username)
+            .password(password)
+            .workgroup(workgroup)
+    }
+
+    #[cfg(target_family = "windows")]
+    pub(super) fn get_smb_params_input(&self) -> SmbParams {
+        let share: String = self.get_input_smb_share();
+
+        let address: String = self.get_input_addr();
+        let port: u16 = self.get_input_port();
+
+        SmbParams::new(address, port, share)
+    }
+
     pub(super) fn get_input_remote_directory(&self) -> Option<PathBuf> {
         match self.app.state(&Id::RemoteDirectory) {
             Ok(State::One(StateValue::String(x))) if !x.is_empty() => {
@@ -913,6 +940,21 @@ impl AuthActivity {
             self.app.state(&Id::S3NewPathStyle),
             Ok(State::One(StateValue::Usize(0)))
         )
+    }
+
+    pub(super) fn get_input_smb_share(&self) -> String {
+        match self.app.state(&Id::SmbShare) {
+            Ok(State::One(StateValue::String(x))) => x,
+            _ => String::new(),
+        }
+    }
+
+    #[cfg(target_family = "unix")]
+    pub(super) fn get_input_smb_workgroup(&self) -> Option<String> {
+        match self.app.state(&Id::SmbWorkgroup) {
+            Ok(State::One(StateValue::String(x))) => Some(x),
+            _ => None,
+        }
     }
 
     /// Get new bookmark params
