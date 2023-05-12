@@ -107,7 +107,6 @@ impl Default for ProtocolParams {
 }
 
 impl ProtocolParams {
-    #[cfg(test)]
     /// Retrieve generic parameters from protocol params if any
     pub fn generic_params(&self) -> Option<&GenericProtocolParams> {
         match self {

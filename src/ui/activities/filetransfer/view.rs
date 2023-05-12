@@ -153,7 +153,16 @@ impl FileTransferActivity {
             self.app.view(&Id::StatusBarLocal, f, status_bar_chunks[0]);
             self.app.view(&Id::StatusBarRemote, f, status_bar_chunks[1]);
             // @! Draw popups
-            if self.app.mounted(&Id::CopyPopup) {
+            if self.app.mounted(&Id::FatalPopup) {
+                let popup = Popup(
+                    Size::Percentage(50),
+                    self.calc_popup_height(Id::FatalPopup, f.size().width, f.size().height),
+                )
+                .draw_in(f.size());
+                f.render_widget(Clear, popup);
+                // make popup
+                self.app.view(&Id::FatalPopup, f, popup);
+            } else if self.app.mounted(&Id::CopyPopup) {
                 let popup = Popup(Size::Percentage(40), Size::Unit(3)).draw_in(f.size());
                 f.render_widget(Clear, popup);
                 // make popup
@@ -292,15 +301,6 @@ impl FileTransferActivity {
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::ErrorPopup, f, popup);
-            } else if self.app.mounted(&Id::FatalPopup) {
-                let popup = Popup(
-                    Size::Percentage(50),
-                    self.calc_popup_height(Id::FatalPopup, f.size().width, f.size().height),
-                )
-                .draw_in(f.size());
-                f.render_widget(Clear, popup);
-                // make popup
-                self.app.view(&Id::FatalPopup, f, popup);
             } else if self.app.mounted(&Id::WaitPopup) {
                 let popup = Popup(Size::Percentage(50), Size::Unit(3)).draw_in(f.size());
                 f.render_widget(Clear, popup);
@@ -360,6 +360,7 @@ impl FileTransferActivity {
     }
 
     pub(super) fn mount_fatal<S: AsRef<str>>(&mut self, text: S) {
+        self.umount_wait();
         // Mount
         let error_color = self.theme().misc_error_dialog;
         assert!(self
