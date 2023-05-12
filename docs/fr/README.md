@@ -6,11 +6,11 @@
 
 <p align="center">~ Un file transfer de terminal riche en fonctionnalités ~</p>
 <p align="center">
-  <a href="https://veeso.github.io/termscp/" target="_blank">Site internet</a>
+  <a href="https://termscp.veeso.dev/termscp/" target="_blank">Site internet</a>
   ·
-  <a href="https://veeso.github.io/termscp/#get-started" target="_blank">Installation</a>
+  <a href="https://termscp.veeso.dev/termscp/#get-started" target="_blank">Installation</a>
   ·
-  <a href="https://veeso.github.io/termscp/#user-manual" target="_blank">Manuel de l'Utilisateur</a>
+  <a href="https://termscp.veeso.dev/termscp/#user-manual" target="_blank">Manuel de l'Utilisateur</a>
 </p>
 
 <p align="center">
@@ -62,7 +62,7 @@
   /></a>
 </p>
 
-<p align="center">Développé par <a href="https://veeso.github.io/" target="_blank">@veeso</a></p>
+<p align="center">Développé par <a href="https://termscp.veeso.dev/" target="_blank">@veeso</a></p>
 <p align="center">Version actuelle: 0.12.0 (19/04/2023)</p>
 
 <p align="center">
@@ -175,7 +175,7 @@ tandis que si tu es un utilisateur Windows, tu peux installer termscp avec [Choc
 choco install termscp
 ```
 
-Pour plus d'informations sur les autres méthodes d'installation, veuillez visiter [veeso.github.io](https://veeso.github.io/termscp/#get-started).
+Pour plus d'informations sur les autres méthodes d'installation, veuillez visiter [termscp.veeso.dev](https://termscp.veeso.dev/termscp/#get-started).
 
 ⚠️ Si tu cherche comme de mettre à jour termscp, tu dois exécuter cette commande dans le terminal: `(sudo) termscp --update` ⚠️
 
@@ -221,7 +221,7 @@ Tu peux faire un don avec l'une de ces plateformes:
 
 ## Manuel d'utilisateur et Documentation 📚
 
-Le manuel d'utilisateur peut être trouvé sur le [site de termscp](https://veeso.github.io/termscp/#user-manual) ou sur [Github](man.md).
+Le manuel d'utilisateur peut être trouvé sur le [site de termscp](https://termscp.veeso.dev/termscp/#user-manual) ou sur [Github](man.md).
 
 La documentation peut être trouvé sur Rust Docs <https://docs.rs/termscp>
 
