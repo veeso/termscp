@@ -209,6 +209,18 @@ install_on_arch_linux() {
     $pkg -S termscp
 }
 
+install_with_brew() {
+    info "Installing termscp with brew"
+    if has termscp; then
+        info "Upgrading ${GREEN}termscp${NO_COLOR}…"
+        # The OR is used since someone could have installed via cargo previously
+        brew update && brew upgrade termscp || brew install veeso/termscp/termscp
+    else
+        info "Installing ${GREEN}termscp${NO_COLOR}…"
+        brew install veeso/termscp/termscp
+    fi
+}
+
 install_on_linux() {
     local msg
     local sudo
@@ -271,6 +283,8 @@ install_on_linux() {
         info "$msg"
         $sudo rpm -U "${archive}"
         rm -f ${archive}
+    elif has brew; then
+        install_with_brew
     else
         try_with_cargo "No suitable installation method found for your Linux distribution; if you're running on Arch linux, please install an AUR package manager (such as yay). Currently only Arch, Debian based and Red Hat based distros are supported" "linux"
     fi
@@ -278,23 +292,7 @@ install_on_linux() {
 
 install_on_macos() {
     if has brew; then
-        # get homebrew formula name
-        if [ "${ARCH}" == "x86_64" ]; then
-            FORMULA="termscp"
-        elif [ "$ARCH" == "aarch64" ]; then
-            FORMULA="termscp-m1"
-        else
-            error "unsupported arch: $ARCH"
-            exit 1
-        fi
-        if has termscp; then
-            info "Upgrading ${GREEN}termscp${NO_COLOR}…"
-            # The OR is used since someone could have installed via cargo previously
-            brew update && brew upgrade ${FORMULA} || brew install veeso/termscp/${FORMULA}
-        else
-            info "Installing ${GREEN}termscp${NO_COLOR}…"
-            brew install veeso/termscp/${FORMULA}
-        fi
+        install_with_brew
     else
         try_with_cargo "brew is missing on your system; please install it from <https://brew.sh/>" "macos"
     fi
