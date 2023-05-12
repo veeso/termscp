@@ -12,6 +12,8 @@ use lazy_regex::{Lazy, Regex};
 use tuirealm::tui::style::Color;
 use tuirealm::utils::parser as tuirealm_parser;
 
+#[cfg(smb)]
+use crate::filetransfer::params::SmbParams;
 use crate::filetransfer::params::{AwsS3Params, GenericProtocolParams, ProtocolParams};
 use crate::filetransfer::{FileTransferParams, FileTransferProtocol};
 #[cfg(not(test))] // NOTE: don't use configuration during tests
@@ -59,7 +61,7 @@ static REMOTE_S3_OPT_REGEX: Lazy<Regex> =
  * - group 4: share?
  * - group 5: remote-dir?
  */
-#[cfg(unix)]
+#[cfg(smb_unix)]
 static REMOTE_SMB_OPT_REGEX: Lazy<Regex> = lazy_regex!(
     r"(?:([^@]+)@)?(?:([^/:]+))(?::((?:[0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])(?:[0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])))?(?:/([^/]+))?(?:(/.+))?"
 );
@@ -149,6 +151,7 @@ pub fn parse_remote_opt(s: &str) -> Result<FileTransferParams, String> {
     // Match against regex for protocol type
     match protocol {
         FileTransferProtocol::AwsS3 => parse_s3_remote_opt(s.as_str()),
+        #[cfg(smb)]
         FileTransferProtocol::Smb => parse_smb_remote_opts(s.as_str()),
         protocol => parse_generic_remote_opt(s.as_str(), protocol),
     }
@@ -265,10 +268,8 @@ fn parse_s3_remote_opt(s: &str) -> Result<FileTransferParams, String> {
 }
 
 /// Parse remote options for smb protocol
-#[cfg(unix)]
+#[cfg(smb_unix)]
 fn parse_smb_remote_opts(s: &str) -> Result<FileTransferParams, String> {
-    use crate::filetransfer::params::SmbParams;
-
     match REMOTE_SMB_OPT_REGEX.captures(s) {
         Some(groups) => {
             let username: Option<String> = match groups.get(1) {
@@ -306,8 +307,6 @@ fn parse_smb_remote_opts(s: &str) -> Result<FileTransferParams, String> {
 
 #[cfg(windows)]
 fn parse_smb_remote_opts(s: &str) -> Result<FileTransferParams, String> {
-    use crate::filetransfer::params::SmbParams;
-
     match REMOTE_SMB_OPT_REGEX.captures(s) {
         Some(groups) => {
             let address = match groups.get(1) {
@@ -622,7 +621,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(unix)]
+    #[cfg(smb_unix)]
     fn should_parse_smb_address() {
         let result = parse_remote_opt("smb://myserver/myshare").ok().unwrap();
         let params = result.params.smb_params().unwrap();
