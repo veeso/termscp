@@ -176,7 +176,7 @@ mod test {
     use tempfile::TempDir;
 
     use super::*;
-    #[cfg(macos)]
+    #[cfg(target_os = "macos")]
     use crate::utils::test_helpers;
 
     #[test]
@@ -275,7 +275,7 @@ mod test {
     }
 
     #[test]
-    #[cfg(macos)]
+    #[cfg(target_os = "macos")]
     fn should_poll_file_update() {
         let mut watcher = FsWatcher::init(Duration::from_millis(100)).unwrap();
         let tempdir = TempDir::new().unwrap();
@@ -301,7 +301,7 @@ mod test {
     }
 
     #[test]
-    #[cfg(macos)]
+    #[cfg(target_os = "macos")]
     fn should_poll_file_removed() {
         let mut watcher = FsWatcher::init(Duration::from_millis(100)).unwrap();
         let tempdir = TempDir::new().unwrap();
@@ -364,7 +364,7 @@ mod test {
      */
 
     #[test]
-    #[cfg(macos)]
+    #[cfg(target_os = "macos")]
     fn should_poll_nothing() {
         let mut watcher = FsWatcher::init(Duration::from_secs(5)).unwrap();
         let tempdir = TempDir::new().unwrap();
@@ -377,7 +377,7 @@ mod test {
     }
 
     #[test]
-    #[cfg(macos)]
+    #[cfg(target_os = "macos")]
     fn should_get_watched_paths() {
         let mut watcher = FsWatcher::init(Duration::from_secs(5)).unwrap();
         assert!(watcher.watch(Path::new("/tmp"), Path::new("/tmp")).is_ok());
