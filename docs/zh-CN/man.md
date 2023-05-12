@@ -4,6 +4,7 @@
   - [用法](#用法)
     - [地址参数](#地址参数)
       - [AWS S3 地址参数](#aws-s3-地址参数)
+      - [SMB 地址参数](#smb-地址参数)
       - [如何输入密码](#如何输入密码)
   - [S3 连接参数](#s3-连接参数)
     - [Aws S3 凭证](#aws-s3-凭证)
@@ -100,6 +101,22 @@ s3://<bucket-name>@<region>[:profile][:/wrkdir]
 
 ```txt
 s3://buckethead@eu-central-1:default:/assets
+```
+
+#### SMB 地址参数
+
+SMB 对 CLI 地址参数有不同的语法，无论您是在 Windows 还是其他系统上，这都是不同的：
+
+**Windows** 句法:
+
+```txt
+\\<server-name>[:port]\<share>[\path\...]
+```
+
+**其他系统** 句法:
+
+```txt
+smb://[username@]<server-name>[:port]/<share>[/path/.../]
 ```
 
 #### 如何输入密码

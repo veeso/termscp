@@ -132,6 +132,7 @@ Termscp is a feature rich terminal file transfer and explorer, with support for 
   - **SCP**
   - **FTP** and **FTPS**
   - **S3**
+  - **SMB**
 - 🖥  Explore and operate on the remote and on the local machine file system with a handy UI
   - Create, remove, rename, search, view and edit files
 - ⭐  Connect to your favourite hosts through built-in bookmarks and recent connections
@@ -187,9 +188,13 @@ For more information or other platforms, please visit [veeso.github.io](https://
 - **Linux** users:
   - libdbus-1
   - pkg-config
+  - libsmbclient
 - **FreeBSD** or, **NetBSD** users:
   - dbus
   - pkgconf
+  - libsmbclient
+- **MacOS** users:
+  - samba
 
 ### Optional Requirements ✔️
 
@@ -261,6 +266,7 @@ termscp is powered by these awesome projects:
 - [edit](https://github.com/milkey-mouse/edit)
 - [keyring-rs](https://github.com/hwchen/keyring-rs)
 - [open-rs](https://github.com/Byron/open-rs)
+- [pavao](https://github.com/veeso/pavao)
 - [remotefs](https://github.com/veeso/remotefs-rs)
 - [rpassword](https://github.com/conradkleinespel/rpassword)
 - [self_update](https://github.com/jaemk/self_update)

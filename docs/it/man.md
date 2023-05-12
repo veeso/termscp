@@ -4,6 +4,7 @@
   - [Argomenti da linea di comando ❓](#argomenti-da-linea-di-comando-)
     - [Argomento indirizzo 🌎](#argomento-indirizzo-)
       - [Argomento indirizzo per AWS S3](#argomento-indirizzo-per-aws-s3)
+      - [Indirizzo SMB](#indirizzo-smb)
       - [Come fornire la password 🔐](#come-fornire-la-password-)
   - [Parametri di connessione S3](#parametri-di-connessione-s3)
     - [Credenziali S3 🦊](#credenziali-s3-)
@@ -100,6 +101,23 @@ e.g.
 ```txt
 s3://buckethead@eu-central-1:default:/assets
 ```
+
+#### Indirizzo SMB
+
+SMB ha una sintassi differente rispetto agli altri protocolli e cambia in base al sistema operativo:
+
+**Windows**:
+
+```txt
+\\<server-name>[:port]\<share>[\path\...]
+```
+
+**Altri sistemi**:
+
+```txt
+smb://[username@]<server-name>[:port]/<share>[/path/.../]
+```
+
 
 #### Come fornire la password 🔐
 

@@ -4,6 +4,7 @@
   - [Usage ❓](#usage-)
     - [Address argument 🌎](#address-argument-)
       - [AWS S3 address argument](#aws-s3-address-argument)
+      - [SMB address argument](#smb-address-argument)
       - [How Password can be provided 🔐](#how-password-can-be-provided-)
   - [S3 connection parameters](#s3-connection-parameters)
     - [S3 credentials 🦊](#s3-credentials-)
@@ -103,6 +104,22 @@ e.g.
 
 ```txt
 s3://buckethead@eu-central-1:default:/assets
+```
+
+#### SMB address argument
+
+SMB has a different syntax for CLI address argument, which is different whether you're on Windows or other systems:
+
+**Windows** syntax:
+
+```txt
+\\<server-name>[:port]\<share>[\path\...]
+```
+
+**Other systems** syntax:
+
+```txt
+smb://[username@]<server-name>[:port]/<share>[/path/.../]
 ```
 
 #### How Password can be provided 🔐

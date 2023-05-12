@@ -137,6 +137,7 @@ Termscp es un explorador y transferencia de archivos de terminal rico en funcion
   - **SCP**
   - **FTP** y **FTPS**
   - **S3**
+  - **SMB**
 - 🖥  Explore y opere en el sistema de archivos de la máquina local y remota con una interfaz de usuario práctica
   - Cree, elimine, cambie el nombre, busque, vea y edite archivos
 - ⭐  Conéctese a sus hosts favoritos y conexiones recientes
@@ -181,14 +182,16 @@ Para obtener más información u otras plataformas, visite [veeso.github.io](htt
 
 ### Requisitos ❗
 
-- Usuarios **Linux**:
-  - libssh
+- **Linux** users:
   - libdbus-1
   - pkg-config
-- Usuarios **FreeBSD**:
-  - libssh
+  - libsmbclient
+- **FreeBSD** or, **NetBSD** users:
   - dbus
   - pkgconf
+  - libsmbclient
+- **MacOS** users:
+  - samba
 
 ### Requisitos opcionales ✔️
 
