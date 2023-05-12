@@ -44,6 +44,7 @@ docker stop "$ARM64_DEB_NAME"
 # Make tar.gz
 cd ${PKGS_DIR}/aarch64-unknown-linux-gnu/
 tar cvzf termscp-v${VERSION}-aarch64-unknown-linux-gnu.tar.gz termscp
+echo "Sha256 (homebrew aarch64): $(sha256sum termscp-v${VERSION}-aarch64-unknown-linux-gnu.tar.gz)"
 rm termscp
 cd -
 # Build aarch64_centos7

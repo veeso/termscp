@@ -209,6 +209,18 @@ install_on_arch_linux() {
     $pkg -S termscp
 }
 
+install_with_brew() {
+    info "Installing termscp with brew"
+    if has termscp; then
+        info "Upgrading ${GREEN}termscp${NO_COLOR}…"
+        # The OR is used since someone could have installed via cargo previously
+        brew update && brew upgrade termscp || brew install veeso/termscp/termscp
+    else
+        info "Installing ${GREEN}termscp${NO_COLOR}…"
+        brew install veeso/termscp/termscp
+    fi
+}
+
 install_on_linux() {
     local msg
     local sudo
@@ -271,6 +283,8 @@ install_on_linux() {
         info "$msg"
         $sudo rpm -U "${archive}"
         rm -f ${archive}
+    elif has brew; then
+        install_with_brew
     else
         try_with_cargo "No suitable installation method found for your Linux distribution; if you're running on Arch linux, please install an AUR package manager (such as yay). Currently only Arch, Debian based and Red Hat based distros are supported" "linux"
     fi
@@ -278,23 +292,7 @@ install_on_linux() {
 
 install_on_macos() {
     if has brew; then
-        # get homebrew formula name
-        if [ "${ARCH}" == "x86_64" ]; then
-            FORMULA="termscp"
-        elif [ "$ARCH" == "aarch64" ]; then
-            FORMULA="termscp-m1"
-        else
-            error "unsupported arch: $ARCH"
-            exit 1
-        fi
-        if has termscp; then
-            info "Upgrading ${GREEN}termscp${NO_COLOR}…"
-            # The OR is used since someone could have installed via cargo previously
-            brew update && brew upgrade ${FORMULA} || brew install veeso/termscp/${FORMULA}
-        else
-            info "Installing ${GREEN}termscp${NO_COLOR}…"
-            brew install veeso/termscp/${FORMULA}
-        fi
+        install_with_brew
     else
         try_with_cargo "brew is missing on your system; please install it from <https://brew.sh/>" "macos"
     fi
@@ -478,8 +476,8 @@ case $PLATFORM in
 esac
 
 completed "Congratulations! Termscp has successfully been installed on your system!"
-info "If you're a new user, you might be interested in reading the user manual <https://veeso.github.io/termscp/#user-manual>"
-info "While if you've just updated your termscp version, you can find the changelog at this link <https://veeso.github.io/termscp/#changelog>"
+info "If you're a new user, you might be interested in reading the user manual <https://termscp.veeso.dev/termscp/#user-manual>"
+info "While if you've just updated your termscp version, you can find the changelog at this link <https://termscp.veeso.dev/termscp/#changelog>"
 info "Remember that if you encounter any issue, you can report them on Github <https://github.com/veeso/termscp/issues/new>"
 info "Feel free to open an issue also if you have an idea which could improve the project"
 info "If you want to support the project, please, consider a little donation <https://ko-fi.com/veeso>"

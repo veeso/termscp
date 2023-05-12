@@ -39,7 +39,7 @@ echo -e "desc: <<EOD\n\
     A feature rich terminal UI file transfer and explorer with support for SCP/SFTP/FTP/S3\n\
 EOD\n\
 arch: \"amd64\"\n\
-www: \"https://veeso.github.io/termscp/\"\n\
+www: \"https://termscp.veeso.dev/termscp/\"\n\
 maintainer: \"christian.visintin1997@gmail.com\"\n\
 prefix: \"/usr/local/bin\"\n\
 deps: {\n\

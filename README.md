@@ -6,11 +6,11 @@
 
 <p align="center">~ A feature rich terminal file transfer ~</p>
 <p align="center">
-  <a href="https://veeso.github.io/termscp/" target="_blank">Website</a>
+  <a href="https://termscp.veeso.dev/termscp/" target="_blank">Website</a>
   ·
-  <a href="https://veeso.github.io/termscp/#get-started" target="_blank">Installation</a>
+  <a href="https://termscp.veeso.dev/termscp/#get-started" target="_blank">Installation</a>
   ·
-  <a href="https://veeso.github.io/termscp/#user-manual" target="_blank">User manual</a>
+  <a href="https://termscp.veeso.dev/termscp/#user-manual" target="_blank">User manual</a>
 </p>
 
 <p align="center">
@@ -62,7 +62,7 @@
   /></a>
 </p>
 
-<p align="center">Developed by <a href="https://veeso.github.io/" target="_blank">@veeso</a></p>
+<p align="center">Developed by <a href="https://termscp.veeso.dev/" target="_blank">@veeso</a></p>
 <p align="center">Current version: 0.12.0 (19/04/2023)</p>
 
 <p align="center">
@@ -178,7 +178,7 @@ NetBSD users can install termscp from the official repositories.
 pkgin install termscp
 ```
 
-For more information or other platforms, please visit [veeso.github.io](https://veeso.github.io/termscp/#get-started) to view all installation methods.
+For more information or other platforms, please visit [termscp.veeso.dev](https://termscp.veeso.dev/termscp/#get-started) to view all installation methods.
 
 ⚠️ If you're looking on how to update termscp just run termscp from CLI with: `(sudo) termscp --update` ⚠️
 
@@ -223,7 +223,7 @@ You can make a donation with one of these platforms:
 
 ## User manual 📚
 
-The user manual can be found on the [termscp's website](https://veeso.github.io/termscp/#user-manual) or on [Github](docs/man.md).
+The user manual can be found on the [termscp's website](https://termscp.veeso.dev/termscp/#user-manual) or on [Github](docs/man.md).
 
 ---
 

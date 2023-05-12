@@ -6,11 +6,11 @@
 
 <p align="center">~ 功能丰富的终端文件传输工具 ~</p>
 <p align="center">
-  <a href="https://veeso.github.io/termscp/" target="_blank">网站</a>
+  <a href="https://termscp.veeso.dev/termscp/" target="_blank">网站</a>
   ·
-  <a href="https://veeso.github.io/termscp/#get-started" target="_blank">安装</a>
+  <a href="https://termscp.veeso.dev/termscp/#get-started" target="_blank">安装</a>
   ·
-  <a href="https://veeso.github.io/termscp/#user-manual" target="_blank">用户手册</a>
+  <a href="https://termscp.veeso.dev/termscp/#user-manual" target="_blank">用户手册</a>
 </p>
 
 <p align="center">
@@ -62,7 +62,7 @@
   /></a>
 </p>
 
-<p align="center">由 <a href="https://veeso.github.io/" target="_blank">@veeso</a> 开发</p>
+<p align="center">由 <a href="https://termscp.veeso.dev/" target="_blank">@veeso</a> 开发</p>
 <p align="center">当前版本： 0.12.0 (19/04/2023)</p>
 
 <p align="center">
@@ -178,7 +178,7 @@ curl -sSLf http://get-termscp.veeso.dev | sh
 choco install termscp
 ```
 
-如需更多信息或其他的平台支持，请访问 [veeso.github.io](https://veeso.github.io/termscp/#get-started) 查看所有安装方法。
+如需更多信息或其他的平台支持，请访问 [termscp.veeso.dev](https://termscp.veeso.dev/termscp/#get-started) 查看所有安装方法。
 
 ⚠️ 如果您正在寻找如何更新 termscp 只需从 CLI 运行 termscp ： `(sudo) termscp --update` ⚠️
 
@@ -225,7 +225,7 @@ choco install termscp
 
 ## 用户手册和文档 📚
 
-用户手册可以在[termscp的网站](https://veeso.github.io/termscp/#user-manual)或者在[Github](man.md)上找到。
+用户手册可以在[termscp的网站](https://termscp.veeso.dev/termscp/#user-manual)或者在[Github](man.md)上找到。
 
 ---
 

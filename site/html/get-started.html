@@ -1,23 +1,19 @@
 <head>
   <link rel="stylesheet" href="css/get-started.css" />
 </head>
+
 <body>
   <section id="start" class="container start">
     <h1 translate="getStarted.title">Get started</h1>
     <section>
       <h2>
-        <i class="fa fa-rocket"></i>&nbsp;<span
-          translate="getStarted.quickSetup"
-          >Quick setup</span
-        >
+        <i class="fa fa-rocket"></i>&nbsp;<span translate="getStarted.quickSetup">Quick setup</span>
       </h2>
       <div class="installation">
         <div class="alert alert-primary">
           <p>
             <i class="fas fa-info-circle"></i>
-            <span translate="getStarted.suggested"
-              >We strongly suggest this method to install termscp</span
-            >
+            <span translate="getStarted.suggested">We strongly suggest this method to install termscp</span>
           </p>
         </div>
         <p translate="getStarted.posixUsers">
@@ -29,80 +25,52 @@
     </section>
     <section>
       <h2>
-        <i class="devicon-windows8-plain"></i>&nbsp;<span
-          translate="getStarted.windows.title"
-          >Windows users</span
-        >
+        <i class="devicon-windows8-plain"></i>&nbsp;<span translate="getStarted.windows.title">Windows users</span>
       </h2>
       <div class="installation">
         <p>
-          <span translate="getStarted.windows.intro"
-            >You can install termscp on Windows via</span
-          >
-          <a
-            href="https://community.chocolatey.org/packages/termscp"
-            target="_blank"
-            >Chocolatey</a
-          >
+          <span translate="getStarted.windows.intro">You can install termscp on Windows via</span>
+          <a href="https://community.chocolatey.org/packages/termscp" target="_blank">Chocolatey</a>
         </p>
         <pre><span class="function">choco</span> install <span class="string">termscp</span></pre>
         <p>
-          <span translate="getStarted.windows.moderation"
-            >Consider that Chocolatey moderation can take up to a few weeks
+          <span translate="getStarted.windows.moderation">Consider that Chocolatey moderation can take up to a few weeks
             since last release, so if the latest version is not available yet,
-            you can install it downloading the ZIP file from</span
-          >
-          <a
-            href="https://github.com/veeso/termscp/releases/latest/download/termscp.0.12.0.nupkg"
-            target="_blank"
-            >Github</a
-          >
-          <span translate="getStarted.windows.then"
-            >and then, from the ZIP directory, install it via</span
-          >
+            you can install it downloading the ZIP file from</span>
+          <a href="https://github.com/veeso/termscp/releases/latest/download/termscp.0.12.0.nupkg"
+            target="_blank">Github</a>
+          <span translate="getStarted.windows.then">and then, from the ZIP directory, install it via</span>
         </p>
         <pre><span class="function">choco</span> install <span class="string">termscp</span> -s .</pre>
       </div>
     </section>
     <section>
       <h2>
-        <i class="devicon-linux-plain"></i>&nbsp;<span
-          translate="getStarted.linuxUsers"
-          >Linux users</span
-        >
+        <i class="devicon-linux-plain"></i>&nbsp;<span translate="getStarted.linuxUsers">Linux users</span>
       </h2>
       <div class="sub-system">
         <div class="alert alert-warning">
           <p>
             <i class="fas fa-exclamation-triangle"></i>
-            <span translate="getStarted.notConfident"
-              >Opt for these methods instead if you don't feel confident using
-              the shell script</span
-            >
+            <span translate="getStarted.notConfident">Opt for these methods instead if you don't feel confident using
+              the shell script</span>
           </p>
         </div>
         <h3>
-          <i class="devicon-linux-plain"></i>&nbsp;<span
-            translate="getStarted.arch.title"
-            >Arch derived users</span
-          >
+          <i class="devicon-linux-plain"></i>&nbsp;<span translate="getStarted.arch.title">Arch derived users</span>
         </h3>
         <div class="installation">
           <p>
-            <span translate="getStarted.arch.intro"
-              >On Arch Linux based distros, you can install termscp using an AUR
-              package manager such as</span
-            >
+            <span translate="getStarted.arch.intro">On Arch Linux based distros, you can install termscp using an AUR
+              package manager such as</span>
             <a href="https://github.com/Jguer/yay" target="_blank">yay</a>
             <span translate="getStarted.arch.then">then run:</span>
           </p>
           <pre><span class="function">yay</span> -S <span class="string">termscp</span></pre>
         </div>
         <h3>
-          <i class="devicon-debian-plain"></i>&nbsp;<span
-            translate="getStarted.debian.title"
-            >Debian derived users</span
-          >
+          <i class="devicon-debian-plain"></i>&nbsp;<span translate="getStarted.debian.title">Debian derived
+            users</span>
         </h3>
         <div class="installation">
           <p translate="getStarted.debian.body">
@@ -113,10 +81,8 @@
 sudo <span class="function">dpkg</span> -i <span class="string">termscp.deb</span></pre>
         </div>
         <h3>
-          <i class="devicon-redhat-plain"></i>&nbsp;<span
-            translate="getStarted.redhat.title"
-            >Redhat derived users</span
-          >
+          <i class="devicon-redhat-plain"></i>&nbsp;<span translate="getStarted.redhat.title">Redhat derived
+            users</span>
         </h3>
         <div class="installation">
           <p translate="getStarted.redhat.body">
@@ -126,28 +92,32 @@ sudo <span class="function">dpkg</span> -i <span class="string">termscp.deb</spa
           <pre><span class="function">wget</span> -O termscp.rpm <span class="string">https://github.com/veeso/termscp/releases/latest/download/termscp-0.12.0-1.x86_64.rpm</span>
 sudo <span class="function">rpm</span> -U <span class="string">termscp.rpm</span></pre>
         </div>
+        <h3>
+          <span>Brew</span>
+        </h3>
+        <div class="installation">
+          <p>
+            <span translate="getStarted.macos.install">Install termscp via</span>&nbsp;
+            <a href="https://brew.sh/" target="_blank">Brew</a>
+          </p>
+          <pre><span class="function">brew</span> install <span class="string">veeso/termscp/termscp</span></pre>
+        </div>
       </div>
     </section>
     <section>
       <h2>
-        <i class="devicon-apple-plain"></i>&nbsp;<span
-          translate="getStarted.macos.title"
-          >MacOS users</span
-        >
+        <i class="devicon-apple-plain"></i>&nbsp;<span translate="getStarted.macos.title">MacOS users</span>
       </h2>
       <div class="installation">
         <div class="alert alert-warning">
           <p>
             <i class="fas fa-exclamation-triangle"></i>
-            <span translate="getStarted.notConfident"
-              >Opt for this method instead if you don't feel confident using the
-              shell script</span
-            >
+            <span translate="getStarted.notConfident">Opt for this method instead if you don't feel confident using the
+              shell script</span>
           </p>
         </div>
         <p>
-          <span translate="getStarted.macos.install">Install termscp via</span
-          >&nbsp;
+          <span translate="getStarted.macos.install">Install termscp via</span>&nbsp;
           <a href="https://brew.sh/" target="_blank">Brew</a>
         </p>
         <pre><span class="function">brew</span> install <span class="string">veeso/termscp/termscp</span></pre>
@@ -155,33 +125,22 @@ sudo <span class="function">rpm</span> -U <span class="string">termscp.rpm</span
     </section>
     <section>
       <h2>
-        <i class="devicon-rust-plain"></i>&nbsp;<span
-          translate="getStarted.cargo.title"
-          >Install with Cargo</span
-        >
+        <i class="devicon-rust-plain"></i>&nbsp;<span translate="getStarted.cargo.title">Install with Cargo</span>
       </h2>
       <div class="installation">
         <div class="alert alert-warning">
           <p>
             <i class="fas fa-exclamation-triangle"></i>
-            <span translate="getStarted.noBinary"
-              >Opt for this method instead if binaries for your platform are not
-              available</span
-            >
+            <span translate="getStarted.noBinary">Opt for this method instead if binaries for your platform are not
+              available</span>
           </p>
         </div>
         <p>
-          <span translate="getStarted.cargo.body"
-            >If a package is not available for your system, you can opt to
-            install termscp via</span
-          >&nbsp;
-          <a href="https://www.rust-lang.org/tools/install" target="_blank"
-            >Cargo</a
-          >.
-          <span translate="getStarted.cargo.requirements"
-            >To install termscp via Cargo, these requirements must be
-            satisfied:</span
-          >
+          <span translate="getStarted.cargo.body">If a package is not available for your system, you can opt to
+            install termscp via</span>&nbsp;
+          <a href="https://www.rust-lang.org/tools/install" target="_blank">Cargo</a>.
+          <span translate="getStarted.cargo.requirements">To install termscp via Cargo, these requirements must be
+            satisfied:</span>
         </p>
         <ul>
           <li>

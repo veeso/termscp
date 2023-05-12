@@ -6,11 +6,11 @@
 
 <p align="center">~ Un file transfer ricco di funzionalità ~</p>
 <p align="center">
-  <a href="https://veeso.github.io/termscp/" target="_blank">Sito</a>
+  <a href="https://termscp.veeso.dev/termscp/" target="_blank">Sito</a>
   ·
-  <a href="https://veeso.github.io/termscp/#get-started" target="_blank">Installazione</a>
+  <a href="https://termscp.veeso.dev/termscp/#get-started" target="_blank">Installazione</a>
   ·
-  <a href="https://veeso.github.io/termscp/#user-manual" target="_blank">Manuale utente</a>
+  <a href="https://termscp.veeso.dev/termscp/#user-manual" target="_blank">Manuale utente</a>
 </p>
 
 <p align="center">
@@ -62,7 +62,7 @@
   /></a>
 </p>
 
-<p align="center">Sviluppato da <a href="https://veeso.github.io/" target="_blank">@veeso</a></p>
+<p align="center">Sviluppato da <a href="https://termscp.veeso.dev/" target="_blank">@veeso</a></p>
 <p align="center">Versione corrente: 0.12.0 (19/04/2023)</p>
 
 <p align="center">
@@ -175,7 +175,7 @@ mentre se sei un utente Windows, puoi installare termscp con [Chocolatey](https:
 choco install termscp
 ```
 
-Per ulteriori informazioni sui metodi di installazione su altre piattaforme, visita [veeso.github.io](https://veeso.github.io/termscp/#get-started).
+Per ulteriori informazioni sui metodi di installazione su altre piattaforme, visita [termscp.veeso.dev](https://termscp.veeso.dev/termscp/#get-started).
 
 ⚠️  Se stavi cercando come aggiornare la tua versione di termscp, puoi semplicemente lanciare termscp con questi argomenti: `(sudo) termscp --update` ⚠️
 
@@ -221,7 +221,7 @@ Puoi fare una donazione tramite una di queste piattaforme:
 
 ## Manuale utente 📚
 
-Il manuale utente lo puoi trovare sul [sito di termscp](https://veeso.github.io/termscp/#user-manual) o su [Github](man.md).
+Il manuale utente lo puoi trovare sul [sito di termscp](https://termscp.veeso.dev/termscp/#user-manual) o su [Github](man.md).
 
 ---
 

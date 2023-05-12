@@ -44,6 +44,7 @@ docker stop "$X86_64_DEB_NAME"
 # Make tar.gz
 cd ${PKGS_DIR}/x86_64-unknown-linux-gnu/
 tar cvzf termscp-v${VERSION}-x86_64-unknown-linux-gnu.tar.gz termscp
+echo "Sha256 x86_64 (homebrew): $(sha256sum termscp-v${VERSION}-x86_64-unknown-linux-gnu.tar.gz)"
 rm termscp
 cd -
 # Build x86_64_centos7
