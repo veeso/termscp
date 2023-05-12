@@ -135,7 +135,7 @@ impl ProtocolParams {
         }
     }
 
-    #[cfg(all(test, smb))]
+    #[cfg(test)]
     /// Retrieve SMB parameters if any
     pub fn smb_params(&self) -> Option<&SmbParams> {
         match self {
