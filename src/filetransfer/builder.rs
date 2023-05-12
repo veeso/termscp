@@ -13,6 +13,9 @@ use remotefs_smb::SmbOptions;
 use remotefs_smb::{SmbCredentials, SmbFs};
 use remotefs_ssh::{ScpFs, SftpFs, SshConfigParseRule, SshOpts};
 
+#[cfg(not(smb))]
+use super::params::{AwsS3Params, GenericProtocolParams};
+#[cfg(smb)]
 use super::params::{AwsS3Params, GenericProtocolParams, SmbParams};
 use super::{FileTransferProtocol, ProtocolParams};
 use crate::system::config_client::ConfigClient;
