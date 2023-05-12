@@ -94,7 +94,7 @@ impl From<FileTransferParams> for Bookmark {
                 s3: Some(S3Params::from(params)),
                 smb: None,
             },
-            #[cfg(target_family = "unix")]
+            #[cfg(unix)]
             ProtocolParams::Smb(params) => Self {
                 smb: Some(SmbParams::from(params.clone())),
                 protocol,
@@ -105,7 +105,7 @@ impl From<FileTransferParams> for Bookmark {
                 directory,
                 s3: None,
             },
-            #[cfg(target_family = "windows")]
+            #[cfg(windows)]
             ProtocolParams::Smb(params) => Self {
                 protocol,
                 address: Some(params.address),
@@ -180,7 +180,7 @@ impl From<S3Params> for AwsS3Params {
     }
 }
 
-#[cfg(target_family = "unix")]
+#[cfg(unix)]
 impl From<TransferSmbParams> for SmbParams {
     fn from(params: TransferSmbParams) -> Self {
         Self {
@@ -190,7 +190,7 @@ impl From<TransferSmbParams> for SmbParams {
     }
 }
 
-#[cfg(target_family = "windows")]
+#[cfg(windows)]
 impl From<TransferSmbParams> for SmbParams {
     fn from(params: TransferSmbParams) -> Self {
         Self {
@@ -395,7 +395,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(target_family = "unix")]
+    #[cfg(unix)]
     fn should_get_ftparams_from_smb_bookmark() {
         let bookmark: Bookmark = Bookmark {
             protocol: FileTransferProtocol::Smb,
@@ -427,7 +427,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(target_family = "windows")]
+    #[cfg(windows)]
     fn should_get_ftparams_from_smb_bookmark() {
         let bookmark: Bookmark = Bookmark {
             protocol: FileTransferProtocol::Smb,

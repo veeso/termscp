@@ -7,7 +7,10 @@ use std::path::PathBuf;
 use remotefs::RemoteFs;
 use remotefs_aws_s3::AwsS3Fs;
 use remotefs_ftp::FtpFs;
-use remotefs_smb::SmbFs;
+#[cfg(smb_unix)]
+use remotefs_smb::SmbOptions;
+#[cfg(smb)]
+use remotefs_smb::{SmbCredentials, SmbFs};
 use remotefs_ssh::{ScpFs, SftpFs, SshConfigParseRule, SshOpts};
 
 use super::params::{AwsS3Params, GenericProtocolParams, SmbParams};
@@ -40,6 +43,7 @@ impl Builder {
             (FileTransferProtocol::Sftp, ProtocolParams::Generic(params)) => {
                 Box::new(Self::sftp_client(params, config_client))
             }
+            #[cfg(smb)]
             (FileTransferProtocol::Smb, ProtocolParams::Smb(params)) => {
                 Box::new(Self::smb_client(params))
             }
@@ -102,10 +106,8 @@ impl Builder {
         Self::build_ssh_opts(params, config_client).into()
     }
 
-    #[cfg(target_family = "unix")]
+    #[cfg(smb_unix)]
     fn smb_client(params: SmbParams) -> SmbFs {
-        use remotefs_smb::{SmbCredentials, SmbOptions};
-
         let mut credentials = SmbCredentials::default()
             .server(format!("smb://{}:{}", params.address, params.port))
             .share(params.share);
@@ -134,7 +136,7 @@ impl Builder {
         }
     }
 
-    #[cfg(target_family = "windows")]
+    #[cfg(windows)]
     fn smb_client(params: SmbParams) -> SmbFs {
         todo!()
     }
@@ -226,6 +228,14 @@ mod test {
         );
         let config_client = get_config_client();
         let _ = Builder::build(FileTransferProtocol::Sftp, params, &config_client);
+    }
+
+    #[test]
+    #[cfg(smb)]
+    fn should_build_smb_fs() {
+        let params = ProtocolParams::Smb(SmbParams::new("localhost", 445, "share"));
+        let config_client = get_config_client();
+        let _ = Builder::build(FileTransferProtocol::Smb, params, &config_client);
     }
 
     #[test]

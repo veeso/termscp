@@ -195,8 +195,6 @@ choco install termscp
   - dbus
   - pkgconf
   - libsmbclient
-- **MacOS** 用户:
-  - samba
 
 ### 可选项 ✔️
 

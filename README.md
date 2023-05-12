@@ -193,8 +193,6 @@ For more information or other platforms, please visit [veeso.github.io](https://
   - dbus
   - pkgconf
   - libsmbclient
-- **MacOS** users:
-  - samba
 
 ### Optional Requirements ✔️
 

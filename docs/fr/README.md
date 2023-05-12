@@ -190,8 +190,6 @@ Pour plus d'informations sur les autres méthodes d'installation, veuillez visit
   - dbus
   - pkgconf
   - libsmbclient
-- **MacOS** users:
-  - samba
 
 ### Requis facultatives ✔️
 

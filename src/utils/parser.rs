@@ -59,7 +59,7 @@ static REMOTE_S3_OPT_REGEX: Lazy<Regex> =
  * - group 4: share?
  * - group 5: remote-dir?
  */
-#[cfg(target_family = "unix")]
+#[cfg(unix)]
 static REMOTE_SMB_OPT_REGEX: Lazy<Regex> = lazy_regex!(
     r"(?:([^@]+)@)?(?:([^/:]+))(?::((?:[0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])(?:[0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])))?(?:/([^/]+))?(?:(/.+))?"
 );
@@ -71,7 +71,7 @@ static REMOTE_SMB_OPT_REGEX: Lazy<Regex> = lazy_regex!(
  * - group 3: share
  * - group 4: remote-dir?
  */
-#[cfg(target_family = "windows")]
+#[cfg(windows)]
 static REMOTE_SMB_OPT_REGEX: Lazy<Regex> = lazy_regex!(
     r"(?::((?:[0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])(?:[0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])))?(?:\\([^\\]+))?(?:(\\.+))?"
 );
@@ -169,7 +169,7 @@ fn parse_remote_opt_protocol(
             let protocol = match protocol {
                 Some(Ok(protocol)) => protocol,
                 Some(Err(err)) => return Err(err),
-                #[cfg(target_family = "windows")]
+                #[cfg(windows)]
                 None if groups.get(2).is_some() => FileTransferProtocol::Smb,
                 None => default,
             };
@@ -265,7 +265,7 @@ fn parse_s3_remote_opt(s: &str) -> Result<FileTransferParams, String> {
 }
 
 /// Parse remote options for smb protocol
-#[cfg(target_family = "unix")]
+#[cfg(unix)]
 fn parse_smb_remote_opts(s: &str) -> Result<FileTransferParams, String> {
     use crate::filetransfer::params::SmbParams;
 
@@ -304,7 +304,7 @@ fn parse_smb_remote_opts(s: &str) -> Result<FileTransferParams, String> {
     }
 }
 
-#[cfg(target_family = "windows")]
+#[cfg(windows)]
 fn parse_smb_remote_opts(s: &str) -> Result<FileTransferParams, String> {
     use crate::filetransfer::params::SmbParams;
 
@@ -622,7 +622,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(target_family = "unix")]
+    #[cfg(unix)]
     fn should_parse_smb_address() {
         let result = parse_remote_opt("smb://myserver/myshare").ok().unwrap();
         let params = result.params.smb_params().unwrap();
@@ -637,7 +637,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(target_family = "unix")]
+    #[cfg(unix)]
     fn should_parse_smb_address_with_opts() {
         let result = parse_remote_opt("smb://omar@myserver:4445/myshare/dir/subdir")
             .ok()
@@ -657,7 +657,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(target_family = "windows")]
+    #[cfg(windows)]
     fn should_parse_smb_address() {
         let result = parse_remote_opt(&String::from("\\\\myserver\\myshare"))
             .ok()
@@ -671,7 +671,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(target_family = "windows")]
+    #[cfg(windows)]
     fn should_parse_smb_address_with_opts() {
         let result = parse_remote_opt(&String::from("\\\\myserver:3445\\myshare\\path"))
             .ok()

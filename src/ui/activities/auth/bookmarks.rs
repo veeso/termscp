@@ -183,12 +183,12 @@ impl AuthActivity {
     fn load_bookmark_smb_into_gui(&mut self, params: SmbParams) {
         self.mount_address(params.address.as_str());
         self.mount_port(params.port);
-        #[cfg(target_family = "unix")]
+        #[cfg(unix)]
         self.mount_username(params.username.as_deref().unwrap_or(""));
-        #[cfg(target_family = "unix")]
+        #[cfg(unix)]
         self.mount_password(params.password.as_deref().unwrap_or(""));
         self.mount_smb_share(&params.share);
-        #[cfg(target_family = "unix")]
+        #[cfg(unix)]
         self.mount_smb_workgroup(params.workgroup.as_deref().unwrap_or(""));
     }
 }

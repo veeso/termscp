@@ -57,7 +57,7 @@ impl AuthActivity {
         self.mount_s3_session_token("");
         self.mount_s3_new_path_style(false);
         self.mount_smb_share("");
-        #[cfg(target_family = "unix")]
+        #[cfg(unix)]
         self.mount_smb_workgroup("");
         // Version notice
         if let Some(version) = self
@@ -163,7 +163,7 @@ impl AuthActivity {
                     )
                     .direction(Direction::Vertical)
                     .split(auth_chunks[4]),
-                #[cfg(target_family = "unix")]
+                #[cfg(unix)]
                 InputMask::Smb => Layout::default()
                     .constraints(
                         [
@@ -179,7 +179,7 @@ impl AuthActivity {
                     )
                     .direction(Direction::Vertical)
                     .split(auth_chunks[4]),
-                #[cfg(target_family = "windows")]
+                #[cfg(windows)]
                 InputMask::Smb => Layout::default()
                     .constraints(
                         [
@@ -764,7 +764,7 @@ impl AuthActivity {
             .is_ok());
     }
 
-    #[cfg(target_family = "unix")]
+    #[cfg(unix)]
     pub(crate) fn mount_smb_workgroup(&mut self, workgroup: &str) {
         let color = self.theme().auth_address;
         assert!(self
@@ -813,7 +813,7 @@ impl AuthActivity {
     }
 
     /// Collect s3 input values from view
-    #[cfg(target_family = "unix")]
+    #[cfg(unix)]
     pub(super) fn get_smb_params_input(&self) -> SmbParams {
         let share: String = self.get_input_smb_share();
         let workgroup: Option<String> = self.get_input_smb_workgroup();
@@ -829,7 +829,7 @@ impl AuthActivity {
             .workgroup(workgroup)
     }
 
-    #[cfg(target_family = "windows")]
+    #[cfg(windows)]
     pub(super) fn get_smb_params_input(&self) -> SmbParams {
         let share: String = self.get_input_smb_share();
 
@@ -949,7 +949,7 @@ impl AuthActivity {
         }
     }
 
-    #[cfg(target_family = "unix")]
+    #[cfg(unix)]
     pub(super) fn get_input_smb_workgroup(&self) -> Option<String> {
         match self.app.state(&Id::SmbWorkgroup) {
             Ok(State::One(StateValue::String(x))) => Some(x),
@@ -1076,7 +1076,7 @@ impl AuthActivity {
         }
     }
 
-    #[cfg(target_family = "unix")]
+    #[cfg(unix)]
     fn get_smb_view(&self) -> [Id; 4] {
         match self.app.focus() {
             Some(&Id::Address | &Id::Port | &Id::SmbShare | &Id::Username) => {
@@ -1094,7 +1094,7 @@ impl AuthActivity {
         }
     }
 
-    #[cfg(target_family = "windows")]
+    #[cfg(windows)]
     fn get_smb_view(&self) -> [Id; 4] {
         [Id::Address, Id::Port, Id::SmbShare, Id::RemoteDirectory]
     }

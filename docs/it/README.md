@@ -190,8 +190,6 @@ Per ulteriori informazioni sui metodi di installazione su altre piattaforme, vis
   - dbus
   - pkgconf
   - libsmbclient
-- **MacOS** users:
-  - samba
 
 ### Requisiti opzionali ✔️
 

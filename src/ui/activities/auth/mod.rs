@@ -64,7 +64,7 @@ pub enum Id {
     S3SecurityToken,
     S3SessionToken,
     SmbShare,
-    #[cfg(target_family = "unix")]
+    #[cfg(unix)]
     SmbWorkgroup,
     Subtitle,
     Title,
@@ -138,9 +138,9 @@ pub enum UiMsg {
     S3SessionTokenBlurUp,
     SmbShareBlurDown,
     SmbShareBlurUp,
-    #[cfg(target_family = "unix")]
+    #[cfg(unix)]
     SmbWorkgroupDown,
-    #[cfg(target_family = "unix")]
+    #[cfg(unix)]
     SmbWorkgroupUp,
     BookmarkNameBlur,
     SaveBookmarkPasswordBlur,

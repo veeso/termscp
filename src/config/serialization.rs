@@ -409,14 +409,14 @@ mod tests {
         let host = hosts.bookmarks.get("smb").unwrap();
         assert_eq!(host.address.as_deref().unwrap(), "localhost");
         assert_eq!(host.port.unwrap(), 445);
-        #[cfg(target_family = "unix")]
+        #[cfg(unix)]
         assert_eq!(host.username.as_deref().unwrap(), "test");
-        #[cfg(target_family = "unix")]
+        #[cfg(unix)]
         assert_eq!(host.password.as_deref().unwrap(), "test");
 
         let smb = host.smb.as_ref().unwrap();
         assert_eq!(smb.share.as_str(), "temp");
-        #[cfg(target_family = "unix")]
+        #[cfg(unix)]
         assert_eq!(smb.workgroup.as_deref().unwrap(), "test");
     }
 
@@ -480,12 +480,12 @@ mod tests {
                 smb: None,
             },
         );
-        #[cfg(target_family = "unix")]
+        #[cfg(unix)]
         let smb_params = Some(SmbParams {
             share: "test".to_string(),
             workgroup: None,
         });
-        #[cfg(target_family = "windows")]
+        #[cfg(windows)]
         let smb_params: Option<SmbParams> = Some(SmbParams {
             share: "test".to_string(),
         });

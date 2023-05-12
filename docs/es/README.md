@@ -190,8 +190,6 @@ Para obtener más información u otras plataformas, visite [veeso.github.io](htt
   - dbus
   - pkgconf
   - libsmbclient
-- **MacOS** users:
-  - samba
 
 ### Requisitos opcionales ✔️
 

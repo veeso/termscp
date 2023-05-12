@@ -161,9 +161,9 @@ impl AuthActivity {
                     .app
                     .active(match self.input_mask() {
                         InputMask::Generic => &Id::RemoteDirectory,
-                        #[cfg(target_family = "unix")]
+                        #[cfg(unix)]
                         InputMask::Smb => &Id::SmbWorkgroup,
-                        #[cfg(target_family = "windows")]
+                        #[cfg(windows)]
                         InputMask::Smb => &Id::RemoteDirectory,
                         InputMask::AwsS3 => panic!("this shouldn't happen (password on s3)"),
                     })
@@ -209,9 +209,9 @@ impl AuthActivity {
                     .app
                     .active(match self.input_mask() {
                         InputMask::Generic => &Id::Password,
-                        #[cfg(target_family = "unix")]
+                        #[cfg(unix)]
                         InputMask::Smb => &Id::SmbWorkgroup,
-                        #[cfg(target_family = "windows")]
+                        #[cfg(windows)]
                         InputMask::Smb => &Id::Password,
                         InputMask::AwsS3 => &Id::S3NewPathStyle,
                     })
@@ -272,19 +272,19 @@ impl AuthActivity {
                 assert!(self.app.active(&Id::S3SessionToken).is_ok());
             }
             UiMsg::SmbShareBlurDown => {
-                #[cfg(target_family = "unix")]
+                #[cfg(unix)]
                 assert!(self.app.active(&Id::Username).is_ok());
-                #[cfg(target_family = "windows")]
+                #[cfg(windows)]
                 assert!(self.app.active(&Id::RemoteDirectory).is_ok());
             }
             UiMsg::SmbShareBlurUp => {
                 assert!(self.app.active(&Id::Port).is_ok());
             }
-            #[cfg(target_family = "unix")]
+            #[cfg(unix)]
             UiMsg::SmbWorkgroupDown => {
                 assert!(self.app.active(&Id::RemoteDirectory).is_ok());
             }
-            #[cfg(target_family = "unix")]
+            #[cfg(unix)]
             UiMsg::SmbWorkgroupUp => {
                 assert!(self.app.active(&Id::Password).is_ok());
             }

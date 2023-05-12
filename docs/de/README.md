@@ -192,8 +192,6 @@ Für weitere Informationen oder andere Plattformen besuchen Sie bitte [veeso.git
   - dbus
   - pkgconf
   - libsmbclient
-- **MacOs** Benutzer:
-  - samba
 
 ### Optionale Softwareanforderungen ✔️
 

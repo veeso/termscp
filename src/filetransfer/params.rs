@@ -51,11 +51,11 @@ pub struct SmbParams {
     pub address: String,
     pub port: u16,
     pub share: String,
-    #[cfg(target_family = "unix")]
+    #[cfg(unix)]
     pub username: Option<String>,
-    #[cfg(target_family = "unix")]
+    #[cfg(unix)]
     pub password: Option<String>,
-    #[cfg(target_family = "unix")]
+    #[cfg(unix)]
     pub workgroup: Option<String>,
 }
 
@@ -135,7 +135,7 @@ impl ProtocolParams {
         }
     }
 
-    #[cfg(test)]
+    #[cfg(all(test, smb))]
     /// Retrieve SMB parameters if any
     pub fn smb_params(&self) -> Option<&SmbParams> {
         match self {
@@ -270,28 +270,28 @@ impl SmbParams {
             address: address.as_ref().to_string(),
             port,
             share: share.as_ref().to_string(),
-            #[cfg(target_family = "unix")]
+            #[cfg(unix)]
             username: None,
-            #[cfg(target_family = "unix")]
+            #[cfg(unix)]
             password: None,
-            #[cfg(target_family = "unix")]
+            #[cfg(unix)]
             workgroup: None,
         }
     }
 
-    #[cfg(target_family = "unix")]
+    #[cfg(unix)]
     pub fn username(mut self, username: Option<impl ToString>) -> Self {
         self.username = username.map(|x| x.to_string());
         self
     }
 
-    #[cfg(target_family = "unix")]
+    #[cfg(unix)]
     pub fn password(mut self, password: Option<impl ToString>) -> Self {
         self.password = password.map(|x| x.to_string());
         self
     }
 
-    #[cfg(target_family = "unix")]
+    #[cfg(unix)]
     pub fn workgroup(mut self, workgroup: Option<impl ToString>) -> Self {
         self.workgroup = workgroup.map(|x| x.to_string());
         self
@@ -308,12 +308,12 @@ impl SmbParams {
     }
 
     /// Set password
-    #[cfg(target_family = "unix")]
+    #[cfg(unix)]
     pub fn set_default_secret(&mut self, secret: String) {
         self.password = Some(secret);
     }
 
-    #[cfg(target_family = "windows")]
+    #[cfg(windows)]
     pub fn set_default_secret(&mut self, _secret: String) {}
 }
 
@@ -393,16 +393,15 @@ mod test {
         assert_eq!(params.port, 3456);
         assert_eq!(&params.share, "temp");
 
-        #[cfg(target_family = "unix")]
+        #[cfg(unix)]
         assert!(params.username.is_none());
-        #[cfg(target_family = "unix")]
+        #[cfg(unix)]
         assert!(params.password.is_none());
-        #[cfg(target_family = "unix")]
+        #[cfg(unix)]
         assert!(params.workgroup.is_none());
     }
 
     #[test]
-    #[cfg(target_family = "unix")]
     fn should_init_smb_params_with_optionals() {
         let params = SmbParams::new("localhost", 3456, "temp")
             .username(Some("foo"))

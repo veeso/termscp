@@ -11,7 +11,7 @@ use bytesize::ByteSize;
 use lazy_regex::{Lazy, Regex};
 use remotefs::File;
 use unicode_width::UnicodeWidthStr;
-#[cfg(target_family = "unix")]
+#[cfg(unix)]
 use users::{get_group_by_gid, get_user_by_uid};
 
 use crate::utils::fmt::{fmt_path_elide, fmt_pex, fmt_time};
@@ -211,7 +211,7 @@ impl Formatter {
         _fmt_extra: Option<&String>,
     ) -> String {
         // Get username
-        #[cfg(target_family = "unix")]
+        #[cfg(unix)]
         let group: String = match fsentry.metadata().gid {
             Some(gid) => match get_group_by_gid(gid) {
                 Some(user) => user.name().to_string_lossy().to_string(),
@@ -219,7 +219,7 @@ impl Formatter {
             },
             None => 0.to_string(),
         };
-        #[cfg(target_os = "windows")]
+        #[cfg(windows)]
         let group: String = match fsentry.metadata().gid {
             Some(gid) => gid.to_string(),
             None => 0.to_string(),
@@ -420,7 +420,7 @@ impl Formatter {
         _fmt_extra: Option<&String>,
     ) -> String {
         // Get username
-        #[cfg(target_family = "unix")]
+        #[cfg(unix)]
         let username: String = match fsentry.metadata().uid {
             Some(uid) => match get_user_by_uid(uid) {
                 Some(user) => user.name().to_string_lossy().to_string(),
@@ -428,7 +428,7 @@ impl Formatter {
             },
             None => 0.to_string(),
         };
-        #[cfg(target_os = "windows")]
+        #[cfg(windows)]
         let username: String = match fsentry.metadata().uid {
             Some(uid) => uid.to_string(),
             None => 0.to_string(),
@@ -592,7 +592,7 @@ mod tests {
                 mode: Some(UnixPex::from(0o644)),
             },
         };
-        #[cfg(target_family = "unix")]
+        #[cfg(unix)]
         assert_eq!(
             formatter.fmt(&entry),
             format!(
@@ -600,7 +600,7 @@ mod tests {
                 fmt_time(t, "%b %d %Y %H:%M")
             )
         );
-        #[cfg(target_os = "windows")]
+        #[cfg(windows)]
         assert_eq!(
             formatter.fmt(&entry),
             format!(
@@ -623,7 +623,7 @@ mod tests {
                 mode: Some(UnixPex::from(0o644)),
             },
         };
-        #[cfg(target_family = "unix")]
+        #[cfg(unix)]
         assert_eq!(
             formatter.fmt(&entry),
             format!(
@@ -631,7 +631,7 @@ mod tests {
                 fmt_time(t, "%b %d %Y %H:%M")
             )
         );
-        #[cfg(target_os = "windows")]
+        #[cfg(windows)]
         assert_eq!(
             formatter.fmt(&entry),
             format!(
@@ -654,7 +654,7 @@ mod tests {
                 mode: None,
             },
         };
-        #[cfg(target_family = "unix")]
+        #[cfg(unix)]
         assert_eq!(
             formatter.fmt(&entry),
             format!(
@@ -662,7 +662,7 @@ mod tests {
                 fmt_time(t, "%b %d %Y %H:%M")
             )
         );
-        #[cfg(target_os = "windows")]
+        #[cfg(windows)]
         assert_eq!(
             formatter.fmt(&entry),
             format!(
@@ -685,7 +685,7 @@ mod tests {
                 mode: None,
             },
         };
-        #[cfg(target_family = "unix")]
+        #[cfg(unix)]
         assert_eq!(
             formatter.fmt(&entry),
             format!(
@@ -693,7 +693,7 @@ mod tests {
                 fmt_time(t, "%b %d %Y %H:%M")
             )
         );
-        #[cfg(target_os = "windows")]
+        #[cfg(windows)]
         assert_eq!(
             formatter.fmt(&entry),
             format!(
@@ -723,7 +723,7 @@ mod tests {
                 mode: Some(UnixPex::from(0o755)),
             },
         };
-        #[cfg(target_family = "unix")]
+        #[cfg(unix)]
         assert_eq!(
             formatter.fmt(&entry),
             format!(
@@ -731,7 +731,7 @@ mod tests {
                 fmt_time(t, "%b %d %Y %H:%M")
             )
         );
-        #[cfg(target_os = "windows")]
+        #[cfg(windows)]
         assert_eq!(
             formatter.fmt(&entry),
             format!(
@@ -754,7 +754,7 @@ mod tests {
                 mode: None,
             },
         };
-        #[cfg(target_family = "unix")]
+        #[cfg(unix)]
         assert_eq!(
             formatter.fmt(&entry),
             format!(
@@ -762,7 +762,7 @@ mod tests {
                 fmt_time(t, "%b %d %Y %H:%M")
             )
         );
-        #[cfg(target_os = "windows")]
+        #[cfg(windows)]
         assert_eq!(
             formatter.fmt(&entry),
             format!(
@@ -864,7 +864,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(target_family = "unix")]
+    #[cfg(unix)]
     fn should_fmt_path() {
         let t: SystemTime = SystemTime::now();
         let entry = File {
@@ -896,7 +896,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(target_family = "unix")]
+    #[cfg(unix)]
     fn should_fmt_utf8_path() {
         let t: SystemTime = SystemTime::now();
         let entry = File {

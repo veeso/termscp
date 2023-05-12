@@ -13,7 +13,7 @@ pub use bookmarks::{
     BookmarkName, BookmarkSavePassword, BookmarksList, DeleteBookmarkPopup, DeleteRecentPopup,
     RecentsList,
 };
-#[cfg(target_family = "unix")]
+#[cfg(unix)]
 pub use form::InputSmbWorkgroup;
 pub use form::{
     InputAddress, InputPassword, InputPort, InputRemoteDirectory, InputS3AccessKey, InputS3Bucket,

@@ -31,7 +31,11 @@ impl ProtocolRadio {
                         .color(color)
                         .modifiers(BorderType::Rounded),
                 )
-                .choices(&["SFTP", "SCP", "FTP", "FTPS", "S3", "SMB"])
+                .choices(if cfg!(smb) {
+                    &["SFTP", "SCP", "FTP", "FTPS", "S3", "SMB"]
+                } else {
+                    &["SFTP", "SCP", "FTP", "FTPS", "S3"]
+                })
                 .foreground(color)
                 .rewind(true)
                 .title("Protocol", Alignment::Left)
@@ -714,13 +718,13 @@ impl Component<Msg, NoUserEvent> for InputSmbShare {
     }
 }
 
-#[cfg(target_family = "unix")]
+#[cfg(unix)]
 #[derive(MockComponent)]
 pub struct InputSmbWorkgroup {
     component: Input,
 }
 
-#[cfg(target_family = "unix")]
+#[cfg(unix)]
 impl InputSmbWorkgroup {
     pub fn new(host: &str, color: Color) -> Self {
         Self {
@@ -738,7 +742,7 @@ impl InputSmbWorkgroup {
     }
 }
 
-#[cfg(target_family = "unix")]
+#[cfg(unix)]
 impl Component<Msg, NoUserEvent> for InputSmbWorkgroup {
     fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
         handle_input_ev(

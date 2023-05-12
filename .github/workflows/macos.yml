@@ -13,8 +13,6 @@ jobs:
       LDFLAGS: "-L/opt/homebrew/opt/samba/lib"
     steps:
       - uses: actions/checkout@v2
-      - name: Install dependencies
-        run: brew update && brew install samba pkg-config
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
