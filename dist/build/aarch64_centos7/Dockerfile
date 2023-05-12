@@ -9,6 +9,7 @@ RUN yum -y install \
     gcc \
     make \
     dbus-devel \
+    libsmbclient-devel \
     bash \
     rpm-build
 # Install rust

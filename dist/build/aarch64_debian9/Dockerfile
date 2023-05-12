@@ -8,6 +8,8 @@ RUN apt update && apt install -y \
   pkg-config \
   libdbus-1-dev \
   build-essential \
+  libsmbclient-dev \
+  libsmbclient \
   bash \
   curl
 

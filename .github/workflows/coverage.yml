@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Install dependencies
-        run: sudo apt update && sudo apt install -y libdbus-1-dev libssh2-1-dev libssl-dev
+        run: sudo apt update && sudo apt install -y libdbus-1-dev libsmbclient-dev libsmbclient
       - name: Setup nightly toolchain
         uses: actions-rs/toolchain@v1
         with:
