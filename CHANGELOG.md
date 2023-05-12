@@ -37,6 +37,8 @@ Released on ??
 
 - **Change file permissions**: you can now change file permissions easily with the permissions popup pressing `Z` in the explorer.
   - [Issue 172](https://github.com/veeso/termscp/issues/172)
+- **SMB protocol**: Support for SMB protocol has been added thanks to the [remotefs-smb](https://github.com/veeso/remotefs-rs-smb) library and the [pavao](https://github.com/veeso/pavao) project. You may notice that the interface is quiet different between Windows and Linux/MacOs/BSD due to the fact that SMB is natively supported on Windows systems.
+  - [Issue 182](https://github.com/veeso/termscp/issues/182)
 - [Issue 153](https://github.com/veeso/termscp/issues/153): show a loading message when loading directory's content
 - [Issue 176](https://github.com/veeso/termscp/issues/176): debug log is now written to CACHE_DIR
 - [Issue 173](https://github.com/veeso/termscp/issues/173): allow unknown fields in ssh2 configuration file
