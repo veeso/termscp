@@ -636,7 +636,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(unix)]
+    #[cfg(smb_unix)]
     fn should_parse_smb_address_with_opts() {
         let result = parse_remote_opt("smb://omar@myserver:4445/myshare/dir/subdir")
             .ok()
