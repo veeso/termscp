@@ -49,11 +49,10 @@ pub struct AwsS3Params {
 #[derive(Debug, Clone)]
 pub struct SmbParams {
     pub address: String,
+    #[cfg(unix)]
     pub port: u16,
     pub share: String,
-    #[cfg(unix)]
     pub username: Option<String>,
-    #[cfg(unix)]
     pub password: Option<String>,
     #[cfg(unix)]
     pub workgroup: Option<String>,
@@ -265,14 +264,13 @@ impl AwsS3Params {
 
 impl SmbParams {
     /// Instantiates a new `AwsS3Params` struct
-    pub fn new<S: AsRef<str>>(address: S, port: u16, share: S) -> Self {
+    pub fn new<S: AsRef<str>>(address: S, share: S) -> Self {
         Self {
             address: address.as_ref().to_string(),
-            port,
+            #[cfg(unix)]
+            port: 445,
             share: share.as_ref().to_string(),
-            #[cfg(unix)]
             username: None,
-            #[cfg(unix)]
             password: None,
             #[cfg(unix)]
             workgroup: None,
@@ -280,12 +278,16 @@ impl SmbParams {
     }
 
     #[cfg(unix)]
+    pub fn port(mut self, port: u16) -> Self {
+        self.port = port;
+        self
+    }
+
     pub fn username(mut self, username: Option<impl ToString>) -> Self {
         self.username = username.map(|x| x.to_string());
         self
     }
 
-    #[cfg(unix)]
     pub fn password(mut self, password: Option<impl ToString>) -> Self {
         self.password = password.map(|x| x.to_string());
         self
@@ -300,11 +302,7 @@ impl SmbParams {
     /// Returns whether a password is supposed to be required for this protocol params.
     /// The result true is returned ONLY if the supposed secret is MISSING!!!
     pub fn password_missing(&self) -> bool {
-        if cfg!(target_family = "unix") {
-            self.password.is_none()
-        } else {
-            false
-        }
+        self.password.is_none()
     }
 
     /// Set password
@@ -388,9 +386,11 @@ mod test {
 
     #[test]
     fn should_init_smb_params() {
-        let params = SmbParams::new("localhost", 3456, "temp");
+        let params = SmbParams::new("localhost", "temp");
         assert_eq!(&params.address, "localhost");
-        assert_eq!(params.port, 3456);
+
+        #[cfg(unix)]
+        assert_eq!(params.port, 445);
         assert_eq!(&params.share, "temp");
 
         #[cfg(unix)]
@@ -402,8 +402,10 @@ mod test {
     }
 
     #[test]
+    #[cfg(unix)]
     fn should_init_smb_params_with_optionals() {
-        let params = SmbParams::new("localhost", 3456, "temp")
+        let params = SmbParams::new("localhost", "temp")
+            .port(3456)
             .username(Some("foo"))
             .password(Some("bar"))
             .workgroup(Some("baz"));
@@ -414,6 +416,19 @@ mod test {
         assert_eq!(params.username.as_deref().unwrap(), "foo");
         assert_eq!(params.password.as_deref().unwrap(), "bar");
         assert_eq!(params.workgroup.as_deref().unwrap(), "baz");
+    }
+
+    #[test]
+    #[cfg(windows)]
+    fn should_init_smb_params_with_optionals() {
+        let params = SmbParams::new("localhost", "temp")
+            .username(Some("foo"))
+            .password(Some("bar"));
+
+        assert_eq!(&params.address, "localhost");
+        assert_eq!(&params.share, "temp");
+        assert_eq!(params.username.as_deref().unwrap(), "foo");
+        assert_eq!(params.password.as_deref().unwrap(), "bar");
     }
 
     #[test]

@@ -480,14 +480,9 @@ mod tests {
                 smb: None,
             },
         );
-        #[cfg(unix)]
-        let smb_params = Some(SmbParams {
-            share: "test".to_string(),
-            workgroup: None,
-        });
-        #[cfg(windows)]
         let smb_params: Option<SmbParams> = Some(SmbParams {
             share: "test".to_string(),
+            workgroup: None,
         });
         bookmarks.insert(
             String::from("smb"),

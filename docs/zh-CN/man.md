@@ -110,7 +110,7 @@ SMB 对 CLI 地址参数有不同的语法，无论您是在 Windows 还是其�
 **Windows** 句法:
 
 ```txt
-\\<server-name>[:port]\<share>[\path\...]
+\\[username@]<server-name>\<share>[\path\...]
 ```
 
 **其他系统** 句法:

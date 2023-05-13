@@ -115,7 +115,12 @@ impl AuthActivity {
     fn update_ui(&mut self, msg: UiMsg) -> Option<Msg> {
         match msg {
             UiMsg::AddressBlurDown => {
-                assert!(self.app.active(&Id::Port).is_ok());
+                let id = if cfg!(windows) && self.input_mask() == InputMask::Smb {
+                    &Id::SmbShare
+                } else {
+                    &Id::Port
+                };
+                assert!(self.app.active(id).is_ok());
             }
             UiMsg::AddressBlurUp => {
                 assert!(self.app.active(&Id::Protocol).is_ok());
@@ -272,13 +277,15 @@ impl AuthActivity {
                 assert!(self.app.active(&Id::S3SessionToken).is_ok());
             }
             UiMsg::SmbShareBlurDown => {
-                #[cfg(unix)]
                 assert!(self.app.active(&Id::Username).is_ok());
-                #[cfg(windows)]
-                assert!(self.app.active(&Id::RemoteDirectory).is_ok());
             }
             UiMsg::SmbShareBlurUp => {
-                assert!(self.app.active(&Id::Port).is_ok());
+                let id = if cfg!(windows) && self.input_mask() == InputMask::Smb {
+                    &Id::Address
+                } else {
+                    &Id::Port
+                };
+                assert!(self.app.active(id).is_ok());
             }
             #[cfg(unix)]
             UiMsg::SmbWorkgroupDown => {

@@ -109,7 +109,7 @@ SMB ha una sintassi differente rispetto agli altri protocolli e cambia in base a
 **Windows**:
 
 ```txt
-\\<server-name>[:port]\<share>[\path\...]
+\\[username@]<server-name>\<share>[\path\...]
 ```
 
 **Altri sistemi**:

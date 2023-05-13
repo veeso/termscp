@@ -141,7 +141,16 @@ impl Builder {
 
     #[cfg(windows)]
     fn smb_client(params: SmbParams) -> SmbFs {
-        todo!()
+        let mut credentials = SmbCredentials::new(params.address, params.share);
+
+        if let Some(username) = params.username {
+            credentials = credentials.username(username);
+        }
+        if let Some(password) = params.password {
+            credentials = credentials.password(password);
+        }
+
+        SmbFs::new(credentials)
     }
 
     /// Build ssh options from generic protocol params and client configuration
@@ -236,7 +245,7 @@ mod test {
     #[test]
     #[cfg(smb)]
     fn should_build_smb_fs() {
-        let params = ProtocolParams::Smb(SmbParams::new("localhost", 445, "share"));
+        let params = ProtocolParams::Smb(SmbParams::new("localhost", "share"));
         let config_client = get_config_client();
         let _ = Builder::build(FileTransferProtocol::Smb, params, &config_client);
     }

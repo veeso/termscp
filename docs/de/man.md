@@ -113,7 +113,7 @@ SMB has a different syntax for CLI address argument, which is different whether 
 **Windows** syntax:
 
 ```txt
-\\<server-name>[:port]\<share>[\path\...]
+\\[username@]<server-name>\<share>[\path\...]
 ```
 
 **Other systems** syntax:

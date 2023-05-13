@@ -81,6 +81,7 @@ impl AuthActivity {
         if params.address.is_empty() {
             return Err("Invalid address");
         }
+        #[cfg(unix)]
         if params.port == 0 {
             return Err("Invalid port");
         }

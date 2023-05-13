@@ -184,8 +184,9 @@ impl AuthActivity {
                     .constraints(
                         [
                             Constraint::Length(3), // address
-                            Constraint::Length(3), // port
                             Constraint::Length(3), // share
+                            Constraint::Length(3), // username
+                            Constraint::Length(3), // password
                             Constraint::Length(3), // remote directory
                         ]
                         .as_ref(),
@@ -823,7 +824,8 @@ impl AuthActivity {
         let username = self.get_input_username();
         let password = self.get_input_password();
 
-        SmbParams::new(address, port, share)
+        SmbParams::new(address, share)
+            .port(port)
             .username(username)
             .password(password)
             .workgroup(workgroup)
@@ -834,9 +836,12 @@ impl AuthActivity {
         let share: String = self.get_input_smb_share();
 
         let address: String = self.get_input_addr();
-        let port: u16 = self.get_input_port();
+        let username = self.get_input_username();
+        let password = self.get_input_password();
 
-        SmbParams::new(address, port, share)
+        SmbParams::new(address, share)
+            .username(username)
+            .password(password)
     }
 
     pub(super) fn get_input_remote_directory(&self) -> Option<PathBuf> {
@@ -1020,8 +1025,24 @@ impl AuthActivity {
                     protocol, username, params.address, params.port
                 )
             }
+            #[cfg(unix)]
             ProtocolParams::Smb(params) => {
-                format!("\\\\{}:{}\\{}", params.address, params.port, params.share)
+                let username: String = match params.username {
+                    None => String::default(),
+                    Some(u) => format!("{u}@"),
+                };
+                format!(
+                    "\\\\{username}{}:{}\\{}",
+                    params.address, params.port, params.share
+                )
+            }
+            #[cfg(windows)]
+            ProtocolParams::Smb(params) => {
+                let username: String = match params.username {
+                    None => String::default(),
+                    Some(u) => format!("{u}@"),
+                };
+                format!("\\\\{username}{}\\{}", params.address, params.share)
             }
         }
     }
@@ -1096,7 +1117,18 @@ impl AuthActivity {
 
     #[cfg(windows)]
     fn get_smb_view(&self) -> [Id; 4] {
-        [Id::Address, Id::Port, Id::SmbShare, Id::RemoteDirectory]
+        match self.app.focus() {
+            Some(&Id::Address | &Id::Password | &Id::SmbShare | &Id::Username) => {
+                [Id::Address, Id::SmbShare, Id::Username, Id::Password]
+            }
+            Some(&Id::RemoteDirectory) => [
+                Id::SmbShare,
+                Id::Username,
+                Id::Password,
+                Id::RemoteDirectory,
+            ],
+            _ => [Id::Address, Id::SmbShare, Id::Username, Id::Password],
+        }
     }
 
     fn init_global_listener(&mut self) {

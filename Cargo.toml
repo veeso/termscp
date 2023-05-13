@@ -80,7 +80,7 @@ with-keyring = [ "keyring" ]
 
 [target."cfg(not(target_os = \"macos\"))"]
 [target."cfg(not(target_os = \"macos\"))".dependencies]
-remotefs-smb = "^0.1"
+remotefs-smb = "^0.2"
 
 [target."cfg(target_family = \"windows\")"]
 [target."cfg(target_family = \"windows\")".dependencies]

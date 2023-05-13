@@ -94,27 +94,18 @@ impl From<FileTransferParams> for Bookmark {
                 s3: Some(S3Params::from(params)),
                 smb: None,
             },
-            #[cfg(unix)]
             ProtocolParams::Smb(params) => Self {
                 smb: Some(SmbParams::from(params.clone())),
                 protocol,
                 address: Some(params.address),
+                #[cfg(unix)]
                 port: Some(params.port),
+                #[cfg(windows)]
+                port: None,
                 username: params.username,
                 password: params.password,
                 directory,
                 s3: None,
-            },
-            #[cfg(windows)]
-            ProtocolParams::Smb(params) => Self {
-                protocol,
-                address: Some(params.address),
-                port: Some(params.port),
-                username: None,
-                password: None,
-                directory,
-                s3: None,
-                smb: Some(SmbParams::from(params)),
             },
         }
     }
@@ -139,15 +130,27 @@ impl From<Bookmark> for FileTransferParams {
                     .password(bookmark.password);
                 Self::new(bookmark.protocol, ProtocolParams::Generic(params))
             }
+            #[cfg(unix)]
             FileTransferProtocol::Smb => {
                 let params = TransferSmbParams::new(
                     bookmark.address.unwrap_or_default(),
-                    bookmark.port.unwrap_or(445),
                     bookmark.smb.clone().map(|x| x.share).unwrap_or_default(),
                 )
+                .port(bookmark.port.unwrap_or(445))
                 .username(bookmark.username)
                 .password(bookmark.password)
                 .workgroup(bookmark.smb.and_then(|x| x.workgroup));
+
+                Self::new(bookmark.protocol, ProtocolParams::Smb(params))
+            }
+            #[cfg(windows)]
+            FileTransferProtocol::Smb => {
+                let params = TransferSmbParams::new(
+                    bookmark.address.unwrap_or_default(),
+                    bookmark.smb.clone().map(|x| x.share).unwrap_or_default(),
+                )
+                .username(bookmark.username)
+                .password(bookmark.password);
 
                 Self::new(bookmark.protocol, ProtocolParams::Smb(params))
             }
@@ -195,6 +198,7 @@ impl From<TransferSmbParams> for SmbParams {
     fn from(params: TransferSmbParams) -> Self {
         Self {
             share: params.share,
+            workgroup: None,
         }
     }
 }
@@ -439,6 +443,7 @@ mod tests {
             s3: None,
             smb: Some(SmbParams {
                 share: "test".to_string(),
+                workgroup: None,
             }),
         };
 
@@ -450,7 +455,6 @@ mod tests {
         );
         let smb_params = params.params.smb_params().unwrap();
         assert_eq!(smb_params.address.as_str(), "localhost");
-        assert_eq!(smb_params.port, 445);
         assert_eq!(smb_params.share.as_str(), "test");
     }
 }

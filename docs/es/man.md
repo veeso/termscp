@@ -113,7 +113,7 @@ SMB tiene una sintaxis diferente para el argumento de la dirección CLI, que es 
 **Windows** sintaxis:
 
 ```txt
-\\<server-name>[:port]\<share>[\path\...]
+\\[username@]<server-name>\<share>[\path\...]
 ```
 
 **Other systems** sintaxis:

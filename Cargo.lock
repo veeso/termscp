@@ -2050,9 +2050,9 @@ checksum = "8835116a5c179084a830efb3adc117ab007512b535bc1a21c991d3b32a6b44dd"
 
 [[package]]
 name = "pavao"
-version = "0.1.2"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a51a966a8b169575917ba1dd9fc49cf03997a639f1ada205931e01623f8e2c32"
+checksum = "7f789d21b9a0ae0168b6325cee036811e746e635ef90896161e1df2ee3d3b60d"
 dependencies = [
  "lazy_static",
  "libc",
@@ -2280,14 +2280,16 @@ dependencies = [
 
 [[package]]
 name = "remotefs-smb"
-version = "0.1.0"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7a1e17ca4312fdf46c5fe0969fbc2a6881548132c46bfd81721712f319cd1894"
+checksum = "27c4fb523b04b6bcd5dae95a33cbaee73cf7d6607862039b6d2bff310db6ed9f"
 dependencies = [
+ "filetime",
  "libc",
  "log",
  "pavao",
  "remotefs",
+ "windows-sys 0.48.0",
 ]
 
 [[package]]

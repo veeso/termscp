@@ -30,7 +30,7 @@ use crate::system::environment;
  * - group 2: SMB windows prefix
  * - group 3: Some(other args)
  */
-static REMOTE_OPT_PROTOCOL_REGEX: Lazy<Regex> = lazy_regex!(r"(?:([a-z0-9]+)://)?(\\)?(?:(.+))");
+static REMOTE_OPT_PROTOCOL_REGEX: Lazy<Regex> = lazy_regex!(r"(?:([a-z0-9]+)://)?(\\\\)?(?:(.+))");
 
 /**
  * Regex matches:
@@ -68,15 +68,14 @@ static REMOTE_SMB_OPT_REGEX: Lazy<Regex> = lazy_regex!(
 
 /**
  * Regex matches:
- * - group 1: address
- * - group 2: port?
+ * - group 1: username?
+ * - group 2: address
  * - group 3: share
  * - group 4: remote-dir?
  */
 #[cfg(windows)]
-static REMOTE_SMB_OPT_REGEX: Lazy<Regex> = lazy_regex!(
-    r"(?::((?:[0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])(?:[0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])))?(?:\\([^\\]+))?(?:(\\.+))?"
-);
+static REMOTE_SMB_OPT_REGEX: Lazy<Regex> =
+    lazy_regex!(r"(?:([^@]+)@)?(?:([^:\\]+))(?:\\([^\\]+))?(?:(\\.+))?");
 
 /**
  * Regex matches:
@@ -297,7 +296,7 @@ fn parse_smb_remote_opts(s: &str) -> Result<FileTransferParams, String> {
 
             Ok(FileTransferParams::new(
                 FileTransferProtocol::Smb,
-                ProtocolParams::Smb(SmbParams::new(address, port, share).username(username)),
+                ProtocolParams::Smb(SmbParams::new(address, share).port(port).username(username)),
             )
             .entry_directory(entry_directory))
         }
@@ -309,17 +308,10 @@ fn parse_smb_remote_opts(s: &str) -> Result<FileTransferParams, String> {
 fn parse_smb_remote_opts(s: &str) -> Result<FileTransferParams, String> {
     match REMOTE_SMB_OPT_REGEX.captures(s) {
         Some(groups) => {
-            let address = match groups.get(1) {
+            let username = groups.get(1).map(|x| x.as_str().to_string());
+            let address = match groups.get(2) {
                 Some(group) => group.as_str().to_string(),
                 None => return Err(String::from("Missing address")),
-            };
-            let port = match groups.get(2) {
-                Some(port) => match port.as_str().parse::<u16>() {
-                    // Try to parse port
-                    Ok(p) => p,
-                    Err(err) => return Err(format!("Bad port \"{}\": {}", port.as_str(), err)),
-                },
-                None => 445,
             };
             let share = match groups.get(3) {
                 Some(group) => group.as_str().to_string(),
@@ -330,7 +322,7 @@ fn parse_smb_remote_opts(s: &str) -> Result<FileTransferParams, String> {
 
             Ok(FileTransferParams::new(
                 FileTransferProtocol::Smb,
-                ProtocolParams::Smb(SmbParams::new(address, port, share)),
+                ProtocolParams::Smb(SmbParams::new(address, share).username(username)),
             )
             .entry_directory(entry_directory))
         }
@@ -664,7 +656,6 @@ mod tests {
         let params = result.params.smb_params().unwrap();
 
         assert_eq!(params.address.as_str(), "myserver");
-        assert_eq!(params.port, 445);
         assert_eq!(params.share.as_str(), "myshare");
         assert!(result.entry_directory.is_none());
     }
@@ -672,14 +663,14 @@ mod tests {
     #[test]
     #[cfg(windows)]
     fn should_parse_smb_address_with_opts() {
-        let result = parse_remote_opt(&String::from("\\\\myserver:3445\\myshare\\path"))
+        let result = parse_remote_opt(&String::from("\\\\omar@myserver:3445\\myshare\\path"))
             .ok()
             .unwrap();
         let params = result.params.smb_params().unwrap();
 
         assert_eq!(params.address.as_str(), "myserver");
-        assert_eq!(params.port, 3445);
         assert_eq!(params.share.as_str(), "myshare");
+        assert_eq!(params.username.as_deref().unwrap(), "omar");
         assert_eq!(
             result.entry_directory.as_deref().unwrap(),
             std::path::Path::new("\\path")
