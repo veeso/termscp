@@ -7,11 +7,14 @@
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
-use crate::filetransfer::FileTransferParams;
+use remotefs_ssh::SshKeyStorage as SshKeyStorageTrait;
+
+use crate::filetransfer::{FileTransferParams, FileTransferProtocol};
 use crate::host::{HostError, Localhost};
 use crate::system::bookmarks_client::BookmarksClient;
 use crate::system::config_client::ConfigClient;
 use crate::system::environment;
+use crate::system::sshkey_storage::SshKeyStorage;
 use crate::system::theme_provider::ThemeProvider;
 use crate::ui::activities::auth::AuthActivity;
 use crate::ui::activities::filetransfer::FileTransferActivity;
@@ -71,23 +74,58 @@ impl ActivityManager {
         if params.password_missing() {
             if let Some(password) = password {
                 params.set_default_secret(password.to_string());
-            } else {
-                match tty::read_secret_from_tty("Password: ") {
-                    Err(err) => return Err(format!("Could not read password: {err}")),
-                    Ok(Some(secret)) => {
-                        debug!(
-                            "Read password from tty: {}",
-                            fmt::shadow_password(secret.as_str())
-                        );
-                        params.set_default_secret(secret);
-                    }
-                    Ok(None) => {}
+            } else if matches!(
+                params.protocol,
+                FileTransferProtocol::Scp | FileTransferProtocol::Sftp,
+            ) && params.params.generic_params().is_some()
+            {
+                // * if protocol is SCP or SFTP check whether a SSH key is registered for this remote, in case not ask password
+                let storage = SshKeyStorage::from(self.context.as_ref().unwrap().config());
+                let generic_params = params.params.generic_params().unwrap();
+                if storage
+                    .resolve(
+                        &generic_params.address,
+                        &generic_params
+                            .username
+                            .clone()
+                            .unwrap_or(whoami::username()),
+                    )
+                    .is_none()
+                {
+                    debug!(
+                        "storage could not find any suitable key for {}... prompting for password",
+                        generic_params.address
+                    );
+                    self.prompt_password(&mut params)?;
+                } else {
+                    debug!(
+                        "a key is already set for {}; password is not required",
+                        generic_params.address
+                    );
                 }
+            } else {
+                self.prompt_password(&mut params)?;
             }
         }
         // Put params into the context
         self.context.as_mut().unwrap().set_ftparams(params);
         Ok(())
+    }
+
+    /// Prompt user for password to set into params.
+    fn prompt_password(&self, params: &mut FileTransferParams) -> Result<(), String> {
+        match tty::read_secret_from_tty("Password: ") {
+            Err(err) => Err(format!("Could not read password: {err}")),
+            Ok(Some(secret)) => {
+                debug!(
+                    "Read password from tty: {}",
+                    fmt::shadow_password(secret.as_str())
+                );
+                params.set_default_secret(secret);
+                Ok(())
+            }
+            Ok(None) => Ok(()),
+        }
     }
 
     /// Resolve provided bookmark name and set it as file transfer params.

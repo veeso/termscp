@@ -196,16 +196,7 @@ fn parse_generic_remote_opt(
     match REMOTE_GENERIC_OPT_REGEX.captures(s) {
         Some(groups) => {
             // Match user
-            let username: Option<String> = match groups.get(1) {
-                Some(group) => Some(group.as_str().to_string()),
-                None => match protocol {
-                    // If group is empty, set to current user
-                    FileTransferProtocol::Scp | FileTransferProtocol::Sftp => {
-                        Some(whoami::username())
-                    }
-                    _ => None,
-                },
-            };
+            let username = groups.get(1).map(|x| x.as_str().to_string());
             // Get address
             let address: String = match groups.get(2) {
                 Some(group) => group.as_str().to_string(),
@@ -437,7 +428,7 @@ mod tests {
         assert_eq!(result.protocol, FileTransferProtocol::Sftp);
         assert_eq!(params.address, String::from("172.26.104.1"));
         assert_eq!(params.port, 22);
-        assert!(params.username.is_some());
+        assert!(params.username.is_none());
         // User case
         let result: FileTransferParams = parse_remote_opt(&String::from("root@172.26.104.1"))
             .ok()
@@ -472,7 +463,7 @@ mod tests {
         assert_eq!(result.protocol, FileTransferProtocol::Sftp);
         assert_eq!(params.address, String::from("172.26.104.1"));
         assert_eq!(params.port, 4022);
-        assert!(params.username.is_some());
+        assert!(params.username.is_none());
         assert!(result.entry_directory.is_none());
         // Protocol
         let result: FileTransferParams = parse_remote_opt(&String::from("ftp://172.26.104.1"))
@@ -492,7 +483,7 @@ mod tests {
         assert_eq!(result.protocol, FileTransferProtocol::Sftp);
         assert_eq!(params.address, String::from("172.26.104.1"));
         assert_eq!(params.port, 22); // Fallback to sftp default
-        assert!(params.username.is_some()); // Doesn't fall back
+        assert!(params.username.is_none()); // Doesn't fall back
         assert!(result.entry_directory.is_none());
         let result: FileTransferParams = parse_remote_opt(&String::from("scp://172.26.104.1"))
             .ok()
@@ -501,7 +492,7 @@ mod tests {
         assert_eq!(result.protocol, FileTransferProtocol::Scp);
         assert_eq!(params.address, String::from("172.26.104.1"));
         assert_eq!(params.port, 22); // Fallback to scp default
-        assert!(params.username.is_some()); // Doesn't fall back
+        assert!(params.username.is_none()); // Doesn't fall back
         assert!(result.entry_directory.is_none());
         // Protocol + user
         let result: FileTransferParams =
@@ -539,7 +530,7 @@ mod tests {
         assert_eq!(result.protocol, FileTransferProtocol::Sftp);
         assert_eq!(params.address, String::from("172.26.104.1"));
         assert_eq!(params.port, 22);
-        assert!(params.username.is_some());
+        assert!(params.username.is_none());
         assert_eq!(result.entry_directory.unwrap(), PathBuf::from("home"));
         // All together now
         let result: FileTransferParams =

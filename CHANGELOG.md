@@ -42,6 +42,8 @@ Released on ??
 - [Issue 153](https://github.com/veeso/termscp/issues/153): show a loading message when loading directory's content
 - [Issue 176](https://github.com/veeso/termscp/issues/176): debug log is now written to CACHE_DIR
 - [Issue 173](https://github.com/veeso/termscp/issues/173): allow unknown fields in ssh2 configuration file
+- [Issue 175](https://github.com/veeso/termscp/issues/175): don't prompt for password if a ssh key is set for that host
+- Fixed an issue that didn't use the `User` specified in ssh2-config
 
 ## 0.11.3
 

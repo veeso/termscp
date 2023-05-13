@@ -20,6 +20,7 @@ use super::params::{AwsS3Params, GenericProtocolParams, SmbParams};
 use super::{FileTransferProtocol, ProtocolParams};
 use crate::system::config_client::ConfigClient;
 use crate::system::sshkey_storage::SshKeyStorage;
+use crate::utils::ssh as ssh_utils;
 
 /// Remotefs builder
 pub struct Builder;
@@ -155,11 +156,30 @@ impl Builder {
 
     /// Build ssh options from generic protocol params and client configuration
     fn build_ssh_opts(params: GenericProtocolParams, config_client: &ConfigClient) -> SshOpts {
-        let mut opts = SshOpts::new(params.address)
+        let mut opts = SshOpts::new(params.address.clone())
             .key_storage(Box::new(Self::make_ssh_storage(config_client)))
             .port(params.port);
+        //*  get username. Case 1 provided in params
         if let Some(username) = params.username {
             opts = opts.username(username);
+        } else if let Some(ssh_config) = config_client.get_ssh_config().and_then(|x| {
+            //* case 2: found in ssh2 config
+            debug!("reading ssh config at {}", x);
+            ssh_utils::parse_ssh2_config(x).ok()
+        }) {
+            debug!("no username was provided, checking whether a user is set for this host");
+            if let Some(username) = ssh_config.query(&params.address).user {
+                debug!("found username from config: {username}");
+                opts = opts.username(username);
+            } else {
+                //* case 3: use system username; can't be None
+                debug!("no username was provided, using current username");
+                opts = opts.username(whoami::username());
+            }
+        } else {
+            //* case 3: use system username; can't be None
+            debug!("no username was provided, using current username");
+            opts = opts.username(whoami::username());
         }
         if let Some(password) = params.password {
             opts = opts.password(password);
