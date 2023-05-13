@@ -663,7 +663,7 @@ mod tests {
     #[test]
     #[cfg(windows)]
     fn should_parse_smb_address_with_opts() {
-        let result = parse_remote_opt(&String::from("\\\\omar@myserver:3445\\myshare\\path"))
+        let result = parse_remote_opt(&String::from("\\\\omar@myserver\\myshare\\path"))
             .ok()
             .unwrap();
         let params = result.params.smb_params().unwrap();
