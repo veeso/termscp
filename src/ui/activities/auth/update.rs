@@ -68,6 +68,7 @@ impl AuthActivity {
                     .app
                     .active(match self.input_mask() {
                         InputMask::Generic => &Id::Password,
+                        InputMask::Smb => &Id::Password,
                         InputMask::AwsS3 => &Id::S3Bucket,
                     })
                     .is_ok());
@@ -79,6 +80,7 @@ impl AuthActivity {
                     .app
                     .active(match self.input_mask() {
                         InputMask::Generic => &Id::Password,
+                        InputMask::Smb => &Id::Password,
                         InputMask::AwsS3 => &Id::S3Bucket,
                     })
                     .is_ok());
@@ -113,7 +115,12 @@ impl AuthActivity {
     fn update_ui(&mut self, msg: UiMsg) -> Option<Msg> {
         match msg {
             UiMsg::AddressBlurDown => {
-                assert!(self.app.active(&Id::Port).is_ok());
+                let id = if cfg!(windows) && self.input_mask() == InputMask::Smb {
+                    &Id::SmbShare
+                } else {
+                    &Id::Port
+                };
+                assert!(self.app.active(id).is_ok());
             }
             UiMsg::AddressBlurUp => {
                 assert!(self.app.active(&Id::Protocol).is_ok());
@@ -155,13 +162,30 @@ impl AuthActivity {
                 assert!(self.app.active(&Id::BookmarksList).is_ok());
             }
             UiMsg::PasswordBlurDown => {
-                assert!(self.app.active(&Id::RemoteDirectory).is_ok());
+                assert!(self
+                    .app
+                    .active(match self.input_mask() {
+                        InputMask::Generic => &Id::RemoteDirectory,
+                        #[cfg(unix)]
+                        InputMask::Smb => &Id::SmbWorkgroup,
+                        #[cfg(windows)]
+                        InputMask::Smb => &Id::RemoteDirectory,
+                        InputMask::AwsS3 => panic!("this shouldn't happen (password on s3)"),
+                    })
+                    .is_ok());
             }
             UiMsg::PasswordBlurUp => {
                 assert!(self.app.active(&Id::Username).is_ok());
             }
             UiMsg::PortBlurDown => {
-                assert!(self.app.active(&Id::Username).is_ok());
+                assert!(self
+                    .app
+                    .active(match self.input_mask() {
+                        InputMask::Generic => &Id::Username,
+                        InputMask::Smb => &Id::SmbShare,
+                        InputMask::AwsS3 => panic!("this shouldn't happen (port on s3)"),
+                    })
+                    .is_ok());
             }
             UiMsg::PortBlurUp => {
                 assert!(self.app.active(&Id::Address).is_ok());
@@ -171,6 +195,7 @@ impl AuthActivity {
                     .app
                     .active(match self.input_mask() {
                         InputMask::Generic => &Id::Address,
+                        InputMask::Smb => &Id::Address,
                         InputMask::AwsS3 => &Id::S3Bucket,
                     })
                     .is_ok());
@@ -189,6 +214,10 @@ impl AuthActivity {
                     .app
                     .active(match self.input_mask() {
                         InputMask::Generic => &Id::Password,
+                        #[cfg(unix)]
+                        InputMask::Smb => &Id::SmbWorkgroup,
+                        #[cfg(windows)]
+                        InputMask::Smb => &Id::Password,
                         InputMask::AwsS3 => &Id::S3NewPathStyle,
                     })
                     .is_ok());
@@ -247,6 +276,25 @@ impl AuthActivity {
             UiMsg::S3NewPathStyleBlurUp => {
                 assert!(self.app.active(&Id::S3SessionToken).is_ok());
             }
+            UiMsg::SmbShareBlurDown => {
+                assert!(self.app.active(&Id::Username).is_ok());
+            }
+            UiMsg::SmbShareBlurUp => {
+                let id = if cfg!(windows) && self.input_mask() == InputMask::Smb {
+                    &Id::Address
+                } else {
+                    &Id::Port
+                };
+                assert!(self.app.active(id).is_ok());
+            }
+            #[cfg(unix)]
+            UiMsg::SmbWorkgroupDown => {
+                assert!(self.app.active(&Id::RemoteDirectory).is_ok());
+            }
+            #[cfg(unix)]
+            UiMsg::SmbWorkgroupUp => {
+                assert!(self.app.active(&Id::Password).is_ok());
+            }
             UiMsg::SaveBookmarkPasswordBlur => {
                 assert!(self.app.active(&Id::BookmarkName).is_ok());
             }
@@ -272,7 +320,14 @@ impl AuthActivity {
                 assert!(self.app.active(&Id::Password).is_ok());
             }
             UiMsg::UsernameBlurUp => {
-                assert!(self.app.active(&Id::Port).is_ok());
+                assert!(self
+                    .app
+                    .active(match self.input_mask() {
+                        InputMask::Generic => &Id::Port,
+                        InputMask::Smb => &Id::SmbShare,
+                        InputMask::AwsS3 => panic!("this shouldn't happen (username on s3)"),
+                    })
+                    .is_ok());
             }
             UiMsg::WindowResized => {
                 self.redraw = true;

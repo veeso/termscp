@@ -308,7 +308,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(target_family = "unix")]
+    #[cfg(unix)]
     fn test_utils_fmt_path_elide() {
         let p: &Path = Path::new("/develop/pippo");
         // Under max size

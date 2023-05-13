@@ -4,7 +4,7 @@
 
 // Locals
 use super::{AuthActivity, FileTransferParams};
-use crate::filetransfer::params::{AwsS3Params, GenericProtocolParams, ProtocolParams};
+use crate::filetransfer::params::{AwsS3Params, GenericProtocolParams, ProtocolParams, SmbParams};
 
 impl AuthActivity {
     /// Delete bookmark
@@ -157,6 +157,7 @@ impl AuthActivity {
         match bookmark.params {
             ProtocolParams::AwsS3(params) => self.load_bookmark_s3_into_gui(params),
             ProtocolParams::Generic(params) => self.load_bookmark_generic_into_gui(params),
+            ProtocolParams::Smb(params) => self.load_bookmark_smb_into_gui(params),
         }
     }
 
@@ -177,5 +178,16 @@ impl AuthActivity {
         self.mount_s3_security_token(params.security_token.as_deref().unwrap_or(""));
         self.mount_s3_session_token(params.session_token.as_deref().unwrap_or(""));
         self.mount_s3_new_path_style(params.new_path_style);
+    }
+
+    fn load_bookmark_smb_into_gui(&mut self, params: SmbParams) {
+        self.mount_address(params.address.as_str());
+        #[cfg(unix)]
+        self.mount_port(params.port);
+        self.mount_username(params.username.as_deref().unwrap_or(""));
+        self.mount_password(params.password.as_deref().unwrap_or(""));
+        self.mount_smb_share(&params.share);
+        #[cfg(unix)]
+        self.mount_smb_workgroup(params.workgroup.as_deref().unwrap_or(""));
     }
 }

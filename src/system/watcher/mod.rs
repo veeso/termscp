@@ -329,7 +329,7 @@ mod test {
 
     /*
     #[test]
-    #[cfg(target_family = "unix")]
+    #[cfg(unix)]
     fn should_poll_file_moved() {
         let mut watcher = FsWatcher::init(Duration::from_millis(100)).unwrap();
         let tempdir = TempDir::new().unwrap();

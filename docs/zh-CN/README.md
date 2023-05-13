@@ -139,6 +139,7 @@ termscp 是一个功能丰富的终端文件浏览和传输工具，支持 SCP/S
   - **SCP**
   - **FTP** and **FTPS**
   - **S3**
+  - **SMB**
 - 🖥  使用便捷的 UI 在远程和本地文件系统上浏览和操作
   - 创建、删除、重命名、搜索、查看和编辑文件
 - ⭐  通过“内置书签”和“最近连接”快速连接到您的主机
@@ -188,10 +189,12 @@ choco install termscp
   - libssh
   - libdbus-1
   - pkg-config
+  - libsmbclient
 - **FreeBSD** 用户:
   - libssh
   - dbus
   - pkgconf
+  - libsmbclient
 
 ### 可选项 ✔️
 

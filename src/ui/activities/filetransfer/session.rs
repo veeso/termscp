@@ -57,6 +57,7 @@ impl FileTransferActivity {
         // Connect to remote
         match self.client.connect() {
             Ok(Welcome { banner, .. }) => {
+                self.connected = true;
                 if let Some(banner) = banner {
                     // Log welcome
                     self.log(

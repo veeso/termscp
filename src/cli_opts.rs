@@ -28,6 +28,8 @@ Address syntax can be:
 
     - `protocol://user@address:port:wrkdir` for protocols such as Sftp, Scp, Ftp
     - `s3://bucket-name@region:profile:/wrkdir` for Aws S3 protocol
+    - `\\\\<server>[:port]\\<share>[\\path]` for SMB (on Windows)
+    - `smb://[user@]<server>[:port]</share>[/path]` for SMB (on other systems)
 
 Please, report issues to <https://github.com/veeso/termscp>
 Please, consider supporting the author <https://ko-fi.com/veeso>")]

@@ -115,7 +115,7 @@ mod tests {
     use tuirealm::tui::style::Color;
 
     use super::*;
-    use crate::config::bookmarks::{Bookmark, S3Params, UserHosts};
+    use crate::config::bookmarks::{Bookmark, S3Params, SmbParams, UserHosts};
     use crate::config::params::UserConfig;
     use crate::config::themes::Theme;
     use crate::filetransfer::FileTransferProtocol;
@@ -366,7 +366,7 @@ mod tests {
         assert_eq!(host.username.as_deref().unwrap(), "root");
         assert_eq!(host.password, None);
         // Verify bookmarks
-        assert_eq!(hosts.bookmarks.len(), 4);
+        assert_eq!(hosts.bookmarks.len(), 5);
         let host: &Bookmark = hosts.bookmarks.get("raspberrypi2").unwrap();
         assert_eq!(host.address.as_deref().unwrap(), "192.168.1.31");
         assert_eq!(host.port.unwrap(), 22);
@@ -404,6 +404,20 @@ mod tests {
         assert_eq!(s3.access_key.as_deref().unwrap(), "pippo");
         assert_eq!(s3.secret_access_key.as_deref().unwrap(), "pluto");
         assert_eq!(s3.new_path_style.unwrap(), true);
+
+        // smb
+        let host = hosts.bookmarks.get("smb").unwrap();
+        assert_eq!(host.address.as_deref().unwrap(), "localhost");
+        assert_eq!(host.port.unwrap(), 445);
+        #[cfg(unix)]
+        assert_eq!(host.username.as_deref().unwrap(), "test");
+        #[cfg(unix)]
+        assert_eq!(host.password.as_deref().unwrap(), "test");
+
+        let smb = host.smb.as_ref().unwrap();
+        assert_eq!(smb.share.as_str(), "temp");
+        #[cfg(unix)]
+        assert_eq!(smb.workgroup.as_deref().unwrap(), "test");
     }
 
     #[test]
@@ -429,6 +443,7 @@ mod tests {
                 password: None,
                 directory: None,
                 s3: None,
+                smb: None,
             },
         );
         bookmarks.insert(
@@ -441,6 +456,7 @@ mod tests {
                 password: Some(String::from("password")),
                 directory: Some(PathBuf::from("/tmp")),
                 s3: None,
+                smb: None,
             },
         );
         bookmarks.insert(
@@ -461,6 +477,24 @@ mod tests {
                     secret_access_key: None,
                     new_path_style: None,
                 }),
+                smb: None,
+            },
+        );
+        let smb_params: Option<SmbParams> = Some(SmbParams {
+            share: "test".to_string(),
+            workgroup: None,
+        });
+        bookmarks.insert(
+            String::from("smb"),
+            Bookmark {
+                address: Some("localhost".to_string()),
+                port: Some(445),
+                protocol: FileTransferProtocol::Smb,
+                username: None,
+                password: None,
+                directory: None,
+                s3: None,
+                smb: smb_params,
             },
         );
         let mut recents: HashMap<String, Bookmark> = HashMap::with_capacity(1);
@@ -474,6 +508,7 @@ mod tests {
                 password: Some(String::from("aaa")),
                 directory: Some(PathBuf::from("/tmp")),
                 s3: None,
+                smb: None,
             },
         );
         let tmpfile: tempfile::NamedTempFile = tempfile::NamedTempFile::new().unwrap();
@@ -526,6 +561,17 @@ mod tests {
         access_key = "pippo"
         secret_access_key = "pluto"
         new_path_style = true
+
+        [bookmarks.smb]
+        protocol = "SMB"
+        address = "localhost"
+        port = 445
+        username = "test"
+        password = "test"
+
+        [bookmarks.smb.smb]
+        share = "temp"
+        workgroup = "test"
 
         [recents]
         ISO20201215T094000Z = { address = "172.16.104.10", port = 22, protocol = "SCP", username = "root" }

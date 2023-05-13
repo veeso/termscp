@@ -12,6 +12,8 @@ use lazy_regex::{Lazy, Regex};
 use tuirealm::tui::style::Color;
 use tuirealm::utils::parser as tuirealm_parser;
 
+#[cfg(smb)]
+use crate::filetransfer::params::SmbParams;
 use crate::filetransfer::params::{AwsS3Params, GenericProtocolParams, ProtocolParams};
 use crate::filetransfer::{FileTransferParams, FileTransferProtocol};
 #[cfg(not(test))] // NOTE: don't use configuration during tests
@@ -25,9 +27,10 @@ use crate::system::environment;
  * This regex matches the protocol used as option
  * Regex matches:
  * - group 1: Some(protocol) | None
- * - group 2: Some(other args)
+ * - group 2: SMB windows prefix
+ * - group 3: Some(other args)
  */
-static REMOTE_OPT_PROTOCOL_REGEX: Lazy<Regex> = lazy_regex!(r"(?:([a-z0-9]+)://)?(?:(.+))");
+static REMOTE_OPT_PROTOCOL_REGEX: Lazy<Regex> = lazy_regex!(r"(?:([a-z0-9]+)://)?(\\\\)?(?:(.+))");
 
 /**
  * Regex matches:
@@ -49,6 +52,30 @@ static REMOTE_GENERIC_OPT_REGEX: Lazy<Regex> = lazy_regex!(
  */
 static REMOTE_S3_OPT_REGEX: Lazy<Regex> =
     lazy_regex!(r"(?:([^@]+)@)(?:([^:]+))(?::([a-zA-Z0-9][^:]+))?(?::([^:]+))?");
+
+/**
+ * Regex matches:
+ * - group 1: username
+ * - group 2: address
+ * - group 3: port?
+ * - group 4: share?
+ * - group 5: remote-dir?
+ */
+#[cfg(smb_unix)]
+static REMOTE_SMB_OPT_REGEX: Lazy<Regex> = lazy_regex!(
+    r"(?:([^@]+)@)?(?:([^/:]+))(?::((?:[0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])(?:[0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])))?(?:/([^/]+))?(?:(/.+))?"
+);
+
+/**
+ * Regex matches:
+ * - group 1: username?
+ * - group 2: address
+ * - group 3: share
+ * - group 4: remote-dir?
+ */
+#[cfg(windows)]
+static REMOTE_SMB_OPT_REGEX: Lazy<Regex> =
+    lazy_regex!(r"(?:([^@]+)@)?(?:([^:\\]+))(?:\\([^\\]+))?(?:(\\.+))?");
 
 /**
  * Regex matches:
@@ -83,6 +110,21 @@ static BYTESIZE_REGEX: Lazy<Regex> = lazy_regex!(r"(:?([0-9])+)( )*(:?[KMGTP])?B
 /// - sftp://172.26.104.1:4022
 /// - sftp://172.26.104.1
 /// - ...
+///
+/// For s3:
+///
+/// s3://<bucket-name>@<region>[:profile][:/wrkdir]
+///
+/// For SMB:
+///
+/// on UNIX derived (macos, linux, ...)
+///
+/// smb://[username@]<address>[:port]/<share>[/path]
+///
+/// on Windows
+///
+/// \\<address>\<share>[\path]
+///
 pub fn parse_remote_opt(s: &str) -> Result<FileTransferParams, String> {
     // Set protocol to default protocol
     #[cfg(not(test))] // NOTE: don't use configuration during tests
@@ -108,6 +150,8 @@ pub fn parse_remote_opt(s: &str) -> Result<FileTransferParams, String> {
     // Match against regex for protocol type
     match protocol {
         FileTransferProtocol::AwsS3 => parse_s3_remote_opt(s.as_str()),
+        #[cfg(smb)]
+        FileTransferProtocol::Smb => parse_smb_remote_opts(s.as_str()),
         protocol => parse_generic_remote_opt(s.as_str(), protocol),
     }
 }
@@ -127,13 +171,15 @@ fn parse_remote_opt_protocol(
             let protocol = match protocol {
                 Some(Ok(protocol)) => protocol,
                 Some(Err(err)) => return Err(err),
+                #[cfg(windows)]
+                None if groups.get(2).is_some() => FileTransferProtocol::Smb,
                 None => default,
             };
             // Return protocol and remaining arguments
             Ok((
                 protocol,
                 groups
-                    .get(2)
+                    .get(3)
                     .map(|x| x.as_str().to_string())
                     .unwrap_or_default(),
             ))
@@ -213,6 +259,70 @@ fn parse_s3_remote_opt(s: &str) -> Result<FileTransferParams, String> {
             Ok(FileTransferParams::new(
                 FileTransferProtocol::AwsS3,
                 ProtocolParams::AwsS3(AwsS3Params::new(bucket, Some(region), profile)),
+            )
+            .entry_directory(entry_directory))
+        }
+        None => Err(String::from("Bad remote host syntax!")),
+    }
+}
+
+/// Parse remote options for smb protocol
+#[cfg(smb_unix)]
+fn parse_smb_remote_opts(s: &str) -> Result<FileTransferParams, String> {
+    match REMOTE_SMB_OPT_REGEX.captures(s) {
+        Some(groups) => {
+            let username: Option<String> = match groups.get(1) {
+                Some(group) => Some(group.as_str().to_string()),
+                None => Some(whoami::username()),
+            };
+            let address = match groups.get(2) {
+                Some(group) => group.as_str().to_string(),
+                None => return Err(String::from("Missing address")),
+            };
+            let port = match groups.get(3) {
+                Some(port) => match port.as_str().parse::<u16>() {
+                    // Try to parse port
+                    Ok(p) => p,
+                    Err(err) => return Err(format!("Bad port \"{}\": {}", port.as_str(), err)),
+                },
+                None => 445,
+            };
+            let share = match groups.get(4) {
+                Some(group) => group.as_str().to_string(),
+                None => return Err(String::from("Missing address")),
+            };
+            let entry_directory: Option<PathBuf> =
+                groups.get(5).map(|group| PathBuf::from(group.as_str()));
+
+            Ok(FileTransferParams::new(
+                FileTransferProtocol::Smb,
+                ProtocolParams::Smb(SmbParams::new(address, share).port(port).username(username)),
+            )
+            .entry_directory(entry_directory))
+        }
+        None => Err(String::from("Bad remote host syntax!")),
+    }
+}
+
+#[cfg(windows)]
+fn parse_smb_remote_opts(s: &str) -> Result<FileTransferParams, String> {
+    match REMOTE_SMB_OPT_REGEX.captures(s) {
+        Some(groups) => {
+            let username = groups.get(1).map(|x| x.as_str().to_string());
+            let address = match groups.get(2) {
+                Some(group) => group.as_str().to_string(),
+                None => return Err(String::from("Missing address")),
+            };
+            let share = match groups.get(3) {
+                Some(group) => group.as_str().to_string(),
+                None => return Err(String::from("Missing address")),
+            };
+            let entry_directory: Option<PathBuf> =
+                groups.get(4).map(|group| PathBuf::from(group.as_str()));
+
+            Ok(FileTransferParams::new(
+                FileTransferProtocol::Smb,
+                ProtocolParams::Smb(SmbParams::new(address, share).username(username)),
             )
             .entry_directory(entry_directory))
         }
@@ -500,6 +610,71 @@ mod tests {
         assert_eq!(params.profile.as_deref(), Some("default"));
         // -- bad args
         assert!(parse_remote_opt(&String::from("s3://mybucket:default:/foobar")).is_err());
+    }
+
+    #[test]
+    #[cfg(smb_unix)]
+    fn should_parse_smb_address() {
+        let result = parse_remote_opt("smb://myserver/myshare").ok().unwrap();
+        let params = result.params.smb_params().unwrap();
+
+        assert_eq!(params.address.as_str(), "myserver");
+        assert_eq!(params.port, 445);
+        assert_eq!(params.share.as_str(), "myshare");
+        assert!(params.username.is_some());
+        assert!(params.password.is_none());
+        assert!(params.workgroup.is_none());
+        assert!(result.entry_directory.is_none());
+    }
+
+    #[test]
+    #[cfg(smb_unix)]
+    fn should_parse_smb_address_with_opts() {
+        let result = parse_remote_opt("smb://omar@myserver:4445/myshare/dir/subdir")
+            .ok()
+            .unwrap();
+        let params = result.params.smb_params().unwrap();
+
+        assert_eq!(params.address.as_str(), "myserver");
+        assert_eq!(params.port, 4445);
+        assert_eq!(params.username.as_deref().unwrap(), "omar");
+        assert!(params.password.is_none());
+        assert!(params.workgroup.is_none());
+        assert_eq!(params.share.as_str(), "myshare");
+        assert_eq!(
+            result.entry_directory.as_deref().unwrap(),
+            std::path::Path::new("/dir/subdir")
+        );
+    }
+
+    #[test]
+    #[cfg(windows)]
+    fn should_parse_smb_address() {
+        let result = parse_remote_opt(&String::from("\\\\myserver\\myshare"))
+            .ok()
+            .unwrap();
+        let params = result.params.smb_params().unwrap();
+
+        assert_eq!(params.address.as_str(), "myserver");
+        assert_eq!(params.share.as_str(), "myshare");
+        assert!(result.entry_directory.is_none());
+    }
+
+    #[test]
+    #[cfg(windows)]
+    fn should_parse_smb_address_with_opts() {
+        let result = parse_remote_opt(&String::from("\\\\omar@myserver\\myshare\\path"))
+            .ok()
+            .unwrap();
+        let params = result.params.smb_params().unwrap();
+
+        assert_eq!(params.address.as_str(), "myserver");
+        assert_eq!(params.share.as_str(), "myshare");
+        assert_eq!(params.username.as_deref().unwrap(), "omar");
+        assert_eq!(
+            result.entry_directory.as_deref().unwrap(),
+            std::path::Path::new("\\path")
+        );
     }
 
     #[test]

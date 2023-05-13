@@ -513,7 +513,7 @@ mod tests {
                 mode: Some(UnixPex::from(0o644)),
             },
         };
-        #[cfg(target_family = "unix")]
+        #[cfg(unix)]
         assert_eq!(
             explorer.fmt_file(&entry),
             format!(
@@ -521,7 +521,7 @@ mod tests {
                 fmt_time(t, "%b %d %Y %H:%M")
             )
         );
-        #[cfg(target_os = "windows")]
+        #[cfg(windows)]
         assert_eq!(
             explorer.fmt_file(&entry),
             format!(

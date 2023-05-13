@@ -137,6 +137,7 @@ Termscp ist ein funktionsreicher Terminal-Dateitransfer und Explorer mit Unterst
   - **SCP**
   - **FTP** und **FTPS**
   - **S3**
+  - **SMB**
 - 🖥  Erkunden und bedienen Sie das Dateisystem der Fernbedienung und des lokalen Computers mit einer praktischen Benutzeroberfläche
   - Erstellen, Entfernen, Umbenennen, Suchen, Anzeigen und Bearbeiten von Dateien
 - ⭐  Verbinden Sie sich über integrierte Lesezeichen und aktuelle Verbindungen mit Ihren Lieblingshosts
@@ -185,10 +186,12 @@ Für weitere Informationen oder andere Plattformen besuchen Sie bitte [termscp.v
   - libssh
   - libdbus-1
   - pkg-config
+  - libsmbclient
 - **FreeBSD** Benutzer:
   - libssh
   - dbus
   - pkgconf
+  - libsmbclient
 
 ### Optionale Softwareanforderungen ✔️
 

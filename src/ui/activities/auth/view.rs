@@ -11,7 +11,7 @@ use tuirealm::tui::widgets::Clear;
 use tuirealm::{State, StateValue, Sub, SubClause, SubEventClause};
 
 use super::{components, AuthActivity, Context, FileTransferProtocol, Id, InputMask};
-use crate::filetransfer::params::{AwsS3Params, GenericProtocolParams, ProtocolParams};
+use crate::filetransfer::params::{AwsS3Params, GenericProtocolParams, ProtocolParams, SmbParams};
 use crate::filetransfer::FileTransferParams;
 use crate::utils::ui::{Popup, Size};
 
@@ -56,6 +56,9 @@ impl AuthActivity {
         self.mount_s3_security_token("");
         self.mount_s3_session_token("");
         self.mount_s3_new_path_style(false);
+        self.mount_smb_share("");
+        #[cfg(unix)]
+        self.mount_smb_workgroup("");
         // Version notice
         if let Some(version) = self
             .context()
@@ -150,8 +153,38 @@ impl AuthActivity {
                 InputMask::Generic => Layout::default()
                     .constraints(
                         [
-                            Constraint::Length(3), // host
+                            Constraint::Length(3), // address
                             Constraint::Length(3), // port
+                            Constraint::Length(3), // username
+                            Constraint::Length(3), // password
+                            Constraint::Length(3), // remote directory
+                        ]
+                        .as_ref(),
+                    )
+                    .direction(Direction::Vertical)
+                    .split(auth_chunks[4]),
+                #[cfg(unix)]
+                InputMask::Smb => Layout::default()
+                    .constraints(
+                        [
+                            Constraint::Length(3), // address
+                            Constraint::Length(3), // port
+                            Constraint::Length(3), // share
+                            Constraint::Length(3), // username
+                            Constraint::Length(3), // password
+                            Constraint::Length(3), // workgroup
+                            Constraint::Length(3), // remote directory
+                        ]
+                        .as_ref(),
+                    )
+                    .direction(Direction::Vertical)
+                    .split(auth_chunks[4]),
+                #[cfg(windows)]
+                InputMask::Smb => Layout::default()
+                    .constraints(
+                        [
+                            Constraint::Length(3), // address
+                            Constraint::Length(3), // share
                             Constraint::Length(3), // username
                             Constraint::Length(3), // password
                             Constraint::Length(3), // remote directory
@@ -183,6 +216,13 @@ impl AuthActivity {
                 }
                 InputMask::Generic => {
                     let view_ids = self.get_generic_params_view();
+                    self.app.view(&view_ids[0], f, input_mask[0]);
+                    self.app.view(&view_ids[1], f, input_mask[1]);
+                    self.app.view(&view_ids[2], f, input_mask[2]);
+                    self.app.view(&view_ids[3], f, input_mask[3]);
+                }
+                InputMask::Smb => {
+                    let view_ids = self.get_smb_view();
                     self.app.view(&view_ids[0], f, input_mask[0]);
                     self.app.view(&view_ids[1], f, input_mask[1]);
                     self.app.view(&view_ids[2], f, input_mask[2]);
@@ -713,6 +753,31 @@ impl AuthActivity {
             .is_ok());
     }
 
+    pub(crate) fn mount_smb_share(&mut self, share: &str) {
+        let color = self.theme().auth_password;
+        assert!(self
+            .app
+            .remount(
+                Id::SmbShare,
+                Box::new(components::InputSmbShare::new(share, color)),
+                vec![]
+            )
+            .is_ok());
+    }
+
+    #[cfg(unix)]
+    pub(crate) fn mount_smb_workgroup(&mut self, workgroup: &str) {
+        let color = self.theme().auth_address;
+        assert!(self
+            .app
+            .remount(
+                Id::SmbWorkgroup,
+                Box::new(components::InputSmbWorkgroup::new(workgroup, color)),
+                vec![]
+            )
+            .is_ok());
+    }
+
     // -- query
 
     /// Collect input values from view
@@ -746,6 +811,37 @@ impl AuthActivity {
             .security_token(security_token)
             .session_token(session_token)
             .new_path_style(new_path_style)
+    }
+
+    /// Collect s3 input values from view
+    #[cfg(unix)]
+    pub(super) fn get_smb_params_input(&self) -> SmbParams {
+        let share: String = self.get_input_smb_share();
+        let workgroup: Option<String> = self.get_input_smb_workgroup();
+
+        let address: String = self.get_input_addr();
+        let port: u16 = self.get_input_port();
+        let username = self.get_input_username();
+        let password = self.get_input_password();
+
+        SmbParams::new(address, share)
+            .port(port)
+            .username(username)
+            .password(password)
+            .workgroup(workgroup)
+    }
+
+    #[cfg(windows)]
+    pub(super) fn get_smb_params_input(&self) -> SmbParams {
+        let share: String = self.get_input_smb_share();
+
+        let address: String = self.get_input_addr();
+        let username = self.get_input_username();
+        let password = self.get_input_password();
+
+        SmbParams::new(address, share)
+            .username(username)
+            .password(password)
     }
 
     pub(super) fn get_input_remote_directory(&self) -> Option<PathBuf> {
@@ -851,6 +947,21 @@ impl AuthActivity {
         )
     }
 
+    pub(super) fn get_input_smb_share(&self) -> String {
+        match self.app.state(&Id::SmbShare) {
+            Ok(State::One(StateValue::String(x))) => x,
+            _ => String::new(),
+        }
+    }
+
+    #[cfg(unix)]
+    pub(super) fn get_input_smb_workgroup(&self) -> Option<String> {
+        match self.app.state(&Id::SmbWorkgroup) {
+            Ok(State::One(StateValue::String(x))) => Some(x),
+            _ => None,
+        }
+    }
+
     /// Get new bookmark params
     pub(super) fn get_new_bookmark(&self) -> (String, bool) {
         let name = match self.app.state(&Id::BookmarkName) {
@@ -874,6 +985,7 @@ impl AuthActivity {
         match self.input_mask() {
             InputMask::AwsS3 => 12,
             InputMask::Generic => 12,
+            InputMask::Smb => 12,
         }
     }
 
@@ -912,6 +1024,25 @@ impl AuthActivity {
                     "{}://{}{}:{}",
                     protocol, username, params.address, params.port
                 )
+            }
+            #[cfg(unix)]
+            ProtocolParams::Smb(params) => {
+                let username: String = match params.username {
+                    None => String::default(),
+                    Some(u) => format!("{u}@"),
+                };
+                format!(
+                    "\\\\{username}{}:{}\\{}",
+                    params.address, params.port, params.share
+                )
+            }
+            #[cfg(windows)]
+            ProtocolParams::Smb(params) => {
+                let username: String = match params.username {
+                    None => String::default(),
+                    Some(u) => format!("{u}@"),
+                };
+                format!("\\\\{username}{}\\{}", params.address, params.share)
             }
         }
     }
@@ -963,6 +1094,40 @@ impl AuthActivity {
                 Id::RemoteDirectory,
             ],
             _ => [Id::S3Bucket, Id::S3Region, Id::S3Endpoint, Id::S3Profile],
+        }
+    }
+
+    #[cfg(unix)]
+    fn get_smb_view(&self) -> [Id; 4] {
+        match self.app.focus() {
+            Some(&Id::Address | &Id::Port | &Id::SmbShare | &Id::Username) => {
+                [Id::Address, Id::Port, Id::SmbShare, Id::Username]
+            }
+            Some(&Id::Password) => [Id::Port, Id::SmbShare, Id::Username, Id::Password],
+            Some(&Id::SmbWorkgroup) => [Id::SmbShare, Id::Username, Id::Password, Id::SmbWorkgroup],
+            Some(&Id::RemoteDirectory) => [
+                Id::Username,
+                Id::Password,
+                Id::SmbWorkgroup,
+                Id::RemoteDirectory,
+            ],
+            _ => [Id::Address, Id::Port, Id::SmbShare, Id::Username],
+        }
+    }
+
+    #[cfg(windows)]
+    fn get_smb_view(&self) -> [Id; 4] {
+        match self.app.focus() {
+            Some(&Id::Address | &Id::Password | &Id::SmbShare | &Id::Username) => {
+                [Id::Address, Id::SmbShare, Id::Username, Id::Password]
+            }
+            Some(&Id::RemoteDirectory) => [
+                Id::SmbShare,
+                Id::Username,
+                Id::Password,
+                Id::RemoteDirectory,
+            ],
+            _ => [Id::Address, Id::SmbShare, Id::Username, Id::Password],
         }
     }
 

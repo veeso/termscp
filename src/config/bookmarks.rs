@@ -9,7 +9,9 @@ use std::str::FromStr;
 use serde::de::Error as DeError;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-use crate::filetransfer::params::{AwsS3Params, GenericProtocolParams, ProtocolParams};
+use crate::filetransfer::params::{
+    AwsS3Params, GenericProtocolParams, ProtocolParams, SmbParams as TransferSmbParams,
+};
 use crate::filetransfer::{FileTransferParams, FileTransferProtocol};
 
 /// UserHosts contains all the hosts saved by the user in the data storage
@@ -40,6 +42,8 @@ pub struct Bookmark {
     pub directory: Option<PathBuf>,
     /// S3 params; optional. When used other fields are empty for sure
     pub s3: Option<S3Params>,
+    /// SMB params; optional. Extra params required for SMB protocol
+    pub smb: Option<SmbParams>,
 }
 
 /// Connection parameters for Aws s3 protocol
@@ -53,6 +57,13 @@ pub struct S3Params {
     pub secret_access_key: Option<String>,
     /// NOTE: there are no session token and security token since they are always temporary
     pub new_path_style: Option<bool>,
+}
+
+/// Extra Connection parameters for SMB protocol
+#[derive(Clone, Deserialize, Serialize, Debug, PartialEq, Eq, Default)]
+pub struct SmbParams {
+    pub share: String,
+    pub workgroup: Option<String>,
 }
 
 // -- impls
@@ -71,6 +82,7 @@ impl From<FileTransferParams> for Bookmark {
                 password: params.password,
                 directory,
                 s3: None,
+                smb: None,
             },
             ProtocolParams::AwsS3(params) => Self {
                 protocol,
@@ -80,6 +92,20 @@ impl From<FileTransferParams> for Bookmark {
                 password: None,
                 directory,
                 s3: Some(S3Params::from(params)),
+                smb: None,
+            },
+            ProtocolParams::Smb(params) => Self {
+                smb: Some(SmbParams::from(params.clone())),
+                protocol,
+                address: Some(params.address),
+                #[cfg(unix)]
+                port: Some(params.port),
+                #[cfg(windows)]
+                port: None,
+                username: params.username,
+                password: params.password,
+                directory,
+                s3: None,
             },
         }
     }
@@ -103,6 +129,30 @@ impl From<Bookmark> for FileTransferParams {
                     .username(bookmark.username)
                     .password(bookmark.password);
                 Self::new(bookmark.protocol, ProtocolParams::Generic(params))
+            }
+            #[cfg(unix)]
+            FileTransferProtocol::Smb => {
+                let params = TransferSmbParams::new(
+                    bookmark.address.unwrap_or_default(),
+                    bookmark.smb.clone().map(|x| x.share).unwrap_or_default(),
+                )
+                .port(bookmark.port.unwrap_or(445))
+                .username(bookmark.username)
+                .password(bookmark.password)
+                .workgroup(bookmark.smb.and_then(|x| x.workgroup));
+
+                Self::new(bookmark.protocol, ProtocolParams::Smb(params))
+            }
+            #[cfg(windows)]
+            FileTransferProtocol::Smb => {
+                let params = TransferSmbParams::new(
+                    bookmark.address.unwrap_or_default(),
+                    bookmark.smb.clone().map(|x| x.share).unwrap_or_default(),
+                )
+                .username(bookmark.username)
+                .password(bookmark.password);
+
+                Self::new(bookmark.protocol, ProtocolParams::Smb(params))
             }
         }
         .entry_directory(bookmark.directory) // Set entry directory
@@ -130,6 +180,26 @@ impl From<S3Params> for AwsS3Params {
             .access_key(params.access_key)
             .secret_access_key(params.secret_access_key)
             .new_path_style(params.new_path_style.unwrap_or(false))
+    }
+}
+
+#[cfg(unix)]
+impl From<TransferSmbParams> for SmbParams {
+    fn from(params: TransferSmbParams) -> Self {
+        Self {
+            share: params.share,
+            workgroup: params.workgroup,
+        }
+    }
+}
+
+#[cfg(windows)]
+impl From<TransferSmbParams> for SmbParams {
+    fn from(params: TransferSmbParams) -> Self {
+        Self {
+            share: params.share,
+            workgroup: None,
+        }
     }
 }
 
@@ -178,6 +248,7 @@ mod tests {
             password: Some(String::from("password")),
             directory: Some(PathBuf::from("/tmp")),
             s3: None,
+            smb: None,
         };
         let recent: Bookmark = Bookmark {
             address: Some(String::from("192.168.1.2")),
@@ -187,6 +258,7 @@ mod tests {
             password: Some(String::from("password")),
             directory: Some(PathBuf::from("/home")),
             s3: None,
+            smb: None,
         };
         let mut bookmarks: HashMap<String, Bookmark> = HashMap::with_capacity(1);
         bookmarks.insert(String::from("test"), bookmark);
@@ -275,6 +347,7 @@ mod tests {
             password: Some(String::from("password")),
             directory: Some(PathBuf::from("/tmp")),
             s3: None,
+            smb: None,
         };
         let params = FileTransferParams::from(bookmark);
         assert_eq!(params.protocol, FileTransferProtocol::Sftp);
@@ -307,6 +380,7 @@ mod tests {
                 secret_access_key: Some(String::from("pluto")),
                 new_path_style: Some(true),
             }),
+            smb: None,
         };
         let params = FileTransferParams::from(bookmark);
         assert_eq!(params.protocol, FileTransferProtocol::AwsS3);
@@ -322,5 +396,65 @@ mod tests {
         assert_eq!(gparams.access_key.as_deref().unwrap(), "pippo");
         assert_eq!(gparams.secret_access_key.as_deref().unwrap(), "pluto");
         assert_eq!(gparams.new_path_style, true);
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn should_get_ftparams_from_smb_bookmark() {
+        let bookmark: Bookmark = Bookmark {
+            protocol: FileTransferProtocol::Smb,
+            address: Some("localhost".to_string()),
+            port: Some(445),
+            username: Some("foo".to_string()),
+            password: Some("bar".to_string()),
+            directory: Some(PathBuf::from("/tmp")),
+            s3: None,
+            smb: Some(SmbParams {
+                share: "test".to_string(),
+                workgroup: Some("testone".to_string()),
+            }),
+        };
+
+        let params = FileTransferParams::from(bookmark);
+        assert_eq!(params.protocol, FileTransferProtocol::Smb);
+        assert_eq!(
+            params.entry_directory.as_deref().unwrap(),
+            std::path::Path::new("/tmp")
+        );
+        let smb_params = params.params.smb_params().unwrap();
+        assert_eq!(smb_params.address.as_str(), "localhost");
+        assert_eq!(smb_params.port, 445);
+        assert_eq!(smb_params.share.as_str(), "test");
+        assert_eq!(smb_params.password.as_deref().unwrap(), "bar");
+        assert_eq!(smb_params.username.as_deref().unwrap(), "foo");
+        assert_eq!(smb_params.workgroup.as_deref().unwrap(), "testone");
+    }
+
+    #[test]
+    #[cfg(windows)]
+    fn should_get_ftparams_from_smb_bookmark() {
+        let bookmark: Bookmark = Bookmark {
+            protocol: FileTransferProtocol::Smb,
+            address: Some("localhost".to_string()),
+            port: Some(445),
+            username: None,
+            password: None,
+            directory: Some(PathBuf::from("/tmp")),
+            s3: None,
+            smb: Some(SmbParams {
+                share: "test".to_string(),
+                workgroup: None,
+            }),
+        };
+
+        let params = FileTransferParams::from(bookmark);
+        assert_eq!(params.protocol, FileTransferProtocol::Smb);
+        assert_eq!(
+            params.entry_directory.as_deref().unwrap(),
+            std::path::Path::new("/tmp")
+        );
+        let smb_params = params.params.smb_params().unwrap();
+        assert_eq!(smb_params.address.as_str(), "localhost");
+        assert_eq!(smb_params.share.as_str(), "test");
     }
 }

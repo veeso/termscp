@@ -24,6 +24,14 @@ use crate::config::themes::Theme;
 use crate::system::config_client::ConfigClient;
 use crate::system::theme_provider::ThemeProvider;
 
+// radio
+const RADIO_PROTOCOL_SFTP: usize = 0;
+const RADIO_PROTOCOL_SCP: usize = 1;
+const RADIO_PROTOCOL_FTP: usize = 2;
+const RADIO_PROTOCOL_FTPS: usize = 3;
+const RADIO_PROTOCOL_S3: usize = 4;
+const RADIO_PROTOCOL_SMB: usize = 5;
+
 // -- components
 #[derive(Debug, Eq, PartialEq, Clone, Hash)]
 enum Id {

@@ -220,6 +220,8 @@ pub struct FileTransferActivity {
     cache: Option<TempDir>,
     /// Fs watcher
     fswatcher: Option<FsWatcher>,
+    /// conncted once
+    connected: bool,
 }
 
 impl FileTransferActivity {
@@ -252,6 +254,7 @@ impl FileTransferActivity {
                     None
                 }
             },
+            connected: false,
         }
     }
 
@@ -372,14 +375,12 @@ impl Activity for FileTransferActivity {
             return;
         }
         // Check if connected (popup must be None, otherwise would try reconnecting in loop in case of error)
-        if !self.client.is_connected() && !self.app.mounted(&Id::FatalPopup) {
+        if (!self.client.is_connected() || !self.connected) && !self.app.mounted(&Id::FatalPopup) {
             let ftparams = self.context().ft_params().unwrap();
             // print params
             let msg: String = Self::get_connection_msg(&ftparams.params);
             // Set init state to connecting popup
-            self.mount_wait(msg.as_str());
-            // Force ui draw
-            self.view();
+            self.mount_blocking_wait(msg.as_str());
             // Connect to remote
             self.connect();
             // Redraw

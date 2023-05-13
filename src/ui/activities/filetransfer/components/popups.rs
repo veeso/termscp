@@ -13,7 +13,7 @@ use tuirealm::props::{
     Alignment, BorderSides, BorderType, Borders, Color, InputType, Style, TableBuilder, TextSpan,
 };
 use tuirealm::{Component, Event, MockComponent, NoUserEvent, State, StateValue};
-#[cfg(target_family = "unix")]
+#[cfg(unix)]
 use users::{get_group_by_gid, get_user_by_uid};
 
 use super::super::Browser;
@@ -445,7 +445,7 @@ impl FileInfoPopup {
             .add_col(TextSpan::from("Last access time: "))
             .add_col(TextSpan::new(atime.as_str()).fg(Color::LightRed));
         // User
-        #[cfg(target_family = "unix")]
+        #[cfg(unix)]
         let username: String = match file.metadata().uid {
             Some(uid) => match get_user_by_uid(uid) {
                 Some(user) => user.name().to_string_lossy().to_string(),
@@ -453,10 +453,10 @@ impl FileInfoPopup {
             },
             None => String::from("0"),
         };
-        #[cfg(target_os = "windows")]
+        #[cfg(windows)]
         let username: String = format!("{}", file.metadata().uid.unwrap_or(0));
         // Group
-        #[cfg(target_family = "unix")]
+        #[cfg(unix)]
         let group: String = match file.metadata().gid {
             Some(gid) => match get_group_by_gid(gid) {
                 Some(group) => group.name().to_string_lossy().to_string(),
@@ -464,7 +464,7 @@ impl FileInfoPopup {
             },
             None => String::from("0"),
         };
-        #[cfg(target_os = "windows")]
+        #[cfg(windows)]
         let group: String = format!("{}", file.metadata().gid.unwrap_or(0));
         texts
             .add_row()

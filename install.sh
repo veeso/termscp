@@ -304,14 +304,14 @@ install_bsd_cargo_deps() {
     set -e
     confirm "${YELLOW}libssh, gcc${NO_COLOR} are required to install ${GREEN}termscp${NO_COLOR}; would you like to proceed?"
     sudo="$(elevate_priv_ex /usr/local/bin)"
-    $sudo pkg install -y curl wget libssh gcc dbus pkgconf
+    $sudo pkg install -y curl wget libssh gcc dbus pkgconf libsmbclient
     info "Dependencies installed successfully"
 }
 
 install_linux_cargo_deps() {
-    local debian_deps="gcc pkg-config libdbus-1-dev"
-    local rpm_deps="gcc openssl pkgconfig libdbus-devel openssl-devel"
-    local arch_deps="gcc openssl pkg-config dbus"
+    local debian_deps="gcc pkg-config libdbus-1-dev libsmbclient-dev"
+    local rpm_deps="gcc openssl pkgconfig libdbus-devel openssl-devel libsmbclient-devel"
+    local arch_deps="gcc openssl pkg-config dbus smbclient"
     local deps_cmd=""
     # Get pkg manager
     if has apt; then

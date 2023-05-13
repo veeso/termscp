@@ -4,6 +4,7 @@
   - [Usage ❓](#usage-)
     - [Argument d'adresse 🌎](#argument-dadresse-)
       - [Argument d'adresse AWS S3](#argument-dadresse-aws-s3)
+      - [Argument d'adresse SMB](#argument-dadresse-smb)
       - [Comment le mot de passe peut être fourni 🔐](#comment-le-mot-de-passe-peut-être-fourni-)
   - [S3 paramètres de connexion](#s3-paramètres-de-connexion)
     - [Identifiants S3 🦊](#identifiants-s3-)
@@ -102,6 +103,23 @@ e.g.
 ```txt
 s3://buckethead@eu-central-1:default:/assets
 ```
+
+#### Argument d'adresse SMB
+
+SMB a une syntaxe différente pour l'argument d'adresse CLI, qui est différente que vous soyez sur Windows ou sur d'autres systèmes :
+
+syntaxe **Windows**:
+
+```txt
+\\[username@]<server-name>\<share>[\path\...]
+```
+
+syntaxe **Other systems**:
+
+```txt
+smb://[username@]<server-name>[:port]/<share>[/path/.../]
+```
+
 
 #### Comment le mot de passe peut être fourni 🔐
 

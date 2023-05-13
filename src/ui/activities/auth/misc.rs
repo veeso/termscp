@@ -14,6 +14,7 @@ impl AuthActivity {
             FileTransferProtocol::Sftp | FileTransferProtocol::Scp => 22,
             FileTransferProtocol::Ftp(_) => 21,
             FileTransferProtocol::AwsS3 => 22, // Doesn't matter, since not used
+            FileTransferProtocol::Smb => 445,
         }
     }
 
@@ -36,7 +37,10 @@ impl AuthActivity {
     pub(super) fn collect_host_params(&self) -> Result<FileTransferParams, &'static str> {
         match self.protocol {
             FileTransferProtocol::AwsS3 => self.collect_s3_host_params(),
-            protocol => self.collect_generic_host_params(protocol),
+            FileTransferProtocol::Smb => self.collect_smb_host_params(),
+            FileTransferProtocol::Ftp(_)
+            | FileTransferProtocol::Scp
+            | FileTransferProtocol::Sftp => self.collect_generic_host_params(self.protocol),
         }
     }
 
@@ -68,6 +72,25 @@ impl AuthActivity {
         Ok(FileTransferParams {
             protocol: FileTransferProtocol::AwsS3,
             params: ProtocolParams::AwsS3(params),
+            entry_directory: self.get_input_remote_directory(),
+        })
+    }
+
+    pub(super) fn collect_smb_host_params(&self) -> Result<FileTransferParams, &'static str> {
+        let params = self.get_smb_params_input();
+        if params.address.is_empty() {
+            return Err("Invalid address");
+        }
+        #[cfg(unix)]
+        if params.port == 0 {
+            return Err("Invalid port");
+        }
+        if params.share.is_empty() {
+            return Err("Invalid share");
+        }
+        Ok(FileTransferParams {
+            protocol: FileTransferProtocol::Smb,
+            params: ProtocolParams::Smb(params),
             entry_directory: self.get_input_remote_directory(),
         })
     }

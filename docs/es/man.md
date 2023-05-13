@@ -4,6 +4,7 @@
   - [Uso ❓](#uso-)
     - [Argumento dirección 🌎](#argumento-dirección-)
       - [Argumento dirección por AWS S3](#argumento-dirección-por-aws-s3)
+      - [Argumento dirección por SMB](#argumento-dirección-por-smb)
       - [Cómo se puede proporcionar la contraseña 🔐](#cómo-se-puede-proporcionar-la-contraseña-)
   - [S3 parámetros de conexión](#s3-parámetros-de-conexión)
     - [Credenciales de S3 🦊](#credenciales-de-s3-)
@@ -103,6 +104,22 @@ por ejemplo
 
 ```txt
 s3://buckethead@eu-central-1:default:/assets
+```
+
+#### Argumento dirección por SMB
+
+SMB tiene una sintaxis diferente para el argumento de la dirección CLI, que es diferente si está en Windows u otros sistemas:
+
+**Windows** sintaxis:
+
+```txt
+\\[username@]<server-name>\<share>[\path\...]
+```
+
+**Other systems** sintaxis:
+
+```txt
+smb://[username@]<server-name>[:port]/<share>[/path/.../]
 ```
 
 #### Cómo se puede proporcionar la contraseña 🔐
