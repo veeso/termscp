@@ -63,7 +63,7 @@
 </p>
 
 <p align="center">由 <a href="https://termscp.veeso.dev/" target="_blank">@veeso</a> 开发</p>
-<p align="center">当前版本： 0.12.0 (19/04/2023)</p>
+<p align="center">当前版本： 0.12.0 (15/05/2023)</p>
 
 <p align="center">
   <a href="https://opensource.org/licenses/MIT"
