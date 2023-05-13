@@ -356,7 +356,7 @@ Ces paramètres peuvent être modifiés :
 - **Local File formatter syntax**: syntaxe pour afficher les informations de fichier pour chaque fichier dans l'explorateur local. Voir [File explorer format](#format-de-lexplorateur-de-fichiers)
 - **Enable notifications?**: S'il est défini sur `Yes`, les notifications seront affichées.
 - **Notifications: minimum transfer size**: si la taille du transfert est supérieure ou égale à la valeur spécifiée, les notifications de transfert seront affichées. Les valeurs acceptées sont au format `{UNSIGNED} B/KB/MB/GB/TB/PB`
-- **SSH configuration path** : définissez le fichier de configuration SSH à utiliser lors de la connexion à un serveur SCP/SFTP. S'il n'est pas défini (vide), aucun fichier ne sera utilisé. Vous pouvez spécifier un chemin commençant par `~` pour indiquer le chemin d'accueil (par exemple `~/.ssh/config`)
+- **SSH configuration path** : définissez le fichier de configuration SSH à utiliser lors de la connexion à un serveur SCP/SFTP. S'il n'est pas défini (vide), aucun fichier ne sera utilisé. Vous pouvez spécifier un chemin commençant par `~` pour indiquer le chemin d'accueil (par exemple `~/.ssh/config`). Les paramétrages disponibles pour la configuration sont listées [ICI](https://github.com/veeso/ssh2-config#exposed-attributes).
 
 ### SSH Key Storage 🔐
 

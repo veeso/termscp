@@ -348,7 +348,7 @@ termscp和书签一样，只需要保证这些路径是可访问的：
 - **Local File formatter syntax**：在本地资源管理器中显示每个文件的文件信息的语法。参见[资源管理器格式](#资源管理器格式)
 - **Enable notifications?**: 如果设置为 `Yes`，则会显示通知。
 - **Notifications: minimum transfer size**: 如果传输大小大于或等于指定值，将显示传输通知。 接受的值格式为 `{UNSIGNED} B/KB/MB/GB/TB/PB`
-- **SSH Configuration path**：设置连接到 SCP/SFTP 服务器时使用的 SSH 配置文件。 如果未设置（空），则不会使用任何文件。 你可以指定一个以 `~` 开头的路径来表示主路径（例如 `~/.ssh/config`）
+- **SSH Configuration path**：设置连接到 SCP/SFTP 服务器时使用的 SSH 配置文件。 如果未设置（空），则不会使用任何文件。 你可以指定一个以 `~` 开头的路径来表示主路径（例如 `~/.ssh/config`）. 指定了 termscp 支持的参数 [HERE](https://github.com/veeso/ssh2-config#exposed-attributes).
 
 ### SSH Key Storage
 
