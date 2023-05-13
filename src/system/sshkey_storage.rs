@@ -7,10 +7,11 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 // Ext
-use remotefs_ssh::{SshConfigParseRule, SshKeyStorage as SshKeyStorageTrait};
+use remotefs_ssh::SshKeyStorage as SshKeyStorageTrait;
 use ssh2_config::SshConfig;
 
 use super::config_client::ConfigClient;
+use crate::utils::ssh as ssh_utils;
 
 #[derive(Default)]
 pub struct SshKeyStorage {
@@ -32,19 +33,6 @@ impl SshKeyStorage {
     pub fn add_key(&mut self, host: &str, username: &str, p: PathBuf) {
         let key: String = Self::make_mapkey(host, username);
         self.hosts.insert(key, p);
-    }
-
-    /// Parse ssh2 config
-    fn parse_ssh2_config(path: &str) -> Result<SshConfig, String> {
-        use std::fs::File;
-        use std::io::BufReader;
-
-        let mut reader = File::open(path)
-            .map_err(|e| format!("failed to open {path}: {e}"))
-            .map(BufReader::new)?;
-        SshConfig::default()
-            .parse(&mut reader, SshConfigParseRule::ALLOW_UNKNOWN_FIELDS)
-            .map_err(|e| format!("Failed to parse ssh2 config: {e}"))
     }
 
     /// Resolve host via termscp ssh keys storage
@@ -89,7 +77,7 @@ impl From<&ConfigClient> for SshKeyStorage {
         // read ssh2 config
         let ssh_config = cfg_client.get_ssh_config().and_then(|x| {
             debug!("reading ssh config at {}", x);
-            Self::parse_ssh2_config(x).ok()
+            ssh_utils::parse_ssh2_config(x).ok()
         });
         let mut hosts: HashMap<String, PathBuf> =
             HashMap::with_capacity(cfg_client.iter_ssh_keys().count());

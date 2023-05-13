@@ -9,6 +9,7 @@ pub mod fmt;
 pub mod parser;
 pub mod path;
 pub mod random;
+pub mod ssh;
 pub mod string;
 pub mod tty;
 pub mod ui;
