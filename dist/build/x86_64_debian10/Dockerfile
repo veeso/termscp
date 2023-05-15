@@ -1,4 +1,4 @@
-FROM debian:stretch
+FROM debian:buster
 
 WORKDIR /usr/src/
 # Install dependencies

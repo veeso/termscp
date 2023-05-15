@@ -38,7 +38,7 @@ if [ ! -f Cargo.toml ]; then
 fi
 
 # Build release (x86_64)
-cargo build --release
+cargo build --release --target x86_64-apple-darwin
 # Make pkg
 X86_64_HASH=$(make_pkg "x86_64" "$VERSION")
 RET_X86_64=$?

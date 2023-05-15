@@ -23,6 +23,8 @@ fi
 ARM64_DEB_NAME="termscp-arm64_deb"
 ARM64_RPM_NAME="termscp-arm64_rpm"
 
+docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+
 set -e # Don't fail
 
 # Create pkgs directory
@@ -31,7 +33,7 @@ PKGS_DIR=$(pwd)/pkgs
 cd -
 mkdir -p ${PKGS_DIR}/
 # Build aarch64_deb
-cd aarch64_debian9/
+cd aarch64_debian10/
 docker buildx build --platform linux/arm64 $CACHE --build-arg branch=${BRANCH} --tag $ARM64_DEB_NAME .
 cd -
 mkdir -p ${PKGS_DIR}/deb/
