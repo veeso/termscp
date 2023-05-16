@@ -33,7 +33,7 @@
 
 ## 0.12.0
 
-Released on 15/05/2023
+Released on 16/05/2023
 
 - **Change file permissions**: you can now change file permissions easily with the permissions popup pressing `Z` in the explorer.
   - [Issue 172](https://github.com/veeso/termscp/issues/172)

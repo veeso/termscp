@@ -63,7 +63,7 @@
 </p>
 
 <p align="center">Sviluppato da <a href="https://termscp.veeso.dev/" target="_blank">@veeso</a></p>
-<p align="center">Versione corrente: 0.12.0 (15/05/2023)</p>
+<p align="center">Versione corrente: 0.12.0 (16/05/2023)</p>
 
 <p align="center">
   <a href="https://opensource.org/licenses/MIT"
