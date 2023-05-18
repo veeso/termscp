@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Install dependencies
-        run: sudo apt update && sudo apt install -y curl wget
+        run: sudo apt update && sudo apt install -y curl wget libsmbclient
       - name: Install termscp from script
         run: |
           ./install.sh -v=0.12.0 -f
