@@ -6,11 +6,11 @@
 
 <p align="center">~ Un file transfer ricco di funzionalità ~</p>
 <p align="center">
-  <a href="https://termscp.veeso.dev/termscp/" target="_blank">Sito</a>
+  <a href="https://termscp.veeso.dev" target="_blank">Sito</a>
   ·
-  <a href="https://termscp.veeso.dev/termscp/#get-started" target="_blank">Installazione</a>
+  <a href="https://termscp.veeso.dev/#get-started" target="_blank">Installazione</a>
   ·
-  <a href="https://termscp.veeso.dev/termscp/#user-manual" target="_blank">Manuale utente</a>
+  <a href="https://termscp.veeso.dev/#user-manual" target="_blank">Manuale utente</a>
 </p>
 
 <p align="center">
@@ -62,7 +62,7 @@
   /></a>
 </p>
 
-<p align="center">Sviluppato da <a href="https://termscp.veeso.dev/" target="_blank">@veeso</a></p>
+<p align="center">Sviluppato da <a href="https://veeso.dev/" target="_blank">@veeso</a></p>
 <p align="center">Versione corrente: 0.12.0 (16/05/2023)</p>
 
 <p align="center">

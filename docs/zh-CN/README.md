@@ -6,11 +6,11 @@
 
 <p align="center">~ 功能丰富的终端文件传输工具 ~</p>
 <p align="center">
-  <a href="https://termscp.veeso.dev/termscp/" target="_blank">网站</a>
+  <a href="https://termscp.veeso.dev" target="_blank">网站</a>
   ·
-  <a href="https://termscp.veeso.dev/termscp/#get-started" target="_blank">安装</a>
+  <a href="https://termscp.veeso.dev/#get-started" target="_blank">安装</a>
   ·
-  <a href="https://termscp.veeso.dev/termscp/#user-manual" target="_blank">用户手册</a>
+  <a href="https://termscp.veeso.dev/#user-manual" target="_blank">用户手册</a>
 </p>
 
 <p align="center">
@@ -62,7 +62,7 @@
   /></a>
 </p>
 
-<p align="center">由 <a href="https://termscp.veeso.dev/" target="_blank">@veeso</a> 开发</p>
+<p align="center">由 <a href="https://veeso.dev/" target="_blank">@veeso</a> 开发</p>
 <p align="center">当前版本： 0.12.0 (16/05/2023)</p>
 
 <p align="center">

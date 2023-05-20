@@ -6,11 +6,11 @@
 
 <p align="center">~ Una transferencia de archivos de terminal rica en funciones ~</p>
 <p align="center">
-  <a href="https://termscp.veeso.dev/termscp/" target="_blank">Sitio Web</a>
+  <a href="https://termscp.veeso.dev" target="_blank">Sitio Web</a>
   ·
-  <a href="https://termscp.veeso.dev/termscp/#get-started" target="_blank">Instalación</a>
+  <a href="https://termscp.veeso.dev/#get-started" target="_blank">Instalación</a>
   ·
-  <a href="https://termscp.veeso.dev/termscp/#user-manual" target="_blank">Manual de usuario</a>
+  <a href="https://termscp.veeso.dev/#user-manual" target="_blank">Manual de usuario</a>
 </p>
 
 <p align="center">
@@ -62,7 +62,7 @@
   /></a>
 </p>
 
-<p align="center">Desarrollado por <a href="https://termscp.veeso.dev/" target="_blank">@veeso</a></p>
+<p align="center">Desarrollado por <a href="https://veeso.dev/" target="_blank">@veeso</a></p>
 <p align="center">Versión actual: 0.12.0 (16/05/2023)</p>
 
 <p align="center">

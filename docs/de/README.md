@@ -6,11 +6,11 @@
 
 <p align="center">~ Eine funktionsreiche Terminal-Dateiübertragung ~</p>
 <p align="center">
-  <a href="https://termscp.veeso.dev/termscp/" target="_blank">Webseite</a>
+  <a href="https://termscp.veeso.dev" target="_blank">Webseite</a>
   ·
-  <a href="https://termscp.veeso.dev/termscp/#get-started" target="_blank">Installation</a>
+  <a href="https://termscp.veeso.dev/#get-started" target="_blank">Installation</a>
   ·
-  <a href="https://termscp.veeso.dev/termscp/#user-manual" target="_blank">Benutzerhandbuch</a>
+  <a href="https://termscp.veeso.dev/#user-manual" target="_blank">Benutzerhandbuch</a>
 </p>
 
 <p align="center">
@@ -62,7 +62,7 @@
   /></a>
 </p>
 
-<p align="center">Entwickelt von <a href="https://termscp.veeso.dev/" target="_blank">@veeso</a></p>
+<p align="center">Entwickelt von <a href="https://veeso.dev/" target="_blank">@veeso</a></p>
 <p align="center">Aktuelle Version: 0.12.0 (16/05/2023)</p>
 
 <p align="center">
