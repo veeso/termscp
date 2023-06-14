@@ -750,6 +750,7 @@ impl KeybindingsPopup {
                         .add_col(TextSpan::from(
                             "            Open text file with preferred editor",
                         ))
+                        .add_row()
                         .add_col(TextSpan::new("<P>").bold().fg(key_color))
                         .add_col(TextSpan::from("               Toggle log panel"))
                         .add_row()
@@ -785,6 +786,7 @@ impl KeybindingsPopup {
                         .add_col(TextSpan::from(
                             "               Toggle synchronized browsing",
                         ))
+                        .add_row()
                         .add_col(TextSpan::new("<Z>").bold().fg(key_color))
                         .add_col(TextSpan::from("               Change file permissions"))
                         .add_row()
