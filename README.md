@@ -179,7 +179,7 @@ NetBSD users can install termscp from the official repositories.
 pkgin install termscp
 ```
 
-For more information or other platforms, please visit [termscp.veeso.dev](https://termscp.veeso.dev/termscp/#get-started) to view all installation methods.
+For more information or other platforms, please visit [termscp.veeso.dev](https://termscp.veeso.dev/#get-started) to view all installation methods.
 
 ⚠️ If you're looking on how to update termscp just run termscp from CLI with: `(sudo) termscp --update` ⚠️
 
@@ -226,7 +226,7 @@ You can make a donation with one of these platforms:
 
 ## User manual 📚
 
-The user manual can be found on the [termscp's website](https://termscp.veeso.dev/termscp/#user-manual) or on [Github](docs/man.md).
+The user manual can be found on the [termscp's website](https://termscp.veeso.dev/#user-manual) or on [Github](docs/man.md).
 
 ---
 
