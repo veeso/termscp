@@ -1,17 +1,15 @@
-<head>
-  <link rel="stylesheet" href="css/get-started.css" />
-</head>
+<!DOCTYPE html>
 
 <body>
-  <section id="start" class="container start">
-    <h1 translate="getStarted.title">Get started</h1>
-    <section>
-      <h2>
+  <section id="start" class="flex flex-col mx-auto items-center justify-center w-full px-12 gap-8 dark:text-gray-100">
+    <h1 translate="getStarted.title" class="text-3xl font-thin">Get started</h1>
+    <section class="w-full">
+      <h2 class="text-2xl font-thin">
         <i class="fa fa-rocket"></i>&nbsp;<span translate="getStarted.quickSetup">Quick setup</span>
       </h2>
       <div class="installation">
-        <div class="alert alert-primary">
-          <p>
+        <div class="p-4 my-4 text-sm text-blue-800 rounded-lg bg-blue-50">
+          <p class="text-lg">
             <i class="fas fa-info-circle"></i>
             <span translate="getStarted.suggested">We strongly suggest this method to install termscp</span>
           </p>
@@ -23,8 +21,8 @@
         <pre><span class="function">curl</span> --proto <span class="string">'=https'</span> --tlsv1.2 -sSLf <span class="string">"https://git.io/JBhDb"</span> | sh</pre>
       </div>
     </section>
-    <section>
-      <h2>
+    <section class="w-full">
+      <h2 class="text-2xl font-thin">
         <i class="devicon-windows8-plain"></i>&nbsp;<span translate="getStarted.windows.title">Windows users</span>
       </h2>
       <div class="installation">
@@ -44,13 +42,13 @@
         <pre><span class="function">choco</span> install <span class="string">termscp</span> -s .</pre>
       </div>
     </section>
-    <section>
-      <h2>
+    <section class="w-full">
+      <h2 class="text-2xl font-thin">
         <i class="devicon-linux-plain"></i>&nbsp;<span translate="getStarted.linuxUsers">Linux users</span>
       </h2>
       <div class="sub-system">
-        <div class="alert alert-warning">
-          <p>
+        <div class="p-4 my-4 text-sm text-yellow-800 rounded-lg bg-yellow-50">
+          <p class="text-lg">
             <i class="fas fa-exclamation-triangle"></i>
             <span translate="getStarted.notConfident">Opt for these methods instead if you don't feel confident using
               the shell script</span>
@@ -104,16 +102,16 @@ sudo <span class="function">rpm</span> -U <span class="string">termscp.rpm</span
         </div>
       </div>
     </section>
-    <section>
-      <h2>
+    <section class="w-full">
+      <h2 class="text-2xl font-thin">
         <i class="devicon-apple-plain"></i>&nbsp;<span translate="getStarted.macos.title">MacOS users</span>
       </h2>
       <div class="installation">
-        <div class="alert alert-warning">
-          <p>
+        <div class="p-4 my-4 text-sm text-yellow-800 rounded-lg bg-yellow-50">
+          <p class="text-lg">
             <i class="fas fa-exclamation-triangle"></i>
-            <span translate="getStarted.notConfident">Opt for this method instead if you don't feel confident using the
-              shell script</span>
+            <span translate="getStarted.notConfident">Opt for these methods instead if you don't feel confident using
+              the shell script</span>
           </p>
         </div>
         <p>
@@ -123,13 +121,13 @@ sudo <span class="function">rpm</span> -U <span class="string">termscp.rpm</span
         <pre><span class="function">brew</span> install <span class="string">veeso/termscp/termscp</span></pre>
       </div>
     </section>
-    <section>
-      <h2>
+    <section class="w-full">
+      <h2 class="text-2xl font-thin">
         <i class="devicon-rust-plain"></i>&nbsp;<span translate="getStarted.cargo.title">Install with Cargo</span>
       </h2>
       <div class="installation">
-        <div class="alert alert-warning">
-          <p>
+        <div class="p-4 my-4 text-sm text-yellow-800 rounded-lg bg-yellow-50">
+          <p class="text-lg">
             <i class="fas fa-exclamation-triangle"></i>
             <span translate="getStarted.noBinary">Opt for this method instead if binaries for your platform are not
               available</span>
@@ -142,10 +140,10 @@ sudo <span class="function">rpm</span> -U <span class="string">termscp.rpm</span
           <span translate="getStarted.cargo.requirements">To install termscp via Cargo, these requirements must be
             satisfied:</span>
         </p>
-        <ul>
+        <ul class="list-disc px-8">
           <li>
             Linux:
-            <ul>
+            <ul class="list-disc px-12">
               <li>pkg-config</li>
               <li>libssh2</li>
               <li>openssl-dev</li>
@@ -153,7 +151,7 @@ sudo <span class="function">rpm</span> -U <span class="string">termscp.rpm</span
           </li>
           <li>
             FreeBSD:
-            <ul>
+            <ul class="list-disc px-12">
               <li>libssh</li>
               <li>dbus</li>
               <li>pkg-conf</li>

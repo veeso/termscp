@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<div
+  class="flex flex-row fixed bg-gray-100 dark:bg-brand text-brand dark:text-gray-100 border-b border-gray-400 dark:border-gray-800 items-center justify-between w-screen h-auto py-4 px-8">
+  <!-- Desktop menu-->
+  <div class="sm:hidden flex flex-row justify-start items-center gap-12 w-full">
+    <h2 class="lg:text-xl md:text-lg dark:text-gray-100">
+      <a href="/">
+        <img class="w-[32px] h-auto m-auto inline-block mr-2" alt="logo"
+          src="assets/images/termscp.webp" />&nbsp;termscp
+      </a>
+    </h2>
+    <h2 class="lg:text-xl md:text-lg dark:text-gray-100">
+      <a translate="menu.getStarted" href="/get-started.html"></a>
+    </h2>
+    <h2 class="lg:text-xl md:text-lg dark:text-gray-100">
+      <a translate="menu.updates" href="/updates.html"></a>
+    </h2>
+    <h2 class="lg:text-xl md:text-lg dark:text-gray-100">
+      <a translate="menu.manual" href="/user-manual.html"></a>
+    </h2>
+    <h2 class="lg:text-xl md:text-lg dark:text-gray-100">
+      <a translate="menu.changelog" href="/changelog.html"></a>
+    </h2>
+    <!-- End region -->
+    <div class="flex flex-row self-end justify-end items-center gap-8 flex-1">
+      <!-- Dark/light theme toggle -->
+      <button id="theme-toggle" type="button" onclick="toggleTheme()"
+        class="text-brand dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg lg:text-2xl md:text-lg p-2.5">
+        <svg id="theme-toggle-dark-icon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20"
+          xmlns="http://www.w3.org/2000/svg">
+          <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
+        </svg>
+        <svg id="theme-toggle-light-icon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20"
+          xmlns="http://www.w3.org/2000/svg">
+          <path
+            d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"
+            fill-rule="evenodd" clip-rule="evenodd"></path>
+        </svg>
+      </button>
+      <!-- Socials -->
+      <div>
+        <a href="https://github.com/veeso/termscp" class="lg:text-2xl md:text-lg dark:text-gray-100" target="_blank"><i
+            class="devicon-github-original"></i></a>
+      </div>
+      <div>
+        <a href="https://crates.io/crates/termscp" class="lg:text-2xl md:text-lg dark:text-gray-100" target="_blank"><i
+            class="devicon-rust-plain"></i></a>
+      </div>
+      <div>
+        <a href="https://www.linkedin.com/in/christian-visintin/" class="lg:text-2xl md:text-lg dark:text-gray-100"
+          target="_blank"><i class="devicon-linkedin-plain"></i></a>
+      </div>
+      <div>
+        <a href="https://twitter.com/veeso_dev" target="_blank" class="lg:text-2xl md:text-lg dark:text-gray-100"><i
+            class="devicon-twitter-plain"></i></a>
+      </div>
+    </div>
+  </div>
+  <!-- Mobile topbar -->
+  <div class="sm:flex hidden flex-row justify-start items-center gap-8 w-full">
+    <h2 class="text-2xl dark:text-gray-100">
+      <a href="/">
+        <img class="w-[32px] h-auto m-auto inline-block mr-2" alt="logo"
+          src="assets/images/termscp.webp" />&nbsp;termscp
+      </a>
+    </h2>
+    <div id="menu-icon" class="justify-self-end flex-1 flex justify-end">
+      <i onclick="onToggleMenu()" class="fa fa-bars text-2xl cursor-pointer"></i>
+    </div>
+  </div>
+</div>
+<!-- Mobile menu -->
+<div id="mobile-menu"
+  class="hidden transition-all fixed top-0 left-0 h-screen bg-brand text-white w-screen flex-col justify-start items-center p-8">
+  <div class="flex flex-row justify-end items-end w-full">
+    <div id="menu-icon" class="justify-self-end flex-1 flex justify-end">
+      <i onclick="onToggleMenu()" class="fa fa-bars text-2xl cursor-pointer"></i>
+    </div>
+  </div>
+  <div class="flex flex-col justify-start items-center w-full gap-4">
+    <h2 class="text-2xl text-white">
+      <a translate="menu.intro" href="/"></a>
+    </h2>
+    <h2 class="text-2xl text-white">
+      <a translate="menu.getStarted" href="/get-started.html"></a>
+    </h2>
+    <h2 class="text-2xl text-white">
+      <a translate="menu.updates" href="/updates.html"></a>
+    </h2>
+    <h2 class="text-2xl text-white">
+      <a translate="menu.manual" href="/user-manual.html"></a>
+    </h2>
+    <h2 class="text-2xl text-white">
+      <a translate="menu.changelog" href="/changelog.html"></a>
+    </h2>
+  </div>
+</div>

@@ -2,25 +2,16 @@
   <link rel="stylesheet" href="css/updates.css" />
 </head>
 <body>
-  <section id="updates" class="container updates">
-    <h1 translate="updates.title">Keeping termscp up to date</h1>
-    <div class="alert alert-warning">
-      <p>
-        <i class="fas fa-exclamation-triangle"></i>
-        <span translate="updates.disclaimer">
-        Updating termscp with this method is only available for 0.7.x versions
-        or higher. If you have an older version, you have to install updates
-        using the</span>&nbsp;<a href="#get-started">install.sh script</a>
-      </p>
-    </div>
+  <section id="updates" class="flex flex-col mx-auto items-center justify-center w-full px-12 gap-8 dark:text-gray-100">
+    <h1 translate="updates.title" class="text-3xl font-thin">Keeping termscp up to date</h1>
     <!-- Reasons -->
     <section>
-      <h2>
+      <h2 class="text-2xl font-thin">
         <i class="fa fa-question-circle"></i>&nbsp;<span translate="updates.reasons.title">Why should you install
         updates</span>
       </h2>
       <div class="wall-of-text">
-        <p translate="updates.reasons.wallOfText">
+        <p translate="updates.reasons.wallOfText" class="text-gray-700 dark:text-gray-300">
           Termscp is an application that is still in its early stage of
           development, the first version has been released in december in 2020
           and practically there's only one
@@ -42,7 +33,7 @@
           awesome features 🦄 you can't miss and the application is getting more
           reliable and stable after each update 😄
         </p>
-        <p class="tl-dr">
+        <p class="italic text-xl text-gray-700 dark:text-gray-300">
           <span>TL;DR</span>
           <span translate="updates.reasons.tldr"></span>
         </p>
@@ -50,26 +41,26 @@
     </section>
     <!-- Gui method -->
     <section>
-      <h2><i class="fa fa-desktop"></i>&nbsp;<span translate="updates.gui.title">GUI method</span></h2>
+      <h2 class="text-2xl font-thin"><i class="fa fa-desktop"></i>&nbsp;<span translate="updates.gui.title">GUI method</span></h2>
       <div class="installation">
-        <p translate="updates.gui.body" class="description">
+        <p translate="updates.gui.body" class="text-gray-700 dark:text-gray-300">
           The GUI method just consists in starting termscp with no options, you
           then should be in front of the authentication form. If there's an
           update available a message like "termscp x.y.z is OUT! Update and read
           release notes with CTRL+R". All you have to do at this point to update
           termscp, is:
         </p>
-        <ol>
+        <ol class="list-decimal px-8 text-gray-700 dark:text-gray-300">
           <li translate="updates.gui.steps.st">press CTRL+R. The release notes should now be displayed.</li>
           <li translate="updates.gui.steps.nd">Select "YES" in the "Install update?" radio input</li>
           <li translate="updates.gui.steps.rd">Press "ENTER"</li>
         </ol>
-        <p translate="updates.gui.then" class="description">
+        <p translate="updates.gui.then" class="text-gray-700 dark:text-gray-300">
           If everything worked correctly a green message "termscp x.y.z has been
           installed!" will be displayed. Just restart termscp and enjoy the
           update 😄
         </p>
-        <div class="alert alert-warning">
+        <div class="p-4 my-4 text-sm text-yellow-800 rounded-lg bg-yellow-50">
           <p>
             <i class="fas fa-exclamation-triangle"></i>
             <span translate="updates.gui.pex">
@@ -82,20 +73,20 @@
     </section>
     <!-- CLI method -->
     <section>
-      <h2><i class="fa fa-glasses"></i>&nbsp;<span translate="updates.cli.title">CLI method</span></h2>
+      <h2 class="text-2xl font-thin"><i class="fa fa-glasses"></i>&nbsp;<span translate="updates.cli.title">CLI method</span></h2>
       <div class="installation">
-        <p translate="updates.cli.body" class="description">
+        <p translate="updates.cli.body" class="text-gray-700 dark:text-gray-300">
           If you prefer, you can install a new update just using the dedicated
           CLI option:
         </p>
         <pre><span class="function">termscp</span> --update</pre>
-        <div class="alert alert-warning">
+        <div class="p-4 my-4 text-sm text-yellow-800 rounded-lg bg-yellow-50">
           <p>
             <i class="fas fa-exclamation-triangle"></i>
             <span translate="updates.cli.pex">Run with sudo if necessary (Debian/FreeBSD/RedHat users)</span>
           </p>
         </div>
-        <p translate="updates.cli.then" class="description">
+        <p translate="updates.cli.then" class="text-gray-700 dark:text-gray-300">
           Once started, you will be prompted whether to install or not the
           update. Confirm the installation and ta-dah, the new version of
           termscp should now be available on your machine

@@ -1,0 +1,132 @@
+@import "css/markdown.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: "Sora";
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/sora/v11/xMQ9uFFYT72X5wkB_18qmnndmSdSnx2BAfO5mnuyOo1l_iMwWa-xsaQ.woff2)
+    format("woff2");
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB,
+    U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: "Sora";
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/sora/v11/xMQ9uFFYT72X5wkB_18qmnndmSdSnx2BAfO5mnuyOo1l_iMwV6-x.woff2)
+    format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215,
+    U+FEFF, U+FFFD;
+}
+/* latin-ext */
+@font-face {
+  font-family: "Sora";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/sora/v11/xMQ9uFFYT72X5wkB_18qmnndmSdSnx2BAfO5mnuyOo1l_iMwWa-xsaQ.woff2)
+    format("woff2");
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB,
+    U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: "Sora";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/sora/v11/xMQ9uFFYT72X5wkB_18qmnndmSdSnx2BAfO5mnuyOo1l_iMwV6-x.woff2)
+    format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215,
+    U+FEFF, U+FFFD;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: "Sora", sans-serif;
+  margin: 0;
+  min-width: 100vw;
+  overflow-x: hidden;
+  padding: 0;
+}
+
+main {
+  padding-top: 5rem;
+}
+
+p {
+  font-weight: 300;
+}
+
+input {
+  font-family: "Sora", sans-serif;
+  font-size: 1em;
+}
+
+textarea {
+  font-family: "Sora", sans-serif;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+}
+
+button {
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+button,
+input {
+  margin: 0;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+a {
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: none;
+}
+
+pre {
+  font-family: Consolas, "Liberation Mono", Menlo, Courier, monospace;
+  padding: 16px;
+  overflow: auto;
+  font-size: 85%;
+  line-height: 1.45;
+  color: #d0d0d0;
+  background-color: #222629;
+  border-radius: 3px;
+  word-wrap: normal;
+  border-radius: 0.5em;
+}
+
+pre .function {
+  color: #f08d49;
+}
+
+pre .string {
+  color: #7ec699;
+}

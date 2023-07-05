@@ -12,7 +12,6 @@
 }
 
 .markdown p {
-  color: #202020;
   font-size: 1.1em;
 }
 
@@ -46,14 +45,9 @@
 
 .markdown blockquote {
   border-left: 0.25em solid #ccc;
-  color: #606060;
   font-size: 90%;
   padding: 0.1em;
   padding-left: 0.5em;
-}
-
-.markdown blockquote p {
-  color: #606060;
 }
 
 .markdown pre code {
@@ -68,6 +62,12 @@
   padding: 0.2em 0.4em;
 }
 
+@media (prefers-color-scheme: dark) {
+  .markdown code {
+    background-color: #404040;
+  }
+}
+
 .markdown table {
   border-collapse: collapse;
   border-spacing: 0;
@@ -80,14 +80,6 @@
 
 .markdown table tr {
   border-top: 1px solid #c6cbd1;
-}
-
-.markdown table tr {
-  background-color: white;
-}
-
-.markdown table tr:nth-child(even) {
-  background-color: #dfe2e5;
 }
 
 .markdown table td,

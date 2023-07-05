@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+  xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://termscp.veeso.dev/</loc>
+    <lastmod>2023-07-05</lastmod>
+    <priority>1.00</priority>
+  </url>
+  <url>
+    <loc>https://termscp.veeso.dev/get-started.html</loc>
+    <lastmod>2023-07-05</lastmod>
+    <priority>0.95</priority>
+  </url>
+  <url>
+    <loc>https://termscp.veeso.dev/updates.html</loc>
+    <lastmod>2023-07-05</lastmod>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://termscp.veeso.dev/user-manual.html</loc>
+    <lastmod>2023-07-05</lastmod>
+    <priority>0.90</priority>
+  </url>
+  <url>
+    <loc>https://termscp.veeso.dev/changelog.html</loc>
+    <lastmod>2023-07-05</lastmod>
+    <priority>0.50</priority>
+  </url>
+</urlset>
