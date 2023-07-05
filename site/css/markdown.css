@@ -62,10 +62,8 @@
   padding: 0.2em 0.4em;
 }
 
-@media (prefers-color-scheme: dark) {
-  .markdown code {
-    background-color: #404040;
-  }
+:is(.dark) .markdown code {
+  background-color: #404040;
 }
 
 .markdown table {
