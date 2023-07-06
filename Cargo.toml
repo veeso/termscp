@@ -5,7 +5,13 @@ description = "termscp is a feature rich terminal file transfer and explorer wit
 edition = "2021"
 homepage = "https://termscp.veeso.dev"
 include = ["src/**/*", "LICENSE", "README.md", "CHANGELOG.md"]
-keywords = ["scp-client", "sftp-client", "ftp-client", "winscp", "command-line-utility"]
+keywords = [
+  "scp-client",
+  "sftp-client",
+  "ftp-client",
+  "winscp",
+  "command-line-utility",
+]
 license = "MIT"
 name = "termscp"
 readme = "README.md"
@@ -46,14 +52,23 @@ lazy_static = "^1.4"
 log = "^0.4"
 magic-crypt = "^3.1"
 notify = "^4.0"
-notify-rust = { version = "^4.5", default-features = false, features = [ "d" ] }
-open = "^4.0"
+notify-rust = { version = "^4.5", default-features = false, features = ["d"] }
+open = "^5.0"
 rand = "^0.8.5"
 remotefs = "^0.2.0"
-remotefs-aws-s3 = { version = "^0.2.1", default-features = false, features = [ "find", "rustls" ] }
+remotefs-aws-s3 = { version = "^0.2.1", default-features = false, features = [
+  "find",
+  "rustls",
+] }
 rpassword = "^7.0"
-self_update = { version = "^0.36", default-features = false, features = [ "rustls", "archive-tar", "archive-zip", "compression-flate2", "compression-zip-deflate" ] }
-serde = { version = "^1", features = [ "derive" ] }
+self_update = { version = "^0.36", default-features = false, features = [
+  "rustls",
+  "archive-tar",
+  "archive-zip",
+  "compression-flate2",
+  "compression-zip-deflate",
+] }
+serde = { version = "^1", features = ["derive"] }
 simplelog = "^0.12"
 ssh2-config = "^0.2"
 tempfile = "^3.4"
@@ -74,9 +89,9 @@ serial_test = "^2.0"
 cfg_aliases = "0.1"
 
 [features]
-default = [ "with-keyring" ]
-github-actions = [ ]
-with-keyring = [ "keyring" ]
+default = ["with-keyring"]
+github-actions = []
+with-keyring = ["keyring"]
 
 [target."cfg(not(target_os = \"macos\"))"]
 [target."cfg(not(target_os = \"macos\"))".dependencies]
@@ -84,13 +99,13 @@ remotefs-smb = "^0.2"
 
 [target."cfg(target_family = \"windows\")"]
 [target."cfg(target_family = \"windows\")".dependencies]
-remotefs-ftp = { version = "^0.1.2", features = [ "native-tls" ] }
+remotefs-ftp = { version = "^0.1.2", features = ["native-tls"] }
 remotefs-ssh = "^0.2"
 
 [target."cfg(target_family = \"unix\")"]
 [target."cfg(target_family = \"unix\")".dependencies]
-remotefs-ftp = { version = "^0.1.2", features = [ "vendored", "native-tls" ] }
-remotefs-ssh = { version = "^0.2", features = [ "ssh2-vendored" ] }
+remotefs-ftp = { version = "^0.1.2", features = ["vendored", "native-tls"] }
+remotefs-ssh = { version = "^0.2", features = ["ssh2-vendored"] }
 users = "0.11.0"
 
 [profile.dev]

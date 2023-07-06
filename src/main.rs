@@ -14,9 +14,9 @@ extern crate log;
 extern crate magic_crypt;
 
 // External libs
-use std::env;
 use std::path::PathBuf;
 use std::time::Duration;
+use std::{env, path::Path};
 
 // Include
 mod activity_manager;
@@ -139,59 +139,68 @@ fn parse_remote_address(remote: &str) -> Result<FileTransferParams, String> {
 /// Run task and return rc
 fn run(run_opts: RunOpts) -> i32 {
     match run_opts.task {
-        Task::ImportTheme(theme) => match support::import_theme(theme.as_path()) {
-            Ok(_) => {
-                println!("Theme has been successfully imported!");
-                0
-            }
-            Err(err) => {
-                eprintln!("{err}");
-                1
-            }
-        },
-        Task::InstallUpdate => match support::install_update() {
-            Ok(msg) => {
-                println!("{msg}");
-                0
-            }
-            Err(err) => {
-                eprintln!("Could not install update: {err}");
-                1
-            }
-        },
-        Task::Activity(activity) => {
-            // Get working directory
-            let wrkdir: PathBuf = match env::current_dir() {
-                Ok(dir) => dir,
-                Err(_) => PathBuf::from("/"),
-            };
-            // Create activity manager (and context too)
-            let mut manager: ActivityManager =
-                match ActivityManager::new(wrkdir.as_path(), run_opts.ticks) {
-                    Ok(m) => m,
-                    Err(err) => {
-                        eprintln!("Could not start activity manager: {err}");
-                        return 1;
-                    }
-                };
-            // Set file transfer params if set
-            match run_opts.remote {
-                Remote::Bookmark(BookmarkParams { name, password }) => {
-                    if let Err(err) = manager.resolve_bookmark_name(&name, password.as_deref()) {
-                        eprintln!("{err}");
-                        return 1;
-                    }
-                }
-                Remote::Host(HostParams { params, password }) => {
-                    if let Err(err) = manager.set_filetransfer_params(params, password.as_deref()) {
-                        eprintln!("{err}");
-                        return 1;
-                    }
-                }
-                Remote::None => {}
-            }
-            manager.run(activity);
+        Task::ImportTheme(theme) => run_import_theme(&theme),
+        Task::InstallUpdate => run_install_update(),
+        Task::Activity(activity) => run_activity(activity, run_opts.ticks, run_opts.remote),
+    }
+}
+
+fn run_import_theme(theme: &Path) -> i32 {
+    match support::import_theme(theme) {
+        Ok(_) => {
+            println!("Theme has been successfully imported!");
             0
         }
+        Err(err) => {
+            eprintln!("{err}");
+            1
+        }
     }
+}
+
+fn run_install_update() -> i32 {
+    match support::install_update() {
+        Ok(msg) => {
+            println!("{msg}");
+            0
+        }
+        Err(err) => {
+            eprintln!("Could not install update: {err}");
+            1
+        }
+    }
+}
+
+fn run_activity(activity: NextActivity, ticks: Duration, remote: Remote) -> i32 {
+    // Get working directory
+    let wrkdir: PathBuf = match env::current_dir() {
+        Ok(dir) => dir,
+        Err(_) => PathBuf::from("/"),
+    };
+    // Create activity manager (and context too)
+    let mut manager: ActivityManager = match ActivityManager::new(wrkdir.as_path(), ticks) {
+        Ok(m) => m,
+        Err(err) => {
+            eprintln!("Could not start activity manager: {err}");
+            return 1;
+        }
+    };
+    // Set file transfer params if set
+    match remote {
+        Remote::Bookmark(BookmarkParams { name, password }) => {
+            if let Err(err) = manager.resolve_bookmark_name(&name, password.as_deref()) {
+                eprintln!("{err}");
+                return 1;
+            }
+        }
+        Remote::Host(HostParams { params, password }) => {
+            if let Err(err) = manager.set_filetransfer_params(params, password.as_deref()) {
+                eprintln!("{err}");
+                return 1;
+            }
+        }
+        Remote::None => {}
+    }
+    manager.run(activity);
+    0
 }
