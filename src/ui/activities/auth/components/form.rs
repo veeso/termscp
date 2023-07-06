@@ -8,12 +8,11 @@ use tuirealm::event::{Key, KeyEvent, KeyModifiers};
 use tuirealm::props::{Alignment, BorderType, Borders, Color, InputType, Style};
 use tuirealm::{Component, Event, MockComponent, NoUserEvent, State, StateValue};
 
+use super::{FileTransferProtocol, FormMsg, Msg, UiMsg};
 use crate::ui::activities::auth::{
     RADIO_PROTOCOL_FTP, RADIO_PROTOCOL_FTPS, RADIO_PROTOCOL_S3, RADIO_PROTOCOL_SCP,
     RADIO_PROTOCOL_SFTP, RADIO_PROTOCOL_SMB,
 };
-
-use super::{FileTransferProtocol, FormMsg, Msg, UiMsg};
 
 // -- protocol
 
@@ -118,7 +117,7 @@ impl InputRemoteDirectory {
                 )
                 .foreground(color)
                 .placeholder("/home/foo", Style::default().fg(Color::Rgb(128, 128, 128)))
-                .title("Default remote directory", Alignment::Left)
+                .title("Default remote working directory", Alignment::Left)
                 .input_type(InputType::Text)
                 .value(remote_dir),
         }
@@ -132,6 +131,42 @@ impl Component<Msg, NoUserEvent> for InputRemoteDirectory {
             ev,
             Msg::Ui(UiMsg::RemoteDirectoryBlurDown),
             Msg::Ui(UiMsg::RemoteDirectoryBlurUp),
+        )
+    }
+}
+
+// -- remote directory
+
+#[derive(MockComponent)]
+pub struct InputLocalDirectory {
+    component: Input,
+}
+
+impl InputLocalDirectory {
+    pub fn new(local_dir: &str, color: Color) -> Self {
+        Self {
+            component: Input::default()
+                .borders(
+                    Borders::default()
+                        .color(color)
+                        .modifiers(BorderType::Rounded),
+                )
+                .foreground(color)
+                .placeholder("/home/foo", Style::default().fg(Color::Rgb(128, 128, 128)))
+                .title("Default local working directory", Alignment::Left)
+                .input_type(InputType::Text)
+                .value(local_dir),
+        }
+    }
+}
+
+impl Component<Msg, NoUserEvent> for InputLocalDirectory {
+    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+        handle_input_ev(
+            self,
+            ev,
+            Msg::Ui(UiMsg::LocalDirectoryBlurDown),
+            Msg::Ui(UiMsg::LocalDirectoryBlurUp),
         )
     }
 }

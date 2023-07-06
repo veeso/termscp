@@ -442,6 +442,7 @@ mod tests {
                 username: Some(String::from("root")),
                 password: None,
                 remote_path: None,
+                local_path: None,
                 s3: None,
                 smb: None,
             },
@@ -455,6 +456,7 @@ mod tests {
                 username: Some(String::from("cvisintin")),
                 password: Some(String::from("password")),
                 remote_path: Some(PathBuf::from("/tmp")),
+                local_path: Some(PathBuf::from("/usr")),
                 s3: None,
                 smb: None,
             },
@@ -468,6 +470,7 @@ mod tests {
                 username: None,
                 password: None,
                 remote_path: None,
+                local_path: None,
                 s3: Some(S3Params {
                     bucket: "veeso".to_string(),
                     region: Some("eu-west-1".to_string()),
@@ -493,6 +496,7 @@ mod tests {
                 username: None,
                 password: None,
                 remote_path: None,
+                local_path: None,
                 s3: None,
                 smb: smb_params,
             },
@@ -507,6 +511,7 @@ mod tests {
                 username: Some(String::from("omar")),
                 password: Some(String::from("aaa")),
                 remote_path: Some(PathBuf::from("/tmp")),
+                local_path: Some(PathBuf::from("/usr")),
                 s3: None,
                 smb: None,
             },
@@ -547,7 +552,7 @@ mod tests {
         let file_content: &str = r#"
         [bookmarks]
         raspberrypi2 = { address = "192.168.1.31", port = 22, protocol = "SFTP", username = "root", password = "mypassword" }
-        msi-estrem = { address = "192.168.1.30", port = 22, protocol = "SFTP", username = "cvisintin", password = "mysecret", remote_path = "/tmp" }
+        msi-estrem = { address = "192.168.1.30", port = 22, protocol = "SFTP", username = "cvisintin", password = "mysecret", directory = "/tmp", local_path = "/usr" }
         aws-server-prod1 = { address = "51.23.67.12", port = 21, protocol = "FTPS", username = "aws001" }
         
         [bookmarks.my-bucket]

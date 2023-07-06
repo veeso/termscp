@@ -12,6 +12,7 @@ pub struct FileTransferParams {
     pub protocol: FileTransferProtocol,
     pub params: ProtocolParams,
     pub remote_path: Option<PathBuf>,
+    pub local_path: Option<PathBuf>,
 }
 
 /// Container for protocol params
@@ -65,12 +66,19 @@ impl FileTransferParams {
             protocol,
             params,
             remote_path: None,
+            local_path: None,
         }
     }
 
-    /// Set entry directory
+    /// Set remote directory
     pub fn remote_path<P: AsRef<Path>>(mut self, dir: Option<P>) -> Self {
         self.remote_path = dir.map(|x| x.as_ref().to_path_buf());
+        self
+    }
+
+    /// Set local directory
+    pub fn local_path<P: AsRef<Path>>(mut self, dir: Option<P>) -> Self {
+        self.local_path = dir.map(|x| x.as_ref().to_path_buf());
         self
     }
 
@@ -325,13 +333,15 @@ mod test {
     fn test_filetransfer_params() {
         let params: FileTransferParams =
             FileTransferParams::new(FileTransferProtocol::Scp, ProtocolParams::default())
-                .remote_path(Some(&Path::new("/tmp")));
+                .remote_path(Some(&Path::new("/tmp")))
+                .local_path(Some(&Path::new("/usr")));
         assert_eq!(
             params.params.generic_params().unwrap().address.as_str(),
             "localhost"
         );
         assert_eq!(params.protocol, FileTransferProtocol::Scp);
         assert_eq!(params.remote_path.as_deref().unwrap(), Path::new("/tmp"));
+        assert_eq!(params.local_path.as_deref().unwrap(), Path::new("/usr"));
     }
 
     #[test]

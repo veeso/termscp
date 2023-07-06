@@ -4,7 +4,7 @@
 
 // Deps
 // Namespaces
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::time::Duration;
 
 use remotefs_ssh::SshKeyStorage as SshKeyStorageTrait;
@@ -34,12 +34,11 @@ pub enum NextActivity {
 pub struct ActivityManager {
     context: Option<Context>,
     ticks: Duration,
-    local_dir: PathBuf,
 }
 
 impl ActivityManager {
     /// Initializes a new Activity Manager
-    pub fn new(local_dir: &Path, ticks: Duration) -> Result<ActivityManager, HostError> {
+    pub fn new(ticks: Duration) -> Result<ActivityManager, HostError> {
         // Prepare Context
         // Initialize configuration client
         let (config_client, error_config): (ConfigClient, Option<String>) =
@@ -59,7 +58,6 @@ impl ActivityManager {
         let ctx: Context = Context::new(bookmarks_client, config_client, theme_provider, error);
         Ok(ActivityManager {
             context: Some(ctx),
-            local_dir: local_dir.to_path_buf(),
             ticks,
         })
     }
@@ -243,8 +241,19 @@ impl ActivityManager {
                 return None;
             }
         };
+
+        // get local path:
+        // - if set in file transfer params, get it from there
+        // - otherwise is env current dir
+        // - otherwise is /
+        let local_wrkdir = ft_params
+            .local_path
+            .clone()
+            .or(std::env::current_dir().ok())
+            .unwrap_or(PathBuf::from("/"));
+
         // Prepare activity
-        let host: Localhost = match Localhost::new(self.local_dir.clone()) {
+        let host: Localhost = match Localhost::new(local_wrkdir) {
             Ok(host) => host,
             Err(err) => {
                 // Set error in context

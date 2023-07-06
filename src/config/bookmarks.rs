@@ -42,7 +42,7 @@ pub struct Bookmark {
     #[serde(rename = "directory")]
     pub remote_path: Option<PathBuf>,
     /// local folder to open at startup
-    // pub local_path: Option<PathBuf>,
+    pub local_path: Option<PathBuf>,
     /// S3 params; optional. When used other fields are empty for sure
     pub s3: Option<S3Params>,
     /// SMB params; optional. Extra params required for SMB protocol
@@ -75,6 +75,7 @@ impl From<FileTransferParams> for Bookmark {
     fn from(params: FileTransferParams) -> Self {
         let protocol = params.protocol;
         let remote_path = params.remote_path;
+        let local_path = params.local_path;
         // Create generic or others
         match params.params {
             ProtocolParams::Generic(params) => Self {
@@ -84,6 +85,7 @@ impl From<FileTransferParams> for Bookmark {
                 username: params.username,
                 password: params.password,
                 remote_path,
+                local_path,
                 s3: None,
                 smb: None,
             },
@@ -94,6 +96,7 @@ impl From<FileTransferParams> for Bookmark {
                 username: None,
                 password: None,
                 remote_path,
+                local_path,
                 s3: Some(S3Params::from(params)),
                 smb: None,
             },
@@ -108,6 +111,7 @@ impl From<FileTransferParams> for Bookmark {
                 username: params.username,
                 password: params.password,
                 remote_path,
+                local_path,
                 s3: None,
             },
         }
@@ -159,6 +163,7 @@ impl From<Bookmark> for FileTransferParams {
             }
         }
         .remote_path(bookmark.remote_path) // Set entry remote_path
+        .local_path(bookmark.local_path) // Set entry local path
     }
 }
 
@@ -250,6 +255,7 @@ mod tests {
             username: Some(String::from("root")),
             password: Some(String::from("password")),
             remote_path: Some(PathBuf::from("/tmp")),
+            local_path: Some(PathBuf::from("/usr")),
             s3: None,
             smb: None,
         };
@@ -260,6 +266,7 @@ mod tests {
             username: Some(String::from("admin")),
             password: Some(String::from("password")),
             remote_path: Some(PathBuf::from("/home")),
+            local_path: Some(PathBuf::from("/usr")),
             s3: None,
             smb: None,
         };
@@ -279,6 +286,10 @@ mod tests {
             bookmark.remote_path.as_deref().unwrap(),
             std::path::Path::new("/tmp")
         );
+        assert_eq!(
+            bookmark.local_path.as_deref().unwrap(),
+            std::path::Path::new("/usr")
+        );
         let bookmark: &Bookmark = hosts
             .recents
             .get(&String::from("ISO20201218T181432"))
@@ -292,6 +303,10 @@ mod tests {
             bookmark.remote_path.as_deref().unwrap(),
             std::path::Path::new("/home")
         );
+        assert_eq!(
+            bookmark.local_path.as_deref().unwrap(),
+            std::path::Path::new("/usr")
+        );
     }
 
     #[test]
@@ -303,7 +318,8 @@ mod tests {
             password: Some(String::from("omar")),
         });
         let params: FileTransferParams = FileTransferParams::new(FileTransferProtocol::Scp, params)
-            .remote_path(Some(PathBuf::from("/home")));
+            .remote_path(Some(PathBuf::from("/home")))
+            .local_path(Some(PathBuf::from("/tmp")));
         let bookmark = Bookmark::from(params);
         assert_eq!(bookmark.protocol, FileTransferProtocol::Scp);
         assert_eq!(bookmark.address.as_deref().unwrap(), "127.0.0.1");
@@ -313,6 +329,10 @@ mod tests {
         assert_eq!(
             bookmark.remote_path.as_deref().unwrap(),
             std::path::Path::new("/home")
+        );
+        assert_eq!(
+            bookmark.local_path.as_deref().unwrap(),
+            std::path::Path::new("/tmp")
         );
         assert!(bookmark.s3.is_none());
     }
@@ -349,6 +369,7 @@ mod tests {
             username: Some(String::from("root")),
             password: Some(String::from("password")),
             remote_path: Some(PathBuf::from("/tmp")),
+            local_path: Some(PathBuf::from("/usr")),
             s3: None,
             smb: None,
         };
@@ -357,6 +378,10 @@ mod tests {
         assert_eq!(
             params.remote_path.as_deref().unwrap(),
             std::path::Path::new("/tmp")
+        );
+        assert_eq!(
+            params.local_path.as_deref().unwrap(),
+            std::path::Path::new("/usr")
         );
         let gparams = params.params.generic_params().unwrap();
         assert_eq!(gparams.address.as_str(), "192.168.1.1");
@@ -374,6 +399,7 @@ mod tests {
             username: None,
             password: None,
             remote_path: Some(PathBuf::from("/tmp")),
+            local_path: Some(PathBuf::from("/usr")),
             s3: Some(S3Params {
                 bucket: String::from("veeso"),
                 region: Some(String::from("eu-west-1")),
@@ -390,6 +416,10 @@ mod tests {
         assert_eq!(
             params.remote_path.as_deref().unwrap(),
             std::path::Path::new("/tmp")
+        );
+        assert_eq!(
+            params.local_path.as_deref().unwrap(),
+            std::path::Path::new("/usr")
         );
         let gparams = params.params.s3_params().unwrap();
         assert_eq!(gparams.bucket_name.as_str(), "veeso");
@@ -411,6 +441,7 @@ mod tests {
             username: Some("foo".to_string()),
             password: Some("bar".to_string()),
             remote_path: Some(PathBuf::from("/tmp")),
+            local_path: Some(PathBuf::from("/usr")),
             s3: None,
             smb: Some(SmbParams {
                 share: "test".to_string(),
@@ -423,6 +454,10 @@ mod tests {
         assert_eq!(
             params.remote_path.as_deref().unwrap(),
             std::path::Path::new("/tmp")
+        );
+        assert_eq!(
+            params.local_path.as_deref().unwrap(),
+            std::path::Path::new("/usr")
         );
         let smb_params = params.params.smb_params().unwrap();
         assert_eq!(smb_params.address.as_str(), "localhost");
@@ -443,6 +478,7 @@ mod tests {
             username: None,
             password: None,
             remote_path: Some(PathBuf::from("/tmp")),
+            local_path: Some(PathBuf::from("/usr")),
             s3: None,
             smb: Some(SmbParams {
                 share: "test".to_string(),
@@ -455,6 +491,10 @@ mod tests {
         assert_eq!(
             params.remote_path.as_deref().unwrap(),
             std::path::Path::new("/tmp")
+        );
+        assert_eq!(
+            params.local_path.as_deref().unwrap(),
+            std::path::Path::new("/usr")
         );
         let smb_params = params.params.smb_params().unwrap();
         assert_eq!(smb_params.address.as_str(), "localhost");

@@ -158,6 +158,12 @@ impl AuthActivity {
                 assert!(self.app.umount(&Id::BookmarkName).is_ok());
                 assert!(self.app.umount(&Id::BookmarkSavePassword).is_ok());
             }
+            UiMsg::LocalDirectoryBlurDown => {
+                assert!(self.app.active(&Id::Protocol).is_ok());
+            }
+            UiMsg::LocalDirectoryBlurUp => {
+                assert!(self.app.active(&Id::RemoteDirectory).is_ok());
+            }
             UiMsg::ParamsFormBlur => {
                 assert!(self.app.active(&Id::BookmarksList).is_ok());
             }
@@ -201,13 +207,13 @@ impl AuthActivity {
                     .is_ok());
             }
             UiMsg::ProtocolBlurUp => {
-                assert!(self.app.active(&Id::RemoteDirectory).is_ok());
+                assert!(self.app.active(&Id::LocalDirectory).is_ok());
             }
             UiMsg::RececentsListBlur => {
                 assert!(self.app.active(&Id::BookmarksList).is_ok());
             }
             UiMsg::RemoteDirectoryBlurDown => {
-                assert!(self.app.active(&Id::Protocol).is_ok());
+                assert!(self.app.active(&Id::LocalDirectory).is_ok());
             }
             UiMsg::RemoteDirectoryBlurUp => {
                 assert!(self

@@ -154,6 +154,12 @@ impl AuthActivity {
                 .map(|x| x.to_string_lossy().to_string())
                 .unwrap_or_default(),
         );
+        self.mount_local_directory(
+            bookmark
+                .local_path
+                .map(|x| x.to_string_lossy().to_string())
+                .unwrap_or_default(),
+        );
         match bookmark.params {
             ProtocolParams::AwsS3(params) => self.load_bookmark_s3_into_gui(params),
             ProtocolParams::Generic(params) => self.load_bookmark_generic_into_gui(params),
