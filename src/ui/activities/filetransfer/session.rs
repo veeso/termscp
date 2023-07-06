@@ -11,7 +11,7 @@ use std::time::Instant;
 // Ext
 use bytesize::ByteSize;
 use remotefs::fs::{File, Metadata, ReadStream, UnixPex, Welcome, WriteStream};
-use remotefs::{RemoteError, RemoteErrorType};
+use remotefs::{RemoteError, RemoteErrorType, RemoteResult};
 use thiserror::Error;
 
 use super::{FileTransferActivity, LogLevel};
@@ -115,9 +115,10 @@ impl FileTransferActivity {
         if let Ok(wrkdir) = self.client.pwd() {
             self.mount_blocking_wait("Loading remote directory...");
 
-            self.remote_scan(wrkdir.as_path());
-            // Set wrkdir
-            self.remote_mut().wrkdir = wrkdir;
+            if self.remote_scan(wrkdir.as_path()).is_ok() {
+                // Set wrkdir
+                self.remote_mut().wrkdir = wrkdir;
+            }
 
             self.umount_wait();
         }
@@ -128,40 +129,47 @@ impl FileTransferActivity {
         self.mount_blocking_wait("Loading local directory...");
 
         let wrkdir: PathBuf = self.host.pwd();
-        self.local_scan(wrkdir.as_path());
-        self.local_mut().wrkdir = wrkdir;
+
+        if self.local_scan(wrkdir.as_path()).is_ok() {
+            self.local_mut().wrkdir = wrkdir;
+        }
 
         self.umount_wait();
     }
 
     /// Scan current local directory
-    fn local_scan(&mut self, path: &Path) {
+    fn local_scan(&mut self, path: &Path) -> Result<(), HostError> {
         match self.host.scan_dir(path) {
             Ok(files) => {
                 // Set files and sort (sorting is implicit)
                 self.local_mut().set_files(files);
+
+                Ok(())
             }
             Err(err) => {
                 self.log_and_alert(
                     LogLevel::Error,
                     format!("Could not scan current directory: {err}"),
                 );
+                Err(err)
             }
         }
     }
 
     /// Scan current remote directory
-    fn remote_scan(&mut self, path: &Path) {
+    fn remote_scan(&mut self, path: &Path) -> RemoteResult<()> {
         match self.client.list_dir(path) {
             Ok(files) => {
                 // Set files and sort (sorting is implicit)
                 self.remote_mut().set_files(files);
+                Ok(())
             }
             Err(err) => {
                 self.log_and_alert(
                     LogLevel::Error,
                     format!("Could not scan current directory: {err}"),
                 );
+                Err(err)
             }
         }
     }
