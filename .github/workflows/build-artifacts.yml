@@ -26,6 +26,7 @@ jobs:
         with:
           toolchain: stable
           override: true
+          target: ${{ matrix.platform.target }}
       - name: Build release
         run: cargo build --release --target ${{ matrix.platform.target }}
       - name: Prepare artifact files
