@@ -380,7 +380,7 @@ mod tests {
         assert_eq!(host.username.as_deref().unwrap(), "cvisintin");
         assert_eq!(host.password.as_deref().unwrap(), "mysecret");
         assert_eq!(
-            host.directory.as_deref().unwrap(),
+            host.remote_path.as_deref().unwrap(),
             std::path::Path::new("/tmp")
         );
         let host: &Bookmark = hosts.bookmarks.get("aws-server-prod1").unwrap();
@@ -441,7 +441,7 @@ mod tests {
                 protocol: FileTransferProtocol::Sftp,
                 username: Some(String::from("root")),
                 password: None,
-                directory: None,
+                remote_path: None,
                 s3: None,
                 smb: None,
             },
@@ -454,7 +454,7 @@ mod tests {
                 protocol: FileTransferProtocol::Sftp,
                 username: Some(String::from("cvisintin")),
                 password: Some(String::from("password")),
-                directory: Some(PathBuf::from("/tmp")),
+                remote_path: Some(PathBuf::from("/tmp")),
                 s3: None,
                 smb: None,
             },
@@ -467,7 +467,7 @@ mod tests {
                 protocol: FileTransferProtocol::AwsS3,
                 username: None,
                 password: None,
-                directory: None,
+                remote_path: None,
                 s3: Some(S3Params {
                     bucket: "veeso".to_string(),
                     region: Some("eu-west-1".to_string()),
@@ -492,7 +492,7 @@ mod tests {
                 protocol: FileTransferProtocol::Smb,
                 username: None,
                 password: None,
-                directory: None,
+                remote_path: None,
                 s3: None,
                 smb: smb_params,
             },
@@ -506,7 +506,7 @@ mod tests {
                 protocol: FileTransferProtocol::Scp,
                 username: Some(String::from("omar")),
                 password: Some(String::from("aaa")),
-                directory: Some(PathBuf::from("/tmp")),
+                remote_path: Some(PathBuf::from("/tmp")),
                 s3: None,
                 smb: None,
             },
@@ -547,7 +547,7 @@ mod tests {
         let file_content: &str = r#"
         [bookmarks]
         raspberrypi2 = { address = "192.168.1.31", port = 22, protocol = "SFTP", username = "root", password = "mypassword" }
-        msi-estrem = { address = "192.168.1.30", port = 22, protocol = "SFTP", username = "cvisintin", password = "mysecret", directory = "/tmp" }
+        msi-estrem = { address = "192.168.1.30", port = 22, protocol = "SFTP", username = "cvisintin", password = "mysecret", remote_path = "/tmp" }
         aws-server-prod1 = { address = "51.23.67.12", port = 21, protocol = "FTPS", username = "aws001" }
         
         [bookmarks.my-bucket]

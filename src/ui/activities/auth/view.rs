@@ -582,14 +582,14 @@ impl AuthActivity {
             .is_ok());
     }
 
-    pub(super) fn mount_remote_directory<S: AsRef<str>>(&mut self, entry_directory: S) {
+    pub(super) fn mount_remote_directory<S: AsRef<str>>(&mut self, remote_path: S) {
         let protocol_color = self.theme().auth_protocol;
         assert!(self
             .app
             .remount(
                 Id::RemoteDirectory,
                 Box::new(components::InputRemoteDirectory::new(
-                    entry_directory.as_ref(),
+                    remote_path.as_ref(),
                     protocol_color
                 )),
                 vec![]
