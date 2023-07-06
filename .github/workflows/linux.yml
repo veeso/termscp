@@ -1,6 +1,14 @@
 name: Linux
 
-on: [push, pull_request]
+on:
+  pull_request:
+    paths-ignore:
+      - "*.md"
+      - "./site/**/*"
+  push:
+    paths-ignore:
+      - "*.md"
+      - "./site/**/*"
 
 env:
   CARGO_TERM_COLOR: always
