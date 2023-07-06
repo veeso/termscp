@@ -14,9 +14,9 @@ extern crate log;
 extern crate magic_crypt;
 
 // External libs
-use std::path::PathBuf;
+use std::env;
+use std::path::{Path, PathBuf};
 use std::time::Duration;
-use std::{env, path::Path};
 
 // Include
 mod activity_manager;
@@ -172,13 +172,8 @@ fn run_install_update() -> i32 {
 }
 
 fn run_activity(activity: NextActivity, ticks: Duration, remote: Remote) -> i32 {
-    // Get working directory
-    let wrkdir: PathBuf = match env::current_dir() {
-        Ok(dir) => dir,
-        Err(_) => PathBuf::from("/"),
-    };
     // Create activity manager (and context too)
-    let mut manager: ActivityManager = match ActivityManager::new(wrkdir.as_path(), ticks) {
+    let mut manager: ActivityManager = match ActivityManager::new(ticks) {
         Ok(m) => m,
         Err(err) => {
             eprintln!("Could not start activity manager: {err}");

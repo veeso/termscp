@@ -53,7 +53,7 @@ impl FileTransferActivity {
     /// Connect to remote
     pub(super) fn connect(&mut self) {
         let ft_params = self.context().ft_params().unwrap().clone();
-        let entry_dir: Option<PathBuf> = ft_params.entry_directory;
+        let entry_dir: Option<PathBuf> = ft_params.remote_path;
         // Connect to remote
         match self.client.connect() {
             Ok(Welcome { banner, .. }) => {
@@ -71,11 +71,11 @@ impl FileTransferActivity {
                 }
                 // Try to change directory to entry directory
                 let mut remote_chdir: Option<PathBuf> = None;
-                if let Some(entry_directory) = &entry_dir {
-                    remote_chdir = Some(entry_directory.clone());
+                if let Some(remote_path) = &entry_dir {
+                    remote_chdir = Some(remote_path.clone());
                 }
-                if let Some(entry_directory) = remote_chdir {
-                    self.remote_changedir(entry_directory.as_path(), false);
+                if let Some(remote_path) = remote_chdir {
+                    self.remote_changedir(remote_path.as_path(), false);
                 }
                 // Set state to explorer
                 self.umount_wait();

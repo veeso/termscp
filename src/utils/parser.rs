@@ -218,7 +218,7 @@ fn parse_generic_remote_opt(
                 },
             };
             // Get workdir
-            let entry_directory: Option<PathBuf> =
+            let remote_path: Option<PathBuf> =
                 groups.get(4).map(|group| PathBuf::from(group.as_str()));
             let params: ProtocolParams = ProtocolParams::Generic(
                 GenericProtocolParams::default()
@@ -226,7 +226,7 @@ fn parse_generic_remote_opt(
                     .port(port)
                     .username(username),
             );
-            Ok(FileTransferParams::new(protocol, params).entry_directory(entry_directory))
+            Ok(FileTransferParams::new(protocol, params).remote_path(remote_path))
         }
         None => Err(String::from("Bad remote host syntax!")),
     }
@@ -245,13 +245,13 @@ fn parse_s3_remote_opt(s: &str) -> Result<FileTransferParams, String> {
                 .map(|x| x.as_str().to_string())
                 .unwrap_or_default();
             let profile: Option<String> = groups.get(3).map(|x| x.as_str().to_string());
-            let entry_directory: Option<PathBuf> =
+            let remote_path: Option<PathBuf> =
                 groups.get(4).map(|group| PathBuf::from(group.as_str()));
             Ok(FileTransferParams::new(
                 FileTransferProtocol::AwsS3,
                 ProtocolParams::AwsS3(AwsS3Params::new(bucket, Some(region), profile)),
             )
-            .entry_directory(entry_directory))
+            .remote_path(remote_path))
         }
         None => Err(String::from("Bad remote host syntax!")),
     }
@@ -282,14 +282,14 @@ fn parse_smb_remote_opts(s: &str) -> Result<FileTransferParams, String> {
                 Some(group) => group.as_str().to_string(),
                 None => return Err(String::from("Missing address")),
             };
-            let entry_directory: Option<PathBuf> =
+            let remote_path: Option<PathBuf> =
                 groups.get(5).map(|group| PathBuf::from(group.as_str()));
 
             Ok(FileTransferParams::new(
                 FileTransferProtocol::Smb,
                 ProtocolParams::Smb(SmbParams::new(address, share).port(port).username(username)),
             )
-            .entry_directory(entry_directory))
+            .remote_path(remote_path))
         }
         None => Err(String::from("Bad remote host syntax!")),
     }
@@ -308,14 +308,14 @@ fn parse_smb_remote_opts(s: &str) -> Result<FileTransferParams, String> {
                 Some(group) => group.as_str().to_string(),
                 None => return Err(String::from("Missing address")),
             };
-            let entry_directory: Option<PathBuf> =
+            let remote_path: Option<PathBuf> =
                 groups.get(4).map(|group| PathBuf::from(group.as_str()));
 
             Ok(FileTransferParams::new(
                 FileTransferProtocol::Smb,
                 ProtocolParams::Smb(SmbParams::new(address, share).username(username)),
             )
-            .entry_directory(entry_directory))
+            .remote_path(remote_path))
         }
         None => Err(String::from("Bad remote host syntax!")),
     }
@@ -441,7 +441,7 @@ mod tests {
             params.username.as_deref().unwrap().to_string(),
             String::from("root")
         );
-        assert!(result.entry_directory.is_none());
+        assert!(result.remote_path.is_none());
         // User + port
         let result: FileTransferParams = parse_remote_opt(&String::from("root@172.26.104.1:8022"))
             .ok()
@@ -454,7 +454,7 @@ mod tests {
             String::from("root")
         );
         assert_eq!(result.protocol, FileTransferProtocol::Sftp);
-        assert!(result.entry_directory.is_none());
+        assert!(result.remote_path.is_none());
         // Port only
         let result: FileTransferParams = parse_remote_opt(&String::from("172.26.104.1:4022"))
             .ok()
@@ -464,7 +464,7 @@ mod tests {
         assert_eq!(params.address, String::from("172.26.104.1"));
         assert_eq!(params.port, 4022);
         assert!(params.username.is_none());
-        assert!(result.entry_directory.is_none());
+        assert!(result.remote_path.is_none());
         // Protocol
         let result: FileTransferParams = parse_remote_opt(&String::from("ftp://172.26.104.1"))
             .ok()
@@ -474,7 +474,7 @@ mod tests {
         assert_eq!(params.address, String::from("172.26.104.1"));
         assert_eq!(params.port, 21); // Fallback to ftp default
         assert!(params.username.is_none()); // Doesn't fall back
-        assert!(result.entry_directory.is_none());
+        assert!(result.remote_path.is_none());
         // Protocol
         let result: FileTransferParams = parse_remote_opt(&String::from("sftp://172.26.104.1"))
             .ok()
@@ -484,7 +484,7 @@ mod tests {
         assert_eq!(params.address, String::from("172.26.104.1"));
         assert_eq!(params.port, 22); // Fallback to sftp default
         assert!(params.username.is_none()); // Doesn't fall back
-        assert!(result.entry_directory.is_none());
+        assert!(result.remote_path.is_none());
         let result: FileTransferParams = parse_remote_opt(&String::from("scp://172.26.104.1"))
             .ok()
             .unwrap();
@@ -493,7 +493,7 @@ mod tests {
         assert_eq!(params.address, String::from("172.26.104.1"));
         assert_eq!(params.port, 22); // Fallback to scp default
         assert!(params.username.is_none()); // Doesn't fall back
-        assert!(result.entry_directory.is_none());
+        assert!(result.remote_path.is_none());
         // Protocol + user
         let result: FileTransferParams =
             parse_remote_opt(&String::from("ftps://anon@172.26.104.1"))
@@ -507,7 +507,7 @@ mod tests {
             params.username.as_deref().unwrap().to_string(),
             String::from("anon")
         );
-        assert!(result.entry_directory.is_none());
+        assert!(result.remote_path.is_none());
         // Path
         let result: FileTransferParams =
             parse_remote_opt(&String::from("root@172.26.104.1:8022:/var"))
@@ -521,7 +521,7 @@ mod tests {
             params.username.as_deref().unwrap().to_string(),
             String::from("root")
         );
-        assert_eq!(result.entry_directory.unwrap(), PathBuf::from("/var"));
+        assert_eq!(result.remote_path.unwrap(), PathBuf::from("/var"));
         // Port only
         let result: FileTransferParams = parse_remote_opt(&String::from("172.26.104.1:home"))
             .ok()
@@ -531,7 +531,7 @@ mod tests {
         assert_eq!(params.address, String::from("172.26.104.1"));
         assert_eq!(params.port, 22);
         assert!(params.username.is_none());
-        assert_eq!(result.entry_directory.unwrap(), PathBuf::from("home"));
+        assert_eq!(result.remote_path.unwrap(), PathBuf::from("home"));
         // All together now
         let result: FileTransferParams =
             parse_remote_opt(&String::from("ftp://anon@172.26.104.1:8021:/tmp"))
@@ -545,7 +545,7 @@ mod tests {
             params.username.as_deref().unwrap().to_string(),
             String::from("anon")
         );
-        assert_eq!(result.entry_directory.unwrap(), PathBuf::from("/tmp"));
+        assert_eq!(result.remote_path.unwrap(), PathBuf::from("/tmp"));
         // bad syntax
         // Bad protocol
         assert!(parse_remote_opt(&String::from("omar://172.26.104.1")).is_err());
@@ -562,7 +562,7 @@ mod tests {
                 .unwrap();
         let params = result.params.s3_params().unwrap();
         assert_eq!(result.protocol, FileTransferProtocol::AwsS3);
-        assert_eq!(result.entry_directory, None);
+        assert_eq!(result.remote_path, None);
         assert_eq!(params.bucket_name.as_str(), "mybucket");
         assert_eq!(params.region.as_deref().unwrap(), "eu-central-1");
         assert_eq!(params.profile, None);
@@ -573,7 +573,7 @@ mod tests {
                 .unwrap();
         let params = result.params.s3_params().unwrap();
         assert_eq!(result.protocol, FileTransferProtocol::AwsS3);
-        assert_eq!(result.entry_directory, None);
+        assert_eq!(result.remote_path, None);
         assert_eq!(params.bucket_name.as_str(), "mybucket");
         assert_eq!(params.region.as_deref().unwrap(), "eu-central-1");
         assert_eq!(params.profile.as_deref(), Some("default"));
@@ -584,7 +584,7 @@ mod tests {
                 .unwrap();
         let params = result.params.s3_params().unwrap();
         assert_eq!(result.protocol, FileTransferProtocol::AwsS3);
-        assert_eq!(result.entry_directory, Some(PathBuf::from("/foobar")));
+        assert_eq!(result.remote_path, Some(PathBuf::from("/foobar")));
         assert_eq!(params.bucket_name.as_str(), "mybucket");
         assert_eq!(params.region.as_deref().unwrap(), "eu-central-1");
         assert_eq!(params.profile, None);
@@ -595,7 +595,7 @@ mod tests {
                 .unwrap();
         let params = result.params.s3_params().unwrap();
         assert_eq!(result.protocol, FileTransferProtocol::AwsS3);
-        assert_eq!(result.entry_directory, Some(PathBuf::from("/foobar")));
+        assert_eq!(result.remote_path, Some(PathBuf::from("/foobar")));
         assert_eq!(params.bucket_name.as_str(), "mybucket");
         assert_eq!(params.region.as_deref().unwrap(), "eu-central-1");
         assert_eq!(params.profile.as_deref(), Some("default"));
@@ -615,7 +615,7 @@ mod tests {
         assert!(params.username.is_some());
         assert!(params.password.is_none());
         assert!(params.workgroup.is_none());
-        assert!(result.entry_directory.is_none());
+        assert!(result.remote_path.is_none());
     }
 
     #[test]
@@ -633,7 +633,7 @@ mod tests {
         assert!(params.workgroup.is_none());
         assert_eq!(params.share.as_str(), "myshare");
         assert_eq!(
-            result.entry_directory.as_deref().unwrap(),
+            result.remote_path.as_deref().unwrap(),
             std::path::Path::new("/dir/subdir")
         );
     }
@@ -648,7 +648,7 @@ mod tests {
 
         assert_eq!(params.address.as_str(), "myserver");
         assert_eq!(params.share.as_str(), "myshare");
-        assert!(result.entry_directory.is_none());
+        assert!(result.remote_path.is_none());
     }
 
     #[test]
@@ -663,7 +663,7 @@ mod tests {
         assert_eq!(params.share.as_str(), "myshare");
         assert_eq!(params.username.as_deref().unwrap(), "omar");
         assert_eq!(
-            result.entry_directory.as_deref().unwrap(),
+            result.remote_path.as_deref().unwrap(),
             std::path::Path::new("\\path")
         );
     }

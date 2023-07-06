@@ -15,7 +15,8 @@ pub fn parse_ssh2_config(path: &str) -> Result<SshConfig, String> {
 #[cfg(test)]
 mod test {
 
-    use crate::utils::{ssh::parse_ssh2_config, test_helpers};
+    use crate::utils::ssh::parse_ssh2_config;
+    use crate::utils::test_helpers;
 
     #[test]
     fn should_parse_ssh2_config() {

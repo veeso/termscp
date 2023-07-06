@@ -150,7 +150,13 @@ impl AuthActivity {
         self.mount_protocol(bookmark.protocol);
         self.mount_remote_directory(
             bookmark
-                .entry_directory
+                .remote_path
+                .map(|x| x.to_string_lossy().to_string())
+                .unwrap_or_default(),
+        );
+        self.mount_local_directory(
+            bookmark
+                .local_path
                 .map(|x| x.to_string_lossy().to_string())
                 .unwrap_or_default(),
         );

@@ -220,7 +220,7 @@ pub struct FileTransferActivity {
     cache: Option<TempDir>,
     /// Fs watcher
     fswatcher: Option<FsWatcher>,
-    /// conncted once
+    /// connected once
     connected: bool,
 }
 

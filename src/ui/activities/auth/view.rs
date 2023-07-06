@@ -43,6 +43,7 @@ impl AuthActivity {
         // Auth form
         self.mount_protocol(default_protocol);
         self.mount_remote_directory("");
+        self.mount_local_directory("");
         self.mount_address("");
         self.mount_port(Self::get_default_port_for_protocol(default_protocol));
         self.mount_username("");
@@ -582,15 +583,30 @@ impl AuthActivity {
             .is_ok());
     }
 
-    pub(super) fn mount_remote_directory<S: AsRef<str>>(&mut self, entry_directory: S) {
+    pub(super) fn mount_remote_directory<S: AsRef<str>>(&mut self, remote_path: S) {
         let protocol_color = self.theme().auth_protocol;
         assert!(self
             .app
             .remount(
                 Id::RemoteDirectory,
                 Box::new(components::InputRemoteDirectory::new(
-                    entry_directory.as_ref(),
+                    remote_path.as_ref(),
                     protocol_color
+                )),
+                vec![]
+            )
+            .is_ok());
+    }
+
+    pub(super) fn mount_local_directory<S: AsRef<str>>(&mut self, local_path: S) {
+        let color = self.theme().auth_username;
+        assert!(self
+            .app
+            .remount(
+                Id::LocalDirectory,
+                Box::new(components::InputLocalDirectory::new(
+                    local_path.as_ref(),
+                    color
                 )),
                 vec![]
             )
@@ -853,6 +869,15 @@ impl AuthActivity {
         }
     }
 
+    pub(super) fn get_input_local_directory(&self) -> Option<PathBuf> {
+        match self.app.state(&Id::LocalDirectory) {
+            Ok(State::One(StateValue::String(x))) if !x.is_empty() => {
+                Some(PathBuf::from(x.as_str()))
+            }
+            _ => None,
+        }
+    }
+
     pub(super) fn get_input_addr(&self) -> String {
         match self.app.state(&Id::Address) {
             Ok(State::One(StateValue::String(x))) => x,
@@ -1053,6 +1078,12 @@ impl AuthActivity {
             Some(&Id::RemoteDirectory) => {
                 [Id::Port, Id::Username, Id::Password, Id::RemoteDirectory]
             }
+            Some(&Id::LocalDirectory) => [
+                Id::Username,
+                Id::Password,
+                Id::RemoteDirectory,
+                Id::LocalDirectory,
+            ],
             _ => [Id::Address, Id::Port, Id::Username, Id::Password],
         }
     }
@@ -1093,6 +1124,12 @@ impl AuthActivity {
                 Id::S3NewPathStyle,
                 Id::RemoteDirectory,
             ],
+            Some(&Id::LocalDirectory) => [
+                Id::S3SessionToken,
+                Id::S3NewPathStyle,
+                Id::RemoteDirectory,
+                Id::LocalDirectory,
+            ],
             _ => [Id::S3Bucket, Id::S3Region, Id::S3Endpoint, Id::S3Profile],
         }
     }
@@ -1111,6 +1148,12 @@ impl AuthActivity {
                 Id::SmbWorkgroup,
                 Id::RemoteDirectory,
             ],
+            Some(&Id::LocalDirectory) => [
+                Id::Password,
+                Id::SmbWorkgroup,
+                Id::RemoteDirectory,
+                Id::LocalDirectory,
+            ],
             _ => [Id::Address, Id::Port, Id::SmbShare, Id::Username],
         }
     }
@@ -1126,6 +1169,12 @@ impl AuthActivity {
                 Id::Username,
                 Id::Password,
                 Id::RemoteDirectory,
+            ],
+            Some(&Id::LocalDirectory) => [
+                Id::Username,
+                Id::Password,
+                Id::RemoteDirectory,
+                Id::LocalDirectory,
             ],
             _ => [Id::Address, Id::SmbShare, Id::Username, Id::Password],
         }
