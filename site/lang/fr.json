@@ -82,7 +82,8 @@
       "body": "Si un package n'est pas disponible pour votre système, vous pouvez choisir d'installer Termscp via",
       "requirements": "Pour installer termscp via Cargo, ces conditions doivent être remplies",
       "install": "Ensuite, vous pouvez installer termscp via",
-      "noKeyring": "Ou si vous ne voulez pas avoir de support pour le trousseau de clés ou si vous construisez sur *BSD :"
+      "noKeyring": "Ou si vous ne voulez pas avoir de support pour le trousseau de clés ou si vous construisez sur *BSD :",
+      "noSMB": "Ou si vous ne voulez pas avoir de support pour SMB:"
     }
   },
   "updates": {

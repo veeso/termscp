@@ -82,7 +82,8 @@
       "body": "Se un pacchetto non è disponibile per il tuo sistema, puoi installare termscp con cargo con",
       "requirements": "Per installare con Cargo, questi requisiti di sistema devono essere soddisfatti",
       "install": "Infine puoi installare termscp con",
-      "noKeyring": "O se non hai il supporto a DBUS o sei un utente *BSD:"
+      "noKeyring": "O se non hai il supporto a DBUS o sei un utente *BSD:",
+      "noSMB": "O se vuoi disabilitare il supporto per SMB:"
     }
   },
   "updates": {

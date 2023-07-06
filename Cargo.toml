@@ -89,13 +89,13 @@ serial_test = "^2.0"
 cfg_aliases = "0.1"
 
 [features]
-default = ["with-keyring"]
+default = ["smb", "with-keyring"]
 github-actions = []
 with-keyring = ["keyring"]
+smb = ["remotefs-smb"]
 
-[target."cfg(not(target_os = \"macos\"))"]
 [target."cfg(not(target_os = \"macos\"))".dependencies]
-remotefs-smb = "^0.2"
+remotefs-smb = { version = "^0.2", optional = true }
 
 [target."cfg(target_family = \"windows\")"]
 [target."cfg(target_family = \"windows\")".dependencies]

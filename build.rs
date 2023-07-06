@@ -9,7 +9,7 @@ fn main() {
         unix: { target_family = "unix" },
         windows: { target_family = "windows" },
         // exclusive features
-        smb: { not( macos ) },
-        smb_unix: { all(unix, not(macos)) }
+        smb: { all(feature = "smb", not( macos )) },
+        smb_unix: { all(unix, feature = "smb", not(macos)) }
     }
 }
