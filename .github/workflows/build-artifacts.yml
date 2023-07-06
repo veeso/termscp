@@ -1,0 +1,42 @@
+name: "Build artifacts"
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-binaries:
+    name: Build - ${{ matrix.platform.release_for }}
+    strategy:
+      matrix:
+        platform:
+          - release_for: MacOS-x86_64
+            os: macos-latest
+            target: x86_64-apple-darwin
+            script: macos.sh
+
+          - release_for: MacOS-M1
+            os: macos-latest
+            target: aarch64-apple-darwin
+            script: macos.sh
+
+    runs-on: ${{ matrix.platform.os }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+          target: ${{ matrix.platform.target }}
+      - name: Build release
+        run: cargo build --release --target ${{ matrix.platform.target }}
+      - name: Prepare artifact files
+        run: |
+          mkdir -p .artifact
+          mv target/${{ matrix.platform.target }}/release/termscp .artifact/termscp
+      - name: "Upload artifact"
+        uses: actions/upload-artifact@v3
+        with:
+          if-no-files-found: error
+          retention-days: 1
+          name: ${{ matrix.platform.release_for }}
+          path: .artifact/*
