@@ -59,7 +59,7 @@
     },
     "linuxUsers": "Linux users",
     "notConfident": "Opt for these methods instead if you don't feel confident using the shell script",
-    "noBinary": "Opt for this method instead if binaries for your platform are not available",
+    "noBinary": "Opt for this method instead if binaries for your platform are not available or you want to select features",
     "arch": {
       "title": "Arch derived users",
       "intro": "On Arch Linux based distros, you can install termscp using an AUR package manager such as",
@@ -82,7 +82,8 @@
       "body": "If a package is not available for your system, you can opt to install termscp via",
       "requirements": "To install termscp via Cargo, these requirements must be satisfied",
       "install": "Then you can install termscp via",
-      "noKeyring": "Or if you don't want to have support for keyring or you're building on *BSD:"
+      "noKeyring": "Or if you don't want to have support for keyring or you're building on *BSD:",
+      "noSMB": "Or if you want to disable SMB:"
     }
   },
   "updates": {

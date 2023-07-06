@@ -82,7 +82,8 @@
       "body": "Si un paquete no está disponible para su sistema, puede optar por instalar termscp a través de",
       "requirements": "Para instalar termscp a través de Cargo, se deben cumplir estos requisitos",
       "install": "Entonces puedes instalar termscp a través de",
-      "noKeyring": "O si no desea tener soporte para llavero o está construyendo sobre *BSD:"
+      "noKeyring": "O si no desea tener soporte para llavero o está construyendo sobre *BSD:",
+      "noSMB": "O si no desea tener soporte para SMB:"
     }
   },
   "updates": {

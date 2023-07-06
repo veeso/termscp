@@ -82,7 +82,8 @@
       "body": "如果您的系统没有可用的软件包，您可以选择通过以下方式安装 termscp：",
       "requirements": "要通过 Cargo 安装termscp，必须满足这些要求",
       "install": "然后你可以通过安装termscp",
-      "noKeyring": "或者，如果您不想支持密钥环，或者您正在构建 *BSD："
+      "noKeyring": "或者，如果您不想支持密钥环，或者您正在构建 *BSD：",
+      "noSMB": "或者如果你想禁用 SMB :"
     }
   },
   "updates": {

@@ -145,14 +145,13 @@ sudo <span class="function">rpm</span> -U <span class="string">termscp.rpm</span
             Linux:
             <ul class="list-disc px-12">
               <li>pkg-config</li>
-              <li>libssh2</li>
-              <li>openssl-dev</li>
+              <li>libdbus-1</li>
+              <li>libsmbclient</li>
             </ul>
           </li>
           <li>
             FreeBSD:
             <ul class="list-disc px-12">
-              <li>libssh</li>
               <li>dbus</li>
               <li>pkg-conf</li>
               <li>gcc</li>
@@ -161,11 +160,13 @@ sudo <span class="function">rpm</span> -U <span class="string">termscp.rpm</span
         </ul>
         <p translate="getStarted.cargo.install">Then you can install it via</p>
         <pre><span class="function">cargo</span> install --locked <span class="string">termscp</span></pre>
-        <p translate="getStarted.cargo.noKeyring">
+        <p translate="getStarted.cargo.noKeyring" class="pt-4 pb-2">
           Or if you don't want to have support for keyring or you're building on
           *BSD:
         </p>
-        <pre><span class="function">cargo</span> install --locked --no-default-features <span class="string">termscp</span></pre>
+        <pre><span class="function">cargo</span> install --locked --no-default-features --features smb <span class="string">termscp</span></pre>
+        <p translate="getStarted.cargo.noSMB" class="pt-4 pb-2"></p>
+        <pre><span class="function">cargo</span> install --locked --no-default-features --features with-keyring <span class="string">termscp</span></pre>
       </div>
     </section>
   </section>
