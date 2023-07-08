@@ -207,29 +207,29 @@ In order to change panel you need to type `<LEFT>` to move the remote explorer p
 | `<BACKTAB>`   | Switch between log tab and explorer                     |             |
 | `<A>`         | Toggle hidden files                                     | All         |
 | `<B>`         | Sort files by                                           | Bubblesort? |
-| `<C|F5>`      | Copy file/directory                                     | Copy        |
-| `<D|F7>`      | Make directory                                          | Directory   |
-| `<E|F8|DEL>`  | Delete file                                             | Erase       |
+| `<C\|F5>`     | Copy file/directory                                     | Copy        |
+| `<D\|F7>`     | Make directory                                          | Directory   |
+| `<E\|F8\|DEL>`| Delete file                                             | Erase       |
 | `<F>`         | Search for files (wild match is supported)              | Find        |
 | `<G>`         | Go to supplied path                                     | Go to       |
-| `<H|F1>`      | Show help                                               | Help        |
+| `<H\|F1>`     | Show help                                               | Help        |
 | `<I>`         | Show info about selected file or directory              | Info        |
 | `<K>`         | Create symlink pointing to the currently selected entry | symlinK     |
 | `<L>`         | Reload current directory's content / Clear selection    | List        |
 | `<M>`         | Select a file                                           | Mark        |
 | `<N>`         | Create new file with provided name                      | New         |
-| `<O|F4>`      | Edit file; see  Text editor                             | Open        |
+| `<O\|F4>`     | Edit file; see  Text editor                             | Open        |
 | `<P>`         | Open log panel                                          | Panel       |
-| `<Q|F10>`     | Quit termscp                                            | Quit        |
-| `<R|F6>`      | Rename file                                             | Rename      |
-| `<S|F2>`      | Save file as...                                         | Save        |
+| `<Q\|F10>`    | Quit termscp                                            | Quit        |
+| `<R\|F6>`     | Rename file                                             | Rename      |
+| `<S\|F2>`     | Save file as...                                         | Save        |
 | `<T>`         | Synchronize changes to selected path to remote          | Track       |
 | `<U>`         | Go to parent directory                                  | Up          |
-| `<V|F3>`      | Open file with default program for filetype             | View        |
+| `<V\|F3>`     | Open file with default program for filetype             | View        |
 | `<W>`         | Open file with provided program                         | With        |
 | `<X>`         | Execute a command                                       | eXecute     |
 | `<Y>`         | Toggle synchronized browsing                            | sYnc        |
-| `<Z>`         | Change file mode                                      |             |
+| `<Z>`         | Change file mode                                        |             |
 | `<CTRL+A>`    | Select all files                                        |             |
 | `<CTRL+C>`    | Abort file transfer process                             |             |
 | `<CTRL+T>`    | Show all synchronized paths                             | Track       |
