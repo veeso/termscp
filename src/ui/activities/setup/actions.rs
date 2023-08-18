@@ -366,7 +366,7 @@ impl SetupActivity {
             .get_color(&Id::Theme(IdTheme::StatusSync))
             .map_err(|_| Id::Theme(IdTheme::StatusSync))?;
         // Update theme
-        let mut theme: &mut Theme = self.theme_mut();
+        let theme = self.theme_mut();
         theme.auth_address = auth_address;
         theme.auth_bookmarks = auth_bookmarks;
         theme.auth_password = auth_password;
