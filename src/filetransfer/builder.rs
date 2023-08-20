@@ -140,7 +140,7 @@ impl Builder {
         }
     }
 
-    #[cfg(windows)]
+    #[cfg(smb_windows)]
     fn smb_client(params: SmbParams) -> SmbFs {
         let mut credentials = SmbCredentials::new(params.address, params.share);
 
