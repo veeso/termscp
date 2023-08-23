@@ -7,7 +7,7 @@ use tuirealm::props::{
     Alignment, AttrValue, Attribute, Borders, Color, Style, Table, TextModifiers,
 };
 use tuirealm::tui::layout::Corner;
-use tuirealm::tui::text::{Span, Line};
+use tuirealm::tui::text::{Line, Span};
 use tuirealm::tui::widgets::{List as TuiList, ListItem, ListState};
 use tuirealm::{MockComponent, Props, State, StateValue};
 
