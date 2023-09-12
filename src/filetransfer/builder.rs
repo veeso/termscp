@@ -159,16 +159,26 @@ impl Builder {
         let mut opts = SshOpts::new(params.address.clone())
             .key_storage(Box::new(Self::make_ssh_storage(config_client)))
             .port(params.port);
+        // get ssh config
+        let ssh_config = config_client
+            .get_ssh_config()
+            .and_then(|path| {
+                debug!("reading ssh config at {}", path);
+                ssh_utils::parse_ssh2_config(path).ok()
+            })
+            .map(|config| config.query(&params.address));
+
+        //* override port
+        if let Some(port) = ssh_config.as_ref().and_then(|config| config.port) {
+            opts = opts.port(port);
+        }
+
         //*  get username. Case 1 provided in params
         if let Some(username) = params.username {
             opts = opts.username(username);
-        } else if let Some(ssh_config) = config_client.get_ssh_config().and_then(|x| {
-            //* case 2: found in ssh2 config
-            debug!("reading ssh config at {}", x);
-            ssh_utils::parse_ssh2_config(x).ok()
-        }) {
+        } else if let Some(ssh_config) = &ssh_config {
             debug!("no username was provided, checking whether a user is set for this host");
-            if let Some(username) = ssh_config.query(&params.address).user {
+            if let Some(username) = &ssh_config.user {
                 debug!("found username from config: {username}");
                 opts = opts.username(username);
             } else {
