@@ -524,8 +524,10 @@ mod tests {
 
     #[test]
     fn test_config_serialization_theme_serialize() {
-        let mut theme: Theme = Theme::default();
-        theme.auth_address = Color::Rgb(240, 240, 240);
+        let mut theme: Theme = Theme {
+            auth_address: Color::Rgb(240, 240, 240),
+            ..Default::default()
+        };
         let tmpfile: tempfile::NamedTempFile = tempfile::NamedTempFile::new().unwrap();
         let (reader, writer) = create_file_ioers(tmpfile.path());
         assert!(serialize(&theme, Box::new(writer)).is_ok());

@@ -315,8 +315,11 @@ mod tests {
 
     #[test]
     fn test_fs_explorer_stack() {
-        let mut explorer: FileExplorer = FileExplorer::default();
-        explorer.stack_size = 2;
+        let mut explorer = FileExplorer {
+            stack_size: 2,
+            dirstack: VecDeque::with_capacity(2),
+            ..Default::default()
+        };
         explorer.dirstack = VecDeque::with_capacity(2);
         // Push dir
         explorer.pushd(Path::new("/tmp"));
