@@ -38,6 +38,7 @@ Released on 06/07/2023
 
 - [Issue 169](https://github.com/veeso/termscp/issues/169): Local working directory can now be specified in connection form and be saved into bookmarks.
 - [Issue 188](https://github.com/veeso/termscp/issues/188): The breadcrumbs path is not fallbacked after a failed enter into the directory
+- [Issue 215](https://github.com/veeso/termscp/issues/215): termscp not respecting port in SSH config. The port specified for the host in the SSH configuration wasn't evaluated.
 - SMB support is now a feature (you can build rust without default features to disable smb).
 - If SSH connection timeout is 0, the connection won't timeout.
 
