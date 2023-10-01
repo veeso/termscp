@@ -6,6 +6,7 @@
 use std::path::PathBuf;
 use std::str::FromStr;
 
+use tuirealm::props::Color;
 use tuirealm::tui::layout::{Constraint, Direction, Layout};
 use tuirealm::tui::widgets::Clear;
 use tuirealm::{State, StateValue, Sub, SubClause, SubEventClause};
@@ -413,12 +414,11 @@ impl AuthActivity {
     /// Mount size error
     pub(super) fn mount_size_err(&mut self) {
         // Mount
-        let err_color = self.theme().misc_error_dialog;
         assert!(self
             .app
             .remount(
                 Id::WindowSizeError,
-                Box::new(components::WindowSizeError::new(err_color)),
+                Box::new(components::WindowSizeError::new(Color::Red)),
                 vec![]
             )
             .is_ok());
