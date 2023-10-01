@@ -524,7 +524,7 @@ mod tests {
 
     #[test]
     fn test_config_serialization_theme_serialize() {
-        let mut theme: Theme = Theme {
+        let theme: Theme = Theme {
             auth_address: Color::Rgb(240, 240, 240),
             ..Default::default()
         };

@@ -1,6 +1,7 @@
 # Changelog
 
 - [Changelog](#changelog)
+  - [0.12.2](#0122)
   - [0.12.1](#0121)
   - [0.12.0](#0120)
   - [0.11.3](#0113)
@@ -32,13 +33,21 @@
 
 ---
 
+## 0.12.2
+
+Released on 01/10/2023
+
+- [Issue 205](https://github.com/veeso/termscp/issues/205): Allow windows build without SMB support
+- [Issue 215](https://github.com/veeso/termscp/issues/215): termscp not respecting port in SSH config. The port specified for the host in the SSH configuration wasn't evaluated.
+- [Issue 213](https://github.com/veeso/termscp/issues/215): termscp panicks if the terminal window is too small
+
 ## 0.12.1
 
 Released on 06/07/2023
 
 - [Issue 169](https://github.com/veeso/termscp/issues/169): Local working directory can now be specified in connection form and be saved into bookmarks.
 - [Issue 188](https://github.com/veeso/termscp/issues/188): The breadcrumbs path is not fallbacked after a failed enter into the directory
-- [Issue 215](https://github.com/veeso/termscp/issues/215): termscp not respecting port in SSH config. The port specified for the host in the SSH configuration wasn't evaluated.
+
 - SMB support is now a feature (you can build rust without default features to disable smb).
 - If SSH connection timeout is 0, the connection won't timeout.
 
