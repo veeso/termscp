@@ -18,11 +18,11 @@ use std::time::Duration;
 
 // Includes
 use chrono::{DateTime, Local};
-pub(self) use lib::browser;
+use lib::browser;
 use lib::browser::Browser;
 use lib::transfer::{TransferOpts, TransferStates};
 use remotefs::RemoteFs;
-pub(self) use session::TransferPayload;
+use session::TransferPayload;
 use tempfile::TempDir;
 use tuirealm::{Application, EventListenerCfg, NoUserEvent};
 
