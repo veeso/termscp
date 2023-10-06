@@ -12,7 +12,7 @@
   "intro": {
     "caption": "Un explorador y transferencia de archivos de terminal rico en funciones, con apoyo para SCP/SFTP/FTP/S3",
     "getStarted": "Para iniciar →",
-    "versionAlert": "termscp 0.12.2 ya está disponible! Descárgalo desde",
+    "versionAlert": "termscp 0.12.3 ya está disponible! Descárgalo desde",
     "here": "aquì",
     "features": {
       "handy": {
