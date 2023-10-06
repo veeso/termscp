@@ -7,7 +7,7 @@ use tuirealm::props::{
     Alignment, AttrValue, Attribute, Borders, Color, Style, Table, TextModifiers,
 };
 use tuirealm::tui::layout::Corner;
-use tuirealm::tui::text::{Line, Span};
+use tuirealm::tui::text::{Span, Spans};
 use tuirealm::tui::widgets::{List as TuiList, ListItem, ListState};
 use tuirealm::{MockComponent, Props, State, StateValue};
 
@@ -211,7 +211,7 @@ impl MockComponent for FileList {
                             )
                         })
                         .collect();
-                    ListItem::new(Line::from(columns))
+                    ListItem::new(Spans::from(columns))
                 })
                 .collect(), // Make List item from TextSpan
             _ => Vec::new(),
