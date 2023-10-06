@@ -1,6 +1,7 @@
 # Changelog
 
 - [Changelog](#changelog)
+  - [0.12.3](#0123)
   - [0.12.2](#0122)
   - [0.12.1](#0121)
   - [0.12.0](#0120)
@@ -32,6 +33,12 @@
   - [0.1.0](#010)
 
 ---
+
+## 0.12.3
+
+Released on 06/10/2023
+
+- Dropped ratatui support, reverted to tui-realm 1.8
 
 ## 0.12.2
 
