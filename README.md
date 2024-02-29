@@ -1,7 +1,7 @@
 # termscp
 
 <p align="center">
-  <img src="/assets/images/termscp.svg" width="256" height="256" />
+  <img src="/assets/images/termscp.svg" alt="termscp logo" width="256" height="256" />
 </p>
 
 <p align="center">~ A feature rich terminal file transfer ~</p>
@@ -73,7 +73,7 @@
   /></a>
   <a href="https://github.com/veeso/termscp/stargazers"
     ><img
-      src="https://img.shields.io/github/stars/veeso/termscp.svg"
+      src="https://img.shields.io/github/stars/veeso/termscp?style=flat"
       alt="Repo stars"
   /></a>
   <a href="https://crates.io/crates/termscp"

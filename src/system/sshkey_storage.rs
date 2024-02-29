@@ -48,7 +48,7 @@ impl SshKeyStorage {
                 .query(host)
                 .identity_file
                 .as_ref()
-                .and_then(|x| x.get(0).cloned());
+                .and_then(|x| x.first().cloned());
 
             key
         })

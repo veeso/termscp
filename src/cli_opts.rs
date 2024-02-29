@@ -34,36 +34,25 @@ Address syntax can be:
 Please, report issues to <https://github.com/veeso/termscp>
 Please, consider supporting the author <https://ko-fi.com/veeso>")]
 pub struct Args {
-    #[argh(
-        switch,
-        short = 'b',
-        description = "resolve address argument as a bookmark name"
-    )]
+    #[argh(subcommand)]
+    pub nested: Option<ArgsSubcommands>,
+    /// resolve address argument as a bookmark name
+    #[argh(switch, short = 'b')]
     pub address_as_bookmark: bool,
-    #[argh(switch, short = 'c', description = "open termscp configuration")]
-    pub config: bool,
-    #[argh(switch, short = 'D', description = "enable TRACE log level")]
+    /// enable TRACE log level
+    #[argh(switch, short = 'D')]
     pub debug: bool,
-    #[argh(option, short = 'P', description = "provide password from CLI")]
+    /// provide password from CLI
+    #[argh(option, short = 'P')]
     pub password: Option<String>,
-    #[argh(switch, short = 'q', description = "disable logging")]
+    /// disable logging
+    #[argh(switch, short = 'q')]
     pub quiet: bool,
-    #[argh(option, short = 't', description = "import specified theme")]
-    pub theme: Option<String>,
-    #[argh(
-        switch,
-        short = 'u',
-        description = "update termscp to the latest version"
-    )]
-    pub update: bool,
-    #[argh(
-        option,
-        short = 'T',
-        default = "10",
-        description = "set UI ticks; default 10ms"
-    )]
+    /// set UI ticks; default 10ms
+    #[argh(option, short = 'T', default = "10")]
     pub ticks: u64,
-    #[argh(switch, short = 'v', description = "print version")]
+    /// print version
+    #[argh(switch, short = 'v')]
     pub version: bool,
     // -- positional
     #[argh(
@@ -73,11 +62,61 @@ pub struct Args {
     pub positional: Vec<String>,
 }
 
+#[derive(FromArgs)]
+#[argh(subcommand)]
+pub enum ArgsSubcommands {
+    Config(ConfigArgs),
+    LoadTheme(LoadThemeArgs),
+    Update(UpdateArgs),
+}
+
+#[derive(FromArgs)]
+/// open termscp configuration
+#[argh(subcommand, name = "config")]
+pub struct ConfigArgs {}
+
+#[derive(FromArgs)]
+/// import the specified theme
+#[argh(subcommand, name = "update")]
+pub struct UpdateArgs {}
+
+#[derive(FromArgs)]
+/// import the specified theme
+#[argh(subcommand, name = "theme")]
+pub struct LoadThemeArgs {
+    #[argh(positional)]
+    /// theme file
+    pub theme: PathBuf,
+}
+
 pub struct RunOpts {
     pub remote: Remote,
     pub ticks: Duration,
     pub log_level: LogLevel,
     pub task: Task,
+}
+
+impl RunOpts {
+    pub fn config() -> Self {
+        Self {
+            task: Task::Activity(NextActivity::SetupActivity),
+            ..Default::default()
+        }
+    }
+
+    pub fn update() -> Self {
+        Self {
+            task: Task::InstallUpdate,
+            ..Default::default()
+        }
+    }
+
+    pub fn import_theme(theme: PathBuf) -> Self {
+        Self {
+            task: Task::ImportTheme(theme),
+            ..Default::default()
+        }
+    }
 }
 
 impl Default for RunOpts {

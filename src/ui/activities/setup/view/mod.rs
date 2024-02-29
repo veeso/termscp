@@ -7,9 +7,6 @@ pub mod setup;
 pub mod ssh_keys;
 pub mod theme;
 
-pub use setup::*;
-pub use ssh_keys::*;
-pub use theme::*;
 use tuirealm::event::{Key, KeyEvent, KeyModifiers};
 use tuirealm::tui::widgets::Clear;
 use tuirealm::{Frame, Sub, SubClause, SubEventClause};

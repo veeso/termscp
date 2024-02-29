@@ -32,7 +32,7 @@ mod utils;
 
 // namespaces
 use activity_manager::{ActivityManager, NextActivity};
-use cli_opts::{Args, BookmarkParams, HostParams, Remote, RunOpts, Task};
+use cli_opts::{Args, ArgsSubcommands, BookmarkParams, HostParams, Remote, RunOpts, Task};
 use filetransfer::FileTransferParams;
 use system::logging::{self, LogLevel};
 
@@ -63,59 +63,57 @@ fn main() {
 /// In case of success returns `RunOpts`
 /// in case something is wrong returns the error message
 fn parse_args(args: Args) -> Result<RunOpts, String> {
-    let mut run_opts: RunOpts = RunOpts::default();
-    // Version
-    if args.version {
-        return Err(format!(
-            "termscp - {TERMSCP_VERSION} - Developed by {TERMSCP_AUTHORS}",
-        ));
-    }
-    // Setup activity?
-    if args.config {
-        run_opts.task = Task::Activity(NextActivity::SetupActivity);
-    }
-    // Logging
-    if args.debug {
-        run_opts.log_level = LogLevel::Trace;
-    } else if args.quiet {
-        run_opts.log_level = LogLevel::Off;
-    }
-    // Match ticks
-    run_opts.ticks = Duration::from_millis(args.ticks);
-    // @! extra modes
-    if let Some(theme) = args.theme.as_deref() {
-        run_opts.task = Task::ImportTheme(PathBuf::from(theme));
-    }
-    if args.update {
-        run_opts.task = Task::InstallUpdate;
-    }
-    // @! Ordinary mode
-    // Remote argument
-    match parse_address_arg(&args) {
-        Err(err) => return Err(err),
-        Ok(Remote::None) => {}
-        Ok(remote) => {
-            // Set params
-            run_opts.remote = remote;
-            // In this case the first activity will be FileTransfer
-            run_opts.task = Task::Activity(NextActivity::FileTransfer);
-        }
-    }
+    let run_opts = match args.nested {
+        Some(ArgsSubcommands::Update(_)) => RunOpts::update(),
+        Some(ArgsSubcommands::LoadTheme(args)) => RunOpts::import_theme(args.theme),
+        Some(ArgsSubcommands::Config(_)) => RunOpts::config(),
+        None => {
+            let mut run_opts: RunOpts = RunOpts::default();
+            // Version
+            if args.version {
+                return Err(format!(
+                    "termscp - {TERMSCP_VERSION} - Developed by {TERMSCP_AUTHORS}",
+                ));
+            }
+            // Logging
+            if args.debug {
+                run_opts.log_level = LogLevel::Trace;
+            } else if args.quiet {
+                run_opts.log_level = LogLevel::Off;
+            }
+            // Match ticks
+            run_opts.ticks = Duration::from_millis(args.ticks);
+            // Remote argument
+            match parse_address_arg(&args) {
+                Err(err) => return Err(err),
+                Ok(Remote::None) => {}
+                Ok(remote) => {
+                    // Set params
+                    run_opts.remote = remote;
+                    // In this case the first activity will be FileTransfer
+                    run_opts.task = Task::Activity(NextActivity::FileTransfer);
+                }
+            }
 
-    // Local directory
-    if let Some(localdir) = args.positional.get(1) {
-        // Change working directory if local dir is set
-        let localdir: PathBuf = PathBuf::from(localdir);
-        if let Err(err) = env::set_current_dir(localdir.as_path()) {
-            return Err(format!("Bad working directory argument: {err}"));
+            // Local directory
+            if let Some(localdir) = args.positional.get(1) {
+                // Change working directory if local dir is set
+                let localdir: PathBuf = PathBuf::from(localdir);
+                if let Err(err) = env::set_current_dir(localdir.as_path()) {
+                    return Err(format!("Bad working directory argument: {err}"));
+                }
+            }
+
+            run_opts
         }
-    }
+    };
+
     Ok(run_opts)
 }
 
 /// Parse address argument from cli args
 fn parse_address_arg(args: &Args) -> Result<Remote, String> {
-    if let Some(remote) = args.positional.get(0) {
+    if let Some(remote) = args.positional.first() {
         if args.address_as_bookmark {
             Ok(Remote::Bookmark(BookmarkParams::new(
                 remote,
@@ -197,5 +195,6 @@ fn run_activity(activity: NextActivity, ticks: Duration, remote: Remote) -> i32 
         Remote::None => {}
     }
     manager.run(activity);
+
     0
 }
