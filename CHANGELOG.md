@@ -1,6 +1,7 @@
 # Changelog
 
 - [Changelog](#changelog)
+  - [0.13.0](#0130)
   - [0.12.3](#0123)
   - [0.12.2](#0122)
   - [0.12.1](#0121)
@@ -33,6 +34,15 @@
   - [0.1.0](#010)
 
 ---
+
+## 0.13.0
+
+Released on
+
+- Added CLI subcommands
+  - Changed `-t` to `theme`
+  - Changed `-u` to `update`
+  - Changed `-c` to `config`
 
 ## 0.12.3
 
