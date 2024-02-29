@@ -43,10 +43,7 @@ ou
 
 - `-P, --password <password>` si l'adresse est fournie, le mot de passe sera cet argument
 - `-b, --address-as-bookmark` résoudre l'argument d'adresse en tant que nom de signet
-- `-c, --config` Ouvrir termscp à partir de la page de configuration
 - `-q, --quiet` Désactiver la journalisation
-- `-t, --theme <path>` Importer le thème spécifié
-- `-u, --update` Mettre à jour termscp vers la dernière version
 - `-v, --version` Imprimer les informations sur la version
 - `-h, --help` Imprimer la page d'aide
 
