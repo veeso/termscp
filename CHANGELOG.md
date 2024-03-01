@@ -43,6 +43,8 @@ Released on
   - Changed `-t` to `theme`
   - Changed `-u` to `update`
   - Changed `-c` to `config`
+- Bugfix:
+  - [Issue 232](https://github.com/veeso/termscp/issues/232): AWS S3 wasn't working anymore due to rust-s3 outdate
 
 ## 0.12.3
 
