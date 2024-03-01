@@ -43,10 +43,7 @@ O
 
 - `-P, --password <password>` Se viene fornito l'argomento indirizzo, questa sarà la password utilizzata per autenticarsi
 - `-b, --address-as-bookmark` risolve l'argomento indirizzo come nome di un segnalibro
-- `-c, --config` Apri la configurazione di termscp
 - `-q, --quiet` Disabilita i log
-- `-t, --theme <path>` Importa il tema al percorso fornito
-- `-u, --update` Aggiorna termscp all'ultima versione
 - `-v, --version` Mostra a video le informazioni sulla versione attualmente installata
 - `-h, --help` Mostra la pagina di aiuto.
 

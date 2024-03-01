@@ -43,9 +43,7 @@ termscp启动时可以使用以下选项:
 
 - `-P, --password <password>` 登陆密码
 - `-b, --address-as-bookmark` 将地址参数解析为书签名称
-- `-c, --config` 打开termscp时打开配置页面
 - `-q, --quiet` 禁用日志
-- `-t, --theme <path>` 导入自定义主题
 - `-v, --version` 打印版本信息
 - `-h, --help` 打开帮助
 
