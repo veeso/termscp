@@ -4,6 +4,7 @@
   - [Usage ❓](#usage-)
     - [Address argument 🌎](#address-argument-)
       - [AWS S3 address argument](#aws-s3-address-argument)
+      - [WebDAV address argument](#webdav-address-argument)
       - [SMB address argument](#smb-address-argument)
       - [How Password can be provided 🔐](#how-password-can-be-provided-)
     - [Subcommands](#subcommands)
@@ -102,6 +103,20 @@ e.g.
 
 ```txt
 s3://buckethead@eu-central-1:default:/assets
+```
+
+#### WebDAV address argument
+
+In case you want to connect to webDAV use the following syntax
+
+```txt
+http://<username>:<password>@<url></path>
+```
+
+or in case you want to use https
+
+```txt
+https://<username>:<password>@<url></path>
 ```
 
 #### SMB address argument

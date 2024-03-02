@@ -14,7 +14,9 @@ use tuirealm::utils::parser as tuirealm_parser;
 
 #[cfg(smb)]
 use crate::filetransfer::params::SmbParams;
-use crate::filetransfer::params::{AwsS3Params, GenericProtocolParams, ProtocolParams};
+use crate::filetransfer::params::{
+    AwsS3Params, GenericProtocolParams, ProtocolParams, WebDAVProtocolParams,
+};
 use crate::filetransfer::{FileTransferParams, FileTransferProtocol};
 #[cfg(not(test))] // NOTE: don't use configuration during tests
 use crate::system::config_client::ConfigClient;
@@ -42,6 +44,16 @@ static REMOTE_OPT_PROTOCOL_REGEX: Lazy<Regex> = lazy_regex!(r"(?:([a-z0-9]+)://)
 static REMOTE_GENERIC_OPT_REGEX: Lazy<Regex> = lazy_regex!(
     r"(?:([^@]+)@)?(?:([^:]+))(?::((?:[0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])(?:[0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])))?(?::([^:]+))?"
 );
+
+/**
+ * Regex matches:
+ *  - group 1: Username
+ *  - group 2: Password
+ *  - group 2: Uri
+ *  - group 4: Some(path) | None
+ */
+static REMOTE_WEBDAV_OPT_REGEX: Lazy<Regex> =
+    lazy_regex!(r"(?:([^:]+):)(?:([^@]+)@)(?:([^/]+))(?:/(.+))?");
 
 /**
  * Regex matches:
@@ -145,14 +157,24 @@ pub fn parse_remote_opt(s: &str) -> Result<FileTransferParams, String> {
     #[cfg(test)] // NOTE: during test set protocol just to Sftp
     let default_protocol: FileTransferProtocol = FileTransferProtocol::Sftp;
     // Get protocol
-    let (protocol, s): (FileTransferProtocol, String) =
+    let (protocol, remote): (FileTransferProtocol, String) =
         parse_remote_opt_protocol(s, default_protocol)?;
     // Match against regex for protocol type
     match protocol {
-        FileTransferProtocol::AwsS3 => parse_s3_remote_opt(s.as_str()),
+        FileTransferProtocol::AwsS3 => parse_s3_remote_opt(remote.as_str()),
         #[cfg(smb)]
-        FileTransferProtocol::Smb => parse_smb_remote_opts(s.as_str()),
-        protocol => parse_generic_remote_opt(s.as_str(), protocol),
+        FileTransferProtocol::Smb => parse_smb_remote_opts(remote.as_str()),
+        FileTransferProtocol::WebDAV => {
+            // get the differnece between s and remote
+            let prefix = if s.starts_with("https") {
+                "https"
+            } else {
+                "http"
+            };
+
+            parse_webdav_remote_opt(remote.as_str(), prefix)
+        }
+        protocol => parse_generic_remote_opt(remote.as_str(), protocol),
     }
 }
 
@@ -227,6 +249,29 @@ fn parse_generic_remote_opt(
                     .username(username),
             );
             Ok(FileTransferParams::new(protocol, params).remote_path(remote_path))
+        }
+        None => Err(String::from("Bad remote host syntax!")),
+    }
+}
+
+fn parse_webdav_remote_opt(s: &str, prefix: &str) -> Result<FileTransferParams, String> {
+    match REMOTE_WEBDAV_OPT_REGEX.captures(s) {
+        Some(groups) => {
+            let username = groups.get(1).map(|x| x.as_str().to_string()).unwrap();
+            let password = groups.get(2).map(|x| x.as_str().to_string()).unwrap();
+            let uri = groups.get(3).map(|x| x.as_str().to_string()).unwrap();
+            let remote_path: Option<PathBuf> =
+                groups.get(4).map(|group| PathBuf::from(group.as_str()));
+
+            let params = ProtocolParams::WebDAV(WebDAVProtocolParams {
+                uri: format!("{}://{}", prefix, uri),
+                username,
+                password,
+            });
+            Ok(
+                FileTransferParams::new(FileTransferProtocol::WebDAV, params)
+                    .remote_path(remote_path),
+            )
         }
         None => Err(String::from("Bad remote host syntax!")),
     }

@@ -12,7 +12,9 @@ use remotefs_smb::SmbOptions;
 #[cfg(smb)]
 use remotefs_smb::{SmbCredentials, SmbFs};
 use remotefs_ssh::{ScpFs, SftpFs, SshConfigParseRule, SshOpts};
+use remotefs_webdav::WebDAVFs;
 
+use super::params::WebDAVProtocolParams;
 #[cfg(not(smb))]
 use super::params::{AwsS3Params, GenericProtocolParams};
 #[cfg(smb)]
@@ -50,6 +52,9 @@ impl Builder {
             #[cfg(smb)]
             (FileTransferProtocol::Smb, ProtocolParams::Smb(params)) => {
                 Box::new(Self::smb_client(params))
+            }
+            (FileTransferProtocol::WebDAV, ProtocolParams::WebDAV(params)) => {
+                Box::new(Self::webdav_client(params))
             }
             (protocol, params) => {
                 error!("Invalid params for protocol '{:?}'", protocol);
@@ -152,6 +157,10 @@ impl Builder {
         }
 
         SmbFs::new(credentials)
+    }
+
+    fn webdav_client(params: WebDAVProtocolParams) -> WebDAVFs {
+        WebDAVFs::new(&params.username, &params.password, &params.uri)
     }
 
     /// Build ssh options from generic protocol params and client configuration

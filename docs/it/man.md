@@ -4,6 +4,7 @@
   - [Argomenti da linea di comando ❓](#argomenti-da-linea-di-comando-)
     - [Argomento indirizzo 🌎](#argomento-indirizzo-)
       - [Argomento indirizzo per AWS S3](#argomento-indirizzo-per-aws-s3)
+      - [Argomento indirizzo per WebDAV](#argomento-indirizzo-per-webdav)
       - [Indirizzo SMB](#indirizzo-smb)
       - [Come fornire la password 🔐](#come-fornire-la-password-)
   - [Parametri di connessione S3](#parametri-di-connessione-s3)
@@ -97,6 +98,20 @@ e.g.
 
 ```txt
 s3://buckethead@eu-central-1:default:/assets
+```
+
+#### Argomento indirizzo per WebDAV
+
+Nel caso in cui si desideri connettersi a WebDAV utilizzare la seguente sintassi
+
+```txt
+http://<username>:<password>@<url></path>
+```
+
+oppure nel caso in cui si desideri utilizzare https
+
+```txt
+https://<username>:<password>@<url></path>
 ```
 
 #### Indirizzo SMB

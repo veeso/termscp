@@ -70,6 +70,7 @@ impl AuthActivity {
                         InputMask::Generic => &Id::Password,
                         InputMask::Smb => &Id::Password,
                         InputMask::AwsS3 => &Id::S3Bucket,
+                        InputMask::WebDAV => &Id::Password,
                     })
                     .is_ok());
             }
@@ -82,6 +83,7 @@ impl AuthActivity {
                         InputMask::Generic => &Id::Password,
                         InputMask::Smb => &Id::Password,
                         InputMask::AwsS3 => &Id::S3Bucket,
+                        InputMask::WebDAV => &Id::Password,
                     })
                     .is_ok());
             }
@@ -177,6 +179,7 @@ impl AuthActivity {
                         #[cfg(windows)]
                         InputMask::Smb => &Id::RemoteDirectory,
                         InputMask::AwsS3 => panic!("this shouldn't happen (password on s3)"),
+                        InputMask::WebDAV => &Id::RemoteDirectory,
                     })
                     .is_ok());
             }
@@ -189,7 +192,8 @@ impl AuthActivity {
                     .active(match self.input_mask() {
                         InputMask::Generic => &Id::Username,
                         InputMask::Smb => &Id::SmbShare,
-                        InputMask::AwsS3 => panic!("this shouldn't happen (port on s3)"),
+                        InputMask::AwsS3 | InputMask::WebDAV =>
+                            panic!("this shouldn't happen (port on s3)"),
                     })
                     .is_ok());
             }
@@ -203,6 +207,7 @@ impl AuthActivity {
                         InputMask::Generic => &Id::Address,
                         InputMask::Smb => &Id::Address,
                         InputMask::AwsS3 => &Id::S3Bucket,
+                        InputMask::WebDAV => &Id::WebDAVUri,
                     })
                     .is_ok());
             }
@@ -225,6 +230,7 @@ impl AuthActivity {
                         #[cfg(windows)]
                         InputMask::Smb => &Id::Password,
                         InputMask::AwsS3 => &Id::S3NewPathStyle,
+                        InputMask::WebDAV => &Id::Password,
                     })
                     .is_ok());
             }
@@ -332,8 +338,15 @@ impl AuthActivity {
                         InputMask::Generic => &Id::Port,
                         InputMask::Smb => &Id::SmbShare,
                         InputMask::AwsS3 => panic!("this shouldn't happen (username on s3)"),
+                        InputMask::WebDAV => &Id::WebDAVUri,
                     })
                     .is_ok());
+            }
+            UiMsg::WebDAVUriBlurDown => {
+                assert!(self.app.active(&Id::Username).is_ok());
+            }
+            UiMsg::WebDAVUriBlurUp => {
+                assert!(self.app.active(&Id::Protocol).is_ok());
             }
             UiMsg::WindowResized => {
                 self.redraw = true;

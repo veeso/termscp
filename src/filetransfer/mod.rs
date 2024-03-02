@@ -18,6 +18,7 @@ pub enum FileTransferProtocol {
     Scp,
     Sftp,
     Smb,
+    WebDAV,
 }
 
 // Traits
@@ -33,6 +34,7 @@ impl std::string::ToString for FileTransferProtocol {
             FileTransferProtocol::Scp => "SCP",
             FileTransferProtocol::Sftp => "SFTP",
             FileTransferProtocol::Smb => "SMB",
+            FileTransferProtocol::WebDAV => "WEBDAV",
         })
     }
 }
@@ -47,6 +49,7 @@ impl std::str::FromStr for FileTransferProtocol {
             "SCP" => Ok(FileTransferProtocol::Scp),
             "SFTP" => Ok(FileTransferProtocol::Sftp),
             "SMB" => Ok(FileTransferProtocol::Smb),
+            "WEBDAV" | "HTTP" => Ok(FileTransferProtocol::WebDAV),
             _ => Err(s.to_string()),
         }
     }
@@ -134,9 +137,17 @@ mod tests {
             FileTransferProtocol::Ftp(false).to_string(),
             String::from("FTP")
         );
+        assert_eq!(
+            FileTransferProtocol::WebDAV.to_string(),
+            String::from("WEBDAV")
+        );
         assert_eq!(FileTransferProtocol::Scp.to_string(), String::from("SCP"));
         assert_eq!(FileTransferProtocol::Sftp.to_string(), String::from("SFTP"));
         assert_eq!(FileTransferProtocol::AwsS3.to_string(), String::from("S3"));
         assert_eq!(FileTransferProtocol::Smb.to_string(), String::from("SMB"));
+        assert_eq!(
+            FileTransferProtocol::WebDAV.to_string(),
+            String::from("WEBDAV")
+        );
     }
 }

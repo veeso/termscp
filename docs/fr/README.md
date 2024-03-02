@@ -138,6 +138,7 @@ Termscp est un file transfer et explorateur de fichiers de terminal riche en fon
   - **FTP** et **FTPS**
   - **S3**
   - **SMB**
+  - **WebDAV**
 - 🖥  Explorer et opérer sur le système de fichiers distant et local avec une interface utilisateur pratique.
   - Créer, supprimer, renommer, rechercher, afficher et modifier des fichiers
 - ⭐  Connectez-vous à vos hôtes préférés via des signets et des connexions récentes.

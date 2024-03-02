@@ -60,6 +60,7 @@ remotefs-aws-s3 = { version = "^0.2.3", default-features = false, features = [
   "find",
   "rustls",
 ] }
+remotefs-webdav = "^0.1.1"
 rpassword = "^7.0"
 self_update = { version = "^0.37", default-features = false, features = [
   "rustls",

@@ -21,6 +21,7 @@ pub enum ProtocolParams {
     Generic(GenericProtocolParams),
     AwsS3(AwsS3Params),
     Smb(SmbParams),
+    WebDAV(WebDAVProtocolParams),
 }
 
 /// Protocol params used by most common protocols
@@ -89,6 +90,7 @@ impl FileTransferParams {
             ProtocolParams::AwsS3(params) => params.password_missing(),
             ProtocolParams::Generic(params) => params.password_missing(),
             ProtocolParams::Smb(params) => params.password_missing(),
+            ProtocolParams::WebDAV(params) => params.password_missing(),
         }
     }
 
@@ -98,7 +100,26 @@ impl FileTransferParams {
             ProtocolParams::AwsS3(params) => params.set_default_secret(secret),
             ProtocolParams::Generic(params) => params.set_default_secret(secret),
             ProtocolParams::Smb(params) => params.set_default_secret(secret),
+            ProtocolParams::WebDAV(params) => params.set_default_secret(secret),
         }
+    }
+}
+
+/// Protocol params used by WebDAV
+#[derive(Debug, Clone)]
+pub struct WebDAVProtocolParams {
+    pub uri: String,
+    pub username: String,
+    pub password: String,
+}
+
+impl WebDAVProtocolParams {
+    fn set_default_secret(&mut self, secret: String) {
+        self.password = secret;
+    }
+
+    fn password_missing(&self) -> bool {
+        self.password.is_empty()
     }
 }
 
@@ -146,6 +167,15 @@ impl ProtocolParams {
     pub fn smb_params(&self) -> Option<&SmbParams> {
         match self {
             ProtocolParams::Smb(params) => Some(params),
+            _ => None,
+        }
+    }
+
+    #[cfg(test)]
+    /// Retrieve WebDAV parameters if any
+    pub fn webdav_params(&self) -> Option<&WebDAVProtocolParams> {
+        match self {
+            ProtocolParams::WebDAV(params) => Some(params),
             _ => None,
         }
     }
@@ -510,6 +540,39 @@ mod test {
                 .unwrap(),
             "secret"
         );
+    }
+
+    #[test]
+    fn set_default_secret_smb() {
+        let mut params = FileTransferParams::new(
+            FileTransferProtocol::Scp,
+            ProtocolParams::Smb(SmbParams::new("localhost", "temp")),
+        );
+        params.set_default_secret(String::from("secret"));
+        assert_eq!(
+            params
+                .params
+                .smb_params()
+                .unwrap()
+                .password
+                .as_deref()
+                .unwrap(),
+            "secret"
+        );
+    }
+
+    #[test]
+    fn set_default_secret_webdav() {
+        let mut params = FileTransferParams::new(
+            FileTransferProtocol::Scp,
+            ProtocolParams::WebDAV(WebDAVProtocolParams {
+                uri: "http://localhost".to_string(),
+                username: "user".to_string(),
+                password: "pass".to_string(),
+            }),
+        );
+        params.set_default_secret(String::from("secret"));
+        assert_eq!(params.params.webdav_params().unwrap().password, "secret");
     }
 
     #[test]
