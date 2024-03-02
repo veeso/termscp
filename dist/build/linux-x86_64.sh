@@ -38,7 +38,7 @@ mkdir -p ${PKGS_DIR}/deb/
 mkdir -p ${PKGS_DIR}/x86_64-unknown-linux-gnu/
 docker run --name "$X86_64_DEB_NAME" -d "$X86_64_DEB_NAME" || docker start "$X86_64_DEB_NAME"
 docker exec -it "$X86_64_DEB_NAME" bash -c ". \$HOME/.cargo/env && git fetch origin && git checkout origin/$BRANCH && cargo build --release && cargo deb"
-docker cp ${X86_64_DEB_NAME}:/usr/src/termscp/target/debian/termscp_${VERSION}-1_amd64.deb ${PKGS_DIR}/deb/
+docker cp ${X86_64_DEB_NAME}:/usr/src/termscp/target/debian/termscp_${VERSION}-1_amd64.deb ${PKGS_DIR}/deb/termscp_${VERSION}_amd64.deb
 docker cp ${X86_64_DEB_NAME}:/usr/src/termscp/target/release/termscp ${PKGS_DIR}/x86_64-unknown-linux-gnu/
 docker stop "$X86_64_DEB_NAME"
 # Make tar.gz
