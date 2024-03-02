@@ -543,7 +543,7 @@ mod test {
     }
 
     #[test]
-    #[cfg(windows)]
+    #[cfg(linux)]
     fn set_default_secret_smb() {
         let mut params = FileTransferParams::new(
             FileTransferProtocol::Scp,
