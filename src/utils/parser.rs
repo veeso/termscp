@@ -599,6 +599,25 @@ mod tests {
     }
 
     #[test]
+    fn test_should_parse_webdav_opt() {
+        let result =
+            parse_remote_opt("https://omar:password@myserver:4445/myshare/dir/subdir").unwrap();
+
+        let params = result.params.webdav_params().unwrap();
+        assert_eq!(params.uri.as_str(), "https://myserver:4445");
+        assert_eq!(params.username.as_str(), "omar");
+        assert_eq!(params.password.as_str(), "password");
+
+        let result =
+            parse_remote_opt("http://omar:password@myserver:4445/myshare/dir/subdir").unwrap();
+
+        let params = result.params.webdav_params().unwrap();
+        assert_eq!(params.uri.as_str(), "http://myserver:4445");
+        assert_eq!(params.username.as_str(), "omar");
+        assert_eq!(params.password.as_str(), "password");
+    }
+
+    #[test]
     fn parse_aws_s3_opt() {
         // Simple
         let result: FileTransferParams =

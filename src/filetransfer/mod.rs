@@ -49,7 +49,7 @@ impl std::str::FromStr for FileTransferProtocol {
             "SCP" => Ok(FileTransferProtocol::Scp),
             "SFTP" => Ok(FileTransferProtocol::Sftp),
             "SMB" => Ok(FileTransferProtocol::Smb),
-            "WEBDAV" | "HTTP" => Ok(FileTransferProtocol::WebDAV),
+            "WEBDAV" | "HTTP" | "HTTPS" => Ok(FileTransferProtocol::WebDAV),
             _ => Err(s.to_string()),
         }
     }
