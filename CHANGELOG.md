@@ -37,7 +37,7 @@
 
 ## 0.13.0
 
-Released on
+Released on 03/03/2024
 
 - Added CLI subcommands
   - Changed `-t` to `theme`
