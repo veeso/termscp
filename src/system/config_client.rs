@@ -419,7 +419,7 @@ mod tests {
     use tempfile::TempDir;
 
     use super::*;
-    use crate::config::UserConfig;
+    use crate::config::params::UserConfig;
     use crate::utils::random::random_alphanumeric_with_len;
 
     #[test]

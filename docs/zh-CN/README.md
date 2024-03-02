@@ -63,7 +63,7 @@
 </p>
 
 <p align="center">由 <a href="https://veeso.dev/" target="_blank">@veeso</a> 开发</p>
-<p align="center">当前版本： 0.12.3 (06/10/2023)</p>
+<p align="center">当前版本： 0.13.0 (03/03/2024)</p>
 
 <p align="center">
   <a href="https://opensource.org/licenses/MIT"
@@ -140,6 +140,7 @@ termscp 是一个功能丰富的终端文件浏览和传输工具，支持 SCP/S
   - **FTP** and **FTPS**
   - **S3**
   - **SMB**
+  - **WebDAV**
 - 🖥  使用便捷的 UI 在远程和本地文件系统上浏览和操作
   - 创建、删除、重命名、搜索、查看和编辑文件
 - ⭐  通过“内置书签”和“最近连接”快速连接到您的主机

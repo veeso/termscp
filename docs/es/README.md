@@ -63,7 +63,7 @@
 </p>
 
 <p align="center">Desarrollado por <a href="https://veeso.dev/" target="_blank">@veeso</a></p>
-<p align="center">Versión actual: 0.12.3 (06/10/2023)</p>
+<p align="center">Versión actual: 0.13.0 (03/03/2024)</p>
 
 <p align="center">
   <a href="https://opensource.org/licenses/MIT"
@@ -138,6 +138,7 @@ Termscp es un explorador y transferencia de archivos de terminal rico en funcion
   - **FTP** y **FTPS**
   - **S3**
   - **SMB**
+  - **WebDAV**
 - 🖥  Explore y opere en el sistema de archivos de la máquina local y remota con una interfaz de usuario práctica
   - Cree, elimine, cambie el nombre, busque, vea y edite archivos
 - ⭐  Conéctese a sus hosts favoritos y conexiones recientes

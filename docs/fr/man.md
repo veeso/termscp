@@ -4,6 +4,7 @@
   - [Usage ❓](#usage-)
     - [Argument d'adresse 🌎](#argument-dadresse-)
       - [Argument d'adresse AWS S3](#argument-dadresse-aws-s3)
+      - [Argument d'adresse WebDAV](#argument-dadresse-webdav)
       - [Argument d'adresse SMB](#argument-dadresse-smb)
       - [Comment le mot de passe peut être fourni 🔐](#comment-le-mot-de-passe-peut-être-fourni-)
   - [S3 paramètres de connexion](#s3-paramètres-de-connexion)
@@ -43,10 +44,7 @@ ou
 
 - `-P, --password <password>` si l'adresse est fournie, le mot de passe sera cet argument
 - `-b, --address-as-bookmark` résoudre l'argument d'adresse en tant que nom de signet
-- `-c, --config` Ouvrir termscp à partir de la page de configuration
 - `-q, --quiet` Désactiver la journalisation
-- `-t, --theme <path>` Importer le thème spécifié
-- `-u, --update` Mettre à jour termscp vers la dernière version
 - `-v, --version` Imprimer les informations sur la version
 - `-h, --help` Imprimer la page d'aide
 
@@ -102,6 +100,20 @@ e.g.
 
 ```txt
 s3://buckethead@eu-central-1:default:/assets
+```
+
+#### Argument d'adresse WebDAV
+
+Dans le cas où vous souhaitez vous connecter à WebDAV, utilisez la syntaxe suivante
+
+```txt
+http://<username>:<password>@<url></path>
+```
+
+ou dans le cas où vous souhaitez utiliser https
+
+```txt
+https://<username>:<password>@<url></path>
 ```
 
 #### Argument d'adresse SMB

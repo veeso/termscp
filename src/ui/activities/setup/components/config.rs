@@ -13,7 +13,7 @@ use crate::explorer::GroupDirs as GroupDirsEnum;
 use crate::filetransfer::FileTransferProtocol;
 use crate::ui::activities::setup::{
     RADIO_PROTOCOL_FTP, RADIO_PROTOCOL_FTPS, RADIO_PROTOCOL_S3, RADIO_PROTOCOL_SCP,
-    RADIO_PROTOCOL_SFTP, RADIO_PROTOCOL_SMB,
+    RADIO_PROTOCOL_SFTP, RADIO_PROTOCOL_SMB, RADIO_PROTOCOL_WEBDAV,
 };
 use crate::utils::parser::parse_bytesize;
 
@@ -67,7 +67,7 @@ impl DefaultProtocol {
                         .color(Color::Cyan)
                         .modifiers(BorderType::Rounded),
                 )
-                .choices(&["SFTP", "SCP", "FTP", "FTPS", "S3", "SMB"])
+                .choices(&["SFTP", "SCP", "FTP", "FTPS", "S3", "SMB", "WebDAV"])
                 .foreground(Color::Cyan)
                 .rewind(true)
                 .title("Default protocol", Alignment::Left)
@@ -78,6 +78,7 @@ impl DefaultProtocol {
                     FileTransferProtocol::Ftp(true) => RADIO_PROTOCOL_FTPS,
                     FileTransferProtocol::AwsS3 => RADIO_PROTOCOL_S3,
                     FileTransferProtocol::Smb => RADIO_PROTOCOL_SMB,
+                    FileTransferProtocol::WebDAV => RADIO_PROTOCOL_WEBDAV,
                 }),
         }
     }

@@ -4,6 +4,7 @@
   - [用法](#用法)
     - [地址参数](#地址参数)
       - [AWS S3 地址参数](#aws-s3-地址参数)
+      - [WebDAV 地址参数](#webdav-地址参数)
       - [SMB 地址参数](#smb-地址参数)
       - [如何输入密码](#如何输入密码)
   - [S3 连接参数](#s3-连接参数)
@@ -43,9 +44,7 @@ termscp启动时可以使用以下选项:
 
 - `-P, --password <password>` 登陆密码
 - `-b, --address-as-bookmark` 将地址参数解析为书签名称
-- `-c, --config` 打开termscp时打开配置页面
 - `-q, --quiet` 禁用日志
-- `-t, --theme <path>` 导入自定义主题
 - `-v, --version` 打印版本信息
 - `-h, --help` 打开帮助
 
@@ -101,6 +100,19 @@ s3://<bucket-name>@<region>[:profile][:/wrkdir]
 
 ```txt
 s3://buckethead@eu-central-1:default:/assets
+```
+
+#### WebDAV 地址参数
+
+如果您想要连接到 WebDAV，请使用以下语法
+
+```txt
+http://<username>:<password>@<url></path>
+或者如果您想要使用 https
+```
+
+```txt
+https://<username>:<password>@<url></path>
 ```
 
 #### SMB 地址参数

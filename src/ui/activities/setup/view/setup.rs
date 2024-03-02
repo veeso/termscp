@@ -10,7 +10,9 @@ use std::path::PathBuf;
 use tuirealm::tui::layout::{Constraint, Direction, Layout};
 use tuirealm::{State, StateValue};
 
-use super::{components, Context, Id, IdCommon, IdConfig, SetupActivity, ViewLayout};
+use super::{
+    components, Context, Id, IdCommon, IdConfig, SetupActivity, ViewLayout, RADIO_PROTOCOL_WEBDAV,
+};
 use crate::explorer::GroupDirs;
 use crate::filetransfer::FileTransferProtocol;
 use crate::ui::activities::setup::{
@@ -277,6 +279,7 @@ impl SetupActivity {
                 RADIO_PROTOCOL_FTPS => FileTransferProtocol::Ftp(true),
                 RADIO_PROTOCOL_S3 => FileTransferProtocol::AwsS3,
                 RADIO_PROTOCOL_SMB => FileTransferProtocol::Smb,
+                RADIO_PROTOCOL_WEBDAV => FileTransferProtocol::WebDAV,
                 _ => FileTransferProtocol::Sftp,
             };
             self.config_mut().set_default_protocol(protocol);

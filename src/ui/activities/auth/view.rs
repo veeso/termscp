@@ -12,7 +12,9 @@ use tuirealm::tui::widgets::Clear;
 use tuirealm::{State, StateValue, Sub, SubClause, SubEventClause};
 
 use super::{components, AuthActivity, Context, FileTransferProtocol, Id, InputMask};
-use crate::filetransfer::params::{AwsS3Params, GenericProtocolParams, ProtocolParams, SmbParams};
+use crate::filetransfer::params::{
+    AwsS3Params, GenericProtocolParams, ProtocolParams, SmbParams, WebDAVProtocolParams,
+};
 use crate::filetransfer::FileTransferParams;
 use crate::utils::ui::{Popup, Size};
 
@@ -61,6 +63,7 @@ impl AuthActivity {
         self.mount_smb_share("");
         #[cfg(unix)]
         self.mount_smb_workgroup("");
+        self.mount_webdav_uri("");
         // Version notice
         if let Some(version) = self
             .context()
@@ -195,6 +198,18 @@ impl AuthActivity {
                     )
                     .direction(Direction::Vertical)
                     .split(auth_chunks[4]),
+                InputMask::WebDAV => Layout::default()
+                    .constraints(
+                        [
+                            Constraint::Length(3), // uri
+                            Constraint::Length(3), // username
+                            Constraint::Length(3), // password
+                            Constraint::Length(3), // dir
+                        ]
+                        .as_ref(),
+                    )
+                    .direction(Direction::Vertical)
+                    .split(auth_chunks[4]),
             };
             // Create bookmark chunks
             let bookmark_chunks = Layout::default()
@@ -225,6 +240,13 @@ impl AuthActivity {
                 }
                 InputMask::Smb => {
                     let view_ids = self.get_smb_view();
+                    self.app.view(&view_ids[0], f, input_mask[0]);
+                    self.app.view(&view_ids[1], f, input_mask[1]);
+                    self.app.view(&view_ids[2], f, input_mask[2]);
+                    self.app.view(&view_ids[3], f, input_mask[3]);
+                }
+                InputMask::WebDAV => {
+                    let view_ids = self.get_webdav_view();
                     self.app.view(&view_ids[0], f, input_mask[0]);
                     self.app.view(&view_ids[1], f, input_mask[1]);
                     self.app.view(&view_ids[2], f, input_mask[2]);
@@ -794,6 +816,18 @@ impl AuthActivity {
             .is_ok());
     }
 
+    pub(super) fn mount_webdav_uri(&mut self, uri: &str) {
+        let addr_color = self.theme().auth_address;
+        assert!(self
+            .app
+            .remount(
+                Id::WebDAVUri,
+                Box::new(components::InputWebDAVUri::new(uri, addr_color)),
+                vec![]
+            )
+            .is_ok());
+    }
+
     // -- query
 
     /// Collect input values from view
@@ -860,6 +894,18 @@ impl AuthActivity {
             .password(password)
     }
 
+    pub(super) fn get_webdav_params_input(&self) -> WebDAVProtocolParams {
+        let uri: String = self.get_webdav_uri();
+        let username = self.get_input_username().unwrap_or_default();
+        let password = self.get_input_password().unwrap_or_default();
+
+        WebDAVProtocolParams {
+            uri,
+            username,
+            password,
+        }
+    }
+
     pub(super) fn get_input_remote_directory(&self) -> Option<PathBuf> {
         match self.app.state(&Id::RemoteDirectory) {
             Ok(State::One(StateValue::String(x))) if !x.is_empty() => {
@@ -875,6 +921,13 @@ impl AuthActivity {
                 Some(PathBuf::from(x.as_str()))
             }
             _ => None,
+        }
+    }
+
+    pub(super) fn get_webdav_uri(&self) -> String {
+        match self.app.state(&Id::WebDAVUri) {
+            Ok(State::One(StateValue::String(x))) => x,
+            _ => String::new(),
         }
     }
 
@@ -1011,6 +1064,7 @@ impl AuthActivity {
             InputMask::AwsS3 => 12,
             InputMask::Generic => 12,
             InputMask::Smb => 12,
+            InputMask::WebDAV => 12,
         }
     }
 
@@ -1069,6 +1123,7 @@ impl AuthActivity {
                 };
                 format!("\\\\{username}{}\\{}", params.address, params.share)
             }
+            ProtocolParams::WebDAV(params) => params.uri,
         }
     }
 
@@ -1177,6 +1232,23 @@ impl AuthActivity {
                 Id::LocalDirectory,
             ],
             _ => [Id::Address, Id::SmbShare, Id::Username, Id::Password],
+        }
+    }
+
+    fn get_webdav_view(&self) -> [Id; 4] {
+        match self.app.focus() {
+            Some(&Id::LocalDirectory) => [
+                Id::Username,
+                Id::Password,
+                Id::RemoteDirectory,
+                Id::LocalDirectory,
+            ],
+            _ => [
+                Id::WebDAVUri,
+                Id::Username,
+                Id::Password,
+                Id::RemoteDirectory,
+            ],
         }
     }
 

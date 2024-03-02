@@ -1,6 +1,7 @@
 # Changelog
 
 - [Changelog](#changelog)
+  - [0.13.0](#0130)
   - [0.12.3](#0123)
   - [0.12.2](#0122)
   - [0.12.1](#0121)
@@ -33,6 +34,21 @@
   - [0.1.0](#010)
 
 ---
+
+## 0.13.0
+
+Released on 03/03/2024
+
+- Added CLI subcommands
+  - Changed `-t` to `theme`
+  - Changed `-u` to `update`
+  - Changed `-c` to `config`
+- Introduced support for [WebDAV](https://www.rfc-editor.org/rfc/rfc4918)
+  - It is now possible also to connect directly to WebDAV server with the syntax `http(s)://username:password@google.com`
+- Bugfix:
+  - [Issue 232](https://github.com/veeso/termscp/issues/232): AWS S3 wasn't working anymore due to rust-s3 outdate
+- Dependencies:
+  - Added `remotefs-webdav 0.1.1`
 
 ## 0.12.3
 

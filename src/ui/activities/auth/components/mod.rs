@@ -19,7 +19,7 @@ pub use form::{
     InputAddress, InputLocalDirectory, InputPassword, InputPort, InputRemoteDirectory,
     InputS3AccessKey, InputS3Bucket, InputS3Endpoint, InputS3Profile, InputS3Region,
     InputS3SecretAccessKey, InputS3SecurityToken, InputS3SessionToken, InputSmbShare,
-    InputUsername, ProtocolRadio, RadioS3NewPathStyle,
+    InputUsername, InputWebDAVUri, ProtocolRadio, RadioS3NewPathStyle,
 };
 pub use popup::{
     ErrorPopup, InfoPopup, InstallUpdatePopup, Keybindings, QuitPopup, ReleaseNotes, WaitPopup,

@@ -4,6 +4,7 @@
   - [Argomenti da linea di comando ❓](#argomenti-da-linea-di-comando-)
     - [Argomento indirizzo 🌎](#argomento-indirizzo-)
       - [Argomento indirizzo per AWS S3](#argomento-indirizzo-per-aws-s3)
+      - [Argomento indirizzo per WebDAV](#argomento-indirizzo-per-webdav)
       - [Indirizzo SMB](#indirizzo-smb)
       - [Come fornire la password 🔐](#come-fornire-la-password-)
   - [Parametri di connessione S3](#parametri-di-connessione-s3)
@@ -43,10 +44,7 @@ O
 
 - `-P, --password <password>` Se viene fornito l'argomento indirizzo, questa sarà la password utilizzata per autenticarsi
 - `-b, --address-as-bookmark` risolve l'argomento indirizzo come nome di un segnalibro
-- `-c, --config` Apri la configurazione di termscp
 - `-q, --quiet` Disabilita i log
-- `-t, --theme <path>` Importa il tema al percorso fornito
-- `-u, --update` Aggiorna termscp all'ultima versione
 - `-v, --version` Mostra a video le informazioni sulla versione attualmente installata
 - `-h, --help` Mostra la pagina di aiuto.
 
@@ -100,6 +98,20 @@ e.g.
 
 ```txt
 s3://buckethead@eu-central-1:default:/assets
+```
+
+#### Argomento indirizzo per WebDAV
+
+Nel caso in cui si desideri connettersi a WebDAV utilizzare la seguente sintassi
+
+```txt
+http://<username>:<password>@<url></path>
+```
+
+oppure nel caso in cui si desideri utilizzare https
+
+```txt
+https://<username>:<password>@<url></path>
 ```
 
 #### Indirizzo SMB

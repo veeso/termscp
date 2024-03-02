@@ -112,6 +112,7 @@ impl FileTransferActivity {
             ProtocolParams::Generic(params) => params.address.clone(),
             ProtocolParams::AwsS3(params) => params.bucket_name.clone(),
             ProtocolParams::Smb(params) => params.address.clone(),
+            ProtocolParams::WebDAV(params) => params.uri.clone(),
         }
     }
 
@@ -140,6 +141,13 @@ impl FileTransferActivity {
                     params.address, params.share
                 );
                 format!("Connecting to \\\\{}\\{}…", params.address, params.share)
+            }
+            ProtocolParams::WebDAV(params) => {
+                info!(
+                    "Client is not connected to remote; connecting to {}",
+                    params.uri
+                );
+                format!("Connecting to {}…", params.uri)
             }
         }
     }

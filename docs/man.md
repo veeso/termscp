@@ -4,8 +4,12 @@
   - [Usage ❓](#usage-)
     - [Address argument 🌎](#address-argument-)
       - [AWS S3 address argument](#aws-s3-address-argument)
+      - [WebDAV address argument](#webdav-address-argument)
       - [SMB address argument](#smb-address-argument)
       - [How Password can be provided 🔐](#how-password-can-be-provided-)
+    - [Subcommands](#subcommands)
+      - [Import a theme](#import-a-theme)
+      - [Install latest version](#install-latest-version)
   - [S3 connection parameters](#s3-connection-parameters)
     - [S3 credentials 🦊](#s3-credentials-)
   - [File explorer 📂](#file-explorer-)
@@ -43,10 +47,7 @@ OR
 
 - `-P, --password <password>` if address is provided, password will be this argument
 - `-b, --address-as-bookmark` resolve address argument as a bookmark name
-- `-c, --config` Open termscp starting from the configuration page
 - `-q, --quiet` Disable logging
-- `-t, --theme <path>` Import specified theme
-- `-u, --update` Update termscp to latest version
 - `-v, --version` Print version info
 - `-h, --help` Print help page
 
@@ -104,6 +105,20 @@ e.g.
 s3://buckethead@eu-central-1:default:/assets
 ```
 
+#### WebDAV address argument
+
+In case you want to connect to webDAV use the following syntax
+
+```txt
+http://<username>:<password>@<url></path>
+```
+
+or in case you want to use https
+
+```txt
+https://<username>:<password>@<url></path>
+```
+
 #### SMB address argument
 
 SMB has a different syntax for CLI address argument, which is different whether you're on Windows or other systems:
@@ -128,6 +143,16 @@ Password can be basically provided through 3 ways when address argument is provi
 - `-P, --password` option: just use this CLI option providing the password. I strongly unrecommend this method, since it's very insecure (since you might keep the password in the shell history)
 - Via `sshpass`: you can provide password via `sshpass`, e.g. `sshpass -f ~/.ssh/topsecret.key termscp cvisintin@192.168.1.31`
 - You will be prompted for it: if you don't use any of the previous methods, you will be prompted for the password, as happens with the more classics tools such as `scp`, `ssh`, etc.
+
+### Subcommands
+
+#### Import a theme
+
+Run termscp as `termscp theme <theme-file>`
+
+#### Install latest version
+
+Run termscp as `termscp update`
 
 ---
 

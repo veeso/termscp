@@ -1,7 +1,7 @@
 # termscp
 
 <p align="center">
-  <img src="/assets/images/termscp.svg" width="256" height="256" />
+  <img src="/assets/images/termscp.svg" alt="termscp logo" width="256" height="256" />
 </p>
 
 <p align="center">~ A feature rich terminal file transfer ~</p>
@@ -63,7 +63,7 @@
 </p>
 
 <p align="center">Developed by <a href="https://veeso.dev/" target="_blank">@veeso</a></p>
-<p align="center">Current version: 0.12.3 (06/10/2023)</p>
+<p align="center">Current version: 0.13.0 (03/03/2024)</p>
 
 <p align="center">
   <a href="https://opensource.org/licenses/MIT"
@@ -73,7 +73,7 @@
   /></a>
   <a href="https://github.com/veeso/termscp/stargazers"
     ><img
-      src="https://img.shields.io/github/stars/veeso/termscp.svg"
+      src="https://img.shields.io/github/stars/veeso/termscp?style=flat"
       alt="Repo stars"
   /></a>
   <a href="https://crates.io/crates/termscp"
@@ -133,6 +133,7 @@ Termscp is a feature rich terminal file transfer and explorer, with support for 
   - **FTP** and **FTPS**
   - **S3**
   - **SMB**
+  - **WebDAV**
 - 🖥  Explore and operate on the remote and on the local machine file system with a handy UI
   - Create, remove, rename, search, view and edit files
 - ⭐  Connect to your favourite hosts through built-in bookmarks and recent connections

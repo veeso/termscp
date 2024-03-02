@@ -11,7 +11,7 @@ use tuirealm::{Component, Event, MockComponent, NoUserEvent, State, StateValue};
 use super::{FileTransferProtocol, FormMsg, Msg, UiMsg};
 use crate::ui::activities::auth::{
     RADIO_PROTOCOL_FTP, RADIO_PROTOCOL_FTPS, RADIO_PROTOCOL_S3, RADIO_PROTOCOL_SCP,
-    RADIO_PROTOCOL_SFTP, RADIO_PROTOCOL_SMB,
+    RADIO_PROTOCOL_SFTP, RADIO_PROTOCOL_SMB, RADIO_PROTOCOL_WEBDAV,
 };
 
 // -- protocol
@@ -31,9 +31,9 @@ impl ProtocolRadio {
                         .modifiers(BorderType::Rounded),
                 )
                 .choices(if cfg!(smb) {
-                    &["SFTP", "SCP", "FTP", "FTPS", "S3", "SMB"]
+                    &["SFTP", "SCP", "FTP", "FTPS", "S3", "WebDAV", "SMB"]
                 } else {
-                    &["SFTP", "SCP", "FTP", "FTPS", "S3"]
+                    &["SFTP", "SCP", "FTP", "FTPS", "S3", "WebDAV"]
                 })
                 .foreground(color)
                 .rewind(true)
@@ -50,6 +50,7 @@ impl ProtocolRadio {
             RADIO_PROTOCOL_FTPS => FileTransferProtocol::Ftp(true),
             RADIO_PROTOCOL_S3 => FileTransferProtocol::AwsS3,
             RADIO_PROTOCOL_SMB => FileTransferProtocol::Smb,
+            RADIO_PROTOCOL_WEBDAV => FileTransferProtocol::WebDAV,
             _ => FileTransferProtocol::Sftp,
         }
     }
@@ -63,6 +64,7 @@ impl ProtocolRadio {
             FileTransferProtocol::Ftp(true) => RADIO_PROTOCOL_FTPS,
             FileTransferProtocol::AwsS3 => RADIO_PROTOCOL_S3,
             FileTransferProtocol::Smb => RADIO_PROTOCOL_SMB,
+            FileTransferProtocol::WebDAV => RADIO_PROTOCOL_WEBDAV,
         }
     }
 }
@@ -785,6 +787,43 @@ impl Component<Msg, NoUserEvent> for InputSmbWorkgroup {
             ev,
             Msg::Ui(UiMsg::SmbWorkgroupDown),
             Msg::Ui(UiMsg::SmbWorkgroupUp),
+        )
+    }
+}
+
+#[derive(MockComponent)]
+pub struct InputWebDAVUri {
+    component: Input,
+}
+
+impl InputWebDAVUri {
+    pub fn new(host: &str, color: Color) -> Self {
+        Self {
+            component: Input::default()
+                .borders(
+                    Borders::default()
+                        .color(color)
+                        .modifiers(BorderType::Rounded),
+                )
+                .foreground(color)
+                .placeholder(
+                    "http://localhost:8080",
+                    Style::default().fg(Color::Rgb(128, 128, 128)),
+                )
+                .title("HTTP url", Alignment::Left)
+                .input_type(InputType::Text)
+                .value(host),
+        }
+    }
+}
+
+impl Component<Msg, NoUserEvent> for InputWebDAVUri {
+    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+        handle_input_ev(
+            self,
+            ev,
+            Msg::Ui(UiMsg::WebDAVUriBlurDown),
+            Msg::Ui(UiMsg::WebDAVUriBlurUp),
         )
     }
 }
