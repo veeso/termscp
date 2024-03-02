@@ -4,7 +4,9 @@
 
 // Locals
 use super::{AuthActivity, FileTransferParams};
-use crate::filetransfer::params::{AwsS3Params, GenericProtocolParams, ProtocolParams, SmbParams};
+use crate::filetransfer::params::{
+    AwsS3Params, GenericProtocolParams, ProtocolParams, SmbParams, WebDAVProtocolParams,
+};
 
 impl AuthActivity {
     /// Delete bookmark
@@ -164,6 +166,7 @@ impl AuthActivity {
             ProtocolParams::AwsS3(params) => self.load_bookmark_s3_into_gui(params),
             ProtocolParams::Generic(params) => self.load_bookmark_generic_into_gui(params),
             ProtocolParams::Smb(params) => self.load_bookmark_smb_into_gui(params),
+            ProtocolParams::WebDAV(params) => self.load_bookmark_webdav_into_gui(params),
         }
     }
 
@@ -195,5 +198,11 @@ impl AuthActivity {
         self.mount_smb_share(&params.share);
         #[cfg(unix)]
         self.mount_smb_workgroup(params.workgroup.as_deref().unwrap_or(""));
+    }
+
+    fn load_bookmark_webdav_into_gui(&mut self, params: WebDAVProtocolParams) {
+        self.mount_webdav_uri(&params.uri);
+        self.mount_username(&params.username);
+        self.mount_password(&params.password);
     }
 }

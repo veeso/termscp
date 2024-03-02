@@ -56,10 +56,11 @@ notify-rust = { version = "^4.5", default-features = false, features = ["d"] }
 open = "^5.0"
 rand = "^0.8.5"
 remotefs = "^0.2.0"
-remotefs-aws-s3 = { version = "^0.2.3", default-features = false, features = [
+remotefs-aws-s3 = { version = "^0.2.4", default-features = false, features = [
   "find",
   "rustls",
 ] }
+remotefs-webdav = "^0.1.1"
 rpassword = "^7.0"
 self_update = { version = "^0.37", default-features = false, features = [
   "rustls",

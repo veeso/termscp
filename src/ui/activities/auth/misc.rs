@@ -15,6 +15,7 @@ impl AuthActivity {
             FileTransferProtocol::Ftp(_) => 21,
             FileTransferProtocol::AwsS3 => 22, // Doesn't matter, since not used
             FileTransferProtocol::Smb => 445,
+            FileTransferProtocol::WebDAV => 80, // Doesn't matter, since not used
         }
     }
 
@@ -41,6 +42,7 @@ impl AuthActivity {
             FileTransferProtocol::Ftp(_)
             | FileTransferProtocol::Scp
             | FileTransferProtocol::Sftp => self.collect_generic_host_params(self.protocol),
+            FileTransferProtocol::WebDAV => self.collect_webdav_host_params(),
         }
     }
 
@@ -93,6 +95,19 @@ impl AuthActivity {
         Ok(FileTransferParams {
             protocol: FileTransferProtocol::Smb,
             params: ProtocolParams::Smb(params),
+            local_path: self.get_input_local_directory(),
+            remote_path: self.get_input_remote_directory(),
+        })
+    }
+
+    pub(super) fn collect_webdav_host_params(&self) -> Result<FileTransferParams, &'static str> {
+        let params = self.get_webdav_params_input();
+        if params.uri.is_empty() {
+            return Err("Invalid URI");
+        }
+        Ok(FileTransferParams {
+            protocol: FileTransferProtocol::WebDAV,
+            params: ProtocolParams::WebDAV(params),
             local_path: self.get_input_local_directory(),
             remote_path: self.get_input_remote_directory(),
         })

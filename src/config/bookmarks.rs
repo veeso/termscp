@@ -11,6 +11,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::filetransfer::params::{
     AwsS3Params, GenericProtocolParams, ProtocolParams, SmbParams as TransferSmbParams,
+    WebDAVProtocolParams,
 };
 use crate::filetransfer::{FileTransferParams, FileTransferProtocol};
 
@@ -114,6 +115,17 @@ impl From<FileTransferParams> for Bookmark {
                 local_path,
                 s3: None,
             },
+            ProtocolParams::WebDAV(parms) => Self {
+                protocol,
+                address: Some(parms.uri),
+                port: None,
+                username: Some(parms.username),
+                password: Some(parms.password),
+                remote_path,
+                local_path,
+                s3: None,
+                smb: None,
+            },
         }
     }
 }
@@ -161,6 +173,14 @@ impl From<Bookmark> for FileTransferParams {
 
                 Self::new(bookmark.protocol, ProtocolParams::Smb(params))
             }
+            FileTransferProtocol::WebDAV => Self::new(
+                FileTransferProtocol::WebDAV,
+                ProtocolParams::WebDAV(WebDAVProtocolParams {
+                    uri: bookmark.address.unwrap_or_default(),
+                    username: bookmark.username.unwrap_or_default(),
+                    password: bookmark.password.unwrap_or_default(),
+                }),
+            ),
         }
         .remote_path(bookmark.remote_path) // Set entry remote_path
         .local_path(bookmark.local_path) // Set entry local path
@@ -388,6 +408,35 @@ mod tests {
         assert_eq!(gparams.port, 22);
         assert_eq!(gparams.username.as_deref().unwrap(), "root");
         assert_eq!(gparams.password.as_deref().unwrap(), "password");
+    }
+
+    #[test]
+    fn ftparams_from_webdav() {
+        let bookmark: Bookmark = Bookmark {
+            address: Some(String::from("192.168.1.1")),
+            port: None,
+            protocol: FileTransferProtocol::WebDAV,
+            username: Some(String::from("root")),
+            password: Some(String::from("password")),
+            remote_path: Some(PathBuf::from("/tmp")),
+            local_path: Some(PathBuf::from("/usr")),
+            s3: None,
+            smb: None,
+        };
+        let params = FileTransferParams::from(bookmark);
+        assert_eq!(params.protocol, FileTransferProtocol::WebDAV);
+        assert_eq!(
+            params.remote_path.as_deref().unwrap(),
+            std::path::Path::new("/tmp")
+        );
+        assert_eq!(
+            params.local_path.as_deref().unwrap(),
+            std::path::Path::new("/usr")
+        );
+        let gparams = params.params.webdav_params().unwrap();
+        assert_eq!(gparams.uri.as_str(), "192.168.1.1");
+        assert_eq!(gparams.username, "root");
+        assert_eq!(gparams.password, "password");
     }
 
     #[test]

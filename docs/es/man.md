@@ -4,6 +4,7 @@
   - [Uso ❓](#uso-)
     - [Argumento dirección 🌎](#argumento-dirección-)
       - [Argumento dirección por AWS S3](#argumento-dirección-por-aws-s3)
+      - [Argumento de dirección de WebDAV](#argumento-de-dirección-de-webdav)
       - [Argumento dirección por SMB](#argumento-dirección-por-smb)
       - [Cómo se puede proporcionar la contraseña 🔐](#cómo-se-puede-proporcionar-la-contraseña-)
   - [S3 parámetros de conexión](#s3-parámetros-de-conexión)
@@ -101,6 +102,20 @@ por ejemplo
 
 ```txt
 s3://buckethead@eu-central-1:default:/assets
+```
+
+#### Argumento de dirección de WebDAV
+
+En caso de que quieras conectarte a WebDAV utiliza la siguiente sintaxis
+
+```txt
+http://<username>:<password>@<url></path>
+```
+
+o en caso de que quieras usar https
+
+```txt
+https://<username>:<password>@<url></path>
 ```
 
 #### Argumento dirección por SMB
