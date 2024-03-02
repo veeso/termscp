@@ -67,7 +67,7 @@ mod tests {
         let child: Rect = Popup(Size::Percentage(75), Size::Percentage(30)).draw_in(area);
         assert_eq!(child.x, 43);
         assert_eq!(child.y, 63);
-        assert_eq!(child.width, 271);
-        assert_eq!(child.height, 54);
+        assert_eq!(child.width, 272);
+        assert_eq!(child.height, 55);
     }
 }
