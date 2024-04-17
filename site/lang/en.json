@@ -62,7 +62,7 @@
     "noBinary": "Opt for this method instead if binaries for your platform are not available or you want to select features",
     "arch": {
       "title": "Arch derived users",
-      "intro": "On Arch Linux based distros, you can install termscp using an AUR package manager such as",
+      "intro": "On Arch Linux based distros, you can install termscp using",
       "then": "then run"
     },
     "debian": {

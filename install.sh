@@ -225,7 +225,9 @@ install_on_linux() {
     local msg
     local sudo
     local archive
-    if has yay; then
+    if has pacman; then
+        install_on_arch_linux pacman
+    elif has yay; then
         install_on_arch_linux yay
     elif has pakku; then
         install_on_arch_linux pakku

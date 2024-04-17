@@ -180,6 +180,12 @@ NetBSD users can install termscp from the official repositories.
 pkgin install termscp
 ```
 
+Arch Linux users can install termscp from the official repositories.
+
+```sh
+pacman -S termscp
+```
+
 For more information or other platforms, please visit [termscp.veeso.dev](https://termscp.veeso.dev/#get-started) to view all installation methods.
 
 ⚠️ If you're looking on how to update termscp just run termscp from CLI with: `(sudo) termscp --update` ⚠️
