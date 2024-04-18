@@ -274,7 +274,7 @@ termscp is powered by these awesome projects:
 - [remotefs](https://github.com/veeso/remotefs-rs)
 - [rpassword](https://github.com/conradkleinespel/rpassword)
 - [self_update](https://github.com/jaemk/self_update)
-- [tui-rs](https://github.com/fdehau/tui-rs)
+- [ratatui](https://github.com/ratatui-org/ratatui)
 - [tui-realm](https://github.com/veeso/tui-realm)
 - [whoami](https://github.com/libcala/whoami)
 - [wildmatch](https://github.com/becheran/wildmatch)

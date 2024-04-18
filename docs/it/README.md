@@ -256,7 +256,7 @@ se termscp esiste, è anche grazie a questi fantastici progetti:
 - [self_update](https://github.com/jaemk/self_update)
 - [ssh2-rs](https://github.com/alexcrichton/ssh2-rs)
 - [suppaftp](https://github.com/veeso/suppaftp)
-- [tui-rs](https://github.com/fdehau/tui-rs)
+- [ratatui](https://github.com/ratatui-org/ratatui)
 - [tui-realm](https://github.com/veeso/tui-realm)
 - [whoami](https://github.com/libcala/whoami)
 - [wildmatch](https://github.com/becheran/wildmatch)
