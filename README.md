@@ -14,6 +14,14 @@
 </p>
 
 <p align="center">
+  <a
+    href="/docs/ptbr/README.md"
+    ><img
+      height="20"
+      src="/assets/images/flags/br.png"
+      alt="Brazilian Portuguese"
+  /></a>
+  &nbsp;
   <a href="https://github.com/veeso/termscp"
     ><img
       height="20"
