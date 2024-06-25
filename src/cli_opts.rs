@@ -76,7 +76,7 @@ pub enum ArgsSubcommands {
 pub struct ConfigArgs {}
 
 #[derive(FromArgs)]
-/// import the specified theme
+/// update termscp to the latest version
 #[argh(subcommand, name = "update")]
 pub struct UpdateArgs {}
 
