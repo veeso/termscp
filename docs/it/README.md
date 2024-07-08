@@ -1,7 +1,7 @@
 # termscp
 
 <p align="center">
-  <img src="/assets/images/termscp.svg" width="256" height="256" />
+  <img src="/assets/images/termscp.svg" alt="logo" width="256" height="256" />
 </p>
 
 <p align="center">~ Un file transfer ricco di funzionalità ~</p>
@@ -14,19 +14,19 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/veeso/termscp"
+    ><img
+      height="20"
+      src="/assets/images/flags/gb.png"
+      alt="English"
+  /></a>
+  &nbsp;
   <a
     href="https://github.com/veeso/termscp/blob/main/docs/ptbr/README.md"
     ><img
       height="20"
       src="/assets/images/flags/br.png"
       alt="Brazilian Portuguese"
-  /></a>
-  &nbsp;
-  <a href="https://github.com/veeso/termscp"
-    ><img
-      height="20"
-      src="/assets/images/flags/gb.png"
-      alt="English"
   /></a>
   &nbsp;
   <a
