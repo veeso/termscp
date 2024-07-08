@@ -81,7 +81,7 @@ impl Store {
 
     /// Check if a state is set in the store
     pub fn isset(&self, key: &str) -> bool {
-        self.store.get(key).is_some()
+        self.store.contains_key(key)
     }
 
     // -- setters

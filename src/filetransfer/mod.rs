@@ -23,19 +23,23 @@ pub enum FileTransferProtocol {
 
 // Traits
 
-impl std::string::ToString for FileTransferProtocol {
-    fn to_string(&self) -> String {
-        String::from(match self {
-            FileTransferProtocol::AwsS3 => "S3",
-            FileTransferProtocol::Ftp(secure) => match secure {
-                true => "FTPS",
-                false => "FTP",
-            },
-            FileTransferProtocol::Scp => "SCP",
-            FileTransferProtocol::Sftp => "SFTP",
-            FileTransferProtocol::Smb => "SMB",
-            FileTransferProtocol::WebDAV => "WEBDAV",
-        })
+impl std::fmt::Display for FileTransferProtocol {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                FileTransferProtocol::AwsS3 => "S3",
+                FileTransferProtocol::Ftp(secure) => match secure {
+                    true => "FTPS",
+                    false => "FTP",
+                },
+                FileTransferProtocol::Scp => "SCP",
+                FileTransferProtocol::Sftp => "SFTP",
+                FileTransferProtocol::Smb => "SMB",
+                FileTransferProtocol::WebDAV => "WEBDAV",
+            }
+        )
     }
 }
 
