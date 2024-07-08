@@ -245,6 +245,7 @@ Para cambiar de panel, debe escribir `<LEFT>` para mover el panel del explorador
 | `<Y>`         | Alternar navegación sincronizada                                           | sYnc        |
 | `<Z>`         | Cambiar ppermisos de archivo                                               |             |
 | `<CTRL+A>`    | Seleccionar todos los archivos                                             |             |
+| `<ALT+A>`    | Deseleccionar todos los archivos                                             |             |
 | `<CTRL+C>`    | Abortar el proceso de transferencia de archivos                            |             |
 | `<CTRL+T>`    | Mostrar todas las rutas sincronizadas                                      | Track       |
 

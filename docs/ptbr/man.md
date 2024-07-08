@@ -15,13 +15,13 @@
   - [Explorador de Arquivos 📂](#explorador-de-arquivos-)
     - [Atalhos de Teclado ⌨](#atalhos-de-teclado-)
     - [Trabalhar com Vários Arquivos 🥷](#trabalhar-com-vários-arquivos-)
-    - [Navegação Sincronizada ⏲️](#navegação-sincronizada-)
+    - [Navegação Sincronizada ⏲️](#navegação-sincronizada-️)
     - [Abrir e Abrir Com 🚪](#abrir-e-abrir-com-)
   - [Favoritos ⭐](#favoritos-)
     - [Minhas Senhas São Seguras? 😈](#minhas-senhas-são-seguras-)
       - [Keyring do Linux](#keyring-do-linux)
         - [Configuração do KeepassXC para o termscp](#configuração-do-keepassxc-para-o-termscp)
-  - [Configuração ⚙️](#configuração-)
+  - [Configuração ⚙️](#configuração-️)
     - [Armazenamento de Chave SSH 🔐](#armazenamento-de-chave-ssh-)
     - [Formato do Explorador de Arquivos](#formato-do-explorador-de-arquivos)
   - [Temas 🎨](#temas-)
@@ -258,6 +258,7 @@ Para trocar de painel, você precisa pressionar `<LEFT>` para mover para o paine
 | `<Y>`           | Alternar navegação sincronizada                             | Sincronizar   |
 | `<Z>`           | Alterar modo de arquivo                                   |                   |
 | `<CTRL+A>`    | Selecionar todos os arquivos                               |                   |
+| `<ALT+A>`    | Deselecionar todos os arquivos                               |                   |
 | `<CTRL+C>`    | Abortir processo de transferência de arquivo                  |                   |
 | `<CTRL+T>`   | Mostrar todos os caminhos sincronizados                         | Track          |
 
