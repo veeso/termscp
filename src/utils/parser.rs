@@ -42,7 +42,7 @@ static REMOTE_OPT_PROTOCOL_REGEX: Lazy<Regex> = lazy_regex!(r"(?:([a-z0-9]+)://)
  *  - group 4: Some(path) | None
  */
 static REMOTE_GENERIC_OPT_REGEX: Lazy<Regex> = lazy_regex!(
-    r"(?:([^@]+)@)?(?:([^:]+))(?::((?:[0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])(?:[0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])))?(?::([^:]+))?"
+    r"(?:(.+[^@])@)?(?:([^:]+))(?::((?:[0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])(?:[0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])))?(?::([^:]+))?"
 );
 
 /**
@@ -53,7 +53,7 @@ static REMOTE_GENERIC_OPT_REGEX: Lazy<Regex> = lazy_regex!(
  *  - group 4: Some(path) | None
  */
 static REMOTE_WEBDAV_OPT_REGEX: Lazy<Regex> =
-    lazy_regex!(r"(?:([^:]+):)(?:([^@]+)@)(?:([^/]+))(?:/(.+))?");
+    lazy_regex!(r"(?:([^:]+):)(?:(.+[^@])@)(?:([^/]+))(?:/(.+))?");
 
 /**
  * Regex matches:
@@ -63,7 +63,7 @@ static REMOTE_WEBDAV_OPT_REGEX: Lazy<Regex> =
  * - group 4: Some(path) | None
  */
 static REMOTE_S3_OPT_REGEX: Lazy<Regex> =
-    lazy_regex!(r"(?:([^@]+)@)(?:([^:]+))(?::([a-zA-Z0-9][^:]+))?(?::([^:]+))?");
+    lazy_regex!(r"(?:(.+[^@])@)(?:([^:]+))(?::([a-zA-Z0-9][^:]+))?(?::([^:]+))?");
 
 /**
  * Regex matches:
@@ -75,7 +75,7 @@ static REMOTE_S3_OPT_REGEX: Lazy<Regex> =
  */
 #[cfg(smb_unix)]
 static REMOTE_SMB_OPT_REGEX: Lazy<Regex> = lazy_regex!(
-    r"(?:([^@]+)@)?(?:([^/:]+))(?::((?:[0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])(?:[0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])))?(?:/([^/]+))?(?:(/.+))?"
+    r"(?:(.+[^@])@)?(?:([^/:]+))(?::((?:[0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])(?:[0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])))?(?:/([^/]+))?(?:(/.+))?"
 );
 
 /**
@@ -87,7 +87,7 @@ static REMOTE_SMB_OPT_REGEX: Lazy<Regex> = lazy_regex!(
  */
 #[cfg(smb_windows)]
 static REMOTE_SMB_OPT_REGEX: Lazy<Regex> =
-    lazy_regex!(r"(?:([^@]+)@)?(?:([^:\\]+))(?:\\([^\\]+))?(?:(\\.+))?");
+    lazy_regex!(r"(?:(.+[^@])@)?(?:([^:\\]+))(?:\\([^\\]+))?(?:(\\.+))?");
 
 /**
  * Regex matches:
@@ -596,6 +596,21 @@ mod tests {
         assert!(parse_remote_opt(&String::from("omar://172.26.104.1")).is_err());
         // Bad port
         assert!(parse_remote_opt(&String::from("scp://172.26.104.1:650000")).is_err());
+
+        // with @ in username
+        let result: FileTransferParams =
+            parse_remote_opt(&String::from("dummy@veeso.dev@172.26.104.1:8022"))
+                .ok()
+                .unwrap();
+        let params = result.params.generic_params().unwrap();
+        assert_eq!(params.address, String::from("172.26.104.1"));
+        assert_eq!(params.port, 8022);
+        assert_eq!(
+            params.username.as_deref().unwrap().to_string(),
+            String::from("dummy@veeso.dev")
+        );
+        assert_eq!(result.protocol, FileTransferProtocol::Sftp);
+        assert!(result.remote_path.is_none());
     }
 
     #[test]
@@ -614,6 +629,18 @@ mod tests {
         let params = result.params.webdav_params().unwrap();
         assert_eq!(params.uri.as_str(), "http://myserver:4445");
         assert_eq!(params.username.as_str(), "omar");
+        assert_eq!(params.password.as_str(), "password");
+    }
+
+    #[test]
+    fn test_should_parse_webdav_opt_with_at() {
+        let result =
+            parse_remote_opt("https://omar@veeso.dev:password@myserver:4445/myshare/dir/subdir")
+                .unwrap();
+
+        let params = result.params.webdav_params().unwrap();
+        assert_eq!(params.uri.as_str(), "https://myserver:4445");
+        assert_eq!(params.username.as_str(), "omar@veeso.dev");
         assert_eq!(params.password.as_str(), "password");
     }
 
@@ -665,6 +692,18 @@ mod tests {
         assert_eq!(params.profile.as_deref(), Some("default"));
         // -- bad args
         assert!(parse_remote_opt(&String::from("s3://mybucket:default:/foobar")).is_err());
+
+        // with @
+        let result: FileTransferParams = parse_remote_opt(&String::from(
+            "s3://omar@mybucket@eu-central-1:default:/foobar",
+        ))
+        .ok()
+        .unwrap();
+        let params = result.params.s3_params().unwrap();
+        assert_eq!(result.protocol, FileTransferProtocol::AwsS3);
+        assert_eq!(result.remote_path, Some(PathBuf::from("/foobar")));
+        assert_eq!(params.bucket_name.as_str(), "omar@mybucket");
+        assert_eq!(params.region.as_deref().unwrap(), "eu-central-1");
     }
 
     #[test]
