@@ -1,6 +1,7 @@
 # Changelog
 
 - [Changelog](#changelog)
+  - [0.14.0](#0140)
   - [0.13.0](#0130)
   - [0.12.3](#0123)
   - [0.12.2](#0122)
@@ -34,6 +35,13 @@
   - [0.1.0](#010)
 
 ---
+
+## 0.14.0
+
+Released on ??
+
+- [Issue 241](https://github.com/veeso/termscp/issues/241): Jump to next entry after select
+- [Issue 257](https://github.com/veeso/termscp/issues/257): CLI remote args cannot handle '@' in the username
 
 ## 0.13.0
 

@@ -102,6 +102,8 @@ impl OwnStates {
             true => self.deselect(entry),
             false => self.select(entry),
         }
+        // increment index
+        self.incr_list_index(false);
     }
 
     /// Select all files
