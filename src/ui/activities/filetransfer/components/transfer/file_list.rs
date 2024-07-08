@@ -12,6 +12,7 @@ use tuirealm::tui::widgets::{List as TuiList, ListItem, ListState};
 use tuirealm::{MockComponent, Props, State, StateValue};
 
 pub const FILE_LIST_CMD_SELECT_ALL: &str = "A";
+pub const FILE_LIST_CMD_DESELECT_ALL: &str = "D";
 
 /// OwnStates contains states for this component
 #[derive(Clone, Default)]
@@ -111,6 +112,11 @@ impl OwnStates {
         for i in 0..self.list_len() {
             self.select(i);
         }
+    }
+
+    /// Select all files
+    pub fn deselect_all(&mut self) {
+        self.selected.clear();
     }
 
     /// Select provided index if not selected yet
@@ -330,6 +336,10 @@ impl MockComponent for FileList {
             }
             Cmd::Custom(FILE_LIST_CMD_SELECT_ALL) => {
                 self.states.select_all();
+                CmdResult::None
+            }
+            Cmd::Custom(FILE_LIST_CMD_DESELECT_ALL) => {
+                self.states.deselect_all();
                 CmdResult::None
             }
             Cmd::Toggle => {

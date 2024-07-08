@@ -244,6 +244,7 @@ In order to change panel you need to type `<LEFT>` to move the remote explorer p
 | `<Y>`         | Toggle synchronized browsing                          | sYnc        |
 | `<Z>`         | Change file mode                                      |             |
 | `<CTRL+A>`    | Select all files                                      |             |
+| `<ALT+A>` | Deselect all files                                      |             |
 | `<CTRL+C>`    | Abort file transfer process                           |             |
 | `<CTRL+T>`    | Show all synchronized paths                             | Track       |
 

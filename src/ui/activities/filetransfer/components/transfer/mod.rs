@@ -74,6 +74,13 @@ impl Component<Msg, NoUserEvent> for ExplorerFind {
                 Some(Msg::None)
             }
             Event::Keyboard(KeyEvent {
+                code: Key::Char('a'),
+                modifiers: KeyModifiers::ALT,
+            }) => {
+                let _ = self.perform(Cmd::Custom(file_list::FILE_LIST_CMD_DESELECT_ALL));
+                Some(Msg::None)
+            }
+            Event::Keyboard(KeyEvent {
                 code: Key::Char('m'),
                 modifiers: KeyModifiers::NONE,
             }) => {
@@ -196,6 +203,13 @@ impl Component<Msg, NoUserEvent> for ExplorerLocal {
                 modifiers: KeyModifiers::CONTROL,
             }) => {
                 let _ = self.perform(Cmd::Custom(file_list::FILE_LIST_CMD_SELECT_ALL));
+                Some(Msg::None)
+            }
+            Event::Keyboard(KeyEvent {
+                code: Key::Char('a'),
+                modifiers: KeyModifiers::ALT,
+            }) => {
+                let _ = self.perform(Cmd::Custom(file_list::FILE_LIST_CMD_DESELECT_ALL));
                 Some(Msg::None)
             }
             Event::Keyboard(KeyEvent {
@@ -381,6 +395,13 @@ impl Component<Msg, NoUserEvent> for ExplorerRemote {
                 modifiers: KeyModifiers::CONTROL,
             }) => {
                 let _ = self.perform(Cmd::Custom(file_list::FILE_LIST_CMD_SELECT_ALL));
+                Some(Msg::None)
+            }
+            Event::Keyboard(KeyEvent {
+                code: Key::Char('a'),
+                modifiers: KeyModifiers::ALT,
+            }) => {
+                let _ = self.perform(Cmd::Custom(file_list::FILE_LIST_CMD_DESELECT_ALL));
                 Some(Msg::None)
             }
             Event::Keyboard(KeyEvent {

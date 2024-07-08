@@ -240,6 +240,7 @@ Per cambiare pannello ti puoi muovere con le frecce, `<LEFT>` per andare sul pan
 | `<Y>`         | Abilita/disabilita Sync-Browsing                      | sYnc        |
 | `<Z>`         | Modifica permessi file                                |             |
 | `<CTRL+A>`    | Seleziona tutti i file                                |             |
+| `<ALT+A>`    | Deseleziona tutti i file                                |             |
 | `<CTRL+C>`    | Annulla trasferimento file                            |             |
 | `<CTRL+T>`    | Visualizza tutti i percorsi sincronizzati             | Track       |
 
