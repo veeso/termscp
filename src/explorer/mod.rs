@@ -10,7 +10,6 @@ use std::cmp::Reverse;
 use std::collections::VecDeque;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
-use std::string::ToString;
 
 use formatter::Formatter;
 // Ext
@@ -243,14 +242,18 @@ impl FileExplorer {
 
 // Traits
 
-impl ToString for FileSorting {
-    fn to_string(&self) -> String {
-        String::from(match self {
-            FileSorting::CreationTime => "by_creation_time",
-            FileSorting::ModifyTime => "by_mtime",
-            FileSorting::Name => "by_name",
-            FileSorting::Size => "by_size",
-        })
+impl std::fmt::Display for FileSorting {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                FileSorting::CreationTime => "by_creation_time",
+                FileSorting::ModifyTime => "by_mtime",
+                FileSorting::Name => "by_name",
+                FileSorting::Size => "by_size",
+            }
+        )
     }
 }
 
@@ -267,12 +270,16 @@ impl FromStr for FileSorting {
     }
 }
 
-impl ToString for GroupDirs {
-    fn to_string(&self) -> String {
-        String::from(match self {
-            GroupDirs::First => "first",
-            GroupDirs::Last => "last",
-        })
+impl std::fmt::Display for GroupDirs {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                GroupDirs::First => "first",
+                GroupDirs::Last => "last",
+            }
+        )
     }
 }
 
