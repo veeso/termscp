@@ -40,6 +40,7 @@
 
 Released on ??
 
+- [Issue 226](https://github.com/veeso/termscp/issues/226): Use ssh-agent
 - [Issue 241](https://github.com/veeso/termscp/issues/241): Jump to next entry after select
 - [Issue 255](https://github.com/veeso/termscp/issues/255): New keybindings `Ctrl + Shift + A` to deselect all files
 - [Issue 257](https://github.com/veeso/termscp/issues/257): CLI remote args cannot handle '@' in the username
