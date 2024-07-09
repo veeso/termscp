@@ -11,7 +11,7 @@ use remotefs_ftp::FtpFs;
 use remotefs_smb::SmbOptions;
 #[cfg(smb)]
 use remotefs_smb::{SmbCredentials, SmbFs};
-use remotefs_ssh::{ScpFs, SftpFs, SshConfigParseRule, SshOpts};
+use remotefs_ssh::{ScpFs, SftpFs, SshAgentIdentity, SshConfigParseRule, SshOpts};
 use remotefs_webdav::WebDAVFs;
 
 use super::params::WebDAVProtocolParams;
@@ -167,6 +167,7 @@ impl Builder {
     fn build_ssh_opts(params: GenericProtocolParams, config_client: &ConfigClient) -> SshOpts {
         let mut opts = SshOpts::new(params.address.clone())
             .key_storage(Box::new(Self::make_ssh_storage(config_client)))
+            .ssh_agent_identity(Some(SshAgentIdentity::All))
             .port(params.port);
         // get ssh config
         let ssh_config = config_client
