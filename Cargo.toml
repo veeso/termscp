@@ -55,6 +55,7 @@ notify = "=4.0.17"
 notify-rust = { version = "^4.5", default-features = false, features = ["d"] }
 open = "^5.0"
 rand = "^0.8.5"
+regex = "^1"
 remotefs = "^0.2.0"
 remotefs-aws-s3 = { version = "^0.2.4", default-features = false, features = [
   "find",

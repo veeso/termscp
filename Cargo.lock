@@ -3553,6 +3553,7 @@ dependencies = [
  "open",
  "pretty_assertions",
  "rand",
+ "regex",
  "remotefs",
  "remotefs-aws-s3",
  "remotefs-ftp",

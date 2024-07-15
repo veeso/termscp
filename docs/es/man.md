@@ -244,6 +244,7 @@ Para cambiar de panel, debe escribir `<LEFT>` para mover el panel del explorador
 | `<X>`         | Ejecutar un comando                                                        | eXecute     |
 | `<Y>`         | Alternar navegación sincronizada                                           | sYnc        |
 | `<Z>`         | Cambiar ppermisos de archivo                                               |             |
+| `</>`         | Filtrar archivos (se admite tanto regex como coincidencias con comodines)    |             |
 | `<CTRL+A>`    | Seleccionar todos los archivos                                             |             |
 | `<ALT+A>`    | Deseleccionar todos los archivos                                             |             |
 | `<CTRL+C>`    | Abortar el proceso de transferencia de archivos                            |             |

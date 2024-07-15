@@ -257,6 +257,7 @@ Para trocar de painel, você precisa pressionar `<LEFT>` para mover para o paine
 | `<X>`           | Executar um comando                                        | Executar     |
 | `<Y>`           | Alternar navegação sincronizada                             | Sincronizar   |
 | `<Z>`           | Alterar modo de arquivo                                   |                   |
+| `</>`         | Filtrar arquivos (suporte tanto para regex quanto para coringa)    |             |
 | `<CTRL+A>`    | Selecionar todos os arquivos                               |                   |
 | `<ALT+A>`    | Deselecionar todos os arquivos                               |                   |
 | `<CTRL+C>`    | Abortir processo de transferência de arquivo                  |                   |
