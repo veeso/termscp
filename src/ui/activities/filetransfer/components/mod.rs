@@ -17,8 +17,8 @@ mod transfer;
 pub use misc::FooterBar;
 pub use popups::{
     ChmodPopup, CopyPopup, DeletePopup, DisconnectPopup, ErrorPopup, ExecPopup, FatalPopup,
-    FileInfoPopup, FindPopup, GoToPopup, KeybindingsPopup, MkdirPopup, NewfilePopup, OpenWithPopup,
-    ProgressBarFull, ProgressBarPartial, QuitPopup, RenamePopup, ReplacePopup,
+    FileInfoPopup, FilterPopup, FindPopup, GoToPopup, KeybindingsPopup, MkdirPopup, NewfilePopup,
+    OpenWithPopup, ProgressBarFull, ProgressBarPartial, QuitPopup, RenamePopup, ReplacePopup,
     ReplacingFilesListPopup, SaveAsPopup, SortingPopup, StatusBarLocal, StatusBarRemote,
     SymlinkPopup, SyncBrowsingMkdirPopup, WaitPopup, WatchedPathsList, WatcherPopup,
 };

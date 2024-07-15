@@ -243,6 +243,7 @@ Pour changer de panneau, vous devez taper `<LEFT>` pour déplacer le panneau de 
 | `<X>`         | Exécuter une commande                                                     | eXecute     |
 | `<Y>`         | Basculer la navigation synchronisée                                       | sYnc        |
 | `<Z>`         | Changer permissions de fichier                                            |             |
+| `</>`         | Filtrer les fichiers (les expressions régulières et les correspondances génériques sont prises en charge)    |             |
 | `<CTRL+A>`    | Sélectionner tous les fichiers                                            |             |
 | `<ALT+A>`    | Desélectionner tous les fichiers                                            |             |
 | `<CTRL+C>`    | Abandonner le processus de transfert de fichiers                          |             |

@@ -239,6 +239,7 @@ Per cambiare pannello ti puoi muovere con le frecce, `<LEFT>` per andare sul pan
 | `<X>`         | Esegui comando shell                                  | eXecute     |
 | `<Y>`         | Abilita/disabilita Sync-Browsing                      | sYnc        |
 | `<Z>`         | Modifica permessi file                                |             |
+| `</>`         | Filtra i file (supporta sia regex che wildmatch  )    |             |
 | `<CTRL+A>`    | Seleziona tutti i file                                |             |
 | `<ALT+A>`    | Deseleziona tutti i file                                |             |
 | `<CTRL+C>`    | Annulla trasferimento file                            |             |

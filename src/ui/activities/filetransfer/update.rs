@@ -400,6 +400,7 @@ impl FileTransferActivity {
             }
             UiMsg::CloseFileInfoPopup => self.umount_file_info(),
             UiMsg::CloseFileSortingPopup => self.umount_file_sorting(),
+            UiMsg::CloseFilterPopup => self.umount_filter(),
             UiMsg::CloseFindExplorer => {
                 self.finalize_find();
                 self.umount_find();
@@ -419,6 +420,33 @@ impl FileTransferActivity {
             UiMsg::Disconnect => {
                 self.disconnect();
                 self.umount_disconnect();
+            }
+            UiMsg::FilterFiles(filter) => {
+                self.umount_filter();
+                let files = self.filter(&filter);
+                // Get wrkdir
+                let wrkdir = match self.browser.tab() {
+                    FileExplorerTab::Local => self.local().wrkdir.clone(),
+                    _ => self.remote().wrkdir.clone(),
+                };
+                // Create explorer and load files
+                self.browser.set_found(
+                    match self.browser.tab() {
+                        FileExplorerTab::Local => FoundExplorerTab::Local,
+                        _ => FoundExplorerTab::Remote,
+                    },
+                    files,
+                    wrkdir.as_path(),
+                );
+                // Mount result widget
+                self.mount_find(&filter);
+                self.update_find_list();
+                // Initialize tab
+                self.browser.change_tab(match self.browser.tab() {
+                    FileExplorerTab::Local => FileExplorerTab::FindLocal,
+                    FileExplorerTab::Remote => FileExplorerTab::FindRemote,
+                    _ => FileExplorerTab::FindLocal,
+                });
             }
             UiMsg::ShowLogPanel => {
                 assert!(self.app.active(&Id::Log).is_ok());
@@ -485,6 +513,7 @@ impl FileTransferActivity {
                 }
             }
             UiMsg::ShowFileSortingPopup => self.mount_file_sorting(),
+            UiMsg::ShowFilterPopup => self.mount_filter(),
             UiMsg::ShowFindPopup => self.mount_find_input(),
             UiMsg::ShowGotoPopup => self.mount_goto(),
             UiMsg::ShowKeybindingsPopup => self.mount_help(),

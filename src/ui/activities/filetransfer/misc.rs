@@ -260,6 +260,7 @@ impl FileTransferActivity {
     /// Update remote file list
     pub(super) fn update_remote_filelist(&mut self) {
         self.reload_remote_dir();
+
         let width = self
             .context_mut()
             .terminal()

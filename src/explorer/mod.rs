@@ -98,13 +98,6 @@ impl FileExplorer {
         }
     }
 
-    /*
-    /// Return amount of files
-    pub fn count(&self) -> usize {
-        self.files.len()
-    }
-    */
-
     /// Iterate over files
     /// Filters are applied based on current options (e.g. hidden files not returned)
     pub fn iter_files(&self) -> impl Iterator<Item = &File> + '_ {

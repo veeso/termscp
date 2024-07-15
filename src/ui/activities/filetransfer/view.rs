@@ -172,6 +172,11 @@ impl FileTransferActivity {
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::ChmodPopup, f, popup);
+            } else if self.app.mounted(&Id::FilterPopup) {
+                let popup = Popup(Size::Percentage(50), Size::Unit(3)).draw_in(f.size());
+                f.render_widget(Clear, popup);
+                // make popup
+                self.app.view(&Id::FilterPopup, f, popup);
             } else if self.app.mounted(&Id::FindPopup) {
                 let popup = Popup(Size::Percentage(40), Size::Unit(3)).draw_in(f.size());
                 f.render_widget(Clear, popup);
@@ -457,6 +462,23 @@ impl FileTransferActivity {
 
     pub(super) fn umount_chmod(&mut self) {
         let _ = self.app.umount(&Id::ChmodPopup);
+    }
+
+    pub(super) fn umount_filter(&mut self) {
+        let _ = self.app.umount(&Id::FilterPopup);
+    }
+
+    pub(super) fn mount_filter(&mut self) {
+        let input_color = self.theme().misc_input_dialog;
+        assert!(self
+            .app
+            .remount(
+                Id::FilterPopup,
+                Box::new(components::FilterPopup::new(input_color)),
+                vec![],
+            )
+            .is_ok());
+        assert!(self.app.active(&Id::FilterPopup).is_ok());
     }
 
     pub(super) fn mount_copy(&mut self) {
@@ -1096,9 +1118,14 @@ impl FileTransferActivity {
                                                                                                                 Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
                                                                                                                     Id::ChmodPopup,
                                                                                                                 )))),
-                                                                                                                Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
-                                                                                                                    Id::WaitPopup,
-                                                                                                                )))),
+                                                                                                                Box::new(SubClause::And(
+                                                                                                                    Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
+                                                                                                                        Id::WaitPopup,
+                                                                                                                    )))),
+                                                                                                                    Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
+                                                                                                                        Id::FilterPopup,
+                                                                                                                    )))),
+                                                                                                                )),
                                                                                                             )),
                                                                                                         )),
                                                                                                     )),

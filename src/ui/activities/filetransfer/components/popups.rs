@@ -112,6 +112,90 @@ impl Component<Msg, NoUserEvent> for CopyPopup {
 }
 
 #[derive(MockComponent)]
+pub struct FilterPopup {
+    component: Input,
+}
+
+impl FilterPopup {
+    pub fn new(color: Color) -> Self {
+        Self {
+            component: Input::default()
+                .borders(
+                    Borders::default()
+                        .color(color)
+                        .modifiers(BorderType::Rounded),
+                )
+                .foreground(color)
+                .input_type(InputType::Text)
+                .placeholder(
+                    "regex or wildmatch",
+                    Style::default().fg(Color::Rgb(128, 128, 128)),
+                )
+                .title("Filter files by regex or wildmatch", Alignment::Center),
+        }
+    }
+}
+
+impl Component<Msg, NoUserEvent> for FilterPopup {
+    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+        match ev {
+            Event::Keyboard(KeyEvent {
+                code: Key::Left, ..
+            }) => {
+                self.perform(Cmd::Move(Direction::Left));
+                Some(Msg::None)
+            }
+            Event::Keyboard(KeyEvent {
+                code: Key::Right, ..
+            }) => {
+                self.perform(Cmd::Move(Direction::Right));
+                Some(Msg::None)
+            }
+            Event::Keyboard(KeyEvent {
+                code: Key::Home, ..
+            }) => {
+                self.perform(Cmd::GoTo(Position::Begin));
+                Some(Msg::None)
+            }
+            Event::Keyboard(KeyEvent { code: Key::End, .. }) => {
+                self.perform(Cmd::GoTo(Position::End));
+                Some(Msg::None)
+            }
+            Event::Keyboard(KeyEvent {
+                code: Key::Delete, ..
+            }) => {
+                self.perform(Cmd::Cancel);
+                Some(Msg::None)
+            }
+            Event::Keyboard(KeyEvent {
+                code: Key::Backspace,
+                ..
+            }) => {
+                self.perform(Cmd::Delete);
+                Some(Msg::None)
+            }
+            Event::Keyboard(KeyEvent {
+                code: Key::Char(ch),
+                ..
+            }) => {
+                self.perform(Cmd::Type(ch));
+                Some(Msg::None)
+            }
+            Event::Keyboard(KeyEvent {
+                code: Key::Enter, ..
+            }) => match self.state() {
+                State::One(StateValue::String(filter)) => Some(Msg::Ui(UiMsg::FilterFiles(filter))),
+                _ => Some(Msg::None),
+            },
+            Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
+                Some(Msg::Ui(UiMsg::CloseFilterPopup))
+            }
+            _ => None,
+        }
+    }
+}
+
+#[derive(MockComponent)]
 pub struct DeletePopup {
     component: Radio,
 }
@@ -789,6 +873,9 @@ impl KeybindingsPopup {
                         .add_row()
                         .add_col(TextSpan::new("<Z>").bold().fg(key_color))
                         .add_col(TextSpan::from("               Change file permissions"))
+                        .add_row()
+                        .add_col(TextSpan::new("</>").bold().fg(key_color))
+                        .add_col(TextSpan::from("               Filter files"))
                         .add_row()
                         .add_col(TextSpan::new("<DEL|F8|E>").bold().fg(key_color))
                         .add_col(TextSpan::from("        Delete selected file"))
