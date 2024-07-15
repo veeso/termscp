@@ -1,571 +1,1113 @@
-# User manual 🎓
+# Benutzerhandbuch 🎓
 
-- [User manual 🎓](#user-manual-)
-  - [Usage ❓](#usage-)
-    - [Address argument 🌎](#address-argument-)
-      - [AWS S3 address argument](#aws-s3-address-argument)
-      - [SMB address argument](#smb-address-argument)
-      - [How Password can be provided 🔐](#how-password-can-be-provided-)
-    - [Subcommands](#subcommands)
-      - [Import a theme](#import-a-theme)
-      - [Install latest version](#install-latest-version)
-  - [S3 connection parameters](#s3-connection-parameters)
-    - [S3 credentials 🦊](#s3-credentials-)
-  - [File explorer 📂](#file-explorer-)
-    - [Keybindings ⌨](#keybindings-)
-    - [Work on multiple files 🥷](#work-on-multiple-files-)
-    - [Synchronized browsing ⏲️](#synchronized-browsing-️)
-    - [Open and Open With 🚪](#open-and-open-with-)
-  - [Bookmarks ⭐](#bookmarks-)
-    - [Are my passwords Safe 😈](#are-my-passwords-safe-)
-      - [Linux Keyring](#linux-keyring)
-        - [KeepassXC setup for termscp](#keepassxc-setup-for-termscp)
-  - [Configuration ⚙️](#configuration-️)
-    - [SSH Key Storage 🔐](#ssh-key-storage-)
-    - [File Explorer Format](#file-explorer-format)
-  - [Themes 🎨](#themes-)
-    - [My theme won't load 😱](#my-theme-wont-load-)
-    - [Styles 💈](#styles-)
-      - [Authentication page](#authentication-page)
-      - [Transfer page](#transfer-page)
-      - [Misc](#misc)
-  - [Text Editor ✏](#text-editor-)
-  - [Logging 🩺](#logging-)
-  - [Notifications 📫](#notifications-)
-  - [File watcher 🔭](#file-watcher-)
+- [Benutzerhandbuch 🎓](#benutzerhandbuch-)
+  - [Verwendung ❓](#verwendung-)
+    - [Adressargument 🌎](#adressargument-)
+      - [AWS S3 Adressargument](#aws-s3-adressargument)
+      - [SMB Adressargument](#smb-adressargument)
+      - [Wie das Passwort bereitgestellt werden kann 🔐](#wie-das-passwort-bereitgestellt-werden-kann-)
+    - [Unterbefehle](#unterbefehle)
+      - [Ein Thema importieren](#ein-thema-importieren)
+      - [Neueste Version installieren](#neueste-version-installieren)
+  - [S3-Verbindungsparameter](#s3-verbindungsparameter)
+    - [S3-Anmeldeinformationen 🦊](#s3-anmeldeinformationen-)
+  - [Dateiexplorer 📂](#dateiexplorer-)
+    - [Tastenkombinationen ⌨](#tastenkombinationen-)
+    - [Mit mehreren Dateien arbeiten 🥷](#mit-mehreren-dateien-arbeiten-)
+    - [Synchronisiertes Durchsuchen ⏲️](#synchronisiertes-durchsuchen-️)
+    - [Öffnen und Öffnen mit 🚪](#öffnen-und-öffnen-mit-)
+  - [Lesezeichen ⭐](#lesezeichen-)
+    - [Sind meine Passwörter sicher 😈](#sind-meine-passwörter-sicher-)
+      - [Linux-Schlüsselbund](#linux-schlüsselbund)
+        - [KeepassXC-Einrichtung für termscp](#keepassxc-einrichtung-für-termscp)
+  - [Konfiguration ⚙️](#konfiguration-️)
+    - [SSH-Schlüssel-Speicherung 🔐](#ssh-schlüssel-speicherung-)
+    - [Dateiexplorer-Format](#dateiexplorer-format)
+  - [Themen 🎨](#themen-)
+      - [AWS S3 Adressargument](#aws-s3-adressargument-1)
+      - [SMB Adressargument](#smb-adressargument-1)
+      - [Wie das Passwort bereitgestellt werden kann 🔐](#wie-das-passwort-bereitgestellt-werden-kann--1)
+    - [Unterbefehle](#unterbefehle-1)
+      - [Ein Thema importieren](#ein-thema-importieren-1)
+      - [Neueste Version installieren](#neueste-version-installieren-1)
+  - [S3-Verbindungsparameter](#s3-verbindungsparameter-1)
+    - [S3-Anmeldeinformationen 🦊](#s3-anmeldeinformationen--1)
+  - [Dateiexplorer 📂](#dateiexplorer--1)
+    - [Tastenkombinationen ⌨](#tastenkombinationen--1)
+    - [Mit mehreren Dateien arbeiten 🥷](#mit-mehreren-dateien-arbeiten--1)
+    - [Synchronisiertes Durchsuchen ⏲️](#synchronisiertes-durchsuchen-️-1)
+    - [Öffnen und Öffnen mit 🚪](#öffnen-und-öffnen-mit--1)
+  - [Lesezeichen ⭐](#lesezeichen--1)
+    - [Sind meine Passwörter sicher 😈](#sind-meine-passwörter-sicher--1)
+      - [Linux-Schlüsselbund](#linux-schlüsselbund-1)
+        - [KeepassXC-Einrichtung für termscp](#keepassxc-einrichtung-für-termscp-1)
+  - [Konfiguration ⚙️](#konfiguration-️-1)
+    - [SSH-Schlüssel-Speicherung 🔐](#ssh-schlüssel-speicherung--1)
+    - [Dateiexplorer-Format](#dateiexplorer-format-1)
+  - [Themen 🎨](#themen--1)
+    - [Mein Thema wird nicht geladen 😱](#mein-thema-wird-nicht-geladen-)
+    - [Stile 💈](#stile-)
+      - [Authentifizierungsseite](#authentifizierungsseite)
+      - [Übertragungsseite](#übertragungsseite)
+      - [Sonstiges](#sonstiges)
+  - [Texteditor ✏](#texteditor-)
+  - [Protokollierung 🩺](#protokollierung-)
+  - [Benachrichtigungen 📫](#benachrichtigungen-)
+  - [Dateiwächter 🔭](#dateiwächter-)
 
-> ❗ I need a help to translate this manual into German. If you want to contribute to the translations, please open a PR 🙏
+> ❗ Ich benötige Hilfe bei der Übersetzung dieses Handbuchs ins Deutsche. Wenn Sie zur Übersetzung beitragen möchten, öffnen Sie bitte einen PR 🙏
 
-## Usage ❓
+## Verwendung ❓
 
-termscp can be started with the following options:
+termscp kann mit den folgenden Optionen gestartet werden:
 
-`termscp [options]... [protocol://user@address:port:wrkdir] [local-wrkdir]`
+`termscp [Optionen]... [protokoll://benutzer@adresse:port:arbeitsverzeichnis] [lokales-arbeitsverzeichnis]`
 
-OR
+ODER
 
-`termscp [options]... -b [bookmark-name] [local-wrkdir]`
+`termscp [Optionen]... -b [Lesezeichen-Name] [lokales-arbeitsverzeichnis]`
 
-- `-P, --password <password>` if address is provided, password will be this argument
-- `-b, --address-as-bookmark` resolve address argument as a bookmark name
-- `-q, --quiet` Disable logging
-- `-v, --version` Print version info
-- `-h, --help` Print help page
+- `-P, --password <Passwort>` wenn Adresse angegeben wird, ist das Passwort dieses Argument
+- `-b, --address-as-bookmark` löst das Adressargument als Lesezeichenname auf
+- `-q, --quiet` Protokollierung deaktivieren
+- `-v, --version` Versionsinformationen anzeigen
+- `-h, --help` Hilfeseite anzeigen
 
-termscp can be started in three different modes, if no extra arguments is provided, termscp will show the authentication form, where the user will be able to provide the parameters required to connect to the remote peer.
+termscp kann in drei verschiedenen Modi gestartet werden. Wenn keine zusätzlichen Argumente angegeben werden, zeigt termscp das Authentifizierungsformular an, in dem der Benutzer die erforderlichen Parameter zum Herstellen einer Verbindung mit dem Remote-Peer angeben kann.
 
-Alternatively, the user can provide an address as argument to skip the authentication form and starting directly the connection to the remote server.
+Alternativ kann der Benutzer eine Adresse als Argument angeben, um das Authentifizierungsformular zu überspringen und direkt die Verbindung zum Remote-Server zu starten.
 
-If address argument or bookmark name is provided you can also provide the start working directory for local host
+Wenn das Adressargument oder der Lesezeichenname angegeben wird, können Sie auch das Startarbeitsverzeichnis für den lokalen Host angeben.
 
-### Address argument 🌎
+### Adressargument 🌎
 
-The address argument has the following syntax:
-
-```txt
-[protocol://][username@]<address>[:port][:wrkdir]
-```
-
-Let's see some example of this particular syntax, since it's very comfortable and you'll probably going to use this instead of the other one...
-
-- Connect using default protocol (*defined in configuration*) to 192.168.1.31, port if not provided is default for the selected protocol (in this case depends on your configuration); username is current user's name
-
-    ```sh
-    termscp 192.168.1.31
-    ```
-
-- Connect using default protocol (*defined in configuration*) to 192.168.1.31; username is `root`
-
-    ```sh
-    termscp root@192.168.1.31
-    ```
-
-- Connect using scp to 192.168.1.31, port is 4022; username is `omar`
-
-    ```sh
-    termscp scp://omar@192.168.1.31:4022
-    ```
-
-- Connect using scp to 192.168.1.31, port is 4022; username is `omar`. You will start in directory `/tmp`
-
-    ```sh
-    termscp scp://omar@192.168.1.31:4022:/tmp
-    ```
-
-#### AWS S3 address argument
-
-Aws S3 has a different syntax for CLI address argument, for obvious reasons, but I managed to keep it the more similar as possible to the generic address argument:
+Das Adressargument hat die folgende Syntax:
 
 ```txt
-s3://<bucket-name>@<region>[:profile][:/wrkdir]
+[protokoll://][benutzername@]<adresse>[:port][:arbeitsverzeichnis]
 ```
 
-e.g.
+Sehen wir uns einige Beispiele für diese besondere Syntax an, da sie sehr komfortabel ist und Sie diese wahrscheinlich anstelle der anderen verwenden werden...
+
+- Verbindung mit dem Standardprotokoll herstellen (_in der Konfiguration definiert_) zu 192.168.1.31, Port, wenn nicht angegeben, ist Standard für das ausgewählte Protokoll (in diesem Fall hängt es von Ihrer Konfiguration ab); Benutzername ist der aktuelle Benutzername
+
+```sh
+termscp 192.168.1.31
+```
+
+- Verbindung mit dem Standardprotokoll herstellen (_in der Konfiguration definiert_) zu 192.168.1.31; Benutzername ist `root`
+
+```sh
+termscp root@192.168.1.31
+```
+
+- Verbindung mit scp zu 192.168.1.31, Port ist 4022; Benutzername ist `omar`
+
+```sh
+termscp scp://omar@192.168.1.31:4022
+```
+
+- Verbindung mit scp zu 192.168.1.31, Port ist 4022; Benutzername ist `omar`. Sie starten im Verzeichnis `/tmp`
+
+```sh
+termscp scp://omar@192.168.1.31:4022:/tmp
+```
+
+#### AWS S3 Adressargument
+
+AWS S3 hat aus offensichtlichen Gründen eine andere Syntax für CLI-Adressargumente, aber ich habe es geschafft, sie so ähnlich wie möglich an das generische Adressargument anzupassen:
+
+```txt
+s3://<bucket-name>@<region>[:profile][:/arbeitsverzeichnis]
+```
+
+z.B.
 
 ```txt
 s3://buckethead@eu-central-1:default:/assets
 ```
 
-#### SMB address argument
+#### SMB Adressargument
 
-SMB has a different syntax for CLI address argument, which is different whether you're on Windows or other systems:
-
-**Windows** syntax:
-
-```txt
-\\[username@]<server-name>\<share>[\path\...]
-```
-
-**Other systems** syntax:
+SMB hat eine andere Syntax für CLI-Adressargumente, die je nach System unterschiedlich ist:
+**Windows** -Syntax:
 
 ```txt
-smb://[username@]<server-name>[:port]/<share>[/path/.../]
+\\[benutzername@]<server-name>\<freigabe>[\pfad\...]
 ```
 
-#### How Password can be provided 🔐
+**Andere Systeme** -Syntax:
 
-You have probably noticed, that, when providing the address as argument, there's no way to provide the password.
-Password can be basically provided through 3 ways when address argument is provided:
+```txt
+smb://[benutzername@]<server-name>[:port]/<freigabe>[/pfad/.../]
+```
 
-- `-P, --password` option: just use this CLI option providing the password. I strongly unrecommend this method, since it's very unsecure (since you might keep the password in the shell history)
-- Via `sshpass`: you can provide password via `sshpass`, e.g. `sshpass -f ~/.ssh/topsecret.key termscp cvisintin@192.168.1.31`
-- You will be prompted for it: if you don't use any of the previous methods, you will be prompted for the password, as happens with the more classics tools such as `scp`, `ssh`, etc.
+#### Wie das Passwort bereitgestellt werden kann 🔐
 
+Sie haben wahrscheinlich bemerkt, dass beim Bereitstellen der Adresse als Argument keine Möglichkeit besteht, das Passwort anzugeben.
+Das Passwort kann im Wesentlichen auf drei Arten bereitgestellt werden, wenn das Adressargument angegeben wird:
 
-### Subcommands
+- `-P, --password` Option: Verwenden Sie einfach diese CLI-Option und geben Sie das Passwort an. Ich rate dringend von dieser Methode ab, da sie sehr unsicher ist (da Sie das Passwort möglicherweise in der Shell-Historie behalten)
 
-#### Import a theme
+- Über `sshpass`: Sie können das Passwort über `sshpass` bereitstellen, z.B. `sshpass -f ~/.ssh/topsecret.key termscp cvisintin@192.168.1.31`
 
-Run termscp as `termscp theme <theme-file>`
+- Sie werden danach gefragt: Wenn Sie keine der vorherigen Methoden verwenden, werden Sie nach dem Passwort gefragt, wie es bei den klassischen Tools wie `scp`, `ssh` usw. der Fall ist.
 
-#### Install latest version
+### Unterbefehle
 
-Run termscp as `termscp update`
+#### Ein Thema importieren
+
+Führen Sie termscp als `termscp theme <thema-datei>` aus
+
+#### Neueste Version installieren
+
+Führen Sie termscp als `termscp update` aus
 
 ---
 
-## S3 connection parameters
+## S3-Verbindungsparameter
 
-These parameters are required to connect to aws s3 and other s3 compatible servers:
+Diese Parameter sind erforderlich, um eine Verbindung zu AWS S3 und anderen S3-kompatiblen Servern herzustellen:
 
 - AWS S3:
-  - **bucket name**
-  - **region**
-  - *profile* (if not provided: "default")
-  - *access key* (unless if public)
-  - *secret access key* (unless if public)
-  - *security token* (if required)
-  - *session token* (if required)
-  - new path style: **NO**
-- Other S3 endpoints:
-  - **bucket name**
-  - **endpoint**
-  - *access key* (unless if public)
-  - *secret access key* (unless if public)
-  - new path style: **YES**
 
-### S3 credentials 🦊
+  - **Bucket-Name**
 
-In order to connect to an Aws S3 bucket you must obviously provide some credentials.
-There are basically three ways to achieve this.
-So these are the ways you can provide the credentials for s3:
+  - **Region**
 
-1. Authentication form:
-   1. You can provide the `access_key` (should be mandatory), the `secret_access_key` (should be mandatory), `security_token` and the `session_token`
-   2. If you save the s3 connection as a bookmark, these credentials will be saved as an encrypted AES-256/BASE64 string in your bookmarks file (except for the security token and session token which are meant to be temporary credentials).
-2. Use your credentials file: just configure the AWS cli via `aws configure` and your credentials should already be located at `~/.aws/credentials`. In case you're using a profile different from `default`, just provide it in the profile field in the authentication form.
-3. **Environment variables**: you can always provide your credentials as environment variables. Keep in mind that these credentials **will always override** the credentials located in the `credentials` file. See how to configure the environment below:
+  - _Profil_ (wenn nicht angegeben: "default")
 
-    These should always be mandatory:
+  - _Zugriffsschlüssel_ (sofern nicht öffentlich)
 
-    - `AWS_ACCESS_KEY_ID`: aws access key ID (usually starts with `AKIA...`)
-    - `AWS_SECRET_ACCESS_KEY`: the secret access key
+  - _Geheimer Zugriffsschlüssel_ (sofern nicht öffentlich)
 
-    In case you've configured a stronger security, you *may* require these too:
+  - _Sicherheitstoken_ (falls erforderlich)
 
-    - `AWS_SECURITY_TOKEN`: security token
-    - `AWS_SESSION_TOKEN`: session token
+  - _Sitzungstoken_ (falls erforderlich)
 
-⚠️ Your credentials are safe: termscp won't manipulate these values directly! Your credentials are directly consumed by the **s3** crate.
-In case you've got some concern regarding security, please contact the library author on [Github](https://github.com/durch/rust-s3) ⚠️
+  - neuer Pfadstil: **NEIN**
 
----
+- Andere S3-Endpunkte:
 
-## File explorer 📂
+  - **Bucket-Name**
 
-When we refer to file explorers in termscp, we refer to the panels you can see after establishing a connection with the remote.
-These panels are basically 3 (yes, three actually):
+  - **Endpunkt**
 
-- Local explorer panel: it is displayed on the left of your screen and shows the current directory entries for localhost
-- Remote explorer panel: it is displayed on the right of your screen and shows the current directory entries for the remote host.
-- Find results panel: depending on where you're searching for files (local/remote) it will replace the local or the explorer panel. This panel shows the entries matching the search query you performed.
+  - _Zugriffsschlüssel_ (sofern nicht öffentlich)
 
-In order to change panel you need to type `<LEFT>` to move the remote explorer panel and `<RIGHT>` to move back to the local explorer panel. Whenever you are in the find results panel, you need to press `<ESC>` to exit panel and go back to the previous panel.
+  - _Geheimer Zugriffsschlüssel_ (sofern nicht öffentlich)
 
-### Keybindings ⌨
+  - neuer Pfadstil: **JA**
 
-| Key           | Command                                               | Reminder    |
-|---------------|-------------------------------------------------------|-------------|
-| `<ESC>`       | Disconnect from remote; return to authentication page |             |
-| `<BACKSPACE>` | Go to previous directory in stack                     |             |
-| `<TAB>`       | Switch explorer tab                                   |             |
-| `<RIGHT>`     | Move to remote explorer tab                           |             |
-| `<LEFT>`      | Move to local explorer tab                            |             |
-| `<UP>`        | Move up in selected list                              |             |
-| `<DOWN>`      | Move down in selected list                            |             |
-| `<PGUP>`      | Move up in selected list by 8 rows                    |             |
-| `<PGDOWN>`    | Move down in selected list by 8 rows                  |             |
-| `<ENTER>`     | Enter directory                                       |             |
-| `<SPACE>`     | Upload / download selected file                       |             |
-| `<BACKTAB>`   | Switch between log tab and explorer                   |             |
-| `<A>`         | Toggle hidden files                                   | All         |
-| `<B>`         | Sort files by                                         | Bubblesort? |
-| `<C|F5>`      | Copy file/directory                                   | Copy        |
-| `<D|F7>`      | Make directory                                        | Directory   |
-| `<E|F8|DEL>`  | Delete file                                           | Erase       |
-| `<F>`         | Search for files (wild match is supported)            | Find        |
-| `<G>`         | Go to supplied path                                   | Go to       |
-| `<H|F1>`      | Show help                                             | Help        |
-| `<K>`         | Create symlink pointing to the currently selected entry | symlinK     |
-| `<I>`         | Show info about selected file or directory            | Info        |
-| `<L>`         | Reload current directory's content / Clear selection  | List        |
-| `<M>`         | Select a file                                         | Mark         |
-| `<N>`         | Create new file with provided name                    | New         |
-| `<O|F4>`      | Edit file; see  Text editor                           | Open        |
-| `<P>`         | Open log panel                                          | Panel       |
-| `<Q|F10>`     | Quit termscp                                          | Quit        |
-| `<R|F6>`      | Rename file                                           | Rename      |
-| `<S|F2>`      | Save file as...                                       | Save        |
-| `<T>`         | Synchronize changes to selected path to remote          | Track       |
-| `<U>`         | Go to parent directory                                | Upper       |
-| `<V|F3>`      | Open file with default program for filetype           | View        |
-| `<W>`         | Open file with provided program                       | With        |
-| `<X>`         | Execute a command                                     | eXecute     |
-| `<Y>`         | Toggle synchronized browsing                          | sYnc        |
-| `<Z>`         | Change file mode                                      |             |
-| `<CTRL+A>`    | Select all files                                      |             |
-| `<ALT+A>` | Deselect all files                                      |             |
-| `<CTRL+C>`    | Abort file transfer process                           |             |
-| `<CTRL+T>`    | Show all synchronized paths                             | Track       |
+### S3-Anmeldeinformationen 🦊
 
-### Work on multiple files 🥷
+Um eine Verbindung zu einem AWS S3-Bucket herzustellen, müssen Sie offensichtlich einige Anmeldeinformationen angeben.
+Es gibt im Wesentlichen drei Möglichkeiten, dies zu erreichen.
+Dies sind die Möglichkeiten, wie Sie die Anmeldeinformationen für S3 bereitstellen können:
 
-You can opt to work on multiple files, selecting them pressing `<M>`, in order to select the current file, or pressing `<CTRL+A>`, which will select all the files in the working directory.
-Once a file is marked for selection, it will be displayed with a `*` on the left.
-When working on selection, only selected file will be processed for actions, while the current highlighted item will be ignored.
-It is possible to work on multiple files also when in the find result panel.
-All the actions are available when working with multiple files, but be aware that some actions work in a slightly different way. Let's dive in:
+1. Authentifizierungsformular:
 
-- *Copy*: whenever you copy a file, you'll be prompted to insert the destination name. When working with multiple file, this name refers to the destination directory where all these files will be copied.
-- *Rename*: same as copy, but will move files there.
-- *Save as*: same as copy, but will write them there.
+1. Sie können den `access_key` (sollte obligatorisch sein), den `secret_access_key` (sollte obligatorisch sein), `security_token` und den `session_token` angeben.
 
-### Synchronized browsing ⏲️
+1. Wenn Sie die S3-Verbindung als Lesezeichen speichern, werden diese Anmeldeinformationen als verschlüsselter AES-256/BASE64-String in Ihrer Lesezeichen-Datei gespeichert (außer dem Sicherheitstoken und dem Sitzungstoken, die als temporäre Anmeldeinformationen gedacht sind).
 
-When enabled, synchronized browsing, will allow you to synchronize the navigation between the two panels.
-This means that whenever you'll change the working directory on one panel, the same action will be reproduced on the other panel. If you want to enable synchronized browsing just press `<Y>`; press twice to disable. While enabled, the synchronized browsing state will be reported on the status bar on `ON`.
+1. Verwenden Sie Ihre Anmeldeinformationsdatei: Konfigurieren Sie einfach die AWS-CLI über `aws configure` und Ihre Anmeldeinformationen sollten bereits unter `~/.aws/credentials` gespeichert sein. Falls Sie ein anderes Profil als `default` verwenden, geben Sie es im Feld "Profil" im Authentifizierungsformular an.
 
-### Open and Open With 🚪
+1. **Umgebungsvariablen** : Sie können Ihre Anmeldeinformationen jederzeit als Umgebungsvariablen angeben. Beachten Sie, dass diese Anmeldeinformationen **immer die im Anmeldeinformationsdatei** angegebenen Anmeldeinformationen überschreiben. So konfigurieren Sie die Umgebung:
+   Diese sollten immer obligatorisch sein:
 
-Open and open with commands are powered by [open-rs](https://docs.rs/crate/open/1.7.0).
-When opening files with View command (`<V>`), the system default application for the file type will be used. To do so, the default operting system service will be used, so be sure to have at least one of these installed on your system:
+- `AWS_ACCESS_KEY_ID`: AWS-Zugriffsschlüssel-ID (beginnt normalerweise mit `AKIA...`)
 
-- **Windows** users: you don't have to worry about it, since the crate will use the `start` command.
-- **MacOS** users: you don't have to worry either, since the crate will use `open`, which is already installed on your system.
-- **Linux** users: one of these should be installed
-  - *xdg-open*
-  - *gio*
-  - *gnome-open*
-  - *kde-open*
-- **WSL** users: *wslview* is required, you must install [wslu](https://github.com/wslutilities/wslu).
+- `AWS_SECRET_ACCESS_KEY`: der geheime Zugriffsschlüssel
 
-> Q: Can I edit remote files using the view command?  
-> A: No, at least not directly from the "remote panel". You have to download it to a local directory first, that's due to the fact that when you open a remote file, the file is downloaded into a temporary directory, but there's no way to create a watcher for the file to check when the program you used to open it was closed, so termscp is not able to know when you're done editing the file.
+Falls Sie eine stärkere Sicherheit konfiguriert haben, benötigen Sie möglicherweise auch diese:
+
+- `AWS_SECURITY_TOKEN`: Sicherheitstoken
+
+- `AWS_SESSION_TOKEN`: Sitzungstoken
+  ⚠️ Ihre Anmeldeinformationen sind sicher: termscp manipuliert diese Werte nicht direkt! Ihre Anmeldeinformationen werden direkt von der **S3** -Bibliothek verwendet.
+  Falls Sie Bedenken hinsichtlich der Sicherheit haben, kontaktieren Sie bitte den Bibliotheksautor auf [Github](https://github.com/durch/rust-s3) ⚠️
 
 ---
 
-## Bookmarks ⭐
+## Dateiexplorer 📂
 
-In termscp it is possible to save favourites hosts, which can be then loaded quickly from the main layout of termscp.
-termscp will also save the last 16 hosts you connected to.
-This feature allows you to load all the parameters required to connect to a certain remote, simply selecting the bookmark in the tab under the authentication form.
+Wenn wir in termscp von Dateiexplorern sprechen, meinen wir die Panels, die Sie nach dem Herstellen einer Verbindung mit dem Remote-Host sehen können.
+Diese Panels sind im Wesentlichen 3 (ja, tatsächlich drei):
 
-Bookmarks will be saved, if possible at:
+- Lokales Explorer-Panel: Es wird links auf Ihrem Bildschirm angezeigt und zeigt die aktuellen Verzeichniseinträge für den lokalen Host.
 
-- `$HOME/.config/termscp/` on Linux/BSD
-- `$HOME/Library/Application Support/termscp` on MacOs
-- `FOLDERID_RoamingAppData\termscp\` on Windows
+- Remote-Explorer-Panel: Es wird rechts auf Ihrem Bildschirm angezeigt und zeigt die aktuellen Verzeichniseinträge für den Remote-Host.
 
-For bookmarks only (this won't apply to recent hosts) it is also possible to save the password used to authenticate. The password is not saved by default and must be specified through the prompt when saving a new Bookmark.
-If you're concerned about the security of the password saved for your bookmarks, please read the [chapter below 👀](#are-my-passwords-safe-).
+- Suchergebnisse-Panel: Abhängig davon, wo Sie nach Dateien suchen (lokal/remote), wird es das lokale oder das Explorer-Panel ersetzen. Dieses Panel zeigt die Einträge an, die der von Ihnen durchgeführten Suchanfrage entsprechen.
+  Um das Panel zu wechseln, müssen Sie `<LINKS>` eingeben, um zum Remote-Explorer-Panel zu wechseln, und `<RECHTS>`, um zum lokalen Explorer-Panel zurückzukehren. Wann immer Sie sich im Suchergebnis-Panel befinden, müssen Sie `<ESC>` drücken, um das Panel zu verlassen und zum vorherigen Panel zurückzukehren.
 
-In order to create a new bookmark, just follow these steps:
+### Tastenkombinationen ⌨
 
-1. Type in the authentication form the parameters to connect to your remote server
-2. Press `<CTRL+S>`
-3. Type in the name you want to give to the bookmark
-4. Choose whether to remind the password or not
-5. Press `<ENTER>` to submit
+| Taste       | Befehl                                                                 | Erinnerung                                     |
+| ----------- | ---------------------------------------------------------------------- | ---------------------------------------------- |
+| <ESC>       | Vom Remote-Host trennen; zur Authentifizierungsseite zurückkehren      |                                                |
+| <BACKSPACE> | Zum vorherigen Verzeichnis im Stapel wechseln                          |                                                |
+| <TAB>       | Explorer-Tab wechseln                                                  |                                                |
+| <RECHTS>    | Zum Remote-Explorer-Tab wechseln                                       |                                                |
+| <LINKS>     | Zum lokalen Explorer-Tab wechseln                                      |                                                |
+| <OBEN>      | Im ausgewählten Eintrag nach oben wechseln                             |                                                |
+| <UNTEN>     | Im ausgewählten Eintrag nach unten wechseln                            |                                                |
+| <PGUP>      | Im ausgewählten Eintrag um 8 Zeilen nach oben wechseln                 |                                                |
+| <PGDOWN>    | Im ausgewählten Eintrag um 8 Zeilen nach unten wechseln                |                                                |
+| <ENTER>     | Verzeichnis betreten                                                   |                                                |
+| <SPACE>     | Ausgewählte Datei hochladen/herunterladen                              |                                                |
+| <BACKTAB>   | Zwischen Protokoll-Tab und Explorer wechseln                           |                                                |
+| <A>         | Versteckte Dateien ein-/ausblenden                                     | Alle                                           |
+| <B>         | Dateien sortieren nach                                                 | Bubblesort?                                    |
+| `<C         | F5>`                                                                   | Datei/Verzeichnis kopieren                     |
+| `<D         | F7>`                                                                   | Verzeichnis erstellen                          |
+| `<E         | F8                                                                     | DEL>`                                          |
+| <F>         | Nach Dateien suchen (Wildcards unterstützt)                            | Finden                                         |
+| <G>         | Zum angegebenen Pfad wechseln                                          | Gehe zu                                        |
+| `<H         | F1>`                                                                   | Hilfe anzeigen                                 |
+| <K>         | Symlink erstellen, der auf den aktuell ausgewählten Eintrag zeigt      | SymlinK                                        |
+| <I>         | Informationen über die ausgewählte Datei oder das Verzeichnis anzeigen | Info                                           |
+| <L>         | Inhalt des aktuellen Verzeichnisses neu laden / Auswahl löschen        | Liste                                          |
+| <M>         | Datei auswählen                                                        | Markieren                                      |
+| <N>         | Neue Datei mit angegebenem Namen erstellen                             | Neu                                            |
+| `<O         | F4>`                                                                   | Datei bearbeiten; siehe Texteditor             |
+| <P>         | Protokoll-Panel öffnen                                                 | Panel                                          |
+| `<Q         | F10>`                                                                  | termscp beenden                                |
+| `<R         | F6>`                                                                   | Datei umbenennen                               |
+| `<S         | F2>`                                                                   | Datei speichern unter...                       |
+| <T>         | Änderungen zum ausgewählten Pfad zum Remote-Host synchronisieren       | Track                                          |
+| <U>         | Zum übergeordneten Verzeichnis wechseln                                | Übergeordnet                                   |
+| `<V         | F3>`                                                                   | Datei mit Standardprogramm für Dateityp öffnen |
+| <W>         | Datei mit angegebenem Programm öffnen                                  | Mit                                            |
+| <X>         | Befehl ausführen                                                       | Ausführen                                      |
+| <Y>         | Synchronisiertes Durchsuchen umschalten                                | sYnc                                           |
+| <Z>         | Dateimodus ändern                                                      |                                                |
+| <CTRL+A>    | Alle Dateien auswählen                                                 |                                                |
+| <ALT+A>     | Alle Dateien abwählen                                                  |                                                |
+| <CTRL+C>    | Dateiübertragungsvorgang abbrechen                                     |                                                |
+| <CTRL+T>    | Alle synchronisierten Pfade anzeigen                                   | Track                                          |
 
-whenever you want to use the previously saved connection, just press `<TAB>` to navigate to the bookmarks list and load the bookmark parameters into the form pressing `<ENTER>`.
+### Mit mehreren Dateien arbeiten 🥷
 
-![Bookmarks](https://github.com/veeso/termscp/blob/main/assets/images/bookmarks.gif?raw=true)
+Sie können mit mehreren Dateien arbeiten, indem Sie `<M>` drücken, um die aktuelle Datei auszuwählen, oder `<CTRL+A>`, um alle Dateien im Arbeitsverzeichnis auszuwählen.
+Sobald eine Datei zur Auswahl markiert ist, wird sie mit einem `*` auf der linken Seite angezeigt.
+Bei der Arbeit mit der Auswahl werden nur die ausgewählten Dateien für Aktionen verarbeitet, während der aktuell hervorgehobene Eintrag ignoriert wird.
+Es ist auch möglich, mit mehreren Dateien im Suchergebnis-Panel zu arbeiten.
+Alle Aktionen sind verfügbar, wenn Sie mit mehreren Dateien arbeiten, aber beachten Sie, dass einige Aktionen etwas anders funktionieren. Schauen wir uns das genauer an:
 
-### Are my passwords Safe 😈
+- _Kopieren_: Wann immer Sie eine Datei kopieren, werden Sie aufgefordert, den Zielnamen einzugeben. Bei der Arbeit mit mehreren Dateien bezieht sich dieser Name auf das Zielverzeichnis, in dem alle diese Dateien kopiert werden.
 
-Sure 😉.
-As said before, bookmarks are saved in your configuration directory along with passwords. Passwords are obviously not plain text, they are encrypted with **AES-128**. Does this make them safe? Absolutely! (except for BSD and WSL users 😢)
+- _Umbenennen_: Dasselbe wie Kopieren, aber die Dateien werden dorthin verschoben.
 
-On **Windows**, **Linux** and **MacOS** the key used to encrypt passwords is stored, if possible (but should be), respectively in the *Windows Vault*, in the *system keyring* and into the *Keychain*. This is actually super-safe and is directly managed by your operating system.
+- _Speichern unter_: Dasselbe wie Kopieren, aber die Dateien werden dorthin geschrieben.
 
-❗ Please, notice that if you're a Linux user, you'd better to read the [chapter below 👀](#linux-keyring), because the keyring might not be enabled or supported on your system!
+### Synchronisiertes Durchsuchen ⏲️
 
-On *BSD* and *WSL*, on the other hand, the key used to encrypt your passwords is stored on your drive (at $HOME/.config/termscp). It is then, still possible to retrieve the key to decrypt passwords. Luckily, the location of the key guarantees your key can't be read by users different from yours, but yeah, I still wouldn't save the password for a server exposed on the internet 😉.
+Wenn aktiviert, ermöglicht das synchronisierte Durchsuchen, die Navigation zwischen den beiden Panels zu synchronisieren.
+Das bedeutet, dass, wann immer Sie das Arbeitsverzeichnis in einem Panel ändern, dieselbe Aktion im anderen Panel wiederholt wird. Wenn Sie das synchronisierte Durchsuchen aktivieren möchten, drücken Sie einfach `<Y>`; drücken Sie zweimal, um es zu deaktivieren. Während es aktiviert ist, wird der Status des synchronisierten Durchsuchens in der Statusleiste auf `ON` angezeigt.
 
-#### Linux Keyring
+### Öffnen und Öffnen mit 🚪
 
-We all love Linux thanks to the freedom it gives to the users. You can basically do anything you want as a Linux user, but this has also some cons, such as the fact that often there is no standard applications across different distributions. And this involves keyring too.
-This means that on Linux there might be no keyring installed on your system. Unfortunately the library we use to work with the key storage requires a service which exposes `org.freedesktop.secrets` on D-BUS and the worst fact is that there only two services exposing it.
+Die Befehle Öffnen und Öffnen mit werden von [open-rs](https://docs.rs/crate/open/1.7.0) unterstützt.
+Beim Öffnen von Dateien mit dem Befehl Anzeigen (`<V>`) wird die standardmäßige Anwendung für den Dateityp verwendet. Dazu wird der Standarddienst des Betriebssystems verwendet, stellen Sie also sicher, dass mindestens eine dieser Anwendungen auf Ihrem System installiert ist:
 
-- ❗ If you use GNOME as desktop environment (e.g. ubuntu users), you should already be fine, since keyring is already provided by `gnome-keyring` and everything should already be working.
-- ❗ For other desktop environment users there is a nice program you can use to get a keyring which is [KeepassXC](https://keepassxc.org/), which I use on my Manjaro installation (with KDE) and works fine. The only problem is that you have to setup it to be used along with termscp (but it's quite simple). To get started with KeepassXC read more [here](#keepassxc-setup-for-termscp).
-- ❗ What about you don't want to install any of these services? Well, there's no problem! **termscp will keep working as usual**, but it will save the key in a file, as it usually does for BSD and WSL.
+- **Windows** -Benutzer: Sie müssen sich keine Sorgen machen, da das Crate den `start`-Befehl verwendet.
 
-##### KeepassXC setup for termscp
+- **MacOS** -Benutzer: Sie müssen sich auch keine Sorgen machen, da das Crate `open` verwendet, das bereits auf Ihrem System installiert ist.
 
-Follow these steps in order to setup keepassXC for termscp:
+- **Linux** -Benutzer: Eines dieser Programme sollte installiert sein
 
-1. Install KeepassXC
-2. Go to "tools" > "settings" in toolbar
-3. Select "Secret service integration" and toggle "Enable KeepassXC freedesktop.org secret service integration"
-4. Create a database, if you don't have one yet: from toolbar "Database" > "New database"
-5. From toolbar: "Database" > "Database settings"
-6. Select "Secret service integration" and toggle "Expose entries under this group"
-7. Select the group in the list where you want the termscp secret to be kept. Remember that this group might be used by any other application to store secrets via DBUS.
+  - _xdg-open_
 
----
+  - _gio_
 
-## Configuration ⚙️
+  - _gnome-open_
 
-termscp supports some user defined parameters, which can be defined in the configuration.
-Underhood termscp has a TOML file and some other directories where all the parameters will be saved, but don't worry, you won't touch any of these files manually, since I made possible to configure termscp from its user interface entirely.
+  - _kde-open_
 
-termscp, like for bookmarks, just requires to have these paths accessible:
+- **WSL** -Benutzer: _wslview_ ist erforderlich, Sie müssen [wslu](https://github.com/wslutilities/wslu) installieren.
 
-- `$HOME/.config/termscp/` on Linux/BSD
-- `$HOME/Library/Application Support/termscp` on MacOs
-- `FOLDERID_RoamingAppData\termscp\` on Windows
-
-To access configuration, you just have to press `<CTRL+C>` from the home of termscp.
-
-These parameters can be changed:
-
-- **Text Editor**: the text editor to use. By default termscp will find the default editor for you; with this option you can force an editor to be used (e.g. `vim`). **Also GUI editors are supported**, unless they `nohup` from the parent process so if you ask: yes, you can use `notepad.exe`, and no: **Visual Studio Code doesn't work**.
-- **Default Protocol**: the default protocol is the default value for the file transfer protocol to be used in termscp. This applies for the login page and for the address CLI argument.
-- **Show Hidden Files**: select whether hidden files shall be displayed by default. You will be able to decide whether to show or not hidden files at runtime pressing `A` anyway.
-- **Check for updates**: if set to `yes`, termscp will fetch the Github API to check if there is a new version of termscp available.
-- **Prompt when replacing existing files?**: If set to `yes`, termscp will prompt for confirmation you whenever a file transfer would cause an existing file on target host to be replaced.
-- **Group Dirs**: select whether directories should be groupped or not in file explorers. If `Display first` is selected, directories will be sorted using the configured method but displayed before files, viceversa if `Display last` is selected.
-- **Remote File formatter syntax**: syntax to display file info for each file in the remote explorer. See [File explorer format](#file-explorer-format)
-- **Local File formatter syntax**: syntax to display file info for each file in the local explorer. See [File explorer format](#file-explorer-format)
-- **Enable notifications?**: If set to `Yes`, notifications will be displayed.
-- **Notifications: minimum transfer size**: if transfer size is greater or equal than the specified value, notifications for transfer will be displayed. The accepted values are in format `{UNSIGNED} B/KB/MB/GB/TB/PB`
-- **SSH configuration path**: Set SSH configuration file to use when connecting to a SCP/SFTP server. If unset (empty) no file will be used. You can specify a path starting with `~` to indicate the home path (e.g. `~/.ssh/config`). The parameters supported by termscp are specified [HERE](https://github.com/veeso/ssh2-config#exposed-attributes).
-
-### SSH Key Storage 🔐
-
-Along with configuration, termscp provides also an **essential** feature for **SFTP/SCP clients**: the SSH key storage.
-
-You can access the SSH key storage, from configuration moving to the `SSH Keys` tab, once there you can:
-
-- **Add a new key**: just press `<CTRL+N>` and you will be prompted to create a new key. Provide the hostname/ip address and the username associated to the key and finally a text editor will open up: paste the **PRIVATE** ssh key into the text editor, save and quit.
-- **Remove an existing key**: just press `<DEL>` or `<CTRL+E>` on the key you want to remove, to delete persistently the key from termscp.
-- **Edit an existing key**: just press `<ENTER>` on the key you want to edit, to change the private key.
-
-> Q: Wait, my private key is protected with password, can I use it?  
-> A: Of course you can. The password provided for authentication in termscp, is valid both for username/password authentication and for RSA key authentication.
-
-### File Explorer Format
-
-It is possible through configuration to define a custom format for the file explorer. This is possible both for local and remote host, so you can have two different syntax in use. These fields, with name `File formatter syntax (local)` and `File formatter syntax (remote)` will define how the file entries will be displayed in the file explorer.
-The syntax for the formatter is the following `{KEY1}... {KEY2:LENGTH}... {KEY3:LENGTH:EXTRA} {KEYn}...`.
-Each key in bracket will be replaced with the related attribute, while everything outside brackets will be left unchanged.
-
-- The key name is mandatory and must be one of the keys below
-- The length describes the length reserved to display the field. Static attributes doesn't support this (GROUP, PEX, SIZE, USER)
-- Extra is supported only by some parameters and is an additional options. See keys to check if extra is supported.
-
-These are the keys supported by the formatter:
-
-- `ATIME`: Last access time (with default syntax `%b %d %Y %H:%M`); Extra might be provided as the time syntax (e.g. `{ATIME:8:%H:%M}`)
-- `CTIME`: Creation time (with syntax `%b %d %Y %H:%M`); Extra might be provided as the time syntax (e.g. `{CTIME:8:%H:%M}`)
-- `GROUP`: Owner group
-- `MTIME`: Last change time (with syntax `%b %d %Y %H:%M`); Extra might be provided as the time syntax (e.g. `{MTIME:8:%H:%M}`)
-- `NAME`: File name (Elided if longer than LENGTH)
-- `PATH`: File absolute path (Elided if longer than LENGHT)
-- `PEX`: File permissions (UNIX format)
-- `SIZE`: File size (omitted for directories)
-- `SYMLINK`: Symlink (if any `-> {FILE_PATH}`)
-- `USER`: Owner user
-
-If left empty, the default formatter syntax will be used: `{NAME:24} {PEX} {USER} {SIZE} {MTIME:17:%b %d %Y %H:%M}`
+> F: Kann ich Remote-Dateien mit dem Befehl Anzeigen bearbeiten?
+> A: Nein, zumindest nicht direkt aus dem "Remote-Panel". Sie müssen es zuerst in ein lokales Verzeichnis herunterladen, da beim Öffnen einer Remote-Datei die Datei in ein temporäres Verzeichnis heruntergeladen wird. Es gibt jedoch keine Möglichkeit, einen Wächter für die Datei zu erstellen, um zu überprüfen, wann das Programm, mit dem Sie die Datei geöffnet haben, geschlossen wurde. termscp kann daher nicht wissen, wann Sie mit der Bearbeitung der Datei fertig sind.
 
 ---
 
-## Themes 🎨
+## Lesezeichen ⭐
 
-Termscp provides you with an awesome feature: the possibility to set the colors for several components in the application.
-If you want to customize termscp there are two available ways to do so:
+In termscp ist es möglich, bevorzugte Hosts zu speichern, die dann schnell aus dem Hauptlayout von termscp geladen werden können.
+termscp speichert auch die letzten 16 Hosts, zu denen Sie eine Verbindung hergestellt haben.
+Diese Funktion ermöglicht es Ihnen, alle Parameter, die für die Verbindung zu einem bestimmten Remote-Host erforderlich sind, einfach auszuwählen, indem Sie das Lesezeichen im Tab unter dem Authentifizierungsformular auswählen.
 
-- From the **configuration menu**
-- Importing a **theme file**
+Lesezeichen werden, wenn möglich, gespeichert unter:
 
-In order to create your own customization from termscp, all you have to do so is to enter the configuration from the auth activity, pressing `<CTRL+C>` and then `<TAB>` twice. You should have now moved to the `themes` panel.
+- `$HOME/.config/termscp/` auf Linux/BSD
 
-Here you can move with `<UP>` and `<DOWN>` to change the style you want to change, as shown in the gif below:
+- `$HOME/Library/Application Support/termscp` auf MacOS
 
-![Themes](https://github.com/veeso/termscp/blob/main/assets/images/themes.gif?raw=true)
+- `FOLDERID_RoamingAppData\termscp\` auf Windows
+  Für Lesezeichen (dies gilt nicht für zuletzt verwendete Hosts) ist es auch möglich, das Passwort zu speichern, das zur Authentifizierung verwendet wird. Das Passwort wird standardmäßig nicht gespeichert und muss beim Speichern eines neuen Lesezeichens über die Eingabeaufforderung angegeben werden.
+  Wenn Sie sich Sorgen um die Sicherheit des für Ihre Lesezeichen gespeicherten Passworts machen, lesen Sie bitte das [Kapitel unten 👀](https://chatgpt.com/c/d24fa52b-6f59-4fd7-9b40-d877c758c3de#sind-meine-passwoerter-sicher-) .
+  Um ein neues Lesezeichen zu erstellen, folgen Sie einfach diesen Schritten:
 
-termscp supports both the traditional explicit hex (`#rrggbb`) and rgb `rgb(r, g, b)` syntax to provide colors, but also **[css colors](https://www.w3schools.com/cssref/css_colors.asp)** (such as `crimson`) are accepted 😉. There is also a special keywork which is `Default`. Default means that the color used will be the default foreground or background color based on the situation (foreground for texts and lines, background for well, guess what).
+1. Geben Sie im Authentifizierungsformular die Parameter ein, um eine Verbindung zu Ihrem Remote-Server herzustellen
 
-As said before, you can also import theme files. You can take inspiration from or directly use one of the themes provided along with termscp, located in the `themes/` directory of this repository and import them running termscp as `termscp -t <theme_file>`. If everything was fine, it should tell you the theme has successfully been imported.
+2. Drücken Sie `<CTRL+S>`
 
-### My theme won't load 😱
+3. Geben Sie den Namen ein, den Sie dem Lesezeichen geben möchten
 
-This is probably due to a recent update which has broken the theme. Whenever I add a new key to themes, the saved theme won't load. To fix this issues there are two really quick-fix solutions:
+4. Wählen Sie, ob das Passwort gespeichert werden soll oder nicht
 
-1. Reload theme: whenever I release an update I will also patch the "official" themes, so you just have to download it from the repository again and re-import the theme via `-t` option
+5. Drücken Sie `<ENTER>`, um zu bestätigen
+   Wann immer Sie die zuvor gespeicherte Verbindung verwenden möchten, drücken Sie `<TAB>`, um zur Lesezeichenliste zu navigieren und die Lesezeichenparameter in das Formular zu laden, indem Sie `<ENTER>` drücken.![Lesezeichen](https://github.com/veeso/termscp/blob/main/assets/images/bookmarks.gif?raw=true)
 
-    ```sh
-    termscp -t <theme.toml>
-    ```
+### Sind meine Passwörter sicher 😈
 
-2. Fix your theme: If you're using a custom theme, then you can edit via `vim` and add the missing key. The theme is located at `$CONFIG_DIR/termscp/theme.toml` where `$CONFIG_DIR` is:
+Natürlich 😉.
+Wie bereits erwähnt, werden Lesezeichen in Ihrem Konfigurationsverzeichnis zusammen mit Passwörtern gespeichert. Passwörter sind natürlich nicht im Klartext, sie sind mit **AES-128** verschlüsselt. Macht das sie sicher? Absolut! (außer für BSD- und WSL-Benutzer 😢)Unter **Windows** , **Linux** und **MacOS** wird der Schlüssel, der zur Verschlüsselung der Passwörter verwendet wird, falls möglich (aber sollte sein), im _Windows Vault_, im _System-Schlüsselbund_ und im _Schlüsselbund_ gespeichert. Dies ist tatsächlich sehr sicher und wird direkt von Ihrem Betriebssystem verwaltet.❗ Bitte beachten Sie, dass Sie, wenn Sie ein Linux-Benutzer sind, das [Kapitel unten 👀](https://chatgpt.com/c/d24fa52b-6f59-4fd7-9b40-d877c758c3de#linux-schluesselbund) lesen sollten, da der Schlüsselbund auf Ihrem System möglicherweise nicht aktiviert oder unterstützt wird!Auf _BSD_ und _WSL_ hingegen wird der Schlüssel, der zur Verschlüsselung Ihrer Passwörter verwendet wird, auf Ihrer Festplatte gespeichert (unter $HOME/.config/termscp). Es ist daher immer noch möglich, den Schlüssel zum Entschlüsseln von Passwörtern abzurufen. Glücklicherweise garantiert der Speicherort des Schlüssels, dass Ihr Schlüssel nicht von anderen Benutzern gelesen werden kann, aber ja, ich würde das Passwort für einen im Internet exponierten Server trotzdem nicht speichern 😉.
 
-    - FreeBSD/GNU-Linux: `$HOME/.config/`
-    - MacOs: `$HOME/Library/Application Support`
-    - Windows: `%appdata%`
+#### Linux-Schlüsselbund
 
-    ❗ Missing keys are reported in the CHANGELOG under `BREAKING CHANGES` for the version you've just installed.
+Wir alle lieben Linux aufgrund der Freiheit, die es den Benutzern bietet. Sie können im Wesentlichen alles tun, was Sie als Linux-Benutzer möchten, aber das hat auch einige Nachteile, wie zum Beispiel die Tatsache, dass es oft keine Standardanwendungen über verschiedene Distributionen hinweg gibt. Und das betrifft auch den Schlüsselbund.
+Das bedeutet, dass unter Linux möglicherweise kein Schlüsselbund auf Ihrem System installiert ist. Leider erfordert die Bibliothek, die wir verwenden, um mit dem Schlüsselspeicher zu arbeiten, einen Dienst, der `org.freedesktop.secrets` auf D-BUS exponiert, und das Schlimmste daran ist, dass es nur zwei Dienste gibt, die dies tun.
 
-### Styles 💈
+- ❗ Wenn Sie GNOME als Desktop-Umgebung verwenden (z.B. Ubuntu-Benutzer), sollten Sie bereits in Ordnung sein, da der Schlüsselbund bereits von `gnome-keyring` bereitgestellt wird und alles bereits funktionieren sollte.
 
-You can find in the table below, the description for each style field.
-Please, notice that **styles won't apply to configuration page**, in order to make it always accessible in case you mess everything up
+- ❗ Für Benutzer anderer Desktop-Umgebungen gibt es ein schönes Programm, das Sie verwenden können, um einen Schlüsselbund zu erhalten, nämlich [KeepassXC](https://keepassxc.org/) , das ich auf meiner Manjaro-Installation (mit KDE) verwende und das gut funktioniert. Das einzige Problem ist, dass Sie es einrichten müssen, um es zusammen mit termscp zu verwenden (aber es ist ziemlich einfach). Um mit KeepassXC zu beginnen, lesen Sie mehr [hier](https://chatgpt.com/c/d24fa52b-6f59-4fd7-9b40-d877c758c3de#keepassxc-einrichtung-fuer-termscp) .
 
-#### Authentication page
+- ❗ Was ist, wenn Sie keinen dieser Dienste installieren möchten? Nun, kein Problem! **termscp wird weiterhin wie gewohnt funktionieren** , aber es wird den Schlüssel in einer Datei speichern, wie es normalerweise für BSD und WSL der Fall ist.
 
-| Key            | Description                              |
-|----------------|------------------------------------------|
-| auth_address   | Color of the input field for IP address  |
-| auth_bookmarks | Color of the bookmarks panel             |
-| auth_password  | Color of the input field for password    |
-| auth_port      | Color of the input field for port number |
-| auth_protocol  | Color of the radio group for protocol    |
-| auth_recents   | Color of the recents panel               |
-| auth_username  | Color of the input field for username    |
+##### KeepassXC-Einrichtung für termscp
 
-#### Transfer page
+Befolgen Sie diese Schritte, um KeepassXC für termscp einzurichten:
 
-| Key                                  | Description                                                               |
-|--------------------------------------|---------------------------------------------------------------------------|
-| transfer_local_explorer_background   | Background color of localhost explorer                                    |
-| transfer_local_explorer_foreground   | Foreground coloor of localhost explorer                                   |
-| transfer_local_explorer_highlighted  | Border and highlighted color for localhost explorer                       |
-| transfer_remote_explorer_background  | Background color of remote explorer                                       |
-| transfer_remote_explorer_foreground  | Foreground coloor of remote explorer                                      |
-| transfer_remote_explorer_highlighted | Border and highlighted color for remote explorer                          |
-| transfer_log_background              | Background color for log panel                                            |
-| transfer_log_window                  | Window color for log panel                                                |
-| transfer_progress_bar_partial        | Partial progress bar color                                                |
-| transfer_progress_bar_total          | Total progress bar color                                                  |
-| transfer_status_hidden               | Color for status bar "hidden" label                                       |
-| transfer_status_sorting              | Color for status bar "sorting" label; applies also to file sorting dialog |
-| transfer_status_sync_browsing        | Color for status bar "sync browsing" label                                |
+1. Installieren Sie KeepassXC
 
-#### Misc
+2. Gehen Sie in der Symbolleiste zu "Werkzeuge" > "Einstellungen"
 
-These styles applie to different part of the application.
+3. Wählen Sie "Integration des Geheimdienstes" und aktivieren Sie "KeepassXC freedesktop.org Geheimdienstintegration aktivieren"
 
-| Key               | Description                                 |
-|-------------------|---------------------------------------------|
-| misc_error_dialog | Color for error messages                    |
-| misc_info_dialog  | Color for info dialogs                      |
-| misc_input_dialog | Color for input dialogs (such as copy file) |
-| misc_keys         | Color of text for key strokes               |
-| misc_quit_dialog  | Color for quit dialogs                      |
-| misc_save_dialog  | Color for save dialogs                      |
-| misc_warn_dialog  | Color for warn dialogs                      |
+4. Erstellen Sie eine Datenbank, falls Sie noch keine haben: In der Symbolleiste "Datenbank" > "Neue Datenbank"
+
+5. In der Symbolleiste: "Datenbank" > "Datenbankeinstellungen"
+
+6. Wählen Sie "Integration des Geheimdienstes" und aktivieren Sie "Einträge unter dieser Gruppe anzeigen"
+
+7. Wählen Sie die Gruppe in der Liste aus, in der das termscp-Geheimnis aufbewahrt werden soll. Denken Sie daran, dass diese Gruppe von jeder anderen Anwendung verwendet werden könnte, um Geheimnisse über DBUS zu speichern.
 
 ---
 
-## Text Editor ✏
+## Konfiguration ⚙️
 
-termscp has, as you might have noticed, many features, one of these is the possibility to view and edit text file. It doesn't matter if the file is located on the local host or on the remote host, termscp provides the possibility to open a file in your favourite text editor.
-In case the file is located on remote host, the file will be first downloaded into your temporary file directory and then, **only** if changes were made to the file, re-uploaded to the remote host. termscp checks if you made changes to the file verifying the last modification time of the file.
+termscp unterstützt einige benutzerdefinierte Parameter, die in der Konfiguration definiert werden können.
+Intern verwendet termscp eine TOML-Datei und einige andere Verzeichnisse, in denen alle Parameter gespeichert werden, aber keine Sorge, Sie werden keine dieser Dateien manuell bearbeiten, da ich es möglich gemacht habe, termscp vollständig über die Benutzeroberfläche zu konfigurieren.
 
-Just a reminder: **you can edit only textual file**; binary files are not supported.
+termscp erfordert, wie für Lesezeichen, nur den Zugriff auf diese Pfade:
+
+- `$HOME/.config/termscp/` auf Linux/BSD
+
+- `$HOME/Library/Application Support/termscp` auf MacOS
+
+- `FOLDERID_RoamingAppData\termscp\` auf Windows
+  Um auf die Konfiguration zuzugreifen, müssen Sie nur `<CTRL+C>` von der Startseite von termscp drücken.
+  Diese Parameter können geändert werden:
+
+- **Texteditor** : Der zu verwendende Texteditor. Standardmäßig findet termscp den Standardeditor für Sie; mit dieser Option können Sie einen Editor zur Verwendung erzwingen (z.B. `vim`). **Auch GUI-Editoren werden unterstützt** , sofern sie sich nicht vom übergeordneten Prozess ablösen (`nohup`). Wenn Sie also fragen: Ja, Sie können `notepad.exe` verwenden, und nein: **Visual Studio Code funktioniert nicht** .
+
+- **Standardprotokoll** : Das Standardprotokoll ist der Standardwert für das in termscp zu verwendende Dateiübertragungsprotokoll. Dies gilt für die Anmeldeseite und für das CLI-Adressargument.
+
+- **Versteckte Dateien anzeigen** : Wählen Sie, ob versteckte Dateien standardmäßig angezeigt werden sollen. Sie können jederzeit zur Laufzeit entscheiden, ob versteckte Dateien angezeigt werden sollen, indem Sie `A` drücken.
+
+- **Auf Updates prüfen** : Wenn auf `Ja` gesetzt, ruft termscp die Github-API ab, um zu überprüfen, ob eine neue Version von termscp verfügbar ist.
+
+- **Aufforderung beim Ersetzen vorhandener Dateien?** : Wenn auf `Ja` gesetzt, fordert termscp Sie zur Bestätigung auf, wenn ein Dateiübertragungsvorgang dazu führt, dass eine vorhandene Datei auf dem Zielhost ersetzt wird.
+
+- **Verzeichnisse gruppieren** : Wählen Sie, ob Verzeichnisse in den Dateiexplorern gruppiert werden sollen. Wenn `Erste anzeigen` ausgewählt ist, werden Verzeichnisse mit der konfigurierten Methode sortiert, aber vor Dateien angezeigt, umgekehrt, wenn `Letzte anzeigen` ausgewählt ist.
+
+- **Remote-Dateiformatierer-Syntax** : Syntax zum Anzeigen von Dateiinformationen für jede Datei im Remote-Explorer. Siehe [Dateiexplorer-Format](https://chatgpt.com/c/d24fa52b-6f59-4fd7-9b40-d877c758c3de#dateiexplorer-format)
+
+- **Lokale Dateiformatierer-Syntax** : Syntax zum Anzeigen von Dateiinformationen für jede Datei im lokalen Explorer. Siehe [Dateiexplorer-Format](https://chatgpt.com/c/d24fa52b-6f59-4fd7-9b40-d877c758c3de#dateiexplorer-format)
+
+- **Benachrichtigungen aktivieren?** : Wenn auf `Ja` gesetzt, werden Benachrichtigungen angezeigt.
+
+- **Benachrichtigungen: Mindestgröße der Übertragung** : Wenn die Übertragungsgröße größer oder gleich dem angegebenen Wert ist, werden Benachrichtigungen für die Übertragung angezeigt. Die akzeptierten Werte sind im Format `{UNSIGNED} B/KB/MB/GB/TB/PB`
+
+- **SSH-Konfigurationspfad** : Legen Sie die SSH-Konfigurationsdatei fest, die beim Herstellen einer Verbindung zu einem SCP/SFTP-Server verwendet werden soll. Wenn nicht festgelegt (leer), wird keine Datei verwendet. Sie können einen Pfad angeben, der mit `~` beginnt, um den Home-Pfad anzugeben (z.B. `~/.ssh/config`). Die von termscp unterstützten Parameter sind [HIER](https://github.com/veeso/ssh2-config#exposed-attributes) angegeben.
+
+### SSH-Schlüssel-Speicherung 🔐
+
+Zusammen mit der Konfiguration bietet termscp auch eine **wesentliche** Funktion für **SFTP/SCP-Clients** : die SSH-Schlüssel-Speicherung.Sie können auf die SSH-Schlüssel-Speicherung zugreifen, indem Sie zur Konfiguration wechseln und zur Registerkarte `SSH-Schlüssel` navigieren. Dort können Sie:
+
+- **Einen neuen Schlüssel hinzufügen** : Drücken Sie einfach `<CTRL+N>` und Sie werden aufgefordert, einen neuen Schlüssel zu erstellen. Geben Sie den Hostnamen/IP-Adresse und den Benutzernamen ein, der mit dem Schlüssel verknüpft ist, und schließlich öffnet sich ein Texteditor: Fügen Sie den **PRIVATEN** SSH-Schlüssel in den Texteditor ein, speichern und beenden Sie.
+
+- **Einen vorhandenen Schlüssel entfernen** : Drücken Sie einfach `<DEL>` oder `<CTRL+E>` auf den Schlüssel, den Sie entfernen möchten, um den Schlüssel dauerhaft aus termscp zu löschen.
+
+- **Einen vorhandenen Schlüssel bearbeiten** : Drücken Sie einfach `<ENTER>` auf den Schlüssel, den Sie bearbeiten möchten, um den privaten Schlüssel zu ändern.
+
+> F: Moment, mein privater Schlüssel ist mit einem Passwort geschützt, kann ich ihn verwenden?
+> A: Natürlich können Sie das. Das zur Authentifizierung in termscp angegebene Passwort ist sowohl für die Benutzername/Passwort-Authentifizierung als auch für die RSA-Schlüssel-Authentifizierung gültig.
+
+### Dateiexplorer-Format
+
+Es ist möglich, über die Konfiguration ein benutzerdefiniertes Format für den Dateiexplorer zu definieren. Dies ist sowohl für den lokalen als auch für den Remote-Host möglich, sodass Sie zwei verschiedene Syntaxen verwenden können. Diese Felder mit den Namen `Dateiformatierer-Syntax (lokal)` und `Dateiformatierer-Syntax (remote)` definieren, wie die Dateieinträge im Dateiexplorer angezeigt werden.
+Die Syntax für den Formatierer lautet `{SCHLÜSSEL1}... {SCHLÜSSEL2:LÄNGE}... {SCHLÜSSEL3:LÄNGE:EXTRA} {SCHLÜSSELn}...`.
+Jeder in Klammern stehende Schlüssel wird durch das zugehörige Attribut ersetzt, während alles außerhalb der Klammern unverändert bleibt.
+
+- Der Schlüsselname ist obligatorisch und muss einer der untenstehenden Schlüssel sein
+
+- Die Länge beschreibt die Länge, die für die Anzeige des Feldes reserviert ist. Statische Attribute unterstützen dies nicht (GRUPPE, PEX, GRÖSSE, BENUTZER)
+
+- Extra wird nur von einigen Parametern unterstützt und ist eine zusätzliche Option. Siehe Schlüssel, um zu überprüfen, ob Extra unterstützt wird.
+
+Dies sind die vom Formatierer unterstützten Schlüssel:
+
+- `ATIME`: Letzte Zugriffszeit (mit Standardsyntax `%b %d %Y %H:%M`); Extra kann als Zeitsyntax angegeben werden (z.B. `{ATIME:8:%H:%M}`)
+
+- `CTIME`: Erstellungszeit (mit Syntax `%b %d %Y %H:%M`); Extra kann als Zeitsyntax angegeben werden (z.B. `{CTIME:8:%H:%M}`)
+
+- `GRUPPE`: Besitzergruppe
+
+- `MTIME`: Letzte Änderungszeit (mit Syntax `%b %d %Y %H:%M`); Extra kann als Zeitsyntax angegeben werden (z.B. `{MTIME:8:%H:%M}`)
+
+- `NAME`: Dateiname (gekürzt, wenn länger als LÄNGE)
+
+- `PFAD`: Absoluter Dateipfad (gekürzt, wenn länger als LÄNGE)
+
+- `PEX`: Dateiberechtigungen (UNIX-Format)
+
+- `GRÖSSE`: Dateigröße (ausgenommen für Verzeichnisse)
+
+- `SYMLINK`: Symlink (falls vorhanden `-> {DATEIPFAD}`)
+
+- `BENUTZER`: Besitzerbenutzer
+  Wenn das Feld leer gelassen wird, wird die Standardsyntax des Formatierers verwendet: `{NAME:24} {PEX} {USER} {SIZE} {MTIME:17:%b %d %Y %H:%M}`
 
 ---
 
-## Logging 🩺
+## Themen 🎨
 
-termscp writes a log file for each session, which is written at
+Termscp bietet Ihnen eine großartige Funktion: die Möglichkeit, die Farben für mehrere Komponenten der Anwendung festzulegen.
+Wenn Sie termscp anpassen möchten, gibt es zwei Möglichkeiten, dies zu tun:
 
-- `$HOME/.cache/termscp/termscp.log` on Linux/BSD
-- `$HOME/Library/Caches/termscp/termscp.log` on MacOs
-- `FOLDERID_LocalAppData\termscp\termscp.log` on Windows
+- Über das **Konfigurationsmenü**
 
-the log won't be rotated, but will just be truncated after each launch of termscp, so if you want to report an issue and you want to attach your log file, keep in mind to save the log file in a safe place before using termscp again.
-The logging by default reports in *INFO* level, so it is not very verbose.
+- Importieren einer **Thema-Datei**
+  Um Ihre eigene Anpassung in termscp zu erstellen, müssen Sie nur die Konfiguration von der Authentifizierungsaktivität aus aufrufen, indem Sie `<CTRL+C>` und dann zweimal `<TAB>` drücken. Sie sollten jetzt zum `themen` Panel gewechselt haben.Hier können Sie mit `<OBEN>` und `<UNTEN>` den Stil ändern, den Sie ändern möchten, wie im folgenden GIF gezeigt:![Themen](https://github.com/veeso/termscp/blob/main/assets/images/themes.gif?raw=true)
+  termscp unterstützt sowohl die traditionelle explizite Hex-Syntax (`#rrggbb`) als auch die RGB-Syntax `rgb(r, g, b)` zur Angabe von Farben, aber auch \*\*
 
-If you want to submit an issue, please, if you can, reproduce the issue with the level set to `TRACE`, to do so, launch termscp with
-the `-D` CLI option.
+````markdown
+# Benutzerhandbuch 🎓
 
-I know you might have some questions regarding log files, so I made a kind of a Q/A:
+- [Benutzerhandbuch 🎓](#benutzerhandbuch-)
+  - [Verwendung ❓](#verwendung-)
+    - [Adressargument 🌎](#adressargument-)
+      - [AWS S3 Adressargument](#aws-s3-adressargument)
+      - [SMB Adressargument](#smb-adressargument)
+      - [Wie das Passwort bereitgestellt werden kann 🔐](#wie-das-passwort-bereitgestellt-werden-kann-)
+    - [Unterbefehle](#unterbefehle)
+      - [Ein Thema importieren](#ein-thema-importieren)
+      - [Neueste Version installieren](#neueste-version-installieren)
+  - [S3-Verbindungsparameter](#s3-verbindungsparameter)
+    - [S3-Anmeldeinformationen 🦊](#s3-anmeldeinformationen-)
+  - [Dateiexplorer 📂](#dateiexplorer-)
+    - [Tastenkombinationen ⌨](#tastenkombinationen-)
+    - [Mit mehreren Dateien arbeiten 🥷](#mit-mehreren-dateien-arbeiten-)
+    - [Synchronisiertes Durchsuchen ⏲️](#synchronisiertes-durchsuchen-️)
+    - [Öffnen und Öffnen mit 🚪](#öffnen-und-öffnen-mit-)
+  - [Lesezeichen ⭐](#lesezeichen-)
+    - [Sind meine Passwörter sicher 😈](#sind-meine-passwoerter-sicher-)
+      - [Linux-Schlüsselbund](#linux-schluesselbund)
+        - [KeepassXC-Einrichtung für termscp](#keepassxc-einrichtung-fuer-termscp)
+  - [Konfiguration ⚙️](#konfiguration-️)
+    - [SSH-Schlüssel-Speicherung 🔐](#ssh-schluessel-speicherung-)
+    - [Dateiexplorer-Format](#dateiexplorer-format)
+  - [Themen 🎨](#themen-)
+    - [Mein Thema wird nicht geladen 😱](#mein-thema-wird-nicht-geladen-)
+    - [Stile 💈](#stile-)
+      - [Authentifizierungsseite](#authentifizierungsseite)
+      - [Übertragungsseite](#uebertragungsseite)
+      - [Sonstiges](#sonstiges)
+  - [Texteditor ✏](#texteditor-)
+  - [Protokollierung 🩺](#protokollierung-)
+  - [Benachrichtigungen 📫](#benachrichtigungen-)
+  - [Dateiwächter 🔭](#dateiwaechter-)
 
-> I don't want logging, can I turn it off?
+> ❗ Ich benötige Hilfe bei der Übersetzung dieses Handbuchs ins Deutsche. Wenn Sie zur Übersetzung beitragen möchten, öffnen Sie bitte einen PR 🙏
 
-Yes, you can. Just start termscp with `-q or --quiet` option. You can alias termscp to make it persistent. Remember that logging is used to diagnose issues, so since behind every open source project, there should always be this kind of mutual help, keeping log files might be your way to support the project 😉. I don't want you to feel guilty, but just to say.
+## Verwendung ❓
 
-> Is logging safe?
+termscp kann mit den folgenden Optionen gestartet werden:
 
-If you're concerned about security, the log file doesn't contain any plain password, so don't worry and exposes the same information the sibling file `bookmarks` reports.
+`termscp [Optionen]... [protokoll://benutzer@adresse:port:arbeitsverzeichnis] [lokales-arbeitsverzeichnis]`
 
-## Notifications 📫
+ODER
 
-Termscp will send Desktop notifications for these kind of events:
+`termscp [Optionen]... -b [Lesezeichen-Name] [lokales-arbeitsverzeichnis]`
 
-- on **Transfer completed**: The notification will be sent once a transfer has been successfully completed.
-  - ❗ The notification will be displayed only if the transfer total size is at least the specified `Notifications: minimum transfer size` in the configuration.
-- on **Transfer failed**: The notification will be sent once a transfer has failed due to an error.
-  - ❗ The notification will be displayed only if the transfer total size is at least the specified `Notifications: minimum transfer size` in the configuration.
-- on **Update available**: Whenever a new version of termscp is available, a notification will be displayed.
-- on **Update installed**: Whenever a new version of termscp has been installed, a notification will be displayed.
-- on **Update failed**: Whenever the installation of the update fails, a notification will be displayed.
+- `-P, --password <Passwort>` wenn Adresse angegeben wird, ist das Passwort dieses Argument
+- `-b, --address-as-bookmark` löst das Adressargument als Lesezeichenname auf
+- `-q, --quiet` Protokollierung deaktivieren
+- `-v, --version` Versionsinformationen anzeigen
+- `-h, --help` Hilfeseite anzeigen
 
-❗ If you prefer to keep notifications turned off, you can just enter setup and set `Enable notifications?` to `No` 😉.  
-❗ If you want to change the minimum transfer size to display notifications, you can change the value in the configuration with key `Notifications: minimum transfer size` and set it to whatever suits better for you 🙂.
+termscp kann in drei verschiedenen Modi gestartet werden. Wenn keine zusätzlichen Argumente angegeben werden, zeigt termscp das Authentifizierungsformular an, in dem der Benutzer die erforderlichen Parameter zum Herstellen einer Verbindung mit dem Remote-Peer angeben kann.
 
-## File watcher 🔭
+Alternativ kann der Benutzer eine Adresse als Argument angeben, um das Authentifizierungsformular zu überspringen und direkt die Verbindung zum Remote-Server zu starten.
 
-The file watcher allows you to setup a list of paths to synchronize with the remote hosts.
-This means that whenever a change on the local file system will be detected on the synchronized path, the change will be automatically reported to the configured remote host path, within 5 seconds.
+Wenn das Adressargument oder der Lesezeichenname angegeben wird, können Sie auch das Startarbeitsverzeichnis für den lokalen Host angeben.
 
-You can set as many paths to synchronize as you prefer:
+### Adressargument 🌎
 
-1. Put the cursor on the local explorer on the directory/file you want to keep synchronized
-2. Go to the directory you want the changes to be reported to on the remote host
-3. Press `<T>`
-4. Answer `<YES>` to the radio popup
+Das Adressargument hat die folgende Syntax:
 
-To unwatch, just press `<T>` on the local synchronized path (or to any of its subfolders)
-OR you can just press `<CTRL+T>` and press `<ENTER>` to the synchronized path you want to unwatch.
+```txt
+[protokoll://][benutzername@]<adresse>[:port][:arbeitsverzeichnis]
+```
+````
 
-These changes will be reported to the remote host:
+Sehen wir uns einige Beispiele für diese besondere Syntax an, da sie sehr komfortabel ist und Sie diese wahrscheinlich anstelle der anderen verwenden werden...
 
-- New files, file changes
-- File moved/renamed
-- File removed/unlinked
+- Verbindung mit dem Standardprotokoll herstellen (_in der Konfiguration definiert_) zu 192.168.1.31, Port, wenn nicht angegeben, ist Standard für das ausgewählte Protokoll (in diesem Fall hängt es von Ihrer Konfiguration ab); Benutzername ist der aktuelle Benutzername
 
-> ❗ The watcher works only in one direction (local > remote). It is NOT possible to synchronize automatically the changes from remote to local.
+```sh
+termscp 192.168.1.31
+```
+
+- Verbindung mit dem Standardprotokoll herstellen (_in der Konfiguration definiert_) zu 192.168.1.31; Benutzername ist `root`
+
+```sh
+termscp root@192.168.1.31
+```
+
+- Verbindung mit scp zu 192.168.1.31, Port ist 4022; Benutzername ist `omar`
+
+```sh
+termscp scp://omar@192.168.1.31:4022
+```
+
+- Verbindung mit scp zu 192.168.1.31, Port ist 4022; Benutzername ist `omar`. Sie starten im Verzeichnis `/tmp`
+
+```sh
+termscp scp://omar@192.168.1.31:4022:/tmp
+```
+
+#### AWS S3 Adressargument
+
+AWS S3 hat aus offensichtlichen Gründen eine andere Syntax für CLI-Adressargumente, aber ich habe es geschafft, sie so ähnlich wie möglich an das generische Adressargument anzupassen:
+
+```txt
+s3://<bucket-name>@<region>[:profile][:/arbeitsverzeichnis]
+```
+
+z.B.
+
+```txt
+s3://buckethead@eu-central-1:default:/assets
+```
+
+#### SMB Adressargument
+
+SMB hat eine andere Syntax für CLI-Adressargumente, die je nach System unterschiedlich ist:
+**Windows** -Syntax:
+
+```txt
+\\[benutzername@]<server-name>\<freigabe>[\pfad\...]
+```
+
+**Andere Systeme** -Syntax:
+
+```txt
+smb://[benutzername@]<server-name>[:port]/<freigabe>[/pfad/.../]
+```
+
+#### Wie das Passwort bereitgestellt werden kann 🔐
+
+Sie haben wahrscheinlich bemerkt, dass beim Bereitstellen der Adresse als Argument keine Möglichkeit besteht, das Passwort anzugeben.
+Das Passwort kann im Wesentlichen auf drei Arten bereitgestellt werden, wenn das Adressargument angegeben wird:
+
+- `-P, --password` Option: Verwenden Sie einfach diese CLI-Option und geben Sie das Passwort an. Ich rate dringend von dieser Methode ab, da sie sehr unsicher ist (da Sie das Passwort möglicherweise in der Shell-Historie behalten)
+
+- Über `sshpass`: Sie können das Passwort über `sshpass` bereitstellen, z.B. `sshpass -f ~/.ssh/topsecret.key termscp cvisintin@192.168.1.31`
+
+- Sie werden danach gefragt: Wenn Sie keine der vorherigen Methoden verwenden, werden Sie nach dem Passwort gefragt, wie es bei den klassischen Tools wie `scp`, `ssh` usw. der Fall ist.
+
+### Unterbefehle
+
+#### Ein Thema importieren
+
+Führen Sie termscp als `termscp theme <thema-datei>` aus
+
+#### Neueste Version installieren
+
+Führen Sie termscp als `termscp update` aus
+
+---
+
+## S3-Verbindungsparameter
+
+Diese Parameter sind erforderlich, um eine Verbindung zu AWS S3 und anderen S3-kompatiblen Servern herzustellen:
+
+- AWS S3:
+
+  - **Bucket-Name**
+
+  - **Region**
+
+  - _Profil_ (wenn nicht angegeben: "default")
+
+  - _Zugriffsschlüssel_ (sofern nicht öffentlich)
+
+  - _Geheimer Zugriffsschlüssel_ (sofern nicht öffentlich)
+
+  - _Sicherheitstoken_ (falls erforderlich)
+
+  - _Sitzungstoken_ (falls erforderlich)
+
+  - neuer Pfadstil: **NEIN**
+
+- Andere S3-Endpunkte:
+
+  - **Bucket-Name**
+
+  - **Endpunkt**
+
+  - _Zugriffsschlüssel_ (sofern nicht öffentlich)
+
+  - _Geheimer Zugriffsschlüssel_ (sofern nicht öffentlich)
+
+  - neuer Pfadstil: **JA**
+
+### S3-Anmeldeinformationen 🦊
+
+Um eine Verbindung zu einem AWS S3-Bucket herzustellen, müssen Sie offensichtlich einige Anmeldeinformationen angeben.
+Es gibt im Wesentlichen drei Möglichkeiten, dies zu erreichen.
+Dies sind die Möglichkeiten, wie Sie die Anmeldeinformationen für S3 bereitstellen können:
+
+1. Authentifizierungsformular:
+
+1. Sie können den `access_key` (sollte obligatorisch sein), den `secret_access_key` (sollte obligatorisch sein), `security_token` und den `session_token` angeben.
+
+1. Wenn Sie die S3-Verbindung als Lesezeichen speichern, werden diese Anmeldeinformationen als verschlüsselter AES-256/BASE64-String in Ihrer Lesezeichen-Datei gespeichert (außer dem Sicherheitstoken und dem Sitzungstoken, die als temporäre Anmeldeinformationen gedacht sind).
+
+1. Verwenden Sie Ihre Anmeldeinformationsdatei: Konfigurieren Sie einfach die AWS-CLI über `aws configure` und Ihre Anmeldeinformationen sollten bereits unter `~/.aws/credentials` gespeichert sein. Falls Sie ein anderes Profil als `default` verwenden, geben Sie es im Feld "Profil" im Authentifizierungsformular an.
+
+1. **Umgebungsvariablen** : Sie können Ihre Anmeldeinformationen jederzeit als Umgebungsvariablen angeben. Beachten Sie, dass diese Anmeldeinformationen **immer die im Anmeldeinformationsdatei** angegebenen Anmeldeinformationen überschreiben. So konfigurieren Sie die Umgebung:
+   Diese sollten immer obligatorisch sein:
+
+- `AWS_ACCESS_KEY_ID`: AWS-Zugriffsschlüssel-ID (beginnt normalerweise mit `AKIA...`)
+
+- `AWS_SECRET_ACCESS_KEY`: der geheime Zugriffsschlüssel
+
+Falls Sie eine stärkere Sicherheit konfiguriert haben, benötigen Sie möglicherweise auch diese:
+
+- `AWS_SECURITY_TOKEN`: Sicherheitstoken
+
+- `AWS_SESSION_TOKEN`: Sitzungstoken
+  ⚠️ Ihre Anmeldeinformationen sind sicher: termscp manipuliert diese Werte nicht direkt! Ihre Anmeldeinformationen werden direkt von der **S3** -Bibliothek verwendet.
+  Falls Sie Bedenken hinsichtlich der Sicherheit haben, kontaktieren Sie bitte den Bibliotheksautor auf [Github](https://github.com/durch/rust-s3) ⚠️
+
+---
+
+## Dateiexplorer 📂
+
+Wenn wir in termscp von Dateiexplorern sprechen, meinen wir die Panels, die Sie nach dem Herstellen einer Verbindung mit dem Remote-Host sehen können.
+Diese Panels sind im Wesentlichen 3 (ja, tatsächlich drei):
+
+- Lokales Explorer-Panel: Es wird links auf Ihrem Bildschirm angezeigt und zeigt die aktuellen Verzeichniseinträge für den lokalen Host.
+
+- Remote-Explorer-Panel: Es wird rechts auf Ihrem Bildschirm angezeigt und zeigt die aktuellen Verzeichniseinträge für den Remote-Host.
+
+- Suchergebnisse-Panel: Abhängig davon, wo Sie nach Dateien suchen (lokal/remote), wird es das lokale oder das Explorer-Panel ersetzen. Dieses Panel zeigt die Einträge an, die der von Ihnen durchgeführten Suchanfrage entsprechen.
+  Um das Panel zu wechseln, müssen Sie `<LINKS>` eingeben, um zum Remote-Explorer-Panel zu wechseln, und `<RECHTS>`, um zum lokalen Explorer-Panel zurückzukehren. Wann immer Sie sich im Suchergebnis-Panel befinden, müssen Sie `<ESC>` drücken, um das Panel zu verlassen und zum vorherigen Panel zurückzukehren.
+
+### Tastenkombinationen ⌨
+
+| Taste       | Befehl                                                                 | Erinnerung                                     |
+| ----------- | ---------------------------------------------------------------------- | ---------------------------------------------- |
+| <ESC>       | Vom Remote-Host trennen; zur Authentifizierungsseite zurückkehren      |                                                |
+| <BACKSPACE> | Zum vorherigen Verzeichnis im Stapel wechseln                          |                                                |
+| <TAB>       | Explorer-Tab wechseln                                                  |                                                |
+| <RECHTS>    | Zum Remote-Explorer-Tab wechseln                                       |                                                |
+| <LINKS>     | Zum lokalen Explorer-Tab wechseln                                      |                                                |
+| <OBEN>      | Im ausgewählten Eintrag nach oben wechseln                             |                                                |
+| <UNTEN>     | Im ausgewählten Eintrag nach unten wechseln                            |                                                |
+| <PGUP>      | Im ausgewählten Eintrag um 8 Zeilen nach oben wechseln                 |                                                |
+| <PGDOWN>    | Im ausgewählten Eintrag um 8 Zeilen nach unten wechseln                |                                                |
+| <ENTER>     | Verzeichnis betreten                                                   |                                                |
+| <SPACE>     | Ausgewählte Datei hochladen/herunterladen                              |                                                |
+| <BACKTAB>   | Zwischen Protokoll-Tab und Explorer wechseln                           |                                                |
+| <A>         | Versteckte Dateien ein-/ausblenden                                     | Alle                                           |
+| <B>         | Dateien sortieren nach                                                 | Bubblesort?                                    |
+| `<C         | F5>`                                                                   | Datei/Verzeichnis kopieren                     |
+| `<D         | F7>`                                                                   | Verzeichnis erstellen                          |
+| `<E         | F8                                                                     | DEL>`                                          |
+| <F>         | Nach Dateien suchen (Wildcards unterstützt)                            | Finden                                         |
+| <G>         | Zum angegebenen Pfad wechseln                                          | Gehe zu                                        |
+| `<H         | F1>`                                                                   | Hilfe anzeigen                                 |
+| <K>         | Symlink erstellen, der auf den aktuell ausgewählten Eintrag zeigt      | SymlinK                                        |
+| <I>         | Informationen über die ausgewählte Datei oder das Verzeichnis anzeigen | Info                                           |
+| <L>         | Inhalt des aktuellen Verzeichnisses neu laden / Auswahl löschen        | Liste                                          |
+| <M>         | Datei auswählen                                                        | Markieren                                      |
+| <N>         | Neue Datei mit angegebenem Namen erstellen                             | Neu                                            |
+| `<O         | F4>`                                                                   | Datei bearbeiten; siehe Texteditor             |
+| <P>         | Protokoll-Panel öffnen                                                 | Panel                                          |
+| `<Q         | F10>`                                                                  | termscp beenden                                |
+| `<R         | F6>`                                                                   | Datei umbenennen                               |
+| `<S         | F2>`                                                                   | Datei speichern unter...                       |
+| <T>         | Änderungen zum ausgewählten Pfad zum Remote-Host synchronisieren       | Track                                          |
+| <U>         | Zum übergeordneten Verzeichnis wechseln                                | Übergeordnet                                   |
+| `<V         | F3>`                                                                   | Datei mit Standardprogramm für Dateityp öffnen |
+| <W>         | Datei mit angegebenem Programm öffnen                                  | Mit                                            |
+| <X>         | Befehl ausführen                                                       | Ausführen                                      |
+| <Y>         | Synchronisiertes Durchsuchen umschalten                                | sYnc                                           |
+| <Z>         | Dateimodus ändern                                                      |                                                |
+| <CTRL+A>    | Alle Dateien auswählen                                                 |                                                |
+| <ALT+A>     | Alle Dateien abwählen                                                  |                                                |
+| <CTRL+C>    | Dateiübertragungsvorgang abbrechen                                     |                                                |
+| <CTRL+T>    | Alle synchronisierten Pfade anzeigen                                   | Track                                          |
+
+### Mit mehreren Dateien arbeiten 🥷
+
+Sie können mit mehreren Dateien arbeiten, indem Sie `<M>` drücken, um die aktuelle Datei auszuwählen, oder `<CTRL+A>`, um alle Dateien im Arbeitsverzeichnis auszuwählen.
+Sobald eine Datei zur Auswahl markiert ist, wird sie mit einem `*` auf der linken Seite angezeigt.
+Bei der Arbeit mit der Auswahl werden nur die ausgewählten Dateien für Aktionen verarbeitet, während der aktuell hervorgehobene Eintrag ignoriert wird.
+Es ist auch möglich, mit mehreren Dateien im Suchergebnis-Panel zu arbeiten.
+Alle Aktionen sind verfügbar, wenn Sie mit mehreren Dateien arbeiten, aber beachten Sie, dass einige Aktionen etwas anders funktionieren. Schauen wir uns das genauer an:
+
+- _Kopieren_: Wann immer Sie eine Datei kopieren, werden Sie aufgefordert, den Zielnamen einzugeben. Bei der Arbeit mit mehreren Dateien bezieht sich dieser Name auf das Zielverzeichnis, in dem alle diese Dateien kopiert werden.
+
+- _Umbenennen_: Dasselbe wie Kopieren, aber die Dateien werden dorthin verschoben.
+
+- _Speichern unter_: Dasselbe wie Kopieren, aber die Dateien werden dorthin geschrieben.
+
+### Synchronisiertes Durchsuchen ⏲️
+
+Wenn aktiviert, ermöglicht das synchronisierte Durchsuchen, die Navigation zwischen den beiden Panels zu synchronisieren.
+Das bedeutet, dass, wann immer Sie das Arbeitsverzeichnis in einem Panel ändern, dieselbe Aktion im anderen Panel wiederholt wird. Wenn Sie das synchronisierte Durchsuchen aktivieren möchten, drücken Sie einfach `<Y>`; drücken Sie zweimal, um es zu deaktivieren. Während es aktiviert ist, wird der Status des synchronisierten Durchsuchens in der Statusleiste auf `ON` angezeigt.
+
+### Öffnen und Öffnen mit 🚪
+
+Die Befehle Öffnen und Öffnen mit werden von [open-rs](https://docs.rs/crate/open/1.7.0) unterstützt.
+Beim Öffnen von Dateien mit dem Befehl Anzeigen (`<V>`) wird die standardmäßige Anwendung für den Dateityp verwendet. Dazu wird der Standarddienst des Betriebssystems verwendet, stellen Sie also sicher, dass mindestens eine dieser Anwendungen auf Ihrem System installiert ist:
+
+- **Windows** -Benutzer: Sie müssen sich keine Sorgen machen, da das Crate den `start`-Befehl verwendet.
+
+- **MacOS** -Benutzer: Sie müssen sich auch keine Sorgen machen, da das Crate `open` verwendet, das bereits auf Ihrem System installiert ist.
+
+- **Linux** -Benutzer: Eines dieser Programme sollte installiert sein
+
+  - _xdg-open_
+
+  - _gio_
+
+  - _gnome-open_
+
+  - _kde-open_
+
+- **WSL** -Benutzer: _wslview_ ist erforderlich, Sie müssen [wslu](https://github.com/wslutilities/wslu) installieren.
+
+> F: Kann ich Remote-Dateien mit dem Befehl Anzeigen bearbeiten?
+> A: Nein, zumindest nicht direkt aus dem "Remote-Panel". Sie müssen es zuerst in ein lokales Verzeichnis herunterladen, da beim Öffnen einer Remote-Datei die Datei in ein temporäres Verzeichnis heruntergeladen wird. Es gibt jedoch keine Möglichkeit, einen Wächter für die Datei zu erstellen, um zu überprüfen, wann das Programm, mit dem Sie die Datei geöffnet haben, geschlossen wurde. termscp kann daher nicht wissen, wann Sie mit der Bearbeitung der Datei fertig sind.
+
+---
+
+## Lesezeichen ⭐
+
+In termscp ist es möglich, bevorzugte Hosts zu speichern, die dann schnell aus dem Hauptlayout von termscp geladen werden können.
+termscp speichert auch die letzten 16 Hosts, zu denen Sie eine Verbindung hergestellt haben.
+Diese Funktion ermöglicht es Ihnen, alle Parameter, die für die Verbindung zu einem bestimmten Remote-Host erforderlich sind, einfach auszuwählen, indem Sie das Lesezeichen im Tab unter dem Authentifizierungsformular auswählen.
+
+Lesezeichen werden, wenn möglich, gespeichert unter:
+
+- `$HOME/.config/termscp/` auf Linux/BSD
+
+- `$HOME/Library/Application Support/termscp` auf MacOS
+
+- `FOLDERID_RoamingAppData\termscp\` auf Windows
+  Für Lesezeichen (dies gilt nicht für zuletzt verwendete Hosts) ist es auch möglich, das Passwort zu speichern, das zur Authentifizierung verwendet wird. Das Passwort wird standardmäßig nicht gespeichert und muss beim Speichern eines neuen Lesezeichens über die Eingabeaufforderung angegeben werden.
+  Wenn Sie sich Sorgen um die Sicherheit des für Ihre Lesezeichen gespeicherten Passworts machen, lesen Sie bitte das [Kapitel unten 👀](https://chatgpt.com/c/d24fa52b-6f59-4fd7-9b40-d877c758c3de#sind-meine-passwoerter-sicher-) .
+  Um ein neues Lesezeichen zu erstellen, folgen Sie einfach diesen Schritten:
+
+1. Geben Sie im Authentifizierungsformular die Parameter ein, um eine Verbindung zu Ihrem Remote-Server herzustellen
+
+2. Drücken Sie `<CTRL+S>`
+
+3. Geben Sie den Namen ein, den Sie dem Lesezeichen geben möchten
+
+4. Wählen Sie, ob das Passwort gespeichert werden soll oder nicht
+
+5. Drücken Sie `<ENTER>`, um zu bestätigen
+   Wann immer Sie die zuvor gespeicherte Verbindung verwenden möchten, drücken Sie `<TAB>`, um zur Lesezeichenliste zu navigieren und die Lesezeichenparameter in das Formular zu laden, indem Sie `<ENTER>` drücken.![Lesezeichen](https://github.com/veeso/termscp/blob/main/assets/images/bookmarks.gif?raw=true)
+
+### Sind meine Passwörter sicher 😈
+
+Natürlich 😉.
+Wie bereits erwähnt, werden Lesezeichen in Ihrem Konfigurationsverzeichnis zusammen mit Passwörtern gespeichert. Passwörter sind natürlich nicht im Klartext, sie sind mit **AES-128** verschlüsselt. Macht das sie sicher? Absolut! (außer für BSD- und WSL-Benutzer 😢)Unter **Windows** , **Linux** und **MacOS** wird der Schlüssel, der zur Verschlüsselung der Passwörter verwendet wird, falls möglich (aber sollte sein), im _Windows Vault_, im _System-Schlüsselbund_ und im _Schlüsselbund_ gespeichert. Dies ist tatsächlich sehr sicher und wird direkt von Ihrem Betriebssystem verwaltet.❗ Bitte beachten Sie, dass Sie, wenn Sie ein Linux-Benutzer sind, das [Kapitel unten 👀](https://chatgpt.com/c/d24fa52b-6f59-4fd7-9b40-d877c758c3de#linux-schluesselbund) lesen sollten, da der Schlüsselbund auf Ihrem System möglicherweise nicht aktiviert oder unterstützt wird!Auf _BSD_ und _WSL_ hingegen wird der Schlüssel, der zur Verschlüsselung Ihrer Passwörter verwendet wird, auf Ihrer Festplatte gespeichert (unter $HOME/.config/termscp). Es ist daher immer noch möglich, den Schlüssel zum Entschlüsseln von Passwörtern abzurufen. Glücklicherweise garantiert der Speicherort des Schlüssels, dass Ihr Schlüssel nicht von anderen Benutzern gelesen werden kann, aber ja, ich würde das Passwort für einen im Internet exponierten Server trotzdem nicht speichern 😉.
+
+#### Linux-Schlüsselbund
+
+Wir alle lieben Linux aufgrund der Freiheit, die es den Benutzern bietet. Sie können im Wesentlichen alles tun, was Sie als Linux-Benutzer möchten, aber das hat auch einige Nachteile, wie zum Beispiel die Tatsache, dass es oft keine Standardanwendungen über verschiedene Distributionen hinweg gibt. Und das betrifft auch den Schlüsselbund.
+Das bedeutet, dass unter Linux möglicherweise kein Schlüsselbund auf Ihrem System installiert ist. Leider erfordert die Bibliothek, die wir verwenden, um mit dem Schlüsselspeicher zu arbeiten, einen Dienst, der `org.freedesktop.secrets` auf D-BUS exponiert, und das Schlimmste daran ist, dass es nur zwei Dienste gibt, die dies tun.
+
+- ❗ Wenn Sie GNOME als Desktop-Umgebung verwenden (z.B. Ubuntu-Benutzer), sollten Sie bereits in Ordnung sein, da der Schlüsselbund bereits von `gnome-keyring` bereitgestellt wird und alles bereits funktionieren sollte.
+
+- ❗ Für Benutzer anderer Desktop-Umgebungen gibt es ein schönes Programm, das Sie verwenden können, um einen Schlüsselbund zu erhalten, nämlich [KeepassXC](https://keepassxc.org/) , das ich auf meiner Manjaro-Installation (mit KDE) verwende und das gut funktioniert. Das einzige Problem ist, dass Sie es einrichten müssen, um es zusammen mit termscp zu verwenden (aber es ist ziemlich einfach). Um mit KeepassXC zu beginnen, lesen Sie mehr [hier](https://chatgpt.com/c/d24fa52b-6f59-4fd7-9b40-d877c758c3de#keepassxc-einrichtung-fuer-termscp) .
+
+- ❗ Was ist, wenn Sie keinen dieser Dienste installieren möchten? Nun, kein Problem! **termscp wird weiterhin wie gewohnt funktionieren** , aber es wird den Schlüssel in einer Datei speichern, wie es normalerweise für BSD und WSL der Fall ist.
+
+##### KeepassXC-Einrichtung für termscp
+
+Befolgen Sie diese Schritte, um KeepassXC für termscp einzurichten:
+
+1. Installieren Sie KeepassXC
+
+2. Gehen Sie in der Symbolleiste zu "Werkzeuge" > "Einstellungen"
+
+3. Wählen Sie "Integration des Geheimdienstes" und aktivieren Sie "KeepassXC freedesktop.org Geheimdienstintegration aktivieren"
+
+4. Erstellen Sie eine Datenbank, falls Sie noch keine haben: In der Symbolleiste "Datenbank" > "Neue Datenbank"
+
+5. In der Symbolleiste: "Datenbank" > "Datenbankeinstellungen"
+
+6. Wählen Sie "Integration des Geheimdienstes" und aktivieren Sie "Einträge unter dieser Gruppe anzeigen"
+
+7. Wählen Sie die Gruppe in der Liste aus, in der das termscp-Geheimnis aufbewahrt werden soll. Denken Sie daran, dass diese Gruppe von jeder anderen Anwendung verwendet werden könnte, um Geheimnisse über DBUS zu speichern.
+
+---
+
+## Konfiguration ⚙️
+
+termscp unterstützt einige benutzerdefinierte Parameter, die in der Konfiguration definiert werden können.
+Intern verwendet termscp eine TOML-Datei und einige andere Verzeichnisse, in denen alle Parameter gespeichert werden, aber keine Sorge, Sie werden keine dieser Dateien manuell bearbeiten, da ich es möglich gemacht habe, termscp vollständig über die Benutzeroberfläche zu konfigurieren.
+
+termscp erfordert, wie für Lesezeichen, nur den Zugriff auf diese Pfade:
+
+- `$HOME/.config/termscp/` auf Linux/BSD
+
+- `$HOME/Library/Application Support/termscp` auf MacOS
+
+- `FOLDERID_RoamingAppData\termscp\` auf Windows
+  Um auf die Konfiguration zuzugreifen, müssen Sie nur `<CTRL+C>` von der Startseite von termscp drücken.
+  Diese Parameter können geändert werden:
+
+- **Texteditor** : Der zu verwendende Texteditor. Standardmäßig findet termscp den Standardeditor für Sie; mit dieser Option können Sie einen Editor zur Verwendung erzwingen (z.B. `vim`). **Auch GUI-Editoren werden unterstützt** , sofern sie sich nicht vom übergeordneten Prozess ablösen (`nohup`). Wenn Sie also fragen: Ja, Sie können `notepad.exe` verwenden, und nein: **Visual Studio Code funktioniert nicht** .
+
+- **Standardprotokoll** : Das Standardprotokoll ist der Standardwert für das in termscp zu verwendende Dateiübertragungsprotokoll. Dies gilt für die Anmeldeseite und für das CLI-Adressargument.
+
+- **Versteckte Dateien anzeigen** : Wählen Sie, ob versteckte Dateien standardmäßig angezeigt werden sollen. Sie können jederzeit zur Laufzeit entscheiden, ob versteckte Dateien angezeigt werden sollen, indem Sie `A` drücken.
+
+- **Auf Updates prüfen** : Wenn auf `Ja` gesetzt, ruft termscp die Github-API ab, um zu überprüfen, ob eine neue Version von termscp verfügbar ist.
+
+- **Aufforderung beim Ersetzen vorhandener Dateien?** : Wenn auf `Ja` gesetzt, fordert termscp Sie zur Bestätigung auf, wenn ein Dateiübertragungsvorgang dazu führt, dass eine vorhandene Datei auf dem Zielhost ersetzt wird.
+
+- **Verzeichnisse gruppieren** : Wählen Sie, ob Verzeichnisse in den Dateiexplorern gruppiert werden sollen. Wenn `Erste anzeigen` ausgewählt ist, werden Verzeichnisse mit der konfigurierten Methode sortiert, aber vor Dateien angezeigt, umgekehrt, wenn `Letzte anzeigen` ausgewählt ist.
+
+- **Remote-Dateiformatierer-Syntax** : Syntax zum Anzeigen von Dateiinformationen für jede Datei im Remote-Explorer. Siehe [Dateiexplorer-Format](https://chatgpt.com/c/d24fa52b-6f59-4fd7-9b40-d877c758c3de#dateiexplorer-format)
+
+- **Lokale Dateiformatierer-Syntax** : Syntax zum Anzeigen von Dateiinformationen für jede Datei im lokalen Explorer. Siehe [Dateiexplorer-Format](https://chatgpt.com/c/d24fa52b-6f59-4fd7-9b40-d877c758c3de#dateiexplorer-format)
+
+- **Benachrichtigungen aktivieren?** : Wenn auf `Ja` gesetzt, werden Benachrichtigungen angezeigt.
+
+- **Benachrichtigungen: Mindestgröße der Übertragung** : Wenn die Übertragungsgröße größer oder gleich dem angegebenen Wert ist, werden Benachrichtigungen für die Übertragung angezeigt. Die akzeptierten Werte sind im Format `{UNSIGNED} B/KB/MB/GB/TB/PB`
+
+- **SSH-Konfigurationspfad** : Legen Sie die SSH-Konfigurationsdatei fest, die beim Herstellen einer Verbindung zu einem SCP/SFTP-Server verwendet werden soll. Wenn nicht festgelegt (leer), wird keine Datei verwendet. Sie können einen Pfad angeben, der mit `~` beginnt, um den Home-Pfad anzugeben (z.B. `~/.ssh/config`). Die von termscp unterstützten Parameter sind [HIER](https://github.com/veeso/ssh2-config#exposed-attributes) angegeben.
+
+### SSH-Schlüssel-Speicherung 🔐
+
+Zusammen mit der Konfiguration bietet termscp auch eine **wesentliche** Funktion für **SFTP/SCP-Clients** : die SSH-Schlüssel-Speicherung.Sie können auf die SSH-Schlüssel-Speicherung zugreifen, indem Sie zur Konfiguration wechseln und zur Registerkarte `SSH-Schlüssel` navigieren. Dort können Sie:
+
+- **Einen neuen Schlüssel hinzufügen** : Drücken Sie einfach `<CTRL+N>` und Sie werden aufgefordert, einen neuen Schlüssel zu erstellen. Geben Sie den Hostnamen/IP-Adresse und den Benutzernamen ein, der mit dem Schlüssel verknüpft ist, und schließlich öffnet sich ein Texteditor: Fügen Sie den **PRIVATEN** SSH-Schlüssel in den Texteditor ein, speichern und beenden Sie.
+
+- **Einen vorhandenen Schlüssel entfernen** : Drücken Sie einfach `<DEL>` oder `<CTRL+E>` auf den Schlüssel, den Sie entfernen möchten, um den Schlüssel dauerhaft aus termscp zu löschen.
+
+- **Einen vorhandenen Schlüssel bearbeiten** : Drücken Sie einfach `<ENTER>` auf den Schlüssel, den Sie bearbeiten möchten, um den privaten Schlüssel zu ändern.
+
+> F: Moment, mein privater Schlüssel ist mit einem Passwort geschützt, kann ich ihn verwenden?
+> A: Natürlich können Sie das. Das zur Authentifizierung in termscp angegebene Passwort ist sowohl für die Benutzername/Passwort-Authentifizierung als auch für die RSA-Schlüssel-Authentifizierung gültig.
+
+### Dateiexplorer-Format
+
+Es ist möglich, über die Konfiguration ein benutzerdefiniertes Format für den Dateiexplorer zu definieren. Dies ist sowohl für den lokalen als auch für den Remote-Host möglich, sodass Sie zwei verschiedene Syntaxen verwenden können. Diese Felder mit den Namen `Dateiformatierer-Syntax (lokal)` und `Dateiformatierer-Syntax (remote)` definieren, wie die Dateieinträge im Dateiexplorer angezeigt werden.
+Die Syntax für den Formatierer lautet `{SCHLÜSSEL1}... {SCHLÜSSEL2:LÄNGE}... {SCHLÜSSEL3:LÄNGE:EXTRA} {SCHLÜSSELn}...`.
+Jeder in Klammern stehende Schlüssel wird durch das zugehörige Attribut ersetzt, während alles außerhalb der Klammern unverändert bleibt.
+
+- Der Schlüsselname ist obligatorisch und muss einer der untenstehenden Schlüssel sein
+
+- Die Länge beschreibt die Länge, die für die Anzeige des Feldes reserviert ist. Statische Attribute unterstützen dies nicht (GRUPPE, PEX, GRÖSSE, BENUTZER)
+
+- Extra wird nur von einigen Parametern unterstützt und ist eine zusätzliche Option. Siehe Schlüssel, um zu überprüfen, ob Extra unterstützt wird.
+
+Dies sind die vom Formatierer unterstützten Schlüssel:
+
+- `ATIME`: Letzte Zugriffszeit (mit Standardsyntax `%b %d %Y %H:%M`); Extra kann als Zeitsyntax angegeben werden (z.B. `{ATIME:8:%H:%M}`)
+
+- `CTIME`: Erstellungszeit (mit Syntax `%b %d %Y %H:%M`); Extra kann als Zeitsyntax angegeben werden (z.B. `{CTIME:8:%H:%M}`)
+
+- `GRUPPE`: Besitzergruppe
+
+- `MTIME`: Letzte Änderungszeit (mit Syntax `%b %d %Y %H:%M`); Extra kann als Zeitsyntax angegeben werden (z.B. `{MTIME:8:%H:%M}`)
+
+- `NAME`: Dateiname (gekürzt, wenn länger als LÄNGE)
+
+- `PFAD`: Absoluter Dateipfad (gekürzt, wenn länger als LÄNGE)
+
+- `PEX`: Dateiberechtigungen (UNIX-Format)
+
+- `GRÖSSE`: Dateigröße (ausgenommen für Verzeichnisse)
+
+- `SYMLINK`: Symlink (falls vorhanden `-> {DATEIPFAD}`)
+
+- `BENUTZER`: Besitzerbenutzer
+  Wenn das Feld leer gelassen wird, wird die Standardsyntax des Formatierers verwendet: `{NAME:24} {PEX} {USER} {SIZE} {MTIME:17:%b %d %Y %H:%M}`
+
+---
+
+## Themen 🎨
+
+Termscp bietet Ihnen eine großartige Funktion: die Möglichkeit, die Farben für mehrere Komponenten der Anwendung festzulegen.
+Wenn Sie termscp anpassen möchten, gibt es zwei Möglichkeiten, dies zu tun:
+
+- Über das **Konfigurationsmenü**
+
+- Importieren einer **Thema-Datei**
+  Um Ihre eigene Anpassung in termscp zu erstellen, müssen Sie nur die Konfiguration von der Authentifizierungsaktivität aus aufrufen, indem Sie `<CTRL+C>` und dann zweimal `<TAB>` drücken. Sie sollten jetzt zum `themen` Panel gewechselt haben.Hier können Sie mit `<OBEN>` und `<UNTEN>` den Stil ändern, den Sie ändern möchten, wie im folgenden GIF gezeigt:![Themen](https://github.com/veeso/termscp/blob/main/assets/images/themes.gif?raw=true)
+  termscp unterstützt sowohl die traditionelle explizite Hex-Syntax (`#rrggbb`) als auch die RGB-Syntax `rgb(r, g, b)` zur Angabe von Farben, aber auch [CSS-Farben](https://www.w3schools.com/cssref/css_colors.asp) \*\* (wie `crimson`) werden akzeptiert 😉. Es gibt auch ein spezielles Schlüsselwort, das `Default` lautet. Default bedeutet, dass die verwendete Farbe die Standard-Vordergrund- oder Hintergrundfarbe basierend auf der Situation ist (Vordergrund für Texte und Linien, Hintergrund für, nun, raten Sie mal).Wie bereits erwähnt, können Sie auch Thema-Dateien importieren. Sie können Inspiration aus einem der zusammen mit termscp bereitgestellten Themen ziehen oder diese direkt verwenden, die sich im `themes/` Verzeichnis dieses Repositorys befinden und sie importieren, indem Sie termscp als `termscp -t <thema_datei>` ausführen. Wenn alles in Ordnung war, sollte angezeigt werden, dass das Thema erfolgreich importiert wurde.
+
+### Mein Thema wird nicht geladen 😱
+
+Dies liegt wahrscheinlich an einem kürzlichen Update, das das Thema beschädigt hat. Wann immer ich einen neuen Schlüssel zu den Themen hinzufüge, wird das gespeicherte Thema nicht geladen. Um dieses Problem zu beheben, gibt es zwei schnelle Lösungen:
+
+1. Thema neu laden: Wann immer ich ein Update veröffentliche, werde ich auch die "offiziellen" Themen patchen, sodass Sie es einfach aus dem Repository erneut herunterladen und das Thema erneut über die Option `-t` importieren müssen
+
+```sh
+termscp -t <thema.toml>
+```
+
+2. Ihr Thema reparieren: Wenn Sie ein benutzerdefiniertes Thema verwenden, können Sie es über `vim` bearbeiten und den fehlenden Schlüssel hinzufügen. Das Thema befindet sich unter `$CONFIG_DIR/termscp/theme.toml`, wobei `$CONFIG_DIR`:
+
+- FreeBSD/GNU-Linux: `$HOME/.config/`
+
+- MacOs: `$HOME/Library/Application Support`
+
+- Windows: `%appdata%`
+  ❗ Fehlende Schlüssel werden im CHANGELOG unter `BREAKING CHANGES` für die gerade installierte Version gemeldet.
+
+### Stile 💈
+
+In der folgenden Tabelle finden Sie die Beschreibung für jedes Stilfeld.
+Bitte beachten Sie, dass **Stile nicht auf die Konfigurationsseite angewendet werden** , um sicherzustellen, dass sie immer zugänglich bleibt, falls Sie alles durcheinander bringen.
+
+#### Authentifizierungsseite
+
+| Schlüssel      | Beschreibung                                 |
+| -------------- | -------------------------------------------- |
+| auth_address   | Farbe des Eingabefelds für die IP-Adresse    |
+| auth_bookmarks | Farbe des Lesezeichen-Panels                 |
+| auth_password  | Farbe des Eingabefelds für das Passwort      |
+| auth_port      | Farbe des Eingabefelds für die Portnummer    |
+| auth_protocol  | Farbe der Radio-Gruppe für das Protokoll     |
+| auth_recents   | Farbe des letzten Panels                     |
+| auth_username  | Farbe des Eingabefelds für den Benutzernamen |
+
+#### Übertragungsseite
+
+| Schlüssel                            | Beschreibung                                                                          |
+| ------------------------------------ | ------------------------------------------------------------------------------------- |
+| transfer_local_explorer_background   | Hintergrundfarbe des lokalen Explorers                                                |
+| transfer_local_explorer_foreground   | Vordergrundfarbe des lokalen Explorers                                                |
+| transfer_local_explorer_highlighted  | Rahmen- und Hervorhebungsfarbe für den lokalen Explorer                               |
+| transfer_remote_explorer_background  | Hintergrundfarbe des Remote-Explorers                                                 |
+| transfer_remote_explorer_foreground  | Vordergrundfarbe des Remote-Explorers                                                 |
+| transfer_remote_explorer_highlighted | Rahmen- und Hervorhebungsfarbe für den Remote-Explorer                                |
+| transfer_log_background              | Hintergrundfarbe für das Protokoll-Panel                                              |
+| transfer_log_window                  | Fensterfarbe für das Protokoll-Panel                                                  |
+| transfer_progress_bar_partial        | Farbe der teilweisen Fortschrittsanzeige                                              |
+| transfer_progress_bar_total          | Farbe der Gesamten Fortschrittsanzeige                                                |
+| transfer_status_hidden               | Farbe für den Statusleisten-Eintrag "versteckt"                                       |
+| transfer_status_sorting              | Farbe für den Statusleisten-Eintrag "sortieren"; gilt auch für das Dateisortierdialog |
+| transfer_status_sync_browsing        | Farbe für den Statusleisten-Eintrag "synchronisiertes Durchsuchen"                    |
+
+#### Sonstiges
+
+Diese Stile gelten für verschiedene Teile der Anwendung.
+| Schlüssel | Beschreibung |
+| --- | --- |
+| misc_error_dialog | Farbe für Fehlermeldungen |
+| misc_info_dialog | Farbe für Info-Dialoge |
+| misc_input_dialog | Farbe für Eingabe-Dialoge (z.B. Datei kopieren) |
+| misc_keys | Farbe des Textes für Tastenkombinationen |
+| misc_quit_dialog | Farbe für Beenden-Dialoge |
+| misc_save_dialog | Farbe für Speichern-Dialoge |
+| misc_warn_dialog | Farbe für Warn-Dialoge |
+
+---
+
+## Texteditor ✏
+
+termscp hat, wie Sie vielleicht bemerkt haben, viele Funktionen, eine davon ist die Möglichkeit, Textdateien anzuzeigen und zu bearbeiten. Es spielt keine Rolle, ob sich die Datei auf dem lokalen Host oder dem Remote-Host befindet, termscp bietet die Möglichkeit, eine Datei in Ihrem bevorzugten Texteditor zu öffnen.
+Wenn sich die Datei auf dem Remote-Host befindet, wird die Datei zuerst in Ihr temporäres Verzeichnis heruntergeladen und dann, **nur** wenn Änderungen an der Datei vorgenommen wurden, wieder auf den Remote-Host hochgeladen. termscp überprüft, ob Sie Änderungen an der Datei vorgenommen haben, indem es die letzte Änderungszeit der Datei überprüft.Zur Erinnerung: **Sie können nur Textdateien bearbeiten** ; Binärdateien werden nicht unterstützt.
+
+---
+
+## Protokollierung 🩺
+
+termscp schreibt eine Protokolldatei für jede Sitzung, die unter
+
+- `$HOME/.cache/termscp/termscp.log` auf Linux/BSD
+
+- `$HOME/Library/Caches/termscp/termscp.log` auf MacOS
+
+- `FOLDERID_LocalAppData\termscp\termscp.log` auf Windows
+  Die Protokolldatei wird nicht rotiert, sondern nach jedem Start von termscp einfach gekürzt, daher beachten Sie, dass Sie die Protokolldatei an einem sicheren Ort speichern müssen, bevor Sie termscp erneut verwenden, wenn Sie ein Problem melden und Ihre Protokolldatei anhängen möchten.
+  Die Protokollierung meldet standardmäßig auf _INFO_-Ebene, sodass sie nicht sehr ausführlich ist.Wenn Sie ein Problem melden möchten, reproduzieren Sie bitte, wenn möglich, das Problem mit auf `TRACE` eingestellter Ebene. Starten Sie dazu termscp mit
+  der `-D` CLI-Option.
+  Ich weiß, dass Sie möglicherweise einige Fragen zu Protokolldateien haben, daher habe ich eine Art FAQ erstellt:
+
+> Ich möchte keine Protokollierung, kann ich sie ausschalten?Ja, das können Sie. Starten Sie einfach termscp mit der Option `-q oder --quiet`. Sie können termscp aliasen, um es dauerhaft zu machen. Denken Sie daran, dass die Protokollierung verwendet wird, um Probleme zu diagnostizieren, daher könnte es Ihr Weg sein, das Projekt zu unterstützen, indem Sie Protokolldateien behalten 😉. Ich möchte Ihnen kein schlechtes Gewissen einreden, sondern nur sagen.
+> Ist die Protokollierung sicher?Wenn Sie sich Sorgen um die Sicherheit machen, enthält die Protokolldatei keine Klartext-Passwörter, also keine Sorge und sie gibt dieselben Informationen weiter, die die Lesezeichendatei `bookmarks` enthält.
+
+## Benachrichtigungen 📫
+
+termscp sendet Desktop-Benachrichtigungen für folgende Ereignisse:
+
+- bei **Übertragung abgeschlossen** : Die Benachrichtigung wird gesendet, sobald eine Übertragung erfolgreich abgeschlossen wurde.
+
+  - ❗ Die Benachrichtigung wird nur angezeigt, wenn die Gesamtgröße der Übertragung mindestens die in der Konfiguration angegebene `Benachrichtigungen: Mindestgröße der Übertragung` beträgt.
+
+- bei **Übertragung fehlgeschlagen** : Die Benachrichtigung wird gesendet, sobald eine Übertragung aufgrund eines Fehlers fehlgeschlagen ist.
+
+  - ❗ Die Benachrichtigung wird nur angezeigt, wenn die Gesamtgröße der Übertragung mindestens die in der Konfiguration angegebene `Benachrichtigungen: Mindestgröße der Übertragung` beträgt.
+
+- bei **Update verfügbar** : Wann immer eine neue Version von termscp verfügbar ist, wird eine Benachrichtigung angezeigt.
+
+- bei **Update installiert** : Wann immer eine neue Version von termscp installiert wurde, wird eine Benachrichtigung angezeigt.
+
+- bei **Update fehlgeschlagen** : Wann immer die Installation des Updates fehlschlägt, wird eine Benachrichtigung angezeigt.
+  ❗ Wenn Sie es vorziehen, die Benachrichtigungen ausgeschaltet zu lassen, können Sie einfach das Setup aufrufen und `Benachrichtigungen aktivieren?` auf `Nein` setzen 😉.
+  ❗ Wenn Sie die Mindestgröße der Übertragung ändern möchten, um Benachrichtigungen anzuzeigen, können Sie den Wert in der Konfiguration mit dem Schlüssel `Benachrichtigungen: Mindestgröße der Übertragung` ändern und auf das einstellen, was für Sie am besten geeignet ist 🙂.
+
+## Dateiwächter 🔭
+
+Der Dateiwächter ermöglicht es Ihnen, eine Liste von Pfaden einzurichten, die mit den Remote-Hosts synchronisiert werden sollen.
+Dies bedeutet, dass wann immer eine Änderung im lokalen Dateisystem im synchronisierten Pfad erkannt wird, die Änderung automatisch innerhalb von 5 Sekunden an den konfigurierten Remote-Host-Pfad gemeldet wird.
+
+Sie können so viele Pfade synchronisieren, wie Sie möchten:
+
+1. Setzen Sie den Cursor im lokalen Explorer auf das Verzeichnis/die Datei, die Sie synchronisieren möchten
+
+2. Gehen Sie zum Verzeichnis, zu dem die Änderungen auf dem Remote-Host gemeldet werden sollen
+
+3. Drücken Sie `<T>`
+
+4. Antworten Sie `<JA>` auf das Radiopopup
+   Um die Überwachung zu deaktivieren, drücken Sie einfach `<T>` auf dem lokalen synchronisierten Pfad (oder einem seiner Unterordner)
+   ODER Sie können einfach `<CTRL+T>` drücken und `<ENTER>` auf den synchronisierten Pfad, den Sie nicht mehr überwachen möchten.
+   Diese Änderungen werden an den Remote-Host gemeldet:
+
+- Neue Dateien, Dateiänderungen
+
+- Datei verschoben/umbenannt
+
+- Datei entfernt/gelöscht
+
+> ❗ Der Wächter arbeitet nur in eine Richtung (lokal > remote). Es ist NICHT möglich, die Änderungen automatisch von remote nach lokal zu synchronisieren.
