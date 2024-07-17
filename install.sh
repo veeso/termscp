@@ -12,8 +12,6 @@ TERMSCP_VERSION="0.13.0"
 GITHUB_URL="https://github.com/veeso/termscp/releases/download/v${TERMSCP_VERSION}"
 DEB_URL_AMD64="${GITHUB_URL}/termscp_${TERMSCP_VERSION}_amd64.deb"
 DEB_URL_AARCH64="${GITHUB_URL}/termscp_${TERMSCP_VERSION}_arm64.deb"
-RPM_URL_AMD64="${GITHUB_URL}/termscp-${TERMSCP_VERSION}-1.x86_64.rpm"
-RPM_URL_AARCH64="${GITHUB_URL}/termscp-${TERMSCP_VERSION}-1.aarch64.rpm"
 
 PATH="$PATH:/usr/sbin"
 
@@ -37,8 +35,6 @@ set_termscp_version() {
     GITHUB_URL="https://github.com/veeso/termscp/releases/download/v${TERMSCP_VERSION}"
     DEB_URL_AMD64="${GITHUB_URL}/termscp_${TERMSCP_VERSION}_amd64.deb"
     DEB_URL_AARCH64="${GITHUB_URL}/termscp_${TERMSCP_VERSION}_arm64.deb"
-    RPM_URL_AMD64="${GITHUB_URL}/termscp-${TERMSCP_VERSION}-1.x86_64.rpm"
-    RPM_URL_AARCH64="${GITHUB_URL}/termscp-${TERMSCP_VERSION}-1.aarch64.rpm"
 }
 
 info() {
@@ -261,29 +257,6 @@ install_on_linux() {
         fi
         info "$msg"
         $sudo dpkg -i "${archive}"
-        rm -f ${archive}
-    elif has rpm; then
-        case "${ARCH}" in
-            x86_64) RPM_URL="$RPM_URL_AMD64" ;;
-            aarch64) RPM_URL="$RPM_URL_AARCH64" ;;
-            *) try_with_cargo "we don't distribute packages for ${ARCH} at the moment" && return $? ;;
-        esac
-        info "Detected rpm on your system"
-        info "Installing ${GREEN}termscp${NO_COLOR} via RPM package"
-        archive=$(get_tmpfile "rpm")
-        download "${archive}" "${RPM_URL}"
-        info "Downloaded rpm package to ${archive}"
-        if test_writeable "/usr/bin"; then
-            sudo=""
-            msg="Installing ${GREEN}termscp${NO_COLOR}, please wait…"
-        else
-            warn "Root permissions are required to install ${GREEN}termscp${NO_COLOR}…"
-            elevate_priv
-            sudo="sudo"
-            msg="Installing ${GREEN}termscp${NO_COLOR} as root, please wait…"
-        fi
-        info "$msg"
-        $sudo rpm -U "${archive}"
         rm -f ${archive}
     elif has brew; then
         install_with_brew

@@ -21,7 +21,6 @@ fi
 
 # names
 ARM64_DEB_NAME="termscp-arm64_deb"
-ARM64_RPM_NAME="termscp-arm64_rpm"
 
 docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
 
@@ -49,14 +48,5 @@ tar cvzf termscp-v${VERSION}-aarch64-unknown-linux-gnu.tar.gz termscp
 echo "Sha256 (homebrew aarch64): $(sha256sum termscp-v${VERSION}-aarch64-unknown-linux-gnu.tar.gz)"
 rm termscp
 cd -
-# Build aarch64_centos7
-cd aarch64_centos7/
-docker buildx build --platform linux/arm64 $CACHE --build-arg branch=${BRANCH} --tag $ARM64_RPM_NAME .
-cd -
-mkdir -p ${PKGS_DIR}/rpm/
-docker run --name "$ARM64_RPM_NAME" -d "$ARM64_RPM_NAME" || docker start "$ARM64_RPM_NAME"
-docker exec -it "$ARM64_RPM_NAME" bash -c ". \$HOME/.cargo/env && git fetch origin && git checkout origin/$BRANCH; cargo rpm init; cargo rpm build"
-docker cp ${ARM64_RPM_NAME}:/usr/src/termscp/target/release/rpmbuild/RPMS/aarch64/termscp-${VERSION}-1.el7.aarch64.rpm ${PKGS_DIR}/rpm/termscp-${VERSION}-1.aarch64.rpm
-docker stop "$ARM64_RPM_NAME"
 
 exit $?
