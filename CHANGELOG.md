@@ -38,7 +38,7 @@
 
 ## 0.14.0
 
-Released on ??
+Released on 17/07/2024
 
 - [Issue 226](https://github.com/veeso/termscp/issues/226): Use ssh-agent
 - [Issue 241](https://github.com/veeso/termscp/issues/241): Jump to next entry after select
