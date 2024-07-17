@@ -15,7 +15,7 @@ use tuirealm::utils::parser as tuirealm_parser;
 #[cfg(smb)]
 use crate::filetransfer::params::SmbParams;
 use crate::filetransfer::params::{
-    AwsS3Params, GenericProtocolParams, ProtocolParams, WebDAVProtocolParams,
+    AwsS3Params, GenericProtocolParams, KubeProtocolParams, ProtocolParams, WebDAVProtocolParams,
 };
 use crate::filetransfer::{FileTransferParams, FileTransferProtocol};
 #[cfg(not(test))] // NOTE: don't use configuration during tests
@@ -53,7 +53,15 @@ static REMOTE_GENERIC_OPT_REGEX: Lazy<Regex> = lazy_regex!(
  *  - group 4: Some(path) | None
  */
 static REMOTE_WEBDAV_OPT_REGEX: Lazy<Regex> =
-    lazy_regex!(r"(?:([^:]+):)(?:(.+[^@])@)(?:([^/]+))(?:/(.+))?");
+    lazy_regex!(r"(?:([^:]+):)(?:(.+[^@])@)(?:([^/]+))(?:(.+))?");
+
+/**
+ * Regex matches: {container}@{pod}/{path}
+ *  - group 1: Container
+ *  - group 2: Pod
+ *  - group 3: Some(path) | None
+ */
+static REMOTE_KUBE_OPT_REGEX: Lazy<Regex> = lazy_regex!(r"(?:(.+[^@])@)(?:([^/]+))(?:(.+))?");
 
 /**
  * Regex matches:
@@ -162,6 +170,7 @@ pub fn parse_remote_opt(s: &str) -> Result<FileTransferParams, String> {
     // Match against regex for protocol type
     match protocol {
         FileTransferProtocol::AwsS3 => parse_s3_remote_opt(remote.as_str()),
+        FileTransferProtocol::Kube => parse_kube_remote_opt(remote.as_str()),
         #[cfg(smb)]
         FileTransferProtocol::Smb => parse_smb_remote_opts(remote.as_str()),
         FileTransferProtocol::WebDAV => {
@@ -295,6 +304,37 @@ fn parse_s3_remote_opt(s: &str) -> Result<FileTransferParams, String> {
             Ok(FileTransferParams::new(
                 FileTransferProtocol::AwsS3,
                 ProtocolParams::AwsS3(AwsS3Params::new(bucket, Some(region), profile)),
+            )
+            .remote_path(remote_path))
+        }
+        None => Err(String::from("Bad remote host syntax!")),
+    }
+}
+
+fn parse_kube_remote_opt(s: &str) -> Result<FileTransferParams, String> {
+    match REMOTE_KUBE_OPT_REGEX.captures(s) {
+        Some(groups) => {
+            let container: String = groups
+                .get(1)
+                .map(|x| x.as_str().to_string())
+                .unwrap_or_default();
+            let pod: String = groups
+                .get(2)
+                .map(|x| x.as_str().to_string())
+                .unwrap_or_default();
+            let remote_path: Option<PathBuf> =
+                groups.get(3).map(|group| PathBuf::from(group.as_str()));
+            Ok(FileTransferParams::new(
+                FileTransferProtocol::Kube,
+                ProtocolParams::Kube(KubeProtocolParams {
+                    pod,
+                    container,
+                    namespace: None,
+                    cluster_url: None,
+                    username: None,
+                    client_cert: None,
+                    client_key: None,
+                }),
             )
             .remote_path(remote_path))
         }
@@ -630,6 +670,12 @@ mod tests {
         assert_eq!(params.uri.as_str(), "http://myserver:4445");
         assert_eq!(params.username.as_str(), "omar");
         assert_eq!(params.password.as_str(), "password");
+
+        // remote path
+        assert_eq!(
+            result.remote_path.unwrap(),
+            PathBuf::from("/myshare/dir/subdir")
+        );
     }
 
     #[test]
@@ -704,6 +750,24 @@ mod tests {
         assert_eq!(result.remote_path, Some(PathBuf::from("/foobar")));
         assert_eq!(params.bucket_name.as_str(), "omar@mybucket");
         assert_eq!(params.region.as_deref().unwrap(), "eu-central-1");
+    }
+
+    #[test]
+    fn should_parse_kube_address() {
+        let result = parse_remote_opt("kube://alpine@my-pod/tmp").ok().unwrap();
+        let params = result.params.kube_params().unwrap();
+
+        assert_eq!(params.container.as_str(), "alpine");
+        assert_eq!(params.pod.as_str(), "my-pod");
+        assert_eq!(params.namespace, None);
+        assert_eq!(params.cluster_url, None);
+        assert_eq!(params.username, None);
+        assert_eq!(params.client_cert, None);
+        assert_eq!(params.client_key, None);
+        assert_eq!(
+            result.remote_path.as_deref().unwrap(),
+            std::path::Path::new("/tmp")
+        );
     }
 
     #[test]

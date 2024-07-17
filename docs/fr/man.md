@@ -4,6 +4,7 @@
   - [Usage ❓](#usage-)
     - [Argument d'adresse 🌎](#argument-dadresse-)
       - [Argument d'adresse AWS S3](#argument-dadresse-aws-s3)
+      - [Argument d'adresse Kube](#argument-dadresse-kube)
       - [Argument d'adresse WebDAV](#argument-dadresse-webdav)
       - [Argument d'adresse SMB](#argument-dadresse-smb)
       - [Comment le mot de passe peut être fourni 🔐](#comment-le-mot-de-passe-peut-être-fourni-)
@@ -100,6 +101,14 @@ e.g.
 
 ```txt
 s3://buckethead@eu-central-1:default:/assets
+```
+
+#### Argument d'adresse Kube
+
+Si vous souhaitez vous connecter à Kube, utilisez la syntaxe suivante
+
+```txt
+kube://<container>@<pod></path>
 ```
 
 #### Argument d'adresse WebDAV

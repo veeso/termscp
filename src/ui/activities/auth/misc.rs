@@ -14,6 +14,7 @@ impl AuthActivity {
             FileTransferProtocol::Sftp | FileTransferProtocol::Scp => 22,
             FileTransferProtocol::Ftp(_) => 21,
             FileTransferProtocol::AwsS3 => 22, // Doesn't matter, since not used
+            FileTransferProtocol::Kube => 22,  // Doesn't matter, since not used
             FileTransferProtocol::Smb => 445,
             FileTransferProtocol::WebDAV => 80, // Doesn't matter, since not used
         }
@@ -38,6 +39,7 @@ impl AuthActivity {
     pub(super) fn collect_host_params(&self) -> Result<FileTransferParams, &'static str> {
         match self.protocol {
             FileTransferProtocol::AwsS3 => self.collect_s3_host_params(),
+            FileTransferProtocol::Kube => self.collect_kube_host_params(),
             FileTransferProtocol::Smb => self.collect_smb_host_params(),
             FileTransferProtocol::Ftp(_)
             | FileTransferProtocol::Scp
@@ -75,6 +77,20 @@ impl AuthActivity {
         Ok(FileTransferParams {
             protocol: FileTransferProtocol::AwsS3,
             params: ProtocolParams::AwsS3(params),
+            local_path: self.get_input_local_directory(),
+            remote_path: self.get_input_remote_directory(),
+        })
+    }
+
+    /// Get input values from fields or return an error if fields are invalid to work as aws s3
+    pub(super) fn collect_kube_host_params(&self) -> Result<FileTransferParams, &'static str> {
+        let params = self.get_kube_params_input();
+        if params.pod.is_empty() {
+            return Err("Invalid pod name");
+        }
+        Ok(FileTransferParams {
+            protocol: FileTransferProtocol::Kube,
+            params: ProtocolParams::Kube(params),
             local_path: self.get_input_local_directory(),
             remote_path: self.get_input_remote_directory(),
         })

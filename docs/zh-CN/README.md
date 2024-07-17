@@ -132,7 +132,7 @@
 
 ## 关于 termscp 🖥
 
-termscp 是一个功能丰富的终端文件浏览和传输工具，支持 SCP/SFTP/FTP/S3。 作为一个带有 TUI 的命令行工具，它可以连接到远程服务器进行文件检索和上传，并能够与本地文件系统进行交互。
+termscp 是一个功能丰富的终端文件浏览和传输工具，支持 SCP/SFTP/FTP/Kube/S3/WebDAV。 作为一个带有 TUI 的命令行工具，它可以连接到远程服务器进行文件检索和上传，并能够与本地文件系统进行交互。
 
 兼容 **Linux**、**MacOS**、**FreeBSD** 和 **Windows** 操作系统。
 
@@ -146,6 +146,7 @@ termscp 是一个功能丰富的终端文件浏览和传输工具，支持 SCP/S
   - **SFTP**
   - **SCP**
   - **FTP** and **FTPS**
+  - **Kube**
   - **S3**
   - **SMB**
   - **WebDAV**

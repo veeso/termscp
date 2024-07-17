@@ -111,6 +111,7 @@ impl FileTransferActivity {
         match &ft_params.params {
             ProtocolParams::Generic(params) => params.address.clone(),
             ProtocolParams::AwsS3(params) => params.bucket_name.clone(),
+            ProtocolParams::Kube(params) => params.pod.clone(),
             ProtocolParams::Smb(params) => params.address.clone(),
             ProtocolParams::WebDAV(params) => params.uri.clone(),
         }
@@ -134,6 +135,13 @@ impl FileTransferActivity {
                     params.region.as_deref().unwrap_or("custom")
                 );
                 format!("Connecting to {}…", params.bucket_name)
+            }
+            ProtocolParams::Kube(params) => {
+                info!(
+                    "Client is not connected to remote; connecting to pod {}",
+                    params.pod,
+                );
+                format!("Connecting to {}…", params.pod)
             }
             ProtocolParams::Smb(params) => {
                 info!(

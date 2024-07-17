@@ -10,7 +10,7 @@
     "support": "Me soutenir"
   },
   "intro": {
-    "caption": "Un file transfer et navigateur de terminal riche en fonctionnalités avec support pour SCP/SFTP/FTP/S3",
+    "caption": "Un file transfer et navigateur de terminal riche en fonctionnalités avec support pour SCP/SFTP/FTP/Kube/S3/WebDAV",
     "getStarted": "Pour commencer →",
     "versionAlert": "termscp 0.13.0 est maintenant sorti! Télécharge-le depuis",
     "here": "ici",

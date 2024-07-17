@@ -4,6 +4,7 @@
   - [Argomenti da linea di comando ❓](#argomenti-da-linea-di-comando-)
     - [Argomento indirizzo 🌎](#argomento-indirizzo-)
       - [Argomento indirizzo per AWS S3](#argomento-indirizzo-per-aws-s3)
+      - [Argomento indirizzo Kube](#argomento-indirizzo-kube)
       - [Argomento indirizzo per WebDAV](#argomento-indirizzo-per-webdav)
       - [Indirizzo SMB](#indirizzo-smb)
       - [Come fornire la password 🔐](#come-fornire-la-password-)
@@ -98,6 +99,14 @@ e.g.
 
 ```txt
 s3://buckethead@eu-central-1:default:/assets
+```
+
+#### Argomento indirizzo Kube
+
+Nel caso tu voglia connetterti a Kube usa la seguente sintassi
+
+```txt
+kube://<container>@<pod></path>
 ```
 
 #### Argomento indirizzo per WebDAV

@@ -1,7 +1,7 @@
 [package]
 authors = ["Christian Visintin <christian.visintin@veeso.dev>"]
 categories = ["command-line-utilities"]
-description = "termscp is a feature rich terminal file transfer and explorer with support for SCP/SFTP/FTP/S3"
+description = "termscp is a feature rich terminal file transfer and explorer with support for SCP/SFTP/FTP/Kube/S3/WebDAV"
 edition = "2021"
 homepage = "https://termscp.veeso.dev"
 include = ["src/**/*", "LICENSE", "README.md", "CHANGELOG.md"]
@@ -16,7 +16,7 @@ license = "MIT"
 name = "termscp"
 readme = "README.md"
 repository = "https://github.com/veeso/termscp"
-version = "0.13.0"
+version = "0.14.0"
 
 [package.metadata.rpm]
 package = "termscp"
@@ -61,6 +61,7 @@ remotefs-aws-s3 = { version = "^0.2.4", default-features = false, features = [
   "find",
   "rustls",
 ] }
+remotefs-kube = "0.2"
 remotefs-webdav = "^0.1.1"
 rpassword = "^7.0"
 self_update = { version = "^0.41", default-features = false, features = [
@@ -75,6 +76,7 @@ simplelog = "^0.12"
 ssh2-config = "^0.2"
 tempfile = "^3.4"
 thiserror = "^1"
+tokio = { version = "1", features = ["rt"] }
 toml = "^0.8"
 tui-realm-stdlib = "^1.3.1"
 tuirealm = "^1.9.1"

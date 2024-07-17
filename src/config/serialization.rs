@@ -115,7 +115,7 @@ mod tests {
     use tuirealm::tui::style::Color;
 
     use super::*;
-    use crate::config::bookmarks::{Bookmark, S3Params, SmbParams, UserHosts};
+    use crate::config::bookmarks::{Bookmark, KubeParams, S3Params, SmbParams, UserHosts};
     use crate::config::params::UserConfig;
     use crate::config::themes::Theme;
     use crate::filetransfer::FileTransferProtocol;
@@ -366,7 +366,7 @@ mod tests {
         assert_eq!(host.username.as_deref().unwrap(), "root");
         assert_eq!(host.password, None);
         // Verify bookmarks
-        assert_eq!(hosts.bookmarks.len(), 5);
+        assert_eq!(hosts.bookmarks.len(), 6);
         let host: &Bookmark = hosts.bookmarks.get("raspberrypi2").unwrap();
         assert_eq!(host.address.as_deref().unwrap(), "192.168.1.31");
         assert_eq!(host.port.unwrap(), 22);
@@ -404,6 +404,21 @@ mod tests {
         assert_eq!(s3.access_key.as_deref().unwrap(), "pippo");
         assert_eq!(s3.secret_access_key.as_deref().unwrap(), "pluto");
         assert_eq!(s3.new_path_style.unwrap(), true);
+        // Kube pod
+        let host: &Bookmark = hosts.bookmarks.get("pod").unwrap();
+        assert_eq!(host.address, None);
+        assert_eq!(host.port, None);
+        assert_eq!(host.username, None);
+        assert_eq!(host.password, None);
+        assert_eq!(host.protocol, FileTransferProtocol::Kube);
+        let kube = host.kube.as_ref().unwrap();
+        assert_eq!(kube.pod_name.as_str(), "my-pod");
+        assert_eq!(kube.container.as_str(), "my-container");
+        assert_eq!(kube.namespace.as_deref().unwrap(), "my-namespace");
+        assert_eq!(kube.cluster_url.as_deref().unwrap(), "https://my-cluster");
+        assert_eq!(kube.username.as_deref().unwrap(), "my-username");
+        assert_eq!(kube.client_cert.as_deref().unwrap(), "my-cert");
+        assert_eq!(kube.client_key.as_deref().unwrap(), "my-key");
 
         // smb
         let host = hosts.bookmarks.get("smb").unwrap();
@@ -443,6 +458,7 @@ mod tests {
                 password: None,
                 remote_path: None,
                 local_path: None,
+                kube: None,
                 s3: None,
                 smb: None,
             },
@@ -457,6 +473,7 @@ mod tests {
                 password: Some(String::from("password")),
                 remote_path: Some(PathBuf::from("/tmp")),
                 local_path: Some(PathBuf::from("/usr")),
+                kube: None,
                 s3: None,
                 smb: None,
             },
@@ -480,9 +497,35 @@ mod tests {
                     secret_access_key: None,
                     new_path_style: None,
                 }),
+                kube: None,
                 smb: None,
             },
         );
+        // push kube pod
+        bookmarks.insert(
+            String::from("pod"),
+            Bookmark {
+                address: None,
+                port: None,
+                protocol: FileTransferProtocol::Kube,
+                username: None,
+                password: None,
+                remote_path: None,
+                local_path: None,
+                s3: None,
+                smb: None,
+                kube: Some(KubeParams {
+                    pod_name: "my-pod".to_string(),
+                    container: "my-container".to_string(),
+                    namespace: Some("my-namespace".to_string()),
+                    cluster_url: Some("https://my-cluster".to_string()),
+                    username: Some("my-username".to_string()),
+                    client_cert: Some("my-cert".to_string()),
+                    client_key: Some("my-key".to_string()),
+                }),
+            },
+        );
+
         let smb_params: Option<SmbParams> = Some(SmbParams {
             share: "test".to_string(),
             workgroup: None,
@@ -498,6 +541,7 @@ mod tests {
                 remote_path: None,
                 local_path: None,
                 s3: None,
+                kube: None,
                 smb: smb_params,
             },
         );
@@ -513,6 +557,7 @@ mod tests {
                 remote_path: Some(PathBuf::from("/tmp")),
                 local_path: Some(PathBuf::from("/usr")),
                 s3: None,
+                kube: None,
                 smb: None,
             },
         );
@@ -568,6 +613,17 @@ mod tests {
         access_key = "pippo"
         secret_access_key = "pluto"
         new_path_style = true
+
+        [bookmarks.pod]
+        protocol = "KUBE"
+        [bookmarks.pod.kube]
+        pod_name = "my-pod"
+        container = "my-container"
+        namespace = "my-namespace"
+        cluster_url = "https://my-cluster"
+        username = "my-username"
+        client_cert = "my-cert"
+        client_key = "my-key"
 
         [bookmarks.smb]
         protocol = "SMB"

@@ -1,4 +1,4 @@
-Termscp is a feature rich terminal file transfer and explorer, with support for SCP/SFTP/FTP/S3. 
+Termscp is a feature rich terminal file transfer and explorer, with support for SCP/SFTP/FTP/Kube/S3/WebDAV. 
 Basically is a terminal utility with an TUI to connect to a remote server to retrieve and upload files and
 to interact with the local file system.
 

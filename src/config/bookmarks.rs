@@ -2,6 +2,10 @@
 //!
 //! `bookmarks` is the module which provides data types and de/serializer for bookmarks
 
+mod aws_s3;
+mod kube;
+mod smb;
+
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::str::FromStr;
@@ -9,9 +13,12 @@ use std::str::FromStr;
 use serde::de::Error as DeError;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
+pub use self::aws_s3::S3Params;
+pub use self::kube::KubeParams;
+pub use self::smb::SmbParams;
 use crate::filetransfer::params::{
-    AwsS3Params, GenericProtocolParams, ProtocolParams, SmbParams as TransferSmbParams,
-    WebDAVProtocolParams,
+    AwsS3Params, GenericProtocolParams, KubeProtocolParams, ProtocolParams,
+    SmbParams as TransferSmbParams, WebDAVProtocolParams,
 };
 use crate::filetransfer::{FileTransferParams, FileTransferProtocol};
 
@@ -44,30 +51,12 @@ pub struct Bookmark {
     pub remote_path: Option<PathBuf>,
     /// local folder to open at startup
     pub local_path: Option<PathBuf>,
+    /// Kube params; optional. When used other fields are empty for sure
+    pub kube: Option<KubeParams>,
     /// S3 params; optional. When used other fields are empty for sure
     pub s3: Option<S3Params>,
     /// SMB params; optional. Extra params required for SMB protocol
     pub smb: Option<SmbParams>,
-}
-
-/// Connection parameters for Aws s3 protocol
-#[derive(Clone, Deserialize, Serialize, Debug, PartialEq, Eq, Default)]
-pub struct S3Params {
-    pub bucket: String,
-    pub region: Option<String>,
-    pub endpoint: Option<String>,
-    pub profile: Option<String>,
-    pub access_key: Option<String>,
-    pub secret_access_key: Option<String>,
-    /// NOTE: there are no session token and security token since they are always temporary
-    pub new_path_style: Option<bool>,
-}
-
-/// Extra Connection parameters for SMB protocol
-#[derive(Clone, Deserialize, Serialize, Debug, PartialEq, Eq, Default)]
-pub struct SmbParams {
-    pub share: String,
-    pub workgroup: Option<String>,
 }
 
 // -- impls
@@ -87,6 +76,7 @@ impl From<FileTransferParams> for Bookmark {
                 password: params.password,
                 remote_path,
                 local_path,
+                kube: None,
                 s3: None,
                 smb: None,
             },
@@ -98,7 +88,20 @@ impl From<FileTransferParams> for Bookmark {
                 password: None,
                 remote_path,
                 local_path,
+                kube: None,
                 s3: Some(S3Params::from(params)),
+                smb: None,
+            },
+            ProtocolParams::Kube(params) => Self {
+                protocol,
+                address: None,
+                port: None,
+                username: None,
+                password: None,
+                remote_path,
+                local_path,
+                kube: Some(KubeParams::from(params)),
+                s3: None,
                 smb: None,
             },
             ProtocolParams::Smb(params) => Self {
@@ -113,6 +116,7 @@ impl From<FileTransferParams> for Bookmark {
                 password: params.password,
                 remote_path,
                 local_path,
+                kube: None,
                 s3: None,
             },
             ProtocolParams::WebDAV(parms) => Self {
@@ -123,6 +127,7 @@ impl From<FileTransferParams> for Bookmark {
                 password: Some(parms.password),
                 remote_path,
                 local_path,
+                kube: None,
                 s3: None,
                 smb: None,
             },
@@ -148,6 +153,11 @@ impl From<Bookmark> for FileTransferParams {
                     .username(bookmark.username)
                     .password(bookmark.password);
                 Self::new(bookmark.protocol, ProtocolParams::Generic(params))
+            }
+            FileTransferProtocol::Kube => {
+                let params = bookmark.kube.unwrap_or_default();
+                let params = KubeProtocolParams::from(params);
+                Self::new(bookmark.protocol, ProtocolParams::Kube(params))
             }
             #[cfg(unix)]
             FileTransferProtocol::Smb => {
@@ -184,50 +194,6 @@ impl From<Bookmark> for FileTransferParams {
         }
         .remote_path(bookmark.remote_path) // Set entry remote_path
         .local_path(bookmark.local_path) // Set entry local path
-    }
-}
-
-impl From<AwsS3Params> for S3Params {
-    fn from(params: AwsS3Params) -> Self {
-        S3Params {
-            bucket: params.bucket_name,
-            region: params.region,
-            endpoint: params.endpoint,
-            profile: params.profile,
-            access_key: params.access_key,
-            secret_access_key: params.secret_access_key,
-            new_path_style: Some(params.new_path_style),
-        }
-    }
-}
-
-impl From<S3Params> for AwsS3Params {
-    fn from(params: S3Params) -> Self {
-        AwsS3Params::new(params.bucket, params.region, params.profile)
-            .endpoint(params.endpoint)
-            .access_key(params.access_key)
-            .secret_access_key(params.secret_access_key)
-            .new_path_style(params.new_path_style.unwrap_or(false))
-    }
-}
-
-#[cfg(unix)]
-impl From<TransferSmbParams> for SmbParams {
-    fn from(params: TransferSmbParams) -> Self {
-        Self {
-            share: params.share,
-            workgroup: params.workgroup,
-        }
-    }
-}
-
-#[cfg(windows)]
-impl From<TransferSmbParams> for SmbParams {
-    fn from(params: TransferSmbParams) -> Self {
-        Self {
-            share: params.share,
-            workgroup: None,
-        }
     }
 }
 
@@ -276,6 +242,7 @@ mod tests {
             password: Some(String::from("password")),
             remote_path: Some(PathBuf::from("/tmp")),
             local_path: Some(PathBuf::from("/usr")),
+            kube: None,
             s3: None,
             smb: None,
         };
@@ -287,6 +254,7 @@ mod tests {
             password: Some(String::from("password")),
             remote_path: Some(PathBuf::from("/home")),
             local_path: Some(PathBuf::from("/usr")),
+            kube: None,
             s3: None,
             smb: None,
         };
@@ -381,6 +349,38 @@ mod tests {
     }
 
     #[test]
+    fn bookmark_from_kube_ftparams() {
+        let params = ProtocolParams::Kube(KubeProtocolParams {
+            pod: "pod".to_string(),
+            container: "container".to_string(),
+            namespace: Some("default".to_string()),
+            username: Some("root".to_string()),
+            cluster_url: Some("https://localhost:6443".to_string()),
+            client_cert: Some("cert".to_string()),
+            client_key: Some("key".to_string()),
+        });
+        let params: FileTransferParams =
+            FileTransferParams::new(FileTransferProtocol::Kube, params);
+        let bookmark = Bookmark::from(params);
+        assert_eq!(bookmark.protocol, FileTransferProtocol::Kube);
+        assert!(bookmark.address.is_none());
+        assert!(bookmark.port.is_none());
+        assert!(bookmark.username.is_none());
+        assert!(bookmark.password.is_none());
+        let kube: &KubeParams = bookmark.kube.as_ref().unwrap();
+        assert_eq!(kube.pod_name.as_str(), "pod");
+        assert_eq!(kube.container.as_str(), "container");
+        assert_eq!(kube.namespace.as_deref().unwrap(), "default");
+        assert_eq!(
+            kube.cluster_url.as_deref().unwrap(),
+            "https://localhost:6443"
+        );
+        assert_eq!(kube.username.as_deref().unwrap(), "root");
+        assert_eq!(kube.client_cert.as_deref().unwrap(), "cert");
+        assert_eq!(kube.client_key.as_deref().unwrap(), "key");
+    }
+
+    #[test]
     fn ftparams_from_generic_bookmark() {
         let bookmark: Bookmark = Bookmark {
             address: Some(String::from("192.168.1.1")),
@@ -390,6 +390,7 @@ mod tests {
             password: Some(String::from("password")),
             remote_path: Some(PathBuf::from("/tmp")),
             local_path: Some(PathBuf::from("/usr")),
+            kube: None,
             s3: None,
             smb: None,
         };
@@ -420,6 +421,7 @@ mod tests {
             password: Some(String::from("password")),
             remote_path: Some(PathBuf::from("/tmp")),
             local_path: Some(PathBuf::from("/usr")),
+            kube: None,
             s3: None,
             smb: None,
         };
@@ -449,6 +451,7 @@ mod tests {
             password: None,
             remote_path: Some(PathBuf::from("/tmp")),
             local_path: Some(PathBuf::from("/usr")),
+            kube: None,
             s3: Some(S3Params {
                 bucket: String::from("veeso"),
                 region: Some(String::from("eu-west-1")),
@@ -481,6 +484,50 @@ mod tests {
     }
 
     #[test]
+    fn ftparams_from_kube_bookmark() {
+        let bookmark: Bookmark = Bookmark {
+            protocol: FileTransferProtocol::Kube,
+            address: None,
+            port: None,
+            username: None,
+            password: None,
+            remote_path: Some(PathBuf::from("/tmp")),
+            local_path: Some(PathBuf::from("/usr")),
+            kube: Some(KubeParams {
+                pod_name: String::from("pod"),
+                container: String::from("container"),
+                namespace: Some(String::from("default")),
+                cluster_url: Some(String::from("https://localhost:6443")),
+                username: Some(String::from("root")),
+                client_cert: Some(String::from("cert")),
+                client_key: Some(String::from("key")),
+            }),
+            s3: None,
+            smb: None,
+        };
+        let params = FileTransferParams::from(bookmark);
+        assert_eq!(params.protocol, FileTransferProtocol::Kube);
+        assert_eq!(
+            params.remote_path.as_deref().unwrap(),
+            std::path::Path::new("/tmp")
+        );
+        assert_eq!(
+            params.local_path.as_deref().unwrap(),
+            std::path::Path::new("/usr")
+        );
+        let gparams = params.params.kube_params().unwrap();
+        assert_eq!(gparams.pod.as_str(), "pod");
+        assert_eq!(gparams.namespace.as_deref().unwrap(), "default");
+        assert_eq!(
+            gparams.cluster_url.as_deref().unwrap(),
+            "https://localhost:6443"
+        );
+        assert_eq!(gparams.username.as_deref().unwrap(), "root");
+        assert_eq!(gparams.client_cert.as_deref().unwrap(), "cert");
+        assert_eq!(gparams.client_key.as_deref().unwrap(), "key");
+    }
+
+    #[test]
     #[cfg(unix)]
     fn should_get_ftparams_from_smb_bookmark() {
         let bookmark: Bookmark = Bookmark {
@@ -491,6 +538,7 @@ mod tests {
             password: Some("bar".to_string()),
             remote_path: Some(PathBuf::from("/tmp")),
             local_path: Some(PathBuf::from("/usr")),
+            kube: None,
             s3: None,
             smb: Some(SmbParams {
                 share: "test".to_string(),
@@ -529,6 +577,7 @@ mod tests {
             remote_path: Some(PathBuf::from("/tmp")),
             local_path: Some(PathBuf::from("/usr")),
             s3: None,
+            kube: None,
             smb: Some(SmbParams {
                 share: "test".to_string(),
                 workgroup: None,

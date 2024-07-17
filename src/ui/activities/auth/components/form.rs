@@ -10,8 +10,8 @@ use tuirealm::{Component, Event, MockComponent, NoUserEvent, State, StateValue};
 
 use super::{FileTransferProtocol, FormMsg, Msg, UiMsg};
 use crate::ui::activities::auth::{
-    RADIO_PROTOCOL_FTP, RADIO_PROTOCOL_FTPS, RADIO_PROTOCOL_S3, RADIO_PROTOCOL_SCP,
-    RADIO_PROTOCOL_SFTP, RADIO_PROTOCOL_SMB, RADIO_PROTOCOL_WEBDAV,
+    RADIO_PROTOCOL_FTP, RADIO_PROTOCOL_FTPS, RADIO_PROTOCOL_KUBE, RADIO_PROTOCOL_S3,
+    RADIO_PROTOCOL_SCP, RADIO_PROTOCOL_SFTP, RADIO_PROTOCOL_SMB, RADIO_PROTOCOL_WEBDAV,
 };
 
 // -- protocol
@@ -31,9 +31,9 @@ impl ProtocolRadio {
                         .modifiers(BorderType::Rounded),
                 )
                 .choices(if cfg!(smb) {
-                    &["SFTP", "SCP", "FTP", "FTPS", "S3", "WebDAV", "SMB"]
+                    &["SFTP", "SCP", "FTP", "FTPS", "S3", "Kube", "WebDAV", "SMB"]
                 } else {
-                    &["SFTP", "SCP", "FTP", "FTPS", "S3", "WebDAV"]
+                    &["SFTP", "SCP", "FTP", "FTPS", "S3", "Kube", "WebDAV"]
                 })
                 .foreground(color)
                 .rewind(true)
@@ -50,6 +50,7 @@ impl ProtocolRadio {
             RADIO_PROTOCOL_FTPS => FileTransferProtocol::Ftp(true),
             RADIO_PROTOCOL_S3 => FileTransferProtocol::AwsS3,
             RADIO_PROTOCOL_SMB => FileTransferProtocol::Smb,
+            RADIO_PROTOCOL_KUBE => FileTransferProtocol::Kube,
             RADIO_PROTOCOL_WEBDAV => FileTransferProtocol::WebDAV,
             _ => FileTransferProtocol::Sftp,
         }
@@ -63,6 +64,7 @@ impl ProtocolRadio {
             FileTransferProtocol::Ftp(false) => RADIO_PROTOCOL_FTP,
             FileTransferProtocol::Ftp(true) => RADIO_PROTOCOL_FTPS,
             FileTransferProtocol::AwsS3 => RADIO_PROTOCOL_S3,
+            FileTransferProtocol::Kube => RADIO_PROTOCOL_KUBE,
             FileTransferProtocol::Smb => RADIO_PROTOCOL_SMB,
             FileTransferProtocol::WebDAV => RADIO_PROTOCOL_WEBDAV,
         }
@@ -824,6 +826,255 @@ impl Component<Msg, NoUserEvent> for InputWebDAVUri {
             ev,
             Msg::Ui(UiMsg::WebDAVUriBlurDown),
             Msg::Ui(UiMsg::WebDAVUriBlurUp),
+        )
+    }
+}
+
+// kube
+
+#[derive(MockComponent)]
+pub struct InputKubePodName {
+    component: Input,
+}
+
+impl InputKubePodName {
+    pub fn new(bucket: &str, color: Color) -> Self {
+        Self {
+            component: Input::default()
+                .borders(
+                    Borders::default()
+                        .color(color)
+                        .modifiers(BorderType::Rounded),
+                )
+                .foreground(color)
+                .placeholder("pod-name", Style::default().fg(Color::Rgb(128, 128, 128)))
+                .title("Pod name", Alignment::Left)
+                .input_type(InputType::Text)
+                .value(bucket),
+        }
+    }
+}
+
+impl Component<Msg, NoUserEvent> for InputKubePodName {
+    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+        handle_input_ev(
+            self,
+            ev,
+            Msg::Ui(UiMsg::KubePodNameBlurDown),
+            Msg::Ui(UiMsg::KubePodNameBlurUp),
+        )
+    }
+}
+
+#[derive(MockComponent)]
+pub struct InputKubeNamespace {
+    component: Input,
+}
+
+impl InputKubeNamespace {
+    pub fn new(bucket: &str, color: Color) -> Self {
+        Self {
+            component: Input::default()
+                .borders(
+                    Borders::default()
+                        .color(color)
+                        .modifiers(BorderType::Rounded),
+                )
+                .foreground(color)
+                .placeholder("namespace", Style::default().fg(Color::Rgb(128, 128, 128)))
+                .title("Pod namespace (optional)", Alignment::Left)
+                .input_type(InputType::Text)
+                .value(bucket),
+        }
+    }
+}
+
+impl Component<Msg, NoUserEvent> for InputKubeNamespace {
+    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+        handle_input_ev(
+            self,
+            ev,
+            Msg::Ui(UiMsg::KubeNamespaceBlurDown),
+            Msg::Ui(UiMsg::KubeNamespaceBlurUp),
+        )
+    }
+}
+
+#[derive(MockComponent)]
+pub struct InputKubeClusterUrl {
+    component: Input,
+}
+
+impl InputKubeClusterUrl {
+    pub fn new(bucket: &str, color: Color) -> Self {
+        Self {
+            component: Input::default()
+                .borders(
+                    Borders::default()
+                        .color(color)
+                        .modifiers(BorderType::Rounded),
+                )
+                .foreground(color)
+                .placeholder(
+                    "cluster url",
+                    Style::default().fg(Color::Rgb(128, 128, 128)),
+                )
+                .title("Kube cluster url (optional)", Alignment::Left)
+                .input_type(InputType::Text)
+                .value(bucket),
+        }
+    }
+}
+
+impl Component<Msg, NoUserEvent> for InputKubeClusterUrl {
+    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+        handle_input_ev(
+            self,
+            ev,
+            Msg::Ui(UiMsg::KubeClusterUrlBlurDown),
+            Msg::Ui(UiMsg::KubeClusterUrlBlurUp),
+        )
+    }
+}
+
+#[derive(MockComponent)]
+pub struct InputKubeContainer {
+    component: Input,
+}
+
+impl InputKubeContainer {
+    pub fn new(bucket: &str, color: Color) -> Self {
+        Self {
+            component: Input::default()
+                .borders(
+                    Borders::default()
+                        .color(color)
+                        .modifiers(BorderType::Rounded),
+                )
+                .foreground(color)
+                .placeholder("container", Style::default().fg(Color::Rgb(128, 128, 128)))
+                .title("Kube container", Alignment::Left)
+                .input_type(InputType::Text)
+                .value(bucket),
+        }
+    }
+}
+
+impl Component<Msg, NoUserEvent> for InputKubeContainer {
+    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+        handle_input_ev(
+            self,
+            ev,
+            Msg::Ui(UiMsg::KubeContainerBlurDown),
+            Msg::Ui(UiMsg::KubeContainerBlurUp),
+        )
+    }
+}
+
+#[derive(MockComponent)]
+pub struct InputKubeUsername {
+    component: Input,
+}
+
+impl InputKubeUsername {
+    pub fn new(bucket: &str, color: Color) -> Self {
+        Self {
+            component: Input::default()
+                .borders(
+                    Borders::default()
+                        .color(color)
+                        .modifiers(BorderType::Rounded),
+                )
+                .foreground(color)
+                .placeholder("username", Style::default().fg(Color::Rgb(128, 128, 128)))
+                .title("Kube username (optional)", Alignment::Left)
+                .input_type(InputType::Text)
+                .value(bucket),
+        }
+    }
+}
+
+impl Component<Msg, NoUserEvent> for InputKubeUsername {
+    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+        handle_input_ev(
+            self,
+            ev,
+            Msg::Ui(UiMsg::KubeUsernameBlurDown),
+            Msg::Ui(UiMsg::KubeUsernameBlurUp),
+        )
+    }
+}
+
+#[derive(MockComponent)]
+pub struct InputKubeClientCert {
+    component: Input,
+}
+
+impl InputKubeClientCert {
+    pub fn new(bucket: &str, color: Color) -> Self {
+        Self {
+            component: Input::default()
+                .borders(
+                    Borders::default()
+                        .color(color)
+                        .modifiers(BorderType::Rounded),
+                )
+                .foreground(color)
+                .placeholder(
+                    "/home/user/.kube/client.crt",
+                    Style::default().fg(Color::Rgb(128, 128, 128)),
+                )
+                .title("Kube client cert path (optional)", Alignment::Left)
+                .input_type(InputType::Text)
+                .value(bucket),
+        }
+    }
+}
+
+impl Component<Msg, NoUserEvent> for InputKubeClientCert {
+    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+        handle_input_ev(
+            self,
+            ev,
+            Msg::Ui(UiMsg::KubeClientCertBlurDown),
+            Msg::Ui(UiMsg::KubeClientCertBlurUp),
+        )
+    }
+}
+
+#[derive(MockComponent)]
+pub struct InputKubeClientKey {
+    component: Input,
+}
+
+impl InputKubeClientKey {
+    pub fn new(bucket: &str, color: Color) -> Self {
+        Self {
+            component: Input::default()
+                .borders(
+                    Borders::default()
+                        .color(color)
+                        .modifiers(BorderType::Rounded),
+                )
+                .foreground(color)
+                .placeholder(
+                    "/home/user/.kube/client.key",
+                    Style::default().fg(Color::Rgb(128, 128, 128)),
+                )
+                .title("Kube client key path (optional)", Alignment::Left)
+                .input_type(InputType::Text)
+                .value(bucket),
+        }
+    }
+}
+
+impl Component<Msg, NoUserEvent> for InputKubeClientKey {
+    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+        handle_input_ev(
+            self,
+            ev,
+            Msg::Ui(UiMsg::KubeClientKeyBlurDown),
+            Msg::Ui(UiMsg::KubeClientKeyBlurUp),
         )
     }
 }

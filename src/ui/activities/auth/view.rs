@@ -13,7 +13,8 @@ use tuirealm::{State, StateValue, Sub, SubClause, SubEventClause};
 
 use super::{components, AuthActivity, Context, FileTransferProtocol, Id, InputMask};
 use crate::filetransfer::params::{
-    AwsS3Params, GenericProtocolParams, ProtocolParams, SmbParams, WebDAVProtocolParams,
+    AwsS3Params, GenericProtocolParams, KubeProtocolParams, ProtocolParams, SmbParams,
+    WebDAVProtocolParams,
 };
 use crate::filetransfer::FileTransferParams;
 use crate::utils::ui::{Popup, Size};
@@ -60,6 +61,13 @@ impl AuthActivity {
         self.mount_s3_security_token("");
         self.mount_s3_session_token("");
         self.mount_s3_new_path_style(false);
+        self.mount_kube_client_cert("");
+        self.mount_kube_client_key("");
+        self.mount_kube_cluster_url("");
+        self.mount_kube_container("");
+        self.mount_kube_namespace("");
+        self.mount_kube_pod_name("");
+        self.mount_kube_username("");
         self.mount_smb_share("");
         #[cfg(unix)]
         self.mount_smb_workgroup("");
@@ -155,6 +163,16 @@ impl AuthActivity {
                     )
                     .direction(Direction::Vertical)
                     .split(auth_chunks[4]),
+                InputMask::Kube => Layout::default()
+                    .constraints([
+                        Constraint::Length(3), // ...
+                        Constraint::Length(3), // ...
+                        Constraint::Length(3), // ...
+                        Constraint::Length(3), // ...
+                        Constraint::Length(3), // remote directory
+                    ])
+                    .direction(Direction::Vertical)
+                    .split(auth_chunks[4]),
                 InputMask::Generic => Layout::default()
                     .constraints(
                         [
@@ -233,6 +251,13 @@ impl AuthActivity {
                 }
                 InputMask::Generic => {
                     let view_ids = self.get_generic_params_view();
+                    self.app.view(&view_ids[0], f, input_mask[0]);
+                    self.app.view(&view_ids[1], f, input_mask[1]);
+                    self.app.view(&view_ids[2], f, input_mask[2]);
+                    self.app.view(&view_ids[3], f, input_mask[3]);
+                }
+                InputMask::Kube => {
+                    let view_ids = self.get_kube_view();
                     self.app.view(&view_ids[0], f, input_mask[0]);
                     self.app.view(&view_ids[1], f, input_mask[1]);
                     self.app.view(&view_ids[2], f, input_mask[2]);
@@ -791,6 +816,90 @@ impl AuthActivity {
             .is_ok());
     }
 
+    pub(super) fn mount_kube_pod_name(&mut self, value: &str) {
+        let color = self.theme().auth_address;
+        assert!(self
+            .app
+            .remount(
+                Id::KubePodName,
+                Box::new(components::InputKubePodName::new(value, color)),
+                vec![]
+            )
+            .is_ok());
+    }
+
+    pub(super) fn mount_kube_container(&mut self, value: &str) {
+        let color = self.theme().auth_password;
+        assert!(self
+            .app
+            .remount(
+                Id::KubeContainer,
+                Box::new(components::InputKubeContainer::new(value, color)),
+                vec![]
+            )
+            .is_ok());
+    }
+
+    pub(super) fn mount_kube_namespace(&mut self, value: &str) {
+        let color = self.theme().auth_port;
+        assert!(self
+            .app
+            .remount(
+                Id::KubeNamespace,
+                Box::new(components::InputKubeNamespace::new(value, color)),
+                vec![]
+            )
+            .is_ok());
+    }
+
+    pub(super) fn mount_kube_cluster_url(&mut self, value: &str) {
+        let color = self.theme().auth_username;
+        assert!(self
+            .app
+            .remount(
+                Id::KubeClusterUrl,
+                Box::new(components::InputKubeClusterUrl::new(value, color)),
+                vec![]
+            )
+            .is_ok());
+    }
+
+    pub(super) fn mount_kube_username(&mut self, value: &str) {
+        let color = self.theme().auth_password;
+        assert!(self
+            .app
+            .remount(
+                Id::KubeUsername,
+                Box::new(components::InputKubeUsername::new(value, color)),
+                vec![]
+            )
+            .is_ok());
+    }
+
+    pub(super) fn mount_kube_client_cert(&mut self, value: &str) {
+        let color = self.theme().auth_address;
+        assert!(self
+            .app
+            .remount(
+                Id::KubeClientCert,
+                Box::new(components::InputKubeClientCert::new(value, color)),
+                vec![]
+            )
+            .is_ok());
+    }
+
+    pub(super) fn mount_kube_client_key(&mut self, value: &str) {
+        let color = self.theme().auth_port;
+        assert!(self
+            .app
+            .remount(
+                Id::KubeClientKey,
+                Box::new(components::InputKubeClientKey::new(value, color)),
+                vec![]
+            )
+            .is_ok());
+    }
+
     pub(crate) fn mount_smb_share(&mut self, share: &str) {
         let color = self.theme().auth_password;
         assert!(self
@@ -861,6 +970,26 @@ impl AuthActivity {
             .security_token(security_token)
             .session_token(session_token)
             .new_path_style(new_path_style)
+    }
+
+    /// Collect s3 input values from view
+    pub(super) fn get_kube_params_input(&self) -> KubeProtocolParams {
+        let pod = self.get_input_kube_pod_name();
+        let container = self.get_input_kube_container();
+        let namespace = self.get_input_kube_namespace();
+        let cluster_url = self.get_input_kube_cluster_url();
+        let username = self.get_input_kube_username();
+        let client_cert = self.get_input_kube_client_cert();
+        let client_key = self.get_input_kube_client_key();
+        KubeProtocolParams {
+            pod,
+            container,
+            namespace,
+            cluster_url,
+            username,
+            client_cert,
+            client_key,
+        }
     }
 
     /// Collect s3 input values from view
@@ -1025,6 +1154,55 @@ impl AuthActivity {
         )
     }
 
+    pub(super) fn get_input_kube_pod_name(&self) -> String {
+        match self.app.state(&Id::KubePodName) {
+            Ok(State::One(StateValue::String(x))) => x,
+            _ => String::new(),
+        }
+    }
+
+    pub(super) fn get_input_kube_container(&self) -> String {
+        match self.app.state(&Id::KubeContainer) {
+            Ok(State::One(StateValue::String(x))) => x,
+            _ => String::new(),
+        }
+    }
+
+    pub(super) fn get_input_kube_namespace(&self) -> Option<String> {
+        match self.app.state(&Id::KubeNamespace) {
+            Ok(State::One(StateValue::String(x))) if !x.is_empty() => Some(x),
+            _ => None,
+        }
+    }
+
+    pub(super) fn get_input_kube_cluster_url(&self) -> Option<String> {
+        match self.app.state(&Id::KubeClusterUrl) {
+            Ok(State::One(StateValue::String(x))) if !x.is_empty() => Some(x),
+            _ => None,
+        }
+    }
+
+    pub(super) fn get_input_kube_username(&self) -> Option<String> {
+        match self.app.state(&Id::KubeUsername) {
+            Ok(State::One(StateValue::String(x))) if !x.is_empty() => Some(x),
+            _ => None,
+        }
+    }
+
+    pub(super) fn get_input_kube_client_cert(&self) -> Option<String> {
+        match self.app.state(&Id::KubeClientCert) {
+            Ok(State::One(StateValue::String(x))) if !x.is_empty() => Some(x),
+            _ => None,
+        }
+    }
+
+    pub(super) fn get_input_kube_client_key(&self) -> Option<String> {
+        match self.app.state(&Id::KubeClientKey) {
+            Ok(State::One(StateValue::String(x))) if !x.is_empty() => Some(x),
+            _ => None,
+        }
+    }
+
     pub(super) fn get_input_smb_share(&self) -> String {
         match self.app.state(&Id::SmbShare) {
             Ok(State::One(StateValue::String(x))) => x,
@@ -1063,6 +1241,7 @@ impl AuthActivity {
         match self.input_mask() {
             InputMask::AwsS3 => 12,
             InputMask::Generic => 12,
+            InputMask::Kube => 12,
             InputMask::Smb => 12,
             InputMask::WebDAV => 12,
         }
@@ -1102,6 +1281,24 @@ impl AuthActivity {
                 format!(
                     "{}://{}{}:{}",
                     protocol, username, params.address, params.port
+                )
+            }
+            ProtocolParams::Kube(params) => {
+                format!(
+                    "{}://{}@{}{}{}",
+                    protocol,
+                    params.container,
+                    params.pod,
+                    params
+                        .namespace
+                        .as_deref()
+                        .map(|x| format!("/{x}"))
+                        .unwrap_or_default(),
+                    params
+                        .cluster_url
+                        .as_deref()
+                        .map(|x| format!("@{x}"))
+                        .unwrap_or_default()
                 )
             }
             #[cfg(unix)]
@@ -1186,6 +1383,54 @@ impl AuthActivity {
                 Id::LocalDirectory,
             ],
             _ => [Id::S3Bucket, Id::S3Region, Id::S3Endpoint, Id::S3Profile],
+        }
+    }
+
+    /// Get the visible element in the kube form, based on current focus
+    fn get_kube_view(&self) -> [Id; 4] {
+        match self.app.focus() {
+            Some(&Id::KubePodName) => [
+                Id::KubePodName,
+                Id::KubeContainer,
+                Id::KubeNamespace,
+                Id::KubeClusterUrl,
+            ],
+            Some(&Id::KubeUsername) => [
+                Id::KubeContainer,
+                Id::KubeNamespace,
+                Id::KubeClusterUrl,
+                Id::KubeUsername,
+            ],
+            Some(&Id::KubeClientCert) => [
+                Id::KubeNamespace,
+                Id::KubeClusterUrl,
+                Id::KubeUsername,
+                Id::KubeClientCert,
+            ],
+            Some(&Id::KubeClientKey) => [
+                Id::KubeClusterUrl,
+                Id::KubeUsername,
+                Id::KubeClientCert,
+                Id::KubeClientKey,
+            ],
+            Some(&Id::RemoteDirectory) => [
+                Id::KubeUsername,
+                Id::KubeClientCert,
+                Id::KubeClientKey,
+                Id::RemoteDirectory,
+            ],
+            Some(&Id::LocalDirectory) => [
+                Id::KubeClientCert,
+                Id::KubeClientKey,
+                Id::RemoteDirectory,
+                Id::LocalDirectory,
+            ],
+            _ => [
+                Id::KubePodName,
+                Id::KubeContainer,
+                Id::KubeNamespace,
+                Id::KubeClusterUrl,
+            ],
         }
     }
 

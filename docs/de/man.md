@@ -4,6 +4,7 @@
   - [Verwendung ❓](#verwendung-)
     - [Adressargument 🌎](#adressargument-)
       - [AWS S3 Adressargument](#aws-s3-adressargument)
+      - [Kube-Adressargument](#kube-adressargument)
       - [SMB Adressargument](#smb-adressargument)
       - [Wie das Passwort bereitgestellt werden kann 🔐](#wie-das-passwort-bereitgestellt-werden-kann-)
     - [Unterbefehle](#unterbefehle)
@@ -125,6 +126,14 @@ z.B.
 
 ```txt
 s3://buckethead@eu-central-1:default:/assets
+```
+
+#### Kube-Adressargument
+
+Falls Sie eine Verbindung zu Kube herstellen möchten, verwenden Sie die folgende Syntax
+
+```txt
+kube://<container>@<pod></path>
 ```
 
 #### SMB Adressargument

@@ -70,6 +70,7 @@ impl AuthActivity {
                         InputMask::Generic => &Id::Password,
                         InputMask::Smb => &Id::Password,
                         InputMask::AwsS3 => &Id::S3Bucket,
+                        InputMask::Kube => &Id::KubePodName,
                         InputMask::WebDAV => &Id::Password,
                     })
                     .is_ok());
@@ -83,6 +84,7 @@ impl AuthActivity {
                         InputMask::Generic => &Id::Password,
                         InputMask::Smb => &Id::Password,
                         InputMask::AwsS3 => &Id::S3Bucket,
+                        InputMask::Kube => &Id::KubePodName,
                         InputMask::WebDAV => &Id::Password,
                     })
                     .is_ok());
@@ -179,6 +181,7 @@ impl AuthActivity {
                         #[cfg(windows)]
                         InputMask::Smb => &Id::RemoteDirectory,
                         InputMask::AwsS3 => panic!("this shouldn't happen (password on s3)"),
+                        InputMask::Kube => panic!("this shouldn't happen (password on kube)"),
                         InputMask::WebDAV => &Id::RemoteDirectory,
                     })
                     .is_ok());
@@ -192,8 +195,8 @@ impl AuthActivity {
                     .active(match self.input_mask() {
                         InputMask::Generic => &Id::Username,
                         InputMask::Smb => &Id::SmbShare,
-                        InputMask::AwsS3 | InputMask::WebDAV =>
-                            panic!("this shouldn't happen (port on s3)"),
+                        InputMask::AwsS3 | InputMask::Kube | InputMask::WebDAV =>
+                            panic!("this shouldn't happen (port on s3/kube/webdav)"),
                     })
                     .is_ok());
             }
@@ -207,6 +210,7 @@ impl AuthActivity {
                         InputMask::Generic => &Id::Address,
                         InputMask::Smb => &Id::Address,
                         InputMask::AwsS3 => &Id::S3Bucket,
+                        InputMask::Kube => &Id::KubePodName,
                         InputMask::WebDAV => &Id::WebDAVUri,
                     })
                     .is_ok());
@@ -229,6 +233,7 @@ impl AuthActivity {
                         InputMask::Smb => &Id::SmbWorkgroup,
                         #[cfg(windows)]
                         InputMask::Smb => &Id::Password,
+                        InputMask::Kube => &Id::KubeClientKey,
                         InputMask::AwsS3 => &Id::S3NewPathStyle,
                         InputMask::WebDAV => &Id::Password,
                     })
@@ -288,6 +293,48 @@ impl AuthActivity {
             UiMsg::S3NewPathStyleBlurUp => {
                 assert!(self.app.active(&Id::S3SessionToken).is_ok());
             }
+            UiMsg::KubeClientCertBlurDown => {
+                assert!(self.app.active(&Id::KubeClientKey).is_ok());
+            }
+            UiMsg::KubeClientCertBlurUp => {
+                assert!(self.app.active(&Id::KubeUsername).is_ok());
+            }
+            UiMsg::KubeClientKeyBlurDown => {
+                assert!(self.app.active(&Id::RemoteDirectory).is_ok());
+            }
+            UiMsg::KubeClientKeyBlurUp => {
+                assert!(self.app.active(&Id::KubeClientCert).is_ok());
+            }
+            UiMsg::KubeContainerBlurDown => {
+                assert!(self.app.active(&Id::KubeNamespace).is_ok());
+            }
+            UiMsg::KubeContainerBlurUp => {
+                assert!(self.app.active(&Id::KubePodName).is_ok());
+            }
+            UiMsg::KubePodNameBlurDown => {
+                assert!(self.app.active(&Id::KubeContainer).is_ok());
+            }
+            UiMsg::KubePodNameBlurUp => {
+                assert!(self.app.active(&Id::Protocol).is_ok());
+            }
+            UiMsg::KubeNamespaceBlurDown => {
+                assert!(self.app.active(&Id::KubeClusterUrl).is_ok());
+            }
+            UiMsg::KubeNamespaceBlurUp => {
+                assert!(self.app.active(&Id::KubeContainer).is_ok());
+            }
+            UiMsg::KubeClusterUrlBlurDown => {
+                assert!(self.app.active(&Id::KubeUsername).is_ok());
+            }
+            UiMsg::KubeClusterUrlBlurUp => {
+                assert!(self.app.active(&Id::KubeNamespace).is_ok());
+            }
+            UiMsg::KubeUsernameBlurDown => {
+                assert!(self.app.active(&Id::KubeClientCert).is_ok());
+            }
+            UiMsg::KubeUsernameBlurUp => {
+                assert!(self.app.active(&Id::KubeClusterUrl).is_ok());
+            }
             UiMsg::SmbShareBlurDown => {
                 assert!(self.app.active(&Id::Username).is_ok());
             }
@@ -337,6 +384,7 @@ impl AuthActivity {
                     .active(match self.input_mask() {
                         InputMask::Generic => &Id::Port,
                         InputMask::Smb => &Id::SmbShare,
+                        InputMask::Kube => panic!("this shouldn't happen (username on kube)"),
                         InputMask::AwsS3 => panic!("this shouldn't happen (username on s3)"),
                         InputMask::WebDAV => &Id::WebDAVUri,
                     })

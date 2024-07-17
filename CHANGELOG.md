@@ -42,6 +42,7 @@ Released on ??
 
 - [Issue 226](https://github.com/veeso/termscp/issues/226): Use ssh-agent
 - [Issue 241](https://github.com/veeso/termscp/issues/241): Jump to next entry after select
+- [Issue 242](https://github.com/veeso/termscp/issues/242): Added `Kube` protocol support
 - [Issue 255](https://github.com/veeso/termscp/issues/255): New keybindings `Ctrl + Shift + A` to deselect all files
 - [Issue 256](https://github.com/veeso/termscp/issues/256): Filter files in current folder. You can now filter files by pressing `/`. Both wildmatch and regex are accepted to filter files.
 - [Issue 257](https://github.com/veeso/termscp/issues/257): CLI remote args cannot handle '@' in the username

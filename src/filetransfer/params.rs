@@ -2,8 +2,17 @@
 //!
 //! file transfer parameters
 
+mod aws_s3;
+mod kube;
+mod smb;
+mod webdav;
+
 use std::path::{Path, PathBuf};
 
+pub use self::aws_s3::AwsS3Params;
+pub use self::kube::KubeProtocolParams;
+pub use self::smb::SmbParams;
+pub use self::webdav::WebDAVProtocolParams;
 use super::FileTransferProtocol;
 
 /// Holds connection parameters for file transfers
@@ -20,6 +29,7 @@ pub struct FileTransferParams {
 pub enum ProtocolParams {
     Generic(GenericProtocolParams),
     AwsS3(AwsS3Params),
+    Kube(KubeProtocolParams),
     Smb(SmbParams),
     WebDAV(WebDAVProtocolParams),
 }
@@ -31,33 +41,6 @@ pub struct GenericProtocolParams {
     pub port: u16,
     pub username: Option<String>,
     pub password: Option<String>,
-}
-
-/// Connection parameters for AWS S3 protocol
-#[derive(Debug, Clone)]
-pub struct AwsS3Params {
-    pub bucket_name: String,
-    pub region: Option<String>,
-    pub endpoint: Option<String>,
-    pub profile: Option<String>,
-    pub access_key: Option<String>,
-    pub secret_access_key: Option<String>,
-    pub security_token: Option<String>,
-    pub session_token: Option<String>,
-    pub new_path_style: bool,
-}
-
-/// Connection parameters for SMB protocol
-#[derive(Debug, Clone)]
-pub struct SmbParams {
-    pub address: String,
-    #[cfg(unix)]
-    pub port: u16,
-    pub share: String,
-    pub username: Option<String>,
-    pub password: Option<String>,
-    #[cfg(unix)]
-    pub workgroup: Option<String>,
 }
 
 impl FileTransferParams {
@@ -89,6 +72,7 @@ impl FileTransferParams {
         match &self.params {
             ProtocolParams::AwsS3(params) => params.password_missing(),
             ProtocolParams::Generic(params) => params.password_missing(),
+            ProtocolParams::Kube(params) => params.password_missing(),
             ProtocolParams::Smb(params) => params.password_missing(),
             ProtocolParams::WebDAV(params) => params.password_missing(),
         }
@@ -99,27 +83,10 @@ impl FileTransferParams {
         match &mut self.params {
             ProtocolParams::AwsS3(params) => params.set_default_secret(secret),
             ProtocolParams::Generic(params) => params.set_default_secret(secret),
+            ProtocolParams::Kube(params) => params.set_default_secret(secret),
             ProtocolParams::Smb(params) => params.set_default_secret(secret),
             ProtocolParams::WebDAV(params) => params.set_default_secret(secret),
         }
-    }
-}
-
-/// Protocol params used by WebDAV
-#[derive(Debug, Clone)]
-pub struct WebDAVProtocolParams {
-    pub uri: String,
-    pub username: String,
-    pub password: String,
-}
-
-impl WebDAVProtocolParams {
-    fn set_default_secret(&mut self, secret: String) {
-        self.password = secret;
-    }
-
-    fn password_missing(&self) -> bool {
-        self.password.is_empty()
     }
 }
 
@@ -158,6 +125,15 @@ impl ProtocolParams {
     pub fn s3_params(&self) -> Option<&AwsS3Params> {
         match self {
             ProtocolParams::AwsS3(params) => Some(params),
+            _ => None,
+        }
+    }
+
+    #[cfg(test)]
+    /// Retrieve Kube params parameters if any
+    pub fn kube_params(&self) -> Option<&KubeProtocolParams> {
+        match self {
+            ProtocolParams::Kube(params) => Some(params),
             _ => None,
         }
     }
@@ -231,127 +207,6 @@ impl GenericProtocolParams {
     }
 }
 
-// -- S3 params
-
-impl AwsS3Params {
-    /// Instantiates a new `AwsS3Params` struct
-    pub fn new<S: AsRef<str>>(bucket: S, region: Option<S>, profile: Option<S>) -> Self {
-        Self {
-            bucket_name: bucket.as_ref().to_string(),
-            region: region.map(|x| x.as_ref().to_string()),
-            profile: profile.map(|x| x.as_ref().to_string()),
-            endpoint: None,
-            access_key: None,
-            secret_access_key: None,
-            security_token: None,
-            session_token: None,
-            new_path_style: false,
-        }
-    }
-
-    /// Construct aws s3 params with specified endpoint
-    pub fn endpoint<S: AsRef<str>>(mut self, endpoint: Option<S>) -> Self {
-        self.endpoint = endpoint.map(|x| x.as_ref().to_string());
-        self
-    }
-
-    /// Construct aws s3 params with provided access key
-    pub fn access_key<S: AsRef<str>>(mut self, key: Option<S>) -> Self {
-        self.access_key = key.map(|x| x.as_ref().to_string());
-        self
-    }
-
-    /// Construct aws s3 params with provided secret_access_key
-    pub fn secret_access_key<S: AsRef<str>>(mut self, key: Option<S>) -> Self {
-        self.secret_access_key = key.map(|x| x.as_ref().to_string());
-        self
-    }
-
-    /// Construct aws s3 params with provided security_token
-    pub fn security_token<S: AsRef<str>>(mut self, key: Option<S>) -> Self {
-        self.security_token = key.map(|x| x.as_ref().to_string());
-        self
-    }
-
-    /// Construct aws s3 params with provided session_token
-    pub fn session_token<S: AsRef<str>>(mut self, key: Option<S>) -> Self {
-        self.session_token = key.map(|x| x.as_ref().to_string());
-        self
-    }
-
-    /// Specify new path style when constructing aws s3 params
-    pub fn new_path_style(mut self, new_path_style: bool) -> Self {
-        self.new_path_style = new_path_style;
-        self
-    }
-
-    /// Returns whether a password is supposed to be required for this protocol params.
-    /// The result true is returned ONLY if the supposed secret is MISSING!!!
-    pub fn password_missing(&self) -> bool {
-        self.secret_access_key.is_none() && self.security_token.is_none()
-    }
-
-    /// Set password
-    pub fn set_default_secret(&mut self, secret: String) {
-        self.secret_access_key = Some(secret);
-    }
-}
-
-// -- SMB params
-
-impl SmbParams {
-    /// Instantiates a new `AwsS3Params` struct
-    pub fn new<S: AsRef<str>>(address: S, share: S) -> Self {
-        Self {
-            address: address.as_ref().to_string(),
-            #[cfg(unix)]
-            port: 445,
-            share: share.as_ref().to_string(),
-            username: None,
-            password: None,
-            #[cfg(unix)]
-            workgroup: None,
-        }
-    }
-
-    #[cfg(unix)]
-    pub fn port(mut self, port: u16) -> Self {
-        self.port = port;
-        self
-    }
-
-    pub fn username(mut self, username: Option<impl ToString>) -> Self {
-        self.username = username.map(|x| x.to_string());
-        self
-    }
-
-    pub fn password(mut self, password: Option<impl ToString>) -> Self {
-        self.password = password.map(|x| x.to_string());
-        self
-    }
-
-    #[cfg(unix)]
-    pub fn workgroup(mut self, workgroup: Option<impl ToString>) -> Self {
-        self.workgroup = workgroup.map(|x| x.to_string());
-        self
-    }
-
-    /// Returns whether a password is supposed to be required for this protocol params.
-    /// The result true is returned ONLY if the supposed secret is MISSING!!!
-    pub fn password_missing(&self) -> bool {
-        self.password.is_none()
-    }
-
-    /// Set password
-    #[cfg(unix)]
-    pub fn set_default_secret(&mut self, secret: String) {
-        self.password = Some(secret);
-    }
-
-    #[cfg(windows)]
-    pub fn set_default_secret(&mut self, _secret: String) {}
-}
-
 #[cfg(test)]
 mod test {
 
@@ -384,87 +239,6 @@ mod test {
         assert_eq!(params.port, 22);
         assert!(params.username.is_none());
         assert!(params.password.is_none());
-    }
-
-    #[test]
-    fn should_init_aws_s3_params() {
-        let params: AwsS3Params = AwsS3Params::new("omar", Some("eu-west-1"), Some("test"));
-        assert_eq!(params.bucket_name.as_str(), "omar");
-        assert_eq!(params.region.as_deref().unwrap(), "eu-west-1");
-        assert_eq!(params.profile.as_deref().unwrap(), "test");
-        assert!(params.endpoint.is_none());
-        assert!(params.access_key.is_none());
-        assert!(params.secret_access_key.is_none());
-        assert!(params.security_token.is_none());
-        assert!(params.session_token.is_none());
-        assert_eq!(params.new_path_style, false);
-    }
-
-    #[test]
-    fn should_init_aws_s3_params_with_optionals() {
-        let params: AwsS3Params = AwsS3Params::new("omar", Some("eu-west-1"), Some("test"))
-            .endpoint(Some("http://omar.it"))
-            .access_key(Some("pippo"))
-            .secret_access_key(Some("pluto"))
-            .security_token(Some("omar"))
-            .session_token(Some("gerry-scotti"))
-            .new_path_style(true);
-        assert_eq!(params.bucket_name.as_str(), "omar");
-        assert_eq!(params.region.as_deref().unwrap(), "eu-west-1");
-        assert_eq!(params.profile.as_deref().unwrap(), "test");
-        assert_eq!(params.endpoint.as_deref().unwrap(), "http://omar.it");
-        assert_eq!(params.access_key.as_deref().unwrap(), "pippo");
-        assert_eq!(params.secret_access_key.as_deref().unwrap(), "pluto");
-        assert_eq!(params.security_token.as_deref().unwrap(), "omar");
-        assert_eq!(params.session_token.as_deref().unwrap(), "gerry-scotti");
-        assert_eq!(params.new_path_style, true);
-    }
-
-    #[test]
-    fn should_init_smb_params() {
-        let params = SmbParams::new("localhost", "temp");
-        assert_eq!(&params.address, "localhost");
-
-        #[cfg(unix)]
-        assert_eq!(params.port, 445);
-        assert_eq!(&params.share, "temp");
-
-        #[cfg(unix)]
-        assert!(params.username.is_none());
-        #[cfg(unix)]
-        assert!(params.password.is_none());
-        #[cfg(unix)]
-        assert!(params.workgroup.is_none());
-    }
-
-    #[test]
-    #[cfg(unix)]
-    fn should_init_smb_params_with_optionals() {
-        let params = SmbParams::new("localhost", "temp")
-            .port(3456)
-            .username(Some("foo"))
-            .password(Some("bar"))
-            .workgroup(Some("baz"));
-
-        assert_eq!(&params.address, "localhost");
-        assert_eq!(params.port, 3456);
-        assert_eq!(&params.share, "temp");
-        assert_eq!(params.username.as_deref().unwrap(), "foo");
-        assert_eq!(params.password.as_deref().unwrap(), "bar");
-        assert_eq!(params.workgroup.as_deref().unwrap(), "baz");
-    }
-
-    #[test]
-    #[cfg(windows)]
-    fn should_init_smb_params_with_optionals() {
-        let params = SmbParams::new("localhost", "temp")
-            .username(Some("foo"))
-            .password(Some("bar"));
-
-        assert_eq!(&params.address, "localhost");
-        assert_eq!(&params.share, "temp");
-        assert_eq!(params.username.as_deref().unwrap(), "foo");
-        assert_eq!(params.password.as_deref().unwrap(), "bar");
     }
 
     #[test]

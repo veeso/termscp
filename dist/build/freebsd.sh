@@ -34,9 +34,9 @@ rm manifest
 echo -e "name: \"termscp\"" > manifest
 echo -e "version: $VERSION" >> manifest
 echo -e "origin: veeso/termscp" >> manifest
-echo -e "comment: \"A feature rich terminal UI file transfer and explorer with support for SCP/SFTP/FTP/S3\"" >> manifest
+echo -e "comment: \"A feature rich terminal UI file transfer and explorer with support for SCP/SFTP/FTP/Kube/S3/WebDAV\"" >> manifest
 echo -e "desc: <<EOD\n\
-    A feature rich terminal UI file transfer and explorer with support for SCP/SFTP/FTP/S3\n\
+    A feature rich terminal UI file transfer and explorer with support for SCP/SFTP/FTP/Kube/S3/WebDAV\n\
 EOD\n\
 arch: \"amd64\"\n\
 www: \"https://termscp.veeso.dev/termscp/\"\n\
