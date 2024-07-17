@@ -4,6 +4,7 @@
   - [Usage ❓](#usage-)
     - [Address argument 🌎](#address-argument-)
       - [AWS S3 address argument](#aws-s3-address-argument)
+      - [Kube address argument](#kube-address-argument)
       - [WebDAV address argument](#webdav-address-argument)
       - [SMB address argument](#smb-address-argument)
       - [How Password can be provided 🔐](#how-password-can-be-provided-)
@@ -103,6 +104,14 @@ e.g.
 
 ```txt
 s3://buckethead@eu-central-1:default:/assets
+```
+
+#### Kube address argument
+
+In case you want to connect to Kube use the following syntax
+
+```txt
+kube://<container>@<pod></path>
 ```
 
 #### WebDAV address argument

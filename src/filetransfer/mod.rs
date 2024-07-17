@@ -15,6 +15,7 @@ pub use params::{FileTransferParams, ProtocolParams};
 pub enum FileTransferProtocol {
     AwsS3,
     Ftp(bool), // Bool is for secure (true => ftps)
+    Kube,
     Scp,
     Sftp,
     Smb,
@@ -34,6 +35,7 @@ impl std::fmt::Display for FileTransferProtocol {
                     true => "FTPS",
                     false => "FTP",
                 },
+                FileTransferProtocol::Kube => "KUBE",
                 FileTransferProtocol::Scp => "SCP",
                 FileTransferProtocol::Sftp => "SFTP",
                 FileTransferProtocol::Smb => "SMB",
@@ -49,6 +51,7 @@ impl std::str::FromStr for FileTransferProtocol {
         match s.to_ascii_uppercase().as_str() {
             "FTP" => Ok(FileTransferProtocol::Ftp(false)),
             "FTPS" => Ok(FileTransferProtocol::Ftp(true)),
+            "KUBE" => Ok(FileTransferProtocol::Kube),
             "S3" => Ok(FileTransferProtocol::AwsS3),
             "SCP" => Ok(FileTransferProtocol::Scp),
             "SFTP" => Ok(FileTransferProtocol::Sftp),
@@ -115,6 +118,14 @@ mod tests {
             FileTransferProtocol::Scp
         );
         assert_eq!(
+            FileTransferProtocol::from_str("kube").ok().unwrap(),
+            FileTransferProtocol::Kube
+        );
+        assert_eq!(
+            FileTransferProtocol::from_str("KUBE").ok().unwrap(),
+            FileTransferProtocol::Kube
+        );
+        assert_eq!(
             FileTransferProtocol::from_str("SMB").ok().unwrap(),
             FileTransferProtocol::Smb
         );
@@ -153,5 +164,6 @@ mod tests {
             FileTransferProtocol::WebDAV.to_string(),
             String::from("WEBDAV")
         );
+        assert_eq!(FileTransferProtocol::Kube.to_string(), String::from("KUBE"));
     }
 }

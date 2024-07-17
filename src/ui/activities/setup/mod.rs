@@ -29,9 +29,10 @@ const RADIO_PROTOCOL_SFTP: usize = 0;
 const RADIO_PROTOCOL_SCP: usize = 1;
 const RADIO_PROTOCOL_FTP: usize = 2;
 const RADIO_PROTOCOL_FTPS: usize = 3;
-const RADIO_PROTOCOL_S3: usize = 4;
-const RADIO_PROTOCOL_SMB: usize = 5;
-const RADIO_PROTOCOL_WEBDAV: usize = 6;
+const RADIO_PROTOCOL_KUBE: usize = 4;
+const RADIO_PROTOCOL_S3: usize = 5;
+const RADIO_PROTOCOL_SMB: usize = 6;
+const RADIO_PROTOCOL_WEBDAV: usize = 7;
 
 // -- components
 #[derive(Debug, Eq, PartialEq, Clone, Hash)]

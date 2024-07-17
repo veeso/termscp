@@ -4,6 +4,7 @@
   - [用法](#用法)
     - [地址参数](#地址参数)
       - [AWS S3 地址参数](#aws-s3-地址参数)
+      - [Kube 地址参数](#kube-地址参数)
       - [WebDAV 地址参数](#webdav-地址参数)
       - [SMB 地址参数](#smb-地址参数)
       - [如何输入密码](#如何输入密码)
@@ -100,6 +101,14 @@ s3://<bucket-name>@<region>[:profile][:/wrkdir]
 
 ```txt
 s3://buckethead@eu-central-1:default:/assets
+```
+
+#### Kube 地址参数
+
+如果您想连接到 Kube，请使用以下语法
+
+```txt
+kube://<container>@<pod></path>
 ```
 
 #### WebDAV 地址参数

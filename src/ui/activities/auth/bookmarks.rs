@@ -5,7 +5,8 @@
 // Locals
 use super::{AuthActivity, FileTransferParams};
 use crate::filetransfer::params::{
-    AwsS3Params, GenericProtocolParams, ProtocolParams, SmbParams, WebDAVProtocolParams,
+    AwsS3Params, GenericProtocolParams, KubeProtocolParams, ProtocolParams, SmbParams,
+    WebDAVProtocolParams,
 };
 
 impl AuthActivity {
@@ -164,6 +165,8 @@ impl AuthActivity {
         );
         match bookmark.params {
             ProtocolParams::AwsS3(params) => self.load_bookmark_s3_into_gui(params),
+            ProtocolParams::Kube(params) => self.load_bookmark_kube_into_gui(params),
+
             ProtocolParams::Generic(params) => self.load_bookmark_generic_into_gui(params),
             ProtocolParams::Smb(params) => self.load_bookmark_smb_into_gui(params),
             ProtocolParams::WebDAV(params) => self.load_bookmark_webdav_into_gui(params),
@@ -187,6 +190,16 @@ impl AuthActivity {
         self.mount_s3_security_token(params.security_token.as_deref().unwrap_or(""));
         self.mount_s3_session_token(params.session_token.as_deref().unwrap_or(""));
         self.mount_s3_new_path_style(params.new_path_style);
+    }
+
+    fn load_bookmark_kube_into_gui(&mut self, params: KubeProtocolParams) {
+        self.mount_kube_pod_name(params.pod.as_str());
+        self.mount_kube_container(&params.container);
+        self.mount_kube_cluster_url(params.cluster_url.as_deref().unwrap_or(""));
+        self.mount_kube_namespace(params.namespace.as_deref().unwrap_or(""));
+        self.mount_kube_client_cert(params.client_cert.as_deref().unwrap_or(""));
+        self.mount_kube_client_key(params.client_key.as_deref().unwrap_or(""));
+        self.mount_kube_username(params.username.as_deref().unwrap_or(""));
     }
 
     fn load_bookmark_smb_into_gui(&mut self, params: SmbParams) {

@@ -3,10 +3,12 @@
 //! Remotefs client builder
 
 use std::path::PathBuf;
+use std::sync::Arc;
 
 use remotefs::RemoteFs;
 use remotefs_aws_s3::AwsS3Fs;
 use remotefs_ftp::FtpFs;
+use remotefs_kube::KubeFs;
 #[cfg(smb_unix)]
 use remotefs_smb::SmbOptions;
 #[cfg(smb)]
@@ -14,11 +16,11 @@ use remotefs_smb::{SmbCredentials, SmbFs};
 use remotefs_ssh::{ScpFs, SftpFs, SshAgentIdentity, SshConfigParseRule, SshOpts};
 use remotefs_webdav::WebDAVFs;
 
-use super::params::WebDAVProtocolParams;
 #[cfg(not(smb))]
 use super::params::{AwsS3Params, GenericProtocolParams};
 #[cfg(smb)]
 use super::params::{AwsS3Params, GenericProtocolParams, SmbParams};
+use super::params::{KubeProtocolParams, WebDAVProtocolParams};
 use super::{FileTransferProtocol, ProtocolParams};
 use crate::system::config_client::ConfigClient;
 use crate::system::sshkey_storage::SshKeyStorage;
@@ -42,6 +44,9 @@ impl Builder {
             }
             (FileTransferProtocol::Ftp(secure), ProtocolParams::Generic(params)) => {
                 Box::new(Self::ftp_client(params, secure))
+            }
+            (FileTransferProtocol::Kube, ProtocolParams::Kube(params)) => {
+                Box::new(Self::kube_client(params))
             }
             (FileTransferProtocol::Scp, ProtocolParams::Generic(params)) => {
                 Box::new(Self::scp_client(params, config_client))
@@ -103,6 +108,23 @@ impl Builder {
             client = client.secure(true, true);
         }
         client
+    }
+
+    /// Build kube client
+    fn kube_client(params: KubeProtocolParams) -> KubeFs {
+        let rt = Arc::new(
+            tokio::runtime::Builder::new_multi_thread()
+                .worker_threads(1)
+                .enable_all()
+                .build()
+                .expect("Unable to create tokio runtime"),
+        );
+        let kube_fs = KubeFs::new(&params.pod, &params.container, &rt);
+        if let Some(config) = params.config() {
+            kube_fs.config(config)
+        } else {
+            kube_fs
+        }
     }
 
     /// Build scp client
@@ -254,6 +276,21 @@ mod test {
         );
         let config_client = get_config_client();
         let _ = Builder::build(FileTransferProtocol::Ftp(true), params, &config_client);
+    }
+
+    #[test]
+    fn test_should_build_kube_fs() {
+        let params = ProtocolParams::Kube(KubeProtocolParams {
+            pod: "pod".to_string(),
+            container: "container".to_string(),
+            namespace: Some("namespace".to_string()),
+            cluster_url: Some("cluster_url".to_string()),
+            username: Some("username".to_string()),
+            client_cert: Some("client_cert".to_string()),
+            client_key: Some("client_key".to_string()),
+        });
+        let config_client = get_config_client();
+        let _ = Builder::build(FileTransferProtocol::Kube, params, &config_client);
     }
 
     #[test]

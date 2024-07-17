@@ -10,7 +10,7 @@
     "support": "Apoyame"
   },
   "intro": {
-    "caption": "Un explorador y transferencia de archivos de terminal rico en funciones, con apoyo para SCP/SFTP/FTP/S3",
+    "caption": "Un explorador y transferencia de archivos de terminal rico en funciones, con apoyo para SCP/SFTP/FTP/Kube/S3/WebDAV",
     "getStarted": "Para iniciar →",
     "versionAlert": "termscp 0.13.0 ya está disponible! Descárgalo desde",
     "here": "aquì",

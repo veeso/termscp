@@ -29,8 +29,9 @@ const RADIO_PROTOCOL_SCP: usize = 1;
 const RADIO_PROTOCOL_FTP: usize = 2;
 const RADIO_PROTOCOL_FTPS: usize = 3;
 const RADIO_PROTOCOL_S3: usize = 4;
-const RADIO_PROTOCOL_WEBDAV: usize = 5;
-const RADIO_PROTOCOL_SMB: usize = 6;
+const RADIO_PROTOCOL_KUBE: usize = 5;
+const RADIO_PROTOCOL_WEBDAV: usize = 6;
+const RADIO_PROTOCOL_SMB: usize = 7;
 
 // -- components
 #[derive(Debug, Eq, PartialEq, Clone, Hash)]
@@ -47,6 +48,13 @@ pub enum Id {
     InfoPopup,
     InstallUpdatePopup,
     Keybindings,
+    KubePodName,
+    KubeContainer,
+    KubeNamespace,
+    KubeClusterUrl,
+    KubeUsername,
+    KubeClientCert,
+    KubeClientKey,
     LocalDirectory,
     NewVersionChangelog,
     NewVersionDisclaimer,
@@ -111,6 +119,20 @@ pub enum UiMsg {
     CloseKeybindingsPopup,
     CloseQuitPopup,
     CloseSaveBookmark,
+    KubePodNameBlurDown,
+    KubePodNameBlurUp,
+    KubeContainerBlurDown,
+    KubeContainerBlurUp,
+    KubeNamespaceBlurDown,
+    KubeNamespaceBlurUp,
+    KubeClusterUrlBlurDown,
+    KubeClusterUrlBlurUp,
+    KubeUsernameBlurDown,
+    KubeUsernameBlurUp,
+    KubeClientCertBlurDown,
+    KubeClientCertBlurUp,
+    KubeClientKeyBlurDown,
+    KubeClientKeyBlurUp,
     LocalDirectoryBlurDown,
     LocalDirectoryBlurUp,
     ParamsFormBlur,
@@ -167,6 +189,7 @@ pub enum UiMsg {
 enum InputMask {
     Generic,
     AwsS3,
+    Kube,
     Smb,
     WebDAV,
 }
@@ -244,6 +267,7 @@ impl AuthActivity {
             FileTransferProtocol::Ftp(_)
             | FileTransferProtocol::Scp
             | FileTransferProtocol::Sftp => InputMask::Generic,
+            FileTransferProtocol::Kube => InputMask::Kube,
             FileTransferProtocol::Smb => InputMask::Smb,
             FileTransferProtocol::WebDAV => InputMask::WebDAV,
         }
