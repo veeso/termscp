@@ -577,6 +577,7 @@ mod tests {
             remote_path: Some(PathBuf::from("/tmp")),
             local_path: Some(PathBuf::from("/usr")),
             s3: None,
+            kube: None,
             smb: Some(SmbParams {
                 share: "test".to_string(),
                 workgroup: None,
