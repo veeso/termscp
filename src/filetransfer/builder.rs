@@ -113,7 +113,7 @@ impl Builder {
     /// Build kube client
     fn kube_client(params: KubeProtocolParams) -> KubeFs {
         let rt = Arc::new(
-            tokio::runtime::Builder::new_multi_thread()
+            tokio::runtime::Builder::new_current_thread()
                 .worker_threads(1)
                 .enable_all()
                 .build()
