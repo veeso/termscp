@@ -149,86 +149,18 @@ impl AuthActivity {
                 .direction(Direction::Vertical)
                 .split(main_chunks[0]);
             // Input mask chunks
-            let input_mask = match self.input_mask() {
-                InputMask::AwsS3 => Layout::default()
-                    .constraints(
-                        [
-                            Constraint::Length(3), // bucket
-                            Constraint::Length(3), // region
-                            Constraint::Length(3), // profile
-                            Constraint::Length(3), // access_key
-                            Constraint::Length(3), // remote directory
-                        ]
-                        .as_ref(),
-                    )
-                    .direction(Direction::Vertical)
-                    .split(auth_chunks[4]),
-                InputMask::Kube => Layout::default()
-                    .constraints([
-                        Constraint::Length(3), // ...
-                        Constraint::Length(3), // ...
-                        Constraint::Length(3), // ...
-                        Constraint::Length(3), // ...
-                        Constraint::Length(3), // remote directory
-                    ])
-                    .direction(Direction::Vertical)
-                    .split(auth_chunks[4]),
-                InputMask::Generic => Layout::default()
-                    .constraints(
-                        [
-                            Constraint::Length(3), // address
-                            Constraint::Length(3), // port
-                            Constraint::Length(3), // username
-                            Constraint::Length(3), // password
-                            Constraint::Length(3), // remote directory
-                        ]
-                        .as_ref(),
-                    )
-                    .direction(Direction::Vertical)
-                    .split(auth_chunks[4]),
-                #[cfg(unix)]
-                InputMask::Smb => Layout::default()
-                    .constraints(
-                        [
-                            Constraint::Length(3), // address
-                            Constraint::Length(3), // port
-                            Constraint::Length(3), // share
-                            Constraint::Length(3), // username
-                            Constraint::Length(3), // password
-                            Constraint::Length(3), // workgroup
-                            Constraint::Length(3), // remote directory
-                        ]
-                        .as_ref(),
-                    )
-                    .direction(Direction::Vertical)
-                    .split(auth_chunks[4]),
-                #[cfg(windows)]
-                InputMask::Smb => Layout::default()
-                    .constraints(
-                        [
-                            Constraint::Length(3), // address
-                            Constraint::Length(3), // share
-                            Constraint::Length(3), // username
-                            Constraint::Length(3), // password
-                            Constraint::Length(3), // remote directory
-                        ]
-                        .as_ref(),
-                    )
-                    .direction(Direction::Vertical)
-                    .split(auth_chunks[4]),
-                InputMask::WebDAV => Layout::default()
-                    .constraints(
-                        [
-                            Constraint::Length(3), // uri
-                            Constraint::Length(3), // username
-                            Constraint::Length(3), // password
-                            Constraint::Length(3), // dir
-                        ]
-                        .as_ref(),
-                    )
-                    .direction(Direction::Vertical)
-                    .split(auth_chunks[4]),
-            };
+            let input_mask = Layout::default()
+                .constraints(
+                    [
+                        Constraint::Length(3), // uri
+                        Constraint::Length(3), // username
+                        Constraint::Length(3), // password
+                        Constraint::Length(3), // dir
+                    ]
+                    .as_ref(),
+                )
+                .direction(Direction::Vertical)
+                .split(auth_chunks[4]);
             // Create bookmark chunks
             let bookmark_chunks = Layout::default()
                 .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
@@ -347,7 +279,7 @@ impl AuthActivity {
                     .constraints(
                         [
                             Constraint::Length(3), // Input form
-                            Constraint::Length(2), // Yes/No
+                            Constraint::Length(4), // Yes/No
                         ]
                         .as_ref(),
                     )
@@ -1069,10 +1001,7 @@ impl AuthActivity {
 
     pub(super) fn get_input_port(&self) -> u16 {
         match self.app.state(&Id::Port) {
-            Ok(State::One(StateValue::String(x))) => match u16::from_str(x.as_str()) {
-                Ok(v) => v,
-                _ => 0,
-            },
+            Ok(State::One(StateValue::String(x))) => u16::from_str(x.as_str()).unwrap_or_default(),
             _ => 0,
         }
     }

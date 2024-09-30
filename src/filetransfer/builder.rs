@@ -8,7 +8,7 @@ use std::sync::Arc;
 use remotefs::RemoteFs;
 use remotefs_aws_s3::AwsS3Fs;
 use remotefs_ftp::FtpFs;
-use remotefs_kube::KubeFs;
+use remotefs_kube::KubeContainerFs as KubeFs;
 #[cfg(smb_unix)]
 use remotefs_smb::SmbOptions;
 #[cfg(smb)]

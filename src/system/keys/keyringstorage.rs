@@ -89,7 +89,7 @@ mod tests {
         let app_name: &str = "termscp-test2";
         let secret: &str = "Th15-15/My-Супер-Секрет";
         let kring: Keyring = Keyring::new(app_name, username.as_str()).unwrap();
-        let _ = kring.delete_password();
+        let _ = kring.delete_credential();
         drop(kring);
         // Secret should not exist
         assert!(storage.get_key(app_name).is_err());
@@ -100,6 +100,6 @@ mod tests {
 
         // Delete the key manually...
         let kring: Keyring = Keyring::new(app_name, username.as_str()).unwrap();
-        assert!(kring.delete_password().is_ok());
+        assert!(kring.delete_credential().is_ok());
     }
 }
