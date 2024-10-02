@@ -111,7 +111,7 @@ s3://buckethead@eu-central-1:default:/assets
 In case you want to connect to Kube use the following syntax
 
 ```txt
-kube://<container>@<pod></path>
+kube://[namespace][@<cluster_url>][$</path>]
 ```
 
 #### WebDAV address argument

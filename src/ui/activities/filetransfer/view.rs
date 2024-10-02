@@ -80,7 +80,7 @@ impl FileTransferActivity {
         self.refresh_remote_status_bar();
         // Update components
         self.update_local_filelist();
-        self.update_remote_filelist();
+        // self.update_remote_filelist();
         // Global listener
         self.mount_global_listener();
         // Give focus to local explorer

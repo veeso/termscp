@@ -85,9 +85,7 @@ impl AuthActivity {
     /// Get input values from fields or return an error if fields are invalid to work as aws s3
     pub(super) fn collect_kube_host_params(&self) -> Result<FileTransferParams, &'static str> {
         let params = self.get_kube_params_input();
-        if params.pod.is_empty() {
-            return Err("Invalid pod name");
-        }
+
         Ok(FileTransferParams {
             protocol: FileTransferProtocol::Kube,
             params: ProtocolParams::Kube(params),

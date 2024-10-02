@@ -46,7 +46,7 @@ dirs = "^5.0"
 edit = "^0.1"
 filetime = "^0.2"
 hostname = "^0.4"
-keyring = { version = "^3", optional = true }
+keyring = { version = "^3", optional = true, features = ["apple-native", "windows-native", "sync-secret-service"] }
 lazy-regex = "^3"
 lazy_static = "^1"
 log = "^0.4"

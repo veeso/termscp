@@ -412,8 +412,6 @@ mod tests {
         assert_eq!(host.password, None);
         assert_eq!(host.protocol, FileTransferProtocol::Kube);
         let kube = host.kube.as_ref().unwrap();
-        assert_eq!(kube.pod_name.as_str(), "my-pod");
-        assert_eq!(kube.container.as_str(), "my-container");
         assert_eq!(kube.namespace.as_deref().unwrap(), "my-namespace");
         assert_eq!(kube.cluster_url.as_deref().unwrap(), "https://my-cluster");
         assert_eq!(kube.username.as_deref().unwrap(), "my-username");
@@ -515,8 +513,6 @@ mod tests {
                 s3: None,
                 smb: None,
                 kube: Some(KubeParams {
-                    pod_name: "my-pod".to_string(),
-                    container: "my-container".to_string(),
                     namespace: Some("my-namespace".to_string()),
                     cluster_url: Some("https://my-cluster".to_string()),
                     username: Some("my-username".to_string()),
@@ -593,6 +589,22 @@ mod tests {
         assert!(deserialize::<Theme>(Box::new(toml_file)).is_err());
     }
 
+    #[test]
+    fn test_should_deserialize_v14_pod_bookmark() {
+        let toml = create_v14_pod_bookmark();
+        toml.as_file().sync_all().unwrap();
+        toml.as_file().rewind().unwrap();
+        let deserialized: UserHosts = deserialize(Box::new(toml)).unwrap();
+        let kube = deserialized.bookmarks.get("pod").unwrap();
+        assert_eq!(kube.protocol, FileTransferProtocol::Kube);
+        let kube = kube.kube.as_ref().unwrap();
+        assert_eq!(kube.namespace.as_deref().unwrap(), "my-namespace");
+        assert_eq!(kube.cluster_url.as_deref().unwrap(), "https://my-cluster");
+        assert_eq!(kube.username.as_deref().unwrap(), "my-username");
+        assert_eq!(kube.client_cert.as_deref().unwrap(), "my-cert");
+        assert_eq!(kube.client_key.as_deref().unwrap(), "my-key");
+    }
+
     fn create_good_toml_bookmarks() -> tempfile::NamedTempFile {
         // Write
         let mut tmpfile: tempfile::NamedTempFile = tempfile::NamedTempFile::new().unwrap();
@@ -617,8 +629,6 @@ mod tests {
         [bookmarks.pod]
         protocol = "KUBE"
         [bookmarks.pod.kube]
-        pod_name = "my-pod"
-        container = "my-container"
         namespace = "my-namespace"
         cluster_url = "https://my-cluster"
         username = "my-username"
@@ -638,6 +648,29 @@ mod tests {
 
         [recents]
         ISO20201215T094000Z = { address = "172.16.104.10", port = 22, protocol = "SCP", username = "root" }
+        "#;
+        tmpfile.write_all(file_content.as_bytes()).unwrap();
+        //write!(tmpfile, "[bookmarks]\nraspberrypi2 = {{ address = \"192.168.1.31\", port = 22, protocol = \"SFTP\", username = \"root\" }}\nmsi-estrem = {{ address = \"192.168.1.30\", port = 22, protocol = \"SFTP\", username = \"cvisintin\" }}\naws-server-prod1 = {{ address = \"51.23.67.12\", port = 21, protocol = \"FTPS\", username = \"aws001\" }}\n\n[recents]\nISO20201215T094000Z = {{ address = \"172.16.104.10\", port = 22, protocol = \"SCP\", username = \"root\" }}\n");
+        tmpfile
+    }
+
+    fn create_v14_pod_bookmark() -> tempfile::NamedTempFile {
+        let mut tmpfile: tempfile::NamedTempFile = tempfile::NamedTempFile::new().unwrap();
+        let file_content: &str = r#"
+        [bookmarks]
+
+        [bookmarks.pod]
+        protocol = "KUBE"
+        [bookmarks.pod.kube]
+        pod_name = "my-pod"
+        container = "my-container"
+        namespace = "my-namespace"
+        cluster_url = "https://my-cluster"
+        username = "my-username"
+        client_cert = "my-cert"
+        client_key = "my-key"
+
+        [recents]
         "#;
         tmpfile.write_all(file_content.as_bytes()).unwrap();
         //write!(tmpfile, "[bookmarks]\nraspberrypi2 = {{ address = \"192.168.1.31\", port = 22, protocol = \"SFTP\", username = \"root\" }}\nmsi-estrem = {{ address = \"192.168.1.30\", port = 22, protocol = \"SFTP\", username = \"cvisintin\" }}\naws-server-prod1 = {{ address = \"51.23.67.12\", port = 21, protocol = \"FTPS\", username = \"aws001\" }}\n\n[recents]\nISO20201215T094000Z = {{ address = \"172.16.104.10\", port = 22, protocol = \"SCP\", username = \"root\" }}\n");

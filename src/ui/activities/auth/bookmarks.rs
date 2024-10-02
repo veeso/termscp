@@ -193,8 +193,6 @@ impl AuthActivity {
     }
 
     fn load_bookmark_kube_into_gui(&mut self, params: KubeProtocolParams) {
-        self.mount_kube_pod_name(params.pod.as_str());
-        self.mount_kube_container(&params.container);
         self.mount_kube_cluster_url(params.cluster_url.as_deref().unwrap_or(""));
         self.mount_kube_namespace(params.namespace.as_deref().unwrap_or(""));
         self.mount_kube_client_cert(params.client_cert.as_deref().unwrap_or(""));

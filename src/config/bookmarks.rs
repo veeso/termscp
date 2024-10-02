@@ -351,8 +351,6 @@ mod tests {
     #[test]
     fn bookmark_from_kube_ftparams() {
         let params = ProtocolParams::Kube(KubeProtocolParams {
-            pod: "pod".to_string(),
-            container: "container".to_string(),
             namespace: Some("default".to_string()),
             username: Some("root".to_string()),
             cluster_url: Some("https://localhost:6443".to_string()),
@@ -368,8 +366,6 @@ mod tests {
         assert!(bookmark.username.is_none());
         assert!(bookmark.password.is_none());
         let kube: &KubeParams = bookmark.kube.as_ref().unwrap();
-        assert_eq!(kube.pod_name.as_str(), "pod");
-        assert_eq!(kube.container.as_str(), "container");
         assert_eq!(kube.namespace.as_deref().unwrap(), "default");
         assert_eq!(
             kube.cluster_url.as_deref().unwrap(),
@@ -494,8 +490,6 @@ mod tests {
             remote_path: Some(PathBuf::from("/tmp")),
             local_path: Some(PathBuf::from("/usr")),
             kube: Some(KubeParams {
-                pod_name: String::from("pod"),
-                container: String::from("container"),
                 namespace: Some(String::from("default")),
                 cluster_url: Some(String::from("https://localhost:6443")),
                 username: Some(String::from("root")),
@@ -516,7 +510,6 @@ mod tests {
             std::path::Path::new("/usr")
         );
         let gparams = params.params.kube_params().unwrap();
-        assert_eq!(gparams.pod.as_str(), "pod");
         assert_eq!(gparams.namespace.as_deref().unwrap(), "default");
         assert_eq!(
             gparams.cluster_url.as_deref().unwrap(),

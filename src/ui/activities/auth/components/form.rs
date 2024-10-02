@@ -833,40 +833,6 @@ impl Component<Msg, NoUserEvent> for InputWebDAVUri {
 // kube
 
 #[derive(MockComponent)]
-pub struct InputKubePodName {
-    component: Input,
-}
-
-impl InputKubePodName {
-    pub fn new(bucket: &str, color: Color) -> Self {
-        Self {
-            component: Input::default()
-                .borders(
-                    Borders::default()
-                        .color(color)
-                        .modifiers(BorderType::Rounded),
-                )
-                .foreground(color)
-                .placeholder("pod-name", Style::default().fg(Color::Rgb(128, 128, 128)))
-                .title("Pod name", Alignment::Left)
-                .input_type(InputType::Text)
-                .value(bucket),
-        }
-    }
-}
-
-impl Component<Msg, NoUserEvent> for InputKubePodName {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
-        handle_input_ev(
-            self,
-            ev,
-            Msg::Ui(UiMsg::KubePodNameBlurDown),
-            Msg::Ui(UiMsg::KubePodNameBlurUp),
-        )
-    }
-}
-
-#[derive(MockComponent)]
 pub struct InputKubeNamespace {
     component: Input,
 }
@@ -933,40 +899,6 @@ impl Component<Msg, NoUserEvent> for InputKubeClusterUrl {
             ev,
             Msg::Ui(UiMsg::KubeClusterUrlBlurDown),
             Msg::Ui(UiMsg::KubeClusterUrlBlurUp),
-        )
-    }
-}
-
-#[derive(MockComponent)]
-pub struct InputKubeContainer {
-    component: Input,
-}
-
-impl InputKubeContainer {
-    pub fn new(bucket: &str, color: Color) -> Self {
-        Self {
-            component: Input::default()
-                .borders(
-                    Borders::default()
-                        .color(color)
-                        .modifiers(BorderType::Rounded),
-                )
-                .foreground(color)
-                .placeholder("container", Style::default().fg(Color::Rgb(128, 128, 128)))
-                .title("Kube container", Alignment::Left)
-                .input_type(InputType::Text)
-                .value(bucket),
-        }
-    }
-}
-
-impl Component<Msg, NoUserEvent> for InputKubeContainer {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
-        handle_input_ev(
-            self,
-            ev,
-            Msg::Ui(UiMsg::KubeContainerBlurDown),
-            Msg::Ui(UiMsg::KubeContainerBlurUp),
         )
     }
 }

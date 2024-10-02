@@ -76,16 +76,12 @@ impl KeyStorage for KeyringStorage {
 
 #[cfg(test)]
 mod tests {
-    #[cfg(linux)]
     use pretty_assertions::assert_eq;
-    #[cfg(linux)]
     use whoami::username;
 
-    #[cfg(linux)]
     use super::*;
 
     #[test]
-    #[cfg(linux)]
     fn test_system_keys_keyringstorage() {
         let username: String = username();
         let storage: KeyringStorage = KeyringStorage::new(username.as_str());
