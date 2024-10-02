@@ -116,11 +116,6 @@
       src="https://github.com/veeso/termscp/workflows/Windows/badge.svg"
       alt="Windows CI"
   /></a>
-  <a href="https://coveralls.io/github/veeso/termscp"
-    ><img
-      src="https://coveralls.io/repos/github/veeso/termscp/badge.svg"
-      alt="Coveralls"
-  /></a>
 </p>
 
 ---
