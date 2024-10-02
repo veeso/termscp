@@ -131,7 +131,10 @@ impl FilterPopup {
                     "regex or wildmatch",
                     Style::default().fg(Color::Rgb(128, 128, 128)),
                 )
-                .title("Filter files by regex or wildmatch", Alignment::Center),
+                .title(
+                    "Filter files by regex or wildmatch in the current directory",
+                    Alignment::Center,
+                ),
         }
     }
 }
@@ -596,11 +599,8 @@ impl FindPopup {
                 )
                 .foreground(color)
                 .input_type(InputType::Text)
-                .placeholder(
-                    "Search files by name",
-                    Style::default().fg(Color::Rgb(128, 128, 128)),
-                )
-                .title("*.txt", Alignment::Center),
+                .placeholder("*.txt", Style::default().fg(Color::Rgb(128, 128, 128)))
+                .title("Search files by name or wildmatch", Alignment::Center),
         }
     }
 }
