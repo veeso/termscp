@@ -30,7 +30,7 @@ impl Context {
         theme_provider: ThemeProvider,
         error: Option<String>,
     ) -> Context {
-        Context {
+        let mut ctx = Context {
             bookmarks_client,
             config_client,
             ft_params: None,
@@ -38,7 +38,13 @@ impl Context {
             terminal: TerminalBridge::new().expect("Could not initialize terminal"),
             theme_provider,
             error,
-        }
+        };
+
+        // Init terminal state
+        let _ = ctx.terminal.enable_raw_mode();
+        let _ = ctx.terminal.enter_alternate_screen();
+
+        ctx
     }
 
     // -- getters
@@ -107,6 +113,5 @@ impl Drop for Context {
         // Re-enable terminal stuff
         let _ = self.terminal.disable_raw_mode();
         let _ = self.terminal.leave_alternate_screen();
-        let _ = self.terminal.clear_screen();
     }
 }

@@ -44,6 +44,7 @@ Released on
 - [Issue 268](https://github.com/veeso/termscp/issues/268): Pods and container explorer for Kube protocol.
   - BREAKING ‼️ Kube address argument has changed; see manual!
   - Pod and container argumets have been removed; from now on you will connect with the following syntax to the provided namespace: `/pod-name/container-name/path/to/file`
+- [Issue 279](https://github.com/veeso/termscp/issues/279): do not clear screen
 
 ## 0.14.0
 
