@@ -51,7 +51,7 @@ lazy-regex = "^3"
 lazy_static = "^1"
 log = "^0.4"
 magic-crypt = "^3"
-notify = "=4.0.17"
+notify = "6"
 notify-rust = { version = "^4.5", default-features = false, features = ["d"] }
 open = "^5.0"
 rand = "^0.8.5"

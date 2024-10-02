@@ -12,7 +12,7 @@ use std::time::Duration;
 
 pub use change::FsChange;
 use notify::{
-    watcher, DebouncedEvent, Error as WatcherError, RecommendedWatcher, RecursiveMode, Watcher,
+    Config, Error as WatcherError, Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher,
 };
 use thiserror::Error;
 
@@ -27,6 +27,8 @@ pub enum FsWatcherError {
     PathNotWatched,
     #[error("unable to watch path, since it's already watched")]
     PathAlreadyWatched,
+    #[error("unknown event: {0}")]
+    UnknownEvent(&'static str),
     #[error("worker error: {0}")]
     WorkerError(WatcherError),
 }
@@ -37,10 +39,61 @@ impl From<WatcherError> for FsWatcherError {
     }
 }
 
+/// Describes an event that can be received from the `FsWatcher`
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum FsWatcherEvent {
+    Rename { source: PathBuf, dest: PathBuf },
+    Remove(PathBuf),
+    Create(PathBuf),
+    Modify(PathBuf),
+    Other,
+}
+
+impl TryFrom<Event> for FsWatcherEvent {
+    type Error = &'static str;
+
+    fn try_from(ev: Event) -> Result<Self, Self::Error> {
+        match ev.kind {
+            EventKind::Any | EventKind::Access(_) | EventKind::Other => Ok(Self::Other),
+            EventKind::Create(_) => {
+                if ev.paths.len() == 2 {
+                    Ok(Self::Rename {
+                        source: ev.paths[0].clone(),
+                        dest: ev.paths[1].clone(),
+                    })
+                } else if let Some(p) = ev.paths.first() {
+                    Ok(Self::Create(p.clone()))
+                } else {
+                    Err("No path found")
+                }
+            }
+            EventKind::Modify(_) => {
+                if ev.paths.len() == 2 {
+                    Ok(Self::Rename {
+                        source: ev.paths[0].clone(),
+                        dest: ev.paths[1].clone(),
+                    })
+                } else if let Some(p) = ev.paths.first() {
+                    Ok(Self::Modify(p.clone()))
+                } else {
+                    Err("No path found")
+                }
+            }
+            EventKind::Remove(_) => {
+                if let Some(p) = ev.paths.first() {
+                    Ok(Self::Remove(p.clone()))
+                } else {
+                    Err("No path found")
+                }
+            }
+        }
+    }
+}
+
 /// File system watcher
 pub struct FsWatcher {
     paths: HashMap<PathBuf, PathBuf>,
-    receiver: Receiver<DebouncedEvent>,
+    receiver: Receiver<notify::Result<Event>>,
     watcher: RecommendedWatcher,
 }
 
@@ -52,29 +105,32 @@ impl FsWatcher {
         Ok(Self {
             paths: HashMap::default(),
             receiver,
-            watcher: watcher(tx, delay)?,
+            watcher: RecommendedWatcher::new(tx, Config::default().with_poll_interval(delay))?,
         })
     }
 
     /// Poll searching for the first available disk change
     pub fn poll(&self) -> FsWatcherResult<Option<FsChange>> {
-        match self.receiver.recv_timeout(Duration::from_millis(1)) {
-            Ok(DebouncedEvent::Rename(source, dest)) => Ok(self.build_fs_move(source, dest)),
-            Ok(DebouncedEvent::Remove(p)) => Ok(self.build_fs_remove(p)),
-            Ok(DebouncedEvent::Chmod(p) | DebouncedEvent::Create(p) | DebouncedEvent::Write(p)) => {
-                Ok(self.build_fs_update(p))
-            }
-            Ok(
-                DebouncedEvent::Rescan
-                | DebouncedEvent::NoticeRemove(_)
-                | DebouncedEvent::NoticeWrite(_),
-            ) => Ok(None),
-            Ok(DebouncedEvent::Error(e, _)) => {
-                error!("FsWatcher reported error: {}", e);
-                Err(e.into())
-            }
-            Err(RecvTimeoutError::Timeout) => Ok(None),
+        let res = match self.receiver.recv_timeout(Duration::from_millis(1)) {
+            Ok(res) => res,
+            Err(RecvTimeoutError::Timeout) => return Ok(None),
             Err(RecvTimeoutError::Disconnected) => panic!("File watcher died"),
+        };
+
+        // convert event to FsChange
+        let event = res
+            .map(FsWatcherEvent::try_from)
+            .map_err(FsWatcherError::from)?
+            .map_err(FsWatcherError::UnknownEvent)?;
+
+        match event {
+            FsWatcherEvent::Rename { source, dest } => Ok(self.build_fs_move(source, dest)),
+            FsWatcherEvent::Remove(p) => Ok(self.build_fs_remove(p)),
+            FsWatcherEvent::Modify(p) | FsWatcherEvent::Create(p) => Ok(self.build_fs_update(p)),
+            FsWatcherEvent::Other => {
+                debug!("unknown event");
+                Ok(None)
+            }
         }
     }
 
