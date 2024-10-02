@@ -2418,18 +2418,6 @@ checksum = "2b15c43186be67a4fd63bee50d0303afffcef381492ebe2c5d87f324e1b8815c"
 
 [[package]]
 name = "remotefs"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e8df5d94ca7480505315216544f145f358b7609781beef33a9149ecd9be44a5b"
-dependencies = [
- "chrono",
- "log",
- "thiserror",
- "wildmatch",
-]
-
-[[package]]
-name = "remotefs"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b34c83859b73d72acd9a02090193ef379e669644cea9ab5260a7ad9a0342de30"
@@ -2448,22 +2436,9 @@ dependencies = [
  "chrono",
  "log",
  "path-slash 0.1.5",
- "remotefs 0.3.0",
+ "remotefs",
  "rust-s3",
  "thiserror",
- "users",
-]
-
-[[package]]
-name = "remotefs-ftp"
-version = "0.1.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1727502e84b81b54d93ddd6f56eeed9b3cb0c7e2d3c888a40e2df7c7a7ca4371"
-dependencies = [
- "log",
- "path-slash 0.1.5",
- "remotefs 0.2.0",
- "suppaftp",
  "users",
 ]
 
@@ -2475,7 +2450,7 @@ checksum = "86b36cc2d369fa47f11cfa4986fea304934983804e43a1f7e77970060bea66bb"
 dependencies = [
  "log",
  "path-slash 0.1.5",
- "remotefs 0.3.0",
+ "remotefs",
  "suppaftp",
  "users",
 ]
@@ -2493,7 +2468,7 @@ dependencies = [
  "lazy-regex",
  "log",
  "path-slash 0.2.1",
- "remotefs 0.3.0",
+ "remotefs",
  "tar",
  "tempfile",
  "thiserror",
@@ -2511,7 +2486,7 @@ dependencies = [
  "libc",
  "log",
  "pavao",
- "remotefs 0.3.0",
+ "remotefs",
  "windows-sys 0.59.0",
 ]
 
@@ -2525,7 +2500,7 @@ dependencies = [
  "lazy-regex",
  "log",
  "path-slash 0.2.1",
- "remotefs 0.3.0",
+ "remotefs",
  "ssh2",
  "ssh2-config",
  "users",
@@ -2546,7 +2521,7 @@ dependencies = [
  "mime",
  "nonempty",
  "quick-xml 0.31.0",
- "remotefs 0.3.0",
+ "remotefs",
  "rustydav",
  "thiserror",
  "time",
@@ -3443,10 +3418,9 @@ dependencies = [
  "pretty_assertions",
  "rand",
  "regex",
- "remotefs 0.3.0",
+ "remotefs",
  "remotefs-aws-s3",
- "remotefs-ftp 0.1.4",
- "remotefs-ftp 0.2.0",
+ "remotefs-ftp",
  "remotefs-kube",
  "remotefs-smb",
  "remotefs-ssh",

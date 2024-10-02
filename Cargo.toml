@@ -103,7 +103,7 @@ remotefs-smb = { version = "^0.3", optional = true }
 
 [target."cfg(target_family = \"windows\")"]
 [target."cfg(target_family = \"windows\")".dependencies]
-remotefs-ftp = { version = "^0.1.2", features = ["native-tls"] }
+remotefs-ftp = { version = "^0.2", features = ["native-tls"] }
 remotefs-ssh = "^0.4"
 
 [target."cfg(target_family = \"unix\")"]
