@@ -41,8 +41,9 @@
 
 Released on
 
-- [Issue 268](https://github.com/veeso/termscp/issues/268): Pods and container explorer for Kube protocol.
-  - BREAKING ‼️ Kube address argument has changed; see manual!
+- [Issue 249](https://github.com/veeso/termscp/issues/249): The old *find* command has been replaced with a brand new explorer with support to 🪄 **Fuzzy search** 🪄. The command is still `<F>`.
+- [Issue 268](https://github.com/veeso/termscp/issues/268): 📦 **Pods and container explorer** 🐳 for Kube protocol.
+  - BREAKING ‼️ Kube address argument has changed to `namespace[@<cluster_url>][$<path>]`
   - Pod and container argumets have been removed; from now on you will connect with the following syntax to the provided namespace: `/pod-name/container-name/path/to/file`
 - [Issue 279](https://github.com/veeso/termscp/issues/279): do not clear screen
 - [Issue 277](https://github.com/veeso/termscp/issues/277): Fix a bug in the configuration page, which caused being stuck if the added SSH key was empty

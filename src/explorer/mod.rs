@@ -30,6 +30,7 @@ pub enum FileSorting {
     ModifyTime,
     CreationTime,
     Size,
+    None,
 }
 
 /// GroupDirs defines how directories should be grouped in sorting files
@@ -178,6 +179,7 @@ impl FileExplorer {
             FileSorting::CreationTime => self.sort_files_by_creation_time(),
             FileSorting::ModifyTime => self.sort_files_by_mtime(),
             FileSorting::Size => self.sort_files_by_size(),
+            FileSorting::None => {}
         }
         // Directories first (NOTE: MUST COME AFTER OTHER SORTING)
         // Group directories if necessary
@@ -245,6 +247,7 @@ impl std::fmt::Display for FileSorting {
                 FileSorting::ModifyTime => "by_mtime",
                 FileSorting::Name => "by_name",
                 FileSorting::Size => "by_size",
+                FileSorting::None => "none",
             }
         )
     }

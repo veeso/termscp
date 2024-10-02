@@ -584,89 +584,6 @@ impl Component<Msg, NoUserEvent> for FileInfoPopup {
 }
 
 #[derive(MockComponent)]
-pub struct FindPopup {
-    component: Input,
-}
-
-impl FindPopup {
-    pub fn new(color: Color) -> Self {
-        Self {
-            component: Input::default()
-                .borders(
-                    Borders::default()
-                        .color(color)
-                        .modifiers(BorderType::Rounded),
-                )
-                .foreground(color)
-                .input_type(InputType::Text)
-                .placeholder("*.txt", Style::default().fg(Color::Rgb(128, 128, 128)))
-                .title("Search files by name or wildmatch", Alignment::Center),
-        }
-    }
-}
-
-impl Component<Msg, NoUserEvent> for FindPopup {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
-        match ev {
-            Event::Keyboard(KeyEvent {
-                code: Key::Left, ..
-            }) => {
-                self.perform(Cmd::Move(Direction::Left));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Right, ..
-            }) => {
-                self.perform(Cmd::Move(Direction::Right));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Home, ..
-            }) => {
-                self.perform(Cmd::GoTo(Position::Begin));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent { code: Key::End, .. }) => {
-                self.perform(Cmd::GoTo(Position::End));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Delete, ..
-            }) => {
-                self.perform(Cmd::Cancel);
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Backspace,
-                ..
-            }) => {
-                self.perform(Cmd::Delete);
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Char(ch),
-                ..
-            }) => {
-                self.perform(Cmd::Type(ch));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Enter, ..
-            }) => match self.state() {
-                State::One(StateValue::String(i)) => {
-                    Some(Msg::Transfer(TransferMsg::SearchFile(i)))
-                }
-                _ => Some(Msg::None),
-            },
-            Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
-                Some(Msg::Ui(UiMsg::CloseFindPopup))
-            }
-            _ => None,
-        }
-    }
-}
-
-#[derive(MockComponent)]
 pub struct GoToPopup {
     component: Input,
 }
@@ -1675,6 +1592,7 @@ impl SortingPopup {
                     FileSorting::ModifyTime => 1,
                     FileSorting::Name => 0,
                     FileSorting::Size => 3,
+                    FileSorting::None => 0,
                 }),
         }
     }
@@ -1778,6 +1696,7 @@ fn file_sorting_label(sorting: FileSorting) -> &'static str {
         FileSorting::ModifyTime => "By modify time",
         FileSorting::Name => "By name",
         FileSorting::Size => "By size",
+        FileSorting::None => "",
     }
 }
 
