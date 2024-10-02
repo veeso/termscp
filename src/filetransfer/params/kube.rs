@@ -3,8 +3,6 @@ use remotefs_kube::Config;
 /// Protocol params used by WebDAV
 #[derive(Debug, Clone)]
 pub struct KubeProtocolParams {
-    pub pod: String,
-    pub container: String,
     pub namespace: Option<String>,
     pub cluster_url: Option<String>,
     pub username: Option<String>,

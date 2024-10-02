@@ -108,7 +108,7 @@ s3://buckethead@eu-central-1:default:/assets
 如果您想连接到 Kube，请使用以下语法
 
 ```txt
-kube://<container>@<pod></path>
+kube://[namespace][@<cluster_url>][$</path>]
 ```
 
 #### WebDAV 地址参数

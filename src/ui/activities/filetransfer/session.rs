@@ -57,7 +57,11 @@ impl FileTransferActivity {
         // Connect to remote
         match self.client.connect() {
             Ok(Welcome { banner, .. }) => {
-                self.connected = true;
+                self.connected = self.client.is_connected();
+                if !self.connected {
+                    return;
+                }
+
                 if let Some(banner) = banner {
                     // Log welcome
                     self.log(
@@ -66,6 +70,15 @@ impl FileTransferActivity {
                             "Established connection with '{}': \"{}\"",
                             self.get_remote_hostname(),
                             banner
+                        ),
+                    );
+                } else {
+                    // Log welcome
+                    self.log(
+                        LogLevel::Info,
+                        format!(
+                            "Established connection with '{}'",
+                            self.get_remote_hostname()
                         ),
                     );
                 }
@@ -111,16 +124,28 @@ impl FileTransferActivity {
 
     /// Reload remote directory entries and update browser
     pub(super) fn reload_remote_dir(&mut self) {
+        if !self.connected {
+            return;
+        }
         // Get current entries
         if let Ok(wrkdir) = self.client.pwd() {
             self.mount_blocking_wait("Loading remote directory...");
 
-            if self.remote_scan(wrkdir.as_path()).is_ok() {
-                // Set wrkdir
-                self.remote_mut().wrkdir = wrkdir;
-            }
+            let res = self.remote_scan(wrkdir.as_path());
 
             self.umount_wait();
+
+            match res {
+                Ok(_) => {
+                    self.remote_mut().wrkdir = wrkdir;
+                }
+                Err(err) => {
+                    self.log_and_alert(
+                        LogLevel::Error,
+                        format!("Could not scan current remote directory: {err}"),
+                    );
+                }
+            }
         }
     }
 
@@ -130,11 +155,21 @@ impl FileTransferActivity {
 
         let wrkdir: PathBuf = self.host.pwd();
 
-        if self.local_scan(wrkdir.as_path()).is_ok() {
-            self.local_mut().wrkdir = wrkdir;
-        }
+        let res = self.local_scan(wrkdir.as_path());
 
         self.umount_wait();
+
+        match res {
+            Ok(_) => {
+                self.local_mut().wrkdir = wrkdir;
+            }
+            Err(err) => {
+                self.log_and_alert(
+                    LogLevel::Error,
+                    format!("Could not scan current local directory: {err}"),
+                );
+            }
+        }
     }
 
     /// Scan current local directory
@@ -146,13 +181,7 @@ impl FileTransferActivity {
 
                 Ok(())
             }
-            Err(err) => {
-                self.log_and_alert(
-                    LogLevel::Error,
-                    format!("Could not scan current directory: {err}"),
-                );
-                Err(err)
-            }
+            Err(err) => Err(err),
         }
     }
 
@@ -164,13 +193,7 @@ impl FileTransferActivity {
                 self.remote_mut().set_files(files);
                 Ok(())
             }
-            Err(err) => {
-                self.log_and_alert(
-                    LogLevel::Error,
-                    format!("Could not scan current directory: {err}"),
-                );
-                Err(err)
-            }
+            Err(err) => Err(err),
         }
     }
 

@@ -64,9 +64,7 @@ impl AuthActivity {
         self.mount_kube_client_cert("");
         self.mount_kube_client_key("");
         self.mount_kube_cluster_url("");
-        self.mount_kube_container("");
         self.mount_kube_namespace("");
-        self.mount_kube_pod_name("");
         self.mount_kube_username("");
         self.mount_smb_share("");
         #[cfg(unix)]
@@ -748,30 +746,6 @@ impl AuthActivity {
             .is_ok());
     }
 
-    pub(super) fn mount_kube_pod_name(&mut self, value: &str) {
-        let color = self.theme().auth_address;
-        assert!(self
-            .app
-            .remount(
-                Id::KubePodName,
-                Box::new(components::InputKubePodName::new(value, color)),
-                vec![]
-            )
-            .is_ok());
-    }
-
-    pub(super) fn mount_kube_container(&mut self, value: &str) {
-        let color = self.theme().auth_password;
-        assert!(self
-            .app
-            .remount(
-                Id::KubeContainer,
-                Box::new(components::InputKubeContainer::new(value, color)),
-                vec![]
-            )
-            .is_ok());
-    }
-
     pub(super) fn mount_kube_namespace(&mut self, value: &str) {
         let color = self.theme().auth_port;
         assert!(self
@@ -906,16 +880,12 @@ impl AuthActivity {
 
     /// Collect s3 input values from view
     pub(super) fn get_kube_params_input(&self) -> KubeProtocolParams {
-        let pod = self.get_input_kube_pod_name();
-        let container = self.get_input_kube_container();
         let namespace = self.get_input_kube_namespace();
         let cluster_url = self.get_input_kube_cluster_url();
         let username = self.get_input_kube_username();
         let client_cert = self.get_input_kube_client_cert();
         let client_key = self.get_input_kube_client_key();
         KubeProtocolParams {
-            pod,
-            container,
             namespace,
             cluster_url,
             username,
@@ -1083,20 +1053,6 @@ impl AuthActivity {
         )
     }
 
-    pub(super) fn get_input_kube_pod_name(&self) -> String {
-        match self.app.state(&Id::KubePodName) {
-            Ok(State::One(StateValue::String(x))) => x,
-            _ => String::new(),
-        }
-    }
-
-    pub(super) fn get_input_kube_container(&self) -> String {
-        match self.app.state(&Id::KubeContainer) {
-            Ok(State::One(StateValue::String(x))) => x,
-            _ => String::new(),
-        }
-    }
-
     pub(super) fn get_input_kube_namespace(&self) -> Option<String> {
         match self.app.state(&Id::KubeNamespace) {
             Ok(State::One(StateValue::String(x))) if !x.is_empty() => Some(x),
@@ -1214,15 +1170,13 @@ impl AuthActivity {
             }
             ProtocolParams::Kube(params) => {
                 format!(
-                    "{}://{}@{}{}{}",
+                    "{}://{}{}",
                     protocol,
-                    params.container,
-                    params.pod,
                     params
                         .namespace
                         .as_deref()
                         .map(|x| format!("/{x}"))
-                        .unwrap_or_default(),
+                        .unwrap_or_else(|| String::from("default")),
                     params
                         .cluster_url
                         .as_deref()
@@ -1318,18 +1272,6 @@ impl AuthActivity {
     /// Get the visible element in the kube form, based on current focus
     fn get_kube_view(&self) -> [Id; 4] {
         match self.app.focus() {
-            Some(&Id::KubePodName) => [
-                Id::KubePodName,
-                Id::KubeContainer,
-                Id::KubeNamespace,
-                Id::KubeClusterUrl,
-            ],
-            Some(&Id::KubeUsername) => [
-                Id::KubeContainer,
-                Id::KubeNamespace,
-                Id::KubeClusterUrl,
-                Id::KubeUsername,
-            ],
             Some(&Id::KubeClientCert) => [
                 Id::KubeNamespace,
                 Id::KubeClusterUrl,
@@ -1355,10 +1297,10 @@ impl AuthActivity {
                 Id::LocalDirectory,
             ],
             _ => [
-                Id::KubePodName,
-                Id::KubeContainer,
                 Id::KubeNamespace,
                 Id::KubeClusterUrl,
+                Id::KubeUsername,
+                Id::KubeClientCert,
             ],
         }
     }

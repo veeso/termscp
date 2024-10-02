@@ -110,7 +110,7 @@ s3://buckethead@eu-central-1:default:/assets
 En caso de que quieras conectarte a Kube, utiliza la siguiente sintaxis
 
 ```txt
-kube://<container>@<pod></path>
+kube://[namespace][@<cluster_url>][$</path>]
 ```
 
 #### Argumento de dirección de WebDAV

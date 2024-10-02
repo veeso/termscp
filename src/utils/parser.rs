@@ -56,12 +56,12 @@ static REMOTE_WEBDAV_OPT_REGEX: Lazy<Regex> =
     lazy_regex!(r"(?:([^:]+):)(?:(.+[^@])@)(?:([^/]+))(?:(.+))?");
 
 /**
- * Regex matches: {container}@{pod}/{path}
- *  - group 1: Container
- *  - group 2: Pod
- *  - group 3: Some(path) | None
+ * Regex matches: {namespace}[@{cluster_url}]$/{path}
+ *  - group 1: Namespace
+ *  - group 3: Some(cluster_url) | None
+ *  - group 5: Some(path) | None
  */
-static REMOTE_KUBE_OPT_REGEX: Lazy<Regex> = lazy_regex!(r"(?:(.+[^@])@)(?:([^/]+))(?:(.+))?");
+static REMOTE_KUBE_OPT_REGEX: Lazy<Regex> = lazy_regex!(r"(?:([^@]+))(@(?:([^$]+)))?(\$(?:(.+)))?");
 
 /**
  * Regex matches:
@@ -313,23 +313,15 @@ fn parse_s3_remote_opt(s: &str) -> Result<FileTransferParams, String> {
 fn parse_kube_remote_opt(s: &str) -> Result<FileTransferParams, String> {
     match REMOTE_KUBE_OPT_REGEX.captures(s) {
         Some(groups) => {
-            let container: String = groups
-                .get(1)
-                .map(|x| x.as_str().to_string())
-                .unwrap_or_default();
-            let pod: String = groups
-                .get(2)
-                .map(|x| x.as_str().to_string())
-                .unwrap_or_default();
+            let namespace: Option<String> = groups.get(1).map(|x| x.as_str().to_string());
+            let cluster_url: Option<String> = groups.get(3).map(|x| x.as_str().to_string());
             let remote_path: Option<PathBuf> =
-                groups.get(3).map(|group| PathBuf::from(group.as_str()));
+                groups.get(5).map(|group| PathBuf::from(group.as_str()));
             Ok(FileTransferParams::new(
                 FileTransferProtocol::Kube,
                 ProtocolParams::Kube(KubeProtocolParams {
-                    pod,
-                    container,
-                    namespace: None,
-                    cluster_url: None,
+                    namespace,
+                    cluster_url,
                     username: None,
                     client_cert: None,
                     client_key: None,
@@ -753,13 +745,13 @@ mod tests {
 
     #[test]
     fn should_parse_kube_address() {
-        let result = parse_remote_opt("kube://alpine@my-pod/tmp").ok().unwrap();
+        let result = parse_remote_opt("kube://my-namespace@http://localhost:1234$/tmp")
+            .ok()
+            .unwrap();
         let params = result.params.kube_params().unwrap();
 
-        assert_eq!(params.container.as_str(), "alpine");
-        assert_eq!(params.pod.as_str(), "my-pod");
-        assert_eq!(params.namespace, None);
-        assert_eq!(params.cluster_url, None);
+        assert_eq!(params.namespace, Some("my-namespace".to_string()));
+        assert_eq!(params.cluster_url.as_deref(), Some("http://localhost:1234"));
         assert_eq!(params.username, None);
         assert_eq!(params.client_cert, None);
         assert_eq!(params.client_key, None);

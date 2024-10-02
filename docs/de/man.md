@@ -133,7 +133,7 @@ s3://buckethead@eu-central-1:default:/assets
 Falls Sie eine Verbindung zu Kube herstellen möchten, verwenden Sie die folgende Syntax
 
 ```txt
-kube://<container>@<pod></path>
+kube://[namespace][@<cluster_url>][$</path>]
 ```
 
 #### SMB Adressargument
