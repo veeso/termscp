@@ -211,6 +211,56 @@ impl FileTransferActivity {
                     _ => {}
                 }
             }
+            TransferMsg::InitFuzzySearch => {
+                // Mount wait
+                self.mount_blocking_wait("Scanning current directory…");
+                // Find
+                let res: Result<Vec<File>, String> = match self.browser.tab() {
+                    FileExplorerTab::Local => self.action_walkdir_local(),
+                    FileExplorerTab::Remote => self.action_walkdir_remote(),
+                    _ => panic!("Trying to search for files, while already in a find result"),
+                };
+                // Umount wait
+                self.umount_wait();
+                // Match result
+                match res {
+                    Err(err) => {
+                        // Mount error
+                        self.mount_error(err.as_str());
+                    }
+                    Ok(files) if files.is_empty() => {
+                        // If no file has been found notify user
+                        self.mount_info("There are no files in the current directory");
+                    }
+                    Ok(files) => {
+                        // Get wrkdir
+                        let wrkdir = match self.browser.tab() {
+                            FileExplorerTab::Local => self.local().wrkdir.clone(),
+                            _ => self.remote().wrkdir.clone(),
+                        };
+                        // Create explorer and load files
+                        self.browser.set_found(
+                            match self.browser.tab() {
+                                FileExplorerTab::Local => FoundExplorerTab::Local,
+                                _ => FoundExplorerTab::Remote,
+                            },
+                            files,
+                            wrkdir.as_path(),
+                        );
+                        // init fuzzy search to display nothing
+                        self.browser.init_fuzzy_search();
+                        // Mount result widget
+                        self.mount_find(format!(r#"Searching at "{}""#, wrkdir.display()), true);
+                        self.update_find_list();
+                        // Initialize tab
+                        self.browser.change_tab(match self.browser.tab() {
+                            FileExplorerTab::Local => FileExplorerTab::FindLocal,
+                            FileExplorerTab::Remote => FileExplorerTab::FindRemote,
+                            _ => FileExplorerTab::FindLocal,
+                        });
+                    }
+                }
+            }
             TransferMsg::Mkdir(dir) => {
                 match self.browser.tab() {
                     FileExplorerTab::Local => self.action_local_mkdir(dir),
@@ -281,57 +331,7 @@ impl FileTransferActivity {
                 // Reload files
                 self.update_browser_file_list_swapped();
             }
-            TransferMsg::SearchFile(search) => {
-                self.umount_find_input();
-                // Mount wait
-                self.mount_blocking_wait(format!(r#"Searching for "{search}"…"#).as_str());
-                // Find
-                let res: Result<Vec<File>, String> = match self.browser.tab() {
-                    FileExplorerTab::Local => self.action_local_find(search.clone()),
-                    FileExplorerTab::Remote => self.action_remote_find(search.clone()),
-                    _ => panic!("Trying to search for files, while already in a find result"),
-                };
-                // Umount wait
-                self.umount_wait();
-                // Match result
-                match res {
-                    Err(err) => {
-                        // Mount error
-                        self.mount_error(err.as_str());
-                    }
-                    Ok(files) if files.is_empty() => {
-                        // If no file has been found notify user
-                        self.mount_info(
-                            format!(r#"Could not find any file matching "{search}""#).as_str(),
-                        );
-                    }
-                    Ok(files) => {
-                        // Get wrkdir
-                        let wrkdir = match self.browser.tab() {
-                            FileExplorerTab::Local => self.local().wrkdir.clone(),
-                            _ => self.remote().wrkdir.clone(),
-                        };
-                        // Create explorer and load files
-                        self.browser.set_found(
-                            match self.browser.tab() {
-                                FileExplorerTab::Local => FoundExplorerTab::Local,
-                                _ => FoundExplorerTab::Remote,
-                            },
-                            files,
-                            wrkdir.as_path(),
-                        );
-                        // Mount result widget
-                        self.mount_find(&search);
-                        self.update_find_list();
-                        // Initialize tab
-                        self.browser.change_tab(match self.browser.tab() {
-                            FileExplorerTab::Local => FileExplorerTab::FindLocal,
-                            FileExplorerTab::Remote => FileExplorerTab::FindRemote,
-                            _ => FileExplorerTab::FindLocal,
-                        });
-                    }
-                }
-            }
+
             TransferMsg::ToggleWatch => self.action_toggle_watch(),
             TransferMsg::ToggleWatchFor(index) => self.action_toggle_watch_for(index),
             TransferMsg::TransferFile => {
@@ -405,7 +405,6 @@ impl FileTransferActivity {
                 self.finalize_find();
                 self.umount_find();
             }
-            UiMsg::CloseFindPopup => self.umount_find_input(),
             UiMsg::CloseGotoPopup => self.umount_goto(),
             UiMsg::CloseKeybindingsPopup => self.umount_help(),
             UiMsg::CloseMkdirPopup => self.umount_mkdir(),
@@ -439,7 +438,7 @@ impl FileTransferActivity {
                     wrkdir.as_path(),
                 );
                 // Mount result widget
-                self.mount_find(&filter);
+                self.mount_find(&filter, false);
                 self.update_find_list();
                 // Initialize tab
                 self.browser.change_tab(match self.browser.tab() {
@@ -447,6 +446,10 @@ impl FileTransferActivity {
                     FileExplorerTab::Remote => FileExplorerTab::FindRemote,
                     _ => FileExplorerTab::FindLocal,
                 });
+            }
+            UiMsg::FuzzySearch(needle) => {
+                self.browser.fuzzy_search(&needle);
+                self.update_find_list();
             }
             UiMsg::ShowLogPanel => {
                 assert!(self.app.active(&Id::Log).is_ok());
@@ -514,7 +517,6 @@ impl FileTransferActivity {
             }
             UiMsg::ShowFileSortingPopup => self.mount_file_sorting(),
             UiMsg::ShowFilterPopup => self.mount_filter(),
-            UiMsg::ShowFindPopup => self.mount_find_input(),
             UiMsg::ShowGotoPopup => self.mount_goto(),
             UiMsg::ShowKeybindingsPopup => self.mount_help(),
             UiMsg::ShowMkdirPopup => self.mount_mkdir(),

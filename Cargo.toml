@@ -5,13 +5,7 @@ description = "termscp is a feature rich terminal file transfer and explorer wit
 edition = "2021"
 homepage = "https://termscp.veeso.dev"
 include = ["src/**/*", "LICENSE", "README.md", "CHANGELOG.md"]
-keywords = [
-  "scp-client",
-  "sftp-client",
-  "ftp-client",
-  "winscp",
-  "command-line-utility",
-]
+keywords = ["terminal", "ftp", "scp", "sftp", "tui"]
 license = "MIT"
 name = "termscp"
 readme = "README.md"
@@ -46,13 +40,18 @@ dirs = "^5.0"
 edit = "^0.1"
 filetime = "^0.2"
 hostname = "^0.4"
-keyring = { version = "^3", optional = true, features = ["apple-native", "windows-native", "sync-secret-service"] }
+keyring = { version = "^3", optional = true, features = [
+  "apple-native",
+  "windows-native",
+  "sync-secret-service",
+] }
 lazy-regex = "^3"
 lazy_static = "^1"
 log = "^0.4"
 magic-crypt = "^3"
 notify = "6"
 notify-rust = { version = "^4.5", default-features = false, features = ["d"] }
+nucleo = "0.5"
 open = "^5.0"
 rand = "^0.8.5"
 regex = "^1"
@@ -83,7 +82,7 @@ tuirealm = "^1.9"
 unicode-width = "^0.2"
 version-compare = "^0.2"
 whoami = "^1.5"
-wildmatch = "^2.3"
+wildmatch = "^2"
 
 [dev-dependencies]
 pretty_assertions = "^1"

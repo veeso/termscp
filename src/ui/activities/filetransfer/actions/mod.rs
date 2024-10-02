@@ -124,6 +124,9 @@ impl FileTransferActivity {
 
     /// Get remote file entry
     pub(crate) fn get_found_selected_entries(&self) -> SelectedFile {
+        let index = self.get_selected_index(&Id::ExplorerFind);
+        debug!("get_found_selected_entries: {:?}", index);
+
         match self.get_selected_index(&Id::ExplorerFind) {
             SelectedFileIndex::One(idx) => {
                 SelectedFile::from(self.found().as_ref().unwrap().get(idx))
