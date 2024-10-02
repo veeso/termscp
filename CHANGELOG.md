@@ -45,6 +45,7 @@ Released on
   - BREAKING ‼️ Kube address argument has changed; see manual!
   - Pod and container argumets have been removed; from now on you will connect with the following syntax to the provided namespace: `/pod-name/container-name/path/to/file`
 - [Issue 279](https://github.com/veeso/termscp/issues/279): do not clear screen
+- [Issue 277](https://github.com/veeso/termscp/issues/277): Fix a bug in the configuration page, which caused being stuck if the added SSH key was empty
 
 ## 0.14.0
 

@@ -225,9 +225,14 @@ impl SetupActivity {
                 }
             }
             SshMsg::SaveSshKey => {
-                self.action_new_ssh_key();
+                let res = self.action_new_ssh_key();
                 self.umount_new_ssh_key();
-                self.reload_ssh_keys();
+                match res {
+                    Ok(_) => {
+                        self.reload_ssh_keys();
+                    }
+                    Err(err) => self.mount_error(&err),
+                }
             }
             SshMsg::ShowDelSshKeyPopup => {
                 self.mount_del_ssh_key();
