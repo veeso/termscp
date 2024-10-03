@@ -19,7 +19,7 @@ impl FileTransferActivity {
         let mut acc = Vec::with_capacity(32_768);
 
         self.walkdir(&mut acc, &self.host.pwd(), |activity, path| {
-            activity.host.scan_dir(path).map_err(|e| e.to_string())
+            activity.host.list_dir(path).map_err(|e| e.to_string())
         })?;
 
         Ok(acc)
