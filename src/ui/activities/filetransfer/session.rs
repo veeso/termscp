@@ -174,7 +174,7 @@ impl FileTransferActivity {
 
     /// Scan current local directory
     fn local_scan(&mut self, path: &Path) -> Result<(), HostError> {
-        match self.host.scan_dir(path) {
+        match self.host.list_dir(path) {
             Ok(files) => {
                 // Set files and sort (sorting is implicit)
                 self.local_mut().set_files(files);
@@ -358,7 +358,7 @@ impl FileTransferActivity {
                 }
             }
             // Get files in dir
-            match self.host.scan_dir(entry.path()) {
+            match self.host.list_dir(entry.path()) {
                 Ok(entries) => {
                     // Iterate over files
                     for entry in entries.iter() {
@@ -1156,7 +1156,7 @@ impl FileTransferActivity {
     fn get_total_transfer_size_local(&mut self, entry: &File) -> usize {
         if entry.is_dir() {
             // List dir
-            match self.host.scan_dir(entry.path()) {
+            match self.host.list_dir(entry.path()) {
                 Ok(files) => files
                     .iter()
                     .map(|x| self.get_total_transfer_size_local(x))

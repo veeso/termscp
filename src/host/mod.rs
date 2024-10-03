@@ -16,7 +16,6 @@ use filetime::{self, FileTime};
 use remotefs::fs::UnixPex;
 use remotefs::fs::{File, FileType, Metadata};
 use thiserror::Error;
-use wildmatch::WildMatch;
 
 // Locals
 use crate::utils::path;
@@ -112,7 +111,7 @@ impl Localhost {
             ));
         }
         // Retrieve files for provided path
-        host.files = match host.scan_dir(host.wrkdir.as_path()) {
+        host.files = match host.list_dir(host.wrkdir.as_path()) {
             Ok(files) => files,
             Err(err) => {
                 error!(
@@ -129,12 +128,6 @@ impl Localhost {
     /// Print working directory
     pub fn pwd(&self) -> PathBuf {
         self.wrkdir.clone()
-    }
-
-    /// List files in current directory
-    #[allow(dead_code)]
-    pub fn list_dir(&self) -> Vec<File> {
-        self.files.clone()
     }
 
     /// Change working directory with the new provided directory
@@ -164,7 +157,7 @@ impl Localhost {
                                                      // Change dir
         self.wrkdir = new_dir;
         // Scan new directory
-        self.files = match self.scan_dir(self.wrkdir.as_path()) {
+        self.files = match self.list_dir(self.wrkdir.as_path()) {
             Ok(files) => files,
             Err(err) => {
                 error!("Could not scan new directory: {}", err);
@@ -204,7 +197,7 @@ impl Localhost {
             Ok(_) => {
                 // Update dir
                 if dir_name.is_relative() {
-                    self.files = self.scan_dir(self.wrkdir.as_path())?;
+                    self.files = self.list_dir(self.wrkdir.as_path())?;
                 }
                 info!("Created directory {}", dir_path.display());
                 Ok(())
@@ -237,7 +230,7 @@ impl Localhost {
             match std::fs::remove_dir_all(entry.path()) {
                 Ok(_) => {
                     // Update dir
-                    self.files = self.scan_dir(self.wrkdir.as_path())?;
+                    self.files = self.list_dir(self.wrkdir.as_path())?;
                     info!("Removed directory {}", entry.path().display());
                     Ok(())
                 }
@@ -265,7 +258,7 @@ impl Localhost {
             match std::fs::remove_file(entry.path()) {
                 Ok(_) => {
                     // Update dir
-                    self.files = self.scan_dir(self.wrkdir.as_path())?;
+                    self.files = self.list_dir(self.wrkdir.as_path())?;
                     info!("Removed file {}", entry.path().display());
                     Ok(())
                 }
@@ -286,7 +279,7 @@ impl Localhost {
         match std::fs::rename(entry.path(), dst_path) {
             Ok(_) => {
                 // Scan dir
-                self.files = self.scan_dir(self.wrkdir.as_path())?;
+                self.files = self.list_dir(self.wrkdir.as_path())?;
                 debug!(
                     "Moved file {} to {}",
                     entry.path().display(),
@@ -327,7 +320,7 @@ impl Localhost {
                 self.mkdir(dst.as_path())?;
             }
             // Scan dir
-            let dir_files: Vec<File> = self.scan_dir(entry.path())?;
+            let dir_files: Vec<File> = self.list_dir(entry.path())?;
             // Iterate files
             for dir_entry in dir_files.iter() {
                 // Calculate dst
@@ -362,11 +355,11 @@ impl Localhost {
         match dst.is_dir() {
             true => {
                 if dst == self.pwd().as_path() {
-                    self.files = self.scan_dir(self.wrkdir.as_path())?;
+                    self.files = self.list_dir(self.wrkdir.as_path())?;
                 } else if let Some(parent) = dst.parent() {
                     // If parent is pwd, scan directory
                     if parent == self.pwd().as_path() {
-                        self.files = self.scan_dir(self.wrkdir.as_path())?;
+                        self.files = self.list_dir(self.wrkdir.as_path())?;
                     }
                 }
             }
@@ -374,7 +367,7 @@ impl Localhost {
                 if let Some(parent) = dst.parent() {
                     // If parent is pwd, scan directory
                     if parent == self.pwd().as_path() {
-                        self.files = self.scan_dir(self.wrkdir.as_path())?;
+                        self.files = self.list_dir(self.wrkdir.as_path())?;
                     }
                 }
             }
@@ -557,7 +550,7 @@ impl Localhost {
     }
 
     /// Get content of the current directory as a list of fs entry
-    pub fn scan_dir(&self, dir: &Path) -> Result<Vec<File>, HostError> {
+    pub fn list_dir(&self, dir: &Path) -> Result<Vec<File>, HostError> {
         info!("Reading directory {}", dir.display());
         match std::fs::read_dir(dir) {
             Ok(e) => {
@@ -579,12 +572,6 @@ impl Localhost {
         }
     }
 
-    /// Find files matching `search` on localhost starting from current directory. Search supports recursive search of course.
-    /// The `search` argument supports wilcards ('*', '?')
-    pub fn find(&self, search: &str) -> Result<Vec<File>, HostError> {
-        self.iter_search(self.wrkdir.as_path(), &WildMatch::new(search))
-    }
-
     /// Create a symlink at path pointing at target
     #[cfg(unix)]
     pub fn symlink(&self, path: &Path, target: &Path) -> Result<(), HostError> {
@@ -598,41 +585,6 @@ impl Localhost {
             );
             HostError::new(HostErrorType::CouldNotCreateFile, Some(e), path.as_path())
         })
-    }
-
-    // -- privates
-
-    /// Recursive call for `find` method.
-    /// Search in current directory for files which match `filter`.
-    /// If a directory is found in current directory, `iter_search` will be called using that dir as argument.
-    fn iter_search(&self, dir: &Path, filter: &WildMatch) -> Result<Vec<File>, HostError> {
-        // Scan directory
-        let mut drained: Vec<File> = Vec::new();
-        match self.scan_dir(dir) {
-            Err(err) => Err(err),
-            Ok(entries) => {
-                // Iter entries
-                /* For each entry:
-                - if is dir: call iter_search with `dir`
-                    - push `iter_search` result to `drained`
-                - if is file: check if it matches `filter`
-                    - if it matches `filter`: push to to filter
-                */
-                for entry in entries.into_iter() {
-                    if entry.is_dir() {
-                        // If directory matches; push directory to drained
-                        let next_path = entry.path().to_path_buf();
-                        if filter.matches(entry.name().as_str()) {
-                            drained.push(entry);
-                        }
-                        drained.append(&mut self.iter_search(next_path.as_path(), filter)?);
-                    } else if filter.matches(entry.name().as_str()) {
-                        drained.push(entry);
-                    }
-                }
-                Ok(drained)
-            }
-        }
     }
 
     /// Convert path to absolute path
@@ -658,7 +610,7 @@ mod tests {
     use super::*;
     #[cfg(unix)]
     use crate::utils::test_helpers::make_fsentry;
-    use crate::utils::test_helpers::{create_sample_file, make_dir_at, make_file_at};
+    use crate::utils::test_helpers::{create_sample_file, make_file_at};
 
     #[test]
     fn test_host_error_new() {
@@ -709,19 +661,6 @@ mod tests {
     fn test_host_localhost_pwd() {
         let host: Localhost = Localhost::new(PathBuf::from("/dev")).ok().unwrap();
         assert_eq!(host.pwd(), PathBuf::from("/dev"));
-    }
-
-    #[test]
-    #[cfg(unix)]
-    fn test_host_localhost_list_files() {
-        let host: Localhost = Localhost::new(PathBuf::from("/dev")).ok().unwrap();
-        // Scan dir
-        let entries = std::fs::read_dir(PathBuf::from("/dev").as_path()).unwrap();
-        let mut counter: usize = 0;
-        for _ in entries {
-            counter += 1;
-        }
-        assert_eq!(host.list_dir().len(), counter);
     }
 
     #[test]
@@ -813,7 +752,7 @@ mod tests {
         .is_ok());
         // Get dir
         let host: Localhost = Localhost::new(PathBuf::from(tmpdir.path())).ok().unwrap();
-        let files: Vec<File> = host.list_dir();
+        let files: Vec<File> = host.files.clone();
         // Verify files
         let file_0: &File = files.get(0).unwrap();
         if file_0.name() == *"foo.txt" {
@@ -841,10 +780,10 @@ mod tests {
     fn test_host_localhost_mkdir() {
         let tmpdir: tempfile::TempDir = tempfile::TempDir::new().unwrap();
         let mut host: Localhost = Localhost::new(PathBuf::from(tmpdir.path())).ok().unwrap();
-        let files: Vec<File> = host.list_dir();
+        let files: Vec<File> = host.files.clone();
         assert_eq!(files.len(), 0); // There should be 0 files now
         assert!(host.mkdir(PathBuf::from("test_dir").as_path()).is_ok());
-        let files: Vec<File> = host.list_dir();
+        let files: Vec<File> = host.files.clone();
         assert_eq!(files.len(), 1); // There should be 1 file now
                                     // Try to re-create directory
         assert!(host.mkdir(PathBuf::from("test_dir").as_path()).is_err());
@@ -868,17 +807,17 @@ mod tests {
         // Create sample file
         assert!(StdFile::create(format!("{}/foo.txt", tmpdir.path().display()).as_str()).is_ok());
         let mut host: Localhost = Localhost::new(PathBuf::from(tmpdir.path())).ok().unwrap();
-        let files: Vec<File> = host.list_dir();
+        let files: Vec<File> = host.files.clone();
         assert_eq!(files.len(), 1); // There should be 1 file now
                                     // Remove file
         assert!(host.remove(files.get(0).unwrap()).is_ok());
         // There should be 0 files now
-        let files: Vec<File> = host.list_dir();
+        let files: Vec<File> = host.files.clone();
         assert_eq!(files.len(), 0); // There should be 0 files now
                                     // Create directory
         assert!(host.mkdir(PathBuf::from("test_dir").as_path()).is_ok());
         // Delete directory
-        let files: Vec<File> = host.list_dir();
+        let files: Vec<File> = host.files.clone();
         assert_eq!(files.len(), 1); // There should be 1 file now
         assert!(host.remove(files.get(0).unwrap()).is_ok());
         // Remove unexisting directory
@@ -899,7 +838,7 @@ mod tests {
             PathBuf::from(format!("{}/foo.txt", tmpdir.path().display()).as_str());
         assert!(StdFile::create(src_path.as_path()).is_ok());
         let mut host: Localhost = Localhost::new(PathBuf::from(tmpdir.path())).ok().unwrap();
-        let files: Vec<File> = host.list_dir();
+        let files: Vec<File> = host.files.clone();
         assert_eq!(files.len(), 1); // There should be 1 file now
         assert_eq!(files.get(0).unwrap().name(), "foo.txt");
         // Rename file
@@ -909,7 +848,7 @@ mod tests {
             .rename(files.get(0).unwrap(), dst_path.as_path())
             .is_ok());
         // There should be still 1 file now, but named bar.txt
-        let files: Vec<File> = host.list_dir();
+        let files: Vec<File> = host.files.clone();
         assert_eq!(files.len(), 1); // There should be 0 files now
         assert_eq!(files.get(0).unwrap().name(), "bar.txt");
         // Fail
@@ -1082,39 +1021,6 @@ mod tests {
         let host: Localhost = Localhost::new(PathBuf::from(tmpdir.path())).ok().unwrap();
         // Execute
         assert!(host.exec("echo 5").ok().unwrap().as_str().contains("5"));
-    }
-
-    #[test]
-    fn test_host_find() {
-        let tmpdir: tempfile::TempDir = tempfile::TempDir::new().unwrap();
-        let dir_path: &Path = tmpdir.path();
-        // Make files
-        assert!(make_file_at(dir_path, "pippo.txt").is_ok());
-        assert!(make_file_at(dir_path, "foo.jpg").is_ok());
-        // Make nested struct
-        assert!(make_dir_at(dir_path, "examples").is_ok());
-        let mut subdir: PathBuf = PathBuf::from(dir_path);
-        subdir.push("examples/");
-        assert!(make_file_at(subdir.as_path(), "omar.txt").is_ok());
-        assert!(make_file_at(subdir.as_path(), "errors.txt").is_ok());
-        assert!(make_file_at(subdir.as_path(), "screenshot.png").is_ok());
-        assert!(make_file_at(subdir.as_path(), "examples.csv").is_ok());
-        let host: Localhost = Localhost::new(PathBuf::from(dir_path)).ok().unwrap();
-        // Find txt files
-        let mut result: Vec<File> = host.find("*.txt").ok().unwrap();
-        result.sort_by_key(|x: &File| x.name().to_lowercase());
-        // There should be 3 entries
-        assert_eq!(result.len(), 3);
-        // Check names (they should be sorted alphabetically already; NOTE: examples/ comes before pippo.txt)
-        assert_eq!(result[0].name(), "errors.txt");
-        assert_eq!(result[1].name(), "omar.txt");
-        assert_eq!(result[2].name(), "pippo.txt");
-        // Search for directory
-        let mut result: Vec<File> = host.find("examples*").ok().unwrap();
-        result.sort_by_key(|x: &File| x.name().to_lowercase());
-        assert_eq!(result.len(), 2);
-        assert_eq!(result[0].name(), "examples");
-        assert_eq!(result[1].name(), "examples.csv");
     }
 
     #[cfg(unix)]

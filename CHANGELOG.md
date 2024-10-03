@@ -42,6 +42,7 @@
 Released on
 
 - [Issue 249](https://github.com/veeso/termscp/issues/249): The old *find* command has been replaced with a brand new explorer with support to 🪄 **Fuzzy search** 🪄. The command is still `<F>`.
+- [Issue 283](https://github.com/veeso/termscp/issues/283): **Find command can now be cancelled** by pressing `<CTRL+C>`. While scanning the directory it will also display the current progress.
 - [Issue 268](https://github.com/veeso/termscp/issues/268): 📦 **Pods and container explorer** 🐳 for Kube protocol.
   - BREAKING ‼️ Kube address argument has changed to `namespace[@<cluster_url>][$<path>]`
   - Pod and container argumets have been removed; from now on you will connect with the following syntax to the provided namespace: `/pod-name/container-name/path/to/file`

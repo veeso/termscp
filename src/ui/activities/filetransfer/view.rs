@@ -6,9 +6,10 @@
 // Ext
 use remotefs::fs::{File, UnixPex};
 use tuirealm::event::{Key, KeyEvent, KeyModifiers};
+use tuirealm::props::{PropPayload, PropValue, TextSpan};
 use tuirealm::tui::layout::{Constraint, Direction, Layout};
 use tuirealm::tui::widgets::Clear;
-use tuirealm::{Sub, SubClause, SubEventClause};
+use tuirealm::{AttrValue, Attribute, Sub, SubClause, SubEventClause};
 use unicode_width::UnicodeWidthStr;
 
 use super::browser::{FileExplorerTab, FoundExplorerTab};
@@ -302,7 +303,15 @@ impl FileTransferActivity {
                 // make popup
                 self.app.view(&Id::ErrorPopup, f, popup);
             } else if self.app.mounted(&Id::WaitPopup) {
-                let popup = Popup(Size::Percentage(50), Size::Unit(3)).draw_in(f.size());
+                let wait_popup_lines = self
+                    .app
+                    .query(&Id::WaitPopup, Attribute::Text)
+                    .map(|x| x.map(|x| x.unwrap_payload().unwrap_vec().len()))
+                    .unwrap_or_default()
+                    .unwrap_or(1) as u16;
+
+                let popup =
+                    Popup(Size::Percentage(50), Size::Unit(2 + wait_popup_lines)).draw_in(f.size());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::WaitPopup, f, popup);
@@ -390,6 +399,38 @@ impl FileTransferActivity {
             )
             .is_ok());
         assert!(self.app.active(&Id::WaitPopup).is_ok());
+    }
+
+    pub(super) fn mount_walkdir_wait(&mut self) {
+        let color = self.theme().misc_info_dialog;
+        assert!(self
+            .app
+            .remount(
+                Id::WaitPopup,
+                Box::new(components::WalkdirWaitPopup::new(
+                    "Scanning current directory…",
+                    color
+                )),
+                vec![],
+            )
+            .is_ok());
+        assert!(self.app.active(&Id::WaitPopup).is_ok());
+
+        self.view();
+    }
+
+    pub(super) fn update_walkdir_entries(&mut self, entries: usize) {
+        let text = format!("Scanning current directory… ({entries} items found)",);
+        let _ = self.app.attr(
+            &Id::WaitPopup,
+            Attribute::Text,
+            AttrValue::Payload(PropPayload::Vec(vec![
+                PropValue::TextSpan(TextSpan::from(text)),
+                PropValue::TextSpan(TextSpan::from("Press 'CTRL+C' to abort")),
+            ])),
+        );
+
+        self.view();
     }
 
     pub(super) fn mount_blocking_wait<S: AsRef<str>>(&mut self, text: S) {

@@ -4,3 +4,4 @@
 
 pub(crate) mod browser;
 pub(crate) mod transfer;
+pub(crate) mod walkdir;
