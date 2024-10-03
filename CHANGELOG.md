@@ -39,7 +39,7 @@
 
 ## 0.15.0
 
-Released on
+Released on 03/10/2024
 
 - [Issue 249](https://github.com/veeso/termscp/issues/249): The old *find* command has been replaced with a brand new explorer with support to 🪄 **Fuzzy search** 🪄. The command is still `<F>`.
 - [Issue 283](https://github.com/veeso/termscp/issues/283): **Find command can now be cancelled** by pressing `<CTRL+C>`. While scanning the directory it will also display the current progress.
