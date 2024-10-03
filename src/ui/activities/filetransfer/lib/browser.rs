@@ -50,6 +50,16 @@ impl Browser {
         }
     }
 
+    pub fn explorer(&self) -> &FileExplorer {
+        match self.tab {
+            FileExplorerTab::Local => &self.local,
+            FileExplorerTab::Remote => &self.remote,
+            FileExplorerTab::FindLocal | FileExplorerTab::FindRemote => {
+                self.found.as_ref().map(|x| &x.explorer).unwrap()
+            }
+        }
+    }
+
     pub fn local(&self) -> &FileExplorer {
         &self.local
     }

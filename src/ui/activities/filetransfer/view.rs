@@ -13,6 +13,7 @@ use tuirealm::{AttrValue, Attribute, Sub, SubClause, SubEventClause};
 use unicode_width::UnicodeWidthStr;
 
 use super::browser::{FileExplorerTab, FoundExplorerTab};
+use super::components::ATTR_FILES;
 use super::{components, Context, FileTransferActivity, Id};
 use crate::explorer::FileSorting;
 use crate::utils::ui::{Popup, Size};
@@ -599,16 +600,38 @@ impl FileTransferActivity {
     }
 
     pub(super) fn mount_goto(&mut self) {
+        // get files
+        let files = self
+            .browser
+            .explorer()
+            .iter_files()
+            .filter(|f| f.is_dir() || f.is_symlink())
+            .map(|f| f.path().to_string_lossy().to_string())
+            .collect::<Vec<String>>();
+
         let input_color = self.theme().misc_input_dialog;
         assert!(self
             .app
             .remount(
                 Id::GotoPopup,
-                Box::new(components::GoToPopup::new(input_color)),
+                Box::new(components::GotoPopup::new(input_color, files)),
                 vec![],
             )
             .is_ok());
         assert!(self.app.active(&Id::GotoPopup).is_ok());
+    }
+
+    pub(super) fn update_goto(&mut self, files: Vec<String>) {
+        let payload = files
+            .into_iter()
+            .map(PropValue::Str)
+            .collect::<Vec<PropValue>>();
+
+        let _ = self.app.attr(
+            &Id::GotoPopup,
+            Attribute::Custom(ATTR_FILES),
+            AttrValue::Payload(PropPayload::Vec(payload)),
+        );
     }
 
     pub(super) fn umount_goto(&mut self) {

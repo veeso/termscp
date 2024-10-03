@@ -49,6 +49,7 @@ Released on
 - [Issue 279](https://github.com/veeso/termscp/issues/279): do not clear screen
 - [Issue 277](https://github.com/veeso/termscp/issues/277): Fix a bug in the configuration page, which caused being stuck if the added SSH key was empty
 - [Issue 272](https://github.com/veeso/termscp/issues/272): `isolated-tests` feature to run tests for releasing on distributions which run in isolated environments
+- [Issue 280](https://github.com/veeso/termscp/issues/280): Autocompletion when pressing `<TAB>` on the `Go to` popup.
 
 ## 0.14.0
 

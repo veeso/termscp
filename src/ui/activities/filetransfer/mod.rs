@@ -14,6 +14,7 @@ mod view;
 
 // locals
 use std::collections::VecDeque;
+use std::path::PathBuf;
 use std::time::Duration;
 
 // Includes
@@ -113,6 +114,7 @@ enum TransferMsg {
     OpenTextFile,
     ReloadDir,
     RenameFile(String),
+    RescanGotoFiles(PathBuf),
     SaveFileAs(String),
     ToggleWatch,
     ToggleWatchFor(usize),
