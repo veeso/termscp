@@ -365,6 +365,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(unix)]
     fn test_should_suggest_absolute_path() {
         let mut states = OwnStates {
             files: vec![
