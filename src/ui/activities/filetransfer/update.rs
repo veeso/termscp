@@ -324,6 +324,15 @@ impl FileTransferActivity {
                 // Reload files
                 self.update_browser_file_list()
             }
+            TransferMsg::RescanGotoFiles(path) => {
+                let files = self.action_scan(&path).unwrap_or_default();
+                let files = files
+                    .into_iter()
+                    .filter(|f| f.is_dir() || f.is_symlink())
+                    .map(|f| f.path().to_string_lossy().to_string())
+                    .collect();
+                self.update_goto(files);
+            }
             TransferMsg::SaveFileAs(dest) => {
                 self.umount_saveas();
                 match self.browser.tab() {

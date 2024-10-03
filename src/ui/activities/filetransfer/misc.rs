@@ -22,7 +22,7 @@ const LOG_CAPACITY: usize = 256;
 impl FileTransferActivity {
     /// Call `Application::tick()` and process messages in `Update`
     pub(super) fn tick(&mut self) {
-        match self.app.tick(PollStrategy::UpTo(3)) {
+        match self.app.tick(PollStrategy::UpTo(1)) {
             Ok(messages) => {
                 if !messages.is_empty() {
                     self.redraw = true;
