@@ -82,6 +82,7 @@ mod tests {
     use super::*;
 
     #[test]
+    #[cfg(not(feature = "isolated-tests"))]
     fn test_system_keys_keyringstorage() {
         let username: String = username();
         let storage: KeyringStorage = KeyringStorage::new(username.as_str());

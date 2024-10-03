@@ -48,6 +48,7 @@ Released on
   - Pod and container argumets have been removed; from now on you will connect with the following syntax to the provided namespace: `/pod-name/container-name/path/to/file`
 - [Issue 279](https://github.com/veeso/termscp/issues/279): do not clear screen
 - [Issue 277](https://github.com/veeso/termscp/issues/277): Fix a bug in the configuration page, which caused being stuck if the added SSH key was empty
+- [Issue 272](https://github.com/veeso/termscp/issues/272): `isolated-tests` feature to run tests for releasing on distributions which run in isolated environments
 
 ## 0.14.0
 

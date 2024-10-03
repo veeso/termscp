@@ -94,8 +94,9 @@ cfg_aliases = "0.2"
 [features]
 default = ["smb", "with-keyring"]
 github-actions = []
-with-keyring = ["keyring"]
+isolated-tests = []
 smb = ["remotefs-smb"]
+with-keyring = ["keyring"]
 
 [target."cfg(not(target_os = \"macos\"))".dependencies]
 remotefs-smb = { version = "^0.3", optional = true }
