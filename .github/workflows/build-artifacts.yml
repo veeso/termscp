@@ -33,10 +33,11 @@ jobs:
         run: |
           mkdir -p .artifact
           mv target/${{ matrix.platform.target }}/release/termscp .artifact/termscp
+          ls -l .artifact/
       - name: "Upload artifact"
         uses: actions/upload-artifact@v3
         with:
           if-no-files-found: error
           retention-days: 1
           name: ${{ matrix.platform.release_for }}
-          path: .artifact/*
+          path: .artifact/termscp
