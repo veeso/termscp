@@ -242,9 +242,7 @@ The user manual can be found on the [termscp's website](https://termscp.veeso.de
 
 ## Upcoming Features 🧪
 
-For **2023** there will be two major updates during the year.
-
-Along to new features, termscp developments is now focused on UX and performance improvements, so if you have any suggestion, feel free to open an issue.
+See [Milestones](https://github.com/veeso/termscp/milestones)
 
 ---
 
