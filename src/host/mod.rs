@@ -16,7 +16,6 @@ use filetime::{self, FileTime};
 use remotefs::fs::UnixPex;
 use remotefs::fs::{File, FileType, Metadata};
 use thiserror::Error;
-use wildmatch::WildMatch;
 
 // Locals
 use crate::utils::path;
@@ -579,12 +578,6 @@ impl Localhost {
         }
     }
 
-    /// Find files matching `search` on localhost starting from current directory. Search supports recursive search of course.
-    /// The `search` argument supports wilcards ('*', '?')
-    pub fn find(&self, search: &str) -> Result<Vec<File>, HostError> {
-        self.iter_search(self.wrkdir.as_path(), &WildMatch::new(search))
-    }
-
     /// Create a symlink at path pointing at target
     #[cfg(unix)]
     pub fn symlink(&self, path: &Path, target: &Path) -> Result<(), HostError> {
@@ -598,41 +591,6 @@ impl Localhost {
             );
             HostError::new(HostErrorType::CouldNotCreateFile, Some(e), path.as_path())
         })
-    }
-
-    // -- privates
-
-    /// Recursive call for `find` method.
-    /// Search in current directory for files which match `filter`.
-    /// If a directory is found in current directory, `iter_search` will be called using that dir as argument.
-    fn iter_search(&self, dir: &Path, filter: &WildMatch) -> Result<Vec<File>, HostError> {
-        // Scan directory
-        let mut drained: Vec<File> = Vec::new();
-        match self.scan_dir(dir) {
-            Err(err) => Err(err),
-            Ok(entries) => {
-                // Iter entries
-                /* For each entry:
-                - if is dir: call iter_search with `dir`
-                    - push `iter_search` result to `drained`
-                - if is file: check if it matches `filter`
-                    - if it matches `filter`: push to to filter
-                */
-                for entry in entries.into_iter() {
-                    if entry.is_dir() {
-                        // If directory matches; push directory to drained
-                        let next_path = entry.path().to_path_buf();
-                        if filter.matches(entry.name().as_str()) {
-                            drained.push(entry);
-                        }
-                        drained.append(&mut self.iter_search(next_path.as_path(), filter)?);
-                    } else if filter.matches(entry.name().as_str()) {
-                        drained.push(entry);
-                    }
-                }
-                Ok(drained)
-            }
-        }
     }
 
     /// Convert path to absolute path
@@ -658,7 +616,7 @@ mod tests {
     use super::*;
     #[cfg(unix)]
     use crate::utils::test_helpers::make_fsentry;
-    use crate::utils::test_helpers::{create_sample_file, make_dir_at, make_file_at};
+    use crate::utils::test_helpers::{create_sample_file, make_file_at};
 
     #[test]
     fn test_host_error_new() {
@@ -1082,39 +1040,6 @@ mod tests {
         let host: Localhost = Localhost::new(PathBuf::from(tmpdir.path())).ok().unwrap();
         // Execute
         assert!(host.exec("echo 5").ok().unwrap().as_str().contains("5"));
-    }
-
-    #[test]
-    fn test_host_find() {
-        let tmpdir: tempfile::TempDir = tempfile::TempDir::new().unwrap();
-        let dir_path: &Path = tmpdir.path();
-        // Make files
-        assert!(make_file_at(dir_path, "pippo.txt").is_ok());
-        assert!(make_file_at(dir_path, "foo.jpg").is_ok());
-        // Make nested struct
-        assert!(make_dir_at(dir_path, "examples").is_ok());
-        let mut subdir: PathBuf = PathBuf::from(dir_path);
-        subdir.push("examples/");
-        assert!(make_file_at(subdir.as_path(), "omar.txt").is_ok());
-        assert!(make_file_at(subdir.as_path(), "errors.txt").is_ok());
-        assert!(make_file_at(subdir.as_path(), "screenshot.png").is_ok());
-        assert!(make_file_at(subdir.as_path(), "examples.csv").is_ok());
-        let host: Localhost = Localhost::new(PathBuf::from(dir_path)).ok().unwrap();
-        // Find txt files
-        let mut result: Vec<File> = host.find("*.txt").ok().unwrap();
-        result.sort_by_key(|x: &File| x.name().to_lowercase());
-        // There should be 3 entries
-        assert_eq!(result.len(), 3);
-        // Check names (they should be sorted alphabetically already; NOTE: examples/ comes before pippo.txt)
-        assert_eq!(result[0].name(), "errors.txt");
-        assert_eq!(result[1].name(), "omar.txt");
-        assert_eq!(result[2].name(), "pippo.txt");
-        // Search for directory
-        let mut result: Vec<File> = host.find("examples*").ok().unwrap();
-        result.sort_by_key(|x: &File| x.name().to_lowercase());
-        assert_eq!(result.len(), 2);
-        assert_eq!(result[0].name(), "examples");
-        assert_eq!(result[1].name(), "examples.csv");
     }
 
     #[cfg(unix)]

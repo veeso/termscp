@@ -21,6 +21,7 @@ use chrono::{DateTime, Local};
 use lib::browser;
 use lib::browser::Browser;
 use lib::transfer::{TransferOpts, TransferStates};
+use lib::walkdir::WalkdirStates;
 use remotefs::RemoteFs;
 use session::TransferPayload;
 use tempfile::TempDir;
@@ -93,6 +94,7 @@ enum PendingActionMsg {
 
 #[derive(Debug, PartialEq)]
 enum TransferMsg {
+    AbortWalkdir,
     AbortTransfer,
     Chmod(remotefs::fs::UnixPex),
     CopyFileTo(String),
@@ -217,6 +219,9 @@ pub struct FileTransferActivity {
     browser: Browser,
     /// Current log lines
     log_records: VecDeque<LogRecord>,
+    /// Fuzzy search states
+    walkdir: WalkdirStates,
+    /// Transfer states
     transfer: TransferStates,
     /// Temporary directory where to store temporary stuff
     cache: Option<TempDir>,
@@ -244,6 +249,7 @@ impl FileTransferActivity {
             client: Builder::build(params.protocol, params.params.clone(), &config_client),
             browser: Browser::new(&config_client),
             log_records: VecDeque::with_capacity(256), // 256 events is enough I guess
+            walkdir: WalkdirStates::default(),
             transfer: TransferStates::default(),
             cache: match TempDir::new() {
                 Ok(d) => Some(d),

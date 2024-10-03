@@ -20,7 +20,8 @@ pub use popups::{
     FileInfoPopup, FilterPopup, GoToPopup, KeybindingsPopup, MkdirPopup, NewfilePopup,
     OpenWithPopup, ProgressBarFull, ProgressBarPartial, QuitPopup, RenamePopup, ReplacePopup,
     ReplacingFilesListPopup, SaveAsPopup, SortingPopup, StatusBarLocal, StatusBarRemote,
-    SymlinkPopup, SyncBrowsingMkdirPopup, WaitPopup, WatchedPathsList, WatcherPopup,
+    SymlinkPopup, SyncBrowsingMkdirPopup, WaitPopup, WalkdirWaitPopup, WatchedPathsList,
+    WatcherPopup,
 };
 pub use transfer::{ExplorerFind, ExplorerFuzzy, ExplorerLocal, ExplorerRemote};
 

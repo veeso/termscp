@@ -8,6 +8,7 @@ use remotefs::fs::File;
 use tuirealm::props::{AttrValue, Attribute};
 use tuirealm::{State, StateValue, Update};
 
+use super::actions::walkdir::WalkdirError;
 use super::actions::SelectedFile;
 use super::browser::{FileExplorerTab, FoundExplorerTab};
 use super::{ExitReason, FileTransferActivity, Id, Msg, TransferMsg, TransferOpts, UiMsg};
@@ -31,6 +32,9 @@ impl FileTransferActivity {
         match msg {
             TransferMsg::AbortTransfer => {
                 self.transfer.abort();
+            }
+            TransferMsg::AbortWalkdir => {
+                self.walkdir.aborted = true;
             }
             TransferMsg::Chmod(mode) => {
                 self.umount_chmod();
@@ -213,9 +217,9 @@ impl FileTransferActivity {
             }
             TransferMsg::InitFuzzySearch => {
                 // Mount wait
-                self.mount_blocking_wait("Scanning current directory…");
+                self.mount_walkdir_wait();
                 // Find
-                let res: Result<Vec<File>, String> = match self.browser.tab() {
+                let res: Result<Vec<File>, WalkdirError> = match self.browser.tab() {
                     FileExplorerTab::Local => self.action_walkdir_local(),
                     FileExplorerTab::Remote => self.action_walkdir_remote(),
                     _ => panic!("Trying to search for files, while already in a find result"),
@@ -224,9 +228,12 @@ impl FileTransferActivity {
                 self.umount_wait();
                 // Match result
                 match res {
-                    Err(err) => {
+                    Err(WalkdirError::Error(err)) => {
                         // Mount error
                         self.mount_error(err.as_str());
+                    }
+                    Err(WalkdirError::Aborted) => {
+                        self.mount_info("Search aborted");
                     }
                     Ok(files) if files.is_empty() => {
                         // If no file has been found notify user

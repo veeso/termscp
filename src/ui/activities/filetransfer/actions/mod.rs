@@ -29,6 +29,7 @@ pub(crate) mod rename;
 pub(crate) mod save;
 pub(crate) mod submit;
 pub(crate) mod symlink;
+pub(crate) mod walkdir;
 pub(crate) mod watcher;
 
 #[derive(Debug)]
