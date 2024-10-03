@@ -145,7 +145,7 @@ mod test {
     }
 
     #[test]
-    #[cfg(any(
+    #[cfg(all(
         not(all(
             any(target_os = "macos", target_os = "freebsd"),
             feature = "github-actions"
@@ -165,7 +165,7 @@ mod test {
     }
 
     #[test]
-    #[cfg(any(
+    #[cfg(all(
         not(all(
             any(target_os = "macos", target_os = "freebsd"),
             feature = "github-actions"
