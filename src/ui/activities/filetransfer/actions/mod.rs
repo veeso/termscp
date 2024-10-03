@@ -27,8 +27,10 @@ pub(crate) mod open;
 mod pending;
 pub(crate) mod rename;
 pub(crate) mod save;
+pub(crate) mod scan;
 pub(crate) mod submit;
 pub(crate) mod symlink;
+pub(crate) mod walkdir;
 pub(crate) mod watcher;
 
 #[derive(Debug)]

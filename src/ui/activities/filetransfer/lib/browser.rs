@@ -4,11 +4,14 @@
 
 use std::path::Path;
 
+use nucleo::Utf32String;
 use remotefs::File;
 
 use crate::explorer::builder::FileExplorerBuilder;
-use crate::explorer::{FileExplorer, FileSorting, GroupDirs};
+use crate::explorer::{FileExplorer, FileSorting};
 use crate::system::config_client::ConfigClient;
+
+const FUZZY_SEARCH_THRESHOLD: u16 = 50;
 
 /// File explorer tab
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -28,10 +31,10 @@ pub enum FoundExplorerTab {
 
 /// Browser contains the browser options
 pub struct Browser {
-    local: FileExplorer,                             // Local File explorer state
-    remote: FileExplorer,                            // Remote File explorer state
-    found: Option<(FoundExplorerTab, FileExplorer)>, // File explorer for find result
-    tab: FileExplorerTab,                            // Current selected tab
+    local: FileExplorer,  // Local File explorer state
+    remote: FileExplorer, // Remote File explorer state
+    found: Option<Found>, // File explorer for find result
+    tab: FileExplorerTab, // Current selected tab
     pub sync_browsing: bool,
 }
 
@@ -44,6 +47,16 @@ impl Browser {
             found: None,
             tab: FileExplorerTab::Local,
             sync_browsing: false,
+        }
+    }
+
+    pub fn explorer(&self) -> &FileExplorer {
+        match self.tab {
+            FileExplorerTab::Local => &self.local,
+            FileExplorerTab::Remote => &self.remote,
+            FileExplorerTab::FindLocal | FileExplorerTab::FindRemote => {
+                self.found.as_ref().map(|x| &x.explorer).unwrap()
+            }
         }
     }
 
@@ -64,17 +77,35 @@ impl Browser {
     }
 
     pub fn found(&self) -> Option<&FileExplorer> {
-        self.found.as_ref().map(|x| &x.1)
+        self.found.as_ref().map(|x| &x.explorer)
     }
 
     pub fn found_mut(&mut self) -> Option<&mut FileExplorer> {
-        self.found.as_mut().map(|x| &mut x.1)
+        self.found.as_mut().map(|x| &mut x.explorer)
+    }
+
+    /// Perform fuzzy search on found tab
+    pub fn fuzzy_search(&mut self, needle: &str) {
+        if let Some(x) = self.found.as_mut() {
+            x.fuzzy_search(needle)
+        }
+    }
+
+    /// Initialize fuzzy search
+    pub fn init_fuzzy_search(&mut self) {
+        if let Some(explorer) = self.found_mut() {
+            explorer.set_files(vec![]);
+        }
     }
 
     pub fn set_found(&mut self, tab: FoundExplorerTab, files: Vec<File>, wrkdir: &Path) {
         let mut explorer = Self::build_found_explorer(wrkdir);
-        explorer.set_files(files);
-        self.found = Some((tab, explorer));
+        explorer.set_files(files.clone());
+        self.found = Some(Found {
+            tab,
+            explorer,
+            search_results: files,
+        });
     }
 
     pub fn del_found(&mut self) {
@@ -83,7 +114,7 @@ impl Browser {
 
     /// Returns found tab if any
     pub fn found_tab(&self) -> Option<FoundExplorerTab> {
-        self.found.as_ref().map(|x| x.0)
+        self.found.as_ref().map(|x| x.tab)
     }
 
     pub fn tab(&self) -> FileExplorerTab {
@@ -129,13 +160,58 @@ impl Browser {
     /// Build explorer reading from `ConfigClient`, for found result (has some differences)
     fn build_found_explorer(wrkdir: &Path) -> FileExplorer {
         FileExplorerBuilder::new()
-            .with_file_sorting(FileSorting::Name)
-            .with_group_dirs(Some(GroupDirs::First))
+            .with_file_sorting(FileSorting::None)
+            .with_group_dirs(None)
             .with_hidden_files(true)
             .with_stack_size(0)
             .with_formatter(Some(
                 format!("{{PATH:36:{}}} {{SYMLINK}}", wrkdir.display()).as_str(),
             ))
             .build()
+    }
+}
+
+/// Found state
+struct Found {
+    explorer: FileExplorer,
+    /// Search results; original copy of files
+    search_results: Vec<File>,
+    tab: FoundExplorerTab,
+}
+
+impl Found {
+    /// Fuzzy search from `search_results` and update `explorer.files` with the results.
+    pub fn fuzzy_search(&mut self, needle: &str) {
+        let search = Utf32String::from(needle);
+        let mut nucleo = nucleo::Matcher::new(nucleo::Config::DEFAULT.match_paths());
+
+        // get scores
+        let mut fuzzy_results_with_score = self
+            .search_results
+            .iter()
+            .map(|f| {
+                (
+                    Utf32String::from(f.path().to_string_lossy().into_owned()),
+                    f,
+                )
+            })
+            .filter_map(|(path, file)| {
+                nucleo
+                    .fuzzy_match(path.slice(..), search.slice(..))
+                    .map(|score| (path, file, score))
+            })
+            .filter(|(_, _, score)| *score >= FUZZY_SEARCH_THRESHOLD)
+            .collect::<Vec<_>>();
+
+        // sort by score; highest first
+        fuzzy_results_with_score.sort_by(|(_, _, a), (_, _, b)| b.cmp(a));
+
+        // update files
+        self.explorer.set_files(
+            fuzzy_results_with_score
+                .into_iter()
+                .map(|(_, file, _)| file.clone())
+                .collect(),
+        );
     }
 }

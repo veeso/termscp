@@ -6,12 +6,14 @@
 // Ext
 use remotefs::fs::{File, UnixPex};
 use tuirealm::event::{Key, KeyEvent, KeyModifiers};
+use tuirealm::props::{PropPayload, PropValue, TextSpan};
 use tuirealm::tui::layout::{Constraint, Direction, Layout};
 use tuirealm::tui::widgets::Clear;
-use tuirealm::{Sub, SubClause, SubEventClause};
+use tuirealm::{AttrValue, Attribute, Sub, SubClause, SubEventClause};
 use unicode_width::UnicodeWidthStr;
 
 use super::browser::{FileExplorerTab, FoundExplorerTab};
+use super::components::ATTR_FILES;
 use super::{components, Context, FileTransferActivity, Id};
 use crate::explorer::FileSorting;
 use crate::utils::ui::{Popup, Size};
@@ -80,7 +82,7 @@ impl FileTransferActivity {
         self.refresh_remote_status_bar();
         // Update components
         self.update_local_filelist();
-        self.update_remote_filelist();
+        // self.update_remote_filelist();
         // Global listener
         self.mount_global_listener();
         // Give focus to local explorer
@@ -177,11 +179,6 @@ impl FileTransferActivity {
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::FilterPopup, f, popup);
-            } else if self.app.mounted(&Id::FindPopup) {
-                let popup = Popup(Size::Percentage(40), Size::Unit(3)).draw_in(f.size());
-                f.render_widget(Clear, popup);
-                // make popup
-                self.app.view(&Id::FindPopup, f, popup);
             } else if self.app.mounted(&Id::GotoPopup) {
                 let popup = Popup(Size::Percentage(40), Size::Unit(3)).draw_in(f.size());
                 f.render_widget(Clear, popup);
@@ -307,7 +304,15 @@ impl FileTransferActivity {
                 // make popup
                 self.app.view(&Id::ErrorPopup, f, popup);
             } else if self.app.mounted(&Id::WaitPopup) {
-                let popup = Popup(Size::Percentage(50), Size::Unit(3)).draw_in(f.size());
+                let wait_popup_lines = self
+                    .app
+                    .query(&Id::WaitPopup, Attribute::Text)
+                    .map(|x| x.map(|x| x.unwrap_payload().unwrap_vec().len()))
+                    .unwrap_or_default()
+                    .unwrap_or(1) as u16;
+
+                let popup =
+                    Popup(Size::Percentage(50), Size::Unit(2 + wait_popup_lines)).draw_in(f.size());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::WaitPopup, f, popup);
@@ -395,6 +400,38 @@ impl FileTransferActivity {
             )
             .is_ok());
         assert!(self.app.active(&Id::WaitPopup).is_ok());
+    }
+
+    pub(super) fn mount_walkdir_wait(&mut self) {
+        let color = self.theme().misc_info_dialog;
+        assert!(self
+            .app
+            .remount(
+                Id::WaitPopup,
+                Box::new(components::WalkdirWaitPopup::new(
+                    "Scanning current directory…",
+                    color
+                )),
+                vec![],
+            )
+            .is_ok());
+        assert!(self.app.active(&Id::WaitPopup).is_ok());
+
+        self.view();
+    }
+
+    pub(super) fn update_walkdir_entries(&mut self, entries: usize) {
+        let text = format!("Scanning current directory… ({entries} items found)",);
+        let _ = self.app.attr(
+            &Id::WaitPopup,
+            Attribute::Text,
+            AttrValue::Payload(PropPayload::Vec(vec![
+                PropValue::TextSpan(TextSpan::from(text)),
+                PropValue::TextSpan(TextSpan::from("Press 'CTRL+C' to abort")),
+            ])),
+        );
+
+        self.view();
     }
 
     pub(super) fn mount_blocking_wait<S: AsRef<str>>(&mut self, text: S) {
@@ -515,7 +552,7 @@ impl FileTransferActivity {
         let _ = self.app.umount(&Id::ExecPopup);
     }
 
-    pub(super) fn mount_find(&mut self, search: &str) {
+    pub(super) fn mount_find(&mut self, msg: impl ToString, fuzzy_search: bool) {
         // Get color
         let (bg, fg, hg) = match self.browser.tab() {
             FileExplorerTab::Local | FileExplorerTab::FindLocal => (
@@ -529,18 +566,29 @@ impl FileTransferActivity {
                 self.theme().transfer_remote_explorer_highlighted,
             ),
         };
+
         // Mount component
         assert!(self
             .app
             .remount(
                 Id::ExplorerFind,
-                Box::new(components::ExplorerFind::new(
-                    format!(r#"Search results for "{search}""#),
-                    &[],
-                    bg,
-                    fg,
-                    hg
-                )),
+                if fuzzy_search {
+                    Box::new(components::ExplorerFuzzy::new(
+                        msg.to_string(),
+                        &[],
+                        bg,
+                        fg,
+                        hg,
+                    ))
+                } else {
+                    Box::new(components::ExplorerFind::new(
+                        msg.to_string(),
+                        &[],
+                        bg,
+                        fg,
+                        hg,
+                    ))
+                },
                 vec![],
             )
             .is_ok());
@@ -551,35 +599,39 @@ impl FileTransferActivity {
         let _ = self.app.umount(&Id::ExplorerFind);
     }
 
-    pub(super) fn mount_find_input(&mut self) {
-        let input_color = self.theme().misc_input_dialog;
-        assert!(self
-            .app
-            .remount(
-                Id::FindPopup,
-                Box::new(components::FindPopup::new(input_color)),
-                vec![],
-            )
-            .is_ok());
-        assert!(self.app.active(&Id::FindPopup).is_ok());
-    }
-
-    pub(super) fn umount_find_input(&mut self) {
-        // Umount input find
-        let _ = self.app.umount(&Id::FindPopup);
-    }
-
     pub(super) fn mount_goto(&mut self) {
+        // get files
+        let files = self
+            .browser
+            .explorer()
+            .iter_files()
+            .filter(|f| f.is_dir() || f.is_symlink())
+            .map(|f| f.path().to_string_lossy().to_string())
+            .collect::<Vec<String>>();
+
         let input_color = self.theme().misc_input_dialog;
         assert!(self
             .app
             .remount(
                 Id::GotoPopup,
-                Box::new(components::GoToPopup::new(input_color)),
+                Box::new(components::GotoPopup::new(input_color, files)),
                 vec![],
             )
             .is_ok());
         assert!(self.app.active(&Id::GotoPopup).is_ok());
+    }
+
+    pub(super) fn update_goto(&mut self, files: Vec<String>) {
+        let payload = files
+            .into_iter()
+            .map(PropValue::Str)
+            .collect::<Vec<PropValue>>();
+
+        let _ = self.app.attr(
+            &Id::GotoPopup,
+            Attribute::Custom(ATTR_FILES),
+            AttrValue::Payload(PropPayload::Vec(payload)),
+        );
     }
 
     pub(super) fn umount_goto(&mut self) {
@@ -1094,38 +1146,33 @@ impl FileTransferActivity {
                                                                                         Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
                                                                                             Id::SortingPopup,
                                                                                         )))),
-                                                                                        Box::new(SubClause::And(
-                                                                                            Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
-                                                                                                Id::FindPopup,
-                                                                                            )))),
                                                                                             Box::new(SubClause::And(
                                                                                                 Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
                                                                                                     Id::SyncBrowsingMkdirPopup,
+                                                                                            )))),
+                                                                                            Box::new(SubClause::And(
+                                                                                                Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
+                                                                                                    Id::SymlinkPopup,
                                                                                                 )))),
                                                                                                 Box::new(SubClause::And(
                                                                                                     Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
-                                                                                                        Id::SymlinkPopup,
+                                                                                                        Id::WatcherPopup,
                                                                                                     )))),
                                                                                                     Box::new(SubClause::And(
                                                                                                         Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
-                                                                                                            Id::WatcherPopup,
+                                                                                                            Id::WatchedPathsList,
                                                                                                         )))),
                                                                                                         Box::new(SubClause::And(
                                                                                                             Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
-                                                                                                                Id::WatchedPathsList,
+                                                                                                                Id::ChmodPopup,
                                                                                                             )))),
                                                                                                             Box::new(SubClause::And(
                                                                                                                 Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
-                                                                                                                    Id::ChmodPopup,
+                                                                                                                    Id::WaitPopup,
                                                                                                                 )))),
-                                                                                                                Box::new(SubClause::And(
-                                                                                                                    Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
-                                                                                                                        Id::WaitPopup,
-                                                                                                                    )))),
-                                                                                                                    Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
-                                                                                                                        Id::FilterPopup,
-                                                                                                                    )))),
-                                                                                                                )),
+                                                                                                                Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
+                                                                                                                    Id::FilterPopup,
+                                                                                                                )))),
                                                                                                             )),
                                                                                                         )),
                                                                                                     )),

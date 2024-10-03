@@ -82,6 +82,7 @@ mod tests {
     use super::*;
 
     #[test]
+    #[cfg(not(feature = "isolated-tests"))]
     fn test_system_keys_keyringstorage() {
         let username: String = username();
         let storage: KeyringStorage = KeyringStorage::new(username.as_str());
@@ -89,17 +90,17 @@ mod tests {
         let app_name: &str = "termscp-test2";
         let secret: &str = "Th15-15/My-Супер-Секрет";
         let kring: Keyring = Keyring::new(app_name, username.as_str()).unwrap();
-        let _ = kring.delete_password();
+        let _ = kring.delete_credential();
         drop(kring);
         // Secret should not exist
         assert!(storage.get_key(app_name).is_err());
         // Write secret
         assert!(storage.set_key(app_name, secret).is_ok());
         // Get secret
-        assert_eq!(storage.get_key(app_name).ok().unwrap().as_str(), secret);
+        assert_eq!(storage.get_key(app_name).unwrap().as_str(), secret);
 
         // Delete the key manually...
         let kring: Keyring = Keyring::new(app_name, username.as_str()).unwrap();
-        assert!(kring.delete_password().is_ok());
+        assert!(kring.delete_credential().is_ok());
     }
 }

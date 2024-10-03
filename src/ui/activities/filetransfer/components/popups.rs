@@ -2,6 +2,9 @@
 //!
 //! popups components
 
+mod chmod;
+mod goto;
+
 use std::time::UNIX_EPOCH;
 
 use bytesize::ByteSize;
@@ -16,14 +19,12 @@ use tuirealm::{Component, Event, MockComponent, NoUserEvent, State, StateValue};
 #[cfg(unix)]
 use users::{get_group_by_gid, get_user_by_uid};
 
+pub use self::chmod::ChmodPopup;
+pub use self::goto::{GotoPopup, ATTR_FILES};
 use super::super::Browser;
 use super::{Msg, PendingActionMsg, TransferMsg, UiMsg};
 use crate::explorer::FileSorting;
 use crate::utils::fmt::fmt_time;
-
-mod chmod;
-
-pub use chmod::ChmodPopup;
 
 #[derive(MockComponent)]
 pub struct CopyPopup {
@@ -131,7 +132,10 @@ impl FilterPopup {
                     "regex or wildmatch",
                     Style::default().fg(Color::Rgb(128, 128, 128)),
                 )
-                .title("Filter files by regex or wildmatch", Alignment::Center),
+                .title(
+                    "Filter files by regex or wildmatch in the current directory",
+                    Alignment::Center,
+                ),
         }
     }
 }
@@ -575,176 +579,6 @@ impl Component<Msg, NoUserEvent> for FileInfoPopup {
                 code: Key::Esc | Key::Enter,
                 ..
             }) => Some(Msg::Ui(UiMsg::CloseFileInfoPopup)),
-            _ => None,
-        }
-    }
-}
-
-#[derive(MockComponent)]
-pub struct FindPopup {
-    component: Input,
-}
-
-impl FindPopup {
-    pub fn new(color: Color) -> Self {
-        Self {
-            component: Input::default()
-                .borders(
-                    Borders::default()
-                        .color(color)
-                        .modifiers(BorderType::Rounded),
-                )
-                .foreground(color)
-                .input_type(InputType::Text)
-                .placeholder(
-                    "Search files by name",
-                    Style::default().fg(Color::Rgb(128, 128, 128)),
-                )
-                .title("*.txt", Alignment::Center),
-        }
-    }
-}
-
-impl Component<Msg, NoUserEvent> for FindPopup {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
-        match ev {
-            Event::Keyboard(KeyEvent {
-                code: Key::Left, ..
-            }) => {
-                self.perform(Cmd::Move(Direction::Left));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Right, ..
-            }) => {
-                self.perform(Cmd::Move(Direction::Right));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Home, ..
-            }) => {
-                self.perform(Cmd::GoTo(Position::Begin));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent { code: Key::End, .. }) => {
-                self.perform(Cmd::GoTo(Position::End));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Delete, ..
-            }) => {
-                self.perform(Cmd::Cancel);
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Backspace,
-                ..
-            }) => {
-                self.perform(Cmd::Delete);
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Char(ch),
-                ..
-            }) => {
-                self.perform(Cmd::Type(ch));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Enter, ..
-            }) => match self.state() {
-                State::One(StateValue::String(i)) => {
-                    Some(Msg::Transfer(TransferMsg::SearchFile(i)))
-                }
-                _ => Some(Msg::None),
-            },
-            Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
-                Some(Msg::Ui(UiMsg::CloseFindPopup))
-            }
-            _ => None,
-        }
-    }
-}
-
-#[derive(MockComponent)]
-pub struct GoToPopup {
-    component: Input,
-}
-
-impl GoToPopup {
-    pub fn new(color: Color) -> Self {
-        Self {
-            component: Input::default()
-                .borders(
-                    Borders::default()
-                        .color(color)
-                        .modifiers(BorderType::Rounded),
-                )
-                .foreground(color)
-                .input_type(InputType::Text)
-                .placeholder(
-                    "/foo/bar/buzz",
-                    Style::default().fg(Color::Rgb(128, 128, 128)),
-                )
-                .title("Go to…", Alignment::Center),
-        }
-    }
-}
-
-impl Component<Msg, NoUserEvent> for GoToPopup {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
-        match ev {
-            Event::Keyboard(KeyEvent {
-                code: Key::Left, ..
-            }) => {
-                self.perform(Cmd::Move(Direction::Left));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Right, ..
-            }) => {
-                self.perform(Cmd::Move(Direction::Right));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Home, ..
-            }) => {
-                self.perform(Cmd::GoTo(Position::Begin));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent { code: Key::End, .. }) => {
-                self.perform(Cmd::GoTo(Position::End));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Delete, ..
-            }) => {
-                self.perform(Cmd::Cancel);
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Backspace,
-                ..
-            }) => {
-                self.perform(Cmd::Delete);
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Char(ch),
-                ..
-            }) => {
-                self.perform(Cmd::Type(ch));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Enter, ..
-            }) => match self.state() {
-                State::One(StateValue::String(i)) => Some(Msg::Transfer(TransferMsg::GoTo(i))),
-                _ => Some(Msg::None),
-            },
-            Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
-                Some(Msg::Ui(UiMsg::CloseGotoPopup))
-            }
             _ => None,
         }
     }
@@ -1675,6 +1509,7 @@ impl SortingPopup {
                     FileSorting::ModifyTime => 1,
                     FileSorting::Name => 0,
                     FileSorting::Size => 3,
+                    FileSorting::None => 0,
                 }),
         }
     }
@@ -1778,6 +1613,7 @@ fn file_sorting_label(sorting: FileSorting) -> &'static str {
         FileSorting::ModifyTime => "By modify time",
         FileSorting::Name => "By name",
         FileSorting::Size => "By size",
+        FileSorting::None => "",
     }
 }
 
@@ -1975,6 +1811,47 @@ impl WaitPopup {
 impl Component<Msg, NoUserEvent> for WaitPopup {
     fn on(&mut self, _ev: Event<NoUserEvent>) -> Option<Msg> {
         None
+    }
+}
+
+#[derive(MockComponent)]
+pub struct WalkdirWaitPopup {
+    component: Paragraph,
+}
+
+impl WalkdirWaitPopup {
+    pub fn new<S: AsRef<str>>(text: S, color: Color) -> Self {
+        Self {
+            component: Paragraph::default()
+                .alignment(Alignment::Center)
+                .borders(
+                    Borders::default()
+                        .color(color)
+                        .modifiers(BorderType::Rounded),
+                )
+                .foreground(color)
+                .text(&[
+                    TextSpan::from(text.as_ref()),
+                    TextSpan::from("Press 'CTRL+C' to abort"),
+                ])
+                .wrap(true),
+        }
+    }
+}
+
+impl Component<Msg, NoUserEvent> for WalkdirWaitPopup {
+    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+        if matches!(
+            ev,
+            Event::Keyboard(KeyEvent {
+                code: Key::Char('c'),
+                modifiers: KeyModifiers::CONTROL
+            })
+        ) {
+            Some(Msg::Transfer(TransferMsg::AbortWalkdir))
+        } else {
+            None
+        }
     }
 }
 

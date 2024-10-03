@@ -70,7 +70,7 @@ impl AuthActivity {
                         InputMask::Generic => &Id::Password,
                         InputMask::Smb => &Id::Password,
                         InputMask::AwsS3 => &Id::S3Bucket,
-                        InputMask::Kube => &Id::KubePodName,
+                        InputMask::Kube => &Id::KubeNamespace,
                         InputMask::WebDAV => &Id::Password,
                     })
                     .is_ok());
@@ -84,7 +84,7 @@ impl AuthActivity {
                         InputMask::Generic => &Id::Password,
                         InputMask::Smb => &Id::Password,
                         InputMask::AwsS3 => &Id::S3Bucket,
-                        InputMask::Kube => &Id::KubePodName,
+                        InputMask::Kube => &Id::KubeNamespace,
                         InputMask::WebDAV => &Id::Password,
                     })
                     .is_ok());
@@ -210,7 +210,7 @@ impl AuthActivity {
                         InputMask::Generic => &Id::Address,
                         InputMask::Smb => &Id::Address,
                         InputMask::AwsS3 => &Id::S3Bucket,
-                        InputMask::Kube => &Id::KubePodName,
+                        InputMask::Kube => &Id::KubeNamespace,
                         InputMask::WebDAV => &Id::WebDAVUri,
                     })
                     .is_ok());
@@ -305,23 +305,11 @@ impl AuthActivity {
             UiMsg::KubeClientKeyBlurUp => {
                 assert!(self.app.active(&Id::KubeClientCert).is_ok());
             }
-            UiMsg::KubeContainerBlurDown => {
-                assert!(self.app.active(&Id::KubeNamespace).is_ok());
-            }
-            UiMsg::KubeContainerBlurUp => {
-                assert!(self.app.active(&Id::KubePodName).is_ok());
-            }
-            UiMsg::KubePodNameBlurDown => {
-                assert!(self.app.active(&Id::KubeContainer).is_ok());
-            }
-            UiMsg::KubePodNameBlurUp => {
-                assert!(self.app.active(&Id::Protocol).is_ok());
-            }
             UiMsg::KubeNamespaceBlurDown => {
                 assert!(self.app.active(&Id::KubeClusterUrl).is_ok());
             }
             UiMsg::KubeNamespaceBlurUp => {
-                assert!(self.app.active(&Id::KubeContainer).is_ok());
+                assert!(self.app.active(&Id::Protocol).is_ok());
             }
             UiMsg::KubeClusterUrlBlurDown => {
                 assert!(self.app.active(&Id::KubeUsername).is_ok());

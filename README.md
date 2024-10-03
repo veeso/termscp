@@ -71,7 +71,7 @@
 </p>
 
 <p align="center">Developed by <a href="https://veeso.dev/" target="_blank">@veeso</a></p>
-<p align="center">Current version: 0.14.0 (17/07/2024)</p>
+<p align="center">Current version: 0.15.0 (03/10/2024)</p>
 
 <p align="center">
   <a href="https://opensource.org/licenses/MIT"
@@ -115,11 +115,6 @@
     ><img
       src="https://github.com/veeso/termscp/workflows/Windows/badge.svg"
       alt="Windows CI"
-  /></a>
-  <a href="https://coveralls.io/github/veeso/termscp"
-    ><img
-      src="https://coveralls.io/repos/github/veeso/termscp/badge.svg"
-      alt="Coveralls"
   /></a>
 </p>
 

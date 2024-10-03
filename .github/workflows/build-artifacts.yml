@@ -22,21 +22,21 @@ jobs:
     runs-on: ${{ matrix.platform.os }}
     steps:
       - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
+      - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
-          override: true
-          target: ${{ matrix.platform.target }}
+          targets: ${{ matrix.platform.target }}
       - name: Build release
         run: cargo build --release --target ${{ matrix.platform.target }}
       - name: Prepare artifact files
         run: |
           mkdir -p .artifact
           mv target/${{ matrix.platform.target }}/release/termscp .artifact/termscp
+          ls -l .artifact/
       - name: "Upload artifact"
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           if-no-files-found: error
           retention-days: 1
           name: ${{ matrix.platform.release_for }}
-          path: .artifact/*
+          path: .artifact/termscp

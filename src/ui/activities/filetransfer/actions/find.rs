@@ -9,23 +9,10 @@ use super::super::browser::FileExplorerTab;
 use super::{File, FileTransferActivity, LogLevel, SelectedFile, TransferOpts, TransferPayload};
 
 impl FileTransferActivity {
-    pub(crate) fn action_local_find(&mut self, input: String) -> Result<Vec<File>, String> {
-        match self.host.find(input.as_str()) {
-            Ok(entries) => Ok(entries),
-            Err(err) => Err(format!("Could not search for files: {err}")),
-        }
-    }
-
-    pub(crate) fn action_remote_find(&mut self, input: String) -> Result<Vec<File>, String> {
-        match self.client.as_mut().find(input.as_str()) {
-            Ok(entries) => Ok(entries),
-            Err(err) => Err(format!("Could not search for files: {err}")),
-        }
-    }
-
     pub(crate) fn action_find_changedir(&mut self) {
         // Match entry
         if let SelectedFile::One(entry) = self.get_found_selected_entries() {
+            debug!("Changedir to: {}", entry.name());
             // Get path: if a directory, use directory path; if it is a File, get parent path
             let path = if entry.is_dir() {
                 entry.path().to_path_buf()

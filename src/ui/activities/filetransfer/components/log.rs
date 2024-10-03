@@ -5,8 +5,7 @@
 use tuirealm::command::{Cmd, CmdResult, Direction, Position};
 use tuirealm::event::{Key, KeyEvent};
 use tuirealm::props::{Alignment, AttrValue, Attribute, Borders, Color, Style, Table};
-use tuirealm::tui::layout::Corner;
-use tuirealm::tui::widgets::{List as TuiList, ListItem, ListState};
+use tuirealm::tui::widgets::{List as TuiList, ListDirection, ListItem, ListState};
 use tuirealm::{Component, Event, MockComponent, NoUserEvent, Props, State, StateValue};
 
 use super::{Msg, UiMsg};
@@ -63,7 +62,7 @@ impl MockComponent for Log {
                 focus,
                 None,
             ))
-            .start_corner(Corner::BottomLeft)
+            .direction(ListDirection::BottomToTop)
             .highlight_symbol(">> ")
             .style(Style::default().bg(bg))
             .highlight_style(Style::default());

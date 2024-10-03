@@ -6,9 +6,8 @@ use tuirealm::command::{Cmd, CmdResult, Direction, Position};
 use tuirealm::props::{
     Alignment, AttrValue, Attribute, Borders, Color, Style, Table, TextModifiers,
 };
-use tuirealm::tui::layout::Corner;
 use tuirealm::tui::text::{Line, Span};
-use tuirealm::tui::widgets::{List as TuiList, ListItem, ListState};
+use tuirealm::tui::widgets::{List as TuiList, ListDirection, ListItem, ListState};
 use tuirealm::{MockComponent, Props, State, StateValue};
 
 pub const FILE_LIST_CMD_SELECT_ALL: &str = "A";
@@ -235,7 +234,7 @@ impl MockComponent for FileList {
         // Make list
         let mut list = TuiList::new(list_items)
             .block(div)
-            .start_corner(Corner::TopLeft);
+            .direction(ListDirection::TopToBottom);
         if let Some(highlighted_color) = highlighted_color {
             list = list.highlight_style(
                 Style::default()

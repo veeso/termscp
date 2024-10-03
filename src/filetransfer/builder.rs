@@ -8,7 +8,7 @@ use std::sync::Arc;
 use remotefs::RemoteFs;
 use remotefs_aws_s3::AwsS3Fs;
 use remotefs_ftp::FtpFs;
-use remotefs_kube::KubeFs;
+use remotefs_kube::KubeMultiPodFs as KubeFs;
 #[cfg(smb_unix)]
 use remotefs_smb::SmbOptions;
 #[cfg(smb)]
@@ -119,7 +119,7 @@ impl Builder {
                 .build()
                 .expect("Unable to create tokio runtime"),
         );
-        let kube_fs = KubeFs::new(&params.pod, &params.container, &rt);
+        let kube_fs = KubeFs::new(&rt);
         if let Some(config) = params.config() {
             kube_fs.config(config)
         } else {
@@ -281,8 +281,6 @@ mod test {
     #[test]
     fn test_should_build_kube_fs() {
         let params = ProtocolParams::Kube(KubeProtocolParams {
-            pod: "pod".to_string(),
-            container: "container".to_string(),
             namespace: Some("namespace".to_string()),
             cluster_url: Some("cluster_url".to_string()),
             username: Some("username".to_string()),

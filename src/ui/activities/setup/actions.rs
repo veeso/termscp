@@ -124,7 +124,7 @@ impl SetupActivity {
     }
 
     /// Create a new ssh key
-    pub(super) fn action_new_ssh_key(&mut self) {
+    pub(super) fn action_new_ssh_key(&mut self) -> Result<(), String> {
         // get parameters
         let host: String = match self.app.state(&Id::Ssh(IdSsh::SshHost)) {
             Ok(State::One(StateValue::String(host))) => host,
@@ -148,29 +148,23 @@ impl SetupActivity {
         // Lock ports
         assert!(self.app.lock_ports().is_ok());
         // Write key to file
-        match edit::edit(placeholder.as_bytes()) {
+        let res = match edit::edit(placeholder.as_bytes()) {
             Ok(rsa_key) => {
                 // Remove placeholder from `rsa_key`
                 let rsa_key: String = rsa_key.as_str().replace(placeholder.as_str(), "");
                 if rsa_key.is_empty() {
                     // Report error: empty key
-                    self.mount_error("SSH key is empty!");
+                    Err("SSH key is empty!".to_string())
                 } else {
-                    // Add key
-                    if let Err(err) =
-                        self.add_ssh_key(host.as_str(), username.as_str(), rsa_key.as_str())
-                    {
-                        self.mount_error(
-                            format!("Could not create new private key: {err}").as_str(),
-                        );
-                    }
+                    self.add_ssh_key(host.as_str(), username.as_str(), rsa_key.as_str())
+                        .map_err(|e| format!("Could not create new private key: {e}"))
                 }
             }
             Err(err) => {
                 // Report error
-                self.mount_error(format!("Could not write private key to file: {err}").as_str());
+                Err(format!("Could not write private key to file: {err}"))
             }
-        }
+        };
         // Restore terminal
         if let Some(ctx) = self.context.as_mut() {
             // Enter alternate mode
@@ -187,6 +181,8 @@ impl SetupActivity {
             // Unlock ports
             assert!(self.app.unlock_ports().is_ok());
         }
+
+        res
     }
 
     /// Given a component and a color, save the color into the theme
