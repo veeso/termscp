@@ -13,6 +13,7 @@ use thiserror::Error;
 // Locals
 pub use self::bridge::HostBridge;
 pub use self::localhost::Localhost;
+pub use self::remote_bridged::RemoteBridged;
 
 pub type HostResult<T> = Result<T, HostError>;
 

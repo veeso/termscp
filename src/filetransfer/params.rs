@@ -15,6 +15,15 @@ pub use self::smb::SmbParams;
 pub use self::webdav::WebDAVProtocolParams;
 use super::FileTransferProtocol;
 
+/// Host bridge params
+#[derive(Debug, Clone)]
+pub enum HostBridgeParams {
+    /// Localhost with starting working directory
+    Localhost(PathBuf),
+    /// Remote host with protocol and file transfer params
+    Remote(FileTransferProtocol, ProtocolParams),
+}
+
 /// Holds connection parameters for file transfers
 #[derive(Debug, Clone)]
 pub struct FileTransferParams {

@@ -97,11 +97,6 @@ impl Context {
 
     // -- error
 
-    /// Set context error
-    pub fn set_error(&mut self, err: String) {
-        self.error = Some(err);
-    }
-
     /// Get error message and remove it from the context
     pub fn error(&mut self) -> Option<String> {
         self.error.take()

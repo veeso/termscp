@@ -9,8 +9,8 @@ use std::time::Duration;
 
 use remotefs_ssh::SshKeyStorage as SshKeyStorageTrait;
 
-use crate::filetransfer::{FileTransferParams, FileTransferProtocol};
-use crate::host::{HostError, Localhost};
+use crate::filetransfer::{FileTransferParams, FileTransferProtocol, HostBridgeParams};
+use crate::host::HostError;
 use crate::system::bookmarks_client::BookmarksClient;
 use crate::system::config_client::ConfigClient;
 use crate::system::environment;
@@ -226,7 +226,7 @@ impl ActivityManager {
     fn run_filetransfer(&mut self) -> Option<NextActivity> {
         info!("Starting FileTransferActivity");
         // Get context
-        let mut ctx: Context = match self.context.take() {
+        let ctx: Context = match self.context.take() {
             Some(ctx) => ctx,
             None => {
                 error!("Failed to start FileTransferActivity: context is None");
@@ -234,7 +234,7 @@ impl ActivityManager {
             }
         };
         // If ft params is None, return None
-        let ft_params: &FileTransferParams = match ctx.ft_params() {
+        let remote_params: &FileTransferParams = match ctx.ft_params() {
             Some(ft_params) => ft_params,
             None => {
                 error!("Failed to start FileTransferActivity: file transfer params is None");
@@ -246,24 +246,17 @@ impl ActivityManager {
         // - if set in file transfer params, get it from there
         // - otherwise is env current dir
         // - otherwise is /
-        let local_wrkdir = ft_params
+        let local_wrkdir = remote_params
             .local_path
             .clone()
             .or(std::env::current_dir().ok())
             .unwrap_or(PathBuf::from("/"));
 
-        // Prepare activity
-        let host: Localhost = match Localhost::new(local_wrkdir) {
-            Ok(host) => host,
-            Err(err) => {
-                // Set error in context
-                error!("Failed to initialize localhost: {}", err);
-                ctx.set_error(format!("Could not initialize localhost: {err}"));
-                return None;
-            }
-        };
+        // TODO: get host params from prev activity
+        let host_bridge_params = HostBridgeParams::Localhost(local_wrkdir);
+
         let mut activity: FileTransferActivity =
-            FileTransferActivity::new(host, ft_params, self.ticks);
+            FileTransferActivity::new(host_bridge_params, remote_params, self.ticks);
         // Prepare result
         let result: Option<NextActivity>;
         // Create activity

@@ -31,8 +31,10 @@ use tuirealm::{Application, EventListenerCfg, NoUserEvent};
 use super::{Activity, Context, ExitReason};
 use crate::config::themes::Theme;
 use crate::explorer::{FileExplorer, FileSorting};
-use crate::filetransfer::{Builder, FileTransferParams};
-use crate::host::{HostBridge, Localhost};
+use crate::filetransfer::{
+    FileTransferParams, HostBridgeBuilder, HostBridgeParams, RemoteFsBuilder,
+};
+use crate::host::HostBridge;
 use crate::system::config_client::ConfigClient;
 use crate::system::watcher::FsWatcher;
 
@@ -235,7 +237,11 @@ pub struct FileTransferActivity {
 
 impl FileTransferActivity {
     /// Instantiates a new FileTransferActivity
-    pub fn new(host: Localhost, params: &FileTransferParams, ticks: Duration) -> Self {
+    pub fn new(
+        host_bridge_params: HostBridgeParams,
+        remote_params: &FileTransferParams,
+        ticks: Duration,
+    ) -> Self {
         // Get config client
         let config_client: ConfigClient = Self::init_config_client();
         Self {
@@ -247,8 +253,12 @@ impl FileTransferActivity {
                     .default_input_listener(ticks),
             ),
             redraw: true,
-            host_bridge: Box::new(host),
-            client: Builder::build(params.protocol, params.params.clone(), &config_client),
+            host_bridge: HostBridgeBuilder::build(host_bridge_params, &config_client),
+            client: RemoteFsBuilder::build(
+                remote_params.protocol,
+                remote_params.params.clone(),
+                &config_client,
+            ),
             browser: Browser::new(&config_client),
             log_records: VecDeque::with_capacity(256), // 256 events is enough I guess
             walkdir: WalkdirStates::default(),
