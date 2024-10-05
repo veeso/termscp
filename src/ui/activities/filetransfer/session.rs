@@ -3,8 +3,7 @@
 //! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
 
 // Locals
-use std::fs::File as StdFile;
-use std::io::{Read, Seek, Write};
+use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::time::Instant;
 
@@ -26,8 +25,6 @@ const BUFSIZE: usize = 65535;
 enum TransferErrorReason {
     #[error("File transfer aborted")]
     Abrupted,
-    #[error("Failed to seek file: {0}")]
-    CouldNotRewind(std::io::Error),
     #[error("I/O error on localhost: {0}")]
     LocalIoError(std::io::Error),
     #[error("Host error: {0}")]
@@ -153,7 +150,10 @@ impl FileTransferActivity {
     pub(super) fn reload_local_dir(&mut self) {
         self.mount_blocking_wait("Loading local directory...");
 
-        let wrkdir: PathBuf = self.host.pwd();
+        let Ok(wrkdir) = self.host.pwd() else {
+            error!("failed to get host working directory");
+            return;
+        };
 
         let res = self.local_scan(wrkdir.as_path());
 
@@ -460,13 +460,12 @@ impl FileTransferActivity {
         }
         // Upload file
         // Try to open local file
-        match self.host.open_file_read(local.path.as_path()) {
-            Ok(fhnd) => match self.client.create(remote, &metadata) {
-                Ok(rhnd) => {
-                    self.filetransfer_send_one_with_stream(local, remote, file_name, fhnd, rhnd)
-                }
+        match self.host.open_file(local.path.as_path()) {
+            Ok(local_read) => match self.client.create(remote, &metadata) {
+                Ok(rhnd) => self
+                    .filetransfer_send_one_with_stream(local, remote, file_name, local_read, rhnd),
                 Err(err) if err.kind == RemoteErrorType::UnsupportedFeature => {
-                    self.filetransfer_send_one_wno_stream(local, remote, file_name, fhnd)
+                    self.filetransfer_send_one_wno_stream(local, remote, file_name, local_read)
                 }
                 Err(err) => Err(TransferErrorReason::FileTransferError(err)),
             },
@@ -480,17 +479,18 @@ impl FileTransferActivity {
         local: &File,
         remote: &Path,
         file_name: String,
-        mut reader: StdFile,
+        mut reader: Box<dyn Read + Send>,
         mut writer: WriteStream,
     ) -> Result<(), TransferErrorReason> {
         // Write file
-        let file_size: usize = reader.seek(std::io::SeekFrom::End(0)).unwrap_or(0) as usize;
+        let file_size = self
+            .host
+            .stat(local.path())
+            .map_err(TransferErrorReason::HostError)
+            .map(|x| x.metadata().size as usize)?;
         // Init transfer
         self.transfer.partial.init(file_size);
-        // rewind
-        if let Err(err) = reader.rewind() {
-            return Err(TransferErrorReason::CouldNotRewind(err));
-        }
+
         // Write remote file
         let mut total_bytes_written: usize = 0;
         let mut last_progress_val: f64 = 0.0;
@@ -583,7 +583,7 @@ impl FileTransferActivity {
         local: &File,
         remote: &Path,
         file_name: String,
-        mut reader: StdFile,
+        reader: Box<dyn Read + Send>,
     ) -> Result<(), TransferErrorReason> {
         // Sync file size and attributes before transfer
         let metadata = self
@@ -592,18 +592,19 @@ impl FileTransferActivity {
             .map_err(TransferErrorReason::HostError)
             .map(|x| x.metadata().clone())?;
         // Write file
-        let file_size: usize = reader.seek(std::io::SeekFrom::End(0)).unwrap_or(0) as usize;
+        let file_size = self
+            .host
+            .stat(local.path())
+            .map_err(TransferErrorReason::HostError)
+            .map(|x| x.metadata().size as usize)?;
         // Init transfer
         self.transfer.partial.init(file_size);
-        // rewind
-        if let Err(err) = reader.rewind() {
-            return Err(TransferErrorReason::CouldNotRewind(err));
-        }
+
         // Draw before
         self.update_progress_bar(format!("Uploading \"{file_name}\"…"));
         self.view();
         // Send file
-        if let Err(err) = self.client.create_file(remote, &metadata, Box::new(reader)) {
+        if let Err(err) = self.client.create_file(remote, &metadata, reader) {
             return Err(TransferErrorReason::FileTransferError(err));
         }
         // set stat
@@ -889,7 +890,7 @@ impl FileTransferActivity {
         }
 
         // Try to open local file
-        match self.host.open_file_write(local) {
+        match self.host.create_file(local) {
             Ok(local_file) => {
                 // Download file from remote
                 match self.client.open(remote.path.as_path()) {
@@ -913,7 +914,7 @@ impl FileTransferActivity {
         remote: &File,
         file_name: String,
         mut reader: ReadStream,
-        mut writer: StdFile,
+        mut writer: Box<dyn Write + Send>,
     ) -> Result<(), TransferErrorReason> {
         let mut total_bytes_written: usize = 0;
         // Init transfer
@@ -1020,7 +1021,7 @@ impl FileTransferActivity {
         // Open local file
         let reader = self
             .host
-            .open_file_write(local)
+            .create_file(local)
             .map_err(TransferErrorReason::HostError)
             .map(Box::new)?;
         // Init transfer
@@ -1207,7 +1208,7 @@ impl FileTransferActivity {
     // file changed
 
     /// Check whether provided file has changed on local disk, compared to remote file
-    fn has_local_file_changed(&self, local: &Path, remote: &File) -> bool {
+    fn has_local_file_changed(&mut self, local: &Path, remote: &File) -> bool {
         // check if files are equal (in case, don't transfer)
         if let Ok(local_file) = self.host.stat(local) {
             local_file.metadata().modified != remote.metadata().modified
@@ -1231,10 +1232,10 @@ impl FileTransferActivity {
     // -- file exist
 
     pub(crate) fn local_file_exists(&mut self, p: &Path) -> bool {
-        self.host.file_exists(p)
+        self.host.exists(p).unwrap_or_default()
     }
 
     pub(crate) fn remote_file_exists(&mut self, p: &Path) -> bool {
-        self.client.stat(p).is_ok()
+        self.client.exists(p).unwrap_or_default()
     }
 }

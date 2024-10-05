@@ -18,7 +18,12 @@ impl FileTransferActivity {
     pub(crate) fn action_walkdir_local(&mut self) -> Result<Vec<File>, WalkdirError> {
         let mut acc = Vec::with_capacity(32_768);
 
-        self.walkdir(&mut acc, &self.host.pwd(), |activity, path| {
+        let pwd = self
+            .host
+            .pwd()
+            .map_err(|e| WalkdirError::Error(e.to_string()))?;
+
+        self.walkdir(&mut acc, &pwd, |activity, path| {
             activity.host.list_dir(path).map_err(|e| e.to_string())
         })?;
 

@@ -32,7 +32,7 @@ use super::{Activity, Context, ExitReason};
 use crate::config::themes::Theme;
 use crate::explorer::{FileExplorer, FileSorting};
 use crate::filetransfer::{Builder, FileTransferParams};
-use crate::host::Localhost;
+use crate::host::{HostBridge, Localhost};
 use crate::system::config_client::ConfigClient;
 use crate::system::watcher::FsWatcher;
 
@@ -214,7 +214,7 @@ pub struct FileTransferActivity {
     /// Whether should redraw UI
     redraw: bool,
     /// Localhost bridge
-    host: Localhost,
+    host: Box<dyn HostBridge>,
     /// Remote host client
     client: Box<dyn RemoteFs>,
     /// Browser
@@ -247,7 +247,7 @@ impl FileTransferActivity {
                     .default_input_listener(ticks),
             ),
             redraw: true,
-            host,
+            host: Box::new(host),
             client: Builder::build(params.protocol, params.params.clone(), &config_client),
             browser: Browser::new(&config_client),
             log_records: VecDeque::with_capacity(256), // 256 events is enough I guess

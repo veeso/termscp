@@ -23,7 +23,7 @@ impl FileTransferActivity {
         }
         // Create file
         let file_path: PathBuf = PathBuf::from(input.as_str());
-        if let Err(err) = self.host.open_file_write(file_path.as_path()) {
+        if let Err(err) = self.host.create_file(file_path.as_path()) {
             self.log_and_alert(
                 LogLevel::Error,
                 format!("Could not create file \"{}\": {}", file_path.display(), err),

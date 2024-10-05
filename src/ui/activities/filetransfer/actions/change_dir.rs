@@ -129,7 +129,17 @@ impl FileTransferActivity {
                     return;
                 }
             },
-            FileExplorerTab::Remote => self.host.file_exists(path.as_path()),
+            FileExplorerTab::Remote => match self.host.exists(path.as_path()) {
+                Ok(e) => e,
+                Err(err) => {
+                    error!(
+                        "Failed to check whether {} exists on host: {}",
+                        path.display(),
+                        err
+                    );
+                    return;
+                }
+            },
             _ => return,
         };
         let name = path
