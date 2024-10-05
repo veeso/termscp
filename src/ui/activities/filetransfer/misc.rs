@@ -1,8 +1,6 @@
-// Locals
 use std::env;
 use std::path::{Path, PathBuf};
 
-// Ext
 use bytesize::ByteSize;
 use tuirealm::props::{
     Alignment, AttrValue, Attribute, Color, PropPayload, PropValue, TableBuilder, TextSpan,
@@ -95,9 +93,9 @@ impl FileTransferActivity {
         env::set_var("EDITOR", self.config().get_text_editor());
     }
 
-    /// Convert a path to absolute according to local explorer
-    pub(super) fn local_to_abs_path(&self, path: &Path) -> PathBuf {
-        path::absolutize(self.local().wrkdir.as_path(), path)
+    /// Convert a path to absolute according to host explorer
+    pub(super) fn host_bridge_to_abs_path(&self, path: &Path) -> PathBuf {
+        path::absolutize(self.host_bridge().wrkdir.as_path(), path)
     }
 
     /// Convert a path to absolute according to remote explorer
@@ -217,9 +215,9 @@ impl FileTransferActivity {
         }
     }
 
-    /// Update local file list
-    pub(super) fn update_local_filelist(&mut self) {
-        self.reload_local_dir();
+    /// Update host bridge file list
+    pub(super) fn update_host_bridge_filelist(&mut self) {
+        self.reload_host_bridge_dir();
         // Get width
         let width = self
             .context_mut()
@@ -239,18 +237,22 @@ impl FileTransferActivity {
         let hostname: String = format!(
             "{}:{} ",
             hostname,
-            fmt_path_elide_ex(self.local().wrkdir.as_path(), width, hostname.len() + 3) // 3 because of '/…/'
+            fmt_path_elide_ex(
+                self.host_bridge().wrkdir.as_path(),
+                width,
+                hostname.len() + 3
+            ) // 3 because of '/…/'
         );
         let files: Vec<Vec<TextSpan>> = self
-            .local()
+            .host_bridge()
             .iter_files()
-            .map(|x| vec![TextSpan::from(self.local().fmt_file(x))])
+            .map(|x| vec![TextSpan::from(self.host_bridge().fmt_file(x))])
             .collect();
         // Update content and title
         assert!(self
             .app
             .attr(
-                &Id::ExplorerLocal,
+                &Id::ExplorerHostBridge,
                 Attribute::Content,
                 AttrValue::Table(files)
             )
@@ -258,7 +260,7 @@ impl FileTransferActivity {
         assert!(self
             .app
             .attr(
-                &Id::ExplorerLocal,
+                &Id::ExplorerHostBridge,
                 Attribute::Title,
                 AttrValue::Title((hostname, Alignment::Left))
             )
@@ -409,17 +411,19 @@ impl FileTransferActivity {
         self.browser.del_found();
         // Restore tab
         let new_tab = match self.browser.tab() {
-            FileExplorerTab::FindLocal => FileExplorerTab::Local,
+            FileExplorerTab::FindHostBridge => FileExplorerTab::HostBridge,
             FileExplorerTab::FindRemote => FileExplorerTab::Remote,
-            _ => FileExplorerTab::Local,
+            _ => FileExplorerTab::HostBridge,
         };
         // Give focus to new tab
         match new_tab {
-            FileExplorerTab::Local => assert!(self.app.active(&Id::ExplorerLocal).is_ok()),
+            FileExplorerTab::HostBridge => {
+                assert!(self.app.active(&Id::ExplorerHostBridge).is_ok())
+            }
             FileExplorerTab::Remote => {
                 assert!(self.app.active(&Id::ExplorerRemote).is_ok())
             }
-            FileExplorerTab::FindLocal | FileExplorerTab::FindRemote => {
+            FileExplorerTab::FindHostBridge | FileExplorerTab::FindRemote => {
                 assert!(self.app.active(&Id::ExplorerFind).is_ok())
             }
         }
@@ -445,15 +449,21 @@ impl FileTransferActivity {
 
     pub(super) fn update_browser_file_list(&mut self) {
         match self.browser.tab() {
-            FileExplorerTab::Local | FileExplorerTab::FindLocal => self.update_local_filelist(),
+            FileExplorerTab::HostBridge | FileExplorerTab::FindHostBridge => {
+                self.update_host_bridge_filelist()
+            }
             FileExplorerTab::Remote | FileExplorerTab::FindRemote => self.update_remote_filelist(),
         }
     }
 
     pub(super) fn update_browser_file_list_swapped(&mut self) {
         match self.browser.tab() {
-            FileExplorerTab::Local | FileExplorerTab::FindLocal => self.update_remote_filelist(),
-            FileExplorerTab::Remote | FileExplorerTab::FindRemote => self.update_local_filelist(),
+            FileExplorerTab::HostBridge | FileExplorerTab::FindHostBridge => {
+                self.update_remote_filelist()
+            }
+            FileExplorerTab::Remote | FileExplorerTab::FindRemote => {
+                self.update_host_bridge_filelist()
+            }
         }
     }
 }

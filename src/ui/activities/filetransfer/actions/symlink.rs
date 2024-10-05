@@ -13,7 +13,7 @@ impl FileTransferActivity {
     pub(crate) fn action_local_symlink(&mut self, name: String) {
         if let SelectedFile::One(entry) = self.get_local_selected_entries() {
             match self
-                .host
+                .host_bridge
                 .symlink(PathBuf::from(name.as_str()).as_path(), entry.path())
             {
                 Ok(_) => {

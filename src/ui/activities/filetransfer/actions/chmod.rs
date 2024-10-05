@@ -8,7 +8,7 @@ impl FileTransferActivity {
         let files = self.get_local_selected_entries().get_files();
 
         for file in files {
-            if let Err(err) = self.host.chmod(file.path(), mode) {
+            if let Err(err) = self.host_bridge.chmod(file.path(), mode) {
                 self.log_and_alert(
                     LogLevel::Error,
                     format!(
@@ -56,7 +56,7 @@ impl FileTransferActivity {
         let files = self.get_found_selected_entries().get_files();
 
         for file in files {
-            if let Err(err) = self.host.chmod(file.path(), mode) {
+            if let Err(err) = self.host_bridge.chmod(file.path(), mode) {
                 self.log_and_alert(
                     LogLevel::Error,
                     format!(

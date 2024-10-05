@@ -47,7 +47,7 @@ enum Id {
     ErrorPopup,
     ExecPopup,
     ExplorerFind,
-    ExplorerLocal,
+    ExplorerHostBridge,
     ExplorerRemote,
     FatalPopup,
     FileInfoPopup,
@@ -68,7 +68,7 @@ enum Id {
     ReplacingFilesListPopup,
     SaveAsPopup,
     SortingPopup,
-    StatusBarLocal,
+    StatusBarHostBridge,
     StatusBarRemote,
     SymlinkPopup,
     SyncBrowsingMkdirPopup,
@@ -213,8 +213,8 @@ pub struct FileTransferActivity {
     app: Application<Id, Msg, NoUserEvent>,
     /// Whether should redraw UI
     redraw: bool,
-    /// Localhost bridge
-    host: Box<dyn HostBridge>,
+    /// Host bridge
+    host_bridge: Box<dyn HostBridge>,
     /// Remote host client
     client: Box<dyn RemoteFs>,
     /// Browser
@@ -247,7 +247,7 @@ impl FileTransferActivity {
                     .default_input_listener(ticks),
             ),
             redraw: true,
-            host: Box::new(host),
+            host_bridge: Box::new(host),
             client: Builder::build(params.protocol, params.params.clone(), &config_client),
             browser: Browser::new(&config_client),
             log_records: VecDeque::with_capacity(256), // 256 events is enough I guess
@@ -268,12 +268,12 @@ impl FileTransferActivity {
         }
     }
 
-    fn local(&self) -> &FileExplorer {
-        self.browser.local()
+    fn host_bridge(&self) -> &FileExplorer {
+        self.browser.host_bridge()
     }
 
-    fn local_mut(&mut self) -> &mut FileExplorer {
-        self.browser.local_mut()
+    fn host_bridge_mut(&mut self) -> &mut FileExplorer {
+        self.browser.host_bridge_mut()
     }
 
     fn remote(&self) -> &FileExplorer {
@@ -361,7 +361,7 @@ impl Activity for FileTransferActivity {
             error!("Failed to enter raw mode: {}", err);
         }
         // Get files at current pwd
-        self.reload_local_dir();
+        self.reload_host_bridge_dir();
         debug!("Read working directory");
         // Configure text editor
         self.setup_text_editor();

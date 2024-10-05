@@ -138,7 +138,7 @@ impl FileTransferActivity {
             return Err(format!("Could not open file {file_name}: {err}"));
         }
         // Get current file modification time
-        let prev_mtime: SystemTime = match self.host.stat(tmpfile.as_path()) {
+        let prev_mtime: SystemTime = match self.host_bridge.stat(tmpfile.as_path()) {
             Ok(e) => e.metadata().modified.unwrap_or(std::time::UNIX_EPOCH),
             Err(err) => {
                 return Err(format!(
@@ -151,7 +151,7 @@ impl FileTransferActivity {
         // Edit file
         self.edit_local_file(tmpfile.as_path())?;
         // Get local fs entry
-        let tmpfile_entry: File = match self.host.stat(tmpfile.as_path()) {
+        let tmpfile_entry: File = match self.host_bridge.stat(tmpfile.as_path()) {
             Ok(e) => e,
             Err(err) => {
                 return Err(format!(
@@ -177,7 +177,7 @@ impl FileTransferActivity {
                     ),
                 );
                 // Get local fs entry
-                let tmpfile_entry = match self.host.stat(tmpfile.as_path()) {
+                let tmpfile_entry = match self.host_bridge.stat(tmpfile.as_path()) {
                     Ok(e) => e,
                     Err(err) => {
                         return Err(format!(

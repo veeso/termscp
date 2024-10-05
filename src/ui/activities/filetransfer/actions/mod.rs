@@ -86,12 +86,12 @@ impl From<Vec<&File>> for SelectedFile {
 impl FileTransferActivity {
     /// Get local file entry
     pub(crate) fn get_local_selected_entries(&self) -> SelectedFile {
-        match self.get_selected_index(&Id::ExplorerLocal) {
-            SelectedFileIndex::One(idx) => SelectedFile::from(self.local().get(idx)),
+        match self.get_selected_index(&Id::ExplorerHostBridge) {
+            SelectedFileIndex::One(idx) => SelectedFile::from(self.host_bridge().get(idx)),
             SelectedFileIndex::Many(files) => {
                 let files: Vec<&File> = files
                     .iter()
-                    .filter_map(|x| self.local().get(*x)) // Usize to Option<File>
+                    .filter_map(|x| self.host_bridge().get(*x)) // Usize to Option<File>
                     .collect();
                 SelectedFile::from(files)
             }

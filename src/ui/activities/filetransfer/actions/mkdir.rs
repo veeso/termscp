@@ -11,7 +11,10 @@ use super::{FileTransferActivity, LogLevel};
 
 impl FileTransferActivity {
     pub(crate) fn action_local_mkdir(&mut self, input: String) {
-        match self.host.mkdir(PathBuf::from(input.as_str()).as_path()) {
+        match self
+            .host_bridge
+            .mkdir(PathBuf::from(input.as_str()).as_path())
+        {
             Ok(_) => {
                 // Reload files
                 self.log(LogLevel::Info, format!("Created directory \"{input}\""));

@@ -14,7 +14,7 @@ impl FileTransferActivity {
     pub(crate) fn action_local_newfile(&mut self, input: String) {
         // Check if file exists
         let mut file_exists: bool = false;
-        for file in self.local().iter_files_all() {
+        for file in self.host_bridge().iter_files_all() {
             if input == file.name() {
                 file_exists = true;
             }
@@ -27,7 +27,7 @@ impl FileTransferActivity {
         // Create file
         let file_path: PathBuf = PathBuf::from(input.as_str());
         let writer = match self
-            .host
+            .host_bridge
             .create_file(file_path.as_path(), &Metadata::default())
         {
             Ok(f) => f,
@@ -40,7 +40,7 @@ impl FileTransferActivity {
             }
         };
         // finalize write
-        if let Err(err) = self.host.finalize_write(writer) {
+        if let Err(err) = self.host_bridge.finalize_write(writer) {
             self.log_and_alert(
                 LogLevel::Error,
                 format!("Could not write file \"{}\": {}", file_path.display(), err),
@@ -75,7 +75,7 @@ impl FileTransferActivity {
             }
             Ok(tfile) => {
                 // Stat tempfile
-                let local_file: File = match self.host.stat(tfile.path()) {
+                let local_file: File = match self.host_bridge.stat(tfile.path()) {
                     Err(err) => {
                         self.log_and_alert(
                             LogLevel::Error,

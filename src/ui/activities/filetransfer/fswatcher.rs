@@ -30,10 +30,10 @@ impl FileTransferActivity {
             Ok(Some(FsChange::Update(update))) => {
                 debug!(
                     "fs watcher reported an `Update` from {} to {}",
-                    update.local().display(),
+                    update.host_bridge().display(),
                     update.remote().display()
                 );
-                self.upload_watched_file(update.local(), update.remote());
+                self.upload_watched_file(update.host_bridge(), update.remote());
             }
             Err(err) => {
                 self.log(
@@ -87,9 +87,9 @@ impl FileTransferActivity {
         }
     }
 
-    fn upload_watched_file(&mut self, local: &Path, remote: &Path) {
-        // stat local file
-        let entry = match self.host.stat(local) {
+    fn upload_watched_file(&mut self, host: &Path, remote: &Path) {
+        // stat host file
+        let entry = match self.host_bridge.stat(host) {
             Ok(e) => e,
             Err(err) => {
                 self.log(
@@ -105,8 +105,8 @@ impl FileTransferActivity {
         };
         // send
         trace!(
-            "syncing local file {} with remote {}",
-            local.display(),
+            "syncing host file {} with remote {}",
+            host.display(),
             remote.display()
         );
         let remote_path = remote.parent().unwrap_or_else(|| Path::new("/"));
@@ -116,7 +116,7 @@ impl FileTransferActivity {
                     LogLevel::Info,
                     format!(
                         "synched watched file {} with {}",
-                        local.display(),
+                        host.display(),
                         remote.display()
                     ),
                 );
