@@ -6,6 +6,8 @@
 use std::fs::File as StdFile;
 use std::path::PathBuf;
 
+use remotefs::fs::Metadata;
+
 use super::{File, FileTransferActivity, LogLevel};
 
 impl FileTransferActivity {
@@ -21,19 +23,35 @@ impl FileTransferActivity {
             self.log_and_alert(LogLevel::Warn, format!("File \"{input}\" already exists",));
             return;
         }
+
         // Create file
         let file_path: PathBuf = PathBuf::from(input.as_str());
-        if let Err(err) = self.host.create_file(file_path.as_path()) {
+        let writer = match self
+            .host
+            .create_file(file_path.as_path(), &Metadata::default())
+        {
+            Ok(f) => f,
+            Err(err) => {
+                self.log_and_alert(
+                    LogLevel::Error,
+                    format!("Could not create file \"{}\": {}", file_path.display(), err),
+                );
+                return;
+            }
+        };
+        // finalize write
+        if let Err(err) = self.host.finalize_write(writer) {
             self.log_and_alert(
                 LogLevel::Error,
-                format!("Could not create file \"{}\": {}", file_path.display(), err),
+                format!("Could not write file \"{}\": {}", file_path.display(), err),
             );
-        } else {
-            self.log(
-                LogLevel::Info,
-                format!("Created file \"{}\"", file_path.display()),
-            );
+            return;
         }
+
+        self.log(
+            LogLevel::Info,
+            format!("Created file \"{}\"", file_path.display()),
+        );
     }
 
     pub(crate) fn action_remote_newfile(&mut self, input: String) {

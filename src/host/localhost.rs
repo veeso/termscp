@@ -491,7 +491,11 @@ impl HostBridge for Localhost {
         }
     }
 
-    fn create_file(&mut self, file: &Path) -> HostResult<Box<dyn Write + Send>> {
+    fn create_file(
+        &mut self,
+        file: &Path,
+        _metadata: &Metadata,
+    ) -> HostResult<Box<dyn Write + Send>> {
         let file: PathBuf = self.to_path(file);
         info!("Opening file {} for write", file.display());
         match OpenOptions::new()
@@ -517,6 +521,11 @@ impl HostBridge for Localhost {
                 }
             }
         }
+    }
+
+    fn finalize_write(&mut self, _writer: Box<dyn Write + Send>) -> HostResult<()> {
+        // no-op
+        Ok(())
     }
 }
 
@@ -651,7 +660,7 @@ mod tests {
         let mut host: Localhost = Localhost::new(PathBuf::from("/dev")).ok().unwrap();
         // Create temp file
         let file: tempfile::NamedTempFile = create_sample_file();
-        assert!(host.create_file(file.path()).is_ok());
+        assert!(host.create_file(file.path(), &Metadata::default()).is_ok());
     }
 
     #[test]
@@ -662,7 +671,7 @@ mod tests {
         //let mut perms = fs::metadata(file.path())?.permissions();
         fs::set_permissions(file.path(), PermissionsExt::from_mode(0o444)).unwrap();
         //fs::set_permissions(file.path(), perms)?;
-        assert!(host.create_file(file.path()).is_err());
+        assert!(host.create_file(file.path(), &Metadata::default()).is_err());
     }
 
     #[cfg(unix)]

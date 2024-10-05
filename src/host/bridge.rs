@@ -61,5 +61,12 @@ pub trait HostBridge {
     fn open_file(&mut self, file: &Path) -> HostResult<Box<dyn Read + Send>>;
 
     /// Open file for writing
-    fn create_file(&mut self, file: &Path) -> HostResult<Box<dyn Write + Send>>;
+    fn create_file(
+        &mut self,
+        file: &Path,
+        metadata: &Metadata,
+    ) -> HostResult<Box<dyn Write + Send>>;
+
+    /// Finalize write operation
+    fn finalize_write(&mut self, writer: Box<dyn Write + Send>) -> HostResult<()>;
 }

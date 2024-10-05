@@ -890,13 +890,12 @@ impl FileTransferActivity {
         }
 
         // Try to open local file
-        match self.host.create_file(local) {
-            Ok(local_file) => {
+        match self.host.create_file(local, &remote.metadata) {
+            Ok(writer) => {
                 // Download file from remote
                 match self.client.open(remote.path.as_path()) {
-                    Ok(rhnd) => self.filetransfer_recv_one_with_stream(
-                        local, remote, file_name, rhnd, local_file,
-                    ),
+                    Ok(rhnd) => self
+                        .filetransfer_recv_one_with_stream(local, remote, file_name, rhnd, writer),
                     Err(err) if err.kind == RemoteErrorType::UnsupportedFeature => {
                         self.filetransfer_recv_one_wno_stream(local, remote, file_name)
                     }
@@ -985,6 +984,12 @@ impl FileTransferActivity {
         if self.transfer.aborted() {
             return Err(TransferErrorReason::Abrupted);
         }
+
+        // finalize write
+        self.host
+            .finalize_write(writer)
+            .map_err(TransferErrorReason::HostError)?;
+
         // Apply file mode to file
         if let Err(err) = self.host.setstat(local, remote.metadata()) {
             self.log(
@@ -1008,6 +1013,7 @@ impl FileTransferActivity {
                 ByteSize(self.transfer.partial.calc_bytes_per_second()),
             ),
         );
+
         Ok(())
     }
 
@@ -1021,7 +1027,7 @@ impl FileTransferActivity {
         // Open local file
         let reader = self
             .host
-            .create_file(local)
+            .create_file(local, &remote.metadata)
             .map_err(TransferErrorReason::HostError)
             .map(Box::new)?;
         // Init transfer

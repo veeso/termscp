@@ -4,6 +4,7 @@
 
 mod bridge;
 mod localhost;
+mod remote_bridged;
 
 use std::path::{Path, PathBuf};
 
@@ -46,6 +47,12 @@ pub struct HostError {
     pub error: HostErrorType,
     ioerr: Option<std::io::Error>,
     path: Option<PathBuf>,
+}
+
+impl From<remotefs::RemoteError> for HostError {
+    fn from(value: remotefs::RemoteError) -> Self {
+        HostError::from(HostErrorType::RemoteFs(value))
+    }
 }
 
 impl HostError {
