@@ -37,11 +37,11 @@
 
 termscp può essere lanciato con questi argomenti:
 
-`termscp [options]... [protocol://user@address:port:wrkdir] [local-wrkdir]`
+`termscp [options]... [protocol://user@address:port:wrkdir] [protocol://user@address:port:wrkdir] [local-wrkdir]`
 
 O
 
-`termscp [options]... -b [bookmark-name] [local-wrkdir]`
+`termscp [options]... -b [bookmark-name] -b [bookmark-name] [local-wrkdir]`
 
 - `-P, --password <password>` Se viene fornito l'argomento indirizzo, questa sarà la password utilizzata per autenticarsi
 - `-b, --address-as-bookmark` risolve l'argomento indirizzo come nome di un segnalibro

@@ -9,7 +9,7 @@ use tuirealm::{PollStrategy, Update};
 
 use super::browser::FileExplorerTab;
 use super::{ConfigClient, FileTransferActivity, Id, LogLevel, LogRecord, TransferPayload};
-use crate::filetransfer::ProtocolParams;
+use crate::filetransfer::{HostBridgeParams, ProtocolParams};
 use crate::system::environment;
 use crate::system::notifications::Notification;
 use crate::utils::fmt::{fmt_millis, fmt_path_elide_ex};
@@ -105,8 +105,28 @@ impl FileTransferActivity {
 
     /// Get remote hostname
     pub(super) fn get_remote_hostname(&self) -> String {
-        let ft_params = self.context().ft_params().unwrap();
-        match &ft_params.params {
+        let ft_params = self.context().remote_params().unwrap();
+        self.get_hostname(&ft_params.params)
+    }
+
+    pub(super) fn get_hostbridge_hostname(&self) -> String {
+        let host_bridge_params = self.context().host_bridge_params().unwrap();
+        match host_bridge_params {
+            HostBridgeParams::Localhost(_) => {
+                let hostname = match hostname::get() {
+                    Ok(h) => h,
+                    Err(_) => return String::from("localhost"),
+                };
+                let hostname: String = hostname.as_os_str().to_string_lossy().to_string();
+                let tokens: Vec<&str> = hostname.split('.').collect();
+                String::from(*tokens.first().unwrap_or(&"localhost"))
+            }
+            HostBridgeParams::Remote(_, params) => self.get_hostname(params),
+        }
+    }
+
+    fn get_hostname(&self, params: &ProtocolParams) -> String {
+        match params {
             ProtocolParams::Generic(params) => params.address.clone(),
             ProtocolParams::AwsS3(params) => params.bucket_name.clone(),
             ProtocolParams::Kube(params) => {
@@ -226,17 +246,10 @@ impl FileTransferActivity {
             .size()
             .map(|x| (x.width / 2) - 2)
             .unwrap_or(0) as usize;
-        let hostname: String = match hostname::get() {
-            Ok(h) => {
-                let hostname: String = h.as_os_str().to_string_lossy().to_string();
-                let tokens: Vec<&str> = hostname.split('.').collect();
-                String::from(*tokens.first().unwrap_or(&"localhost"))
-            }
-            Err(_) => String::from("localhost"),
-        };
+        let hostname = self.get_hostbridge_hostname();
+
         let hostname: String = format!(
-            "{}:{} ",
-            hostname,
+            "{hostname}:{} ",
             fmt_path_elide_ex(
                 self.host_bridge().wrkdir.as_path(),
                 width,

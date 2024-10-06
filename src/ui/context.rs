@@ -6,14 +6,15 @@
 use tuirealm::terminal::TerminalBridge;
 
 use super::store::Store;
-use crate::filetransfer::FileTransferParams;
+use crate::filetransfer::{FileTransferParams, HostBridgeParams};
 use crate::system::bookmarks_client::BookmarksClient;
 use crate::system::config_client::ConfigClient;
 use crate::system::theme_provider::ThemeProvider;
 
 /// Context holds data structures shared by the activities
 pub struct Context {
-    ft_params: Option<FileTransferParams>,
+    host_bridge_params: Option<HostBridgeParams>,
+    remote_params: Option<FileTransferParams>,
     bookmarks_client: Option<BookmarksClient>,
     config_client: ConfigClient,
     pub(crate) store: Store,
@@ -33,7 +34,8 @@ impl Context {
         let mut ctx = Context {
             bookmarks_client,
             config_client,
-            ft_params: None,
+            host_bridge_params: None,
+            remote_params: None,
             store: Store::init(),
             terminal: TerminalBridge::new().expect("Could not initialize terminal"),
             theme_provider,
@@ -49,8 +51,12 @@ impl Context {
 
     // -- getters
 
-    pub fn ft_params(&self) -> Option<&FileTransferParams> {
-        self.ft_params.as_ref()
+    pub fn remote_params(&self) -> Option<&FileTransferParams> {
+        self.remote_params.as_ref()
+    }
+
+    pub fn host_bridge_params(&self) -> Option<&HostBridgeParams> {
+        self.host_bridge_params.as_ref()
     }
 
     pub fn bookmarks_client(&self) -> Option<&BookmarksClient> {
@@ -91,8 +97,12 @@ impl Context {
 
     // -- setter
 
-    pub fn set_ftparams(&mut self, params: FileTransferParams) {
-        self.ft_params = Some(params);
+    pub fn set_remote_params(&mut self, params: FileTransferParams) {
+        self.remote_params = Some(params);
+    }
+
+    pub fn set_host_bridge_params(&mut self, params: HostBridgeParams) {
+        self.host_bridge_params = Some(params);
     }
 
     // -- error

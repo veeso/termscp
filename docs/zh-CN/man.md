@@ -37,11 +37,11 @@
 
 termscp启动时可以使用以下选项:
 
-`termscp [options]... [protocol://user@address:port:wrkdir] [local-wrkdir]`
+`termscp [options]... [protocol://user@address:port:wrkdir] [protocol://user@address:port:wrkdir] [local-wrkdir]`
 
 或作为
 
-`termscp [options]... -b [bookmark-name] [local-wrkdir]`
+`termscp [options]... -b [bookmark-name] -b [bookmark-name] [local-wrkdir]`
 
 - `-P, --password <password>` 登陆密码
 - `-b, --address-as-bookmark` 将地址参数解析为书签名称

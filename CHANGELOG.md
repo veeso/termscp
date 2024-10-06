@@ -42,6 +42,10 @@
 
 Released on
 
+- [**Multi Host support**](https://github.com/veeso/termscp/issues/285):
+  - Now it is possible to work on two different remotes `remote A -> remote B` instead of just `localhost -> remote`
+  - Cli arguments now accept an additional `remote-args` for the left panel.
+  - For more details read this issue <https://github.com/veeso/termscp/issues/285>.
 - [Issue 290](https://github.com/veeso/termscp/issues/290): Password prompt was broken
 
 ## 0.15.0

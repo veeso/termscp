@@ -275,7 +275,7 @@ impl Activity for AuthActivity {
     fn on_create(&mut self, mut context: Context) {
         debug!("Initializing activity");
         // Initialize file transfer params
-        context.set_ftparams(FileTransferParams::default());
+        context.set_remote_params(FileTransferParams::default());
         // Set context
         self.context = Some(context);
         // Clear terminal

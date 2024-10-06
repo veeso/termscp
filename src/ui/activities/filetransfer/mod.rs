@@ -231,8 +231,10 @@ pub struct FileTransferActivity {
     cache: Option<TempDir>,
     /// Fs watcher
     fswatcher: Option<FsWatcher>,
-    /// connected once
-    connected: bool,
+    /// host bridge connected
+    host_bridge_connected: bool,
+    /// remote connected once
+    remote_connected: bool,
 }
 
 impl FileTransferActivity {
@@ -244,6 +246,9 @@ impl FileTransferActivity {
     ) -> Self {
         // Get config client
         let config_client: ConfigClient = Self::init_config_client();
+        // init host bridge
+        let host_bridge = HostBridgeBuilder::build(host_bridge_params, &config_client);
+        let host_bridge_connected = host_bridge.is_localhost();
         Self {
             exit_reason: None,
             context: None,
@@ -253,7 +258,7 @@ impl FileTransferActivity {
                     .default_input_listener(ticks),
             ),
             redraw: true,
-            host_bridge: HostBridgeBuilder::build(host_bridge_params, &config_client),
+            host_bridge,
             client: RemoteFsBuilder::build(
                 remote_params.protocol,
                 remote_params.params.clone(),
@@ -274,7 +279,8 @@ impl FileTransferActivity {
                     None
                 }
             },
-            connected: false,
+            host_bridge_connected,
+            remote_connected: false,
         }
     }
 
@@ -371,7 +377,10 @@ impl Activity for FileTransferActivity {
             error!("Failed to enter raw mode: {}", err);
         }
         // Get files at current pwd
-        self.reload_host_bridge_dir();
+        if self.host_bridge.is_localhost() {
+            debug!("Reloading host bridge directory");
+            self.reload_host_bridge_dir();
+        }
         debug!("Read working directory");
         // Configure text editor
         self.setup_text_editor();
@@ -394,15 +403,34 @@ impl Activity for FileTransferActivity {
         if self.context.is_none() {
             return;
         }
-        // Check if connected (popup must be None, otherwise would try reconnecting in loop in case of error)
-        if (!self.client.is_connected() || !self.connected) && !self.app.mounted(&Id::FatalPopup) {
-            let ftparams = self.context().ft_params().unwrap();
+        // Check if connected to host bridge (popup must be None, otherwise would try reconnecting in loop in case of error)
+        if (!self.host_bridge.is_connected() || !self.host_bridge_connected)
+            && !self.app.mounted(&Id::FatalPopup)
+            && !self.host_bridge.is_localhost()
+        {
+            let host_bridge_params = self.context().host_bridge_params().unwrap();
+            let ft_params = host_bridge_params.unwrap_protocol_params();
+            // print params
+            let msg: String = Self::get_connection_msg(ft_params);
+            // Set init state to connecting popup
+            self.mount_blocking_wait(msg.as_str());
+            // Connect to remote
+            self.connect_to_host_bridge();
+            // Redraw
+            self.redraw = true;
+        }
+        // Check if connected to remote (popup must be None, otherwise would try reconnecting in loop in case of error)
+        if (!self.client.is_connected() || !self.remote_connected)
+            && !self.app.mounted(&Id::FatalPopup)
+            && self.host_bridge.is_connected()
+        {
+            let ftparams = self.context().remote_params().unwrap();
             // print params
             let msg: String = Self::get_connection_msg(&ftparams.params);
             // Set init state to connecting popup
             self.mount_blocking_wait(msg.as_str());
             // Connect to remote
-            self.connect();
+            self.connect_to_remote();
             // Redraw
             self.redraw = true;
         }
@@ -441,6 +469,10 @@ impl Activity for FileTransferActivity {
         // Disconnect client
         if self.client.is_connected() {
             let _ = self.client.disconnect();
+        }
+        // disconnect host bridge
+        if self.host_bridge.is_connected() {
+            let _ = self.host_bridge.disconnect();
         }
         self.context.take()
     }

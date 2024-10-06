@@ -7,7 +7,7 @@ use tuirealm::terminal::TerminalBridge;
 /// Read a secret from tty with customisable prompt
 pub fn read_secret_from_tty(
     terminal_bridge: &mut TerminalBridge,
-    prompt: &str,
+    prompt: impl ToString,
 ) -> std::io::Result<Option<String>> {
     let _ = terminal_bridge.disable_raw_mode();
     let _ = terminal_bridge.leave_alternate_screen();

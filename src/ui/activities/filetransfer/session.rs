@@ -45,15 +45,57 @@ pub(super) enum TransferPayload {
 }
 
 impl FileTransferActivity {
+    pub(super) fn connect_to_host_bridge(&mut self) {
+        let ft_params = self.context().remote_params().unwrap().clone();
+        let entry_dir: Option<PathBuf> = ft_params.local_path;
+        // Connect to host bridge
+        match self.host_bridge.connect() {
+            Ok(()) => {
+                self.host_bridge_connected = self.host_bridge.is_connected();
+                if !self.host_bridge_connected {
+                    return;
+                }
+
+                // Log welcome
+                self.log(
+                    LogLevel::Info,
+                    format!(
+                        "Established connection with '{}'",
+                        self.get_hostbridge_hostname()
+                    ),
+                );
+
+                // Try to change directory to entry directory
+                let mut remote_chdir: Option<PathBuf> = None;
+                if let Some(remote_path) = &entry_dir {
+                    remote_chdir = Some(remote_path.clone());
+                }
+                if let Some(remote_path) = remote_chdir {
+                    self.local_changedir(remote_path.as_path(), false);
+                }
+                // Set state to explorer
+                self.umount_wait();
+                self.reload_host_bridge_dir();
+                // Update file lists
+                self.update_host_bridge_filelist();
+            }
+            Err(err) => {
+                // Set popup fatal error
+                self.umount_wait();
+                self.mount_fatal(err.to_string());
+            }
+        }
+    }
+
     /// Connect to remote
-    pub(super) fn connect(&mut self) {
-        let ft_params = self.context().ft_params().unwrap().clone();
+    pub(super) fn connect_to_remote(&mut self) {
+        let ft_params = self.context().remote_params().unwrap().clone();
         let entry_dir: Option<PathBuf> = ft_params.remote_path;
         // Connect to remote
         match self.client.connect() {
             Ok(Welcome { banner, .. }) => {
-                self.connected = self.client.is_connected();
-                if !self.connected {
+                self.remote_connected = self.client.is_connected();
+                if !self.remote_connected {
                     return;
                 }
 
@@ -119,7 +161,7 @@ impl FileTransferActivity {
 
     /// Reload remote directory entries and update browser
     pub(super) fn reload_remote_dir(&mut self) {
-        if !self.connected {
+        if !self.remote_connected {
             return;
         }
         // Get current entries
@@ -146,11 +188,21 @@ impl FileTransferActivity {
 
     /// Reload host_bridge directory entries and update browser
     pub(super) fn reload_host_bridge_dir(&mut self) {
+        if !self.host_bridge_connected {
+            return;
+        }
+
         self.mount_blocking_wait("Loading host bridge directory...");
 
-        let Ok(wrkdir) = self.host_bridge.pwd() else {
-            error!("failed to get host working directory");
-            return;
+        let wrkdir = match self.host_bridge.pwd() {
+            Ok(wrkdir) => wrkdir,
+            Err(err) => {
+                self.log_and_alert(
+                    LogLevel::Error,
+                    format!("Could not scan current host bridge directory: {err}"),
+                );
+                return;
+            }
         };
 
         let res = self.host_bridge_scan(wrkdir.as_path());
@@ -1107,6 +1159,33 @@ impl FileTransferActivity {
                     LogLevel::Info,
                     format!("Changed directory on host_bridge: {}", path.display()),
                 );
+                // Push prev_dir to stack
+                if push {
+                    self.host_bridge_mut().pushd(prev_dir.as_path())
+                }
+            }
+            Err(err) => {
+                // Report err
+                self.log_and_alert(
+                    LogLevel::Error,
+                    format!("Could not change working directory: {err}"),
+                );
+            }
+        }
+    }
+
+    pub(super) fn local_changedir(&mut self, path: &Path, push: bool) {
+        // Get current directory
+        let prev_dir: PathBuf = self.host_bridge().wrkdir.clone();
+        // Change directory
+        match self.host_bridge.change_wrkdir(path) {
+            Ok(_) => {
+                self.log(
+                    LogLevel::Info,
+                    format!("Changed directory on host bridge: {}", path.display()),
+                );
+                // Update files
+                self.reload_host_bridge_dir();
                 // Push prev_dir to stack
                 if push {
                     self.host_bridge_mut().pushd(prev_dir.as_path())

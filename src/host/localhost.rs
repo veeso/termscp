@@ -62,6 +62,22 @@ impl Localhost {
 }
 
 impl HostBridge for Localhost {
+    fn connect(&mut self) -> HostResult<()> {
+        Ok(())
+    }
+
+    fn disconnect(&mut self) -> HostResult<()> {
+        Ok(())
+    }
+
+    fn is_connected(&mut self) -> bool {
+        true
+    }
+
+    fn is_localhost(&self) -> bool {
+        true
+    }
+
     fn pwd(&mut self) -> HostResult<PathBuf> {
         Ok(self.wrkdir.clone())
     }

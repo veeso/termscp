@@ -49,8 +49,25 @@ impl From<Box<dyn RemoteFs>> for RemoteBridged {
 }
 
 impl HostBridge for RemoteBridged {
+    fn connect(&mut self) -> HostResult<()> {
+        self.remote.connect().map(|_| ()).map_err(HostError::from)
+    }
+
+    fn disconnect(&mut self) -> HostResult<()> {
+        self.remote.disconnect().map_err(HostError::from)
+    }
+
+    fn is_connected(&mut self) -> bool {
+        self.remote.is_connected()
+    }
+
+    fn is_localhost(&self) -> bool {
+        false
+    }
+
     fn pwd(&mut self) -> HostResult<PathBuf> {
-        todo!()
+        debug!("Getting working directory");
+        self.remote.pwd().map_err(HostError::from)
     }
 
     fn change_wrkdir(&mut self, new_dir: &Path) -> HostResult<PathBuf> {

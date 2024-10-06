@@ -12,6 +12,18 @@ use super::HostResult;
 /// implement a real bridge when the resource is first loaded on the local
 ///  filesystem and then processed on the remote.
 pub trait HostBridge {
+    /// Connect to host
+    fn connect(&mut self) -> HostResult<()>;
+
+    /// Disconnect from host
+    fn disconnect(&mut self) -> HostResult<()>;
+
+    /// Returns whether the host is connected
+    fn is_connected(&mut self) -> bool;
+
+    /// Returns whether the host is localhost
+    fn is_localhost(&self) -> bool;
+
     /// Print working directory
     fn pwd(&mut self) -> HostResult<PathBuf>;
 

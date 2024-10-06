@@ -40,13 +40,15 @@
 
 termscp can be started with the following options:
 
-`termscp [options]... [protocol://user@address:port:wrkdir] [local-wrkdir]`
+`termscp [options]... [protocol://user@address:port:wrkdir] [protocol://user@address:port:wrkdir] [local-wrkdir]`
 
 OR
 
-`termscp [options]... -b [bookmark-name] [local-wrkdir]`
+`termscp [options]... -b [bookmark-name] -b [bookmark-name] [local-wrkdir]`
 
-- `-P, --password <password>` if address is provided, password will be this argument
+AND any combination of the two
+
+- `-P, --password <password>` if address is provided, password will be this argument. A password *can* be specified for each remote provided. The order must be the same of the address argument. The use of this parameter is discouraged.
 - `-b, --address-as-bookmark` resolve address argument as a bookmark name
 - `-q, --quiet` Disable logging
 - `-v, --version` Print version info
