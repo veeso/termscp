@@ -1,6 +1,7 @@
 # Changelog
 
 - [Changelog](#changelog)
+  - [0.16.0](#0160)
   - [0.15.0](#0150)
   - [0.14.0](#0140)
   - [0.13.0](#0130)
@@ -36,6 +37,12 @@
   - [0.1.0](#010)
 
 ---
+
+## 0.16.0
+
+Released on
+
+- [Issue 290](https://github.com/veeso/termscp/issues/290): Password prompt was broken
 
 ## 0.15.0
 

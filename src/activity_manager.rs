@@ -111,8 +111,10 @@ impl ActivityManager {
     }
 
     /// Prompt user for password to set into params.
-    fn prompt_password(&self, params: &mut FileTransferParams) -> Result<(), String> {
-        match tty::read_secret_from_tty("Password: ") {
+    fn prompt_password(&mut self, params: &mut FileTransferParams) -> Result<(), String> {
+        let ctx = self.context.as_mut().unwrap();
+
+        match tty::read_secret_from_tty(ctx.terminal(), "Password: ") {
             Err(err) => Err(format!("Could not read password: {err}")),
             Ok(Some(secret)) => {
                 debug!(

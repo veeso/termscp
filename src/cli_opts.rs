@@ -20,9 +20,11 @@ pub enum Task {
 #[derive(FromArgs)]
 #[argh(description = "
 where positional can be: 
-        - [address]         [local-wrkdir]
+        - [address_a] [address_b] [local-wrkdir]
     OR
-        - [bookmark-Name]   [local-wrkdir]
+        - -b [bookmark-name_1] -b [bookmark-name_2] [local-wrkdir]
+
+    and any combination of the above
 
 Address syntax can be:
 
