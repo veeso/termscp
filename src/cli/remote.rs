@@ -104,6 +104,12 @@ pub enum Remote {
     None,
 }
 
+impl Remote {
+    pub fn is_none(&self) -> bool {
+        matches!(self, Self::None)
+    }
+}
+
 /// Bookmark parameters
 #[derive(Debug)]
 pub struct BookmarkParams {

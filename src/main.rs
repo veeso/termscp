@@ -87,10 +87,16 @@ fn parse_args(args: Args) -> Result<RunOpts, String> {
                 Ok(remote) => {
                     // Set params
                     run_opts.remote = remote;
-                    // In this case the first activity will be FileTransfer
-                    run_opts.task = Task::Activity(NextActivity::FileTransfer);
                 }
             }
+
+            // set activity based on remote state
+            run_opts.task =
+                if run_opts.remote.remote.is_none() || run_opts.remote.host_bridge.is_none() {
+                    Task::Activity(NextActivity::Authentication)
+                } else {
+                    Task::Activity(NextActivity::FileTransfer)
+                };
 
             // Local directory
             if let Some(localdir) = run_opts.remote.local_dir.as_deref() {

@@ -30,6 +30,7 @@ impl AuthActivity {
                         self.save_recent();
                         // Set file transfer params to context
                         self.context_mut().set_remote_params(params);
+                        // TODO: set host bridge params
                         // Set exit reason
                         self.exit_reason = Some(super::ExitReason::Connect);
                     }
