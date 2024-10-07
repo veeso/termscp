@@ -9,6 +9,7 @@ use tuirealm::props::{Alignment, BorderSides, BorderType, Borders, Color, InputT
 use tuirealm::{Component, Event, MockComponent, NoUserEvent, State, StateValue};
 
 use super::{FormMsg, Msg, UiMsg};
+use crate::ui::activities::auth::FormTab;
 
 // -- bookmark list
 
@@ -323,10 +324,11 @@ impl Component<Msg, NoUserEvent> for DeleteRecentPopup {
 #[derive(MockComponent)]
 pub struct BookmarkSavePassword {
     component: Radio,
+    form_tab: FormTab,
 }
 
 impl BookmarkSavePassword {
-    pub fn new(color: Color) -> Self {
+    pub fn new(form_tab: FormTab, color: Color) -> Self {
         Self {
             component: Radio::default()
                 .borders(
@@ -340,6 +342,7 @@ impl BookmarkSavePassword {
                 .rewind(true)
                 .foreground(color)
                 .title("Save secrets?", Alignment::Center),
+            form_tab,
         }
     }
 }
@@ -364,7 +367,7 @@ impl Component<Msg, NoUserEvent> for BookmarkSavePassword {
             }
             Event::Keyboard(KeyEvent {
                 code: Key::Enter, ..
-            }) => Some(Msg::Form(FormMsg::SaveBookmark)),
+            }) => Some(Msg::Form(FormMsg::SaveBookmark(self.form_tab))),
             Event::Keyboard(KeyEvent { code: Key::Up, .. }) => {
                 Some(Msg::Ui(UiMsg::SaveBookmarkPasswordBlur))
             }
@@ -378,10 +381,11 @@ impl Component<Msg, NoUserEvent> for BookmarkSavePassword {
 #[derive(MockComponent)]
 pub struct BookmarkName {
     component: Input,
+    form_tab: FormTab,
 }
 
 impl BookmarkName {
-    pub fn new(color: Color) -> Self {
+    pub fn new(form_tab: FormTab, color: Color) -> Self {
         Self {
             component: Input::default()
                 .borders(
@@ -393,6 +397,7 @@ impl BookmarkName {
                 .foreground(color)
                 .title("Bookmark name", Alignment::Left)
                 .input_type(InputType::Text),
+            form_tab,
         }
     }
 }
@@ -447,7 +452,7 @@ impl Component<Msg, NoUserEvent> for BookmarkName {
             }
             Event::Keyboard(KeyEvent {
                 code: Key::Enter, ..
-            }) => Some(Msg::Form(FormMsg::SaveBookmark)),
+            }) => Some(Msg::Form(FormMsg::SaveBookmark(self.form_tab))),
             Event::Keyboard(KeyEvent {
                 code: Key::Down, ..
             }) => Some(Msg::Ui(UiMsg::BookmarkNameBlur)),

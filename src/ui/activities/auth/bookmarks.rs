@@ -3,11 +3,12 @@
 //! `auth_activity` is the module which implements the authentication activity
 
 // Locals
-use super::{AuthActivity, FileTransferParams};
+use super::{AuthActivity, FileTransferParams, FormTab, HostBridgeProtocol};
 use crate::filetransfer::params::{
     AwsS3Params, GenericProtocolParams, KubeProtocolParams, ProtocolParams, SmbParams,
     WebDAVProtocolParams,
 };
+use crate::filetransfer::HostBridgeParams;
 
 impl AuthActivity {
     /// Delete bookmark
@@ -26,27 +27,49 @@ impl AuthActivity {
     }
 
     /// Load selected bookmark (at index) to input fields
-    pub(super) fn load_bookmark(&mut self, idx: usize) {
+    pub(super) fn load_bookmark(&mut self, form_tab: FormTab, idx: usize) {
         if let Some(bookmarks_cli) = self.bookmarks_client() {
             // Iterate over bookmarks
             if let Some(key) = self.bookmarks_list.get(idx) {
                 if let Some(bookmark) = bookmarks_cli.get_bookmark(key) {
                     // Load parameters into components
-                    self.load_bookmark_into_gui(bookmark);
+                    match form_tab {
+                        FormTab::Remote => self.load_remote_bookmark_into_gui(bookmark),
+                        FormTab::HostBridge => self.load_host_bridge_bookmark_into_gui(bookmark),
+                    }
                 }
             }
         }
     }
 
     /// Save current input fields as a bookmark
-    pub(super) fn save_bookmark(&mut self, name: String, save_password: bool) {
-        let params = match self.collect_host_params() {
-            Ok(p) => p,
-            Err(e) => {
-                self.mount_error(e);
-                return;
-            }
+    pub(super) fn save_bookmark(&mut self, form_tab: FormTab, name: String, save_password: bool) {
+        let params = match form_tab {
+            FormTab::Remote => match self.collect_remote_host_params() {
+                Ok(p) => p,
+                Err(e) => {
+                    self.mount_error(e);
+                    return;
+                }
+            },
+            FormTab::HostBridge => match self.collect_host_bridge_params() {
+                Ok(HostBridgeParams::Remote(protocol, params)) => FileTransferParams {
+                    protocol,
+                    params,
+                    remote_path: None,
+                    local_path: None,
+                },
+                Ok(HostBridgeParams::Localhost(_)) => {
+                    self.mount_error("You cannot save a localhost bookmark");
+                    return;
+                }
+                Err(e) => {
+                    self.mount_error(e);
+                    return;
+                }
+            },
         };
+
         if let Some(bookmarks_cli) = self.bookmarks_client_mut() {
             bookmarks_cli.add_bookmark(name.clone(), params, save_password);
             // Save bookmarks
@@ -73,13 +96,16 @@ impl AuthActivity {
     }
 
     /// Load selected recent (at index) to input fields
-    pub(super) fn load_recent(&mut self, idx: usize) {
+    pub(super) fn load_recent(&mut self, form_tab: FormTab, idx: usize) {
         if let Some(client) = self.bookmarks_client() {
             // Iterate over bookmarks
             if let Some(key) = self.recents_list.get(idx) {
                 if let Some(bookmark) = client.get_recent(key) {
                     // Load parameters
-                    self.load_bookmark_into_gui(bookmark);
+                    match form_tab {
+                        FormTab::Remote => self.load_remote_bookmark_into_gui(bookmark),
+                        FormTab::HostBridge => self.load_host_bridge_bookmark_into_gui(bookmark),
+                    }
                 }
             }
         }
@@ -87,7 +113,7 @@ impl AuthActivity {
 
     /// Save current input fields as a "recent"
     pub(super) fn save_recent(&mut self) {
-        let params = match self.collect_host_params() {
+        let params = match self.collect_remote_host_params() {
             Ok(p) => p,
             Err(e) => {
                 self.mount_error(e);
@@ -147,73 +173,125 @@ impl AuthActivity {
     }
 
     /// Load bookmark data into the gui components
-    fn load_bookmark_into_gui(&mut self, bookmark: FileTransferParams) {
+    fn load_host_bridge_bookmark_into_gui(&mut self, bookmark: FileTransferParams) {
         // Load parameters into components
-        self.protocol = bookmark.protocol;
-        self.mount_protocol(bookmark.protocol);
+        self.host_bridge_protocol = HostBridgeProtocol::Remote(bookmark.protocol);
+        self.mount_host_bridge_protocol(self.host_bridge_protocol);
         self.mount_remote_directory(
+            FormTab::HostBridge,
             bookmark
                 .remote_path
                 .map(|x| x.to_string_lossy().to_string())
                 .unwrap_or_default(),
         );
         self.mount_local_directory(
+            FormTab::HostBridge,
             bookmark
                 .local_path
                 .map(|x| x.to_string_lossy().to_string())
                 .unwrap_or_default(),
         );
         match bookmark.params {
-            ProtocolParams::AwsS3(params) => self.load_bookmark_s3_into_gui(params),
-            ProtocolParams::Kube(params) => self.load_bookmark_kube_into_gui(params),
+            ProtocolParams::AwsS3(params) => {
+                self.load_bookmark_s3_into_gui(FormTab::HostBridge, params)
+            }
+            ProtocolParams::Kube(params) => {
+                self.load_bookmark_kube_into_gui(FormTab::HostBridge, params)
+            }
 
-            ProtocolParams::Generic(params) => self.load_bookmark_generic_into_gui(params),
-            ProtocolParams::Smb(params) => self.load_bookmark_smb_into_gui(params),
-            ProtocolParams::WebDAV(params) => self.load_bookmark_webdav_into_gui(params),
+            ProtocolParams::Generic(params) => {
+                self.load_bookmark_generic_into_gui(FormTab::HostBridge, params)
+            }
+            ProtocolParams::Smb(params) => {
+                self.load_bookmark_smb_into_gui(FormTab::HostBridge, params)
+            }
+            ProtocolParams::WebDAV(params) => {
+                self.load_bookmark_webdav_into_gui(FormTab::HostBridge, params)
+            }
         }
     }
 
-    fn load_bookmark_generic_into_gui(&mut self, params: GenericProtocolParams) {
-        self.mount_address(params.address.as_str());
-        self.mount_port(params.port);
-        self.mount_username(params.username.as_deref().unwrap_or(""));
-        self.mount_password(params.password.as_deref().unwrap_or(""));
+    /// Load bookmark data into the gui components
+    fn load_remote_bookmark_into_gui(&mut self, bookmark: FileTransferParams) {
+        // Load parameters into components
+        self.remote_protocol = bookmark.protocol;
+        self.mount_remote_protocol(bookmark.protocol);
+        self.mount_remote_directory(
+            FormTab::Remote,
+            bookmark
+                .remote_path
+                .map(|x| x.to_string_lossy().to_string())
+                .unwrap_or_default(),
+        );
+        self.mount_local_directory(
+            FormTab::Remote,
+            bookmark
+                .local_path
+                .map(|x| x.to_string_lossy().to_string())
+                .unwrap_or_default(),
+        );
+        match bookmark.params {
+            ProtocolParams::AwsS3(params) => {
+                self.load_bookmark_s3_into_gui(FormTab::Remote, params)
+            }
+            ProtocolParams::Kube(params) => {
+                self.load_bookmark_kube_into_gui(FormTab::Remote, params)
+            }
+
+            ProtocolParams::Generic(params) => {
+                self.load_bookmark_generic_into_gui(FormTab::Remote, params)
+            }
+            ProtocolParams::Smb(params) => self.load_bookmark_smb_into_gui(FormTab::Remote, params),
+            ProtocolParams::WebDAV(params) => {
+                self.load_bookmark_webdav_into_gui(FormTab::Remote, params)
+            }
+        }
     }
 
-    fn load_bookmark_s3_into_gui(&mut self, params: AwsS3Params) {
-        self.mount_s3_bucket(params.bucket_name.as_str());
-        self.mount_s3_region(params.region.as_deref().unwrap_or(""));
-        self.mount_s3_endpoint(params.endpoint.as_deref().unwrap_or(""));
-        self.mount_s3_profile(params.profile.as_deref().unwrap_or(""));
-        self.mount_s3_access_key(params.access_key.as_deref().unwrap_or(""));
-        self.mount_s3_secret_access_key(params.secret_access_key.as_deref().unwrap_or(""));
-        self.mount_s3_security_token(params.security_token.as_deref().unwrap_or(""));
-        self.mount_s3_session_token(params.session_token.as_deref().unwrap_or(""));
-        self.mount_s3_new_path_style(params.new_path_style);
+    fn load_bookmark_generic_into_gui(&mut self, form_tab: FormTab, params: GenericProtocolParams) {
+        self.mount_address(form_tab, params.address.as_str());
+        self.mount_port(form_tab, params.port);
+        self.mount_username(form_tab, params.username.as_deref().unwrap_or(""));
+        self.mount_password(form_tab, params.password.as_deref().unwrap_or(""));
     }
 
-    fn load_bookmark_kube_into_gui(&mut self, params: KubeProtocolParams) {
-        self.mount_kube_cluster_url(params.cluster_url.as_deref().unwrap_or(""));
-        self.mount_kube_namespace(params.namespace.as_deref().unwrap_or(""));
-        self.mount_kube_client_cert(params.client_cert.as_deref().unwrap_or(""));
-        self.mount_kube_client_key(params.client_key.as_deref().unwrap_or(""));
-        self.mount_kube_username(params.username.as_deref().unwrap_or(""));
+    fn load_bookmark_s3_into_gui(&mut self, form_tab: FormTab, params: AwsS3Params) {
+        self.mount_s3_bucket(form_tab, params.bucket_name.as_str());
+        self.mount_s3_region(form_tab, params.region.as_deref().unwrap_or(""));
+        self.mount_s3_endpoint(form_tab, params.endpoint.as_deref().unwrap_or(""));
+        self.mount_s3_profile(form_tab, params.profile.as_deref().unwrap_or(""));
+        self.mount_s3_access_key(form_tab, params.access_key.as_deref().unwrap_or(""));
+        self.mount_s3_secret_access_key(
+            form_tab,
+            params.secret_access_key.as_deref().unwrap_or(""),
+        );
+        self.mount_s3_security_token(form_tab, params.security_token.as_deref().unwrap_or(""));
+        self.mount_s3_session_token(form_tab, params.session_token.as_deref().unwrap_or(""));
+        self.mount_s3_new_path_style(form_tab, params.new_path_style);
     }
 
-    fn load_bookmark_smb_into_gui(&mut self, params: SmbParams) {
-        self.mount_address(params.address.as_str());
+    fn load_bookmark_kube_into_gui(&mut self, form_tab: FormTab, params: KubeProtocolParams) {
+        self.mount_kube_cluster_url(form_tab, params.cluster_url.as_deref().unwrap_or(""));
+        self.mount_kube_namespace(form_tab, params.namespace.as_deref().unwrap_or(""));
+        self.mount_kube_client_cert(form_tab, params.client_cert.as_deref().unwrap_or(""));
+        self.mount_kube_client_key(form_tab, params.client_key.as_deref().unwrap_or(""));
+        self.mount_kube_username(form_tab, params.username.as_deref().unwrap_or(""));
+    }
+
+    fn load_bookmark_smb_into_gui(&mut self, form_tab: FormTab, params: SmbParams) {
+        self.mount_address(form_tab, params.address.as_str());
         #[cfg(unix)]
-        self.mount_port(params.port);
-        self.mount_username(params.username.as_deref().unwrap_or(""));
-        self.mount_password(params.password.as_deref().unwrap_or(""));
-        self.mount_smb_share(&params.share);
+        self.mount_port(form_tab, params.port);
+        self.mount_username(form_tab, params.username.as_deref().unwrap_or(""));
+        self.mount_password(form_tab, params.password.as_deref().unwrap_or(""));
+        self.mount_smb_share(form_tab, &params.share);
         #[cfg(unix)]
-        self.mount_smb_workgroup(params.workgroup.as_deref().unwrap_or(""));
+        self.mount_smb_workgroup(form_tab, params.workgroup.as_deref().unwrap_or(""));
     }
 
-    fn load_bookmark_webdav_into_gui(&mut self, params: WebDAVProtocolParams) {
-        self.mount_webdav_uri(&params.uri);
-        self.mount_username(&params.username);
-        self.mount_password(&params.password);
+    fn load_bookmark_webdav_into_gui(&mut self, form_tab: FormTab, params: WebDAVProtocolParams) {
+        self.mount_webdav_uri(form_tab, &params.uri);
+        self.mount_username(form_tab, &params.username);
+        self.mount_password(form_tab, &params.password);
     }
 }
