@@ -1,5 +1,6 @@
 use std::fs::{self, OpenOptions};
 use std::io::{Read, Write};
+#[cfg(unix)]
 use std::os::unix::fs::PermissionsExt as _;
 use std::path::{Path, PathBuf};
 
@@ -431,7 +432,7 @@ impl HostBridge for Localhost {
     }
 
     #[cfg(windows)]
-    fn symlink(&mut self, src: &Path, dst: &Path) -> HostResult<()> {
+    fn symlink(&mut self, _src: &Path, _dst: &Path) -> HostResult<()> {
         warn!("Cannot create symlink on Windows");
 
         return Err(HostError::from(HostErrorType::NotImplemented));
@@ -476,7 +477,7 @@ impl HostBridge for Localhost {
     }
 
     #[cfg(windows)]
-    fn chmod(&mut self, path: &std::path::Path, pex: UnixPex) -> HostResult<()> {
+    fn chmod(&mut self, _path: &std::path::Path, _pex: UnixPex) -> HostResult<()> {
         warn!("Cannot set file mode on Windows");
 
         return Err(HostError::from(HostErrorType::NotImplemented));

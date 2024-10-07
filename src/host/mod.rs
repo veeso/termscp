@@ -19,6 +19,7 @@ pub type HostResult<T> = Result<T, HostError>;
 
 /// HostErrorType provides an overview of the specific host error
 #[derive(Error, Debug)]
+#[allow(dead_code)]
 pub enum HostErrorType {
     #[error("No such file or directory")]
     NoSuchFileOrDirectory,
