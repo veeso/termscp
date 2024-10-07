@@ -17,7 +17,7 @@ use tuirealm::props::{
 };
 use tuirealm::{Component, Event, MockComponent, NoUserEvent, State, StateValue};
 #[cfg(unix)]
-use users::{get_group_by_gid, get_user_by_uid};
+use uzers::{get_group_by_gid, get_user_by_uid};
 
 pub use self::chmod::ChmodPopup;
 pub use self::goto::{GotoPopup, ATTR_FILES};

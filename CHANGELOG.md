@@ -48,6 +48,7 @@ Released on
   - For more details read this issue <https://github.com/veeso/termscp/issues/285>.
   - Change between auth forms with `<BACKTAB>`
   - Bookmarks are automatically loaded into the last auth form.
+- [Issue 289](https://github.com/veeso/termscp/issues/289): Use `uzers` instead of the dead package `users` which has several vulnerabilities
 - [Issue 290](https://github.com/veeso/termscp/issues/290): Password prompt was broken
 
 ## 0.15.0
