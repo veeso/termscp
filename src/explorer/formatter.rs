@@ -12,7 +12,7 @@ use lazy_regex::{Lazy, Regex};
 use remotefs::File;
 use unicode_width::UnicodeWidthStr;
 #[cfg(unix)]
-use users::{get_group_by_gid, get_user_by_uid};
+use uzers::{get_group_by_gid, get_user_by_uid};
 
 use crate::utils::fmt::{fmt_path_elide, fmt_pex, fmt_time};
 use crate::utils::path::diff_paths;

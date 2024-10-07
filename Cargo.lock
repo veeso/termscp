@@ -3760,7 +3760,7 @@ dependencies = [
  "tui-realm-stdlib",
  "tuirealm",
  "unicode-width 0.2.0",
- "users",
+ "uzers",
  "vergen-git2",
  "version-compare",
  "whoami",
@@ -4240,6 +4240,16 @@ name = "utf-8"
 version = "0.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "09cc8ee72d2a9becf2f2febe0205bbed8fc6615b7cb429ad062dc7b7ddd036a9"
+
+[[package]]
+name = "uzers"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4df81ff504e7d82ad53e95ed1ad5b72103c11253f39238bcc0235b90768a97dd"
+dependencies = [
+ "libc",
+ "log",
+]
 
 [[package]]
 name = "vcpkg"
