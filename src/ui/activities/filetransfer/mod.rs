@@ -249,6 +249,7 @@ impl FileTransferActivity {
         // init host bridge
         let host_bridge = HostBridgeBuilder::build(host_bridge_params, &config_client);
         let host_bridge_connected = host_bridge.is_localhost();
+        let enable_fs_watcher = host_bridge.is_localhost();
         Self {
             exit_reason: None,
             context: None,
@@ -272,12 +273,10 @@ impl FileTransferActivity {
                 Ok(d) => Some(d),
                 Err(_) => None,
             },
-            fswatcher: match FsWatcher::init(Duration::from_secs(5)) {
-                Ok(w) => Some(w),
-                Err(e) => {
-                    error!("failed to initialize fs watcher: {}", e);
-                    None
-                }
+            fswatcher: if enable_fs_watcher {
+                FsWatcher::init(Duration::from_secs(5)).ok()
+            } else {
+                None
             },
             host_bridge_connected,
             remote_connected: false,
