@@ -40,14 +40,12 @@ impl FileTransferActivity {
                 self.umount_chmod();
                 self.mount_blocking_wait("Applying new file mode…");
                 match self.browser.tab() {
-                    #[cfg(unix)]
+                    FileExplorerTab::HostBridge | FileExplorerTab::FindHostBridge
+                        if self.host_bridge.is_localhost() && cfg!(windows) => {}
                     FileExplorerTab::HostBridge => self.action_local_chmod(mode),
-                    #[cfg(unix)]
                     FileExplorerTab::FindHostBridge => self.action_find_local_chmod(mode),
                     FileExplorerTab::Remote => self.action_remote_chmod(mode),
                     FileExplorerTab::FindRemote => self.action_find_remote_chmod(mode),
-                    #[cfg(windows)]
-                    FileExplorerTab::HostBridge | FileExplorerTab::FindHostBridge => {}
                 }
                 self.umount_wait();
                 self.update_browser_file_list();
