@@ -416,13 +416,8 @@ impl HostBridge for Localhost {
         }
     }
 
+    #[cfg(unix)]
     fn symlink(&mut self, src: &Path, dst: &Path) -> HostResult<()> {
-        if cfg!(windows) {
-            warn!("Cannot create symlink on Windows");
-
-            return Err(HostError::from(HostErrorType::NotImplemented));
-        }
-
         let src = self.to_path(src);
         std::os::unix::fs::symlink(dst, src.as_path()).map_err(|e| {
             error!(
@@ -435,13 +430,15 @@ impl HostBridge for Localhost {
         })
     }
 
+    #[cfg(windows)]
+    fn symlink(&mut self, src: &Path, dst: &Path) -> HostResult<()> {
+        warn!("Cannot create symlink on Windows");
+
+        return Err(HostError::from(HostErrorType::NotImplemented));
+    }
+
+    #[cfg(unix)]
     fn chmod(&mut self, path: &std::path::Path, pex: UnixPex) -> HostResult<()> {
-        if cfg!(windows) {
-            warn!("Cannot set file mode on Windows");
-
-            return Err(HostError::from(HostErrorType::NotImplemented));
-        }
-
         let path: PathBuf = self.to_path(path);
         // Get metadta
         match fs::metadata(path.as_path()) {
@@ -476,6 +473,13 @@ impl HostBridge for Localhost {
                 ))
             }
         }
+    }
+
+    #[cfg(windows)]
+    fn chmod(&mut self, path: &std::path::Path, pex: UnixPex) -> HostResult<()> {
+        warn!("Cannot set file mode on Windows");
+
+        return Err(HostError::from(HostErrorType::NotImplemented));
     }
 
     fn open_file(&mut self, file: &std::path::Path) -> HostResult<Box<dyn Read + Send>> {
