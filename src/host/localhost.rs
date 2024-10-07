@@ -435,7 +435,7 @@ impl HostBridge for Localhost {
     fn symlink(&mut self, _src: &Path, _dst: &Path) -> HostResult<()> {
         warn!("Cannot create symlink on Windows");
 
-        return Err(HostError::from(HostErrorType::NotImplemented));
+        Err(HostError::from(HostErrorType::NotImplemented))
     }
 
     #[cfg(unix)]
@@ -480,7 +480,7 @@ impl HostBridge for Localhost {
     fn chmod(&mut self, _path: &std::path::Path, _pex: UnixPex) -> HostResult<()> {
         warn!("Cannot set file mode on Windows");
 
-        return Err(HostError::from(HostErrorType::NotImplemented));
+        Err(HostError::from(HostErrorType::NotImplemented))
     }
 
     fn open_file(&mut self, file: &std::path::Path) -> HostResult<Box<dyn Read + Send>> {
