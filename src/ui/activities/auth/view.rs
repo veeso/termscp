@@ -186,6 +186,7 @@ impl AuthActivity {
             let bookmark_chunks = Layout::default()
                 .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
                 .direction(Direction::Horizontal)
+                .spacing(2)
                 .split(main_chunks[1]);
             // Render
             // Auth chunks

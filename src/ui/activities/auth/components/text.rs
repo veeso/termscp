@@ -100,6 +100,8 @@ impl HelpFooter {
                 TextSpan::from(" Change field "),
                 TextSpan::from("<TAB>").bold().fg(key_color),
                 TextSpan::from(" Switch tab "),
+                TextSpan::from("<BACKTAB>").bold().fg(key_color),
+                TextSpan::from(" Switch form "),
                 TextSpan::from("<ENTER>").bold().fg(key_color),
                 TextSpan::from(" Submit form "),
                 TextSpan::from("<F10|ESC>").bold().fg(key_color),

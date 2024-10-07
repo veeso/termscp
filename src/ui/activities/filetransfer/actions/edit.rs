@@ -2,13 +2,12 @@
 //!
 //! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
 
-// locals
 use std::fs::OpenOptions;
 use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 
-// ext
+use remotefs::fs::Metadata;
 use remotefs::File;
 
 use super::{FileTransferActivity, LogLevel, SelectedFile, TransferPayload};
@@ -29,7 +28,12 @@ impl FileTransferActivity {
                     format!("Opening file \"{}\"…", entry.path().display()),
                 );
                 // Edit file
-                if let Err(err) = self.edit_local_file(entry.path()) {
+                let res = match self.host_bridge.is_localhost() {
+                    true => self.edit_local_file(entry.path()).map(|_| ()),
+                    false => self.edit_bridged_local_file(entry),
+                };
+
+                if let Err(err) = res {
                     self.log_and_alert(LogLevel::Error, err);
                 }
             }
@@ -59,7 +63,83 @@ impl FileTransferActivity {
     }
 
     /// Edit a file on localhost
-    fn edit_local_file(&mut self, path: &Path) -> Result<(), String> {
+    fn edit_bridged_local_file(&mut self, entry: &File) -> Result<(), String> {
+        // Download file
+        let tmpfile: String =
+            match self.get_cache_tmp_name(&entry.name(), entry.extension().as_deref()) {
+                None => {
+                    return Err("Could not create tempdir".to_string());
+                }
+                Some(p) => p,
+            };
+        let cache: PathBuf = match self.cache.as_ref() {
+            None => {
+                return Err("Could not create tempdir".to_string());
+            }
+            Some(p) => p.path().to_path_buf(),
+        };
+
+        // open from host bridge
+        let mut reader = match self.host_bridge.open_file(entry.path()) {
+            Ok(reader) => reader,
+            Err(err) => {
+                return Err(format!("Failed to open bridged entry: {err}"));
+            }
+        };
+
+        let tempfile = cache.join(tmpfile);
+
+        // write to file
+        let mut writer = match std::fs::File::create(tempfile.as_path()) {
+            Ok(writer) => writer,
+            Err(err) => {
+                return Err(format!("Failed to write file: {err}"));
+            }
+        };
+
+        let new_file_size = match std::io::copy(&mut reader, &mut writer) {
+            Err(err) => return Err(format!("Could not write file: {err}")),
+            Ok(size) => size,
+        };
+
+        // edit file
+
+        let has_changed = self.edit_local_file(tempfile.as_path())?;
+
+        if has_changed {
+            // report changes to remote
+            let mut reader = match std::fs::File::open(tempfile.as_path()) {
+                Ok(reader) => reader,
+                Err(err) => {
+                    return Err(format!("Could not open file: {err}"));
+                }
+            };
+            let mut writer = match self.host_bridge.create_file(
+                entry.path(),
+                &Metadata {
+                    size: new_file_size,
+                    ..Default::default()
+                },
+            ) {
+                Ok(writer) => writer,
+                Err(err) => {
+                    return Err(format!("Could not write file: {err}"));
+                }
+            };
+
+            if let Err(err) = std::io::copy(&mut reader, &mut writer) {
+                return Err(format!("Could not write file: {err}"));
+            }
+
+            self.host_bridge
+                .finalize_write(writer)
+                .map_err(|err| format!("Could not write file: {err}"))?;
+        }
+
+        Ok(())
+    }
+
+    fn edit_local_file(&mut self, path: &Path) -> Result<bool, String> {
         // Read first 2048 bytes or less from file to check if it is textual
         match OpenOptions::new().read(true).open(path) {
             Ok(mut f) => {
@@ -90,6 +170,8 @@ impl FileTransferActivity {
         }
         // Lock ports
         assert!(self.app.lock_ports().is_ok());
+        // Get current file modification time
+        let prev_mtime = self.get_localhost_mtime(path)?;
         // Open editor
         match edit::edit_file(path) {
             Ok(_) => self.log(
@@ -117,7 +199,23 @@ impl FileTransferActivity {
             // Unlock ports
             assert!(self.app.unlock_ports().is_ok());
         }
-        Ok(())
+        let after_mtime = self.get_localhost_mtime(path)?;
+
+        // return if file has changed
+        Ok(prev_mtime != after_mtime)
+    }
+
+    fn get_localhost_mtime(&self, p: &Path) -> Result<SystemTime, String> {
+        let attr = match std::fs::metadata(p) {
+            Ok(metadata) => metadata,
+            Err(err) => {
+                return Err(format!("Could not read file metadata: {}", err));
+            }
+        };
+
+        Ok(Metadata::from(attr)
+            .modified
+            .unwrap_or(std::time::UNIX_EPOCH))
     }
 
     /// Edit file on remote host
