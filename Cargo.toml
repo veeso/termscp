@@ -90,6 +90,8 @@ serial_test = "^3"
 
 [build-dependencies]
 cfg_aliases = "0.2"
+vergen-git2 = { version = "1", features = ["build", "cargo", "rustc", "si"] }
+
 
 [features]
 default = ["smb", "with-keyring"]

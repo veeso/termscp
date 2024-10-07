@@ -29,10 +29,19 @@ use self::activity_manager::{ActivityManager, NextActivity};
 use self::cli::{Args, ArgsSubcommands, RemoteArgs, RunOpts, Task};
 use self::system::logging::{self, LogLevel};
 
+const APP_NAME: &str = env!("CARGO_PKG_NAME");
+const APP_BUILD_DATE: &str = env!("VERGEN_BUILD_TIMESTAMP");
+const APP_GIT_BRANCH: &str = env!("VERGEN_GIT_BRANCH");
+const APP_GIT_HASH: &str = env!("VERGEN_GIT_SHA");
 const EXIT_CODE_SUCCESS: i32 = 0;
 const EXIT_CODE_ERROR: i32 = 1;
 const TERMSCP_VERSION: &str = env!("CARGO_PKG_VERSION");
 const TERMSCP_AUTHORS: &str = env!("CARGO_PKG_AUTHORS");
+
+#[inline]
+fn git_hash() -> &'static str {
+    APP_GIT_HASH[0..8].as_ref()
+}
 
 fn main() {
     let args: Args = argh::from_env();
@@ -48,7 +57,10 @@ fn main() {
     if let Err(err) = logging::init(run_opts.log_level) {
         eprintln!("Failed to initialize logging: {err}");
     }
-    info!("termscp {} started!", TERMSCP_VERSION);
+    info!(
+        "{APP_NAME} v{TERMSCP_VERSION} ({APP_GIT_BRANCH}, {git_hash}, {APP_BUILD_DATE}) - Developed by {TERMSCP_AUTHORS}",
+        git_hash = git_hash()
+    );
     // Run
     info!("Starting activity manager...");
     let rc = run(run_opts);
@@ -70,7 +82,8 @@ fn parse_args(args: Args) -> Result<RunOpts, String> {
             // Version
             if args.version {
                 return Err(format!(
-                    "termscp - {TERMSCP_VERSION} - Developed by {TERMSCP_AUTHORS}",
+                    "{APP_NAME} v{TERMSCP_VERSION} ({APP_GIT_BRANCH}, {git_hash}, {APP_BUILD_DATE}) - Developed by {TERMSCP_AUTHORS}",
+                    git_hash = git_hash()
                 ));
             }
             // Logging
