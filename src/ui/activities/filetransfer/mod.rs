@@ -31,8 +31,10 @@ use tuirealm::{Application, EventListenerCfg, NoUserEvent};
 use super::{Activity, Context, ExitReason};
 use crate::config::themes::Theme;
 use crate::explorer::{FileExplorer, FileSorting};
-use crate::filetransfer::{Builder, FileTransferParams};
-use crate::host::Localhost;
+use crate::filetransfer::{
+    FileTransferParams, HostBridgeBuilder, HostBridgeParams, RemoteFsBuilder,
+};
+use crate::host::HostBridge;
 use crate::system::config_client::ConfigClient;
 use crate::system::watcher::FsWatcher;
 
@@ -47,7 +49,7 @@ enum Id {
     ErrorPopup,
     ExecPopup,
     ExplorerFind,
-    ExplorerLocal,
+    ExplorerHostBridge,
     ExplorerRemote,
     FatalPopup,
     FileInfoPopup,
@@ -68,7 +70,7 @@ enum Id {
     ReplacingFilesListPopup,
     SaveAsPopup,
     SortingPopup,
-    StatusBarLocal,
+    StatusBarHostBridge,
     StatusBarRemote,
     SymlinkPopup,
     SyncBrowsingMkdirPopup,
@@ -213,8 +215,8 @@ pub struct FileTransferActivity {
     app: Application<Id, Msg, NoUserEvent>,
     /// Whether should redraw UI
     redraw: bool,
-    /// Localhost bridge
-    host: Localhost,
+    /// Host bridge
+    host_bridge: Box<dyn HostBridge>,
     /// Remote host client
     client: Box<dyn RemoteFs>,
     /// Browser
@@ -229,15 +231,25 @@ pub struct FileTransferActivity {
     cache: Option<TempDir>,
     /// Fs watcher
     fswatcher: Option<FsWatcher>,
-    /// connected once
-    connected: bool,
+    /// host bridge connected
+    host_bridge_connected: bool,
+    /// remote connected once
+    remote_connected: bool,
 }
 
 impl FileTransferActivity {
     /// Instantiates a new FileTransferActivity
-    pub fn new(host: Localhost, params: &FileTransferParams, ticks: Duration) -> Self {
+    pub fn new(
+        host_bridge_params: HostBridgeParams,
+        remote_params: &FileTransferParams,
+        ticks: Duration,
+    ) -> Self {
         // Get config client
         let config_client: ConfigClient = Self::init_config_client();
+        // init host bridge
+        let host_bridge = HostBridgeBuilder::build(host_bridge_params, &config_client);
+        let host_bridge_connected = host_bridge.is_localhost();
+        let enable_fs_watcher = host_bridge.is_localhost();
         Self {
             exit_reason: None,
             context: None,
@@ -247,8 +259,12 @@ impl FileTransferActivity {
                     .default_input_listener(ticks),
             ),
             redraw: true,
-            host,
-            client: Builder::build(params.protocol, params.params.clone(), &config_client),
+            host_bridge,
+            client: RemoteFsBuilder::build(
+                remote_params.protocol,
+                remote_params.params.clone(),
+                &config_client,
+            ),
             browser: Browser::new(&config_client),
             log_records: VecDeque::with_capacity(256), // 256 events is enough I guess
             walkdir: WalkdirStates::default(),
@@ -257,23 +273,22 @@ impl FileTransferActivity {
                 Ok(d) => Some(d),
                 Err(_) => None,
             },
-            fswatcher: match FsWatcher::init(Duration::from_secs(5)) {
-                Ok(w) => Some(w),
-                Err(e) => {
-                    error!("failed to initialize fs watcher: {}", e);
-                    None
-                }
+            fswatcher: if enable_fs_watcher {
+                FsWatcher::init(Duration::from_secs(5)).ok()
+            } else {
+                None
             },
-            connected: false,
+            host_bridge_connected,
+            remote_connected: false,
         }
     }
 
-    fn local(&self) -> &FileExplorer {
-        self.browser.local()
+    fn host_bridge(&self) -> &FileExplorer {
+        self.browser.host_bridge()
     }
 
-    fn local_mut(&mut self) -> &mut FileExplorer {
-        self.browser.local_mut()
+    fn host_bridge_mut(&mut self) -> &mut FileExplorer {
+        self.browser.host_bridge_mut()
     }
 
     fn remote(&self) -> &FileExplorer {
@@ -361,7 +376,10 @@ impl Activity for FileTransferActivity {
             error!("Failed to enter raw mode: {}", err);
         }
         // Get files at current pwd
-        self.reload_local_dir();
+        if self.host_bridge.is_localhost() {
+            debug!("Reloading host bridge directory");
+            self.reload_host_bridge_dir();
+        }
         debug!("Read working directory");
         // Configure text editor
         self.setup_text_editor();
@@ -384,15 +402,34 @@ impl Activity for FileTransferActivity {
         if self.context.is_none() {
             return;
         }
-        // Check if connected (popup must be None, otherwise would try reconnecting in loop in case of error)
-        if (!self.client.is_connected() || !self.connected) && !self.app.mounted(&Id::FatalPopup) {
-            let ftparams = self.context().ft_params().unwrap();
+        // Check if connected to host bridge (popup must be None, otherwise would try reconnecting in loop in case of error)
+        if (!self.host_bridge.is_connected() || !self.host_bridge_connected)
+            && !self.app.mounted(&Id::FatalPopup)
+            && !self.host_bridge.is_localhost()
+        {
+            let host_bridge_params = self.context().host_bridge_params().unwrap();
+            let ft_params = host_bridge_params.unwrap_protocol_params();
+            // print params
+            let msg: String = Self::get_connection_msg(ft_params);
+            // Set init state to connecting popup
+            self.mount_blocking_wait(msg.as_str());
+            // Connect to remote
+            self.connect_to_host_bridge();
+            // Redraw
+            self.redraw = true;
+        }
+        // Check if connected to remote (popup must be None, otherwise would try reconnecting in loop in case of error)
+        if (!self.client.is_connected() || !self.remote_connected)
+            && !self.app.mounted(&Id::FatalPopup)
+            && self.host_bridge.is_connected()
+        {
+            let ftparams = self.context().remote_params().unwrap();
             // print params
             let msg: String = Self::get_connection_msg(&ftparams.params);
             // Set init state to connecting popup
             self.mount_blocking_wait(msg.as_str());
             // Connect to remote
-            self.connect();
+            self.connect_to_remote();
             // Redraw
             self.redraw = true;
         }
@@ -431,6 +468,10 @@ impl Activity for FileTransferActivity {
         // Disconnect client
         if self.client.is_connected() {
             let _ = self.client.disconnect();
+        }
+        // disconnect host bridge
+        if self.host_bridge.is_connected() {
+            let _ = self.host_bridge.disconnect();
         }
         self.context.take()
     }

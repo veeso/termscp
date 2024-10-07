@@ -15,6 +15,24 @@ pub use self::smb::SmbParams;
 pub use self::webdav::WebDAVProtocolParams;
 use super::FileTransferProtocol;
 
+/// Host bridge params
+#[derive(Debug, Clone)]
+pub enum HostBridgeParams {
+    /// Localhost with starting working directory
+    Localhost(PathBuf),
+    /// Remote host with protocol and file transfer params
+    Remote(FileTransferProtocol, ProtocolParams),
+}
+
+impl HostBridgeParams {
+    pub fn unwrap_protocol_params(&self) -> &ProtocolParams {
+        match self {
+            HostBridgeParams::Localhost(_) => panic!("Localhost has no protocol params"),
+            HostBridgeParams::Remote(_, params) => params,
+        }
+    }
+}
+
 /// Holds connection parameters for file transfers
 #[derive(Debug, Clone)]
 pub struct FileTransferParams {
@@ -32,6 +50,43 @@ pub enum ProtocolParams {
     Kube(KubeProtocolParams),
     Smb(SmbParams),
     WebDAV(WebDAVProtocolParams),
+}
+
+impl ProtocolParams {
+    pub fn password_missing(&self) -> bool {
+        match self {
+            ProtocolParams::AwsS3(params) => params.password_missing(),
+            ProtocolParams::Generic(params) => params.password_missing(),
+            ProtocolParams::Kube(params) => params.password_missing(),
+            ProtocolParams::Smb(params) => params.password_missing(),
+            ProtocolParams::WebDAV(params) => params.password_missing(),
+        }
+    }
+
+    /// Set the secret to ft params for the default secret field for this protocol
+    pub fn set_default_secret(&mut self, secret: String) {
+        match self {
+            ProtocolParams::AwsS3(params) => params.set_default_secret(secret),
+            ProtocolParams::Generic(params) => params.set_default_secret(secret),
+            ProtocolParams::Kube(params) => params.set_default_secret(secret),
+            ProtocolParams::Smb(params) => params.set_default_secret(secret),
+            ProtocolParams::WebDAV(params) => params.set_default_secret(secret),
+        }
+    }
+
+    pub fn host_name(&self) -> String {
+        match self {
+            ProtocolParams::AwsS3(params) => params.bucket_name.clone(),
+            ProtocolParams::Generic(params) => params.address.clone(),
+            ProtocolParams::Kube(params) => params
+                .namespace
+                .as_ref()
+                .cloned()
+                .unwrap_or_else(|| String::from("default")),
+            ProtocolParams::Smb(params) => params.address.clone(),
+            ProtocolParams::WebDAV(params) => params.uri.clone(),
+        }
+    }
 }
 
 /// Protocol params used by most common protocols
@@ -68,25 +123,15 @@ impl FileTransferParams {
 
     /// Returns whether a password is supposed to be required for this protocol params.
     /// The result true is returned ONLY if the supposed secret is MISSING!!!
+    #[cfg(test)]
     pub fn password_missing(&self) -> bool {
-        match &self.params {
-            ProtocolParams::AwsS3(params) => params.password_missing(),
-            ProtocolParams::Generic(params) => params.password_missing(),
-            ProtocolParams::Kube(params) => params.password_missing(),
-            ProtocolParams::Smb(params) => params.password_missing(),
-            ProtocolParams::WebDAV(params) => params.password_missing(),
-        }
+        self.params.password_missing()
     }
 
     /// Set the secret to ft params for the default secret field for this protocol
+    #[cfg(test)]
     pub fn set_default_secret(&mut self, secret: String) {
-        match &mut self.params {
-            ProtocolParams::AwsS3(params) => params.set_default_secret(secret),
-            ProtocolParams::Generic(params) => params.set_default_secret(secret),
-            ProtocolParams::Kube(params) => params.set_default_secret(secret),
-            ProtocolParams::Smb(params) => params.set_default_secret(secret),
-            ProtocolParams::WebDAV(params) => params.set_default_secret(secret),
-        }
+        self.params.set_default_secret(secret);
     }
 }
 

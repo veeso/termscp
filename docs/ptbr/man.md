@@ -40,11 +40,11 @@
 
 O termscp pode ser iniciado com as seguintes opções:
 
-`termscp [opções]... [protocol://usuário@endereço:porta:diretório-trabalho] [diretório-trabalho-local]`
+`termscp [opções]... [protocol://usuário@endereço:porta:diretório-trabalho] [protocol://usuário@endereço:porta:diretório-trabalho] [diretório-trabalho-local]`
 
 OU
 
-`termscp [opções]... -b [nome-do-favorito] [diretório-trabalho-local]`
+`termscp [opções]... -b [nome-do-favorito] -b [nome-do-favorito] [diretório-trabalho-local]`
 
 - `-P, --password <senha>` se o endereço for fornecido, a senha será este argumento
 - `-b, --address-as-bookmark` resolve o argumento do endereço como um nome de favorito

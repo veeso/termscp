@@ -40,7 +40,7 @@ impl FileTransferActivity {
         let filter = Filter::from_str(filter).unwrap();
 
         match self.browser.tab() {
-            FileExplorerTab::Local => self.browser.local().iter_files(),
+            FileExplorerTab::HostBridge => self.browser.host_bridge().iter_files(),
             FileExplorerTab::Remote => self.browser.remote().iter_files(),
             _ => return vec![],
         }

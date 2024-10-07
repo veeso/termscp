@@ -2,8 +2,11 @@
 //!
 //! `auth_activity` is the module which implements the authentication activity
 
-use super::{AuthActivity, FileTransferParams, FileTransferProtocol};
+use std::env;
+
+use super::{AuthActivity, FileTransferParams, FileTransferProtocol, FormTab, HostBridgeProtocol};
 use crate::filetransfer::params::ProtocolParams;
+use crate::filetransfer::HostBridgeParams;
 use crate::system::auto_update::{Release, Update, UpdateStatus};
 use crate::system::notifications::Notification;
 
@@ -36,24 +39,64 @@ impl AuthActivity {
     }
 
     /// Collect host params as `FileTransferParams`
-    pub(super) fn collect_host_params(&self) -> Result<FileTransferParams, &'static str> {
-        match self.protocol {
-            FileTransferProtocol::AwsS3 => self.collect_s3_host_params(),
-            FileTransferProtocol::Kube => self.collect_kube_host_params(),
-            FileTransferProtocol::Smb => self.collect_smb_host_params(),
+    pub(super) fn collect_host_bridge_params(&self) -> Result<HostBridgeParams, &'static str> {
+        match self.host_bridge_protocol {
+            HostBridgeProtocol::Localhost => self.collect_localhost_host_params(),
+            HostBridgeProtocol::Remote(remote) => {
+                let transfer_params = match remote {
+                    FileTransferProtocol::AwsS3 => self.collect_s3_host_params(FormTab::HostBridge),
+                    FileTransferProtocol::Kube => {
+                        self.collect_kube_host_params(FormTab::HostBridge)
+                    }
+                    FileTransferProtocol::Smb => self.collect_smb_host_params(FormTab::HostBridge),
+                    FileTransferProtocol::Ftp(_)
+                    | FileTransferProtocol::Scp
+                    | FileTransferProtocol::Sftp => {
+                        self.collect_generic_host_params(remote, FormTab::HostBridge)
+                    }
+                    FileTransferProtocol::WebDAV => {
+                        self.collect_webdav_host_params(FormTab::HostBridge)
+                    }
+                }?;
+
+                Ok(HostBridgeParams::Remote(
+                    transfer_params.protocol,
+                    transfer_params.params,
+                ))
+            }
+        }
+    }
+
+    /// Collect host params as `FileTransferParams`
+    pub(super) fn collect_remote_host_params(&self) -> Result<FileTransferParams, &'static str> {
+        match self.remote_protocol {
+            FileTransferProtocol::AwsS3 => self.collect_s3_host_params(FormTab::Remote),
+            FileTransferProtocol::Kube => self.collect_kube_host_params(FormTab::Remote),
+            FileTransferProtocol::Smb => self.collect_smb_host_params(FormTab::Remote),
             FileTransferProtocol::Ftp(_)
             | FileTransferProtocol::Scp
-            | FileTransferProtocol::Sftp => self.collect_generic_host_params(self.protocol),
-            FileTransferProtocol::WebDAV => self.collect_webdav_host_params(),
+            | FileTransferProtocol::Sftp => {
+                self.collect_generic_host_params(self.remote_protocol, FormTab::Remote)
+            }
+            FileTransferProtocol::WebDAV => self.collect_webdav_host_params(FormTab::Remote),
         }
+    }
+
+    fn collect_localhost_host_params(&self) -> Result<HostBridgeParams, &'static str> {
+        let path = self
+            .get_input_local_directory(FormTab::HostBridge)
+            .unwrap_or_else(|| env::current_dir().unwrap_or_default());
+
+        Ok(HostBridgeParams::Localhost(path))
     }
 
     /// Get input values from fields or return an error if fields are invalid to work as generic
     pub(super) fn collect_generic_host_params(
         &self,
         protocol: FileTransferProtocol,
+        form_tab: FormTab,
     ) -> Result<FileTransferParams, &'static str> {
-        let params = self.get_generic_params_input();
+        let params = self.get_generic_params_input(form_tab);
         if params.address.is_empty() {
             return Err("Invalid host");
         }
@@ -63,39 +106,48 @@ impl AuthActivity {
         Ok(FileTransferParams {
             protocol,
             params: ProtocolParams::Generic(params),
-            local_path: self.get_input_local_directory(),
-            remote_path: self.get_input_remote_directory(),
+            local_path: self.get_input_local_directory(form_tab),
+            remote_path: self.get_input_remote_directory(form_tab),
         })
     }
 
     /// Get input values from fields or return an error if fields are invalid to work as aws s3
-    pub(super) fn collect_s3_host_params(&self) -> Result<FileTransferParams, &'static str> {
-        let params = self.get_s3_params_input();
+    pub(super) fn collect_s3_host_params(
+        &self,
+        form_tab: FormTab,
+    ) -> Result<FileTransferParams, &'static str> {
+        let params = self.get_s3_params_input(form_tab);
         if params.bucket_name.is_empty() {
             return Err("Invalid bucket");
         }
         Ok(FileTransferParams {
             protocol: FileTransferProtocol::AwsS3,
             params: ProtocolParams::AwsS3(params),
-            local_path: self.get_input_local_directory(),
-            remote_path: self.get_input_remote_directory(),
+            local_path: self.get_input_local_directory(form_tab),
+            remote_path: self.get_input_remote_directory(form_tab),
         })
     }
 
     /// Get input values from fields or return an error if fields are invalid to work as aws s3
-    pub(super) fn collect_kube_host_params(&self) -> Result<FileTransferParams, &'static str> {
-        let params = self.get_kube_params_input();
+    pub(super) fn collect_kube_host_params(
+        &self,
+        form_tab: FormTab,
+    ) -> Result<FileTransferParams, &'static str> {
+        let params = self.get_kube_params_input(form_tab);
 
         Ok(FileTransferParams {
             protocol: FileTransferProtocol::Kube,
             params: ProtocolParams::Kube(params),
-            local_path: self.get_input_local_directory(),
-            remote_path: self.get_input_remote_directory(),
+            local_path: self.get_input_local_directory(form_tab),
+            remote_path: self.get_input_remote_directory(form_tab),
         })
     }
 
-    pub(super) fn collect_smb_host_params(&self) -> Result<FileTransferParams, &'static str> {
-        let params = self.get_smb_params_input();
+    pub(super) fn collect_smb_host_params(
+        &self,
+        form_tab: FormTab,
+    ) -> Result<FileTransferParams, &'static str> {
+        let params = self.get_smb_params_input(form_tab);
         if params.address.is_empty() {
             return Err("Invalid address");
         }
@@ -109,21 +161,24 @@ impl AuthActivity {
         Ok(FileTransferParams {
             protocol: FileTransferProtocol::Smb,
             params: ProtocolParams::Smb(params),
-            local_path: self.get_input_local_directory(),
-            remote_path: self.get_input_remote_directory(),
+            local_path: self.get_input_local_directory(form_tab),
+            remote_path: self.get_input_remote_directory(form_tab),
         })
     }
 
-    pub(super) fn collect_webdav_host_params(&self) -> Result<FileTransferParams, &'static str> {
-        let params = self.get_webdav_params_input();
+    pub(super) fn collect_webdav_host_params(
+        &self,
+        form_tab: FormTab,
+    ) -> Result<FileTransferParams, &'static str> {
+        let params = self.get_webdav_params_input(form_tab);
         if params.uri.is_empty() {
             return Err("Invalid URI");
         }
         Ok(FileTransferParams {
             protocol: FileTransferProtocol::WebDAV,
             params: ProtocolParams::WebDAV(params),
-            local_path: self.get_input_local_directory(),
-            remote_path: self.get_input_remote_directory(),
+            local_path: self.get_input_local_directory(form_tab),
+            remote_path: self.get_input_remote_directory(form_tab),
         })
     }
 

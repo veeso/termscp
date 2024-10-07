@@ -19,7 +19,7 @@ impl FileTransferActivity {
         } else if entry.metadata().symlink.is_some() {
             // Stat file
             let symlink = entry.metadata().symlink.as_ref().unwrap();
-            let stat_file = match self.host.stat(symlink.as_path()) {
+            let stat_file = match self.host_bridge.stat(symlink.as_path()) {
                 Ok(e) => e,
                 Err(err) => {
                     warn!(

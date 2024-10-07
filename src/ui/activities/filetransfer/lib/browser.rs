@@ -16,10 +16,10 @@ const FUZZY_SEARCH_THRESHOLD: u16 = 50;
 /// File explorer tab
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum FileExplorerTab {
-    Local,
+    HostBridge,
     Remote,
-    FindLocal,  // Find result tab
-    FindRemote, // Find result tab
+    FindHostBridge, // Find result tab
+    FindRemote,     // Find result tab
 }
 
 /// Describes the explorer tab type
@@ -31,10 +31,10 @@ pub enum FoundExplorerTab {
 
 /// Browser contains the browser options
 pub struct Browser {
-    local: FileExplorer,  // Local File explorer state
-    remote: FileExplorer, // Remote File explorer state
-    found: Option<Found>, // File explorer for find result
-    tab: FileExplorerTab, // Current selected tab
+    host_bridge: FileExplorer, // Local File explorer state
+    remote: FileExplorer,      // Remote File explorer state
+    found: Option<Found>,      // File explorer for find result
+    tab: FileExplorerTab,      // Current selected tab
     pub sync_browsing: bool,
 }
 
@@ -42,30 +42,30 @@ impl Browser {
     /// Build a new `Browser` struct
     pub fn new(cli: &ConfigClient) -> Self {
         Self {
-            local: Self::build_local_explorer(cli),
+            host_bridge: Self::build_local_explorer(cli),
             remote: Self::build_remote_explorer(cli),
             found: None,
-            tab: FileExplorerTab::Local,
+            tab: FileExplorerTab::HostBridge,
             sync_browsing: false,
         }
     }
 
     pub fn explorer(&self) -> &FileExplorer {
         match self.tab {
-            FileExplorerTab::Local => &self.local,
+            FileExplorerTab::HostBridge => &self.host_bridge,
             FileExplorerTab::Remote => &self.remote,
-            FileExplorerTab::FindLocal | FileExplorerTab::FindRemote => {
+            FileExplorerTab::FindHostBridge | FileExplorerTab::FindRemote => {
                 self.found.as_ref().map(|x| &x.explorer).unwrap()
             }
         }
     }
 
-    pub fn local(&self) -> &FileExplorer {
-        &self.local
+    pub fn host_bridge(&self) -> &FileExplorer {
+        &self.host_bridge
     }
 
-    pub fn local_mut(&mut self) -> &mut FileExplorer {
-        &mut self.local
+    pub fn host_bridge_mut(&mut self) -> &mut FileExplorer {
+        &mut self.host_bridge
     }
 
     pub fn remote(&self) -> &FileExplorer {

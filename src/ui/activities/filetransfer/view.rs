@@ -44,7 +44,7 @@ impl FileTransferActivity {
         assert!(self
             .app
             .mount(
-                Id::ExplorerLocal,
+                Id::ExplorerHostBridge,
                 Box::new(components::ExplorerLocal::new(
                     "",
                     &[],
@@ -81,12 +81,12 @@ impl FileTransferActivity {
         self.refresh_local_status_bar();
         self.refresh_remote_status_bar();
         // Update components
-        self.update_local_filelist();
+        self.update_host_bridge_filelist();
         // self.update_remote_filelist();
         // Global listener
         self.mount_global_listener();
         // Give focus to local explorer
-        assert!(self.app.active(&Id::ExplorerLocal).is_ok());
+        assert!(self.app.active(&Id::ExplorerHostBridge).is_ok());
     }
 
     // -- view
@@ -141,7 +141,7 @@ impl FileTransferActivity {
             if matches!(self.browser.found_tab(), Some(FoundExplorerTab::Local)) {
                 self.app.view(&Id::ExplorerFind, f, tabs_chunks[0]);
             } else {
-                self.app.view(&Id::ExplorerLocal, f, tabs_chunks[0]);
+                self.app.view(&Id::ExplorerHostBridge, f, tabs_chunks[0]);
             }
             // @! Remote explorer (Find or default)
             if matches!(self.browser.found_tab(), Some(FoundExplorerTab::Remote)) {
@@ -152,7 +152,8 @@ impl FileTransferActivity {
             // Draw log box
             self.app.view(&Id::Log, f, bottom_chunks[1]);
             // Draw status bar
-            self.app.view(&Id::StatusBarLocal, f, status_bar_chunks[0]);
+            self.app
+                .view(&Id::StatusBarHostBridge, f, status_bar_chunks[0]);
             self.app.view(&Id::StatusBarRemote, f, status_bar_chunks[1]);
             // @! Draw popups
             if self.app.mounted(&Id::FatalPopup) {
@@ -555,7 +556,7 @@ impl FileTransferActivity {
     pub(super) fn mount_find(&mut self, msg: impl ToString, fuzzy_search: bool) {
         // Get color
         let (bg, fg, hg) = match self.browser.tab() {
-            FileExplorerTab::Local | FileExplorerTab::FindLocal => (
+            FileExplorerTab::HostBridge | FileExplorerTab::FindHostBridge => (
                 self.theme().transfer_local_explorer_background,
                 self.theme().transfer_local_explorer_foreground,
                 self.theme().transfer_local_explorer_highlighted,
@@ -763,7 +764,7 @@ impl FileTransferActivity {
     pub(super) fn mount_file_sorting(&mut self) {
         let sorting_color = self.theme().transfer_status_sorting;
         let sorting: FileSorting = match self.browser.tab() {
-            FileExplorerTab::Local => self.local().get_file_sorting(),
+            FileExplorerTab::HostBridge => self.host_bridge().get_file_sorting(),
             FileExplorerTab::Remote => self.remote().get_file_sorting(),
             _ => return,
         };
@@ -901,7 +902,7 @@ impl FileTransferActivity {
         assert!(self
             .app
             .remount(
-                Id::StatusBarLocal,
+                Id::StatusBarHostBridge,
                 Box::new(components::StatusBarLocal::new(
                     &self.browser,
                     sorting_color,

@@ -53,7 +53,7 @@ impl FileTransferActivity {
     }
 
     fn local_copy_file(&mut self, entry: &File, dest: &Path) {
-        match self.host.copy(entry, dest) {
+        match self.host_bridge.copy(entry, dest) {
             Ok(_) => {
                 self.log(
                     LogLevel::Info,
@@ -136,7 +136,7 @@ impl FileTransferActivity {
                 return Err(err);
             }
             // Stat dir
-            let tempdir_entry = match self.host.stat(tempdir_path.as_path()) {
+            let tempdir_entry = match self.host_bridge.stat(tempdir_path.as_path()) {
                 Ok(e) => e,
                 Err(err) => {
                     self.log_and_alert(
@@ -189,7 +189,7 @@ impl FileTransferActivity {
                 return Err(err);
             }
             // Get local fs entry
-            let tmpfile_entry = match self.host.stat(tmpfile.path()) {
+            let tmpfile_entry = match self.host_bridge.stat(tmpfile.path()) {
                 Ok(e) if e.is_file() => e,
                 Ok(_) => panic!("{} is not a file", tmpfile.path().display()),
                 Err(err) => {

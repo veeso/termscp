@@ -1,6 +1,7 @@
 # Changelog
 
 - [Changelog](#changelog)
+  - [0.16.0](#0160)
   - [0.15.0](#0150)
   - [0.14.0](#0140)
   - [0.13.0](#0130)
@@ -36,6 +37,18 @@
   - [0.1.0](#010)
 
 ---
+
+## 0.16.0
+
+Released on
+
+- [**Multi Host support**](https://github.com/veeso/termscp/issues/285):
+  - Now it is possible to work on two different remotes `remote A -> remote B` instead of just `localhost -> remote`
+  - Cli arguments now accept an additional `remote-args` for the left panel.
+  - For more details read this issue <https://github.com/veeso/termscp/issues/285>.
+  - Change between auth forms with `<BACKTAB>`
+  - Bookmarks are automatically loaded into the last auth form.
+- [Issue 290](https://github.com/veeso/termscp/issues/290): Password prompt was broken
 
 ## 0.15.0
 

@@ -136,7 +136,7 @@ impl FileToRemove {
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct FileUpdate {
     /// Path to file which has changed
-    local: PathBuf,
+    host_bridge: PathBuf,
     /// Path to remote file to update
     remote: PathBuf,
 }
@@ -152,13 +152,13 @@ impl FileUpdate {
     fn new(changed_path: PathBuf, local_watched_path: &Path, remote_synched_path: &Path) -> Self {
         Self {
             remote: remote_relative_path(&changed_path, local_watched_path, remote_synched_path),
-            local: changed_path,
+            host_bridge: changed_path,
         }
     }
 
     /// Get path to local file to sync
-    pub fn local(&self) -> &Path {
-        self.local.as_path()
+    pub fn host_bridge(&self) -> &Path {
+        self.host_bridge.as_path()
     }
 
     /// Get path to remote file to sync
@@ -288,7 +288,7 @@ mod test {
             Path::new("/home/foo/bar.txt"),
         );
         if let FsChange::Update(change) = change {
-            assert_eq!(change.local(), Path::new("/tmp/bar.txt"),);
+            assert_eq!(change.host_bridge(), Path::new("/tmp/bar.txt"),);
             assert_eq!(change.remote(), Path::new("/home/foo/bar.txt"));
         } else {
             panic!("not an update");
@@ -303,7 +303,7 @@ mod test {
             Path::new("/home/foo/temp"),
         );
         if let FsChange::Update(change) = change {
-            assert_eq!(change.local(), Path::new("/tmp/abc/foo.txt"),);
+            assert_eq!(change.host_bridge(), Path::new("/tmp/abc/foo.txt"),);
             assert_eq!(change.remote(), Path::new("/home/foo/temp/abc/foo.txt"));
         } else {
             panic!("not an update");

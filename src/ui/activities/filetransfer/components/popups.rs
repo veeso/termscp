@@ -1551,8 +1551,8 @@ pub struct StatusBarLocal {
 
 impl StatusBarLocal {
     pub fn new(browser: &Browser, sorting_color: Color, hidden_color: Color) -> Self {
-        let file_sorting = file_sorting_label(browser.local().file_sorting);
-        let hidden_files = hidden_files_label(browser.local().hidden_files_visible());
+        let file_sorting = file_sorting_label(browser.host_bridge().file_sorting);
+        let hidden_files = hidden_files_label(browser.host_bridge().hidden_files_visible());
         Self {
             component: Span::default().spans(&[
                 TextSpan::new("File sorting: ").fg(sorting_color),

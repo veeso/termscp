@@ -23,20 +23,30 @@ use crate::filetransfer::{FileTransferParams, FileTransferProtocol};
 use crate::system::bookmarks_client::BookmarksClient;
 use crate::system::config_client::ConfigClient;
 
-// radio
-const RADIO_PROTOCOL_SFTP: usize = 0;
-const RADIO_PROTOCOL_SCP: usize = 1;
-const RADIO_PROTOCOL_FTP: usize = 2;
-const RADIO_PROTOCOL_FTPS: usize = 3;
-const RADIO_PROTOCOL_S3: usize = 4;
-const RADIO_PROTOCOL_KUBE: usize = 5;
-const RADIO_PROTOCOL_WEBDAV: usize = 6;
-const RADIO_PROTOCOL_SMB: usize = 7;
+// host bridge protocol radio
+const HOST_BRIDGE_RADIO_PROTOCOL_LOCALHOST: usize = 0;
+const HOST_BRIDGE_RADIO_PROTOCOL_SFTP: usize = 1;
+const HOST_BRIDGE_RADIO_PROTOCOL_SCP: usize = 2;
+const HOST_BRIDGE_RADIO_PROTOCOL_FTP: usize = 3;
+const HOST_BRIDGE_RADIO_PROTOCOL_FTPS: usize = 4;
+const HOST_BRIDGE_RADIO_PROTOCOL_S3: usize = 5;
+const HOST_BRIDGE_RADIO_PROTOCOL_KUBE: usize = 6;
+const HOST_BRIDGE_RADIO_PROTOCOL_WEBDAV: usize = 7;
+const HOST_BRIDGE_RADIO_PROTOCOL_SMB: usize = 8; // Keep as last
+
+// remote protocol radio
+const REMOTE_RADIO_PROTOCOL_SFTP: usize = 0;
+const REMOTE_RADIO_PROTOCOL_SCP: usize = 1;
+const REMOTE_RADIO_PROTOCOL_FTP: usize = 2;
+const REMOTE_RADIO_PROTOCOL_FTPS: usize = 3;
+const REMOTE_RADIO_PROTOCOL_S3: usize = 4;
+const REMOTE_RADIO_PROTOCOL_KUBE: usize = 5;
+const REMOTE_RADIO_PROTOCOL_WEBDAV: usize = 6;
+const REMOTE_RADIO_PROTOCOL_SMB: usize = 7; // Keep as last
 
 // -- components
 #[derive(Debug, Eq, PartialEq, Clone, Hash)]
 pub enum Id {
-    Address,
     BookmarkName,
     BookmarkSavePassword,
     BookmarksList,
@@ -45,22 +55,33 @@ pub enum Id {
     ErrorPopup,
     GlobalListener,
     HelpFooter,
+    HostBridge(AuthFormId),
     InfoPopup,
     InstallUpdatePopup,
     Keybindings,
+    NewVersionChangelog,
+    NewVersionDisclaimer,
+    QuitPopup,
+    RecentsList,
+    Remote(AuthFormId),
+    Subtitle,
+    Title,
+    WaitPopup,
+    WindowSizeError,
+}
+
+#[derive(Debug, Eq, PartialEq, Clone, Hash)]
+pub enum AuthFormId {
+    Address,
     KubeNamespace,
     KubeClusterUrl,
     KubeUsername,
     KubeClientCert,
     KubeClientKey,
     LocalDirectory,
-    NewVersionChangelog,
-    NewVersionDisclaimer,
     Password,
     Port,
     Protocol,
-    QuitPopup,
-    RecentsList,
     RemoteDirectory,
     S3AccessKey,
     S3Bucket,
@@ -74,23 +95,19 @@ pub enum Id {
     SmbShare,
     #[cfg(unix)]
     SmbWorkgroup,
-    Subtitle,
-    Title,
     Username,
-    WaitPopup,
     WebDAVUri,
-    WindowSizeError,
 }
 
 #[derive(Debug, Eq, PartialEq)]
-pub enum Msg {
+enum Msg {
     Form(FormMsg),
     Ui(UiMsg),
     None,
 }
 
 #[derive(Debug, PartialEq, Eq)]
-pub enum FormMsg {
+enum FormMsg {
     Connect,
     DeleteBookmark,
     DeleteRecent,
@@ -98,15 +115,14 @@ pub enum FormMsg {
     InstallUpdate,
     LoadBookmark(usize),
     LoadRecent(usize),
-    ProtocolChanged(FileTransferProtocol),
+    HostBridgeProtocolChanged(HostBridgeProtocol),
+    RemoteProtocolChanged(FileTransferProtocol),
     Quit,
-    SaveBookmark,
+    SaveBookmark(FormTab),
 }
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum UiMsg {
-    AddressBlurDown,
-    AddressBlurUp,
     BookmarksListBlur,
     BookmarksTabBlur,
     CloseDeleteBookmark,
@@ -117,6 +133,25 @@ pub enum UiMsg {
     CloseKeybindingsPopup,
     CloseQuitPopup,
     CloseSaveBookmark,
+    HostBridge(UiAuthFormMsg),
+    RececentsListBlur,
+    Remote(UiAuthFormMsg),
+    BookmarkNameBlur,
+    SaveBookmarkPasswordBlur,
+    ShowDeleteBookmarkPopup,
+    ShowDeleteRecentPopup,
+    ShowKeybindingsPopup,
+    ShowQuitPopup,
+    ShowReleaseNotes,
+    ShowSaveBookmarkPopup,
+    WindowResized,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum UiAuthFormMsg {
+    AddressBlurDown,
+    AddressBlurUp,
+    ChangeFormTab,
     KubeNamespaceBlurDown,
     KubeNamespaceBlurUp,
     KubeClusterUrlBlurDown,
@@ -136,7 +171,6 @@ pub enum UiMsg {
     PortBlurUp,
     ProtocolBlurDown,
     ProtocolBlurUp,
-    RececentsListBlur,
     RemoteDirectoryBlurDown,
     RemoteDirectoryBlurUp,
     S3AccessKeyBlurDown,
@@ -163,19 +197,10 @@ pub enum UiMsg {
     SmbWorkgroupDown,
     #[cfg(unix)]
     SmbWorkgroupUp,
-    BookmarkNameBlur,
-    SaveBookmarkPasswordBlur,
-    ShowDeleteBookmarkPopup,
-    ShowDeleteRecentPopup,
-    ShowKeybindingsPopup,
-    ShowQuitPopup,
-    ShowReleaseNotes,
-    ShowSaveBookmarkPopup,
     UsernameBlurDown,
     UsernameBlurUp,
     WebDAVUriBlurDown,
     WebDAVUriBlurUp,
-    WindowResized,
 }
 
 /// Auth form input mask
@@ -184,8 +209,21 @@ enum InputMask {
     Generic,
     AwsS3,
     Kube,
+    Localhost,
     Smb,
     WebDAV,
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+enum HostBridgeProtocol {
+    Localhost,
+    Remote(FileTransferProtocol),
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum FormTab {
+    HostBridge,
+    Remote,
 }
 
 // Store keys
@@ -203,8 +241,11 @@ pub struct AuthActivity {
     exit_reason: Option<ExitReason>,
     /// Should redraw ui
     redraw: bool,
-    /// Protocol
-    protocol: FileTransferProtocol,
+    /// Host bridge protocol
+    host_bridge_protocol: HostBridgeProtocol,
+    last_form_tab: FormTab,
+    /// Remote file transfer protocol
+    remote_protocol: FileTransferProtocol,
     context: Option<Context>,
 }
 
@@ -220,9 +261,11 @@ impl AuthActivity {
             context: None,
             bookmarks_list: Vec::new(),
             exit_reason: None,
+            last_form_tab: FormTab::Remote,
             recents_list: Vec::new(),
             redraw: true,
-            protocol: FileTransferProtocol::Sftp,
+            host_bridge_protocol: HostBridgeProtocol::Localhost,
+            remote_protocol: FileTransferProtocol::Sftp,
         }
     }
 
@@ -255,8 +298,23 @@ impl AuthActivity {
     }
 
     /// Get current input mask to show
-    fn input_mask(&self) -> InputMask {
-        match self.protocol {
+    fn remote_input_mask(&self) -> InputMask {
+        Self::file_transfer_protocol_input_mask(self.remote_protocol)
+    }
+
+    /// Get current input mask to show
+    fn host_bridge_input_mask(&self) -> InputMask {
+        match self.host_bridge_protocol {
+            HostBridgeProtocol::Localhost => InputMask::Localhost,
+            HostBridgeProtocol::Remote(protocol) => {
+                Self::file_transfer_protocol_input_mask(protocol)
+            }
+        }
+    }
+
+    /// Get input mask for protocol
+    fn file_transfer_protocol_input_mask(protocol: FileTransferProtocol) -> InputMask {
+        match protocol {
             FileTransferProtocol::AwsS3 => InputMask::AwsS3,
             FileTransferProtocol::Ftp(_)
             | FileTransferProtocol::Scp
@@ -275,7 +333,7 @@ impl Activity for AuthActivity {
     fn on_create(&mut self, mut context: Context) {
         debug!("Initializing activity");
         // Initialize file transfer params
-        context.set_ftparams(FileTransferParams::default());
+        context.set_remote_params(FileTransferParams::default());
         // Set context
         self.context = Some(context);
         // Clear terminal
