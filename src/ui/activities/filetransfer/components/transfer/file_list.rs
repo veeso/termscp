@@ -224,6 +224,7 @@ impl MockComponent for FileList {
                 .chain(table.iter())
                 .enumerate()
                 .map(|(num, row)| {
+                    let real_num = num;
                     let num = if self.has_dot_dot() {
                         num.checked_sub(1).unwrap_or_default()
                     } else {
@@ -235,11 +236,14 @@ impl MockComponent for FileList {
                         .map(|col| {
                             let (fg, bg, mut modifiers) =
                                 tui_realm_stdlib::utils::use_or_default_styles(&self.props, col);
-                            if self.states.is_selected(num) {
+                            if !(self.has_dot_dot() && real_num == 0)
+                                && self.states.is_selected(num)
+                            {
                                 modifiers |= TextModifiers::REVERSED
                                     | TextModifiers::UNDERLINED
                                     | TextModifiers::ITALIC;
                             }
+
                             Span::styled(
                                 col.content.clone(),
                                 Style::default().add_modifier(modifiers).fg(fg).bg(bg),
