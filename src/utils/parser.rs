@@ -102,7 +102,7 @@ static REMOTE_SMB_OPT_REGEX: Lazy<Regex> =
  * - group 1: Version
  *      E.g. termscp-0.3.2 => 0.3.2; v0.4.0 => 0.4.0
  */
-static SEMVER_REGEX: Lazy<Regex> = lazy_regex!(r".*(:?[0-9]\.[0-9]\.[0-9])");
+static SEMVER_REGEX: Lazy<Regex> = lazy_regex!(r"v?((0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*))");
 
 /**
  * Regex matches:
@@ -835,6 +835,8 @@ mod tests {
         assert_eq!(parse_semver("v0.4.1").unwrap(), String::from("0.4.1"),);
         assert_eq!(parse_semver("1.0.0").unwrap(), String::from("1.0.0"),);
         assert!(parse_semver("v1.1").is_none());
+
+        assert_eq!(parse_semver("10.15.10"), Some("10.15.10".to_string()));
     }
 
     #[test]

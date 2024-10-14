@@ -25,7 +25,11 @@ pub fn init(level: LogLevel) -> Result<(), String> {
     let file = open_file(log_file_path.as_path(), true, true, false)
         .map_err(|e| format!("Failed to open file {}: {}", log_file_path.display(), e))?;
     // Prepare log config
-    let config = ConfigBuilder::new().set_time_format_rfc3339().build();
+    let config = ConfigBuilder::new()
+        .set_time_format_rfc3339()
+        .add_filter_allow_str("termscp")
+        .add_filter_allow_str("remotefs")
+        .build();
     // Make logger
     WriteLogger::init(level, config, file).map_err(|e| format!("Failed to initialize logger: {e}"))
 }
