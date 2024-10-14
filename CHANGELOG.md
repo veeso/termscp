@@ -40,7 +40,7 @@
 
 ## 0.16.0
 
-Released on
+Released on 14/10/2024
 
 - [**Multi Host support**](https://github.com/veeso/termscp/issues/285):
   - Now it is possible to work on two different remotes `remote A -> remote B` instead of just `localhost -> remote`
