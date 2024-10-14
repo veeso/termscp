@@ -7,8 +7,8 @@ use std::path::PathBuf;
 use std::str::FromStr;
 
 use tuirealm::props::Color;
-use tuirealm::tui::layout::{Constraint, Direction, Layout};
-use tuirealm::tui::widgets::Clear;
+use tuirealm::ratatui::layout::{Constraint, Direction, Layout};
+use tuirealm::ratatui::widgets::Clear;
 use tuirealm::{State, StateValue, Sub, SubClause, SubEventClause};
 
 use super::{
@@ -140,7 +140,7 @@ impl AuthActivity {
         let mut ctx: Context = self.context.take().unwrap();
         let _ = ctx.terminal().raw_mut().draw(|f| {
             // Check window size
-            let height: u16 = f.size().height;
+            let height: u16 = f.area().height;
             self.check_minimum_window_size(height);
             // Prepare chunks
             let body = Layout::default()
@@ -152,7 +152,7 @@ impl AuthActivity {
                     ]
                     .as_ref(),
                 )
-                .split(f.size());
+                .split(f.area());
             // Footer
             self.app.view(&Id::HelpFooter, f, body[1]);
             let auth_form_len = 7 + self.max_input_mask_size();
@@ -214,43 +214,43 @@ impl AuthActivity {
             self.app.view(&Id::RecentsList, f, bookmark_chunks[1]);
             // Popups
             if self.app.mounted(&Id::ErrorPopup) {
-                let popup = Popup(Size::Percentage(50), Size::Unit(3)).draw_in(f.size());
+                let popup = Popup(Size::Percentage(50), Size::Unit(3)).draw_in(f.area());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::ErrorPopup, f, popup);
             } else if self.app.mounted(&Id::InfoPopup) {
-                let popup = Popup(Size::Percentage(50), Size::Unit(3)).draw_in(f.size());
+                let popup = Popup(Size::Percentage(50), Size::Unit(3)).draw_in(f.area());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::InfoPopup, f, popup);
             } else if self.app.mounted(&Id::WaitPopup) {
-                let popup = Popup(Size::Percentage(50), Size::Unit(3)).draw_in(f.size());
+                let popup = Popup(Size::Percentage(50), Size::Unit(3)).draw_in(f.area());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::WaitPopup, f, popup);
             } else if self.app.mounted(&Id::WindowSizeError) {
-                let popup = Popup(Size::Percentage(80), Size::Percentage(20)).draw_in(f.size());
+                let popup = Popup(Size::Percentage(80), Size::Percentage(20)).draw_in(f.area());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::WindowSizeError, f, popup);
             } else if self.app.mounted(&Id::QuitPopup) {
                 // make popup
-                let popup = Popup(Size::Percentage(30), Size::Unit(3)).draw_in(f.size());
+                let popup = Popup(Size::Percentage(30), Size::Unit(3)).draw_in(f.area());
                 f.render_widget(Clear, popup);
                 self.app.view(&Id::QuitPopup, f, popup);
             } else if self.app.mounted(&Id::DeleteBookmarkPopup) {
                 // make popup
-                let popup = Popup(Size::Percentage(30), Size::Unit(3)).draw_in(f.size());
+                let popup = Popup(Size::Percentage(30), Size::Unit(3)).draw_in(f.area());
                 f.render_widget(Clear, popup);
                 self.app.view(&Id::DeleteBookmarkPopup, f, popup);
             } else if self.app.mounted(&Id::DeleteRecentPopup) {
                 // make popup
-                let popup = Popup(Size::Percentage(30), Size::Unit(3)).draw_in(f.size());
+                let popup = Popup(Size::Percentage(30), Size::Unit(3)).draw_in(f.area());
                 f.render_widget(Clear, popup);
                 self.app.view(&Id::DeleteRecentPopup, f, popup);
             } else if self.app.mounted(&Id::NewVersionChangelog) {
                 // make popup
-                let popup = Popup(Size::Percentage(90), Size::Percentage(85)).draw_in(f.size());
+                let popup = Popup(Size::Percentage(90), Size::Percentage(85)).draw_in(f.area());
                 f.render_widget(Clear, popup);
                 let popup_chunks = Layout::default()
                     .direction(Direction::Vertical)
@@ -266,12 +266,12 @@ impl AuthActivity {
                 self.app.view(&Id::InstallUpdatePopup, f, popup_chunks[1]);
             } else if self.app.mounted(&Id::Keybindings) {
                 // make popup
-                let popup = Popup(Size::Percentage(50), Size::Percentage(70)).draw_in(f.size());
+                let popup = Popup(Size::Percentage(50), Size::Percentage(70)).draw_in(f.area());
                 f.render_widget(Clear, popup);
                 self.app.view(&Id::Keybindings, f, popup);
             } else if self.app.mounted(&Id::BookmarkSavePassword) {
                 // make popup
-                let popup = Popup(Size::Percentage(20), Size::Percentage(20)).draw_in(f.size());
+                let popup = Popup(Size::Percentage(20), Size::Percentage(20)).draw_in(f.area());
                 f.render_widget(Clear, popup);
                 let popup_chunks = Layout::default()
                     .direction(Direction::Vertical)
@@ -294,8 +294,8 @@ impl AuthActivity {
 
     fn render_host_bridge_input_mask(
         &mut self,
-        f: &mut tuirealm::tui::Frame<'_>,
-        area: tuirealm::tui::layout::Rect,
+        f: &mut tuirealm::ratatui::Frame<'_>,
+        area: tuirealm::ratatui::layout::Rect,
     ) {
         let protocol_and_mask_chunks = Layout::default()
             .constraints(
@@ -372,8 +372,8 @@ impl AuthActivity {
 
     fn render_remote_input_mask(
         &mut self,
-        f: &mut tuirealm::tui::Frame<'_>,
-        area: tuirealm::tui::layout::Rect,
+        f: &mut tuirealm::ratatui::Frame<'_>,
+        area: tuirealm::ratatui::layout::Rect,
     ) {
         let protocol_and_mask_chunks = Layout::default()
             .constraints(
@@ -2019,43 +2019,15 @@ impl AuthActivity {
 
     /// Returns a sub clause which requires that no popup is mounted in order to be satisfied
     fn no_popup_mounted_clause() -> SubClause<Id> {
-        SubClause::And(
-            Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
-                Id::ErrorPopup,
-            )))),
-            Box::new(SubClause::And(
-                Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
-                    Id::InfoPopup,
-                )))),
-                Box::new(SubClause::And(
-                    Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
-                        Id::Keybindings,
-                    )))),
-                    Box::new(SubClause::And(
-                        Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
-                            Id::DeleteBookmarkPopup,
-                        )))),
-                        Box::new(SubClause::And(
-                            Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
-                                Id::DeleteRecentPopup,
-                            )))),
-                            Box::new(SubClause::And(
-                                Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
-                                    Id::InstallUpdatePopup,
-                                )))),
-                                Box::new(SubClause::And(
-                                    Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
-                                        Id::BookmarkSavePassword,
-                                    )))),
-                                    Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
-                                        Id::WaitPopup,
-                                    )))),
-                                )),
-                            )),
-                        )),
-                    )),
-                )),
-            )),
+        tuirealm::subclause_and_not!(
+            Id::ErrorPopup,
+            Id::InfoPopup,
+            Id::Keybindings,
+            Id::DeleteBookmarkPopup,
+            Id::DeleteRecentPopup,
+            Id::InstallUpdatePopup,
+            Id::BookmarkSavePassword,
+            Id::WaitPopup
         )
     }
 }

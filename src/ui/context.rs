@@ -3,7 +3,7 @@
 //! `Context` is the module which provides all the functionalities related to the UI data holder, called Context
 
 // Locals
-use tuirealm::terminal::TerminalBridge;
+use tuirealm::terminal::{CrosstermTerminalAdapter, TerminalBridge};
 
 use super::store::Store;
 use crate::filetransfer::{FileTransferParams, HostBridgeParams};
@@ -18,7 +18,7 @@ pub struct Context {
     bookmarks_client: Option<BookmarksClient>,
     config_client: ConfigClient,
     pub(crate) store: Store,
-    pub(crate) terminal: TerminalBridge,
+    pub(crate) terminal: TerminalBridge<CrosstermTerminalAdapter>,
     theme_provider: ThemeProvider,
     error: Option<String>,
 }
@@ -31,22 +31,19 @@ impl Context {
         theme_provider: ThemeProvider,
         error: Option<String>,
     ) -> Context {
-        let mut ctx = Context {
+        let mut terminal = TerminalBridge::init_crossterm().expect("Could not initialize terminal");
+        let _ = terminal.disable_mouse_capture();
+
+        Context {
             bookmarks_client,
             config_client,
             host_bridge_params: None,
             remote_params: None,
             store: Store::init(),
-            terminal: TerminalBridge::new().expect("Could not initialize terminal"),
+            terminal,
             theme_provider,
             error,
-        };
-
-        // Init terminal state
-        let _ = ctx.terminal.enable_raw_mode();
-        let _ = ctx.terminal.enter_alternate_screen();
-
-        ctx
+        }
     }
 
     // -- getters
@@ -91,7 +88,7 @@ impl Context {
         &mut self.theme_provider
     }
 
-    pub fn terminal(&mut self) -> &mut TerminalBridge {
+    pub fn terminal(&mut self) -> &mut TerminalBridge<CrosstermTerminalAdapter> {
         &mut self.terminal
     }
 
@@ -115,8 +112,8 @@ impl Context {
 
 impl Drop for Context {
     fn drop(&mut self) {
-        // Re-enable terminal stuff
-        let _ = self.terminal.disable_raw_mode();
-        let _ = self.terminal.leave_alternate_screen();
+        if let Err(err) = self.terminal.restore() {
+            error!("Could not restore terminal: {err}");
+        }
     }
 }

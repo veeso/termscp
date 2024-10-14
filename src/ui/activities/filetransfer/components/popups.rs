@@ -1036,7 +1036,7 @@ pub struct ProgressBarFull {
 }
 
 impl ProgressBarFull {
-    pub fn new<S: AsRef<str>>(prog: f64, label: S, title: S, color: Color) -> Self {
+    pub fn new<S: Into<String>>(prog: f64, label: S, title: S, color: Color) -> Self {
         Self {
             component: ProgressBar::default()
                 .borders(
@@ -1074,7 +1074,7 @@ pub struct ProgressBarPartial {
 }
 
 impl ProgressBarPartial {
-    pub fn new<S: AsRef<str>>(prog: f64, label: S, title: S, color: Color) -> Self {
+    pub fn new<S: Into<String>>(prog: f64, label: S, title: S, color: Color) -> Self {
         Self {
             component: ProgressBar::default()
                 .borders(

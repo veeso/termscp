@@ -7,7 +7,7 @@ use std::time::{Duration, SystemTime};
 
 use chrono::prelude::*;
 use remotefs::fs::UnixPexClass;
-use tuirealm::tui::style::Color;
+use tuirealm::ratatui::style::Color;
 use unicode_width::UnicodeWidthStr;
 
 /// Convert permissions bytes of permissions value into ls notation (e.g. rwx,-wx,--x)

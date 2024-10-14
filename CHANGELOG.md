@@ -50,6 +50,8 @@ Released on
   - Bookmarks are automatically loaded into the last auth form.
 - [Issue 289](https://github.com/veeso/termscp/issues/289): Use `uzers` instead of the dead package `users` which has several vulnerabilities
 - [Issue 290](https://github.com/veeso/termscp/issues/290): Password prompt was broken
+- [Issue 298](https://github.com/veeso/termscp/issues/298): tuirealm 2.x
+  - Fixed some performance issues where sometimes the app froze for a couple of seconds, thanks to this <https://github.com/veeso/tui-realm/pull/78>.
 
 ## 0.15.0
 

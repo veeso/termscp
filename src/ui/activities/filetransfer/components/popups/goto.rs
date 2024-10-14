@@ -198,7 +198,7 @@ impl GotoPopup {
 }
 
 impl MockComponent for GotoPopup {
-    fn view(&mut self, frame: &mut tuirealm::Frame, area: tuirealm::tui::prelude::Rect) {
+    fn view(&mut self, frame: &mut tuirealm::Frame, area: tuirealm::ratatui::prelude::Rect) {
         self.input.view(frame, area);
     }
 

@@ -10,6 +10,8 @@ pub mod auth;
 pub mod filetransfer;
 pub mod setup;
 
+const CROSSTERM_MAX_POLL: usize = 10;
+
 // -- Exit reason
 
 pub enum ExitReason {
