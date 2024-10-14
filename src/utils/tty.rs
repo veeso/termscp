@@ -2,13 +2,16 @@
 //!
 //! `Utils` implements utilities functions to work with layouts
 
-use tuirealm::terminal::TerminalBridge;
+use tuirealm::terminal::{TerminalAdapter, TerminalBridge};
 
 /// Read a secret from tty with customisable prompt
-pub fn read_secret_from_tty(
-    terminal_bridge: &mut TerminalBridge,
+pub fn read_secret_from_tty<T>(
+    terminal_bridge: &mut TerminalBridge<T>,
     prompt: impl ToString,
-) -> std::io::Result<Option<String>> {
+) -> std::io::Result<Option<String>>
+where
+    T: TerminalAdapter,
+{
     let _ = terminal_bridge.disable_raw_mode();
     let _ = terminal_bridge.leave_alternate_screen();
     let res = match rpassword::prompt_password(prompt) {

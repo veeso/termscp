@@ -19,7 +19,7 @@ use tuirealm::listener::EventListenerCfg;
 use tuirealm::props::Color;
 use tuirealm::{Application, NoUserEvent, Update};
 
-use super::{Activity, Context, ExitReason};
+use super::{Activity, Context, ExitReason, CROSSTERM_MAX_POLL};
 use crate::config::themes::Theme;
 use crate::system::config_client::ConfigClient;
 use crate::system::theme_provider::ThemeProvider;
@@ -262,7 +262,7 @@ impl SetupActivity {
         Self {
             app: Application::init(
                 EventListenerCfg::default()
-                    .default_input_listener(ticks)
+                    .crossterm_input_listener(ticks, CROSSTERM_MAX_POLL)
                     .poll_timeout(ticks),
             ),
             exit_reason: None,

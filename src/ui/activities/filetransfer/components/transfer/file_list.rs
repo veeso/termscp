@@ -6,8 +6,8 @@ use tuirealm::command::{Cmd, CmdResult, Direction, Position};
 use tuirealm::props::{
     Alignment, AttrValue, Attribute, Borders, Color, Style, Table, TextModifiers,
 };
-use tuirealm::tui::text::{Line, Span};
-use tuirealm::tui::widgets::{List as TuiList, ListDirection, ListItem, ListState};
+use tuirealm::ratatui::text::{Line, Span};
+use tuirealm::ratatui::widgets::{List as TuiList, ListDirection, ListItem, ListState};
 use tuirealm::{MockComponent, Props, State, StateValue};
 
 pub const FILE_LIST_CMD_SELECT_ALL: &str = "A";
@@ -175,7 +175,7 @@ impl FileList {
 }
 
 impl MockComponent for FileList {
-    fn view(&mut self, frame: &mut tuirealm::Frame, area: tuirealm::tui::layout::Rect) {
+    fn view(&mut self, frame: &mut tuirealm::Frame, area: tuirealm::ratatui::layout::Rect) {
         let title = self
             .props
             .get_or(

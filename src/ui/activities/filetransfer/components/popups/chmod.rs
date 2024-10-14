@@ -3,7 +3,7 @@ use tui_realm_stdlib::Checkbox;
 use tuirealm::command::{Cmd, CmdResult, Direction};
 use tuirealm::event::{Key, KeyEvent};
 use tuirealm::props::{Alignment, AttrValue, Attribute, BorderSides, Borders, Color};
-use tuirealm::tui::layout::{Constraint, Direction as LayoutDirection, Layout};
+use tuirealm::ratatui::layout::{Constraint, Direction as LayoutDirection, Layout};
 use tuirealm::{Component, Event, MockComponent, NoUserEvent, Props, State, StateValue};
 
 use super::{Msg, TransferMsg, UiMsg};
@@ -186,7 +186,7 @@ impl MockComponent for ChmodPopup {
         State::One(StateValue::U32(self.get_mode().into()))
     }
 
-    fn view(&mut self, frame: &mut tuirealm::Frame, area: tuirealm::tui::layout::Rect) {
+    fn view(&mut self, frame: &mut tuirealm::Frame, area: tuirealm::ratatui::layout::Rect) {
         if self.props.get_or(Attribute::Display, AttrValue::Flag(true)) != AttrValue::Flag(true) {
             return;
         }

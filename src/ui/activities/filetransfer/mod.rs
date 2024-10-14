@@ -28,7 +28,7 @@ use session::TransferPayload;
 use tempfile::TempDir;
 use tuirealm::{Application, EventListenerCfg, NoUserEvent};
 
-use super::{Activity, Context, ExitReason};
+use super::{Activity, Context, ExitReason, CROSSTERM_MAX_POLL};
 use crate::config::themes::Theme;
 use crate::explorer::{FileExplorer, FileSorting};
 use crate::filetransfer::{
@@ -256,7 +256,7 @@ impl FileTransferActivity {
             app: Application::init(
                 EventListenerCfg::default()
                     .poll_timeout(ticks)
-                    .default_input_listener(ticks),
+                    .crossterm_input_listener(ticks, CROSSTERM_MAX_POLL),
             ),
             redraw: true,
             host_bridge,

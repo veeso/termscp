@@ -2,7 +2,7 @@
 //!
 //! `Utils` implements utilities functions to work with layouts
 
-use tuirealm::tui::layout::{Constraint, Direction, Layout, Rect};
+use tuirealm::ratatui::layout::{Constraint, Direction, Layout, Rect};
 
 /// Size type for UI renders
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]

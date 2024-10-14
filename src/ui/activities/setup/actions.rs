@@ -6,7 +6,7 @@
 // Locals
 use std::env;
 
-use tuirealm::tui::style::Color;
+use tuirealm::ratatui::style::Color;
 use tuirealm::{State, StateValue};
 
 use super::{Id, IdSsh, IdTheme, SetupActivity, ViewLayout};

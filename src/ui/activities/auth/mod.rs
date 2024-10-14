@@ -17,7 +17,7 @@ use tuirealm::application::PollStrategy;
 use tuirealm::listener::EventListenerCfg;
 use tuirealm::{Application, NoUserEvent, Update};
 
-use super::{Activity, Context, ExitReason};
+use super::{Activity, Context, ExitReason, CROSSTERM_MAX_POLL};
 use crate::config::themes::Theme;
 use crate::filetransfer::{FileTransferParams, FileTransferProtocol};
 use crate::system::bookmarks_client::BookmarksClient;
@@ -255,7 +255,7 @@ impl AuthActivity {
         AuthActivity {
             app: Application::init(
                 EventListenerCfg::default()
-                    .default_input_listener(ticks)
+                    .crossterm_input_listener(ticks, CROSSTERM_MAX_POLL)
                     .poll_timeout(ticks),
             ),
             context: None,

@@ -5,7 +5,7 @@
 use tuirealm::command::{Cmd, CmdResult, Direction, Position};
 use tuirealm::event::{Key, KeyEvent};
 use tuirealm::props::{Alignment, AttrValue, Attribute, Borders, Color, Style, Table};
-use tuirealm::tui::widgets::{List as TuiList, ListDirection, ListItem, ListState};
+use tuirealm::ratatui::widgets::{List as TuiList, ListDirection, ListItem, ListState};
 use tuirealm::{Component, Event, MockComponent, NoUserEvent, Props, State, StateValue};
 
 use super::{Msg, UiMsg};
@@ -32,7 +32,7 @@ impl Log {
 }
 
 impl MockComponent for Log {
-    fn view(&mut self, frame: &mut tuirealm::Frame, area: tuirealm::tui::layout::Rect) {
+    fn view(&mut self, frame: &mut tuirealm::Frame, area: tuirealm::ratatui::layout::Rect) {
         let width: usize = area.width as usize - 4;
         let focus = self
             .props

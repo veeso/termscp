@@ -7,7 +7,7 @@
 // Ext
 use std::path::PathBuf;
 
-use tuirealm::tui::layout::{Constraint, Direction, Layout};
+use tuirealm::ratatui::layout::{Constraint, Direction, Layout};
 use tuirealm::{State, StateValue};
 
 use super::{
@@ -50,7 +50,7 @@ impl SetupActivity {
                     ]
                     .as_ref(),
                 )
-                .split(f.size());
+                .split(f.area());
             // Render common widget
             self.app.view(&Id::Common(IdCommon::Header), f, chunks[0]);
             self.app.view(&Id::Common(IdCommon::Footer), f, chunks[2]);

@@ -9,7 +9,7 @@ use std::str::FromStr;
 // Ext
 use bytesize::ByteSize;
 use lazy_regex::{Lazy, Regex};
-use tuirealm::tui::style::Color;
+use tuirealm::ratatui::style::Color;
 use tuirealm::utils::parser as tuirealm_parser;
 
 #[cfg(smb)]

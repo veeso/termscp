@@ -112,7 +112,7 @@ mod tests {
     use std::path::PathBuf;
 
     use pretty_assertions::assert_eq;
-    use tuirealm::tui::style::Color;
+    use tuirealm::ratatui::style::Color;
 
     use super::*;
     use crate::config::bookmarks::{Bookmark, KubeParams, S3Params, SmbParams, UserHosts};
