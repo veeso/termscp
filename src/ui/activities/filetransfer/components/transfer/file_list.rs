@@ -4,7 +4,7 @@
 
 use tuirealm::command::{Cmd, CmdResult, Direction, Position};
 use tuirealm::props::{
-    Alignment, AttrValue, Attribute, Borders, Color, Style, Table, TextModifiers,
+    Alignment, AttrValue, Attribute, Borders, Color, Style, Table, TextModifiers, TextSpan,
 };
 use tuirealm::ratatui::text::{Line, Span};
 use tuirealm::ratatui::widgets::{List as TuiList, ListDirection, ListItem, ListState};
@@ -12,6 +12,7 @@ use tuirealm::{MockComponent, Props, State, StateValue};
 
 pub const FILE_LIST_CMD_SELECT_ALL: &str = "A";
 pub const FILE_LIST_CMD_DESELECT_ALL: &str = "D";
+const PROP_DOT_DOT: &str = "dot_dot";
 
 /// OwnStates contains states for this component
 #[derive(Clone, Default)]
@@ -22,8 +23,8 @@ struct OwnStates {
 
 impl OwnStates {
     /// Initialize list states
-    pub fn init_list_states(&mut self, len: usize) {
-        self.selected = Vec::with_capacity(len);
+    pub fn init_list_states(&mut self, len: usize, has_dot_dot: bool) {
+        self.selected = Vec::with_capacity(len + if has_dot_dot { 1 } else { 0 });
         self.fix_list_index();
     }
 
@@ -107,9 +108,9 @@ impl OwnStates {
     }
 
     /// Select all files
-    pub fn select_all(&mut self) {
+    pub fn select_all(&mut self, has_dot_dot: bool) {
         for i in 0..self.list_len() {
-            self.select(i);
+            self.select(i + if has_dot_dot { 1 } else { 0 });
         }
     }
 
@@ -172,6 +173,20 @@ impl FileList {
         self.attr(Attribute::Content, AttrValue::Table(rows));
         self
     }
+
+    /// If enabled, show `..` entry at the beginning of the list
+    pub fn dot_dot(mut self, show: bool) -> Self {
+        self.attr(Attribute::Custom(PROP_DOT_DOT), AttrValue::Flag(show));
+        self
+    }
+
+    /// Returns the value of the `dot_dot` property
+    fn has_dot_dot(&self) -> bool {
+        self.props
+            .get(Attribute::Custom(PROP_DOT_DOT))
+            .map(|x| x.unwrap_flag())
+            .unwrap_or(false)
+    }
 }
 
 impl MockComponent for FileList {
@@ -193,15 +208,28 @@ impl MockComponent for FileList {
             .unwrap_flag();
         let div = tui_realm_stdlib::utils::get_block(borders, Some(title), focus, None);
         // Make list entries
+        let init_table_iter = if self.has_dot_dot() {
+            vec![vec![TextSpan::from("..")]]
+        } else {
+            vec![]
+        };
+
         let list_items: Vec<ListItem> = match self
             .props
             .get(Attribute::Content)
             .map(|x| x.unwrap_table())
         {
-            Some(table) => table
+            Some(table) => init_table_iter
                 .iter()
+                .chain(table.iter())
                 .enumerate()
                 .map(|(num, row)| {
+                    let num = if self.has_dot_dot() {
+                        num.checked_sub(1).unwrap_or_default()
+                    } else {
+                        num
+                    };
+
                     let columns: Vec<Span> = row
                         .iter()
                         .map(|col| {
@@ -255,6 +283,7 @@ impl MockComponent for FileList {
                     Some(line) => line.len(),
                     _ => 0,
                 },
+                self.has_dot_dot(),
             );
             self.states.fix_list_index();
         }
@@ -265,8 +294,16 @@ impl MockComponent for FileList {
     }
 
     fn state(&self) -> State {
+        if self.has_dot_dot() && self.states.list_index == 0 {
+            return State::One(StateValue::String("..".to_string()));
+        }
+
         match self.states.is_selection_empty() {
-            true => State::One(StateValue::Usize(self.states.list_index())),
+            true => State::One(StateValue::Usize(if self.has_dot_dot() {
+                self.states.list_index.checked_sub(1).unwrap_or_default()
+            } else {
+                self.states.list_index
+            })),
             false => State::Vec(
                 self.states
                     .get_selection()
@@ -334,7 +371,7 @@ impl MockComponent for FileList {
                 }
             }
             Cmd::Custom(FILE_LIST_CMD_SELECT_ALL) => {
-                self.states.select_all();
+                self.states.select_all(self.has_dot_dot());
                 CmdResult::None
             }
             Cmd::Custom(FILE_LIST_CMD_DESELECT_ALL) => {
@@ -342,7 +379,15 @@ impl MockComponent for FileList {
                 CmdResult::None
             }
             Cmd::Toggle => {
-                self.states.toggle_file(self.states.list_index());
+                if self.has_dot_dot() && self.states.list_index() == 0 {
+                    return CmdResult::None;
+                }
+
+                self.states.toggle_file(if self.has_dot_dot() {
+                    self.states.list_index().checked_sub(1).unwrap_or_default()
+                } else {
+                    self.states.list_index()
+                });
                 CmdResult::None
             }
             _ => CmdResult::None,
