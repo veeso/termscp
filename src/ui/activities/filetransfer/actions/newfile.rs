@@ -6,13 +6,15 @@
 use std::fs::File as StdFile;
 use std::path::PathBuf;
 
+use remotefs::fs::Metadata;
+
 use super::{File, FileTransferActivity, LogLevel};
 
 impl FileTransferActivity {
     pub(crate) fn action_local_newfile(&mut self, input: String) {
         // Check if file exists
         let mut file_exists: bool = false;
-        for file in self.local().iter_files_all() {
+        for file in self.host_bridge().iter_files_all() {
             if input == file.name() {
                 file_exists = true;
             }
@@ -21,19 +23,35 @@ impl FileTransferActivity {
             self.log_and_alert(LogLevel::Warn, format!("File \"{input}\" already exists",));
             return;
         }
+
         // Create file
         let file_path: PathBuf = PathBuf::from(input.as_str());
-        if let Err(err) = self.host.open_file_write(file_path.as_path()) {
+        let writer = match self
+            .host_bridge
+            .create_file(file_path.as_path(), &Metadata::default())
+        {
+            Ok(f) => f,
+            Err(err) => {
+                self.log_and_alert(
+                    LogLevel::Error,
+                    format!("Could not create file \"{}\": {}", file_path.display(), err),
+                );
+                return;
+            }
+        };
+        // finalize write
+        if let Err(err) = self.host_bridge.finalize_write(writer) {
             self.log_and_alert(
                 LogLevel::Error,
-                format!("Could not create file \"{}\": {}", file_path.display(), err),
+                format!("Could not write file \"{}\": {}", file_path.display(), err),
             );
-        } else {
-            self.log(
-                LogLevel::Info,
-                format!("Created file \"{}\"", file_path.display()),
-            );
+            return;
         }
+
+        self.log(
+            LogLevel::Info,
+            format!("Created file \"{}\"", file_path.display()),
+        );
     }
 
     pub(crate) fn action_remote_newfile(&mut self, input: String) {
@@ -57,7 +75,7 @@ impl FileTransferActivity {
             }
             Ok(tfile) => {
                 // Stat tempfile
-                let local_file: File = match self.host.stat(tfile.path()) {
+                let local_file: File = match self.host_bridge.stat(tfile.path()) {
                     Err(err) => {
                         self.log_and_alert(
                             LogLevel::Error,

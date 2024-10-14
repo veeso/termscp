@@ -1,5 +1,13 @@
-const TERMSCP_VERSION: &str = env!("CARGO_PKG_VERSION");
-const TERMSCP_AUTHORS: &str = env!("CARGO_PKG_AUTHORS");
+mod activity_manager;
+mod cli;
+mod config;
+mod explorer;
+mod filetransfer;
+mod host;
+mod support;
+mod system;
+mod ui;
+mod utils;
 
 // Crates
 #[macro_use]
@@ -13,28 +21,27 @@ extern crate log;
 #[macro_use]
 extern crate magic_crypt;
 
-// External libs
 use std::env;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::time::Duration;
 
-// Include
-mod activity_manager;
-mod cli_opts;
-mod config;
-mod explorer;
-mod filetransfer;
-mod host;
-mod support;
-mod system;
-mod ui;
-mod utils;
+use self::activity_manager::{ActivityManager, NextActivity};
+use self::cli::{Args, ArgsSubcommands, RemoteArgs, RunOpts, Task};
+use self::system::logging::{self, LogLevel};
 
-// namespaces
-use activity_manager::{ActivityManager, NextActivity};
-use cli_opts::{Args, ArgsSubcommands, BookmarkParams, HostParams, Remote, RunOpts, Task};
-use filetransfer::FileTransferParams;
-use system::logging::{self, LogLevel};
+const APP_NAME: &str = env!("CARGO_PKG_NAME");
+const APP_BUILD_DATE: &str = env!("VERGEN_BUILD_TIMESTAMP");
+const APP_GIT_BRANCH: &str = env!("VERGEN_GIT_BRANCH");
+const APP_GIT_HASH: &str = env!("VERGEN_GIT_SHA");
+const EXIT_CODE_SUCCESS: i32 = 0;
+const EXIT_CODE_ERROR: i32 = 1;
+const TERMSCP_VERSION: &str = env!("CARGO_PKG_VERSION");
+const TERMSCP_AUTHORS: &str = env!("CARGO_PKG_AUTHORS");
+
+#[inline]
+fn git_hash() -> &'static str {
+    APP_GIT_HASH[0..8].as_ref()
+}
 
 fn main() {
     let args: Args = argh::from_env();
@@ -50,7 +57,10 @@ fn main() {
     if let Err(err) = logging::init(run_opts.log_level) {
         eprintln!("Failed to initialize logging: {err}");
     }
-    info!("termscp {} started!", TERMSCP_VERSION);
+    info!(
+        "{APP_NAME} v{TERMSCP_VERSION} ({APP_GIT_BRANCH}, {git_hash}, {APP_BUILD_DATE}) - Developed by {TERMSCP_AUTHORS}",
+        git_hash = git_hash()
+    );
     // Run
     info!("Starting activity manager...");
     let rc = run(run_opts);
@@ -72,7 +82,8 @@ fn parse_args(args: Args) -> Result<RunOpts, String> {
             // Version
             if args.version {
                 return Err(format!(
-                    "termscp - {TERMSCP_VERSION} - Developed by {TERMSCP_AUTHORS}",
+                    "{APP_NAME} v{TERMSCP_VERSION} ({APP_GIT_BRANCH}, {git_hash}, {APP_BUILD_DATE}) - Developed by {TERMSCP_AUTHORS}",
+                    git_hash = git_hash()
                 ));
             }
             // Logging
@@ -84,22 +95,24 @@ fn parse_args(args: Args) -> Result<RunOpts, String> {
             // Match ticks
             run_opts.ticks = Duration::from_millis(args.ticks);
             // Remote argument
-            match parse_address_arg(&args) {
+            match RemoteArgs::try_from(&args) {
                 Err(err) => return Err(err),
-                Ok(Remote::None) => {}
                 Ok(remote) => {
                     // Set params
                     run_opts.remote = remote;
-                    // In this case the first activity will be FileTransfer
-                    run_opts.task = Task::Activity(NextActivity::FileTransfer);
                 }
             }
 
+            // set activity based on remote state
+            run_opts.task = if run_opts.remote.remote.is_none() {
+                Task::Activity(NextActivity::Authentication)
+            } else {
+                Task::Activity(NextActivity::FileTransfer)
+            };
+
             // Local directory
-            if let Some(localdir) = args.positional.get(1) {
-                // Change working directory if local dir is set
-                let localdir: PathBuf = PathBuf::from(localdir);
-                if let Err(err) = env::set_current_dir(localdir.as_path()) {
+            if let Some(localdir) = run_opts.remote.local_dir.as_deref() {
+                if let Err(err) = env::set_current_dir(localdir) {
                     return Err(format!("Bad working directory argument: {err}"));
                 }
             }
@@ -109,29 +122,6 @@ fn parse_args(args: Args) -> Result<RunOpts, String> {
     };
 
     Ok(run_opts)
-}
-
-/// Parse address argument from cli args
-fn parse_address_arg(args: &Args) -> Result<Remote, String> {
-    if let Some(remote) = args.positional.first() {
-        if args.address_as_bookmark {
-            Ok(Remote::Bookmark(BookmarkParams::new(
-                remote,
-                args.password.as_ref(),
-            )))
-        } else {
-            // Parse address
-            parse_remote_address(remote.as_str())
-                .map(|x| Remote::Host(HostParams::new(x, args.password.as_deref())))
-        }
-    } else {
-        Ok(Remote::None)
-    }
-}
-
-/// Parse remote address
-fn parse_remote_address(remote: &str) -> Result<FileTransferParams, String> {
-    utils::parser::parse_remote_opt(remote).map_err(|e| format!("Bad address option: {e}"))
 }
 
 /// Run task and return rc
@@ -147,11 +137,11 @@ fn run_import_theme(theme: &Path) -> i32 {
     match support::import_theme(theme) {
         Ok(_) => {
             println!("Theme has been successfully imported!");
-            0
+            EXIT_CODE_ERROR
         }
         Err(err) => {
             eprintln!("{err}");
-            1
+            EXIT_CODE_ERROR
         }
     }
 }
@@ -160,41 +150,32 @@ fn run_install_update() -> i32 {
     match support::install_update() {
         Ok(msg) => {
             println!("{msg}");
-            0
+            EXIT_CODE_SUCCESS
         }
         Err(err) => {
             eprintln!("Could not install update: {err}");
-            1
+            EXIT_CODE_ERROR
         }
     }
 }
 
-fn run_activity(activity: NextActivity, ticks: Duration, remote: Remote) -> i32 {
+fn run_activity(activity: NextActivity, ticks: Duration, remote_args: RemoteArgs) -> i32 {
     // Create activity manager (and context too)
     let mut manager: ActivityManager = match ActivityManager::new(ticks) {
         Ok(m) => m,
         Err(err) => {
             eprintln!("Could not start activity manager: {err}");
-            return 1;
+            return EXIT_CODE_ERROR;
         }
     };
+
     // Set file transfer params if set
-    match remote {
-        Remote::Bookmark(BookmarkParams { name, password }) => {
-            if let Err(err) = manager.resolve_bookmark_name(&name, password.as_deref()) {
-                eprintln!("{err}");
-                return 1;
-            }
-        }
-        Remote::Host(HostParams { params, password }) => {
-            if let Err(err) = manager.set_filetransfer_params(params, password.as_deref()) {
-                eprintln!("{err}");
-                return 1;
-            }
-        }
-        Remote::None => {}
+    if let Err(err) = manager.configure_remote_args(remote_args) {
+        eprintln!("{err}");
+        return EXIT_CODE_ERROR;
     }
+
     manager.run(activity);
 
-    0
+    EXIT_CODE_SUCCESS
 }

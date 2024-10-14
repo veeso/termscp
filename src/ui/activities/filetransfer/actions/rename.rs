@@ -51,7 +51,7 @@ impl FileTransferActivity {
     }
 
     fn local_rename_file(&mut self, entry: &File, dest: &Path) {
-        match self.host.rename(entry, dest) {
+        match self.host_bridge.rename(entry, dest) {
             Ok(_) => {
                 self.log(
                     LogLevel::Info,

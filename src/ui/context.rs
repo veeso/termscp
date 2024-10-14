@@ -3,21 +3,22 @@
 //! `Context` is the module which provides all the functionalities related to the UI data holder, called Context
 
 // Locals
-use tuirealm::terminal::TerminalBridge;
+use tuirealm::terminal::{CrosstermTerminalAdapter, TerminalBridge};
 
 use super::store::Store;
-use crate::filetransfer::FileTransferParams;
+use crate::filetransfer::{FileTransferParams, HostBridgeParams};
 use crate::system::bookmarks_client::BookmarksClient;
 use crate::system::config_client::ConfigClient;
 use crate::system::theme_provider::ThemeProvider;
 
 /// Context holds data structures shared by the activities
 pub struct Context {
-    ft_params: Option<FileTransferParams>,
+    host_bridge_params: Option<HostBridgeParams>,
+    remote_params: Option<FileTransferParams>,
     bookmarks_client: Option<BookmarksClient>,
     config_client: ConfigClient,
     pub(crate) store: Store,
-    pub(crate) terminal: TerminalBridge,
+    pub(crate) terminal: TerminalBridge<CrosstermTerminalAdapter>,
     theme_provider: ThemeProvider,
     error: Option<String>,
 }
@@ -30,27 +31,29 @@ impl Context {
         theme_provider: ThemeProvider,
         error: Option<String>,
     ) -> Context {
-        let mut ctx = Context {
+        let mut terminal = TerminalBridge::init_crossterm().expect("Could not initialize terminal");
+        let _ = terminal.disable_mouse_capture();
+
+        Context {
             bookmarks_client,
             config_client,
-            ft_params: None,
+            host_bridge_params: None,
+            remote_params: None,
             store: Store::init(),
-            terminal: TerminalBridge::new().expect("Could not initialize terminal"),
+            terminal,
             theme_provider,
             error,
-        };
-
-        // Init terminal state
-        let _ = ctx.terminal.enable_raw_mode();
-        let _ = ctx.terminal.enter_alternate_screen();
-
-        ctx
+        }
     }
 
     // -- getters
 
-    pub fn ft_params(&self) -> Option<&FileTransferParams> {
-        self.ft_params.as_ref()
+    pub fn remote_params(&self) -> Option<&FileTransferParams> {
+        self.remote_params.as_ref()
+    }
+
+    pub fn host_bridge_params(&self) -> Option<&HostBridgeParams> {
+        self.host_bridge_params.as_ref()
     }
 
     pub fn bookmarks_client(&self) -> Option<&BookmarksClient> {
@@ -85,22 +88,21 @@ impl Context {
         &mut self.theme_provider
     }
 
-    pub fn terminal(&mut self) -> &mut TerminalBridge {
+    pub fn terminal(&mut self) -> &mut TerminalBridge<CrosstermTerminalAdapter> {
         &mut self.terminal
     }
 
     // -- setter
 
-    pub fn set_ftparams(&mut self, params: FileTransferParams) {
-        self.ft_params = Some(params);
+    pub fn set_remote_params(&mut self, params: FileTransferParams) {
+        self.remote_params = Some(params);
+    }
+
+    pub fn set_host_bridge_params(&mut self, params: HostBridgeParams) {
+        self.host_bridge_params = Some(params);
     }
 
     // -- error
-
-    /// Set context error
-    pub fn set_error(&mut self, err: String) {
-        self.error = Some(err);
-    }
 
     /// Get error message and remove it from the context
     pub fn error(&mut self) -> Option<String> {
@@ -110,8 +112,8 @@ impl Context {
 
 impl Drop for Context {
     fn drop(&mut self) {
-        // Re-enable terminal stuff
-        let _ = self.terminal.disable_raw_mode();
-        let _ = self.terminal.leave_alternate_screen();
+        if let Err(err) = self.terminal.restore() {
+            error!("Could not restore terminal: {err}");
+        }
     }
 }

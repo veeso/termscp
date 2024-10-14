@@ -6,7 +6,7 @@
 // ext
 use serde::de::Error as DeError;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use tuirealm::tui::style::Color;
+use tuirealm::ratatui::style::Color;
 
 use crate::utils::fmt::fmt_color;
 use crate::utils::parser::parse_color;

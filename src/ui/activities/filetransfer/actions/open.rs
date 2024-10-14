@@ -35,7 +35,11 @@ impl FileTransferActivity {
 
     /// Perform open lopcal file
     pub(crate) fn action_open_local_file(&mut self, entry: &File, open_with: Option<&str>) {
-        self.open_path_with(entry.path(), open_with);
+        if self.host_bridge.is_localhost() {
+            self.open_path_with(entry.path(), open_with);
+        } else {
+            self.open_bridged_file(entry, open_with);
+        }
     }
 
     /// Open remote file. The file is first downloaded to a temporary directory on localhost
@@ -102,6 +106,57 @@ impl FileTransferActivity {
         entries
             .iter()
             .for_each(|x| self.action_open_remote_file(x, Some(with)));
+    }
+
+    fn open_bridged_file(&mut self, entry: &File, open_with: Option<&str>) {
+        // Download file
+        let tmpfile: String =
+            match self.get_cache_tmp_name(&entry.name(), entry.extension().as_deref()) {
+                None => {
+                    self.log(LogLevel::Error, String::from("Could not create tempdir"));
+                    return;
+                }
+                Some(p) => p,
+            };
+        let cache: PathBuf = match self.cache.as_ref() {
+            None => {
+                self.log(LogLevel::Error, String::from("Could not create tempdir"));
+                return;
+            }
+            Some(p) => p.path().to_path_buf(),
+        };
+
+        let tmpfile = cache.join(tmpfile);
+
+        // open from host bridge
+        let mut reader = match self.host_bridge.open_file(entry.path()) {
+            Ok(reader) => reader,
+            Err(err) => {
+                self.log(
+                    LogLevel::Error,
+                    format!("Failed to open bridged entry: {err}"),
+                );
+                return;
+            }
+        };
+
+        // write to file
+        let mut writer = match std::fs::File::create(tmpfile.as_path()) {
+            Ok(writer) => writer,
+            Err(err) => {
+                self.log(LogLevel::Error, format!("Failed to create file: {err}"));
+                return;
+            }
+        };
+
+        if let Err(err) = std::io::copy(&mut reader, &mut writer) {
+            self.log(LogLevel::Error, format!("Failed to write file: {err}"));
+            return;
+        }
+
+        if tmpfile.exists() {
+            self.open_path_with(tmpfile.as_path(), open_with);
+        }
     }
 
     /// Common function which opens a path with default or specified program.

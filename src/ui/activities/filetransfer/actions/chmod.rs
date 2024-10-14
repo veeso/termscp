@@ -3,12 +3,11 @@ use remotefs::fs::UnixPex;
 use super::{FileTransferActivity, LogLevel};
 
 impl FileTransferActivity {
-    #[cfg(unix)]
     pub fn action_local_chmod(&mut self, mode: UnixPex) {
         let files = self.get_local_selected_entries().get_files();
 
         for file in files {
-            if let Err(err) = self.host.chmod(file.path(), mode) {
+            if let Err(err) = self.host_bridge.chmod(file.path(), mode) {
                 self.log_and_alert(
                     LogLevel::Error,
                     format!(
@@ -51,12 +50,11 @@ impl FileTransferActivity {
         }
     }
 
-    #[cfg(unix)]
     pub fn action_find_local_chmod(&mut self, mode: UnixPex) {
         let files = self.get_found_selected_entries().get_files();
 
         for file in files {
-            if let Err(err) = self.host.chmod(file.path(), mode) {
+            if let Err(err) = self.host_bridge.chmod(file.path(), mode) {
                 self.log_and_alert(
                     LogLevel::Error,
                     format!(

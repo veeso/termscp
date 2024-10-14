@@ -2,13 +2,10 @@
 //!
 //! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
 
-// Locals
-use std::fs::File as StdFile;
-use std::io::{Read, Seek, Write};
+use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::time::Instant;
 
-// Ext
 use bytesize::ByteSize;
 use remotefs::fs::{File, Metadata, ReadStream, UnixPex, Welcome, WriteStream};
 use remotefs::{RemoteError, RemoteErrorType, RemoteResult};
@@ -26,10 +23,8 @@ const BUFSIZE: usize = 65535;
 enum TransferErrorReason {
     #[error("File transfer aborted")]
     Abrupted,
-    #[error("Failed to seek file: {0}")]
-    CouldNotRewind(std::io::Error),
-    #[error("I/O error on localhost: {0}")]
-    LocalIoError(std::io::Error),
+    #[error("I/O error on host_bridgehost: {0}")]
+    HostIoError(std::io::Error),
     #[error("Host error: {0}")]
     HostError(HostError),
     #[error("I/O error on remote: {0}")]
@@ -50,15 +45,57 @@ pub(super) enum TransferPayload {
 }
 
 impl FileTransferActivity {
+    pub(super) fn connect_to_host_bridge(&mut self) {
+        let ft_params = self.context().remote_params().unwrap().clone();
+        let entry_dir: Option<PathBuf> = ft_params.local_path;
+        // Connect to host bridge
+        match self.host_bridge.connect() {
+            Ok(()) => {
+                self.host_bridge_connected = self.host_bridge.is_connected();
+                if !self.host_bridge_connected {
+                    return;
+                }
+
+                // Log welcome
+                self.log(
+                    LogLevel::Info,
+                    format!(
+                        "Established connection with '{}'",
+                        self.get_hostbridge_hostname()
+                    ),
+                );
+
+                // Try to change directory to entry directory
+                let mut remote_chdir: Option<PathBuf> = None;
+                if let Some(remote_path) = &entry_dir {
+                    remote_chdir = Some(remote_path.clone());
+                }
+                if let Some(remote_path) = remote_chdir {
+                    self.local_changedir(remote_path.as_path(), false);
+                }
+                // Set state to explorer
+                self.umount_wait();
+                self.reload_host_bridge_dir();
+                // Update file lists
+                self.update_host_bridge_filelist();
+            }
+            Err(err) => {
+                // Set popup fatal error
+                self.umount_wait();
+                self.mount_fatal(err.to_string());
+            }
+        }
+    }
+
     /// Connect to remote
-    pub(super) fn connect(&mut self) {
-        let ft_params = self.context().ft_params().unwrap().clone();
+    pub(super) fn connect_to_remote(&mut self) {
+        let ft_params = self.context().remote_params().unwrap().clone();
         let entry_dir: Option<PathBuf> = ft_params.remote_path;
         // Connect to remote
         match self.client.connect() {
             Ok(Welcome { banner, .. }) => {
-                self.connected = self.client.is_connected();
-                if !self.connected {
+                self.remote_connected = self.client.is_connected();
+                if !self.remote_connected {
                     return;
                 }
 
@@ -94,7 +131,7 @@ impl FileTransferActivity {
                 self.umount_wait();
                 self.reload_remote_dir();
                 // Update file lists
-                self.update_local_filelist();
+                self.update_host_bridge_filelist();
                 self.update_remote_filelist();
             }
             Err(err) => {
@@ -124,7 +161,7 @@ impl FileTransferActivity {
 
     /// Reload remote directory entries and update browser
     pub(super) fn reload_remote_dir(&mut self) {
-        if !self.connected {
+        if !self.remote_connected {
             return;
         }
         // Get current entries
@@ -149,35 +186,48 @@ impl FileTransferActivity {
         }
     }
 
-    /// Reload local directory entries and update browser
-    pub(super) fn reload_local_dir(&mut self) {
-        self.mount_blocking_wait("Loading local directory...");
+    /// Reload host_bridge directory entries and update browser
+    pub(super) fn reload_host_bridge_dir(&mut self) {
+        if !self.host_bridge_connected {
+            return;
+        }
 
-        let wrkdir: PathBuf = self.host.pwd();
+        self.mount_blocking_wait("Loading host bridge directory...");
 
-        let res = self.local_scan(wrkdir.as_path());
+        let wrkdir = match self.host_bridge.pwd() {
+            Ok(wrkdir) => wrkdir,
+            Err(err) => {
+                self.log_and_alert(
+                    LogLevel::Error,
+                    format!("Could not scan current host bridge directory: {err}"),
+                );
+                return;
+            }
+        };
+
+        let res = self.host_bridge_scan(wrkdir.as_path());
 
         self.umount_wait();
 
         match res {
             Ok(_) => {
-                self.local_mut().wrkdir = wrkdir;
+                self.host_bridge_mut().wrkdir = wrkdir;
             }
             Err(err) => {
                 self.log_and_alert(
                     LogLevel::Error,
-                    format!("Could not scan current local directory: {err}"),
+                    format!("Could not scan current host bridge directory: {err}"),
                 );
             }
         }
     }
 
-    /// Scan current local directory
-    fn local_scan(&mut self, path: &Path) -> Result<(), HostError> {
-        match self.host.list_dir(path) {
+    /// Scan current host bridge directory
+    fn host_bridge_scan(&mut self, path: &Path) -> Result<(), HostError> {
+        match self.host_bridge.list_dir(path) {
             Ok(files) => {
                 // Set files and sort (sorting is implicit)
-                self.local_mut().set_files(files);
+                self.host_bridge_mut().set_files(files);
 
                 Ok(())
             }
@@ -270,7 +320,7 @@ impl FileTransferActivity {
         // Reset states
         self.transfer.reset();
         // Calculate total size of transfer
-        let total_transfer_size: usize = self.get_total_transfer_size_local(entry);
+        let total_transfer_size: usize = self.get_total_transfer_size_host(entry);
         self.transfer.full.init(total_transfer_size);
         // Mount progress bar
         self.mount_progress_bar(format!("Uploading {}…", entry.path().display()));
@@ -292,7 +342,7 @@ impl FileTransferActivity {
         // Calculate total size of transfer
         let total_transfer_size: usize = entries
             .iter()
-            .map(|x| self.get_total_transfer_size_local(x))
+            .map(|x| self.get_total_transfer_size_host(x))
             .sum();
         self.transfer.full.init(total_transfer_size);
         // Mount progress bar
@@ -358,7 +408,7 @@ impl FileTransferActivity {
                 }
             }
             // Get files in dir
-            match self.host.list_dir(entry.path()) {
+            match self.host_bridge.list_dir(entry.path()) {
                 Ok(entries) => {
                     // Iterate over files
                     for entry in entries.iter() {
@@ -433,17 +483,17 @@ impl FileTransferActivity {
         result
     }
 
-    /// Send local file and write it to remote path
+    /// Send host_bridge file and write it to remote path
     fn filetransfer_send_one(
         &mut self,
-        local: &File,
+        host_bridge: &File,
         remote: &Path,
         file_name: String,
     ) -> Result<(), TransferErrorReason> {
         // Sync file size and attributes before transfer
         let metadata = self
-            .host
-            .stat(local.path.as_path())
+            .host_bridge
+            .stat(host_bridge.path.as_path())
             .map_err(TransferErrorReason::HostError)
             .map(|x| x.metadata().clone())?;
 
@@ -452,22 +502,30 @@ impl FileTransferActivity {
                 LogLevel::Info,
                 format!(
                     "file {} won't be transferred since hasn't changed",
-                    local.path().display()
+                    host_bridge.path().display()
                 ),
             );
             self.transfer.full.update_progress(metadata.size as usize);
             return Ok(());
         }
         // Upload file
-        // Try to open local file
-        match self.host.open_file_read(local.path.as_path()) {
-            Ok(fhnd) => match self.client.create(remote, &metadata) {
-                Ok(rhnd) => {
-                    self.filetransfer_send_one_with_stream(local, remote, file_name, fhnd, rhnd)
-                }
-                Err(err) if err.kind == RemoteErrorType::UnsupportedFeature => {
-                    self.filetransfer_send_one_wno_stream(local, remote, file_name, fhnd)
-                }
+        // Try to open host_bridge file
+        match self.host_bridge.open_file(host_bridge.path.as_path()) {
+            Ok(host_bridge_read) => match self.client.create(remote, &metadata) {
+                Ok(rhnd) => self.filetransfer_send_one_with_stream(
+                    host_bridge,
+                    remote,
+                    file_name,
+                    host_bridge_read,
+                    rhnd,
+                ),
+                Err(err) if err.kind == RemoteErrorType::UnsupportedFeature => self
+                    .filetransfer_send_one_wno_stream(
+                        host_bridge,
+                        remote,
+                        file_name,
+                        host_bridge_read,
+                    ),
                 Err(err) => Err(TransferErrorReason::FileTransferError(err)),
             },
             Err(err) => Err(TransferErrorReason::HostError(err)),
@@ -477,20 +535,21 @@ impl FileTransferActivity {
     /// Send file to remote using stream
     fn filetransfer_send_one_with_stream(
         &mut self,
-        local: &File,
+        host: &File,
         remote: &Path,
         file_name: String,
-        mut reader: StdFile,
+        mut reader: Box<dyn Read + Send>,
         mut writer: WriteStream,
     ) -> Result<(), TransferErrorReason> {
         // Write file
-        let file_size: usize = reader.seek(std::io::SeekFrom::End(0)).unwrap_or(0) as usize;
+        let file_size = self
+            .host_bridge
+            .stat(host.path())
+            .map_err(TransferErrorReason::HostError)
+            .map(|x| x.metadata().size as usize)?;
         // Init transfer
         self.transfer.partial.init(file_size);
-        // rewind
-        if let Err(err) = reader.rewind() {
-            return Err(TransferErrorReason::CouldNotRewind(err));
-        }
+
         // Write remote file
         let mut total_bytes_written: usize = 0;
         let mut last_progress_val: f64 = 0.0;
@@ -535,7 +594,7 @@ impl FileTransferActivity {
                     }
                 }
                 Err(err) => {
-                    return Err(TransferErrorReason::LocalIoError(err));
+                    return Err(TransferErrorReason::HostIoError(err));
                 }
             };
             // Increase progress
@@ -561,14 +620,14 @@ impl FileTransferActivity {
             return Err(TransferErrorReason::Abrupted);
         }
         // set stat
-        if let Err(err) = self.client.setstat(remote, local.metadata().clone()) {
+        if let Err(err) = self.client.setstat(remote, host.metadata().clone()) {
             error!("failed to set stat for {}: {}", remote.display(), err);
         }
         self.log(
             LogLevel::Info,
             format!(
                 "Saved file \"{}\" to \"{}\" (took {} seconds; at {}/s)",
-                local.path.display(),
+                host.path.display(),
                 remote.display(),
                 fmt_millis(self.transfer.partial.started().elapsed()),
                 ByteSize(self.transfer.partial.calc_bytes_per_second()),
@@ -580,30 +639,31 @@ impl FileTransferActivity {
     /// Send an `File` to remote without using streams.
     fn filetransfer_send_one_wno_stream(
         &mut self,
-        local: &File,
+        host: &File,
         remote: &Path,
         file_name: String,
-        mut reader: StdFile,
+        reader: Box<dyn Read + Send>,
     ) -> Result<(), TransferErrorReason> {
         // Sync file size and attributes before transfer
         let metadata = self
-            .host
-            .stat(local.path.as_path())
+            .host_bridge
+            .stat(host.path.as_path())
             .map_err(TransferErrorReason::HostError)
             .map(|x| x.metadata().clone())?;
         // Write file
-        let file_size: usize = reader.seek(std::io::SeekFrom::End(0)).unwrap_or(0) as usize;
+        let file_size = self
+            .host_bridge
+            .stat(host.path())
+            .map_err(TransferErrorReason::HostError)
+            .map(|x| x.metadata().size as usize)?;
         // Init transfer
         self.transfer.partial.init(file_size);
-        // rewind
-        if let Err(err) = reader.rewind() {
-            return Err(TransferErrorReason::CouldNotRewind(err));
-        }
+
         // Draw before
         self.update_progress_bar(format!("Uploading \"{file_name}\"…"));
         self.view();
         // Send file
-        if let Err(err) = self.client.create_file(remote, &metadata, Box::new(reader)) {
+        if let Err(err) = self.client.create_file(remote, &metadata, reader) {
             return Err(TransferErrorReason::FileTransferError(err));
         }
         // set stat
@@ -621,7 +681,7 @@ impl FileTransferActivity {
             LogLevel::Info,
             format!(
                 "Saved file \"{}\" to \"{}\" (took {} seconds; at {}/s)",
-                local.path.display(),
+                host.path.display(),
                 remote.display(),
                 fmt_millis(self.transfer.partial.started().elapsed()),
                 ByteSize(self.transfer.partial.calc_bytes_per_second()),
@@ -636,15 +696,17 @@ impl FileTransferActivity {
     pub(super) fn filetransfer_recv(
         &mut self,
         payload: TransferPayload,
-        local_path: &Path,
+        host_bridge_path: &Path,
         dst_name: Option<String>,
     ) -> Result<(), String> {
         let result = match payload {
             TransferPayload::Any(ref entry) => {
-                self.filetransfer_recv_any(entry, local_path, dst_name)
+                self.filetransfer_recv_any(entry, host_bridge_path, dst_name)
             }
-            TransferPayload::File(ref file) => self.filetransfer_recv_file(file, local_path),
-            TransferPayload::Many(ref entries) => self.filetransfer_recv_many(entries, local_path),
+            TransferPayload::File(ref file) => self.filetransfer_recv_file(file, host_bridge_path),
+            TransferPayload::Many(ref entries) => {
+                self.filetransfer_recv_many(entries, host_bridge_path)
+            }
         };
         // Notify
         match &result {
@@ -664,7 +726,7 @@ impl FileTransferActivity {
     fn filetransfer_recv_any(
         &mut self,
         entry: &File,
-        local_path: &Path,
+        host_path: &Path,
         dst_name: Option<String>,
     ) -> Result<(), String> {
         // Reset states
@@ -675,14 +737,18 @@ impl FileTransferActivity {
         // Mount progress bar
         self.mount_progress_bar(format!("Downloading {}…", entry.path().display()));
         // Receive
-        let result = self.filetransfer_recv_recurse(entry, local_path, dst_name);
+        let result = self.filetransfer_recv_recurse(entry, host_path, dst_name);
         // Umount progress bar
         self.umount_progress_bar();
         result
     }
 
     /// Receive a single file from remote.
-    fn filetransfer_recv_file(&mut self, entry: &File, local_path: &Path) -> Result<(), String> {
+    fn filetransfer_recv_file(
+        &mut self,
+        entry: &File,
+        host_bridge_path: &Path,
+    ) -> Result<(), String> {
         // Reset states
         self.transfer.reset();
         // Calculate total transfer size
@@ -691,7 +757,7 @@ impl FileTransferActivity {
         // Mount progress bar
         self.mount_progress_bar(format!("Downloading {}…", entry.path.display()));
         // Receive
-        let result = self.filetransfer_recv_one(local_path, entry, entry.name());
+        let result = self.filetransfer_recv_one(host_bridge_path, entry, entry.name());
         // Umount progress bar
         self.umount_progress_bar();
         // Return result
@@ -728,7 +794,7 @@ impl FileTransferActivity {
     fn filetransfer_recv_recurse(
         &mut self,
         entry: &File,
-        local_path: &Path,
+        host_bridge_path: &Path,
         dst_name: Option<String>,
     ) -> Result<(), String> {
         // Write popup
@@ -736,32 +802,35 @@ impl FileTransferActivity {
         // Match entry
         let result: Result<(), String> = if entry.is_dir() {
             // Get dir name
-            let mut local_dir_path: PathBuf = PathBuf::from(local_path);
+            let mut host_bridge_dir_path: PathBuf = PathBuf::from(host_bridge_path);
             match dst_name {
-                Some(name) => local_dir_path.push(name),
-                None => local_dir_path.push(entry.name()),
+                Some(name) => host_bridge_dir_path.push(name),
+                None => host_bridge_dir_path.push(entry.name()),
             }
-            // Create directory on local
-            match self.host.mkdir_ex(local_dir_path.as_path(), true) {
+            // Create directory on host_bridge
+            match self
+                .host_bridge
+                .mkdir_ex(host_bridge_dir_path.as_path(), true)
+            {
                 Ok(_) => {
                     // Apply file mode to directory
                     if let Err(err) = self
-                        .host
-                        .setstat(local_dir_path.as_path(), entry.metadata())
+                        .host_bridge
+                        .setstat(host_bridge_dir_path.as_path(), entry.metadata())
                     {
                         self.log(
                             LogLevel::Error,
                             format!(
                                 "Could not set stat to directory {:?} to \"{}\": {}",
                                 entry.metadata(),
-                                local_dir_path.display(),
+                                host_bridge_dir_path.display(),
                                 err
                             ),
                         );
                     }
                     self.log(
                         LogLevel::Info,
-                        format!("Created directory \"{}\"", local_dir_path.display()),
+                        format!("Created directory \"{}\"", host_bridge_dir_path.display()),
                     );
                     // Get files in dir
                     match self.client.list_dir(entry.path()) {
@@ -773,10 +842,10 @@ impl FileTransferActivity {
                                     break;
                                 }
                                 // Receive entry; name is always None after first call
-                                // Local path becomes local_dir_path
+                                // Local path becomes host_bridge_dir_path
                                 self.filetransfer_recv_recurse(
                                     entry,
-                                    local_dir_path.as_path(),
+                                    host_bridge_dir_path.as_path(),
                                     None,
                                 )?
                             }
@@ -800,7 +869,7 @@ impl FileTransferActivity {
                         LogLevel::Error,
                         format!(
                             "Failed to create directory \"{}\": {}",
-                            local_dir_path.display(),
+                            host_bridge_dir_path.display(),
                             err
                         ),
                     );
@@ -808,39 +877,39 @@ impl FileTransferActivity {
                 }
             }
         } else {
-            // Get local file
-            let mut local_file_path: PathBuf = PathBuf::from(local_path);
-            let local_file_name: String = match dst_name {
+            // Get host_bridge file
+            let mut host_bridge_file_path: PathBuf = PathBuf::from(host_bridge_path);
+            let host_bridge_file_name: String = match dst_name {
                 Some(n) => n,
                 None => entry.name(),
             };
-            local_file_path.push(local_file_name.as_str());
+            host_bridge_file_path.push(host_bridge_file_name.as_str());
             // Download file
             if let Err(err) =
-                self.filetransfer_recv_one(local_file_path.as_path(), entry, file_name)
+                self.filetransfer_recv_one(host_bridge_file_path.as_path(), entry, file_name)
             {
                 // If transfer was abrupted or there was an IO error on remote, remove file
                 if matches!(
                     err,
-                    TransferErrorReason::Abrupted | TransferErrorReason::LocalIoError(_)
+                    TransferErrorReason::Abrupted | TransferErrorReason::HostIoError(_)
                 ) {
                     // Stat file
-                    match self.host.stat(local_file_path.as_path()) {
+                    match self.host_bridge.stat(host_bridge_file_path.as_path()) {
                         Err(err) => self.log(
                             LogLevel::Error,
                             format!(
                                 "Could not remove created file {}: {}",
-                                local_file_path.display(),
+                                host_bridge_file_path.display(),
                                 err
                             ),
                         ),
                         Ok(entry) => {
-                            if let Err(err) = self.host.remove(&entry) {
+                            if let Err(err) = self.host_bridge.remove(&entry) {
                                 self.log(
                                     LogLevel::Error,
                                     format!(
                                         "Could not remove created file {}: {}",
-                                        local_file_path.display(),
+                                        host_bridge_file_path.display(),
                                         err
                                     ),
                                 );
@@ -853,8 +922,8 @@ impl FileTransferActivity {
                 Ok(())
             }
         };
-        // Reload directory on local
-        self.reload_local_dir();
+        // Reload directory on host_bridge
+        self.reload_host_bridge_dir();
         // if aborted; show alert
         if self.transfer.aborted() {
             // Log abort
@@ -866,15 +935,15 @@ impl FileTransferActivity {
         result
     }
 
-    /// Receive file from remote and write it to local path
+    /// Receive file from remote and write it to host_bridge path
     fn filetransfer_recv_one(
         &mut self,
-        local: &Path,
+        host_bridge: &Path,
         remote: &File,
         file_name: String,
     ) -> Result<(), TransferErrorReason> {
         // check if files are equal (in case, don't transfer)
-        if !self.has_local_file_changed(local, remote) {
+        if !self.has_host_bridge_file_changed(host_bridge, remote) {
             self.log(
                 LogLevel::Info,
                 format!(
@@ -888,16 +957,20 @@ impl FileTransferActivity {
             return Ok(());
         }
 
-        // Try to open local file
-        match self.host.open_file_write(local) {
-            Ok(local_file) => {
+        // Try to open host_bridge file
+        match self.host_bridge.create_file(host_bridge, &remote.metadata) {
+            Ok(writer) => {
                 // Download file from remote
                 match self.client.open(remote.path.as_path()) {
                     Ok(rhnd) => self.filetransfer_recv_one_with_stream(
-                        local, remote, file_name, rhnd, local_file,
+                        host_bridge,
+                        remote,
+                        file_name,
+                        rhnd,
+                        writer,
                     ),
                     Err(err) if err.kind == RemoteErrorType::UnsupportedFeature => {
-                        self.filetransfer_recv_one_wno_stream(local, remote, file_name)
+                        self.filetransfer_recv_one_wno_stream(host_bridge, remote, file_name)
                     }
                     Err(err) => Err(TransferErrorReason::FileTransferError(err)),
                 }
@@ -909,16 +982,16 @@ impl FileTransferActivity {
     /// Receive an `File` from remote using stream
     fn filetransfer_recv_one_with_stream(
         &mut self,
-        local: &Path,
+        host_bridge: &Path,
         remote: &File,
         file_name: String,
         mut reader: ReadStream,
-        mut writer: StdFile,
+        mut writer: Box<dyn Write + Send>,
     ) -> Result<(), TransferErrorReason> {
         let mut total_bytes_written: usize = 0;
         // Init transfer
         self.transfer.partial.init(remote.metadata.size as usize);
-        // Write local file
+        // Write host_bridge file
         let mut last_progress_val: f64 = 0.0;
         let mut last_input_event_fetch: Option<Instant> = None;
         // While the entire file hasn't been completely read,
@@ -951,7 +1024,7 @@ impl FileTransferActivity {
                             match writer.write(&buffer[delta..bytes_read]) {
                                 Ok(bytes) => delta += bytes,
                                 Err(err) => {
-                                    return Err(TransferErrorReason::LocalIoError(err));
+                                    return Err(TransferErrorReason::HostIoError(err));
                                 }
                             }
                         }
@@ -984,14 +1057,20 @@ impl FileTransferActivity {
         if self.transfer.aborted() {
             return Err(TransferErrorReason::Abrupted);
         }
+
+        // finalize write
+        self.host_bridge
+            .finalize_write(writer)
+            .map_err(TransferErrorReason::HostError)?;
+
         // Apply file mode to file
-        if let Err(err) = self.host.setstat(local, remote.metadata()) {
+        if let Err(err) = self.host_bridge.setstat(host_bridge, remote.metadata()) {
             self.log(
                 LogLevel::Error,
                 format!(
                     "Could not set stat to file {:?} to \"{}\": {}",
                     remote.metadata(),
-                    local.display(),
+                    host_bridge.display(),
                     err
                 ),
             );
@@ -1002,25 +1081,26 @@ impl FileTransferActivity {
             format!(
                 "Saved file \"{}\" to \"{}\" (took {} seconds; at {}/s)",
                 remote.path.display(),
-                local.display(),
+                host_bridge.display(),
                 fmt_millis(self.transfer.partial.started().elapsed()),
                 ByteSize(self.transfer.partial.calc_bytes_per_second()),
             ),
         );
+
         Ok(())
     }
 
     /// Receive an `File` from remote without using stream
     fn filetransfer_recv_one_wno_stream(
         &mut self,
-        local: &Path,
+        host_bridge: &Path,
         remote: &File,
         file_name: String,
     ) -> Result<(), TransferErrorReason> {
-        // Open local file
+        // Open host_bridge file
         let reader = self
-            .host
-            .open_file_write(local)
+            .host_bridge
+            .create_file(host_bridge, &remote.metadata)
             .map_err(TransferErrorReason::HostError)
             .map(Box::new)?;
         // Init transfer
@@ -1043,13 +1123,13 @@ impl FileTransferActivity {
         self.update_progress_bar(format!("Downloading \"{file_name}\""));
         self.view();
         // Apply file mode to file
-        if let Err(err) = self.host.setstat(local, remote.metadata()) {
+        if let Err(err) = self.host_bridge.setstat(host_bridge, remote.metadata()) {
             self.log(
                 LogLevel::Error,
                 format!(
                     "Could not set stat to file {:?} to \"{}\": {}",
                     remote.metadata(),
-                    local.display(),
+                    host_bridge.display(),
                     err
                 ),
             );
@@ -1060,7 +1140,7 @@ impl FileTransferActivity {
             format!(
                 "Saved file \"{}\" to \"{}\" (took {} seconds; at {}/s)",
                 remote.path.display(),
-                local.display(),
+                host_bridge.display(),
                 fmt_millis(self.transfer.partial.started().elapsed()),
                 ByteSize(self.transfer.partial.calc_bytes_per_second()),
             ),
@@ -1068,20 +1148,47 @@ impl FileTransferActivity {
         Ok(())
     }
 
-    /// Change directory for local
-    pub(super) fn local_changedir(&mut self, path: &Path, push: bool) {
+    /// Change directory for host_bridge
+    pub(super) fn host_bridge_changedir(&mut self, path: &Path, push: bool) {
         // Get current directory
-        let prev_dir: PathBuf = self.local().wrkdir.clone();
+        let prev_dir: PathBuf = self.host_bridge().wrkdir.clone();
         // Change directory
-        match self.host.change_wrkdir(path) {
+        match self.host_bridge.change_wrkdir(path) {
             Ok(_) => {
                 self.log(
                     LogLevel::Info,
-                    format!("Changed directory on local: {}", path.display()),
+                    format!("Changed directory on host_bridge: {}", path.display()),
                 );
                 // Push prev_dir to stack
                 if push {
-                    self.local_mut().pushd(prev_dir.as_path())
+                    self.host_bridge_mut().pushd(prev_dir.as_path())
+                }
+            }
+            Err(err) => {
+                // Report err
+                self.log_and_alert(
+                    LogLevel::Error,
+                    format!("Could not change working directory: {err}"),
+                );
+            }
+        }
+    }
+
+    pub(super) fn local_changedir(&mut self, path: &Path, push: bool) {
+        // Get current directory
+        let prev_dir: PathBuf = self.host_bridge().wrkdir.clone();
+        // Change directory
+        match self.host_bridge.change_wrkdir(path) {
+            Ok(_) => {
+                self.log(
+                    LogLevel::Info,
+                    format!("Changed directory on host bridge: {}", path.display()),
+                );
+                // Update files
+                self.reload_host_bridge_dir();
+                // Push prev_dir to stack
+                if push {
+                    self.host_bridge_mut().pushd(prev_dir.as_path())
                 }
             }
             Err(err) => {
@@ -1152,14 +1259,14 @@ impl FileTransferActivity {
 
     // -- transfer sizes
 
-    /// Get total size of transfer for localhost
-    fn get_total_transfer_size_local(&mut self, entry: &File) -> usize {
+    /// Get total size of transfer for host_bridgehost
+    fn get_total_transfer_size_host(&mut self, entry: &File) -> usize {
         if entry.is_dir() {
             // List dir
-            match self.host.list_dir(entry.path()) {
+            match self.host_bridge.list_dir(entry.path()) {
                 Ok(files) => files
                     .iter()
-                    .map(|x| self.get_total_transfer_size_local(x))
+                    .map(|x| self.get_total_transfer_size_host(x))
                     .sum(),
                 Err(err) => {
                     self.log(
@@ -1206,23 +1313,23 @@ impl FileTransferActivity {
 
     // file changed
 
-    /// Check whether provided file has changed on local disk, compared to remote file
-    fn has_local_file_changed(&self, local: &Path, remote: &File) -> bool {
+    /// Check whether provided file has changed on host_bridge disk, compared to remote file
+    fn has_host_bridge_file_changed(&mut self, host_bridge: &Path, remote: &File) -> bool {
         // check if files are equal (in case, don't transfer)
-        if let Ok(local_file) = self.host.stat(local) {
-            local_file.metadata().modified != remote.metadata().modified
-                || local_file.metadata().size != remote.metadata().size
+        if let Ok(host_bridge_file) = self.host_bridge.stat(host_bridge) {
+            host_bridge_file.metadata().modified != remote.metadata().modified
+                || host_bridge_file.metadata().size != remote.metadata().size
         } else {
             true
         }
     }
 
-    /// Checks whether remote file has changed compared to local file
-    fn has_remote_file_changed(&mut self, remote: &Path, local_metadata: &Metadata) -> bool {
+    /// Checks whether remote file has changed compared to host_bridge file
+    fn has_remote_file_changed(&mut self, remote: &Path, host_bridge_metadata: &Metadata) -> bool {
         // check if files are equal (in case, don't transfer)
         if let Ok(remote_file) = self.client.stat(remote) {
-            local_metadata.modified != remote_file.metadata().modified
-                || local_metadata.size != remote_file.metadata().size
+            host_bridge_metadata.modified != remote_file.metadata().modified
+                || host_bridge_metadata.size != remote_file.metadata().size
         } else {
             true
         }
@@ -1230,11 +1337,11 @@ impl FileTransferActivity {
 
     // -- file exist
 
-    pub(crate) fn local_file_exists(&mut self, p: &Path) -> bool {
-        self.host.file_exists(p)
+    pub(crate) fn host_bridge_file_exists(&mut self, p: &Path) -> bool {
+        self.host_bridge.exists(p).unwrap_or_default()
     }
 
     pub(crate) fn remote_file_exists(&mut self, p: &Path) -> bool {
-        self.client.stat(p).is_ok()
+        self.client.exists(p).unwrap_or_default()
     }
 }

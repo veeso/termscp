@@ -62,11 +62,11 @@
 
 termscp kann mit den folgenden Optionen gestartet werden:
 
-`termscp [Optionen]... [protokoll://benutzer@adresse:port:arbeitsverzeichnis] [lokales-arbeitsverzeichnis]`
+`termscp [Optionen]... [protokoll://benutzer@adresse:port:arbeitsverzeichnis] [protokoll://benutzer@adresse:port:arbeitsverzeichnis] [lokales-arbeitsverzeichnis]`
 
 ODER
 
-`termscp [Optionen]... -b [Lesezeichen-Name] [lokales-arbeitsverzeichnis]`
+`termscp [Optionen]... -b [Lesezeichen-Name] -b [Lesezeichen-Name] [lokales-arbeitsverzeichnis]`
 
 - `-P, --password <Passwort>` wenn Adresse angegeben wird, ist das Passwort dieses Argument
 - `-b, --address-as-bookmark` löst das Adressargument als Lesezeichenname auf

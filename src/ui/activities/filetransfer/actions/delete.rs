@@ -43,7 +43,7 @@ impl FileTransferActivity {
     }
 
     pub(crate) fn local_remove_file(&mut self, entry: &File) {
-        match self.host.remove(entry) {
+        match self.host_bridge.remove(entry) {
             Ok(_) => {
                 // Log
                 self.log(

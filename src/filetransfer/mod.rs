@@ -2,12 +2,14 @@
 //!
 //! `filetransfer` is the module which provides the file transfer protocols and remotefs builders
 
-mod builder;
+mod host_bridge_builder;
 pub mod params;
+mod remotefs_builder;
 
 // -- export types
-pub use builder::Builder;
-pub use params::{FileTransferParams, ProtocolParams};
+pub use host_bridge_builder::HostBridgeBuilder;
+pub use params::{FileTransferParams, HostBridgeParams, ProtocolParams};
+pub use remotefs_builder::RemoteFsBuilder;
 
 /// This enum defines the different transfer protocol available in termscp
 

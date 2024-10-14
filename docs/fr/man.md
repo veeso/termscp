@@ -37,11 +37,11 @@
 
 termscp peut être démarré avec les options suivantes :
 
-`termscp [options]... [protocol://user@address:port:wrkdir] [local-wrkdir]`
+`termscp [options]... [protocol://user@address:port:wrkdir] [protocol://user@address:port:wrkdir] [local-wrkdir]`
 
 ou
 
-`termscp [options]... -b [bookmark-name] [local-wrkdir]`
+`termscp [options]... -b [bookmark-name] -b [bookmark-name] [local-wrkdir]`
 
 - `-P, --password <password>` si l'adresse est fournie, le mot de passe sera cet argument
 - `-b, --address-as-bookmark` résoudre l'argument d'adresse en tant que nom de signet

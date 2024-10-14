@@ -363,7 +363,8 @@ impl ExplorerLocal {
                 .foreground(fg)
                 .highlighted_color(hg)
                 .title(title, Alignment::Left)
-                .rows(files.iter().map(|x| vec![TextSpan::from(x)]).collect()),
+                .rows(files.iter().map(|x| vec![TextSpan::from(x)]).collect())
+                .dot_dot(true),
         }
     }
 }
@@ -439,11 +440,23 @@ impl Component<Msg, NoUserEvent> for ExplorerLocal {
             }) => Some(Msg::Transfer(TransferMsg::GoToPreviousDirectory)),
             Event::Keyboard(KeyEvent {
                 code: Key::Enter, ..
-            }) => Some(Msg::Transfer(TransferMsg::EnterDirectory)),
+            }) => {
+                if matches!(self.component.state(), State::One(StateValue::String(_))) {
+                    Some(Msg::Transfer(TransferMsg::GoToParentDirectory))
+                } else {
+                    Some(Msg::Transfer(TransferMsg::EnterDirectory))
+                }
+            }
             Event::Keyboard(KeyEvent {
                 code: Key::Char(' '),
                 ..
-            }) => Some(Msg::Transfer(TransferMsg::TransferFile)),
+            }) => {
+                if matches!(self.component.state(), State::One(StateValue::String(_))) {
+                    Some(Msg::None)
+                } else {
+                    Some(Msg::Transfer(TransferMsg::TransferFile))
+                }
+            }
             Event::Keyboard(KeyEvent {
                 code: Key::Char('a'),
                 modifiers: KeyModifiers::NONE,
@@ -559,7 +572,8 @@ impl ExplorerRemote {
                 .foreground(fg)
                 .highlighted_color(hg)
                 .title(title, Alignment::Left)
-                .rows(files.iter().map(|x| vec![TextSpan::from(x)]).collect()),
+                .rows(files.iter().map(|x| vec![TextSpan::from(x)]).collect())
+                .dot_dot(true),
         }
     }
 }
@@ -635,11 +649,23 @@ impl Component<Msg, NoUserEvent> for ExplorerRemote {
             }) => Some(Msg::Transfer(TransferMsg::GoToPreviousDirectory)),
             Event::Keyboard(KeyEvent {
                 code: Key::Enter, ..
-            }) => Some(Msg::Transfer(TransferMsg::EnterDirectory)),
+            }) => {
+                if matches!(self.component.state(), State::One(StateValue::String(_))) {
+                    Some(Msg::Transfer(TransferMsg::GoToParentDirectory))
+                } else {
+                    Some(Msg::Transfer(TransferMsg::EnterDirectory))
+                }
+            }
             Event::Keyboard(KeyEvent {
                 code: Key::Char(' '),
                 ..
-            }) => Some(Msg::Transfer(TransferMsg::TransferFile)),
+            }) => {
+                if matches!(self.component.state(), State::One(StateValue::String(_))) {
+                    Some(Msg::None)
+                } else {
+                    Some(Msg::Transfer(TransferMsg::TransferFile))
+                }
+            }
             Event::Keyboard(KeyEvent {
                 code: Key::Char('a'),
                 modifiers: KeyModifiers::NONE,

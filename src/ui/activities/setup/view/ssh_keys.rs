@@ -5,8 +5,8 @@
 
 // Locals
 // Ext
-use tuirealm::tui::layout::{Constraint, Direction, Layout};
-use tuirealm::tui::widgets::Clear;
+use tuirealm::ratatui::layout::{Constraint, Direction, Layout};
+use tuirealm::ratatui::widgets::Clear;
 
 use super::{components, Context, Id, IdCommon, IdSsh, SetupActivity, ViewLayout};
 use crate::utils::ui::{Popup, Size};
@@ -37,7 +37,7 @@ impl SetupActivity {
                     ]
                     .as_ref(),
                 )
-                .split(f.size());
+                .split(f.area());
             // Render common widget
             self.app.view(&Id::Common(IdCommon::Header), f, chunks[0]);
             self.app.view(&Id::Common(IdCommon::Footer), f, chunks[2]);
@@ -45,11 +45,11 @@ impl SetupActivity {
             // Popups
             self.view_popups(f);
             if self.app.mounted(&Id::Ssh(IdSsh::DelSshKeyPopup)) {
-                let popup = Popup(Size::Percentage(30), Size::Unit(3)).draw_in(f.size());
+                let popup = Popup(Size::Percentage(30), Size::Unit(3)).draw_in(f.area());
                 f.render_widget(Clear, popup);
                 self.app.view(&Id::Ssh(IdSsh::DelSshKeyPopup), f, popup);
             } else if self.app.mounted(&Id::Ssh(IdSsh::SshHost)) {
-                let popup = Popup(Size::Percentage(50), Size::Percentage(20)).draw_in(f.size());
+                let popup = Popup(Size::Percentage(50), Size::Percentage(20)).draw_in(f.area());
                 f.render_widget(Clear, popup);
                 let popup_chunks = Layout::default()
                     .direction(Direction::Vertical)

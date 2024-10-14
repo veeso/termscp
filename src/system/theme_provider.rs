@@ -143,7 +143,7 @@ impl ThemeProvider {
 mod test {
     use pretty_assertions::assert_eq;
     use tempfile::TempDir;
-    use tuirealm::tui::style::Color;
+    use tuirealm::ratatui::style::Color;
 
     use super::*;
 

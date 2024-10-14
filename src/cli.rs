@@ -2,13 +2,15 @@
 //!
 //! defines the types for main.rs types
 
+mod remote;
+
 use std::path::PathBuf;
 use std::time::Duration;
 
 use argh::FromArgs;
+pub use remote::{Remote, RemoteArgs};
 
 use crate::activity_manager::NextActivity;
-use crate::filetransfer::FileTransferParams;
 use crate::system::logging::LogLevel;
 
 pub enum Task {
@@ -17,12 +19,14 @@ pub enum Task {
     InstallUpdate,
 }
 
-#[derive(FromArgs)]
+#[derive(Default, FromArgs)]
 #[argh(description = "
 where positional can be: 
-        - [address]         [local-wrkdir]
+        - [address_a] [address_b] [local-wrkdir]
     OR
-        - [bookmark-Name]   [local-wrkdir]
+        - -b [bookmark-name_1] -b [bookmark-name_2] [local-wrkdir]
+
+    and any combination of the above
 
 Address syntax can be:
 
@@ -37,14 +41,15 @@ pub struct Args {
     #[argh(subcommand)]
     pub nested: Option<ArgsSubcommands>,
     /// resolve address argument as a bookmark name
-    #[argh(switch, short = 'b')]
-    pub address_as_bookmark: bool,
+    #[argh(option, short = 'b')]
+    pub bookmark: Vec<String>,
     /// enable TRACE log level
     #[argh(switch, short = 'D')]
     pub debug: bool,
-    /// provide password from CLI
+    /// provide password from CLI; if you need to provide multiple passwords, use multiple -P flags.
+    /// In case just respect the order of the addresses
     #[argh(option, short = 'P')]
-    pub password: Option<String>,
+    pub password: Vec<String>,
     /// disable logging
     #[argh(switch, short = 'q')]
     pub quiet: bool,
@@ -55,10 +60,7 @@ pub struct Args {
     #[argh(switch, short = 'v')]
     pub version: bool,
     // -- positional
-    #[argh(
-        positional,
-        description = "protocol://user@address:port:wrkdir local-wrkdir"
-    )]
+    #[argh(positional, description = "address1 address2 local-wrkdir")]
     pub positional: Vec<String>,
 }
 
@@ -90,7 +92,7 @@ pub struct LoadThemeArgs {
 }
 
 pub struct RunOpts {
-    pub remote: Remote,
+    pub remote: RemoteArgs,
     pub ticks: Duration,
     pub log_level: LogLevel,
     pub task: Task,
@@ -122,45 +124,10 @@ impl RunOpts {
 impl Default for RunOpts {
     fn default() -> Self {
         Self {
-            remote: Remote::None,
+            remote: RemoteArgs::default(),
             ticks: Duration::from_millis(10),
             log_level: LogLevel::Info,
             task: Task::Activity(NextActivity::Authentication),
-        }
-    }
-}
-
-#[allow(clippy::large_enum_variant)]
-pub enum Remote {
-    Bookmark(BookmarkParams),
-    Host(HostParams),
-    None,
-}
-
-pub struct BookmarkParams {
-    pub name: String,
-    pub password: Option<String>,
-}
-
-pub struct HostParams {
-    pub params: FileTransferParams,
-    pub password: Option<String>,
-}
-
-impl BookmarkParams {
-    pub fn new<S: AsRef<str>>(name: S, password: Option<S>) -> Self {
-        Self {
-            name: name.as_ref().to_string(),
-            password: password.map(|x| x.as_ref().to_string()),
-        }
-    }
-}
-
-impl HostParams {
-    pub fn new<S: AsRef<str>>(params: FileTransferParams, password: Option<S>) -> Self {
-        Self {
-            params,
-            password: password.map(|x| x.as_ref().to_string()),
         }
     }
 }

@@ -17,7 +17,7 @@ use tuirealm::props::{
 };
 use tuirealm::{Component, Event, MockComponent, NoUserEvent, State, StateValue};
 #[cfg(unix)]
-use users::{get_group_by_gid, get_user_by_uid};
+use uzers::{get_group_by_gid, get_user_by_uid};
 
 pub use self::chmod::ChmodPopup;
 pub use self::goto::{GotoPopup, ATTR_FILES};
@@ -1036,7 +1036,7 @@ pub struct ProgressBarFull {
 }
 
 impl ProgressBarFull {
-    pub fn new<S: AsRef<str>>(prog: f64, label: S, title: S, color: Color) -> Self {
+    pub fn new<S: Into<String>>(prog: f64, label: S, title: S, color: Color) -> Self {
         Self {
             component: ProgressBar::default()
                 .borders(
@@ -1074,7 +1074,7 @@ pub struct ProgressBarPartial {
 }
 
 impl ProgressBarPartial {
-    pub fn new<S: AsRef<str>>(prog: f64, label: S, title: S, color: Color) -> Self {
+    pub fn new<S: Into<String>>(prog: f64, label: S, title: S, color: Color) -> Self {
         Self {
             component: ProgressBar::default()
                 .borders(
@@ -1551,8 +1551,8 @@ pub struct StatusBarLocal {
 
 impl StatusBarLocal {
     pub fn new(browser: &Browser, sorting_color: Color, hidden_color: Color) -> Self {
-        let file_sorting = file_sorting_label(browser.local().file_sorting);
-        let hidden_files = hidden_files_label(browser.local().hidden_files_visible());
+        let file_sorting = file_sorting_label(browser.host_bridge().file_sorting);
+        let hidden_files = hidden_files_label(browser.host_bridge().hidden_files_visible());
         Self {
             component: Span::default().spans(&[
                 TextSpan::new("File sorting: ").fg(sorting_color),

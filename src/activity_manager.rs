@@ -2,15 +2,17 @@
 //!
 //! `activity_manager` is the module which provides run methods and handling for activities
 
-// Deps
-// Namespaces
+use std::env;
 use std::path::PathBuf;
 use std::time::Duration;
 
 use remotefs_ssh::SshKeyStorage as SshKeyStorageTrait;
 
-use crate::filetransfer::{FileTransferParams, FileTransferProtocol};
-use crate::host::{HostError, Localhost};
+use crate::cli::{Remote, RemoteArgs};
+use crate::filetransfer::{
+    FileTransferParams, FileTransferProtocol, HostBridgeParams, ProtocolParams,
+};
+use crate::host::HostError;
 use crate::system::bookmarks_client::BookmarksClient;
 use crate::system::config_client::ConfigClient;
 use crate::system::environment;
@@ -28,6 +30,16 @@ pub enum NextActivity {
     Authentication,
     FileTransfer,
     SetupActivity,
+}
+
+pub enum Host {
+    HostBridge,
+    Remote,
+}
+
+pub enum HostParams {
+    HostBridge(HostBridgeParams),
+    Remote(FileTransferParams),
 }
 
 /// The activity manager takes care of running activities and handling them until the application has ended
@@ -62,10 +74,100 @@ impl ActivityManager {
         })
     }
 
+    /// Configure remote args
+    pub fn configure_remote_args(&mut self, remote_args: RemoteArgs) -> Result<(), String> {
+        // Set for host bridge
+        match remote_args.host_bridge {
+            Remote::Bookmark(params) => self.resolve_bookmark_name(
+                Host::HostBridge,
+                &params.name,
+                params.password.as_deref(),
+            ),
+            Remote::Host(host_params) => self.set_host_params(
+                HostParams::HostBridge(HostBridgeParams::Remote(
+                    host_params.file_transfer_params.protocol,
+                    host_params.file_transfer_params.params,
+                )),
+                host_params.password.as_deref(),
+            ),
+            Remote::None => self.set_host_params(
+                HostParams::HostBridge(HostBridgeParams::Localhost(
+                    env::current_dir()
+                        .map_err(|e| format!("Could not get current directory: {e}"))?,
+                )),
+                None,
+            ),
+        }?;
+
+        // set remote
+        match remote_args.remote {
+            Remote::Bookmark(params) => {
+                self.resolve_bookmark_name(Host::Remote, &params.name, params.password.as_deref())
+            }
+            Remote::Host(host_params) => self.set_host_params(
+                HostParams::Remote(host_params.file_transfer_params),
+                host_params.password.as_deref(),
+            ),
+            Remote::None => Ok(()),
+        }
+    }
+
     /// Set file transfer params
-    pub fn set_filetransfer_params(
+    pub fn set_host_params(
         &mut self,
-        mut params: FileTransferParams,
+        host: HostParams,
+        password: Option<&str>,
+    ) -> Result<(), String> {
+        let (remote_local_path, remote_remote_path) = match &host {
+            HostParams::Remote(params) => (params.local_path.clone(), params.remote_path.clone()),
+            _ => (None, None),
+        };
+
+        let mut remote_params = match &host {
+            HostParams::HostBridge(HostBridgeParams::Remote(protocol, protocol_params)) => {
+                Some((*protocol, protocol_params.clone()))
+            }
+            HostParams::HostBridge(HostBridgeParams::Localhost(_)) => None,
+            HostParams::Remote(ft_params) => Some((ft_params.protocol, ft_params.params.clone())),
+        };
+
+        // Put params into the context
+        if let Some((protocol, params)) = remote_params.as_mut() {
+            self.resolve_password_for_protocol_params(*protocol, params, password)?;
+        }
+
+        match host {
+            HostParams::HostBridge(HostBridgeParams::Localhost(path)) => {
+                self.context
+                    .as_mut()
+                    .unwrap()
+                    .set_host_bridge_params(HostBridgeParams::Localhost(path));
+            }
+            HostParams::HostBridge(HostBridgeParams::Remote(_, _)) => {
+                let (protocol, params) = remote_params.unwrap();
+                self.context
+                    .as_mut()
+                    .unwrap()
+                    .set_host_bridge_params(HostBridgeParams::Remote(protocol, params));
+            }
+            HostParams::Remote(_) => {
+                let (protocol, params) = remote_params.unwrap();
+                let params = FileTransferParams {
+                    local_path: remote_local_path,
+                    remote_path: remote_remote_path,
+                    protocol,
+                    params,
+                };
+                self.context.as_mut().unwrap().set_remote_params(params);
+            }
+        }
+        Ok(())
+    }
+
+    fn resolve_password_for_protocol_params(
+        &mut self,
+        protocol: FileTransferProtocol,
+        params: &mut ProtocolParams,
         password: Option<&str>,
     ) -> Result<(), String> {
         // Set password if provided
@@ -73,13 +175,13 @@ impl ActivityManager {
             if let Some(password) = password {
                 params.set_default_secret(password.to_string());
             } else if matches!(
-                params.protocol,
+                protocol,
                 FileTransferProtocol::Scp | FileTransferProtocol::Sftp,
-            ) && params.params.generic_params().is_some()
+            ) && params.generic_params().is_some()
             {
                 // * if protocol is SCP or SFTP check whether a SSH key is registered for this remote, in case not ask password
                 let storage = SshKeyStorage::from(self.context.as_ref().unwrap().config());
-                let generic_params = params.params.generic_params().unwrap();
+                let generic_params = params.generic_params().unwrap();
                 if storage
                     .resolve(
                         &generic_params.address,
@@ -94,7 +196,7 @@ impl ActivityManager {
                         "storage could not find any suitable key for {}... prompting for password",
                         generic_params.address
                     );
-                    self.prompt_password(&mut params)?;
+                    self.prompt_password(params)?;
                 } else {
                     debug!(
                         "a key is already set for {}; password is not required",
@@ -102,17 +204,19 @@ impl ActivityManager {
                     );
                 }
             } else {
-                self.prompt_password(&mut params)?;
+                self.prompt_password(params)?;
             }
         }
-        // Put params into the context
-        self.context.as_mut().unwrap().set_ftparams(params);
+
         Ok(())
     }
 
     /// Prompt user for password to set into params.
-    fn prompt_password(&self, params: &mut FileTransferParams) -> Result<(), String> {
-        match tty::read_secret_from_tty("Password: ") {
+    fn prompt_password(&mut self, params: &mut ProtocolParams) -> Result<(), String> {
+        let ctx = self.context.as_mut().unwrap();
+        let prompt = format!("Password for {}: ", params.host_name());
+
+        match tty::read_secret_from_tty(ctx.terminal(), prompt) {
             Err(err) => Err(format!("Could not read password: {err}")),
             Ok(Some(secret)) => {
                 debug!(
@@ -130,16 +234,28 @@ impl ActivityManager {
     /// Returns error if bookmark is not found
     pub fn resolve_bookmark_name(
         &mut self,
+        host: Host,
         bookmark_name: &str,
         password: Option<&str>,
     ) -> Result<(), String> {
         if let Some(bookmarks_client) = self.context.as_mut().unwrap().bookmarks_client_mut() {
-            match bookmarks_client.get_bookmark(bookmark_name) {
-                None => Err(format!(
-                    r#"Could not resolve bookmark name: "{bookmark_name}" no such bookmark"#
-                )),
-                Some(params) => self.set_filetransfer_params(params, password),
-            }
+            let params = match bookmarks_client.get_bookmark(bookmark_name) {
+                None => {
+                    return Err(format!(
+                        r#"Could not resolve bookmark name: "{bookmark_name}" no such bookmark"#
+                    ))
+                }
+                Some(params) => params,
+            };
+
+            let params = match host {
+                Host::Remote => HostParams::Remote(params),
+                Host::HostBridge => {
+                    HostParams::HostBridge(HostBridgeParams::Remote(params.protocol, params.params))
+                }
+            };
+
+            self.set_host_params(params, password)
         } else {
             Err(String::from(
                 "Could not resolve bookmark name: bookmarks client not initialized",
@@ -226,15 +342,24 @@ impl ActivityManager {
     fn run_filetransfer(&mut self) -> Option<NextActivity> {
         info!("Starting FileTransferActivity");
         // Get context
-        let mut ctx: Context = match self.context.take() {
+        let ctx: Context = match self.context.take() {
             Some(ctx) => ctx,
             None => {
                 error!("Failed to start FileTransferActivity: context is None");
                 return None;
             }
         };
+
+        let host_bridge_params = match ctx.host_bridge_params() {
+            Some(params) => params.clone(),
+            None => {
+                error!("Failed to start FileTransferActivity: host bridge params is None");
+                return None;
+            }
+        };
+
         // If ft params is None, return None
-        let ft_params: &FileTransferParams = match ctx.ft_params() {
+        let remote_params: &FileTransferParams = match ctx.remote_params() {
             Some(ft_params) => ft_params,
             None => {
                 error!("Failed to start FileTransferActivity: file transfer params is None");
@@ -242,28 +367,8 @@ impl ActivityManager {
             }
         };
 
-        // get local path:
-        // - if set in file transfer params, get it from there
-        // - otherwise is env current dir
-        // - otherwise is /
-        let local_wrkdir = ft_params
-            .local_path
-            .clone()
-            .or(std::env::current_dir().ok())
-            .unwrap_or(PathBuf::from("/"));
-
-        // Prepare activity
-        let host: Localhost = match Localhost::new(local_wrkdir) {
-            Ok(host) => host,
-            Err(err) => {
-                // Set error in context
-                error!("Failed to initialize localhost: {}", err);
-                ctx.set_error(format!("Could not initialize localhost: {err}"));
-                return None;
-            }
-        };
         let mut activity: FileTransferActivity =
-            FileTransferActivity::new(host, ft_params, self.ticks);
+            FileTransferActivity::new(host_bridge_params, remote_params, self.ticks);
         // Prepare result
         let result: Option<NextActivity>;
         // Create activity

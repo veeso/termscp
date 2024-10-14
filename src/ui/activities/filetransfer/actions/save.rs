@@ -93,12 +93,12 @@ impl FileTransferActivity {
     }
 
     fn remote_recv_file(&mut self, opts: TransferOpts) {
-        let wrkdir: PathBuf = self.local().wrkdir.clone();
+        let wrkdir: PathBuf = self.host_bridge().wrkdir.clone();
         match self.get_remote_selected_entries() {
             SelectedFile::One(entry) => {
                 let file_to_check = Self::file_to_check(&entry, opts.save_as.as_ref());
                 if self.config().get_prompt_on_file_replace()
-                    && self.local_file_exists(file_to_check.as_path())
+                    && self.host_bridge_file_exists(file_to_check.as_path())
                     && !self
                         .should_replace_file(opts.save_as.clone().unwrap_or_else(|| entry.name()))
                 {
@@ -129,7 +129,7 @@ impl FileTransferActivity {
                     let existing_files: Vec<&File> = entries
                         .iter()
                         .filter(|x| {
-                            self.local_file_exists(
+                            self.host_bridge_file_exists(
                                 Self::file_to_check_many(x, dest_path.as_path()).as_path(),
                             )
                         })

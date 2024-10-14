@@ -1,6 +1,7 @@
 # Changelog
 
 - [Changelog](#changelog)
+  - [0.16.0](#0160)
   - [0.15.0](#0150)
   - [0.14.0](#0140)
   - [0.13.0](#0130)
@@ -36,6 +37,24 @@
   - [0.1.0](#010)
 
 ---
+
+## 0.16.0
+
+Released on 14/10/2024
+
+- [**Multi Host support**](https://github.com/veeso/termscp/issues/285):
+  - Now it is possible to work on two different remotes `remote A -> remote B` instead of just `localhost -> remote`
+  - Cli arguments now accept an additional `remote-args` for the left panel.
+  - For more details read this issue <https://github.com/veeso/termscp/issues/285>.
+  - Change between auth forms with `<BACKTAB>`
+  - Bookmarks are automatically loaded into the last auth form.
+- [Issue 289](https://github.com/veeso/termscp/issues/289): Use `uzers` instead of the dead package `users` which has several vulnerabilities
+- [Issue 290](https://github.com/veeso/termscp/issues/290): Password prompt was broken
+- [Issue 298](https://github.com/veeso/termscp/issues/298): tuirealm 2.x
+  - Fixed some performance issues where sometimes the app froze for a couple of seconds, thanks to this <https://github.com/veeso/tui-realm/pull/78>.
+- [Issue 292](https://github.com/veeso/termscp/issues/292): New version alert was not displayed due to a semver regex issue.
+- [Issue 291](https://github.com/veeso/termscp/issues/291): Show `..` directory before all the others in the explorer. If you click on it you'll go the parent directory (same as pressing `<U>`). No, you can't select it for transfers and it's actually been implemented in the worse way possible, because this little change would require a huge refactoring of the explorer component. I promise I will do it one day, but I dunno when.
+- Logging: filter out messages not related to termscp or remotefs
 
 ## 0.15.0
 

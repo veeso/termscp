@@ -7,7 +7,7 @@ use super::{FileTransferActivity, LogLevel};
 
 impl FileTransferActivity {
     pub(crate) fn action_local_exec(&mut self, input: String) {
-        match self.host.exec(input.as_str()) {
+        match self.host_bridge.exec(input.as_str()) {
             Ok(output) => {
                 // Reload files
                 self.log(LogLevel::Info, format!("\"{input}\": {output}"));

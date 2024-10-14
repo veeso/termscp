@@ -9,11 +9,10 @@ use super::{FileTransferActivity, LogLevel, SelectedFile};
 
 impl FileTransferActivity {
     /// Create symlink on localhost
-    #[cfg(unix)]
     pub(crate) fn action_local_symlink(&mut self, name: String) {
         if let SelectedFile::One(entry) = self.get_local_selected_entries() {
             match self
-                .host
+                .host_bridge
                 .symlink(PathBuf::from(name.as_str()).as_path(), entry.path())
             {
                 Ok(_) => {
@@ -31,11 +30,6 @@ impl FileTransferActivity {
                 }
             }
         }
-    }
-
-    #[cfg(windows)]
-    pub(crate) fn action_local_symlink(&mut self, _name: String) {
-        self.mount_error("Symlinks are not supported on Windows hosts");
     }
 
     /// Copy file on remote

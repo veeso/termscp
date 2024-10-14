@@ -8,7 +8,7 @@ pub mod ssh_keys;
 pub mod theme;
 
 use tuirealm::event::{Key, KeyEvent, KeyModifiers};
-use tuirealm::tui::widgets::Clear;
+use tuirealm::ratatui::widgets::Clear;
 use tuirealm::{Frame, Sub, SubClause, SubEventClause};
 
 use super::*;
@@ -112,23 +112,23 @@ impl SetupActivity {
 
     pub(super) fn view_popups(&mut self, f: &mut Frame) {
         if self.app.mounted(&Id::Common(IdCommon::ErrorPopup)) {
-            let popup = Popup(Size::Percentage(50), Size::Unit(3)).draw_in(f.size());
+            let popup = Popup(Size::Percentage(50), Size::Unit(3)).draw_in(f.area());
             f.render_widget(Clear, popup);
             // make popup
             self.app.view(&Id::Common(IdCommon::ErrorPopup), f, popup);
         } else if self.app.mounted(&Id::Common(IdCommon::QuitPopup)) {
             // make popup
-            let popup = Popup(Size::Percentage(40), Size::Unit(3)).draw_in(f.size());
+            let popup = Popup(Size::Percentage(40), Size::Unit(3)).draw_in(f.area());
             f.render_widget(Clear, popup);
             self.app.view(&Id::Common(IdCommon::QuitPopup), f, popup);
         } else if self.app.mounted(&Id::Common(IdCommon::Keybindings)) {
             // make popup
-            let popup = Popup(Size::Percentage(50), Size::Percentage(70)).draw_in(f.size());
+            let popup = Popup(Size::Percentage(50), Size::Percentage(70)).draw_in(f.area());
             f.render_widget(Clear, popup);
             self.app.view(&Id::Common(IdCommon::Keybindings), f, popup);
         } else if self.app.mounted(&Id::Common(IdCommon::SavePopup)) {
             // make popup
-            let popup = Popup(Size::Percentage(30), Size::Unit(3)).draw_in(f.size());
+            let popup = Popup(Size::Percentage(30), Size::Unit(3)).draw_in(f.area());
             f.render_widget(Clear, popup);
             self.app.view(&Id::Common(IdCommon::SavePopup), f, popup);
         }
@@ -235,33 +235,13 @@ impl SetupActivity {
 
     /// Returns a sub clause which requires that no popup is mounted in order to be satisfied
     fn no_popup_mounted_clause() -> SubClause<Id> {
-        SubClause::And(
-            Box::new(SubClause::Not(Box::new(SubClause::IsMounted(Id::Common(
-                IdCommon::ErrorPopup,
-            ))))),
-            Box::new(SubClause::And(
-                Box::new(SubClause::Not(Box::new(SubClause::IsMounted(Id::Common(
-                    IdCommon::Keybindings,
-                ))))),
-                Box::new(SubClause::And(
-                    Box::new(SubClause::Not(Box::new(SubClause::IsMounted(Id::Common(
-                        IdCommon::QuitPopup,
-                    ))))),
-                    Box::new(SubClause::And(
-                        Box::new(SubClause::Not(Box::new(SubClause::IsMounted(Id::Common(
-                            IdCommon::SavePopup,
-                        ))))),
-                        Box::new(SubClause::And(
-                            Box::new(SubClause::Not(Box::new(SubClause::IsMounted(Id::Ssh(
-                                IdSsh::DelSshKeyPopup,
-                            ))))),
-                            Box::new(SubClause::Not(Box::new(SubClause::IsMounted(Id::Ssh(
-                                IdSsh::SshHost,
-                            ))))),
-                        )),
-                    )),
-                )),
-            )),
+        tuirealm::subclause_and_not!(
+            Id::Common(IdCommon::ErrorPopup),
+            Id::Common(IdCommon::Keybindings),
+            Id::Common(IdCommon::QuitPopup),
+            Id::Common(IdCommon::SavePopup),
+            Id::Ssh(IdSsh::DelSshKeyPopup),
+            Id::Ssh(IdSsh::SshHost)
         )
     }
 }

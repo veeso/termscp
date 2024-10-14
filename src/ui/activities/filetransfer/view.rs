@@ -7,8 +7,8 @@
 use remotefs::fs::{File, UnixPex};
 use tuirealm::event::{Key, KeyEvent, KeyModifiers};
 use tuirealm::props::{PropPayload, PropValue, TextSpan};
-use tuirealm::tui::layout::{Constraint, Direction, Layout};
-use tuirealm::tui::widgets::Clear;
+use tuirealm::ratatui::layout::{Constraint, Direction, Layout};
+use tuirealm::ratatui::widgets::Clear;
 use tuirealm::{AttrValue, Attribute, Sub, SubClause, SubEventClause};
 use unicode_width::UnicodeWidthStr;
 
@@ -44,7 +44,7 @@ impl FileTransferActivity {
         assert!(self
             .app
             .mount(
-                Id::ExplorerLocal,
+                Id::ExplorerHostBridge,
                 Box::new(components::ExplorerLocal::new(
                     "",
                     &[],
@@ -81,12 +81,12 @@ impl FileTransferActivity {
         self.refresh_local_status_bar();
         self.refresh_remote_status_bar();
         // Update components
-        self.update_local_filelist();
+        self.update_host_bridge_filelist();
         // self.update_remote_filelist();
         // Global listener
         self.mount_global_listener();
         // Give focus to local explorer
-        assert!(self.app.active(&Id::ExplorerLocal).is_ok());
+        assert!(self.app.active(&Id::ExplorerHostBridge).is_ok());
     }
 
     // -- view
@@ -106,7 +106,7 @@ impl FileTransferActivity {
                     ]
                     .as_ref(),
                 )
-                .split(f.size());
+                .split(f.area());
             // main chunks
             let main_chunks = Layout::default()
                 .direction(Direction::Vertical)
@@ -141,7 +141,7 @@ impl FileTransferActivity {
             if matches!(self.browser.found_tab(), Some(FoundExplorerTab::Local)) {
                 self.app.view(&Id::ExplorerFind, f, tabs_chunks[0]);
             } else {
-                self.app.view(&Id::ExplorerLocal, f, tabs_chunks[0]);
+                self.app.view(&Id::ExplorerHostBridge, f, tabs_chunks[0]);
             }
             // @! Remote explorer (Find or default)
             if matches!(self.browser.found_tab(), Some(FoundExplorerTab::Remote)) {
@@ -152,80 +152,81 @@ impl FileTransferActivity {
             // Draw log box
             self.app.view(&Id::Log, f, bottom_chunks[1]);
             // Draw status bar
-            self.app.view(&Id::StatusBarLocal, f, status_bar_chunks[0]);
+            self.app
+                .view(&Id::StatusBarHostBridge, f, status_bar_chunks[0]);
             self.app.view(&Id::StatusBarRemote, f, status_bar_chunks[1]);
             // @! Draw popups
             if self.app.mounted(&Id::FatalPopup) {
                 let popup = Popup(
                     Size::Percentage(50),
-                    self.calc_popup_height(Id::FatalPopup, f.size().width, f.size().height),
+                    self.calc_popup_height(Id::FatalPopup, f.area().width, f.area().height),
                 )
-                .draw_in(f.size());
+                .draw_in(f.area());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::FatalPopup, f, popup);
             } else if self.app.mounted(&Id::CopyPopup) {
-                let popup = Popup(Size::Percentage(40), Size::Unit(3)).draw_in(f.size());
+                let popup = Popup(Size::Percentage(40), Size::Unit(3)).draw_in(f.area());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::CopyPopup, f, popup);
             } else if self.app.mounted(&Id::ChmodPopup) {
-                let popup = Popup(Size::Percentage(50), Size::Unit(12)).draw_in(f.size());
+                let popup = Popup(Size::Percentage(50), Size::Unit(12)).draw_in(f.area());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::ChmodPopup, f, popup);
             } else if self.app.mounted(&Id::FilterPopup) {
-                let popup = Popup(Size::Percentage(50), Size::Unit(3)).draw_in(f.size());
+                let popup = Popup(Size::Percentage(50), Size::Unit(3)).draw_in(f.area());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::FilterPopup, f, popup);
             } else if self.app.mounted(&Id::GotoPopup) {
-                let popup = Popup(Size::Percentage(40), Size::Unit(3)).draw_in(f.size());
+                let popup = Popup(Size::Percentage(40), Size::Unit(3)).draw_in(f.area());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::GotoPopup, f, popup);
             } else if self.app.mounted(&Id::MkdirPopup) {
-                let popup = Popup(Size::Percentage(40), Size::Unit(3)).draw_in(f.size());
+                let popup = Popup(Size::Percentage(40), Size::Unit(3)).draw_in(f.area());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::MkdirPopup, f, popup);
             } else if self.app.mounted(&Id::NewfilePopup) {
-                let popup = Popup(Size::Percentage(40), Size::Unit(3)).draw_in(f.size());
+                let popup = Popup(Size::Percentage(40), Size::Unit(3)).draw_in(f.area());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::NewfilePopup, f, popup);
             } else if self.app.mounted(&Id::OpenWithPopup) {
-                let popup = Popup(Size::Percentage(40), Size::Unit(3)).draw_in(f.size());
+                let popup = Popup(Size::Percentage(40), Size::Unit(3)).draw_in(f.area());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::OpenWithPopup, f, popup);
             } else if self.app.mounted(&Id::RenamePopup) {
-                let popup = Popup(Size::Percentage(40), Size::Unit(3)).draw_in(f.size());
+                let popup = Popup(Size::Percentage(40), Size::Unit(3)).draw_in(f.area());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::RenamePopup, f, popup);
             } else if self.app.mounted(&Id::SaveAsPopup) {
-                let popup = Popup(Size::Percentage(40), Size::Unit(3)).draw_in(f.size());
+                let popup = Popup(Size::Percentage(40), Size::Unit(3)).draw_in(f.area());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::SaveAsPopup, f, popup);
             } else if self.app.mounted(&Id::SymlinkPopup) {
-                let popup = Popup(Size::Percentage(50), Size::Unit(3)).draw_in(f.size());
+                let popup = Popup(Size::Percentage(50), Size::Unit(3)).draw_in(f.area());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::SymlinkPopup, f, popup);
             } else if self.app.mounted(&Id::ExecPopup) {
-                let popup = Popup(Size::Percentage(40), Size::Unit(3)).draw_in(f.size());
+                let popup = Popup(Size::Percentage(40), Size::Unit(3)).draw_in(f.area());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::ExecPopup, f, popup);
             } else if self.app.mounted(&Id::FileInfoPopup) {
-                let popup = Popup(Size::Percentage(50), Size::Percentage(50)).draw_in(f.size());
+                let popup = Popup(Size::Percentage(50), Size::Percentage(50)).draw_in(f.area());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::FileInfoPopup, f, popup);
             } else if self.app.mounted(&Id::ProgressBarPartial) {
-                let popup = Popup(Size::Percentage(50), Size::Percentage(20)).draw_in(f.size());
+                let popup = Popup(Size::Percentage(50), Size::Percentage(20)).draw_in(f.area());
                 f.render_widget(Clear, popup);
                 // make popup
                 let popup_chunks = Layout::default()
@@ -241,14 +242,14 @@ impl FileTransferActivity {
                 self.app.view(&Id::ProgressBarFull, f, popup_chunks[0]);
                 self.app.view(&Id::ProgressBarPartial, f, popup_chunks[1]);
             } else if self.app.mounted(&Id::DeletePopup) {
-                let popup = Popup(Size::Percentage(30), Size::Unit(3)).draw_in(f.size());
+                let popup = Popup(Size::Percentage(30), Size::Unit(3)).draw_in(f.area());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::DeletePopup, f, popup);
             } else if self.app.mounted(&Id::ReplacePopup) {
                 // NOTE: handle extended / normal modes
                 if self.is_radio_replace_extended() {
-                    let popup = Popup(Size::Percentage(50), Size::Percentage(50)).draw_in(f.size());
+                    let popup = Popup(Size::Percentage(50), Size::Percentage(50)).draw_in(f.area());
                     f.render_widget(Clear, popup);
                     let popup_chunks = Layout::default()
                         .direction(Direction::Vertical)
@@ -264,42 +265,42 @@ impl FileTransferActivity {
                         .view(&Id::ReplacingFilesListPopup, f, popup_chunks[0]);
                     self.app.view(&Id::ReplacePopup, f, popup_chunks[1]);
                 } else {
-                    let popup = Popup(Size::Percentage(50), Size::Unit(3)).draw_in(f.size());
+                    let popup = Popup(Size::Percentage(50), Size::Unit(3)).draw_in(f.area());
                     f.render_widget(Clear, popup);
                     // make popup
                     self.app.view(&Id::ReplacePopup, f, popup);
                 }
             } else if self.app.mounted(&Id::DisconnectPopup) {
-                let popup = Popup(Size::Percentage(30), Size::Unit(3)).draw_in(f.size());
+                let popup = Popup(Size::Percentage(30), Size::Unit(3)).draw_in(f.area());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::DisconnectPopup, f, popup);
             } else if self.app.mounted(&Id::QuitPopup) {
-                let popup = Popup(Size::Percentage(30), Size::Unit(3)).draw_in(f.size());
+                let popup = Popup(Size::Percentage(30), Size::Unit(3)).draw_in(f.area());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::QuitPopup, f, popup);
             } else if self.app.mounted(&Id::WatchedPathsList) {
-                let popup = Popup(Size::Percentage(60), Size::Percentage(50)).draw_in(f.size());
+                let popup = Popup(Size::Percentage(60), Size::Percentage(50)).draw_in(f.area());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::WatchedPathsList, f, popup);
             } else if self.app.mounted(&Id::WatcherPopup) {
-                let popup = Popup(Size::Percentage(60), Size::Unit(3)).draw_in(f.size());
+                let popup = Popup(Size::Percentage(60), Size::Unit(3)).draw_in(f.area());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::WatcherPopup, f, popup);
             } else if self.app.mounted(&Id::SortingPopup) {
-                let popup = Popup(Size::Percentage(50), Size::Unit(3)).draw_in(f.size());
+                let popup = Popup(Size::Percentage(50), Size::Unit(3)).draw_in(f.area());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::SortingPopup, f, popup);
             } else if self.app.mounted(&Id::ErrorPopup) {
                 let popup = Popup(
                     Size::Percentage(50),
-                    self.calc_popup_height(Id::ErrorPopup, f.size().width, f.size().height),
+                    self.calc_popup_height(Id::ErrorPopup, f.area().width, f.area().height),
                 )
-                .draw_in(f.size());
+                .draw_in(f.area());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::ErrorPopup, f, popup);
@@ -312,17 +313,17 @@ impl FileTransferActivity {
                     .unwrap_or(1) as u16;
 
                 let popup =
-                    Popup(Size::Percentage(50), Size::Unit(2 + wait_popup_lines)).draw_in(f.size());
+                    Popup(Size::Percentage(50), Size::Unit(2 + wait_popup_lines)).draw_in(f.area());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::WaitPopup, f, popup);
             } else if self.app.mounted(&Id::SyncBrowsingMkdirPopup) {
-                let popup = Popup(Size::Percentage(60), Size::Unit(3)).draw_in(f.size());
+                let popup = Popup(Size::Percentage(60), Size::Unit(3)).draw_in(f.area());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::SyncBrowsingMkdirPopup, f, popup);
             } else if self.app.mounted(&Id::KeybindingsPopup) {
-                let popup = Popup(Size::Percentage(50), Size::Percentage(80)).draw_in(f.size());
+                let popup = Popup(Size::Percentage(50), Size::Percentage(80)).draw_in(f.area());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::KeybindingsPopup, f, popup);
@@ -555,7 +556,7 @@ impl FileTransferActivity {
     pub(super) fn mount_find(&mut self, msg: impl ToString, fuzzy_search: bool) {
         // Get color
         let (bg, fg, hg) = match self.browser.tab() {
-            FileExplorerTab::Local | FileExplorerTab::FindLocal => (
+            FileExplorerTab::HostBridge | FileExplorerTab::FindHostBridge => (
                 self.theme().transfer_local_explorer_background,
                 self.theme().transfer_local_explorer_foreground,
                 self.theme().transfer_local_explorer_highlighted,
@@ -763,7 +764,7 @@ impl FileTransferActivity {
     pub(super) fn mount_file_sorting(&mut self) {
         let sorting_color = self.theme().transfer_status_sorting;
         let sorting: FileSorting = match self.browser.tab() {
-            FileExplorerTab::Local => self.local().get_file_sorting(),
+            FileExplorerTab::HostBridge => self.host_bridge().get_file_sorting(),
             FileExplorerTab::Remote => self.remote().get_file_sorting(),
             _ => return,
         };
@@ -901,7 +902,7 @@ impl FileTransferActivity {
         assert!(self
             .app
             .remount(
-                Id::StatusBarLocal,
+                Id::StatusBarHostBridge,
                 Box::new(components::StatusBarLocal::new(
                     &self.browser,
                     sorting_color,
@@ -1066,138 +1067,34 @@ impl FileTransferActivity {
 
     /// Returns a sub clause which requires that no popup is mounted in order to be satisfied
     fn no_popup_mounted_clause() -> SubClause<Id> {
-        SubClause::And(
-            Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
-                Id::CopyPopup,
-            )))),
-            Box::new(SubClause::And(
-                Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
-                    Id::DeletePopup,
-                )))),
-                Box::new(SubClause::And(
-                    Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
-                        Id::DisconnectPopup,
-                    )))),
-                    Box::new(SubClause::And(
-                        Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
-                            Id::ErrorPopup,
-                        )))),
-                        Box::new(SubClause::And(
-                            Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
-                                Id::ExecPopup,
-                            )))),
-                            Box::new(SubClause::And(
-                                Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
-                                    Id::FatalPopup,
-                                )))),
-                                Box::new(SubClause::And(
-                                    Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
-                                        Id::FileInfoPopup,
-                                    )))),
-                                    Box::new(SubClause::And(
-                                        Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
-                                            Id::GotoPopup,
-                                        )))),
-                                        Box::new(SubClause::And(
-                                            Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
-                                                Id::KeybindingsPopup,
-                                            )))),
-                                            Box::new(SubClause::And(
-                                                Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
-                                                    Id::MkdirPopup,
-                                                )))),
-                                                Box::new(SubClause::And(
-                                                    Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
-                                                        Id::NewfilePopup,
-                                                    )))),
-                                                    Box::new(SubClause::And(
-                                                        Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
-                                                            Id::OpenWithPopup,
-                                                        )))),
-                                                        Box::new(SubClause::And(
-                                                            Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
-                                                                Id::ProgressBarFull,
-                                                            )))),
-                                                            Box::new(SubClause::And(
-                                                                Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
-                                                                    Id::ProgressBarPartial,
-                                                                )))),
-                                                                Box::new(SubClause::And(
-                                                                    Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
-                                                                        Id::ExplorerFind,
-                                                                    )))),
-                                                                    Box::new(SubClause::And(
-                                                                        Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
-                                                                            Id::QuitPopup,
-                                                                        )))),
-                                                                        Box::new(SubClause::And(
-                                                                            Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
-                                                                                Id::RenamePopup,
-                                                                            )))),
-                                                                            Box::new(SubClause::And(
-                                                                                Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
-                                                                                    Id::ReplacePopup,
-                                                                                )))),
-                                                                                Box::new(SubClause::And(
-                                                                                    Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
-                                                                                        Id::SaveAsPopup,
-                                                                                    )))),
-                                                                                    Box::new(SubClause::And(
-                                                                                        Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
-                                                                                            Id::SortingPopup,
-                                                                                        )))),
-                                                                                            Box::new(SubClause::And(
-                                                                                                Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
-                                                                                                    Id::SyncBrowsingMkdirPopup,
-                                                                                            )))),
-                                                                                            Box::new(SubClause::And(
-                                                                                                Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
-                                                                                                    Id::SymlinkPopup,
-                                                                                                )))),
-                                                                                                Box::new(SubClause::And(
-                                                                                                    Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
-                                                                                                        Id::WatcherPopup,
-                                                                                                    )))),
-                                                                                                    Box::new(SubClause::And(
-                                                                                                        Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
-                                                                                                            Id::WatchedPathsList,
-                                                                                                        )))),
-                                                                                                        Box::new(SubClause::And(
-                                                                                                            Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
-                                                                                                                Id::ChmodPopup,
-                                                                                                            )))),
-                                                                                                            Box::new(SubClause::And(
-                                                                                                                Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
-                                                                                                                    Id::WaitPopup,
-                                                                                                                )))),
-                                                                                                                Box::new(SubClause::Not(Box::new(SubClause::IsMounted(
-                                                                                                                    Id::FilterPopup,
-                                                                                                                )))),
-                                                                                                            )),
-                                                                                                        )),
-                                                                                                    )),
-                                                                                                )),
-                                                                                            )),
-                                                                                        )),
-                                                                                    )),
-                                                                                )),
-                                                                            )),
-                                                                        )),
-                                                                    )),
-                                                                )),
-                                                            )),
-                                                        )),
-                                                    )),
-                                                )),
-                                            )),
-                                        )),
-                                    )),
-                                )),
-                            )),
-                        )),
-                    )),
-                )),
-            )),
+        tuirealm::subclause_and_not!(
+            Id::CopyPopup,
+            Id::DeletePopup,
+            Id::DisconnectPopup,
+            Id::ErrorPopup,
+            Id::ExecPopup,
+            Id::FatalPopup,
+            Id::FileInfoPopup,
+            Id::GotoPopup,
+            Id::KeybindingsPopup,
+            Id::MkdirPopup,
+            Id::NewfilePopup,
+            Id::OpenWithPopup,
+            Id::ProgressBarFull,
+            Id::ProgressBarPartial,
+            Id::ExplorerFind,
+            Id::QuitPopup,
+            Id::RenamePopup,
+            Id::ReplacePopup,
+            Id::SaveAsPopup,
+            Id::SortingPopup,
+            Id::SyncBrowsingMkdirPopup,
+            Id::SymlinkPopup,
+            Id::WatcherPopup,
+            Id::WatchedPathsList,
+            Id::ChmodPopup,
+            Id::WaitPopup,
+            Id::FilterPopup
         )
     }
 }

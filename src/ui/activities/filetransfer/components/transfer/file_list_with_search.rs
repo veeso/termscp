@@ -1,7 +1,7 @@
 use tui_realm_stdlib::Input;
 use tuirealm::command::{Cmd, CmdResult};
 use tuirealm::props::{Alignment, AttrValue, Attribute, Borders, Color, Table};
-use tuirealm::tui::layout::{Constraint, Direction, Layout};
+use tuirealm::ratatui::layout::{Constraint, Direction, Layout};
 use tuirealm::{MockComponent, State};
 
 use super::file_list::FileList;
@@ -88,7 +88,7 @@ impl FileListWithSearch {
 }
 
 impl MockComponent for FileListWithSearch {
-    fn view(&mut self, frame: &mut tuirealm::Frame, area: tuirealm::tui::layout::Rect) {
+    fn view(&mut self, frame: &mut tuirealm::Frame, area: tuirealm::ratatui::layout::Rect) {
         // split the area in two
         let chunks = Layout::default()
             .direction(Direction::Vertical)
