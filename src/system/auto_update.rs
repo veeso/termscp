@@ -85,6 +85,7 @@ impl Update {
 
     /// In case received version is newer than current one, version as Some is returned; otherwise None
     fn check_version(r: Release) -> Option<Release> {
+        debug!("got version from GitHub: {}", r.version);
         match parse_semver(r.version.as_str()) {
             Some(new_version) => {
                 // Check if version is different

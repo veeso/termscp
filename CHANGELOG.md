@@ -52,6 +52,8 @@ Released on
 - [Issue 290](https://github.com/veeso/termscp/issues/290): Password prompt was broken
 - [Issue 298](https://github.com/veeso/termscp/issues/298): tuirealm 2.x
   - Fixed some performance issues where sometimes the app froze for a couple of seconds, thanks to this <https://github.com/veeso/tui-realm/pull/78>.
+- [Issue 292](https://github.com/veeso/termscp/issues/292): New version alert was not displayed due to a semver regex issue.
+- Logging: filter out messages not related to termscp or remotefs
 
 ## 0.15.0
 
