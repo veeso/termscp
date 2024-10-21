@@ -422,14 +422,14 @@ mod tests {
         let host = hosts.bookmarks.get("smb").unwrap();
         assert_eq!(host.address.as_deref().unwrap(), "localhost");
         assert_eq!(host.port.unwrap(), 445);
-        #[cfg(unix)]
+        #[cfg(posix)]
         assert_eq!(host.username.as_deref().unwrap(), "test");
-        #[cfg(unix)]
+        #[cfg(posix)]
         assert_eq!(host.password.as_deref().unwrap(), "test");
 
         let smb = host.smb.as_ref().unwrap();
         assert_eq!(smb.share.as_str(), "temp");
-        #[cfg(unix)]
+        #[cfg(posix)]
         assert_eq!(smb.workgroup.as_deref().unwrap(), "test");
     }
 

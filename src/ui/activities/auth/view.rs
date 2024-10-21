@@ -69,7 +69,7 @@ impl AuthActivity {
         self.mount_kube_namespace(FormTab::HostBridge, "");
         self.mount_kube_username(FormTab::HostBridge, "");
         self.mount_smb_share(FormTab::HostBridge, "");
-        #[cfg(unix)]
+        #[cfg(posix)]
         self.mount_smb_workgroup(FormTab::HostBridge, "");
         self.mount_webdav_uri(FormTab::HostBridge, "");
 
@@ -102,7 +102,7 @@ impl AuthActivity {
         self.mount_kube_namespace(FormTab::Remote, "");
         self.mount_kube_username(FormTab::Remote, "");
         self.mount_smb_share(FormTab::Remote, "");
-        #[cfg(unix)]
+        #[cfg(posix)]
         self.mount_smb_workgroup(FormTab::Remote, "");
         self.mount_webdav_uri(FormTab::Remote, "");
 
@@ -1042,7 +1042,7 @@ impl AuthActivity {
             .is_ok());
     }
 
-    #[cfg(unix)]
+    #[cfg(posix)]
     pub(super) fn mount_smb_workgroup(&mut self, form_tab: FormTab, workgroup: &str) {
         let color = self.theme().auth_address;
         let id = Self::form_tab_id(form_tab, AuthFormId::SmbWorkgroup);
@@ -1130,7 +1130,7 @@ impl AuthActivity {
     }
 
     /// Collect s3 input values from view
-    #[cfg(unix)]
+    #[cfg(posix)]
     pub(super) fn get_smb_params_input(&self, form_tab: FormTab) -> SmbParams {
         let share: String = self.get_input_smb_share(form_tab);
         let workgroup: Option<String> = self.get_input_smb_workgroup(form_tab);
@@ -1394,7 +1394,7 @@ impl AuthActivity {
         }
     }
 
-    #[cfg(unix)]
+    #[cfg(posix)]
     pub(super) fn get_input_smb_workgroup(&self, form_tab: FormTab) -> Option<String> {
         match self
             .app
@@ -1494,7 +1494,7 @@ impl AuthActivity {
                         .unwrap_or_default()
                 )
             }
-            #[cfg(unix)]
+            #[cfg(posix)]
             ProtocolParams::Smb(params) => {
                 let username: String = match params.username {
                     None => String::default(),
@@ -1749,7 +1749,7 @@ impl AuthActivity {
         }
     }
 
-    #[cfg(unix)]
+    #[cfg(posix)]
     fn get_host_bridge_smb_view(&self) -> [Id; 4] {
         match self.app.focus() {
             Some(
@@ -1796,7 +1796,7 @@ impl AuthActivity {
         }
     }
 
-    #[cfg(unix)]
+    #[cfg(posix)]
     fn get_remote_smb_view(&self) -> [Id; 4] {
         match self.app.focus() {
             Some(

@@ -385,7 +385,7 @@ mod test {
 
     /*
     #[test]
-    #[cfg(unix)]
+    #[cfg(posix)]
     fn should_poll_file_moved() {
         let mut watcher = FsWatcher::init(Duration::from_millis(100)).unwrap();
         let tempdir = TempDir::new().unwrap();

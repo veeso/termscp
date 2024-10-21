@@ -1,6 +1,6 @@
 use std::fs::{self, OpenOptions};
 use std::io::{Read, Write};
-#[cfg(unix)]
+#[cfg(posix)]
 use std::os::unix::fs::PermissionsExt as _;
 use std::path::{Path, PathBuf};
 
@@ -385,7 +385,7 @@ impl HostBridge for Localhost {
             filetime::set_file_atime(path, atime)
                 .map_err(|e| HostError::new(HostErrorType::FileNotAccessible, Some(e), path))?;
         }
-        #[cfg(unix)]
+        #[cfg(posix)]
         if let Some(mode) = metadata.mode {
             self.chmod(path, mode)?;
         }
@@ -417,7 +417,7 @@ impl HostBridge for Localhost {
         }
     }
 
-    #[cfg(unix)]
+    #[cfg(posix)]
     fn symlink(&mut self, src: &Path, dst: &Path) -> HostResult<()> {
         let src = self.to_path(src);
         std::os::unix::fs::symlink(dst, src.as_path()).map_err(|e| {
@@ -438,7 +438,7 @@ impl HostBridge for Localhost {
         Err(HostError::from(HostErrorType::NotImplemented))
     }
 
-    #[cfg(unix)]
+    #[cfg(posix)]
     fn chmod(&mut self, path: &std::path::Path, pex: UnixPex) -> HostResult<()> {
         let path: PathBuf = self.to_path(path);
         // Get metadta
@@ -553,19 +553,19 @@ impl HostBridge for Localhost {
 #[cfg(test)]
 mod tests {
 
-    #[cfg(unix)]
+    #[cfg(posix)]
     use std::fs::File as StdFile;
-    #[cfg(unix)]
+    #[cfg(posix)]
     use std::io::Write;
     use std::ops::AddAssign;
-    #[cfg(unix)]
+    #[cfg(posix)]
     use std::os::unix::fs::{symlink, PermissionsExt};
     use std::time::{Duration, SystemTime};
 
     use pretty_assertions::assert_eq;
 
     use super::*;
-    #[cfg(unix)]
+    #[cfg(posix)]
     use crate::utils::test_helpers::make_fsentry;
     use crate::utils::test_helpers::{create_sample_file, make_file_at};
 
@@ -578,7 +578,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(unix)]
+    #[cfg(posix)]
     fn test_host_localhost_new() {
         let host: Localhost = Localhost::new(PathBuf::from("/dev")).ok().unwrap();
         assert_eq!(host.wrkdir, PathBuf::from("/dev"));
@@ -614,14 +614,14 @@ mod tests {
     }
 
     #[test]
-    #[cfg(unix)]
+    #[cfg(posix)]
     fn test_host_localhost_pwd() {
         let mut host: Localhost = Localhost::new(PathBuf::from("/dev")).ok().unwrap();
         assert_eq!(host.pwd().unwrap(), PathBuf::from("/dev"));
     }
 
     #[test]
-    #[cfg(unix)]
+    #[cfg(posix)]
     fn test_host_localhost_change_dir() {
         let mut host: Localhost = Localhost::new(PathBuf::from("/dev")).ok().unwrap();
         let new_dir: PathBuf = PathBuf::from("/dev");
@@ -637,7 +637,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(unix)]
+    #[cfg(posix)]
     #[should_panic]
     fn test_host_localhost_change_dir_failed() {
         let mut host: Localhost = Localhost::new(PathBuf::from("/dev")).ok().unwrap();
@@ -646,7 +646,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(unix)]
+    #[cfg(posix)]
     fn test_host_localhost_open_read() {
         let mut host: Localhost = Localhost::new(PathBuf::from("/dev")).ok().unwrap();
         // Create temp file
@@ -655,7 +655,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(unix)]
+    #[cfg(posix)]
     #[should_panic]
     fn test_host_localhost_open_read_err_no_such_file() {
         let mut host: Localhost = Localhost::new(PathBuf::from("/dev")).ok().unwrap();
@@ -676,7 +676,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(unix)]
+    #[cfg(posix)]
     fn test_host_localhost_open_write() {
         let mut host: Localhost = Localhost::new(PathBuf::from("/dev")).ok().unwrap();
         // Create temp file
@@ -695,7 +695,7 @@ mod tests {
         assert!(host.create_file(file.path(), &Metadata::default()).is_err());
     }
 
-    #[cfg(unix)]
+    #[cfg(posix)]
     #[test]
     fn test_host_localhost_symlinks() {
         let tmpdir: tempfile::TempDir = tempfile::TempDir::new().unwrap();
@@ -733,7 +733,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(unix)]
+    #[cfg(posix)]
     fn test_host_localhost_mkdir() {
         let tmpdir: tempfile::TempDir = tempfile::TempDir::new().unwrap();
         let mut host: Localhost = Localhost::new(PathBuf::from(tmpdir.path())).ok().unwrap();
@@ -758,7 +758,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(unix)]
+    #[cfg(posix)]
     fn test_host_localhost_remove() {
         let tmpdir: tempfile::TempDir = tempfile::TempDir::new().unwrap();
         // Create sample file
@@ -787,7 +787,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(unix)]
+    #[cfg(posix)]
     fn test_host_localhost_rename() {
         let tmpdir: tempfile::TempDir = tempfile::TempDir::new().unwrap();
         // Create sample file
@@ -840,7 +840,7 @@ mod tests {
         assert_eq!(new_metadata.metadata().modified, Some(new_mtime));
     }
 
-    #[cfg(unix)]
+    #[cfg(posix)]
     #[test]
     fn test_host_chmod() {
         let tmpdir: tempfile::TempDir = tempfile::TempDir::new().unwrap();
@@ -859,7 +859,7 @@ mod tests {
             .is_err());
     }
 
-    #[cfg(unix)]
+    #[cfg(posix)]
     #[test]
     fn test_host_copy_file_absolute() {
         let tmpdir: tempfile::TempDir = tempfile::TempDir::new().unwrap();
@@ -889,7 +889,7 @@ mod tests {
             .is_err());
     }
 
-    #[cfg(unix)]
+    #[cfg(posix)]
     #[test]
     fn test_host_copy_file_relative() {
         let tmpdir: tempfile::TempDir = tempfile::TempDir::new().unwrap();
@@ -911,7 +911,7 @@ mod tests {
         assert_eq!(host.files.len(), 2);
     }
 
-    #[cfg(unix)]
+    #[cfg(posix)]
     #[test]
     fn test_host_copy_directory_absolute() {
         let tmpdir: tempfile::TempDir = tempfile::TempDir::new().unwrap();
@@ -942,7 +942,7 @@ mod tests {
         assert!(host.stat(test_file_path.as_path()).is_ok());
     }
 
-    #[cfg(unix)]
+    #[cfg(posix)]
     #[test]
     fn test_host_copy_directory_relative() {
         let tmpdir: tempfile::TempDir = tempfile::TempDir::new().unwrap();
@@ -980,7 +980,7 @@ mod tests {
         assert!(host.exec("echo 5").ok().unwrap().as_str().contains("5"));
     }
 
-    #[cfg(unix)]
+    #[cfg(posix)]
     #[test]
     fn should_create_symlink() {
         let tmpdir: tempfile::TempDir = tempfile::TempDir::new().unwrap();

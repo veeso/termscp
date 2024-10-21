@@ -180,7 +180,7 @@ mod test {
     }
 
     #[test]
-    #[cfg(unix)]
+    #[cfg(posix)]
     fn test_should_make_remote_args_from_two_remotes_and_local_dir() {
         let args = Args {
             positional: vec![
@@ -224,7 +224,7 @@ mod test {
     }
 
     #[test]
-    #[cfg(unix)]
+    #[cfg(posix)]
     fn test_should_make_remote_args_from_two_bookmarks_and_local_dir() {
         let args = Args {
             bookmark: vec!["foo".to_string(), "bar".to_string()],
@@ -254,7 +254,7 @@ mod test {
     }
 
     #[test]
-    #[cfg(unix)]
+    #[cfg(posix)]
     fn test_should_make_remote_args_from_one_bookmark_and_one_remote_with_local_dir() {
         let args = Args {
             positional: vec!["scp://host1".to_string(), "/home".to_string()],

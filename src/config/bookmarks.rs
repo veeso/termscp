@@ -108,7 +108,7 @@ impl From<FileTransferParams> for Bookmark {
                 smb: Some(SmbParams::from(params.clone())),
                 protocol,
                 address: Some(params.address),
-                #[cfg(unix)]
+                #[cfg(posix)]
                 port: Some(params.port),
                 #[cfg(windows)]
                 port: None,
@@ -159,7 +159,7 @@ impl From<Bookmark> for FileTransferParams {
                 let params = KubeProtocolParams::from(params);
                 Self::new(bookmark.protocol, ProtocolParams::Kube(params))
             }
-            #[cfg(unix)]
+            #[cfg(posix)]
             FileTransferProtocol::Smb => {
                 let params = TransferSmbParams::new(
                     bookmark.address.unwrap_or_default(),
@@ -521,7 +521,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(unix)]
+    #[cfg(posix)]
     fn should_get_ftparams_from_smb_bookmark() {
         let bookmark: Bookmark = Bookmark {
             protocol: FileTransferProtocol::Smb,

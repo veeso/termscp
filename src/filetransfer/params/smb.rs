@@ -2,12 +2,12 @@
 #[derive(Debug, Clone)]
 pub struct SmbParams {
     pub address: String,
-    #[cfg(unix)]
+    #[cfg(posix)]
     pub port: u16,
     pub share: String,
     pub username: Option<String>,
     pub password: Option<String>,
-    #[cfg(unix)]
+    #[cfg(posix)]
     pub workgroup: Option<String>,
 }
 
@@ -18,17 +18,17 @@ impl SmbParams {
     pub fn new<S: AsRef<str>>(address: S, share: S) -> Self {
         Self {
             address: address.as_ref().to_string(),
-            #[cfg(unix)]
+            #[cfg(posix)]
             port: 445,
             share: share.as_ref().to_string(),
             username: None,
             password: None,
-            #[cfg(unix)]
+            #[cfg(posix)]
             workgroup: None,
         }
     }
 
-    #[cfg(unix)]
+    #[cfg(posix)]
     pub fn port(mut self, port: u16) -> Self {
         self.port = port;
         self
@@ -44,7 +44,7 @@ impl SmbParams {
         self
     }
 
-    #[cfg(unix)]
+    #[cfg(posix)]
     pub fn workgroup(mut self, workgroup: Option<impl ToString>) -> Self {
         self.workgroup = workgroup.map(|x| x.to_string());
         self
@@ -57,7 +57,7 @@ impl SmbParams {
     }
 
     /// Set password
-    #[cfg(unix)]
+    #[cfg(posix)]
     pub fn set_default_secret(&mut self, secret: String) {
         self.password = Some(secret);
     }
@@ -78,20 +78,20 @@ mod test {
         let params = SmbParams::new("localhost", "temp");
         assert_eq!(&params.address, "localhost");
 
-        #[cfg(unix)]
+        #[cfg(posix)]
         assert_eq!(params.port, 445);
         assert_eq!(&params.share, "temp");
 
-        #[cfg(unix)]
+        #[cfg(posix)]
         assert!(params.username.is_none());
-        #[cfg(unix)]
+        #[cfg(posix)]
         assert!(params.password.is_none());
-        #[cfg(unix)]
+        #[cfg(posix)]
         assert!(params.workgroup.is_none());
     }
 
     #[test]
-    #[cfg(unix)]
+    #[cfg(posix)]
     fn should_init_smb_params_with_optionals() {
         let params = SmbParams::new("localhost", "temp")
             .port(3456)

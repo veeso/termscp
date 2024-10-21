@@ -9,7 +9,7 @@ pub struct SmbParams {
     pub workgroup: Option<String>,
 }
 
-#[cfg(unix)]
+#[cfg(posix)]
 impl From<TransferSmbParams> for SmbParams {
     fn from(params: TransferSmbParams) -> Self {
         Self {

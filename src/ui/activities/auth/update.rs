@@ -269,7 +269,7 @@ impl AuthActivity {
                     .active(match self.host_bridge_input_mask() {
                         InputMask::Localhost => unreachable!(),
                         InputMask::Generic => &Id::HostBridge(AuthFormId::RemoteDirectory),
-                        #[cfg(unix)]
+                        #[cfg(posix)]
                         InputMask::Smb => &Id::HostBridge(AuthFormId::SmbWorkgroup),
                         #[cfg(windows)]
                         InputMask::Smb => &Id::HostBridge(AuthFormId::RemoteDirectory),
@@ -285,7 +285,7 @@ impl AuthActivity {
                     .active(match self.remote_input_mask() {
                         InputMask::Localhost => unreachable!(),
                         InputMask::Generic => &Id::Remote(AuthFormId::RemoteDirectory),
-                        #[cfg(unix)]
+                        #[cfg(posix)]
                         InputMask::Smb => &Id::Remote(AuthFormId::SmbWorkgroup),
                         #[cfg(windows)]
                         InputMask::Smb => &Id::Remote(AuthFormId::RemoteDirectory),
@@ -400,7 +400,7 @@ impl AuthActivity {
                     .active(match self.host_bridge_input_mask() {
                         InputMask::Localhost => unreachable!(),
                         InputMask::Generic => &Id::HostBridge(AuthFormId::Password),
-                        #[cfg(unix)]
+                        #[cfg(posix)]
                         InputMask::Smb => &Id::HostBridge(AuthFormId::SmbWorkgroup),
                         #[cfg(windows)]
                         InputMask::Smb => &Id::HostBridge(AuthFormId::Password),
@@ -416,7 +416,7 @@ impl AuthActivity {
                     .active(match self.remote_input_mask() {
                         InputMask::Localhost => unreachable!(),
                         InputMask::Generic => &Id::Remote(AuthFormId::Password),
-                        #[cfg(unix)]
+                        #[cfg(posix)]
                         InputMask::Smb => &Id::Remote(AuthFormId::SmbWorkgroup),
                         #[cfg(windows)]
                         InputMask::Smb => &Id::Remote(AuthFormId::Password),
@@ -760,28 +760,28 @@ impl AuthActivity {
                 };
                 assert!(self.app.active(id).is_ok());
             }
-            #[cfg(unix)]
+            #[cfg(posix)]
             UiMsg::HostBridge(UiAuthFormMsg::SmbWorkgroupDown) => {
                 assert!(self
                     .app
                     .active(&Id::HostBridge(AuthFormId::RemoteDirectory))
                     .is_ok());
             }
-            #[cfg(unix)]
+            #[cfg(posix)]
             UiMsg::Remote(UiAuthFormMsg::SmbWorkgroupDown) => {
                 assert!(self
                     .app
                     .active(&Id::Remote(AuthFormId::RemoteDirectory))
                     .is_ok());
             }
-            #[cfg(unix)]
+            #[cfg(posix)]
             UiMsg::HostBridge(UiAuthFormMsg::SmbWorkgroupUp) => {
                 assert!(self
                     .app
                     .active(&Id::HostBridge(AuthFormId::Password))
                     .is_ok());
             }
-            #[cfg(unix)]
+            #[cfg(posix)]
             UiMsg::Remote(UiAuthFormMsg::SmbWorkgroupUp) => {
                 assert!(self.app.active(&Id::Remote(AuthFormId::Password)).is_ok());
             }

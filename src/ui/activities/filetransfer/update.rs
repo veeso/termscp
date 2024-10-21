@@ -494,9 +494,9 @@ impl FileTransferActivity {
             }
             UiMsg::ShowChmodPopup => {
                 let selected_file = match self.browser.tab() {
-                    #[cfg(unix)]
+                    #[cfg(posix)]
                     FileExplorerTab::HostBridge => self.get_local_selected_entries(),
-                    #[cfg(unix)]
+                    #[cfg(posix)]
                     FileExplorerTab::FindHostBridge => self.get_found_selected_entries(),
                     FileExplorerTab::Remote => self.get_remote_selected_entries(),
                     FileExplorerTab::FindRemote => self.get_found_selected_entries(),

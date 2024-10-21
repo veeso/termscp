@@ -952,14 +952,14 @@ impl Component<Msg, NoUserEvent> for InputSmbShare {
     }
 }
 
-#[cfg(unix)]
+#[cfg(posix)]
 #[derive(MockComponent)]
 pub struct InputSmbWorkgroup {
     component: Input,
     form_tab: FormTab,
 }
 
-#[cfg(unix)]
+#[cfg(posix)]
 impl InputSmbWorkgroup {
     pub fn new(host: &str, form_tab: FormTab, color: Color) -> Self {
         Self {
@@ -978,7 +978,7 @@ impl InputSmbWorkgroup {
     }
 }
 
-#[cfg(unix)]
+#[cfg(posix)]
 impl Component<Msg, NoUserEvent> for InputSmbWorkgroup {
     fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
         let on_key_down = match self.form_tab {

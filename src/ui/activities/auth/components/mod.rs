@@ -13,7 +13,7 @@ pub use bookmarks::{
     BookmarkName, BookmarkSavePassword, BookmarksList, DeleteBookmarkPopup, DeleteRecentPopup,
     RecentsList,
 };
-#[cfg(unix)]
+#[cfg(posix)]
 pub use form::InputSmbWorkgroup;
 pub use form::{
     HostBridgeProtocolRadio, InputAddress, InputKubeClientCert, InputKubeClientKey,

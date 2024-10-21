@@ -93,7 +93,7 @@ pub enum AuthFormId {
     S3SecurityToken,
     S3SessionToken,
     SmbShare,
-    #[cfg(unix)]
+    #[cfg(posix)]
     SmbWorkgroup,
     Username,
     WebDAVUri,
@@ -193,9 +193,9 @@ pub enum UiAuthFormMsg {
     S3SessionTokenBlurUp,
     SmbShareBlurDown,
     SmbShareBlurUp,
-    #[cfg(unix)]
+    #[cfg(posix)]
     SmbWorkgroupDown,
-    #[cfg(unix)]
+    #[cfg(posix)]
     SmbWorkgroupUp,
     UsernameBlurDown,
     UsernameBlurUp,

@@ -16,7 +16,7 @@ use tuirealm::props::{
     Alignment, BorderSides, BorderType, Borders, Color, InputType, Style, TableBuilder, TextSpan,
 };
 use tuirealm::{Component, Event, MockComponent, NoUserEvent, State, StateValue};
-#[cfg(unix)]
+#[cfg(posix)]
 use uzers::{get_group_by_gid, get_user_by_uid};
 
 pub use self::chmod::ChmodPopup;
@@ -533,7 +533,7 @@ impl FileInfoPopup {
             .add_col(TextSpan::from("Last access time: "))
             .add_col(TextSpan::new(atime.as_str()).fg(Color::LightRed));
         // User
-        #[cfg(unix)]
+        #[cfg(posix)]
         let username: String = match file.metadata().uid {
             Some(uid) => match get_user_by_uid(uid) {
                 Some(user) => user.name().to_string_lossy().to_string(),
@@ -544,7 +544,7 @@ impl FileInfoPopup {
         #[cfg(windows)]
         let username: String = format!("{}", file.metadata().uid.unwrap_or(0));
         // Group
-        #[cfg(unix)]
+        #[cfg(posix)]
         let group: String = match file.metadata().gid {
             Some(gid) => match get_group_by_gid(gid) {
                 Some(group) => group.name().to_string_lossy().to_string(),

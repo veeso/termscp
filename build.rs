@@ -7,7 +7,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         // Platforms
         macos: { target_os = "macos" },
         linux: { target_os = "linux" },
-        unix: { target_family = "unix" },
+        posix: { target_family = "unix" },
         windows: { target_family = "windows" },
         // exclusive features
         smb: { all(feature = "smb", not( macos )) },

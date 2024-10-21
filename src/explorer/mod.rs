@@ -519,7 +519,7 @@ mod tests {
                 mode: Some(UnixPex::from(0o644)),
             },
         };
-        #[cfg(unix)]
+        #[cfg(posix)]
         assert_eq!(
             explorer.fmt_file(&entry),
             format!(

@@ -280,12 +280,12 @@ impl AuthActivity {
 
     fn load_bookmark_smb_into_gui(&mut self, form_tab: FormTab, params: SmbParams) {
         self.mount_address(form_tab, params.address.as_str());
-        #[cfg(unix)]
+        #[cfg(posix)]
         self.mount_port(form_tab, params.port);
         self.mount_username(form_tab, params.username.as_deref().unwrap_or(""));
         self.mount_password(form_tab, params.password.as_deref().unwrap_or(""));
         self.mount_smb_share(form_tab, &params.share);
-        #[cfg(unix)]
+        #[cfg(posix)]
         self.mount_smb_workgroup(form_tab, params.workgroup.as_deref().unwrap_or(""));
     }
 
