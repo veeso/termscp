@@ -431,7 +431,7 @@ impl HostBridge for Localhost {
         })
     }
 
-    #[cfg(windows)]
+    #[cfg(win)]
     fn symlink(&mut self, _src: &Path, _dst: &Path) -> HostResult<()> {
         warn!("Cannot create symlink on Windows");
 
@@ -476,7 +476,7 @@ impl HostBridge for Localhost {
         }
     }
 
-    #[cfg(windows)]
+    #[cfg(win)]
     fn chmod(&mut self, _path: &std::path::Path, _pex: UnixPex) -> HostResult<()> {
         warn!("Cannot set file mode on Windows");
 
@@ -592,7 +592,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(windows)]
+    #[cfg(win)]
     fn test_host_localhost_new() {
         let mut host: Localhost = Localhost::new(PathBuf::from("C:\\users")).ok().unwrap();
         assert_eq!(host.wrkdir, PathBuf::from("C:\\users"));

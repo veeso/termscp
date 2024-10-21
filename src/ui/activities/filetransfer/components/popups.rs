@@ -541,7 +541,7 @@ impl FileInfoPopup {
             },
             None => String::from("0"),
         };
-        #[cfg(windows)]
+        #[cfg(win)]
         let username: String = format!("{}", file.metadata().uid.unwrap_or(0));
         // Group
         #[cfg(posix)]
@@ -552,7 +552,7 @@ impl FileInfoPopup {
             },
             None => String::from("0"),
         };
-        #[cfg(windows)]
+        #[cfg(win)]
         let group: String = format!("{}", file.metadata().gid.unwrap_or(0));
         texts
             .add_row()

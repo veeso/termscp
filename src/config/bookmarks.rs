@@ -110,7 +110,7 @@ impl From<FileTransferParams> for Bookmark {
                 address: Some(params.address),
                 #[cfg(posix)]
                 port: Some(params.port),
-                #[cfg(windows)]
+                #[cfg(win)]
                 port: None,
                 username: params.username,
                 password: params.password,
@@ -172,7 +172,7 @@ impl From<Bookmark> for FileTransferParams {
 
                 Self::new(bookmark.protocol, ProtocolParams::Smb(params))
             }
-            #[cfg(windows)]
+            #[cfg(win)]
             FileTransferProtocol::Smb => {
                 let params = TransferSmbParams::new(
                     bookmark.address.unwrap_or_default(),
@@ -559,7 +559,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(windows)]
+    #[cfg(win)]
     fn should_get_ftparams_from_smb_bookmark() {
         let bookmark: Bookmark = Bookmark {
             protocol: FileTransferProtocol::Smb,

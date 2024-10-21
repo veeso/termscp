@@ -1147,7 +1147,7 @@ impl AuthActivity {
             .workgroup(workgroup)
     }
 
-    #[cfg(windows)]
+    #[cfg(win)]
     pub(super) fn get_smb_params_input(&self, form_tab: FormTab) -> SmbParams {
         let share: String = self.get_input_smb_share(form_tab);
 
@@ -1505,7 +1505,7 @@ impl AuthActivity {
                     params.address, params.port, params.share
                 )
             }
-            #[cfg(windows)]
+            #[cfg(win)]
             ProtocolParams::Smb(params) => {
                 let username: String = match params.username {
                     None => String::default(),
@@ -1843,7 +1843,7 @@ impl AuthActivity {
         }
     }
 
-    #[cfg(windows)]
+    #[cfg(win)]
     fn get_host_bridge_smb_view(&self) -> [Id; 4] {
         match self.app.focus() {
             Some(
@@ -1878,7 +1878,7 @@ impl AuthActivity {
         }
     }
 
-    #[cfg(windows)]
+    #[cfg(win)]
     fn get_remote_smb_view(&self) -> [Id; 4] {
         match self.app.focus() {
             Some(

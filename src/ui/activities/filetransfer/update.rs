@@ -500,7 +500,7 @@ impl FileTransferActivity {
                     FileExplorerTab::FindHostBridge => self.get_found_selected_entries(),
                     FileExplorerTab::Remote => self.get_remote_selected_entries(),
                     FileExplorerTab::FindRemote => self.get_found_selected_entries(),
-                    #[cfg(windows)]
+                    #[cfg(win)]
                     FileExplorerTab::HostBridge | FileExplorerTab::FindHostBridge => {
                         SelectedFile::None
                     }

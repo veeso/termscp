@@ -271,7 +271,7 @@ impl AuthActivity {
                         InputMask::Generic => &Id::HostBridge(AuthFormId::RemoteDirectory),
                         #[cfg(posix)]
                         InputMask::Smb => &Id::HostBridge(AuthFormId::SmbWorkgroup),
-                        #[cfg(windows)]
+                        #[cfg(win)]
                         InputMask::Smb => &Id::HostBridge(AuthFormId::RemoteDirectory),
                         InputMask::AwsS3 => unreachable!("this shouldn't happen (password on s3)"),
                         InputMask::Kube => unreachable!("this shouldn't happen (password on kube)"),
@@ -287,7 +287,7 @@ impl AuthActivity {
                         InputMask::Generic => &Id::Remote(AuthFormId::RemoteDirectory),
                         #[cfg(posix)]
                         InputMask::Smb => &Id::Remote(AuthFormId::SmbWorkgroup),
-                        #[cfg(windows)]
+                        #[cfg(win)]
                         InputMask::Smb => &Id::Remote(AuthFormId::RemoteDirectory),
                         InputMask::AwsS3 => unreachable!("this shouldn't happen (password on s3)"),
                         InputMask::Kube => unreachable!("this shouldn't happen (password on kube)"),
@@ -402,7 +402,7 @@ impl AuthActivity {
                         InputMask::Generic => &Id::HostBridge(AuthFormId::Password),
                         #[cfg(posix)]
                         InputMask::Smb => &Id::HostBridge(AuthFormId::SmbWorkgroup),
-                        #[cfg(windows)]
+                        #[cfg(win)]
                         InputMask::Smb => &Id::HostBridge(AuthFormId::Password),
                         InputMask::Kube => &Id::HostBridge(AuthFormId::KubeClientKey),
                         InputMask::AwsS3 => &Id::HostBridge(AuthFormId::S3NewPathStyle),
@@ -418,7 +418,7 @@ impl AuthActivity {
                         InputMask::Generic => &Id::Remote(AuthFormId::Password),
                         #[cfg(posix)]
                         InputMask::Smb => &Id::Remote(AuthFormId::SmbWorkgroup),
-                        #[cfg(windows)]
+                        #[cfg(win)]
                         InputMask::Smb => &Id::Remote(AuthFormId::Password),
                         InputMask::Kube => &Id::Remote(AuthFormId::KubeClientKey),
                         InputMask::AwsS3 => &Id::Remote(AuthFormId::S3NewPathStyle),

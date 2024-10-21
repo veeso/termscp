@@ -19,7 +19,7 @@ impl From<TransferSmbParams> for SmbParams {
     }
 }
 
-#[cfg(windows)]
+#[cfg(win)]
 impl From<TransferSmbParams> for SmbParams {
     fn from(params: TransferSmbParams) -> Self {
         Self {

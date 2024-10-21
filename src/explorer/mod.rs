@@ -527,7 +527,7 @@ mod tests {
                 fmt_time(t, "%b %d %Y %H:%M")
             )
         );
-        #[cfg(windows)]
+        #[cfg(win)]
         assert_eq!(
             explorer.fmt_file(&entry),
             format!(

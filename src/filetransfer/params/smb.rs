@@ -62,7 +62,7 @@ impl SmbParams {
         self.password = Some(secret);
     }
 
-    #[cfg(windows)]
+    #[cfg(win)]
     pub fn set_default_secret(&mut self, _secret: String) {}
 }
 
@@ -108,7 +108,7 @@ mod test {
     }
 
     #[test]
-    #[cfg(windows)]
+    #[cfg(win)]
     fn should_init_smb_params_with_optionals() {
         let params = SmbParams::new("localhost", "temp")
             .username(Some("foo"))

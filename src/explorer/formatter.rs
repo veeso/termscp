@@ -219,7 +219,7 @@ impl Formatter {
             },
             None => 0.to_string(),
         };
-        #[cfg(windows)]
+        #[cfg(win)]
         let group: String = match fsentry.metadata().gid {
             Some(gid) => gid.to_string(),
             None => 0.to_string(),
@@ -428,7 +428,7 @@ impl Formatter {
             },
             None => 0.to_string(),
         };
-        #[cfg(windows)]
+        #[cfg(win)]
         let username: String = match fsentry.metadata().uid {
             Some(uid) => uid.to_string(),
             None => 0.to_string(),
@@ -600,7 +600,7 @@ mod tests {
                 fmt_time(t, "%b %d %Y %H:%M")
             )
         );
-        #[cfg(windows)]
+        #[cfg(win)]
         assert_eq!(
             formatter.fmt(&entry),
             format!(
@@ -631,7 +631,7 @@ mod tests {
                 fmt_time(t, "%b %d %Y %H:%M")
             )
         );
-        #[cfg(windows)]
+        #[cfg(win)]
         assert_eq!(
             formatter.fmt(&entry),
             format!(
@@ -662,7 +662,7 @@ mod tests {
                 fmt_time(t, "%b %d %Y %H:%M")
             )
         );
-        #[cfg(windows)]
+        #[cfg(win)]
         assert_eq!(
             formatter.fmt(&entry),
             format!(
@@ -693,7 +693,7 @@ mod tests {
                 fmt_time(t, "%b %d %Y %H:%M")
             )
         );
-        #[cfg(windows)]
+        #[cfg(win)]
         assert_eq!(
             formatter.fmt(&entry),
             format!(
@@ -731,7 +731,7 @@ mod tests {
                 fmt_time(t, "%b %d %Y %H:%M")
             )
         );
-        #[cfg(windows)]
+        #[cfg(win)]
         assert_eq!(
             formatter.fmt(&entry),
             format!(
@@ -762,7 +762,7 @@ mod tests {
                 fmt_time(t, "%b %d %Y %H:%M")
             )
         );
-        #[cfg(windows)]
+        #[cfg(win)]
         assert_eq!(
             formatter.fmt(&entry),
             format!(
