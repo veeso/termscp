@@ -12,7 +12,7 @@
   "intro": {
     "caption": "Un explorador y transferencia de archivos de terminal rico en funciones, con apoyo para SCP/SFTP/FTP/Kube/S3/WebDAV",
     "getStarted": "Para iniciar →",
-    "versionAlert": "termscp 0.16.0 ya está disponible! Descárgalo desde",
+    "versionAlert": "termscp 0.16.1 ya está disponible! Descárgalo desde",
     "here": "aquì",
     "features": {
       "handy": {

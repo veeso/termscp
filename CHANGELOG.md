@@ -1,6 +1,7 @@
 # Changelog
 
 - [Changelog](#changelog)
+  - [0.16.1](#0161)
   - [0.16.0](#0160)
   - [0.15.0](#0150)
   - [0.14.0](#0140)
@@ -37,6 +38,13 @@
   - [0.1.0](#010)
 
 ---
+
+## 0.16.1
+
+Released on 12/11/2024
+
+- Just fixed this: e45c3d5b4ef64653e5b6cc4f3703e3b67514306d
+  - `fix: gg rust 1.82 for introducing a nice breaking change in config which was not mentioned in changelog`
 
 ## 0.16.0
 
