@@ -579,6 +579,7 @@ mod tests {
 
     #[test]
     #[cfg(posix)]
+    #[cfg(not(feature = "isolated-tests"))]
     fn test_host_localhost_new() {
         let host: Localhost = Localhost::new(PathBuf::from("/dev")).ok().unwrap();
         assert_eq!(host.wrkdir, PathBuf::from("/dev"));
@@ -622,6 +623,7 @@ mod tests {
 
     #[test]
     #[cfg(posix)]
+    #[cfg(not(feature = "isolated-tests"))]
     fn test_host_localhost_change_dir() {
         let mut host: Localhost = Localhost::new(PathBuf::from("/dev")).ok().unwrap();
         let new_dir: PathBuf = PathBuf::from("/dev");
