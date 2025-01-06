@@ -359,7 +359,6 @@ impl FileTransferActivity {
  * Keep it clean :)
  * Use methods instead!
  */
-
 impl Activity for FileTransferActivity {
     /// `on_create` is the function which must be called to initialize the activity.
     /// `on_create` must initialize all the data structures used by the activity
