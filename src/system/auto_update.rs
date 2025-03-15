@@ -5,7 +5,7 @@
 use self_update::backends::github::Update as GithubUpdater;
 pub use self_update::errors::Error as UpdateError;
 use self_update::update::Release as UpdRelease;
-use self_update::{cargo_crate_version, Status};
+use self_update::{Status, cargo_crate_version};
 
 use crate::utils::parser::parse_semver;
 

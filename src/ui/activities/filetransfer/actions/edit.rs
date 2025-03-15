@@ -7,8 +7,8 @@ use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 
-use remotefs::fs::Metadata;
 use remotefs::File;
+use remotefs::fs::Metadata;
 
 use super::{FileTransferActivity, LogLevel, SelectedFile, TransferPayload};
 
@@ -221,10 +221,7 @@ impl FileTransferActivity {
     /// Edit file on remote host
     fn edit_remote_file(&mut self, file: File) -> Result<(), String> {
         // Create temp file
-        let tmpfile: PathBuf = match self.download_file_as_temp(&file) {
-            Ok(p) => p,
-            Err(err) => return Err(err),
-        };
+        let tmpfile = self.download_file_as_temp(&file)?;
         // Download file
         let file_name = file.name();
         let file_path = file.path().to_path_buf();
@@ -243,7 +240,7 @@ impl FileTransferActivity {
                     "Could not stat \"{}\": {}",
                     tmpfile.as_path().display(),
                     err
-                ))
+                ));
             }
         };
         // Edit file
@@ -256,7 +253,7 @@ impl FileTransferActivity {
                     "Could not stat \"{}\": {}",
                     tmpfile.as_path().display(),
                     err
-                ))
+                ));
             }
         };
         // Check if file has changed
@@ -282,7 +279,7 @@ impl FileTransferActivity {
                             "Could not stat \"{}\": {}",
                             tmpfile.as_path().display(),
                             err
-                        ))
+                        ));
                     }
                 };
                 // Send file

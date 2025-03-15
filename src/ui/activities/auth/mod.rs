@@ -17,7 +17,7 @@ use tuirealm::application::PollStrategy;
 use tuirealm::listener::EventListenerCfg;
 use tuirealm::{Application, NoUserEvent, Update};
 
-use super::{Activity, Context, ExitReason, CROSSTERM_MAX_POLL};
+use super::{Activity, CROSSTERM_MAX_POLL, Context, ExitReason};
 use crate::config::themes::Theme;
 use crate::filetransfer::{FileTransferParams, FileTransferProtocol};
 use crate::system::bookmarks_client::BookmarksClient;

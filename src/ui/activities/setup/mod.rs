@@ -19,7 +19,7 @@ use tuirealm::listener::EventListenerCfg;
 use tuirealm::props::Color;
 use tuirealm::{Application, NoUserEvent, Update};
 
-use super::{Activity, Context, ExitReason, CROSSTERM_MAX_POLL};
+use super::{Activity, CROSSTERM_MAX_POLL, Context, ExitReason};
 use crate::config::themes::Theme;
 use crate::system::config_client::ConfigClient;
 use crate::system::theme_provider::ThemeProvider;

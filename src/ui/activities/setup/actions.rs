@@ -135,7 +135,9 @@ impl SetupActivity {
             _ => String::new(),
         };
         // Prepare text editor
-        env::set_var("EDITOR", self.config().get_text_editor());
+        unsafe {
+            env::set_var("EDITOR", self.config().get_text_editor());
+        }
         let placeholder: String = format!("# Type private SSH key for {username}@{host}\n");
         // Put input mode back to normal
         if let Err(err) = self.context_mut().terminal().disable_raw_mode() {

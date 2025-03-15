@@ -523,7 +523,7 @@ mod tests {
         assert_eq!(
             explorer.fmt_file(&entry),
             format!(
-                "bar.txt                  -rw-r--r-- root         8.2 KB     {}",
+                "bar.txt                  -rw-r--r-- root         8.2 kB     {}",
                 fmt_time(t, "%b %d %Y %H:%M")
             )
         );
@@ -531,7 +531,7 @@ mod tests {
         assert_eq!(
             explorer.fmt_file(&entry),
             format!(
-                "bar.txt                  -rw-r--r-- 0            8.2 KB     {}",
+                "bar.txt                  -rw-r--r-- 0            8.2 kB     {}",
                 fmt_time(t, "%b %d %Y %H:%M")
             )
         );

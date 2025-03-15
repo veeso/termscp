@@ -181,10 +181,11 @@ impl AuthActivity {
                 assert!(self.app.active(id).is_ok());
             }
             UiMsg::HostBridge(UiAuthFormMsg::AddressBlurUp) => {
-                assert!(self
-                    .app
-                    .active(&Id::HostBridge(AuthFormId::Protocol))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::HostBridge(AuthFormId::Protocol))
+                        .is_ok()
+                );
             }
             UiMsg::Remote(UiAuthFormMsg::AddressBlurUp) => {
                 assert!(self.app.active(&Id::Remote(AuthFormId::Protocol)).is_ok());
@@ -196,10 +197,11 @@ impl AuthActivity {
                 assert!(self.app.active(&Id::BookmarkSavePassword).is_ok());
             }
             UiMsg::BookmarksTabBlur => {
-                assert!(self
-                    .app
-                    .active(&Id::HostBridge(AuthFormId::Protocol))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::HostBridge(AuthFormId::Protocol))
+                        .is_ok()
+                );
             }
             UiMsg::HostBridge(UiAuthFormMsg::ChangeFormTab) => {
                 self.last_form_tab = FormTab::Remote;
@@ -207,10 +209,11 @@ impl AuthActivity {
             }
             UiMsg::Remote(UiAuthFormMsg::ChangeFormTab) => {
                 self.last_form_tab = FormTab::HostBridge;
-                assert!(self
-                    .app
-                    .active(&Id::HostBridge(AuthFormId::Protocol))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::HostBridge(AuthFormId::Protocol))
+                        .is_ok()
+                );
             }
             UiMsg::CloseDeleteBookmark => {
                 assert!(self.app.umount(&Id::DeleteBookmarkPopup).is_ok());
@@ -237,25 +240,28 @@ impl AuthActivity {
                 assert!(self.app.umount(&Id::BookmarkSavePassword).is_ok());
             }
             UiMsg::HostBridge(UiAuthFormMsg::LocalDirectoryBlurDown) => {
-                assert!(self
-                    .app
-                    .active(&Id::HostBridge(AuthFormId::Protocol))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::HostBridge(AuthFormId::Protocol))
+                        .is_ok()
+                );
             }
             UiMsg::Remote(UiAuthFormMsg::LocalDirectoryBlurDown) => {
                 assert!(self.app.active(&Id::Remote(AuthFormId::Protocol)).is_ok());
             }
             UiMsg::HostBridge(UiAuthFormMsg::LocalDirectoryBlurUp) => {
-                assert!(self
-                    .app
-                    .active(&Id::HostBridge(AuthFormId::RemoteDirectory))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::HostBridge(AuthFormId::RemoteDirectory))
+                        .is_ok()
+                );
             }
             UiMsg::Remote(UiAuthFormMsg::LocalDirectoryBlurUp) => {
-                assert!(self
-                    .app
-                    .active(&Id::Remote(AuthFormId::RemoteDirectory))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::Remote(AuthFormId::RemoteDirectory))
+                        .is_ok()
+                );
             }
             UiMsg::HostBridge(UiAuthFormMsg::ParamsFormBlur) => {
                 assert!(self.app.active(&Id::BookmarksList).is_ok());
@@ -264,482 +270,548 @@ impl AuthActivity {
                 assert!(self.app.active(&Id::BookmarksList).is_ok());
             }
             UiMsg::HostBridge(UiAuthFormMsg::PasswordBlurDown) => {
-                assert!(self
-                    .app
-                    .active(match self.host_bridge_input_mask() {
-                        InputMask::Localhost => unreachable!(),
-                        InputMask::Generic => &Id::HostBridge(AuthFormId::RemoteDirectory),
-                        #[cfg(posix)]
-                        InputMask::Smb => &Id::HostBridge(AuthFormId::SmbWorkgroup),
-                        #[cfg(win)]
-                        InputMask::Smb => &Id::HostBridge(AuthFormId::RemoteDirectory),
-                        InputMask::AwsS3 => unreachable!("this shouldn't happen (password on s3)"),
-                        InputMask::Kube => unreachable!("this shouldn't happen (password on kube)"),
-                        InputMask::WebDAV => &Id::HostBridge(AuthFormId::RemoteDirectory),
-                    })
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(match self.host_bridge_input_mask() {
+                            InputMask::Localhost => unreachable!(),
+                            InputMask::Generic => &Id::HostBridge(AuthFormId::RemoteDirectory),
+                            #[cfg(posix)]
+                            InputMask::Smb => &Id::HostBridge(AuthFormId::SmbWorkgroup),
+                            #[cfg(win)]
+                            InputMask::Smb => &Id::HostBridge(AuthFormId::RemoteDirectory),
+                            InputMask::AwsS3 =>
+                                unreachable!("this shouldn't happen (password on s3)"),
+                            InputMask::Kube =>
+                                unreachable!("this shouldn't happen (password on kube)"),
+                            InputMask::WebDAV => &Id::HostBridge(AuthFormId::RemoteDirectory),
+                        })
+                        .is_ok()
+                );
             }
             UiMsg::Remote(UiAuthFormMsg::PasswordBlurDown) => {
-                assert!(self
-                    .app
-                    .active(match self.remote_input_mask() {
-                        InputMask::Localhost => unreachable!(),
-                        InputMask::Generic => &Id::Remote(AuthFormId::RemoteDirectory),
-                        #[cfg(posix)]
-                        InputMask::Smb => &Id::Remote(AuthFormId::SmbWorkgroup),
-                        #[cfg(win)]
-                        InputMask::Smb => &Id::Remote(AuthFormId::RemoteDirectory),
-                        InputMask::AwsS3 => unreachable!("this shouldn't happen (password on s3)"),
-                        InputMask::Kube => unreachable!("this shouldn't happen (password on kube)"),
-                        InputMask::WebDAV => &Id::Remote(AuthFormId::RemoteDirectory),
-                    })
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(match self.remote_input_mask() {
+                            InputMask::Localhost => unreachable!(),
+                            InputMask::Generic => &Id::Remote(AuthFormId::RemoteDirectory),
+                            #[cfg(posix)]
+                            InputMask::Smb => &Id::Remote(AuthFormId::SmbWorkgroup),
+                            #[cfg(win)]
+                            InputMask::Smb => &Id::Remote(AuthFormId::RemoteDirectory),
+                            InputMask::AwsS3 =>
+                                unreachable!("this shouldn't happen (password on s3)"),
+                            InputMask::Kube =>
+                                unreachable!("this shouldn't happen (password on kube)"),
+                            InputMask::WebDAV => &Id::Remote(AuthFormId::RemoteDirectory),
+                        })
+                        .is_ok()
+                );
             }
             UiMsg::HostBridge(UiAuthFormMsg::PasswordBlurUp) => {
-                assert!(self
-                    .app
-                    .active(&Id::HostBridge(AuthFormId::Username))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::HostBridge(AuthFormId::Username))
+                        .is_ok()
+                );
             }
             UiMsg::Remote(UiAuthFormMsg::PasswordBlurUp) => {
                 assert!(self.app.active(&Id::Remote(AuthFormId::Username)).is_ok());
             }
             UiMsg::HostBridge(UiAuthFormMsg::PortBlurDown) => {
-                assert!(self
-                    .app
-                    .active(match self.host_bridge_input_mask() {
-                        InputMask::Generic => &Id::HostBridge(AuthFormId::Username),
-                        InputMask::Smb => &Id::HostBridge(AuthFormId::SmbShare),
-                        InputMask::Localhost
-                        | InputMask::AwsS3
-                        | InputMask::Kube
-                        | InputMask::WebDAV =>
-                            unreachable!("this shouldn't happen (port on s3/kube/webdav)"),
-                    })
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(match self.host_bridge_input_mask() {
+                            InputMask::Generic => &Id::HostBridge(AuthFormId::Username),
+                            InputMask::Smb => &Id::HostBridge(AuthFormId::SmbShare),
+                            InputMask::Localhost
+                            | InputMask::AwsS3
+                            | InputMask::Kube
+                            | InputMask::WebDAV =>
+                                unreachable!("this shouldn't happen (port on s3/kube/webdav)"),
+                        })
+                        .is_ok()
+                );
             }
             UiMsg::Remote(UiAuthFormMsg::PortBlurDown) => {
-                assert!(self
-                    .app
-                    .active(match self.remote_input_mask() {
-                        InputMask::Generic => &Id::Remote(AuthFormId::Username),
-                        InputMask::Smb => &Id::Remote(AuthFormId::SmbShare),
-                        InputMask::Localhost
-                        | InputMask::AwsS3
-                        | InputMask::Kube
-                        | InputMask::WebDAV =>
-                            unreachable!("this shouldn't happen (port on s3/kube/webdav)"),
-                    })
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(match self.remote_input_mask() {
+                            InputMask::Generic => &Id::Remote(AuthFormId::Username),
+                            InputMask::Smb => &Id::Remote(AuthFormId::SmbShare),
+                            InputMask::Localhost
+                            | InputMask::AwsS3
+                            | InputMask::Kube
+                            | InputMask::WebDAV =>
+                                unreachable!("this shouldn't happen (port on s3/kube/webdav)"),
+                        })
+                        .is_ok()
+                );
             }
             UiMsg::HostBridge(UiAuthFormMsg::PortBlurUp) => {
-                assert!(self
-                    .app
-                    .active(&Id::HostBridge(AuthFormId::Address))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::HostBridge(AuthFormId::Address))
+                        .is_ok()
+                );
             }
             UiMsg::Remote(UiAuthFormMsg::PortBlurUp) => {
                 assert!(self.app.active(&Id::Remote(AuthFormId::Address)).is_ok());
             }
             UiMsg::HostBridge(UiAuthFormMsg::ProtocolBlurDown) => {
-                assert!(self
-                    .app
-                    .active(match self.host_bridge_input_mask() {
-                        InputMask::Localhost => &Id::HostBridge(AuthFormId::LocalDirectory),
-                        InputMask::Generic => &Id::HostBridge(AuthFormId::Address),
-                        InputMask::Smb => &Id::HostBridge(AuthFormId::Address),
-                        InputMask::AwsS3 => &Id::HostBridge(AuthFormId::S3Bucket),
-                        InputMask::Kube => &Id::HostBridge(AuthFormId::KubeNamespace),
-                        InputMask::WebDAV => &Id::HostBridge(AuthFormId::WebDAVUri),
-                    })
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(match self.host_bridge_input_mask() {
+                            InputMask::Localhost => &Id::HostBridge(AuthFormId::LocalDirectory),
+                            InputMask::Generic => &Id::HostBridge(AuthFormId::Address),
+                            InputMask::Smb => &Id::HostBridge(AuthFormId::Address),
+                            InputMask::AwsS3 => &Id::HostBridge(AuthFormId::S3Bucket),
+                            InputMask::Kube => &Id::HostBridge(AuthFormId::KubeNamespace),
+                            InputMask::WebDAV => &Id::HostBridge(AuthFormId::WebDAVUri),
+                        })
+                        .is_ok()
+                );
             }
             UiMsg::Remote(UiAuthFormMsg::ProtocolBlurDown) => {
-                assert!(self
-                    .app
-                    .active(match self.remote_input_mask() {
-                        InputMask::Localhost => &Id::Remote(AuthFormId::LocalDirectory),
-                        InputMask::Generic => &Id::Remote(AuthFormId::Address),
-                        InputMask::Smb => &Id::Remote(AuthFormId::Address),
-                        InputMask::AwsS3 => &Id::Remote(AuthFormId::S3Bucket),
-                        InputMask::Kube => &Id::Remote(AuthFormId::KubeNamespace),
-                        InputMask::WebDAV => &Id::Remote(AuthFormId::WebDAVUri),
-                    })
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(match self.remote_input_mask() {
+                            InputMask::Localhost => &Id::Remote(AuthFormId::LocalDirectory),
+                            InputMask::Generic => &Id::Remote(AuthFormId::Address),
+                            InputMask::Smb => &Id::Remote(AuthFormId::Address),
+                            InputMask::AwsS3 => &Id::Remote(AuthFormId::S3Bucket),
+                            InputMask::Kube => &Id::Remote(AuthFormId::KubeNamespace),
+                            InputMask::WebDAV => &Id::Remote(AuthFormId::WebDAVUri),
+                        })
+                        .is_ok()
+                );
             }
             UiMsg::HostBridge(UiAuthFormMsg::ProtocolBlurUp) => {
-                assert!(self
-                    .app
-                    .active(&Id::HostBridge(AuthFormId::LocalDirectory))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::HostBridge(AuthFormId::LocalDirectory))
+                        .is_ok()
+                );
             }
             UiMsg::Remote(UiAuthFormMsg::ProtocolBlurUp) => {
-                assert!(self
-                    .app
-                    .active(&Id::Remote(AuthFormId::LocalDirectory))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::Remote(AuthFormId::LocalDirectory))
+                        .is_ok()
+                );
             }
             UiMsg::RececentsListBlur => {
                 assert!(self.app.active(&Id::BookmarksList).is_ok());
             }
             UiMsg::HostBridge(UiAuthFormMsg::RemoteDirectoryBlurDown) => {
-                assert!(self
-                    .app
-                    .active(&Id::HostBridge(AuthFormId::LocalDirectory))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::HostBridge(AuthFormId::LocalDirectory))
+                        .is_ok()
+                );
             }
             UiMsg::Remote(UiAuthFormMsg::RemoteDirectoryBlurDown) => {
-                assert!(self
-                    .app
-                    .active(&Id::Remote(AuthFormId::LocalDirectory))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::Remote(AuthFormId::LocalDirectory))
+                        .is_ok()
+                );
             }
             UiMsg::HostBridge(UiAuthFormMsg::RemoteDirectoryBlurUp) => {
-                assert!(self
-                    .app
-                    .active(match self.host_bridge_input_mask() {
-                        InputMask::Localhost => unreachable!(),
-                        InputMask::Generic => &Id::HostBridge(AuthFormId::Password),
-                        #[cfg(posix)]
-                        InputMask::Smb => &Id::HostBridge(AuthFormId::SmbWorkgroup),
-                        #[cfg(win)]
-                        InputMask::Smb => &Id::HostBridge(AuthFormId::Password),
-                        InputMask::Kube => &Id::HostBridge(AuthFormId::KubeClientKey),
-                        InputMask::AwsS3 => &Id::HostBridge(AuthFormId::S3NewPathStyle),
-                        InputMask::WebDAV => &Id::HostBridge(AuthFormId::Password),
-                    })
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(match self.host_bridge_input_mask() {
+                            InputMask::Localhost => unreachable!(),
+                            InputMask::Generic => &Id::HostBridge(AuthFormId::Password),
+                            #[cfg(posix)]
+                            InputMask::Smb => &Id::HostBridge(AuthFormId::SmbWorkgroup),
+                            #[cfg(win)]
+                            InputMask::Smb => &Id::HostBridge(AuthFormId::Password),
+                            InputMask::Kube => &Id::HostBridge(AuthFormId::KubeClientKey),
+                            InputMask::AwsS3 => &Id::HostBridge(AuthFormId::S3NewPathStyle),
+                            InputMask::WebDAV => &Id::HostBridge(AuthFormId::Password),
+                        })
+                        .is_ok()
+                );
             }
             UiMsg::Remote(UiAuthFormMsg::RemoteDirectoryBlurUp) => {
-                assert!(self
-                    .app
-                    .active(match self.remote_input_mask() {
-                        InputMask::Localhost => unreachable!(),
-                        InputMask::Generic => &Id::Remote(AuthFormId::Password),
-                        #[cfg(posix)]
-                        InputMask::Smb => &Id::Remote(AuthFormId::SmbWorkgroup),
-                        #[cfg(win)]
-                        InputMask::Smb => &Id::Remote(AuthFormId::Password),
-                        InputMask::Kube => &Id::Remote(AuthFormId::KubeClientKey),
-                        InputMask::AwsS3 => &Id::Remote(AuthFormId::S3NewPathStyle),
-                        InputMask::WebDAV => &Id::Remote(AuthFormId::Password),
-                    })
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(match self.remote_input_mask() {
+                            InputMask::Localhost => unreachable!(),
+                            InputMask::Generic => &Id::Remote(AuthFormId::Password),
+                            #[cfg(posix)]
+                            InputMask::Smb => &Id::Remote(AuthFormId::SmbWorkgroup),
+                            #[cfg(win)]
+                            InputMask::Smb => &Id::Remote(AuthFormId::Password),
+                            InputMask::Kube => &Id::Remote(AuthFormId::KubeClientKey),
+                            InputMask::AwsS3 => &Id::Remote(AuthFormId::S3NewPathStyle),
+                            InputMask::WebDAV => &Id::Remote(AuthFormId::Password),
+                        })
+                        .is_ok()
+                );
             }
             UiMsg::HostBridge(UiAuthFormMsg::S3BucketBlurDown) => {
-                assert!(self
-                    .app
-                    .active(&Id::HostBridge(AuthFormId::S3Region))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::HostBridge(AuthFormId::S3Region))
+                        .is_ok()
+                );
             }
             UiMsg::Remote(UiAuthFormMsg::S3BucketBlurDown) => {
                 assert!(self.app.active(&Id::Remote(AuthFormId::S3Region)).is_ok());
             }
             UiMsg::HostBridge(UiAuthFormMsg::S3BucketBlurUp) => {
-                assert!(self
-                    .app
-                    .active(&Id::HostBridge(AuthFormId::Protocol))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::HostBridge(AuthFormId::Protocol))
+                        .is_ok()
+                );
             }
             UiMsg::Remote(UiAuthFormMsg::S3BucketBlurUp) => {
                 assert!(self.app.active(&Id::Remote(AuthFormId::Protocol)).is_ok());
             }
             UiMsg::HostBridge(UiAuthFormMsg::S3RegionBlurDown) => {
-                assert!(self
-                    .app
-                    .active(&Id::HostBridge(AuthFormId::S3Endpoint))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::HostBridge(AuthFormId::S3Endpoint))
+                        .is_ok()
+                );
             }
             UiMsg::Remote(UiAuthFormMsg::S3RegionBlurDown) => {
                 assert!(self.app.active(&Id::Remote(AuthFormId::S3Endpoint)).is_ok());
             }
             UiMsg::HostBridge(UiAuthFormMsg::S3RegionBlurUp) => {
-                assert!(self
-                    .app
-                    .active(&Id::HostBridge(AuthFormId::S3Bucket))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::HostBridge(AuthFormId::S3Bucket))
+                        .is_ok()
+                );
             }
             UiMsg::Remote(UiAuthFormMsg::S3RegionBlurUp) => {
                 assert!(self.app.active(&Id::Remote(AuthFormId::S3Bucket)).is_ok());
             }
             UiMsg::HostBridge(UiAuthFormMsg::S3EndpointBlurDown) => {
-                assert!(self
-                    .app
-                    .active(&Id::HostBridge(AuthFormId::S3Profile))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::HostBridge(AuthFormId::S3Profile))
+                        .is_ok()
+                );
             }
             UiMsg::Remote(UiAuthFormMsg::S3EndpointBlurDown) => {
                 assert!(self.app.active(&Id::Remote(AuthFormId::S3Profile)).is_ok());
             }
             UiMsg::HostBridge(UiAuthFormMsg::S3EndpointBlurUp) => {
-                assert!(self
-                    .app
-                    .active(&Id::HostBridge(AuthFormId::S3Region))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::HostBridge(AuthFormId::S3Region))
+                        .is_ok()
+                );
             }
             UiMsg::Remote(UiAuthFormMsg::S3EndpointBlurUp) => {
                 assert!(self.app.active(&Id::Remote(AuthFormId::S3Region)).is_ok());
             }
             UiMsg::HostBridge(UiAuthFormMsg::S3ProfileBlurDown) => {
-                assert!(self
-                    .app
-                    .active(&Id::HostBridge(AuthFormId::S3AccessKey))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::HostBridge(AuthFormId::S3AccessKey))
+                        .is_ok()
+                );
             }
             UiMsg::Remote(UiAuthFormMsg::S3ProfileBlurDown) => {
-                assert!(self
-                    .app
-                    .active(&Id::Remote(AuthFormId::S3AccessKey))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::Remote(AuthFormId::S3AccessKey))
+                        .is_ok()
+                );
             }
             UiMsg::HostBridge(UiAuthFormMsg::S3ProfileBlurUp) => {
-                assert!(self
-                    .app
-                    .active(&Id::HostBridge(AuthFormId::S3Endpoint))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::HostBridge(AuthFormId::S3Endpoint))
+                        .is_ok()
+                );
             }
             UiMsg::Remote(UiAuthFormMsg::S3ProfileBlurUp) => {
                 assert!(self.app.active(&Id::Remote(AuthFormId::S3Endpoint)).is_ok());
             }
             UiMsg::HostBridge(UiAuthFormMsg::S3AccessKeyBlurDown) => {
-                assert!(self
-                    .app
-                    .active(&Id::HostBridge(AuthFormId::S3SecretAccessKey))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::HostBridge(AuthFormId::S3SecretAccessKey))
+                        .is_ok()
+                );
             }
             UiMsg::Remote(UiAuthFormMsg::S3AccessKeyBlurDown) => {
-                assert!(self
-                    .app
-                    .active(&Id::Remote(AuthFormId::S3SecretAccessKey))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::Remote(AuthFormId::S3SecretAccessKey))
+                        .is_ok()
+                );
             }
             UiMsg::HostBridge(UiAuthFormMsg::S3AccessKeyBlurUp) => {
-                assert!(self
-                    .app
-                    .active(&Id::HostBridge(AuthFormId::S3Profile))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::HostBridge(AuthFormId::S3Profile))
+                        .is_ok()
+                );
             }
             UiMsg::Remote(UiAuthFormMsg::S3AccessKeyBlurUp) => {
                 assert!(self.app.active(&Id::Remote(AuthFormId::S3Profile)).is_ok());
             }
             UiMsg::HostBridge(UiAuthFormMsg::S3SecretAccessKeyBlurDown) => {
-                assert!(self
-                    .app
-                    .active(&Id::HostBridge(AuthFormId::S3SecurityToken))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::HostBridge(AuthFormId::S3SecurityToken))
+                        .is_ok()
+                );
             }
             UiMsg::Remote(UiAuthFormMsg::S3SecretAccessKeyBlurDown) => {
-                assert!(self
-                    .app
-                    .active(&Id::Remote(AuthFormId::S3SecurityToken))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::Remote(AuthFormId::S3SecurityToken))
+                        .is_ok()
+                );
             }
             UiMsg::HostBridge(UiAuthFormMsg::S3SecretAccessKeyBlurUp) => {
-                assert!(self
-                    .app
-                    .active(&Id::HostBridge(AuthFormId::S3AccessKey))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::HostBridge(AuthFormId::S3AccessKey))
+                        .is_ok()
+                );
             }
             UiMsg::Remote(UiAuthFormMsg::S3SecretAccessKeyBlurUp) => {
-                assert!(self
-                    .app
-                    .active(&Id::Remote(AuthFormId::S3AccessKey))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::Remote(AuthFormId::S3AccessKey))
+                        .is_ok()
+                );
             }
             UiMsg::HostBridge(UiAuthFormMsg::S3SecurityTokenBlurDown) => {
-                assert!(self
-                    .app
-                    .active(&Id::HostBridge(AuthFormId::S3SessionToken))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::HostBridge(AuthFormId::S3SessionToken))
+                        .is_ok()
+                );
             }
             UiMsg::Remote(UiAuthFormMsg::S3SecurityTokenBlurDown) => {
-                assert!(self
-                    .app
-                    .active(&Id::Remote(AuthFormId::S3SessionToken))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::Remote(AuthFormId::S3SessionToken))
+                        .is_ok()
+                );
             }
             UiMsg::HostBridge(UiAuthFormMsg::S3SecurityTokenBlurUp) => {
-                assert!(self
-                    .app
-                    .active(&Id::HostBridge(AuthFormId::S3SecretAccessKey))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::HostBridge(AuthFormId::S3SecretAccessKey))
+                        .is_ok()
+                );
             }
             UiMsg::Remote(UiAuthFormMsg::S3SecurityTokenBlurUp) => {
-                assert!(self
-                    .app
-                    .active(&Id::Remote(AuthFormId::S3SecretAccessKey))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::Remote(AuthFormId::S3SecretAccessKey))
+                        .is_ok()
+                );
             }
             UiMsg::HostBridge(UiAuthFormMsg::S3SessionTokenBlurDown) => {
-                assert!(self
-                    .app
-                    .active(&Id::HostBridge(AuthFormId::S3NewPathStyle))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::HostBridge(AuthFormId::S3NewPathStyle))
+                        .is_ok()
+                );
             }
             UiMsg::Remote(UiAuthFormMsg::S3SessionTokenBlurDown) => {
-                assert!(self
-                    .app
-                    .active(&Id::Remote(AuthFormId::S3NewPathStyle))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::Remote(AuthFormId::S3NewPathStyle))
+                        .is_ok()
+                );
             }
             UiMsg::HostBridge(UiAuthFormMsg::S3SessionTokenBlurUp) => {
-                assert!(self
-                    .app
-                    .active(&Id::HostBridge(AuthFormId::S3SecurityToken))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::HostBridge(AuthFormId::S3SecurityToken))
+                        .is_ok()
+                );
             }
             UiMsg::Remote(UiAuthFormMsg::S3SessionTokenBlurUp) => {
-                assert!(self
-                    .app
-                    .active(&Id::Remote(AuthFormId::S3SecurityToken))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::Remote(AuthFormId::S3SecurityToken))
+                        .is_ok()
+                );
             }
             UiMsg::HostBridge(UiAuthFormMsg::S3NewPathStyleBlurDown) => {
-                assert!(self
-                    .app
-                    .active(&Id::HostBridge(AuthFormId::RemoteDirectory))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::HostBridge(AuthFormId::RemoteDirectory))
+                        .is_ok()
+                );
             }
             UiMsg::Remote(UiAuthFormMsg::S3NewPathStyleBlurDown) => {
-                assert!(self
-                    .app
-                    .active(&Id::Remote(AuthFormId::RemoteDirectory))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::Remote(AuthFormId::RemoteDirectory))
+                        .is_ok()
+                );
             }
             UiMsg::HostBridge(UiAuthFormMsg::S3NewPathStyleBlurUp) => {
-                assert!(self
-                    .app
-                    .active(&Id::HostBridge(AuthFormId::S3SessionToken))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::HostBridge(AuthFormId::S3SessionToken))
+                        .is_ok()
+                );
             }
             UiMsg::Remote(UiAuthFormMsg::S3NewPathStyleBlurUp) => {
-                assert!(self
-                    .app
-                    .active(&Id::Remote(AuthFormId::S3SessionToken))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::Remote(AuthFormId::S3SessionToken))
+                        .is_ok()
+                );
             }
             UiMsg::HostBridge(UiAuthFormMsg::KubeClientCertBlurDown) => {
-                assert!(self
-                    .app
-                    .active(&Id::HostBridge(AuthFormId::KubeClientKey))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::HostBridge(AuthFormId::KubeClientKey))
+                        .is_ok()
+                );
             }
             UiMsg::Remote(UiAuthFormMsg::KubeClientCertBlurDown) => {
-                assert!(self
-                    .app
-                    .active(&Id::Remote(AuthFormId::KubeClientKey))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::Remote(AuthFormId::KubeClientKey))
+                        .is_ok()
+                );
             }
             UiMsg::HostBridge(UiAuthFormMsg::KubeClientCertBlurUp) => {
-                assert!(self
-                    .app
-                    .active(&Id::HostBridge(AuthFormId::KubeUsername))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::HostBridge(AuthFormId::KubeUsername))
+                        .is_ok()
+                );
             }
             UiMsg::Remote(UiAuthFormMsg::KubeClientCertBlurUp) => {
-                assert!(self
-                    .app
-                    .active(&Id::Remote(AuthFormId::KubeUsername))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::Remote(AuthFormId::KubeUsername))
+                        .is_ok()
+                );
             }
             UiMsg::HostBridge(UiAuthFormMsg::KubeClientKeyBlurDown) => {
-                assert!(self
-                    .app
-                    .active(&Id::HostBridge(AuthFormId::RemoteDirectory))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::HostBridge(AuthFormId::RemoteDirectory))
+                        .is_ok()
+                );
             }
             UiMsg::Remote(UiAuthFormMsg::KubeClientKeyBlurDown) => {
-                assert!(self
-                    .app
-                    .active(&Id::Remote(AuthFormId::RemoteDirectory))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::Remote(AuthFormId::RemoteDirectory))
+                        .is_ok()
+                );
             }
             UiMsg::HostBridge(UiAuthFormMsg::KubeClientKeyBlurUp) => {
-                assert!(self
-                    .app
-                    .active(&Id::HostBridge(AuthFormId::KubeClientCert))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::HostBridge(AuthFormId::KubeClientCert))
+                        .is_ok()
+                );
             }
             UiMsg::Remote(UiAuthFormMsg::KubeClientKeyBlurUp) => {
-                assert!(self
-                    .app
-                    .active(&Id::Remote(AuthFormId::KubeClientCert))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::Remote(AuthFormId::KubeClientCert))
+                        .is_ok()
+                );
             }
             UiMsg::HostBridge(UiAuthFormMsg::KubeNamespaceBlurDown) => {
-                assert!(self
-                    .app
-                    .active(&Id::HostBridge(AuthFormId::KubeClusterUrl))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::HostBridge(AuthFormId::KubeClusterUrl))
+                        .is_ok()
+                );
             }
             UiMsg::Remote(UiAuthFormMsg::KubeNamespaceBlurDown) => {
-                assert!(self
-                    .app
-                    .active(&Id::Remote(AuthFormId::KubeClusterUrl))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::Remote(AuthFormId::KubeClusterUrl))
+                        .is_ok()
+                );
             }
             UiMsg::HostBridge(UiAuthFormMsg::KubeNamespaceBlurUp) => {
-                assert!(self
-                    .app
-                    .active(&Id::HostBridge(AuthFormId::Protocol))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::HostBridge(AuthFormId::Protocol))
+                        .is_ok()
+                );
             }
             UiMsg::Remote(UiAuthFormMsg::KubeNamespaceBlurUp) => {
                 assert!(self.app.active(&Id::Remote(AuthFormId::Protocol)).is_ok());
             }
             UiMsg::HostBridge(UiAuthFormMsg::KubeClusterUrlBlurDown) => {
-                assert!(self
-                    .app
-                    .active(&Id::HostBridge(AuthFormId::KubeUsername))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::HostBridge(AuthFormId::KubeUsername))
+                        .is_ok()
+                );
             }
             UiMsg::Remote(UiAuthFormMsg::KubeClusterUrlBlurDown) => {
-                assert!(self
-                    .app
-                    .active(&Id::Remote(AuthFormId::KubeUsername))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::Remote(AuthFormId::KubeUsername))
+                        .is_ok()
+                );
             }
             UiMsg::HostBridge(UiAuthFormMsg::KubeClusterUrlBlurUp) => {
-                assert!(self
-                    .app
-                    .active(&Id::HostBridge(AuthFormId::KubeNamespace))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::HostBridge(AuthFormId::KubeNamespace))
+                        .is_ok()
+                );
             }
             UiMsg::Remote(UiAuthFormMsg::KubeClusterUrlBlurUp) => {
-                assert!(self
-                    .app
-                    .active(&Id::Remote(AuthFormId::KubeNamespace))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::Remote(AuthFormId::KubeNamespace))
+                        .is_ok()
+                );
             }
             UiMsg::HostBridge(UiAuthFormMsg::KubeUsernameBlurDown) => {
-                assert!(self
-                    .app
-                    .active(&Id::HostBridge(AuthFormId::KubeClientCert))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::HostBridge(AuthFormId::KubeClientCert))
+                        .is_ok()
+                );
             }
             UiMsg::Remote(UiAuthFormMsg::KubeUsernameBlurDown) => {
-                assert!(self
-                    .app
-                    .active(&Id::Remote(AuthFormId::KubeClientCert))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::Remote(AuthFormId::KubeClientCert))
+                        .is_ok()
+                );
             }
             UiMsg::HostBridge(UiAuthFormMsg::KubeUsernameBlurUp) => {
-                assert!(self
-                    .app
-                    .active(&Id::HostBridge(AuthFormId::KubeClusterUrl))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::HostBridge(AuthFormId::KubeClusterUrl))
+                        .is_ok()
+                );
             }
             UiMsg::Remote(UiAuthFormMsg::KubeUsernameBlurUp) => {
-                assert!(self
-                    .app
-                    .active(&Id::Remote(AuthFormId::KubeClusterUrl))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::Remote(AuthFormId::KubeClusterUrl))
+                        .is_ok()
+                );
             }
             UiMsg::HostBridge(UiAuthFormMsg::SmbShareBlurDown) => {
-                assert!(self
-                    .app
-                    .active(&Id::HostBridge(AuthFormId::Username))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::HostBridge(AuthFormId::Username))
+                        .is_ok()
+                );
             }
             UiMsg::Remote(UiAuthFormMsg::SmbShareBlurDown) => {
                 assert!(self.app.active(&Id::Remote(AuthFormId::Username)).is_ok());
@@ -762,24 +834,27 @@ impl AuthActivity {
             }
             #[cfg(posix)]
             UiMsg::HostBridge(UiAuthFormMsg::SmbWorkgroupDown) => {
-                assert!(self
-                    .app
-                    .active(&Id::HostBridge(AuthFormId::RemoteDirectory))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::HostBridge(AuthFormId::RemoteDirectory))
+                        .is_ok()
+                );
             }
             #[cfg(posix)]
             UiMsg::Remote(UiAuthFormMsg::SmbWorkgroupDown) => {
-                assert!(self
-                    .app
-                    .active(&Id::Remote(AuthFormId::RemoteDirectory))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::Remote(AuthFormId::RemoteDirectory))
+                        .is_ok()
+                );
             }
             #[cfg(posix)]
             UiMsg::HostBridge(UiAuthFormMsg::SmbWorkgroupUp) => {
-                assert!(self
-                    .app
-                    .active(&Id::HostBridge(AuthFormId::Password))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::HostBridge(AuthFormId::Password))
+                        .is_ok()
+                );
             }
             #[cfg(posix)]
             UiMsg::Remote(UiAuthFormMsg::SmbWorkgroupUp) => {
@@ -807,54 +882,63 @@ impl AuthActivity {
                 self.mount_bookmark_save_dialog(self.get_current_form_tab());
             }
             UiMsg::HostBridge(UiAuthFormMsg::UsernameBlurDown) => {
-                assert!(self
-                    .app
-                    .active(&Id::HostBridge(AuthFormId::Password))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::HostBridge(AuthFormId::Password))
+                        .is_ok()
+                );
             }
             UiMsg::Remote(UiAuthFormMsg::UsernameBlurDown) => {
                 assert!(self.app.active(&Id::Remote(AuthFormId::Password)).is_ok());
             }
             UiMsg::HostBridge(UiAuthFormMsg::UsernameBlurUp) => {
-                assert!(self
-                    .app
-                    .active(match self.host_bridge_input_mask() {
-                        InputMask::Localhost => unreachable!(),
-                        InputMask::Generic => &Id::HostBridge(AuthFormId::Port),
-                        InputMask::Smb => &Id::HostBridge(AuthFormId::SmbShare),
-                        InputMask::Kube => unreachable!("this shouldn't happen (username on kube)"),
-                        InputMask::AwsS3 => unreachable!("this shouldn't happen (username on s3)"),
-                        InputMask::WebDAV => &Id::HostBridge(AuthFormId::WebDAVUri),
-                    })
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(match self.host_bridge_input_mask() {
+                            InputMask::Localhost => unreachable!(),
+                            InputMask::Generic => &Id::HostBridge(AuthFormId::Port),
+                            InputMask::Smb => &Id::HostBridge(AuthFormId::SmbShare),
+                            InputMask::Kube =>
+                                unreachable!("this shouldn't happen (username on kube)"),
+                            InputMask::AwsS3 =>
+                                unreachable!("this shouldn't happen (username on s3)"),
+                            InputMask::WebDAV => &Id::HostBridge(AuthFormId::WebDAVUri),
+                        })
+                        .is_ok()
+                );
             }
             UiMsg::Remote(UiAuthFormMsg::UsernameBlurUp) => {
-                assert!(self
-                    .app
-                    .active(match self.remote_input_mask() {
-                        InputMask::Localhost => unreachable!(),
-                        InputMask::Generic => &Id::Remote(AuthFormId::Port),
-                        InputMask::Smb => &Id::Remote(AuthFormId::SmbShare),
-                        InputMask::Kube => unreachable!("this shouldn't happen (username on kube)"),
-                        InputMask::AwsS3 => unreachable!("this shouldn't happen (username on s3)"),
-                        InputMask::WebDAV => &Id::Remote(AuthFormId::WebDAVUri),
-                    })
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(match self.remote_input_mask() {
+                            InputMask::Localhost => unreachable!(),
+                            InputMask::Generic => &Id::Remote(AuthFormId::Port),
+                            InputMask::Smb => &Id::Remote(AuthFormId::SmbShare),
+                            InputMask::Kube =>
+                                unreachable!("this shouldn't happen (username on kube)"),
+                            InputMask::AwsS3 =>
+                                unreachable!("this shouldn't happen (username on s3)"),
+                            InputMask::WebDAV => &Id::Remote(AuthFormId::WebDAVUri),
+                        })
+                        .is_ok()
+                );
             }
             UiMsg::HostBridge(UiAuthFormMsg::WebDAVUriBlurDown) => {
-                assert!(self
-                    .app
-                    .active(&Id::HostBridge(AuthFormId::Username))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::HostBridge(AuthFormId::Username))
+                        .is_ok()
+                );
             }
             UiMsg::Remote(UiAuthFormMsg::WebDAVUriBlurDown) => {
                 assert!(self.app.active(&Id::Remote(AuthFormId::Username)).is_ok());
             }
             UiMsg::HostBridge(UiAuthFormMsg::WebDAVUriBlurUp) => {
-                assert!(self
-                    .app
-                    .active(&Id::HostBridge(AuthFormId::Protocol))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::HostBridge(AuthFormId::Protocol))
+                        .is_ok()
+                );
             }
             UiMsg::Remote(UiAuthFormMsg::WebDAVUriBlurUp) => {
                 assert!(self.app.active(&Id::Remote(AuthFormId::Protocol)).is_ok());

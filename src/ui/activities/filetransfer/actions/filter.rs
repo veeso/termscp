@@ -4,8 +4,8 @@ use regex::Regex;
 use remotefs::File;
 use wildmatch::WildMatch;
 
-use crate::ui::activities::filetransfer::lib::browser::FileExplorerTab;
 use crate::ui::activities::filetransfer::FileTransferActivity;
+use crate::ui::activities::filetransfer::lib::browser::FileExplorerTab;
 
 #[derive(Clone, Debug)]
 pub enum Filter {

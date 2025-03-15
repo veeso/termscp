@@ -5,8 +5,8 @@ use std::os::unix::fs::PermissionsExt as _;
 use std::path::{Path, PathBuf};
 
 use filetime::FileTime;
-use remotefs::fs::{FileType, Metadata, UnixPex};
 use remotefs::File;
+use remotefs::fs::{FileType, Metadata, UnixPex};
 
 use super::{HostBridge, HostResult};
 use crate::host::{HostError, HostErrorType};
@@ -105,8 +105,8 @@ impl HostBridge for Localhost {
             ));
         }
         let prev_dir: PathBuf = self.wrkdir.clone(); // Backup location
-                                                     // Update working directory
-                                                     // Change dir
+        // Update working directory
+        // Change dir
         self.wrkdir = new_dir;
         // Scan new directory
         let pwd = self.pwd()?;
@@ -135,7 +135,7 @@ impl HostBridge for Localhost {
                         HostErrorType::FileAlreadyExists,
                         None,
                         dir_path.as_path(),
-                    ))
+                    ));
                 }
             }
         }
@@ -559,7 +559,7 @@ mod tests {
     use std::io::Write;
     use std::ops::AddAssign;
     #[cfg(posix)]
-    use std::os::unix::fs::{symlink, PermissionsExt};
+    use std::os::unix::fs::{PermissionsExt, symlink};
     use std::time::{Duration, SystemTime};
 
     use pretty_assertions::assert_eq;
@@ -661,9 +661,10 @@ mod tests {
     #[should_panic]
     fn test_host_localhost_open_read_err_no_such_file() {
         let mut host: Localhost = Localhost::new(PathBuf::from("/dev")).ok().unwrap();
-        assert!(host
-            .open_file(PathBuf::from("/bin/foo-bar-test-omar-123-456-789.txt").as_path())
-            .is_ok());
+        assert!(
+            host.open_file(PathBuf::from("/bin/foo-bar-test-omar-123-456-789.txt").as_path())
+                .is_ok()
+        );
     }
 
     #[test]
@@ -704,11 +705,13 @@ mod tests {
         // Create sample file
         assert!(StdFile::create(format!("{}/foo.txt", tmpdir.path().display()).as_str()).is_ok());
         // Create symlink
-        assert!(symlink(
-            format!("{}/foo.txt", tmpdir.path().display()),
-            format!("{}/bar.txt", tmpdir.path().display())
-        )
-        .is_ok());
+        assert!(
+            symlink(
+                format!("{}/foo.txt", tmpdir.path().display()),
+                format!("{}/bar.txt", tmpdir.path().display())
+            )
+            .is_ok()
+        );
         // Get dir
         let host: Localhost = Localhost::new(PathBuf::from(tmpdir.path())).ok().unwrap();
         let files: Vec<File> = host.files.clone();
@@ -744,19 +747,21 @@ mod tests {
         assert!(host.mkdir(PathBuf::from("test_dir").as_path()).is_ok());
         let files: Vec<File> = host.files.clone();
         assert_eq!(files.len(), 1); // There should be 1 file now
-                                    // Try to re-create directory
+        // Try to re-create directory
         assert!(host.mkdir(PathBuf::from("test_dir").as_path()).is_err());
         // Try abs path
-        assert!(host
-            .mkdir_ex(PathBuf::from("/tmp/test_dir_123456789").as_path(), true)
-            .is_ok());
+        assert!(
+            host.mkdir_ex(PathBuf::from("/tmp/test_dir_123456789").as_path(), true)
+                .is_ok()
+        );
         // Fail
-        assert!(host
-            .mkdir_ex(
+        assert!(
+            host.mkdir_ex(
                 PathBuf::from("/aaaa/oooooo/tmp/test_dir_123456789").as_path(),
                 true
             )
-            .is_err());
+            .is_err()
+        );
     }
 
     #[test]
@@ -768,24 +773,26 @@ mod tests {
         let mut host: Localhost = Localhost::new(PathBuf::from(tmpdir.path())).ok().unwrap();
         let files: Vec<File> = host.files.clone();
         assert_eq!(files.len(), 1); // There should be 1 file now
-                                    // Remove file
+        // Remove file
         assert!(host.remove(files.get(0).unwrap()).is_ok());
         // There should be 0 files now
         let files: Vec<File> = host.files.clone();
         assert_eq!(files.len(), 0); // There should be 0 files now
-                                    // Create directory
+        // Create directory
         assert!(host.mkdir(PathBuf::from("test_dir").as_path()).is_ok());
         // Delete directory
         let files: Vec<File> = host.files.clone();
         assert_eq!(files.len(), 1); // There should be 1 file now
         assert!(host.remove(files.get(0).unwrap()).is_ok());
         // Remove unexisting directory
-        assert!(host
-            .remove(&make_fsentry(PathBuf::from("/a/b/c/d"), true))
-            .is_err());
-        assert!(host
-            .remove(&make_fsentry(PathBuf::from("/aaaaaaa"), false))
-            .is_err());
+        assert!(
+            host.remove(&make_fsentry(PathBuf::from("/a/b/c/d"), true))
+                .is_err()
+        );
+        assert!(
+            host.remove(&make_fsentry(PathBuf::from("/aaaaaaa"), false))
+                .is_err()
+        );
     }
 
     #[test]
@@ -803,18 +810,20 @@ mod tests {
         // Rename file
         let dst_path: PathBuf =
             PathBuf::from(format!("{}/bar.txt", tmpdir.path().display()).as_str());
-        assert!(host
-            .rename(files.get(0).unwrap(), dst_path.as_path())
-            .is_ok());
+        assert!(
+            host.rename(files.get(0).unwrap(), dst_path.as_path())
+                .is_ok()
+        );
         // There should be still 1 file now, but named bar.txt
         let files: Vec<File> = host.files.clone();
         assert_eq!(files.len(), 1); // There should be 0 files now
         assert_eq!(files.get(0).unwrap().name(), "bar.txt");
         // Fail
         let bad_path: PathBuf = PathBuf::from("/asdailsjoidoewojdijow/ashdiuahu");
-        assert!(host
-            .rename(files.get(0).unwrap(), bad_path.as_path())
-            .is_err());
+        assert!(
+            host.rename(files.get(0).unwrap(), bad_path.as_path())
+                .is_err()
+        );
     }
 
     #[test]
@@ -853,12 +862,13 @@ mod tests {
         // Chmod to dir
         assert!(host.chmod(tmpdir.path(), UnixPex::from(0o750)).is_ok());
         // Error
-        assert!(host
-            .chmod(
+        assert!(
+            host.chmod(
                 Path::new("/tmp/krgiogoiegj/kwrgnoerig"),
                 UnixPex::from(0o777)
             )
-            .is_err());
+            .is_err()
+        );
     }
 
     #[cfg(posix)]
@@ -883,12 +893,13 @@ mod tests {
         // Verify host has two files
         assert_eq!(host.files.len(), 2);
         // Fail copy
-        assert!(host
-            .copy(
+        assert!(
+            host.copy(
                 &make_fsentry(PathBuf::from("/a/a7/a/a7a"), false),
                 PathBuf::from("571k422i").as_path()
             )
-            .is_err());
+            .is_err()
+        );
     }
 
     #[cfg(posix)]
@@ -996,9 +1007,10 @@ mod tests {
         assert!(host.symlink(Path::new("link.txt"), p.as_path()).is_ok());
         // Fail symlink
         assert!(host.symlink(Path::new("link.txt"), p.as_path()).is_err());
-        assert!(host
-            .symlink(Path::new("/tmp/oooo/aaaa"), p.as_path())
-            .is_err());
+        assert!(
+            host.symlink(Path::new("/tmp/oooo/aaaa"), p.as_path())
+                .is_err()
+        );
     }
 
     #[test]

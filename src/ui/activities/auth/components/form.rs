@@ -10,14 +10,13 @@ use tuirealm::{Component, Event, MockComponent, NoUserEvent, State, StateValue};
 
 use super::{FileTransferProtocol, FormMsg, Msg, UiMsg};
 use crate::ui::activities::auth::{
-    FormTab, HostBridgeProtocol, UiAuthFormMsg, HOST_BRIDGE_RADIO_PROTOCOL_FTP,
-    HOST_BRIDGE_RADIO_PROTOCOL_FTPS, HOST_BRIDGE_RADIO_PROTOCOL_KUBE,
-    HOST_BRIDGE_RADIO_PROTOCOL_LOCALHOST, HOST_BRIDGE_RADIO_PROTOCOL_S3,
-    HOST_BRIDGE_RADIO_PROTOCOL_SCP, HOST_BRIDGE_RADIO_PROTOCOL_SFTP,
-    HOST_BRIDGE_RADIO_PROTOCOL_SMB, HOST_BRIDGE_RADIO_PROTOCOL_WEBDAV, REMOTE_RADIO_PROTOCOL_FTP,
-    REMOTE_RADIO_PROTOCOL_FTPS, REMOTE_RADIO_PROTOCOL_KUBE, REMOTE_RADIO_PROTOCOL_S3,
-    REMOTE_RADIO_PROTOCOL_SCP, REMOTE_RADIO_PROTOCOL_SFTP, REMOTE_RADIO_PROTOCOL_SMB,
-    REMOTE_RADIO_PROTOCOL_WEBDAV,
+    FormTab, HOST_BRIDGE_RADIO_PROTOCOL_FTP, HOST_BRIDGE_RADIO_PROTOCOL_FTPS,
+    HOST_BRIDGE_RADIO_PROTOCOL_KUBE, HOST_BRIDGE_RADIO_PROTOCOL_LOCALHOST,
+    HOST_BRIDGE_RADIO_PROTOCOL_S3, HOST_BRIDGE_RADIO_PROTOCOL_SCP, HOST_BRIDGE_RADIO_PROTOCOL_SFTP,
+    HOST_BRIDGE_RADIO_PROTOCOL_SMB, HOST_BRIDGE_RADIO_PROTOCOL_WEBDAV, HostBridgeProtocol,
+    REMOTE_RADIO_PROTOCOL_FTP, REMOTE_RADIO_PROTOCOL_FTPS, REMOTE_RADIO_PROTOCOL_KUBE,
+    REMOTE_RADIO_PROTOCOL_S3, REMOTE_RADIO_PROTOCOL_SCP, REMOTE_RADIO_PROTOCOL_SFTP,
+    REMOTE_RADIO_PROTOCOL_SMB, REMOTE_RADIO_PROTOCOL_WEBDAV, UiAuthFormMsg,
 };
 
 // -- protocol
@@ -93,10 +92,10 @@ impl Component<Msg, NoUserEvent> for RemoteProtocolRadio {
                 code: Key::Down, ..
             }) => return Some(Msg::Ui(UiMsg::Remote(UiAuthFormMsg::ProtocolBlurDown))),
             Event::Keyboard(KeyEvent { code: Key::Up, .. }) => {
-                return Some(Msg::Ui(UiMsg::Remote(UiAuthFormMsg::ProtocolBlurUp)))
+                return Some(Msg::Ui(UiMsg::Remote(UiAuthFormMsg::ProtocolBlurUp)));
             }
             Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => {
-                return Some(Msg::Ui(UiMsg::Remote(UiAuthFormMsg::ParamsFormBlur)))
+                return Some(Msg::Ui(UiMsg::Remote(UiAuthFormMsg::ParamsFormBlur)));
             }
             Event::Keyboard(KeyEvent {
                 code: Key::BackTab, ..
@@ -228,10 +227,10 @@ impl Component<Msg, NoUserEvent> for HostBridgeProtocolRadio {
                 code: Key::Down, ..
             }) => return Some(Msg::Ui(UiMsg::HostBridge(UiAuthFormMsg::ProtocolBlurDown))),
             Event::Keyboard(KeyEvent { code: Key::Up, .. }) => {
-                return Some(Msg::Ui(UiMsg::HostBridge(UiAuthFormMsg::ProtocolBlurUp)))
+                return Some(Msg::Ui(UiMsg::HostBridge(UiAuthFormMsg::ProtocolBlurUp)));
             }
             Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => {
-                return Some(Msg::Ui(UiMsg::HostBridge(UiAuthFormMsg::ParamsFormBlur)))
+                return Some(Msg::Ui(UiMsg::HostBridge(UiAuthFormMsg::ParamsFormBlur)));
             }
             Event::Keyboard(KeyEvent {
                 code: Key::BackTab, ..

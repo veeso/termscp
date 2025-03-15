@@ -1239,7 +1239,7 @@ impl FileTransferActivity {
             None => {
                 return Err(String::from(
                     "Could not create tempfile: cache not available",
-                ))
+                ));
             }
         };
         // Download file

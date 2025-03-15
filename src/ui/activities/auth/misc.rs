@@ -5,8 +5,8 @@
 use std::env;
 
 use super::{AuthActivity, FileTransferParams, FileTransferProtocol, FormTab, HostBridgeProtocol};
-use crate::filetransfer::params::ProtocolParams;
 use crate::filetransfer::HostBridgeParams;
+use crate::filetransfer::params::ProtocolParams;
 use crate::system::auto_update::{Release, Update, UpdateStatus};
 use crate::system::notifications::Notification;
 

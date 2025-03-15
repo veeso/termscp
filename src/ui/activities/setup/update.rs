@@ -103,10 +103,11 @@ impl SetupActivity {
     fn config_update(&mut self, msg: ConfigMsg) -> Option<Msg> {
         match msg {
             ConfigMsg::CheckUpdatesBlurDown => {
-                assert!(self
-                    .app
-                    .active(&Id::Config(IdConfig::PromptOnFileReplace))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::Config(IdConfig::PromptOnFileReplace))
+                        .is_ok()
+                );
             }
             ConfigMsg::CheckUpdatesBlurUp => {
                 assert!(self.app.active(&Id::Config(IdConfig::HiddenFiles)).is_ok());
@@ -121,49 +122,55 @@ impl SetupActivity {
                 assert!(self.app.active(&Id::Config(IdConfig::LocalFileFmt)).is_ok());
             }
             ConfigMsg::GroupDirsBlurUp => {
-                assert!(self
-                    .app
-                    .active(&Id::Config(IdConfig::PromptOnFileReplace))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::Config(IdConfig::PromptOnFileReplace))
+                        .is_ok()
+                );
             }
             ConfigMsg::HiddenFilesBlurDown => {
                 assert!(self.app.active(&Id::Config(IdConfig::CheckUpdates)).is_ok());
             }
             ConfigMsg::HiddenFilesBlurUp => {
-                assert!(self
-                    .app
-                    .active(&Id::Config(IdConfig::DefaultProtocol))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::Config(IdConfig::DefaultProtocol))
+                        .is_ok()
+                );
             }
             ConfigMsg::LocalFileFmtBlurDown => {
-                assert!(self
-                    .app
-                    .active(&Id::Config(IdConfig::RemoteFileFmt))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::Config(IdConfig::RemoteFileFmt))
+                        .is_ok()
+                );
             }
             ConfigMsg::LocalFileFmtBlurUp => {
                 assert!(self.app.active(&Id::Config(IdConfig::GroupDirs)).is_ok());
             }
             ConfigMsg::NotificationsEnabledBlurDown => {
-                assert!(self
-                    .app
-                    .active(&Id::Config(IdConfig::NotificationsThreshold))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::Config(IdConfig::NotificationsThreshold))
+                        .is_ok()
+                );
             }
             ConfigMsg::NotificationsEnabledBlurUp => {
-                assert!(self
-                    .app
-                    .active(&Id::Config(IdConfig::RemoteFileFmt))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::Config(IdConfig::RemoteFileFmt))
+                        .is_ok()
+                );
             }
             ConfigMsg::NotificationsThresholdBlurDown => {
                 assert!(self.app.active(&Id::Config(IdConfig::SshConfig)).is_ok());
             }
             ConfigMsg::NotificationsThresholdBlurUp => {
-                assert!(self
-                    .app
-                    .active(&Id::Config(IdConfig::NotificationsEnabled))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::Config(IdConfig::NotificationsEnabled))
+                        .is_ok()
+                );
             }
             ConfigMsg::PromptOnFileReplaceBlurDown => {
                 assert!(self.app.active(&Id::Config(IdConfig::GroupDirs)).is_ok());
@@ -172,19 +179,21 @@ impl SetupActivity {
                 assert!(self.app.active(&Id::Config(IdConfig::CheckUpdates)).is_ok());
             }
             ConfigMsg::RemoteFileFmtBlurDown => {
-                assert!(self
-                    .app
-                    .active(&Id::Config(IdConfig::NotificationsEnabled))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::Config(IdConfig::NotificationsEnabled))
+                        .is_ok()
+                );
             }
             ConfigMsg::RemoteFileFmtBlurUp => {
                 assert!(self.app.active(&Id::Config(IdConfig::LocalFileFmt)).is_ok());
             }
             ConfigMsg::TextEditorBlurDown => {
-                assert!(self
-                    .app
-                    .active(&Id::Config(IdConfig::DefaultProtocol))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::Config(IdConfig::DefaultProtocol))
+                        .is_ok()
+                );
             }
             ConfigMsg::TextEditorBlurUp => {
                 assert!(self.app.active(&Id::Config(IdConfig::SshConfig)).is_ok());
@@ -193,10 +202,11 @@ impl SetupActivity {
                 assert!(self.app.active(&Id::Config(IdConfig::TextEditor)).is_ok());
             }
             ConfigMsg::SshConfigBlurUp => {
-                assert!(self
-                    .app
-                    .active(&Id::Config(IdConfig::NotificationsThreshold))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::Config(IdConfig::NotificationsThreshold))
+                        .is_ok()
+                );
             }
             ConfigMsg::ConfigChanged => {
                 self.set_config_changed(true);
@@ -259,10 +269,11 @@ impl SetupActivity {
                 assert!(self.app.active(&Id::Theme(IdTheme::AuthProtocol)).is_ok());
             }
             ThemeMsg::AuthBookmarksBlurDown => {
-                assert!(self
-                    .app
-                    .active(&Id::Theme(IdTheme::AuthRecentHosts))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::Theme(IdTheme::AuthRecentHosts))
+                        .is_ok()
+                );
             }
             ThemeMsg::AuthBookmarksBlurUp => {
                 assert!(self.app.active(&Id::Theme(IdTheme::AuthPassword)).is_ok());
@@ -301,10 +312,11 @@ impl SetupActivity {
                 assert!(self.app.active(&Id::Theme(IdTheme::MiscInfo)).is_ok());
             }
             ThemeMsg::MiscErrorBlurUp => {
-                assert!(self
-                    .app
-                    .active(&Id::Theme(IdTheme::AuthRecentHosts))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::Theme(IdTheme::AuthRecentHosts))
+                        .is_ok()
+                );
             }
             ThemeMsg::MiscInfoBlurDown => {
                 assert!(self.app.active(&Id::Theme(IdTheme::MiscInput)).is_ok());
@@ -337,88 +349,100 @@ impl SetupActivity {
                 assert!(self.app.active(&Id::Theme(IdTheme::MiscQuit)).is_ok());
             }
             ThemeMsg::MiscWarnBlurDown => {
-                assert!(self
-                    .app
-                    .active(&Id::Theme(IdTheme::ExplorerLocalBg))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::Theme(IdTheme::ExplorerLocalBg))
+                        .is_ok()
+                );
             }
             ThemeMsg::MiscWarnBlurUp => {
                 assert!(self.app.active(&Id::Theme(IdTheme::MiscSave)).is_ok());
             }
             ThemeMsg::ExplorerLocalBgBlurDown => {
-                assert!(self
-                    .app
-                    .active(&Id::Theme(IdTheme::ExplorerLocalFg))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::Theme(IdTheme::ExplorerLocalFg))
+                        .is_ok()
+                );
             }
             ThemeMsg::ExplorerLocalBgBlurUp => {
                 assert!(self.app.active(&Id::Theme(IdTheme::MiscWarn)).is_ok());
             }
             ThemeMsg::ExplorerLocalFgBlurDown => {
-                assert!(self
-                    .app
-                    .active(&Id::Theme(IdTheme::ExplorerLocalHg))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::Theme(IdTheme::ExplorerLocalHg))
+                        .is_ok()
+                );
             }
             ThemeMsg::ExplorerLocalFgBlurUp => {
-                assert!(self
-                    .app
-                    .active(&Id::Theme(IdTheme::ExplorerLocalBg))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::Theme(IdTheme::ExplorerLocalBg))
+                        .is_ok()
+                );
             }
             ThemeMsg::ExplorerLocalHgBlurDown => {
-                assert!(self
-                    .app
-                    .active(&Id::Theme(IdTheme::ExplorerRemoteBg))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::Theme(IdTheme::ExplorerRemoteBg))
+                        .is_ok()
+                );
             }
             ThemeMsg::ExplorerLocalHgBlurUp => {
-                assert!(self
-                    .app
-                    .active(&Id::Theme(IdTheme::ExplorerLocalFg))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::Theme(IdTheme::ExplorerLocalFg))
+                        .is_ok()
+                );
             }
             ThemeMsg::ExplorerRemoteBgBlurDown => {
-                assert!(self
-                    .app
-                    .active(&Id::Theme(IdTheme::ExplorerRemoteFg))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::Theme(IdTheme::ExplorerRemoteFg))
+                        .is_ok()
+                );
             }
             ThemeMsg::ExplorerRemoteBgBlurUp => {
-                assert!(self
-                    .app
-                    .active(&Id::Theme(IdTheme::ExplorerLocalHg))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::Theme(IdTheme::ExplorerLocalHg))
+                        .is_ok()
+                );
             }
             ThemeMsg::ExplorerRemoteFgBlurDown => {
-                assert!(self
-                    .app
-                    .active(&Id::Theme(IdTheme::ExplorerRemoteHg))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::Theme(IdTheme::ExplorerRemoteHg))
+                        .is_ok()
+                );
             }
             ThemeMsg::ExplorerRemoteFgBlurUp => {
-                assert!(self
-                    .app
-                    .active(&Id::Theme(IdTheme::ExplorerRemoteBg))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::Theme(IdTheme::ExplorerRemoteBg))
+                        .is_ok()
+                );
             }
             ThemeMsg::ExplorerRemoteHgBlurDown => {
                 assert!(self.app.active(&Id::Theme(IdTheme::ProgBarFull)).is_ok());
             }
             ThemeMsg::ExplorerRemoteHgBlurUp => {
-                assert!(self
-                    .app
-                    .active(&Id::Theme(IdTheme::ExplorerRemoteFg))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::Theme(IdTheme::ExplorerRemoteFg))
+                        .is_ok()
+                );
             }
             ThemeMsg::ProgBarFullBlurDown => {
                 assert!(self.app.active(&Id::Theme(IdTheme::ProgBarPartial)).is_ok());
             }
             ThemeMsg::ProgBarFullBlurUp => {
-                assert!(self
-                    .app
-                    .active(&Id::Theme(IdTheme::ExplorerRemoteHg))
-                    .is_ok());
+                assert!(
+                    self.app
+                        .active(&Id::Theme(IdTheme::ExplorerRemoteHg))
+                        .is_ok()
+                );
             }
             ThemeMsg::ProgBarPartialBlurDown => {
                 assert!(self.app.active(&Id::Theme(IdTheme::LogBg)).is_ok());

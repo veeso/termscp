@@ -28,7 +28,7 @@ use session::TransferPayload;
 use tempfile::TempDir;
 use tuirealm::{Application, EventListenerCfg, NoUserEvent};
 
-use super::{Activity, Context, ExitReason, CROSSTERM_MAX_POLL};
+use super::{Activity, CROSSTERM_MAX_POLL, Context, ExitReason};
 use crate::config::themes::Theme;
 use crate::explorer::{FileExplorer, FileSorting};
 use crate::filetransfer::{

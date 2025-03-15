@@ -301,11 +301,13 @@ mod test {
 
     #[test]
     fn password_missing() {
-        assert!(FileTransferParams::new(
-            FileTransferProtocol::Scp,
-            ProtocolParams::AwsS3(AwsS3Params::new("omar", Some("eu-west-1"), Some("test")))
-        )
-        .password_missing());
+        assert!(
+            FileTransferParams::new(
+                FileTransferProtocol::Scp,
+                ProtocolParams::AwsS3(AwsS3Params::new("omar", Some("eu-west-1"), Some("test")))
+            )
+            .password_missing()
+        );
         assert_eq!(
             FileTransferParams::new(
                 FileTransferProtocol::Scp,

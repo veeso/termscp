@@ -20,7 +20,7 @@ use tuirealm::{Component, Event, MockComponent, NoUserEvent, State, StateValue};
 use uzers::{get_group_by_gid, get_user_by_uid};
 
 pub use self::chmod::ChmodPopup;
-pub use self::goto::{GotoPopup, ATTR_FILES};
+pub use self::goto::{ATTR_FILES, GotoPopup};
 use super::super::Browser;
 use super::{Msg, PendingActionMsg, TransferMsg, UiMsg};
 use crate::explorer::FileSorting;

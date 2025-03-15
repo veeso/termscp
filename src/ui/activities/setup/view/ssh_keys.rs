@@ -8,7 +8,7 @@
 use tuirealm::ratatui::layout::{Constraint, Direction, Layout};
 use tuirealm::ratatui::widgets::Clear;
 
-use super::{components, Context, Id, IdCommon, IdSsh, SetupActivity, ViewLayout};
+use super::{Context, Id, IdCommon, IdSsh, SetupActivity, ViewLayout, components};
 use crate::utils::ui::{Popup, Size};
 
 impl SetupActivity {
@@ -74,14 +74,15 @@ impl SetupActivity {
 
     /// Mount delete ssh key component
     pub(crate) fn mount_del_ssh_key(&mut self) {
-        assert!(self
-            .app
-            .remount(
-                Id::Ssh(IdSsh::DelSshKeyPopup),
-                Box::<components::DelSshKeyPopup>::default(),
-                vec![]
-            )
-            .is_ok());
+        assert!(
+            self.app
+                .remount(
+                    Id::Ssh(IdSsh::DelSshKeyPopup),
+                    Box::<components::DelSshKeyPopup>::default(),
+                    vec![]
+                )
+                .is_ok()
+        );
         assert!(self.app.active(&Id::Ssh(IdSsh::DelSshKeyPopup)).is_ok());
     }
 
@@ -92,22 +93,24 @@ impl SetupActivity {
 
     /// Mount new ssh key prompt
     pub(crate) fn mount_new_ssh_key(&mut self) {
-        assert!(self
-            .app
-            .remount(
-                Id::Ssh(IdSsh::SshHost),
-                Box::<components::SshHost>::default(),
-                vec![]
-            )
-            .is_ok());
-        assert!(self
-            .app
-            .remount(
-                Id::Ssh(IdSsh::SshUsername),
-                Box::<components::SshUsername>::default(),
-                vec![]
-            )
-            .is_ok());
+        assert!(
+            self.app
+                .remount(
+                    Id::Ssh(IdSsh::SshHost),
+                    Box::<components::SshHost>::default(),
+                    vec![]
+                )
+                .is_ok()
+        );
+        assert!(
+            self.app
+                .remount(
+                    Id::Ssh(IdSsh::SshUsername),
+                    Box::<components::SshUsername>::default(),
+                    vec![]
+                )
+                .is_ok()
+        );
         assert!(self.app.active(&Id::Ssh(IdSsh::SshHost)).is_ok());
     }
 
@@ -127,14 +130,15 @@ impl SetupActivity {
                 format!("{username} at {addr}")
             })
             .collect();
-        assert!(self
-            .app
-            .remount(
-                Id::Ssh(IdSsh::SshKeys),
-                Box::new(components::SshKeys::new(&keys)),
-                vec![]
-            )
-            .is_ok());
+        assert!(
+            self.app
+                .remount(
+                    Id::Ssh(IdSsh::SshKeys),
+                    Box::new(components::SshKeys::new(&keys)),
+                    vec![]
+                )
+                .is_ok()
+        );
         assert!(self.app.active(&Id::Ssh(IdSsh::SshKeys)).is_ok());
     }
 }

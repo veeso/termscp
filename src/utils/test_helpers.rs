@@ -24,7 +24,9 @@ pub fn create_sample_file_entry() -> (File, NamedTempFile) {
 
 /// Create sample file with default lorem ipsum content
 pub fn create_sample_file() -> NamedTempFile {
-    create_sample_file_with_content("Lorem ipsum dolor sit amet, consectetur adipiscing elit.Mauris ultricies consequat eros,nec scelerisque magna imperdiet metus.")
+    create_sample_file_with_content(
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit.Mauris ultricies consequat eros,nec scelerisque magna imperdiet metus.",
+    )
 }
 
 /// Create sample file with provided content

@@ -123,9 +123,11 @@ mod tests {
             .ok()
             .unwrap();
         // Add ssh key
-        assert!(client
-            .add_ssh_key("192.168.1.31", "pi", "piroporopero")
-            .is_ok());
+        assert!(
+            client
+                .add_ssh_key("192.168.1.31", "pi", "piroporopero")
+                .is_ok()
+        );
         // Create ssh key storage
         let storage: SshKeyStorage = SshKeyStorage::from(&client);
         // Verify key exists
@@ -141,7 +143,9 @@ mod tests {
 
     #[test]
     fn sould_resolve_key_from_ssh2_config() {
-        let rsa_key = test_helpers::create_sample_file_with_content("ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDErJhQxEI0+VvhlXVUyh+vMCm7aXfCA/g633AG8ezD/5EylwchtAr2JCoBWnxn4zV8nI9dMqOgm0jO4IsXpKOjQojv+0VOH7I+cDlBg0tk4hFlvyyS6YviDAfDDln3jYUM+5QNDfQLaZlH2WvcJ3mkDxLVlI9MBX1BAeSmChLxwAvxALp2ncImNQLzDO9eHcig3dtMrEKkzXQowRW5Y7eUzg2+vvVq4H2DOjWwUndvB5sJkhEfTUVE7ID8ZdGJo60kUb/02dZYj+IbkAnMCsqktk0cg/4XFX82hEfRYFeb1arkysFisPU1DOb6QielL/axeTebVplaouYcXY0pFdJt root@8c50fd4c345a");
+        let rsa_key = test_helpers::create_sample_file_with_content(
+            "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDErJhQxEI0+VvhlXVUyh+vMCm7aXfCA/g633AG8ezD/5EylwchtAr2JCoBWnxn4zV8nI9dMqOgm0jO4IsXpKOjQojv+0VOH7I+cDlBg0tk4hFlvyyS6YviDAfDDln3jYUM+5QNDfQLaZlH2WvcJ3mkDxLVlI9MBX1BAeSmChLxwAvxALp2ncImNQLzDO9eHcig3dtMrEKkzXQowRW5Y7eUzg2+vvVq4H2DOjWwUndvB5sJkhEfTUVE7ID8ZdGJo60kUb/02dZYj+IbkAnMCsqktk0cg/4XFX82hEfRYFeb1arkysFisPU1DOb6QielL/axeTebVplaouYcXY0pFdJt root@8c50fd4c345a",
+        );
         let ssh_config_file = test_helpers::create_sample_file_with_content(format!(
             r#"
 Host test

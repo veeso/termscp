@@ -243,7 +243,7 @@ impl ActivityManager {
                 None => {
                     return Err(format!(
                         r#"Could not resolve bookmark name: "{bookmark_name}" no such bookmark"#
-                    ))
+                    ));
                 }
                 Some(params) => params,
             };
@@ -495,19 +495,28 @@ impl ActivityManager {
                         match ThemeProvider::new(theme_path.as_path()) {
                             Ok(provider) => provider,
                             Err(err) => {
-                                error!("Could not initialize theme provider with file '{}': {}; using theme provider in degraded mode", theme_path.display(), err);
+                                error!(
+                                    "Could not initialize theme provider with file '{}': {}; using theme provider in degraded mode",
+                                    theme_path.display(),
+                                    err
+                                );
                                 ThemeProvider::degraded()
                             }
                         }
                     }
                     None => {
-                        error!("This system doesn't provide a configuration directory; using theme provider in degraded mode");
+                        error!(
+                            "This system doesn't provide a configuration directory; using theme provider in degraded mode"
+                        );
                         ThemeProvider::degraded()
                     }
                 }
             }
             Err(err) => {
-                error!("Could not initialize configuration directory: {}; using theme provider in degraded mode", err);
+                error!(
+                    "Could not initialize configuration directory: {}; using theme provider in degraded mode",
+                    err
+                );
                 ThemeProvider::degraded()
             }
         }

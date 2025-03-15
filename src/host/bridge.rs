@@ -1,8 +1,8 @@
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 
-use remotefs::fs::{Metadata, UnixPex};
 use remotefs::File;
+use remotefs::fs::{Metadata, UnixPex};
 
 use super::HostResult;
 

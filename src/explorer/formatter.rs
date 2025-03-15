@@ -364,8 +364,16 @@ impl Formatter {
         if fsentry.is_file() {
             // Get byte size
             let size: ByteSize = ByteSize(fsentry.metadata().size);
+            let mut fmt = size.display().si().to_string();
+            // pad with up to len 10
+            let pad = 10usize.saturating_sub(fmt.len());
+            for _ in 0..pad {
+                fmt.push(' ');
+            }
+
+            format!("{cur_str}{prefix}{fmt}")
             // Add to cur str, prefix and the key value
-            format!("{cur_str}{prefix}{size:10}")
+            //format!("{cur_str}{prefix}{size:10}", size = size.display().si())
         } else if fsentry.metadata().symlink.is_some() {
             let size = ByteSize(
                 fsentry
@@ -376,7 +384,14 @@ impl Formatter {
                     .to_string_lossy()
                     .len() as u64,
             );
-            format!("{cur_str}{prefix}{size:10}")
+            let mut fmt = size.display().si().to_string();
+            // pad with up to len 10
+            let pad = 10usize.saturating_sub(fmt.len());
+            for _ in 0..pad {
+                fmt.push(' ');
+            }
+
+            format!("{cur_str}{prefix}{fmt}")
         } else {
             // Add to cur str, prefix and the key value
             format!("{cur_str}{prefix}          ")
@@ -596,7 +611,7 @@ mod tests {
         assert_eq!(
             formatter.fmt(&entry),
             format!(
-                "bar.txt                  -rw-r--r-- root         8.2 KB     {}",
+                "bar.txt                  -rw-r--r-- root         8.2 kB     {}",
                 fmt_time(t, "%b %d %Y %H:%M")
             )
         );
@@ -604,7 +619,7 @@ mod tests {
         assert_eq!(
             formatter.fmt(&entry),
             format!(
-                "bar.txt                  -rw-r--r-- 0            8.2 KB     {}",
+                "bar.txt                  -rw-r--r-- 0            8.2 kB     {}",
                 fmt_time(t, "%b %d %Y %H:%M")
             )
         );
@@ -627,7 +642,7 @@ mod tests {
         assert_eq!(
             formatter.fmt(&entry),
             format!(
-                "piroparoporoperoperupup… -rw-r--r-- root         8.2 KB     {}",
+                "piroparoporoperoperupup… -rw-r--r-- root         8.2 kB     {}",
                 fmt_time(t, "%b %d %Y %H:%M")
             )
         );
@@ -635,7 +650,7 @@ mod tests {
         assert_eq!(
             formatter.fmt(&entry),
             format!(
-                "piroparoporoperoperupup… -rw-r--r-- 0            8.2 KB     {}",
+                "piroparoporoperoperupup… -rw-r--r-- 0            8.2 kB     {}",
                 fmt_time(t, "%b %d %Y %H:%M")
             )
         );
@@ -658,7 +673,7 @@ mod tests {
         assert_eq!(
             formatter.fmt(&entry),
             format!(
-                "bar.txt                  -????????? root         8.2 KB     {}",
+                "bar.txt                  -????????? root         8.2 kB     {}",
                 fmt_time(t, "%b %d %Y %H:%M")
             )
         );
@@ -666,7 +681,7 @@ mod tests {
         assert_eq!(
             formatter.fmt(&entry),
             format!(
-                "bar.txt                  -????????? 0            8.2 KB     {}",
+                "bar.txt                  -????????? 0            8.2 kB     {}",
                 fmt_time(t, "%b %d %Y %H:%M")
             )
         );
@@ -689,7 +704,7 @@ mod tests {
         assert_eq!(
             formatter.fmt(&entry),
             format!(
-                "bar.txt                  -????????? 0            8.2 KB     {}",
+                "bar.txt                  -????????? 0            8.2 kB     {}",
                 fmt_time(t, "%b %d %Y %H:%M")
             )
         );
@@ -697,7 +712,7 @@ mod tests {
         assert_eq!(
             formatter.fmt(&entry),
             format!(
-                "bar.txt                  -????????? 0            8.2 KB     {}",
+                "bar.txt                  -????????? 0            8.2 kB     {}",
                 fmt_time(t, "%b %d %Y %H:%M")
             )
         );
@@ -774,8 +789,9 @@ mod tests {
 
     #[test]
     fn test_fs_explorer_formatter_all_together_now() {
-        let formatter: Formatter =
-            Formatter::new("{NAME:16} {SYMLINK:12} {GROUP} {USER} {PEX} {SIZE} {ATIME:20:%a %b %d %Y %H:%M} {CTIME:20:%a %b %d %Y %H:%M} {MTIME:20:%a %b %d %Y %H:%M}");
+        let formatter: Formatter = Formatter::new(
+            "{NAME:16} {SYMLINK:12} {GROUP} {USER} {PEX} {SIZE} {ATIME:20:%a %b %d %Y %H:%M} {CTIME:20:%a %b %d %Y %H:%M} {MTIME:20:%a %b %d %Y %H:%M}",
+        );
         // Directory (with symlink)
         let t: SystemTime = SystemTime::now();
         let entry = File {
@@ -792,12 +808,15 @@ mod tests {
                 mode: Some(UnixPex::from(0o755)),
             },
         };
-        assert_eq!(formatter.fmt(&entry), format!(
-            "projects         -> project.info 0            0            lrwxr-xr-x 12 B       {} {} {}",
-            fmt_time(t, "%a %b %d %Y %H:%M"), 
-            fmt_time(t, "%a %b %d %Y %H:%M"), 
-            fmt_time(t, "%a %b %d %Y %H:%M"), 
-        ));
+        assert_eq!(
+            formatter.fmt(&entry),
+            format!(
+                "projects         -> project.info 0            0            lrwxr-xr-x 12 B       {} {} {}",
+                fmt_time(t, "%a %b %d %Y %H:%M"),
+                fmt_time(t, "%a %b %d %Y %H:%M"),
+                fmt_time(t, "%a %b %d %Y %H:%M"),
+            )
+        );
         // Directory without symlink
         let entry = File {
             path: PathBuf::from("/home/cvisintin/projects"),
@@ -813,12 +832,15 @@ mod tests {
                 mode: Some(UnixPex::from(0o755)),
             },
         };
-        assert_eq!(formatter.fmt(&entry), format!(
-            "projects/                                 0            0            drwxr-xr-x            {} {} {}",
-            fmt_time(t, "%a %b %d %Y %H:%M"), 
-            fmt_time(t, "%a %b %d %Y %H:%M"), 
-            fmt_time(t, "%a %b %d %Y %H:%M"), 
-        ));
+        assert_eq!(
+            formatter.fmt(&entry),
+            format!(
+                "projects/                                 0            0            drwxr-xr-x            {} {} {}",
+                fmt_time(t, "%a %b %d %Y %H:%M"),
+                fmt_time(t, "%a %b %d %Y %H:%M"),
+                fmt_time(t, "%a %b %d %Y %H:%M"),
+            )
+        );
         // File with symlink
         let entry = File {
             path: PathBuf::from("/bar.txt"),
@@ -834,12 +856,15 @@ mod tests {
                 mode: Some(UnixPex::from(0o644)),
             },
         };
-        assert_eq!(formatter.fmt(&entry), format!(
-            "bar.txt          -> project.info 0            0            lrw-r--r-- 12 B       {} {} {}",
-            fmt_time(t, "%a %b %d %Y %H:%M"), 
-            fmt_time(t, "%a %b %d %Y %H:%M"), 
-            fmt_time(t, "%a %b %d %Y %H:%M"), 
-        ));
+        assert_eq!(
+            formatter.fmt(&entry),
+            format!(
+                "bar.txt          -> project.info 0            0            lrw-r--r-- 12 B       {} {} {}",
+                fmt_time(t, "%a %b %d %Y %H:%M"),
+                fmt_time(t, "%a %b %d %Y %H:%M"),
+                fmt_time(t, "%a %b %d %Y %H:%M"),
+            )
+        );
         // File without symlink
         let entry = File {
             path: PathBuf::from("/bar.txt"),
@@ -855,12 +880,15 @@ mod tests {
                 mode: Some(UnixPex::from(0o644)),
             },
         };
-        assert_eq!(formatter.fmt(&entry), format!(
-            "bar.txt                                   0            0            -rw-r--r-- 8.2 KB     {} {} {}",
-            fmt_time(t, "%a %b %d %Y %H:%M"), 
-            fmt_time(t, "%a %b %d %Y %H:%M"), 
-            fmt_time(t, "%a %b %d %Y %H:%M"), 
-        ));
+        assert_eq!(
+            formatter.fmt(&entry),
+            format!(
+                "bar.txt                                   0            0            -rw-r--r-- 8.2 kB     {} {} {}",
+                fmt_time(t, "%a %b %d %Y %H:%M"),
+                fmt_time(t, "%a %b %d %Y %H:%M"),
+                fmt_time(t, "%a %b %d %Y %H:%M"),
+            )
+        );
     }
 
     #[test]

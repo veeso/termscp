@@ -4,11 +4,11 @@
 
 // Locals
 use super::{AuthActivity, FileTransferParams, FormTab, HostBridgeProtocol};
+use crate::filetransfer::HostBridgeParams;
 use crate::filetransfer::params::{
     AwsS3Params, GenericProtocolParams, KubeProtocolParams, ProtocolParams, SmbParams,
     WebDAVProtocolParams,
 };
-use crate::filetransfer::HostBridgeParams;
 
 impl AuthActivity {
     /// Delete bookmark

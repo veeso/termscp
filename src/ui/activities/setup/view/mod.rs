@@ -40,14 +40,15 @@ impl SetupActivity {
 
     /// Mount error box
     pub(super) fn mount_error<S: AsRef<str>>(&mut self, text: S) {
-        assert!(self
-            .app
-            .remount(
-                Id::Common(IdCommon::ErrorPopup),
-                Box::new(components::ErrorPopup::new(text)),
-                vec![],
-            )
-            .is_ok());
+        assert!(
+            self.app
+                .remount(
+                    Id::Common(IdCommon::ErrorPopup),
+                    Box::new(components::ErrorPopup::new(text)),
+                    vec![],
+                )
+                .is_ok()
+        );
         assert!(self.app.active(&Id::Common(IdCommon::ErrorPopup)).is_ok());
     }
 
@@ -58,14 +59,15 @@ impl SetupActivity {
 
     /// Mount quit popup
     pub(super) fn mount_quit(&mut self) {
-        assert!(self
-            .app
-            .remount(
-                Id::Common(IdCommon::QuitPopup),
-                Box::<components::QuitPopup>::default(),
-                vec![],
-            )
-            .is_ok());
+        assert!(
+            self.app
+                .remount(
+                    Id::Common(IdCommon::QuitPopup),
+                    Box::<components::QuitPopup>::default(),
+                    vec![],
+                )
+                .is_ok()
+        );
         assert!(self.app.active(&Id::Common(IdCommon::QuitPopup)).is_ok());
     }
 
@@ -76,14 +78,15 @@ impl SetupActivity {
 
     /// Mount save popup
     pub(super) fn mount_save_popup(&mut self) {
-        assert!(self
-            .app
-            .remount(
-                Id::Common(IdCommon::SavePopup),
-                Box::<components::SavePopup>::default(),
-                vec![],
-            )
-            .is_ok());
+        assert!(
+            self.app
+                .remount(
+                    Id::Common(IdCommon::SavePopup),
+                    Box::<components::SavePopup>::default(),
+                    vec![],
+                )
+                .is_ok()
+        );
         assert!(self.app.active(&Id::Common(IdCommon::SavePopup)).is_ok());
     }
 
@@ -94,14 +97,15 @@ impl SetupActivity {
 
     /// Mount help
     pub(super) fn mount_help(&mut self) {
-        assert!(self
-            .app
-            .remount(
-                Id::Common(IdCommon::Keybindings),
-                Box::<components::Keybindings>::default(),
-                vec![],
-            )
-            .is_ok());
+        assert!(
+            self.app
+                .remount(
+                    Id::Common(IdCommon::Keybindings),
+                    Box::<components::Keybindings>::default(),
+                    vec![],
+                )
+                .is_ok()
+        );
         assert!(self.app.active(&Id::Common(IdCommon::Keybindings)).is_ok());
     }
 
@@ -144,93 +148,96 @@ impl SetupActivity {
     /// Mount common components
     fn mount_commons(&mut self, layout: ViewLayout) {
         // Radio tab
-        assert!(self
-            .app
-            .remount(
-                Id::Common(IdCommon::Header),
-                Box::new(components::Header::new(layout)),
-                vec![],
-            )
-            .is_ok());
+        assert!(
+            self.app
+                .remount(
+                    Id::Common(IdCommon::Header),
+                    Box::new(components::Header::new(layout)),
+                    vec![],
+                )
+                .is_ok()
+        );
         // Footer
-        assert!(self
-            .app
-            .remount(
-                Id::Common(IdCommon::Footer),
-                Box::<components::Footer>::default(),
-                vec![],
-            )
-            .is_ok());
+        assert!(
+            self.app
+                .remount(
+                    Id::Common(IdCommon::Footer),
+                    Box::<components::Footer>::default(),
+                    vec![],
+                )
+                .is_ok()
+        );
     }
 
     /// Mount global listener
     fn mount_global_listener(&mut self) {
-        assert!(self
-            .app
-            .mount(
-                Id::Common(IdCommon::GlobalListener),
-                Box::<components::GlobalListener>::default(),
-                vec![
-                    Sub::new(
-                        SubEventClause::Keyboard(KeyEvent {
-                            code: Key::Esc,
-                            modifiers: KeyModifiers::NONE,
-                        }),
-                        Self::no_popup_mounted_clause(),
-                    ),
-                    Sub::new(
-                        SubEventClause::Keyboard(KeyEvent {
-                            code: Key::Function(10),
-                            modifiers: KeyModifiers::NONE,
-                        }),
-                        Self::no_popup_mounted_clause(),
-                    ),
-                    Sub::new(
-                        SubEventClause::Keyboard(KeyEvent {
-                            code: Key::Tab,
-                            modifiers: KeyModifiers::NONE,
-                        }),
-                        Self::no_popup_mounted_clause(),
-                    ),
-                    Sub::new(
-                        SubEventClause::Keyboard(KeyEvent {
-                            code: Key::Char('h'),
-                            modifiers: KeyModifiers::CONTROL,
-                        }),
-                        Self::no_popup_mounted_clause(),
-                    ),
-                    Sub::new(
-                        SubEventClause::Keyboard(KeyEvent {
-                            code: Key::Function(1),
-                            modifiers: KeyModifiers::NONE,
-                        }),
-                        Self::no_popup_mounted_clause(),
-                    ),
-                    Sub::new(
-                        SubEventClause::Keyboard(KeyEvent {
-                            code: Key::Char('r'),
-                            modifiers: KeyModifiers::CONTROL,
-                        }),
-                        Self::no_popup_mounted_clause(),
-                    ),
-                    Sub::new(
-                        SubEventClause::Keyboard(KeyEvent {
-                            code: Key::Char('s'),
-                            modifiers: KeyModifiers::CONTROL,
-                        }),
-                        Self::no_popup_mounted_clause(),
-                    ),
-                    Sub::new(
-                        SubEventClause::Keyboard(KeyEvent {
-                            code: Key::Function(4),
-                            modifiers: KeyModifiers::NONE,
-                        }),
-                        Self::no_popup_mounted_clause(),
-                    ),
-                    Sub::new(SubEventClause::WindowResize, SubClause::Always)
-                ]
-            )
-            .is_ok());
+        assert!(
+            self.app
+                .mount(
+                    Id::Common(IdCommon::GlobalListener),
+                    Box::<components::GlobalListener>::default(),
+                    vec![
+                        Sub::new(
+                            SubEventClause::Keyboard(KeyEvent {
+                                code: Key::Esc,
+                                modifiers: KeyModifiers::NONE,
+                            }),
+                            Self::no_popup_mounted_clause(),
+                        ),
+                        Sub::new(
+                            SubEventClause::Keyboard(KeyEvent {
+                                code: Key::Function(10),
+                                modifiers: KeyModifiers::NONE,
+                            }),
+                            Self::no_popup_mounted_clause(),
+                        ),
+                        Sub::new(
+                            SubEventClause::Keyboard(KeyEvent {
+                                code: Key::Tab,
+                                modifiers: KeyModifiers::NONE,
+                            }),
+                            Self::no_popup_mounted_clause(),
+                        ),
+                        Sub::new(
+                            SubEventClause::Keyboard(KeyEvent {
+                                code: Key::Char('h'),
+                                modifiers: KeyModifiers::CONTROL,
+                            }),
+                            Self::no_popup_mounted_clause(),
+                        ),
+                        Sub::new(
+                            SubEventClause::Keyboard(KeyEvent {
+                                code: Key::Function(1),
+                                modifiers: KeyModifiers::NONE,
+                            }),
+                            Self::no_popup_mounted_clause(),
+                        ),
+                        Sub::new(
+                            SubEventClause::Keyboard(KeyEvent {
+                                code: Key::Char('r'),
+                                modifiers: KeyModifiers::CONTROL,
+                            }),
+                            Self::no_popup_mounted_clause(),
+                        ),
+                        Sub::new(
+                            SubEventClause::Keyboard(KeyEvent {
+                                code: Key::Char('s'),
+                                modifiers: KeyModifiers::CONTROL,
+                            }),
+                            Self::no_popup_mounted_clause(),
+                        ),
+                        Sub::new(
+                            SubEventClause::Keyboard(KeyEvent {
+                                code: Key::Function(4),
+                                modifiers: KeyModifiers::NONE,
+                            }),
+                            Self::no_popup_mounted_clause(),
+                        ),
+                        Sub::new(SubEventClause::WindowResize, SubClause::Always)
+                    ]
+                )
+                .is_ok()
+        );
     }
 
     /// Returns a sub clause which requires that no popup is mounted in order to be satisfied

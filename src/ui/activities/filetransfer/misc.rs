@@ -90,7 +90,9 @@ impl FileTransferActivity {
 
     /// Set text editor to use
     pub(super) fn setup_text_editor(&self) {
-        env::set_var("EDITOR", self.config().get_text_editor());
+        unsafe {
+            env::set_var("EDITOR", self.config().get_text_editor());
+        }
     }
 
     /// Convert a path to absolute according to host explorer
@@ -262,22 +264,24 @@ impl FileTransferActivity {
             .map(|x| vec![TextSpan::from(self.host_bridge().fmt_file(x))])
             .collect();
         // Update content and title
-        assert!(self
-            .app
-            .attr(
-                &Id::ExplorerHostBridge,
-                Attribute::Content,
-                AttrValue::Table(files)
-            )
-            .is_ok());
-        assert!(self
-            .app
-            .attr(
-                &Id::ExplorerHostBridge,
-                Attribute::Title,
-                AttrValue::Title((hostname, Alignment::Left))
-            )
-            .is_ok());
+        assert!(
+            self.app
+                .attr(
+                    &Id::ExplorerHostBridge,
+                    Attribute::Content,
+                    AttrValue::Table(files)
+                )
+                .is_ok()
+        );
+        assert!(
+            self.app
+                .attr(
+                    &Id::ExplorerHostBridge,
+                    Attribute::Title,
+                    AttrValue::Title((hostname, Alignment::Left))
+                )
+                .is_ok()
+        );
     }
 
     /// Update remote file list
@@ -307,22 +311,24 @@ impl FileTransferActivity {
             .map(|x| vec![TextSpan::from(self.remote().fmt_file(x))])
             .collect();
         // Update content and title
-        assert!(self
-            .app
-            .attr(
-                &Id::ExplorerRemote,
-                Attribute::Content,
-                AttrValue::Table(files)
-            )
-            .is_ok());
-        assert!(self
-            .app
-            .attr(
-                &Id::ExplorerRemote,
-                Attribute::Title,
-                AttrValue::Title((hostname, Alignment::Left))
-            )
-            .is_ok());
+        assert!(
+            self.app
+                .attr(
+                    &Id::ExplorerRemote,
+                    Attribute::Content,
+                    AttrValue::Table(files)
+                )
+                .is_ok()
+        );
+        assert!(
+            self.app
+                .attr(
+                    &Id::ExplorerRemote,
+                    Attribute::Title,
+                    AttrValue::Title((hostname, Alignment::Left))
+                )
+                .is_ok()
+        );
     }
 
     /// Update log box
@@ -361,61 +367,67 @@ impl FileTransferActivity {
                 .add_col(TextSpan::from("]: "))
                 .add_col(TextSpan::from(record.msg.as_str()));
         }
-        assert!(self
-            .app
-            .attr(
-                &Id::Log,
-                Attribute::Content,
-                AttrValue::Table(table.build())
-            )
-            .is_ok());
+        assert!(
+            self.app
+                .attr(
+                    &Id::Log,
+                    Attribute::Content,
+                    AttrValue::Table(table.build())
+                )
+                .is_ok()
+        );
     }
 
     pub(super) fn update_progress_bar(&mut self, filename: String) {
-        assert!(self
-            .app
-            .attr(
-                &Id::ProgressBarFull,
-                Attribute::Text,
-                AttrValue::String(self.transfer.full.to_string())
-            )
-            .is_ok());
-        assert!(self
-            .app
-            .attr(
-                &Id::ProgressBarFull,
-                Attribute::Value,
-                AttrValue::Payload(PropPayload::One(PropValue::F64(
-                    self.transfer.full.calc_progress()
-                )))
-            )
-            .is_ok());
-        assert!(self
-            .app
-            .attr(
-                &Id::ProgressBarPartial,
-                Attribute::Text,
-                AttrValue::String(self.transfer.partial.to_string())
-            )
-            .is_ok());
-        assert!(self
-            .app
-            .attr(
-                &Id::ProgressBarPartial,
-                Attribute::Value,
-                AttrValue::Payload(PropPayload::One(PropValue::F64(
-                    self.transfer.partial.calc_progress()
-                )))
-            )
-            .is_ok());
-        assert!(self
-            .app
-            .attr(
-                &Id::ProgressBarPartial,
-                Attribute::Title,
-                AttrValue::Title((filename, Alignment::Center))
-            )
-            .is_ok());
+        assert!(
+            self.app
+                .attr(
+                    &Id::ProgressBarFull,
+                    Attribute::Text,
+                    AttrValue::String(self.transfer.full.to_string())
+                )
+                .is_ok()
+        );
+        assert!(
+            self.app
+                .attr(
+                    &Id::ProgressBarFull,
+                    Attribute::Value,
+                    AttrValue::Payload(PropPayload::One(PropValue::F64(
+                        self.transfer.full.calc_progress()
+                    )))
+                )
+                .is_ok()
+        );
+        assert!(
+            self.app
+                .attr(
+                    &Id::ProgressBarPartial,
+                    Attribute::Text,
+                    AttrValue::String(self.transfer.partial.to_string())
+                )
+                .is_ok()
+        );
+        assert!(
+            self.app
+                .attr(
+                    &Id::ProgressBarPartial,
+                    Attribute::Value,
+                    AttrValue::Payload(PropPayload::One(PropValue::F64(
+                        self.transfer.partial.calc_progress()
+                    )))
+                )
+                .is_ok()
+        );
+        assert!(
+            self.app
+                .attr(
+                    &Id::ProgressBarPartial,
+                    Attribute::Title,
+                    AttrValue::Title((filename, Alignment::Center))
+                )
+                .is_ok()
+        );
     }
 
     /// Finalize find process
@@ -450,14 +462,15 @@ impl FileTransferActivity {
             .iter_files()
             .map(|x| vec![TextSpan::from(self.found().unwrap().fmt_file(x))])
             .collect();
-        assert!(self
-            .app
-            .attr(
-                &Id::ExplorerFind,
-                Attribute::Content,
-                AttrValue::Table(files)
-            )
-            .is_ok());
+        assert!(
+            self.app
+                .attr(
+                    &Id::ExplorerFind,
+                    Attribute::Content,
+                    AttrValue::Table(files)
+                )
+                .is_ok()
+        );
     }
 
     pub(super) fn update_browser_file_list(&mut self) {

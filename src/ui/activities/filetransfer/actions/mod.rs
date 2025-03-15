@@ -2,8 +2,8 @@
 //!
 //! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
 
-use remotefs::fs::UnixPex;
 use remotefs::File;
+use remotefs::fs::UnixPex;
 use tuirealm::{State, StateValue};
 
 use super::browser::FileExplorerTab;

@@ -4,14 +4,14 @@
 
 // Locals
 // Ext
-use std::fs::{create_dir, remove_file, File, OpenOptions};
+use std::fs::{File, OpenOptions, create_dir, remove_file};
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use std::string::ToString;
 
-use crate::config::params::{UserConfig, DEFAULT_NOTIFICATION_TRANSFER_THRESHOLD};
-use crate::config::serialization::{deserialize, serialize, SerializerError, SerializerErrorKind};
+use crate::config::params::{DEFAULT_NOTIFICATION_TRANSFER_THRESHOLD, UserConfig};
+use crate::config::serialization::{SerializerError, SerializerErrorKind, deserialize, serialize};
 use crate::explorer::GroupDirs;
 use crate::filetransfer::FileTransferProtocol;
 
@@ -480,9 +480,11 @@ mod tests {
         // Change some stuff
         client.set_text_editor(PathBuf::from("/usr/bin/vim"));
         client.set_default_protocol(FileTransferProtocol::Scp);
-        assert!(client
-            .add_ssh_key("192.168.1.31", "pi", "piroporopero")
-            .is_ok());
+        assert!(
+            client
+                .add_ssh_key("192.168.1.31", "pi", "piroporopero")
+                .is_ok()
+        );
         assert!(client.write_config().is_ok());
         // Istantiate a new client
         let client: ConfigClient = ConfigClient::new(cfg_path.as_path(), key_path.as_path())
@@ -678,9 +680,11 @@ mod tests {
             .unwrap();
         // Add a new key
         let rsa_key: String = get_sample_rsa_key();
-        assert!(client
-            .add_ssh_key("192.168.1.31", "pi", rsa_key.as_str())
-            .is_ok());
+        assert!(
+            client
+                .add_ssh_key("192.168.1.31", "pi", rsa_key.as_str())
+                .is_ok()
+        );
         // Iterate keys
         for key in client.iter_ssh_keys() {
             let host: SshHost = client.get_ssh_key(key).ok().unwrap().unwrap();

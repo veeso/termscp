@@ -16,7 +16,7 @@ use super::keys::{KeyStorage, KeyStorageError};
 // Local
 use crate::config::{
     bookmarks::{Bookmark, UserHosts},
-    serialization::{deserialize, serialize, SerializerError, SerializerErrorKind},
+    serialization::{SerializerError, SerializerErrorKind, deserialize, serialize},
 };
 use crate::filetransfer::FileTransferParams;
 use crate::utils::crypto;

@@ -8,8 +8,8 @@ use remotefs::fs::File;
 use tuirealm::props::{AttrValue, Attribute};
 use tuirealm::{State, StateValue, Update};
 
-use super::actions::walkdir::WalkdirError;
 use super::actions::SelectedFile;
+use super::actions::walkdir::WalkdirError;
 use super::browser::{FileExplorerTab, FoundExplorerTab};
 use super::{ExitReason, FileTransferActivity, Id, Msg, TransferMsg, TransferOpts, UiMsg};
 

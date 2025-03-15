@@ -7,7 +7,7 @@ mod change;
 // -- export
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use std::sync::mpsc::{channel, Receiver, RecvTimeoutError};
+use std::sync::mpsc::{Receiver, RecvTimeoutError, channel};
 use std::time::Duration;
 
 pub use change::FsChange;
@@ -245,9 +245,11 @@ mod test {
     fn should_watch_path() {
         let mut watcher = FsWatcher::init(Duration::from_secs(5)).unwrap();
         let tempdir = TempDir::new().unwrap();
-        assert!(watcher
-            .watch(tempdir.path(), Path::new("/tmp/test"))
-            .is_ok());
+        assert!(
+            watcher
+                .watch(tempdir.path(), Path::new("/tmp/test"))
+                .is_ok()
+        );
         // check if in paths
         assert_eq!(
             watcher.paths.get(tempdir.path()).unwrap(),
@@ -261,16 +263,20 @@ mod test {
     fn should_not_watch_path_if_subdir_of_watched_path() {
         let mut watcher = FsWatcher::init(Duration::from_secs(5)).unwrap();
         let tempdir = TempDir::new().unwrap();
-        assert!(watcher
-            .watch(tempdir.path(), Path::new("/tmp/test"))
-            .is_ok());
+        assert!(
+            watcher
+                .watch(tempdir.path(), Path::new("/tmp/test"))
+                .is_ok()
+        );
         // watch subdir
         let mut subdir = tempdir.path().to_path_buf();
         subdir.push("abc/def");
         // should return already watched
-        assert!(watcher
-            .watch(subdir.as_path(), Path::new("/tmp/test/abc/def"))
-            .is_err());
+        assert!(
+            watcher
+                .watch(subdir.as_path(), Path::new("/tmp/test/abc/def"))
+                .is_err()
+        );
         // close tempdir
         assert!(tempdir.close().is_ok());
     }
@@ -279,9 +285,11 @@ mod test {
     fn should_unwatch_path() {
         let mut watcher = FsWatcher::init(Duration::from_secs(5)).unwrap();
         let tempdir = TempDir::new().unwrap();
-        assert!(watcher
-            .watch(tempdir.path(), Path::new("/tmp/test"))
-            .is_ok());
+        assert!(
+            watcher
+                .watch(tempdir.path(), Path::new("/tmp/test"))
+                .is_ok()
+        );
         // unwatch
         assert!(watcher.unwatch(tempdir.path()).is_ok());
         assert!(watcher.paths.get(tempdir.path()).is_none());
@@ -293,9 +301,11 @@ mod test {
     fn should_unwatch_path_when_subdir() {
         let mut watcher = FsWatcher::init(Duration::from_secs(5)).unwrap();
         let tempdir = TempDir::new().unwrap();
-        assert!(watcher
-            .watch(tempdir.path(), Path::new("/tmp/test"))
-            .is_ok());
+        assert!(
+            watcher
+                .watch(tempdir.path(), Path::new("/tmp/test"))
+                .is_ok()
+        );
         // unwatch
         let mut subdir = tempdir.path().to_path_buf();
         subdir.push("abc/def");
@@ -318,9 +328,11 @@ mod test {
     fn should_tell_whether_path_is_watched() {
         let mut watcher = FsWatcher::init(Duration::from_secs(5)).unwrap();
         let tempdir = TempDir::new().unwrap();
-        assert!(watcher
-            .watch(tempdir.path(), Path::new("/tmp/test"))
-            .is_ok());
+        assert!(
+            watcher
+                .watch(tempdir.path(), Path::new("/tmp/test"))
+                .is_ok()
+        );
         assert_eq!(watcher.watched(tempdir.path()), true);
         let mut subdir = tempdir.path().to_path_buf();
         subdir.push("abc/def");
@@ -336,9 +348,11 @@ mod test {
         let mut watcher = FsWatcher::init(Duration::from_millis(100)).unwrap();
         let tempdir = TempDir::new().unwrap();
         let tempdir_path = PathBuf::from(format!("/private{}", tempdir.path().display()));
-        assert!(watcher
-            .watch(tempdir_path.as_path(), Path::new("/tmp/test"))
-            .is_ok());
+        assert!(
+            watcher
+                .watch(tempdir_path.as_path(), Path::new("/tmp/test"))
+                .is_ok()
+        );
         // create file
         let file_path = test_helpers::make_file_at(tempdir_path.as_path(), "test.txt").unwrap();
         // wait
@@ -362,9 +376,11 @@ mod test {
         let mut watcher = FsWatcher::init(Duration::from_millis(100)).unwrap();
         let tempdir = TempDir::new().unwrap();
         let tempdir_path = PathBuf::from(format!("/private{}", tempdir.path().display()));
-        assert!(watcher
-            .watch(tempdir_path.as_path(), Path::new("/tmp/test"))
-            .is_ok());
+        assert!(
+            watcher
+                .watch(tempdir_path.as_path(), Path::new("/tmp/test"))
+                .is_ok()
+        );
         // create file
         let file_path = test_helpers::make_file_at(tempdir_path.as_path(), "test.txt").unwrap();
         std::thread::sleep(Duration::from_millis(500));
@@ -424,9 +440,11 @@ mod test {
     fn should_poll_nothing() {
         let mut watcher = FsWatcher::init(Duration::from_secs(5)).unwrap();
         let tempdir = TempDir::new().unwrap();
-        assert!(watcher
-            .watch(tempdir.path(), Path::new("/tmp/test"))
-            .is_ok());
+        assert!(
+            watcher
+                .watch(tempdir.path(), Path::new("/tmp/test"))
+                .is_ok()
+        );
         assert!(watcher.poll().ok().unwrap().is_none());
         // close tempdir
         assert!(tempdir.close().is_ok());
@@ -437,9 +455,11 @@ mod test {
     fn should_get_watched_paths() {
         let mut watcher = FsWatcher::init(Duration::from_secs(5)).unwrap();
         assert!(watcher.watch(Path::new("/tmp"), Path::new("/tmp")).is_ok());
-        assert!(watcher
-            .watch(Path::new("/home"), Path::new("/home"))
-            .is_ok());
+        assert!(
+            watcher
+                .watch(Path::new("/home"), Path::new("/home"))
+                .is_ok()
+        );
         let mut watched_paths = watcher.watched_paths();
         watched_paths.sort();
         assert_eq!(watched_paths, vec![Path::new("/home"), Path::new("/tmp")]);

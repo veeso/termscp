@@ -59,7 +59,9 @@ impl SetupActivity {
             None => Ok(()),
             Some(ctx) => {
                 // Set editor if config client exists
-                env::set_var("EDITOR", ctx.config().get_text_editor());
+                unsafe {
+                    env::set_var("EDITOR", ctx.config().get_text_editor());
+                }
                 // Prepare terminal
                 if let Err(err) = ctx.terminal().disable_raw_mode() {
                     error!("Failed to disable raw mode: {}", err);

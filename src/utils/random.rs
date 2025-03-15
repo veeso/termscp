@@ -3,12 +3,13 @@
 //! `random` is the module which provides utilities for rand
 
 // Ext
-use rand::distributions::Alphanumeric;
-use rand::{thread_rng, Rng};
+
+use rand::distr::Alphanumeric;
+use rand::{Rng, rng};
 
 /// Generate a random alphanumeric string with provided length
 pub fn random_alphanumeric_with_len(len: usize) -> String {
-    let mut rng = thread_rng();
+    let mut rng = rng();
     std::iter::repeat(())
         .map(|()| rng.sample(Alphanumeric))
         .map(char::from)

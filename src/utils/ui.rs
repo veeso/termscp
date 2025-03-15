@@ -65,9 +65,9 @@ mod tests {
     fn test_utils_ui_draw_area_in() {
         let area: Rect = Rect::new(0, 0, 1024, 512);
         let child: Rect = Popup(Size::Percentage(75), Size::Percentage(30)).draw_in(area);
-        assert_eq!(child.x, 43);
-        assert_eq!(child.y, 63);
-        assert_eq!(child.width, 272);
-        assert_eq!(child.height, 55);
+        assert_eq!(child.x, 123);
+        assert_eq!(child.y, 179);
+        assert_eq!(child.width, 768);
+        assert_eq!(child.height, 154);
     }
 }

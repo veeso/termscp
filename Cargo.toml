@@ -2,7 +2,7 @@
 authors = ["Christian Visintin <christian.visintin@veeso.dev>"]
 categories = ["command-line-utilities"]
 description = "termscp is a feature rich terminal file transfer and explorer with support for SCP/SFTP/FTP/Kube/S3/WebDAV"
-edition = "2021"
+edition = "2024"
 homepage = "https://termscp.veeso.dev"
 include = ["src/**/*", "build.rs", "LICENSE", "README.md", "CHANGELOG.md"]
 keywords = ["terminal", "ftp", "scp", "sftp", "tui"]
@@ -10,7 +10,7 @@ license = "MIT"
 name = "termscp"
 readme = "README.md"
 repository = "https://github.com/veeso/termscp"
-version = "0.16.1"
+version = "0.17.0"
 
 [package.metadata.rpm]
 package = "termscp"
@@ -33,10 +33,10 @@ path = "src/main.rs"
 [dependencies]
 argh = "^0.1"
 bitflags = "^2"
-bytesize = "^1"
+bytesize = "^2"
 chrono = "^0.4"
 content_inspector = "^0.2"
-dirs = "^5.0"
+dirs = "^6"
 edit = "^0.1"
 filetime = "^0.2"
 hostname = "^0.4"
@@ -48,12 +48,12 @@ keyring = { version = "^3", optional = true, features = [
 lazy-regex = "^3"
 lazy_static = "^1"
 log = "^0.4"
-magic-crypt = "^3"
-notify = "6"
-notify-rust = { version = "^4.5", default-features = false, features = ["d"] }
+magic-crypt = "4"
+notify = "8"
+notify-rust = { version = "^4", default-features = false, features = ["d"] }
 nucleo = "0.5"
 open = "^5.0"
-rand = "^0.8.5"
+rand = "^0.9"
 regex = "^1"
 remotefs = "^0.3"
 remotefs-aws-s3 = { version = "^0.3", default-features = false, features = [
@@ -63,7 +63,7 @@ remotefs-aws-s3 = { version = "^0.3", default-features = false, features = [
 remotefs-kube = "0.4"
 remotefs-webdav = "^0.2"
 rpassword = "^7"
-self_update = { version = "^0.41", default-features = false, features = [
+self_update = { version = "^0.42", default-features = false, features = [
   "rustls",
   "archive-tar",
   "archive-zip",
@@ -72,10 +72,10 @@ self_update = { version = "^0.41", default-features = false, features = [
 ] }
 serde = { version = "^1", features = ["derive"] }
 simplelog = "^0.12"
-ssh2-config = "^0.2"
-tempfile = "^3"
-thiserror = "^1"
-tokio = { version = "=1.38.1", features = ["rt"] }
+ssh2-config = "^0.3"
+tempfile = "3"
+thiserror = "2"
+tokio = { version = "1.44", features = ["rt"] }
 toml = "^0.8"
 tui-realm-stdlib = "2"
 tuirealm = "2"
@@ -106,12 +106,12 @@ remotefs-smb = { version = "^0.3", optional = true }
 [target."cfg(target_family = \"windows\")"]
 [target."cfg(target_family = \"windows\")".dependencies]
 remotefs-ftp = { version = "^0.2", features = ["native-tls"] }
-remotefs-ssh = "^0.4"
+remotefs-ssh = "^0.5"
 
 [target."cfg(target_family = \"unix\")"]
 [target."cfg(target_family = \"unix\")".dependencies]
 remotefs-ftp = { version = "^0.2", features = ["vendored", "native-tls"] }
-remotefs-ssh = { version = "^0.4", features = ["ssh2-vendored"] }
+remotefs-ssh = { version = "^0.5", features = ["ssh2-vendored"] }
 uzers = "0.12"
 
 [profile.dev]

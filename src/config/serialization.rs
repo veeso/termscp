@@ -4,8 +4,8 @@
 
 use std::io::{Read, Write};
 
-use serde::de::DeserializeOwned;
 use serde::Serialize;
+use serde::de::DeserializeOwned;
 use thiserror::Error;
 
 /// Contains the error for serializer/deserializer
@@ -63,7 +63,7 @@ where
             return Err(SerializerError::new_ex(
                 SerializerErrorKind::Serialization,
                 err.to_string(),
-            ))
+            ));
         }
     };
     trace!("Serialized new bookmarks data: {}", data);

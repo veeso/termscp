@@ -1,6 +1,7 @@
 # Changelog
 
 - [Changelog](#changelog)
+  - [0.17.0](#0170)
   - [0.16.1](#0161)
   - [0.16.0](#0160)
   - [0.15.0](#0150)
@@ -38,6 +39,19 @@
   - [0.1.0](#010)
 
 ---
+
+## 0.17.0
+
+Released on ??
+
+- Dependencies:
+  - `argh` to `0.1.13`
+  - `bytesize` to `2`
+  - `dirs` to `6`
+  - `magic-crypt` to `4`
+  - `notify` to `8`
+  - `ssh2-config` to `0.3`
+  - `remotefs-ssh` to `0.4`
 
 ## 0.16.1
 

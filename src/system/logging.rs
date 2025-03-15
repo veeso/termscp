@@ -16,7 +16,7 @@ pub fn init(level: LogLevel) -> Result<(), String> {
         Ok(None) => {
             return Err(String::from(
                 "This system doesn't seem to support CACHE_DIR",
-            ))
+            ));
         }
         Err(err) => return Err(err),
     };

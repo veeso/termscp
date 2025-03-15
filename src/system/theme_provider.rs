@@ -8,7 +8,7 @@ use std::fs::OpenOptions;
 use std::path::{Path, PathBuf};
 use std::string::ToString;
 
-use crate::config::serialization::{deserialize, serialize, SerializerError, SerializerErrorKind};
+use crate::config::serialization::{SerializerError, SerializerErrorKind, deserialize, serialize};
 use crate::config::themes::Theme;
 
 /// ThemeProvider provides a high level API to communicate with the termscp theme

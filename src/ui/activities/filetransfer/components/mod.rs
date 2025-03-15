@@ -16,12 +16,12 @@ mod transfer;
 
 pub use misc::FooterBar;
 pub use popups::{
-    ChmodPopup, CopyPopup, DeletePopup, DisconnectPopup, ErrorPopup, ExecPopup, FatalPopup,
-    FileInfoPopup, FilterPopup, GotoPopup, KeybindingsPopup, MkdirPopup, NewfilePopup,
+    ATTR_FILES, ChmodPopup, CopyPopup, DeletePopup, DisconnectPopup, ErrorPopup, ExecPopup,
+    FatalPopup, FileInfoPopup, FilterPopup, GotoPopup, KeybindingsPopup, MkdirPopup, NewfilePopup,
     OpenWithPopup, ProgressBarFull, ProgressBarPartial, QuitPopup, RenamePopup, ReplacePopup,
     ReplacingFilesListPopup, SaveAsPopup, SortingPopup, StatusBarLocal, StatusBarRemote,
     SymlinkPopup, SyncBrowsingMkdirPopup, WaitPopup, WalkdirWaitPopup, WatchedPathsList,
-    WatcherPopup, ATTR_FILES,
+    WatcherPopup,
 };
 pub use transfer::{ExplorerFind, ExplorerFuzzy, ExplorerLocal, ExplorerRemote};
 

@@ -167,7 +167,9 @@ impl FileTransferActivity {
                 }
             } else {
                 // Do not synchronize, disable sync browsing and return
-                trace!("The user doesn't want to create the directory; disabling synchronized browsing");
+                trace!(
+                    "The user doesn't want to create the directory; disabling synchronized browsing"
+                );
                 self.log(
                     LogLevel::Warn,
                     format!("Refused to create '{name}'; synchronized browsing disabled"),
