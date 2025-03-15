@@ -252,7 +252,10 @@ impl AuthActivity {
             UiMsg::HostBridge(UiAuthFormMsg::LocalDirectoryBlurUp) => {
                 assert!(
                     self.app
-                        .active(&Id::HostBridge(AuthFormId::RemoteDirectory))
+                        .active(match self.host_bridge_input_mask() {
+                            InputMask::Localhost => &Id::HostBridge(AuthFormId::Protocol),
+                            _ => &Id::HostBridge(AuthFormId::RemoteDirectory),
+                        })
                         .is_ok()
                 );
             }
