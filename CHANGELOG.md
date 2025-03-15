@@ -52,6 +52,7 @@ Released on ??
   - `notify` to `8`
   - `ssh2-config` to `0.3`
   - `remotefs-ssh` to `0.4`
+  - `rust` edition to `2024`
 
 ## 0.16.1
 
