@@ -53,8 +53,8 @@ Released on ??
   - `dirs` to `6`
   - `magic-crypt` to `4`
   - `notify` to `8`
-  - `ssh2-config` to `0.3`
-  - `remotefs-ssh` to `0.4`
+  - `ssh2-config` to `0.4`
+  - `remotefs-ssh` to `0.6`
   - `rust` edition to `2024`
 
 ## 0.16.1

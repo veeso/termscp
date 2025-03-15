@@ -744,20 +744,11 @@ dependencies = [
 
 [[package]]
 name = "dirs"
-version = "5.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "44c45a9d03d6676652bcb5e724c7e988de1acad23a711b5217ab9cbecbec2225"
-dependencies = [
- "dirs-sys 0.4.1",
-]
-
-[[package]]
-name = "dirs"
 version = "6.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c3e8aa94d75141228480295a7d0e7feb620b1a5ad9f12bc40be62411e38cce4e"
 dependencies = [
- "dirs-sys 0.5.0",
+ "dirs-sys",
 ]
 
 [[package]]
@@ -768,18 +759,6 @@ checksum = "b98cf8ebf19c3d1b223e151f99a4f9f0690dca41414773390fc824184ac833e1"
 dependencies = [
  "cfg-if",
  "dirs-sys-next",
-]
-
-[[package]]
-name = "dirs-sys"
-version = "0.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "520f05a5cbd335fae5a99ff7a6ab8627577660ee5cfd6a94a6a929b52ff0321c"
-dependencies = [
- "libc",
- "option-ext",
- "redox_users 0.4.6",
- "windows-sys 0.48.0",
 ]
 
 [[package]]
@@ -1131,6 +1110,12 @@ dependencies = [
  "log",
  "url",
 ]
+
+[[package]]
+name = "glob"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a8d1add55171497b4705a648c6b583acafb01d58050a51727785f0b2c8e0a2b2"
 
 [[package]]
 name = "h2"
@@ -2975,9 +2960,9 @@ dependencies = [
 
 [[package]]
 name = "remotefs-ssh"
-version = "0.5.0"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7cefa6893f2510787c917be88fb9e14db4b0726bfee069ed22945fdefdcaad18"
+checksum = "1b903d59822f962aa9ddcb922b4ca45a78c13b509df7d0b9be6daf9bda133300"
 dependencies = [
  "chrono",
  "lazy-regex",
@@ -2985,7 +2970,7 @@ dependencies = [
  "path-slash 0.2.1",
  "remotefs",
  "ssh2",
- "ssh2-config 0.2.3",
+ "ssh2-config",
 ]
 
 [[package]]
@@ -3723,24 +3708,14 @@ dependencies = [
 
 [[package]]
 name = "ssh2-config"
-version = "0.2.3"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "98150bad1e8fe53df07f38b53364f4d34e84a6cc2ee9f933e43629571060af65"
+checksum = "b54c1f8a904a031c129e6e258994999839d6f0ffad4964062cb76d975259a0d8"
 dependencies = [
  "bitflags 2.9.0",
- "dirs 5.0.1",
- "thiserror 1.0.69",
- "wildmatch",
-]
-
-[[package]]
-name = "ssh2-config"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c2f7fc951533455d92036f8130c7888d883b9f776b1aa700cda1f7e63e515845"
-dependencies = [
- "bitflags 2.9.0",
- "dirs 5.0.1",
+ "dirs",
+ "glob",
+ "log",
  "thiserror 2.0.12",
  "wildmatch",
 ]
@@ -3931,7 +3906,7 @@ dependencies = [
  "cfg_aliases",
  "chrono",
  "content_inspector",
- "dirs 6.0.0",
+ "dirs",
  "edit",
  "filetime",
  "hostname",
@@ -3959,7 +3934,7 @@ dependencies = [
  "serde",
  "serial_test",
  "simplelog",
- "ssh2-config 0.3.0",
+ "ssh2-config",
  "tempfile",
  "thiserror 2.0.12",
  "tokio",

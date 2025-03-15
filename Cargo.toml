@@ -11,6 +11,7 @@ name = "termscp"
 readme = "README.md"
 repository = "https://github.com/veeso/termscp"
 version = "0.17.0"
+rust-version = "1.85.0"
 
 [package.metadata.rpm]
 package = "termscp"
@@ -23,7 +24,7 @@ termscp = { path = "/usr/bin/termscp" }
 
 [package.metadata.deb]
 maintainer = "Christian Visintin <christian.visintin@veeso.dev>"
-copyright = "2022, Christian Visintin <christian.visintin@veeso.dev>"
+copyright = "2025, Christian Visintin <christian.visintin@veeso.dev>"
 extended-description-file = "docs/misc/README.deb.txt"
 
 [[bin]]
@@ -72,7 +73,7 @@ self_update = { version = "^0.42", default-features = false, features = [
 ] }
 serde = { version = "^1", features = ["derive"] }
 simplelog = "^0.12"
-ssh2-config = "^0.3"
+ssh2-config = "^0.4"
 tempfile = "3"
 thiserror = "2"
 tokio = { version = "1.44", features = ["rt"] }
@@ -106,12 +107,12 @@ remotefs-smb = { version = "^0.3", optional = true }
 [target."cfg(target_family = \"windows\")"]
 [target."cfg(target_family = \"windows\")".dependencies]
 remotefs-ftp = { version = "^0.2", features = ["native-tls"] }
-remotefs-ssh = "^0.5"
+remotefs-ssh = "^0.6"
 
 [target."cfg(target_family = \"unix\")"]
 [target."cfg(target_family = \"unix\")".dependencies]
 remotefs-ftp = { version = "^0.2", features = ["vendored", "native-tls"] }
-remotefs-ssh = { version = "^0.5", features = ["ssh2-vendored"] }
+remotefs-ssh = { version = "^0.6", features = ["ssh2-vendored"] }
 uzers = "0.12"
 
 [profile.dev]
