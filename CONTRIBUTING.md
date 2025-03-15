@@ -1,7 +1,7 @@
 # Contributing
 
 Before contributing to this repository, please first discuss the change you wish to make via issue of this repository before making a change.
-Please note we have a [code of conduct](CODE_OF_CONDUCT.md), please follow it in all your interactions with the project.
+Please note we have a [code of conduct](CODE_OF_CONDUCT.md). Please follow it in all your interactions with the project.
 
 - [Contributing](#contributing)
   - [Project mission](#project-mission)
@@ -20,9 +20,13 @@ Please note we have a [code of conduct](CODE_OF_CONDUCT.md), please follow it in
 
 ## Project mission
 
-termscp was born because, as a terminal lover and Linux user, I wanted something like WinSCP on Linux and on terminal. I my previous job I used SFTP/SCP pratically everyday and that made me to desire an application like termscp so much, that eventually I started to work on it in the spare time. I saw there was a very cool library to create terminal user interface (`tui-rs`), so I started to code it. I wrote termscp as an experiment, I designed kinda nothing at the time. I just said
+termscp was born because, as a terminal lover and Linux user, I wanted something like WinSCP on Linux and on terminal. At my previous job, I used SFTP/SCP practically everyday and that made me desire an application like termscp so much that eventually I started to work on it in my spare time.
 
-> Ok, there must be a `FileTransfer` trait somehow, I'll have more views, so I'll use something like Android activities, and there must be a module to interact with the local host".
+I saw there was a very cool library to create terminal user interfaces (`tui-rs`, now `ratatui`), so I started to code it.
+
+I wrote termscp as an experiment. I didn't design anything at the time. I just said,
+
+> "Ok, there must be a FileTransfer trait somehow. I'll have more views, so I'll use something like Android activities, and there must be a module to interact with the local host."
 
 And so in december 2020 I had the first version of termscp running and it worked, but was very simple, raw and minimal.
 A lot of things have changed since them, both the features the project provides and my personal view of this project.
