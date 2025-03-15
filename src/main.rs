@@ -33,24 +33,24 @@ const APP_NAME: &str = env!("CARGO_PKG_NAME");
 const APP_BUILD_DATE: &str = env!("VERGEN_BUILD_TIMESTAMP");
 const APP_GIT_BRANCH: &str = env!("VERGEN_GIT_BRANCH");
 const APP_GIT_HASH: &str = env!("VERGEN_GIT_SHA");
-const EXIT_CODE_SUCCESS: i32 = 0;
-const EXIT_CODE_ERROR: i32 = 1;
 const TERMSCP_VERSION: &str = env!("CARGO_PKG_VERSION");
 const TERMSCP_AUTHORS: &str = env!("CARGO_PKG_AUTHORS");
+
+type MainResult<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 #[inline]
 fn git_hash() -> &'static str {
     APP_GIT_HASH[0..8].as_ref()
 }
 
-fn main() {
+fn main() -> MainResult<()> {
     let args: Args = argh::from_env();
     // Parse args
     let run_opts: RunOpts = match parse_args(args) {
         Ok(opts) => opts,
         Err(err) => {
             eprintln!("{err}");
-            std::process::exit(255);
+            return Err(err.into());
         }
     };
     // Setup logging
@@ -63,10 +63,7 @@ fn main() {
     );
     // Run
     info!("Starting activity manager...");
-    let rc = run(run_opts);
-    info!("termscp terminated with exitcode {}", rc);
-    // Then return
-    std::process::exit(rc);
+    run(run_opts)
 }
 
 /// Parse arguments
@@ -81,10 +78,8 @@ fn parse_args(args: Args) -> Result<RunOpts, String> {
             let mut run_opts: RunOpts = RunOpts::default();
             // Version
             if args.version {
-                return Err(format!(
-                    "{APP_NAME} v{TERMSCP_VERSION} ({APP_GIT_BRANCH}, {git_hash}, {APP_BUILD_DATE}) - Developed by {TERMSCP_AUTHORS}",
-                    git_hash = git_hash()
-                ));
+                run_opts.task = Task::Version;
+                return Ok(run_opts);
             }
             // Logging
             if args.debug {
@@ -125,57 +120,71 @@ fn parse_args(args: Args) -> Result<RunOpts, String> {
 }
 
 /// Run task and return rc
-fn run(run_opts: RunOpts) -> i32 {
+fn run(run_opts: RunOpts) -> MainResult<()> {
     match run_opts.task {
         Task::ImportTheme(theme) => run_import_theme(&theme),
         Task::InstallUpdate => run_install_update(),
         Task::Activity(activity) => run_activity(activity, run_opts.ticks, run_opts.remote),
+        Task::Version => print_version(),
     }
 }
 
-fn run_import_theme(theme: &Path) -> i32 {
+fn print_version() -> MainResult<()> {
+    println!(
+        "{APP_NAME} v{TERMSCP_VERSION} ({APP_GIT_BRANCH}, {git_hash}, {APP_BUILD_DATE}) - Developed by {TERMSCP_AUTHORS}",
+        git_hash = git_hash()
+    );
+
+    Ok(())
+}
+
+fn run_import_theme(theme: &Path) -> MainResult<()> {
     match support::import_theme(theme) {
         Ok(_) => {
             println!("Theme has been successfully imported!");
-            EXIT_CODE_ERROR
+            Ok(())
         }
         Err(err) => {
             eprintln!("{err}");
-            EXIT_CODE_ERROR
+            Err(err.into())
         }
     }
 }
 
-fn run_install_update() -> i32 {
+fn run_install_update() -> MainResult<()> {
     match support::install_update() {
         Ok(msg) => {
             println!("{msg}");
-            EXIT_CODE_SUCCESS
+            Ok(())
         }
         Err(err) => {
             eprintln!("Could not install update: {err}");
-            EXIT_CODE_ERROR
+            Err(err.into())
         }
     }
 }
 
-fn run_activity(activity: NextActivity, ticks: Duration, remote_args: RemoteArgs) -> i32 {
+fn run_activity(
+    activity: NextActivity,
+    ticks: Duration,
+    remote_args: RemoteArgs,
+) -> MainResult<()> {
     // Create activity manager (and context too)
     let mut manager: ActivityManager = match ActivityManager::new(ticks) {
         Ok(m) => m,
         Err(err) => {
             eprintln!("Could not start activity manager: {err}");
-            return EXIT_CODE_ERROR;
+            return Err(err.into());
         }
     };
 
     // Set file transfer params if set
     if let Err(err) = manager.configure_remote_args(remote_args) {
         eprintln!("{err}");
-        return EXIT_CODE_ERROR;
+        return Err(err.into());
     }
 
     manager.run(activity);
 
-    EXIT_CODE_SUCCESS
+    Ok(())
 }

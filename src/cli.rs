@@ -17,6 +17,7 @@ pub enum Task {
     Activity(NextActivity),
     ImportTheme(PathBuf),
     InstallUpdate,
+    Version,
 }
 
 #[derive(Default, FromArgs)]

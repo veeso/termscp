@@ -44,7 +44,7 @@ pub enum HostErrorType {
 }
 
 /// HostError is a wrapper for the error type and the exact io error
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub struct HostError {
     pub error: HostErrorType,
     ioerr: Option<std::io::Error>,
