@@ -108,6 +108,10 @@ impl Context {
     pub fn error(&mut self) -> Option<String> {
         self.error.take()
     }
+
+    pub fn set_error(&mut self, error: String) {
+        self.error = Some(error);
+    }
 }
 
 impl Drop for Context {

@@ -7,15 +7,19 @@ pub struct HostBridgeBuilder;
 impl HostBridgeBuilder {
     /// Build Host Bridge from parms
     ///
-    /// if protocol and parameters are inconsistent, the function will panic.
-    pub fn build(params: HostBridgeParams, config_client: &ConfigClient) -> Box<dyn HostBridge> {
+    /// if protocol and parameters are inconsistent, the function will return an error.
+    pub fn build(
+        params: HostBridgeParams,
+        config_client: &ConfigClient,
+    ) -> Result<Box<dyn HostBridge>, String> {
         match params {
-            HostBridgeParams::Localhost(path) => {
-                Box::new(Localhost::new(path).expect("Failed to create Localhost"))
+            HostBridgeParams::Localhost(path) => Localhost::new(path)
+                .map(|host| Box::new(host) as Box<dyn HostBridge>)
+                .map_err(|e| e.to_string()),
+            HostBridgeParams::Remote(protocol, params) => {
+                RemoteFsBuilder::build(protocol, params, config_client)
+                    .map(|host| Box::new(RemoteBridged::from(host)) as Box<dyn HostBridge>)
             }
-            HostBridgeParams::Remote(protocol, params) => Box::new(RemoteBridged::from(
-                RemoteFsBuilder::build(protocol, params, config_client),
-            )),
         }
     }
 }

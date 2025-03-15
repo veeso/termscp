@@ -44,6 +44,8 @@
 
 Released on ??
 
+- [issue 319](https://github.com/veeso/termscp/issues/319): fixed a crash when the local directory specified in the auth form does not exist
+- [issue 327](https://github.com/veeso/termscp/issues/327): fixed a panic when trying to go up from local directory on localhost in the auth form
 - Dependencies:
   - `argh` to `0.1.13`
   - `bytesize` to `2`

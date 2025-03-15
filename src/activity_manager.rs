@@ -342,7 +342,7 @@ impl ActivityManager {
     fn run_filetransfer(&mut self) -> Option<NextActivity> {
         info!("Starting FileTransferActivity");
         // Get context
-        let ctx: Context = match self.context.take() {
+        let mut ctx: Context = match self.context.take() {
             Some(ctx) => ctx,
             None => {
                 error!("Failed to start FileTransferActivity: context is None");
@@ -367,8 +367,18 @@ impl ActivityManager {
             }
         };
 
-        let mut activity: FileTransferActivity =
-            FileTransferActivity::new(host_bridge_params, remote_params, self.ticks);
+        // try to setup activity
+        let mut activity =
+            match FileTransferActivity::new(host_bridge_params, remote_params, self.ticks) {
+                Ok(activity) => activity,
+                Err(err) => {
+                    error!("Failed to start FileTransferActivity: {}", err);
+                    ctx.set_error(err);
+                    self.context = Some(ctx);
+                    // Return to authentication
+                    return Some(NextActivity::Authentication);
+                }
+            };
         // Prepare result
         let result: Option<NextActivity>;
         // Create activity

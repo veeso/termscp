@@ -37,33 +37,35 @@ impl RemoteFsBuilder {
         protocol: FileTransferProtocol,
         params: ProtocolParams,
         config_client: &ConfigClient,
-    ) -> Box<dyn RemoteFs> {
+    ) -> Result<Box<dyn RemoteFs>, String> {
         match (protocol, params) {
             (FileTransferProtocol::AwsS3, ProtocolParams::AwsS3(params)) => {
-                Box::new(Self::aws_s3_client(params))
+                Ok(Box::new(Self::aws_s3_client(params)))
             }
             (FileTransferProtocol::Ftp(secure), ProtocolParams::Generic(params)) => {
-                Box::new(Self::ftp_client(params, secure))
+                Ok(Box::new(Self::ftp_client(params, secure)))
             }
             (FileTransferProtocol::Kube, ProtocolParams::Kube(params)) => {
-                Box::new(Self::kube_client(params))
+                Ok(Box::new(Self::kube_client(params)))
             }
             (FileTransferProtocol::Scp, ProtocolParams::Generic(params)) => {
-                Box::new(Self::scp_client(params, config_client))
+                Ok(Box::new(Self::scp_client(params, config_client)))
             }
             (FileTransferProtocol::Sftp, ProtocolParams::Generic(params)) => {
-                Box::new(Self::sftp_client(params, config_client))
+                Ok(Box::new(Self::sftp_client(params, config_client)))
             }
             #[cfg(smb)]
             (FileTransferProtocol::Smb, ProtocolParams::Smb(params)) => {
-                Box::new(Self::smb_client(params))
+                Ok(Box::new(Self::smb_client(params)))
             }
             (FileTransferProtocol::WebDAV, ProtocolParams::WebDAV(params)) => {
-                Box::new(Self::webdav_client(params))
+                Ok(Box::new(Self::webdav_client(params)))
             }
             (protocol, params) => {
                 error!("Invalid params for protocol '{:?}'", protocol);
-                panic!("Invalid protocol '{protocol:?}' with parameters of type {params:?}")
+                Err(format!(
+                    "Invalid protocol '{protocol:?}' with parameters of type {params:?}",
+                ))
             }
         }
     }

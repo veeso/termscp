@@ -243,14 +243,14 @@ impl FileTransferActivity {
         host_bridge_params: HostBridgeParams,
         remote_params: &FileTransferParams,
         ticks: Duration,
-    ) -> Self {
+    ) -> Result<Self, String> {
         // Get config client
         let config_client: ConfigClient = Self::init_config_client();
         // init host bridge
-        let host_bridge = HostBridgeBuilder::build(host_bridge_params, &config_client);
+        let host_bridge = HostBridgeBuilder::build(host_bridge_params, &config_client)?;
         let host_bridge_connected = host_bridge.is_localhost();
         let enable_fs_watcher = host_bridge.is_localhost();
-        Self {
+        Ok(Self {
             exit_reason: None,
             context: None,
             app: Application::init(
@@ -264,7 +264,7 @@ impl FileTransferActivity {
                 remote_params.protocol,
                 remote_params.params.clone(),
                 &config_client,
-            ),
+            )?,
             browser: Browser::new(&config_client),
             log_records: VecDeque::with_capacity(256), // 256 events is enough I guess
             walkdir: WalkdirStates::default(),
@@ -280,7 +280,7 @@ impl FileTransferActivity {
             },
             host_bridge_connected,
             remote_connected: false,
-        }
+        })
     }
 
     fn host_bridge(&self) -> &FileExplorer {
