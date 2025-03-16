@@ -57,10 +57,7 @@ open = "^5.0"
 rand = "^0.9"
 regex = "^1"
 remotefs = "^0.3"
-remotefs-aws-s3 = { version = "^0.3", default-features = false, features = [
-  "find",
-  "rustls",
-] }
+remotefs-aws-s3 = "0.4"
 remotefs-kube = "0.4"
 remotefs-webdav = "^0.2"
 rpassword = "^7"

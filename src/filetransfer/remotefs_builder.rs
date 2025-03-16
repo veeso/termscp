@@ -72,7 +72,15 @@ impl RemoteFsBuilder {
 
     /// Build aws s3 client from parameters
     fn aws_s3_client(params: AwsS3Params) -> AwsS3Fs {
-        let mut client = AwsS3Fs::new(params.bucket_name).new_path_style(params.new_path_style);
+        let rt = Arc::new(
+            tokio::runtime::Builder::new_current_thread()
+                .worker_threads(1)
+                .enable_all()
+                .build()
+                .expect("Unable to create tokio runtime"),
+        );
+        let mut client =
+            AwsS3Fs::new(params.bucket_name, &rt).new_path_style(params.new_path_style);
         if let Some(region) = params.region {
             client = client.region(region);
         }
