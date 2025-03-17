@@ -29,6 +29,9 @@ pub fn init(level: LogLevel) -> Result<(), String> {
         .set_time_format_rfc3339()
         .add_filter_allow_str("termscp")
         .add_filter_allow_str("remotefs")
+        .add_filter_allow_str("kube")
+        .add_filter_allow_str("suppaftp")
+        .add_filter_allow_str("pavao")
         .build();
     // Make logger
     WriteLogger::init(level, config, file).map_err(|e| format!("Failed to initialize logger: {e}"))
