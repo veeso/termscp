@@ -272,7 +272,9 @@ mod test {
                 .session_token(Some("gerry-scotti")),
         );
         let config_client = get_config_client();
-        let _ = RemoteFsBuilder::build(FileTransferProtocol::AwsS3, params, &config_client);
+        assert!(
+            RemoteFsBuilder::build(FileTransferProtocol::AwsS3, params, &config_client).is_ok()
+        );
     }
 
     #[test]
@@ -285,7 +287,9 @@ mod test {
                 .password(Some("qwerty123")),
         );
         let config_client = get_config_client();
-        let _ = RemoteFsBuilder::build(FileTransferProtocol::Ftp(true), params, &config_client);
+        assert!(
+            RemoteFsBuilder::build(FileTransferProtocol::Ftp(true), params, &config_client).is_ok()
+        );
     }
 
     #[test]
@@ -298,7 +302,7 @@ mod test {
             client_key: Some("client_key".to_string()),
         });
         let config_client = get_config_client();
-        let _ = RemoteFsBuilder::build(FileTransferProtocol::Kube, params, &config_client);
+        assert!(RemoteFsBuilder::build(FileTransferProtocol::Kube, params, &config_client).is_ok());
     }
 
     #[test]
@@ -311,7 +315,7 @@ mod test {
                 .password(Some("qwerty123")),
         );
         let config_client = get_config_client();
-        let _ = RemoteFsBuilder::build(FileTransferProtocol::Scp, params, &config_client);
+        assert!(RemoteFsBuilder::build(FileTransferProtocol::Scp, params, &config_client).is_ok());
     }
 
     #[test]
@@ -324,7 +328,7 @@ mod test {
                 .password(Some("qwerty123")),
         );
         let config_client = get_config_client();
-        let _ = RemoteFsBuilder::build(FileTransferProtocol::Sftp, params, &config_client);
+        assert!(RemoteFsBuilder::build(FileTransferProtocol::Sftp, params, &config_client).is_ok());
     }
 
     #[test]
@@ -332,11 +336,10 @@ mod test {
     fn should_build_smb_fs() {
         let params = ProtocolParams::Smb(SmbParams::new("localhost", "share"));
         let config_client = get_config_client();
-        let _ = RemoteFsBuilder::build(FileTransferProtocol::Smb, params, &config_client);
+        assert!(RemoteFsBuilder::build(FileTransferProtocol::Smb, params, &config_client).is_ok());
     }
 
     #[test]
-    #[should_panic]
     fn should_not_build_fs() {
         let params = ProtocolParams::Generic(
             GenericProtocolParams::default()
@@ -346,7 +349,9 @@ mod test {
                 .password(Some("qwerty123")),
         );
         let config_client = get_config_client();
-        let _ = RemoteFsBuilder::build(FileTransferProtocol::AwsS3, params, &config_client);
+        assert!(
+            RemoteFsBuilder::build(FileTransferProtocol::AwsS3, params, &config_client).is_err()
+        );
     }
 
     fn get_config_client() -> ConfigClient {
