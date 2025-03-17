@@ -70,7 +70,7 @@
   /></a>
 </p>
 
-<p align="center">Desarrollado por <a href="https://veeso.dev/" target="_blank">@veeso</a></p>
+<p align="center">Desarrollado por <a href="https://veeso.me/" target="_blank">@veeso</a></p>
 <p align="center">Versión actual: 0.16.1 12/11/2024</p>
 
 <p align="center">
