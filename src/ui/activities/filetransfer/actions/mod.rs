@@ -162,10 +162,10 @@ impl FileTransferActivity {
     }
 
     fn get_file_from_path(&mut self, id: &Id, path: &Path) -> Option<File> {
-        match id {
-            &Id::ExplorerHostBridge => self.host_bridge.stat(path).ok(),
-            &Id::ExplorerRemote => self.client.stat(path).ok(),
-            &Id::ExplorerFind => {
+        match *id {
+            Id::ExplorerHostBridge => self.host_bridge.stat(path).ok(),
+            Id::ExplorerRemote => self.client.stat(path).ok(),
+            Id::ExplorerFind => {
                 let found = self.browser.found_tab().unwrap();
                 match found {
                     FoundExplorerTab::Local => self.host_bridge.stat(path).ok(),
@@ -177,10 +177,10 @@ impl FileTransferActivity {
     }
 
     fn browser_by_id(&self, id: &Id) -> &FileExplorer {
-        match id {
-            &Id::ExplorerHostBridge => self.host_bridge(),
-            &Id::ExplorerRemote => self.remote(),
-            &Id::ExplorerFind => self.found().as_ref().unwrap(),
+        match *id {
+            Id::ExplorerHostBridge => self.host_bridge(),
+            Id::ExplorerRemote => self.remote(),
+            Id::ExplorerFind => self.found().as_ref().unwrap(),
             _ => unreachable!(),
         }
     }
@@ -189,12 +189,7 @@ impl FileTransferActivity {
         let browser = self.browser_by_id(id);
         // if no transfer queue, return selected files
         match self.get_selected_index(id) {
-            SelectedFileIndex::One(idx) => {
-                let Some(f) = browser.get(idx) else {
-                    return None;
-                };
-                Some(f.clone())
-            }
+            SelectedFileIndex::One(idx) => browser.get(idx).cloned(),
             SelectedFileIndex::None => None,
         }
     }

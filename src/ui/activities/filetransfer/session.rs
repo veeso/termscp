@@ -350,7 +350,7 @@ impl FileTransferActivity {
         // Send recurse
         let result = entries
             .iter()
-            .map(|(x, remote)| self.filetransfer_send_recurse(x, &remote, None))
+            .map(|(x, remote)| self.filetransfer_send_recurse(x, remote, None))
             .find(|x| x.is_err())
             .unwrap_or(Ok(()));
         // Umount progress bar
@@ -782,7 +782,7 @@ impl FileTransferActivity {
         // Send recurse
         let result = entries
             .iter()
-            .map(|(x, path)| self.filetransfer_recv_recurse(x, &path, None))
+            .map(|(x, path)| self.filetransfer_recv_recurse(x, path, None))
             .find(|x| x.is_err())
             .unwrap_or(Ok(()));
         // Umount progress bar
