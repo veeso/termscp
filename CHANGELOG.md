@@ -44,6 +44,10 @@
 
 Released on ??
 
+- [issue 316](https://github.com/veeso/termscp/issues/316): Local directory path is not switching to what's specified in the bookmark. Now the local directory path is correctly set following this hierarchy:
+    1. Local directory path specified for the host bridge
+    2. Local directory path specified in the bookmark
+    3. Working directory
 - [issue 317](https://github.com/veeso/termscp/issues/317): the return value of `--version` should be `0`
 - [issue 319](https://github.com/veeso/termscp/issues/319): fixed a crash when the local directory specified in the auth form does not exist
 - [issue 327](https://github.com/veeso/termscp/issues/327): fixed a panic when trying to go up from local directory on localhost in the auth form

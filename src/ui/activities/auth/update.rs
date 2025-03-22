@@ -36,6 +36,9 @@ impl AuthActivity {
                     return None;
                 };
 
+                debug!("Remote params: {:?}", remote_params);
+                debug!("Host bridge params: {:?}", host_bridge_params);
+
                 self.save_recent();
                 // Set file transfer params to context
                 self.context_mut().set_remote_params(remote_params);

@@ -83,8 +83,16 @@ impl AuthActivity {
     }
 
     fn collect_localhost_host_params(&self) -> Result<HostBridgeParams, &'static str> {
+        // get remote local path
+        let remote_local_path = self.get_input_local_directory(FormTab::Remote);
+
+        // Local path is:
+        // - the input local path if set
+        // - the remote local path if set
+        // - the current directory if neither is set
         let path = self
             .get_input_local_directory(FormTab::HostBridge)
+            .or(remote_local_path)
             .unwrap_or_else(|| env::current_dir().unwrap_or_default());
 
         Ok(HostBridgeParams::Localhost(path))

@@ -90,13 +90,18 @@ impl ActivityManager {
                 )),
                 host_params.password.as_deref(),
             ),
-            Remote::None => self.set_host_params(
-                HostParams::HostBridge(HostBridgeParams::Localhost(
-                    env::current_dir()
-                        .map_err(|e| format!("Could not get current directory: {e}"))?,
-                )),
-                None,
-            ),
+            Remote::None => {
+                // local dir is remote_args.local_dir if set, otherwise current dir
+                let local_dir = remote_args
+                    .local_dir
+                    .unwrap_or_else(|| env::current_dir().unwrap());
+                debug!("host bridge is None, setting local dir to {:?}", local_dir,);
+
+                self.set_host_params(
+                    HostParams::HostBridge(HostBridgeParams::Localhost(local_dir)),
+                    None,
+                )
+            }
         }?;
 
         // set remote
