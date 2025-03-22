@@ -60,6 +60,35 @@ impl Browser {
         }
     }
 
+    pub fn other_explorer(&self) -> &FileExplorer {
+        let found_set = self.found.is_some();
+        match (self.tab, found_set) {
+            (FileExplorerTab::HostBridge, false) => &self.remote,
+            (FileExplorerTab::Remote, false) => &self.host_bridge,
+            (FileExplorerTab::HostBridge, true) => &self.found.as_ref().unwrap().explorer,
+            (FileExplorerTab::Remote, true) => &self.found.as_ref().unwrap().explorer,
+            (FileExplorerTab::FindHostBridge, _) => &self.remote,
+            (FileExplorerTab::FindRemote, _) => &self.host_bridge,
+        }
+    }
+
+    pub fn other_explorer_no_found(&self) -> &FileExplorer {
+        match self.tab {
+            FileExplorerTab::HostBridge | FileExplorerTab::FindHostBridge => &self.remote,
+            FileExplorerTab::Remote | FileExplorerTab::FindRemote => &self.host_bridge,
+        }
+    }
+
+    pub fn explorer_mut(&mut self) -> &mut FileExplorer {
+        match self.tab {
+            FileExplorerTab::HostBridge => &mut self.host_bridge,
+            FileExplorerTab::Remote => &mut self.remote,
+            FileExplorerTab::FindHostBridge | FileExplorerTab::FindRemote => {
+                self.found.as_mut().map(|x| &mut x.explorer).unwrap()
+            }
+        }
+    }
+
     pub fn host_bridge(&self) -> &FileExplorer {
         &self.host_bridge
     }

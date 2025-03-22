@@ -132,21 +132,26 @@ impl ExplorerFuzzy {
                 modifiers: KeyModifiers::CONTROL,
             }) => {
                 let _ = self.perform(Cmd::Custom(file_list::FILE_LIST_CMD_SELECT_ALL));
-                Some(Msg::None)
+                Some(Msg::Ui(UiMsg::MarkAll))
             }
             Event::Keyboard(KeyEvent {
                 code: Key::Char('a'),
                 modifiers: KeyModifiers::ALT,
             }) => {
                 let _ = self.perform(Cmd::Custom(file_list::FILE_LIST_CMD_DESELECT_ALL));
-                Some(Msg::None)
+                Some(Msg::Ui(UiMsg::MarkClear))
             }
             Event::Keyboard(KeyEvent {
                 code: Key::Char('m'),
                 modifiers: KeyModifiers::NONE,
             }) => {
-                let _ = self.perform(Cmd::Toggle);
-                Some(Msg::None)
+                let CmdResult::Changed(State::One(StateValue::Usize(index))) =
+                    self.perform(Cmd::Toggle)
+                else {
+                    return Some(Msg::None);
+                };
+
+                Some(Msg::Ui(UiMsg::MarkFile(index)))
             }
             Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => {
                 self.perform(Cmd::Change);
@@ -277,21 +282,26 @@ impl Component<Msg, NoUserEvent> for ExplorerFind {
                 modifiers: KeyModifiers::CONTROL,
             }) => {
                 let _ = self.perform(Cmd::Custom(file_list::FILE_LIST_CMD_SELECT_ALL));
-                Some(Msg::None)
+                Some(Msg::Ui(UiMsg::MarkAll))
             }
             Event::Keyboard(KeyEvent {
                 code: Key::Char('a'),
                 modifiers: KeyModifiers::ALT,
             }) => {
                 let _ = self.perform(Cmd::Custom(file_list::FILE_LIST_CMD_DESELECT_ALL));
-                Some(Msg::None)
+                Some(Msg::Ui(UiMsg::MarkClear))
             }
             Event::Keyboard(KeyEvent {
                 code: Key::Char('m'),
                 modifiers: KeyModifiers::NONE,
             }) => {
-                let _ = self.perform(Cmd::Toggle);
-                Some(Msg::None)
+                let CmdResult::Changed(State::One(StateValue::Usize(index))) =
+                    self.perform(Cmd::Toggle)
+                else {
+                    return Some(Msg::None);
+                };
+
+                Some(Msg::Ui(UiMsg::MarkFile(index)))
             }
             // -- comp msg
             Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
@@ -410,21 +420,26 @@ impl Component<Msg, NoUserEvent> for ExplorerLocal {
                 modifiers: KeyModifiers::CONTROL,
             }) => {
                 let _ = self.perform(Cmd::Custom(file_list::FILE_LIST_CMD_SELECT_ALL));
-                Some(Msg::None)
+                Some(Msg::Ui(UiMsg::MarkAll))
             }
             Event::Keyboard(KeyEvent {
                 code: Key::Char('a'),
                 modifiers: KeyModifiers::ALT,
             }) => {
                 let _ = self.perform(Cmd::Custom(file_list::FILE_LIST_CMD_DESELECT_ALL));
-                Some(Msg::None)
+                Some(Msg::Ui(UiMsg::MarkClear))
             }
             Event::Keyboard(KeyEvent {
                 code: Key::Char('m'),
                 modifiers: KeyModifiers::NONE,
             }) => {
-                let _ = self.perform(Cmd::Toggle);
-                Some(Msg::None)
+                let CmdResult::Changed(State::One(StateValue::Usize(index))) =
+                    self.perform(Cmd::Toggle)
+                else {
+                    return Some(Msg::None);
+                };
+
+                Some(Msg::Ui(UiMsg::MarkFile(index)))
             }
             // -- comp msg
             Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
@@ -619,21 +634,26 @@ impl Component<Msg, NoUserEvent> for ExplorerRemote {
                 modifiers: KeyModifiers::CONTROL,
             }) => {
                 let _ = self.perform(Cmd::Custom(file_list::FILE_LIST_CMD_SELECT_ALL));
-                Some(Msg::None)
+                Some(Msg::Ui(UiMsg::MarkAll))
             }
             Event::Keyboard(KeyEvent {
                 code: Key::Char('a'),
                 modifiers: KeyModifiers::ALT,
             }) => {
                 let _ = self.perform(Cmd::Custom(file_list::FILE_LIST_CMD_DESELECT_ALL));
-                Some(Msg::None)
+                Some(Msg::Ui(UiMsg::MarkClear))
             }
             Event::Keyboard(KeyEvent {
                 code: Key::Char('m'),
                 modifiers: KeyModifiers::NONE,
             }) => {
-                let _ = self.perform(Cmd::Toggle);
-                Some(Msg::None)
+                let CmdResult::Changed(State::One(StateValue::Usize(index))) =
+                    self.perform(Cmd::Toggle)
+                else {
+                    return Some(Msg::None);
+                };
+
+                Some(Msg::Ui(UiMsg::MarkFile(index)))
             }
             // -- comp msg
             Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {

@@ -21,6 +21,7 @@ pub(crate) mod edit;
 pub(crate) mod exec;
 pub(crate) mod filter;
 pub(crate) mod find;
+pub(crate) mod mark;
 pub(crate) mod mkdir;
 pub(crate) mod newfile;
 pub(crate) mod open;
@@ -64,7 +65,7 @@ impl SelectedFile {
 #[derive(Debug)]
 enum SelectedFileIndex {
     One(usize),
-    Many(Vec<usize>),
+    Many(Vec<usize>), // TODO: remove
     None,
 }
 

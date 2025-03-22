@@ -17,20 +17,17 @@ const PROP_DOT_DOT: &str = "dot_dot";
 /// OwnStates contains states for this component
 #[derive(Clone, Default)]
 struct OwnStates {
-    list_index: usize,    // Index of selected element in list
-    selected: Vec<usize>, // Selected files
+    list_index: usize, // Index of selected element in list
+    list_len: usize,   // Length of the list
+    dot_dot: bool,
 }
 
 impl OwnStates {
     /// Initialize list states
     pub fn init_list_states(&mut self, len: usize, has_dot_dot: bool) {
-        self.selected = Vec::with_capacity(len + if has_dot_dot { 1 } else { 0 });
+        self.list_len = len + if has_dot_dot { 1 } else { 0 };
         self.fix_list_index();
-    }
-
-    /// Return current value for list index
-    pub fn list_index(&self) -> usize {
-        self.list_index
+        self.dot_dot = has_dot_dot;
     }
 
     /// Incremenet list index.
@@ -41,6 +38,14 @@ impl OwnStates {
             self.list_index += 1;
         } else if can_rewind {
             self.list_index = 0;
+        }
+    }
+
+    pub fn real_index(&self) -> usize {
+        if self.dot_dot {
+            self.list_index.saturating_sub(1)
+        } else {
+            self.list_index
         }
     }
 
@@ -68,22 +73,7 @@ impl OwnStates {
 
     /// Returns the length of the file list, which is actually the capacity of the selection vector
     pub fn list_len(&self) -> usize {
-        self.selected.capacity()
-    }
-
-    /// Returns whether the file with index `entry` is selected
-    pub fn is_selected(&self, entry: usize) -> bool {
-        self.selected.contains(&entry)
-    }
-
-    /// Returns whether the selection is currently empty
-    pub fn is_selection_empty(&self) -> bool {
-        self.selected.is_empty()
-    }
-
-    /// Returns current file selection
-    pub fn get_selection(&self) -> Vec<usize> {
-        self.selected.clone()
+        self.list_len
     }
 
     /// Keep index if possible, otherwise set to lenght - 1
@@ -92,44 +82,6 @@ impl OwnStates {
             self.list_index = self.list_len() - 1;
         } else if self.list_len() == 0 {
             self.list_index = 0;
-        }
-    }
-
-    // -- select manipulation
-
-    /// Select or deselect file with provided entry index
-    pub fn toggle_file(&mut self, entry: usize) {
-        match self.is_selected(entry) {
-            true => self.deselect(entry),
-            false => self.select(entry),
-        }
-        // increment index
-        self.incr_list_index(false);
-    }
-
-    /// Select all files
-    pub fn select_all(&mut self, has_dot_dot: bool) {
-        for i in 0..self.list_len() {
-            self.select(i + if has_dot_dot { 1 } else { 0 });
-        }
-    }
-
-    /// Select all files
-    pub fn deselect_all(&mut self) {
-        self.selected.clear();
-    }
-
-    /// Select provided index if not selected yet
-    fn select(&mut self, entry: usize) {
-        if !self.is_selected(entry) {
-            self.selected.push(entry);
-        }
-    }
-
-    /// Remove element file with associated index
-    fn deselect(&mut self, entry: usize) {
-        if self.is_selected(entry) {
-            self.selected.retain(|&x| x != entry);
         }
     }
 }
@@ -222,27 +174,12 @@ impl MockComponent for FileList {
             Some(table) => init_table_iter
                 .iter()
                 .chain(table.iter())
-                .enumerate()
-                .map(|(num, row)| {
-                    let real_num = num;
-                    let num = if self.has_dot_dot() {
-                        num.checked_sub(1).unwrap_or_default()
-                    } else {
-                        num
-                    };
-
+                .map(|row| {
                     let columns: Vec<Span> = row
                         .iter()
                         .map(|col| {
-                            let (fg, bg, mut modifiers) =
+                            let (fg, bg, modifiers) =
                                 tui_realm_stdlib::utils::use_or_default_styles(&self.props, col);
-                            if !(self.has_dot_dot() && real_num == 0)
-                                && self.states.is_selected(num)
-                            {
-                                modifiers |= TextModifiers::REVERSED
-                                    | TextModifiers::UNDERLINED
-                                    | TextModifiers::ITALIC;
-                            }
 
                             Span::styled(
                                 col.content.clone(),
@@ -302,20 +239,11 @@ impl MockComponent for FileList {
             return State::One(StateValue::String("..".to_string()));
         }
 
-        match self.states.is_selection_empty() {
-            true => State::One(StateValue::Usize(if self.has_dot_dot() {
-                self.states.list_index.checked_sub(1).unwrap_or_default()
-            } else {
-                self.states.list_index
-            })),
-            false => State::Vec(
-                self.states
-                    .get_selection()
-                    .into_iter()
-                    .map(StateValue::Usize)
-                    .collect(),
-            ),
-        }
+        State::One(StateValue::Usize(if self.has_dot_dot() {
+            self.states.list_index.checked_sub(1).unwrap_or_default()
+        } else {
+            self.states.list_index
+        }))
     }
 
     fn perform(&mut self, cmd: Cmd) -> CmdResult {
@@ -374,25 +302,18 @@ impl MockComponent for FileList {
                     CmdResult::None
                 }
             }
-            Cmd::Custom(FILE_LIST_CMD_SELECT_ALL) => {
-                self.states.select_all(self.has_dot_dot());
-                CmdResult::None
-            }
-            Cmd::Custom(FILE_LIST_CMD_DESELECT_ALL) => {
-                self.states.deselect_all();
-                CmdResult::None
-            }
             Cmd::Toggle => {
-                if self.has_dot_dot() && self.states.list_index() == 0 {
+                if self.states.list_index == 0 && self.has_dot_dot() {
                     return CmdResult::None;
                 }
 
-                self.states.toggle_file(if self.has_dot_dot() {
-                    self.states.list_index().checked_sub(1).unwrap_or_default()
-                } else {
-                    self.states.list_index()
-                });
-                CmdResult::None
+                let index = self.states.real_index();
+                self.states.list_index = self
+                    .states
+                    .list_index
+                    .saturating_add(1)
+                    .min(self.states.list_len.saturating_sub(1));
+                CmdResult::Changed(State::One(StateValue::Usize(index)))
             }
             _ => CmdResult::None,
         }

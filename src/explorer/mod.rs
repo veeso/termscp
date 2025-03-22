@@ -7,7 +7,7 @@ pub(crate) mod builder;
 mod formatter;
 // Locals
 use std::cmp::Reverse;
-use std::collections::VecDeque;
+use std::collections::{HashMap, VecDeque};
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
@@ -42,14 +42,24 @@ pub enum GroupDirs {
 
 /// File explorer states
 pub struct FileExplorer {
-    pub wrkdir: PathBuf,                      // Current directory
-    pub(crate) dirstack: VecDeque<PathBuf>,   // Stack of visited directory (max 16)
-    pub(crate) stack_size: usize,             // Directory stack size
-    pub(crate) file_sorting: FileSorting,     // File sorting criteria
-    pub(crate) group_dirs: Option<GroupDirs>, // If Some, defines how to group directories
-    pub(crate) opts: ExplorerOpts,            // Explorer options
-    pub(crate) fmt: Formatter,                // File formatter
-    files: Vec<File>,                         // Files in directory
+    /// Current working directory
+    pub wrkdir: PathBuf,
+    /// Stack of visited directories
+    pub(crate) dirstack: VecDeque<PathBuf>,
+    /// Stack size
+    pub(crate) stack_size: usize,
+    /// Criteria to sort file
+    pub(crate) file_sorting: FileSorting,
+    /// defines how to group directories in the explorer
+    pub(crate) group_dirs: Option<GroupDirs>,
+    /// Explorer options
+    pub(crate) opts: ExplorerOpts,
+    /// Formatter for file entries
+    pub(crate) fmt: Formatter,
+    /// Files in directory
+    files: Vec<File>,
+    /// files enqueued for transfer. Map between source and destination
+    transfer_queue: HashMap<PathBuf, PathBuf>, // transfer queue
 }
 
 impl Default for FileExplorer {
@@ -63,6 +73,7 @@ impl Default for FileExplorer {
             opts: ExplorerOpts::empty(),
             fmt: Formatter::default(),
             files: Vec::new(),
+            transfer_queue: HashMap::new(),
         }
     }
 }
@@ -137,6 +148,27 @@ impl FileExplorer {
             })
             .collect::<Vec<_>>();
         filtered.get(idx).copied()
+    }
+
+    /// Enqueue a file for transfer
+    pub fn enqueue(&mut self, src: &Path, dst: &Path) {
+        self.transfer_queue
+            .insert(PathBuf::from(src), PathBuf::from(dst));
+    }
+
+    /// Get enqueued files
+    pub fn enqueued(&self) -> &HashMap<PathBuf, PathBuf> {
+        &self.transfer_queue
+    }
+
+    /// Dequeue a file
+    pub fn dequeue(&mut self, src: &Path) {
+        self.transfer_queue.remove(src);
+    }
+
+    /// Clear transfer queue
+    pub fn clear_queue(&mut self) {
+        self.transfer_queue.clear();
     }
 
     // Formatting
@@ -584,6 +616,26 @@ mod tests {
         assert_eq!(explorer.files[0].name(), "docs");
         explorer.del_entry(5);
         assert_eq!(explorer.files.len(), 3);
+    }
+
+    #[test]
+    fn test_should_enqueue_and_dequeue_files() {
+        let mut explorer: FileExplorer = FileExplorer::default();
+        // Create files (files are then sorted by name)
+        explorer.set_files(vec![
+            make_fs_entry("CONTRIBUTING.md", false),
+            make_fs_entry("docs", true),
+            make_fs_entry("src", true),
+            make_fs_entry("README.md", false),
+        ]);
+        // Enqueue
+        explorer.enqueue(Path::new("CONTRIBUTING.md"), Path::new("CONTRIBUTING.md"));
+        explorer.enqueue(Path::new("docs"), Path::new("docs"));
+        // Dequeue
+        explorer.dequeue(Path::new("CONTRIBUTING.md"));
+        assert_eq!(explorer.enqueued().len(), 1);
+        explorer.dequeue(Path::new("docs"));
+        assert_eq!(explorer.enqueued().len(), 0);
     }
 
     fn make_fs_entry(name: &str, is_dir: bool) -> File {

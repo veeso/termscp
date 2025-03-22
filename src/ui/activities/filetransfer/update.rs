@@ -479,6 +479,15 @@ impl FileTransferActivity {
             UiMsg::LogBackTabbed => {
                 assert!(self.app.active(&Id::ExplorerHostBridge).is_ok());
             }
+            UiMsg::MarkFile(index) => {
+                self.action_mark_file(index);
+            }
+            UiMsg::MarkAll => {
+                self.action_mark_all();
+            }
+            UiMsg::MarkClear => {
+                self.action_mark_clear();
+            }
             UiMsg::Quit => {
                 self.disconnect_and_quit();
                 self.umount_quit();

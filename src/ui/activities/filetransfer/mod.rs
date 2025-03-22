@@ -153,6 +153,12 @@ enum UiMsg {
     FilterFiles(String),
     FuzzySearch(String),
     LogBackTabbed,
+    /// Mark file on the list; usize is the index of the file
+    MarkFile(usize),
+    /// Mark all file at tab
+    MarkAll,
+    /// Clear all marks
+    MarkClear,
     Quit,
     ReplacePopupTabbed,
     ShowChmodPopup,
