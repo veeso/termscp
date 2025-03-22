@@ -156,6 +156,14 @@ impl FileExplorer {
             .insert(PathBuf::from(src), PathBuf::from(dst));
     }
 
+    /// Enqueue all files for transfer
+    pub fn enqueue_all(&mut self, dst: &Path) {
+        let files: Vec<_> = self.iter_files().map(|f| f.path.clone()).collect();
+        for file in files {
+            self.enqueue(&file, dst);
+        }
+    }
+
     /// Get enqueued files
     pub fn enqueued(&self) -> &HashMap<PathBuf, PathBuf> {
         &self.transfer_queue

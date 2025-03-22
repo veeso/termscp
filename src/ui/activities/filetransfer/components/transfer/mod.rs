@@ -523,7 +523,7 @@ impl Component<Msg, NoUserEvent> for ExplorerLocal {
             Event::Keyboard(KeyEvent {
                 code: Key::Char('p'),
                 modifiers: KeyModifiers::NONE,
-            }) => Some(Msg::Ui(UiMsg::ShowLogPanel)),
+            }) => Some(Msg::Ui(UiMsg::GoToTransferQueue)),
             Event::Keyboard(KeyEvent {
                 code: Key::Char('r') | Key::Function(6),
                 modifiers: KeyModifiers::NONE,
@@ -737,7 +737,7 @@ impl Component<Msg, NoUserEvent> for ExplorerRemote {
             Event::Keyboard(KeyEvent {
                 code: Key::Char('p'),
                 modifiers: KeyModifiers::NONE,
-            }) => Some(Msg::Ui(UiMsg::ShowLogPanel)),
+            }) => Some(Msg::Ui(UiMsg::GoToTransferQueue)),
             Event::Keyboard(KeyEvent {
                 code: Key::Char('r') | Key::Function(6),
                 modifiers: KeyModifiers::NONE,

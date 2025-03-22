@@ -12,6 +12,7 @@ use super::{Msg, PendingActionMsg, TransferMsg, UiMsg};
 mod log;
 mod misc;
 mod popups;
+mod selected_files;
 mod transfer;
 
 pub use misc::FooterBar;
@@ -26,6 +27,7 @@ pub use popups::{
 pub use transfer::{ExplorerFind, ExplorerFuzzy, ExplorerLocal, ExplorerRemote};
 
 pub use self::log::Log;
+pub use self::selected_files::SelectedFilesList;
 
 #[derive(Default, MockComponent)]
 pub struct GlobalListener {
