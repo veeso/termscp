@@ -50,7 +50,7 @@ pub struct ActivityManager {
 
 impl ActivityManager {
     /// Initializes a new Activity Manager
-    pub fn new(ticks: Duration) -> Result<ActivityManager, HostError> {
+    pub fn new(ticks: Duration, keyring: bool) -> Result<ActivityManager, HostError> {
         // Prepare Context
         // Initialize configuration client
         let (config_client, error_config): (ConfigClient, Option<String>) =
@@ -61,7 +61,7 @@ impl ActivityManager {
                     (ConfigClient::degraded(), Some(err))
                 }
             };
-        let (bookmarks_client, error_bookmark) = match Self::init_bookmarks_client() {
+        let (bookmarks_client, error_bookmark) = match Self::init_bookmarks_client(keyring) {
             Ok(cli) => (cli, None),
             Err(err) => (None, Some(err)),
         };
@@ -447,7 +447,7 @@ impl ActivityManager {
 
     // -- misc
 
-    fn init_bookmarks_client() -> Result<Option<BookmarksClient>, String> {
+    fn init_bookmarks_client(keyring: bool) -> Result<Option<BookmarksClient>, String> {
         // Get config dir
         match environment::init_config_dir() {
             Ok(path) => {
@@ -456,16 +456,21 @@ impl ActivityManager {
                     let bookmarks_file: PathBuf =
                         environment::get_bookmarks_paths(config_dir_path.as_path());
                     // Initialize client
-                    BookmarksClient::new(bookmarks_file.as_path(), config_dir_path.as_path(), 16)
-                        .map(Option::Some)
-                        .map_err(|e| {
-                            format!(
-                                "Could not initialize bookmarks (at \"{}\", \"{}\"): {}",
-                                bookmarks_file.display(),
-                                config_dir_path.display(),
-                                e
-                            )
-                        })
+                    BookmarksClient::new(
+                        bookmarks_file.as_path(),
+                        config_dir_path.as_path(),
+                        16,
+                        keyring,
+                    )
+                    .map(Option::Some)
+                    .map_err(|e| {
+                        format!(
+                            "Could not initialize bookmarks (at \"{}\", \"{}\"): {}",
+                            bookmarks_file.display(),
+                            config_dir_path.display(),
+                            e
+                        )
+                    })
                 } else {
                     Ok(None)
                 }

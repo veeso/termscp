@@ -41,10 +41,11 @@ dirs = "^6"
 edit = "^0.1"
 filetime = "^0.2"
 hostname = "^0.4"
-keyring = { version = "^3", optional = true, features = [
+keyring = { version = "^3", features = [
   "apple-native",
   "windows-native",
   "sync-secret-service",
+  "vendored",
 ] }
 lazy-regex = "^3"
 lazy_static = "^1"
@@ -92,11 +93,11 @@ vergen-git2 = { version = "1", features = ["build", "cargo", "rustc", "si"] }
 
 
 [features]
-default = ["smb", "with-keyring"]
+default = ["smb", "keyring"]
 github-actions = []
 isolated-tests = []
-smb = ["remotefs-smb"]
-with-keyring = ["keyring"]
+smb = ["dep:remotefs-smb"]
+keyring = []
 
 [target."cfg(not(target_os = \"macos\"))".dependencies]
 remotefs-smb = { version = "^0.3", optional = true }

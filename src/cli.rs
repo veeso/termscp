@@ -60,6 +60,9 @@ pub struct Args {
     /// print version
     #[argh(switch, short = 'v')]
     pub version: bool,
+    /// disable keyring support
+    #[argh(switch)]
+    pub wno_keyring: bool,
     // -- positional
     #[argh(positional, description = "address1 address2 local-wrkdir")]
     pub positional: Vec<String>,
@@ -94,6 +97,7 @@ pub struct LoadThemeArgs {
 
 pub struct RunOpts {
     pub remote: RemoteArgs,
+    pub keyring: bool,
     pub ticks: Duration,
     pub log_level: LogLevel,
     pub task: Task,
@@ -127,6 +131,7 @@ impl Default for RunOpts {
         Self {
             remote: RemoteArgs::default(),
             ticks: Duration::from_millis(10),
+            keyring: true,
             log_level: LogLevel::Info,
             task: Task::Activity(NextActivity::Authentication),
         }

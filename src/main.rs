@@ -76,6 +76,7 @@ fn parse_args(args: Args) -> Result<RunOpts, String> {
         Some(ArgsSubcommands::Config(_)) => RunOpts::config(),
         None => {
             let mut run_opts: RunOpts = RunOpts::default();
+
             // Version
             if args.version {
                 run_opts.task = Task::Version;
@@ -86,6 +87,10 @@ fn parse_args(args: Args) -> Result<RunOpts, String> {
                 run_opts.log_level = LogLevel::Trace;
             } else if args.quiet {
                 run_opts.log_level = LogLevel::Off;
+            }
+            // set keyring
+            if args.wno_keyring {
+                run_opts.keyring = false;
             }
             // Match ticks
             run_opts.ticks = Duration::from_millis(args.ticks);
@@ -124,7 +129,9 @@ fn run(run_opts: RunOpts) -> MainResult<()> {
     match run_opts.task {
         Task::ImportTheme(theme) => run_import_theme(&theme),
         Task::InstallUpdate => run_install_update(),
-        Task::Activity(activity) => run_activity(activity, run_opts.ticks, run_opts.remote),
+        Task::Activity(activity) => {
+            run_activity(activity, run_opts.ticks, run_opts.remote, run_opts.keyring)
+        }
         Task::Version => print_version(),
     }
 }
@@ -168,9 +175,10 @@ fn run_activity(
     activity: NextActivity,
     ticks: Duration,
     remote_args: RemoteArgs,
+    keyring: bool,
 ) -> MainResult<()> {
     // Create activity manager (and context too)
-    let mut manager: ActivityManager = match ActivityManager::new(ticks) {
+    let mut manager: ActivityManager = match ActivityManager::new(ticks, keyring) {
         Ok(m) => m,
         Err(err) => {
             eprintln!("Could not start activity manager: {err}");

@@ -4,29 +4,24 @@
 
 // Storages
 pub mod filestorage;
-#[cfg(feature = "with-keyring")]
 pub mod keyringstorage;
 // ext
-#[cfg(feature = "with-keyring")]
 use keyring::Error as KeyringError;
 use thiserror::Error;
 
 /// defines the error type for the `KeyStorage`
 #[derive(Debug, Error)]
 pub enum KeyStorageError {
-    #[cfg(feature = "with-keyring")]
     #[error("Key has a bad syntax")]
     BadSytax,
     #[error("Provider service error")]
     ProviderError,
     #[error("No such key")]
     NoSuchKey,
-    #[cfg(feature = "with-keyring")]
     #[error("keyring error: {0}")]
     KeyringError(KeyringError),
 }
 
-#[cfg(feature = "with-keyring")]
 impl From<KeyringError> for KeyStorageError {
     fn from(e: KeyringError) -> Self {
         Self::KeyringError(e)
@@ -58,7 +53,6 @@ mod tests {
 
     #[test]
     fn test_system_keys_mod_errors() {
-        #[cfg(feature = "with-keyring")]
         assert_eq!(
             KeyStorageError::BadSytax.to_string(),
             String::from("Key has a bad syntax")

@@ -10,7 +10,6 @@ use std::string::ToString;
 use std::time::SystemTime;
 
 use super::keys::filestorage::FileStorage;
-#[cfg(feature = "with-keyring")]
 use super::keys::keyringstorage::KeyringStorage;
 use super::keys::{KeyStorage, KeyStorageError};
 // Local
@@ -39,42 +38,13 @@ impl BookmarksClient {
         bookmarks_file: &Path,
         storage_path: &Path,
         recents_size: usize,
+        keyring: bool,
     ) -> Result<BookmarksClient, SerializerError> {
         // Create default hosts
         let default_hosts: UserHosts = UserHosts::default();
         debug!("Setting up bookmarks client...");
-        // Make a key storage (with-keyring)
-        #[cfg(feature = "with-keyring")]
-        let (key_storage, service_id): (Box<dyn KeyStorage>, &str) = {
-            debug!("Setting up KeyStorage");
-            let username: String = whoami::username();
-            let storage: KeyringStorage = KeyringStorage::new(username.as_str());
-            // Check if keyring storage is supported
-            #[cfg(not(test))]
-            let app_name: &str = "termscp";
-            #[cfg(test)] // NOTE: when running test, add -test
-            let app_name: &str = "termscp-test";
-            match storage.is_supported() {
-                true => {
-                    debug!("Using KeyringStorage");
-                    (Box::new(storage), app_name)
-                }
-                false => {
-                    warn!("KeyringStorage is not supported; using FileStorage");
-                    (Box::new(FileStorage::new(storage_path)), "bookmarks")
-                }
-            }
-        };
-        // Make a key storage (wno-keyring)
-        #[cfg(not(feature = "with-keyring"))]
-        let (key_storage, service_id): (Box<dyn KeyStorage>, &str) = {
-            #[cfg(not(test))]
-            let app_name: &str = "bookmarks";
-            #[cfg(test)] // NOTE: when running test, add -test
-            let app_name: &str = "bookmarks-test";
-            debug!("Using FileStorage");
-            (Box::new(FileStorage::new(storage_path)), app_name)
-        };
+        // Get key storage
+        let (key_storage, service_id) = Self::keyring(storage_path, keyring);
         // Load key
         let key: String = match key_storage.get_key(service_id) {
             Ok(k) => {
@@ -128,6 +98,37 @@ impl BookmarksClient {
         info!("Bookmarks client initialized");
         // Load key
         Ok(client)
+    }
+
+    /// Get the key storage
+    fn keyring(storage_path: &Path, keyring: bool) -> (Box<dyn KeyStorage>, &'static str) {
+        if keyring && cfg!(feature = "keyring") {
+            debug!("Setting up KeyStorage");
+            let username: String = whoami::username();
+            let storage: KeyringStorage = KeyringStorage::new(username.as_str());
+            // Check if keyring storage is supported
+            #[cfg(not(test))]
+            let app_name: &str = "termscp";
+            #[cfg(test)] // NOTE: when running test, add -test
+            let app_name: &str = "termscp-test";
+            match storage.is_supported() {
+                true => {
+                    debug!("Using KeyringStorage");
+                    (Box::new(storage), app_name)
+                }
+                false => {
+                    warn!("KeyringStorage is not supported; using FileStorage");
+                    (Box::new(FileStorage::new(storage_path)), "bookmarks")
+                }
+            }
+        } else {
+            #[cfg(not(test))]
+            let app_name: &str = "bookmarks";
+            #[cfg(test)] // NOTE: when running test, add -test
+            let app_name: &str = "bookmarks-test";
+            debug!("Using FileStorage");
+            (Box::new(FileStorage::new(storage_path)), app_name)
+        }
     }
 
     /// Iterate over bookmarks keys
@@ -389,7 +390,7 @@ mod tests {
         let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
         // Initialize a new bookmarks client
         let client: BookmarksClient =
-            BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16).unwrap();
+            BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16, true).unwrap();
         // Verify client
         assert_eq!(client.hosts.bookmarks.len(), 0);
         assert_eq!(client.hosts.recents.len(), 0);
@@ -405,7 +406,7 @@ mod tests {
         let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
         // Initialize a new bookmarks client
         let mut client: BookmarksClient =
-            BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16).unwrap();
+            BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16, true).unwrap();
         // Add some bookmarks
         client.add_bookmark(
             "raspberry",
@@ -430,7 +431,7 @@ mod tests {
         let key: String = client.key.clone();
         // Re-initialize a client
         let client: BookmarksClient =
-            BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16).unwrap();
+            BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16, true).unwrap();
         // Verify it loaded parameters correctly
         assert_eq!(client.key, key);
         let bookmark = ftparams_to_tup(client.get_bookmark("raspberry").unwrap());
@@ -453,7 +454,7 @@ mod tests {
         let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
         // Initialize a new bookmarks client
         let mut client: BookmarksClient =
-            BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16).unwrap();
+            BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16, true).unwrap();
         // Add s3 bookmark
         client.add_bookmark("my-bucket", make_s3_ftparams(), true);
         // Verify bookmark
@@ -473,7 +474,7 @@ mod tests {
         let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
         // Initialize a new bookmarks client
         let mut client: BookmarksClient =
-            BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16).unwrap();
+            BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16, true).unwrap();
         // Add s3 bookmark
         client.add_bookmark("my-bucket", make_s3_ftparams(), false);
         // Verify bookmark
@@ -494,7 +495,7 @@ mod tests {
         let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
         // Initialize a new bookmarks client
         let mut client: BookmarksClient =
-            BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16).unwrap();
+            BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16, true).unwrap();
         // Add s3 bookmark
         client.add_recent(make_s3_ftparams());
         // Verify bookmark
@@ -517,7 +518,7 @@ mod tests {
         let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
         // Initialize a new bookmarks client
         let mut client: BookmarksClient =
-            BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16).unwrap();
+            BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16, true).unwrap();
         // Add bookmark
         client.add_bookmark(
             "raspberry",
@@ -568,7 +569,7 @@ mod tests {
         let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
         // Initialize a new bookmarks client
         let mut client: BookmarksClient =
-            BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16).unwrap();
+            BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16, true).unwrap();
         // Add bookmark
         client.add_bookmark(
             "",
@@ -589,7 +590,7 @@ mod tests {
         let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
         // Initialize a new bookmarks client
         let mut client: BookmarksClient =
-            BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16).unwrap();
+            BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16, true).unwrap();
         // Add bookmark
         client.add_bookmark(
             "raspberry",
@@ -617,7 +618,7 @@ mod tests {
         let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
         // Initialize a new bookmarks client
         let mut client: BookmarksClient =
-            BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16).unwrap();
+            BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16, true).unwrap();
         // Add bookmark
         client.add_recent(make_generic_ftparams(
             FileTransferProtocol::Sftp,
@@ -653,7 +654,7 @@ mod tests {
         let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
         // Initialize a new bookmarks client
         let mut client: BookmarksClient =
-            BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16).unwrap();
+            BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16, true).unwrap();
         // Add bookmark
         client.add_recent(make_generic_ftparams(
             FileTransferProtocol::Sftp,
@@ -680,7 +681,7 @@ mod tests {
         let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
         // Initialize a new bookmarks client
         let mut client: BookmarksClient =
-            BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 2).unwrap();
+            BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 2, true).unwrap();
         // Add recent, wait 1 second for each one (cause the name depends on time)
         // 1
         client.add_recent(make_generic_ftparams(
@@ -748,7 +749,7 @@ mod tests {
         let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
         // Initialize a new bookmarks client
         let mut client: BookmarksClient =
-            BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16).unwrap();
+            BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16, true).unwrap();
         // Add bookmark
         client.add_bookmark(
             "",
@@ -769,7 +770,7 @@ mod tests {
         let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
         // Initialize a new bookmarks client
         let mut client: BookmarksClient =
-            BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16).unwrap();
+            BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16, true).unwrap();
         client.key = "MYSUPERSECRETKEY".to_string();
         assert_eq!(
             client.decrypt_str("z4Z6LpcpYqBW4+bkIok+5A==").ok().unwrap(),

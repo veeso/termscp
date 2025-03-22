@@ -44,6 +44,7 @@
 
 Released on ??
 
+- [issue 308](https://github.com/veeso/termscp/issues/308): added `--wno-keyring` flag to disable keyring
 - [issue 316](https://github.com/veeso/termscp/issues/316): Local directory path is not switching to what's specified in the bookmark. Now the local directory path is correctly set following this hierarchy:
     1. Local directory path specified for the host bridge
     2. Local directory path specified in the bookmark

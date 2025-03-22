@@ -1125,6 +1125,7 @@ dependencies = [
  "futures-util",
  "num",
  "once_cell",
+ "openssl",
  "rand 0.8.5",
 ]
 
@@ -2334,6 +2335,7 @@ dependencies = [
  "byteorder",
  "dbus-secret-service",
  "log",
+ "openssl",
  "security-framework 2.11.1",
  "security-framework 3.2.0",
  "windows-sys 0.59.0",
@@ -2472,6 +2474,7 @@ version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "06085512b750d640299b79be4bad3d2fa90a9c00b1fd9e1b46364f66f0485c72"
 dependencies = [
+ "cc",
  "pkg-config",
 ]
 
