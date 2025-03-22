@@ -18,13 +18,15 @@ impl FileTransferActivity {
             }
             SelectedFile::Many(entries) => {
                 // Try to copy each file to Input/{FILE_NAME}
-                let base_path: PathBuf = PathBuf::from(input);
                 // Iter files
-                for entry in entries.iter() {
-                    let mut dest_path: PathBuf = base_path.clone();
+                for (entry, mut dest_path) in entries.into_iter() {
                     dest_path.push(entry.name());
-                    self.local_rename_file(entry, dest_path.as_path());
+                    self.local_rename_file(&entry, dest_path.as_path());
                 }
+
+                // clear selection
+                self.host_bridge_mut().clear_queue();
+                self.reload_host_bridge_filelist();
             }
             SelectedFile::None => {}
         }
@@ -38,13 +40,16 @@ impl FileTransferActivity {
             }
             SelectedFile::Many(entries) => {
                 // Try to copy each file to Input/{FILE_NAME}
-                let base_path: PathBuf = PathBuf::from(input);
                 // Iter files
-                for entry in entries.iter() {
-                    let mut dest_path: PathBuf = base_path.clone();
+                for (entry, mut dest_path) in entries.into_iter() {
                     dest_path.push(entry.name());
-                    self.remote_rename_file(entry, dest_path.as_path());
+                    self.remote_rename_file(&entry, dest_path.as_path());
                 }
+
+                // clear selection
+                self.remote_mut().clear_queue();
+                // reload remote
+                self.reload_remote_filelist();
             }
             SelectedFile::None => {}
         }

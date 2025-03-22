@@ -228,7 +228,7 @@ impl FileTransferActivity {
                     transfer_stats
                 )
             }
-            TransferPayload::Many(entries) => {
+            TransferPayload::TransferQueue(entries) => {
                 format!(
                     "{} files has been successfully transferred ({})",
                     entries.len(),
@@ -485,7 +485,14 @@ impl FileTransferActivity {
             .found()
             .unwrap()
             .iter_files()
-            .map(|x| vec![TextSpan::from(self.found().unwrap().fmt_file(x))])
+            .map(|x| {
+                let mut span = TextSpan::from(self.found().unwrap().fmt_file(x));
+                if self.found().unwrap().enqueued().contains_key(x.path()) {
+                    span.modifiers |=
+                        TextModifiers::REVERSED | TextModifiers::UNDERLINED | TextModifiers::ITALIC;
+                }
+                vec![span]
+            })
             .collect();
         assert!(
             self.app

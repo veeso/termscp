@@ -113,7 +113,7 @@ impl FileTransferActivity {
                 }
             }
             TransferMsg::EnterDirectory if self.browser.tab() == FileExplorerTab::HostBridge => {
-                if let SelectedFile::One(entry) = self.get_local_selected_entries() {
+                if let Some(entry) = self.get_local_selected_file() {
                     self.action_submit_local(entry);
                     // Update file list if sync
                     if self.browser.sync_browsing && self.browser.found().is_none() {
@@ -123,7 +123,7 @@ impl FileTransferActivity {
                 }
             }
             TransferMsg::EnterDirectory if self.browser.tab() == FileExplorerTab::Remote => {
-                if let SelectedFile::One(entry) = self.get_remote_selected_entries() {
+                if let Some(entry) = self.get_remote_selected_file() {
                     self.action_submit_remote(entry);
                     // Update file list if sync
                     if self.browser.sync_browsing && self.browser.found().is_none() {

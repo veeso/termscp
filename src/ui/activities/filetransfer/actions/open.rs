@@ -13,24 +13,32 @@ impl FileTransferActivity {
     pub(crate) fn action_open_local(&mut self) {
         let entries: Vec<File> = match self.get_local_selected_entries() {
             SelectedFile::One(entry) => vec![entry],
-            SelectedFile::Many(entries) => entries,
+            SelectedFile::Many(entries) => entries.into_iter().map(|(f, _)| f).collect(),
             SelectedFile::None => vec![],
         };
         entries
             .iter()
             .for_each(|x| self.action_open_local_file(x, None));
+
+        // clear selection
+        self.host_bridge_mut().clear_queue();
+        self.reload_host_bridge_filelist();
     }
 
     /// Open local file
     pub(crate) fn action_open_remote(&mut self) {
         let entries: Vec<File> = match self.get_remote_selected_entries() {
             SelectedFile::One(entry) => vec![entry],
-            SelectedFile::Many(entries) => entries,
+            SelectedFile::Many(entries) => entries.into_iter().map(|(f, _)| f).collect(),
             SelectedFile::None => vec![],
         };
         entries
             .iter()
             .for_each(|x| self.action_open_remote_file(x, None));
+
+        // clear selection
+        self.remote_mut().clear_queue();
+        self.reload_remote_filelist();
     }
 
     /// Perform open lopcal file
@@ -86,26 +94,33 @@ impl FileTransferActivity {
     pub(crate) fn action_local_open_with(&mut self, with: &str) {
         let entries: Vec<File> = match self.get_local_selected_entries() {
             SelectedFile::One(entry) => vec![entry],
-            SelectedFile::Many(entries) => entries,
+            SelectedFile::Many(entries) => entries.into_iter().map(|(f, _)| f).collect(),
             SelectedFile::None => vec![],
         };
         // Open all entries
         entries
             .iter()
             .for_each(|x| self.action_open_local_file(x, Some(with)));
+
+        // clear selection
+        self.host_bridge_mut().clear_queue();
     }
 
     /// Open selected file with provided application
     pub(crate) fn action_remote_open_with(&mut self, with: &str) {
         let entries: Vec<File> = match self.get_remote_selected_entries() {
             SelectedFile::One(entry) => vec![entry],
-            SelectedFile::Many(entries) => entries,
+            SelectedFile::Many(entries) => entries.into_iter().map(|(f, _)| f).collect(),
             SelectedFile::None => vec![],
         };
         // Open all entries
         entries
             .iter()
             .for_each(|x| self.action_open_remote_file(x, Some(with)));
+
+        // clear selection
+        self.remote_mut().clear_queue();
+        self.reload_remote_filelist();
     }
 
     fn open_bridged_file(&mut self, entry: &File, open_with: Option<&str>) {

@@ -11,7 +11,7 @@ use super::{File, FileTransferActivity, LogLevel, SelectedFile, TransferOpts, Tr
 impl FileTransferActivity {
     pub(crate) fn action_find_changedir(&mut self) {
         // Match entry
-        if let SelectedFile::One(entry) = self.get_found_selected_entries() {
+        if let Some(entry) = self.get_found_selected_file() {
             debug!("Changedir to: {}", entry.name());
             // Get path: if a directory, use directory path; if it is a File, get parent path
             let path = if entry.is_dir() {
@@ -103,11 +103,12 @@ impl FileTransferActivity {
                             // Check which file would be replaced
                             let existing_files: Vec<&File> = entries
                                 .iter()
-                                .filter(|x| {
+                                .filter(|(x, dest_path)| {
                                     self.remote_file_exists(
                                         Self::file_to_check_many(x, dest_path.as_path()).as_path(),
                                     )
                                 })
+                                .map(|(x, _)| x)
                                 .collect();
                             // Check whether to replace files
                             if !existing_files.is_empty()
@@ -117,7 +118,7 @@ impl FileTransferActivity {
                             }
                         }
                         if let Err(err) = self.filetransfer_send(
-                            TransferPayload::Many(entries),
+                            TransferPayload::TransferQueue(entries),
                             dest_path.as_path(),
                             None,
                         ) {
@@ -134,11 +135,12 @@ impl FileTransferActivity {
                             // Check which file would be replaced
                             let existing_files: Vec<&File> = entries
                                 .iter()
-                                .filter(|x| {
+                                .filter(|(x, dest_path)| {
                                     self.host_bridge_file_exists(
                                         Self::file_to_check_many(x, dest_path.as_path()).as_path(),
                                     )
                                 })
+                                .map(|(x, _)| x)
                                 .collect();
                             // Check whether to replace files
                             if !existing_files.is_empty()
@@ -148,7 +150,7 @@ impl FileTransferActivity {
                             }
                         }
                         if let Err(err) = self.filetransfer_recv(
-                            TransferPayload::Many(entries),
+                            TransferPayload::TransferQueue(entries),
                             dest_path.as_path(),
                             None,
                         ) {
@@ -156,6 +158,12 @@ impl FileTransferActivity {
                                 LogLevel::Error,
                                 format!("Could not download file: {err}"),
                             );
+                        }
+
+                        // clear selection
+                        if let Some(f) = self.found_mut() {
+                            f.clear_queue();
+                            self.update_find_list();
                         }
                     }
                 }
@@ -172,9 +180,15 @@ impl FileTransferActivity {
             }
             SelectedFile::Many(entries) => {
                 // Iter files
-                for entry in entries.iter() {
+                for (entry, _) in entries.iter() {
                     // Delete file
                     self.remove_found_file(entry);
+                }
+
+                // clear selection
+                if let Some(f) = self.found_mut() {
+                    f.clear_queue();
+                    self.update_find_list();
                 }
             }
             SelectedFile::None => {}
@@ -200,9 +214,14 @@ impl FileTransferActivity {
             }
             SelectedFile::Many(entries) => {
                 // Iter files
-                for entry in entries.iter() {
+                for (entry, _) in entries.iter() {
                     // Open file
                     self.open_found_file(entry, None);
+                }
+                // clear selection
+                if let Some(f) = self.found_mut() {
+                    f.clear_queue();
+                    self.update_find_list();
                 }
             }
             SelectedFile::None => {}
@@ -217,9 +236,14 @@ impl FileTransferActivity {
             }
             SelectedFile::Many(entries) => {
                 // Iter files
-                for entry in entries.iter() {
+                for (entry, _) in entries.iter() {
                     // Open file
                     self.open_found_file(entry, Some(with));
+                }
+                // clear selection
+                if let Some(f) = self.found_mut() {
+                    f.clear_queue();
+                    self.update_find_list();
                 }
             }
             SelectedFile::None => {}

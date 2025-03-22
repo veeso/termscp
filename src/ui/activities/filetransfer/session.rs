@@ -41,7 +41,8 @@ enum TransferErrorReason {
 pub(super) enum TransferPayload {
     File(File),
     Any(File),
-    Many(Vec<File>),
+    /// List of file with their destination name
+    TransferQueue(Vec<(File, PathBuf)>),
 }
 
 impl FileTransferActivity {
@@ -264,8 +265,8 @@ impl FileTransferActivity {
             TransferPayload::File(ref file) => {
                 self.filetransfer_send_file(file, curr_remote_path, dst_name)
             }
-            TransferPayload::Many(ref entries) => {
-                self.filetransfer_send_many(entries, curr_remote_path)
+            TransferPayload::TransferQueue(ref entries) => {
+                self.filetransfer_send_transfer_queue(entries)
             }
         };
         // Notify
@@ -331,18 +332,17 @@ impl FileTransferActivity {
         result
     }
 
-    /// Send many entries to remote
-    fn filetransfer_send_many(
+    /// Send transfer queue entries to remote
+    fn filetransfer_send_transfer_queue(
         &mut self,
-        entries: &[File],
-        curr_remote_path: &Path,
+        entries: &[(File, PathBuf)],
     ) -> Result<(), String> {
         // Reset states
         self.transfer.reset();
         // Calculate total size of transfer
         let total_transfer_size: usize = entries
             .iter()
-            .map(|x| self.get_total_transfer_size_host(x))
+            .map(|(x, _)| self.get_total_transfer_size_host(x))
             .sum();
         self.transfer.full.init(total_transfer_size);
         // Mount progress bar
@@ -350,7 +350,7 @@ impl FileTransferActivity {
         // Send recurse
         let result = entries
             .iter()
-            .map(|x| self.filetransfer_send_recurse(x, curr_remote_path, None))
+            .map(|(x, remote)| self.filetransfer_send_recurse(x, &remote, None))
             .find(|x| x.is_err())
             .unwrap_or(Ok(()));
         // Umount progress bar
@@ -704,8 +704,8 @@ impl FileTransferActivity {
                 self.filetransfer_recv_any(entry, host_bridge_path, dst_name)
             }
             TransferPayload::File(ref file) => self.filetransfer_recv_file(file, host_bridge_path),
-            TransferPayload::Many(ref entries) => {
-                self.filetransfer_recv_many(entries, host_bridge_path)
+            TransferPayload::TransferQueue(ref entries) => {
+                self.filetransfer_recv_transfer_queue(entries)
             }
         };
         // Notify
@@ -764,18 +764,17 @@ impl FileTransferActivity {
         result.map_err(|x| x.to_string())
     }
 
-    /// Send many entries to remote
-    fn filetransfer_recv_many(
+    /// Receive transfer queue from remote
+    fn filetransfer_recv_transfer_queue(
         &mut self,
-        entries: &[File],
-        curr_remote_path: &Path,
+        entries: &[(File, PathBuf)],
     ) -> Result<(), String> {
         // Reset states
         self.transfer.reset();
         // Calculate total size of transfer
         let total_transfer_size: usize = entries
             .iter()
-            .map(|x| self.get_total_transfer_size_remote(x))
+            .map(|(x, _)| self.get_total_transfer_size_remote(x))
             .sum();
         self.transfer.full.init(total_transfer_size);
         // Mount progress bar
@@ -783,7 +782,7 @@ impl FileTransferActivity {
         // Send recurse
         let result = entries
             .iter()
-            .map(|x| self.filetransfer_recv_recurse(x, curr_remote_path, None))
+            .map(|(x, path)| self.filetransfer_recv_recurse(x, &path, None))
             .find(|x| x.is_err())
             .unwrap_or(Ok(()));
         // Umount progress bar

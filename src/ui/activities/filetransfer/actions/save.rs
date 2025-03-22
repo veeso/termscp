@@ -64,11 +64,12 @@ impl FileTransferActivity {
                     // Check which file would be replaced
                     let existing_files: Vec<&File> = entries
                         .iter()
-                        .filter(|x| {
+                        .filter(|(x, dest_path)| {
                             self.remote_file_exists(
                                 Self::file_to_check_many(x, dest_path.as_path()).as_path(),
                             )
                         })
+                        .map(|(x, _)| x)
                         .collect();
                     // Check whether to replace files
                     if !existing_files.is_empty() && !self.should_replace_files(existing_files) {
@@ -76,7 +77,7 @@ impl FileTransferActivity {
                     }
                 }
                 if let Err(err) = self.filetransfer_send(
-                    TransferPayload::Many(entries),
+                    TransferPayload::TransferQueue(entries),
                     dest_path.as_path(),
                     None,
                 ) {
@@ -86,6 +87,10 @@ impl FileTransferActivity {
                             format!("Could not upload file: {err}"),
                         );
                     }
+                } else {
+                    // clear selection
+                    self.host_bridge_mut().clear_queue();
+                    self.reload_host_bridge_filelist();
                 }
             }
             SelectedFile::None => {}
@@ -128,11 +133,12 @@ impl FileTransferActivity {
                     // Check which file would be replaced
                     let existing_files: Vec<&File> = entries
                         .iter()
-                        .filter(|x| {
+                        .filter(|(x, dest_path)| {
                             self.host_bridge_file_exists(
                                 Self::file_to_check_many(x, dest_path.as_path()).as_path(),
                             )
                         })
+                        .map(|(x, _)| x)
                         .collect();
                     // Check whether to replace files
                     if !existing_files.is_empty() && !self.should_replace_files(existing_files) {
@@ -140,7 +146,7 @@ impl FileTransferActivity {
                     }
                 }
                 if let Err(err) = self.filetransfer_recv(
-                    TransferPayload::Many(entries),
+                    TransferPayload::TransferQueue(entries),
                     dest_path.as_path(),
                     None,
                 ) {
@@ -150,6 +156,11 @@ impl FileTransferActivity {
                             format!("Could not download file: {err}"),
                         );
                     }
+                } else {
+                    // clear selection
+                    self.remote_mut().clear_queue();
+                    // reload remote
+                    self.reload_remote_filelist();
                 }
             }
             SelectedFile::None => {}
