@@ -60,8 +60,6 @@ regex = "^1"
 remotefs = "^0.3"
 remotefs-aws-s3 = "0.4"
 remotefs-kube = "0.4"
-remotefs-ftp = { version = "^0.2", features = ["vendored", "native-tls"] }
-remotefs-ssh = { version = "^0.6", features = ["ssh2-vendored"] }
 remotefs-webdav = "^0.2"
 rpassword = "^7"
 self_update = { version = "^0.42", default-features = false, features = [
@@ -89,7 +87,13 @@ wildmatch = "^2"
 remotefs-smb = { version = "^0.3", optional = true }
 
 [target."cfg(target_family = \"unix\")".dependencies]
+remotefs-ftp = { version = "^0.2", features = ["vendored", "native-tls"] }
+remotefs-ssh = { version = "^0.6", features = ["ssh2-vendored"] }
 uzers = "0.12"
+
+[target."cfg(target_family = \"windows\")".dependencies]
+remotefs-ftp = { version = "^0.2", features = ["native-tls"] }
+remotefs-ssh = { version = "^0.6" }
 
 [dev-dependencies]
 pretty_assertions = "^1"
