@@ -43,9 +43,9 @@ impl SelectedFilesList {
                         .iter()
                         .map(|(src, dest)| {
                             vec![
-                                TextSpan::from(Self::filename(&src)),
+                                TextSpan::from(Self::filename(src)),
                                 TextSpan::from(" -> "),
-                                TextSpan::from(Self::filename(&dest)),
+                                TextSpan::from(Self::filename(dest)),
                             ]
                         })
                         .collect(),

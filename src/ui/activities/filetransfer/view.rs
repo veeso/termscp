@@ -964,7 +964,7 @@ impl FileTransferActivity {
                         &enqueued,
                         MarkQueue::Local,
                         log_panel,
-                        "Host Bridge transfer queue",
+                        "Host Bridge selected files",
                     )),
                     vec![]
                 )
@@ -989,7 +989,7 @@ impl FileTransferActivity {
                         &enqueued,
                         MarkQueue::Remote,
                         log_panel,
-                        "Remote transfer queue",
+                        "Remote transfer selected files",
                     )),
                     vec![]
                 )
