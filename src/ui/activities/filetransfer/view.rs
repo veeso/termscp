@@ -16,6 +16,7 @@ use super::browser::{FileExplorerTab, FoundExplorerTab};
 use super::components::ATTR_FILES;
 use super::{Context, FileTransferActivity, Id, components};
 use crate::explorer::FileSorting;
+use crate::ui::activities::filetransfer::MarkQueue;
 use crate::utils::ui::{Popup, Size};
 
 impl FileTransferActivity {
@@ -81,6 +82,8 @@ impl FileTransferActivity {
                 )
                 .is_ok()
         );
+        self.refresh_host_bridge_transfer_queue();
+        self.refresh_remote_transfer_queue();
         // Load status bar
         self.refresh_local_status_bar();
         self.refresh_remote_status_bar();
@@ -138,6 +141,17 @@ impl FileTransferActivity {
                 .direction(Direction::Horizontal)
                 .horizontal_margin(1)
                 .split(bottom_chunks[0]);
+            let bottom_components = Layout::default()
+                .constraints(
+                    [
+                        Constraint::Percentage(25),
+                        Constraint::Percentage(25),
+                        Constraint::Percentage(50),
+                    ]
+                    .as_ref(),
+                )
+                .direction(Direction::Horizontal)
+                .split(bottom_chunks[1]);
             // Draw footer
             self.app.view(&Id::FooterBar, f, body[1]);
             // Draw explorers
@@ -153,8 +167,13 @@ impl FileTransferActivity {
             } else {
                 self.app.view(&Id::ExplorerRemote, f, tabs_chunks[1]);
             }
+            // draw transfer queues
+            self.app
+                .view(&Id::TransferQueueHostBridge, f, bottom_components[0]);
+            self.app
+                .view(&Id::TransferQueueRemote, f, bottom_components[1]);
             // Draw log box
-            self.app.view(&Id::Log, f, bottom_chunks[1]);
+            self.app.view(&Id::Log, f, bottom_components[2]);
             // Draw status bar
             self.app
                 .view(&Id::StatusBarHostBridge, f, status_bar_chunks[0]);
@@ -926,6 +945,56 @@ impl FileTransferActivity {
 
     pub(super) fn umount_file_info(&mut self) {
         let _ = self.app.umount(&Id::FileInfoPopup);
+    }
+
+    pub(super) fn refresh_host_bridge_transfer_queue(&mut self) {
+        let enqueued = self
+            .host_bridge()
+            .enqueued()
+            .iter()
+            .map(|(src, dest)| (src.clone(), dest.clone()))
+            .collect::<Vec<_>>();
+        let log_panel = self.theme().transfer_log_window;
+
+        assert!(
+            self.app
+                .remount(
+                    Id::TransferQueueHostBridge,
+                    Box::new(components::SelectedFilesList::new(
+                        &enqueued,
+                        MarkQueue::Local,
+                        log_panel,
+                        "Host Bridge selected files",
+                    )),
+                    vec![]
+                )
+                .is_ok()
+        );
+    }
+
+    pub(super) fn refresh_remote_transfer_queue(&mut self) {
+        let enqueued = self
+            .remote()
+            .enqueued()
+            .iter()
+            .map(|(src, dest)| (src.clone(), dest.clone()))
+            .collect::<Vec<_>>();
+        let log_panel = self.theme().transfer_log_window;
+
+        assert!(
+            self.app
+                .remount(
+                    Id::TransferQueueRemote,
+                    Box::new(components::SelectedFilesList::new(
+                        &enqueued,
+                        MarkQueue::Remote,
+                        log_panel,
+                        "Remote transfer selected files",
+                    )),
+                    vec![]
+                )
+                .is_ok()
+        );
     }
 
     pub(super) fn refresh_local_status_bar(&mut self) {

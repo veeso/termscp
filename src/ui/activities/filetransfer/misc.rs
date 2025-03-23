@@ -3,7 +3,8 @@ use std::path::{Path, PathBuf};
 
 use bytesize::ByteSize;
 use tuirealm::props::{
-    Alignment, AttrValue, Attribute, Color, PropPayload, PropValue, TableBuilder, TextSpan,
+    Alignment, AttrValue, Attribute, Color, PropPayload, PropValue, TableBuilder, TextModifiers,
+    TextSpan,
 };
 use tuirealm::{PollStrategy, Update};
 
@@ -227,7 +228,7 @@ impl FileTransferActivity {
                     transfer_stats
                 )
             }
-            TransferPayload::Many(entries) => {
+            TransferPayload::TransferQueue(entries) => {
                 format!(
                     "{} files has been successfully transferred ({})",
                     entries.len(),
@@ -240,6 +241,11 @@ impl FileTransferActivity {
     /// Update host bridge file list
     pub(super) fn update_host_bridge_filelist(&mut self) {
         self.reload_host_bridge_dir();
+        self.reload_host_bridge_filelist();
+    }
+
+    /// Update host bridge file list
+    pub(super) fn reload_host_bridge_filelist(&mut self) {
         // Get width
         let width = self
             .context_mut()
@@ -261,7 +267,15 @@ impl FileTransferActivity {
         let files: Vec<Vec<TextSpan>> = self
             .host_bridge()
             .iter_files()
-            .map(|x| vec![TextSpan::from(self.host_bridge().fmt_file(x))])
+            .map(|x| {
+                let mut span = TextSpan::from(self.host_bridge().fmt_file(x));
+                if self.host_bridge().enqueued().contains_key(x.path()) {
+                    span.modifiers |=
+                        TextModifiers::REVERSED | TextModifiers::UNDERLINED | TextModifiers::ITALIC;
+                }
+
+                vec![span]
+            })
             .collect();
         // Update content and title
         assert!(
@@ -287,7 +301,10 @@ impl FileTransferActivity {
     /// Update remote file list
     pub(super) fn update_remote_filelist(&mut self) {
         self.reload_remote_dir();
+        self.reload_remote_filelist();
+    }
 
+    pub(super) fn reload_remote_filelist(&mut self) {
         let width = self
             .context_mut()
             .terminal()
@@ -308,7 +325,15 @@ impl FileTransferActivity {
         let files: Vec<Vec<TextSpan>> = self
             .remote()
             .iter_files()
-            .map(|x| vec![TextSpan::from(self.remote().fmt_file(x))])
+            .map(|x| {
+                let mut span = TextSpan::from(self.remote().fmt_file(x));
+                if self.remote().enqueued().contains_key(x.path()) {
+                    span.modifiers |=
+                        TextModifiers::REVERSED | TextModifiers::UNDERLINED | TextModifiers::ITALIC;
+                }
+
+                vec![span]
+            })
             .collect();
         // Update content and title
         assert!(
@@ -460,7 +485,14 @@ impl FileTransferActivity {
             .found()
             .unwrap()
             .iter_files()
-            .map(|x| vec![TextSpan::from(self.found().unwrap().fmt_file(x))])
+            .map(|x| {
+                let mut span = TextSpan::from(self.found().unwrap().fmt_file(x));
+                if self.found().unwrap().enqueued().contains_key(x.path()) {
+                    span.modifiers |=
+                        TextModifiers::REVERSED | TextModifiers::UNDERLINED | TextModifiers::ITALIC;
+                }
+                vec![span]
+            })
             .collect();
         assert!(
             self.app
@@ -479,6 +511,15 @@ impl FileTransferActivity {
                 self.update_host_bridge_filelist()
             }
             FileExplorerTab::Remote | FileExplorerTab::FindRemote => self.update_remote_filelist(),
+        }
+    }
+
+    pub(super) fn reload_browser_file_list(&mut self) {
+        match self.browser.tab() {
+            FileExplorerTab::HostBridge | FileExplorerTab::FindHostBridge => {
+                self.reload_host_bridge_filelist()
+            }
+            FileExplorerTab::Remote | FileExplorerTab::FindRemote => self.reload_remote_filelist(),
         }
     }
 

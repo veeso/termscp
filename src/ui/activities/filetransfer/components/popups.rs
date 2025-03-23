@@ -670,7 +670,7 @@ impl KeybindingsPopup {
                         ))
                         .add_row()
                         .add_col(TextSpan::new("<P>").bold().fg(key_color))
-                        .add_col(TextSpan::from("               Toggle log panel"))
+                        .add_col(TextSpan::from("               Toggle bottom panel"))
                         .add_row()
                         .add_col(TextSpan::new("<Q|F10>").bold().fg(key_color))
                         .add_col(TextSpan::from("           Quit termscp"))

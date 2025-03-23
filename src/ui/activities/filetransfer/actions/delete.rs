@@ -16,10 +16,14 @@ impl FileTransferActivity {
             }
             SelectedFile::Many(entries) => {
                 // Iter files
-                for entry in entries.iter() {
+                for (entry, _) in entries.iter() {
                     // Delete file
                     self.local_remove_file(entry);
                 }
+
+                // clear selection
+                self.host_bridge_mut().clear_queue();
+                self.reload_host_bridge_filelist();
             }
             SelectedFile::None => {}
         }
@@ -33,10 +37,14 @@ impl FileTransferActivity {
             }
             SelectedFile::Many(entries) => {
                 // Iter files
-                for entry in entries.iter() {
+                for (entry, _) in entries.iter() {
                     // Delete file
                     self.remote_remove_file(entry);
                 }
+
+                // clear selection
+                self.remote_mut().clear_queue();
+                self.reload_remote_filelist();
             }
             SelectedFile::None => {}
         }

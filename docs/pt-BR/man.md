@@ -15,7 +15,8 @@
     - [Credenciais do S3 🦊](#credenciais-do-s3-)
   - [Explorador de Arquivos 📂](#explorador-de-arquivos-)
     - [Atalhos de Teclado ⌨](#atalhos-de-teclado-)
-    - [Trabalhar com Vários Arquivos 🥷](#trabalhar-com-vários-arquivos-)
+    - [Trabalhar com múltiplos arquivos 🥷](#trabalhar-com-múltiplos-arquivos-)
+      - [Exemplo](#exemplo)
     - [Navegação Sincronizada ⏲️](#navegação-sincronizada-️)
     - [Abrir e Abrir Com 🚪](#abrir-e-abrir-com-)
   - [Favoritos ⭐](#favoritos-)
@@ -272,17 +273,34 @@ Para trocar de painel, você precisa pressionar `<LEFT>` para mover para o paine
 | `<CTRL+C>`    | Abortir processo de transferência de arquivo                  |                   |
 | `<CTRL+T>`   | Mostrar todos os caminhos sincronizados                         | Track          |
 
-### Trabalhar com Vários Arquivos 🥷
+### Trabalhar com múltiplos arquivos 🥷 
 
-Você pode optar por trabalhar com vários arquivos, selecionando-os pressionando `<M>`, para selecionar o arquivo atual, ou pressionando `<CTRL+A>`, que selecionará todos os arquivos no diretório de trabalho.
-Uma vez que um arquivo esteja marcado para seleção, ele será exibido com um `*` à esquerda.
-Ao trabalhar com seleção, apenas o arquivo selecionado será processado para ações, enquanto o item destacado atual será ignorado.
-É possível trabalhar com vários arquivos também quando estiver no painel de resultados da busca.
-Todas as ações estão disponíveis ao trabalhar com vários arquivos, mas tenha em mente que algumas ações funcionam de forma ligeiramente diferente. Vamos explicar algumas delas:
+Você pode optar por trabalhar com vários arquivos, usando estes controles simples:
 
-- *Copiar*: sempre que você copiar um arquivo, você será solicitado a inserir o nome de destino. Ao trabalhar com vários arquivos, esse nome refere-se ao diretório de destino onde todos esses arquivos serão copiados.
-- *Renomear*: igual ao copiar, mas moverá os arquivos para lá.
-- *Salvar como*: igual ao copiar, mas gravará lá.
+- `<M>`: marcar um arquivo para seleção
+- `<CTRL+A>`: selecionar todos os arquivos no diretório atual
+- `<ALT+A>`: desselecionar todos os arquivos
+
+Uma vez marcado, o arquivo será **exibido com fundo destacado** .
+Ao trabalhar com seleção, apenas os arquivos selecionados serão processados, enquanto o item atualmente destacado será ignorado.
+
+É possível trabalhar com múltiplos arquivos também no painel de resultados de busca.
+
+Todas as ações estão disponíveis ao trabalhar com múltiplos arquivos, mas algumas funcionam de forma ligeiramente diferente. Vamos ver:
+
+- *Copiar*: ao copiar, será solicitado o nome de destino. Com múltiplos arquivos, esse nome será o diretório de destino para todos eles.
+- *Renomear*: igual a copiar, mas moverá os arquivos.
+- *Salvar como*: igual a copiar, mas escreverá os arquivos nesse local.
+
+Se você selecionar um arquivo num diretório (ex: `/home`) e mudar de diretório, ele continuará selecionado e aparecerá na **fila de transferência**  no painel inferior.
+Ao selecionar um arquivo, o diretório *remoto* atual é associado a ele; então, se for transferido, será enviado para esse diretório associado.
+
+#### Exemplo
+
+Se selecionarmos `/home/a.txt` localmente e estivermos em `/tmp` no painel remoto, depois mudarmos para `/var` e selecionarmos `/var/b.txt`, e estivermos em `/home` no painel remoto, ao transferir teremos:
+
+- `/home/a.txt` transferido para `/tmp/a.txt`
+- `/var/b.txt` transferido para `/home/b.txt`
 
 ### Navegação Sincronizada ⏲️
 

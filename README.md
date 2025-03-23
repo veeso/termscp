@@ -22,7 +22,7 @@
   /></a>
   &nbsp;
   <a
-    href="/docs/ptbr/README.md"
+    href="/docs/pt-BR/README.md"
     ><img
       height="20"
       src="/assets/images/flags/br.png"

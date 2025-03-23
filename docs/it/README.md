@@ -22,7 +22,7 @@
   /></a>
   &nbsp;
   <a
-    href="https://github.com/veeso/termscp/blob/main/docs/ptbr/README.md"
+    href="https://github.com/veeso/termscp/blob/main/docs/pt-BR/README.md"
     ><img
       height="20"
       src="/assets/images/flags/br.png"

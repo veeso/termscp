@@ -11,7 +11,9 @@ use tuirealm::{State, StateValue, Update};
 use super::actions::SelectedFile;
 use super::actions::walkdir::WalkdirError;
 use super::browser::{FileExplorerTab, FoundExplorerTab};
-use super::{ExitReason, FileTransferActivity, Id, Msg, TransferMsg, TransferOpts, UiMsg};
+use super::{
+    ExitReason, FileTransferActivity, Id, MarkQueue, Msg, TransferMsg, TransferOpts, UiMsg,
+};
 
 impl Update<Msg> for FileTransferActivity {
     fn update(&mut self, msg: Option<Msg>) -> Option<Msg> {
@@ -113,7 +115,7 @@ impl FileTransferActivity {
                 }
             }
             TransferMsg::EnterDirectory if self.browser.tab() == FileExplorerTab::HostBridge => {
-                if let SelectedFile::One(entry) = self.get_local_selected_entries() {
+                if let Some(entry) = self.get_local_selected_file() {
                     self.action_submit_local(entry);
                     // Update file list if sync
                     if self.browser.sync_browsing && self.browser.found().is_none() {
@@ -123,7 +125,7 @@ impl FileTransferActivity {
                 }
             }
             TransferMsg::EnterDirectory if self.browser.tab() == FileExplorerTab::Remote => {
-                if let SelectedFile::One(entry) = self.get_remote_selected_entries() {
+                if let Some(entry) = self.get_remote_selected_file() {
                     self.action_submit_remote(entry);
                     // Update file list if sync
                     if self.browser.sync_browsing && self.browser.found().is_none() {
@@ -473,12 +475,33 @@ impl FileTransferActivity {
                 self.browser.fuzzy_search(&needle);
                 self.update_find_list();
             }
-            UiMsg::ShowLogPanel => {
-                assert!(self.app.active(&Id::Log).is_ok());
+            UiMsg::GoToTransferQueue => {
+                assert!(self.app.active(&Id::TransferQueueHostBridge).is_ok());
             }
             UiMsg::LogBackTabbed => {
                 assert!(self.app.active(&Id::ExplorerHostBridge).is_ok());
             }
+            UiMsg::MarkFile(index) => {
+                self.action_mark_file(index);
+            }
+            UiMsg::MarkAll => {
+                self.action_mark_all();
+            }
+            UiMsg::MarkClear => {
+                self.action_mark_clear();
+            }
+            UiMsg::MarkRemove(tab, path) => match tab {
+                MarkQueue::Local => {
+                    self.host_bridge_mut().dequeue(&path);
+                    self.reload_host_bridge_filelist();
+                    self.refresh_host_bridge_transfer_queue();
+                }
+                MarkQueue::Remote => {
+                    self.remote_mut().dequeue(&path);
+                    self.reload_remote_filelist();
+                    self.refresh_remote_transfer_queue();
+                }
+            },
             UiMsg::Quit => {
                 self.disconnect_and_quit();
                 self.umount_quit();
@@ -584,6 +607,31 @@ impl FileTransferActivity {
             UiMsg::WindowResized => {
                 self.redraw = true;
             }
+
+            UiMsg::BottomPanelLeft => match self.app.focus() {
+                Some(Id::TransferQueueHostBridge) => {
+                    assert!(self.app.active(&Id::Log).is_ok())
+                }
+                Some(Id::TransferQueueRemote) => {
+                    assert!(self.app.active(&Id::TransferQueueHostBridge).is_ok())
+                }
+                Some(Id::Log) => {
+                    assert!(self.app.active(&Id::TransferQueueRemote).is_ok())
+                }
+                _ => {}
+            },
+            UiMsg::BottomPanelRight => match self.app.focus() {
+                Some(Id::TransferQueueHostBridge) => {
+                    assert!(self.app.active(&Id::TransferQueueRemote).is_ok())
+                }
+                Some(Id::TransferQueueRemote) => {
+                    assert!(self.app.active(&Id::Log).is_ok())
+                }
+                Some(Id::Log) => {
+                    assert!(self.app.active(&Id::TransferQueueHostBridge).is_ok())
+                }
+                _ => {}
+            },
         }
         None
     }

@@ -77,7 +77,7 @@ impl KeyStorage for KeyringStorage {
 #[cfg(test)]
 mod tests {
     #[test]
-    #[cfg(not(feature = "isolated-tests"))]
+    #[cfg(all(not(feature = "github-actions"), not(feature = "isolated-tests")))]
     fn test_system_keys_keyringstorage() {
         use pretty_assertions::assert_eq;
         use whoami::username;

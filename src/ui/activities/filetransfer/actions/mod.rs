@@ -2,15 +2,19 @@
 //!
 //! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
 
+use std::path::{Path, PathBuf};
+
 use remotefs::File;
 use remotefs::fs::UnixPex;
 use tuirealm::{State, StateValue};
 
 use super::browser::FileExplorerTab;
+use super::lib::browser::FoundExplorerTab;
 use super::{
     FileTransferActivity, Id, LogLevel, Msg, PendingActionMsg, TransferMsg, TransferOpts,
     TransferPayload, UiMsg,
 };
+use crate::explorer::FileExplorer;
 
 // actions
 pub(crate) mod change_dir;
@@ -21,6 +25,7 @@ pub(crate) mod edit;
 pub(crate) mod exec;
 pub(crate) mod filter;
 pub(crate) mod find;
+pub(crate) mod mark;
 pub(crate) mod mkdir;
 pub(crate) mod newfile;
 pub(crate) mod open;
@@ -36,7 +41,8 @@ pub(crate) mod watcher;
 #[derive(Debug)]
 pub(crate) enum SelectedFile {
     One(File),
-    Many(Vec<File>),
+    /// List of file with their destination path
+    Many(Vec<(File, PathBuf)>),
     None,
 }
 
@@ -45,7 +51,10 @@ impl SelectedFile {
     /// In case is `Many` the first item mode is returned
     pub fn unix_pex(&self) -> Option<UnixPex> {
         match self {
-            Self::Many(files) => files.iter().next().and_then(|file| file.metadata().mode),
+            Self::Many(files) => files
+                .iter()
+                .next()
+                .and_then(|(file, _)| file.metadata().mode),
             Self::One(file) => file.metadata().mode,
             Self::None => None,
         }
@@ -55,7 +64,7 @@ impl SelectedFile {
     pub fn get_files(self) -> Vec<File> {
         match self {
             Self::One(file) => vec![file],
-            Self::Many(files) => files,
+            Self::Many(files) => files.into_iter().map(|(f, _)| f).collect(),
             Self::None => vec![],
         }
     }
@@ -64,7 +73,6 @@ impl SelectedFile {
 #[derive(Debug)]
 enum SelectedFileIndex {
     One(usize),
-    Many(Vec<usize>),
     None,
 }
 
@@ -77,68 +85,42 @@ impl From<Option<&File>> for SelectedFile {
     }
 }
 
-impl From<Vec<&File>> for SelectedFile {
-    fn from(files: Vec<&File>) -> Self {
-        SelectedFile::Many(files.into_iter().cloned().collect())
-    }
-}
-
 impl FileTransferActivity {
     /// Get local file entry
-    pub(crate) fn get_local_selected_entries(&self) -> SelectedFile {
-        match self.get_selected_index(&Id::ExplorerHostBridge) {
-            SelectedFileIndex::One(idx) => SelectedFile::from(self.host_bridge().get(idx)),
-            SelectedFileIndex::Many(files) => {
-                let files: Vec<&File> = files
-                    .iter()
-                    .filter_map(|x| self.host_bridge().get(*x)) // Usize to Option<File>
-                    .collect();
-                SelectedFile::from(files)
-            }
-            SelectedFileIndex::None => SelectedFile::None,
-        }
+    pub(crate) fn get_local_selected_entries(&mut self) -> SelectedFile {
+        self.get_selected_files(&Id::ExplorerHostBridge)
+    }
+
+    pub(crate) fn get_local_selected_file(&self) -> Option<File> {
+        self.get_selected_file(&Id::ExplorerHostBridge)
     }
 
     /// Get remote file entry
-    pub(crate) fn get_remote_selected_entries(&self) -> SelectedFile {
-        match self.get_selected_index(&Id::ExplorerRemote) {
-            SelectedFileIndex::One(idx) => SelectedFile::from(self.remote().get(idx)),
-            SelectedFileIndex::Many(files) => {
-                let files: Vec<&File> = files
-                    .iter()
-                    .filter_map(|x| self.remote().get(*x)) // Usize to Option<File>
-                    .collect();
-                SelectedFile::from(files)
-            }
-            SelectedFileIndex::None => SelectedFile::None,
-        }
+    pub(crate) fn get_remote_selected_entries(&mut self) -> SelectedFile {
+        self.get_selected_files(&Id::ExplorerRemote)
+    }
+
+    pub(crate) fn get_remote_selected_file(&self) -> Option<File> {
+        self.get_selected_file(&Id::ExplorerRemote)
     }
 
     /// Returns whether only one entry is selected on local host
-    pub(crate) fn is_local_selected_one(&self) -> bool {
+    pub(crate) fn is_local_selected_one(&mut self) -> bool {
         matches!(self.get_local_selected_entries(), SelectedFile::One(_))
     }
 
     /// Returns whether only one entry is selected on remote host
-    pub(crate) fn is_remote_selected_one(&self) -> bool {
+    pub(crate) fn is_remote_selected_one(&mut self) -> bool {
         matches!(self.get_remote_selected_entries(), SelectedFile::One(_))
     }
 
     /// Get remote file entry
-    pub(crate) fn get_found_selected_entries(&self) -> SelectedFile {
-        match self.get_selected_index(&Id::ExplorerFind) {
-            SelectedFileIndex::One(idx) => {
-                SelectedFile::from(self.found().as_ref().unwrap().get(idx))
-            }
-            SelectedFileIndex::Many(files) => {
-                let files: Vec<&File> = files
-                    .iter()
-                    .filter_map(|x| self.found().as_ref().unwrap().get(*x)) // Usize to Option<File>
-                    .collect();
-                SelectedFile::from(files)
-            }
-            SelectedFileIndex::None => SelectedFile::None,
-        }
+    pub(crate) fn get_found_selected_entries(&mut self) -> SelectedFile {
+        self.get_selected_files(&Id::ExplorerFind)
+    }
+
+    pub(crate) fn get_found_selected_file(&self) -> Option<File> {
+        self.get_selected_file(&Id::ExplorerFind)
     }
 
     // -- private
@@ -146,17 +128,69 @@ impl FileTransferActivity {
     fn get_selected_index(&self, id: &Id) -> SelectedFileIndex {
         match self.app.state(id) {
             Ok(State::One(StateValue::Usize(idx))) => SelectedFileIndex::One(idx),
-            Ok(State::Vec(files)) => {
-                let list: Vec<usize> = files
-                    .iter()
-                    .map(|x| match x {
-                        StateValue::Usize(v) => *v,
-                        _ => 0,
-                    })
-                    .collect();
-                SelectedFileIndex::Many(list)
-            }
             _ => SelectedFileIndex::None,
+        }
+    }
+
+    fn get_selected_files(&mut self, id: &Id) -> SelectedFile {
+        let browser = self.browser_by_id(id);
+        // if transfer queue is not empty, return that
+        let transfer_queue = browser.enqueued().clone();
+        if !transfer_queue.is_empty() {
+            return SelectedFile::Many(
+                transfer_queue
+                    .iter()
+                    .filter_map(|(src, dest)| {
+                        let src_file = self.get_file_from_path(id, src)?;
+                        Some((src_file, dest.clone()))
+                    })
+                    .collect(),
+            );
+        }
+
+        let browser = self.browser_by_id(id);
+        // if no transfer queue, return selected files
+        match self.get_selected_index(id) {
+            SelectedFileIndex::One(idx) => {
+                let Some(f) = browser.get(idx) else {
+                    return SelectedFile::None;
+                };
+                SelectedFile::One(f.clone())
+            }
+            SelectedFileIndex::None => SelectedFile::None,
+        }
+    }
+
+    fn get_file_from_path(&mut self, id: &Id, path: &Path) -> Option<File> {
+        match *id {
+            Id::ExplorerHostBridge => self.host_bridge.stat(path).ok(),
+            Id::ExplorerRemote => self.client.stat(path).ok(),
+            Id::ExplorerFind => {
+                let found = self.browser.found_tab().unwrap();
+                match found {
+                    FoundExplorerTab::Local => self.host_bridge.stat(path).ok(),
+                    FoundExplorerTab::Remote => self.client.stat(path).ok(),
+                }
+            }
+            _ => None,
+        }
+    }
+
+    fn browser_by_id(&self, id: &Id) -> &FileExplorer {
+        match *id {
+            Id::ExplorerHostBridge => self.host_bridge(),
+            Id::ExplorerRemote => self.remote(),
+            Id::ExplorerFind => self.found().as_ref().unwrap(),
+            _ => unreachable!(),
+        }
+    }
+
+    fn get_selected_file(&self, id: &Id) -> Option<File> {
+        let browser = self.browser_by_id(id);
+        // if no transfer queue, return selected files
+        match self.get_selected_index(id) {
+            SelectedFileIndex::One(idx) => browser.get(idx).cloned(),
+            SelectedFileIndex::None => None,
         }
     }
 }

@@ -13,6 +13,7 @@
   - [Explorateur de fichiers 📂](#explorateur-de-fichiers-)
     - [Raccourcis clavier ⌨](#raccourcis-clavier-)
     - [Travailler sur plusieurs fichiers 🥷](#travailler-sur-plusieurs-fichiers-)
+      - [Exemple](#exemple)
     - [Navigation synchronisée ⏲️](#navigation-synchronisée-️)
     - [Ouvrir et ouvrir avec 🚪](#ouvrir-et-ouvrir-avec-)
   - [Signets ⭐](#signets-)
@@ -258,17 +259,34 @@ Pour changer de panneau, vous devez taper `<LEFT>` pour déplacer le panneau de 
 | `<CTRL+C>`    | Abandonner le processus de transfert de fichiers                          |             |
 | `<CTRL+T>`    | Afficher tous les chemins synchronisés                                    | Track       |
 
-### Travailler sur plusieurs fichiers 🥷
+### Travailler sur plusieurs fichiers 🥷 
 
-Vous pouvez choisir de travailler sur plusieurs fichiers, en les sélectionnant en appuyant sur `<M>`, afin de sélectionner le fichier actuel, ou en appuyant sur `<CTRL+A>`, ce qui sélectionnera tous les fichiers dans le répertoire de travail.
-Une fois qu'un fichier est marqué pour la sélection, il sera affiché avec un `*` sur la gauche.
-Lorsque vous travaillez sur la sélection, seul le fichier sélectionné sera traité pour les actions, tandis que l'élément en surbrillance actuel sera ignoré.
-Il est également possible de travailler sur plusieurs fichiers dans le panneau des résultats de recherche.
-Toutes les actions sont disponibles lorsque vous travaillez avec plusieurs fichiers, mais sachez que certaines actions fonctionnent de manière légèrement différente. Plongeons dans:
+Vous pouvez choisir de travailler sur plusieurs fichiers avec ces simples commandes :
 
-- *Copy*: chaque fois que vous copiez un fichier, vous serez invité à insérer le nom de destination. Lorsque vous travaillez avec plusieurs fichiers, ce nom fait référence au répertoire de destination où tous ces fichiers seront copiés.
-- *Rename*: identique à la copie, mais y déplacera les fichiers.
-- *Save as*: identique à la copie, mais les y écrira.
+- `<M>` : marquer un fichier à sélectionner
+- `<CTRL+A>` : sélectionner tous les fichiers du répertoire actuel
+- `<ALT+A>` : désélectionner tous les fichiers
+
+Une fois sélectionné, un fichier sera **affiché avec un fond en surbrillance** .
+Lorsqu’on travaille avec des sélections, seules les fichiers sélectionnés seront affectés par les actions, tandis que l'élément actuellement surligné sera ignoré.
+
+Il est également possible de travailler avec plusieurs fichiers depuis le panneau des résultats de recherche.
+
+Toutes les actions sont disponibles avec des fichiers multiples, mais certaines peuvent se comporter différemment. Détails :
+
+- *Copier* : lors de la copie, il vous sera demandé un nom de destination. Avec plusieurs fichiers, cela correspond au dossier de destination.
+- *Renommer* : identique à la copie, mais déplace les fichiers.
+- *Enregistrer sous* : identique à la copie, mais enregistre les fichiers à cet emplacement.
+
+Si vous sélectionnez un fichier dans un dossier (ex. `/home`) puis changez de répertoire, il restera sélectionné et sera affiché dans la **file d’attente de transfert**  en bas.
+Lorsqu’un fichier est sélectionné, le dossier *distant* courant lui est associé ; en cas de transfert, il sera envoyé vers ce dossier.
+
+#### Exemple
+
+Si on sélectionne `/home/a.txt` localement et que le panneau distant est sur `/tmp`, puis on passe à `/var`, on sélectionne `/var/b.txt` et que le panneau distant est sur `/home`, le transfert donnera :
+
+- `/home/a.txt` transféré vers `/tmp/a.txt`
+- `/var/b.txt` transféré vers `/home/b.txt`
 
 ### Navigation synchronisée ⏲️
 

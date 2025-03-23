@@ -40,6 +40,12 @@ use crate::system::watcher::FsWatcher;
 
 // -- components
 
+#[derive(Debug, Eq, PartialEq, Clone, Copy)]
+pub enum MarkQueue {
+    Local,
+    Remote,
+}
+
 #[derive(Debug, Eq, PartialEq, Clone, Hash)]
 enum Id {
     ChmodPopup,
@@ -74,6 +80,8 @@ enum Id {
     StatusBarRemote,
     SymlinkPopup,
     SyncBrowsingMkdirPopup,
+    TransferQueueHostBridge,
+    TransferQueueRemote,
     WaitPopup,
     WatchedPathsList,
     WatcherPopup,
@@ -125,6 +133,8 @@ enum TransferMsg {
 
 #[derive(Debug, PartialEq)]
 enum UiMsg {
+    BottomPanelLeft,
+    BottomPanelRight,
     ChangeFileSorting(FileSorting),
     ChangeTransferWindow,
     CloseChmodPopup,
@@ -153,6 +163,13 @@ enum UiMsg {
     FilterFiles(String),
     FuzzySearch(String),
     LogBackTabbed,
+    /// Mark file on the list; usize is the index of the file
+    MarkFile(usize),
+    MarkRemove(MarkQueue, PathBuf),
+    /// Mark all file at tab
+    MarkAll,
+    /// Clear all marks
+    MarkClear,
     Quit,
     ReplacePopupTabbed,
     ShowChmodPopup,
@@ -165,7 +182,7 @@ enum UiMsg {
     ShowFilterPopup,
     ShowGotoPopup,
     ShowKeybindingsPopup,
-    ShowLogPanel,
+    GoToTransferQueue,
     ShowMkdirPopup,
     ShowNewFilePopup,
     ShowOpenWithPopup,
@@ -305,6 +322,45 @@ impl FileTransferActivity {
 
     fn found_mut(&mut self) -> Option<&mut FileExplorer> {
         self.browser.found_mut()
+    }
+
+    /// Enqueue a file to be transferred
+    fn enqueue_file(&mut self, index: usize) {
+        let Some(src) = self
+            .browser
+            .explorer()
+            .get(index)
+            .map(|item| item.path().to_path_buf())
+        else {
+            return;
+        };
+
+        if self.browser.explorer().enqueued().contains_key(&src) {
+            debug!("File already marked, unmarking {}", src.display());
+            self.browser.explorer_mut().dequeue(&src);
+        } else {
+            debug!("Marking file {}", src.display());
+            let dest = self.browser.other_explorer_no_found().wrkdir.clone();
+            self.browser.explorer_mut().enqueue(&src, &dest);
+        }
+        self.reload_browser_file_list();
+        self.refresh_host_bridge_transfer_queue();
+        self.refresh_remote_transfer_queue();
+    }
+
+    fn enqueue_all(&mut self) {
+        let dest = self.browser.other_explorer_no_found().wrkdir.clone();
+        self.browser.explorer_mut().enqueue_all(&dest);
+        self.reload_browser_file_list();
+        self.refresh_host_bridge_transfer_queue();
+        self.refresh_remote_transfer_queue();
+    }
+
+    fn clear_queue(&mut self) {
+        self.browser.explorer_mut().clear_queue();
+        self.reload_browser_file_list();
+        self.refresh_host_bridge_transfer_queue();
+        self.refresh_remote_transfer_queue();
     }
 
     /// Get file name for a file in cache

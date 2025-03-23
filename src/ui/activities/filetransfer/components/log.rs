@@ -167,6 +167,12 @@ impl Component<Msg, NoUserEvent> for Log {
                 Some(Msg::None)
             }
             Event::Keyboard(KeyEvent {
+                code: Key::Right, ..
+            }) => Some(Msg::Ui(UiMsg::BottomPanelRight)),
+            Event::Keyboard(KeyEvent {
+                code: Key::Left, ..
+            }) => Some(Msg::Ui(UiMsg::BottomPanelLeft)),
+            Event::Keyboard(KeyEvent {
                 code: Key::PageUp, ..
             }) => {
                 self.perform(Cmd::Scroll(Direction::Down));

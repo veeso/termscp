@@ -60,6 +60,23 @@ impl Browser {
         }
     }
 
+    pub fn other_explorer_no_found(&self) -> &FileExplorer {
+        match self.tab {
+            FileExplorerTab::HostBridge | FileExplorerTab::FindHostBridge => &self.remote,
+            FileExplorerTab::Remote | FileExplorerTab::FindRemote => &self.host_bridge,
+        }
+    }
+
+    pub fn explorer_mut(&mut self) -> &mut FileExplorer {
+        match self.tab {
+            FileExplorerTab::HostBridge => &mut self.host_bridge,
+            FileExplorerTab::Remote => &mut self.remote,
+            FileExplorerTab::FindHostBridge | FileExplorerTab::FindRemote => {
+                self.found.as_mut().map(|x| &mut x.explorer).unwrap()
+            }
+        }
+    }
+
     pub fn host_bridge(&self) -> &FileExplorer {
         &self.host_bridge
     }

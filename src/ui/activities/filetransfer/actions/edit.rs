@@ -16,7 +16,7 @@ impl FileTransferActivity {
     pub(crate) fn action_edit_local_file(&mut self) {
         let entries: Vec<File> = match self.get_local_selected_entries() {
             SelectedFile::One(entry) => vec![entry],
-            SelectedFile::Many(entries) => entries,
+            SelectedFile::Many(entries) => entries.into_iter().map(|(f, _)| f).collect(),
             SelectedFile::None => vec![],
         };
         // Edit all entries
@@ -38,12 +38,16 @@ impl FileTransferActivity {
                 }
             }
         }
+
+        // clear selection
+        self.host_bridge_mut().clear_queue();
+        self.reload_host_bridge_filelist();
     }
 
     pub(crate) fn action_edit_remote_file(&mut self) {
         let entries: Vec<File> = match self.get_remote_selected_entries() {
             SelectedFile::One(entry) => vec![entry],
-            SelectedFile::Many(entries) => entries,
+            SelectedFile::Many(entries) => entries.into_iter().map(|(f, _)| f).collect(),
             SelectedFile::None => vec![],
         };
         // Edit all entries
@@ -60,6 +64,10 @@ impl FileTransferActivity {
                 }
             }
         }
+
+        // clear selection
+        self.remote_mut().clear_queue();
+        self.reload_remote_filelist();
     }
 
     /// Edit a file on localhost
