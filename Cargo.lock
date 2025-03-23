@@ -3541,9 +3541,9 @@ dependencies = [
 
 [[package]]
 name = "remotefs-aws-s3"
-version = "0.4.1"
+version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ee93d3188584735675a3e036a9cac5b33327313c87b8ddef999a1ebc83839895"
+checksum = "8c0e94832ca2658686a1755125e04e78f5f814ce558dcb135c1034eb71d77948"
 dependencies = [
  "aws-config",
  "aws-credential-types",
