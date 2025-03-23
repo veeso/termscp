@@ -30,7 +30,7 @@ PKGS_DIR=$(pwd)/pkgs
 cd -
 mkdir -p ${PKGS_DIR}/
 # Build x86_64_deb
-cd x86_64_debian10/
+cd x86_64_debian12/
 docker build $CACHE --build-arg branch=${BRANCH} --tag "$X86_64_DEB_NAME" .
 cd -
 mkdir -p ${PKGS_DIR}/deb/
