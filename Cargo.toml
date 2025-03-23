@@ -60,6 +60,8 @@ regex = "^1"
 remotefs = "^0.3"
 remotefs-aws-s3 = "0.4"
 remotefs-kube = "0.4"
+remotefs-ftp = { version = "^0.2", features = ["vendored", "native-tls"] }
+remotefs-ssh = { version = "^0.6", features = ["ssh2-vendored"] }
 remotefs-webdav = "^0.2"
 rpassword = "^7"
 self_update = { version = "^0.42", default-features = false, features = [
@@ -83,6 +85,12 @@ version-compare = "^0.2"
 whoami = "^1.5"
 wildmatch = "^2"
 
+[target."cfg(not(target_os = \"macos\"))".dependencies]
+remotefs-smb = { version = "^0.3", optional = true }
+
+[target."cfg(target_family = \"unix\")".dependencies]
+uzers = "0.12"
+
 [dev-dependencies]
 pretty_assertions = "^1"
 serial_test = "^3"
@@ -91,27 +99,13 @@ serial_test = "^3"
 cfg_aliases = "0.2"
 vergen-git2 = { version = "1", features = ["build", "cargo", "rustc", "si"] }
 
-
 [features]
 default = ["smb", "keyring"]
 github-actions = []
 isolated-tests = []
-smb = ["dep:remotefs-smb"]
 keyring = []
-
-[target."cfg(not(target_os = \"macos\"))".dependencies]
-remotefs-smb = { version = "^0.3", optional = true }
-
-[target."cfg(target_family = \"windows\")"]
-[target."cfg(target_family = \"windows\")".dependencies]
-remotefs-ftp = { version = "^0.2", features = ["native-tls"] }
-remotefs-ssh = "^0.6"
-
-[target."cfg(target_family = \"unix\")"]
-[target."cfg(target_family = \"unix\")".dependencies]
-remotefs-ftp = { version = "^0.2", features = ["vendored", "native-tls"] }
-remotefs-ssh = { version = "^0.6", features = ["ssh2-vendored"] }
-uzers = "0.12"
+smb = ["dep:remotefs-smb"]
+smb-vendored = ["remotefs-smb/vendored"]
 
 [profile.dev]
 incremental = true

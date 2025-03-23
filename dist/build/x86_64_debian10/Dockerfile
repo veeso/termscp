@@ -9,9 +9,33 @@ RUN apt update && apt install -y \
   libdbus-1-dev \
   build-essential \
   libsmbclient-dev \
-  libsmbclient \
+  libgit2-dev \
+  build-essential \
+  pkg-config \
+  libbsd-dev \
+  libcap-dev \
+  libcups2-dev \
+  libgnutls28-dev \
+  libicu-dev \
+  libjansson-dev \
+  libkeyutils-dev \
+  libldap2-dev \
+  zlib1g-dev \
+  libpam0g-dev \
+  libacl1-dev \
+  libarchive-dev \
+  flex \
+  bison \
+  libntirpc-dev \
+  libtracker-sparql-3.0-dev \
+  libglib2.0-dev \
+  libdbus-1-dev \
+  libsasl2-dev \
+  libunistring-dev \
   bash \
-  curl
+  curl \
+  cpanminus && \
+  cpanm Parse::Yapp::Driver;
 
 # Install rust
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > /tmp/rust.sh && \
