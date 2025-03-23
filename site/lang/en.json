@@ -12,7 +12,7 @@
   "intro": {
     "caption": "A feature rich terminal UI file transfer and explorer with support for SCP/SFTP/FTP/Kube/S3/WebDAV",
     "getStarted": "Get started →",
-    "versionAlert": "termscp 0.16.1 is NOW out! Download it from",
+    "versionAlert": "termscp 0.17.0 is NOW out! Download it from",
     "here": "here",
     "features": {
       "handy": {

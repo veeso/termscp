@@ -42,7 +42,7 @@
 
 ## 0.17.0
 
-Released on ??
+Released on 24/03/2025
 
 - **Queuing transfers**:
   - the logic of selecting files has been extended!
