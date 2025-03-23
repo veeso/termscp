@@ -35,12 +35,12 @@ jobs:
         run: |
           mkdir -p .artifact
           mv target/${{ matrix.platform.target }}/release/termscp .artifact/termscp
-          tar -czf .artifact/termscp.tar.gz -C .artifact termscp
+          tar -czf .artifact/termscp-v${{ env.TERMSCP_VERSION }}-${{ matrix.platform.target }}.tar.gz -C .artifact termscp
           ls -l .artifact/
       - name: "Upload artifact"
         uses: actions/upload-artifact@v4
         with:
           if-no-files-found: error
           retention-days: 1
-          name: termscp-v${{ env.TERMSCP_VERSION }}.tar.gz
-          path: .artifact/termscp.tar.gz
+          name: termscp-${{ matrix.platform.target }}
+          path: .artifact/termscp-v${{ env.TERMSCP_VERSION }}-${{ matrix.platform.target }}.tar.gz
