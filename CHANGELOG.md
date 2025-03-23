@@ -48,7 +48,7 @@ Released on ??
   - the logic of selecting files has been extended!
   - From now on selecting file will put the files into a **transfer queue**, which is shown on the bottom panel.
   - When a file is selected the file is added to the queue with a destination path, which is the **current other explorer path at the moment of selection.**
-  - It is possible to navigate to the transfer queue by using `P` and pressing `ENTER` on a file will remove it from the transfer queue.
+  - It is possible to navigate to the transfer queue by using `P` and pressing `ENTER` or `DELETE` on a file will remove it from the transfer queue.
   - Other commands will work as well on the transfer queue, like `COPY`, `MOVE`, `DELETE`, `RENAME`.
 - [issue 308](https://github.com/veeso/termscp/issues/308): added `--wno-keyring` flag to disable keyring
 - [issue 316](https://github.com/veeso/termscp/issues/316): Local directory path is not switching to what's specified in the bookmark. Now the local directory path is correctly set following this hierarchy:

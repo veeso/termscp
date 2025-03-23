@@ -12,7 +12,8 @@
     - [Credenziali S3 🦊](#credenziali-s3-)
   - [File explorer 📂](#file-explorer-)
     - [Abbinamento tasti ⌨](#abbinamento-tasti-)
-    - [Lavora su più file 🥷](#lavora-su-più-file-)
+    - [Lavora con più file 🥷](#lavora-con-più-file-)
+      - [Esempio](#esempio)
     - [Synchronized browsing ⏲️](#synchronized-browsing-️)
     - [Apri e apri con 🚪](#apri-e-apri-con-)
   - [Segnalibri ⭐](#segnalibri-)
@@ -254,17 +255,34 @@ Per cambiare pannello ti puoi muovere con le frecce, `<LEFT>` per andare sul pan
 | `<CTRL+C>`    | Annulla trasferimento file                            |             |
 | `<CTRL+T>`    | Visualizza tutti i percorsi sincronizzati             | Track       |
 
-### Lavora su più file 🥷
+### Lavora con più file 🥷
 
-Puoi lavorare su una selezione di file, marcandoli come selezionati tramite `<M>`, per selezionare il file corrente o con `<CTRL+A` per selezionarli tutti.
-Una volta che un file è marcato, sarà visualizzato con un `*` prima del nome.
-Quando lavori con una selezioni, solo i file selezionati saranno presi in considerazione (l'eventuale file evidenziato sarà ignorato).
-È possibile operare su più file anche nel pannello di ricerca.
-Tutte le azioni sono disponibili quando si lavora sulle selezioni, ma occhio, che alcune azioni si comporteranno in maniera leggermente differente. Vediamo quali e come:
+Puoi scegliere di lavorare con più file, usando questi semplici comandi:
 
-- *Copia*: Se copi un file, ti verrà richiesto di inserire il nome delle destinazione, ma quando lavori con la selezione, il nome si riferisce alla directory di destinazione, mentre il nome del file rimarrà inviariato.
-- *Rinomina*: Come il copia, ma li sposterà.
-- *Salva con nome*: Come il copia, ma li trasferirà.
+- `<M>`: marca un file per la selezione
+- `<CTRL+A>`: seleziona tutti i file nella directory corrente
+- `<ALT+A>`: deseleziona tutti i file
+
+Una volta che un file è stato selezionato, verrà **evidenziato con uno sfondo colorato** .
+Quando lavori su una selezione, solo i file selezionati verranno processati per le azioni, mentre l'elemento attualmente evidenziato sarà ignorato.
+
+È possibile lavorare con più file anche dal pannello dei risultati di ricerca.
+
+Tutte le azioni sono disponibili anche quando si lavora con più file, ma alcune funzionano in modo leggermente diverso. Ecco i dettagli:
+
+- *Copia*: quando copi un file, ti verrà chiesto di inserire il nome di destinazione. Con più file selezionati, questo nome rappresenta la cartella di destinazione dove verranno copiati.
+- *Rinomina*: come la copia, ma i file verranno spostati lì.
+- *Salva come*: come la copia, ma i file verranno salvati lì.
+
+Se selezioni un file in una directory (es. `/home`) e poi cambi directory, il file rimarrà selezionato e sarà visibile nella **coda di trasferimento**  nel pannello inferiore.
+Quando un file viene selezionato, la directory *remota* corrente viene associata all’elemento; quindi, se il file viene trasferito, verrà trasferito nella directory associata.
+
+#### Esempio
+
+Se selezioniamo un file locale `/home/a.txt`, siamo su `/tmp` nel pannello remoto, poi ci spostiamo su `/var`, selezioniamo `/var/b.txt`, e sul pannello remoto siamo su `/home`, eseguendo il trasferimento otterremo:
+
+- `/home/a.txt` trasferito su `/tmp/a.txt`
+- `/var/b.txt` trasferito su `/home/b.txt`
 
 ### Synchronized browsing ⏲️
 

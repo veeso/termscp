@@ -15,6 +15,7 @@
   - [Dateiexplorer 📂](#dateiexplorer-)
     - [Tastenkombinationen ⌨](#tastenkombinationen-)
     - [Mit mehreren Dateien arbeiten 🥷](#mit-mehreren-dateien-arbeiten-)
+      - [Beispiel](#beispiel)
     - [Synchronisiertes Durchsuchen ⏲️](#synchronisiertes-durchsuchen-️)
     - [Öffnen und Öffnen mit 🚪](#öffnen-und-öffnen-mit-)
   - [Lesezeichen ⭐](#lesezeichen-)
@@ -297,19 +298,34 @@ Diese Panels sind im Wesentlichen 3 (ja, tatsächlich drei):
 | <CTRL+C>    | Dateiübertragungsvorgang abbrechen                                     |                                                |
 | <CTRL+T>    | Alle synchronisierten Pfade anzeigen                                   | Track                                          |
 
-### Mit mehreren Dateien arbeiten 🥷
+### Mit mehreren Dateien arbeiten 🥷 
 
-Sie können mit mehreren Dateien arbeiten, indem Sie `<M>` drücken, um die aktuelle Datei auszuwählen, oder `<CTRL+A>`, um alle Dateien im Arbeitsverzeichnis auszuwählen.
-Sobald eine Datei zur Auswahl markiert ist, wird sie mit einem `*` auf der linken Seite angezeigt.
-Bei der Arbeit mit der Auswahl werden nur die ausgewählten Dateien für Aktionen verarbeitet, während der aktuell hervorgehobene Eintrag ignoriert wird.
-Es ist auch möglich, mit mehreren Dateien im Suchergebnis-Panel zu arbeiten.
-Alle Aktionen sind verfügbar, wenn Sie mit mehreren Dateien arbeiten, aber beachten Sie, dass einige Aktionen etwas anders funktionieren. Schauen wir uns das genauer an:
+Du kannst mit mehreren Dateien gleichzeitig arbeiten, mit diesen einfachen Tastenkombinationen:
 
-- _Kopieren_: Wann immer Sie eine Datei kopieren, werden Sie aufgefordert, den Zielnamen einzugeben. Bei der Arbeit mit mehreren Dateien bezieht sich dieser Name auf das Zielverzeichnis, in dem alle diese Dateien kopiert werden.
+- `<M>`: Datei zur Auswahl markieren
+- `<CTRL+A>`: alle Dateien im aktuellen Verzeichnis auswählenas
+- `<ALT+A>`: Auswahl aller Dateien aufheben
 
-- _Umbenennen_: Dasselbe wie Kopieren, aber die Dateien werden dorthin verschoben.
+Markierte Dateien werden **mit hervorgehobenem Hintergrund**  angezeigt.
+Bei Auswahlaktionen werden nur die markierten Dateien verarbeitet, das aktuell hervorgehobene Element wird ignoriert.
 
-- _Speichern unter_: Dasselbe wie Kopieren, aber die Dateien werden dorthin geschrieben.
+Auch im Suchergebnis-Panel ist die Mehrfachauswahl möglich.
+
+Alle Aktionen sind bei mehreren Dateien verfügbar, einige funktionieren jedoch leicht anders:
+
+- *Kopieren*: du wirst nach einem Zielnamen gefragt. Bei mehreren Dateien ist das das Zielverzeichnis.
+- *Umbenennen*: wie Kopieren, aber verschiebt die Dateien.
+- *Speichern unter*: wie Kopieren, aber schreibt die Dateien dorthin.
+
+Wenn du eine Datei in einem Verzeichnis (z. B. `/home`) auswählst und dann das Verzeichnis wechselst, bleibt sie ausgewählt und erscheint in der **Transfer-Warteschlange**  im unteren Panel.
+Beim Markieren einer Datei wird das aktuelle *Remote*-Verzeichnis gespeichert; bei einem Transfer wird sie in dieses Verzeichnis übertragen.
+
+#### Beispiel
+
+Wenn wir `/home/a.txt` lokal auswählen und im Remote-Panel in `/tmp` sind, dann zu `/var` wechseln, `/var/b.txt` auswählen und im Remote-Panel in `/home` sind, ergibt der Transfer:
+
+- `/home/a.txt` → `/tmp/a.txt`
+- `/var/b.txt` → `/home/b.txt`
 
 ### Synchronisiertes Durchsuchen ⏲️
 

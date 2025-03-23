@@ -16,6 +16,7 @@
   - [File explorer 📂](#file-explorer-)
     - [Keybindings ⌨](#keybindings-)
     - [Work on multiple files 🥷](#work-on-multiple-files-)
+      - [Example](#example)
     - [Synchronized browsing ⏲️](#synchronized-browsing-️)
     - [Open and Open With 🚪](#open-and-open-with-)
   - [Bookmarks ⭐](#bookmarks-)
@@ -274,15 +275,33 @@ In order to change panel you need to type `<LEFT>` to move the remote explorer p
 
 ### Work on multiple files 🥷
 
-You can opt to work on multiple files, selecting them pressing `<M>`, in order to select the current file, or pressing `<CTRL+A>`, which will select all the files in the working directory.
-Once a file is marked for selection, it will be displayed with a `*` on the left.
+You can opt to work on multiple files, with these simple controls:
+
+- `<M>`: mark a file for selection
+- `<CTRL+A>`: select all files in the current directory
+- `<ALT+A>`: deselect all files
+
+Once a file is marked for selection, it will be **displayed with an highlighted background**.
+
 When working on selection, only selected file will be processed for actions, while the current highlighted item will be ignored.
 It is possible to work on multiple files also when in the find result panel.
+
 All the actions are available when working with multiple files, but be aware that some actions work in a slightly different way. Let's dive in:
 
 - *Copy*: whenever you copy a file, you'll be prompted to insert the destination name. When working with multiple file, this name refers to the destination directory where all these files will be copied.
 - *Rename*: same as copy, but will move files there.
 - *Save as*: same as copy, but will write them there.
+
+If you select a file in a directory (e.g. `/home`) and then you change directory the file will be kept selected and it will be displayed in the **transfer queue** in the bottom panel.
+
+When a file gets selected the current *remote* directory is associated to its entry; so in case the file gets transferred it will be transferred to the directory associated to the file.
+
+#### Example
+
+If we select a file on local `/home/a.txt` and we're currently at `/tmp` on remote and then we move to `/var` and we select `/var/b.txt` and on the remote panel we're at `/home` and we perform a transfer the result will be:
+
+- `/home/a.txt` transferred to `/tmp/a.txt`
+- `/var/b.txt` transferred to `/home/b.txt`
 
 ### Synchronized browsing ⏲️
 

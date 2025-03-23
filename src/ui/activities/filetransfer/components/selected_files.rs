@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use tui_realm_stdlib::List;
 use tuirealm::command::{Cmd, Direction, Position};
@@ -31,41 +31,33 @@ impl SelectedFilesList {
             queue,
             paths: enqueued_paths,
             component: List::default()
-                .borders(
-                    Borders::default()
-                        .color(color)
-                        .modifiers(BorderType::Rounded),
-                )
+                .borders(Borders::default().color(color).modifiers(BorderType::Plain))
                 .rewind(true)
                 .scroll(true)
                 .step(4)
                 .highlighted_color(color)
                 .highlighted_str("➤ ")
-                .title(title, Alignment::Center)
+                .title(title, Alignment::Left)
                 .rows(
                     paths
                         .iter()
                         .map(|(src, dest)| {
-                            let name = src
-                                .file_name()
-                                .unwrap_or_default()
-                                .to_string_lossy()
-                                .to_string();
-                            let dest = dest
-                                .file_name()
-                                .unwrap_or_default()
-                                .to_string_lossy()
-                                .to_string();
-
                             vec![
-                                TextSpan::from(name),
+                                TextSpan::from(Self::filename(&src)),
                                 TextSpan::from(" -> "),
-                                TextSpan::from(dest),
+                                TextSpan::from(Self::filename(&dest)),
                             ]
                         })
                         .collect(),
                 ),
         }
+    }
+
+    fn filename(p: &Path) -> String {
+        p.file_name()
+            .unwrap_or_default()
+            .to_string_lossy()
+            .to_string()
     }
 }
 
@@ -116,7 +108,8 @@ impl Component<Msg, NoUserEvent> for SelectedFilesList {
                 ..
             }) => Some(Msg::Ui(UiMsg::LogBackTabbed)),
             Event::Keyboard(KeyEvent {
-                code: Key::Enter, ..
+                code: Key::Enter | Key::Delete,
+                ..
             }) => {
                 // unmark the selected file
                 let State::One(StateValue::Usize(idx)) = self.state() else {
