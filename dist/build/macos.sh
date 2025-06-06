@@ -81,7 +81,7 @@ fi
 # Build release (x86_64)
 X86_TARGET=""
 X86_TARGET_DIR=""
-if [ "$ARCH" = "aarch64" ]; then
+if [ "$ARCH" = "amd64" ]; then
     X86_TARGET="--target x86_64-apple-darwin"
     X86_TARGET_DIR="target/x86_64-apple-darwin/release/"
 fi
