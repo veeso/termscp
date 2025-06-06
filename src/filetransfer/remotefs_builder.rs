@@ -233,8 +233,12 @@ impl RemoteFsBuilder {
             debug!("no username was provided, using current username");
             opts = opts.username(whoami::username());
         }
+        // For SSH protocols, only set password if explicitly provided and non-empty.
+        // This allows the SSH library to prioritize key-based and agent authentication.
         if let Some(password) = params.password {
-            opts = opts.password(password);
+            if !password.is_empty() {
+                opts = opts.password(password);
+            }
         }
         if let Some(config_path) = config_client.get_ssh_config() {
             opts = opts.config_file(
