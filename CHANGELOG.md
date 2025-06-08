@@ -46,6 +46,7 @@
 Released on 31/07/2025
 
 - **Updated dependencies** and updated the Rust edition to `2024`
+- [Issue 345](https://github.com/veeso/termscp/issues/345): Default keys are used from `~/.ssh` directory if no keys are resolved for the host.
 
 ## 0.17.0
 

@@ -50,6 +50,23 @@ impl SshKeyStorage {
                 .and_then(|x| x.first().cloned())
         })
     }
+
+    /// Get default SSH identity files that SSH would normally try
+    /// This mirrors the behavior of OpenSSH client
+    fn get_default_identity_files(&self) -> Vec<PathBuf> {
+        let Some(home_dir) = dirs::home_dir() else {
+            return Vec::new();
+        };
+
+        let ssh_dir = home_dir.join(".ssh");
+
+        // Standard SSH identity files in order of preference (matches OpenSSH)
+        ["id_ed25519", "id_ecdsa", "id_rsa", "id_dsa"]
+            .iter()
+            .map(|key_name| ssh_dir.join(key_name))
+            .filter(|key_path| key_path.exists())
+            .collect()
+    }
 }
 
 impl SshKeyStorageTrait for SshKeyStorage {
@@ -63,9 +80,13 @@ impl SshKeyStorageTrait for SshKeyStorage {
             username, host
         );
         // otherwise search in configuration
-        let key = self.resolve_host_in_ssh2_configuration(host)?;
-        debug!("Found key in SSH config for {host}: {}", key.display());
-        Some(key)
+        if let Some(key) = self.resolve_host_in_ssh2_configuration(host) {
+            debug!("Found key in SSH config for {host}: {}", key.display());
+            return Some(key);
+        }
+
+        // As a final fallback, try default SSH identity files (like regular ssh does)
+        self.get_default_identity_files().into_iter().next()
     }
 }
 
@@ -134,8 +155,14 @@ mod tests {
             *storage.resolve("192.168.1.31", "pi").unwrap(),
             exp_key_path
         );
-        // Verify unexisting key
-        assert!(storage.resolve("deskichup", "veeso").is_none());
+        // Verify key is a default key or none
+        let default_keys: Vec<PathBuf> = storage.get_default_identity_files().into_iter().collect();
+
+        if let Some(key) = storage.resolve("deskichup", "veeso") {
+            assert!(default_keys.contains(&key));
+        } else {
+            assert!(default_keys.is_empty());
+        }
     }
 
     #[test]
