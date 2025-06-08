@@ -36,9 +36,9 @@ impl RemoteProtocolRadio {
                         .modifiers(BorderType::Rounded),
                 )
                 .choices(if cfg!(smb) {
-                    &["SFTP", "SCP", "FTP", "FTPS", "S3", "Kube", "WebDAV", "SMB"]
+                    vec!["SFTP", "SCP", "FTP", "FTPS", "S3", "Kube", "WebDAV", "SMB"].into_iter()
                 } else {
-                    &["SFTP", "SCP", "FTP", "FTPS", "S3", "Kube", "WebDAV"]
+                    vec!["SFTP", "SCP", "FTP", "FTPS", "S3", "Kube", "WebDAV"].into_iter()
                 })
                 .foreground(color)
                 .rewind(true)
@@ -126,7 +126,7 @@ impl HostBridgeProtocolRadio {
                         .modifiers(BorderType::Rounded),
                 )
                 .choices(if cfg!(smb) {
-                    &[
+                    vec![
                         "Localhost",
                         "SFTP",
                         "SCP",
@@ -137,8 +137,9 @@ impl HostBridgeProtocolRadio {
                         "WebDAV",
                         "SMB",
                     ]
+                    .into_iter()
                 } else {
-                    &[
+                    vec![
                         "Localhost",
                         "SFTP",
                         "SCP",
@@ -148,6 +149,7 @@ impl HostBridgeProtocolRadio {
                         "Kube",
                         "WebDAV",
                     ]
+                    .into_iter()
                 })
                 .foreground(color)
                 .rewind(true)
@@ -649,7 +651,7 @@ impl RadioS3NewPathStyle {
                         .color(color)
                         .modifiers(BorderType::Rounded),
                 )
-                .choices(&["Yes", "No"])
+                .choices(["Yes", "No"])
                 .foreground(color)
                 .rewind(true)
                 .title("New path style", Alignment::Left)

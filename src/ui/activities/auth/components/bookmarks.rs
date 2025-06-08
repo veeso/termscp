@@ -197,7 +197,7 @@ impl DeleteBookmarkPopup {
                         .color(color)
                         .modifiers(BorderType::Rounded),
                 )
-                .choices(&["Yes", "No"])
+                .choices(["Yes", "No"])
                 .value(1)
                 .rewind(true)
                 .foreground(color)
@@ -265,7 +265,7 @@ impl DeleteRecentPopup {
                         .color(color)
                         .modifiers(BorderType::Rounded),
                 )
-                .choices(&["Yes", "No"])
+                .choices(["Yes", "No"])
                 .value(1)
                 .rewind(true)
                 .foreground(color)
@@ -337,7 +337,7 @@ impl BookmarkSavePassword {
                         .sides(BorderSides::BOTTOM | BorderSides::LEFT | BorderSides::RIGHT)
                         .modifiers(BorderType::Rounded),
                 )
-                .choices(&["Yes", "No"])
+                .choices(["Yes", "No"])
                 .value(0)
                 .rewind(true)
                 .foreground(color)

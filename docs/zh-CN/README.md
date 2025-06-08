@@ -71,7 +71,7 @@
 </p>
 
 <p align="center">由 <a href="https://veeso.me/" target="_blank">@veeso</a> 开发</p>
-<p align="center">当前版本： 0.17.0 24/03/2025</p>
+<p align="center">当前版本： 0.18.0 24/03/2025</p>
 
 <p align="center">
   <a href="https://opensource.org/licenses/MIT"

@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 env:
-  TERMSCP_VERSION: "0.17.0"
+  TERMSCP_VERSION: "0.18.0"
 
 jobs:
   build-binaries:

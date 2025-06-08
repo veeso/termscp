@@ -59,21 +59,21 @@ impl ChmodPopup {
             },
             user: Checkbox::default()
                 .foreground(color)
-                .choices(&["Read", "Write", "Execute"])
+                .choices(["Read", "Write", "Execute"])
                 .title("User", Alignment::Left)
                 .borders(Borders::default().sides(BorderSides::NONE))
                 .values(&make_pex_values(pex.user()))
                 .rewind(true),
             group: Checkbox::default()
                 .foreground(color)
-                .choices(&["Read", "Write", "Execute"])
+                .choices(["Read", "Write", "Execute"])
                 .title("Group", Alignment::Left)
                 .borders(Borders::default().sides(BorderSides::NONE))
                 .values(&make_pex_values(pex.group()))
                 .rewind(true),
             others: Checkbox::default()
                 .foreground(color)
-                .choices(&["Read", "Write", "Execute"])
+                .choices(["Read", "Write", "Execute"])
                 .title("Others", Alignment::Left)
                 .borders(Borders::default().sides(BorderSides::NONE))
                 .values(&make_pex_values(pex.others()))
@@ -208,9 +208,11 @@ impl MockComponent for ChmodPopup {
             .get_or(Attribute::Focus, AttrValue::Flag(false))
             .unwrap_flag();
 
+        let div_title = (self.title.clone(), Alignment::Center);
+
         let div = tui_realm_stdlib::utils::get_block(
             Borders::default().color(self.color),
-            Some((self.title.clone(), Alignment::Center)),
+            Some(&div_title),
             focus,
             None,
         );

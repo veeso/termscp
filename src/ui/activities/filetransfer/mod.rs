@@ -286,10 +286,7 @@ impl FileTransferActivity {
             log_records: VecDeque::with_capacity(256), // 256 events is enough I guess
             walkdir: WalkdirStates::default(),
             transfer: TransferStates::default(),
-            cache: match TempDir::new() {
-                Ok(d) => Some(d),
-                Err(_) => None,
-            },
+            cache: TempDir::new().ok(),
             fswatcher: if enable_fs_watcher {
                 FsWatcher::init(Duration::from_secs(5)).ok()
             } else {

@@ -158,7 +158,7 @@ impl MockComponent for FileList {
             .props
             .get_or(Attribute::Focus, AttrValue::Flag(false))
             .unwrap_flag();
-        let div = tui_realm_stdlib::utils::get_block(borders, Some(title), focus, None);
+        let div = tui_realm_stdlib::utils::get_block(borders, Some(&title), focus, None);
         // Make list entries
         let init_table_iter = if self.has_dot_dot() {
             vec![vec![TextSpan::from("..")]]

@@ -28,7 +28,7 @@ impl ErrorPopup {
                         .modifiers(BorderType::Rounded),
                 )
                 .foreground(color)
-                .text(&[TextSpan::from(text.as_ref())])
+                .text([TextSpan::from(text.as_ref())])
                 .wrap(true),
         }
     }
@@ -64,7 +64,7 @@ impl InfoPopup {
                         .modifiers(BorderType::Rounded),
                 )
                 .foreground(color)
-                .text(&[TextSpan::from(text.as_ref())])
+                .text([TextSpan::from(text.as_ref())])
                 .wrap(true),
         }
     }
@@ -100,7 +100,7 @@ impl WaitPopup {
                         .modifiers(BorderType::Rounded),
                 )
                 .foreground(color)
-                .text(&[TextSpan::from(text.as_ref())])
+                .text([TextSpan::from(text.as_ref())])
                 .wrap(true),
         }
     }
@@ -130,7 +130,7 @@ impl WindowSizeError {
                         .modifiers(BorderType::Rounded),
                 )
                 .foreground(color)
-                .text(&[TextSpan::from(
+                .text([TextSpan::from(
                     "termscp requires at least 24 lines of height to run",
                 )])
                 .wrap(true),
@@ -163,7 +163,7 @@ impl QuitPopup {
                 .foreground(color)
                 .title("Quit termscp?", Alignment::Center)
                 .rewind(true)
-                .choices(&["Yes", "No"]),
+                .choices(["Yes", "No"]),
         }
     }
 }
@@ -230,7 +230,7 @@ impl InstallUpdatePopup {
                 .foreground(color)
                 .title("Install update?", Alignment::Center)
                 .rewind(true)
-                .choices(&["Yes", "No"]),
+                .choices(["Yes", "No"]),
         }
     }
 }
@@ -296,13 +296,7 @@ impl ReleaseNotes {
                 )
                 .foreground(color)
                 .title("Release notes", Alignment::Center)
-                .text_rows(
-                    notes
-                        .lines()
-                        .map(TextSpan::from)
-                        .collect::<Vec<TextSpan>>()
-                        .as_slice(),
-                ),
+                .text_rows(notes.lines().map(TextSpan::from)),
         }
     }
 }

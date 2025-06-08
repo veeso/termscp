@@ -71,7 +71,7 @@
 </p>
 
 <p align="center">Entwickelt von <a href="https://veeso.me/" target="_blank">@veeso</a></p>
-<p align="center">Aktuelle Version: 0.17.0 24/03/2025</p>
+<p align="center">Aktuelle Version: 0.18.0 24/03/2025</p>
 
 <p align="center">
   <a href="https://opensource.org/licenses/MIT"

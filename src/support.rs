@@ -79,10 +79,7 @@ fn get_config_client() -> Option<ConfigClient> {
         Err(_) => None,
         Ok(dir) => {
             let (cfg_path, ssh_key_dir) = environment::get_config_paths(dir.as_path());
-            match ConfigClient::new(cfg_path.as_path(), ssh_key_dir.as_path()) {
-                Err(_) => None,
-                Ok(c) => Some(c),
-            }
+            ConfigClient::new(cfg_path.as_path(), ssh_key_dir.as_path()).ok()
         }
     }
 }

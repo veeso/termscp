@@ -100,7 +100,7 @@ static REMOTE_SMB_OPT_REGEX: Lazy<Regex> =
 /**
  * Regex matches:
  * - group 1: Version
- *      E.g. termscp-0.3.2 => 0.3.2; v0.4.0 => 0.4.0
+ *   E.g. termscp-0.3.2 => 0.3.2; v0.4.0 => 0.4.0
  */
 static SEMVER_REGEX: Lazy<Regex> = lazy_regex!(r"v?((0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*))");
 
