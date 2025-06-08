@@ -31,7 +31,7 @@ impl Default for DelSshKeyPopup {
                         .color(Color::Red)
                         .modifiers(BorderType::Rounded),
                 )
-                .choices(&["Yes", "No"])
+                .choices(["Yes", "No"])
                 .foreground(Color::Red)
                 .rewind(true)
                 .title("Delete key?", Alignment::Center)

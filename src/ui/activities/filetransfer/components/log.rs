@@ -53,12 +53,20 @@ impl MockComponent for Log {
             .unwrap()
             .unwrap_table()
             .iter()
-            .map(|row| ListItem::new(tui_realm_stdlib::utils::wrap_spans(row, width, &self.props)))
+            .map(|row| {
+                let row_refs = row.iter().collect::<Vec<_>>();
+                ListItem::new(tui_realm_stdlib::utils::wrap_spans(
+                    row_refs.as_slice(),
+                    width,
+                    &self.props,
+                ))
+            })
             .collect();
+        let title = ("Log".to_string(), Alignment::Left);
         let w = TuiList::new(list_items)
             .block(tui_realm_stdlib::utils::get_block(
                 borders,
-                Some(("Log".to_string(), Alignment::Left)),
+                Some(&title),
                 focus,
                 None,
             ))

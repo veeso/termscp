@@ -16,7 +16,7 @@ pub struct FooterBar {
 impl FooterBar {
     pub fn new(key_color: Color) -> Self {
         Self {
-            component: Span::default().spans(&[
+            component: Span::default().spans([
                 TextSpan::from("<F1|H>").bold().fg(key_color),
                 TextSpan::from(" Help "),
                 TextSpan::from("<TAB>").bold().fg(key_color),

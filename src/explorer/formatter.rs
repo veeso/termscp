@@ -504,10 +504,7 @@ impl Formatter {
                     };
                     // Match format length: group 3
                     let fmt_len: Option<usize> = match &regex_match.get(3) {
-                        Some(len) => match len.as_str().parse::<usize>() {
-                            Ok(len) => Some(len),
-                            Err(_) => None,
-                        },
+                        Some(len) => len.as_str().parse::<usize>().ok(),
                         None => None,
                     };
                     // Match format extra: group 2 + 1

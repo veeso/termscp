@@ -64,7 +64,7 @@ pub struct NewVersionDisclaimer {
 impl NewVersionDisclaimer {
     pub fn new(new_version: &str, color: Color) -> Self {
         Self {
-            component: Span::default().foreground(color).spans(&[
+            component: Span::default().foreground(color).spans([
                 TextSpan::from("termscp "),
                 TextSpan::new(new_version).underlined().bold(),
                 TextSpan::from(
@@ -91,7 +91,7 @@ pub struct HelpFooter {
 impl HelpFooter {
     pub fn new(key_color: Color) -> Self {
         Self {
-            component: Span::default().spans(&[
+            component: Span::default().spans([
                 TextSpan::from("<F1|CTRL+H>").bold().fg(key_color),
                 TextSpan::from(" Help "),
                 TextSpan::from("<CTRL+C>").bold().fg(key_color),

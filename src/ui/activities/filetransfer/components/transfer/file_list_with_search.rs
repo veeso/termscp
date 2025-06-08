@@ -57,7 +57,7 @@ impl FileListWithSearch {
 
     pub fn borders(mut self, b: Borders) -> Self {
         self.file_list
-            .attr(Attribute::Borders, AttrValue::Borders(b.clone()));
+            .attr(Attribute::Borders, AttrValue::Borders(b));
         self.search.attr(Attribute::Borders, AttrValue::Borders(b));
         self
     }

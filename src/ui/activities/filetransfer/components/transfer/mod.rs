@@ -28,7 +28,7 @@ impl ExplorerFuzzy {
                 .foreground(fg)
                 .highlighted_color(hg)
                 .title(title, Alignment::Left)
-                .rows(files.iter().map(|x| vec![TextSpan::from(x)]).collect()),
+                .rows(files.iter().map(|x| vec![TextSpan::from(*x)]).collect()),
         }
     }
 
@@ -236,7 +236,7 @@ impl ExplorerFind {
                 .foreground(fg)
                 .highlighted_color(hg)
                 .title(title, Alignment::Left)
-                .rows(files.iter().map(|x| vec![TextSpan::from(x)]).collect()),
+                .rows(files.iter().map(|x| vec![TextSpan::from(*x)]).collect()),
         }
     }
 }
@@ -373,7 +373,7 @@ impl ExplorerLocal {
                 .foreground(fg)
                 .highlighted_color(hg)
                 .title(title, Alignment::Left)
-                .rows(files.iter().map(|x| vec![TextSpan::from(x)]).collect())
+                .rows(files.iter().map(|x| vec![TextSpan::from(*x)]).collect())
                 .dot_dot(true),
         }
     }
@@ -587,7 +587,7 @@ impl ExplorerRemote {
                 .foreground(fg)
                 .highlighted_color(hg)
                 .title(title, Alignment::Left)
-                .rows(files.iter().map(|x| vec![TextSpan::from(x)]).collect())
+                .rows(files.iter().map(|x| vec![TextSpan::from(*x)]).collect())
                 .dot_dot(true),
         }
     }

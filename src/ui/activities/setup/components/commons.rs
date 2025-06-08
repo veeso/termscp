@@ -26,7 +26,7 @@ impl ErrorPopup {
                         .modifiers(BorderType::Rounded),
                 )
                 .foreground(Color::Red)
-                .text(&[TextSpan::from(text.as_ref())])
+                .text([TextSpan::from(text.as_ref())])
                 .wrap(true),
         }
     }
@@ -52,7 +52,7 @@ pub struct Footer {
 impl Default for Footer {
     fn default() -> Self {
         Self {
-            component: Span::default().spans(&[
+            component: Span::default().spans([
                 TextSpan::new("<F1|CTRL+H>").bold().fg(Color::Cyan),
                 TextSpan::new(" Help "),
                 TextSpan::new("<F4|CTRL+S>").bold().fg(Color::Cyan),
@@ -88,7 +88,7 @@ impl Header {
                         .color(Color::Yellow)
                         .sides(BorderSides::BOTTOM),
                 )
-                .choices(&["Configuration parameters", "SSH Keys", "Theme"])
+                .choices(["Configuration parameters", "SSH Keys", "Theme"])
                 .foreground(Color::Yellow)
                 .value(match layout {
                     ViewLayout::SetupForm => 0,
@@ -217,7 +217,7 @@ impl Default for QuitPopup {
                     Alignment::Center,
                 )
                 .rewind(true)
-                .choices(&["Save", "Don't save", "Cancel"]),
+                .choices(["Save", "Don't save", "Cancel"]),
         }
     }
 }
@@ -273,7 +273,7 @@ impl Default for SavePopup {
                 .foreground(Color::Yellow)
                 .title("Save changes?", Alignment::Center)
                 .rewind(true)
-                .choices(&["Yes", "No"]),
+                .choices(["Yes", "No"]),
         }
     }
 }

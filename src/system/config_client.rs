@@ -153,10 +153,7 @@ impl ConfigClient {
         // Convert string to `GroupDirs`
         match &self.config.user_interface.group_dirs {
             None => None,
-            Some(val) => match GroupDirs::from_str(val.as_str()) {
-                Ok(val) => Some(val),
-                Err(_) => None,
-            },
+            Some(val) => GroupDirs::from_str(val.as_str()).ok(),
         }
     }
 

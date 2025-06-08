@@ -214,7 +214,7 @@ impl DeletePopup {
                         .modifiers(BorderType::Rounded),
                 )
                 .foreground(color)
-                .choices(&["Yes", "No"])
+                .choices(["Yes", "No"])
                 .value(1)
                 .title("Delete file(s)?", Alignment::Center),
         }
@@ -279,7 +279,7 @@ impl DisconnectPopup {
                         .modifiers(BorderType::Rounded),
                 )
                 .foreground(color)
-                .choices(&["Yes", "No"])
+                .choices(["Yes", "No"])
                 .title("Are you sure you want to disconnect?", Alignment::Center),
         }
     }
@@ -344,7 +344,7 @@ impl ErrorPopup {
                         .modifiers(BorderType::Rounded),
                 )
                 .foreground(color)
-                .text(&[TextSpan::from(text.as_ref())])
+                .text([TextSpan::from(text.as_ref())])
                 .wrap(true),
         }
     }
@@ -461,7 +461,7 @@ impl FatalPopup {
                         .modifiers(BorderType::Rounded),
                 )
                 .foreground(color)
-                .text(&[TextSpan::from(text.as_ref())])
+                .text([TextSpan::from(text.as_ref())])
                 .wrap(true),
         }
     }
@@ -1121,7 +1121,7 @@ impl QuitPopup {
                         .modifiers(BorderType::Rounded),
                 )
                 .foreground(color)
-                .choices(&["Yes", "No"])
+                .choices(["Yes", "No"])
                 .title("Are you sure you want to quit termscp?", Alignment::Center),
         }
     }
@@ -1275,7 +1275,7 @@ impl ReplacePopup {
                         .modifiers(BorderType::Rounded),
                 )
                 .foreground(color)
-                .choices(&["Yes", "No"])
+                .choices(["Yes", "No"])
                 .title(text, Alignment::Center),
         }
     }
@@ -1502,7 +1502,7 @@ impl SortingPopup {
                         .modifiers(BorderType::Rounded),
                 )
                 .foreground(color)
-                .choices(&["Name", "Modify time", "Creation time", "Size"])
+                .choices(["Name", "Modify time", "Creation time", "Size"])
                 .title("Sort files by…", Alignment::Center)
                 .value(match value {
                     FileSorting::CreationTime => 2,
@@ -1554,7 +1554,7 @@ impl StatusBarLocal {
         let file_sorting = file_sorting_label(browser.host_bridge().file_sorting);
         let hidden_files = hidden_files_label(browser.host_bridge().hidden_files_visible());
         Self {
-            component: Span::default().spans(&[
+            component: Span::default().spans([
                 TextSpan::new("File sorting: ").fg(sorting_color),
                 TextSpan::new(file_sorting).fg(sorting_color).reversed(),
                 TextSpan::new(" Hidden files: ").fg(hidden_color),
@@ -1589,7 +1589,7 @@ impl StatusBarRemote {
             false => "OFF",
         };
         Self {
-            component: Span::default().spans(&[
+            component: Span::default().spans([
                 TextSpan::new("File sorting: ").fg(sorting_color),
                 TextSpan::new(file_sorting).fg(sorting_color).reversed(),
                 TextSpan::new(" Hidden files: ").fg(hidden_color),
@@ -1728,7 +1728,7 @@ impl SyncBrowsingMkdirPopup {
                         .modifiers(BorderType::Rounded),
                 )
                 .foreground(color)
-                .choices(&["Yes", "No"])
+                .choices(["Yes", "No"])
                 .title(
                     format!(
                         r#"Sync browsing: directory "{dir_name}" doesn't exist. Do you want to create it?"#
@@ -1802,7 +1802,7 @@ impl WaitPopup {
                         .modifiers(BorderType::Rounded),
                 )
                 .foreground(color)
-                .text(&[TextSpan::from(text.as_ref())])
+                .text([TextSpan::from(text.as_ref())])
                 .wrap(true),
         }
     }
@@ -1830,7 +1830,7 @@ impl WalkdirWaitPopup {
                         .modifiers(BorderType::Rounded),
                 )
                 .foreground(color)
-                .text(&[
+                .text([
                     TextSpan::from(text.as_ref()),
                     TextSpan::from("Press 'CTRL+C' to abort"),
                 ])
@@ -1961,7 +1961,7 @@ impl WatcherPopup {
                         .modifiers(BorderType::Rounded),
                 )
                 .foreground(color)
-                .choices(&["Yes", "No"])
+                .choices(["Yes", "No"])
                 .title(text, Alignment::Center),
         }
     }

@@ -33,7 +33,7 @@ impl CheckUpdates {
                         .color(Color::LightYellow)
                         .modifiers(BorderType::Rounded),
                 )
-                .choices(&["Yes", "No"])
+                .choices(["Yes", "No"])
                 .foreground(Color::LightYellow)
                 .rewind(true)
                 .title("Check for updates?", Alignment::Left)
@@ -67,7 +67,7 @@ impl DefaultProtocol {
                         .color(Color::Cyan)
                         .modifiers(BorderType::Rounded),
                 )
-                .choices(&["SFTP", "SCP", "FTP", "FTPS", "Kube", "S3", "SMB", "WebDAV"])
+                .choices(["SFTP", "SCP", "FTP", "FTPS", "Kube", "S3", "SMB", "WebDAV"])
                 .foreground(Color::Cyan)
                 .rewind(true)
                 .title("Default protocol", Alignment::Left)
@@ -110,7 +110,7 @@ impl GroupDirs {
                         .color(Color::LightMagenta)
                         .modifiers(BorderType::Rounded),
                 )
-                .choices(&["Display first", "Display last", "No"])
+                .choices(["Display first", "Display last", "No"])
                 .foreground(Color::LightMagenta)
                 .rewind(true)
                 .title("Group directories", Alignment::Left)
@@ -148,7 +148,7 @@ impl HiddenFiles {
                         .color(Color::LightRed)
                         .modifiers(BorderType::Rounded),
                 )
-                .choices(&["Yes", "No"])
+                .choices(["Yes", "No"])
                 .foreground(Color::LightRed)
                 .rewind(true)
                 .title("Show hidden files? (by default)", Alignment::Left)
@@ -182,7 +182,7 @@ impl NotificationsEnabled {
                         .color(Color::LightRed)
                         .modifiers(BorderType::Rounded),
                 )
-                .choices(&["Yes", "No"])
+                .choices(["Yes", "No"])
                 .foreground(Color::LightRed)
                 .rewind(true)
                 .title("Enable notifications?", Alignment::Left)
@@ -216,7 +216,7 @@ impl PromptOnFileReplace {
                         .color(Color::LightBlue)
                         .modifiers(BorderType::Rounded),
                 )
-                .choices(&["Yes", "No"])
+                .choices(["Yes", "No"])
                 .foreground(Color::LightBlue)
                 .rewind(true)
                 .title("Prompt when replacing existing files?", Alignment::Left)
