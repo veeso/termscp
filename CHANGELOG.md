@@ -1,6 +1,7 @@
 # Changelog
 
 - [Changelog](#changelog)
+  - [0.18.0](#0180)
   - [0.17.0](#0170)
   - [0.16.1](#0161)
   - [0.16.0](#0160)
@@ -39,6 +40,13 @@
   - [0.1.0](#010)
 
 ---
+
+## 0.18.0
+
+Released on 31/07/2025
+
+- **Updated dependencies** and updated the Rust edition to `2024`
+- [Issue 345](https://github.com/veeso/termscp/issues/345): Default keys are used from `~/.ssh` directory if no keys are resolved for the host.
 
 ## 0.17.0
 
