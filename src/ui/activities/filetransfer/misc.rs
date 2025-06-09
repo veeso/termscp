@@ -304,6 +304,53 @@ impl FileTransferActivity {
         self.reload_remote_filelist();
     }
 
+    pub(super) fn get_tab_hostname(&self) -> String {
+        match self.browser.tab() {
+            FileExplorerTab::HostBridge | FileExplorerTab::FindHostBridge => {
+                self.get_hostbridge_hostname()
+            }
+            FileExplorerTab::Remote | FileExplorerTab::FindRemote => self.get_remote_hostname(),
+        }
+    }
+
+    pub(super) fn terminal_prompt(&self) -> String {
+        let panel = self.browser.tab();
+        match panel {
+            FileExplorerTab::HostBridge | FileExplorerTab::FindHostBridge => {
+                let username = self
+                    .context()
+                    .host_bridge_params()
+                    .and_then(|params| params.username().map(|u| format!("{u}@")))
+                    .unwrap_or("".to_string());
+                let hostname = self.get_hostbridge_hostname();
+                format!(
+                    "{username}{hostname}:{} ",
+                    fmt_path_elide_ex(
+                        self.host_bridge().wrkdir.as_path(),
+                        0,
+                        hostname.len() + 3 // 3 because of '/…/'
+                    )
+                )
+            }
+            FileExplorerTab::Remote | FileExplorerTab::FindRemote => {
+                let username = self
+                    .context()
+                    .remote_params()
+                    .and_then(|params| params.username().map(|u| format!("{u}@")))
+                    .unwrap_or("".to_string());
+                let hostname = self.get_remote_hostname();
+                format!(
+                    "{username}{hostname}:/{} ",
+                    fmt_path_elide_ex(
+                        self.remote().wrkdir.as_path(),
+                        0,
+                        hostname.len() + 3 // 3 because of '/…/'
+                    )
+                )
+            }
+        }
+    }
+
     pub(super) fn reload_remote_filelist(&mut self) {
         let width = self
             .context_mut()

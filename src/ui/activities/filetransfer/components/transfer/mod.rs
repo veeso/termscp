@@ -547,7 +547,7 @@ impl Component<Msg, NoUserEvent> for ExplorerLocal {
             Event::Keyboard(KeyEvent {
                 code: Key::Char('x'),
                 modifiers: KeyModifiers::NONE,
-            }) => Some(Msg::Ui(UiMsg::ShowExecPopup)),
+            }) => Some(Msg::Ui(UiMsg::ShowTerminal)),
             Event::Keyboard(KeyEvent {
                 code: Key::Char('y'),
                 modifiers: KeyModifiers::NONE,
@@ -761,7 +761,7 @@ impl Component<Msg, NoUserEvent> for ExplorerRemote {
             Event::Keyboard(KeyEvent {
                 code: Key::Char('x'),
                 modifiers: KeyModifiers::NONE,
-            }) => Some(Msg::Ui(UiMsg::ShowExecPopup)),
+            }) => Some(Msg::Ui(UiMsg::ShowTerminal)),
             Event::Keyboard(KeyEvent {
                 code: Key::Char('y'),
                 modifiers: KeyModifiers::NONE,

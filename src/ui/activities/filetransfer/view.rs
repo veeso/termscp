@@ -158,12 +158,16 @@ impl FileTransferActivity {
             // @! Local explorer (Find or default)
             if matches!(self.browser.found_tab(), Some(FoundExplorerTab::Local)) {
                 self.app.view(&Id::ExplorerFind, f, tabs_chunks[0]);
+            } else if self.browser.is_terminal_open_host_bridge() {
+                self.app.view(&Id::TerminalHostBridge, f, tabs_chunks[0]);
             } else {
                 self.app.view(&Id::ExplorerHostBridge, f, tabs_chunks[0]);
             }
             // @! Remote explorer (Find or default)
             if matches!(self.browser.found_tab(), Some(FoundExplorerTab::Remote)) {
                 self.app.view(&Id::ExplorerFind, f, tabs_chunks[1]);
+            } else if self.browser.is_terminal_open_remote() {
+                self.app.view(&Id::TerminalRemote, f, tabs_chunks[1]);
             } else {
                 self.app.view(&Id::ExplorerRemote, f, tabs_chunks[1]);
             }
@@ -238,11 +242,6 @@ impl FileTransferActivity {
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::SymlinkPopup, f, popup);
-            } else if self.app.mounted(&Id::ExecPopup) {
-                let popup = Popup(Size::Percentage(40), Size::Unit(3)).draw_in(f.area());
-                f.render_widget(Clear, popup);
-                // make popup
-                self.app.view(&Id::ExecPopup, f, popup);
             } else if self.app.mounted(&Id::FileInfoPopup) {
                 let popup = Popup(Size::Percentage(50), Size::Percentage(50)).draw_in(f.area());
                 f.render_widget(Clear, popup);
@@ -570,21 +569,49 @@ impl FileTransferActivity {
     }
 
     pub(super) fn mount_exec(&mut self) {
+        let tab = self.browser.tab();
+        let id = match tab {
+            FileExplorerTab::HostBridge => Id::TerminalHostBridge,
+            FileExplorerTab::Remote => Id::TerminalRemote,
+            _ => panic!("Cannot mount terminal on this tab"),
+        };
+
         let input_color = self.theme().misc_input_dialog;
         assert!(
             self.app
                 .remount(
-                    Id::ExecPopup,
-                    Box::new(components::ExecPopup::new(input_color)),
+                    id.clone(),
+                    Box::new(
+                        components::Terminal::default()
+                            .foreground(input_color)
+                            .prompt(self.terminal_prompt())
+                            .title(format!("Terminal - {}", self.get_tab_hostname()))
+                    ),
                     vec![],
                 )
                 .is_ok()
         );
-        assert!(self.app.active(&Id::ExecPopup).is_ok());
+        assert!(self.app.active(&id).is_ok());
+    }
+
+    /// Print output to terminal
+    pub(super) fn print_terminal(&mut self, text: String) {
+        // get id
+        let focus = self.app.focus().unwrap().clone();
+
+        // replace all \n with \r\n
+        let mut text = text.replace('\n', "\r\n");
+        if !text.ends_with("\r\n") && !text.is_empty() {
+            text.push_str("\r\n");
+        }
+        let _ = self
+            .app
+            .attr(&focus, Attribute::Text, AttrValue::String(text));
     }
 
     pub(super) fn umount_exec(&mut self) {
-        let _ = self.app.umount(&Id::ExecPopup);
+        let focus = self.app.focus().unwrap().clone();
+        let _ = self.app.umount(&focus);
     }
 
     pub(super) fn mount_find(&mut self, msg: impl ToString, fuzzy_search: bool) {
@@ -1179,7 +1206,8 @@ impl FileTransferActivity {
             Id::DeletePopup,
             Id::DisconnectPopup,
             Id::ErrorPopup,
-            Id::ExecPopup,
+            Id::TerminalHostBridge,
+            Id::TerminalRemote,
             Id::FatalPopup,
             Id::FileInfoPopup,
             Id::GotoPopup,

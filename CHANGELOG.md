@@ -45,8 +45,9 @@
 
 Released on 31/07/2025
 
-- **Updated dependencies** and updated the Rust edition to `2024`
+- [Issue 340](https://github.com/veeso/termscp/issues/340): Replaced the `Exec` popup with a **fully functional terminal emulator** embedded thanks to [A-Kenji's tui-term](https://github.com/a-kenji/tui-term).
 - [Issue 345](https://github.com/veeso/termscp/issues/345): Default keys are used from `~/.ssh` directory if no keys are resolved for the host.
+- **Updated dependencies** and updated the Rust edition to `2024`
 
 ## 0.17.0
 

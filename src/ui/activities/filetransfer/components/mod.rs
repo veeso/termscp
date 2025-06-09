@@ -13,12 +13,13 @@ mod log;
 mod misc;
 mod popups;
 mod selected_files;
+mod terminal;
 mod transfer;
 
 pub use misc::FooterBar;
 pub use popups::{
-    ATTR_FILES, ChmodPopup, CopyPopup, DeletePopup, DisconnectPopup, ErrorPopup, ExecPopup,
-    FatalPopup, FileInfoPopup, FilterPopup, GotoPopup, KeybindingsPopup, MkdirPopup, NewfilePopup,
+    ATTR_FILES, ChmodPopup, CopyPopup, DeletePopup, DisconnectPopup, ErrorPopup, FatalPopup,
+    FileInfoPopup, FilterPopup, GotoPopup, KeybindingsPopup, MkdirPopup, NewfilePopup,
     OpenWithPopup, ProgressBarFull, ProgressBarPartial, QuitPopup, RenamePopup, ReplacePopup,
     ReplacingFilesListPopup, SaveAsPopup, SortingPopup, StatusBarLocal, StatusBarRemote,
     SymlinkPopup, SyncBrowsingMkdirPopup, WaitPopup, WalkdirWaitPopup, WatchedPathsList,
@@ -28,6 +29,7 @@ pub use transfer::{ExplorerFind, ExplorerFuzzy, ExplorerLocal, ExplorerRemote};
 
 pub use self::log::Log;
 pub use self::selected_files::SelectedFilesList;
+pub use self::terminal::Terminal;
 
 #[derive(Default, MockComponent)]
 pub struct GlobalListener {

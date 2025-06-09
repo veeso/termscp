@@ -56,6 +56,8 @@ pub struct FileExplorer {
     pub(crate) opts: ExplorerOpts,
     /// Formatter for file entries
     pub(crate) fmt: Formatter,
+    /// Is terminal open for this explorer?
+    terminal: bool,
     /// Files in directory
     files: Vec<File>,
     /// files enqueued for transfer. Map between source and destination
@@ -73,6 +75,7 @@ impl Default for FileExplorer {
             opts: ExplorerOpts::empty(),
             fmt: Formatter::default(),
             files: Vec::new(),
+            terminal: false,
             transfer_queue: HashMap::new(),
         }
     }
@@ -177,6 +180,15 @@ impl FileExplorer {
     /// Clear transfer queue
     pub fn clear_queue(&mut self) {
         self.transfer_queue.clear();
+    }
+
+    /// Toggle terminal state
+    pub fn toggle_terminal(&mut self, terminal: bool) {
+        self.terminal = terminal;
+    }
+
+    pub fn terminal_open(&self) -> bool {
+        self.terminal
     }
 
     // Formatting
