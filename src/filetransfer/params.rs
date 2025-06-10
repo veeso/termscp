@@ -31,6 +31,16 @@ impl HostBridgeParams {
             HostBridgeParams::Remote(_, params) => params,
         }
     }
+
+    /// Returns the host name for the bridge params
+    pub fn username(&self) -> Option<String> {
+        match self {
+            HostBridgeParams::Localhost(_) => Some(whoami::username()),
+            HostBridgeParams::Remote(_, params) => {
+                params.generic_params().and_then(|p| p.username.clone())
+            }
+        }
+    }
 }
 
 /// Holds connection parameters for file transfers
@@ -40,6 +50,15 @@ pub struct FileTransferParams {
     pub params: ProtocolParams,
     pub remote_path: Option<PathBuf>,
     pub local_path: Option<PathBuf>,
+}
+
+impl FileTransferParams {
+    /// Returns the remote path if set, otherwise returns the local path
+    pub fn username(&self) -> Option<String> {
+        self.params
+            .generic_params()
+            .and_then(|p| p.username.clone())
+    }
 }
 
 /// Container for protocol params

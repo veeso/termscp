@@ -304,6 +304,70 @@ impl FileTransferActivity {
         self.reload_remote_filelist();
     }
 
+    pub(super) fn get_tab_hostname(&self) -> String {
+        match self.browser.tab() {
+            FileExplorerTab::HostBridge | FileExplorerTab::FindHostBridge => {
+                self.get_hostbridge_hostname()
+            }
+            FileExplorerTab::Remote | FileExplorerTab::FindRemote => self.get_remote_hostname(),
+        }
+    }
+
+    pub(super) fn terminal_prompt(&self) -> String {
+        const TERM_CYAN: &str = "\x1b[36m";
+        const TERM_GREEN: &str = "\x1b[32m";
+        const TERM_YELLOW: &str = "\x1b[33m";
+        const TERM_RESET: &str = "\x1b[0m";
+
+        let panel = self.browser.tab();
+        match panel {
+            FileExplorerTab::HostBridge | FileExplorerTab::FindHostBridge => {
+                let username = self
+                    .context()
+                    .host_bridge_params()
+                    .and_then(|params| {
+                        params
+                            .username()
+                            .map(|u| format!("{TERM_CYAN}{u}{TERM_RESET}@"))
+                    })
+                    .unwrap_or("".to_string());
+                let hostname = self.get_hostbridge_hostname();
+                format!(
+                    "{username}{TERM_GREEN}{hostname}:{TERM_YELLOW}{}{TERM_RESET}$ ",
+                    fmt_path_elide_ex(
+                        self.host_bridge().wrkdir.as_path(),
+                        0,
+                        hostname.len() + 3 // 3 because of '/…/'
+                    )
+                )
+            }
+            FileExplorerTab::Remote | FileExplorerTab::FindRemote => {
+                let username = self
+                    .context()
+                    .remote_params()
+                    .and_then(|params| {
+                        params
+                            .username()
+                            .map(|u| format!("{TERM_CYAN}{u}{TERM_RESET}@"))
+                    })
+                    .unwrap_or("".to_string());
+                let hostname = self.get_remote_hostname();
+                let fmt_path = fmt_path_elide_ex(
+                    self.remote().wrkdir.as_path(),
+                    0,
+                    hostname.len() + 3, // 3 because of '/…/'
+                );
+                let fmt_path = if fmt_path.starts_with('/') {
+                    fmt_path
+                } else {
+                    format!("/{}", fmt_path)
+                };
+
+                format!("{username}{TERM_GREEN}{hostname}:{TERM_YELLOW}{fmt_path}{TERM_RESET}$ ",)
+            }
+        }
+    }
+
     pub(super) fn reload_remote_filelist(&mut self) {
         let width = self
             .context_mut()

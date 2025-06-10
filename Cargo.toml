@@ -78,6 +78,7 @@ tokio = { version = "1.44", features = ["rt"] }
 toml = "^0.8"
 tui-realm-stdlib = "3"
 tuirealm = "3"
+tui-term = "0.2"
 unicode-width = "^0.2"
 version-compare = "^0.2"
 whoami = "^1.6"

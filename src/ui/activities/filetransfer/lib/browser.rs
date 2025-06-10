@@ -148,6 +148,25 @@ impl Browser {
         self.sync_browsing = !self.sync_browsing;
     }
 
+    /// Toggle terminal for the current tab
+    pub fn toggle_terminal(&mut self, terminal: bool) {
+        if self.tab == FileExplorerTab::HostBridge {
+            self.host_bridge.toggle_terminal(terminal);
+        } else if self.tab == FileExplorerTab::Remote {
+            self.remote.toggle_terminal(terminal);
+        }
+    }
+
+    /// Check if terminal is open for the host bridge tab
+    pub fn is_terminal_open_host_bridge(&self) -> bool {
+        self.tab == FileExplorerTab::HostBridge && self.host_bridge.terminal_open()
+    }
+
+    /// Check if terminal is open for the remote tab
+    pub fn is_terminal_open_remote(&self) -> bool {
+        self.tab == FileExplorerTab::Remote && self.remote.terminal_open()
+    }
+
     /// Build a file explorer with local host setup
     pub fn build_local_explorer(cli: &ConfigClient) -> FileExplorer {
         let mut builder = Self::build_explorer(cli);

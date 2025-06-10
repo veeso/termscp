@@ -146,17 +146,12 @@ impl FileTransferActivity {
                 self.update_browser_file_list()
             }
             TransferMsg::ExecuteCmd(cmd) => {
-                // Exex command
-                self.umount_exec();
-                self.mount_blocking_wait(format!("Executing '{cmd}'…").as_str());
+                // Exec command
                 match self.browser.tab() {
                     FileExplorerTab::HostBridge => self.action_local_exec(cmd),
                     FileExplorerTab::Remote => self.action_remote_exec(cmd),
                     _ => panic!("Found tab doesn't support EXEC"),
-                }
-                self.umount_wait();
-                // Reload files
-                self.update_browser_file_list()
+                };
             }
             TransferMsg::GoTo(dir) => {
                 match self.browser.tab() {
@@ -417,7 +412,10 @@ impl FileTransferActivity {
             UiMsg::CloseDeletePopup => self.umount_radio_delete(),
             UiMsg::CloseDisconnectPopup => self.umount_disconnect(),
             UiMsg::CloseErrorPopup => self.umount_error(),
-            UiMsg::CloseExecPopup => self.umount_exec(),
+            UiMsg::CloseExecPopup => {
+                self.browser.toggle_terminal(false);
+                self.umount_exec();
+            }
             UiMsg::CloseFatalPopup => {
                 self.umount_fatal();
                 self.exit_reason = Some(ExitReason::Disconnect);
@@ -546,7 +544,10 @@ impl FileTransferActivity {
             UiMsg::ShowCopyPopup => self.mount_copy(),
             UiMsg::ShowDeletePopup => self.mount_radio_delete(),
             UiMsg::ShowDisconnectPopup => self.mount_disconnect(),
-            UiMsg::ShowExecPopup => self.mount_exec(),
+            UiMsg::ShowTerminal => {
+                self.browser.toggle_terminal(true);
+                self.mount_exec()
+            }
             UiMsg::ShowFileInfoPopup if self.browser.tab() == FileExplorerTab::HostBridge => {
                 if let SelectedFile::One(file) = self.get_local_selected_entries() {
                     self.mount_file_info(&file);
