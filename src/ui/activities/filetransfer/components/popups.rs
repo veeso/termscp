@@ -414,6 +414,10 @@ impl FileInfoPopup {
         texts
             .add_col(TextSpan::from("Path: "))
             .add_col(TextSpan::new(path.as_str()).fg(Color::Yellow));
+        texts
+            .add_row()
+            .add_col(TextSpan::from("Name: "))
+            .add_col(TextSpan::new(file.name()).fg(Color::Yellow));
         if let Some(filetype) = file.extension() {
             texts
                 .add_row()

@@ -243,7 +243,7 @@ impl FileTransferActivity {
                 // make popup
                 self.app.view(&Id::SymlinkPopup, f, popup);
             } else if self.app.mounted(&Id::FileInfoPopup) {
-                let popup = Popup(Size::Percentage(50), Size::Percentage(50)).draw_in(f.area());
+                let popup = Popup(Size::Percentage(80), Size::Percentage(50)).draw_in(f.area());
                 f.render_widget(Clear, popup);
                 // make popup
                 self.app.view(&Id::FileInfoPopup, f, popup);
