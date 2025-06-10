@@ -144,6 +144,7 @@ Termscp is a feature rich terminal file transfer and explorer, with support for 
 - 📝  View and edit files with your favourite applications
 - 💁  SFTP/SCP authentication with SSH keys and username/password
 - 🐧  Compatible with Windows, Linux, FreeBSD, NetBSD and MacOS
+- 🐚  Embedded terminal for executing commands on the system.
 - 🎨  Make it yours!
   - Themes
   - Custom file explorer format

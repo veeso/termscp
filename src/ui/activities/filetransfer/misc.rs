@@ -352,14 +352,18 @@ impl FileTransferActivity {
                     })
                     .unwrap_or("".to_string());
                 let hostname = self.get_remote_hostname();
-                format!(
-                    "{username}{TERM_GREEN}{hostname}:{TERM_YELLOW}{}{TERM_RESET}$ ",
-                    fmt_path_elide_ex(
-                        self.remote().wrkdir.as_path(),
-                        0,
-                        hostname.len() + 3 // 3 because of '/…/'
-                    )
-                )
+                let fmt_path = fmt_path_elide_ex(
+                    self.remote().wrkdir.as_path(),
+                    0,
+                    hostname.len() + 3, // 3 because of '/…/'
+                );
+                let fmt_path = if fmt_path.starts_with('/') {
+                    fmt_path
+                } else {
+                    format!("/{}", fmt_path)
+                };
+
+                format!("{username}{TERM_GREEN}{hostname}:{TERM_YELLOW}{fmt_path}{TERM_RESET}$ ",)
             }
         }
     }
