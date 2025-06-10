@@ -31,6 +31,12 @@ impl Terminal {
         self
     }
 
+    pub fn border_color(mut self, color: Color) -> Self {
+        self.component
+            .attr(Attribute::Borders, AttrValue::Color(color));
+        self
+    }
+
     /// Construct a new [`Terminal`] component with the foreground color
     pub fn foreground(mut self, color: Color) -> Self {
         self.component

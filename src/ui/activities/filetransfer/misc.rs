@@ -314,17 +314,26 @@ impl FileTransferActivity {
     }
 
     pub(super) fn terminal_prompt(&self) -> String {
+        const TERM_CYAN: &str = "\x1b[36m";
+        const TERM_GREEN: &str = "\x1b[32m";
+        const TERM_YELLOW: &str = "\x1b[33m";
+        const TERM_RESET: &str = "\x1b[0m";
+
         let panel = self.browser.tab();
         match panel {
             FileExplorerTab::HostBridge | FileExplorerTab::FindHostBridge => {
                 let username = self
                     .context()
                     .host_bridge_params()
-                    .and_then(|params| params.username().map(|u| format!("{u}@")))
+                    .and_then(|params| {
+                        params
+                            .username()
+                            .map(|u| format!("{TERM_CYAN}{u}{TERM_RESET}@"))
+                    })
                     .unwrap_or("".to_string());
                 let hostname = self.get_hostbridge_hostname();
                 format!(
-                    "{username}{hostname}:{} ",
+                    "{username}{TERM_GREEN}{hostname}:{TERM_YELLOW}{}{TERM_RESET}$ ",
                     fmt_path_elide_ex(
                         self.host_bridge().wrkdir.as_path(),
                         0,
@@ -336,11 +345,15 @@ impl FileTransferActivity {
                 let username = self
                     .context()
                     .remote_params()
-                    .and_then(|params| params.username().map(|u| format!("{u}@")))
+                    .and_then(|params| {
+                        params
+                            .username()
+                            .map(|u| format!("{TERM_CYAN}{u}{TERM_RESET}@"))
+                    })
                     .unwrap_or("".to_string());
                 let hostname = self.get_remote_hostname();
                 format!(
-                    "{username}{hostname}:/{} ",
+                    "{username}{TERM_GREEN}{hostname}:{TERM_YELLOW}{}{TERM_RESET}$ ",
                     fmt_path_elide_ex(
                         self.remote().wrkdir.as_path(),
                         0,

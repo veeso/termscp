@@ -53,7 +53,7 @@ pub fn fmt_path_elide(p: &Path, width: usize) -> String {
 /// This function allows to specify an extra length to consider to elide path
 pub fn fmt_path_elide_ex(p: &Path, width: usize, extra_len: usize) -> String {
     let fmt_path: String = format!("{}", p.display());
-    match fmt_path.width() + extra_len > width {
+    let p = match fmt_path.width() + extra_len > width {
         false => fmt_path,
         true => {
             // Elide
@@ -77,6 +77,12 @@ pub fn fmt_path_elide_ex(p: &Path, width: usize, extra_len: usize) -> String {
             }
             format!("{}", elided_path.display())
         }
+    };
+
+    if p.starts_with('/') {
+        p
+    } else {
+        format!("/{}", p)
     }
 }
 

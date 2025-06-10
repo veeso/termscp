@@ -268,11 +268,17 @@ impl MockComponent for TerminalComponent {
             .map(|value| value.unwrap_color())
             .unwrap_or(tuirealm::ratatui::style::Color::Reset);
 
+        let border_color = self
+            .query(Attribute::Borders)
+            .map(|value| value.unwrap_color())
+            .unwrap_or(tuirealm::ratatui::style::Color::Reset);
+
         let terminal = PseudoTerminal::new(self.parser.screen())
             .block(
                 Block::default()
                     .title(title)
                     .border_type(BorderType::Rounded)
+                    .border_style(Style::default().fg(border_color))
                     .borders(BorderSides::ALL)
                     .style(Style::default().fg(fg).bg(bg)),
             )

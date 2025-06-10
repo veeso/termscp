@@ -576,6 +576,12 @@ impl FileTransferActivity {
             _ => panic!("Cannot mount terminal on this tab"),
         };
 
+        let border = match tab {
+            FileExplorerTab::HostBridge => self.theme().transfer_local_explorer_highlighted,
+            FileExplorerTab::Remote => self.theme().transfer_remote_explorer_highlighted,
+            _ => panic!("Cannot mount terminal on this tab"),
+        };
+
         let input_color = self.theme().misc_input_dialog;
         assert!(
             self.app
@@ -586,6 +592,7 @@ impl FileTransferActivity {
                             .foreground(input_color)
                             .prompt(self.terminal_prompt())
                             .title(format!("Terminal - {}", self.get_tab_hostname()))
+                            .border_color(border)
                     ),
                     vec![],
                 )
