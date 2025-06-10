@@ -601,6 +601,19 @@ impl FileTransferActivity {
         assert!(self.app.active(&id).is_ok());
     }
 
+    /// Update the terminal prompt based on the current directory
+    pub(super) fn update_terminal_prompt(&mut self) {
+        let prompt = self.terminal_prompt();
+        let id = match self.browser.tab() {
+            FileExplorerTab::HostBridge => Id::TerminalHostBridge,
+            FileExplorerTab::Remote => Id::TerminalRemote,
+            _ => panic!("Cannot update terminal prompt on this tab"),
+        };
+        let _ = self
+            .app
+            .attr(&id, Attribute::Content, AttrValue::String(prompt));
+    }
+
     /// Print output to terminal
     pub(super) fn print_terminal(&mut self, text: String) {
         // get id
@@ -1136,6 +1149,10 @@ impl FileTransferActivity {
             .ok()
             .flatten()
             .map(|x| {
+                if x.as_payload().is_none() {
+                    return 0;
+                }
+
                 x.unwrap_payload()
                     .unwrap_vec()
                     .into_iter()

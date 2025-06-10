@@ -146,19 +146,12 @@ impl FileTransferActivity {
                 self.update_browser_file_list()
             }
             TransferMsg::ExecuteCmd(cmd) => {
-                if cmd.is_empty() {
-                    self.print_terminal("".to_string());
-                    return None;
-                }
-
                 // Exec command
-                let output = match self.browser.tab() {
+                match self.browser.tab() {
                     FileExplorerTab::HostBridge => self.action_local_exec(cmd),
                     FileExplorerTab::Remote => self.action_remote_exec(cmd),
                     _ => panic!("Found tab doesn't support EXEC"),
                 };
-                // Show output to terminal
-                self.print_terminal(output);
             }
             TransferMsg::GoTo(dir) => {
                 match self.browser.tab() {
