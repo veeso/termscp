@@ -186,7 +186,7 @@ impl FileTransferActivity {
             Ok(_) => self.log(LogLevel::Info, format!("Opened file `{}`", p.display())),
             Err(err) => self.log(
                 LogLevel::Error,
-                format!("Failed to open filoe `{}`: {}", p.display(), err),
+                format!("Failed to open file `{}`: {}", p.display(), err),
             ),
         }
         // NOTE: clear screen in order to prevent crap on stderr
