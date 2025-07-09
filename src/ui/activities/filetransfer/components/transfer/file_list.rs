@@ -30,7 +30,7 @@ impl OwnStates {
         self.dot_dot = has_dot_dot;
     }
 
-    /// Incremenet list index.
+    /// Increment list index.
     /// If `can_rewind` is `true` the index rewinds when boundary is reached
     pub fn incr_list_index(&mut self, can_rewind: bool) {
         // Check if index is at last element
@@ -76,7 +76,7 @@ impl OwnStates {
         self.list_len
     }
 
-    /// Keep index if possible, otherwise set to lenght - 1
+    /// Keep index if possible, otherwise set to length - 1
     fn fix_list_index(&mut self) {
         if self.list_index >= self.list_len() && self.list_len() > 0 {
             self.list_index = self.list_len() - 1;

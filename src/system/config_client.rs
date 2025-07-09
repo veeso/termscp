@@ -483,7 +483,7 @@ mod tests {
                 .is_ok()
         );
         assert!(client.write_config().is_ok());
-        // Istantiate a new client
+        // Instantiate a new client
         let client: ConfigClient = ConfigClient::new(cfg_path.as_path(), key_path.as_path())
             .ok()
             .unwrap();

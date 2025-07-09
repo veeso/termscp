@@ -233,7 +233,7 @@ impl OwnStates {
         self.list_index
     }
 
-    /// Incremenet list index
+    /// Increment list index
     pub fn incr_list_index(&mut self) {
         // Check if index is at last element
         if self.list_index + 1 < self.list_len {

@@ -52,7 +52,7 @@ struct CallChainBlock {
     func: FmtCallback,
     /// All the content which is between two `{KEY}` items
     prefix: String,
-    /// The fmt len, specied for key as `{KEY:LEN}`
+    /// The fmt len, specified for key as `{KEY:LEN}`
     fmt_len: Option<usize>,
     /// The extra argument for formatting, specified for key as `{KEY:LEN:EXTRA}`
     fmt_extra: Option<String>,
@@ -480,7 +480,7 @@ impl Formatter {
             let index: usize = fmt_str.find(&regex_match[0]).unwrap();
             // Get prefix
             let prefix: String = String::from(&fmt_str[last_index..index]);
-            // Increment last index (sum prefix lenght and the length of the key)
+            // Increment last index (sum prefix length and the length of the key)
             last_index += prefix.len() + regex_match[0].len();
             // Match attributes
             match FMT_ATTR_REGEX.captures(&regex_match[1]) {
@@ -1027,7 +1027,7 @@ mod tests {
         assert_eq!(formatter.fmt(&entry).as_str(), "喵喵喵喵喵喵喵…");
     }
 
-    /// Dummy formatter, just yelds an 'A' at the end of the current string
+    /// Dummy formatter, just yields an 'A' at the end of the current string
     fn dummy_fmt(
         _fmt: &Formatter,
         _entry: &File,

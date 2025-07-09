@@ -21,7 +21,7 @@ impl SetupActivity {
         }
     }
 
-    /// Reset configuration changes; pratically read config from file, overwriting any change made
+    /// Reset configuration changes; practically read config from file, overwriting any change made
     /// since last write action
     pub(super) fn reset_config_changes(&mut self) -> Result<(), String> {
         self.config_mut()
