@@ -441,7 +441,7 @@ impl HostBridge for Localhost {
     #[cfg(posix)]
     fn chmod(&mut self, path: &std::path::Path, pex: UnixPex) -> HostResult<()> {
         let path: PathBuf = self.to_path(path);
-        // Get metadta
+        // Get metadata
         match fs::metadata(path.as_path()) {
             Ok(metadata) => {
                 let mut mpex = metadata.permissions();

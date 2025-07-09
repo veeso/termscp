@@ -115,7 +115,7 @@ Released on 03/10/2024
 - [Issue 283](https://github.com/veeso/termscp/issues/283): **Find command can now be cancelled** by pressing `<CTRL+C>`. While scanning the directory it will also display the current progress.
 - [Issue 268](https://github.com/veeso/termscp/issues/268): 📦 **Pods and container explorer** 🐳 for Kube protocol.
   - BREAKING ‼️ Kube address argument has changed to `namespace[@<cluster_url>][$<path>]`
-  - Pod and container argumets have been removed; from now on you will connect with the following syntax to the provided namespace: `/pod-name/container-name/path/to/file`
+  - Pod and container arguments have been removed; from now on you will connect with the following syntax to the provided namespace: `/pod-name/container-name/path/to/file`
 - [Issue 279](https://github.com/veeso/termscp/issues/279): do not clear screen
 - [Issue 277](https://github.com/veeso/termscp/issues/277): Fix a bug in the configuration page, which caused being stuck if the added SSH key was empty
 - [Issue 272](https://github.com/veeso/termscp/issues/272): `isolated-tests` feature to run tests for releasing on distributions which run in isolated environments
@@ -203,7 +203,7 @@ Released on 07/03/2022
 
 - [Issue 150](https://github.com/veeso/termscp/issues/150)
   - fixed config directory not being created
-  - before setting default ssh config path; check wheter it actually exists
+  - before setting default ssh config path; check whether it actually exists
 - Security:
   - removed `remove_dir_all` crate with `tempfile 3.4`
 - Dependencies:
@@ -434,7 +434,7 @@ Released on 12/10/2021
   - Added a new key in themes: `misc_info_dialog`: if your theme won't load, just reload it. If you're using a customised theme, you can add to it the missing key via a text editor. Just edit the `theme.toml` in your `$CONFIG_DIR/termscp/theme.toml` and add `misc_info_dialog` (Read more in manual at Themes).
 - Enhancements:
   - Reuse mounts in UI, in order to reduce executable size
-  - File list can now be "rewinded", which means that moving with arrows will now allow you to go from top to bottom of the list pressing `<UP>` and viceversa pressing `<DOWN>`.
+  - File list can now be "rewinded", which means that moving with arrows will now allow you to go from top to bottom of the list pressing `<UP>` and vice-versa pressing `<DOWN>`.
 - Bugfix:
   - Fixed [Issue 70](https://github.com/veeso/termscp/issues/70): Unable to type characters with `CTRL+ALT` (e.g. italian layout `CTRL+ALT+ò` => `@`) due to a crossterm issue. Fixed with tui-realm-stdlib `0.6.3`.
 - Dependencies:
@@ -522,7 +522,7 @@ Released on 21/06/2021
     - We're now able to test all the functionalities of the file transfers
   - **Status bar improvements**
     - "Show hidden files" in status bar
-    - Status bar has now been splitted into two, one for each explorer tab
+    - Status bar has now been split into two, one for each explorer tab
   - **Error message if terminal window is too small**
     - If the terminal window has less than 24 lines, then an error message is displayed in the auth activity
     - Changed auth layout to absolute sizes
@@ -546,7 +546,7 @@ Released on 23/05/2021
 > 🌸 Spring Update 2021 🌷
 
 - **Synchronized browsing**:
-  - Added the possibility to enabled the synchronized brower navigation
+  - Added the possibility to enabled the synchronized browser navigation
     - when you enter a directory, the same directory will be entered on the other tab
     - Enable sync browser with `<Y>`
     - Read more on manual: [Synchronized browsing](docs/man.md#Synchronized-browsing-)
@@ -771,7 +771,7 @@ Released on 21/12/2020
   - `O`: Open text file in editor
 - Enhancements:
   - User interface
-    - Collpased borders to make everything more *aesthetic*
+    - Collapsed borders to make everything more *aesthetic*
     - Rounded input field boards
     - File explorer:
       - Log how long it took to upload/download a file and the transfer speed
@@ -808,7 +808,7 @@ Released on 13/12/2020
 - Possibility to abort file transfers
 - Enhancements:
   - File explorer:
-    - When file index is at the end of the list, moving down will set the current index to the first element and viceversa.
+    - When file index is at the end of the list, moving down will set the current index to the first element and vice-versa.
     - Selected file has now colourful background, instead of foreground, for a better readability.
 - Keybindings:
   - `E`: Delete file (Same as `DEL`); added because some keyboards don't have `DEL` (hey, that's my MacBook Air's keyboard!)

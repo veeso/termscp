@@ -13,7 +13,7 @@ use thiserror::Error;
 #[derive(Debug, Error)]
 pub enum KeyStorageError {
     #[error("Key has a bad syntax")]
-    BadSytax,
+    BadSyntax,
     #[error("Provider service error")]
     ProviderError,
     #[error("No such key")]
@@ -31,7 +31,7 @@ impl From<KeyringError> for KeyStorageError {
 /// this traits provides the methods to communicate and interact with the key storage.
 pub trait KeyStorage {
     /// Retrieve key from the key storage.
-    /// The key might be acccess through an identifier, which identifies
+    /// The key might be access through an identifier, which identifies
     /// the key in the storage
     fn get_key(&self, storage_id: &str) -> Result<String, KeyStorageError>;
 
@@ -54,7 +54,7 @@ mod tests {
     #[test]
     fn test_system_keys_mod_errors() {
         assert_eq!(
-            KeyStorageError::BadSytax.to_string(),
+            KeyStorageError::BadSyntax.to_string(),
             String::from("Key has a bad syntax")
         );
         assert_eq!(

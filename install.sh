@@ -188,7 +188,7 @@ confirm() {
 # Installers
 
 install_on_bsd() {
-    try_with_cargo "packages for freeBSD are distribuited no more. Only cargo installations are supported." "freebsd"
+    try_with_cargo "packages for freeBSD are distributed no more. Only cargo installations are supported." "freebsd"
 }
 
 install_on_arch_linux() {

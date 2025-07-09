@@ -2,7 +2,7 @@
 
 ## Supported Versions
 
-Only latst version of termscp has the latest security updates.
+Only latest version of termscp has the latest security updates.
 Because of that, **you should always consider updating termscp to the latest version**.
 
 ## Reporting a Vulnerability

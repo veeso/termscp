@@ -24,7 +24,7 @@ impl KeyringStorage {
 
 impl KeyStorage for KeyringStorage {
     /// Retrieve key from the key storage.
-    /// The key might be acccess through an identifier, which identifies
+    /// The key might be access through an identifier, which identifies
     /// the key in the storage
     fn get_key(&self, storage_id: &str) -> Result<String, KeyStorageError> {
         let storage: Keyring = Keyring::new(storage_id, self.username.as_str())?;
@@ -37,7 +37,7 @@ impl KeyStorage for KeyringStorage {
                 | KeyringError::Invalid(_, _)
                 | KeyringError::Ambiguous(_) => Err(KeyStorageError::ProviderError),
                 KeyringError::BadEncoding(_) | KeyringError::TooLong(_, _) => {
-                    Err(KeyStorageError::BadSytax)
+                    Err(KeyStorageError::BadSyntax)
                 }
                 _ => Err(KeyStorageError::ProviderError),
             },

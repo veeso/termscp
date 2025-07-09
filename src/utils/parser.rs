@@ -173,7 +173,7 @@ pub fn parse_remote_opt(s: &str) -> Result<FileTransferParams, String> {
         #[cfg(smb)]
         FileTransferProtocol::Smb => parse_smb_remote_opts(remote.as_str()),
         FileTransferProtocol::WebDAV => {
-            // get the differnece between s and remote
+            // get the difference between s and remote
             let prefix = if s.starts_with("https") {
                 "https"
             } else {

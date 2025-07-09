@@ -38,7 +38,7 @@ pub struct UserInterfaceConfig {
 }
 
 #[derive(Deserialize, Serialize, Debug)]
-/// Contains configuratio related to remote hosts
+/// Contains configuration related to remote hosts
 pub struct RemoteConfig {
     /// Ssh configuration path. If NONE, won't be read
     pub ssh_config: Option<String>,
