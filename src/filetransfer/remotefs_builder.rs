@@ -13,7 +13,7 @@ use remotefs_kube::KubeMultiPodFs as KubeFs;
 use remotefs_smb::SmbOptions;
 #[cfg(smb)]
 use remotefs_smb::{SmbCredentials, SmbFs};
-use remotefs_ssh::{ScpFs, SftpFs, SshAgentIdentity, SshConfigParseRule, SshOpts};
+use remotefs_ssh::{LibSsh2Session, ScpFs, SftpFs, SshAgentIdentity, SshConfigParseRule, SshOpts};
 use remotefs_webdav::WebDAVFs;
 
 #[cfg(not(smb))]
@@ -138,12 +138,18 @@ impl RemoteFsBuilder {
     }
 
     /// Build scp client
-    fn scp_client(params: GenericProtocolParams, config_client: &ConfigClient) -> ScpFs {
+    fn scp_client(
+        params: GenericProtocolParams,
+        config_client: &ConfigClient,
+    ) -> ScpFs<LibSsh2Session> {
         Self::build_ssh_opts(params, config_client).into()
     }
 
     /// Build sftp client
-    fn sftp_client(params: GenericProtocolParams, config_client: &ConfigClient) -> SftpFs {
+    fn sftp_client(
+        params: GenericProtocolParams,
+        config_client: &ConfigClient,
+    ) -> SftpFs<LibSsh2Session> {
         Self::build_ssh_opts(params, config_client).into()
     }
 
