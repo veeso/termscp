@@ -451,7 +451,7 @@ case $PLATFORM in
 esac
 
 completed "Congratulations! Termscp has successfully been installed on your system!"
-info "If you're a new user, you might be interested in reading the user manual <https://termscp.veeso.dev/#user-manual>"
+info "If you're a new user, you might be interested in reading the user manual <https://termscp.veeso.dev/user-manual.html>"
 info "While if you've just updated your termscp version, you can find the changelog at this link <https://termscp.veeso.dev/#changelog>"
 info "Remember that if you encounter any issue, you can report them on Github <https://github.com/veeso/termscp/issues/new>"
 info "Feel free to open an issue also if you have an idea which could improve the project"

@@ -8,9 +8,9 @@
 <p align="center">
   <a href="https://termscp.veeso.dev" target="_blank">Website</a>
   ·
-  <a href="https://termscp.veeso.dev/#get-started" target="_blank">Installation</a>
+  <a href="https://termscp.veeso.dev/get-started.html" target="_blank">Installation</a>
   ·
-  <a href="https://termscp.veeso.dev/#user-manual" target="_blank">User manual</a>
+  <a href="https://termscp.veeso.dev/user-manual.html" target="_blank">User manual</a>
 </p>
 
 <p align="center">
@@ -191,7 +191,7 @@ Arch Linux users can install termscp from the official repositories.
 pacman -S termscp
 ```
 
-For more information or other platforms, please visit [termscp.veeso.dev](https://termscp.veeso.dev/#get-started) to view all installation methods.
+For more information or other platforms, please visit [termscp.veeso.dev](https://termscp.veeso.dev/get-started.html) to view all installation methods.
 
 ⚠️ If you're looking on how to update termscp just run termscp from CLI with: `(sudo) termscp --update` ⚠️
 
@@ -237,7 +237,7 @@ You can make a donation with one of these platforms:
 
 ## User manual 📚
 
-The user manual can be found on the [termscp's website](https://termscp.veeso.dev/#user-manual) or on [Github](docs/man.md).
+The user manual can be found on the [termscp's website](https://termscp.veeso.dev/user-manual.html) or on [Github](docs/man.md).
 
 ---
 

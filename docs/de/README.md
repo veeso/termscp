@@ -8,9 +8,9 @@
 <p align="center">
   <a href="https://termscp.veeso.dev" target="_blank">Webseite</a>
   ·
-  <a href="https://termscp.veeso.dev/#get-started" target="_blank">Installation</a>
+  <a href="https://termscp.veeso.dev/get-started.html" target="_blank">Installation</a>
   ·
-  <a href="https://termscp.veeso.dev/#user-manual" target="_blank">Benutzerhandbuch</a>
+  <a href="https://termscp.veeso.dev/user-manual.html" target="_blank">Benutzerhandbuch</a>
 </p>
 
 <p align="center">
@@ -186,7 +186,7 @@ Wenn Sie ein Windows-Benutzer sind, können Sie termscp mit [Chocolatey](https:/
 choco install termscp
 ```
 
-Für weitere Informationen oder andere Plattformen besuchen Sie bitte [termscp.veeso.dev](https://termscp.veeso.dev/termscp/#get-started), um alle Installationsmethoden anzuzeigen.
+Für weitere Informationen oder andere Plattformen besuchen Sie bitte [termscp.veeso.dev](https://termscp.veeso.dev/termscp/get-started.html), um alle Installationsmethoden anzuzeigen.
 
 ⚠️ Wenn Sie wissen möchten, wie Sie termscp aktualisieren können, führen Sie einfach termscp über die CLI aus mit: `(sudo) termscp --update` ⚠️
 
@@ -234,7 +234,7 @@ Sie können mit einer dieser Plattformen spenden:
 
 ## User manual 📚
 
-Das Benutzerhandbuch finden Sie auf der [termscp-Website](https://termscp.veeso.dev/termscp/#user-manual) oder auf [Github](man.md).
+Das Benutzerhandbuch finden Sie auf der [termscp-Website](https://termscp.veeso.dev/termscp/user-manual.html) oder auf [Github](man.md).
 
 ---
 
