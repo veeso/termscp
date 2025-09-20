@@ -29,8 +29,45 @@ jobs:
         with:
           toolchain: stable
           targets: ${{ matrix.platform.target }}
+      - name: Install dependencies
+        run: |
+          brew update
+          brew install \
+          bison \
+          cpanminus \
+          cups \
+          flex \
+          gettext \
+          gmp \
+          gnutls \
+          icu4c \
+          jansson \
+          libarchive \
+          libbsd \
+          libunistring \
+          libgit2 \
+          libtirpc \
+          openldap \
+          pkg-config \
+          zlib
+          brew link --force bison
+          brew link --force cups
+          brew link --force flex
+          brew link --force gettext
+          brew link --force gmp
+          brew link --force gnutls
+          brew link --force icu4c
+          brew link --force jansson
+          brew link --force libarchive
+          brew link --force libbsd
+          brew link --force libgit2
+          brew link --force libtirpc
+          brew link --force libunistring
+          brew link --force openldap
+          brew link --force zlib
+          cpanm Parse::Yapp::Driver
       - name: Build release
-        run: cargo build --release --target ${{ matrix.platform.target }}
+        run: cargo build --release --features smb-vendored --target ${{ matrix.platform.target }}
       - name: Prepare artifact files
         run: |
           mkdir -p .artifact

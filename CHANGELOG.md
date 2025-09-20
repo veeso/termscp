@@ -1,6 +1,7 @@
 # Changelog
 
 - [Changelog](#changelog)
+  - [0.19.0](#0190)
   - [0.18.0](#0180)
   - [0.17.0](#0170)
   - [0.16.1](#0161)
@@ -40,6 +41,13 @@
   - [0.1.0](#010)
 
 ---
+
+## 0.19.0
+
+Released on 20/09/2025
+
+- [Issue 356](https://github.com/veeso/termscp/issues/356): Fixed SSH auth issue not trying with the password if any RSA key was found.
+- [Issue 334](https://github.com/veeso/termscp/issues/334): SMB support for MacOS with vendored build of libsmbclient.
 
 ## 0.18.0
 
