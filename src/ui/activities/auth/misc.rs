@@ -223,10 +223,7 @@ impl AuthActivity {
                     }
                     Err(err) => {
                         // Report error
-                        error!("Failed to get latest version: {}", err);
-                        self.mount_error(
-                            format!("Could not check for new updates: {err}").as_str(),
-                        );
+                        error!("Failed to get latest version: {err}",);
                     }
                 }
             } else {

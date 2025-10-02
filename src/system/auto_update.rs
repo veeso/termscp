@@ -2,6 +2,8 @@
 //!
 //! Automatic update module. This module is used to upgrade the current version of termscp to the latest available on Github
 
+use std::net::ToSocketAddrs as _;
+
 use self_update::backends::github::Update as GithubUpdater;
 pub use self_update::errors::Error as UpdateError;
 use self_update::update::Release as UpdRelease;
@@ -67,6 +69,9 @@ impl Update {
     /// otherwise if no version is available, return None
     /// In case of error returns Error with the error description
     pub fn is_new_version_available() -> Result<Option<Release>, UpdateError> {
+        // check if api.github.com is reachable before doing anything
+        Self::check_github_api_reachable()?;
+
         info!("Checking whether a new version is available...");
         GithubUpdater::configure()
             // Set default options
@@ -81,6 +86,27 @@ impl Update {
             .get_latest_release()
             .map(Release::from)
             .map(Self::check_version)
+    }
+
+    /// Check if api.github.com is reachable
+    /// This is useful to avoid long timeouts when the network is down
+    /// or the DNS is not working
+    fn check_github_api_reachable() -> Result<(), UpdateError> {
+        let Some(socket_addr) = ("api.github.com", 443)
+            .to_socket_addrs()
+            .ok()
+            .and_then(|mut i| i.next())
+        else {
+            error!("Could not resolve api.github.com");
+            return Err(UpdateError::Network(
+                "Could not resolve api.github.com".into(),
+            ));
+        };
+
+        // just try to open a connection to api.github.com with a timeout of 5 seconds with tcp
+        std::net::TcpStream::connect_timeout(&socket_addr, std::time::Duration::from_secs(5))
+            .map(|_| ())
+            .map_err(|e| UpdateError::Network(format!("Could not reach api.github.com: {e}")))
     }
 
     /// In case received version is newer than current one, version as Some is returned; otherwise None
@@ -211,5 +237,10 @@ mod test {
         assert!(!Update::is_new_version_higher("0.9.0", "0.10.0"));
         assert!(!Update::is_new_version_higher("0.9.9", "0.10.1"));
         assert!(!Update::is_new_version_higher("0.10.9", "0.11.0"));
+    }
+
+    #[test]
+    fn test_should_check_whether_github_api_is_reachable() {
+        assert!(Update::check_github_api_reachable().is_ok());
     }
 }

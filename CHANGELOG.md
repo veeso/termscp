@@ -50,6 +50,9 @@ Released on 20/09/2025
 - [Issue 334](https://github.com/veeso/termscp/issues/334): SMB support for MacOS with vendored build of libsmbclient.
 - [Issue 337](https://github.com/veeso/termscp/issues/337): Migrated to libssh.org on Linux and MacOS for better ssh agent support.
 - [Issue 361](https://github.com/veeso/termscp/issues/361): Report a message while calculating total size of files to transfer.
+- [Issue 354](https://github.com/veeso/termscp/issues/354):
+  - Removed error popup message if failed to check for updates.
+  - Prevent long timeouts when checking for updates if the network is down or the DNS is not working.
 
 ## 0.18.0
 
