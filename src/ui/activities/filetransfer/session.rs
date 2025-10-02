@@ -1260,7 +1260,10 @@ impl FileTransferActivity {
 
     /// Get total size of transfer for host_bridgehost
     fn get_total_transfer_size_host(&mut self, entry: &File) -> usize {
-        if entry.is_dir() {
+        // mount message to tell we are calculating size
+        self.mount_blocking_wait("Calculating transfer size…");
+
+        let sz = if entry.is_dir() {
             // List dir
             match self.host_bridge.list_dir(entry.path()) {
                 Ok(files) => files
@@ -1281,12 +1284,18 @@ impl FileTransferActivity {
             }
         } else {
             entry.metadata.size as usize
-        }
+        };
+        self.umount_wait();
+
+        sz
     }
 
     /// Get total size of transfer for remote host
     fn get_total_transfer_size_remote(&mut self, entry: &File) -> usize {
-        if entry.is_dir() {
+        // mount message to tell we are calculating size
+        self.mount_blocking_wait("Calculating transfer size…");
+
+        let sz = if entry.is_dir() {
             // List directory
             match self.client.list_dir(entry.path()) {
                 Ok(files) => files
@@ -1307,7 +1316,11 @@ impl FileTransferActivity {
             }
         } else {
             entry.metadata.size as usize
-        }
+        };
+
+        self.umount_wait();
+
+        sz
     }
 
     // file changed
