@@ -190,12 +190,6 @@ mod tests {
 
     #[test]
     fn test_should_import_ssh_hosts() {
-        // enable debug env logger
-        let _ = env_logger::builder()
-            .is_test(true)
-            .filter_level(log::LevelFilter::Debug)
-            .try_init();
-
         let ssh_test_config = ssh_test_config();
 
         // import ssh hosts
