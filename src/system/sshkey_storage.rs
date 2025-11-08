@@ -103,17 +103,11 @@ impl From<&ConfigClient> for SshKeyStorage {
         // Iterate over keys in storage
         for key in cfg_client.iter_ssh_keys() {
             match cfg_client.get_ssh_key(key) {
-                Ok(host) => match host {
-                    Some((addr, username, rsa_key_path)) => {
-                        let key_name: String = Self::make_mapkey(&addr, &username);
-                        hosts.insert(key_name, rsa_key_path);
-                    }
-                    None => continue,
-                },
-                Err(err) => {
-                    error!("Failed to get SSH key for {}: {}", key, err);
-                    continue;
+                Some((addr, username, rsa_key_path)) => {
+                    let key_name: String = Self::make_mapkey(&addr, &username);
+                    hosts.insert(key_name, rsa_key_path);
                 }
+                None => continue,
             }
             info!("Got SSH key for {}", key);
         }

@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use tui_realm_stdlib::Input;
 use tuirealm::command::{Cmd, CmdResult, Direction, Position};
@@ -158,7 +158,7 @@ impl OwnStates {
             .unwrap_or_else(|| PathBuf::from("/"));
 
         // if path is `.`, then return None
-        if parent == PathBuf::from(".") {
+        if parent == Path::new(".") {
             return Suggestion::None;
         }
 

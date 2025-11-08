@@ -46,6 +46,7 @@
 
 Released on 20/09/2025
 
+- [Issue 331](https://github.com/veeso/termscp/issues/331): Added new `import-ssh-hosts` CLI subcommand to import all the hosts from the ssh config as bookmarks.
 - [Issue 356](https://github.com/veeso/termscp/issues/356): Fixed SSH auth issue not trying with the password if any RSA key was found.
 - [Issue 334](https://github.com/veeso/termscp/issues/334): SMB support for MacOS with vendored build of libsmbclient.
 - [Issue 337](https://github.com/veeso/termscp/issues/337): Migrated to libssh.org on Linux and MacOS for better ssh agent support.

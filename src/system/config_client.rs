@@ -300,19 +300,18 @@ impl ConfigClient {
 
     /// Get ssh key from host.
     /// None is returned if key doesn't exist
-    /// `std::io::Error` is returned in case it was not possible to read the key file
-    pub fn get_ssh_key(&self, mkey: &str) -> std::io::Result<Option<SshHost>> {
+    pub fn get_ssh_key(&self, mkey: &str) -> Option<SshHost> {
         if self.degraded {
-            return Ok(None);
+            return None;
         }
         // Check if Key exists
         match self.config.remote.ssh_keys.get(mkey) {
-            None => Ok(None),
+            None => None,
             Some(key_path) => {
                 // Get host and username
                 let (host, username): (String, String) = Self::get_ssh_tokens(mkey);
                 // Return key
-                Ok(Some((host, username, PathBuf::from(key_path))))
+                Some((host, username, PathBuf::from(key_path)))
             }
         }
     }
@@ -451,7 +450,7 @@ mod tests {
         // I/O
         assert!(client.add_ssh_key("Omar", "omar", "omar").is_err());
         assert!(client.del_ssh_key("omar", "omar").is_err());
-        assert!(client.get_ssh_key("omar").ok().unwrap().is_none());
+        assert!(client.get_ssh_key("omar").is_none());
         assert!(client.write_config().is_err());
         assert!(client.read_config().is_err());
     }
@@ -493,7 +492,7 @@ mod tests {
         let mut expected_key_path: PathBuf = key_path;
         expected_key_path.push("pi@192.168.1.31.key");
         assert_eq!(
-            client.get_ssh_key("pi@192.168.1.31").unwrap().unwrap(),
+            client.get_ssh_key("pi@192.168.1.31").unwrap(),
             (
                 String::from("192.168.1.31"),
                 String::from("pi"),
@@ -684,7 +683,7 @@ mod tests {
         );
         // Iterate keys
         for key in client.iter_ssh_keys() {
-            let host: SshHost = client.get_ssh_key(key).ok().unwrap().unwrap();
+            let host: SshHost = client.get_ssh_key(key).unwrap();
             assert_eq!(host.0, String::from("192.168.1.31"));
             assert_eq!(host.1, String::from("pi"));
             let mut expected_key_path: PathBuf = key_path.clone();
@@ -699,7 +698,7 @@ mod tests {
             assert_eq!(key, rsa_key);
         }
         // Unexisting key
-        assert!(client.get_ssh_key("test").ok().unwrap().is_none());
+        assert!(client.get_ssh_key("test").is_none());
         // Delete key
         assert!(client.del_ssh_key("192.168.1.31", "pi").is_ok());
     }

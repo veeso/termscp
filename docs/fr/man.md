@@ -8,6 +8,10 @@
       - [Argument d'adresse WebDAV](#argument-dadresse-webdav)
       - [Argument d'adresse SMB](#argument-dadresse-smb)
       - [Comment le mot de passe peut être fourni 🔐](#comment-le-mot-de-passe-peut-être-fourni-)
+    - [Sous-commandes](#sous-commandes)
+      - [Importer un thème](#importer-un-thème)
+      - [Installer la dernière version](#installer-la-dernière-version)
+      - [Importer des hôtes SSH](#importer-des-hôtes-ssh)
   - [S3 paramètres de connexion](#s3-paramètres-de-connexion)
     - [Identifiants S3 🦊](#identifiants-s3-)
   - [Explorateur de fichiers 📂](#explorateur-de-fichiers-)
@@ -142,7 +146,6 @@ syntaxe **Other systems**:
 smb://[username@]<server-name>[:port]/<share>[/path/.../]
 ```
 
-
 #### Comment le mot de passe peut être fourni 🔐
 
 Vous avez probablement remarqué que, lorsque vous fournissez l'adresse comme argument, il n'y a aucun moyen de fournir le mot de passe.
@@ -151,6 +154,22 @@ Le mot de passe peut être fourni de 3 manières lorsque l'argument d'adresse es
 - `-P, --password` option : utilisez simplement cette option CLI en fournissant le mot de passe. Je déconseille fortement cette méthode, car elle n'est pas sécurisée (puisque vous pouvez conserver le mot de passe dans l'historique du shell)
 - Avec `sshpass`: vous pouvez fournir un mot de passe via `sshpass`, par ex. `sshpass -f ~/.ssh/topsecret.key termscp cvisintin@192.168.1.31`
 - Il vous sera demandé : si vous n'utilisez aucune des méthodes précédentes, le mot de passe vous sera demandé, comme c'est le cas avec les outils plus classiques tels que `scp`, `ssh`, etc.
+
+### Sous-commandes
+
+#### Importer un thème
+
+Exécutez termscp avec `termscp theme <fichier-thème>`
+
+#### Installer la dernière version
+
+Exécutez termscp avec `termscp update`
+
+#### Importer des hôtes SSH
+
+Exécutez termscp avec `termscp import-ssh-hosts [fichier-config-ssh]`
+
+Importez tous les hôtes du fichier de configuration SSH spécifié (si non fourni, `~/.ssh/config` sera utilisé) comme favoris dans termscp. Les fichiers d'identité seront également importés comme clés SSH dans termscp.
 
 ---
 
