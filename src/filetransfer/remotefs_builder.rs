@@ -245,10 +245,10 @@ impl RemoteFsBuilder {
         }
         // For SSH protocols, only set password if explicitly provided and non-empty.
         // This allows the SSH library to prioritize key-based and agent authentication.
-        if let Some(password) = params.password {
-            if !password.is_empty() {
-                opts = opts.password(password);
-            }
+        if let Some(password) = params.password
+            && !password.is_empty()
+        {
+            opts = opts.password(password);
         }
         if let Some(config_path) = config_client.get_ssh_config() {
             opts = opts.config_file(

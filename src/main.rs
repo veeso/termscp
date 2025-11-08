@@ -114,10 +114,10 @@ fn parse_args(args: Args) -> Result<RunOpts, String> {
             };
 
             // Local directory
-            if let Some(localdir) = run_opts.remote.local_dir.as_deref() {
-                if let Err(err) = env::set_current_dir(localdir) {
-                    return Err(format!("Bad working directory argument: {err}"));
-                }
+            if let Some(localdir) = run_opts.remote.local_dir.as_deref()
+                && let Err(err) = env::set_current_dir(localdir)
+            {
+                return Err(format!("Bad working directory argument: {err}"));
             }
 
             run_opts
