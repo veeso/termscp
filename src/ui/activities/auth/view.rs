@@ -687,30 +687,30 @@ impl AuthActivity {
 
     /// mount release notes text area
     pub(super) fn mount_release_notes(&mut self) {
-        if let Some(ctx) = self.context.as_ref() {
-            if let Some(release_notes) = ctx.store().get_string(super::STORE_KEY_RELEASE_NOTES) {
-                // make spans
-                let info_color = self.theme().misc_info_dialog;
-                assert!(
-                    self.app
-                        .remount(
-                            Id::NewVersionChangelog,
-                            Box::new(components::ReleaseNotes::new(release_notes, info_color)),
-                            vec![]
-                        )
-                        .is_ok()
-                );
-                assert!(
-                    self.app
-                        .remount(
-                            Id::InstallUpdatePopup,
-                            Box::new(components::InstallUpdatePopup::new(info_color)),
-                            vec![]
-                        )
-                        .is_ok()
-                );
-                assert!(self.app.active(&Id::InstallUpdatePopup).is_ok());
-            }
+        if let Some(ctx) = self.context.as_ref()
+            && let Some(release_notes) = ctx.store().get_string(super::STORE_KEY_RELEASE_NOTES)
+        {
+            // make spans
+            let info_color = self.theme().misc_info_dialog;
+            assert!(
+                self.app
+                    .remount(
+                        Id::NewVersionChangelog,
+                        Box::new(components::ReleaseNotes::new(release_notes, info_color)),
+                        vec![]
+                    )
+                    .is_ok()
+            );
+            assert!(
+                self.app
+                    .remount(
+                        Id::InstallUpdatePopup,
+                        Box::new(components::InstallUpdatePopup::new(info_color)),
+                        vec![]
+                    )
+                    .is_ok()
+            );
+            assert!(self.app.active(&Id::InstallUpdatePopup).is_ok());
         }
     }
 

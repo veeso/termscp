@@ -8,6 +8,10 @@
       - [Argumento de dirección de WebDAV](#argumento-de-dirección-de-webdav)
       - [Argumento dirección por SMB](#argumento-dirección-por-smb)
       - [Cómo se puede proporcionar la contraseña 🔐](#cómo-se-puede-proporcionar-la-contraseña-)
+    - [Subcomandos](#subcomandos)
+      - [Importar un tema](#importar-un-tema)
+      - [Instalar la versión más reciente](#instalar-la-versión-más-reciente)
+      - [Importar hosts SSH](#importar-hosts-ssh)
   - [S3 parámetros de conexión](#s3-parámetros-de-conexión)
     - [Credenciales de S3 🦊](#credenciales-de-s3-)
   - [Explorador de archivos 📂](#explorador-de-archivos-)
@@ -152,6 +156,22 @@ La contraseña se puede proporcionar básicamente a través de 3 formas cuando s
 - `-P, --password` opción: simplemente use esta opción CLI proporcionando la contraseña. No recomiendo este método, ya que es muy inseguro (ya que puede mantener la contraseña en el historial de shell)
 - Con `sshpass`: puede proporcionar la contraseña a través de `sshpass`, p. ej. `sshpass -f ~/.ssh/topsecret.key termscp cvisintin@192.168.1.31`
 - Se te pedirá que ingreses: si no utilizas ninguno de los métodos anteriores, se te pedirá la contraseña, como ocurre con las herramientas más clásicas como `scp`, `ssh`, etc.
+
+### Subcomandos
+
+#### Importar un tema
+
+Ejecute termscp como `termscp theme <archivo-tema>`
+
+#### Instalar la versión más reciente
+
+Ejecute termscp como `termscp update`
+
+#### Importar hosts SSH
+
+Ejecute termscp como `termscp import-ssh-hosts [archivo-config-ssh]`
+
+Importa todos los hosts del archivo de configuración SSH especificado (si no se proporciona, se usará `~/.ssh/config`) como marcadores en termscp. Los archivos de identidad también se importarán como claves SSH en termscp.
 
 ---
 

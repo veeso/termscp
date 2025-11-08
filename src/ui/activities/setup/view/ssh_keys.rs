@@ -126,7 +126,7 @@ impl SetupActivity {
             .config()
             .iter_ssh_keys()
             .map(|x| {
-                let (addr, username, _) = self.config().get_ssh_key(x).ok().unwrap().unwrap();
+                let (addr, username, _) = self.config().get_ssh_key(x).unwrap();
                 format!("{username} at {addr}")
             })
             .collect();

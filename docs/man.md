@@ -11,6 +11,7 @@
     - [Subcommands](#subcommands)
       - [Import a theme](#import-a-theme)
       - [Install latest version](#install-latest-version)
+      - [Import ssh hosts](#import-ssh-hosts)
   - [S3 connection parameters](#s3-connection-parameters)
     - [S3 credentials 🦊](#s3-credentials-)
   - [File explorer 📂](#file-explorer-)
@@ -165,6 +166,12 @@ Run termscp as `termscp theme <theme-file>`
 #### Install latest version
 
 Run termscp as `termscp update`
+
+#### Import ssh hosts
+
+Run termscp as `termscp import-ssh-hosts [ssh-config-file]`
+
+Import all the hosts from the specified ssh config file (if not provided, `~/.ssh/config` will be used) as bookmarks in termscp. Identity files will be imported as ssh keys in termscp too.
 
 ---
 

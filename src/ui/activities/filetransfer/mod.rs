@@ -506,10 +506,10 @@ impl Activity for FileTransferActivity {
     /// This function must be called once before terminating the activity.
     fn on_destroy(&mut self) -> Option<Context> {
         // Destroy cache
-        if let Some(cache) = self.cache.take() {
-            if let Err(err) = cache.close() {
-                error!("Failed to delete cache: {}", err);
-            }
+        if let Some(cache) = self.cache.take()
+            && let Err(err) = cache.close()
+        {
+            error!("Failed to delete cache: {}", err);
         }
         // Disable raw mode
         if let Err(err) = self.context_mut().terminal().disable_raw_mode() {

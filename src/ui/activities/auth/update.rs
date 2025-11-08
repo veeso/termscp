@@ -126,13 +126,13 @@ impl AuthActivity {
                 self.host_bridge_protocol = protocol;
                 // Update port
                 let port: u16 = self.get_input_port(FormTab::HostBridge);
-                if let HostBridgeProtocol::Remote(remote_protocol) = protocol {
-                    if Self::is_port_standard(port) {
-                        self.mount_port(
-                            FormTab::HostBridge,
-                            Self::get_default_port_for_protocol(remote_protocol),
-                        );
-                    }
+                if let HostBridgeProtocol::Remote(remote_protocol) = protocol
+                    && Self::is_port_standard(port)
+                {
+                    self.mount_port(
+                        FormTab::HostBridge,
+                        Self::get_default_port_for_protocol(remote_protocol),
+                    );
                 }
             }
             FormMsg::RemoteProtocolChanged(protocol) => {

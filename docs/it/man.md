@@ -8,6 +8,10 @@
       - [Argomento indirizzo per WebDAV](#argomento-indirizzo-per-webdav)
       - [Indirizzo SMB](#indirizzo-smb)
       - [Come fornire la password 🔐](#come-fornire-la-password-)
+    - [Sottocomandi](#sottocomandi)
+      - [Importare un tema](#importare-un-tema)
+      - [Installare l’ultima versione](#installare-lultima-versione)
+      - [Importare host SSH](#importare-host-ssh)
   - [Parametri di connessione S3](#parametri-di-connessione-s3)
     - [Credenziali S3 🦊](#credenziali-s3-)
   - [File explorer 📂](#file-explorer-)
@@ -140,7 +144,6 @@ SMB ha una sintassi differente rispetto agli altri protocolli e cambia in base a
 smb://[username@]<server-name>[:port]/<share>[/path/.../]
 ```
 
-
 #### Come fornire la password 🔐
 
 Quando si usa l'argomento indirizzo non è possibile fornire la password direttamente nell'argomento, esistono però altri metodi per farlo:
@@ -148,6 +151,22 @@ Quando si usa l'argomento indirizzo non è possibile fornire la password diretta
 - Argomento `-P, --password <password>`: Passa direttamente la password nell'argomento. Non lo consiglio particolarmente questo metodo, in quanto la password rimarrebbe nella history della shell in chiaro.
 - Tramite `sshpass`: puoi fornire la password tramite l'applicazione GNU/Linux sshpass `sshpass -f ~/.ssh/topsecret.key termscp cvisintin@192.168.1.31`
 - Forniscila quando richiesta: se non la fornisci tramite nessun metodo precedente, alla connessione ti verrà richiesto di fornirla in un prompt che la oscurerà (come avviene con sudo tipo).
+
+### Sottocomandi
+
+#### Importare un tema
+
+Esegui termscp come `termscp theme <file-tema>`
+
+#### Installare l’ultima versione
+
+Esegui termscp come `termscp update`
+
+#### Importare host SSH
+
+Esegui termscp come `termscp import-ssh-hosts [file-config-ssh]`
+
+Importa tutti gli host dal file di configurazione SSH specificato (se non fornito, verrà usato `~/.ssh/config`) come segnalibri in termscp. I file di identità verranno importati come chiavi SSH in termscp.
 
 ---
 

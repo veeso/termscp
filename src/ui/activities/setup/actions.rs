@@ -99,27 +99,14 @@ impl SetupActivity {
             Ok(State::One(StateValue::Usize(idx))) => Some(idx),
             _ => None,
         };
-        if let Some(idx) = idx {
-            let key: Option<String> = self.config().iter_ssh_keys().nth(idx).cloned();
-            if let Some(key) = key {
-                match self.config().get_ssh_key(&key) {
-                    Ok(opt) => {
-                        if let Some((host, username, _)) = opt {
-                            if let Err(err) = self.delete_ssh_key(host.as_str(), username.as_str())
-                            {
-                                // Report error
-                                self.mount_error(err.as_str());
-                            }
-                        }
-                    }
-                    Err(err) => {
-                        // Report error
-                        self.mount_error(
-                            format!("Could not get ssh key \"{key}\": {err}").as_str(),
-                        );
-                    }
-                }
-            }
+        // get ssh key and delete it
+        if let Some(Err(err)) = idx
+            .and_then(|i| self.config().iter_ssh_keys().nth(i).cloned())
+            .and_then(|key| self.config().get_ssh_key(&key))
+            .map(|(host, username, _)| self.delete_ssh_key(host.as_str(), username.as_str()))
+        {
+            // Report error
+            self.mount_error(err.as_str());
         }
     }
 

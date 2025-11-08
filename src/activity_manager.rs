@@ -448,35 +448,7 @@ impl ActivityManager {
     // -- misc
 
     fn init_bookmarks_client(keyring: bool) -> Result<Option<BookmarksClient>, String> {
-        // Get config dir
-        match environment::init_config_dir() {
-            Ok(path) => {
-                // If some configure client, otherwise do nothing; don't bother users telling them that bookmarks are not supported on their system.
-                if let Some(config_dir_path) = path {
-                    let bookmarks_file: PathBuf =
-                        environment::get_bookmarks_paths(config_dir_path.as_path());
-                    // Initialize client
-                    BookmarksClient::new(
-                        bookmarks_file.as_path(),
-                        config_dir_path.as_path(),
-                        16,
-                        keyring,
-                    )
-                    .map(Option::Some)
-                    .map_err(|e| {
-                        format!(
-                            "Could not initialize bookmarks (at \"{}\", \"{}\"): {}",
-                            bookmarks_file.display(),
-                            config_dir_path.display(),
-                            e
-                        )
-                    })
-                } else {
-                    Ok(None)
-                }
-            }
-            Err(err) => Err(err),
-        }
+        crate::support::bookmarks_client(keyring)
     }
 
     /// Initialize configuration client

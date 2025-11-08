@@ -8,6 +8,10 @@
       - [WebDAV 地址参数](#webdav-地址参数)
       - [SMB 地址参数](#smb-地址参数)
       - [如何输入密码](#如何输入密码)
+    - [子命令](#子命令)
+      - [导入主题](#导入主题)
+      - [安装最新版本](#安装最新版本)
+      - [导入 SSH 主机](#导入-ssh-主机)
   - [S3 连接参数](#s3-连接参数)
     - [Aws S3 凭证](#aws-s3-凭证)
   - [文件浏览](#文件浏览)
@@ -148,6 +152,21 @@ smb://[username@]<server-name>[:port]/<share>[/path/.../]
 - `-P, --password` 不推荐：直接在参数中填写明文密码。强烈不推荐这种方法，因为它非常不安全（因为你可能会把密码保留在shell历史记录中）。
 - 通过 `sshpass`: 你可以通过 `sshpass` 传入密码, 例如： `sshpass -f ~/.ssh/topsecret.key termscp cvisintin@192.168.1.31`
 - 提示输入密码：如果你不使用前面的任何方法，你会被提示输入密码，就像 `scp`、`ssh` 等比较经典的工具上一样。
+
+### 子命令
+
+#### 导入主题
+
+以 termscp theme <theme-file> 的方式运行 termscp。
+
+#### 安装最新版本
+
+以 termscp update 的方式运行 termscp。
+
+#### 导入 SSH 主机
+
+以 `termscp import-ssh-hosts [ssh-config-file]` 的方式运行 termscp。
+从指定的 SSH 配置文件中导入所有主机（如果未提供，则使用 `~/.ssh/config`）作为 termscp 中的书签。身份文件也会作为 SSH 密钥导入到 termscp 中。
 
 ---
 

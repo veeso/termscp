@@ -65,10 +65,10 @@ impl FileExplorerBuilder {
 
     /// Set formatter for FileExplorer
     pub fn with_formatter(&mut self, fmt_str: Option<&str>) -> &mut FileExplorerBuilder {
-        if let Some(e) = self.explorer.as_mut() {
-            if let Some(fmt_str) = fmt_str {
-                e.fmt = Formatter::new(fmt_str);
-            }
+        if let Some(e) = self.explorer.as_mut()
+            && let Some(fmt_str) = fmt_str
+        {
+            e.fmt = Formatter::new(fmt_str);
         }
         self
     }
