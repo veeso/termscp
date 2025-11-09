@@ -278,6 +278,7 @@ Para trocar de painel, você precisa pressionar `<LEFT>` para mover para o paine
 | `<CTRL+A>`    | Selecionar todos os arquivos                               |                   |
 | `<ALT+A>`    | Deselecionar todos os arquivos                               |                   |
 | `<CTRL+C>`    | Abortir processo de transferência de arquivo                  |                   |
+| `<CTRL+S>`  | Obter o tamanho total do caminho selecionado             |  | Size          |
 | `<CTRL+T>`   | Mostrar todos os caminhos sincronizados                         | Track          |
 
 ### Trabalhar com múltiplos arquivos 🥷 

@@ -316,6 +316,7 @@ Diese Panels sind im Wesentlichen 3 (ja, tatsächlich drei):
 | <CTRL+A>    | Alle Dateien auswählen                                                 |                                                |
 | <ALT+A>     | Alle Dateien abwählen                                                  |                                                |
 | <CTRL+C>    | Dateiübertragungsvorgang abbrechen                                     |                                                |
+| `<CTRL+S>`  | Gesamte Größe des ausgewählten Pfads abrufen             | Size |
 | <CTRL+T>    | Alle synchronisierten Pfade anzeigen                                   | Track                                          |
 
 ### Mit mehreren Dateien arbeiten 🥷 

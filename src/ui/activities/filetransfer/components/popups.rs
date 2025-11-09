@@ -644,6 +644,11 @@ impl KeybindingsPopup {
                         .add_col(TextSpan::new("<CTRL+C>").bold().fg(key_color))
                         .add_col(TextSpan::from("          Interrupt file transfer"))
                         .add_row()
+                        .add_col(TextSpan::new("<CTRL+S>").bold().fg(key_color))
+                        .add_col(TextSpan::from(
+                            "          Get total path size of selected files",
+                        ))
+                        .add_row()
                         .add_col(TextSpan::new("<CTRL+T>").bold().fg(key_color))
                         .add_col(TextSpan::from("          Show watched paths"))
                         .build(),
