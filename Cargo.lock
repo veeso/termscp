@@ -1272,7 +1272,7 @@ dependencies = [
  "libc",
  "option-ext",
  "redox_users",
- "windows-sys 0.60.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -2032,7 +2032,7 @@ dependencies = [
  "js-sys",
  "log",
  "wasm-bindgen",
- "windows-core 0.57.0",
+ "windows-core 0.61.2",
 ]
 
 [[package]]
@@ -3553,9 +3553,9 @@ dependencies = [
 
 [[package]]
 name = "remotefs-ssh"
-version = "0.7.0"
+version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d29de4702886ae0e4433904d4f6f9b2ed2961d31d76a7e7bef58305097238eb6"
+checksum = "5ca8b65fbd60801ac03973a41196b030fb04d1ce1af33d3c58c5bad94d46eb27"
 dependencies = [
  "chrono",
  "lazy-regex",
