@@ -99,24 +99,16 @@ impl FileTransferActivity {
                 // Iter files
                 match self.browser.tab() {
                     FileExplorerTab::FindHostBridge | FileExplorerTab::HostBridge => {
-                        if self.config().get_prompt_on_file_replace() {
-                            // Check which file would be replaced
-                            let existing_files: Vec<&File> = entries
-                                .iter()
-                                .filter(|(x, dest_path)| {
-                                    self.remote_file_exists(
-                                        Self::file_to_check_many(x, dest_path.as_path()).as_path(),
-                                    )
-                                })
-                                .map(|(x, _)| x)
-                                .collect();
-                            // Check whether to replace files
-                            if !existing_files.is_empty()
-                                && !self.should_replace_files(existing_files)
-                            {
-                                return;
-                            }
-                        }
+                        let super::save::TransferFilesWithOverwritesResult::FilesToTransfer(
+                            entries,
+                        ) = self.get_files_to_transfer_with_overwrites(
+                            entries,
+                            super::save::CheckFileExists::Remote,
+                        )
+                        else {
+                            debug!("User cancelled file transfer due to overwrites");
+                            return;
+                        };
                         if let Err(err) = self.filetransfer_send(
                             TransferPayload::TransferQueue(entries),
                             dest_path.as_path(),
@@ -131,24 +123,16 @@ impl FileTransferActivity {
                         }
                     }
                     FileExplorerTab::FindRemote | FileExplorerTab::Remote => {
-                        if self.config().get_prompt_on_file_replace() {
-                            // Check which file would be replaced
-                            let existing_files: Vec<&File> = entries
-                                .iter()
-                                .filter(|(x, dest_path)| {
-                                    self.host_bridge_file_exists(
-                                        Self::file_to_check_many(x, dest_path.as_path()).as_path(),
-                                    )
-                                })
-                                .map(|(x, _)| x)
-                                .collect();
-                            // Check whether to replace files
-                            if !existing_files.is_empty()
-                                && !self.should_replace_files(existing_files)
-                            {
-                                return;
-                            }
-                        }
+                        let super::save::TransferFilesWithOverwritesResult::FilesToTransfer(
+                            entries,
+                        ) = self.get_files_to_transfer_with_overwrites(
+                            entries,
+                            super::save::CheckFileExists::HostBridge,
+                        )
+                        else {
+                            debug!("User cancelled file transfer due to overwrites");
+                            return;
+                        };
                         if let Err(err) = self.filetransfer_recv(
                             TransferPayload::TransferQueue(entries),
                             dest_path.as_path(),

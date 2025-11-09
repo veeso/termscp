@@ -5,7 +5,6 @@
 // locals
 // externals
 use remotefs::fs::File;
-use tuirealm::props::{AttrValue, Attribute};
 use tuirealm::{State, StateValue, Update};
 
 use super::actions::SelectedFile;
@@ -503,15 +502,6 @@ impl FileTransferActivity {
             UiMsg::Quit => {
                 self.disconnect_and_quit();
                 self.umount_quit();
-            }
-            UiMsg::ReplacePopupTabbed => {
-                if let Ok(Some(AttrValue::Flag(true))) =
-                    self.app.query(&Id::ReplacePopup, Attribute::Focus)
-                {
-                    assert!(self.app.active(&Id::ReplacingFilesListPopup).is_ok());
-                } else {
-                    assert!(self.app.active(&Id::ReplacePopup).is_ok());
-                }
             }
             UiMsg::ShowChmodPopup => {
                 let selected_file = match self.browser.tab() {

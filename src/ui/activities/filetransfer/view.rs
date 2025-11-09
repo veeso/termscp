@@ -269,29 +269,10 @@ impl FileTransferActivity {
                 // make popup
                 self.app.view(&Id::DeletePopup, f, popup);
             } else if self.app.mounted(&Id::ReplacePopup) {
-                // NOTE: handle extended / normal modes
-                if self.is_radio_replace_extended() {
-                    let popup = Popup(Size::Percentage(50), Size::Percentage(50)).draw_in(f.area());
-                    f.render_widget(Clear, popup);
-                    let popup_chunks = Layout::default()
-                        .direction(Direction::Vertical)
-                        .constraints(
-                            [
-                                Constraint::Percentage(85), // List
-                                Constraint::Percentage(15), // Radio
-                            ]
-                            .as_ref(),
-                        )
-                        .split(popup);
-                    self.app
-                        .view(&Id::ReplacingFilesListPopup, f, popup_chunks[0]);
-                    self.app.view(&Id::ReplacePopup, f, popup_chunks[1]);
-                } else {
-                    let popup = Popup(Size::Percentage(50), Size::Unit(3)).draw_in(f.area());
-                    f.render_widget(Clear, popup);
-                    // make popup
-                    self.app.view(&Id::ReplacePopup, f, popup);
-                }
+                let popup = Popup(Size::Percentage(50), Size::Unit(3)).draw_in(f.area());
+                f.render_widget(Clear, popup);
+                // make popup
+                self.app.view(&Id::ReplacePopup, f, popup);
             } else if self.app.mounted(&Id::DisconnectPopup) {
                 let popup = Popup(Size::Percentage(30), Size::Unit(3)).draw_in(f.area());
                 f.render_widget(Clear, popup);
@@ -944,37 +925,8 @@ impl FileTransferActivity {
         assert!(self.app.active(&Id::ReplacePopup).is_ok());
     }
 
-    pub(super) fn mount_radio_replace_many(&mut self, files: &[String]) {
-        let warn_color = self.theme().misc_warn_dialog;
-        assert!(
-            self.app
-                .remount(
-                    Id::ReplacingFilesListPopup,
-                    Box::new(components::ReplacingFilesListPopup::new(files, warn_color)),
-                    vec![],
-                )
-                .is_ok()
-        );
-        assert!(
-            self.app
-                .remount(
-                    Id::ReplacePopup,
-                    Box::new(components::ReplacePopup::new(None, warn_color)),
-                    vec![],
-                )
-                .is_ok()
-        );
-        assert!(self.app.active(&Id::ReplacePopup).is_ok());
-    }
-
-    /// Returns whether radio replace is in "extended" mode (for many files)
-    pub(super) fn is_radio_replace_extended(&self) -> bool {
-        self.app.mounted(&Id::ReplacingFilesListPopup)
-    }
-
     pub(super) fn umount_radio_replace(&mut self) {
         let _ = self.app.umount(&Id::ReplacePopup);
-        let _ = self.app.umount(&Id::ReplacingFilesListPopup); // NOTE: replace anyway
     }
 
     pub(super) fn mount_file_info(&mut self, file: &File) {
