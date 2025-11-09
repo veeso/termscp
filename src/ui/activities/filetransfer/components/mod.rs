@@ -21,9 +21,8 @@ pub use popups::{
     ATTR_FILES, ChmodPopup, CopyPopup, DeletePopup, DisconnectPopup, ErrorPopup, FatalPopup,
     FileInfoPopup, FilterPopup, GotoPopup, KeybindingsPopup, MkdirPopup, NewfilePopup,
     OpenWithPopup, ProgressBarFull, ProgressBarPartial, QuitPopup, RenamePopup, ReplacePopup,
-    ReplacingFilesListPopup, SaveAsPopup, SortingPopup, StatusBarLocal, StatusBarRemote,
-    SymlinkPopup, SyncBrowsingMkdirPopup, WaitPopup, WalkdirWaitPopup, WatchedPathsList,
-    WatcherPopup,
+    SaveAsPopup, SortingPopup, StatusBarLocal, StatusBarRemote, SymlinkPopup,
+    SyncBrowsingMkdirPopup, WaitPopup, WalkdirWaitPopup, WatchedPathsList, WatcherPopup,
 };
 pub use transfer::{ExplorerFind, ExplorerFuzzy, ExplorerLocal, ExplorerRemote};
 

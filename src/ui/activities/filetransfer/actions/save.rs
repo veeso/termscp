@@ -10,6 +10,37 @@ use super::{
     TransferPayload,
 };
 
+enum GetFileToReplaceResult {
+    Replace(Vec<(File, PathBuf)>),
+    Cancel,
+}
+
+/// Result of getting files to transfer with overwrites.
+///
+/// - FilesToTransfer: files to transfer.
+/// - Cancel: user cancelled the operation.
+pub(crate) enum TransferFilesWithOverwritesResult {
+    FilesToTransfer(Vec<(File, PathBuf)>),
+    Cancel,
+}
+
+/// Decides whether to check file existence on host bridge or remote side.
+pub(crate) enum CheckFileExists {
+    HostBridge,
+    Remote,
+}
+
+/// Options for all files replacement.
+///
+/// - ReplaceAll: user wants to replace all files.
+/// - SkipAll: user wants to skip all files.
+/// - Unset: no option set yet.
+enum AllOpts {
+    ReplaceAll,
+    SkipAll,
+    Unset,
+}
+
 impl FileTransferActivity {
     pub(crate) fn action_local_saveas(&mut self, input: String) {
         self.local_send_file(TransferOpts::default().save_as(Some(input)));
@@ -60,22 +91,12 @@ impl FileTransferActivity {
                     dest_path.push(save_as);
                 }
                 // Iter files
-                if self.config().get_prompt_on_file_replace() {
-                    // Check which file would be replaced
-                    let existing_files: Vec<&File> = entries
-                        .iter()
-                        .filter(|(x, dest_path)| {
-                            self.remote_file_exists(
-                                Self::file_to_check_many(x, dest_path.as_path()).as_path(),
-                            )
-                        })
-                        .map(|(x, _)| x)
-                        .collect();
-                    // Check whether to replace files
-                    if !existing_files.is_empty() && !self.should_replace_files(existing_files) {
-                        return;
-                    }
-                }
+                let TransferFilesWithOverwritesResult::FilesToTransfer(entries) =
+                    self.get_files_to_transfer_with_overwrites(entries, CheckFileExists::Remote)
+                else {
+                    debug!("User cancelled file transfer due to overwrites");
+                    return;
+                };
                 if let Err(err) = self.filetransfer_send(
                     TransferPayload::TransferQueue(entries),
                     dest_path.as_path(),
@@ -128,23 +149,13 @@ impl FileTransferActivity {
                 if let Some(save_as) = opts.save_as {
                     dest_path.push(save_as);
                 }
-                // Iter files
-                if self.config().get_prompt_on_file_replace() {
-                    // Check which file would be replaced
-                    let existing_files: Vec<&File> = entries
-                        .iter()
-                        .filter(|(x, dest_path)| {
-                            self.host_bridge_file_exists(
-                                Self::file_to_check_many(x, dest_path.as_path()).as_path(),
-                            )
-                        })
-                        .map(|(x, _)| x)
-                        .collect();
-                    // Check whether to replace files
-                    if !existing_files.is_empty() && !self.should_replace_files(existing_files) {
-                        return;
-                    }
-                }
+                let TransferFilesWithOverwritesResult::FilesToTransfer(entries) = self
+                    .get_files_to_transfer_with_overwrites(entries, CheckFileExists::HostBridge)
+                else {
+                    debug!("User cancelled file transfer due to overwrites");
+                    return;
+                };
+
                 if let Err(err) = self.filetransfer_recv(
                     TransferPayload::TransferQueue(entries),
                     dest_path.as_path(),
@@ -172,11 +183,17 @@ impl FileTransferActivity {
         self.mount_radio_replace(&file_name);
         // Wait for answer
         trace!("Asking user whether he wants to replace file {}", file_name);
-        if self.wait_for_pending_msg(&[
-            Msg::PendingAction(PendingActionMsg::CloseReplacePopups),
-            Msg::PendingAction(PendingActionMsg::TransferPendingFile),
-        ]) == Msg::PendingAction(PendingActionMsg::TransferPendingFile)
-        {
+        if matches!(
+            self.wait_for_pending_msg(&[
+                Msg::PendingAction(PendingActionMsg::ReplaceCancel),
+                Msg::PendingAction(PendingActionMsg::ReplaceOverwrite),
+                Msg::PendingAction(PendingActionMsg::ReplaceSkip),
+                Msg::PendingAction(PendingActionMsg::ReplaceSkipAll),
+                Msg::PendingAction(PendingActionMsg::ReplaceOverwriteAll),
+            ]),
+            Msg::PendingAction(PendingActionMsg::ReplaceOverwrite)
+                | Msg::PendingAction(PendingActionMsg::ReplaceOverwriteAll)
+        ) {
             trace!("User wants to replace file");
             self.umount_radio_replace();
             true
@@ -187,28 +204,76 @@ impl FileTransferActivity {
         }
     }
 
-    /// Set pending transfer for many files into storage and mount radio
-    pub(crate) fn should_replace_files(&mut self, files: Vec<&File>) -> bool {
-        let file_names: Vec<String> = files.iter().map(|x| x.name()).collect();
-        self.mount_radio_replace_many(file_names.as_slice());
-        // Wait for answer
-        trace!(
-            "Asking user whether he wants to replace files {:?}",
-            file_names
-        );
-        if self.wait_for_pending_msg(&[
-            Msg::PendingAction(PendingActionMsg::CloseReplacePopups),
-            Msg::PendingAction(PendingActionMsg::TransferPendingFile),
-        ]) == Msg::PendingAction(PendingActionMsg::TransferPendingFile)
-        {
-            trace!("User wants to replace files");
+    /// Get files to replace
+    fn get_files_to_replace(&mut self, files: Vec<(File, PathBuf)>) -> GetFileToReplaceResult {
+        // keep only files the user want to replace
+        let mut files_to_replace = vec![];
+        let mut all_opts = AllOpts::Unset;
+        for (file, p) in files {
+            // Check for all opts
+            match all_opts {
+                AllOpts::ReplaceAll => {
+                    trace!(
+                        "User wants to replace all files, including file {}",
+                        file.name()
+                    );
+                    files_to_replace.push((file, p));
+                    continue;
+                }
+                AllOpts::SkipAll => {
+                    trace!(
+                        "User wants to skip all files, including file {}",
+                        file.name()
+                    );
+                    continue;
+                }
+                AllOpts::Unset => {}
+            }
+
+            let file_name = file.name();
+            self.mount_radio_replace(&file_name);
+
+            // Wait for answer
+            match self.wait_for_pending_msg(&[
+                Msg::PendingAction(PendingActionMsg::ReplaceCancel),
+                Msg::PendingAction(PendingActionMsg::ReplaceOverwrite),
+                Msg::PendingAction(PendingActionMsg::ReplaceSkip),
+                Msg::PendingAction(PendingActionMsg::ReplaceSkipAll),
+                Msg::PendingAction(PendingActionMsg::ReplaceOverwriteAll),
+            ]) {
+                Msg::PendingAction(PendingActionMsg::ReplaceCancel) => {
+                    trace!("The user cancelled the replace operation");
+                    self.umount_radio_replace();
+                    return GetFileToReplaceResult::Cancel;
+                }
+                Msg::PendingAction(PendingActionMsg::ReplaceOverwrite) => {
+                    trace!("User wants to replace file {}", file_name);
+                    files_to_replace.push((file, p));
+                }
+                Msg::PendingAction(PendingActionMsg::ReplaceOverwriteAll) => {
+                    trace!(
+                        "User wants to replace all files from now on, including file {}",
+                        file_name
+                    );
+                    files_to_replace.push((file, p));
+                    all_opts = AllOpts::ReplaceAll;
+                }
+                Msg::PendingAction(PendingActionMsg::ReplaceSkip) => {
+                    trace!("The user skipped file {}", file_name);
+                }
+                Msg::PendingAction(PendingActionMsg::ReplaceSkipAll) => {
+                    trace!(
+                        "The user skipped all files from now on, including file {}",
+                        file_name
+                    );
+                    all_opts = AllOpts::SkipAll;
+                }
+                _ => {}
+            }
             self.umount_radio_replace();
-            true
-        } else {
-            trace!("The user doesn't want replace file");
-            self.umount_radio_replace();
-            false
         }
+
+        GetFileToReplaceResult::Replace(files_to_replace)
     }
 
     /// Get file to check for path
@@ -223,5 +288,41 @@ impl FileTransferActivity {
         let mut p = wrkdir.to_path_buf();
         p.push(e.name());
         p
+    }
+
+    /// Get the files to transfer with overwrites.
+    ///
+    /// Existing and unexisting files are splitted, and only existing files are prompted for replacement.
+    pub(crate) fn get_files_to_transfer_with_overwrites(
+        &mut self,
+        files: Vec<(File, PathBuf)>,
+        file_exists: CheckFileExists,
+    ) -> TransferFilesWithOverwritesResult {
+        if !self.config().get_prompt_on_file_replace() {
+            return TransferFilesWithOverwritesResult::FilesToTransfer(files);
+        }
+
+        // unzip between existing and non-existing files
+        let (existing_files, new_files): (Vec<_>, Vec<_>) =
+            files.into_iter().partition(|(x, dest_path)| {
+                let p = Self::file_to_check_many(x, dest_path);
+                match file_exists {
+                    CheckFileExists::Remote => self.remote_file_exists(p.as_path()),
+                    CheckFileExists::HostBridge => self.host_bridge_file_exists(p.as_path()),
+                }
+            });
+
+        // filter only files to replace
+        let existing_files = match self.get_files_to_replace(existing_files) {
+            GetFileToReplaceResult::Replace(files) => files,
+            GetFileToReplaceResult::Cancel => {
+                return TransferFilesWithOverwritesResult::Cancel;
+            }
+        };
+
+        // merge back
+        TransferFilesWithOverwritesResult::FilesToTransfer(
+            existing_files.into_iter().chain(new_files).collect(),
+        )
     }
 }

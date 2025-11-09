@@ -72,7 +72,6 @@ enum Id {
     QuitPopup,
     RenamePopup,
     ReplacePopup,
-    ReplacingFilesListPopup,
     SaveAsPopup,
     SortingPopup,
     StatusBarHostBridge,
@@ -98,10 +97,14 @@ enum Msg {
 
 #[derive(Debug, PartialEq)]
 enum PendingActionMsg {
-    CloseReplacePopups,
     CloseSyncBrowsingMkdirPopup,
     MakePendingDirectory,
-    TransferPendingFile,
+    /// Replace file popup
+    ReplaceCancel,
+    ReplaceOverwrite,
+    ReplaceOverwriteAll,
+    ReplaceSkip,
+    ReplaceSkipAll,
 }
 
 #[derive(Debug, PartialEq)]
@@ -171,8 +174,8 @@ enum UiMsg {
     MarkAll,
     /// Clear all marks
     MarkClear,
+
     Quit,
-    ReplacePopupTabbed,
     ShowChmodPopup,
     ShowCopyPopup,
     ShowDeletePopup,

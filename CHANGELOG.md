@@ -47,13 +47,15 @@
 Released on 20/09/2025
 
 - [Issue 331](https://github.com/veeso/termscp/issues/331): Added new `import-ssh-hosts` CLI subcommand to import all the hosts from the ssh config as bookmarks.
+- [Issue 335](https://github.com/veeso/termscp/issues/335): Changed file overwrite behaviour
+  - Now the user can choose for each file whether to overwrite, skip or overwrite all/skip all.
+- [Issue 354](https://github.com/veeso/termscp/issues/354):
+  - Removed error popup message if failed to check for updates.
+  - Prevent long timeouts when checking for updates if the network is down or the DNS is not working.
 - [Issue 356](https://github.com/veeso/termscp/issues/356): Fixed SSH auth issue not trying with the password if any RSA key was found.
 - [Issue 334](https://github.com/veeso/termscp/issues/334): SMB support for MacOS with vendored build of libsmbclient.
 - [Issue 337](https://github.com/veeso/termscp/issues/337): Migrated to libssh.org on Linux and MacOS for better ssh agent support.
 - [Issue 361](https://github.com/veeso/termscp/issues/361): Report a message while calculating total size of files to transfer.
-- [Issue 354](https://github.com/veeso/termscp/issues/354):
-  - Removed error popup message if failed to check for updates.
-  - Prevent long timeouts when checking for updates if the network is down or the DNS is not working.
 
 ## 0.18.0
 
