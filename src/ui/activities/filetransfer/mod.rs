@@ -117,6 +117,7 @@ enum TransferMsg {
     DeleteFile,
     EnterDirectory,
     ExecuteCmd(String),
+    GetFileSize,
     GoTo(String),
     GoToParentDirectory,
     GoToPreviousDirectory,

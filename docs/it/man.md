@@ -245,25 +245,25 @@ Per cambiare pannello ti puoi muovere con le frecce, `<LEFT>` per andare sul pan
 | `<BACKTAB>`   | Cambia tra explorer e pannello di log                 |             |
 | `<A>`         | Mostra/nascondi file nascosti                         | All         |
 | `<B>`         | Ordina file per                                       | Bubblesort? |
-| `<C|F5>`      | Copia file/directory                                  | Copy        |
-| `<D|F7>`      | Crea directory                                        | Directory   |
-| `<E|F8|DEL>`  | Elimina file                                          | Erase       |
+| `<C\|F5>`      | Copia file/directory                                  | Copy        |
+| `<D\|F7>`      | Crea directory                                        | Directory   |
+| `<E\|F8\|DEL>`  | Elimina file                                          | Erase       |
 | `<F>`         | Cerca file (wild match supportato)                    | Find        |
 | `<G>`         | Vai al percorso indicato                              | Go to       |
-| `<H|F1>`      | Mostra help                                           | Help        |
+| `<H\|F1>`      | Mostra help                                           | Help        |
 | `<I>`         | Mostra informazioni per il file selezionato           | Info        |
 | `<K>`         | Crea un link simbolico che punta al file selezionato  | symlinK     |
 | `<L>`         | Ricarica posizione corrente / pulisci selezione file  | List        |
 | `<M>`         | Seleziona file                                        | Mark        |
 | `<N>`         | Crea nuovo file con il nome fornito                   | New         |
-| `<O|F4>`      | Modifica file; Vedi text editor                       | Open        |
+| `<O\|F4>`      | Modifica file; Vedi text editor                       | Open        |
 | `<P>`         | Apri pannello log                                     | Panel       |
-| `<Q|F10>`     | Termina termscp                                       | Quit        |
-| `<R|F6>`      | Rinomina file                                         | Rename      |
-| `<S|F2>`      | Salva file con nome                                   | Save        |
+| `<Q\|F10>`     | Termina termscp                                       | Quit        |
+| `<R\|F6>`      | Rinomina file                                         | Rename      |
+| `<S\|F2>`      | Salva file con nome                                   | Save        |
 | `<T>`         | Sincronizza il percorso locale con l'host remoto      | Track       |
 | `<U>`         | Vai alla directory padre                              | Upper       |
-| `<V|F3>`      | Apri il file con il programma definito dal sistema    | View        |
+| `<V\|F3>`      | Apri il file con il programma definito dal sistema    | View        |
 | `<W>`         | Apri il file con il programma specificato             | With        |
 | `<X>`         | Esegui comando shell                                  | eXecute     |
 | `<Y>`         | Abilita/disabilita Sync-Browsing                      | sYnc        |
@@ -272,6 +272,7 @@ Per cambiare pannello ti puoi muovere con le frecce, `<LEFT>` per andare sul pan
 | `<CTRL+A>`    | Seleziona tutti i file                                |             |
 | `<ALT+A>`    | Deseleziona tutti i file                                |             |
 | `<CTRL+C>`    | Annulla trasferimento file                            |             |
+| `<CTRL+S>`  | Ottieni la dimensione totale del percorso selezionato    | Size        |
 | `<CTRL+T>`    | Visualizza tutti i percorsi sincronizzati             | Track       |
 
 ### Lavora con più file 🥷

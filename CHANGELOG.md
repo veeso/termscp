@@ -46,6 +46,7 @@
 
 Released on 20/09/2025
 
+- [Issue 297](https://github.com/veeso/termscp/issues/297): Added `<CTRL+S>` keybinding to get the total size of selected paths.
 - [Issue 331](https://github.com/veeso/termscp/issues/331): Added new `import-ssh-hosts` CLI subcommand to import all the hosts from the ssh config as bookmarks.
 - [Issue 335](https://github.com/veeso/termscp/issues/335): Changed file overwrite behaviour
   - Now the user can choose for each file whether to overwrite, skip or overwrite all/skip all.

@@ -152,6 +152,9 @@ impl FileTransferActivity {
                     _ => panic!("Found tab doesn't support EXEC"),
                 };
             }
+            TransferMsg::GetFileSize => {
+                self.action_get_file_size();
+            }
             TransferMsg::GoTo(dir) => {
                 match self.browser.tab() {
                     FileExplorerTab::HostBridge => self.action_change_local_dir(dir),

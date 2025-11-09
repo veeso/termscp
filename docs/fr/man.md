@@ -249,25 +249,25 @@ Pour changer de panneau, vous devez taper `<LEFT>` pour déplacer le panneau de 
 | `<BACKTAB>`   | Basculer entre l'onglet journal et l'explorateur                          |             |
 | `<A>`         | Basculer les fichiers cachés                                              | All         |
 | `<B>`         | Trier les fichiers par                                                    | Bubblesort? |
-| `<C|F5>`      | Copier le fichier/répertoire                                              | Copy        |
-| `<D|F7>`      | Créer un dossier                                                          | Directory   |
-| `<E|F8|DEL>`  | Supprimer le fichier (Identique à `DEL`)                                  | Erase       |
+| `<C\|F5>`      | Copier le fichier/répertoire                                              | Copy        |
+| `<D\|F7>`      | Créer un dossier                                                          | Directory   |
+| `<E\|F8\|DEL>`  | Supprimer le fichier (Identique à `DEL`)                                  | Erase       |
 | `<F>`         | Rechercher des fichiers                                                   | Find        |
 | `<G>`         | Aller au chemin fourni                                                    | Go to       |
-| `<H|F1>`      | Afficher l'aide                                                           | Help        |
+| `<H\|F1>`      | Afficher l'aide                                                           | Help        |
 | `<I>`         | Afficher les informations sur le fichier ou le dossier sélectionné        | Info        |
 | `<K>`         | Créer un lien symbolique pointant vers l'entrée actuellement sélectionnée | symlinK     |
 | `<L>`         | Recharger le contenu du répertoire actuel / Effacer la sélection          | List        |
 | `<M>`         | Sélectionner un fichier                                                   | Mark        |
 | `<N>`         | Créer un nouveau fichier avec le nom fourni                               | New         |
-| `<O|F4>`      | Modifier le fichier                                                       | Open        |
+| `<O\|F4>`      | Modifier le fichier                                                       | Open        |
 | `<P>`         | Ouvre le panel de journals                                                | Panel       |
-| `<Q|F10>`     | Quitter termscp                                                           | Quit        |
-| `<R|F6>`      | Renommer le fichier                                                       | Rename      |
-| `<S|F2>`      | Enregistrer le fichier sous...                                            | Save        |
+| `<Q\|F10>`     | Quitter termscp                                                           | Quit        |
+| `<R\|F6>`      | Renommer le fichier                                                       | Rename      |
+| `<S\|F2>`      | Enregistrer le fichier sous...                                            | Save        |
 | `<T>`         | Synchroniser les modifications apportées au chemin sélectionné            | Track       |
 | `<U>`         | Aller dans le répertoire parent                                           | Upper       |
-| `<V|F3>`      | Ouvrir le fichier avec le programme défaut pour le type de fichier        | View        |
+| `<V\|F3>`      | Ouvrir le fichier avec le programme défaut pour le type de fichier        | View        |
 | `<W>`         | Ouvrir le fichier avec le programme spécifié                              | With        |
 | `<X>`         | Exécuter une commande                                                     | eXecute     |
 | `<Y>`         | Basculer la navigation synchronisée                                       | sYnc        |
@@ -276,9 +276,10 @@ Pour changer de panneau, vous devez taper `<LEFT>` pour déplacer le panneau de 
 | `<CTRL+A>`    | Sélectionner tous les fichiers                                            |             |
 | `<ALT+A>`    | Desélectionner tous les fichiers                                            |             |
 | `<CTRL+C>`    | Abandonner le processus de transfert de fichiers                          |             |
+| `<CTRL+S>`  | Obtenir la taille totale du chemin sélectionné           | Size |
 | `<CTRL+T>`    | Afficher tous les chemins synchronisés                                    | Track       |
 
-### Travailler sur plusieurs fichiers 🥷 
+### Travailler sur plusieurs fichiers 🥷
 
 Vous pouvez choisir de travailler sur plusieurs fichiers avec ces simples commandes :
 

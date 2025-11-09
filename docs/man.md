@@ -278,6 +278,7 @@ In order to change panel you need to type `<LEFT>` to move the remote explorer p
 | `<CTRL+A>`    | Select all files                                        |             |
 | `<ALT+A>` | Deselect all files                                      |             |
 | `<CTRL+C>`    | Abort file transfer process                             |             |
+| `<CTRL+S>`    | Get total size of the selected path                     | Size        |
 | `<CTRL+T>`    | Show all synchronized paths                             | Track       |
 
 ### Work on multiple files 🥷
