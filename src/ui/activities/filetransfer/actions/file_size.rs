@@ -48,8 +48,8 @@ impl FileTransferActivity {
         if let Some(symlink) = &file.metadata().symlink {
             // stat
             let stat_res = match host {
-                Host::HostBridge => self.host_bridge.stat(&symlink).map_err(|e| e.to_string()),
-                Host::Remote => self.client.stat(&symlink).map_err(|e| e.to_string()),
+                Host::HostBridge => self.host_bridge.stat(symlink).map_err(|e| e.to_string()),
+                Host::Remote => self.client.stat(symlink).map_err(|e| e.to_string()),
             };
             match stat_res {
                 Ok(stat) => stat.metadata().size,
