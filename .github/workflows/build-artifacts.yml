@@ -158,4 +158,4 @@ jobs:
           if-no-files-found: error
           retention-days: 1
           name: termscp-${{ matrix.platform.target }}-deb
-          path: target/${{ matrix.platform.target }}/debian/termscp_${{ env.TERMSCP_VERSION }}_${{ matrix.platform.debian_suffix }}.deb
+          path: target/debian/termscp_${{ env.TERMSCP_VERSION }}-1_${{ matrix.platform.debian_suffix }}.deb
