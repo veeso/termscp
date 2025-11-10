@@ -140,5 +140,5 @@ jobs:
         with:
           if-no-files-found: error
           retention-days: 1
-          name: termscp-${{ matrix.platform.target }}.zip
+          name: termscp-${{ matrix.platform.target }}
           path: target/${{ matrix.platform.target }}/release/termscp.exe
