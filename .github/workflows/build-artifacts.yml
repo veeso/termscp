@@ -111,7 +111,12 @@ jobs:
           brew link --force openldap
           brew link --force zlib
           cpanm Parse::Yapp::Driver
-      - name: Build release
+      - name: Build release (MacOS Intel)
+        if: matrix.platform.target == 'x86_64-apple-darwin'
+        run: cargo build --release --no-default-features --features keyring --target ${{ matrix.platform.target }}
+
+      - name: Build release (others)
+        if: matrix.platform.target != 'x86_64-apple-darwin'
         run: cargo build --release --features smb-vendored --target ${{ matrix.platform.target }}
       - name: Prepare artifact files (Posix)
         if: matrix.platform.platform != 'windows'
