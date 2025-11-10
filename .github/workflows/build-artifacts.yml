@@ -17,7 +17,7 @@ jobs:
             platform: macos
             target: x86_64-apple-darwin
 
-          - release_for: MacOS-M1
+          - release_for: MacOS-aarch64
             os: macos-latest
             platform: macos
             target: aarch64-apple-darwin
