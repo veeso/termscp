@@ -26,6 +26,7 @@ jobs:
             os: ubuntu-latest
             platform: linux
             target: x86_64-unknown-linux-gnu
+            debian_suffix: amd64
 
           - release_for: Windows-x86_64
             os: windows-latest
@@ -118,6 +119,13 @@ jobs:
       - name: Build release (others)
         if: matrix.platform.target != 'x86_64-apple-darwin'
         run: cargo build --release --features smb-vendored --target ${{ matrix.platform.target }}
+
+      - name: Build deb
+        if: matrix.platform.platform == 'linux'
+        run: |
+          cargo install cargo-deb
+          cargo deb --target ${{ matrix.platform.target }} --features smb-vendored
+
       - name: Prepare artifact files (Posix)
         if: matrix.platform.platform != 'windows'
         run: |
@@ -142,3 +150,12 @@ jobs:
           retention-days: 1
           name: termscp-${{ matrix.platform.target }}
           path: target/${{ matrix.platform.target }}/release/termscp.exe
+
+      - name: Upload artifact (Deb)
+        if: matrix.platform.platform == 'linux'
+        uses: actions/upload-artifact@v4
+        with:
+          if-no-files-found: error
+          retention-days: 1
+          name: termscp-${{ matrix.platform.target }}-deb
+          path: target/${{ matrix.platform.target }}/debian/termscp_${{ env.TERMSCP_VERSION }}_${{ matrix.platform.debian_suffix }}.deb
