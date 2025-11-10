@@ -1272,7 +1272,7 @@ dependencies = [
  "libc",
  "option-ext",
  "redox_users",
- "windows-sys 0.59.0",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]
@@ -3022,9 +3022,9 @@ checksum = "df94ce210e5bc13cb6651479fa48d14f601d9858cfe0467f43ae157023b938d3"
 
 [[package]]
 name = "pavao"
-version = "0.2.13"
+version = "0.2.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f7c62e3a544910e4a9bbb56218bad91593b79a27c676e54a36097200d10d2d6e"
+checksum = "f716d52d838ee3062b42302f328d6a3ecfb0006b651707886fa890e8951c7cf7"
 dependencies = [
  "cfg_aliases",
  "lazy_static",
@@ -3036,9 +3036,9 @@ dependencies = [
 
 [[package]]
 name = "pavao-src"
-version = "4.22.0"
+version = "4.22.0-3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "29b20a487b78fd44d081eb16717d062f78cae52888a7affeed1e7da3be1b9247"
+checksum = "18364b5a8ff85f60fcca22e0d21a60f50ab4b9152d51f7358f3b42bbace88aab"
 dependencies = [
  "cc",
  "git2",
@@ -3047,9 +3047,9 @@ dependencies = [
 
 [[package]]
 name = "pavao-sys"
-version = "0.2.13"
+version = "0.2.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a3e72a8efe4193b073995a99981a288cfef121027d12c420c647c2f19d4103d4"
+checksum = "51792a86ac195a0e5b7a942f5b62e8f9494a260a5febe31673c5e7bb72ade55f"
 dependencies = [
  "cc",
  "libc",
