@@ -60,7 +60,7 @@ Released on 20/09/2025
 
 ## 0.18.0
 
-Released on 10/06/2025
+Released on 11/11/2025
 
 - 🐚 An **Embedded shell for termscp**:
   - [Issue 340](https://github.com/veeso/termscp/issues/340): Replaced the `Exec` popup with a **fully functional terminal emulator** embedded thanks to [A-Kenji's tui-term](https://github.com/a-kenji/tui-term).
