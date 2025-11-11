@@ -148,7 +148,7 @@ jobs:
         with:
           if-no-files-found: error
           retention-days: 1
-          name: termscp-${{ matrix.platform.target }}
+          name: termscp-v${{ env.TERMSCP_VERSION }}-${{ matrix.platform.target }}
           path: target/${{ matrix.platform.target }}/release/termscp.exe
 
       - name: Upload artifact (Deb)
