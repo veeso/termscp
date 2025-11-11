@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 env:
-  TERMSCP_VERSION: "0.18.0"
+  TERMSCP_VERSION: "0.19.0"
 
 jobs:
   build-binaries:
@@ -14,13 +14,24 @@ jobs:
         platform:
           - release_for: MacOS-x86_64
             os: macos-latest
+            platform: macos
             target: x86_64-apple-darwin
-            script: macos.sh
 
-          - release_for: MacOS-M1
+          - release_for: MacOS-aarch64
             os: macos-latest
+            platform: macos
             target: aarch64-apple-darwin
-            script: macos.sh
+
+          - release_for: Linux-x86_64
+            os: ubuntu-latest
+            platform: linux
+            target: x86_64-unknown-linux-gnu
+            debian_suffix: amd64
+
+          - release_for: Windows-x86_64
+            os: windows-latest
+            platform: windows
+            target: x86_64-pc-windows-msvc
 
     runs-on: ${{ matrix.platform.os }}
     steps:
@@ -29,18 +40,122 @@ jobs:
         with:
           toolchain: stable
           targets: ${{ matrix.platform.target }}
-      - name: Build release
-        run: cargo build --release --target ${{ matrix.platform.target }}
-      - name: Prepare artifact files
+
+      - name: Install dependencies (Linux)
+        if: matrix.platform.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+          make \
+          libgit2-dev \
+          build-essential \
+          pkg-config \
+          libbsd-dev \
+          libcap-dev \
+          libcups2-dev \
+          libgnutls28-dev \
+          libicu-dev \
+          libjansson-dev \
+          libkeyutils-dev \
+          libldap2-dev \
+          zlib1g-dev \
+          libpam0g-dev \
+          libacl1-dev \
+          libarchive-dev \
+          flex \
+          bison \
+          libntirpc-dev \
+          libtracker-sparql-3.0-dev \
+          libglib2.0-dev \
+          libdbus-1-dev \
+          libsasl2-dev \
+          libunistring-dev \
+          libdbus-1-dev \
+          cpanminus;
+          sudo cpanm Parse::Yapp::Driver
+
+      - name: Install dependencies (MacOS)
+        if: matrix.platform.platform == 'macos'
+        run: |
+          brew update
+          brew install \
+          bison \
+          cpanminus \
+          cups \
+          flex \
+          gettext \
+          gmp \
+          gnutls \
+          icu4c \
+          jansson \
+          libarchive \
+          libbsd \
+          libunistring \
+          libgit2 \
+          libtirpc \
+          openldap \
+          pkg-config \
+          zlib
+          brew link --force bison
+          brew link --force cups
+          brew link --force flex
+          brew link --force gettext
+          brew link --force gmp
+          brew link --force gnutls
+          brew link --force icu4c
+          brew link --force jansson
+          brew link --force libarchive
+          brew link --force libbsd
+          brew link --force libgit2
+          brew link --force libtirpc
+          brew link --force libunistring
+          brew link --force openldap
+          brew link --force zlib
+          cpanm Parse::Yapp::Driver
+      - name: Build release (MacOS Intel)
+        if: matrix.platform.target == 'x86_64-apple-darwin'
+        run: cargo build --release --no-default-features --features keyring --target ${{ matrix.platform.target }}
+
+      - name: Build release (others)
+        if: matrix.platform.target != 'x86_64-apple-darwin'
+        run: cargo build --release --features smb-vendored --target ${{ matrix.platform.target }}
+
+      - name: Build deb
+        if: matrix.platform.platform == 'linux'
+        run: |
+          cargo install cargo-deb
+          cargo deb --target ${{ matrix.platform.target }} --features smb-vendored
+
+      - name: Prepare artifact files (Posix)
+        if: matrix.platform.platform != 'windows'
         run: |
           mkdir -p .artifact
           mv target/${{ matrix.platform.target }}/release/termscp .artifact/termscp
           tar -czf .artifact/termscp-v${{ env.TERMSCP_VERSION }}-${{ matrix.platform.target }}.tar.gz -C .artifact termscp
           ls -l .artifact/
-      - name: "Upload artifact"
+      - name: Upload artifact (Posix)
+        if: matrix.platform.platform != 'windows'
         uses: actions/upload-artifact@v4
         with:
           if-no-files-found: error
           retention-days: 1
           name: termscp-${{ matrix.platform.target }}
           path: .artifact/termscp-v${{ env.TERMSCP_VERSION }}-${{ matrix.platform.target }}.tar.gz
+
+      - name: Upload artifact (Windows)
+        if: matrix.platform.platform == 'windows'
+        uses: actions/upload-artifact@v4
+        with:
+          if-no-files-found: error
+          retention-days: 1
+          name: termscp-${{ matrix.platform.target }}
+          path: target/${{ matrix.platform.target }}/release/termscp.exe
+
+      - name: Upload artifact (Deb)
+        if: matrix.platform.platform == 'linux'
+        uses: actions/upload-artifact@v4
+        with:
+          if-no-files-found: error
+          retention-days: 1
+          name: termscp-${{ matrix.platform.target }}-deb
+          path: target/debian/termscp_${{ env.TERMSCP_VERSION }}-1_${{ matrix.platform.debian_suffix }}.deb

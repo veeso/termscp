@@ -644,6 +644,11 @@ impl KeybindingsPopup {
                         .add_col(TextSpan::new("<CTRL+C>").bold().fg(key_color))
                         .add_col(TextSpan::from("          Interrupt file transfer"))
                         .add_row()
+                        .add_col(TextSpan::new("<CTRL+S>").bold().fg(key_color))
+                        .add_col(TextSpan::from(
+                            "          Get total path size of selected files",
+                        ))
+                        .add_row()
                         .add_col(TextSpan::new("<CTRL+T>").bold().fg(key_color))
                         .add_col(TextSpan::from("          Show watched paths"))
                         .build(),
@@ -1196,7 +1201,7 @@ impl ReplacePopup {
                         .modifiers(BorderType::Rounded),
                 )
                 .foreground(color)
-                .choices(["Yes", "No"])
+                .choices(["Replace", "Skip", "Replace All", "Skip All", "Cancel"])
                 .title(text, Alignment::Center),
         }
     }
@@ -1205,9 +1210,6 @@ impl ReplacePopup {
 impl Component<Msg, NoUserEvent> for ReplacePopup {
     fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
         match ev {
-            Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => {
-                Some(Msg::Ui(UiMsg::ReplacePopupTabbed))
-            }
             Event::Keyboard(KeyEvent {
                 code: Key::Left, ..
             }) => {
@@ -1221,102 +1223,36 @@ impl Component<Msg, NoUserEvent> for ReplacePopup {
                 Some(Msg::None)
             }
             Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
-                Some(Msg::PendingAction(PendingActionMsg::CloseReplacePopups))
+                Some(Msg::PendingAction(PendingActionMsg::ReplaceCancel))
             }
             Event::Keyboard(KeyEvent {
                 code: Key::Char('y'),
                 modifiers: KeyModifiers::NONE,
-            }) => Some(Msg::PendingAction(PendingActionMsg::TransferPendingFile)),
+            }) => Some(Msg::PendingAction(PendingActionMsg::ReplaceOverwrite)),
             Event::Keyboard(KeyEvent {
                 code: Key::Char('n'),
                 modifiers: KeyModifiers::NONE,
-            }) => Some(Msg::PendingAction(PendingActionMsg::CloseReplacePopups)),
+            }) => Some(Msg::PendingAction(PendingActionMsg::ReplaceSkip)),
             Event::Keyboard(KeyEvent {
                 code: Key::Enter, ..
-            }) => {
-                if matches!(
-                    self.perform(Cmd::Submit),
-                    CmdResult::Submit(State::One(StateValue::Usize(0)))
-                ) {
-                    Some(Msg::PendingAction(PendingActionMsg::TransferPendingFile))
-                } else {
-                    Some(Msg::PendingAction(PendingActionMsg::CloseReplacePopups))
+            }) => match self.perform(Cmd::Submit) {
+                CmdResult::Submit(State::One(StateValue::Usize(0))) => {
+                    Some(Msg::PendingAction(PendingActionMsg::ReplaceOverwrite))
                 }
-            }
-            _ => None,
-        }
-    }
-}
-
-#[derive(MockComponent)]
-pub struct ReplacingFilesListPopup {
-    component: List,
-}
-
-impl ReplacingFilesListPopup {
-    pub fn new(files: &[String], color: Color) -> Self {
-        Self {
-            component: List::default()
-                .borders(
-                    Borders::default()
-                        .color(color)
-                        .modifiers(BorderType::Rounded),
-                )
-                .scroll(true)
-                .step(4)
-                .highlighted_color(color)
-                .highlighted_str("➤ ")
-                .title(
-                    "The following files are going to be replaced",
-                    Alignment::Center,
-                )
-                .rows(files.iter().map(|x| vec![TextSpan::from(x)]).collect()),
-        }
-    }
-}
-
-impl Component<Msg, NoUserEvent> for ReplacingFilesListPopup {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
-        match ev {
-            Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
-                Some(Msg::PendingAction(PendingActionMsg::CloseReplacePopups))
-            }
-            Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => {
-                Some(Msg::Ui(UiMsg::ReplacePopupTabbed))
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Down, ..
-            }) => {
-                self.perform(Cmd::Move(Direction::Down));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent { code: Key::Up, .. }) => {
-                self.perform(Cmd::Move(Direction::Up));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::PageDown,
-                ..
-            }) => {
-                self.perform(Cmd::Scroll(Direction::Down));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::PageUp, ..
-            }) => {
-                self.perform(Cmd::Scroll(Direction::Up));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent {
-                code: Key::Home, ..
-            }) => {
-                self.perform(Cmd::GoTo(Position::Begin));
-                Some(Msg::None)
-            }
-            Event::Keyboard(KeyEvent { code: Key::End, .. }) => {
-                self.perform(Cmd::GoTo(Position::End));
-                Some(Msg::None)
-            }
+                CmdResult::Submit(State::One(StateValue::Usize(1))) => {
+                    Some(Msg::PendingAction(PendingActionMsg::ReplaceSkip))
+                }
+                CmdResult::Submit(State::One(StateValue::Usize(2))) => {
+                    Some(Msg::PendingAction(PendingActionMsg::ReplaceOverwriteAll))
+                }
+                CmdResult::Submit(State::One(StateValue::Usize(3))) => {
+                    Some(Msg::PendingAction(PendingActionMsg::ReplaceSkipAll))
+                }
+                CmdResult::Submit(State::One(StateValue::Usize(4))) => {
+                    Some(Msg::PendingAction(PendingActionMsg::ReplaceCancel))
+                }
+                _ => Some(Msg::None),
+            },
             _ => None,
         }
     }

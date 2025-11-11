@@ -8,6 +8,10 @@
       - [Argument d'adresse WebDAV](#argument-dadresse-webdav)
       - [Argument d'adresse SMB](#argument-dadresse-smb)
       - [Comment le mot de passe peut être fourni 🔐](#comment-le-mot-de-passe-peut-être-fourni-)
+    - [Sous-commandes](#sous-commandes)
+      - [Importer un thème](#importer-un-thème)
+      - [Installer la dernière version](#installer-la-dernière-version)
+      - [Importer des hôtes SSH](#importer-des-hôtes-ssh)
   - [S3 paramètres de connexion](#s3-paramètres-de-connexion)
     - [Identifiants S3 🦊](#identifiants-s3-)
   - [Explorateur de fichiers 📂](#explorateur-de-fichiers-)
@@ -142,7 +146,6 @@ syntaxe **Other systems**:
 smb://[username@]<server-name>[:port]/<share>[/path/.../]
 ```
 
-
 #### Comment le mot de passe peut être fourni 🔐
 
 Vous avez probablement remarqué que, lorsque vous fournissez l'adresse comme argument, il n'y a aucun moyen de fournir le mot de passe.
@@ -151,6 +154,22 @@ Le mot de passe peut être fourni de 3 manières lorsque l'argument d'adresse es
 - `-P, --password` option : utilisez simplement cette option CLI en fournissant le mot de passe. Je déconseille fortement cette méthode, car elle n'est pas sécurisée (puisque vous pouvez conserver le mot de passe dans l'historique du shell)
 - Avec `sshpass`: vous pouvez fournir un mot de passe via `sshpass`, par ex. `sshpass -f ~/.ssh/topsecret.key termscp cvisintin@192.168.1.31`
 - Il vous sera demandé : si vous n'utilisez aucune des méthodes précédentes, le mot de passe vous sera demandé, comme c'est le cas avec les outils plus classiques tels que `scp`, `ssh`, etc.
+
+### Sous-commandes
+
+#### Importer un thème
+
+Exécutez termscp avec `termscp theme <fichier-thème>`
+
+#### Installer la dernière version
+
+Exécutez termscp avec `termscp update`
+
+#### Importer des hôtes SSH
+
+Exécutez termscp avec `termscp import-ssh-hosts [fichier-config-ssh]`
+
+Importez tous les hôtes du fichier de configuration SSH spécifié (si non fourni, `~/.ssh/config` sera utilisé) comme favoris dans termscp. Les fichiers d'identité seront également importés comme clés SSH dans termscp.
 
 ---
 
@@ -230,25 +249,25 @@ Pour changer de panneau, vous devez taper `<LEFT>` pour déplacer le panneau de 
 | `<BACKTAB>`   | Basculer entre l'onglet journal et l'explorateur                          |             |
 | `<A>`         | Basculer les fichiers cachés                                              | All         |
 | `<B>`         | Trier les fichiers par                                                    | Bubblesort? |
-| `<C|F5>`      | Copier le fichier/répertoire                                              | Copy        |
-| `<D|F7>`      | Créer un dossier                                                          | Directory   |
-| `<E|F8|DEL>`  | Supprimer le fichier (Identique à `DEL`)                                  | Erase       |
+| `<C\|F5>`      | Copier le fichier/répertoire                                              | Copy        |
+| `<D\|F7>`      | Créer un dossier                                                          | Directory   |
+| `<E\|F8\|DEL>`  | Supprimer le fichier (Identique à `DEL`)                                  | Erase       |
 | `<F>`         | Rechercher des fichiers                                                   | Find        |
 | `<G>`         | Aller au chemin fourni                                                    | Go to       |
-| `<H|F1>`      | Afficher l'aide                                                           | Help        |
+| `<H\|F1>`      | Afficher l'aide                                                           | Help        |
 | `<I>`         | Afficher les informations sur le fichier ou le dossier sélectionné        | Info        |
 | `<K>`         | Créer un lien symbolique pointant vers l'entrée actuellement sélectionnée | symlinK     |
 | `<L>`         | Recharger le contenu du répertoire actuel / Effacer la sélection          | List        |
 | `<M>`         | Sélectionner un fichier                                                   | Mark        |
 | `<N>`         | Créer un nouveau fichier avec le nom fourni                               | New         |
-| `<O|F4>`      | Modifier le fichier                                                       | Open        |
+| `<O\|F4>`      | Modifier le fichier                                                       | Open        |
 | `<P>`         | Ouvre le panel de journals                                                | Panel       |
-| `<Q|F10>`     | Quitter termscp                                                           | Quit        |
-| `<R|F6>`      | Renommer le fichier                                                       | Rename      |
-| `<S|F2>`      | Enregistrer le fichier sous...                                            | Save        |
+| `<Q\|F10>`     | Quitter termscp                                                           | Quit        |
+| `<R\|F6>`      | Renommer le fichier                                                       | Rename      |
+| `<S\|F2>`      | Enregistrer le fichier sous...                                            | Save        |
 | `<T>`         | Synchroniser les modifications apportées au chemin sélectionné            | Track       |
 | `<U>`         | Aller dans le répertoire parent                                           | Upper       |
-| `<V|F3>`      | Ouvrir le fichier avec le programme défaut pour le type de fichier        | View        |
+| `<V\|F3>`      | Ouvrir le fichier avec le programme défaut pour le type de fichier        | View        |
 | `<W>`         | Ouvrir le fichier avec le programme spécifié                              | With        |
 | `<X>`         | Exécuter une commande                                                     | eXecute     |
 | `<Y>`         | Basculer la navigation synchronisée                                       | sYnc        |
@@ -257,9 +276,10 @@ Pour changer de panneau, vous devez taper `<LEFT>` pour déplacer le panneau de 
 | `<CTRL+A>`    | Sélectionner tous les fichiers                                            |             |
 | `<ALT+A>`    | Desélectionner tous les fichiers                                            |             |
 | `<CTRL+C>`    | Abandonner le processus de transfert de fichiers                          |             |
+| `<CTRL+S>`  | Obtenir la taille totale du chemin sélectionné           | Size |
 | `<CTRL+T>`    | Afficher tous les chemins synchronisés                                    | Track       |
 
-### Travailler sur plusieurs fichiers 🥷 
+### Travailler sur plusieurs fichiers 🥷
 
 Vous pouvez choisir de travailler sur plusieurs fichiers avec ces simples commandes :
 

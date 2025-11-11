@@ -193,6 +193,10 @@ impl ExplorerFuzzy {
                 modifiers: KeyModifiers::NONE,
             }) => Some(Msg::Ui(UiMsg::ShowFileInfoPopup)),
             Event::Keyboard(KeyEvent {
+                code: Key::Char('s'),
+                modifiers: KeyModifiers::CONTROL,
+            }) => Some(Msg::Transfer(TransferMsg::GetFileSize)),
+            Event::Keyboard(KeyEvent {
                 code: Key::Char('s') | Key::Function(2),
                 modifiers: KeyModifiers::NONE,
             }) => Some(Msg::Ui(UiMsg::ShowSaveAsPopup)),
@@ -338,6 +342,10 @@ impl Component<Msg, NoUserEvent> for ExplorerFind {
                 code: Key::Char('i'),
                 modifiers: KeyModifiers::NONE,
             }) => Some(Msg::Ui(UiMsg::ShowFileInfoPopup)),
+            Event::Keyboard(KeyEvent {
+                code: Key::Char('s'),
+                modifiers: KeyModifiers::CONTROL,
+            }) => Some(Msg::Transfer(TransferMsg::GetFileSize)),
             Event::Keyboard(KeyEvent {
                 code: Key::Char('s') | Key::Function(2),
                 modifiers: KeyModifiers::NONE,
@@ -528,6 +536,10 @@ impl Component<Msg, NoUserEvent> for ExplorerLocal {
                 code: Key::Char('r') | Key::Function(6),
                 modifiers: KeyModifiers::NONE,
             }) => Some(Msg::Ui(UiMsg::ShowRenamePopup)),
+            Event::Keyboard(KeyEvent {
+                code: Key::Char('s'),
+                modifiers: KeyModifiers::CONTROL,
+            }) => Some(Msg::Transfer(TransferMsg::GetFileSize)),
             Event::Keyboard(KeyEvent {
                 code: Key::Char('s') | Key::Function(2),
                 modifiers: KeyModifiers::NONE,
@@ -742,6 +754,10 @@ impl Component<Msg, NoUserEvent> for ExplorerRemote {
                 code: Key::Char('r') | Key::Function(6),
                 modifiers: KeyModifiers::NONE,
             }) => Some(Msg::Ui(UiMsg::ShowRenamePopup)),
+            Event::Keyboard(KeyEvent {
+                code: Key::Char('s'),
+                modifiers: KeyModifiers::CONTROL,
+            }) => Some(Msg::Transfer(TransferMsg::GetFileSize)),
             Event::Keyboard(KeyEvent {
                 code: Key::Char('s') | Key::Function(2),
                 modifiers: KeyModifiers::NONE,

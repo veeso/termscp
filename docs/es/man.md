@@ -8,6 +8,10 @@
       - [Argumento de dirección de WebDAV](#argumento-de-dirección-de-webdav)
       - [Argumento dirección por SMB](#argumento-dirección-por-smb)
       - [Cómo se puede proporcionar la contraseña 🔐](#cómo-se-puede-proporcionar-la-contraseña-)
+    - [Subcomandos](#subcomandos)
+      - [Importar un tema](#importar-un-tema)
+      - [Instalar la versión más reciente](#instalar-la-versión-más-reciente)
+      - [Importar hosts SSH](#importar-hosts-ssh)
   - [S3 parámetros de conexión](#s3-parámetros-de-conexión)
     - [Credenciales de S3 🦊](#credenciales-de-s3-)
   - [Explorador de archivos 📂](#explorador-de-archivos-)
@@ -153,6 +157,22 @@ La contraseña se puede proporcionar básicamente a través de 3 formas cuando s
 - Con `sshpass`: puede proporcionar la contraseña a través de `sshpass`, p. ej. `sshpass -f ~/.ssh/topsecret.key termscp cvisintin@192.168.1.31`
 - Se te pedirá que ingreses: si no utilizas ninguno de los métodos anteriores, se te pedirá la contraseña, como ocurre con las herramientas más clásicas como `scp`, `ssh`, etc.
 
+### Subcomandos
+
+#### Importar un tema
+
+Ejecute termscp como `termscp theme <archivo-tema>`
+
+#### Instalar la versión más reciente
+
+Ejecute termscp como `termscp update`
+
+#### Importar hosts SSH
+
+Ejecute termscp como `termscp import-ssh-hosts [archivo-config-ssh]`
+
+Importa todos los hosts del archivo de configuración SSH especificado (si no se proporciona, se usará `~/.ssh/config`) como marcadores en termscp. Los archivos de identidad también se importarán como claves SSH en termscp.
+
 ---
 
 ## S3 parámetros de conexión
@@ -231,25 +251,25 @@ Para cambiar de panel, debe escribir `<LEFT>` para mover el panel del explorador
 | `<BACKTAB>`   | Cambiar entre la pestaña de registro y el explorador                       |             |
 | `<A>`         | Alternar archivos ocultos                                                  | All         |
 | `<B>`         | Ordenar archivos por                                                       | Bubblesort? |
-| `<C|F5>`      | Copiar archivo / directorio                                                | Copy        |
-| `<D|F7>`      | Hacer directorio                                                           | Directory   |
-| `<E|F8|DEL>`  | Eliminar archivo                                                           | Erase       |
+| `<C\|F5>`      | Copiar archivo / directorio                                                | Copy        |
+| `<D\|F7>`      | Hacer directorio                                                           | Directory   |
+| `<E\|F8\|DEL>`  | Eliminar archivo                                                           | Erase       |
 | `<F>`         | Búsqueda de archivos                                                       | Find        |
 | `<G>`         | Ir a la ruta proporcionada                                                 | Go to       |
-| `<H|F1>`      | Mostrar ayuda                                                              | Help        |
+| `<H\|F1>`      | Mostrar ayuda                                                              | Help        |
 | `<I>`         | Mostrar información sobre el archivo                                       | Info        |
 | `<K>`         | Crear un enlace simbólico que apunte a la entrada seleccionada actualmente | symlinK     |
 | `<L>`         | Recargar contenido del directorio / Borrar selección                       | List        |
 | `<M>`         | Seleccione un archivo                                                      | Mark        |
 | `<N>`         | Crear un nuevo archivo con el nombre proporcionado                         | New         |
-| `<O|F4>`      | Editar archivo                                                             | Open        |
+| `<O\|F4>`      | Editar archivo                                                             | Open        |
 | `<P>`         | Open log panel                                          | Panel       |
-| `<Q|F10>`     | Salir de termscp                                                           | Quit        |
-| `<R|F6>`      | Renombrar archivo                                                          | Rename      |
-| `<S|F2>`      | Guardar archivo como...                                                    | Save        |
+| `<Q\|F10>`     | Salir de termscp                                                           | Quit        |
+| `<R\|F6>`      | Renombrar archivo                                                          | Rename      |
+| `<S\|F2>`      | Guardar archivo como...                                                    | Save        |
 | `<T>`         | Sincronizar los cambios en la ruta seleccionada con el control remoto      | Track       |
 | `<U>`         | Ir al directorio principal                                                 | Upper       |
-| `<V|F3>`      | Abrir archivo con el programa predeterminado                               | View        |
+| `<V\|F3>`      | Abrir archivo con el programa predeterminado                               | View        |
 | `<W>`         | Abrir archivo con el programa proporcionado                                | With        |
 | `<X>`         | Ejecutar un comando                                                        | eXecute     |
 | `<Y>`         | Alternar navegación sincronizada                                           | sYnc        |
@@ -258,9 +278,10 @@ Para cambiar de panel, debe escribir `<LEFT>` para mover el panel del explorador
 | `<CTRL+A>`    | Seleccionar todos los archivos                                             |             |
 | `<ALT+A>`    | Deseleccionar todos los archivos                                             |             |
 | `<CTRL+C>`    | Abortar el proceso de transferencia de archivos                            |             |
+| `<CTRL+S>`  | Obtener el tamaño total de la ruta seleccionada                               | Size        |
 | `<CTRL+T>`    | Mostrar todas las rutas sincronizadas                                      | Track       |
 
-### Trabajar con múltiples archivos 🥷 
+### Trabajar con múltiples archivos 🥷
 
 Puedes optar por trabajar con varios archivos, usando estos controles:
 

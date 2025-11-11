@@ -8,6 +8,10 @@
       - [Argomento indirizzo per WebDAV](#argomento-indirizzo-per-webdav)
       - [Indirizzo SMB](#indirizzo-smb)
       - [Come fornire la password 🔐](#come-fornire-la-password-)
+    - [Sottocomandi](#sottocomandi)
+      - [Importare un tema](#importare-un-tema)
+      - [Installare l’ultima versione](#installare-lultima-versione)
+      - [Importare host SSH](#importare-host-ssh)
   - [Parametri di connessione S3](#parametri-di-connessione-s3)
     - [Credenziali S3 🦊](#credenziali-s3-)
   - [File explorer 📂](#file-explorer-)
@@ -140,7 +144,6 @@ SMB ha una sintassi differente rispetto agli altri protocolli e cambia in base a
 smb://[username@]<server-name>[:port]/<share>[/path/.../]
 ```
 
-
 #### Come fornire la password 🔐
 
 Quando si usa l'argomento indirizzo non è possibile fornire la password direttamente nell'argomento, esistono però altri metodi per farlo:
@@ -148,6 +151,22 @@ Quando si usa l'argomento indirizzo non è possibile fornire la password diretta
 - Argomento `-P, --password <password>`: Passa direttamente la password nell'argomento. Non lo consiglio particolarmente questo metodo, in quanto la password rimarrebbe nella history della shell in chiaro.
 - Tramite `sshpass`: puoi fornire la password tramite l'applicazione GNU/Linux sshpass `sshpass -f ~/.ssh/topsecret.key termscp cvisintin@192.168.1.31`
 - Forniscila quando richiesta: se non la fornisci tramite nessun metodo precedente, alla connessione ti verrà richiesto di fornirla in un prompt che la oscurerà (come avviene con sudo tipo).
+
+### Sottocomandi
+
+#### Importare un tema
+
+Esegui termscp come `termscp theme <file-tema>`
+
+#### Installare l’ultima versione
+
+Esegui termscp come `termscp update`
+
+#### Importare host SSH
+
+Esegui termscp come `termscp import-ssh-hosts [file-config-ssh]`
+
+Importa tutti gli host dal file di configurazione SSH specificato (se non fornito, verrà usato `~/.ssh/config`) come segnalibri in termscp. I file di identità verranno importati come chiavi SSH in termscp.
 
 ---
 
@@ -226,25 +245,25 @@ Per cambiare pannello ti puoi muovere con le frecce, `<LEFT>` per andare sul pan
 | `<BACKTAB>`   | Cambia tra explorer e pannello di log                 |             |
 | `<A>`         | Mostra/nascondi file nascosti                         | All         |
 | `<B>`         | Ordina file per                                       | Bubblesort? |
-| `<C|F5>`      | Copia file/directory                                  | Copy        |
-| `<D|F7>`      | Crea directory                                        | Directory   |
-| `<E|F8|DEL>`  | Elimina file                                          | Erase       |
+| `<C\|F5>`      | Copia file/directory                                  | Copy        |
+| `<D\|F7>`      | Crea directory                                        | Directory   |
+| `<E\|F8\|DEL>`  | Elimina file                                          | Erase       |
 | `<F>`         | Cerca file (wild match supportato)                    | Find        |
 | `<G>`         | Vai al percorso indicato                              | Go to       |
-| `<H|F1>`      | Mostra help                                           | Help        |
+| `<H\|F1>`      | Mostra help                                           | Help        |
 | `<I>`         | Mostra informazioni per il file selezionato           | Info        |
 | `<K>`         | Crea un link simbolico che punta al file selezionato  | symlinK     |
 | `<L>`         | Ricarica posizione corrente / pulisci selezione file  | List        |
 | `<M>`         | Seleziona file                                        | Mark        |
 | `<N>`         | Crea nuovo file con il nome fornito                   | New         |
-| `<O|F4>`      | Modifica file; Vedi text editor                       | Open        |
+| `<O\|F4>`      | Modifica file; Vedi text editor                       | Open        |
 | `<P>`         | Apri pannello log                                     | Panel       |
-| `<Q|F10>`     | Termina termscp                                       | Quit        |
-| `<R|F6>`      | Rinomina file                                         | Rename      |
-| `<S|F2>`      | Salva file con nome                                   | Save        |
+| `<Q\|F10>`     | Termina termscp                                       | Quit        |
+| `<R\|F6>`      | Rinomina file                                         | Rename      |
+| `<S\|F2>`      | Salva file con nome                                   | Save        |
 | `<T>`         | Sincronizza il percorso locale con l'host remoto      | Track       |
 | `<U>`         | Vai alla directory padre                              | Upper       |
-| `<V|F3>`      | Apri il file con il programma definito dal sistema    | View        |
+| `<V\|F3>`      | Apri il file con il programma definito dal sistema    | View        |
 | `<W>`         | Apri il file con il programma specificato             | With        |
 | `<X>`         | Esegui comando shell                                  | eXecute     |
 | `<Y>`         | Abilita/disabilita Sync-Browsing                      | sYnc        |
@@ -253,6 +272,7 @@ Per cambiare pannello ti puoi muovere con le frecce, `<LEFT>` per andare sul pan
 | `<CTRL+A>`    | Seleziona tutti i file                                |             |
 | `<ALT+A>`    | Deseleziona tutti i file                                |             |
 | `<CTRL+C>`    | Annulla trasferimento file                            |             |
+| `<CTRL+S>`  | Ottieni la dimensione totale del percorso selezionato    | Size        |
 | `<CTRL+T>`    | Visualizza tutti i percorsi sincronizzati             | Track       |
 
 ### Lavora con più file 🥷

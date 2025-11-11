@@ -15,6 +15,9 @@ use crate::system::logging::LogLevel;
 
 pub enum Task {
     Activity(NextActivity),
+    /// Import ssh hosts from the specified ssh config file, or from the default location
+    /// and save them as bookmarks.
+    ImportSshHosts(Option<PathBuf>),
     ImportTheme(PathBuf),
     InstallUpdate,
     Version,
@@ -72,7 +75,8 @@ pub struct Args {
 #[argh(subcommand)]
 pub enum ArgsSubcommands {
     Config(ConfigArgs),
-    LoadTheme(LoadThemeArgs),
+    ImportSshHosts(ImportSshHostsArgs),
+    ImportTheme(ImportThemeArgs),
     Update(UpdateArgs),
 }
 
@@ -87,9 +91,19 @@ pub struct ConfigArgs {}
 pub struct UpdateArgs {}
 
 #[derive(FromArgs)]
+/// import ssh hosts from the specified ssh config file, or from the default location
+/// and save them as bookmarks.
+#[argh(subcommand, name = "import-ssh-hosts")]
+pub struct ImportSshHostsArgs {
+    #[argh(positional)]
+    /// optional ssh config file; if not specified, the default location will be used
+    pub ssh_config: Option<PathBuf>,
+}
+
+#[derive(FromArgs)]
 /// import the specified theme
 #[argh(subcommand, name = "theme")]
-pub struct LoadThemeArgs {
+pub struct ImportThemeArgs {
     #[argh(positional)]
     /// theme file
     pub theme: PathBuf,
@@ -114,6 +128,14 @@ impl RunOpts {
     pub fn update() -> Self {
         Self {
             task: Task::InstallUpdate,
+            ..Default::default()
+        }
+    }
+
+    pub fn import_ssh_hosts(ssh_config: Option<PathBuf>, keyring: bool) -> Self {
+        Self {
+            task: Task::ImportSshHosts(ssh_config),
+            keyring,
             ..Default::default()
         }
     }

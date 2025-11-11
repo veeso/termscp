@@ -72,7 +72,6 @@ enum Id {
     QuitPopup,
     RenamePopup,
     ReplacePopup,
-    ReplacingFilesListPopup,
     SaveAsPopup,
     SortingPopup,
     StatusBarHostBridge,
@@ -98,10 +97,14 @@ enum Msg {
 
 #[derive(Debug, PartialEq)]
 enum PendingActionMsg {
-    CloseReplacePopups,
     CloseSyncBrowsingMkdirPopup,
     MakePendingDirectory,
-    TransferPendingFile,
+    /// Replace file popup
+    ReplaceCancel,
+    ReplaceOverwrite,
+    ReplaceOverwriteAll,
+    ReplaceSkip,
+    ReplaceSkipAll,
 }
 
 #[derive(Debug, PartialEq)]
@@ -114,6 +117,7 @@ enum TransferMsg {
     DeleteFile,
     EnterDirectory,
     ExecuteCmd(String),
+    GetFileSize,
     GoTo(String),
     GoToParentDirectory,
     GoToPreviousDirectory,
@@ -171,8 +175,8 @@ enum UiMsg {
     MarkAll,
     /// Clear all marks
     MarkClear,
+
     Quit,
-    ReplacePopupTabbed,
     ShowChmodPopup,
     ShowCopyPopup,
     ShowDeletePopup,
@@ -506,10 +510,10 @@ impl Activity for FileTransferActivity {
     /// This function must be called once before terminating the activity.
     fn on_destroy(&mut self) -> Option<Context> {
         // Destroy cache
-        if let Some(cache) = self.cache.take() {
-            if let Err(err) = cache.close() {
-                error!("Failed to delete cache: {}", err);
-            }
+        if let Some(cache) = self.cache.take()
+            && let Err(err) = cache.close()
+        {
+            error!("Failed to delete cache: {}", err);
         }
         // Disable raw mode
         if let Err(err) = self.context_mut().terminal().disable_raw_mode() {

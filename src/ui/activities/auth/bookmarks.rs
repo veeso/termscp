@@ -30,13 +30,13 @@ impl AuthActivity {
     pub(super) fn load_bookmark(&mut self, form_tab: FormTab, idx: usize) {
         if let Some(bookmarks_cli) = self.bookmarks_client() {
             // Iterate over bookmarks
-            if let Some(key) = self.bookmarks_list.get(idx) {
-                if let Some(bookmark) = bookmarks_cli.get_bookmark(key) {
-                    // Load parameters into components
-                    match form_tab {
-                        FormTab::Remote => self.load_remote_bookmark_into_gui(bookmark),
-                        FormTab::HostBridge => self.load_host_bridge_bookmark_into_gui(bookmark),
-                    }
+            if let Some(key) = self.bookmarks_list.get(idx)
+                && let Some(bookmark) = bookmarks_cli.get_bookmark(key)
+            {
+                // Load parameters into components
+                match form_tab {
+                    FormTab::Remote => self.load_remote_bookmark_into_gui(bookmark),
+                    FormTab::HostBridge => self.load_host_bridge_bookmark_into_gui(bookmark),
                 }
             }
         }
@@ -99,13 +99,13 @@ impl AuthActivity {
     pub(super) fn load_recent(&mut self, form_tab: FormTab, idx: usize) {
         if let Some(client) = self.bookmarks_client() {
             // Iterate over bookmarks
-            if let Some(key) = self.recents_list.get(idx) {
-                if let Some(bookmark) = client.get_recent(key) {
-                    // Load parameters
-                    match form_tab {
-                        FormTab::Remote => self.load_remote_bookmark_into_gui(bookmark),
-                        FormTab::HostBridge => self.load_host_bridge_bookmark_into_gui(bookmark),
-                    }
+            if let Some(key) = self.recents_list.get(idx)
+                && let Some(bookmark) = client.get_recent(key)
+            {
+                // Load parameters
+                match form_tab {
+                    FormTab::Remote => self.load_remote_bookmark_into_gui(bookmark),
+                    FormTab::HostBridge => self.load_host_bridge_bookmark_into_gui(bookmark),
                 }
             }
         }
@@ -129,10 +129,10 @@ impl AuthActivity {
 
     /// Write bookmarks to file
     fn write_bookmarks(&mut self) {
-        if let Some(bookmarks_cli) = self.bookmarks_client() {
-            if let Err(err) = bookmarks_cli.write_bookmarks() {
-                self.mount_error(format!("Could not write bookmarks: {err}").as_str());
-            }
+        if let Some(bookmarks_cli) = self.bookmarks_client()
+            && let Err(err) = bookmarks_cli.write_bookmarks()
+        {
+            self.mount_error(format!("Could not write bookmarks: {err}").as_str());
         }
     }
 

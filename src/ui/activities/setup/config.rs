@@ -77,16 +77,11 @@ impl SetupActivity {
                     Some(key) => {
                         // Get key path
                         match ctx.config().get_ssh_key(key) {
-                            Ok(ssh_key) => match ssh_key {
-                                None => Ok(()),
-                                Some((_, _, key_path)) => {
-                                    match edit::edit_file(key_path.as_path()) {
-                                        Ok(_) => Ok(()),
-                                        Err(err) => Err(format!("Could not edit ssh key: {err}")),
-                                    }
-                                }
+                            None => Ok(()),
+                            Some((_, _, key_path)) => match edit::edit_file(key_path.as_path()) {
+                                Ok(_) => Ok(()),
+                                Err(err) => Err(format!("Could not edit ssh key: {err}")),
                             },
-                            Err(err) => Err(format!("Could not read ssh key: {err}")),
                         }
                     }
                     None => Ok(()),

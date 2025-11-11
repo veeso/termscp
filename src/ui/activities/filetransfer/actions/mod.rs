@@ -23,6 +23,7 @@ pub(crate) mod copy;
 pub(crate) mod delete;
 pub(crate) mod edit;
 pub(crate) mod exec;
+pub(crate) mod file_size;
 pub(crate) mod filter;
 pub(crate) mod find;
 pub(crate) mod mark;

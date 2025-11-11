@@ -10,8 +10,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         posix: { target_family = "unix" },
         win: { target_family = "windows" },
         // exclusive features
-        smb: { all(feature = "smb", not( macos )) },
-        smb_unix: { all(unix, feature = "smb", not(macos)) },
+        smb: { feature = "smb" },
+        smb_unix: { all(unix, feature = "smb") },
         smb_windows: { all(windows, feature = "smb") }
     }
 

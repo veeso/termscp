@@ -22,7 +22,7 @@ extern crate log;
 extern crate magic_crypt;
 
 use std::env;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 use self::activity_manager::{ActivityManager, NextActivity};
@@ -72,7 +72,10 @@ fn main() -> MainResult<()> {
 fn parse_args(args: Args) -> Result<RunOpts, String> {
     let run_opts = match args.nested {
         Some(ArgsSubcommands::Update(_)) => RunOpts::update(),
-        Some(ArgsSubcommands::LoadTheme(args)) => RunOpts::import_theme(args.theme),
+        Some(ArgsSubcommands::ImportSshHosts(subargs)) => {
+            RunOpts::import_ssh_hosts(subargs.ssh_config, !args.wno_keyring)
+        }
+        Some(ArgsSubcommands::ImportTheme(args)) => RunOpts::import_theme(args.theme),
         Some(ArgsSubcommands::Config(_)) => RunOpts::config(),
         None => {
             let mut run_opts: RunOpts = RunOpts::default();
@@ -111,10 +114,10 @@ fn parse_args(args: Args) -> Result<RunOpts, String> {
             };
 
             // Local directory
-            if let Some(localdir) = run_opts.remote.local_dir.as_deref() {
-                if let Err(err) = env::set_current_dir(localdir) {
-                    return Err(format!("Bad working directory argument: {err}"));
-                }
+            if let Some(localdir) = run_opts.remote.local_dir.as_deref()
+                && let Err(err) = env::set_current_dir(localdir)
+            {
+                return Err(format!("Bad working directory argument: {err}"));
             }
 
             run_opts
@@ -127,6 +130,7 @@ fn parse_args(args: Args) -> Result<RunOpts, String> {
 /// Run task and return rc
 fn run(run_opts: RunOpts) -> MainResult<()> {
     match run_opts.task {
+        Task::ImportSshHosts(ssh_config) => run_import_ssh_hosts(ssh_config, run_opts.keyring),
         Task::ImportTheme(theme) => run_import_theme(&theme),
         Task::InstallUpdate => run_install_update(),
         Task::Activity(activity) => {
@@ -143,6 +147,17 @@ fn print_version() -> MainResult<()> {
     );
 
     Ok(())
+}
+
+fn run_import_ssh_hosts(ssh_config_path: Option<PathBuf>, keyring: bool) -> MainResult<()> {
+    support::import_ssh_hosts(ssh_config_path, keyring)
+        .map(|_| {
+            println!("SSH hosts have been successfully imported!");
+        })
+        .map_err(|err| {
+            eprintln!("{err}");
+            err.into()
+        })
 }
 
 fn run_import_theme(theme: &Path) -> MainResult<()> {

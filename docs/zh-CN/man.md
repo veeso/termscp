@@ -8,6 +8,10 @@
       - [WebDAV 地址参数](#webdav-地址参数)
       - [SMB 地址参数](#smb-地址参数)
       - [如何输入密码](#如何输入密码)
+    - [子命令](#子命令)
+      - [导入主题](#导入主题)
+      - [安装最新版本](#安装最新版本)
+      - [导入 SSH 主机](#导入-ssh-主机)
   - [S3 连接参数](#s3-连接参数)
     - [Aws S3 凭证](#aws-s3-凭证)
   - [文件浏览](#文件浏览)
@@ -149,6 +153,21 @@ smb://[username@]<server-name>[:port]/<share>[/path/.../]
 - 通过 `sshpass`: 你可以通过 `sshpass` 传入密码, 例如： `sshpass -f ~/.ssh/topsecret.key termscp cvisintin@192.168.1.31`
 - 提示输入密码：如果你不使用前面的任何方法，你会被提示输入密码，就像 `scp`、`ssh` 等比较经典的工具上一样。
 
+### 子命令
+
+#### 导入主题
+
+以 termscp theme <theme-file> 的方式运行 termscp。
+
+#### 安装最新版本
+
+以 termscp update 的方式运行 termscp。
+
+#### 导入 SSH 主机
+
+以 `termscp import-ssh-hosts [ssh-config-file]` 的方式运行 termscp。
+从指定的 SSH 配置文件中导入所有主机（如果未提供，则使用 `~/.ssh/config`）作为 termscp 中的书签。身份文件也会作为 SSH 密钥导入到 termscp 中。
+
 ---
 
 ## S3 连接参数
@@ -226,25 +245,25 @@ termscp中的文件资源管理器是指你与远程建立连接后可以看到�
 | `<BACKTAB>`   | 在日志面板和管理器面板之间切换                        |             |
 | `<A>`         | 是否显示隐藏文件                                      | All         |
 | `<B>`         | 按..排序                                              | Bubblesort? |
-| `<C|F5>`      | 复制文件（夹）                                        | Copy        |
-| `<D|F7>`      | 创建文件夹                                            | Directory   |
-| `<E|F8|DEL>`  | 删除文件                                    | Erase       |
+| `<C\|F5>`      | 复制文件（夹）                                        | Copy        |
+| `<D\|F7>`      | 创建文件夹                                            | Directory   |
+| `<E\|F8\|DEL>`  | 删除文件                                    | Erase       |
 | `<F>`         | 文件搜索 (支持通配符)                                 | Find        |
 | `<G>`         | 跳转到指定路径                                        | Go to       |
-| `<H|F1>`      | 显示帮助                                              | Help        |
+| `<H\|F1>`      | 显示帮助                                              | Help        |
 | `<I>`         | 显示选中文件（夹）信息                                | Info        |
 | `<K>`         | 创建指向当前选定条目的符号链接 | symlinK     |
 | `<L>`         | 刷新当前目录列表 / 清除选中状态                       | List        |
 | `<M>`         | 选中文件                                              | Mark        |
 | `<N>`         | 使用键入的名称新建文件                                | New         |
-| `<O|F4>`      | 编辑文件；参考文本编辑器文档                          | Open        |
+| `<O\|F4>`      | 编辑文件；参考文本编辑器文档                          | Open        |
 | `<P>`         | 打开日志面板                                          | Panel       |
-| `<Q|F10>`     | 退出termscp                                           | Quit        |
-| `<R|F7>`      | 重命名文件                                            | Rename      |
-| `<S|F2>`      | 另存为...                                             | Save        |
+| `<Q\|F10>`     | 退出termscp                                           | Quit        |
+| `<R\|F7>`      | 重命名文件                                            | Rename      |
+| `<S\|F2>`      | 另存为...                                             | Save        |
 | `<T>`         | 显示所有同步路径          | Track       |
 | `<U>`         | 进入上层目录                                          | Upper       |
-| `<V|F3>`      | 使用默认方式打开文件                                  | View        |
+| `<V\|F3>`      | 使用默认方式打开文件                                  | View        |
 | `<W>`         | 使用指定程序打开文件                                  | With        |
 | `<X>`         | 运行命令                                              | eXecute     |
 | `<Y>`         | 是否开启同步浏览                                      | sYnc        |
@@ -253,6 +272,7 @@ termscp中的文件资源管理器是指你与远程建立连接后可以看到�
 | `<CTRL+A>`    | 选中所有文件                                          |             |
 | `<ALT+A>`    | 取消选择所有文件                                          |             |
 | `<CTRL+C>`    | 终止文件传输                                          |             |
+| `<CTRL+S>`  | 获取所选路径的总大小                                       | Size        |
 | `<CTRL+T>`    | 显示所有同步路径                             | Track       |
 
 ### 操作多个文件 🥷

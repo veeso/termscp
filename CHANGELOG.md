@@ -1,6 +1,7 @@
 # Changelog
 
 - [Changelog](#changelog)
+  - [0.19.0](#0190)
   - [0.18.0](#0180)
   - [0.17.0](#0170)
   - [0.16.1](#0161)
@@ -41,9 +42,25 @@
 
 ---
 
+## 0.19.0
+
+Released on 11/11/2025
+
+- [Issue 297](https://github.com/veeso/termscp/issues/297): Added `<CTRL+S>` keybinding to get the total size of selected paths.
+- [Issue 331](https://github.com/veeso/termscp/issues/331): Added new `import-ssh-hosts` CLI subcommand to import all the hosts from the ssh config as bookmarks.
+- [Issue 335](https://github.com/veeso/termscp/issues/335): Changed file overwrite behaviour
+  - Now the user can choose for each file whether to overwrite, skip or overwrite all/skip all.
+- [Issue 354](https://github.com/veeso/termscp/issues/354):
+  - Removed error popup message if failed to check for updates.
+  - Prevent long timeouts when checking for updates if the network is down or the DNS is not working.
+- [Issue 356](https://github.com/veeso/termscp/issues/356): Fixed SSH auth issue not trying with the password if any RSA key was found.
+- [Issue 334](https://github.com/veeso/termscp/issues/334): SMB support for MacOS with vendored build of libsmbclient.
+- [Issue 337](https://github.com/veeso/termscp/issues/337): Migrated to libssh.org on Linux and MacOS for better ssh agent support.
+- [Issue 361](https://github.com/veeso/termscp/issues/361): Report a message while calculating total size of files to transfer.
+
 ## 0.18.0
 
-Released on 10/06/2025
+Released on 11/11/2025
 
 - 🐚 An **Embedded shell for termscp**:
   - [Issue 340](https://github.com/veeso/termscp/issues/340): Replaced the `Exec` popup with a **fully functional terminal emulator** embedded thanks to [A-Kenji's tui-term](https://github.com/a-kenji/tui-term).

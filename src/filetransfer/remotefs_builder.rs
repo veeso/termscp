@@ -13,6 +13,10 @@ use remotefs_kube::KubeMultiPodFs as KubeFs;
 use remotefs_smb::SmbOptions;
 #[cfg(smb)]
 use remotefs_smb::{SmbCredentials, SmbFs};
+#[cfg(windows)]
+use remotefs_ssh::LibSsh2Session as SshSession;
+#[cfg(unix)]
+use remotefs_ssh::LibSshSession as SshSession;
 use remotefs_ssh::{ScpFs, SftpFs, SshAgentIdentity, SshConfigParseRule, SshOpts};
 use remotefs_webdav::WebDAVFs;
 
@@ -138,12 +142,18 @@ impl RemoteFsBuilder {
     }
 
     /// Build scp client
-    fn scp_client(params: GenericProtocolParams, config_client: &ConfigClient) -> ScpFs {
+    fn scp_client(
+        params: GenericProtocolParams,
+        config_client: &ConfigClient,
+    ) -> ScpFs<SshSession> {
         Self::build_ssh_opts(params, config_client).into()
     }
 
     /// Build sftp client
-    fn sftp_client(params: GenericProtocolParams, config_client: &ConfigClient) -> SftpFs {
+    fn sftp_client(
+        params: GenericProtocolParams,
+        config_client: &ConfigClient,
+    ) -> SftpFs<SshSession> {
         Self::build_ssh_opts(params, config_client).into()
     }
 
@@ -235,10 +245,10 @@ impl RemoteFsBuilder {
         }
         // For SSH protocols, only set password if explicitly provided and non-empty.
         // This allows the SSH library to prioritize key-based and agent authentication.
-        if let Some(password) = params.password {
-            if !password.is_empty() {
-                opts = opts.password(password);
-            }
+        if let Some(password) = params.password
+            && !password.is_empty()
+        {
+            opts = opts.password(password);
         }
         if let Some(config_path) = config_client.get_ssh_config() {
             opts = opts.config_file(

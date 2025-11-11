@@ -10,6 +10,10 @@
     - [Unterbefehle](#unterbefehle)
       - [Ein Thema importieren](#ein-thema-importieren)
       - [Neueste Version installieren](#neueste-version-installieren)
+    - [Unterbefehle](#unterbefehle-1)
+      - [Ein Theme importieren](#ein-theme-importieren)
+      - [Neueste Version installieren](#neueste-version-installieren-1)
+      - [SSH-Hosts importieren](#ssh-hosts-importieren)
   - [S3-Verbindungsparameter](#s3-verbindungsparameter)
     - [S3-Anmeldeinformationen 🦊](#s3-anmeldeinformationen-)
   - [Dateiexplorer 📂](#dateiexplorer-)
@@ -29,9 +33,9 @@
       - [AWS S3 Adressargument](#aws-s3-adressargument-1)
       - [SMB Adressargument](#smb-adressargument-1)
       - [Wie das Passwort bereitgestellt werden kann 🔐](#wie-das-passwort-bereitgestellt-werden-kann--1)
-    - [Unterbefehle](#unterbefehle-1)
+    - [Unterbefehle](#unterbefehle-2)
       - [Ein Thema importieren](#ein-thema-importieren-1)
-      - [Neueste Version installieren](#neueste-version-installieren-1)
+      - [Neueste Version installieren](#neueste-version-installieren-2)
   - [S3-Verbindungsparameter](#s3-verbindungsparameter-1)
     - [S3-Anmeldeinformationen 🦊](#s3-anmeldeinformationen--1)
   - [Dateiexplorer 📂](#dateiexplorer--1)
@@ -173,6 +177,22 @@ Führen Sie termscp als `termscp theme <thema-datei>` aus
 
 Führen Sie termscp als `termscp update` aus
 
+### Unterbefehle
+
+#### Ein Theme importieren
+
+Führen Sie termscp mit `termscp theme <theme-datei>` aus.
+
+#### Neueste Version installieren
+
+Führen Sie termscp mit `termscp update` aus.
+
+#### SSH-Hosts importieren
+
+Führen Sie termscp mit `termscp import-ssh-hosts [ssh-config-datei]` aus.
+
+Importieren Sie alle Hosts aus der angegebenen SSH-Konfigurationsdatei (wenn keine angegeben ist, wird `~/.ssh/config` verwendet) als Lesezeichen in termscp. Identitätsdateien werden ebenfalls als SSH-Schlüssel in termscp importiert.
+
 ---
 
 ## S3-Verbindungsparameter
@@ -296,6 +316,7 @@ Diese Panels sind im Wesentlichen 3 (ja, tatsächlich drei):
 | <CTRL+A>    | Alle Dateien auswählen                                                 |                                                |
 | <ALT+A>     | Alle Dateien abwählen                                                  |                                                |
 | <CTRL+C>    | Dateiübertragungsvorgang abbrechen                                     |                                                |
+| `<CTRL+S>`  | Gesamte Größe des ausgewählten Pfads abrufen             | Size |
 | <CTRL+T>    | Alle synchronisierten Pfade anzeigen                                   | Track                                          |
 
 ### Mit mehreren Dateien arbeiten 🥷 

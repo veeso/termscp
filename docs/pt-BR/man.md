@@ -11,6 +11,7 @@
     - [Subcomandos](#subcomandos)
       - [Importar um Tema](#importar-um-tema)
       - [Instalar a Última Versão](#instalar-a-última-versão)
+      - [Importar hosts SSH](#importar-hosts-ssh)
   - [Parâmetros de Conexão do S3](#parâmetros-de-conexão-do-s3)
     - [Credenciais do S3 🦊](#credenciais-do-s3-)
   - [Explorador de Arquivos 📂](#explorador-de-arquivos-)
@@ -164,6 +165,12 @@ Execute o termscp como `termscp theme <theme-file>`
 
 Execute o termscp como `termscp update`
 
+#### Importar hosts SSH
+
+Execute o termscp como `termscp import-ssh-hosts [arquivo-config-ssh]`
+
+Importe todos os hosts do arquivo de configuração SSH especificado (se não for fornecido, `~/.ssh/config` será usado) como favoritos no termscp. Os arquivos de identidade também serão importados como chaves SSH no termscp.
+
 ---
 
 ## Parâmetros de Conexão do S3
@@ -271,6 +278,7 @@ Para trocar de painel, você precisa pressionar `<LEFT>` para mover para o paine
 | `<CTRL+A>`    | Selecionar todos os arquivos                               |                   |
 | `<ALT+A>`    | Deselecionar todos os arquivos                               |                   |
 | `<CTRL+C>`    | Abortir processo de transferência de arquivo                  |                   |
+| `<CTRL+S>`  | Obter o tamanho total do caminho selecionado             |  | Size          |
 | `<CTRL+T>`   | Mostrar todos os caminhos sincronizados                         | Track          |
 
 ### Trabalhar com múltiplos arquivos 🥷 
