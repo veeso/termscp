@@ -10,8 +10,8 @@
 
 TERMSCP_VERSION="0.19.0"
 GITHUB_URL="https://github.com/veeso/termscp/releases/download/v${TERMSCP_VERSION}"
-DEB_URL_AMD64="${GITHUB_URL}/termscp_${TERMSCP_VERSION}_amd64.deb"
-DEB_URL_AARCH64="${GITHUB_URL}/termscp_${TERMSCP_VERSION}_arm64.deb"
+DEB_URL_AMD64="${GITHUB_URL}/termscp_${TERMSCP_VERSION}-1_amd64.deb"
+DEB_URL_AARCH64="${GITHUB_URL}/termscp_${TERMSCP_VERSION}-1_arm64.deb"
 
 PATH="$PATH:/usr/sbin"
 
