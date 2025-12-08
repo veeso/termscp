@@ -16,6 +16,7 @@ use crate::host::HostError;
 use crate::system::bookmarks_client::BookmarksClient;
 use crate::system::config_client::ConfigClient;
 use crate::system::environment;
+use crate::system::key_bindings_client::KeyBindingsClient;
 use crate::system::sshkey_storage::SshKeyStorage;
 use crate::system::theme_provider::ThemeProvider;
 use crate::ui::activities::auth::AuthActivity;
@@ -67,7 +68,14 @@ impl ActivityManager {
         };
         let error = error_config.or(error_bookmark);
         let theme_provider: ThemeProvider = Self::init_theme_provider();
-        let ctx: Context = Context::new(bookmarks_client, config_client, theme_provider, error);
+        let key_bindings = Self::init_key_bindings();
+        let ctx: Context = Context::new(
+            bookmarks_client,
+            config_client,
+            theme_provider,
+            key_bindings,
+            error,
+        );
         Ok(ActivityManager {
             context: Some(ctx),
             ticks,
@@ -474,6 +482,33 @@ impl ActivityManager {
             Err(err) => Err(format!(
                 "Could not initialize configuration directory: {err}"
             )),
+        }
+    }
+
+    fn init_key_bindings() -> KeyBindingsClient {
+        match environment::init_config_dir() {
+            Ok(Some(config_dir)) => {
+                // Get config client paths
+                let key_bindings_path: PathBuf =
+                    environment::get_key_bindings_paths(config_dir.as_path());
+                debug!("Key binding path: {key_bindings_path:?}");
+                KeyBindingsClient::new(key_bindings_path)
+                    .map_err(|err| error!("Error while creating key binding from path {}", err))
+                    .unwrap_or_default()
+            }
+            Ok(None) => {
+                error!(
+                    "This system doesn't provide a configuration directory; using default key bindings"
+                );
+                KeyBindingsClient::default()
+            }
+            Err(err) => {
+                error!(
+                    "Could not initialize configuration directory: {}; using default key bindings",
+                    err
+                );
+                KeyBindingsClient::default()
+            }
         }
     }
 
