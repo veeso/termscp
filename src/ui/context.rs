@@ -6,9 +6,11 @@
 use tuirealm::terminal::{CrosstermTerminalAdapter, TerminalBridge};
 
 use super::store::Store;
+use crate::config::key_bindings::KeyBindings;
 use crate::filetransfer::{FileTransferParams, HostBridgeParams};
 use crate::system::bookmarks_client::BookmarksClient;
 use crate::system::config_client::ConfigClient;
+use crate::system::key_bindings_client::KeyBindingsClient;
 use crate::system::theme_provider::ThemeProvider;
 
 /// Context holds data structures shared by the activities
@@ -20,6 +22,7 @@ pub struct Context {
     pub(crate) store: Store,
     pub(crate) terminal: TerminalBridge<CrosstermTerminalAdapter>,
     theme_provider: ThemeProvider,
+    key_bindings_client: KeyBindingsClient,
     error: Option<String>,
 }
 
@@ -29,6 +32,7 @@ impl Context {
         bookmarks_client: Option<BookmarksClient>,
         config_client: ConfigClient,
         theme_provider: ThemeProvider,
+        key_bindings_client: KeyBindingsClient,
         error: Option<String>,
     ) -> Context {
         let mut terminal = TerminalBridge::init_crossterm().expect("Could not initialize terminal");
@@ -42,6 +46,7 @@ impl Context {
             store: Store::init(),
             terminal,
             theme_provider,
+            key_bindings_client,
             error,
         }
     }
@@ -78,6 +83,10 @@ impl Context {
 
     pub(crate) fn store_mut(&mut self) -> &mut Store {
         &mut self.store
+    }
+
+    pub fn key_bindings(&self) -> KeyBindings {
+        self.key_bindings_client.config.clone()
     }
 
     pub fn theme_provider(&self) -> &ThemeProvider {

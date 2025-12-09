@@ -71,6 +71,15 @@ pub fn get_bookmarks_paths(config_dir: &Path) -> PathBuf {
     bookmarks_file
 }
 
+/// Get paths for key_bindings
+/// Returns: path of key_bindings.toml
+pub fn get_key_bindings_paths(config_dir: &Path) -> PathBuf {
+    // Prepare paths
+    let mut key_bindings_file: PathBuf = PathBuf::from(config_dir);
+    key_bindings_file.push("key_bindings.toml");
+    key_bindings_file
+}
+
 /// Returns paths for config client
 /// Returns: path of config.toml and path for ssh keys
 pub fn get_config_paths(config_dir: &Path) -> (PathBuf, PathBuf) {

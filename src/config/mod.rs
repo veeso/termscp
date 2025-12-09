@@ -8,3 +8,4 @@ pub mod bookmarks;
 pub mod params;
 pub mod serialization;
 pub mod themes;
+pub mod key_bindings;
