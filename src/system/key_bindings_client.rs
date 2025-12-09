@@ -6,7 +6,7 @@ use crate::config::serialization::{SerializerError, SerializerErrorKind, deseria
 
 #[derive(Default)]
 pub struct KeyBindingsClient {
-    config: KeyBindings,
+    pub config: KeyBindings,
     config_path: PathBuf,
 }
 

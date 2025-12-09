@@ -459,11 +459,17 @@ impl AuthActivity {
             })
             .collect();
         let bookmarks_color = self.theme().auth_bookmarks;
+
+        let key_bindings = self.context().key_bindings();
         assert!(
             self.app
                 .remount(
                     Id::BookmarksList,
-                    Box::new(components::BookmarksList::new(&bookmarks, bookmarks_color)),
+                    Box::new(components::BookmarksList::new(
+                        &bookmarks,
+                        bookmarks_color,
+                        key_bindings
+                    )),
                     vec![]
                 )
                 .is_ok()

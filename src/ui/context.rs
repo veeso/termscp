@@ -6,6 +6,7 @@
 use tuirealm::terminal::{CrosstermTerminalAdapter, TerminalBridge};
 
 use super::store::Store;
+use crate::config::key_bindings::KeyBindings;
 use crate::filetransfer::{FileTransferParams, HostBridgeParams};
 use crate::system::bookmarks_client::BookmarksClient;
 use crate::system::config_client::ConfigClient;
@@ -82,6 +83,10 @@ impl Context {
 
     pub(crate) fn store_mut(&mut self) -> &mut Store {
         &mut self.store
+    }
+
+    pub fn key_bindings(&self) -> KeyBindings {
+        self.key_bindings_client.config.clone()
     }
 
     pub fn theme_provider(&self) -> &ThemeProvider {

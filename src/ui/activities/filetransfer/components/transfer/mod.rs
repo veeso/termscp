@@ -153,10 +153,10 @@ impl ExplorerFuzzy {
 
                 Some(Msg::Ui(UiMsg::MarkFile(index)))
             }
-            Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => {
-                self.perform(Cmd::Change);
-                Some(Msg::None)
-            }
+            // Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => {
+            //     self.perform(Cmd::Change);
+            //     Some(Msg::None)
+            // }
             // -- comp msg
             Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
                 Some(Msg::Ui(UiMsg::CloseFindExplorer))
@@ -311,10 +311,10 @@ impl Component<Msg, NoUserEvent> for ExplorerFind {
             Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
                 Some(Msg::Ui(UiMsg::CloseFindExplorer))
             }
-            Event::Keyboard(KeyEvent {
-                code: Key::Left | Key::Right | Key::Tab | Key::BackTab,
-                ..
-            }) => Some(Msg::Ui(UiMsg::ChangeTransferWindow)),
+            // Event::Keyboard(KeyEvent {
+            //     code: Key::Left | Key::Right | Key::Tab | Key::BackTab,
+            //     ..
+            // }) => Some(Msg::Ui(UiMsg::ChangeTransferWindow)),
             Event::Keyboard(KeyEvent {
                 code: Key::Enter, ..
             }) => Some(Msg::Transfer(TransferMsg::EnterDirectory)),
@@ -453,10 +453,10 @@ impl Component<Msg, NoUserEvent> for ExplorerLocal {
             Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
                 Some(Msg::Ui(UiMsg::ShowDisconnectPopup))
             }
-            Event::Keyboard(KeyEvent {
-                code: Key::Right | Key::Tab | Key::BackTab,
-                ..
-            }) => Some(Msg::Ui(UiMsg::ChangeTransferWindow)),
+            // Event::Keyboard(KeyEvent {
+            //     code: Key::Right | Key::Tab | Key::BackTab,
+            //     ..
+            // }) => Some(Msg::Ui(UiMsg::ChangeTransferWindow)),
             Event::Keyboard(KeyEvent {
                 code: Key::Backspace,
                 ..
@@ -671,10 +671,10 @@ impl Component<Msg, NoUserEvent> for ExplorerRemote {
             Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
                 Some(Msg::Ui(UiMsg::ShowDisconnectPopup))
             }
-            Event::Keyboard(KeyEvent {
-                code: Key::Left | Key::Tab | Key::BackTab,
-                ..
-            }) => Some(Msg::Ui(UiMsg::ChangeTransferWindow)),
+            // Event::Keyboard(KeyEvent {
+            //     code: Key::Left | Key::Tab | Key::BackTab,
+            //     ..
+            // }) => Some(Msg::Ui(UiMsg::ChangeTransferWindow)),
             Event::Keyboard(KeyEvent {
                 code: Key::Backspace,
                 ..
