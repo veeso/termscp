@@ -72,6 +72,21 @@ impl Component<Msg, NoUserEvent> for BookmarksList {
                 self.perform(Cmd::GoTo(Position::End));
                 Some(Msg::None)
             }
+            Event::Keyboard(ev)
+                if self.key_bindings.switch_down.contains(&ev)
+                    || self.key_bindings.switch_up.contains(&ev) =>
+            {
+                Some(Msg::Ui(UiMsg::BookmarksTabBlur))
+            }
+            Event::Keyboard(ev)
+                if self.key_bindings.switch_left.contains(&ev)
+                    || self.key_bindings.switch_right.contains(&ev) =>
+            {
+                Some(Msg::Ui(UiMsg::BookmarksListBlur))
+            }
+            Event::Keyboard(ev) if self.key_bindings.auth.bookmarks.delete.contains(&ev) => {
+                Some(Msg::Ui(UiMsg::ShowDeleteBookmarkPopup))
+            }
             Event::Keyboard(ev) if self.key_bindings.auth.bookmarks.load.contains(&ev) => {
                 match self.state() {
                     State::One(StateValue::Usize(choice)) => {
@@ -79,17 +94,6 @@ impl Component<Msg, NoUserEvent> for BookmarksList {
                     }
                     _ => Some(Msg::None),
                 }
-            }
-            Event::Keyboard(ev)
-                if self.key_bindings.switch_down.contains(&ev)
-                    || self.key_bindings.switch_left.contains(&ev)
-                    || self.key_bindings.switch_up.contains(&ev)
-                    || self.key_bindings.switch_right.contains(&ev) =>
-            {
-                Some(Msg::Ui(UiMsg::BookmarksTabBlur))
-            }
-            Event::Keyboard(ev) if self.key_bindings.auth.bookmarks.delete.contains(&ev) => {
-                Some(Msg::Ui(UiMsg::ShowDeleteBookmarkPopup))
             }
             _ => None,
         }
@@ -101,11 +105,18 @@ impl Component<Msg, NoUserEvent> for BookmarksList {
 #[derive(MockComponent)]
 pub struct RecentsList {
     component: List,
+    key_bindings: key_bindings::KeyBindings,
 }
 
 impl RecentsList {
-    pub fn new(bookmarks: &[String], color: Color) -> Self {
+    pub fn new(
+        bookmarks: &[String],
+        color: Color,
+
+        key_bindings: key_bindings::KeyBindings,
+    ) -> Self {
         Self {
+            key_bindings,
             component: List::default()
                 .borders(Borders::default().color(color).modifiers(BorderType::Plain))
                 .highlighted_color(color)
@@ -126,56 +137,53 @@ impl RecentsList {
 impl Component<Msg, NoUserEvent> for RecentsList {
     fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
         match ev {
-            Event::Keyboard(KeyEvent {
-                code: Key::Down, ..
-            }) => {
+            Event::Keyboard(ev) if self.key_bindings.down.contains(&ev) => {
                 self.perform(Cmd::Move(Direction::Down));
                 Some(Msg::None)
             }
-            Event::Keyboard(KeyEvent { code: Key::Up, .. }) => {
+            Event::Keyboard(ev) if self.key_bindings.up.contains(&ev) => {
                 self.perform(Cmd::Move(Direction::Up));
                 Some(Msg::None)
             }
-            Event::Keyboard(KeyEvent {
-                code: Key::PageDown,
-                ..
-            }) => {
+            Event::Keyboard(ev) if self.key_bindings.page_down.contains(&ev) => {
                 self.perform(Cmd::Scroll(Direction::Down));
                 Some(Msg::None)
             }
-            Event::Keyboard(KeyEvent {
-                code: Key::PageUp, ..
-            }) => {
+            Event::Keyboard(ev) if self.key_bindings.page_up.contains(&ev) => {
                 self.perform(Cmd::Scroll(Direction::Up));
                 Some(Msg::None)
             }
-            Event::Keyboard(KeyEvent {
-                code: Key::Home, ..
-            }) => {
+            Event::Keyboard(ev) if self.key_bindings.begin.contains(&ev) => {
                 self.perform(Cmd::GoTo(Position::Begin));
                 Some(Msg::None)
             }
-            Event::Keyboard(KeyEvent { code: Key::End, .. }) => {
+            Event::Keyboard(ev) if self.key_bindings.end.contains(&ev) => {
                 self.perform(Cmd::GoTo(Position::End));
                 Some(Msg::None)
             }
-            Event::Keyboard(KeyEvent {
-                code: Key::Enter, ..
-            }) => match self.state() {
-                State::One(StateValue::Usize(choice)) => {
-                    Some(Msg::Form(FormMsg::LoadRecent(choice)))
-                }
-                _ => Some(Msg::None),
-            },
-            Event::Keyboard(KeyEvent {
-                code: Key::Left, ..
-            }) => Some(Msg::Ui(UiMsg::RececentsListBlur)),
-            Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => {
-                Some(Msg::Ui(UiMsg::BookmarksTabBlur))
+            Event::Keyboard(ev)
+                if self.key_bindings.switch_down.contains(&ev)
+                    || self.key_bindings.switch_up.contains(&ev) =>
+            {
+                Some(Msg::Ui(UiMsg::RecentsTabBlur))
             }
-            Event::Keyboard(KeyEvent {
-                code: Key::Delete, ..
-            }) => Some(Msg::Ui(UiMsg::ShowDeleteRecentPopup)),
+            Event::Keyboard(ev)
+                if self.key_bindings.switch_left.contains(&ev)
+                    || self.key_bindings.switch_right.contains(&ev) =>
+            {
+                Some(Msg::Ui(UiMsg::RecentsListBlur))
+            }
+            Event::Keyboard(ev) if self.key_bindings.auth.recents.delete.contains(&ev) => {
+                Some(Msg::Ui(UiMsg::ShowDeleteRecentPopup))
+            }
+            Event::Keyboard(ev) if self.key_bindings.auth.recents.load.contains(&ev) => {
+                match self.state() {
+                    State::One(StateValue::Usize(choice)) => {
+                        Some(Msg::Form(FormMsg::LoadRecent(choice)))
+                    }
+                    _ => Some(Msg::None),
+                }
+            }
             _ => None,
         }
     }

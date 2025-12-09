@@ -405,8 +405,15 @@ impl AuthActivity {
                         .is_ok()
                 );
             }
-            UiMsg::RececentsListBlur => {
+            UiMsg::RecentsListBlur => {
                 assert!(self.app.active(&Id::BookmarksList).is_ok());
+            }
+            UiMsg::RecentsTabBlur => {
+                assert!(
+                    self.app
+                        .active(&Id::HostBridge(AuthFormId::Protocol))
+                        .is_ok()
+                );
             }
             UiMsg::HostBridge(UiAuthFormMsg::RemoteDirectoryBlurDown) => {
                 assert!(

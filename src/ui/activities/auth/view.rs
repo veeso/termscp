@@ -484,11 +484,16 @@ impl AuthActivity {
             .map(|x| Self::fmt_recent(self.bookmarks_client().unwrap().get_recent(x).unwrap()))
             .collect();
         let recents_color = self.theme().auth_recents;
+        let key_bindings = self.context().key_bindings();
         assert!(
             self.app
                 .remount(
                     Id::RecentsList,
-                    Box::new(components::RecentsList::new(&bookmarks, recents_color)),
+                    Box::new(components::RecentsList::new(
+                        &bookmarks,
+                        recents_color,
+                        key_bindings
+                    )),
                     vec![]
                 )
                 .is_ok()

@@ -32,8 +32,17 @@ pub struct Bookmarks {
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq, Serialize)]
+pub struct Recents {
+    #[serde(with = "key_event_vec", default, skip_serializing_if = "Vec::is_empty")]
+    pub load: Vec<KeyEvent>,
+    #[serde(with = "key_event_vec", default, skip_serializing_if = "Vec::is_empty")]
+    pub delete: Vec<KeyEvent>,
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq, Serialize)]
 pub struct Auth {
     pub bookmarks: Bookmarks,
+    pub recents: Recents,
     #[serde(with = "key_event_vec", default, skip_serializing_if = "Vec::is_empty")]
     pub help: Vec<KeyEvent>,
     #[serde(with = "key_event_vec", default, skip_serializing_if = "Vec::is_empty")]
@@ -88,6 +97,10 @@ impl Default for KeyBindings {
             switch_right: vec![KeyEvent::new(Key::Right, KeyModifiers::NONE)],
             auth: Auth {
                 bookmarks: Bookmarks {
+                    load: vec![KeyEvent::new(Key::Enter, KeyModifiers::NONE)],
+                    delete: vec![KeyEvent::new(Key::Delete, KeyModifiers::NONE)],
+                },
+                recents: Recents {
                     load: vec![KeyEvent::new(Key::Enter, KeyModifiers::NONE)],
                     delete: vec![KeyEvent::new(Key::Delete, KeyModifiers::NONE)],
                 },
