@@ -10,8 +10,8 @@ license = "MIT"
 name = "termscp"
 readme = "README.md"
 repository = "https://github.com/veeso/termscp"
-version = "0.19.0"
-rust-version = "1.88.0"
+version = "0.19.1"
+rust-version = "1.89.0"
 
 [package.metadata.rpm]
 package = "termscp"
@@ -54,7 +54,7 @@ magic-crypt = "4"
 notify = "8"
 notify-rust = { version = "^4", default-features = false, features = ["d"] }
 nucleo = "0.5"
-open = "^5.0"
+open = "5"
 rand = "^0.9"
 regex = "^1"
 remotefs = "^0.3"
@@ -81,10 +81,10 @@ toml = "^0.9"
 tui-realm-stdlib = "3"
 tuirealm = "3"
 tui-term = "0.2"
-unicode-width = "^0.2"
+unicode-width = "0.2"
 version-compare = "^0.2"
 whoami = "^1.6"
-wildmatch = "^2"
+wildmatch = "2"
 
 [target."cfg(target_family = \"unix\")".dependencies]
 remotefs-ftp = { version = "^0.3", features = [

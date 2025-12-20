@@ -1,6 +1,7 @@
 # Changelog
 
 - [Changelog](#changelog)
+  - [0.19.1](#0191)
   - [0.19.0](#0190)
   - [0.18.0](#0180)
   - [0.17.0](#0170)
@@ -41,6 +42,12 @@
   - [0.1.0](#010)
 
 ---
+
+## 0.19.1
+
+Released on 2025-12-20
+
+- [Issue 371](https://github.com/veeso/termscp/issues/371): Updated dependencies to allow build on NetBSD
 
 ## 0.19.0
 
