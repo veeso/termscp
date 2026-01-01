@@ -61,9 +61,21 @@ pub struct Auth {
 pub struct KeyBindings {
     pub auth: Auth,
     #[serde(with = "key_event_vec", default, skip_serializing_if = "Vec::is_empty")]
+    pub close: Vec<KeyEvent>,
+    #[serde(with = "key_event_vec", default, skip_serializing_if = "Vec::is_empty")]
     pub up: Vec<KeyEvent>,
     #[serde(with = "key_event_vec", default, skip_serializing_if = "Vec::is_empty")]
     pub down: Vec<KeyEvent>,
+    #[serde(with = "key_event_vec", default, skip_serializing_if = "Vec::is_empty")]
+    pub left: Vec<KeyEvent>,
+    #[serde(with = "key_event_vec", default, skip_serializing_if = "Vec::is_empty")]
+    pub right: Vec<KeyEvent>,
+    #[serde(with = "key_event_vec", default, skip_serializing_if = "Vec::is_empty")]
+    pub confirm: Vec<KeyEvent>,
+    #[serde(with = "key_event_vec", default, skip_serializing_if = "Vec::is_empty")]
+    pub yes: Vec<KeyEvent>,
+    #[serde(with = "key_event_vec", default, skip_serializing_if = "Vec::is_empty")]
+    pub no: Vec<KeyEvent>,
     #[serde(with = "key_event_vec", default, skip_serializing_if = "Vec::is_empty")]
     pub page_down: Vec<KeyEvent>,
     #[serde(with = "key_event_vec", default, skip_serializing_if = "Vec::is_empty")]
@@ -85,8 +97,14 @@ pub struct KeyBindings {
 impl Default for KeyBindings {
     fn default() -> Self {
         KeyBindings {
+            close: vec![KeyEvent::new(Key::Esc, KeyModifiers::NONE)],
             up: vec![KeyEvent::new(Key::Up, KeyModifiers::NONE)],
             down: vec![KeyEvent::new(Key::Down, KeyModifiers::NONE)],
+            left: vec![KeyEvent::new(Key::Left, KeyModifiers::NONE)],
+            right: vec![KeyEvent::new(Key::Right, KeyModifiers::NONE)],
+            yes: vec![KeyEvent::new(Key::Char('y'), KeyModifiers::NONE)],
+            no: vec![KeyEvent::new(Key::Char('n'), KeyModifiers::NONE)],
+            confirm: vec![KeyEvent::new(Key::Enter, KeyModifiers::NONE)],
             page_down: vec![KeyEvent::new(Key::PageDown, KeyModifiers::NONE)],
             page_up: vec![KeyEvent::new(Key::PageUp, KeyModifiers::NONE)],
             begin: vec![KeyEvent::new(Key::Home, KeyModifiers::NONE)],

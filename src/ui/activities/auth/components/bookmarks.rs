@@ -194,10 +194,11 @@ impl Component<Msg, NoUserEvent> for RecentsList {
 #[derive(MockComponent)]
 pub struct DeleteBookmarkPopup {
     component: Radio,
+    key_bindings: key_bindings::KeyBindings,
 }
 
 impl DeleteBookmarkPopup {
-    pub fn new(color: Color) -> Self {
+    pub fn new(color: Color, key_bindings: key_bindings::KeyBindings) -> Self {
         Self {
             component: Radio::default()
                 .borders(
@@ -210,6 +211,7 @@ impl DeleteBookmarkPopup {
                 .rewind(true)
                 .foreground(color)
                 .title("Delete selected bookmark?", Alignment::Center),
+            key_bindings,
         }
     }
 }
@@ -217,32 +219,24 @@ impl DeleteBookmarkPopup {
 impl Component<Msg, NoUserEvent> for DeleteBookmarkPopup {
     fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
         match ev {
-            Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
+            Event::Keyboard(ev) if self.key_bindings.close.contains(&ev) => {
                 Some(Msg::Ui(UiMsg::CloseDeleteBookmark))
             }
-            Event::Keyboard(KeyEvent {
-                code: Key::Left, ..
-            }) => {
+            Event::Keyboard(ev) if self.key_bindings.left.contains(&ev) => {
                 self.perform(Cmd::Move(Direction::Left));
                 Some(Msg::None)
             }
-            Event::Keyboard(KeyEvent {
-                code: Key::Right, ..
-            }) => {
+            Event::Keyboard(ev) if self.key_bindings.right.contains(&ev) => {
                 self.perform(Cmd::Move(Direction::Right));
                 Some(Msg::None)
             }
-            Event::Keyboard(KeyEvent {
-                code: Key::Char('y'),
-                modifiers: KeyModifiers::NONE,
-            }) => Some(Msg::Form(FormMsg::DeleteBookmark)),
-            Event::Keyboard(KeyEvent {
-                code: Key::Char('n'),
-                modifiers: KeyModifiers::NONE,
-            }) => Some(Msg::Ui(UiMsg::CloseDeleteBookmark)),
-            Event::Keyboard(KeyEvent {
-                code: Key::Enter, ..
-            }) => {
+            Event::Keyboard(ev) if self.key_bindings.yes.contains(&ev) => {
+                Some(Msg::Form(FormMsg::DeleteBookmark))
+            }
+            Event::Keyboard(ev) if self.key_bindings.no.contains(&ev) => {
+                Some(Msg::Ui(UiMsg::CloseDeleteBookmark))
+            }
+            Event::Keyboard(ev) if self.key_bindings.confirm.contains(&ev) => {
                 if matches!(
                     self.perform(Cmd::Submit),
                     CmdResult::Submit(State::One(StateValue::Usize(0)))
@@ -262,10 +256,11 @@ impl Component<Msg, NoUserEvent> for DeleteBookmarkPopup {
 #[derive(MockComponent)]
 pub struct DeleteRecentPopup {
     component: Radio,
+    key_bindings: key_bindings::KeyBindings,
 }
 
 impl DeleteRecentPopup {
-    pub fn new(color: Color) -> Self {
+    pub fn new(color: Color, key_bindings: key_bindings::KeyBindings) -> Self {
         Self {
             component: Radio::default()
                 .borders(
@@ -278,6 +273,7 @@ impl DeleteRecentPopup {
                 .rewind(true)
                 .foreground(color)
                 .title("Delete selected recent host?", Alignment::Center),
+            key_bindings,
         }
     }
 }
@@ -285,32 +281,24 @@ impl DeleteRecentPopup {
 impl Component<Msg, NoUserEvent> for DeleteRecentPopup {
     fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
         match ev {
-            Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
+            Event::Keyboard(ev) if self.key_bindings.close.contains(&ev) => {
                 Some(Msg::Ui(UiMsg::CloseDeleteRecent))
             }
-            Event::Keyboard(KeyEvent {
-                code: Key::Left, ..
-            }) => {
+            Event::Keyboard(ev) if self.key_bindings.left.contains(&ev) => {
                 self.perform(Cmd::Move(Direction::Left));
                 Some(Msg::None)
             }
-            Event::Keyboard(KeyEvent {
-                code: Key::Right, ..
-            }) => {
+            Event::Keyboard(ev) if self.key_bindings.right.contains(&ev) => {
                 self.perform(Cmd::Move(Direction::Right));
                 Some(Msg::None)
             }
-            Event::Keyboard(KeyEvent {
-                code: Key::Char('y'),
-                modifiers: KeyModifiers::NONE,
-            }) => Some(Msg::Form(FormMsg::DeleteRecent)),
-            Event::Keyboard(KeyEvent {
-                code: Key::Char('n'),
-                modifiers: KeyModifiers::NONE,
-            }) => Some(Msg::Ui(UiMsg::CloseDeleteRecent)),
-            Event::Keyboard(KeyEvent {
-                code: Key::Enter, ..
-            }) => {
+            Event::Keyboard(ev) if self.key_bindings.yes.contains(&ev) => {
+                Some(Msg::Form(FormMsg::DeleteRecent))
+            }
+            Event::Keyboard(ev) if self.key_bindings.no.contains(&ev) => {
+                Some(Msg::Ui(UiMsg::CloseDeleteRecent))
+            }
+            Event::Keyboard(ev) if self.key_bindings.confirm.contains(&ev) => {
                 if matches!(
                     self.perform(Cmd::Submit),
                     CmdResult::Submit(State::One(StateValue::Usize(0)))
@@ -333,10 +321,11 @@ impl Component<Msg, NoUserEvent> for DeleteRecentPopup {
 pub struct BookmarkSavePassword {
     component: Radio,
     form_tab: FormTab,
+    key_bindings: key_bindings::KeyBindings,
 }
 
 impl BookmarkSavePassword {
-    pub fn new(form_tab: FormTab, color: Color) -> Self {
+    pub fn new(form_tab: FormTab, color: Color, key_bindings: key_bindings::KeyBindings) -> Self {
         Self {
             component: Radio::default()
                 .borders(
@@ -351,6 +340,7 @@ impl BookmarkSavePassword {
                 .foreground(color)
                 .title("Save secrets?", Alignment::Center),
             form_tab,
+            key_bindings,
         }
     }
 }

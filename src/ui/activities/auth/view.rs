@@ -606,11 +606,15 @@ impl AuthActivity {
     /// Mount bookmark delete dialog
     pub(super) fn mount_bookmark_del_dialog(&mut self) {
         let warn_color = self.theme().misc_warn_dialog;
+        let key_bindings = self.context().key_bindings();
         assert!(
             self.app
                 .remount(
                     Id::DeleteBookmarkPopup,
-                    Box::new(components::DeleteBookmarkPopup::new(warn_color)),
+                    Box::new(components::DeleteBookmarkPopup::new(
+                        warn_color,
+                        key_bindings
+                    )),
                     vec![]
                 )
                 .is_ok()
@@ -626,11 +630,12 @@ impl AuthActivity {
     /// Mount recent delete dialog
     pub(super) fn mount_recent_del_dialog(&mut self) {
         let warn_color = self.theme().misc_warn_dialog;
+        let key_bindings = self.context().key_bindings();
         assert!(
             self.app
                 .remount(
                     Id::DeleteRecentPopup,
-                    Box::new(components::DeleteRecentPopup::new(warn_color)),
+                    Box::new(components::DeleteRecentPopup::new(warn_color, key_bindings)),
                     vec![]
                 )
                 .is_ok()
@@ -647,6 +652,8 @@ impl AuthActivity {
     pub(super) fn mount_bookmark_save_dialog(&mut self, form_tab: FormTab) {
         let save_color = self.theme().misc_save_dialog;
         let warn_color = self.theme().misc_warn_dialog;
+
+        let key_bindings = self.context().key_bindings();
         assert!(
             self.app
                 .remount(
@@ -660,7 +667,11 @@ impl AuthActivity {
             self.app
                 .remount(
                     Id::BookmarkSavePassword,
-                    Box::new(components::BookmarkSavePassword::new(form_tab, warn_color)),
+                    Box::new(components::BookmarkSavePassword::new(
+                        form_tab,
+                        warn_color,
+                        key_bindings
+                    )),
                     vec![]
                 )
                 .is_ok()
