@@ -1,0 +1,17 @@
+name: codeberg-mirror
+on:
+  push:
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: "Mirror to Codeberg"
+        uses: yesolutions/mirror-action@v0.7.0
+        with:
+          REMOTE: 'ssh://git@codeberg.org/veeso/termscp.git'
+          GIT_SSH_PRIVATE_KEY: ${{ secrets.GIT_SSH_PRIVATE_KEY }}
+          GIT_SSH_NO_VERIFY_HOST: "true"
