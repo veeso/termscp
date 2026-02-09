@@ -278,29 +278,6 @@ install_on_linux() {
         install_on_arch_linux pamac
     elif has pikaur; then
         install_on_arch_linux pikaur
-    elif has apt; then
-        case "${ARCH}" in
-            x86_64) DEB_URL="$DEB_URL_AMD64" ;;
-            aarch64) DEB_URL="$DEB_URL_AARCH64" ;;
-            *) try_with_cargo "we don't distribute packages for ${ARCH} at the moment" && return $? ;;
-        esac
-        info "Detected dpkg on your system"
-        info "Installing ${GREEN}termscp${NO_COLOR} via Debian package"
-        archive=$(get_tmpfile "deb")
-        download "${archive}" "${DEB_URL}"
-        info "Downloaded debian package to ${archive}"
-        if test_writeable "/usr/bin"; then
-            sudo=""
-            msg="Installing ${GREEN}termscp${NO_COLOR}, please wait…"
-        else
-            warn "Root permissions are required to install ${GREEN}termscp${NO_COLOR}…"
-            elevate_priv
-            sudo="sudo"
-            msg="Installing ${GREEN}termscp${NO_COLOR} as root, please wait…"
-        fi
-        info "$msg"
-        $sudo dpkg -i "${archive}"
-        rm -f ${archive}
     elif has dpkg; then
         install_on_debian
     elif has brew; then
