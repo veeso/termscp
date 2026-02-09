@@ -217,6 +217,51 @@ install_with_brew() {
     fi
 }
 
+install_on_debian() {
+    local pkg_manager
+    if has apt; then
+        pkg_manager="apt"
+    elif has apt-get; then
+        pkg_manager="apt-get"
+    elif has dpkg; then
+        pkg_manager="dpkg"
+    else
+        try_with_cargo "we couldn't find any suitable package manager on your debian distribution" && return $? ;;
+    fi
+
+    case "${ARCH}" in
+        x86_64) DEB_URL="$DEB_URL_AMD64" ;;
+        aarch64) DEB_URL="$DEB_URL_AARCH64" ;;
+        *) try_with_cargo "we don't distribute packages for ${ARCH} at the moment" && return $? ;;
+    esac
+    info "Detected $pkg_manager on your system"
+    info "Installing ${GREEN}termscp${NO_COLOR} via Debian package"
+    archive=$(get_tmpfile "deb")
+    download "${archive}" "${DEB_URL}"
+    info "Downloaded debian package to ${archive}"
+    if test_writeable "/usr/bin"; then
+        sudo=""
+        msg="Installing ${GREEN}termscp${NO_COLOR}, please wait…"
+    else
+        warn "Root permissions are required to install ${GREEN}termscp${NO_COLOR}…"
+        elevate_priv
+        sudo="sudo"
+        msg="Installing ${GREEN}termscp${NO_COLOR} as root, please wait…"
+    fi
+    info "$msg"
+
+    if [ "$pkg_manager" = "apt" ]; then
+        $sudo apt install -y "${archive}"
+    elif [ "$pkg_manager" = "apt-get" ]; then
+        $sudo dpkg -i "${archive}"
+        $sudo apt-get -f install
+    else
+        $sudo dpkg -i "${archive}"
+    fi
+
+    rm -f ${archive}
+}
+
 install_on_linux() {
     local msg
     local sudo
@@ -235,7 +280,7 @@ install_on_linux() {
         install_on_arch_linux pamac
     elif has pikaur; then
         install_on_arch_linux pikaur
-    elif has dpkg; then
+    elif has apt; then
         case "${ARCH}" in
             x86_64) DEB_URL="$DEB_URL_AMD64" ;;
             aarch64) DEB_URL="$DEB_URL_AARCH64" ;;
@@ -258,6 +303,8 @@ install_on_linux() {
         info "$msg"
         $sudo dpkg -i "${archive}"
         rm -f ${archive}
+    elif has dpkg; then
+        install_on_debian
     elif has brew; then
         install_with_brew
     else

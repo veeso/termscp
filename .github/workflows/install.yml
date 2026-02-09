@@ -11,13 +11,17 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+    runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v2
-      - name: Install dependencies
-        run: sudo apt update && sudo apt install -y curl wget libsmbclient
+      - uses: actions/checkout@v6
       - name: Install termscp from script
         run: |
-          ./install.sh -v=0.12.3 -f
+          ./install.sh -f
           which termscp || exit 1
+          termscp --version

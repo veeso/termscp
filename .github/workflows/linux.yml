@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v6
       - name: Install dependencies
         run: sudo apt update && sudo apt install -y libdbus-1-dev libsmbclient-dev
       - uses: dtolnay/rust-toolchain@stable
