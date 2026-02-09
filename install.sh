@@ -226,7 +226,7 @@ install_on_debian() {
     elif has dpkg; then
         pkg_manager="dpkg"
     else
-        try_with_cargo "we couldn't find any suitable package manager on your debian distribution" && return $? ;;
+        try_with_cargo "we couldn't find any suitable package manager on your debian distribution" && return $?
     fi
 
     case "${ARCH}" in
