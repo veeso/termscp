@@ -221,20 +221,18 @@ install_on_debian() {
     local pkg_manager
     if has apt; then
         pkg_manager="apt"
-    elif has apt-get; then
+    elif has "apt-get"; then
         pkg_manager="apt-get"
-    elif has dpkg; then
-        pkg_manager="dpkg"
     else
-        try_with_cargo "we couldn't find any suitable package manager on your debian distribution" && return $?
+        pkg_manager="dpkg"
     fi
 
+    info "Detected $pkg_manager on your system"
     case "${ARCH}" in
         x86_64) DEB_URL="$DEB_URL_AMD64" ;;
         aarch64) DEB_URL="$DEB_URL_AARCH64" ;;
         *) try_with_cargo "we don't distribute packages for ${ARCH} at the moment" && return $? ;;
     esac
-    info "Detected $pkg_manager on your system"
     info "Installing ${GREEN}termscp${NO_COLOR} via Debian package"
     archive=$(get_tmpfile "deb")
     download "${archive}" "${DEB_URL}"
