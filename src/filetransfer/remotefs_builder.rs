@@ -44,13 +44,13 @@ impl RemoteFsBuilder {
     ) -> Result<Box<dyn RemoteFs>, String> {
         match (protocol, params) {
             (FileTransferProtocol::AwsS3, ProtocolParams::AwsS3(params)) => {
-                Ok(Box::new(Self::aws_s3_client(params)))
+                Ok(Box::new(Self::aws_s3_client(params)?))
             }
             (FileTransferProtocol::Ftp(secure), ProtocolParams::Generic(params)) => {
                 Ok(Box::new(Self::ftp_client(params, secure)))
             }
             (FileTransferProtocol::Kube, ProtocolParams::Kube(params)) => {
-                Ok(Box::new(Self::kube_client(params)))
+                Ok(Box::new(Self::kube_client(params)?))
             }
             (FileTransferProtocol::Scp, ProtocolParams::Generic(params)) => {
                 Ok(Box::new(Self::scp_client(params, config_client)))
@@ -60,7 +60,7 @@ impl RemoteFsBuilder {
             }
             #[cfg(smb)]
             (FileTransferProtocol::Smb, ProtocolParams::Smb(params)) => {
-                Ok(Box::new(Self::smb_client(params)))
+                Ok(Box::new(Self::smb_client(params)?))
             }
             (FileTransferProtocol::WebDAV, ProtocolParams::WebDAV(params)) => {
                 Ok(Box::new(Self::webdav_client(params)))
@@ -75,13 +75,13 @@ impl RemoteFsBuilder {
     }
 
     /// Build aws s3 client from parameters
-    fn aws_s3_client(params: AwsS3Params) -> AwsS3Fs {
+    fn aws_s3_client(params: AwsS3Params) -> Result<AwsS3Fs, String> {
         let rt = Arc::new(
             tokio::runtime::Builder::new_current_thread()
                 .worker_threads(1)
                 .enable_all()
                 .build()
-                .expect("Unable to create tokio runtime"),
+                .map_err(|e| format!("Unable to create tokio runtime: {e}"))?,
         );
         let mut client =
             AwsS3Fs::new(params.bucket_name, &rt).new_path_style(params.new_path_style);
@@ -106,7 +106,7 @@ impl RemoteFsBuilder {
         if let Some(session_token) = params.session_token {
             client = client.session_token(session_token);
         }
-        client
+        Ok(client)
     }
 
     /// Build ftp client from parameters
@@ -125,19 +125,19 @@ impl RemoteFsBuilder {
     }
 
     /// Build kube client
-    fn kube_client(params: KubeProtocolParams) -> KubeFs {
+    fn kube_client(params: KubeProtocolParams) -> Result<KubeFs, String> {
         let rt = Arc::new(
             tokio::runtime::Builder::new_current_thread()
                 .worker_threads(1)
                 .enable_all()
                 .build()
-                .expect("Unable to create tokio runtime"),
+                .map_err(|e| format!("Unable to create tokio runtime: {e}"))?,
         );
         let kube_fs = KubeFs::new(&rt);
         if let Some(config) = params.config() {
-            kube_fs.config(config)
+            Ok(kube_fs.config(config))
         } else {
-            kube_fs
+            Ok(kube_fs)
         }
     }
 
@@ -158,7 +158,7 @@ impl RemoteFsBuilder {
     }
 
     #[cfg(smb_unix)]
-    fn smb_client(params: SmbParams) -> SmbFs {
+    fn smb_client(params: SmbParams) -> Result<SmbFs, String> {
         let mut credentials = SmbCredentials::default()
             .server(format!("smb://{}:{}", params.address, params.port))
             .share(params.share);
@@ -179,14 +179,14 @@ impl RemoteFsBuilder {
                 .one_share_per_server(true)
                 .case_sensitive(false),
         )
-        .unwrap_or_else(|e| {
+        .map_err(|e| {
             error!("Invalid params for protocol SMB: {e}");
-            panic!("Invalid params for protocol SMB: {e}")
+            format!("Invalid params for protocol SMB: {e}")
         })
     }
 
     #[cfg(smb_windows)]
-    fn smb_client(params: SmbParams) -> SmbFs {
+    fn smb_client(params: SmbParams) -> Result<SmbFs, String> {
         let mut credentials = SmbCredentials::new(params.address, params.share);
 
         if let Some(username) = params.username {
@@ -196,7 +196,7 @@ impl RemoteFsBuilder {
             credentials = credentials.password(password);
         }
 
-        SmbFs::new(credentials)
+        Ok(SmbFs::new(credentials))
     }
 
     fn webdav_client(params: WebDAVProtocolParams) -> WebDAVFs {

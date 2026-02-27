@@ -25,10 +25,10 @@ pub enum HostBridgeParams {
 }
 
 impl HostBridgeParams {
-    pub fn unwrap_protocol_params(&self) -> &ProtocolParams {
+    pub fn protocol_params(&self) -> Option<&ProtocolParams> {
         match self {
-            HostBridgeParams::Localhost(_) => panic!("Localhost has no protocol params"),
-            HostBridgeParams::Remote(_, params) => params,
+            HostBridgeParams::Localhost(_) => None,
+            HostBridgeParams::Remote(_, params) => Some(params),
         }
     }
 
@@ -277,6 +277,19 @@ mod test {
     use pretty_assertions::assert_eq;
 
     use super::*;
+
+    #[test]
+    fn test_protocol_params_on_localhost_returns_none() {
+        let params = HostBridgeParams::Localhost(PathBuf::from("/tmp"));
+        assert!(params.protocol_params().is_none());
+    }
+
+    #[test]
+    fn test_protocol_params_on_remote_returns_some() {
+        let params =
+            HostBridgeParams::Remote(FileTransferProtocol::Sftp, ProtocolParams::default());
+        assert!(params.protocol_params().is_some());
+    }
 
     #[test]
     fn test_filetransfer_params() {
