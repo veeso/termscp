@@ -1,17 +1,14 @@
 //! ## FileTransferActivity
 //!
-//! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
+//! `filetransfer_activity` is the module which implements the Filetransfer activity, which is the main activity afterall
 
 // locals
 use std::path::{Path, PathBuf};
 
-use remotefs::RemoteErrorType;
-
 use super::{File, FileTransferActivity, LogLevel, SelectedFile};
 
 impl FileTransferActivity {
-    /// Rename / move the currently selected entries.
-    /// Branches on the active tab (local vs remote).
+    /// Rename / move the currently selected entries via the active tab's pane.
     pub(crate) fn action_rename(&mut self, input: String) {
         match self.get_selected_entries() {
             SelectedFile::One(entry) => {
@@ -25,29 +22,17 @@ impl FileTransferActivity {
                 }
 
                 // clear selection and reload
-                if self.is_local_tab() {
-                    self.host_bridge_mut().clear_queue();
-                    self.reload_host_bridge_filelist();
-                } else {
-                    self.remote_mut().clear_queue();
-                    self.reload_remote_filelist();
-                }
+                self.browser.explorer_mut().clear_queue();
+                self.reload_browser_file_list();
             }
             SelectedFile::None => {}
         }
     }
 
-    /// Rename a single file, branching on the current tab.
+    /// Rename a single file via the active tab's pane.
+    /// Falls back to `tricky_move` on remote tabs when rename fails.
     fn rename_file(&mut self, entry: &File, dest: &Path) {
-        if self.is_local_tab() {
-            self.local_rename_file(entry, dest);
-        } else {
-            self.remote_rename_file(entry, dest);
-        }
-    }
-
-    fn local_rename_file(&mut self, entry: &File, dest: &Path) {
-        match self.host_bridge.rename(entry, dest) {
+        match self.browser.fs_pane_mut().fs.rename(entry, dest) {
             Ok(_) => {
                 self.log(
                     LogLevel::Info,
@@ -58,23 +43,31 @@ impl FileTransferActivity {
                     ),
                 );
             }
-            Err(err) => self.log_and_alert(
-                LogLevel::Error,
-                format!(
-                    "Could not move \"{}\" to \"{}\": {}",
-                    entry.path().display(),
-                    dest.display(),
-                    err
-                ),
-            ),
+            Err(err) => {
+                if !self.is_local_tab() {
+                    // Try tricky_move as a fallback on remote
+                    debug!("Rename failed ({err}); attempting tricky_move");
+                    self.tricky_move(entry, dest);
+                } else {
+                    self.log_and_alert(
+                        LogLevel::Error,
+                        format!(
+                            "Could not move \"{}\" to \"{}\": {}",
+                            entry.path().display(),
+                            dest.display(),
+                            err
+                        ),
+                    );
+                }
+            }
         }
     }
 
     /// Rename / move a file on the remote host.
-    /// Falls back to `tricky_move` when the server reports `UnsupportedFeature`.
+    /// Falls back to `tricky_move` when the rename fails.
     /// Also used by fswatcher for syncing renames.
     pub(crate) fn remote_rename_file(&mut self, entry: &File, dest: &Path) {
-        match self.client.as_mut().mov(entry.path(), dest) {
+        match self.browser.remote_pane_mut().fs.rename(entry, dest) {
             Ok(_) => {
                 self.log(
                     LogLevel::Info,
@@ -85,18 +78,11 @@ impl FileTransferActivity {
                     ),
                 );
             }
-            Err(err) if err.kind == RemoteErrorType::UnsupportedFeature => {
+            Err(err) => {
+                // Try tricky_move as a fallback
+                debug!("Rename failed ({err}); attempting tricky_move");
                 self.tricky_move(entry, dest);
             }
-            Err(err) => self.log_and_alert(
-                LogLevel::Error,
-                format!(
-                    "Could not move \"{}\" to \"{}\": {}",
-                    entry.path().display(),
-                    dest.display(),
-                    err
-                ),
-            ),
         }
     }
 
@@ -111,7 +97,7 @@ impl FileTransferActivity {
         if self.tricky_copy(entry.clone(), dest).is_ok() {
             // Delete remote existing entry
             debug!("Tricky-copy worked; removing existing remote entry");
-            match self.client.remove_dir_all(entry.path()) {
+            match self.browser.remote_pane_mut().fs.remove(entry) {
                 Ok(_) => self.log(
                     LogLevel::Info,
                     format!(

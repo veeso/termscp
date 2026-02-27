@@ -1,6 +1,6 @@
 //! ## FileTransferActivity
 //!
-//! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
+//! `filetransfer_activity` is the module which implements the Filetransfer activity, which is the main activity afterall
 
 use remotefs::fs::{File, UnixPex};
 use tuirealm::props::{PropPayload, PropValue, TextSpan};

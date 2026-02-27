@@ -1,6 +1,6 @@
 //! ## FileTransferActivity
 //!
-//! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
+//! `filetransfer_activity` is the module which implements the Filetransfer activity, which is the main activity afterall
 
 use std::path::PathBuf;
 use std::str::FromStr;
@@ -38,11 +38,10 @@ impl FromStr for Command {
 
 impl FileTransferActivity {
     pub(crate) fn action_exec_cmd(&mut self, input: String) {
-        let remote = !self.is_local_tab();
-        self.action_exec(remote, input);
+        self.action_exec(input);
     }
 
-    fn action_exec(&mut self, remote: bool, cmd: String) {
+    fn action_exec(&mut self, cmd: String) {
         if cmd.is_empty() {
             self.print_terminal("".to_string());
         }
@@ -58,10 +57,10 @@ impl FileTransferActivity {
 
         match cmd {
             Command::Cd(path) => {
-                self.action_exec_cd(remote, path);
+                self.action_exec_cd(path);
             }
             Command::Exec(executable) => {
-                self.action_exec_executable(remote, executable);
+                self.action_exec_executable(executable);
             }
             Command::Exit => {
                 self.action_exec_exit();
@@ -74,43 +73,20 @@ impl FileTransferActivity {
         self.umount_exec();
     }
 
-    fn action_exec_cd(&mut self, remote: bool, input: String) {
-        let new_dir = if remote {
-            let dir_path: PathBuf =
-                self.remote_to_abs_path(PathBuf::from(input.as_str()).as_path());
-            self.remote_changedir(dir_path.as_path(), true);
-
-            dir_path
-        } else {
-            let dir_path: PathBuf =
-                self.host_bridge_to_abs_path(PathBuf::from(input.as_str()).as_path());
-            self.host_bridge_changedir(dir_path.as_path(), true);
-
-            dir_path
-        };
+    fn action_exec_cd(&mut self, input: String) {
+        let dir_path = self.pane_to_abs_path(PathBuf::from(input.as_str()).as_path());
+        self.pane_changedir(dir_path.as_path(), true);
 
         self.update_browser_file_list();
 
         // update prompt and print the new directory
         self.update_terminal_prompt();
-        self.print_terminal(new_dir.display().to_string());
+        self.print_terminal(dir_path.display().to_string());
     }
 
-    /// Execute a [`Command::Exec`] command
-    fn action_exec_executable(&mut self, remote: bool, cmd: String) {
-        let res = if remote {
-            self.client
-                .as_mut()
-                .exec(cmd.as_str())
-                .map(|(_, output)| output)
-                .map_err(|e| e.to_string())
-        } else {
-            self.host_bridge
-                .exec(cmd.as_str())
-                .map_err(|e| e.to_string())
-        };
-
-        match res {
+    /// Execute a command via the active tab's pane.
+    fn action_exec_executable(&mut self, cmd: String) {
+        match self.browser.fs_pane_mut().fs.exec(cmd.as_str()) {
             Ok(output) => {
                 self.print_terminal(output);
             }
@@ -119,7 +95,7 @@ impl FileTransferActivity {
                     LogLevel::Error,
                     format!("Could not execute command \"{cmd}\": {err}"),
                 );
-                self.print_terminal(err);
+                self.print_terminal(err.to_string());
             }
         }
     }

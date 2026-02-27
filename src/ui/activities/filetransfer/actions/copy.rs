@@ -1,17 +1,16 @@
 //! ## FileTransferActivity
 //!
-//! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
+//! `filetransfer_activity` is the module which implements the Filetransfer activity, which is the main activity afterall
 
 // locals
 use std::path::{Path, PathBuf};
 
-use remotefs::{File, RemoteErrorType};
+use remotefs::File;
 
 use super::{FileTransferActivity, LogLevel, SelectedFile, TransferPayload};
 
 impl FileTransferActivity {
-    /// Copy the currently selected file(s).
-    /// Branches on the active tab (local vs remote).
+    /// Copy the currently selected file(s) via the active tab's pane.
     pub(crate) fn action_copy(&mut self, input: String) {
         match self.get_selected_entries() {
             SelectedFile::One(entry) => {
@@ -25,28 +24,15 @@ impl FileTransferActivity {
                 }
 
                 // clear selection and reload
-                if self.is_local_tab() {
-                    self.host_bridge_mut().clear_queue();
-                    self.reload_host_bridge_filelist();
-                } else {
-                    self.remote_mut().clear_queue();
-                    self.reload_remote_filelist();
-                }
+                self.browser.explorer_mut().clear_queue();
+                self.reload_browser_file_list();
             }
             SelectedFile::None => {}
         }
     }
 
     fn copy_file(&mut self, entry: File, dest: &Path) {
-        if self.is_local_tab() {
-            self.local_copy_file(&entry, dest);
-        } else {
-            self.remote_copy_file(entry, dest);
-        }
-    }
-
-    fn local_copy_file(&mut self, entry: &File, dest: &Path) {
-        match self.host_bridge.copy(entry, dest) {
+        match self.browser.fs_pane_mut().fs.copy(&entry, dest) {
             Ok(_) => {
                 self.log(
                     LogLevel::Info,
@@ -57,45 +43,23 @@ impl FileTransferActivity {
                     ),
                 );
             }
-            Err(err) => self.log_and_alert(
-                LogLevel::Error,
-                format!(
-                    "Could not copy \"{}\" to \"{}\": {}",
-                    entry.path().display(),
-                    dest.display(),
-                    err
-                ),
-            ),
-        }
-    }
-
-    fn remote_copy_file(&mut self, entry: File, dest: &Path) {
-        match self.client.as_mut().copy(entry.path(), dest) {
-            Ok(_) => {
-                self.log(
-                    LogLevel::Info,
-                    format!(
-                        "Copied \"{}\" to \"{}\"",
-                        entry.path().display(),
-                        dest.display()
-                    ),
-                );
-            }
-            Err(err) => match err.kind {
-                RemoteErrorType::UnsupportedFeature => {
-                    // If copy is not supported, perform the tricky copy
+            Err(err) => {
+                // On remote tabs, fall back to tricky_copy (download + re-upload)
+                // when the protocol doesn't support server-side copy.
+                if !self.is_local_tab() {
                     let _ = self.tricky_copy(entry, dest);
+                } else {
+                    self.log_and_alert(
+                        LogLevel::Error,
+                        format!(
+                            "Could not copy \"{}\" to \"{}\": {}",
+                            entry.path().display(),
+                            dest.display(),
+                            err
+                        ),
+                    );
                 }
-                _ => self.log_and_alert(
-                    LogLevel::Error,
-                    format!(
-                        "Could not copy \"{}\" to \"{}\": {}",
-                        entry.path().display(),
-                        dest.display(),
-                        err
-                    ),
-                ),
-            },
+            }
         }
     }
 
@@ -129,7 +93,12 @@ impl FileTransferActivity {
                 return Err(err);
             }
             // Stat dir
-            let tempdir_entry = match self.host_bridge.stat(tempdir_path.as_path()) {
+            let tempdir_entry = match self
+                .browser
+                .local_pane_mut()
+                .fs
+                .stat(tempdir_path.as_path())
+            {
                 Ok(e) => e,
                 Err(err) => {
                     self.log_and_alert(
@@ -182,9 +151,17 @@ impl FileTransferActivity {
                 return Err(err);
             }
             // Get local fs entry
-            let tmpfile_entry = match self.host_bridge.stat(tmpfile.path()) {
+            let tmpfile_entry = match self.browser.local_pane_mut().fs.stat(tmpfile.path()) {
                 Ok(e) if e.is_file() => e,
-                Ok(_) => panic!("{} is not a file", tmpfile.path().display()),
+                Ok(_) => {
+                    let msg = format!(
+                        "Copy failed: \"{}\" is not a file",
+                        tmpfile.path().display()
+                    );
+                    error!("{msg}");
+                    self.log_and_alert(LogLevel::Error, msg.clone());
+                    return Err(msg);
+                }
                 Err(err) => {
                     self.log_and_alert(
                         LogLevel::Error,

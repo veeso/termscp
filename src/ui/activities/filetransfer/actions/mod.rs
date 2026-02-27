@@ -1,6 +1,6 @@
 //! ## FileTransferActivity
 //!
-//! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
+//! `filetransfer_activity` is the module which implements the Filetransfer activity, which is the main activity afterall
 
 use std::path::{Path, PathBuf};
 
@@ -171,13 +171,13 @@ impl FileTransferActivity {
 
     fn get_file_from_path(&mut self, id: &Id, path: &Path) -> Option<File> {
         match *id {
-            Id::ExplorerHostBridge => self.host_bridge.stat(path).ok(),
-            Id::ExplorerRemote => self.client.stat(path).ok(),
+            Id::ExplorerHostBridge => self.browser.local_pane_mut().fs.stat(path).ok(),
+            Id::ExplorerRemote => self.browser.remote_pane_mut().fs.stat(path).ok(),
             Id::ExplorerFind => {
                 let found = self.browser.found_tab().unwrap();
                 match found {
-                    FoundExplorerTab::Local => self.host_bridge.stat(path).ok(),
-                    FoundExplorerTab::Remote => self.client.stat(path).ok(),
+                    FoundExplorerTab::Local => self.browser.local_pane_mut().fs.stat(path).ok(),
+                    FoundExplorerTab::Remote => self.browser.remote_pane_mut().fs.stat(path).ok(),
                 }
             }
             _ => None,
@@ -189,7 +189,12 @@ impl FileTransferActivity {
             Id::ExplorerHostBridge => self.host_bridge(),
             Id::ExplorerRemote => self.remote(),
             Id::ExplorerFind => self.found().as_ref().unwrap(),
-            _ => unreachable!(),
+            _ => {
+                error!(
+                    "browser_by_id called with unexpected id: {id:?}; falling back to local explorer"
+                );
+                self.host_bridge()
+            }
         }
     }
 

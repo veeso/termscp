@@ -1,6 +1,6 @@
 //! ## FileTransferActivity
 //!
-//! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
+//! `filetransfer_activity` is the module which implements the Filetransfer activity, which is the main activity afterall
 
 // locals
 use std::path::PathBuf;
@@ -17,49 +17,29 @@ enum SyncBrowsingDestination {
 }
 
 impl FileTransferActivity {
-    /// Enter a directory from entry, dispatching to local or remote based on the active tab.
+    /// Enter a directory from entry, dispatching via the active tab's pane.
     pub(crate) fn action_enter_dir(&mut self, dir: File) {
-        if self.is_local_tab() {
-            self.host_bridge_changedir(dir.path(), true);
-        } else {
-            self.remote_changedir(dir.path(), true);
-        }
+        self.pane_changedir(dir.path(), true);
         if self.browser.sync_browsing && self.browser.found().is_none() {
             self.synchronize_browsing(SyncBrowsingDestination::Path(dir.name()));
         }
     }
 
-    /// Change directory reading value from input, dispatching to local or remote based on the active tab.
+    /// Change directory reading value from input, dispatching via the active tab's pane.
     pub(crate) fn action_change_dir(&mut self, input: String) {
-        let dir_path = if self.is_local_tab() {
-            self.host_bridge_to_abs_path(PathBuf::from(input.as_str()).as_path())
-        } else {
-            self.remote_to_abs_path(PathBuf::from(input.as_str()).as_path())
-        };
-        if self.is_local_tab() {
-            self.host_bridge_changedir(dir_path.as_path(), true);
-        } else {
-            self.remote_changedir(dir_path.as_path(), true);
-        }
+        let dir_path = self.pane_to_abs_path(PathBuf::from(input.as_str()).as_path());
+        self.pane_changedir(dir_path.as_path(), true);
         // Check whether to sync
         if self.browser.sync_browsing && self.browser.found().is_none() {
             self.synchronize_browsing(SyncBrowsingDestination::Path(input));
         }
     }
 
-    /// Go to previous directory, dispatching to local or remote based on the active tab.
+    /// Go to previous directory, dispatching via the active tab's pane.
     pub(crate) fn action_go_to_previous_dir(&mut self) {
-        let prev = if self.is_local_tab() {
-            self.host_bridge_mut().popd()
-        } else {
-            self.remote_mut().popd()
-        };
+        let prev = self.browser.fs_pane_mut().explorer.popd();
         if let Some(d) = prev {
-            if self.is_local_tab() {
-                self.host_bridge_changedir(d.as_path(), false);
-            } else {
-                self.remote_changedir(d.as_path(), false);
-            }
+            self.pane_changedir(d.as_path(), false);
             // Check whether to sync
             if self.browser.sync_browsing && self.browser.found().is_none() {
                 self.synchronize_browsing(SyncBrowsingDestination::PreviousDir);
@@ -67,19 +47,11 @@ impl FileTransferActivity {
         }
     }
 
-    /// Go to upper directory, dispatching to local or remote based on the active tab.
+    /// Go to upper directory, dispatching via the active tab's pane.
     pub(crate) fn action_go_to_upper_dir(&mut self) {
-        let path = if self.is_local_tab() {
-            self.host_bridge().wrkdir.clone()
-        } else {
-            self.remote().wrkdir.clone()
-        };
+        let path = self.browser.fs_pane().explorer.wrkdir.clone();
         if let Some(parent) = path.as_path().parent() {
-            if self.is_local_tab() {
-                self.host_bridge_changedir(parent, true);
-            } else {
-                self.remote_changedir(parent, true);
-            }
+            self.pane_changedir(parent, true);
             // If sync is enabled update the other side too
             if self.browser.sync_browsing && self.browser.found().is_none() {
                 self.synchronize_browsing(SyncBrowsingDestination::ParentDir);
@@ -102,7 +74,7 @@ impl FileTransferActivity {
         let is_local = self.is_local_tab();
         let exists = if is_local {
             // Current tab is local, so the opposite is remote
-            match self.client.exists(path.as_path()) {
+            match self.browser.remote_pane_mut().fs.exists(path.as_path()) {
                 Ok(e) => e,
                 Err(err) => {
                     error!(
@@ -115,7 +87,7 @@ impl FileTransferActivity {
             }
         } else {
             // Current tab is remote, so the opposite is local
-            match self.host_bridge.exists(path.as_path()) {
+            match self.browser.local_pane_mut().fs.exists(path.as_path()) {
                 Ok(e) => e,
                 Err(err) => {
                     error!(
@@ -168,7 +140,7 @@ impl FileTransferActivity {
         if is_local {
             self.remote_changedir(path.as_path(), push);
         } else {
-            self.host_bridge_changedir(path.as_path(), push);
+            self.local_changedir(path.as_path(), push);
         }
     }
 

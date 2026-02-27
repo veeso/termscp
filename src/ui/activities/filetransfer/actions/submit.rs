@@ -1,6 +1,6 @@
 //! ## FileTransferActivity
 //!
-//! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
+//! `filetransfer_activity` is the module which implements the Filetransfer activity, which is the main activity afterall
 
 // locals
 use super::{File, FileTransferActivity};
@@ -11,24 +11,14 @@ enum SubmitAction {
 }
 
 impl FileTransferActivity {
-    /// Decides which action to perform on submit, dispatching to local or remote
-    /// based on the active tab.
+    /// Decides which action to perform on submit, dispatching via the active tab's pane.
     pub(crate) fn action_submit(&mut self, entry: File) {
         let (action, entry) = if entry.is_dir() {
             (SubmitAction::ChangeDir, entry)
         } else if entry.metadata().symlink.is_some() {
-            // Stat file
+            // Stat symlink target via the active pane
             let symlink = entry.metadata().symlink.as_ref().unwrap();
-            let stat_file = if self.is_local_tab() {
-                self.host_bridge
-                    .stat(symlink.as_path())
-                    .map_err(|e| e.to_string())
-            } else {
-                self.client
-                    .stat(symlink.as_path())
-                    .map_err(|e| e.to_string())
-            };
-            match stat_file {
+            match self.browser.fs_pane_mut().fs.stat(symlink.as_path()) {
                 Ok(e) => (SubmitAction::ChangeDir, e),
                 Err(err) => {
                     warn!(

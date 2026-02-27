@@ -1,6 +1,6 @@
 //! ## FileTransferActivity
 //!
-//! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
+//! `filetransfer_activity` is the module which implements the Filetransfer activity, which is the main activity afterall
 
 // locals
 use std::path::{Path, PathBuf};
@@ -64,7 +64,7 @@ impl FileTransferActivity {
             SelectedFile::One(entry) => {
                 let file_to_check = Self::file_to_check(&entry, opts.save_as.as_ref());
                 if self.config().get_prompt_on_file_replace()
-                    && self.remote_file_exists(file_to_check.as_path())
+                    && self.file_exists(file_to_check.as_path(), false)
                     && !self
                         .should_replace_file(opts.save_as.clone().unwrap_or_else(|| entry.name()))
                 {
@@ -124,7 +124,7 @@ impl FileTransferActivity {
             SelectedFile::One(entry) => {
                 let file_to_check = Self::file_to_check(&entry, opts.save_as.as_ref());
                 if self.config().get_prompt_on_file_replace()
-                    && self.host_bridge_file_exists(file_to_check.as_path())
+                    && self.file_exists(file_to_check.as_path(), true)
                     && !self
                         .should_replace_file(opts.save_as.clone().unwrap_or_else(|| entry.name()))
                 {
@@ -307,8 +307,8 @@ impl FileTransferActivity {
             files.into_iter().partition(|(x, dest_path)| {
                 let p = Self::file_to_check_many(x, dest_path);
                 match file_exists {
-                    CheckFileExists::Remote => self.remote_file_exists(p.as_path()),
-                    CheckFileExists::HostBridge => self.host_bridge_file_exists(p.as_path()),
+                    CheckFileExists::Remote => self.file_exists(p.as_path(), false),
+                    CheckFileExists::HostBridge => self.file_exists(p.as_path(), true),
                 }
             });
 

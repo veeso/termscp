@@ -1,10 +1,8 @@
 //! ## FileTransferActivity
 //!
-//! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
+//! `filetransfer_activity` is the module which implements the Filetransfer activity, which is the main activity afterall
 
 use std::path::PathBuf;
-
-use remotefs::fs::Welcome;
 
 use crate::ui::activities::filetransfer::{FileTransferActivity, LogLevel};
 
@@ -13,10 +11,11 @@ impl FileTransferActivity {
         let ft_params = self.context().remote_params().unwrap().clone();
         let entry_dir: Option<PathBuf> = ft_params.local_path;
         // Connect to host bridge
-        match self.host_bridge.connect() {
+        match self.browser.local_pane_mut().fs.connect() {
             Ok(()) => {
-                self.browser.local_pane_mut().connected = self.host_bridge.is_connected();
-                if !self.browser.local_pane().connected {
+                let connected = self.browser.local_pane_mut().fs.is_connected();
+                self.browser.local_pane_mut().connected = connected;
+                if !connected {
                     return;
                 }
 
@@ -30,12 +29,8 @@ impl FileTransferActivity {
                 );
 
                 // Try to change directory to entry directory
-                let mut remote_chdir: Option<PathBuf> = None;
-                if let Some(remote_path) = &entry_dir {
-                    remote_chdir = Some(remote_path.clone());
-                }
-                if let Some(remote_path) = remote_chdir {
-                    self.local_changedir(remote_path.as_path(), false);
+                if let Some(entry_path) = entry_dir {
+                    self.local_changedir(entry_path.as_path(), false);
                 }
                 // Set state to explorer
                 self.umount_wait();
@@ -55,41 +50,26 @@ impl FileTransferActivity {
     pub(in crate::ui::activities::filetransfer) fn connect_to_remote(&mut self) {
         let ft_params = self.context().remote_params().unwrap().clone();
         let entry_dir: Option<PathBuf> = ft_params.remote_path;
-        // Connect to remote
-        match self.client.connect() {
-            Ok(Welcome { banner, .. }) => {
-                self.browser.remote_pane_mut().connected = self.client.is_connected();
-                if !self.browser.remote_pane().connected {
+        // Connect to remote (banner is lost when using HostBridge API)
+        match self.browser.remote_pane_mut().fs.connect() {
+            Ok(()) => {
+                let connected = self.browser.remote_pane_mut().fs.is_connected();
+                self.browser.remote_pane_mut().connected = connected;
+                if !connected {
                     return;
                 }
 
-                if let Some(banner) = banner {
-                    // Log welcome
-                    self.log(
-                        LogLevel::Info,
-                        format!(
-                            "Established connection with '{}': \"{}\"",
-                            self.get_remote_hostname(),
-                            banner
-                        ),
-                    );
-                } else {
-                    // Log welcome
-                    self.log(
-                        LogLevel::Info,
-                        format!(
-                            "Established connection with '{}'",
-                            self.get_remote_hostname()
-                        ),
-                    );
-                }
+                // Log welcome
+                self.log(
+                    LogLevel::Info,
+                    format!(
+                        "Established connection with '{}'",
+                        self.get_remote_hostname()
+                    ),
+                );
                 // Try to change directory to entry directory
-                let mut remote_chdir: Option<PathBuf> = None;
-                if let Some(remote_path) = &entry_dir {
-                    remote_chdir = Some(remote_path.clone());
-                }
-                if let Some(remote_path) = remote_chdir {
-                    self.remote_changedir(remote_path.as_path(), false);
+                if let Some(entry_path) = entry_dir {
+                    self.remote_changedir(entry_path.as_path(), false);
                 }
                 // Set state to explorer
                 self.umount_wait();
@@ -112,7 +92,7 @@ impl FileTransferActivity {
         // Show popup disconnecting
         self.mount_wait(msg.as_str());
         // Disconnect
-        let _ = self.client.disconnect();
+        let _ = self.browser.remote_pane_mut().fs.disconnect();
         // Quit
         self.exit_reason = Some(super::super::ExitReason::Disconnect);
     }

@@ -1,6 +1,6 @@
 //! ## FileTransferActivity
 //!
-//! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
+//! `filetransfer_activity` is the module which implements the Filetransfer activity, which is the main activity afterall
 
 use tuirealm::event::{Key, KeyEvent, KeyModifiers};
 use tuirealm::ratatui::layout::{Constraint, Direction, Layout};
@@ -161,161 +161,116 @@ impl FileTransferActivity {
             self.app
                 .view(&Id::StatusBarHostBridge, f, status_bar_chunks[0]);
             self.app.view(&Id::StatusBarRemote, f, status_bar_chunks[1]);
-            // @! Draw popups
-            if self.app.mounted(&Id::FatalPopup) {
-                let popup = Popup(
-                    Size::Percentage(50),
-                    self.calc_popup_height(Id::FatalPopup, f.area().width, f.area().height),
-                )
-                .draw_in(f.area());
-                f.render_widget(Clear, popup);
-                // make popup
-                self.app.view(&Id::FatalPopup, f, popup);
-            } else if self.app.mounted(&Id::CopyPopup) {
-                let popup = Popup(Size::Percentage(40), Size::Unit(3)).draw_in(f.area());
-                f.render_widget(Clear, popup);
-                // make popup
-                self.app.view(&Id::CopyPopup, f, popup);
-            } else if self.app.mounted(&Id::ChmodPopup) {
-                let popup = Popup(Size::Percentage(50), Size::Unit(12)).draw_in(f.area());
-                f.render_widget(Clear, popup);
-                // make popup
-                self.app.view(&Id::ChmodPopup, f, popup);
-            } else if self.app.mounted(&Id::FilterPopup) {
-                let popup = Popup(Size::Percentage(50), Size::Unit(3)).draw_in(f.area());
-                f.render_widget(Clear, popup);
-                // make popup
-                self.app.view(&Id::FilterPopup, f, popup);
-            } else if self.app.mounted(&Id::GotoPopup) {
-                let popup = Popup(Size::Percentage(40), Size::Unit(3)).draw_in(f.area());
-                f.render_widget(Clear, popup);
-                // make popup
-                self.app.view(&Id::GotoPopup, f, popup);
-            } else if self.app.mounted(&Id::MkdirPopup) {
-                let popup = Popup(Size::Percentage(40), Size::Unit(3)).draw_in(f.area());
-                f.render_widget(Clear, popup);
-                // make popup
-                self.app.view(&Id::MkdirPopup, f, popup);
-            } else if self.app.mounted(&Id::NewfilePopup) {
-                let popup = Popup(Size::Percentage(40), Size::Unit(3)).draw_in(f.area());
-                f.render_widget(Clear, popup);
-                // make popup
-                self.app.view(&Id::NewfilePopup, f, popup);
-            } else if self.app.mounted(&Id::OpenWithPopup) {
-                let popup = Popup(Size::Percentage(40), Size::Unit(3)).draw_in(f.area());
-                f.render_widget(Clear, popup);
-                // make popup
-                self.app.view(&Id::OpenWithPopup, f, popup);
-            } else if self.app.mounted(&Id::RenamePopup) {
-                let popup = Popup(Size::Percentage(40), Size::Unit(3)).draw_in(f.area());
-                f.render_widget(Clear, popup);
-                // make popup
-                self.app.view(&Id::RenamePopup, f, popup);
-            } else if self.app.mounted(&Id::SaveAsPopup) {
-                let popup = Popup(Size::Percentage(40), Size::Unit(3)).draw_in(f.area());
-                f.render_widget(Clear, popup);
-                // make popup
-                self.app.view(&Id::SaveAsPopup, f, popup);
-            } else if self.app.mounted(&Id::SymlinkPopup) {
-                let popup = Popup(Size::Percentage(50), Size::Unit(3)).draw_in(f.area());
-                f.render_widget(Clear, popup);
-                // make popup
-                self.app.view(&Id::SymlinkPopup, f, popup);
-            } else if self.app.mounted(&Id::FileInfoPopup) {
-                let popup = Popup(Size::Percentage(80), Size::Percentage(50)).draw_in(f.area());
-                f.render_widget(Clear, popup);
-                // make popup
-                self.app.view(&Id::FileInfoPopup, f, popup);
-            } else if self.app.mounted(&Id::ProgressBarPartial) {
-                let popup = Popup(Size::Percentage(50), Size::Percentage(20)).draw_in(f.area());
-                f.render_widget(Clear, popup);
-                // make popup
-                let popup_chunks = Layout::default()
-                    .direction(Direction::Vertical)
-                    .constraints(
-                        [
-                            Constraint::Percentage(50), // Full
-                            Constraint::Percentage(50), // Partial
-                        ]
-                        .as_ref(),
-                    )
-                    .split(popup);
-                self.app.view(&Id::ProgressBarFull, f, popup_chunks[0]);
-                self.app.view(&Id::ProgressBarPartial, f, popup_chunks[1]);
-            } else if self.app.mounted(&Id::DeletePopup) {
-                let popup = Popup(Size::Percentage(30), Size::Unit(3)).draw_in(f.area());
-                f.render_widget(Clear, popup);
-                // make popup
-                self.app.view(&Id::DeletePopup, f, popup);
-            } else if self.app.mounted(&Id::ReplacePopup) {
-                let popup = Popup(Size::Percentage(50), Size::Unit(3)).draw_in(f.area());
-                f.render_widget(Clear, popup);
-                // make popup
-                self.app.view(&Id::ReplacePopup, f, popup);
-            } else if self.app.mounted(&Id::DisconnectPopup) {
-                let popup = Popup(Size::Percentage(30), Size::Unit(3)).draw_in(f.area());
-                f.render_widget(Clear, popup);
-                // make popup
-                self.app.view(&Id::DisconnectPopup, f, popup);
-            } else if self.app.mounted(&Id::QuitPopup) {
-                let popup = Popup(Size::Percentage(30), Size::Unit(3)).draw_in(f.area());
-                f.render_widget(Clear, popup);
-                // make popup
-                self.app.view(&Id::QuitPopup, f, popup);
-            } else if self.app.mounted(&Id::WatchedPathsList) {
-                let popup = Popup(Size::Percentage(60), Size::Percentage(50)).draw_in(f.area());
-                f.render_widget(Clear, popup);
-                // make popup
-                self.app.view(&Id::WatchedPathsList, f, popup);
-            } else if self.app.mounted(&Id::WatcherPopup) {
-                let popup = Popup(Size::Percentage(60), Size::Unit(3)).draw_in(f.area());
-                f.render_widget(Clear, popup);
-                // make popup
-                self.app.view(&Id::WatcherPopup, f, popup);
-            } else if self.app.mounted(&Id::SortingPopup) {
-                let popup = Popup(Size::Percentage(50), Size::Unit(3)).draw_in(f.area());
-                f.render_widget(Clear, popup);
-                // make popup
-                self.app.view(&Id::SortingPopup, f, popup);
-            } else if self.app.mounted(&Id::ErrorPopup) {
-                let popup = Popup(
-                    Size::Percentage(50),
-                    self.calc_popup_height(Id::ErrorPopup, f.area().width, f.area().height),
-                )
-                .draw_in(f.area());
-                f.render_widget(Clear, popup);
-                // make popup
-                self.app.view(&Id::ErrorPopup, f, popup);
-            } else if self.app.mounted(&Id::WaitPopup) {
-                let wait_popup_lines = self
-                    .app
-                    .query(&Id::WaitPopup, Attribute::Text)
-                    .map(|x| x.map(|x| x.unwrap_payload().unwrap_vec().len()))
-                    .unwrap_or_default()
-                    .unwrap_or(1) as u16;
-
-                let popup =
-                    Popup(Size::Percentage(50), Size::Unit(2 + wait_popup_lines)).draw_in(f.area());
-                f.render_widget(Clear, popup);
-                // make popup
-                self.app.view(&Id::WaitPopup, f, popup);
-            } else if self.app.mounted(&Id::SyncBrowsingMkdirPopup) {
-                let popup = Popup(Size::Percentage(60), Size::Unit(3)).draw_in(f.area());
-                f.render_widget(Clear, popup);
-                // make popup
-                self.app.view(&Id::SyncBrowsingMkdirPopup, f, popup);
-            } else if self.app.mounted(&Id::KeybindingsPopup) {
-                let popup = Popup(Size::Percentage(50), Size::Percentage(80)).draw_in(f.area());
-                f.render_widget(Clear, popup);
-                // make popup
-                self.app.view(&Id::KeybindingsPopup, f, popup);
+            // @! Draw popups — first mounted popup in priority order wins
+            let popup_priority = [
+                Id::FatalPopup,
+                Id::CopyPopup,
+                Id::ChmodPopup,
+                Id::FilterPopup,
+                Id::GotoPopup,
+                Id::MkdirPopup,
+                Id::NewfilePopup,
+                Id::OpenWithPopup,
+                Id::RenamePopup,
+                Id::SaveAsPopup,
+                Id::SymlinkPopup,
+                Id::FileInfoPopup,
+                Id::ProgressBarPartial,
+                Id::DeletePopup,
+                Id::ReplacePopup,
+                Id::DisconnectPopup,
+                Id::QuitPopup,
+                Id::WatchedPathsList,
+                Id::WatcherPopup,
+                Id::SortingPopup,
+                Id::ErrorPopup,
+                Id::WaitPopup,
+                Id::SyncBrowsingMkdirPopup,
+                Id::KeybindingsPopup,
+            ];
+            if let Some(popup_id) = popup_priority.iter().find(|id| self.app.mounted(id)) {
+                match popup_id {
+                    // Dynamic-height popups (text wrapping)
+                    Id::FatalPopup | Id::ErrorPopup => {
+                        let popup = Popup(
+                            Size::Percentage(50),
+                            self.calc_popup_height(
+                                popup_id.clone(),
+                                f.area().width,
+                                f.area().height,
+                            ),
+                        )
+                        .draw_in(f.area());
+                        f.render_widget(Clear, popup);
+                        self.app.view(popup_id, f, popup);
+                    }
+                    // Dual-component progress bar
+                    Id::ProgressBarPartial => {
+                        let popup =
+                            Popup(Size::Percentage(50), Size::Percentage(20)).draw_in(f.area());
+                        f.render_widget(Clear, popup);
+                        let popup_chunks = Layout::default()
+                            .direction(Direction::Vertical)
+                            .constraints(
+                                [Constraint::Percentage(50), Constraint::Percentage(50)].as_ref(),
+                            )
+                            .split(popup);
+                        self.app.view(&Id::ProgressBarFull, f, popup_chunks[0]);
+                        self.app.view(&Id::ProgressBarPartial, f, popup_chunks[1]);
+                    }
+                    // Wait popup with dynamic line count
+                    Id::WaitPopup => {
+                        let lines = self
+                            .app
+                            .query(&Id::WaitPopup, Attribute::Text)
+                            .map(|x| x.map(|x| x.unwrap_payload().unwrap_vec().len()))
+                            .unwrap_or_default()
+                            .unwrap_or(1) as u16;
+                        let popup =
+                            Popup(Size::Percentage(50), Size::Unit(2 + lines)).draw_in(f.area());
+                        f.render_widget(Clear, popup);
+                        self.app.view(&Id::WaitPopup, f, popup);
+                    }
+                    // Standard fixed-size popups
+                    id => {
+                        let (w, h) = Self::popup_dimensions(id);
+                        let popup = Popup(w, h).draw_in(f.area());
+                        f.render_widget(Clear, popup);
+                        self.app.view(id, f, popup);
+                    }
+                }
             }
         });
         // Re-give context
         self.context = Some(context);
     }
 
-    // -- dynamic size
+    // -- popup dimensions
+
+    /// Returns the fixed (width, height) for a standard popup.
+    fn popup_dimensions(id: &Id) -> (Size, Size) {
+        match id {
+            Id::CopyPopup
+            | Id::GotoPopup
+            | Id::MkdirPopup
+            | Id::NewfilePopup
+            | Id::OpenWithPopup
+            | Id::RenamePopup
+            | Id::SaveAsPopup => (Size::Percentage(40), Size::Unit(3)),
+            Id::ChmodPopup => (Size::Percentage(50), Size::Unit(12)),
+            Id::FilterPopup | Id::SymlinkPopup | Id::SortingPopup | Id::ReplacePopup => {
+                (Size::Percentage(50), Size::Unit(3))
+            }
+            Id::FileInfoPopup => (Size::Percentage(80), Size::Percentage(50)),
+            Id::DeletePopup | Id::DisconnectPopup | Id::QuitPopup => {
+                (Size::Percentage(30), Size::Unit(3))
+            }
+            Id::WatchedPathsList => (Size::Percentage(60), Size::Percentage(50)),
+            Id::WatcherPopup | Id::SyncBrowsingMkdirPopup => (Size::Percentage(60), Size::Unit(3)),
+            Id::KeybindingsPopup => (Size::Percentage(50), Size::Percentage(80)),
+            _ => (Size::Percentage(50), Size::Unit(3)),
+        }
+    }
 
     /// Given the id of the component to display and the width and height of the total area,
     /// returns the height in percentage to the entire area height, that the popup should have

@@ -52,7 +52,7 @@ impl FileTransferActivity {
             destination.display()
         );
         // stat fs entry
-        let origin = match self.client.stat(source) {
+        let origin = match self.browser.remote_pane_mut().fs.stat(source) {
             Ok(f) => f,
             Err(err) => {
                 self.log(
@@ -71,7 +71,18 @@ impl FileTransferActivity {
     }
 
     fn remove_watched_file(&mut self, file: &Path) {
-        match self.client.remove_dir_all(file) {
+        // stat the file first to use HostBridge::remove
+        let entry = match self.browser.remote_pane_mut().fs.stat(file) {
+            Ok(e) => e,
+            Err(err) => {
+                self.log(
+                    LogLevel::Error,
+                    format!("failed to stat watched file {}: {}", file.display(), err),
+                );
+                return;
+            }
+        };
+        match self.browser.remote_pane_mut().fs.remove(&entry) {
             Ok(()) => {
                 self.log(
                     LogLevel::Info,
@@ -89,7 +100,7 @@ impl FileTransferActivity {
 
     fn upload_watched_file(&mut self, host: &Path, remote: &Path) {
         // stat host file
-        let entry = match self.host_bridge.stat(host) {
+        let entry = match self.browser.local_pane_mut().fs.stat(host) {
             Ok(e) => e,
             Err(err) => {
                 self.log(

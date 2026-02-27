@@ -1,10 +1,9 @@
 //! ## FileTransferActivity
 //!
-//! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
+//! `filetransfer_activity` is the module which implements the Filetransfer activity, which is the main activity afterall
 
 use std::path::{Path, PathBuf};
 
-use remotefs::RemoteResult;
 use remotefs::fs::{File, Metadata};
 
 use super::transfer::TransferPayload;
@@ -12,116 +11,111 @@ use crate::host::HostError;
 use crate::ui::activities::filetransfer::{FileTransferActivity, LogLevel};
 
 impl FileTransferActivity {
+    // -- reload directory --
+
     /// Reload remote directory entries and update browser
     pub(in crate::ui::activities::filetransfer) fn reload_remote_dir(&mut self) {
-        if !self.browser.remote_pane().connected {
-            return;
-        }
-        // Get current entries
-        if let Ok(wrkdir) = self.client.pwd() {
-            self.mount_blocking_wait("Loading remote directory...");
-
-            let res = self.remote_scan(wrkdir.as_path());
-
-            self.umount_wait();
-
-            match res {
-                Ok(_) => {
-                    self.remote_mut().wrkdir = wrkdir;
-                }
-                Err(err) => {
-                    self.log_and_alert(
-                        LogLevel::Error,
-                        format!("Could not scan current remote directory: {err}"),
-                    );
-                }
-            }
-        }
+        self.reload_dir_on(false);
     }
 
     /// Reload host_bridge directory entries and update browser
     pub(in crate::ui::activities::filetransfer) fn reload_host_bridge_dir(&mut self) {
-        if !self.browser.local_pane().connected {
+        self.reload_dir_on(true);
+    }
+
+    /// Reload directory entries for the specified side.
+    fn reload_dir_on(&mut self, local: bool) {
+        let pane = if local {
+            self.browser.local_pane()
+        } else {
+            self.browser.remote_pane()
+        };
+        if !pane.connected {
             return;
         }
 
-        self.mount_blocking_wait("Loading host bridge directory...");
+        self.mount_blocking_wait("Loading directory...");
 
-        let wrkdir = match self.host_bridge.pwd() {
+        let pane = if local {
+            self.browser.local_pane_mut()
+        } else {
+            self.browser.remote_pane_mut()
+        };
+        let wrkdir = match pane.fs.pwd() {
             Ok(wrkdir) => wrkdir,
             Err(err) => {
                 self.log_and_alert(
                     LogLevel::Error,
-                    format!("Could not scan current host bridge directory: {err}"),
+                    format!("Could not scan current directory: {err}"),
                 );
+                self.umount_wait();
                 return;
             }
         };
 
-        let res = self.host_bridge_scan(wrkdir.as_path());
+        let res = self.scan_on(local, wrkdir.as_path());
 
         self.umount_wait();
 
         match res {
             Ok(_) => {
-                self.host_bridge_mut().wrkdir = wrkdir;
+                let explorer = if local {
+                    self.host_bridge_mut()
+                } else {
+                    self.remote_mut()
+                };
+                explorer.wrkdir = wrkdir;
             }
             Err(err) => {
                 self.log_and_alert(
                     LogLevel::Error,
-                    format!("Could not scan current host bridge directory: {err}"),
+                    format!("Could not scan current directory: {err}"),
                 );
             }
         }
     }
 
-    /// Scan current host bridge directory
-    fn host_bridge_scan(&mut self, path: &Path) -> Result<(), HostError> {
-        match self.host_bridge.list_dir(path) {
-            Ok(files) => {
-                // Set files and sort (sorting is implicit)
-                self.host_bridge_mut().set_files(files);
+    /// Scan a directory on the specified side and update the explorer file list.
+    fn scan_on(&mut self, local: bool, path: &Path) -> Result<(), HostError> {
+        let pane = if local {
+            self.browser.local_pane_mut()
+        } else {
+            self.browser.remote_pane_mut()
+        };
+        let files = pane.fs.list_dir(path)?;
 
-                Ok(())
-            }
-            Err(err) => Err(err),
-        }
+        let explorer = if local {
+            self.host_bridge_mut()
+        } else {
+            self.remote_mut()
+        };
+        explorer.set_files(files);
+        Ok(())
     }
 
-    /// Scan current remote directory
-    fn remote_scan(&mut self, path: &Path) -> RemoteResult<()> {
-        match self.client.list_dir(path) {
-            Ok(files) => {
-                // Set files and sort (sorting is implicit)
-                self.remote_mut().set_files(files);
-                Ok(())
-            }
-            Err(err) => Err(err),
-        }
-    }
+    // -- change directory --
 
-    /// Change directory for host_bridge
-    pub(in crate::ui::activities::filetransfer) fn host_bridge_changedir(
+    /// Change directory on the current tab's pane (no reload).
+    pub(in crate::ui::activities::filetransfer) fn pane_changedir(
         &mut self,
         path: &Path,
         push: bool,
     ) {
-        // Get current directory
-        let prev_dir: PathBuf = self.host_bridge().wrkdir.clone();
-        // Change directory
-        match self.host_bridge.change_wrkdir(path) {
+        let prev_dir: PathBuf = self.browser.fs_pane().explorer.wrkdir.clone();
+        match self.browser.fs_pane_mut().fs.change_wrkdir(path) {
             Ok(_) => {
                 self.log(
                     LogLevel::Info,
-                    format!("Changed directory on host_bridge: {}", path.display()),
+                    format!("Changed directory: {}", path.display()),
                 );
-                // Push prev_dir to stack
                 if push {
-                    self.host_bridge_mut().pushd(prev_dir.as_path())
+                    self.browser
+                        .fs_pane_mut()
+                        .explorer
+                        .pushd(prev_dir.as_path());
                 }
             }
             Err(err) => {
-                // Report err
                 self.log_and_alert(
                     LogLevel::Error,
                     format!("Could not change working directory: {err}"),
@@ -130,29 +124,25 @@ impl FileTransferActivity {
         }
     }
 
+    /// Change directory on the local pane and reload.
     pub(in crate::ui::activities::filetransfer) fn local_changedir(
         &mut self,
         path: &Path,
         push: bool,
     ) {
-        // Get current directory
         let prev_dir: PathBuf = self.host_bridge().wrkdir.clone();
-        // Change directory
-        match self.host_bridge.change_wrkdir(path) {
+        match self.browser.local_pane_mut().fs.change_wrkdir(path) {
             Ok(_) => {
                 self.log(
                     LogLevel::Info,
                     format!("Changed directory on host bridge: {}", path.display()),
                 );
-                // Update files
                 self.reload_host_bridge_dir();
-                // Push prev_dir to stack
                 if push {
                     self.host_bridge_mut().pushd(prev_dir.as_path())
                 }
             }
             Err(err) => {
-                // Report err
                 self.log_and_alert(
                     LogLevel::Error,
                     format!("Could not change working directory: {err}"),
@@ -161,29 +151,25 @@ impl FileTransferActivity {
         }
     }
 
+    /// Change directory on the remote pane and reload.
     pub(in crate::ui::activities::filetransfer) fn remote_changedir(
         &mut self,
         path: &Path,
         push: bool,
     ) {
-        // Get current directory
         let prev_dir: PathBuf = self.remote().wrkdir.clone();
-        // Change directory
-        match self.client.as_mut().change_dir(path) {
+        match self.browser.remote_pane_mut().fs.change_wrkdir(path) {
             Ok(_) => {
                 self.log(
                     LogLevel::Info,
                     format!("Changed directory on remote: {}", path.display()),
                 );
-                // Update files
                 self.reload_remote_dir();
-                // Push prev_dir to stack
                 if push {
                     self.remote_mut().pushd(prev_dir.as_path())
                 }
             }
             Err(err) => {
-                // Report err
                 self.log_and_alert(
                     LogLevel::Error,
                     format!("Could not change working directory: {err}"),
@@ -191,6 +177,8 @@ impl FileTransferActivity {
             }
         }
     }
+
+    // -- temporary file download --
 
     /// Download provided file as a temporary file
     pub(in crate::ui::activities::filetransfer) fn download_file_as_temp(
@@ -209,7 +197,6 @@ impl FileTransferActivity {
                 ));
             }
         };
-        // Download file
         match self.filetransfer_recv(
             TransferPayload::File(file.clone()),
             tmpfile.as_path(),
@@ -224,51 +211,22 @@ impl FileTransferActivity {
         }
     }
 
-    // -- transfer sizes
+    // -- transfer sizes --
 
-    /// Get total size of transfer for host_bridgehost
-    pub(super) fn get_total_transfer_size_host(&mut self, entry: &File) -> usize {
-        // mount message to tell we are calculating size
+    /// Get total size of transfer for the specified side.
+    pub(super) fn get_total_transfer_size(&mut self, entry: &File, local: bool) -> usize {
         self.mount_blocking_wait("Calculating transfer size…");
 
         let sz = if entry.is_dir() {
-            // List dir
-            match self.host_bridge.list_dir(entry.path()) {
+            let list_result = if local {
+                self.browser.local_pane_mut().fs.list_dir(entry.path())
+            } else {
+                self.browser.remote_pane_mut().fs.list_dir(entry.path())
+            };
+            match list_result {
                 Ok(files) => files
                     .iter()
-                    .map(|x| self.get_total_transfer_size_host(x))
-                    .sum(),
-                Err(err) => {
-                    self.log(
-                        LogLevel::Error,
-                        format!(
-                            "Could not list directory {}: {}",
-                            entry.path().display(),
-                            err
-                        ),
-                    );
-                    0
-                }
-            }
-        } else {
-            entry.metadata.size as usize
-        };
-        self.umount_wait();
-
-        sz
-    }
-
-    /// Get total size of transfer for remote host
-    pub(super) fn get_total_transfer_size_remote(&mut self, entry: &File) -> usize {
-        // mount message to tell we are calculating size
-        self.mount_blocking_wait("Calculating transfer size…");
-
-        let sz = if entry.is_dir() {
-            // List directory
-            match self.client.list_dir(entry.path()) {
-                Ok(files) => files
-                    .iter()
-                    .map(|x| self.get_total_transfer_size_remote(x))
+                    .map(|x| self.get_total_transfer_size(x, local))
                     .sum(),
                 Err(err) => {
                     self.log(
@@ -287,49 +245,40 @@ impl FileTransferActivity {
         };
 
         self.umount_wait();
-
         sz
     }
 
-    // file changed
+    // -- file changed --
 
-    /// Check whether provided file has changed on host_bridge disk, compared to remote file
-    pub(super) fn has_host_bridge_file_changed(
+    /// Check whether a file has changed on the specified side, compared to the given metadata.
+    pub(super) fn has_file_changed(
         &mut self,
-        host_bridge: &Path,
-        remote: &File,
+        path: &Path,
+        other_metadata: &Metadata,
+        local: bool,
     ) -> bool {
-        // check if files are equal (in case, don't transfer)
-        if let Ok(host_bridge_file) = self.host_bridge.stat(host_bridge) {
-            host_bridge_file.metadata().modified != remote.metadata().modified
-                || host_bridge_file.metadata().size != remote.metadata().size
+        let stat_result = if local {
+            self.browser.local_pane_mut().fs.stat(path)
+        } else {
+            self.browser.remote_pane_mut().fs.stat(path)
+        };
+        if let Ok(file) = stat_result {
+            other_metadata.modified != file.metadata().modified
+                || other_metadata.size != file.metadata().size
         } else {
             true
         }
     }
 
-    /// Checks whether remote file has changed compared to host_bridge file
-    pub(super) fn has_remote_file_changed(
-        &mut self,
-        remote: &Path,
-        host_bridge_metadata: &Metadata,
-    ) -> bool {
-        // check if files are equal (in case, don't transfer)
-        if let Ok(remote_file) = self.client.stat(remote) {
-            host_bridge_metadata.modified != remote_file.metadata().modified
-                || host_bridge_metadata.size != remote_file.metadata().size
+    // -- file exist --
+
+    /// Check whether a file exists on the specified side.
+    pub(crate) fn file_exists(&mut self, p: &Path, local: bool) -> bool {
+        let pane = if local {
+            self.browser.local_pane_mut()
         } else {
-            true
-        }
-    }
-
-    // -- file exist
-
-    pub(crate) fn host_bridge_file_exists(&mut self, p: &Path) -> bool {
-        self.host_bridge.exists(p).unwrap_or_default()
-    }
-
-    pub(crate) fn remote_file_exists(&mut self, p: &Path) -> bool {
-        self.client.exists(p).unwrap_or_default()
+            self.browser.remote_pane_mut()
+        };
+        pane.fs.exists(p).unwrap_or_default()
     }
 }

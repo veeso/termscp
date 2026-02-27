@@ -1,6 +1,6 @@
 use tuirealm::props::{AttrValue, Attribute, Color, TableBuilder, TextSpan};
 
-use super::super::{FileTransferActivity, Id, LogLevel, LogRecord};
+use super::super::{FileTransferActivity, Id, LogLevel, LogRecord, ui_result};
 
 const LOG_CAPACITY: usize = 256;
 
@@ -75,14 +75,10 @@ impl FileTransferActivity {
                 .add_col(TextSpan::from("]: "))
                 .add_col(TextSpan::from(record.msg.as_str()));
         }
-        assert!(
-            self.app
-                .attr(
-                    &Id::Log,
-                    Attribute::Content,
-                    AttrValue::Table(table.build())
-                )
-                .is_ok()
-        );
+        ui_result(self.app.attr(
+            &Id::Log,
+            Attribute::Content,
+            AttrValue::Table(table.build()),
+        ));
     }
 }

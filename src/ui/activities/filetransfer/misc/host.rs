@@ -34,20 +34,9 @@ impl FileTransferActivity {
         }
     }
 
-    /// Convert a path to absolute according to host explorer
-    pub(in crate::ui::activities::filetransfer) fn host_bridge_to_abs_path(
-        &self,
-        path: &Path,
-    ) -> PathBuf {
-        path::absolutize(self.host_bridge().wrkdir.as_path(), path)
-    }
-
-    /// Convert a path to absolute according to remote explorer
-    pub(in crate::ui::activities::filetransfer) fn remote_to_abs_path(
-        &self,
-        path: &Path,
-    ) -> PathBuf {
-        path::absolutize(self.remote().wrkdir.as_path(), path)
+    /// Convert a path to absolute according to the current tab's pane explorer
+    pub(in crate::ui::activities::filetransfer) fn pane_to_abs_path(&self, path: &Path) -> PathBuf {
+        path::absolutize(self.browser.fs_pane().explorer.wrkdir.as_path(), path)
     }
 
     /// Get remote hostname

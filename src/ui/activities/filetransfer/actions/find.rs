@@ -1,6 +1,6 @@
 //! ## FileTransferActivity
 //!
-//! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
+//! `filetransfer_activity` is the module which implements the Filetransfer activity, which is the main activity afterall
 
 // locals
 use std::path::PathBuf;
@@ -21,27 +21,19 @@ impl FileTransferActivity {
                     Some(p) => p.to_path_buf(),
                 }
             };
-            // Change directory
-            if self.is_local_tab() {
-                self.host_bridge_changedir(path.as_path(), true);
-            } else {
-                self.remote_changedir(path.as_path(), true);
-            }
+            // Change directory on the active tab's pane
+            self.pane_changedir(path.as_path(), true);
         }
     }
 
     pub(crate) fn action_find_transfer(&mut self, opts: TransferOpts) {
-        let wrkdir: PathBuf = if self.is_local_tab() {
-            self.remote().wrkdir.clone()
-        } else {
-            self.host_bridge().wrkdir.clone()
-        };
+        let wrkdir: PathBuf = self.browser.opposite_pane().explorer.wrkdir.clone();
         match self.get_found_selected_entries() {
             SelectedFile::One(entry) => {
                 if self.is_local_tab() {
                     let file_to_check = Self::file_to_check(&entry, opts.save_as.as_ref());
                     if self.config().get_prompt_on_file_replace()
-                        && self.remote_file_exists(file_to_check.as_path())
+                        && self.file_exists(file_to_check.as_path(), false)
                         && !self.should_replace_file(
                             opts.save_as.clone().unwrap_or_else(|| entry.name()),
                         )
@@ -62,7 +54,7 @@ impl FileTransferActivity {
                 } else {
                     let file_to_check = Self::file_to_check(&entry, opts.save_as.as_ref());
                     if self.config().get_prompt_on_file_replace()
-                        && self.host_bridge_file_exists(file_to_check.as_path())
+                        && self.file_exists(file_to_check.as_path(), true)
                         && !self.should_replace_file(
                             opts.save_as.clone().unwrap_or_else(|| entry.name()),
                         )

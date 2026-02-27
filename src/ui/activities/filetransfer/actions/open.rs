@@ -1,6 +1,6 @@
 //! ## FileTransferActivity
 //!
-//! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
+//! `filetransfer_activity` is the module which implements the Filetransfer activity, which is the main activity afterall
 
 // locals
 // ext
@@ -29,21 +29,17 @@ impl FileTransferActivity {
         self.reload_browser_file_list();
     }
 
-    /// Open a file, dispatching to local or remote handler
+    /// Open a file, dispatching based on whether the active pane is localhost.
     pub(crate) fn open_file(&mut self, entry: &File, open_with: Option<&str>) {
-        if self.is_local_tab() {
-            self.action_open_local_file(entry, open_with);
-        } else {
-            self.action_open_remote_file(entry, open_with);
-        }
-    }
-
-    /// Perform open local file
-    fn action_open_local_file(&mut self, entry: &File, open_with: Option<&str>) {
-        if self.host_bridge.is_localhost() {
+        if self.browser.fs_pane().fs.is_localhost() {
+            // Direct open from local path
             self.open_path_with(entry.path(), open_with);
-        } else {
+        } else if self.is_local_tab() {
+            // Non-localhost host bridge: download via HostBridge API
             self.open_bridged_file(entry, open_with);
+        } else {
+            // Remote: download via filetransfer_recv
+            self.action_open_remote_file(entry, open_with);
         }
     }
 
@@ -108,7 +104,7 @@ impl FileTransferActivity {
         let tmpfile = cache.join(tmpfile);
 
         // open from host bridge
-        let mut reader = match self.host_bridge.open_file(entry.path()) {
+        let mut reader = match self.browser.local_pane_mut().fs.open_file(entry.path()) {
             Ok(reader) => reader,
             Err(err) => {
                 self.log(

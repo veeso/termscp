@@ -1,6 +1,6 @@
 //! ## FileTransferActivity
 //!
-//! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
+//! `filetransfer_activity` is the module which implements the Filetransfer activity, which is the main activity afterall
 
 use std::path::Path;
 
@@ -169,10 +169,8 @@ impl Browser {
     }
 
     // -- Pane accessors --
-    // These methods are not yet used but will be consumed by future unification tasks.
 
     /// The pane whose filesystem is targeted by the current tab.
-    #[allow(dead_code)]
     pub fn fs_pane(&self) -> &Pane {
         match self.tab {
             FileExplorerTab::HostBridge | FileExplorerTab::FindHostBridge => &self.local,
@@ -181,7 +179,6 @@ impl Browser {
     }
 
     /// The pane whose filesystem is targeted by the current tab (mutable).
-    #[allow(dead_code)]
     pub fn fs_pane_mut(&mut self) -> &mut Pane {
         match self.tab {
             FileExplorerTab::HostBridge | FileExplorerTab::FindHostBridge => &mut self.local,
@@ -190,30 +187,11 @@ impl Browser {
     }
 
     /// The opposite pane (transfer destination).
-    #[allow(dead_code)]
     pub fn opposite_pane(&self) -> &Pane {
         match self.tab {
             FileExplorerTab::HostBridge | FileExplorerTab::FindHostBridge => &self.remote,
             FileExplorerTab::Remote | FileExplorerTab::FindRemote => &self.local,
         }
-    }
-
-    /// The opposite pane (transfer destination, mutable).
-    #[allow(dead_code)]
-    pub fn opposite_pane_mut(&mut self) -> &mut Pane {
-        match self.tab {
-            FileExplorerTab::HostBridge | FileExplorerTab::FindHostBridge => &mut self.remote,
-            FileExplorerTab::Remote | FileExplorerTab::FindRemote => &mut self.local,
-        }
-    }
-
-    /// Is the current tab a Find result tab?
-    #[allow(dead_code)]
-    pub fn is_find_tab(&self) -> bool {
-        matches!(
-            self.tab,
-            FileExplorerTab::FindHostBridge | FileExplorerTab::FindRemote
-        )
     }
 
     /// Direct access to local pane

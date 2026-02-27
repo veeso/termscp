@@ -1,6 +1,6 @@
 //! ## FileTransferActivity
 //!
-//! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
+//! `filetransfer_activity` is the module which implements the Filetransfer activity, which is the main activity afterall
 
 // locals
 use remotefs::File;
@@ -8,8 +8,7 @@ use remotefs::File;
 use super::{FileTransferActivity, LogLevel, SelectedFile};
 
 impl FileTransferActivity {
-    /// Delete the currently selected file(s) using the active tab to decide
-    /// whether to operate on the local host-bridge or the remote client.
+    /// Delete the currently selected file(s) via the active tab's pane.
     pub(crate) fn action_delete(&mut self) {
         match self.get_selected_entries() {
             SelectedFile::One(entry) => {
@@ -21,28 +20,16 @@ impl FileTransferActivity {
                 }
 
                 // clear selection and reload
-                if self.is_local_tab() {
-                    self.host_bridge_mut().clear_queue();
-                    self.reload_host_bridge_filelist();
-                } else {
-                    self.remote_mut().clear_queue();
-                    self.reload_remote_filelist();
-                }
+                self.browser.explorer_mut().clear_queue();
+                self.reload_browser_file_list();
             }
             SelectedFile::None => {}
         }
     }
 
-    /// Remove a single file or directory, branching on the current tab.
+    /// Remove a single file or directory via the active tab's pane.
     pub(crate) fn remove_file(&mut self, entry: &File) {
-        let result: Result<(), String> = if self.is_local_tab() {
-            self.host_bridge.remove(entry).map_err(|e| e.to_string())
-        } else {
-            self.client
-                .remove_dir_all(entry.path())
-                .map_err(|e| e.to_string())
-        };
-        match result {
+        match self.browser.fs_pane_mut().fs.remove(entry) {
             Ok(_) => {
                 self.log(
                     LogLevel::Info,

@@ -1,6 +1,6 @@
 //! ## FileTransferActivity
 //!
-//! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
+//! `filetransfer_activity` is the module which implements the Filetransfer activity, which is the main activity afterall
 
 // locals
 // externals
@@ -42,7 +42,10 @@ impl FileTransferActivity {
                 self.umount_chmod();
                 self.mount_blocking_wait("Applying new file mode…");
                 // Skip chmod on Windows localhost
-                if !(self.is_local_tab() && self.host_bridge.is_localhost() && cfg!(windows)) {
+                if !(self.is_local_tab()
+                    && self.browser.local_pane().fs.is_localhost()
+                    && cfg!(windows))
+                {
                     self.action_chmod(mode);
                 }
                 self.umount_wait();
