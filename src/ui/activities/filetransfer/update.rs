@@ -58,7 +58,7 @@ impl FileTransferActivity {
                 match self.browser.tab() {
                     FileExplorerTab::HostBridge => self.action_local_copy(dest),
                     FileExplorerTab::Remote => self.action_remote_copy(dest),
-                    _ => panic!("Found tab doesn't support COPY"),
+                    _ => error!("Found tab doesn't support COPY"),
                 }
                 self.umount_wait();
                 // Reload files
@@ -70,7 +70,7 @@ impl FileTransferActivity {
                 match self.browser.tab() {
                     FileExplorerTab::HostBridge => self.action_local_symlink(name),
                     FileExplorerTab::Remote => self.action_remote_symlink(name),
-                    _ => panic!("Found tab doesn't support SYMLINK"),
+                    _ => error!("Found tab doesn't support SYMLINK"),
                 }
                 self.umount_wait();
                 // Reload files
@@ -150,7 +150,7 @@ impl FileTransferActivity {
                 match self.browser.tab() {
                     FileExplorerTab::HostBridge => self.action_local_exec(cmd),
                     FileExplorerTab::Remote => self.action_remote_exec(cmd),
-                    _ => panic!("Found tab doesn't support EXEC"),
+                    _ => error!("Found tab doesn't support EXEC"),
                 };
             }
             TransferMsg::GetFileSize => {
@@ -160,7 +160,7 @@ impl FileTransferActivity {
                 match self.browser.tab() {
                     FileExplorerTab::HostBridge => self.action_change_local_dir(dir),
                     FileExplorerTab::Remote => self.action_change_remote_dir(dir),
-                    _ => panic!("Found tab doesn't support GOTO"),
+                    _ => error!("Found tab doesn't support GOTO"),
                 }
                 // Umount
                 self.umount_goto();
@@ -220,7 +220,12 @@ impl FileTransferActivity {
                 let res: Result<Vec<File>, WalkdirError> = match self.browser.tab() {
                     FileExplorerTab::HostBridge => self.action_walkdir_local(),
                     FileExplorerTab::Remote => self.action_walkdir_remote(),
-                    _ => panic!("Trying to search for files, while already in a find result"),
+                    _ => {
+                        error!("Trying to search for files, while already in a find result");
+                        self.umount_wait();
+                        self.redraw = true;
+                        return None;
+                    }
                 };
                 // Umount wait
                 self.umount_wait();

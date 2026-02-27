@@ -498,13 +498,19 @@ impl FileTransferActivity {
         let id = match tab {
             FileExplorerTab::HostBridge => Id::TerminalHostBridge,
             FileExplorerTab::Remote => Id::TerminalRemote,
-            _ => panic!("Cannot mount terminal on this tab"),
+            _ => {
+                error!("Cannot mount terminal on this tab");
+                return;
+            }
         };
 
         let border = match tab {
             FileExplorerTab::HostBridge => self.theme().transfer_local_explorer_highlighted,
             FileExplorerTab::Remote => self.theme().transfer_remote_explorer_highlighted,
-            _ => panic!("Cannot mount terminal on this tab"),
+            _ => {
+                error!("Cannot mount terminal on this tab");
+                return;
+            }
         };
 
         let input_color = self.theme().misc_input_dialog;
@@ -530,7 +536,10 @@ impl FileTransferActivity {
         let id = match self.browser.tab() {
             FileExplorerTab::HostBridge => Id::TerminalHostBridge,
             FileExplorerTab::Remote => Id::TerminalRemote,
-            _ => panic!("Cannot update terminal prompt on this tab"),
+            _ => {
+                error!("Cannot update terminal prompt on this tab");
+                return;
+            }
         };
         let _ = self
             .app
