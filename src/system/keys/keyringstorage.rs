@@ -37,7 +37,7 @@ impl KeyStorage for KeyringStorage {
                 | KeyringError::Invalid(_, _)
                 | KeyringError::Ambiguous(_) => Err(KeyStorageError::ProviderError),
                 KeyringError::BadEncoding(_) | KeyringError::TooLong(_, _) => {
-                    Err(KeyStorageError::BadSytax)
+                    Err(KeyStorageError::BadSyntax)
                 }
                 _ => Err(KeyStorageError::ProviderError),
             },

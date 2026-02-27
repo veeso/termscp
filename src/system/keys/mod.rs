@@ -13,7 +13,7 @@ use thiserror::Error;
 #[derive(Debug, Error)]
 pub enum KeyStorageError {
     #[error("Key has a bad syntax")]
-    BadSytax,
+    BadSyntax,
     #[error("Provider service error")]
     ProviderError,
     #[error("No such key")]
@@ -54,7 +54,7 @@ mod tests {
     #[test]
     fn test_system_keys_mod_errors() {
         assert_eq!(
-            KeyStorageError::BadSytax.to_string(),
+            KeyStorageError::BadSyntax.to_string(),
             String::from("Key has a bad syntax")
         );
         assert_eq!(
