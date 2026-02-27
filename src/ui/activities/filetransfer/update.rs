@@ -12,6 +12,7 @@ use super::actions::walkdir::WalkdirError;
 use super::browser::{FileExplorerTab, FoundExplorerTab};
 use super::{
     ExitReason, FileTransferActivity, Id, MarkQueue, Msg, TransferMsg, TransferOpts, UiMsg,
+    ui_result,
 };
 
 impl Update<Msg> for FileTransferActivity {
@@ -399,13 +400,13 @@ impl FileTransferActivity {
                 // Set focus
                 match new_tab {
                     FileExplorerTab::HostBridge => {
-                        assert!(self.app.active(&Id::ExplorerHostBridge).is_ok())
+                        ui_result(self.app.active(&Id::ExplorerHostBridge));
                     }
                     FileExplorerTab::Remote => {
-                        assert!(self.app.active(&Id::ExplorerRemote).is_ok())
+                        ui_result(self.app.active(&Id::ExplorerRemote));
                     }
                     FileExplorerTab::FindHostBridge | FileExplorerTab::FindRemote => {
-                        assert!(self.app.active(&Id::ExplorerFind).is_ok())
+                        ui_result(self.app.active(&Id::ExplorerFind));
                     }
                 }
                 self.browser.change_tab(new_tab);
@@ -476,10 +477,10 @@ impl FileTransferActivity {
                 self.update_find_list();
             }
             UiMsg::GoToTransferQueue => {
-                assert!(self.app.active(&Id::TransferQueueHostBridge).is_ok());
+                ui_result(self.app.active(&Id::TransferQueueHostBridge));
             }
             UiMsg::LogBackTabbed => {
-                assert!(self.app.active(&Id::ExplorerHostBridge).is_ok());
+                ui_result(self.app.active(&Id::ExplorerHostBridge));
             }
             UiMsg::MarkFile(index) => {
                 self.action_mark_file(index);
@@ -604,25 +605,25 @@ impl FileTransferActivity {
 
             UiMsg::BottomPanelLeft => match self.app.focus() {
                 Some(Id::TransferQueueHostBridge) => {
-                    assert!(self.app.active(&Id::Log).is_ok())
+                    ui_result(self.app.active(&Id::Log));
                 }
                 Some(Id::TransferQueueRemote) => {
-                    assert!(self.app.active(&Id::TransferQueueHostBridge).is_ok())
+                    ui_result(self.app.active(&Id::TransferQueueHostBridge));
                 }
                 Some(Id::Log) => {
-                    assert!(self.app.active(&Id::TransferQueueRemote).is_ok())
+                    ui_result(self.app.active(&Id::TransferQueueRemote));
                 }
                 _ => {}
             },
             UiMsg::BottomPanelRight => match self.app.focus() {
                 Some(Id::TransferQueueHostBridge) => {
-                    assert!(self.app.active(&Id::TransferQueueRemote).is_ok())
+                    ui_result(self.app.active(&Id::TransferQueueRemote));
                 }
                 Some(Id::TransferQueueRemote) => {
-                    assert!(self.app.active(&Id::Log).is_ok())
+                    ui_result(self.app.active(&Id::Log));
                 }
                 Some(Id::Log) => {
-                    assert!(self.app.active(&Id::TransferQueueHostBridge).is_ok())
+                    ui_result(self.app.active(&Id::TransferQueueHostBridge));
                 }
                 _ => {}
             },

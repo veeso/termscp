@@ -14,7 +14,7 @@ use unicode_width::UnicodeWidthStr;
 
 use super::browser::{FileExplorerTab, FoundExplorerTab};
 use super::components::ATTR_FILES;
-use super::{Context, FileTransferActivity, Id, components};
+use super::{Context, FileTransferActivity, Id, components, ui_result};
 use crate::explorer::FileSorting;
 use crate::ui::activities::filetransfer::MarkQueue;
 use crate::utils::ui::{Popup, Size};
@@ -34,54 +34,38 @@ impl FileTransferActivity {
         let key_color = self.theme().misc_keys;
         let log_panel = self.theme().transfer_log_window;
         let log_background = self.theme().transfer_log_background;
-        assert!(
-            self.app
-                .mount(
-                    Id::FooterBar,
-                    Box::new(components::FooterBar::new(key_color)),
-                    vec![]
-                )
-                .is_ok()
-        );
-        assert!(
-            self.app
-                .mount(
-                    Id::ExplorerHostBridge,
-                    Box::new(components::ExplorerLocal::new(
-                        "",
-                        &[],
-                        local_explorer_background,
-                        local_explorer_foreground,
-                        local_explorer_highlighted
-                    )),
-                    vec![]
-                )
-                .is_ok()
-        );
-        assert!(
-            self.app
-                .mount(
-                    Id::ExplorerRemote,
-                    Box::new(components::ExplorerRemote::new(
-                        "",
-                        &[],
-                        remote_explorer_background,
-                        remote_explorer_foreground,
-                        remote_explorer_highlighted
-                    )),
-                    vec![]
-                )
-                .is_ok()
-        );
-        assert!(
-            self.app
-                .mount(
-                    Id::Log,
-                    Box::new(components::Log::new(vec![], log_panel, log_background)),
-                    vec![]
-                )
-                .is_ok()
-        );
+        ui_result(self.app.mount(
+            Id::FooterBar,
+            Box::new(components::FooterBar::new(key_color)),
+            vec![],
+        ));
+        ui_result(self.app.mount(
+            Id::ExplorerHostBridge,
+            Box::new(components::ExplorerLocal::new(
+                "",
+                &[],
+                local_explorer_background,
+                local_explorer_foreground,
+                local_explorer_highlighted,
+            )),
+            vec![],
+        ));
+        ui_result(self.app.mount(
+            Id::ExplorerRemote,
+            Box::new(components::ExplorerRemote::new(
+                "",
+                &[],
+                remote_explorer_background,
+                remote_explorer_foreground,
+                remote_explorer_highlighted,
+            )),
+            vec![],
+        ));
+        ui_result(self.app.mount(
+            Id::Log,
+            Box::new(components::Log::new(vec![], log_panel, log_background)),
+            vec![],
+        ));
         self.refresh_host_bridge_transfer_queue();
         self.refresh_remote_transfer_queue();
         // Load status bar
@@ -93,7 +77,7 @@ impl FileTransferActivity {
         // Global listener
         self.mount_global_listener();
         // Give focus to local explorer
-        assert!(self.app.active(&Id::ExplorerHostBridge).is_ok());
+        ui_result(self.app.active(&Id::ExplorerHostBridge));
     }
 
     // -- view
@@ -342,32 +326,24 @@ impl FileTransferActivity {
     pub(super) fn mount_info<S: AsRef<str>>(&mut self, text: S) {
         // Mount
         let info_color = self.theme().misc_info_dialog;
-        assert!(
-            self.app
-                .remount(
-                    Id::ErrorPopup,
-                    Box::new(components::ErrorPopup::new(text, info_color)),
-                    vec![],
-                )
-                .is_ok()
-        );
-        assert!(self.app.active(&Id::ErrorPopup).is_ok());
+        ui_result(self.app.remount(
+            Id::ErrorPopup,
+            Box::new(components::ErrorPopup::new(text, info_color)),
+            vec![],
+        ));
+        ui_result(self.app.active(&Id::ErrorPopup));
     }
 
     /// Mount error box
     pub(super) fn mount_error<S: AsRef<str>>(&mut self, text: S) {
         // Mount
         let error_color = self.theme().misc_error_dialog;
-        assert!(
-            self.app
-                .remount(
-                    Id::ErrorPopup,
-                    Box::new(components::ErrorPopup::new(text, error_color)),
-                    vec![],
-                )
-                .is_ok()
-        );
-        assert!(self.app.active(&Id::ErrorPopup).is_ok());
+        ui_result(self.app.remount(
+            Id::ErrorPopup,
+            Box::new(components::ErrorPopup::new(text, error_color)),
+            vec![],
+        ));
+        ui_result(self.app.active(&Id::ErrorPopup));
     }
 
     /// Umount error message
@@ -379,16 +355,12 @@ impl FileTransferActivity {
         self.umount_wait();
         // Mount
         let error_color = self.theme().misc_error_dialog;
-        assert!(
-            self.app
-                .remount(
-                    Id::FatalPopup,
-                    Box::new(components::FatalPopup::new(text, error_color)),
-                    vec![],
-                )
-                .is_ok()
-        );
-        assert!(self.app.active(&Id::FatalPopup).is_ok());
+        ui_result(self.app.remount(
+            Id::FatalPopup,
+            Box::new(components::FatalPopup::new(text, error_color)),
+            vec![],
+        ));
+        ui_result(self.app.active(&Id::FatalPopup));
     }
 
     /// Umount fatal error message
@@ -398,33 +370,25 @@ impl FileTransferActivity {
 
     pub(super) fn mount_wait<S: AsRef<str>>(&mut self, text: S) {
         let color = self.theme().misc_info_dialog;
-        assert!(
-            self.app
-                .remount(
-                    Id::WaitPopup,
-                    Box::new(components::WaitPopup::new(text, color)),
-                    vec![],
-                )
-                .is_ok()
-        );
-        assert!(self.app.active(&Id::WaitPopup).is_ok());
+        ui_result(self.app.remount(
+            Id::WaitPopup,
+            Box::new(components::WaitPopup::new(text, color)),
+            vec![],
+        ));
+        ui_result(self.app.active(&Id::WaitPopup));
     }
 
     pub(super) fn mount_walkdir_wait(&mut self) {
         let color = self.theme().misc_info_dialog;
-        assert!(
-            self.app
-                .remount(
-                    Id::WaitPopup,
-                    Box::new(components::WalkdirWaitPopup::new(
-                        "Scanning current directory…",
-                        color
-                    )),
-                    vec![],
-                )
-                .is_ok()
-        );
-        assert!(self.app.active(&Id::WaitPopup).is_ok());
+        ui_result(self.app.remount(
+            Id::WaitPopup,
+            Box::new(components::WalkdirWaitPopup::new(
+                "Scanning current directory…",
+                color,
+            )),
+            vec![],
+        ));
+        ui_result(self.app.active(&Id::WaitPopup));
 
         self.view();
     }
@@ -456,16 +420,12 @@ impl FileTransferActivity {
     pub(super) fn mount_quit(&mut self) {
         // Protocol
         let quit_color = self.theme().misc_quit_dialog;
-        assert!(
-            self.app
-                .remount(
-                    Id::QuitPopup,
-                    Box::new(components::QuitPopup::new(quit_color)),
-                    vec![],
-                )
-                .is_ok()
-        );
-        assert!(self.app.active(&Id::QuitPopup).is_ok());
+        ui_result(self.app.remount(
+            Id::QuitPopup,
+            Box::new(components::QuitPopup::new(quit_color)),
+            vec![],
+        ));
+        ui_result(self.app.active(&Id::QuitPopup));
     }
 
     /// Umount quit popup
@@ -477,16 +437,12 @@ impl FileTransferActivity {
     pub(super) fn mount_disconnect(&mut self) {
         // Protocol
         let quit_color = self.theme().misc_quit_dialog;
-        assert!(
-            self.app
-                .remount(
-                    Id::DisconnectPopup,
-                    Box::new(components::DisconnectPopup::new(quit_color)),
-                    vec![],
-                )
-                .is_ok()
-        );
-        assert!(self.app.active(&Id::DisconnectPopup).is_ok());
+        ui_result(self.app.remount(
+            Id::DisconnectPopup,
+            Box::new(components::DisconnectPopup::new(quit_color)),
+            vec![],
+        ));
+        ui_result(self.app.active(&Id::DisconnectPopup));
     }
 
     /// Umount disconnect popup
@@ -497,16 +453,12 @@ impl FileTransferActivity {
     pub(super) fn mount_chmod(&mut self, mode: UnixPex, title: String) {
         // Mount
         let color = self.theme().misc_input_dialog;
-        assert!(
-            self.app
-                .remount(
-                    Id::ChmodPopup,
-                    Box::new(components::ChmodPopup::new(mode, color, title)),
-                    vec![],
-                )
-                .is_ok()
-        );
-        assert!(self.app.active(&Id::ChmodPopup).is_ok());
+        ui_result(self.app.remount(
+            Id::ChmodPopup,
+            Box::new(components::ChmodPopup::new(mode, color, title)),
+            vec![],
+        ));
+        ui_result(self.app.active(&Id::ChmodPopup));
     }
 
     pub(super) fn umount_chmod(&mut self) {
@@ -519,30 +471,22 @@ impl FileTransferActivity {
 
     pub(super) fn mount_filter(&mut self) {
         let input_color = self.theme().misc_input_dialog;
-        assert!(
-            self.app
-                .remount(
-                    Id::FilterPopup,
-                    Box::new(components::FilterPopup::new(input_color)),
-                    vec![],
-                )
-                .is_ok()
-        );
-        assert!(self.app.active(&Id::FilterPopup).is_ok());
+        ui_result(self.app.remount(
+            Id::FilterPopup,
+            Box::new(components::FilterPopup::new(input_color)),
+            vec![],
+        ));
+        ui_result(self.app.active(&Id::FilterPopup));
     }
 
     pub(super) fn mount_copy(&mut self) {
         let input_color = self.theme().misc_input_dialog;
-        assert!(
-            self.app
-                .remount(
-                    Id::CopyPopup,
-                    Box::new(components::CopyPopup::new(input_color)),
-                    vec![],
-                )
-                .is_ok()
-        );
-        assert!(self.app.active(&Id::CopyPopup).is_ok());
+        ui_result(self.app.remount(
+            Id::CopyPopup,
+            Box::new(components::CopyPopup::new(input_color)),
+            vec![],
+        ));
+        ui_result(self.app.active(&Id::CopyPopup));
     }
 
     pub(super) fn umount_copy(&mut self) {
@@ -564,22 +508,20 @@ impl FileTransferActivity {
         };
 
         let input_color = self.theme().misc_input_dialog;
-        assert!(
-            self.app
-                .remount(
-                    id.clone(),
-                    Box::new(
-                        components::Terminal::default()
-                            .foreground(input_color)
-                            .prompt(self.terminal_prompt())
-                            .title(format!("Terminal - {}", self.get_tab_hostname()))
-                            .border_color(border)
-                    ),
-                    vec![],
-                )
-                .is_ok()
+        ui_result(
+            self.app.remount(
+                id.clone(),
+                Box::new(
+                    components::Terminal::default()
+                        .foreground(input_color)
+                        .prompt(self.terminal_prompt())
+                        .title(format!("Terminal - {}", self.get_tab_hostname()))
+                        .border_color(border),
+                ),
+                vec![],
+            ),
         );
-        assert!(self.app.active(&id).is_ok());
+        ui_result(self.app.active(&id));
     }
 
     /// Update the terminal prompt based on the current directory
@@ -631,32 +573,28 @@ impl FileTransferActivity {
         };
 
         // Mount component
-        assert!(
-            self.app
-                .remount(
-                    Id::ExplorerFind,
-                    if fuzzy_search {
-                        Box::new(components::ExplorerFuzzy::new(
-                            msg.to_string(),
-                            &[],
-                            bg,
-                            fg,
-                            hg,
-                        ))
-                    } else {
-                        Box::new(components::ExplorerFind::new(
-                            msg.to_string(),
-                            &[],
-                            bg,
-                            fg,
-                            hg,
-                        ))
-                    },
-                    vec![],
-                )
-                .is_ok()
-        );
-        assert!(self.app.active(&Id::ExplorerFind).is_ok());
+        ui_result(self.app.remount(
+            Id::ExplorerFind,
+            if fuzzy_search {
+                Box::new(components::ExplorerFuzzy::new(
+                    msg.to_string(),
+                    &[],
+                    bg,
+                    fg,
+                    hg,
+                ))
+            } else {
+                Box::new(components::ExplorerFind::new(
+                    msg.to_string(),
+                    &[],
+                    bg,
+                    fg,
+                    hg,
+                ))
+            },
+            vec![],
+        ));
+        ui_result(self.app.active(&Id::ExplorerFind));
     }
 
     pub(super) fn umount_find(&mut self) {
@@ -674,16 +612,12 @@ impl FileTransferActivity {
             .collect::<Vec<String>>();
 
         let input_color = self.theme().misc_input_dialog;
-        assert!(
-            self.app
-                .remount(
-                    Id::GotoPopup,
-                    Box::new(components::GotoPopup::new(input_color, files)),
-                    vec![],
-                )
-                .is_ok()
-        );
-        assert!(self.app.active(&Id::GotoPopup).is_ok());
+        ui_result(self.app.remount(
+            Id::GotoPopup,
+            Box::new(components::GotoPopup::new(input_color, files)),
+            vec![],
+        ));
+        ui_result(self.app.active(&Id::GotoPopup));
     }
 
     pub(super) fn update_goto(&mut self, files: Vec<String>) {
@@ -705,16 +639,12 @@ impl FileTransferActivity {
 
     pub(super) fn mount_mkdir(&mut self) {
         let input_color = self.theme().misc_input_dialog;
-        assert!(
-            self.app
-                .remount(
-                    Id::MkdirPopup,
-                    Box::new(components::MkdirPopup::new(input_color)),
-                    vec![],
-                )
-                .is_ok()
-        );
-        assert!(self.app.active(&Id::MkdirPopup).is_ok());
+        ui_result(self.app.remount(
+            Id::MkdirPopup,
+            Box::new(components::MkdirPopup::new(input_color)),
+            vec![],
+        ));
+        ui_result(self.app.active(&Id::MkdirPopup));
     }
 
     pub(super) fn umount_mkdir(&mut self) {
@@ -723,16 +653,12 @@ impl FileTransferActivity {
 
     pub(super) fn mount_newfile(&mut self) {
         let input_color = self.theme().misc_input_dialog;
-        assert!(
-            self.app
-                .remount(
-                    Id::NewfilePopup,
-                    Box::new(components::NewfilePopup::new(input_color)),
-                    vec![],
-                )
-                .is_ok()
-        );
-        assert!(self.app.active(&Id::NewfilePopup).is_ok());
+        ui_result(self.app.remount(
+            Id::NewfilePopup,
+            Box::new(components::NewfilePopup::new(input_color)),
+            vec![],
+        ));
+        ui_result(self.app.active(&Id::NewfilePopup));
     }
 
     pub(super) fn umount_newfile(&mut self) {
@@ -741,16 +667,12 @@ impl FileTransferActivity {
 
     pub(super) fn mount_openwith(&mut self) {
         let input_color = self.theme().misc_input_dialog;
-        assert!(
-            self.app
-                .remount(
-                    Id::OpenWithPopup,
-                    Box::new(components::OpenWithPopup::new(input_color)),
-                    vec![],
-                )
-                .is_ok()
-        );
-        assert!(self.app.active(&Id::OpenWithPopup).is_ok());
+        ui_result(self.app.remount(
+            Id::OpenWithPopup,
+            Box::new(components::OpenWithPopup::new(input_color)),
+            vec![],
+        ));
+        ui_result(self.app.active(&Id::OpenWithPopup));
     }
 
     pub(super) fn umount_openwith(&mut self) {
@@ -759,16 +681,12 @@ impl FileTransferActivity {
 
     pub(super) fn mount_rename(&mut self) {
         let input_color = self.theme().misc_input_dialog;
-        assert!(
-            self.app
-                .remount(
-                    Id::RenamePopup,
-                    Box::new(components::RenamePopup::new(input_color)),
-                    vec![],
-                )
-                .is_ok()
-        );
-        assert!(self.app.active(&Id::RenamePopup).is_ok());
+        ui_result(self.app.remount(
+            Id::RenamePopup,
+            Box::new(components::RenamePopup::new(input_color)),
+            vec![],
+        ));
+        ui_result(self.app.active(&Id::RenamePopup));
     }
 
     pub(super) fn umount_rename(&mut self) {
@@ -777,16 +695,12 @@ impl FileTransferActivity {
 
     pub(super) fn mount_saveas(&mut self) {
         let input_color = self.theme().misc_input_dialog;
-        assert!(
-            self.app
-                .remount(
-                    Id::SaveAsPopup,
-                    Box::new(components::SaveAsPopup::new(input_color)),
-                    vec![],
-                )
-                .is_ok()
-        );
-        assert!(self.app.active(&Id::SaveAsPopup).is_ok());
+        ui_result(self.app.remount(
+            Id::SaveAsPopup,
+            Box::new(components::SaveAsPopup::new(input_color)),
+            vec![],
+        ));
+        ui_result(self.app.active(&Id::SaveAsPopup));
     }
 
     pub(super) fn umount_saveas(&mut self) {
@@ -796,35 +710,27 @@ impl FileTransferActivity {
     pub(super) fn mount_progress_bar(&mut self, root_name: String) {
         let prog_color_full = self.theme().transfer_progress_bar_full;
         let prog_color_partial = self.theme().transfer_progress_bar_partial;
-        assert!(
-            self.app
-                .remount(
-                    Id::ProgressBarFull,
-                    Box::new(components::ProgressBarFull::new(
-                        0.0,
-                        "",
-                        &root_name,
-                        prog_color_full
-                    )),
-                    vec![],
-                )
-                .is_ok()
-        );
-        assert!(
-            self.app
-                .remount(
-                    Id::ProgressBarPartial,
-                    Box::new(components::ProgressBarPartial::new(
-                        0.0,
-                        "",
-                        "Please wait",
-                        prog_color_partial
-                    )),
-                    vec![],
-                )
-                .is_ok()
-        );
-        assert!(self.app.active(&Id::ProgressBarPartial).is_ok());
+        ui_result(self.app.remount(
+            Id::ProgressBarFull,
+            Box::new(components::ProgressBarFull::new(
+                0.0,
+                "",
+                &root_name,
+                prog_color_full,
+            )),
+            vec![],
+        ));
+        ui_result(self.app.remount(
+            Id::ProgressBarPartial,
+            Box::new(components::ProgressBarPartial::new(
+                0.0,
+                "",
+                "Please wait",
+                prog_color_partial,
+            )),
+            vec![],
+        ));
+        ui_result(self.app.active(&Id::ProgressBarPartial));
     }
 
     pub(super) fn umount_progress_bar(&mut self) {
@@ -839,16 +745,12 @@ impl FileTransferActivity {
             FileExplorerTab::Remote => self.remote().get_file_sorting(),
             _ => return,
         };
-        assert!(
-            self.app
-                .remount(
-                    Id::SortingPopup,
-                    Box::new(components::SortingPopup::new(sorting, sorting_color)),
-                    vec![],
-                )
-                .is_ok()
-        );
-        assert!(self.app.active(&Id::SortingPopup).is_ok());
+        ui_result(self.app.remount(
+            Id::SortingPopup,
+            Box::new(components::SortingPopup::new(sorting, sorting_color)),
+            vec![],
+        ));
+        ui_result(self.app.active(&Id::SortingPopup));
     }
 
     pub(super) fn umount_file_sorting(&mut self) {
@@ -857,16 +759,12 @@ impl FileTransferActivity {
 
     pub(super) fn mount_radio_delete(&mut self) {
         let warn_color = self.theme().misc_warn_dialog;
-        assert!(
-            self.app
-                .remount(
-                    Id::DeletePopup,
-                    Box::new(components::DeletePopup::new(warn_color)),
-                    vec![],
-                )
-                .is_ok()
-        );
-        assert!(self.app.active(&Id::DeletePopup).is_ok());
+        ui_result(self.app.remount(
+            Id::DeletePopup,
+            Box::new(components::DeletePopup::new(warn_color)),
+            vec![],
+        ));
+        ui_result(self.app.active(&Id::DeletePopup));
     }
 
     pub(super) fn umount_radio_delete(&mut self) {
@@ -875,18 +773,14 @@ impl FileTransferActivity {
 
     pub(super) fn mount_radio_watch(&mut self, watch: bool, local: &str, remote: &str) {
         let info_color = self.theme().misc_info_dialog;
-        assert!(
-            self.app
-                .remount(
-                    Id::WatcherPopup,
-                    Box::new(components::WatcherPopup::new(
-                        watch, local, remote, info_color
-                    )),
-                    vec![],
-                )
-                .is_ok()
-        );
-        assert!(self.app.active(&Id::WatcherPopup).is_ok());
+        ui_result(self.app.remount(
+            Id::WatcherPopup,
+            Box::new(components::WatcherPopup::new(
+                watch, local, remote, info_color,
+            )),
+            vec![],
+        ));
+        ui_result(self.app.active(&Id::WatcherPopup));
     }
 
     pub(super) fn umount_radio_watcher(&mut self) {
@@ -895,16 +789,12 @@ impl FileTransferActivity {
 
     pub(super) fn mount_watched_paths_list(&mut self, paths: &[std::path::PathBuf]) {
         let info_color = self.theme().misc_info_dialog;
-        assert!(
-            self.app
-                .remount(
-                    Id::WatchedPathsList,
-                    Box::new(components::WatchedPathsList::new(paths, info_color)),
-                    vec![],
-                )
-                .is_ok()
-        );
-        assert!(self.app.active(&Id::WatchedPathsList).is_ok());
+        ui_result(self.app.remount(
+            Id::WatchedPathsList,
+            Box::new(components::WatchedPathsList::new(paths, info_color)),
+            vec![],
+        ));
+        ui_result(self.app.active(&Id::WatchedPathsList));
     }
 
     pub(super) fn umount_watched_paths_list(&mut self) {
@@ -913,16 +803,12 @@ impl FileTransferActivity {
 
     pub(super) fn mount_radio_replace(&mut self, file_name: &str) {
         let warn_color = self.theme().misc_warn_dialog;
-        assert!(
-            self.app
-                .remount(
-                    Id::ReplacePopup,
-                    Box::new(components::ReplacePopup::new(Some(file_name), warn_color)),
-                    vec![],
-                )
-                .is_ok()
-        );
-        assert!(self.app.active(&Id::ReplacePopup).is_ok());
+        ui_result(self.app.remount(
+            Id::ReplacePopup,
+            Box::new(components::ReplacePopup::new(Some(file_name), warn_color)),
+            vec![],
+        ));
+        ui_result(self.app.active(&Id::ReplacePopup));
     }
 
     pub(super) fn umount_radio_replace(&mut self) {
@@ -930,16 +816,12 @@ impl FileTransferActivity {
     }
 
     pub(super) fn mount_file_info(&mut self, file: &File) {
-        assert!(
-            self.app
-                .remount(
-                    Id::FileInfoPopup,
-                    Box::new(components::FileInfoPopup::new(file)),
-                    vec![],
-                )
-                .is_ok()
-        );
-        assert!(self.app.active(&Id::FileInfoPopup).is_ok());
+        ui_result(self.app.remount(
+            Id::FileInfoPopup,
+            Box::new(components::FileInfoPopup::new(file)),
+            vec![],
+        ));
+        ui_result(self.app.active(&Id::FileInfoPopup));
     }
 
     pub(super) fn umount_file_info(&mut self) {
@@ -955,20 +837,16 @@ impl FileTransferActivity {
             .collect::<Vec<_>>();
         let log_panel = self.theme().transfer_log_window;
 
-        assert!(
-            self.app
-                .remount(
-                    Id::TransferQueueHostBridge,
-                    Box::new(components::SelectedFilesList::new(
-                        &enqueued,
-                        MarkQueue::Local,
-                        log_panel,
-                        "Host Bridge selected files",
-                    )),
-                    vec![]
-                )
-                .is_ok()
-        );
+        ui_result(self.app.remount(
+            Id::TransferQueueHostBridge,
+            Box::new(components::SelectedFilesList::new(
+                &enqueued,
+                MarkQueue::Local,
+                log_panel,
+                "Host Bridge selected files",
+            )),
+            vec![],
+        ));
     }
 
     pub(super) fn refresh_remote_transfer_queue(&mut self) {
@@ -980,72 +858,56 @@ impl FileTransferActivity {
             .collect::<Vec<_>>();
         let log_panel = self.theme().transfer_log_window;
 
-        assert!(
-            self.app
-                .remount(
-                    Id::TransferQueueRemote,
-                    Box::new(components::SelectedFilesList::new(
-                        &enqueued,
-                        MarkQueue::Remote,
-                        log_panel,
-                        "Remote transfer selected files",
-                    )),
-                    vec![]
-                )
-                .is_ok()
-        );
+        ui_result(self.app.remount(
+            Id::TransferQueueRemote,
+            Box::new(components::SelectedFilesList::new(
+                &enqueued,
+                MarkQueue::Remote,
+                log_panel,
+                "Remote transfer selected files",
+            )),
+            vec![],
+        ));
     }
 
     pub(super) fn refresh_local_status_bar(&mut self) {
         let sorting_color = self.theme().transfer_status_sorting;
         let hidden_color = self.theme().transfer_status_hidden;
-        assert!(
-            self.app
-                .remount(
-                    Id::StatusBarHostBridge,
-                    Box::new(components::StatusBarLocal::new(
-                        &self.browser,
-                        sorting_color,
-                        hidden_color
-                    )),
-                    vec![],
-                )
-                .is_ok()
-        );
+        ui_result(self.app.remount(
+            Id::StatusBarHostBridge,
+            Box::new(components::StatusBarLocal::new(
+                &self.browser,
+                sorting_color,
+                hidden_color,
+            )),
+            vec![],
+        ));
     }
 
     pub(super) fn refresh_remote_status_bar(&mut self) {
         let sorting_color = self.theme().transfer_status_sorting;
         let hidden_color = self.theme().transfer_status_hidden;
         let sync_color = self.theme().transfer_status_sync_browsing;
-        assert!(
-            self.app
-                .remount(
-                    Id::StatusBarRemote,
-                    Box::new(components::StatusBarRemote::new(
-                        &self.browser,
-                        sorting_color,
-                        hidden_color,
-                        sync_color
-                    )),
-                    vec![],
-                )
-                .is_ok()
-        );
+        ui_result(self.app.remount(
+            Id::StatusBarRemote,
+            Box::new(components::StatusBarRemote::new(
+                &self.browser,
+                sorting_color,
+                hidden_color,
+                sync_color,
+            )),
+            vec![],
+        ));
     }
 
     pub(super) fn mount_symlink(&mut self) {
         let input_color = self.theme().misc_input_dialog;
-        assert!(
-            self.app
-                .remount(
-                    Id::SymlinkPopup,
-                    Box::new(components::SymlinkPopup::new(input_color)),
-                    vec![],
-                )
-                .is_ok()
-        );
-        assert!(self.app.active(&Id::SymlinkPopup).is_ok());
+        ui_result(self.app.remount(
+            Id::SymlinkPopup,
+            Box::new(components::SymlinkPopup::new(input_color)),
+            vec![],
+        ));
+        ui_result(self.app.active(&Id::SymlinkPopup));
     }
 
     pub(super) fn umount_symlink(&mut self) {
@@ -1054,16 +916,12 @@ impl FileTransferActivity {
 
     pub(super) fn mount_sync_browsing_mkdir_popup(&mut self, dir_name: &str) {
         let color = self.theme().misc_info_dialog;
-        assert!(
-            self.app
-                .remount(
-                    Id::SyncBrowsingMkdirPopup,
-                    Box::new(components::SyncBrowsingMkdirPopup::new(color, dir_name,)),
-                    vec![],
-                )
-                .is_ok()
-        );
-        assert!(self.app.active(&Id::SyncBrowsingMkdirPopup).is_ok());
+        ui_result(self.app.remount(
+            Id::SyncBrowsingMkdirPopup,
+            Box::new(components::SyncBrowsingMkdirPopup::new(color, dir_name)),
+            vec![],
+        ));
+        ui_result(self.app.active(&Id::SyncBrowsingMkdirPopup));
     }
 
     pub(super) fn umount_sync_browsing_mkdir_popup(&mut self) {
@@ -1073,16 +931,12 @@ impl FileTransferActivity {
     /// Mount help
     pub(super) fn mount_help(&mut self) {
         let key_color = self.theme().misc_keys;
-        assert!(
-            self.app
-                .remount(
-                    Id::KeybindingsPopup,
-                    Box::new(components::KeybindingsPopup::new(key_color)),
-                    vec![],
-                )
-                .is_ok()
-        );
-        assert!(self.app.active(&Id::KeybindingsPopup).is_ok());
+        ui_result(self.app.remount(
+            Id::KeybindingsPopup,
+            Box::new(components::KeybindingsPopup::new(key_color)),
+            vec![],
+        ));
+        ui_result(self.app.active(&Id::KeybindingsPopup));
     }
 
     pub(super) fn umount_help(&mut self) {
@@ -1127,52 +981,48 @@ impl FileTransferActivity {
     // -- global listener
 
     fn mount_global_listener(&mut self) {
-        assert!(
-            self.app
-                .mount(
-                    Id::GlobalListener,
-                    Box::<components::GlobalListener>::default(),
-                    vec![
-                        Sub::new(
-                            SubEventClause::Keyboard(KeyEvent {
-                                code: Key::Esc,
-                                modifiers: KeyModifiers::NONE,
-                            }),
-                            Self::no_popup_mounted_clause(),
-                        ),
-                        Sub::new(
-                            SubEventClause::Keyboard(KeyEvent {
-                                code: Key::Char('h'),
-                                modifiers: KeyModifiers::NONE,
-                            }),
-                            Self::no_popup_mounted_clause(),
-                        ),
-                        Sub::new(
-                            SubEventClause::Keyboard(KeyEvent {
-                                code: Key::Function(1),
-                                modifiers: KeyModifiers::NONE,
-                            }),
-                            Self::no_popup_mounted_clause(),
-                        ),
-                        Sub::new(
-                            SubEventClause::Keyboard(KeyEvent {
-                                code: Key::Function(10),
-                                modifiers: KeyModifiers::NONE,
-                            }),
-                            Self::no_popup_mounted_clause(),
-                        ),
-                        Sub::new(
-                            SubEventClause::Keyboard(KeyEvent {
-                                code: Key::Char('q'),
-                                modifiers: KeyModifiers::NONE,
-                            }),
-                            Self::no_popup_mounted_clause(),
-                        ),
-                        Sub::new(SubEventClause::WindowResize, SubClause::Always)
-                    ]
-                )
-                .is_ok()
-        );
+        ui_result(self.app.mount(
+            Id::GlobalListener,
+            Box::<components::GlobalListener>::default(),
+            vec![
+                Sub::new(
+                    SubEventClause::Keyboard(KeyEvent {
+                        code: Key::Esc,
+                        modifiers: KeyModifiers::NONE,
+                    }),
+                    Self::no_popup_mounted_clause(),
+                ),
+                Sub::new(
+                    SubEventClause::Keyboard(KeyEvent {
+                        code: Key::Char('h'),
+                        modifiers: KeyModifiers::NONE,
+                    }),
+                    Self::no_popup_mounted_clause(),
+                ),
+                Sub::new(
+                    SubEventClause::Keyboard(KeyEvent {
+                        code: Key::Function(1),
+                        modifiers: KeyModifiers::NONE,
+                    }),
+                    Self::no_popup_mounted_clause(),
+                ),
+                Sub::new(
+                    SubEventClause::Keyboard(KeyEvent {
+                        code: Key::Function(10),
+                        modifiers: KeyModifiers::NONE,
+                    }),
+                    Self::no_popup_mounted_clause(),
+                ),
+                Sub::new(
+                    SubEventClause::Keyboard(KeyEvent {
+                        code: Key::Char('q'),
+                        modifiers: KeyModifiers::NONE,
+                    }),
+                    Self::no_popup_mounted_clause(),
+                ),
+                Sub::new(SubEventClause::WindowResize, SubClause::Always),
+            ],
+        ));
     }
 
     /// Returns a sub clause which requires that no popup is mounted in order to be satisfied

@@ -3,7 +3,7 @@ use tuirealm::props::{
 };
 
 use super::super::browser::FileExplorerTab;
-use super::super::{FileTransferActivity, Id};
+use super::super::{FileTransferActivity, Id, ui_result};
 use crate::utils::fmt::fmt_path_elide_ex;
 
 impl FileTransferActivity {
@@ -47,24 +47,16 @@ impl FileTransferActivity {
             })
             .collect();
         // Update content and title
-        assert!(
-            self.app
-                .attr(
-                    &Id::ExplorerHostBridge,
-                    Attribute::Content,
-                    AttrValue::Table(files)
-                )
-                .is_ok()
-        );
-        assert!(
-            self.app
-                .attr(
-                    &Id::ExplorerHostBridge,
-                    Attribute::Title,
-                    AttrValue::Title((hostname, Alignment::Left))
-                )
-                .is_ok()
-        );
+        ui_result(self.app.attr(
+            &Id::ExplorerHostBridge,
+            Attribute::Content,
+            AttrValue::Table(files),
+        ));
+        ui_result(self.app.attr(
+            &Id::ExplorerHostBridge,
+            Attribute::Title,
+            AttrValue::Title((hostname, Alignment::Left)),
+        ));
     }
 
     /// Update remote file list
@@ -169,79 +161,51 @@ impl FileTransferActivity {
             })
             .collect();
         // Update content and title
-        assert!(
-            self.app
-                .attr(
-                    &Id::ExplorerRemote,
-                    Attribute::Content,
-                    AttrValue::Table(files)
-                )
-                .is_ok()
-        );
-        assert!(
-            self.app
-                .attr(
-                    &Id::ExplorerRemote,
-                    Attribute::Title,
-                    AttrValue::Title((hostname, Alignment::Left))
-                )
-                .is_ok()
-        );
+        ui_result(self.app.attr(
+            &Id::ExplorerRemote,
+            Attribute::Content,
+            AttrValue::Table(files),
+        ));
+        ui_result(self.app.attr(
+            &Id::ExplorerRemote,
+            Attribute::Title,
+            AttrValue::Title((hostname, Alignment::Left)),
+        ));
     }
 
     pub(in crate::ui::activities::filetransfer) fn update_progress_bar(
         &mut self,
         filename: String,
     ) {
-        assert!(
-            self.app
-                .attr(
-                    &Id::ProgressBarFull,
-                    Attribute::Text,
-                    AttrValue::String(self.transfer.full.to_string())
-                )
-                .is_ok()
-        );
-        assert!(
-            self.app
-                .attr(
-                    &Id::ProgressBarFull,
-                    Attribute::Value,
-                    AttrValue::Payload(PropPayload::One(PropValue::F64(
-                        self.transfer.full.calc_progress()
-                    )))
-                )
-                .is_ok()
-        );
-        assert!(
-            self.app
-                .attr(
-                    &Id::ProgressBarPartial,
-                    Attribute::Text,
-                    AttrValue::String(self.transfer.partial.to_string())
-                )
-                .is_ok()
-        );
-        assert!(
-            self.app
-                .attr(
-                    &Id::ProgressBarPartial,
-                    Attribute::Value,
-                    AttrValue::Payload(PropPayload::One(PropValue::F64(
-                        self.transfer.partial.calc_progress()
-                    )))
-                )
-                .is_ok()
-        );
-        assert!(
-            self.app
-                .attr(
-                    &Id::ProgressBarPartial,
-                    Attribute::Title,
-                    AttrValue::Title((filename, Alignment::Center))
-                )
-                .is_ok()
-        );
+        ui_result(self.app.attr(
+            &Id::ProgressBarFull,
+            Attribute::Text,
+            AttrValue::String(self.transfer.full.to_string()),
+        ));
+        ui_result(self.app.attr(
+            &Id::ProgressBarFull,
+            Attribute::Value,
+            AttrValue::Payload(PropPayload::One(PropValue::F64(
+                self.transfer.full.calc_progress(),
+            ))),
+        ));
+        ui_result(self.app.attr(
+            &Id::ProgressBarPartial,
+            Attribute::Text,
+            AttrValue::String(self.transfer.partial.to_string()),
+        ));
+        ui_result(self.app.attr(
+            &Id::ProgressBarPartial,
+            Attribute::Value,
+            AttrValue::Payload(PropPayload::One(PropValue::F64(
+                self.transfer.partial.calc_progress(),
+            ))),
+        ));
+        ui_result(self.app.attr(
+            &Id::ProgressBarPartial,
+            Attribute::Title,
+            AttrValue::Title((filename, Alignment::Center)),
+        ));
     }
 
     /// Finalize find process
@@ -257,13 +221,13 @@ impl FileTransferActivity {
         // Give focus to new tab
         match new_tab {
             FileExplorerTab::HostBridge => {
-                assert!(self.app.active(&Id::ExplorerHostBridge).is_ok())
+                ui_result(self.app.active(&Id::ExplorerHostBridge));
             }
             FileExplorerTab::Remote => {
-                assert!(self.app.active(&Id::ExplorerRemote).is_ok())
+                ui_result(self.app.active(&Id::ExplorerRemote));
             }
             FileExplorerTab::FindHostBridge | FileExplorerTab::FindRemote => {
-                assert!(self.app.active(&Id::ExplorerFind).is_ok())
+                ui_result(self.app.active(&Id::ExplorerFind));
             }
         }
         self.browser.change_tab(new_tab);
@@ -283,15 +247,11 @@ impl FileTransferActivity {
                 vec![span]
             })
             .collect();
-        assert!(
-            self.app
-                .attr(
-                    &Id::ExplorerFind,
-                    Attribute::Content,
-                    AttrValue::Table(files)
-                )
-                .is_ok()
-        );
+        ui_result(self.app.attr(
+            &Id::ExplorerFind,
+            Attribute::Content,
+            AttrValue::Table(files),
+        ));
     }
 
     pub(in crate::ui::activities::filetransfer) fn update_browser_file_list(&mut self) {

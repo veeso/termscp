@@ -533,3 +533,10 @@ impl Activity for FileTransferActivity {
         self.context.take()
     }
 }
+
+/// Log a UI operation error instead of panicking.
+fn ui_result<T>(result: Result<T, impl std::fmt::Display>) {
+    if let Err(err) = result {
+        error!("UI operation failed: {err}");
+    }
+}
