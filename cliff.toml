@@ -1,0 +1,48 @@
+[changelog]
+body = """
+## {{ version | trim_start_matches(pat="v") }}
+
+Released on {{ timestamp | date(format="%Y-%m-%d") }}
+{{ "" }}
+{%- if commits | filter(attribute="breaking", value=true) | length > 0 %}
+
+### ⚠ Breaking Changes
+
+{%- for commit in commits | filter(attribute="breaking", value=true) %}
+- {% if commit.scope %}**{{ commit.scope }}:** {% endif %}{{ commit.message | split(pat="\n") | first | trim }}
+  {%- if commit.breaking_description %}
+  > {{ commit.breaking_description }}
+  {%- endif %}
+{%- endfor %}
+{%- endif %}
+{%- for group, commits in commits | group_by(attribute="group") %}
+
+### {{ group | upper_first }}
+
+{%- for commit in commits %}
+- {% if commit.breaking %}💥 {% endif %}{% if commit.scope %}**{{ commit.scope }}:** {% endif %}{{ commit.message | split(pat="\n") | first | trim }}
+  {%- if commit.body %}
+  > {{ commit.body | split(pat="\n") | join(sep="\n  > ") }}
+  {%- endif %}
+{%- endfor %}
+{%- endfor %}
+"""
+trim = false
+
+[git]
+conventional_commits = true
+filter_unconventional = true
+split_commits = false
+commit_parsers = [
+  { message = "^feat", group = "Added" },
+  { message = "^fix", group = "Fixed" },
+  { message = "^refactor", group = "Changed" },
+  { message = "^perf", group = "Performance" },
+  { message = "^doc", group = "Documentation" },
+  { message = "^test", group = "Testing" },
+  { message = "^ci", group = "CI" },
+  { message = "^chore", group = "Miscellaneous" },
+]
+filter_commits = false
+tag_pattern = "v[0-9].*"
+sort_commits = "oldest"

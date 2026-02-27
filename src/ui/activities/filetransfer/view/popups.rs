@@ -8,9 +8,8 @@ use tuirealm::{AttrValue, Attribute};
 
 use crate::explorer::FileSorting;
 use crate::ui::activities::filetransfer::browser::FileExplorerTab;
-use crate::ui::activities::filetransfer::components;
 use crate::ui::activities::filetransfer::components::ATTR_FILES;
-use crate::ui::activities::filetransfer::{FileTransferActivity, Id, ui_result};
+use crate::ui::activities::filetransfer::{FileTransferActivity, Id, components, ui_result};
 
 impl FileTransferActivity {
     // -- partials

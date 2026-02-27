@@ -2,8 +2,9 @@
 //!
 //! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
 
-use crate::ui::activities::filetransfer::components;
-use crate::ui::activities::filetransfer::{FileTransferActivity, Id, MarkQueue, ui_result};
+use crate::ui::activities::filetransfer::{
+    FileTransferActivity, Id, MarkQueue, components, ui_result,
+};
 
 impl FileTransferActivity {
     pub(in crate::ui::activities::filetransfer) fn refresh_host_bridge_transfer_queue(&mut self) {

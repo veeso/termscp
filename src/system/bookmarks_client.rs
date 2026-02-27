@@ -2,8 +2,6 @@
 //!
 //! `bookmarks_client` is the module which provides an API between the Bookmarks module and the system
 
-// Crate
-// Ext
 use std::fs::OpenOptions;
 use std::path::{Path, PathBuf};
 use std::string::ToString;
@@ -12,11 +10,8 @@ use std::time::SystemTime;
 use super::keys::filestorage::FileStorage;
 use super::keys::keyringstorage::KeyringStorage;
 use super::keys::{KeyStorage, KeyStorageError};
-// Local
-use crate::config::{
-    bookmarks::{Bookmark, UserHosts},
-    serialization::{SerializerError, SerializerErrorKind, deserialize, serialize},
-};
+use crate::config::bookmarks::{Bookmark, UserHosts};
+use crate::config::serialization::{SerializerError, SerializerErrorKind, deserialize, serialize};
 use crate::filetransfer::FileTransferParams;
 use crate::utils::crypto;
 use crate::utils::fmt::fmt_time;
@@ -104,7 +99,7 @@ impl BookmarksClient {
     fn keyring(storage_path: &Path, keyring: bool) -> (Box<dyn KeyStorage>, &'static str) {
         if keyring && cfg!(feature = "keyring") {
             debug!("Setting up KeyStorage");
-            let username: String = whoami::username();
+            let username = whoami::username().unwrap_or_default();
             let storage: KeyringStorage = KeyringStorage::new(username.as_str());
             // Check if keyring storage is supported
             #[cfg(not(test))]

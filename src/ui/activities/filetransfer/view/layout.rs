@@ -9,8 +9,9 @@ use tuirealm::{Attribute, Sub, SubClause, SubEventClause};
 use unicode_width::UnicodeWidthStr;
 
 use crate::ui::activities::filetransfer::browser::FoundExplorerTab;
-use crate::ui::activities::filetransfer::components;
-use crate::ui::activities::filetransfer::{Context, FileTransferActivity, Id, ui_result};
+use crate::ui::activities::filetransfer::{
+    Context, FileTransferActivity, Id, components, ui_result,
+};
 use crate::utils::ui::{Popup, Size};
 
 impl FileTransferActivity {
