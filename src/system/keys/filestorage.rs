@@ -71,7 +71,10 @@ impl KeyStorage for FileStorage {
                     return Err(KeyStorageError::ProviderError);
                 }
                 // Set file to readonly
-                let mut permissions: Permissions = file.metadata().unwrap().permissions();
+                let mut permissions: Permissions = file
+                    .metadata()
+                    .map_err(|_| KeyStorageError::ProviderError)?
+                    .permissions();
                 permissions.set_readonly(true);
                 let _ = file.set_permissions(permissions);
                 Ok(())

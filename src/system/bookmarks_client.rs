@@ -190,8 +190,8 @@ impl BookmarksClient {
     ) {
         let name: String = name.as_ref().to_string();
         if name.is_empty() {
-            error!("Fatal error; bookmark name is empty");
-            panic!("Bookmark name can't be empty");
+            error!("Bookmark name is empty; ignoring add_bookmark request");
+            return;
         }
         // Make bookmark
         info!("Added bookmark {}", name);
@@ -557,15 +557,13 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
-
     fn test_system_bookmarks_bad_bookmark_name() {
         let tmp_dir: tempfile::TempDir = TempDir::new().ok().unwrap();
         let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
         // Initialize a new bookmarks client
         let mut client: BookmarksClient =
             BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16, true).unwrap();
-        // Add bookmark
+        // Add bookmark with empty name should be silently ignored
         client.add_bookmark(
             "",
             make_generic_ftparams(
@@ -577,6 +575,8 @@ mod tests {
             ),
             true,
         );
+        // No bookmark should have been added
+        assert_eq!(client.iter_bookmarks().count(), 0);
     }
 
     #[test]
@@ -738,14 +738,13 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
     fn test_system_bookmarks_add_bookmark_empty() {
         let tmp_dir: tempfile::TempDir = TempDir::new().ok().unwrap();
         let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
         // Initialize a new bookmarks client
         let mut client: BookmarksClient =
             BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16, true).unwrap();
-        // Add bookmark
+        // Add bookmark with empty name should be silently ignored
         client.add_bookmark(
             "",
             make_generic_ftparams(
@@ -757,6 +756,8 @@ mod tests {
             ),
             true,
         );
+        // No bookmark should have been added
+        assert_eq!(client.iter_bookmarks().count(), 0);
     }
 
     #[test]

@@ -478,9 +478,10 @@ impl Activity for FileTransferActivity {
             && !self.browser.local_pane().fs.is_localhost()
         {
             let host_bridge_params = self.context().host_bridge_params().unwrap();
-            let ft_params = host_bridge_params.unwrap_protocol_params();
-            // print params
-            let msg: String = Self::get_connection_msg(ft_params);
+            let msg: String = match host_bridge_params.protocol_params() {
+                Some(ft_params) => Self::get_connection_msg(ft_params),
+                None => String::from("Connecting..."),
+            };
             // Set init state to connecting popup
             self.mount_blocking_wait(msg.as_str());
             // Connect to remote

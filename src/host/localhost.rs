@@ -395,7 +395,17 @@ impl HostBridge for Localhost {
     fn exec(&mut self, cmd: &str) -> HostResult<String> {
         // Make command
         let args: Vec<&str> = cmd.split(' ').collect();
-        let cmd: &str = args.first().unwrap();
+        let cmd: &str = match args.first() {
+            Some(cmd) => cmd,
+            None => {
+                error!("Empty command provided to exec");
+                return Err(HostError::new(
+                    HostErrorType::ExecutionFailed,
+                    None,
+                    self.wrkdir.as_path(),
+                ));
+            }
+        };
         let argv: &[&str] = &args[1..];
         info!("Executing command: {} {:?}", cmd, argv);
         match std::process::Command::new(cmd).args(argv).output() {
@@ -991,6 +1001,14 @@ mod tests {
         let mut host: Localhost = Localhost::new(PathBuf::from(tmpdir.path())).ok().unwrap();
         // Execute
         assert!(host.exec("echo 5").ok().unwrap().as_str().contains("5"));
+    }
+
+    #[test]
+    fn test_host_exec_empty_command() {
+        let tmpdir: tempfile::TempDir = tempfile::TempDir::new().unwrap();
+        let mut host: Localhost = Localhost::new(PathBuf::from(tmpdir.path())).ok().unwrap();
+        // Execute empty command should return error
+        assert!(host.exec("").is_err());
     }
 
     #[cfg(posix)]
