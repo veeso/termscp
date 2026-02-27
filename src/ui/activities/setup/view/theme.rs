@@ -21,7 +21,9 @@ impl SetupActivity {
         // Load styles
         self.load_styles();
         // Active first field
-        assert!(self.app.active(&Id::Theme(IdTheme::AuthProtocol)).is_ok());
+        if let Err(err) = self.app.active(&Id::Theme(IdTheme::AuthProtocol)) {
+            error!("Failed to activate component: {err}");
+        }
     }
 
     pub(super) fn view_theme(&mut self) {
@@ -242,309 +244,247 @@ impl SetupActivity {
     }
 
     fn load_titles(&mut self) {
-        assert!(
-            self.app
-                .remount(
-                    Id::Theme(IdTheme::AuthTitle),
-                    Box::<components::AuthTitle>::default(),
-                    vec![]
-                )
-                .is_ok()
-        );
-        assert!(
-            self.app
-                .remount(
-                    Id::Theme(IdTheme::MiscTitle),
-                    Box::<components::MiscTitle>::default(),
-                    vec![]
-                )
-                .is_ok()
-        );
-        assert!(
-            self.app
-                .remount(
-                    Id::Theme(IdTheme::TransferTitle),
-                    Box::<components::TransferTitle>::default(),
-                    vec![]
-                )
-                .is_ok()
-        );
-        assert!(
-            self.app
-                .remount(
-                    Id::Theme(IdTheme::TransferTitle2),
-                    Box::<components::TransferTitle2>::default(),
-                    vec![]
-                )
-                .is_ok()
-        );
+        if let Err(err) = self.app.remount(
+            Id::Theme(IdTheme::AuthTitle),
+            Box::<components::AuthTitle>::default(),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
+        if let Err(err) = self.app.remount(
+            Id::Theme(IdTheme::MiscTitle),
+            Box::<components::MiscTitle>::default(),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
+        if let Err(err) = self.app.remount(
+            Id::Theme(IdTheme::TransferTitle),
+            Box::<components::TransferTitle>::default(),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
+        if let Err(err) = self.app.remount(
+            Id::Theme(IdTheme::TransferTitle2),
+            Box::<components::TransferTitle2>::default(),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
     }
 
     /// Load values from theme into input fields
     pub(crate) fn load_styles(&mut self) {
         let theme: Theme = self.theme().clone();
-        assert!(
-            self.app
-                .remount(
-                    Id::Theme(IdTheme::AuthAddress),
-                    Box::new(components::AuthAddress::new(theme.auth_address)),
-                    vec![]
-                )
-                .is_ok()
-        );
-        assert!(
-            self.app
-                .remount(
-                    Id::Theme(IdTheme::AuthBookmarks),
-                    Box::new(components::AuthBookmarks::new(theme.auth_bookmarks)),
-                    vec![]
-                )
-                .is_ok()
-        );
-        assert!(
-            self.app
-                .remount(
-                    Id::Theme(IdTheme::AuthPassword),
-                    Box::new(components::AuthPassword::new(theme.auth_password)),
-                    vec![]
-                )
-                .is_ok()
-        );
-        assert!(
-            self.app
-                .remount(
-                    Id::Theme(IdTheme::AuthPort),
-                    Box::new(components::AuthPort::new(theme.auth_port)),
-                    vec![]
-                )
-                .is_ok()
-        );
-        assert!(
-            self.app
-                .remount(
-                    Id::Theme(IdTheme::AuthProtocol),
-                    Box::new(components::AuthProtocol::new(theme.auth_protocol)),
-                    vec![]
-                )
-                .is_ok()
-        );
-        assert!(
-            self.app
-                .remount(
-                    Id::Theme(IdTheme::AuthRecentHosts),
-                    Box::new(components::AuthRecentHosts::new(theme.auth_recents)),
-                    vec![]
-                )
-                .is_ok()
-        );
-        assert!(
-            self.app
-                .remount(
-                    Id::Theme(IdTheme::AuthUsername),
-                    Box::new(components::AuthUsername::new(theme.auth_username)),
-                    vec![]
-                )
-                .is_ok()
-        );
-        assert!(
-            self.app
-                .remount(
-                    Id::Theme(IdTheme::MiscError),
-                    Box::new(components::MiscError::new(theme.misc_error_dialog)),
-                    vec![]
-                )
-                .is_ok()
-        );
-        assert!(
-            self.app
-                .remount(
-                    Id::Theme(IdTheme::MiscInfo),
-                    Box::new(components::MiscInfo::new(theme.misc_info_dialog)),
-                    vec![]
-                )
-                .is_ok()
-        );
-        assert!(
-            self.app
-                .remount(
-                    Id::Theme(IdTheme::MiscInput),
-                    Box::new(components::MiscInput::new(theme.misc_input_dialog)),
-                    vec![]
-                )
-                .is_ok()
-        );
-        assert!(
-            self.app
-                .remount(
-                    Id::Theme(IdTheme::MiscKeys),
-                    Box::new(components::MiscKeys::new(theme.misc_keys)),
-                    vec![]
-                )
-                .is_ok()
-        );
-        assert!(
-            self.app
-                .remount(
-                    Id::Theme(IdTheme::MiscQuit),
-                    Box::new(components::MiscQuit::new(theme.misc_quit_dialog)),
-                    vec![]
-                )
-                .is_ok()
-        );
-        assert!(
-            self.app
-                .remount(
-                    Id::Theme(IdTheme::MiscSave),
-                    Box::new(components::MiscSave::new(theme.misc_save_dialog)),
-                    vec![]
-                )
-                .is_ok()
-        );
-        assert!(
-            self.app
-                .remount(
-                    Id::Theme(IdTheme::MiscWarn),
-                    Box::new(components::MiscWarn::new(theme.misc_warn_dialog)),
-                    vec![]
-                )
-                .is_ok()
-        );
-        assert!(
-            self.app
-                .remount(
-                    Id::Theme(IdTheme::ExplorerLocalBg),
-                    Box::new(components::ExplorerLocalBg::new(
-                        theme.transfer_local_explorer_background
-                    )),
-                    vec![]
-                )
-                .is_ok()
-        );
-        assert!(
-            self.app
-                .remount(
-                    Id::Theme(IdTheme::ExplorerLocalFg),
-                    Box::new(components::ExplorerLocalFg::new(
-                        theme.transfer_local_explorer_foreground
-                    )),
-                    vec![]
-                )
-                .is_ok()
-        );
-        assert!(
-            self.app
-                .remount(
-                    Id::Theme(IdTheme::ExplorerLocalHg),
-                    Box::new(components::ExplorerLocalHg::new(
-                        theme.transfer_local_explorer_highlighted
-                    )),
-                    vec![]
-                )
-                .is_ok()
-        );
-        assert!(
-            self.app
-                .remount(
-                    Id::Theme(IdTheme::ExplorerRemoteBg),
-                    Box::new(components::ExplorerRemoteBg::new(
-                        theme.transfer_remote_explorer_background
-                    )),
-                    vec![]
-                )
-                .is_ok()
-        );
-        assert!(
-            self.app
-                .remount(
-                    Id::Theme(IdTheme::ExplorerRemoteFg),
-                    Box::new(components::ExplorerRemoteFg::new(
-                        theme.transfer_remote_explorer_foreground
-                    )),
-                    vec![]
-                )
-                .is_ok()
-        );
-        assert!(
-            self.app
-                .remount(
-                    Id::Theme(IdTheme::ExplorerRemoteHg),
-                    Box::new(components::ExplorerRemoteHg::new(
-                        theme.transfer_remote_explorer_highlighted
-                    )),
-                    vec![]
-                )
-                .is_ok()
-        );
-        assert!(
-            self.app
-                .remount(
-                    Id::Theme(IdTheme::ProgBarFull),
-                    Box::new(components::ProgBarFull::new(
-                        theme.transfer_progress_bar_full
-                    )),
-                    vec![]
-                )
-                .is_ok()
-        );
-        assert!(
-            self.app
-                .remount(
-                    Id::Theme(IdTheme::ProgBarPartial),
-                    Box::new(components::ProgBarPartial::new(
-                        theme.transfer_progress_bar_partial
-                    )),
-                    vec![]
-                )
-                .is_ok()
-        );
-        assert!(
-            self.app
-                .remount(
-                    Id::Theme(IdTheme::LogBg),
-                    Box::new(components::LogBg::new(theme.transfer_log_background)),
-                    vec![]
-                )
-                .is_ok()
-        );
-        assert!(
-            self.app
-                .remount(
-                    Id::Theme(IdTheme::LogWindow),
-                    Box::new(components::LogWindow::new(theme.transfer_log_window)),
-                    vec![]
-                )
-                .is_ok()
-        );
-        assert!(
-            self.app
-                .remount(
-                    Id::Theme(IdTheme::StatusSorting),
-                    Box::new(components::StatusSorting::new(
-                        theme.transfer_status_sorting
-                    )),
-                    vec![]
-                )
-                .is_ok()
-        );
-        assert!(
-            self.app
-                .remount(
-                    Id::Theme(IdTheme::StatusHidden),
-                    Box::new(components::StatusHidden::new(theme.transfer_status_hidden)),
-                    vec![]
-                )
-                .is_ok()
-        );
-        assert!(
-            self.app
-                .remount(
-                    Id::Theme(IdTheme::StatusSync),
-                    Box::new(components::StatusSync::new(
-                        theme.transfer_status_sync_browsing
-                    )),
-                    vec![]
-                )
-                .is_ok()
-        );
+        if let Err(err) = self.app.remount(
+            Id::Theme(IdTheme::AuthAddress),
+            Box::new(components::AuthAddress::new(theme.auth_address)),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
+        if let Err(err) = self.app.remount(
+            Id::Theme(IdTheme::AuthBookmarks),
+            Box::new(components::AuthBookmarks::new(theme.auth_bookmarks)),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
+        if let Err(err) = self.app.remount(
+            Id::Theme(IdTheme::AuthPassword),
+            Box::new(components::AuthPassword::new(theme.auth_password)),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
+        if let Err(err) = self.app.remount(
+            Id::Theme(IdTheme::AuthPort),
+            Box::new(components::AuthPort::new(theme.auth_port)),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
+        if let Err(err) = self.app.remount(
+            Id::Theme(IdTheme::AuthProtocol),
+            Box::new(components::AuthProtocol::new(theme.auth_protocol)),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
+        if let Err(err) = self.app.remount(
+            Id::Theme(IdTheme::AuthRecentHosts),
+            Box::new(components::AuthRecentHosts::new(theme.auth_recents)),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
+        if let Err(err) = self.app.remount(
+            Id::Theme(IdTheme::AuthUsername),
+            Box::new(components::AuthUsername::new(theme.auth_username)),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
+        if let Err(err) = self.app.remount(
+            Id::Theme(IdTheme::MiscError),
+            Box::new(components::MiscError::new(theme.misc_error_dialog)),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
+        if let Err(err) = self.app.remount(
+            Id::Theme(IdTheme::MiscInfo),
+            Box::new(components::MiscInfo::new(theme.misc_info_dialog)),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
+        if let Err(err) = self.app.remount(
+            Id::Theme(IdTheme::MiscInput),
+            Box::new(components::MiscInput::new(theme.misc_input_dialog)),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
+        if let Err(err) = self.app.remount(
+            Id::Theme(IdTheme::MiscKeys),
+            Box::new(components::MiscKeys::new(theme.misc_keys)),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
+        if let Err(err) = self.app.remount(
+            Id::Theme(IdTheme::MiscQuit),
+            Box::new(components::MiscQuit::new(theme.misc_quit_dialog)),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
+        if let Err(err) = self.app.remount(
+            Id::Theme(IdTheme::MiscSave),
+            Box::new(components::MiscSave::new(theme.misc_save_dialog)),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
+        if let Err(err) = self.app.remount(
+            Id::Theme(IdTheme::MiscWarn),
+            Box::new(components::MiscWarn::new(theme.misc_warn_dialog)),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
+        if let Err(err) = self.app.remount(
+            Id::Theme(IdTheme::ExplorerLocalBg),
+            Box::new(components::ExplorerLocalBg::new(
+                theme.transfer_local_explorer_background,
+            )),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
+        if let Err(err) = self.app.remount(
+            Id::Theme(IdTheme::ExplorerLocalFg),
+            Box::new(components::ExplorerLocalFg::new(
+                theme.transfer_local_explorer_foreground,
+            )),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
+        if let Err(err) = self.app.remount(
+            Id::Theme(IdTheme::ExplorerLocalHg),
+            Box::new(components::ExplorerLocalHg::new(
+                theme.transfer_local_explorer_highlighted,
+            )),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
+        if let Err(err) = self.app.remount(
+            Id::Theme(IdTheme::ExplorerRemoteBg),
+            Box::new(components::ExplorerRemoteBg::new(
+                theme.transfer_remote_explorer_background,
+            )),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
+        if let Err(err) = self.app.remount(
+            Id::Theme(IdTheme::ExplorerRemoteFg),
+            Box::new(components::ExplorerRemoteFg::new(
+                theme.transfer_remote_explorer_foreground,
+            )),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
+        if let Err(err) = self.app.remount(
+            Id::Theme(IdTheme::ExplorerRemoteHg),
+            Box::new(components::ExplorerRemoteHg::new(
+                theme.transfer_remote_explorer_highlighted,
+            )),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
+        if let Err(err) = self.app.remount(
+            Id::Theme(IdTheme::ProgBarFull),
+            Box::new(components::ProgBarFull::new(
+                theme.transfer_progress_bar_full,
+            )),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
+        if let Err(err) = self.app.remount(
+            Id::Theme(IdTheme::ProgBarPartial),
+            Box::new(components::ProgBarPartial::new(
+                theme.transfer_progress_bar_partial,
+            )),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
+        if let Err(err) = self.app.remount(
+            Id::Theme(IdTheme::LogBg),
+            Box::new(components::LogBg::new(theme.transfer_log_background)),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
+        if let Err(err) = self.app.remount(
+            Id::Theme(IdTheme::LogWindow),
+            Box::new(components::LogWindow::new(theme.transfer_log_window)),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
+        if let Err(err) = self.app.remount(
+            Id::Theme(IdTheme::StatusSorting),
+            Box::new(components::StatusSorting::new(
+                theme.transfer_status_sorting,
+            )),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
+        if let Err(err) = self.app.remount(
+            Id::Theme(IdTheme::StatusHidden),
+            Box::new(components::StatusHidden::new(theme.transfer_status_hidden)),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
+        if let Err(err) = self.app.remount(
+            Id::Theme(IdTheme::StatusSync),
+            Box::new(components::StatusSync::new(
+                theme.transfer_status_sync_browsing,
+            )),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
     }
 }
