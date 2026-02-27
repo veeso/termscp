@@ -7,7 +7,7 @@ use std::path::PathBuf;
 
 use remotefs::File;
 
-use super::{FileExplorerTab, FileTransferActivity, LogLevel, Msg, PendingActionMsg};
+use super::{FileTransferActivity, LogLevel, Msg, PendingActionMsg};
 
 /// Describes destination for sync browsing
 enum SyncBrowsingDestination {
@@ -17,47 +17,49 @@ enum SyncBrowsingDestination {
 }
 
 impl FileTransferActivity {
-    /// Enter a directory on local host from entry
-    pub(crate) fn action_enter_local_dir(&mut self, dir: File) {
-        self.host_bridge_changedir(dir.path(), true);
+    /// Enter a directory from entry, dispatching to local or remote based on the active tab.
+    pub(crate) fn action_enter_dir(&mut self, dir: File) {
+        if self.is_local_tab() {
+            self.host_bridge_changedir(dir.path(), true);
+        } else {
+            self.remote_changedir(dir.path(), true);
+        }
         if self.browser.sync_browsing && self.browser.found().is_none() {
             self.synchronize_browsing(SyncBrowsingDestination::Path(dir.name()));
         }
     }
 
-    /// Enter a directory on local host from entry
-    pub(crate) fn action_enter_remote_dir(&mut self, dir: File) {
-        self.remote_changedir(dir.path(), true);
-        if self.browser.sync_browsing && self.browser.found().is_none() {
-            self.synchronize_browsing(SyncBrowsingDestination::Path(dir.name()));
+    /// Change directory reading value from input, dispatching to local or remote based on the active tab.
+    pub(crate) fn action_change_dir(&mut self, input: String) {
+        let dir_path = if self.is_local_tab() {
+            self.host_bridge_to_abs_path(PathBuf::from(input.as_str()).as_path())
+        } else {
+            self.remote_to_abs_path(PathBuf::from(input.as_str()).as_path())
+        };
+        if self.is_local_tab() {
+            self.host_bridge_changedir(dir_path.as_path(), true);
+        } else {
+            self.remote_changedir(dir_path.as_path(), true);
         }
-    }
-
-    /// Change local directory reading value from input
-    pub(crate) fn action_change_local_dir(&mut self, input: String) {
-        let dir_path: PathBuf =
-            self.host_bridge_to_abs_path(PathBuf::from(input.as_str()).as_path());
-        self.host_bridge_changedir(dir_path.as_path(), true);
         // Check whether to sync
         if self.browser.sync_browsing && self.browser.found().is_none() {
             self.synchronize_browsing(SyncBrowsingDestination::Path(input));
         }
     }
 
-    /// Change remote directory reading value from input
-    pub(crate) fn action_change_remote_dir(&mut self, input: String) {
-        let dir_path: PathBuf = self.remote_to_abs_path(PathBuf::from(input.as_str()).as_path());
-        self.remote_changedir(dir_path.as_path(), true);
-        // Check whether to sync
-        if self.browser.sync_browsing && self.browser.found().is_none() {
-            self.synchronize_browsing(SyncBrowsingDestination::Path(input));
-        }
-    }
-
-    /// Go to previous directory from localhost
-    pub(crate) fn action_go_to_previous_local_dir(&mut self) {
-        if let Some(d) = self.host_bridge_mut().popd() {
-            self.host_bridge_changedir(d.as_path(), false);
+    /// Go to previous directory, dispatching to local or remote based on the active tab.
+    pub(crate) fn action_go_to_previous_dir(&mut self) {
+        let prev = if self.is_local_tab() {
+            self.host_bridge_mut().popd()
+        } else {
+            self.remote_mut().popd()
+        };
+        if let Some(d) = prev {
+            if self.is_local_tab() {
+                self.host_bridge_changedir(d.as_path(), false);
+            } else {
+                self.remote_changedir(d.as_path(), false);
+            }
             // Check whether to sync
             if self.browser.sync_browsing && self.browser.found().is_none() {
                 self.synchronize_browsing(SyncBrowsingDestination::PreviousDir);
@@ -65,41 +67,20 @@ impl FileTransferActivity {
         }
     }
 
-    /// Go to previous directory from remote host
-    pub(crate) fn action_go_to_previous_remote_dir(&mut self) {
-        if let Some(d) = self.remote_mut().popd() {
-            self.remote_changedir(d.as_path(), false);
-            // Check whether to sync
-            if self.browser.sync_browsing && self.browser.found().is_none() {
-                self.synchronize_browsing(SyncBrowsingDestination::PreviousDir);
-            }
-        }
-    }
-
-    /// Go to upper directory on local host
-    pub(crate) fn action_go_to_local_upper_dir(&mut self) {
-        // Get pwd
-        let path: PathBuf = self.host_bridge().wrkdir.clone();
-        // Go to parent directory
+    /// Go to upper directory, dispatching to local or remote based on the active tab.
+    pub(crate) fn action_go_to_upper_dir(&mut self) {
+        let path = if self.is_local_tab() {
+            self.host_bridge().wrkdir.clone()
+        } else {
+            self.remote().wrkdir.clone()
+        };
         if let Some(parent) = path.as_path().parent() {
-            self.host_bridge_changedir(parent, true);
-            // If sync is enabled update remote too
-            if self.browser.sync_browsing && self.browser.found().is_none() {
-                self.synchronize_browsing(SyncBrowsingDestination::ParentDir);
+            if self.is_local_tab() {
+                self.host_bridge_changedir(parent, true);
+            } else {
+                self.remote_changedir(parent, true);
             }
-        }
-    }
-
-    /// #### action_go_to_remote_upper_dir
-    ///
-    /// Go to upper directory on remote host
-    pub(crate) fn action_go_to_remote_upper_dir(&mut self) {
-        // Get pwd
-        let path: PathBuf = self.remote().wrkdir.clone();
-        // Go to parent directory
-        if let Some(parent) = path.as_path().parent() {
-            self.remote_changedir(parent, true);
-            // If sync is enabled update local too
+            // If sync is enabled update the other side too
             if self.browser.sync_browsing && self.browser.found().is_none() {
                 self.synchronize_browsing(SyncBrowsingDestination::ParentDir);
             }
@@ -117,9 +98,11 @@ impl FileTransferActivity {
             None => return,
         };
         trace!("Synchronizing browsing to path {}", path.display());
-        // Check whether destination exists on host
-        let exists = match self.browser.tab() {
-            FileExplorerTab::HostBridge => match self.client.exists(path.as_path()) {
+        // Check whether destination exists on the opposite side
+        let is_local = self.is_local_tab();
+        let exists = if is_local {
+            // Current tab is local, so the opposite is remote
+            match self.client.exists(path.as_path()) {
                 Ok(e) => e,
                 Err(err) => {
                     error!(
@@ -129,8 +112,10 @@ impl FileTransferActivity {
                     );
                     return;
                 }
-            },
-            FileExplorerTab::Remote => match self.host_bridge.exists(path.as_path()) {
+            }
+        } else {
+            // Current tab is remote, so the opposite is local
+            match self.host_bridge.exists(path.as_path()) {
                 Ok(e) => e,
                 Err(err) => {
                     error!(
@@ -140,8 +125,7 @@ impl FileTransferActivity {
                     );
                     return;
                 }
-            },
-            _ => return,
+            }
         };
         let name = path
             .file_name()
@@ -159,12 +143,8 @@ impl FileTransferActivity {
             ]) == Msg::PendingAction(PendingActionMsg::MakePendingDirectory)
             {
                 trace!("User wants to create the unexisting directory");
-                // Make directory
-                match self.browser.tab() {
-                    FileExplorerTab::HostBridge => self.action_remote_mkdir(name.clone()),
-                    FileExplorerTab::Remote => self.action_local_mkdir(name.clone()),
-                    _ => {}
-                }
+                // Make directory on the opposite side
+                self.sync_mkdir_on_opposite(name.clone());
             } else {
                 // Do not synchronize, disable sync browsing and return
                 trace!(
@@ -183,23 +163,21 @@ impl FileTransferActivity {
             self.umount_sync_browsing_mkdir_popup();
         }
         trace!("Entering on the other explorer directory {}", name);
-        // Enter directory
-        match destination {
-            SyncBrowsingDestination::ParentDir => match self.browser.tab() {
-                FileExplorerTab::HostBridge => self.remote_changedir(path.as_path(), true),
-                FileExplorerTab::Remote => self.host_bridge_changedir(path.as_path(), true),
-                _ => {}
-            },
-            SyncBrowsingDestination::Path(_) => match self.browser.tab() {
-                FileExplorerTab::HostBridge => self.remote_changedir(path.as_path(), true),
-                FileExplorerTab::Remote => self.host_bridge_changedir(path.as_path(), true),
-                _ => {}
-            },
-            SyncBrowsingDestination::PreviousDir => match self.browser.tab() {
-                FileExplorerTab::HostBridge => self.remote_changedir(path.as_path(), false),
-                FileExplorerTab::Remote => self.host_bridge_changedir(path.as_path(), false),
-                _ => {}
-            },
+        // Enter directory on the opposite side
+        let push = !matches!(destination, SyncBrowsingDestination::PreviousDir);
+        if is_local {
+            self.remote_changedir(path.as_path(), push);
+        } else {
+            self.host_bridge_changedir(path.as_path(), push);
+        }
+    }
+
+    /// Create a directory on the opposite side for sync browsing.
+    fn sync_mkdir_on_opposite(&mut self, name: String) {
+        if self.is_local_tab() {
+            self.action_remote_mkdir(name);
+        } else {
+            self.action_local_mkdir(name);
         }
     }
 
@@ -208,35 +186,34 @@ impl FileTransferActivity {
         &mut self,
         destination: &SyncBrowsingDestination,
     ) -> Option<PathBuf> {
-        match (destination, self.browser.tab()) {
-            // NOTE: tab and methods are switched on purpose
-            (SyncBrowsingDestination::ParentDir, FileExplorerTab::HostBridge) => {
-                self.remote().wrkdir.parent().map(|x| x.to_path_buf())
-            }
-            (SyncBrowsingDestination::ParentDir, FileExplorerTab::Remote) => {
-                self.host_bridge().wrkdir.parent().map(|x| x.to_path_buf())
-            }
-            (SyncBrowsingDestination::PreviousDir, FileExplorerTab::HostBridge) => {
-                if let Some(p) = self.remote_mut().popd() {
-                    Some(p)
+        let is_local = self.is_local_tab();
+        match destination {
+            // NOTE: tab and methods are switched on purpose (we resolve from the opposite side)
+            SyncBrowsingDestination::ParentDir => {
+                if is_local {
+                    self.remote().wrkdir.parent().map(|x| x.to_path_buf())
                 } else {
-                    warn!("Cannot synchronize browsing: remote has no previous directory in stack");
-                    None
+                    self.host_bridge().wrkdir.parent().map(|x| x.to_path_buf())
                 }
             }
-            (SyncBrowsingDestination::PreviousDir, FileExplorerTab::Remote) => {
-                if let Some(p) = self.host_bridge_mut().popd() {
+            SyncBrowsingDestination::PreviousDir => {
+                if is_local {
+                    if let Some(p) = self.remote_mut().popd() {
+                        Some(p)
+                    } else {
+                        warn!(
+                            "Cannot synchronize browsing: remote has no previous directory in stack"
+                        );
+                        None
+                    }
+                } else if let Some(p) = self.host_bridge_mut().popd() {
                     Some(p)
                 } else {
                     warn!("Cannot synchronize browsing: local has no previous directory in stack");
                     None
                 }
             }
-            (SyncBrowsingDestination::Path(p), _) => Some(PathBuf::from(p.as_str())),
-            _ => {
-                warn!("Cannot synchronize browsing for current explorer");
-                None
-            }
+            SyncBrowsingDestination::Path(p) => Some(PathBuf::from(p.as_str())),
         }
     }
 }

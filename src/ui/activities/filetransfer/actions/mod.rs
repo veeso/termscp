@@ -92,17 +92,9 @@ impl FileTransferActivity {
         self.get_selected_files(&Id::ExplorerHostBridge)
     }
 
-    pub(crate) fn get_local_selected_file(&self) -> Option<File> {
-        self.get_selected_file_by_id(&Id::ExplorerHostBridge)
-    }
-
     /// Get remote file entry
     pub(crate) fn get_remote_selected_entries(&mut self) -> SelectedFile {
         self.get_selected_files(&Id::ExplorerRemote)
-    }
-
-    pub(crate) fn get_remote_selected_file(&self) -> Option<File> {
-        self.get_selected_file_by_id(&Id::ExplorerRemote)
     }
 
     /// Get remote file entry

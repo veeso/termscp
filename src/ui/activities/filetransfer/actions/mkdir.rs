@@ -32,7 +32,7 @@ impl FileTransferActivity {
     }
 
     /// Create a directory on the local host (used by sync-browsing in change_dir).
-    pub(crate) fn action_local_mkdir(&mut self, input: String) {
+    pub(in crate::ui::activities::filetransfer) fn action_local_mkdir(&mut self, input: String) {
         let path = PathBuf::from(input.as_str());
         match self.host_bridge.mkdir(path.as_path()) {
             Ok(_) => self.log(LogLevel::Info, format!("Created directory \"{input}\"")),
@@ -44,7 +44,7 @@ impl FileTransferActivity {
     }
 
     /// Create a directory on the remote host (used by sync-browsing in change_dir).
-    pub(crate) fn action_remote_mkdir(&mut self, input: String) {
+    pub(in crate::ui::activities::filetransfer) fn action_remote_mkdir(&mut self, input: String) {
         let path = PathBuf::from(input.as_str());
         match self
             .client

@@ -23,13 +23,10 @@ impl FileTransferActivity {
                 }
             };
             // Change directory
-            match self.browser.tab() {
-                FileExplorerTab::FindHostBridge | FileExplorerTab::HostBridge => {
-                    self.host_bridge_changedir(path.as_path(), true)
-                }
-                FileExplorerTab::FindRemote | FileExplorerTab::Remote => {
-                    self.remote_changedir(path.as_path(), true)
-                }
+            if self.is_local_tab() {
+                self.host_bridge_changedir(path.as_path(), true);
+            } else {
+                self.remote_changedir(path.as_path(), true);
             }
         }
     }

@@ -96,24 +96,17 @@ impl FileTransferActivity {
                 // Reload files
                 self.update_browser_file_list();
             }
-            TransferMsg::EnterDirectory if self.browser.tab() == FileExplorerTab::HostBridge => {
-                if let Some(entry) = self.get_local_selected_file() {
-                    self.action_submit_local(entry);
+            TransferMsg::EnterDirectory
+                if self.browser.tab() == FileExplorerTab::HostBridge
+                    || self.browser.tab() == FileExplorerTab::Remote =>
+            {
+                if let Some(entry) = self.get_selected_file() {
+                    self.action_submit(entry);
                     // Update file list if sync
                     if self.browser.sync_browsing && self.browser.found().is_none() {
-                        self.update_remote_filelist();
+                        self.update_browser_file_list_swapped();
                     }
-                    self.update_host_bridge_filelist();
-                }
-            }
-            TransferMsg::EnterDirectory if self.browser.tab() == FileExplorerTab::Remote => {
-                if let Some(entry) = self.get_remote_selected_file() {
-                    self.action_submit_remote(entry);
-                    // Update file list if sync
-                    if self.browser.sync_browsing && self.browser.found().is_none() {
-                        self.update_host_bridge_filelist();
-                    }
-                    self.update_remote_filelist();
+                    self.update_browser_file_list();
                 }
             }
             TransferMsg::EnterDirectory => {
@@ -139,11 +132,7 @@ impl FileTransferActivity {
                 self.action_get_file_size();
             }
             TransferMsg::GoTo(dir) => {
-                match self.browser.tab() {
-                    FileExplorerTab::HostBridge => self.action_change_local_dir(dir),
-                    FileExplorerTab::Remote => self.action_change_remote_dir(dir),
-                    _ => error!("Found tab doesn't support GOTO"),
-                }
+                self.action_change_dir(dir);
                 // Umount
                 self.umount_goto();
                 // Reload files if sync
@@ -154,46 +143,18 @@ impl FileTransferActivity {
                 self.update_browser_file_list()
             }
             TransferMsg::GoToParentDirectory => {
-                match self.browser.tab() {
-                    FileExplorerTab::HostBridge => {
-                        self.action_go_to_local_upper_dir();
-                        if self.browser.sync_browsing && self.browser.found().is_none() {
-                            self.update_remote_filelist();
-                        }
-                        // Reload file list component
-                        self.update_host_bridge_filelist()
-                    }
-                    FileExplorerTab::Remote => {
-                        self.action_go_to_remote_upper_dir();
-                        if self.browser.sync_browsing && self.browser.found().is_none() {
-                            self.update_host_bridge_filelist();
-                        }
-                        // Reload file list component
-                        self.update_remote_filelist()
-                    }
-                    _ => {}
+                self.action_go_to_upper_dir();
+                if self.browser.sync_browsing && self.browser.found().is_none() {
+                    self.update_browser_file_list_swapped();
                 }
+                self.update_browser_file_list();
             }
             TransferMsg::GoToPreviousDirectory => {
-                match self.browser.tab() {
-                    FileExplorerTab::HostBridge => {
-                        self.action_go_to_previous_local_dir();
-                        if self.browser.sync_browsing && self.browser.found().is_none() {
-                            self.update_remote_filelist();
-                        }
-                        // Reload file list component
-                        self.update_host_bridge_filelist()
-                    }
-                    FileExplorerTab::Remote => {
-                        self.action_go_to_previous_remote_dir();
-                        if self.browser.sync_browsing && self.browser.found().is_none() {
-                            self.update_host_bridge_filelist();
-                        }
-                        // Reload file list component
-                        self.update_remote_filelist()
-                    }
-                    _ => {}
+                self.action_go_to_previous_dir();
+                if self.browser.sync_browsing && self.browser.found().is_none() {
+                    self.update_browser_file_list_swapped();
                 }
+                self.update_browser_file_list();
             }
             TransferMsg::InitFuzzySearch => {
                 // Mount wait
