@@ -103,3 +103,7 @@ Platform-specific dependencies: SSH and FTP crates use different TLS backends on
 - **Client pattern**: System services wrapped as clients (`BookmarksClient`, `ConfigClient`)
 - **Tests**: Unit tests in `#[cfg(test)]` blocks within source files. Tests requiring serial execution use `#[serial]` from `serial_test`
 - **Encryption**: Bookmark passwords encrypted with `magic-crypt`; keys stored in system keyring or encrypted file
+
+## Other conventions
+
+- Always put plans to `./.claude/plans/`
