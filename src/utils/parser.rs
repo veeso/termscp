@@ -338,9 +338,9 @@ fn parse_kube_remote_opt(s: &str) -> Result<FileTransferParams, String> {
 fn parse_smb_remote_opts(s: &str) -> Result<FileTransferParams, String> {
     match REMOTE_SMB_OPT_REGEX.captures(s) {
         Some(groups) => {
-            let username: Option<String> = match groups.get(1) {
+            let username = match groups.get(1) {
                 Some(group) => Some(group.as_str().to_string()),
-                None => Some(whoami::username()),
+                None => whoami::username().ok(),
             };
             let address = match groups.get(2) {
                 Some(group) => group.as_str().to_string(),

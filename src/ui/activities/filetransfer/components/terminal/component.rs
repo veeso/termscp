@@ -84,6 +84,54 @@ impl TerminalComponent {
 }
 
 impl MockComponent for TerminalComponent {
+    fn view(&mut self, frame: &mut tuirealm::Frame, area: Rect) {
+        let width = area.width.saturating_sub(2);
+        let height = area.height.saturating_sub(2);
+
+        // update the terminal size if it has changed
+        if self.size != (width, height) {
+            self.size = (width, height);
+            self.parser.set_size(height, width);
+        }
+
+        let title = self
+            .query(Attribute::Title)
+            .map(|value| value.unwrap_string())
+            .unwrap_or_else(|| "Terminal".to_string());
+
+        let fg = self
+            .query(Attribute::Foreground)
+            .map(|value| value.unwrap_color())
+            .unwrap_or(tuirealm::ratatui::style::Color::Reset);
+
+        let bg = self
+            .query(Attribute::Background)
+            .map(|value| value.unwrap_color())
+            .unwrap_or(tuirealm::ratatui::style::Color::Reset);
+
+        let border_color = self
+            .query(Attribute::Borders)
+            .map(|value| value.unwrap_color())
+            .unwrap_or(tuirealm::ratatui::style::Color::Reset);
+
+        let terminal = PseudoTerminal::new(self.parser.screen())
+            .block(
+                Block::default()
+                    .title(title)
+                    .border_type(BorderType::Rounded)
+                    .border_style(Style::default().fg(border_color))
+                    .borders(BorderSides::ALL)
+                    .style(Style::default().fg(fg).bg(bg)),
+            )
+            .style(Style::default().fg(fg).bg(bg));
+
+        frame.render_widget(terminal, area);
+    }
+
+    fn query(&self, attr: tuirealm::Attribute) -> Option<tuirealm::AttrValue> {
+        self.props.get(attr)
+    }
+
     fn attr(&mut self, attr: tuirealm::Attribute, value: AttrValue) {
         if attr == Attribute::Text {
             if let tuirealm::AttrValue::String(s) = value {
@@ -95,6 +143,10 @@ impl MockComponent for TerminalComponent {
         } else {
             self.props.set(attr, value);
         }
+    }
+
+    fn state(&self) -> State {
+        State::One(StateValue::String(self.line.content().to_string()))
     }
 
     fn perform(&mut self, cmd: Cmd) -> CmdResult {
@@ -233,57 +285,5 @@ impl MockComponent for TerminalComponent {
             }
             _ => CmdResult::None,
         }
-    }
-
-    fn query(&self, attr: tuirealm::Attribute) -> Option<tuirealm::AttrValue> {
-        self.props.get(attr)
-    }
-
-    fn state(&self) -> State {
-        State::One(StateValue::String(self.line.content().to_string()))
-    }
-
-    fn view(&mut self, frame: &mut tuirealm::Frame, area: Rect) {
-        let width = area.width.saturating_sub(2);
-        let height = area.height.saturating_sub(2);
-
-        // update the terminal size if it has changed
-        if self.size != (width, height) {
-            self.size = (width, height);
-            self.parser.set_size(height, width);
-        }
-
-        let title = self
-            .query(Attribute::Title)
-            .map(|value| value.unwrap_string())
-            .unwrap_or_else(|| "Terminal".to_string());
-
-        let fg = self
-            .query(Attribute::Foreground)
-            .map(|value| value.unwrap_color())
-            .unwrap_or(tuirealm::ratatui::style::Color::Reset);
-
-        let bg = self
-            .query(Attribute::Background)
-            .map(|value| value.unwrap_color())
-            .unwrap_or(tuirealm::ratatui::style::Color::Reset);
-
-        let border_color = self
-            .query(Attribute::Borders)
-            .map(|value| value.unwrap_color())
-            .unwrap_or(tuirealm::ratatui::style::Color::Reset);
-
-        let terminal = PseudoTerminal::new(self.parser.screen())
-            .block(
-                Block::default()
-                    .title(title)
-                    .border_type(BorderType::Rounded)
-                    .border_style(Style::default().fg(border_color))
-                    .borders(BorderSides::ALL)
-                    .style(Style::default().fg(fg).bg(bg)),
-            )
-            .style(Style::default().fg(fg).bg(bg));
-
-        frame.render_widget(terminal, area);
     }
 }

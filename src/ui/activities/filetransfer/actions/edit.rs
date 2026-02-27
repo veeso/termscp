@@ -1,6 +1,6 @@
 //! ## FileTransferActivity
 //!
-//! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
+//! `filetransfer_activity` is the module which implements the Filetransfer activity, which is the main activity afterall
 
 use std::fs::OpenOptions;
 use std::io::Read;
@@ -10,6 +10,7 @@ use std::time::SystemTime;
 use remotefs::File;
 use remotefs::fs::Metadata;
 
+use super::super::ui_result;
 use super::{FileTransferActivity, LogLevel, SelectedFile, TransferPayload};
 
 impl FileTransferActivity {
@@ -28,7 +29,7 @@ impl FileTransferActivity {
                     format!("Opening file \"{}\"…", entry.path().display()),
                 );
                 // Edit file
-                let res = match self.host_bridge.is_localhost() {
+                let res = match self.browser.local_pane().fs.is_localhost() {
                     true => self.edit_local_file(entry.path()).map(|_| ()),
                     false => self.edit_bridged_local_file(entry),
                 };
@@ -88,7 +89,7 @@ impl FileTransferActivity {
         };
 
         // open from host bridge
-        let mut reader = match self.host_bridge.open_file(entry.path()) {
+        let mut reader = match self.browser.local_pane_mut().fs.open_file(entry.path()) {
             Ok(reader) => reader,
             Err(err) => {
                 return Err(format!("Failed to open bridged entry: {err}"));
@@ -122,7 +123,7 @@ impl FileTransferActivity {
                     return Err(format!("Could not open file: {err}"));
                 }
             };
-            let mut writer = match self.host_bridge.create_file(
+            let mut writer = match self.browser.local_pane_mut().fs.create_file(
                 entry.path(),
                 &Metadata {
                     size: new_file_size,
@@ -139,7 +140,9 @@ impl FileTransferActivity {
                 return Err(format!("Could not write file: {err}"));
             }
 
-            self.host_bridge
+            self.browser
+                .local_pane_mut()
+                .fs
                 .finalize_write(writer)
                 .map_err(|err| format!("Could not write file: {err}"))?;
         }
@@ -177,7 +180,7 @@ impl FileTransferActivity {
             error!("Could not leave alternate screen: {}", err);
         }
         // Lock ports
-        assert!(self.app.lock_ports().is_ok());
+        ui_result(self.app.lock_ports());
         // Get current file modification time
         let prev_mtime = self.get_localhost_mtime(path)?;
         // Open editor
@@ -205,7 +208,7 @@ impl FileTransferActivity {
                 error!("Could not clear screen screen: {}", err);
             }
             // Unlock ports
-            assert!(self.app.unlock_ports().is_ok());
+            ui_result(self.app.unlock_ports());
         }
         let after_mtime = self.get_localhost_mtime(path)?;
 
@@ -241,7 +244,8 @@ impl FileTransferActivity {
             return Err(format!("Could not open file {file_name}: {err}"));
         }
         // Get current file modification time
-        let prev_mtime: SystemTime = match self.host_bridge.stat(tmpfile.as_path()) {
+        let prev_mtime: SystemTime = match self.browser.local_pane_mut().fs.stat(tmpfile.as_path())
+        {
             Ok(e) => e.metadata().modified.unwrap_or(std::time::UNIX_EPOCH),
             Err(err) => {
                 return Err(format!(
@@ -254,7 +258,7 @@ impl FileTransferActivity {
         // Edit file
         self.edit_local_file(tmpfile.as_path())?;
         // Get local fs entry
-        let tmpfile_entry: File = match self.host_bridge.stat(tmpfile.as_path()) {
+        let tmpfile_entry: File = match self.browser.local_pane_mut().fs.stat(tmpfile.as_path()) {
             Ok(e) => e,
             Err(err) => {
                 return Err(format!(
@@ -280,7 +284,7 @@ impl FileTransferActivity {
                     ),
                 );
                 // Get local fs entry
-                let tmpfile_entry = match self.host_bridge.stat(tmpfile.as_path()) {
+                let tmpfile_entry = match self.browser.local_pane_mut().fs.stat(tmpfile.as_path()) {
                     Ok(e) => e,
                     Err(err) => {
                         return Err(format!(

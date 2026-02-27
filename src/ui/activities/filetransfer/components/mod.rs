@@ -6,7 +6,7 @@ use tui_realm_stdlib::Phantom;
 use tuirealm::event::{Event, Key, KeyEvent, KeyModifiers};
 use tuirealm::{Component, MockComponent, NoUserEvent};
 
-use super::{Msg, PendingActionMsg, TransferMsg, UiMsg};
+use super::{Msg, TransferMsg, UiMsg};
 
 // -- export
 mod log;

@@ -35,7 +35,7 @@ impl HostBridgeParams {
     /// Returns the host name for the bridge params
     pub fn username(&self) -> Option<String> {
         match self {
-            HostBridgeParams::Localhost(_) => Some(whoami::username()),
+            HostBridgeParams::Localhost(_) => whoami::username().ok(),
             HostBridgeParams::Remote(_, params) => {
                 params.generic_params().and_then(|p| p.username.clone())
             }

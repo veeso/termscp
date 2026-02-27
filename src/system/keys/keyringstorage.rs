@@ -78,14 +78,13 @@ impl KeyStorage for KeyringStorage {
 mod tests {
     #[test]
     #[cfg(all(not(feature = "github-actions"), not(feature = "isolated-tests")))]
-    fn test_system_keys_keyringstorage() {
+    fn test_system_keys_keyring_storage() {
         use pretty_assertions::assert_eq;
-        use whoami::username;
 
         use super::*;
 
-        let username: String = username();
-        let storage: KeyringStorage = KeyringStorage::new(username.as_str());
+        let username = whoami::username().expect("no username");
+        let storage = KeyringStorage::new(username.as_str());
         assert!(storage.is_supported());
         let app_name: &str = "termscp-test2";
         let secret: &str = "Th15-15/My-Супер-Секрет";

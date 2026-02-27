@@ -173,18 +173,16 @@ impl RemoteFsBuilder {
             credentials = credentials.workgroup(workgroup);
         }
 
-        match SmbFs::try_new(
+        SmbFs::try_new(
             credentials,
             SmbOptions::default()
                 .one_share_per_server(true)
                 .case_sensitive(false),
-        ) {
-            Ok(fs) => fs,
-            Err(e) => {
-                error!("Invalid params for protocol SMB: {e}");
-                panic!("Invalid params for protocol SMB: {e}")
-            }
-        }
+        )
+        .unwrap_or_else(|e| {
+            error!("Invalid params for protocol SMB: {e}");
+            panic!("Invalid params for protocol SMB: {e}")
+        })
     }
 
     #[cfg(smb_windows)]
@@ -236,12 +234,13 @@ impl RemoteFsBuilder {
             } else {
                 //* case 3: use system username; can't be None
                 debug!("no username was provided, using current username");
-                opts = opts.username(whoami::username());
+                if let Ok(username) = whoami::username() {
+                    opts = opts.username(username);
+                }
             }
-        } else {
-            //* case 3: use system username; can't be None
+        } else if let Ok(username) = whoami::username() {
             debug!("no username was provided, using current username");
-            opts = opts.username(whoami::username());
+            opts = opts.username(username);
         }
         // For SSH protocols, only set password if explicitly provided and non-empty.
         // This allows the SSH library to prioritize key-based and agent authentication.

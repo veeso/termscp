@@ -55,7 +55,7 @@ notify = "8"
 notify-rust = { version = "^4", default-features = false, features = ["d"] }
 nucleo = "0.5"
 open = "5"
-rand = "^0.9"
+rand = "0.10"
 regex = "^1"
 remotefs = "^0.3"
 remotefs-aws-s3 = "0.4"
@@ -73,21 +73,21 @@ self_update = { version = "^0.42", default-features = false, features = [
 serde = { version = "^1", features = ["derive"] }
 shellexpand = "3"
 simplelog = "^0.12"
-ssh2-config = "^0.6"
+ssh2-config = "^0.7"
 tempfile = "3"
 thiserror = "2"
 tokio = { version = "1", features = ["rt"] }
-toml = "^0.9"
+toml = "1"
 tui-realm-stdlib = "3"
 tuirealm = "3"
 tui-term = "0.2"
 unicode-width = "0.2"
 version-compare = "^0.2"
-whoami = "^1.6"
+whoami = "2"
 wildmatch = "2"
 
 [target."cfg(target_family = \"unix\")".dependencies]
-remotefs-ftp = { version = "^0.3", features = [
+remotefs-ftp = { version = "^0.4", features = [
   "native-tls-vendored",
   "native-tls",
 ] }
@@ -98,7 +98,7 @@ remotefs-ssh = { version = "^0.7", default-features = false, features = [
 uzers = "0.12"
 
 [target."cfg(target_family = \"windows\")".dependencies]
-remotefs-ftp = { version = "^0.3", features = ["native-tls"] }
+remotefs-ftp = { version = "^0.4", features = ["native-tls"] }
 remotefs-ssh = { version = "^0.7" }
 
 [dev-dependencies]
@@ -107,7 +107,7 @@ serial_test = "^3"
 
 [build-dependencies]
 cfg_aliases = "0.2"
-vergen-git2 = { version = "1", features = ["build", "cargo", "rustc", "si"] }
+vergen-git2 = { version = "9", features = ["build", "cargo", "rustc", "si"] }
 
 [features]
 default = ["smb", "keyring"]

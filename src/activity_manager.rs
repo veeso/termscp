@@ -187,14 +187,15 @@ impl ActivityManager {
                 // * if protocol is SCP or SFTP check whether a SSH key is registered for this remote, in case not ask password
                 let storage = SshKeyStorage::from(self.context.as_ref().unwrap().config());
                 let generic_params = params.generic_params().unwrap();
+                let username = generic_params
+                    .username
+                    .clone()
+                    .map(Ok)
+                    .unwrap_or_else(whoami::username)
+                    .map_err(|err| format!("Could not get current username: {err}"))?;
+
                 if storage
-                    .resolve(
-                        &generic_params.address,
-                        &generic_params
-                            .username
-                            .clone()
-                            .unwrap_or(whoami::username()),
-                    )
+                    .resolve(&generic_params.address, &username)
                     .is_none()
                 {
                     debug!(

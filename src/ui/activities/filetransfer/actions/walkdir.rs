@@ -1,6 +1,6 @@
 //! ## FileTransferActivity
 //!
-//! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
+//! `filetransfer_activity` is the module which implements the Filetransfer activity, which is the main activity afterall
 
 // locals
 use std::path::{Path, PathBuf};
@@ -15,34 +15,24 @@ pub enum WalkdirError {
 }
 
 impl FileTransferActivity {
-    pub(crate) fn action_walkdir_local(&mut self) -> Result<Vec<File>, WalkdirError> {
+    /// Walk the directory tree from the current working directory of the active pane.
+    pub(crate) fn action_walkdir(&mut self) -> Result<Vec<File>, WalkdirError> {
         let mut acc = Vec::with_capacity(32_768);
 
         let pwd = self
-            .host_bridge
+            .browser
+            .fs_pane_mut()
+            .fs
             .pwd()
             .map_err(|e| WalkdirError::Error(e.to_string()))?;
 
         self.walkdir(&mut acc, &pwd, |activity, path| {
             activity
-                .host_bridge
+                .browser
+                .fs_pane_mut()
+                .fs
                 .list_dir(path)
                 .map_err(|e| e.to_string())
-        })?;
-
-        Ok(acc)
-    }
-
-    pub(crate) fn action_walkdir_remote(&mut self) -> Result<Vec<File>, WalkdirError> {
-        let mut acc = Vec::with_capacity(32_768);
-
-        let pwd = self
-            .client
-            .pwd()
-            .map_err(|e| WalkdirError::Error(e.to_string()))?;
-
-        self.walkdir(&mut acc, &pwd, |activity, path| {
-            activity.client.list_dir(path).map_err(|e| e.to_string())
         })?;
 
         Ok(acc)

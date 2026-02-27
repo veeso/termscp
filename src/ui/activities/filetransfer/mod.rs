@@ -1,6 +1,6 @@
 //! ## FileTransferActivity
 //!
-//! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
+//! `filetransfer_activity` is the module which implements the Filetransfer activity, which is the main activity afterall
 
 // This module is split into files, cause it's just too big
 mod actions;
@@ -20,10 +20,10 @@ use std::time::Duration;
 // Includes
 use chrono::{DateTime, Local};
 use lib::browser;
-use lib::browser::Browser;
+use lib::browser::{Browser, FileExplorerTab};
+use lib::pane::Pane;
 use lib::transfer::{TransferOpts, TransferStates};
 use lib::walkdir::WalkdirStates;
-use remotefs::RemoteFs;
 use session::TransferPayload;
 use tempfile::TempDir;
 use tuirealm::{Application, EventListenerCfg, NoUserEvent};
@@ -34,7 +34,7 @@ use crate::explorer::{FileExplorer, FileSorting};
 use crate::filetransfer::{
     FileTransferParams, HostBridgeBuilder, HostBridgeParams, RemoteFsBuilder,
 };
-use crate::host::HostBridge;
+use crate::host::RemoteBridged;
 use crate::system::config_client::ConfigClient;
 use crate::system::watcher::FsWatcher;
 
@@ -237,10 +237,6 @@ pub struct FileTransferActivity {
     app: Application<Id, Msg, NoUserEvent>,
     /// Whether should redraw UI
     redraw: bool,
-    /// Host bridge
-    host_bridge: Box<dyn HostBridge>,
-    /// Remote host client
-    client: Box<dyn RemoteFs>,
     /// Browser
     browser: Browser,
     /// Current log lines
@@ -253,10 +249,6 @@ pub struct FileTransferActivity {
     cache: Option<TempDir>,
     /// Fs watcher
     fswatcher: Option<FsWatcher>,
-    /// host bridge connected
-    host_bridge_connected: bool,
-    /// remote connected once
-    remote_connected: bool,
 }
 
 impl FileTransferActivity {
@@ -272,6 +264,25 @@ impl FileTransferActivity {
         let host_bridge = HostBridgeBuilder::build(host_bridge_params, &config_client)?;
         let host_bridge_connected = host_bridge.is_localhost();
         let enable_fs_watcher = host_bridge.is_localhost();
+        // Build remote client, wrapped as HostBridge via RemoteBridged
+        let remote_client = RemoteFsBuilder::build(
+            remote_params.protocol,
+            remote_params.params.clone(),
+            &config_client,
+        )?;
+        let remote_fs: Box<dyn crate::host::HostBridge> =
+            Box::new(RemoteBridged::from(remote_client));
+        // Build panes
+        let local_pane = Pane::new(
+            Browser::build_local_explorer(&config_client),
+            host_bridge_connected,
+            host_bridge,
+        );
+        let remote_pane = Pane::new(
+            Browser::build_remote_explorer(&config_client),
+            false,
+            remote_fs,
+        );
         Ok(Self {
             exit_reason: None,
             context: None,
@@ -281,14 +292,8 @@ impl FileTransferActivity {
                     .crossterm_input_listener(ticks, CROSSTERM_MAX_POLL),
             ),
             redraw: true,
-            host_bridge,
-            client: RemoteFsBuilder::build(
-                remote_params.protocol,
-                remote_params.params.clone(),
-                &config_client,
-            )?,
-            browser: Browser::new(&config_client),
-            log_records: VecDeque::with_capacity(256), // 256 events is enough I guess
+            browser: Browser::new(local_pane, remote_pane),
+            log_records: VecDeque::with_capacity(256),
             walkdir: WalkdirStates::default(),
             transfer: TransferStates::default(),
             cache: TempDir::new().ok(),
@@ -297,9 +302,16 @@ impl FileTransferActivity {
             } else {
                 None
             },
-            host_bridge_connected,
-            remote_connected: false,
         })
+    }
+
+    /// Returns `true` when the active tab targets the local side
+    /// (either the main host-bridge pane or a find-result rooted there).
+    fn is_local_tab(&self) -> bool {
+        matches!(
+            self.browser.tab(),
+            FileExplorerTab::HostBridge | FileExplorerTab::FindHostBridge
+        )
     }
 
     fn host_bridge(&self) -> &FileExplorer {
@@ -433,7 +445,7 @@ impl Activity for FileTransferActivity {
             error!("Failed to enter raw mode: {}", err);
         }
         // Get files at current pwd
-        if self.host_bridge.is_localhost() {
+        if self.browser.local_pane().fs.is_localhost() {
             debug!("Reloading host bridge directory");
             self.reload_host_bridge_dir();
         }
@@ -460,9 +472,10 @@ impl Activity for FileTransferActivity {
             return;
         }
         // Check if connected to host bridge (popup must be None, otherwise would try reconnecting in loop in case of error)
-        if (!self.host_bridge.is_connected() || !self.host_bridge_connected)
+        if (!self.browser.local_pane_mut().fs.is_connected()
+            || !self.browser.local_pane().connected)
             && !self.app.mounted(&Id::FatalPopup)
-            && !self.host_bridge.is_localhost()
+            && !self.browser.local_pane().fs.is_localhost()
         {
             let host_bridge_params = self.context().host_bridge_params().unwrap();
             let ft_params = host_bridge_params.unwrap_protocol_params();
@@ -476,9 +489,10 @@ impl Activity for FileTransferActivity {
             self.redraw = true;
         }
         // Check if connected to remote (popup must be None, otherwise would try reconnecting in loop in case of error)
-        if (!self.client.is_connected() || !self.remote_connected)
+        if (!self.browser.remote_pane_mut().fs.is_connected()
+            || !self.browser.remote_pane().connected)
             && !self.app.mounted(&Id::FatalPopup)
-            && self.host_bridge.is_connected()
+            && self.browser.local_pane_mut().fs.is_connected()
         {
             let ftparams = self.context().remote_params().unwrap();
             // print params
@@ -522,14 +536,21 @@ impl Activity for FileTransferActivity {
         if let Err(err) = self.context_mut().terminal().clear_screen() {
             error!("Failed to clear screen: {}", err);
         }
-        // Disconnect client
-        if self.client.is_connected() {
-            let _ = self.client.disconnect();
+        // Disconnect remote
+        if self.browser.remote_pane_mut().fs.is_connected() {
+            let _ = self.browser.remote_pane_mut().fs.disconnect();
         }
-        // disconnect host bridge
-        if self.host_bridge.is_connected() {
-            let _ = self.host_bridge.disconnect();
+        // Disconnect host bridge
+        if self.browser.local_pane_mut().fs.is_connected() {
+            let _ = self.browser.local_pane_mut().fs.disconnect();
         }
         self.context.take()
+    }
+}
+
+/// Log a UI operation error instead of panicking.
+fn ui_result<T>(result: Result<T, impl std::fmt::Display>) {
+    if let Err(err) = result {
+        error!("UI operation failed: {err}");
     }
 }

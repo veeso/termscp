@@ -6,7 +6,7 @@ use tuirealm::props::{Alignment, AttrValue, Attribute, BorderSides, Borders, Col
 use tuirealm::ratatui::layout::{Constraint, Direction as LayoutDirection, Layout};
 use tuirealm::{Component, Event, MockComponent, NoUserEvent, Props, State, StateValue};
 
-use super::{Msg, TransferMsg, UiMsg};
+use crate::ui::activities::filetransfer::{Msg, TransferMsg, UiMsg};
 
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 pub enum Item {
