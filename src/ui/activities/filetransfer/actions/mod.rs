@@ -93,7 +93,7 @@ impl FileTransferActivity {
     }
 
     pub(crate) fn get_local_selected_file(&self) -> Option<File> {
-        self.get_selected_file(&Id::ExplorerHostBridge)
+        self.get_selected_file_by_id(&Id::ExplorerHostBridge)
     }
 
     /// Get remote file entry
@@ -102,7 +102,7 @@ impl FileTransferActivity {
     }
 
     pub(crate) fn get_remote_selected_file(&self) -> Option<File> {
-        self.get_selected_file(&Id::ExplorerRemote)
+        self.get_selected_file_by_id(&Id::ExplorerRemote)
     }
 
     /// Returns whether only one entry is selected on local host
@@ -121,7 +121,35 @@ impl FileTransferActivity {
     }
 
     pub(crate) fn get_found_selected_file(&self) -> Option<File> {
-        self.get_selected_file(&Id::ExplorerFind)
+        self.get_selected_file_by_id(&Id::ExplorerFind)
+    }
+
+    /// Get selected entries from whichever tab is currently active.
+    #[allow(dead_code)]
+    pub(crate) fn get_selected_entries(&mut self) -> SelectedFile {
+        let id = match self.browser.tab() {
+            FileExplorerTab::HostBridge => Id::ExplorerHostBridge,
+            FileExplorerTab::Remote => Id::ExplorerRemote,
+            FileExplorerTab::FindHostBridge | FileExplorerTab::FindRemote => Id::ExplorerFind,
+        };
+        self.get_selected_files(&id)
+    }
+
+    /// Get single selected file from whichever tab is currently active.
+    #[allow(dead_code)]
+    pub(crate) fn get_selected_file(&self) -> Option<File> {
+        let id = match self.browser.tab() {
+            FileExplorerTab::HostBridge => Id::ExplorerHostBridge,
+            FileExplorerTab::Remote => Id::ExplorerRemote,
+            FileExplorerTab::FindHostBridge | FileExplorerTab::FindRemote => Id::ExplorerFind,
+        };
+        self.get_selected_file_by_id(&id)
+    }
+
+    /// Returns whether only one entry is selected on the current tab.
+    #[allow(dead_code)]
+    pub(crate) fn is_selected_one(&mut self) -> bool {
+        matches!(self.get_selected_entries(), SelectedFile::One(_))
     }
 
     // -- private
@@ -186,7 +214,7 @@ impl FileTransferActivity {
         }
     }
 
-    fn get_selected_file(&self, id: &Id) -> Option<File> {
+    fn get_selected_file_by_id(&self, id: &Id) -> Option<File> {
         let browser = self.browser_by_id(id);
         // if no transfer queue, return selected files
         match self.get_selected_index(id) {
