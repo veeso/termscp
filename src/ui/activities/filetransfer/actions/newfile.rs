@@ -4,31 +4,38 @@
 
 // locals
 use std::fs::File as StdFile;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use remotefs::fs::Metadata;
 
 use super::{File, FileTransferActivity, LogLevel};
 
 impl FileTransferActivity {
-    pub(crate) fn action_local_newfile(&mut self, input: String) {
+    pub(crate) fn action_newfile(&mut self, input: String) {
         // Check if file exists
-        let mut file_exists: bool = false;
-        for file in self.host_bridge().iter_files_all() {
-            if input == file.name() {
-                file_exists = true;
-            }
-        }
-        if file_exists {
-            self.log_and_alert(LogLevel::Warn, format!("File \"{input}\" already exists",));
+        let explorer = if self.is_local_tab() {
+            self.host_bridge()
+        } else {
+            self.remote()
+        };
+        if explorer.iter_files_all().any(|file| input == file.name()) {
+            self.log_and_alert(LogLevel::Warn, format!("File \"{input}\" already exists"));
             return;
         }
 
         // Create file
         let file_path: PathBuf = PathBuf::from(input.as_str());
+        if self.is_local_tab() {
+            self.action_newfile_local(&file_path);
+        } else {
+            self.action_newfile_remote(&file_path);
+        }
+    }
+
+    fn action_newfile_local(&mut self, file_path: &Path) {
         let writer = match self
             .host_bridge
-            .create_file(file_path.as_path(), &Metadata::default())
+            .create_file(file_path, &Metadata::default())
         {
             Ok(f) => f,
             Err(err) => {
@@ -54,20 +61,7 @@ impl FileTransferActivity {
         );
     }
 
-    pub(crate) fn action_remote_newfile(&mut self, input: String) {
-        // Check if file exists
-        let mut file_exists: bool = false;
-        for file in self.remote().iter_files_all() {
-            if input == file.name() {
-                file_exists = true;
-            }
-        }
-        if file_exists {
-            self.log_and_alert(LogLevel::Warn, format!("File \"{input}\" already exists",));
-            return;
-        }
-        // Get path on remote
-        let file_path: PathBuf = PathBuf::from(input.as_str());
+    fn action_newfile_remote(&mut self, file_path: &Path) {
         // Create file (on local)
         match tempfile::NamedTempFile::new() {
             Err(err) => {
@@ -99,7 +93,7 @@ impl FileTransferActivity {
                     });
                     match self
                         .client
-                        .create_file(file_path.as_path(), &local_file.metadata, reader)
+                        .create_file(file_path, &local_file.metadata, reader)
                     {
                         Err(err) => self.log_and_alert(
                             LogLevel::Error,

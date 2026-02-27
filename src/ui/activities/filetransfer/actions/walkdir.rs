@@ -15,34 +15,28 @@ pub enum WalkdirError {
 }
 
 impl FileTransferActivity {
-    pub(crate) fn action_walkdir_local(&mut self) -> Result<Vec<File>, WalkdirError> {
+    pub(crate) fn action_walkdir(&mut self) -> Result<Vec<File>, WalkdirError> {
         let mut acc = Vec::with_capacity(32_768);
 
-        let pwd = self
-            .host_bridge
-            .pwd()
-            .map_err(|e| WalkdirError::Error(e.to_string()))?;
+        let pwd = if self.is_local_tab() {
+            self.host_bridge
+                .pwd()
+                .map_err(|e| WalkdirError::Error(e.to_string()))?
+        } else {
+            self.client
+                .pwd()
+                .map_err(|e| WalkdirError::Error(e.to_string()))?
+        };
 
         self.walkdir(&mut acc, &pwd, |activity, path| {
-            activity
-                .host_bridge
-                .list_dir(path)
-                .map_err(|e| e.to_string())
-        })?;
-
-        Ok(acc)
-    }
-
-    pub(crate) fn action_walkdir_remote(&mut self) -> Result<Vec<File>, WalkdirError> {
-        let mut acc = Vec::with_capacity(32_768);
-
-        let pwd = self
-            .client
-            .pwd()
-            .map_err(|e| WalkdirError::Error(e.to_string()))?;
-
-        self.walkdir(&mut acc, &pwd, |activity, path| {
-            activity.client.list_dir(path).map_err(|e| e.to_string())
+            if activity.is_local_tab() {
+                activity
+                    .host_bridge
+                    .list_dir(path)
+                    .map_err(|e| e.to_string())
+            } else {
+                activity.client.list_dir(path).map_err(|e| e.to_string())
+            }
         })?;
 
         Ok(acc)

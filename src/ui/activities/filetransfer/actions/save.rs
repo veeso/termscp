@@ -42,20 +42,20 @@ enum AllOpts {
 }
 
 impl FileTransferActivity {
-    pub(crate) fn action_local_saveas(&mut self, input: String) {
-        self.local_send_file(TransferOpts::default().save_as(Some(input)));
+    pub(crate) fn action_saveas(&mut self, input: String) {
+        if self.is_local_tab() {
+            self.local_send_file(TransferOpts::default().save_as(Some(input)));
+        } else {
+            self.remote_recv_file(TransferOpts::default().save_as(Some(input)));
+        }
     }
 
-    pub(crate) fn action_remote_saveas(&mut self, input: String) {
-        self.remote_recv_file(TransferOpts::default().save_as(Some(input)));
-    }
-
-    pub(crate) fn action_local_send(&mut self) {
-        self.local_send_file(TransferOpts::default());
-    }
-
-    pub(crate) fn action_remote_recv(&mut self) {
-        self.remote_recv_file(TransferOpts::default());
+    pub(crate) fn action_transfer_file(&mut self) {
+        if self.is_local_tab() {
+            self.local_send_file(TransferOpts::default());
+        } else {
+            self.remote_recv_file(TransferOpts::default());
+        }
     }
 
     fn local_send_file(&mut self, opts: TransferOpts) {

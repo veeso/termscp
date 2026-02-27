@@ -121,12 +121,7 @@ impl FileTransferActivity {
                 self.update_browser_file_list()
             }
             TransferMsg::ExecuteCmd(cmd) => {
-                // Exec command
-                match self.browser.tab() {
-                    FileExplorerTab::HostBridge => self.action_local_exec(cmd),
-                    FileExplorerTab::Remote => self.action_remote_exec(cmd),
-                    _ => error!("Found tab doesn't support EXEC"),
-                };
+                self.action_exec_cmd(cmd);
             }
             TransferMsg::GetFileSize => {
                 self.action_get_file_size();
@@ -160,16 +155,7 @@ impl FileTransferActivity {
                 // Mount wait
                 self.mount_walkdir_wait();
                 // Find
-                let res: Result<Vec<File>, WalkdirError> = match self.browser.tab() {
-                    FileExplorerTab::HostBridge => self.action_walkdir_local(),
-                    FileExplorerTab::Remote => self.action_walkdir_remote(),
-                    _ => {
-                        error!("Trying to search for files, while already in a find result");
-                        self.umount_wait();
-                        self.redraw = true;
-                        return None;
-                    }
-                };
+                let res: Result<Vec<File>, WalkdirError> = self.action_walkdir();
                 // Umount wait
                 self.umount_wait();
                 // Match result
@@ -221,26 +207,22 @@ impl FileTransferActivity {
                 self.update_browser_file_list()
             }
             TransferMsg::NewFile(name) => {
-                match self.browser.tab() {
-                    FileExplorerTab::HostBridge => self.action_local_newfile(name),
-                    FileExplorerTab::Remote => self.action_remote_newfile(name),
-                    _ => {}
-                }
+                self.action_newfile(name);
                 self.umount_newfile();
                 // Reload files
                 self.update_browser_file_list()
             }
             TransferMsg::OpenFile => match self.browser.tab() {
-                FileExplorerTab::HostBridge => self.action_open_local(),
-                FileExplorerTab::Remote => self.action_open_remote(),
+                FileExplorerTab::HostBridge | FileExplorerTab::Remote => self.action_open(),
                 FileExplorerTab::FindHostBridge | FileExplorerTab::FindRemote => {
                     self.action_find_open()
                 }
             },
             TransferMsg::OpenFileWith(prog) => {
                 match self.browser.tab() {
-                    FileExplorerTab::HostBridge => self.action_local_open_with(&prog),
-                    FileExplorerTab::Remote => self.action_remote_open_with(&prog),
+                    FileExplorerTab::HostBridge | FileExplorerTab::Remote => {
+                        self.action_open_with(&prog)
+                    }
                     FileExplorerTab::FindHostBridge | FileExplorerTab::FindRemote => {
                         self.action_find_open_with(&prog)
                     }
@@ -276,10 +258,10 @@ impl FileTransferActivity {
             TransferMsg::SaveFileAs(dest) => {
                 self.umount_saveas();
                 match self.browser.tab() {
-                    FileExplorerTab::HostBridge => self.action_local_saveas(dest),
-                    FileExplorerTab::Remote => self.action_remote_saveas(dest),
+                    FileExplorerTab::HostBridge | FileExplorerTab::Remote => {
+                        self.action_saveas(dest)
+                    }
                     FileExplorerTab::FindHostBridge | FileExplorerTab::FindRemote => {
-                        // Get entry
                         self.action_find_transfer(TransferOpts::default().save_as(Some(dest)));
                     }
                 }
@@ -292,8 +274,9 @@ impl FileTransferActivity {
             TransferMsg::ToggleWatchFor(index) => self.action_toggle_watch_for(index),
             TransferMsg::TransferFile => {
                 match self.browser.tab() {
-                    FileExplorerTab::HostBridge => self.action_local_send(),
-                    FileExplorerTab::Remote => self.action_remote_recv(),
+                    FileExplorerTab::HostBridge | FileExplorerTab::Remote => {
+                        self.action_transfer_file()
+                    }
                     FileExplorerTab::FindHostBridge | FileExplorerTab::FindRemote => {
                         self.action_find_transfer(TransferOpts::default())
                     }

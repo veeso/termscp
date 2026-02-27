@@ -37,12 +37,9 @@ impl FromStr for Command {
 }
 
 impl FileTransferActivity {
-    pub(crate) fn action_local_exec(&mut self, input: String) {
-        self.action_exec(false, input);
-    }
-
-    pub(crate) fn action_remote_exec(&mut self, input: String) {
-        self.action_exec(true, input);
+    pub(crate) fn action_exec_cmd(&mut self, input: String) {
+        let remote = !self.is_local_tab();
+        self.action_exec(remote, input);
     }
 
     fn action_exec(&mut self, remote: bool, cmd: String) {
