@@ -4640,7 +4640,6 @@ dependencies = [
  "hostname",
  "keyring",
  "lazy-regex",
- "lazy_static",
  "log",
  "magic-crypt",
  "notify",
