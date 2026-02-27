@@ -10,48 +10,39 @@ use remotefs::RemoteErrorType;
 use super::{File, FileTransferActivity, LogLevel, SelectedFile};
 
 impl FileTransferActivity {
-    pub(crate) fn action_local_rename(&mut self, input: String) {
-        match self.get_local_selected_entries() {
+    /// Rename / move the currently selected entries.
+    /// Branches on the active tab (local vs remote).
+    pub(crate) fn action_rename(&mut self, input: String) {
+        match self.get_selected_entries() {
             SelectedFile::One(entry) => {
-                let dest_path: PathBuf = PathBuf::from(input);
-                self.local_rename_file(&entry, dest_path.as_path());
+                let dest_path = PathBuf::from(input);
+                self.rename_file(&entry, dest_path.as_path());
             }
             SelectedFile::Many(entries) => {
-                // Try to copy each file to Input/{FILE_NAME}
-                // Iter files
                 for (entry, mut dest_path) in entries.into_iter() {
                     dest_path.push(entry.name());
-                    self.local_rename_file(&entry, dest_path.as_path());
+                    self.rename_file(&entry, dest_path.as_path());
                 }
 
-                // clear selection
-                self.host_bridge_mut().clear_queue();
-                self.reload_host_bridge_filelist();
+                // clear selection and reload
+                if self.is_local_tab() {
+                    self.host_bridge_mut().clear_queue();
+                    self.reload_host_bridge_filelist();
+                } else {
+                    self.remote_mut().clear_queue();
+                    self.reload_remote_filelist();
+                }
             }
             SelectedFile::None => {}
         }
     }
 
-    pub(crate) fn action_remote_rename(&mut self, input: String) {
-        match self.get_remote_selected_entries() {
-            SelectedFile::One(entry) => {
-                let dest_path: PathBuf = PathBuf::from(input);
-                self.remote_rename_file(&entry, dest_path.as_path());
-            }
-            SelectedFile::Many(entries) => {
-                // Try to copy each file to Input/{FILE_NAME}
-                // Iter files
-                for (entry, mut dest_path) in entries.into_iter() {
-                    dest_path.push(entry.name());
-                    self.remote_rename_file(&entry, dest_path.as_path());
-                }
-
-                // clear selection
-                self.remote_mut().clear_queue();
-                // reload remote
-                self.reload_remote_filelist();
-            }
-            SelectedFile::None => {}
+    /// Rename a single file, branching on the current tab.
+    fn rename_file(&mut self, entry: &File, dest: &Path) {
+        if self.is_local_tab() {
+            self.local_rename_file(entry, dest);
+        } else {
+            self.remote_rename_file(entry, dest);
         }
     }
 
@@ -79,6 +70,9 @@ impl FileTransferActivity {
         }
     }
 
+    /// Rename / move a file on the remote host.
+    /// Falls back to `tricky_move` when the server reports `UnsupportedFeature`.
+    /// Also used by fswatcher for syncing renames.
     pub(crate) fn remote_rename_file(&mut self, entry: &File, dest: &Path) {
         match self.client.as_mut().mov(entry.path(), dest) {
             Ok(_) => {

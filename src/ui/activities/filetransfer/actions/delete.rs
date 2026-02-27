@@ -8,72 +8,41 @@ use remotefs::File;
 use super::{FileTransferActivity, LogLevel, SelectedFile};
 
 impl FileTransferActivity {
-    pub(crate) fn action_local_delete(&mut self) {
-        match self.get_local_selected_entries() {
+    /// Delete the currently selected file(s) using the active tab to decide
+    /// whether to operate on the local host-bridge or the remote client.
+    pub(crate) fn action_delete(&mut self) {
+        match self.get_selected_entries() {
             SelectedFile::One(entry) => {
-                // Delete file
-                self.local_remove_file(&entry);
+                self.remove_file(&entry);
             }
             SelectedFile::Many(entries) => {
-                // Iter files
                 for (entry, _) in entries.iter() {
-                    // Delete file
-                    self.local_remove_file(entry);
+                    self.remove_file(entry);
                 }
 
-                // clear selection
-                self.host_bridge_mut().clear_queue();
-                self.reload_host_bridge_filelist();
+                // clear selection and reload
+                if self.is_local_tab() {
+                    self.host_bridge_mut().clear_queue();
+                    self.reload_host_bridge_filelist();
+                } else {
+                    self.remote_mut().clear_queue();
+                    self.reload_remote_filelist();
+                }
             }
             SelectedFile::None => {}
         }
     }
 
-    pub(crate) fn action_remote_delete(&mut self) {
-        match self.get_remote_selected_entries() {
-            SelectedFile::One(entry) => {
-                // Delete file
-                self.remote_remove_file(&entry);
-            }
-            SelectedFile::Many(entries) => {
-                // Iter files
-                for (entry, _) in entries.iter() {
-                    // Delete file
-                    self.remote_remove_file(entry);
-                }
-
-                // clear selection
-                self.remote_mut().clear_queue();
-                self.reload_remote_filelist();
-            }
-            SelectedFile::None => {}
-        }
-    }
-
-    pub(crate) fn local_remove_file(&mut self, entry: &File) {
-        match self.host_bridge.remove(entry) {
-            Ok(_) => {
-                // Log
-                self.log(
-                    LogLevel::Info,
-                    format!("Removed file \"{}\"", entry.path().display()),
-                );
-            }
-            Err(err) => {
-                self.log_and_alert(
-                    LogLevel::Error,
-                    format!(
-                        "Could not delete file \"{}\": {}",
-                        entry.path().display(),
-                        err
-                    ),
-                );
-            }
-        }
-    }
-
-    pub(crate) fn remote_remove_file(&mut self, entry: &File) {
-        match self.client.remove_dir_all(entry.path()) {
+    /// Remove a single file or directory, branching on the current tab.
+    pub(crate) fn remove_file(&mut self, entry: &File) {
+        let result: Result<(), String> = if self.is_local_tab() {
+            self.host_bridge.remove(entry).map_err(|e| e.to_string())
+        } else {
+            self.client
+                .remove_dir_all(entry.path())
+                .map_err(|e| e.to_string())
+        };
+        match result {
             Ok(_) => {
                 self.log(
                     LogLevel::Info,

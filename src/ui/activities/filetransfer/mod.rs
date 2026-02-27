@@ -20,7 +20,7 @@ use std::time::Duration;
 // Includes
 use chrono::{DateTime, Local};
 use lib::browser;
-use lib::browser::Browser;
+use lib::browser::{Browser, FileExplorerTab};
 use lib::pane::Pane;
 use lib::transfer::{TransferOpts, TransferStates};
 use lib::walkdir::WalkdirStates;
@@ -301,6 +301,15 @@ impl FileTransferActivity {
                 None
             },
         })
+    }
+
+    /// Returns `true` when the active tab targets the local side
+    /// (either the main host-bridge pane or a find-result rooted there).
+    fn is_local_tab(&self) -> bool {
+        matches!(
+            self.browser.tab(),
+            FileExplorerTab::HostBridge | FileExplorerTab::FindHostBridge
+        )
     }
 
     fn host_bridge(&self) -> &FileExplorer {

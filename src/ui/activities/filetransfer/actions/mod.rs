@@ -105,16 +105,6 @@ impl FileTransferActivity {
         self.get_selected_file_by_id(&Id::ExplorerRemote)
     }
 
-    /// Returns whether only one entry is selected on local host
-    pub(crate) fn is_local_selected_one(&mut self) -> bool {
-        matches!(self.get_local_selected_entries(), SelectedFile::One(_))
-    }
-
-    /// Returns whether only one entry is selected on remote host
-    pub(crate) fn is_remote_selected_one(&mut self) -> bool {
-        matches!(self.get_remote_selected_entries(), SelectedFile::One(_))
-    }
-
     /// Get remote file entry
     pub(crate) fn get_found_selected_entries(&mut self) -> SelectedFile {
         self.get_selected_files(&Id::ExplorerFind)
@@ -125,7 +115,6 @@ impl FileTransferActivity {
     }
 
     /// Get selected entries from whichever tab is currently active.
-    #[allow(dead_code)]
     pub(crate) fn get_selected_entries(&mut self) -> SelectedFile {
         let id = match self.browser.tab() {
             FileExplorerTab::HostBridge => Id::ExplorerHostBridge,
@@ -136,7 +125,6 @@ impl FileTransferActivity {
     }
 
     /// Get single selected file from whichever tab is currently active.
-    #[allow(dead_code)]
     pub(crate) fn get_selected_file(&self) -> Option<File> {
         let id = match self.browser.tab() {
             FileExplorerTab::HostBridge => Id::ExplorerHostBridge,
@@ -147,7 +135,6 @@ impl FileTransferActivity {
     }
 
     /// Returns whether only one entry is selected on the current tab.
-    #[allow(dead_code)]
     pub(crate) fn is_selected_one(&mut self) -> bool {
         matches!(self.get_selected_entries(), SelectedFile::One(_))
     }

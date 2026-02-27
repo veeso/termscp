@@ -159,14 +159,11 @@ impl FileTransferActivity {
     pub(crate) fn action_find_delete(&mut self) {
         match self.get_found_selected_entries() {
             SelectedFile::One(entry) => {
-                // Delete file
-                self.remove_found_file(&entry);
+                self.remove_file(&entry);
             }
             SelectedFile::Many(entries) => {
-                // Iter files
                 for (entry, _) in entries.iter() {
-                    // Delete file
-                    self.remove_found_file(entry);
+                    self.remove_file(entry);
                 }
 
                 // clear selection
@@ -176,17 +173,6 @@ impl FileTransferActivity {
                 }
             }
             SelectedFile::None => {}
-        }
-    }
-
-    fn remove_found_file(&mut self, entry: &File) {
-        match self.browser.tab() {
-            FileExplorerTab::FindHostBridge | FileExplorerTab::HostBridge => {
-                self.local_remove_file(entry);
-            }
-            FileExplorerTab::FindRemote | FileExplorerTab::Remote => {
-                self.remote_remove_file(entry);
-            }
         }
     }
 

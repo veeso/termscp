@@ -10,47 +10,38 @@ use remotefs::{File, RemoteErrorType};
 use super::{FileTransferActivity, LogLevel, SelectedFile, TransferPayload};
 
 impl FileTransferActivity {
-    /// Copy file on local
-    pub(crate) fn action_local_copy(&mut self, input: String) {
-        match self.get_local_selected_entries() {
+    /// Copy the currently selected file(s).
+    /// Branches on the active tab (local vs remote).
+    pub(crate) fn action_copy(&mut self, input: String) {
+        match self.get_selected_entries() {
             SelectedFile::One(entry) => {
-                let dest_path: PathBuf = PathBuf::from(input);
-                self.local_copy_file(&entry, dest_path.as_path());
+                let dest_path = PathBuf::from(input);
+                self.copy_file(entry, dest_path.as_path());
             }
             SelectedFile::Many(entries) => {
-                // Iter files
                 for (entry, mut dest_path) in entries.into_iter() {
                     dest_path.push(entry.name());
-                    self.local_copy_file(&entry, dest_path.as_path());
+                    self.copy_file(entry, dest_path.as_path());
                 }
 
-                // clear selection
-                self.host_bridge_mut().clear_queue();
-                self.reload_host_bridge_filelist();
+                // clear selection and reload
+                if self.is_local_tab() {
+                    self.host_bridge_mut().clear_queue();
+                    self.reload_host_bridge_filelist();
+                } else {
+                    self.remote_mut().clear_queue();
+                    self.reload_remote_filelist();
+                }
             }
             SelectedFile::None => {}
         }
     }
 
-    /// Copy file on remote
-    pub(crate) fn action_remote_copy(&mut self, input: String) {
-        match self.get_remote_selected_entries() {
-            SelectedFile::One(entry) => {
-                let dest_path: PathBuf = PathBuf::from(input);
-                self.remote_copy_file(entry, dest_path.as_path());
-            }
-            SelectedFile::Many(entries) => {
-                // Iter files
-                for (entry, mut dest_path) in entries.into_iter() {
-                    dest_path.push(entry.name());
-                    self.remote_copy_file(entry, dest_path.as_path());
-                }
-
-                // clear selection
-                self.remote_mut().clear_queue();
-                self.reload_remote_filelist();
-            }
-            SelectedFile::None => {}
+    fn copy_file(&mut self, entry: File, dest: &Path) {
+        if self.is_local_tab() {
+            self.local_copy_file(&entry, dest);
+        } else {
+            self.remote_copy_file(entry, dest);
         }
     }
 

@@ -41,13 +41,9 @@ impl FileTransferActivity {
             TransferMsg::Chmod(mode) => {
                 self.umount_chmod();
                 self.mount_blocking_wait("Applying new file mode…");
-                match self.browser.tab() {
-                    FileExplorerTab::HostBridge | FileExplorerTab::FindHostBridge
-                        if self.host_bridge.is_localhost() && cfg!(windows) => {}
-                    FileExplorerTab::HostBridge => self.action_local_chmod(mode),
-                    FileExplorerTab::FindHostBridge => self.action_find_local_chmod(mode),
-                    FileExplorerTab::Remote => self.action_remote_chmod(mode),
-                    FileExplorerTab::FindRemote => self.action_find_remote_chmod(mode),
+                // Skip chmod on Windows localhost
+                if !(self.is_local_tab() && self.host_bridge.is_localhost() && cfg!(windows)) {
+                    self.action_chmod(mode);
                 }
                 self.umount_wait();
                 self.update_browser_file_list();
@@ -55,11 +51,7 @@ impl FileTransferActivity {
             TransferMsg::CopyFileTo(dest) => {
                 self.umount_copy();
                 self.mount_blocking_wait("Copying file(s)…");
-                match self.browser.tab() {
-                    FileExplorerTab::HostBridge => self.action_local_copy(dest),
-                    FileExplorerTab::Remote => self.action_remote_copy(dest),
-                    _ => error!("Found tab doesn't support COPY"),
-                }
+                self.action_copy(dest);
                 self.umount_wait();
                 // Reload files
                 self.update_browser_file_list()
@@ -67,11 +59,7 @@ impl FileTransferActivity {
             TransferMsg::CreateSymlink(name) => {
                 self.umount_symlink();
                 self.mount_blocking_wait("Creating symlink…");
-                match self.browser.tab() {
-                    FileExplorerTab::HostBridge => self.action_local_symlink(name),
-                    FileExplorerTab::Remote => self.action_remote_symlink(name),
-                    _ => error!("Found tab doesn't support SYMLINK"),
-                }
+                self.action_symlink(name);
                 self.umount_wait();
                 // Reload files
                 self.update_browser_file_list()
@@ -80,15 +68,14 @@ impl FileTransferActivity {
                 self.umount_radio_delete();
                 self.mount_blocking_wait("Removing file(s)…");
                 match self.browser.tab() {
-                    FileExplorerTab::HostBridge => self.action_local_delete(),
-                    FileExplorerTab::Remote => self.action_remote_delete(),
+                    FileExplorerTab::HostBridge | FileExplorerTab::Remote => {
+                        self.action_delete();
+                    }
                     FileExplorerTab::FindHostBridge | FileExplorerTab::FindRemote => {
-                        // Get entry
                         self.action_find_delete();
-                        // Delete entries
+                        // Remove deleted entries from the find-result list
                         match self.app.state(&Id::ExplorerFind) {
                             Ok(State::One(StateValue::Usize(idx))) => {
-                                // Reload entries
                                 self.found_mut().unwrap().del_entry(idx);
                             }
                             Ok(State::Vec(values)) => {
@@ -107,12 +94,7 @@ impl FileTransferActivity {
                 }
                 self.umount_wait();
                 // Reload files
-                match self.browser.tab() {
-                    FileExplorerTab::HostBridge => self.update_host_bridge_filelist(),
-                    FileExplorerTab::Remote => self.update_remote_filelist(),
-                    FileExplorerTab::FindHostBridge => self.update_host_bridge_filelist(),
-                    FileExplorerTab::FindRemote => self.update_remote_filelist(),
-                }
+                self.update_browser_file_list();
             }
             TransferMsg::EnterDirectory if self.browser.tab() == FileExplorerTab::HostBridge => {
                 if let Some(entry) = self.get_local_selected_file() {
@@ -272,11 +254,7 @@ impl FileTransferActivity {
                 }
             }
             TransferMsg::Mkdir(dir) => {
-                match self.browser.tab() {
-                    FileExplorerTab::HostBridge => self.action_local_mkdir(dir),
-                    FileExplorerTab::Remote => self.action_remote_mkdir(dir),
-                    _ => {}
-                }
+                self.action_mkdir(dir);
                 self.umount_mkdir();
                 // Reload files
                 self.update_browser_file_list()
@@ -320,11 +298,7 @@ impl FileTransferActivity {
             TransferMsg::RenameFile(dest) => {
                 self.umount_rename();
                 self.mount_blocking_wait("Moving file(s)…");
-                match self.browser.tab() {
-                    FileExplorerTab::HostBridge => self.action_local_rename(dest),
-                    FileExplorerTab::Remote => self.action_remote_rename(dest),
-                    _ => {}
-                }
+                self.action_rename(dest);
                 self.umount_wait();
                 // Reload files
                 self.update_browser_file_list()
@@ -513,18 +487,16 @@ impl FileTransferActivity {
                 self.umount_quit();
             }
             UiMsg::ShowChmodPopup => {
-                let selected_file = match self.browser.tab() {
-                    #[cfg(posix)]
-                    FileExplorerTab::HostBridge => self.get_local_selected_entries(),
-                    #[cfg(posix)]
-                    FileExplorerTab::FindHostBridge => self.get_found_selected_entries(),
-                    FileExplorerTab::Remote => self.get_remote_selected_entries(),
-                    FileExplorerTab::FindRemote => self.get_found_selected_entries(),
-                    #[cfg(win)]
-                    FileExplorerTab::HostBridge | FileExplorerTab::FindHostBridge => {
-                        SelectedFile::None
-                    }
+                // On Windows localhost, chmod is not supported
+                #[cfg(win)]
+                let selected_file = if self.is_local_tab() {
+                    SelectedFile::None
+                } else {
+                    self.get_selected_entries()
                 };
+                #[cfg(posix)]
+                let selected_file = self.get_selected_entries();
+
                 if let Some(mode) = selected_file.unix_pex() {
                     self.mount_chmod(
                         mode,
@@ -547,18 +519,8 @@ impl FileTransferActivity {
                 self.browser.toggle_terminal(true);
                 self.mount_exec()
             }
-            UiMsg::ShowFileInfoPopup if self.browser.tab() == FileExplorerTab::HostBridge => {
-                if let SelectedFile::One(file) = self.get_local_selected_entries() {
-                    self.mount_file_info(&file);
-                }
-            }
-            UiMsg::ShowFileInfoPopup if self.browser.tab() == FileExplorerTab::Remote => {
-                if let SelectedFile::One(file) = self.get_remote_selected_entries() {
-                    self.mount_file_info(&file);
-                }
-            }
             UiMsg::ShowFileInfoPopup => {
-                if let SelectedFile::One(file) = self.get_found_selected_entries() {
+                if let SelectedFile::One(file) = self.get_selected_entries() {
                     self.mount_file_info(&file);
                 }
             }
@@ -573,12 +535,12 @@ impl FileTransferActivity {
             UiMsg::ShowRenamePopup => self.mount_rename(),
             UiMsg::ShowSaveAsPopup => self.mount_saveas(),
             UiMsg::ShowSymlinkPopup => {
-                if match self.browser.tab() {
-                    FileExplorerTab::HostBridge => self.is_local_selected_one(),
-                    FileExplorerTab::Remote => self.is_remote_selected_one(),
+                // Symlink is not available from find-result tabs
+                let can_symlink = match self.browser.tab() {
+                    FileExplorerTab::HostBridge | FileExplorerTab::Remote => self.is_selected_one(),
                     FileExplorerTab::FindHostBridge | FileExplorerTab::FindRemote => false,
-                } {
-                    // Only if only one entry is selected
+                };
+                if can_symlink {
                     self.mount_symlink();
                 } else {
                     self.mount_error(
