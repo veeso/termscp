@@ -21,6 +21,7 @@ use std::time::Duration;
 use chrono::{DateTime, Local};
 use lib::browser;
 use lib::browser::Browser;
+use lib::pane::Pane;
 use lib::transfer::{TransferOpts, TransferStates};
 use lib::walkdir::WalkdirStates;
 use remotefs::RemoteFs;
@@ -253,10 +254,6 @@ pub struct FileTransferActivity {
     cache: Option<TempDir>,
     /// Fs watcher
     fswatcher: Option<FsWatcher>,
-    /// host bridge connected
-    host_bridge_connected: bool,
-    /// remote connected once
-    remote_connected: bool,
 }
 
 impl FileTransferActivity {
@@ -272,6 +269,12 @@ impl FileTransferActivity {
         let host_bridge = HostBridgeBuilder::build(host_bridge_params, &config_client)?;
         let host_bridge_connected = host_bridge.is_localhost();
         let enable_fs_watcher = host_bridge.is_localhost();
+        // Build panes
+        let local_pane = Pane::new(
+            Browser::build_local_explorer(&config_client),
+            host_bridge_connected,
+        );
+        let remote_pane = Pane::new(Browser::build_remote_explorer(&config_client), false);
         Ok(Self {
             exit_reason: None,
             context: None,
@@ -287,7 +290,7 @@ impl FileTransferActivity {
                 remote_params.params.clone(),
                 &config_client,
             )?,
-            browser: Browser::new(&config_client),
+            browser: Browser::new(local_pane, remote_pane),
             log_records: VecDeque::with_capacity(256), // 256 events is enough I guess
             walkdir: WalkdirStates::default(),
             transfer: TransferStates::default(),
@@ -297,8 +300,6 @@ impl FileTransferActivity {
             } else {
                 None
             },
-            host_bridge_connected,
-            remote_connected: false,
         })
     }
 
@@ -460,7 +461,7 @@ impl Activity for FileTransferActivity {
             return;
         }
         // Check if connected to host bridge (popup must be None, otherwise would try reconnecting in loop in case of error)
-        if (!self.host_bridge.is_connected() || !self.host_bridge_connected)
+        if (!self.host_bridge.is_connected() || !self.browser.local_pane().connected)
             && !self.app.mounted(&Id::FatalPopup)
             && !self.host_bridge.is_localhost()
         {
@@ -476,7 +477,7 @@ impl Activity for FileTransferActivity {
             self.redraw = true;
         }
         // Check if connected to remote (popup must be None, otherwise would try reconnecting in loop in case of error)
-        if (!self.client.is_connected() || !self.remote_connected)
+        if (!self.client.is_connected() || !self.browser.remote_pane().connected)
             && !self.app.mounted(&Id::FatalPopup)
             && self.host_bridge.is_connected()
         {

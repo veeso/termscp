@@ -52,8 +52,8 @@ impl FileTransferActivity {
         // Connect to host bridge
         match self.host_bridge.connect() {
             Ok(()) => {
-                self.host_bridge_connected = self.host_bridge.is_connected();
-                if !self.host_bridge_connected {
+                self.browser.local_pane_mut().connected = self.host_bridge.is_connected();
+                if !self.browser.local_pane().connected {
                     return;
                 }
 
@@ -95,8 +95,8 @@ impl FileTransferActivity {
         // Connect to remote
         match self.client.connect() {
             Ok(Welcome { banner, .. }) => {
-                self.remote_connected = self.client.is_connected();
-                if !self.remote_connected {
+                self.browser.remote_pane_mut().connected = self.client.is_connected();
+                if !self.browser.remote_pane().connected {
                     return;
                 }
 
@@ -162,7 +162,7 @@ impl FileTransferActivity {
 
     /// Reload remote directory entries and update browser
     pub(super) fn reload_remote_dir(&mut self) {
-        if !self.remote_connected {
+        if !self.browser.remote_pane().connected {
             return;
         }
         // Get current entries
@@ -189,7 +189,7 @@ impl FileTransferActivity {
 
     /// Reload host_bridge directory entries and update browser
     pub(super) fn reload_host_bridge_dir(&mut self) {
-        if !self.host_bridge_connected {
+        if !self.browser.local_pane().connected {
             return;
         }
 
