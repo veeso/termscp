@@ -74,16 +74,16 @@ impl SetupActivity {
 
     /// Mount delete ssh key component
     pub(crate) fn mount_del_ssh_key(&mut self) {
-        assert!(
-            self.app
-                .remount(
-                    Id::Ssh(IdSsh::DelSshKeyPopup),
-                    Box::<components::DelSshKeyPopup>::default(),
-                    vec![]
-                )
-                .is_ok()
-        );
-        assert!(self.app.active(&Id::Ssh(IdSsh::DelSshKeyPopup)).is_ok());
+        if let Err(err) = self.app.remount(
+            Id::Ssh(IdSsh::DelSshKeyPopup),
+            Box::<components::DelSshKeyPopup>::default(),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
+        if let Err(err) = self.app.active(&Id::Ssh(IdSsh::DelSshKeyPopup)) {
+            error!("Failed to activate component: {err}");
+        }
     }
 
     /// Umount delete ssh key
@@ -93,25 +93,23 @@ impl SetupActivity {
 
     /// Mount new ssh key prompt
     pub(crate) fn mount_new_ssh_key(&mut self) {
-        assert!(
-            self.app
-                .remount(
-                    Id::Ssh(IdSsh::SshHost),
-                    Box::<components::SshHost>::default(),
-                    vec![]
-                )
-                .is_ok()
-        );
-        assert!(
-            self.app
-                .remount(
-                    Id::Ssh(IdSsh::SshUsername),
-                    Box::<components::SshUsername>::default(),
-                    vec![]
-                )
-                .is_ok()
-        );
-        assert!(self.app.active(&Id::Ssh(IdSsh::SshHost)).is_ok());
+        if let Err(err) = self.app.remount(
+            Id::Ssh(IdSsh::SshHost),
+            Box::<components::SshHost>::default(),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
+        if let Err(err) = self.app.remount(
+            Id::Ssh(IdSsh::SshUsername),
+            Box::<components::SshUsername>::default(),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
+        if let Err(err) = self.app.active(&Id::Ssh(IdSsh::SshHost)) {
+            error!("Failed to activate component: {err}");
+        }
     }
 
     /// Umount new ssh key prompt
@@ -130,15 +128,15 @@ impl SetupActivity {
                 format!("{username} at {addr}")
             })
             .collect();
-        assert!(
-            self.app
-                .remount(
-                    Id::Ssh(IdSsh::SshKeys),
-                    Box::new(components::SshKeys::new(&keys)),
-                    vec![]
-                )
-                .is_ok()
-        );
-        assert!(self.app.active(&Id::Ssh(IdSsh::SshKeys)).is_ok());
+        if let Err(err) = self.app.remount(
+            Id::Ssh(IdSsh::SshKeys),
+            Box::new(components::SshKeys::new(&keys)),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
+        if let Err(err) = self.app.active(&Id::Ssh(IdSsh::SshKeys)) {
+            error!("Failed to activate component: {err}");
+        }
     }
 }

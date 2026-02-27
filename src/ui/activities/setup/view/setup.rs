@@ -32,7 +32,9 @@ impl SetupActivity {
         // Load values
         self.load_input_values();
         // Active text editor
-        assert!(self.app.active(&Id::Config(IdConfig::TextEditor)).is_ok());
+        if let Err(err) = self.app.active(&Id::Config(IdConfig::TextEditor)) {
+            error!("Failed to activate component: {err}");
+        }
     }
 
     pub(super) fn view_setup(&mut self) {
@@ -145,133 +147,111 @@ impl SetupActivity {
         // Text editor
         let text_editor: String =
             String::from(self.config().get_text_editor().as_path().to_string_lossy());
-        assert!(
-            self.app
-                .remount(
-                    Id::Config(IdConfig::TextEditor),
-                    Box::new(components::TextEditor::new(text_editor.as_str())),
-                    vec![]
-                )
-                .is_ok()
-        );
+        if let Err(err) = self.app.remount(
+            Id::Config(IdConfig::TextEditor),
+            Box::new(components::TextEditor::new(text_editor.as_str())),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
         // Protocol
-        assert!(
-            self.app
-                .remount(
-                    Id::Config(IdConfig::DefaultProtocol),
-                    Box::new(components::DefaultProtocol::new(
-                        self.config().get_default_protocol()
-                    )),
-                    vec![]
-                )
-                .is_ok()
-        );
+        if let Err(err) = self.app.remount(
+            Id::Config(IdConfig::DefaultProtocol),
+            Box::new(components::DefaultProtocol::new(
+                self.config().get_default_protocol(),
+            )),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
         // Hidden files
-        assert!(
-            self.app
-                .remount(
-                    Id::Config(IdConfig::HiddenFiles),
-                    Box::new(components::HiddenFiles::new(
-                        self.config().get_show_hidden_files()
-                    )),
-                    vec![]
-                )
-                .is_ok()
-        );
+        if let Err(err) = self.app.remount(
+            Id::Config(IdConfig::HiddenFiles),
+            Box::new(components::HiddenFiles::new(
+                self.config().get_show_hidden_files(),
+            )),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
         // Updates
-        assert!(
-            self.app
-                .remount(
-                    Id::Config(IdConfig::CheckUpdates),
-                    Box::new(components::CheckUpdates::new(
-                        self.config().get_check_for_updates()
-                    )),
-                    vec![]
-                )
-                .is_ok()
-        );
+        if let Err(err) = self.app.remount(
+            Id::Config(IdConfig::CheckUpdates),
+            Box::new(components::CheckUpdates::new(
+                self.config().get_check_for_updates(),
+            )),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
         // File replace
-        assert!(
-            self.app
-                .remount(
-                    Id::Config(IdConfig::PromptOnFileReplace),
-                    Box::new(components::PromptOnFileReplace::new(
-                        self.config().get_prompt_on_file_replace()
-                    )),
-                    vec![]
-                )
-                .is_ok()
-        );
+        if let Err(err) = self.app.remount(
+            Id::Config(IdConfig::PromptOnFileReplace),
+            Box::new(components::PromptOnFileReplace::new(
+                self.config().get_prompt_on_file_replace(),
+            )),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
         // Group dirs
-        assert!(
-            self.app
-                .remount(
-                    Id::Config(IdConfig::GroupDirs),
-                    Box::new(components::GroupDirs::new(self.config().get_group_dirs())),
-                    vec![]
-                )
-                .is_ok()
-        );
+        if let Err(err) = self.app.remount(
+            Id::Config(IdConfig::GroupDirs),
+            Box::new(components::GroupDirs::new(self.config().get_group_dirs())),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
         // Local File Fmt
-        assert!(
-            self.app
-                .remount(
-                    Id::Config(IdConfig::LocalFileFmt),
-                    Box::new(components::LocalFileFmt::new(
-                        &self.config().get_local_file_fmt().unwrap_or_default()
-                    )),
-                    vec![]
-                )
-                .is_ok()
-        );
+        if let Err(err) = self.app.remount(
+            Id::Config(IdConfig::LocalFileFmt),
+            Box::new(components::LocalFileFmt::new(
+                &self.config().get_local_file_fmt().unwrap_or_default(),
+            )),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
         // Remote File Fmt
-        assert!(
-            self.app
-                .remount(
-                    Id::Config(IdConfig::RemoteFileFmt),
-                    Box::new(components::RemoteFileFmt::new(
-                        &self.config().get_remote_file_fmt().unwrap_or_default()
-                    )),
-                    vec![]
-                )
-                .is_ok()
-        );
+        if let Err(err) = self.app.remount(
+            Id::Config(IdConfig::RemoteFileFmt),
+            Box::new(components::RemoteFileFmt::new(
+                &self.config().get_remote_file_fmt().unwrap_or_default(),
+            )),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
         // Notifications enabled
-        assert!(
-            self.app
-                .remount(
-                    Id::Config(IdConfig::NotificationsEnabled),
-                    Box::new(components::NotificationsEnabled::new(
-                        self.config().get_notifications()
-                    )),
-                    vec![]
-                )
-                .is_ok()
-        );
+        if let Err(err) = self.app.remount(
+            Id::Config(IdConfig::NotificationsEnabled),
+            Box::new(components::NotificationsEnabled::new(
+                self.config().get_notifications(),
+            )),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
         // Notifications threshold
-        assert!(
-            self.app
-                .remount(
-                    Id::Config(IdConfig::NotificationsThreshold),
-                    Box::new(components::NotificationsThreshold::new(&fmt_bytes(
-                        self.config().get_notification_threshold()
-                    ))),
-                    vec![]
-                )
-                .is_ok()
-        );
+        if let Err(err) = self.app.remount(
+            Id::Config(IdConfig::NotificationsThreshold),
+            Box::new(components::NotificationsThreshold::new(&fmt_bytes(
+                self.config().get_notification_threshold(),
+            ))),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
         // Ssh config
-        assert!(
-            self.app
-                .remount(
-                    Id::Config(IdConfig::SshConfig),
-                    Box::new(components::SshConfig::new(
-                        self.config().get_ssh_config().unwrap_or("")
-                    )),
-                    vec![]
-                )
-                .is_ok()
-        );
+        if let Err(err) = self.app.remount(
+            Id::Config(IdConfig::SshConfig),
+            Box::new(components::SshConfig::new(
+                self.config().get_ssh_config().unwrap_or(""),
+            )),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
     }
 
     /// Collect values from input and put them into the configuration
