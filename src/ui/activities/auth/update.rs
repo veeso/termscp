@@ -96,7 +96,9 @@ impl AuthActivity {
                     },
                 };
 
-                assert!(self.app.active(focus).is_ok());
+                if let Err(err) = self.app.active(focus) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             FormMsg::LoadRecent(i) => {
                 self.load_recent(self.last_form_tab, i);
@@ -120,7 +122,9 @@ impl AuthActivity {
                     },
                 };
 
-                assert!(self.app.active(focus).is_ok());
+                if let Err(err) = self.app.active(focus) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             FormMsg::HostBridgeProtocolChanged(protocol) => {
                 self.host_bridge_protocol = protocol;
@@ -173,7 +177,9 @@ impl AuthActivity {
                 } else {
                     &Id::HostBridge(AuthFormId::Port)
                 };
-                assert!(self.app.active(id).is_ok());
+                if let Err(err) = self.app.active(id) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::Remote(UiAuthFormMsg::AddressBlurDown) => {
                 let id = if cfg!(windows) && self.remote_input_mask() == InputMask::Smb {
@@ -181,48 +187,56 @@ impl AuthActivity {
                 } else {
                     &Id::Remote(AuthFormId::Port)
                 };
-                assert!(self.app.active(id).is_ok());
+                if let Err(err) = self.app.active(id) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::HostBridge(UiAuthFormMsg::AddressBlurUp) => {
-                assert!(
-                    self.app
-                        .active(&Id::HostBridge(AuthFormId::Protocol))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::HostBridge(AuthFormId::Protocol)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::Remote(UiAuthFormMsg::AddressBlurUp) => {
-                assert!(self.app.active(&Id::Remote(AuthFormId::Protocol)).is_ok());
+                if let Err(err) = self.app.active(&Id::Remote(AuthFormId::Protocol)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::BookmarksListBlur => {
-                assert!(self.app.active(&Id::RecentsList).is_ok());
+                if let Err(err) = self.app.active(&Id::RecentsList) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::BookmarkNameBlur => {
-                assert!(self.app.active(&Id::BookmarkSavePassword).is_ok());
+                if let Err(err) = self.app.active(&Id::BookmarkSavePassword) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::BookmarksTabBlur => {
-                assert!(
-                    self.app
-                        .active(&Id::HostBridge(AuthFormId::Protocol))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::HostBridge(AuthFormId::Protocol)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::HostBridge(UiAuthFormMsg::ChangeFormTab) => {
                 self.last_form_tab = FormTab::Remote;
-                assert!(self.app.active(&Id::Remote(AuthFormId::Protocol)).is_ok());
+                if let Err(err) = self.app.active(&Id::Remote(AuthFormId::Protocol)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::Remote(UiAuthFormMsg::ChangeFormTab) => {
                 self.last_form_tab = FormTab::HostBridge;
-                assert!(
-                    self.app
-                        .active(&Id::HostBridge(AuthFormId::Protocol))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::HostBridge(AuthFormId::Protocol)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::CloseDeleteBookmark => {
-                assert!(self.app.umount(&Id::DeleteBookmarkPopup).is_ok());
+                if let Err(err) = self.app.umount(&Id::DeleteBookmarkPopup) {
+                    error!("Failed to umount component: {err}");
+                }
             }
             UiMsg::CloseDeleteRecent => {
-                assert!(self.app.umount(&Id::DeleteRecentPopup).is_ok());
+                if let Err(err) = self.app.umount(&Id::DeleteRecentPopup) {
+                    error!("Failed to umount component: {err}");
+                }
             }
             UiMsg::CloseErrorPopup => {
                 self.umount_error();
@@ -231,596 +245,522 @@ impl AuthActivity {
                 self.umount_info();
             }
             UiMsg::CloseInstallUpdatePopup => {
-                assert!(self.app.umount(&Id::NewVersionChangelog).is_ok());
-                assert!(self.app.umount(&Id::InstallUpdatePopup).is_ok());
+                if let Err(err) = self.app.umount(&Id::NewVersionChangelog) {
+                    error!("Failed to umount component: {err}");
+                }
+                if let Err(err) = self.app.umount(&Id::InstallUpdatePopup) {
+                    error!("Failed to umount component: {err}");
+                }
             }
             UiMsg::CloseKeybindingsPopup => {
                 self.umount_help();
             }
             UiMsg::CloseQuitPopup => self.umount_quit(),
             UiMsg::CloseSaveBookmark => {
-                assert!(self.app.umount(&Id::BookmarkName).is_ok());
-                assert!(self.app.umount(&Id::BookmarkSavePassword).is_ok());
+                if let Err(err) = self.app.umount(&Id::BookmarkName) {
+                    error!("Failed to umount component: {err}");
+                }
+                if let Err(err) = self.app.umount(&Id::BookmarkSavePassword) {
+                    error!("Failed to umount component: {err}");
+                }
             }
             UiMsg::HostBridge(UiAuthFormMsg::LocalDirectoryBlurDown) => {
-                assert!(
-                    self.app
-                        .active(&Id::HostBridge(AuthFormId::Protocol))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::HostBridge(AuthFormId::Protocol)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::Remote(UiAuthFormMsg::LocalDirectoryBlurDown) => {
-                assert!(self.app.active(&Id::Remote(AuthFormId::Protocol)).is_ok());
+                if let Err(err) = self.app.active(&Id::Remote(AuthFormId::Protocol)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::HostBridge(UiAuthFormMsg::LocalDirectoryBlurUp) => {
-                assert!(
-                    self.app
-                        .active(match self.host_bridge_input_mask() {
-                            InputMask::Localhost => &Id::HostBridge(AuthFormId::Protocol),
-                            _ => &Id::HostBridge(AuthFormId::RemoteDirectory),
-                        })
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(match self.host_bridge_input_mask() {
+                    InputMask::Localhost => &Id::HostBridge(AuthFormId::Protocol),
+                    _ => &Id::HostBridge(AuthFormId::RemoteDirectory),
+                }) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::Remote(UiAuthFormMsg::LocalDirectoryBlurUp) => {
-                assert!(
-                    self.app
-                        .active(&Id::Remote(AuthFormId::RemoteDirectory))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::Remote(AuthFormId::RemoteDirectory)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::HostBridge(UiAuthFormMsg::ParamsFormBlur) => {
-                assert!(self.app.active(&Id::BookmarksList).is_ok());
+                if let Err(err) = self.app.active(&Id::BookmarksList) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::Remote(UiAuthFormMsg::ParamsFormBlur) => {
-                assert!(self.app.active(&Id::BookmarksList).is_ok());
+                if let Err(err) = self.app.active(&Id::BookmarksList) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::HostBridge(UiAuthFormMsg::PasswordBlurDown) => {
-                assert!(
-                    self.app
-                        .active(match self.host_bridge_input_mask() {
-                            InputMask::Localhost => unreachable!(),
-                            InputMask::Generic => &Id::HostBridge(AuthFormId::RemoteDirectory),
-                            #[cfg(posix)]
-                            InputMask::Smb => &Id::HostBridge(AuthFormId::SmbWorkgroup),
-                            #[cfg(win)]
-                            InputMask::Smb => &Id::HostBridge(AuthFormId::RemoteDirectory),
-                            InputMask::AwsS3 =>
-                                unreachable!("this shouldn't happen (password on s3)"),
-                            InputMask::Kube =>
-                                unreachable!("this shouldn't happen (password on kube)"),
-                            InputMask::WebDAV => &Id::HostBridge(AuthFormId::RemoteDirectory),
-                        })
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(match self.host_bridge_input_mask() {
+                    InputMask::Localhost => unreachable!(),
+                    InputMask::Generic => &Id::HostBridge(AuthFormId::RemoteDirectory),
+                    #[cfg(posix)]
+                    InputMask::Smb => &Id::HostBridge(AuthFormId::SmbWorkgroup),
+                    #[cfg(win)]
+                    InputMask::Smb => &Id::HostBridge(AuthFormId::RemoteDirectory),
+                    InputMask::AwsS3 => unreachable!("this shouldn't happen (password on s3)"),
+                    InputMask::Kube => unreachable!("this shouldn't happen (password on kube)"),
+                    InputMask::WebDAV => &Id::HostBridge(AuthFormId::RemoteDirectory),
+                }) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::Remote(UiAuthFormMsg::PasswordBlurDown) => {
-                assert!(
-                    self.app
-                        .active(match self.remote_input_mask() {
-                            InputMask::Localhost => unreachable!(),
-                            InputMask::Generic => &Id::Remote(AuthFormId::RemoteDirectory),
-                            #[cfg(posix)]
-                            InputMask::Smb => &Id::Remote(AuthFormId::SmbWorkgroup),
-                            #[cfg(win)]
-                            InputMask::Smb => &Id::Remote(AuthFormId::RemoteDirectory),
-                            InputMask::AwsS3 =>
-                                unreachable!("this shouldn't happen (password on s3)"),
-                            InputMask::Kube =>
-                                unreachable!("this shouldn't happen (password on kube)"),
-                            InputMask::WebDAV => &Id::Remote(AuthFormId::RemoteDirectory),
-                        })
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(match self.remote_input_mask() {
+                    InputMask::Localhost => unreachable!(),
+                    InputMask::Generic => &Id::Remote(AuthFormId::RemoteDirectory),
+                    #[cfg(posix)]
+                    InputMask::Smb => &Id::Remote(AuthFormId::SmbWorkgroup),
+                    #[cfg(win)]
+                    InputMask::Smb => &Id::Remote(AuthFormId::RemoteDirectory),
+                    InputMask::AwsS3 => unreachable!("this shouldn't happen (password on s3)"),
+                    InputMask::Kube => unreachable!("this shouldn't happen (password on kube)"),
+                    InputMask::WebDAV => &Id::Remote(AuthFormId::RemoteDirectory),
+                }) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::HostBridge(UiAuthFormMsg::PasswordBlurUp) => {
-                assert!(
-                    self.app
-                        .active(&Id::HostBridge(AuthFormId::Username))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::HostBridge(AuthFormId::Username)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::Remote(UiAuthFormMsg::PasswordBlurUp) => {
-                assert!(self.app.active(&Id::Remote(AuthFormId::Username)).is_ok());
+                if let Err(err) = self.app.active(&Id::Remote(AuthFormId::Username)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::HostBridge(UiAuthFormMsg::PortBlurDown) => {
-                assert!(
-                    self.app
-                        .active(match self.host_bridge_input_mask() {
-                            InputMask::Generic => &Id::HostBridge(AuthFormId::Username),
-                            InputMask::Smb => &Id::HostBridge(AuthFormId::SmbShare),
-                            InputMask::Localhost
-                            | InputMask::AwsS3
-                            | InputMask::Kube
-                            | InputMask::WebDAV =>
-                                unreachable!("this shouldn't happen (port on s3/kube/webdav)"),
-                        })
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(match self.host_bridge_input_mask() {
+                    InputMask::Generic => &Id::HostBridge(AuthFormId::Username),
+                    InputMask::Smb => &Id::HostBridge(AuthFormId::SmbShare),
+                    InputMask::Localhost
+                    | InputMask::AwsS3
+                    | InputMask::Kube
+                    | InputMask::WebDAV => {
+                        unreachable!("this shouldn't happen (port on s3/kube/webdav)")
+                    }
+                }) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::Remote(UiAuthFormMsg::PortBlurDown) => {
-                assert!(
-                    self.app
-                        .active(match self.remote_input_mask() {
-                            InputMask::Generic => &Id::Remote(AuthFormId::Username),
-                            InputMask::Smb => &Id::Remote(AuthFormId::SmbShare),
-                            InputMask::Localhost
-                            | InputMask::AwsS3
-                            | InputMask::Kube
-                            | InputMask::WebDAV =>
-                                unreachable!("this shouldn't happen (port on s3/kube/webdav)"),
-                        })
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(match self.remote_input_mask() {
+                    InputMask::Generic => &Id::Remote(AuthFormId::Username),
+                    InputMask::Smb => &Id::Remote(AuthFormId::SmbShare),
+                    InputMask::Localhost
+                    | InputMask::AwsS3
+                    | InputMask::Kube
+                    | InputMask::WebDAV => {
+                        unreachable!("this shouldn't happen (port on s3/kube/webdav)")
+                    }
+                }) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::HostBridge(UiAuthFormMsg::PortBlurUp) => {
-                assert!(
-                    self.app
-                        .active(&Id::HostBridge(AuthFormId::Address))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::HostBridge(AuthFormId::Address)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::Remote(UiAuthFormMsg::PortBlurUp) => {
-                assert!(self.app.active(&Id::Remote(AuthFormId::Address)).is_ok());
+                if let Err(err) = self.app.active(&Id::Remote(AuthFormId::Address)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::HostBridge(UiAuthFormMsg::ProtocolBlurDown) => {
-                assert!(
-                    self.app
-                        .active(match self.host_bridge_input_mask() {
-                            InputMask::Localhost => &Id::HostBridge(AuthFormId::LocalDirectory),
-                            InputMask::Generic => &Id::HostBridge(AuthFormId::Address),
-                            InputMask::Smb => &Id::HostBridge(AuthFormId::Address),
-                            InputMask::AwsS3 => &Id::HostBridge(AuthFormId::S3Bucket),
-                            InputMask::Kube => &Id::HostBridge(AuthFormId::KubeNamespace),
-                            InputMask::WebDAV => &Id::HostBridge(AuthFormId::WebDAVUri),
-                        })
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(match self.host_bridge_input_mask() {
+                    InputMask::Localhost => &Id::HostBridge(AuthFormId::LocalDirectory),
+                    InputMask::Generic => &Id::HostBridge(AuthFormId::Address),
+                    InputMask::Smb => &Id::HostBridge(AuthFormId::Address),
+                    InputMask::AwsS3 => &Id::HostBridge(AuthFormId::S3Bucket),
+                    InputMask::Kube => &Id::HostBridge(AuthFormId::KubeNamespace),
+                    InputMask::WebDAV => &Id::HostBridge(AuthFormId::WebDAVUri),
+                }) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::Remote(UiAuthFormMsg::ProtocolBlurDown) => {
-                assert!(
-                    self.app
-                        .active(match self.remote_input_mask() {
-                            InputMask::Localhost => &Id::Remote(AuthFormId::LocalDirectory),
-                            InputMask::Generic => &Id::Remote(AuthFormId::Address),
-                            InputMask::Smb => &Id::Remote(AuthFormId::Address),
-                            InputMask::AwsS3 => &Id::Remote(AuthFormId::S3Bucket),
-                            InputMask::Kube => &Id::Remote(AuthFormId::KubeNamespace),
-                            InputMask::WebDAV => &Id::Remote(AuthFormId::WebDAVUri),
-                        })
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(match self.remote_input_mask() {
+                    InputMask::Localhost => &Id::Remote(AuthFormId::LocalDirectory),
+                    InputMask::Generic => &Id::Remote(AuthFormId::Address),
+                    InputMask::Smb => &Id::Remote(AuthFormId::Address),
+                    InputMask::AwsS3 => &Id::Remote(AuthFormId::S3Bucket),
+                    InputMask::Kube => &Id::Remote(AuthFormId::KubeNamespace),
+                    InputMask::WebDAV => &Id::Remote(AuthFormId::WebDAVUri),
+                }) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::HostBridge(UiAuthFormMsg::ProtocolBlurUp) => {
-                assert!(
-                    self.app
-                        .active(&Id::HostBridge(AuthFormId::LocalDirectory))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::HostBridge(AuthFormId::LocalDirectory)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::Remote(UiAuthFormMsg::ProtocolBlurUp) => {
-                assert!(
-                    self.app
-                        .active(&Id::Remote(AuthFormId::LocalDirectory))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::Remote(AuthFormId::LocalDirectory)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::RececentsListBlur => {
-                assert!(self.app.active(&Id::BookmarksList).is_ok());
+                if let Err(err) = self.app.active(&Id::BookmarksList) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::HostBridge(UiAuthFormMsg::RemoteDirectoryBlurDown) => {
-                assert!(
-                    self.app
-                        .active(&Id::HostBridge(AuthFormId::LocalDirectory))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::HostBridge(AuthFormId::LocalDirectory)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::Remote(UiAuthFormMsg::RemoteDirectoryBlurDown) => {
-                assert!(
-                    self.app
-                        .active(&Id::Remote(AuthFormId::LocalDirectory))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::Remote(AuthFormId::LocalDirectory)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::HostBridge(UiAuthFormMsg::RemoteDirectoryBlurUp) => {
-                assert!(
-                    self.app
-                        .active(match self.host_bridge_input_mask() {
-                            InputMask::Localhost => unreachable!(),
-                            InputMask::Generic => &Id::HostBridge(AuthFormId::Password),
-                            #[cfg(posix)]
-                            InputMask::Smb => &Id::HostBridge(AuthFormId::SmbWorkgroup),
-                            #[cfg(win)]
-                            InputMask::Smb => &Id::HostBridge(AuthFormId::Password),
-                            InputMask::Kube => &Id::HostBridge(AuthFormId::KubeClientKey),
-                            InputMask::AwsS3 => &Id::HostBridge(AuthFormId::S3NewPathStyle),
-                            InputMask::WebDAV => &Id::HostBridge(AuthFormId::Password),
-                        })
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(match self.host_bridge_input_mask() {
+                    InputMask::Localhost => unreachable!(),
+                    InputMask::Generic => &Id::HostBridge(AuthFormId::Password),
+                    #[cfg(posix)]
+                    InputMask::Smb => &Id::HostBridge(AuthFormId::SmbWorkgroup),
+                    #[cfg(win)]
+                    InputMask::Smb => &Id::HostBridge(AuthFormId::Password),
+                    InputMask::Kube => &Id::HostBridge(AuthFormId::KubeClientKey),
+                    InputMask::AwsS3 => &Id::HostBridge(AuthFormId::S3NewPathStyle),
+                    InputMask::WebDAV => &Id::HostBridge(AuthFormId::Password),
+                }) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::Remote(UiAuthFormMsg::RemoteDirectoryBlurUp) => {
-                assert!(
-                    self.app
-                        .active(match self.remote_input_mask() {
-                            InputMask::Localhost => unreachable!(),
-                            InputMask::Generic => &Id::Remote(AuthFormId::Password),
-                            #[cfg(posix)]
-                            InputMask::Smb => &Id::Remote(AuthFormId::SmbWorkgroup),
-                            #[cfg(win)]
-                            InputMask::Smb => &Id::Remote(AuthFormId::Password),
-                            InputMask::Kube => &Id::Remote(AuthFormId::KubeClientKey),
-                            InputMask::AwsS3 => &Id::Remote(AuthFormId::S3NewPathStyle),
-                            InputMask::WebDAV => &Id::Remote(AuthFormId::Password),
-                        })
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(match self.remote_input_mask() {
+                    InputMask::Localhost => unreachable!(),
+                    InputMask::Generic => &Id::Remote(AuthFormId::Password),
+                    #[cfg(posix)]
+                    InputMask::Smb => &Id::Remote(AuthFormId::SmbWorkgroup),
+                    #[cfg(win)]
+                    InputMask::Smb => &Id::Remote(AuthFormId::Password),
+                    InputMask::Kube => &Id::Remote(AuthFormId::KubeClientKey),
+                    InputMask::AwsS3 => &Id::Remote(AuthFormId::S3NewPathStyle),
+                    InputMask::WebDAV => &Id::Remote(AuthFormId::Password),
+                }) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::HostBridge(UiAuthFormMsg::S3BucketBlurDown) => {
-                assert!(
-                    self.app
-                        .active(&Id::HostBridge(AuthFormId::S3Region))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::HostBridge(AuthFormId::S3Region)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::Remote(UiAuthFormMsg::S3BucketBlurDown) => {
-                assert!(self.app.active(&Id::Remote(AuthFormId::S3Region)).is_ok());
+                if let Err(err) = self.app.active(&Id::Remote(AuthFormId::S3Region)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::HostBridge(UiAuthFormMsg::S3BucketBlurUp) => {
-                assert!(
-                    self.app
-                        .active(&Id::HostBridge(AuthFormId::Protocol))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::HostBridge(AuthFormId::Protocol)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::Remote(UiAuthFormMsg::S3BucketBlurUp) => {
-                assert!(self.app.active(&Id::Remote(AuthFormId::Protocol)).is_ok());
+                if let Err(err) = self.app.active(&Id::Remote(AuthFormId::Protocol)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::HostBridge(UiAuthFormMsg::S3RegionBlurDown) => {
-                assert!(
-                    self.app
-                        .active(&Id::HostBridge(AuthFormId::S3Endpoint))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::HostBridge(AuthFormId::S3Endpoint)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::Remote(UiAuthFormMsg::S3RegionBlurDown) => {
-                assert!(self.app.active(&Id::Remote(AuthFormId::S3Endpoint)).is_ok());
+                if let Err(err) = self.app.active(&Id::Remote(AuthFormId::S3Endpoint)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::HostBridge(UiAuthFormMsg::S3RegionBlurUp) => {
-                assert!(
-                    self.app
-                        .active(&Id::HostBridge(AuthFormId::S3Bucket))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::HostBridge(AuthFormId::S3Bucket)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::Remote(UiAuthFormMsg::S3RegionBlurUp) => {
-                assert!(self.app.active(&Id::Remote(AuthFormId::S3Bucket)).is_ok());
+                if let Err(err) = self.app.active(&Id::Remote(AuthFormId::S3Bucket)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::HostBridge(UiAuthFormMsg::S3EndpointBlurDown) => {
-                assert!(
-                    self.app
-                        .active(&Id::HostBridge(AuthFormId::S3Profile))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::HostBridge(AuthFormId::S3Profile)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::Remote(UiAuthFormMsg::S3EndpointBlurDown) => {
-                assert!(self.app.active(&Id::Remote(AuthFormId::S3Profile)).is_ok());
+                if let Err(err) = self.app.active(&Id::Remote(AuthFormId::S3Profile)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::HostBridge(UiAuthFormMsg::S3EndpointBlurUp) => {
-                assert!(
-                    self.app
-                        .active(&Id::HostBridge(AuthFormId::S3Region))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::HostBridge(AuthFormId::S3Region)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::Remote(UiAuthFormMsg::S3EndpointBlurUp) => {
-                assert!(self.app.active(&Id::Remote(AuthFormId::S3Region)).is_ok());
+                if let Err(err) = self.app.active(&Id::Remote(AuthFormId::S3Region)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::HostBridge(UiAuthFormMsg::S3ProfileBlurDown) => {
-                assert!(
-                    self.app
-                        .active(&Id::HostBridge(AuthFormId::S3AccessKey))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::HostBridge(AuthFormId::S3AccessKey)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::Remote(UiAuthFormMsg::S3ProfileBlurDown) => {
-                assert!(
-                    self.app
-                        .active(&Id::Remote(AuthFormId::S3AccessKey))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::Remote(AuthFormId::S3AccessKey)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::HostBridge(UiAuthFormMsg::S3ProfileBlurUp) => {
-                assert!(
-                    self.app
-                        .active(&Id::HostBridge(AuthFormId::S3Endpoint))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::HostBridge(AuthFormId::S3Endpoint)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::Remote(UiAuthFormMsg::S3ProfileBlurUp) => {
-                assert!(self.app.active(&Id::Remote(AuthFormId::S3Endpoint)).is_ok());
+                if let Err(err) = self.app.active(&Id::Remote(AuthFormId::S3Endpoint)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::HostBridge(UiAuthFormMsg::S3AccessKeyBlurDown) => {
-                assert!(
-                    self.app
-                        .active(&Id::HostBridge(AuthFormId::S3SecretAccessKey))
-                        .is_ok()
-                );
+                if let Err(err) = self
+                    .app
+                    .active(&Id::HostBridge(AuthFormId::S3SecretAccessKey))
+                {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::Remote(UiAuthFormMsg::S3AccessKeyBlurDown) => {
-                assert!(
-                    self.app
-                        .active(&Id::Remote(AuthFormId::S3SecretAccessKey))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::Remote(AuthFormId::S3SecretAccessKey)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::HostBridge(UiAuthFormMsg::S3AccessKeyBlurUp) => {
-                assert!(
-                    self.app
-                        .active(&Id::HostBridge(AuthFormId::S3Profile))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::HostBridge(AuthFormId::S3Profile)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::Remote(UiAuthFormMsg::S3AccessKeyBlurUp) => {
-                assert!(self.app.active(&Id::Remote(AuthFormId::S3Profile)).is_ok());
+                if let Err(err) = self.app.active(&Id::Remote(AuthFormId::S3Profile)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::HostBridge(UiAuthFormMsg::S3SecretAccessKeyBlurDown) => {
-                assert!(
-                    self.app
-                        .active(&Id::HostBridge(AuthFormId::S3SecurityToken))
-                        .is_ok()
-                );
+                if let Err(err) = self
+                    .app
+                    .active(&Id::HostBridge(AuthFormId::S3SecurityToken))
+                {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::Remote(UiAuthFormMsg::S3SecretAccessKeyBlurDown) => {
-                assert!(
-                    self.app
-                        .active(&Id::Remote(AuthFormId::S3SecurityToken))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::Remote(AuthFormId::S3SecurityToken)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::HostBridge(UiAuthFormMsg::S3SecretAccessKeyBlurUp) => {
-                assert!(
-                    self.app
-                        .active(&Id::HostBridge(AuthFormId::S3AccessKey))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::HostBridge(AuthFormId::S3AccessKey)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::Remote(UiAuthFormMsg::S3SecretAccessKeyBlurUp) => {
-                assert!(
-                    self.app
-                        .active(&Id::Remote(AuthFormId::S3AccessKey))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::Remote(AuthFormId::S3AccessKey)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::HostBridge(UiAuthFormMsg::S3SecurityTokenBlurDown) => {
-                assert!(
-                    self.app
-                        .active(&Id::HostBridge(AuthFormId::S3SessionToken))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::HostBridge(AuthFormId::S3SessionToken)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::Remote(UiAuthFormMsg::S3SecurityTokenBlurDown) => {
-                assert!(
-                    self.app
-                        .active(&Id::Remote(AuthFormId::S3SessionToken))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::Remote(AuthFormId::S3SessionToken)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::HostBridge(UiAuthFormMsg::S3SecurityTokenBlurUp) => {
-                assert!(
-                    self.app
-                        .active(&Id::HostBridge(AuthFormId::S3SecretAccessKey))
-                        .is_ok()
-                );
+                if let Err(err) = self
+                    .app
+                    .active(&Id::HostBridge(AuthFormId::S3SecretAccessKey))
+                {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::Remote(UiAuthFormMsg::S3SecurityTokenBlurUp) => {
-                assert!(
-                    self.app
-                        .active(&Id::Remote(AuthFormId::S3SecretAccessKey))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::Remote(AuthFormId::S3SecretAccessKey)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::HostBridge(UiAuthFormMsg::S3SessionTokenBlurDown) => {
-                assert!(
-                    self.app
-                        .active(&Id::HostBridge(AuthFormId::S3NewPathStyle))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::HostBridge(AuthFormId::S3NewPathStyle)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::Remote(UiAuthFormMsg::S3SessionTokenBlurDown) => {
-                assert!(
-                    self.app
-                        .active(&Id::Remote(AuthFormId::S3NewPathStyle))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::Remote(AuthFormId::S3NewPathStyle)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::HostBridge(UiAuthFormMsg::S3SessionTokenBlurUp) => {
-                assert!(
-                    self.app
-                        .active(&Id::HostBridge(AuthFormId::S3SecurityToken))
-                        .is_ok()
-                );
+                if let Err(err) = self
+                    .app
+                    .active(&Id::HostBridge(AuthFormId::S3SecurityToken))
+                {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::Remote(UiAuthFormMsg::S3SessionTokenBlurUp) => {
-                assert!(
-                    self.app
-                        .active(&Id::Remote(AuthFormId::S3SecurityToken))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::Remote(AuthFormId::S3SecurityToken)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::HostBridge(UiAuthFormMsg::S3NewPathStyleBlurDown) => {
-                assert!(
-                    self.app
-                        .active(&Id::HostBridge(AuthFormId::RemoteDirectory))
-                        .is_ok()
-                );
+                if let Err(err) = self
+                    .app
+                    .active(&Id::HostBridge(AuthFormId::RemoteDirectory))
+                {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::Remote(UiAuthFormMsg::S3NewPathStyleBlurDown) => {
-                assert!(
-                    self.app
-                        .active(&Id::Remote(AuthFormId::RemoteDirectory))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::Remote(AuthFormId::RemoteDirectory)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::HostBridge(UiAuthFormMsg::S3NewPathStyleBlurUp) => {
-                assert!(
-                    self.app
-                        .active(&Id::HostBridge(AuthFormId::S3SessionToken))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::HostBridge(AuthFormId::S3SessionToken)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::Remote(UiAuthFormMsg::S3NewPathStyleBlurUp) => {
-                assert!(
-                    self.app
-                        .active(&Id::Remote(AuthFormId::S3SessionToken))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::Remote(AuthFormId::S3SessionToken)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::HostBridge(UiAuthFormMsg::KubeClientCertBlurDown) => {
-                assert!(
-                    self.app
-                        .active(&Id::HostBridge(AuthFormId::KubeClientKey))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::HostBridge(AuthFormId::KubeClientKey)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::Remote(UiAuthFormMsg::KubeClientCertBlurDown) => {
-                assert!(
-                    self.app
-                        .active(&Id::Remote(AuthFormId::KubeClientKey))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::Remote(AuthFormId::KubeClientKey)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::HostBridge(UiAuthFormMsg::KubeClientCertBlurUp) => {
-                assert!(
-                    self.app
-                        .active(&Id::HostBridge(AuthFormId::KubeUsername))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::HostBridge(AuthFormId::KubeUsername)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::Remote(UiAuthFormMsg::KubeClientCertBlurUp) => {
-                assert!(
-                    self.app
-                        .active(&Id::Remote(AuthFormId::KubeUsername))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::Remote(AuthFormId::KubeUsername)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::HostBridge(UiAuthFormMsg::KubeClientKeyBlurDown) => {
-                assert!(
-                    self.app
-                        .active(&Id::HostBridge(AuthFormId::RemoteDirectory))
-                        .is_ok()
-                );
+                if let Err(err) = self
+                    .app
+                    .active(&Id::HostBridge(AuthFormId::RemoteDirectory))
+                {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::Remote(UiAuthFormMsg::KubeClientKeyBlurDown) => {
-                assert!(
-                    self.app
-                        .active(&Id::Remote(AuthFormId::RemoteDirectory))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::Remote(AuthFormId::RemoteDirectory)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::HostBridge(UiAuthFormMsg::KubeClientKeyBlurUp) => {
-                assert!(
-                    self.app
-                        .active(&Id::HostBridge(AuthFormId::KubeClientCert))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::HostBridge(AuthFormId::KubeClientCert)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::Remote(UiAuthFormMsg::KubeClientKeyBlurUp) => {
-                assert!(
-                    self.app
-                        .active(&Id::Remote(AuthFormId::KubeClientCert))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::Remote(AuthFormId::KubeClientCert)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::HostBridge(UiAuthFormMsg::KubeNamespaceBlurDown) => {
-                assert!(
-                    self.app
-                        .active(&Id::HostBridge(AuthFormId::KubeClusterUrl))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::HostBridge(AuthFormId::KubeClusterUrl)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::Remote(UiAuthFormMsg::KubeNamespaceBlurDown) => {
-                assert!(
-                    self.app
-                        .active(&Id::Remote(AuthFormId::KubeClusterUrl))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::Remote(AuthFormId::KubeClusterUrl)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::HostBridge(UiAuthFormMsg::KubeNamespaceBlurUp) => {
-                assert!(
-                    self.app
-                        .active(&Id::HostBridge(AuthFormId::Protocol))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::HostBridge(AuthFormId::Protocol)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::Remote(UiAuthFormMsg::KubeNamespaceBlurUp) => {
-                assert!(self.app.active(&Id::Remote(AuthFormId::Protocol)).is_ok());
+                if let Err(err) = self.app.active(&Id::Remote(AuthFormId::Protocol)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::HostBridge(UiAuthFormMsg::KubeClusterUrlBlurDown) => {
-                assert!(
-                    self.app
-                        .active(&Id::HostBridge(AuthFormId::KubeUsername))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::HostBridge(AuthFormId::KubeUsername)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::Remote(UiAuthFormMsg::KubeClusterUrlBlurDown) => {
-                assert!(
-                    self.app
-                        .active(&Id::Remote(AuthFormId::KubeUsername))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::Remote(AuthFormId::KubeUsername)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::HostBridge(UiAuthFormMsg::KubeClusterUrlBlurUp) => {
-                assert!(
-                    self.app
-                        .active(&Id::HostBridge(AuthFormId::KubeNamespace))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::HostBridge(AuthFormId::KubeNamespace)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::Remote(UiAuthFormMsg::KubeClusterUrlBlurUp) => {
-                assert!(
-                    self.app
-                        .active(&Id::Remote(AuthFormId::KubeNamespace))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::Remote(AuthFormId::KubeNamespace)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::HostBridge(UiAuthFormMsg::KubeUsernameBlurDown) => {
-                assert!(
-                    self.app
-                        .active(&Id::HostBridge(AuthFormId::KubeClientCert))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::HostBridge(AuthFormId::KubeClientCert)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::Remote(UiAuthFormMsg::KubeUsernameBlurDown) => {
-                assert!(
-                    self.app
-                        .active(&Id::Remote(AuthFormId::KubeClientCert))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::Remote(AuthFormId::KubeClientCert)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::HostBridge(UiAuthFormMsg::KubeUsernameBlurUp) => {
-                assert!(
-                    self.app
-                        .active(&Id::HostBridge(AuthFormId::KubeClusterUrl))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::HostBridge(AuthFormId::KubeClusterUrl)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::Remote(UiAuthFormMsg::KubeUsernameBlurUp) => {
-                assert!(
-                    self.app
-                        .active(&Id::Remote(AuthFormId::KubeClusterUrl))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::Remote(AuthFormId::KubeClusterUrl)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::HostBridge(UiAuthFormMsg::SmbShareBlurDown) => {
-                assert!(
-                    self.app
-                        .active(&Id::HostBridge(AuthFormId::Username))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::HostBridge(AuthFormId::Username)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::Remote(UiAuthFormMsg::SmbShareBlurDown) => {
-                assert!(self.app.active(&Id::Remote(AuthFormId::Username)).is_ok());
+                if let Err(err) = self.app.active(&Id::Remote(AuthFormId::Username)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::HostBridge(UiAuthFormMsg::SmbShareBlurUp) => {
                 let id = if cfg!(windows) && self.host_bridge_input_mask() == InputMask::Smb {
@@ -828,7 +768,9 @@ impl AuthActivity {
                 } else {
                     &Id::HostBridge(AuthFormId::Port)
                 };
-                assert!(self.app.active(id).is_ok());
+                if let Err(err) = self.app.active(id) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::Remote(UiAuthFormMsg::SmbShareBlurUp) => {
                 let id = if cfg!(windows) && self.remote_input_mask() == InputMask::Smb {
@@ -836,38 +778,41 @@ impl AuthActivity {
                 } else {
                     &Id::Remote(AuthFormId::Port)
                 };
-                assert!(self.app.active(id).is_ok());
+                if let Err(err) = self.app.active(id) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             #[cfg(posix)]
             UiMsg::HostBridge(UiAuthFormMsg::SmbWorkgroupDown) => {
-                assert!(
-                    self.app
-                        .active(&Id::HostBridge(AuthFormId::RemoteDirectory))
-                        .is_ok()
-                );
+                if let Err(err) = self
+                    .app
+                    .active(&Id::HostBridge(AuthFormId::RemoteDirectory))
+                {
+                    error!("Failed to activate component: {err}");
+                }
             }
             #[cfg(posix)]
             UiMsg::Remote(UiAuthFormMsg::SmbWorkgroupDown) => {
-                assert!(
-                    self.app
-                        .active(&Id::Remote(AuthFormId::RemoteDirectory))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::Remote(AuthFormId::RemoteDirectory)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             #[cfg(posix)]
             UiMsg::HostBridge(UiAuthFormMsg::SmbWorkgroupUp) => {
-                assert!(
-                    self.app
-                        .active(&Id::HostBridge(AuthFormId::Password))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::HostBridge(AuthFormId::Password)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             #[cfg(posix)]
             UiMsg::Remote(UiAuthFormMsg::SmbWorkgroupUp) => {
-                assert!(self.app.active(&Id::Remote(AuthFormId::Password)).is_ok());
+                if let Err(err) = self.app.active(&Id::Remote(AuthFormId::Password)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::SaveBookmarkPasswordBlur => {
-                assert!(self.app.active(&Id::BookmarkName).is_ok());
+                if let Err(err) = self.app.active(&Id::BookmarkName) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::ShowDeleteBookmarkPopup => {
                 self.mount_bookmark_del_dialog();
@@ -888,66 +833,58 @@ impl AuthActivity {
                 self.mount_bookmark_save_dialog(self.get_current_form_tab());
             }
             UiMsg::HostBridge(UiAuthFormMsg::UsernameBlurDown) => {
-                assert!(
-                    self.app
-                        .active(&Id::HostBridge(AuthFormId::Password))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::HostBridge(AuthFormId::Password)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::Remote(UiAuthFormMsg::UsernameBlurDown) => {
-                assert!(self.app.active(&Id::Remote(AuthFormId::Password)).is_ok());
+                if let Err(err) = self.app.active(&Id::Remote(AuthFormId::Password)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::HostBridge(UiAuthFormMsg::UsernameBlurUp) => {
-                assert!(
-                    self.app
-                        .active(match self.host_bridge_input_mask() {
-                            InputMask::Localhost => unreachable!(),
-                            InputMask::Generic => &Id::HostBridge(AuthFormId::Port),
-                            InputMask::Smb => &Id::HostBridge(AuthFormId::SmbShare),
-                            InputMask::Kube =>
-                                unreachable!("this shouldn't happen (username on kube)"),
-                            InputMask::AwsS3 =>
-                                unreachable!("this shouldn't happen (username on s3)"),
-                            InputMask::WebDAV => &Id::HostBridge(AuthFormId::WebDAVUri),
-                        })
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(match self.host_bridge_input_mask() {
+                    InputMask::Localhost => unreachable!(),
+                    InputMask::Generic => &Id::HostBridge(AuthFormId::Port),
+                    InputMask::Smb => &Id::HostBridge(AuthFormId::SmbShare),
+                    InputMask::Kube => unreachable!("this shouldn't happen (username on kube)"),
+                    InputMask::AwsS3 => unreachable!("this shouldn't happen (username on s3)"),
+                    InputMask::WebDAV => &Id::HostBridge(AuthFormId::WebDAVUri),
+                }) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::Remote(UiAuthFormMsg::UsernameBlurUp) => {
-                assert!(
-                    self.app
-                        .active(match self.remote_input_mask() {
-                            InputMask::Localhost => unreachable!(),
-                            InputMask::Generic => &Id::Remote(AuthFormId::Port),
-                            InputMask::Smb => &Id::Remote(AuthFormId::SmbShare),
-                            InputMask::Kube =>
-                                unreachable!("this shouldn't happen (username on kube)"),
-                            InputMask::AwsS3 =>
-                                unreachable!("this shouldn't happen (username on s3)"),
-                            InputMask::WebDAV => &Id::Remote(AuthFormId::WebDAVUri),
-                        })
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(match self.remote_input_mask() {
+                    InputMask::Localhost => unreachable!(),
+                    InputMask::Generic => &Id::Remote(AuthFormId::Port),
+                    InputMask::Smb => &Id::Remote(AuthFormId::SmbShare),
+                    InputMask::Kube => unreachable!("this shouldn't happen (username on kube)"),
+                    InputMask::AwsS3 => unreachable!("this shouldn't happen (username on s3)"),
+                    InputMask::WebDAV => &Id::Remote(AuthFormId::WebDAVUri),
+                }) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::HostBridge(UiAuthFormMsg::WebDAVUriBlurDown) => {
-                assert!(
-                    self.app
-                        .active(&Id::HostBridge(AuthFormId::Username))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::HostBridge(AuthFormId::Username)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::Remote(UiAuthFormMsg::WebDAVUriBlurDown) => {
-                assert!(self.app.active(&Id::Remote(AuthFormId::Username)).is_ok());
+                if let Err(err) = self.app.active(&Id::Remote(AuthFormId::Username)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::HostBridge(UiAuthFormMsg::WebDAVUriBlurUp) => {
-                assert!(
-                    self.app
-                        .active(&Id::HostBridge(AuthFormId::Protocol))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::HostBridge(AuthFormId::Protocol)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::Remote(UiAuthFormMsg::WebDAVUriBlurUp) => {
-                assert!(self.app.active(&Id::Remote(AuthFormId::Protocol)).is_ok());
+                if let Err(err) = self.app.active(&Id::Remote(AuthFormId::Protocol)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             UiMsg::WindowResized => {
                 self.redraw = true;

@@ -135,7 +135,9 @@ impl SetupActivity {
             error!("Could not leave alternate screen: {}", err);
         }
         // Lock ports
-        assert!(self.app.lock_ports().is_ok());
+        if let Err(err) = self.app.lock_ports() {
+            error!("Failed to lock ports: {err}");
+        }
         // Write key to file
         let res = match edit::edit(placeholder.as_bytes()) {
             Ok(rsa_key) => {
@@ -168,7 +170,9 @@ impl SetupActivity {
                 error!("Could not clear screen screen: {}", err);
             }
             // Unlock ports
-            assert!(self.app.unlock_ports().is_ok());
+            if let Err(err) = self.app.unlock_ports() {
+                error!("Failed to unlock ports: {err}");
+            }
         }
 
         res

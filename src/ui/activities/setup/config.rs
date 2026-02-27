@@ -71,7 +71,9 @@ impl SetupActivity {
                     error!("Could not leave alternate screen: {}", err);
                 }
                 // Lock ports
-                assert!(self.app.lock_ports().is_ok());
+                if let Err(err) = self.app.lock_ports() {
+                    error!("Failed to lock ports: {err}");
+                }
                 // Get result
                 let result: Result<(), String> = match ctx.config().iter_ssh_keys().nth(idx) {
                     Some(key) => {
@@ -100,7 +102,9 @@ impl SetupActivity {
                     error!("Failed to enter raw mode: {}", err);
                 }
                 // Unlock ports
-                assert!(self.app.unlock_ports().is_ok());
+                if let Err(err) = self.app.unlock_ports() {
+                    error!("Failed to unlock ports: {err}");
+                }
                 // Return result
                 result
             }

@@ -103,110 +103,120 @@ impl SetupActivity {
     fn config_update(&mut self, msg: ConfigMsg) -> Option<Msg> {
         match msg {
             ConfigMsg::CheckUpdatesBlurDown => {
-                assert!(
-                    self.app
-                        .active(&Id::Config(IdConfig::PromptOnFileReplace))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::Config(IdConfig::PromptOnFileReplace)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ConfigMsg::CheckUpdatesBlurUp => {
-                assert!(self.app.active(&Id::Config(IdConfig::HiddenFiles)).is_ok());
+                if let Err(err) = self.app.active(&Id::Config(IdConfig::HiddenFiles)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ConfigMsg::DefaultProtocolBlurDown => {
-                assert!(self.app.active(&Id::Config(IdConfig::HiddenFiles)).is_ok());
+                if let Err(err) = self.app.active(&Id::Config(IdConfig::HiddenFiles)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ConfigMsg::DefaultProtocolBlurUp => {
-                assert!(self.app.active(&Id::Config(IdConfig::TextEditor)).is_ok());
+                if let Err(err) = self.app.active(&Id::Config(IdConfig::TextEditor)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ConfigMsg::GroupDirsBlurDown => {
-                assert!(self.app.active(&Id::Config(IdConfig::LocalFileFmt)).is_ok());
+                if let Err(err) = self.app.active(&Id::Config(IdConfig::LocalFileFmt)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ConfigMsg::GroupDirsBlurUp => {
-                assert!(
-                    self.app
-                        .active(&Id::Config(IdConfig::PromptOnFileReplace))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::Config(IdConfig::PromptOnFileReplace)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ConfigMsg::HiddenFilesBlurDown => {
-                assert!(self.app.active(&Id::Config(IdConfig::CheckUpdates)).is_ok());
+                if let Err(err) = self.app.active(&Id::Config(IdConfig::CheckUpdates)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ConfigMsg::HiddenFilesBlurUp => {
-                assert!(
-                    self.app
-                        .active(&Id::Config(IdConfig::DefaultProtocol))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::Config(IdConfig::DefaultProtocol)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ConfigMsg::LocalFileFmtBlurDown => {
-                assert!(
-                    self.app
-                        .active(&Id::Config(IdConfig::RemoteFileFmt))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::Config(IdConfig::RemoteFileFmt)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ConfigMsg::LocalFileFmtBlurUp => {
-                assert!(self.app.active(&Id::Config(IdConfig::GroupDirs)).is_ok());
+                if let Err(err) = self.app.active(&Id::Config(IdConfig::GroupDirs)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ConfigMsg::NotificationsEnabledBlurDown => {
-                assert!(
-                    self.app
-                        .active(&Id::Config(IdConfig::NotificationsThreshold))
-                        .is_ok()
-                );
+                if let Err(err) = self
+                    .app
+                    .active(&Id::Config(IdConfig::NotificationsThreshold))
+                {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ConfigMsg::NotificationsEnabledBlurUp => {
-                assert!(
-                    self.app
-                        .active(&Id::Config(IdConfig::RemoteFileFmt))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::Config(IdConfig::RemoteFileFmt)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ConfigMsg::NotificationsThresholdBlurDown => {
-                assert!(self.app.active(&Id::Config(IdConfig::SshConfig)).is_ok());
+                if let Err(err) = self.app.active(&Id::Config(IdConfig::SshConfig)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ConfigMsg::NotificationsThresholdBlurUp => {
-                assert!(
-                    self.app
-                        .active(&Id::Config(IdConfig::NotificationsEnabled))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::Config(IdConfig::NotificationsEnabled)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ConfigMsg::PromptOnFileReplaceBlurDown => {
-                assert!(self.app.active(&Id::Config(IdConfig::GroupDirs)).is_ok());
+                if let Err(err) = self.app.active(&Id::Config(IdConfig::GroupDirs)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ConfigMsg::PromptOnFileReplaceBlurUp => {
-                assert!(self.app.active(&Id::Config(IdConfig::CheckUpdates)).is_ok());
+                if let Err(err) = self.app.active(&Id::Config(IdConfig::CheckUpdates)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ConfigMsg::RemoteFileFmtBlurDown => {
-                assert!(
-                    self.app
-                        .active(&Id::Config(IdConfig::NotificationsEnabled))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::Config(IdConfig::NotificationsEnabled)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ConfigMsg::RemoteFileFmtBlurUp => {
-                assert!(self.app.active(&Id::Config(IdConfig::LocalFileFmt)).is_ok());
+                if let Err(err) = self.app.active(&Id::Config(IdConfig::LocalFileFmt)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ConfigMsg::TextEditorBlurDown => {
-                assert!(
-                    self.app
-                        .active(&Id::Config(IdConfig::DefaultProtocol))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::Config(IdConfig::DefaultProtocol)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ConfigMsg::TextEditorBlurUp => {
-                assert!(self.app.active(&Id::Config(IdConfig::SshConfig)).is_ok());
+                if let Err(err) = self.app.active(&Id::Config(IdConfig::SshConfig)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ConfigMsg::SshConfigBlurDown => {
-                assert!(self.app.active(&Id::Config(IdConfig::TextEditor)).is_ok());
+                if let Err(err) = self.app.active(&Id::Config(IdConfig::TextEditor)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ConfigMsg::SshConfigBlurUp => {
-                assert!(
-                    self.app
-                        .active(&Id::Config(IdConfig::NotificationsThreshold))
-                        .is_ok()
-                );
+                if let Err(err) = self
+                    .app
+                    .active(&Id::Config(IdConfig::NotificationsThreshold))
+                {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ConfigMsg::ConfigChanged => {
                 self.set_config_changed(true);
@@ -251,10 +261,14 @@ impl SetupActivity {
                 self.mount_new_ssh_key();
             }
             SshMsg::SshHostBlur => {
-                assert!(self.app.active(&Id::Ssh(IdSsh::SshUsername)).is_ok());
+                if let Err(err) = self.app.active(&Id::Ssh(IdSsh::SshUsername)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             SshMsg::SshUsernameBlur => {
-                assert!(self.app.active(&Id::Ssh(IdSsh::SshHost)).is_ok());
+                if let Err(err) = self.app.active(&Id::Ssh(IdSsh::SshHost)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
         }
         None
@@ -263,222 +277,274 @@ impl SetupActivity {
     fn theme_update(&mut self, msg: ThemeMsg) -> Option<Msg> {
         match msg {
             ThemeMsg::AuthAddressBlurDown => {
-                assert!(self.app.active(&Id::Theme(IdTheme::AuthPort)).is_ok());
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::AuthPort)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::AuthAddressBlurUp => {
-                assert!(self.app.active(&Id::Theme(IdTheme::AuthProtocol)).is_ok());
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::AuthProtocol)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::AuthBookmarksBlurDown => {
-                assert!(
-                    self.app
-                        .active(&Id::Theme(IdTheme::AuthRecentHosts))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::AuthRecentHosts)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::AuthBookmarksBlurUp => {
-                assert!(self.app.active(&Id::Theme(IdTheme::AuthPassword)).is_ok());
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::AuthPassword)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::AuthPasswordBlurDown => {
-                assert!(self.app.active(&Id::Theme(IdTheme::AuthBookmarks)).is_ok());
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::AuthBookmarks)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::AuthPasswordBlurUp => {
-                assert!(self.app.active(&Id::Theme(IdTheme::AuthUsername)).is_ok());
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::AuthUsername)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::AuthPortBlurDown => {
-                assert!(self.app.active(&Id::Theme(IdTheme::AuthUsername)).is_ok());
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::AuthUsername)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::AuthPortBlurUp => {
-                assert!(self.app.active(&Id::Theme(IdTheme::AuthAddress)).is_ok());
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::AuthAddress)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::AuthProtocolBlurDown => {
-                assert!(self.app.active(&Id::Theme(IdTheme::AuthAddress)).is_ok());
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::AuthAddress)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::AuthProtocolBlurUp => {
-                assert!(self.app.active(&Id::Theme(IdTheme::StatusSync)).is_ok());
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::StatusSync)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::AuthRecentHostsBlurDown => {
-                assert!(self.app.active(&Id::Theme(IdTheme::MiscError)).is_ok());
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::MiscError)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::AuthRecentHostsBlurUp => {
-                assert!(self.app.active(&Id::Theme(IdTheme::AuthBookmarks)).is_ok());
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::AuthBookmarks)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::AuthUsernameBlurDown => {
-                assert!(self.app.active(&Id::Theme(IdTheme::AuthPassword)).is_ok());
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::AuthPassword)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::AuthUsernameBlurUp => {
-                assert!(self.app.active(&Id::Theme(IdTheme::AuthPort)).is_ok());
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::AuthPort)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::MiscErrorBlurDown => {
-                assert!(self.app.active(&Id::Theme(IdTheme::MiscInfo)).is_ok());
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::MiscInfo)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::MiscErrorBlurUp => {
-                assert!(
-                    self.app
-                        .active(&Id::Theme(IdTheme::AuthRecentHosts))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::AuthRecentHosts)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::MiscInfoBlurDown => {
-                assert!(self.app.active(&Id::Theme(IdTheme::MiscInput)).is_ok());
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::MiscInput)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::MiscInfoBlurUp => {
-                assert!(self.app.active(&Id::Theme(IdTheme::MiscError)).is_ok());
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::MiscError)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::MiscInputBlurDown => {
-                assert!(self.app.active(&Id::Theme(IdTheme::MiscKeys)).is_ok());
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::MiscKeys)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::MiscInputBlurUp => {
-                assert!(self.app.active(&Id::Theme(IdTheme::MiscInfo)).is_ok());
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::MiscInfo)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::MiscKeysBlurDown => {
-                assert!(self.app.active(&Id::Theme(IdTheme::MiscQuit)).is_ok());
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::MiscQuit)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::MiscKeysBlurUp => {
-                assert!(self.app.active(&Id::Theme(IdTheme::MiscInput)).is_ok());
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::MiscInput)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::MiscQuitBlurDown => {
-                assert!(self.app.active(&Id::Theme(IdTheme::MiscSave)).is_ok());
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::MiscSave)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::MiscQuitBlurUp => {
-                assert!(self.app.active(&Id::Theme(IdTheme::MiscKeys)).is_ok());
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::MiscKeys)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::MiscSaveBlurDown => {
-                assert!(self.app.active(&Id::Theme(IdTheme::MiscWarn)).is_ok());
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::MiscWarn)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::MiscSaveBlurUp => {
-                assert!(self.app.active(&Id::Theme(IdTheme::MiscQuit)).is_ok());
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::MiscQuit)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::MiscWarnBlurDown => {
-                assert!(
-                    self.app
-                        .active(&Id::Theme(IdTheme::ExplorerLocalBg))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::ExplorerLocalBg)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::MiscWarnBlurUp => {
-                assert!(self.app.active(&Id::Theme(IdTheme::MiscSave)).is_ok());
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::MiscSave)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::ExplorerLocalBgBlurDown => {
-                assert!(
-                    self.app
-                        .active(&Id::Theme(IdTheme::ExplorerLocalFg))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::ExplorerLocalFg)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::ExplorerLocalBgBlurUp => {
-                assert!(self.app.active(&Id::Theme(IdTheme::MiscWarn)).is_ok());
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::MiscWarn)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::ExplorerLocalFgBlurDown => {
-                assert!(
-                    self.app
-                        .active(&Id::Theme(IdTheme::ExplorerLocalHg))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::ExplorerLocalHg)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::ExplorerLocalFgBlurUp => {
-                assert!(
-                    self.app
-                        .active(&Id::Theme(IdTheme::ExplorerLocalBg))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::ExplorerLocalBg)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::ExplorerLocalHgBlurDown => {
-                assert!(
-                    self.app
-                        .active(&Id::Theme(IdTheme::ExplorerRemoteBg))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::ExplorerRemoteBg)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::ExplorerLocalHgBlurUp => {
-                assert!(
-                    self.app
-                        .active(&Id::Theme(IdTheme::ExplorerLocalFg))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::ExplorerLocalFg)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::ExplorerRemoteBgBlurDown => {
-                assert!(
-                    self.app
-                        .active(&Id::Theme(IdTheme::ExplorerRemoteFg))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::ExplorerRemoteFg)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::ExplorerRemoteBgBlurUp => {
-                assert!(
-                    self.app
-                        .active(&Id::Theme(IdTheme::ExplorerLocalHg))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::ExplorerLocalHg)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::ExplorerRemoteFgBlurDown => {
-                assert!(
-                    self.app
-                        .active(&Id::Theme(IdTheme::ExplorerRemoteHg))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::ExplorerRemoteHg)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::ExplorerRemoteFgBlurUp => {
-                assert!(
-                    self.app
-                        .active(&Id::Theme(IdTheme::ExplorerRemoteBg))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::ExplorerRemoteBg)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::ExplorerRemoteHgBlurDown => {
-                assert!(self.app.active(&Id::Theme(IdTheme::ProgBarFull)).is_ok());
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::ProgBarFull)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::ExplorerRemoteHgBlurUp => {
-                assert!(
-                    self.app
-                        .active(&Id::Theme(IdTheme::ExplorerRemoteFg))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::ExplorerRemoteFg)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::ProgBarFullBlurDown => {
-                assert!(self.app.active(&Id::Theme(IdTheme::ProgBarPartial)).is_ok());
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::ProgBarPartial)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::ProgBarFullBlurUp => {
-                assert!(
-                    self.app
-                        .active(&Id::Theme(IdTheme::ExplorerRemoteHg))
-                        .is_ok()
-                );
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::ExplorerRemoteHg)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::ProgBarPartialBlurDown => {
-                assert!(self.app.active(&Id::Theme(IdTheme::LogBg)).is_ok());
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::LogBg)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::ProgBarPartialBlurUp => {
-                assert!(self.app.active(&Id::Theme(IdTheme::ProgBarFull)).is_ok());
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::ProgBarFull)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::LogBgBlurDown => {
-                assert!(self.app.active(&Id::Theme(IdTheme::LogWindow)).is_ok());
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::LogWindow)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::LogBgBlurUp => {
-                assert!(self.app.active(&Id::Theme(IdTheme::ProgBarPartial)).is_ok());
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::ProgBarPartial)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::LogWindowBlurDown => {
-                assert!(self.app.active(&Id::Theme(IdTheme::StatusSorting)).is_ok());
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::StatusSorting)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::LogWindowBlurUp => {
-                assert!(self.app.active(&Id::Theme(IdTheme::LogBg)).is_ok());
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::LogBg)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::StatusSortingBlurDown => {
-                assert!(self.app.active(&Id::Theme(IdTheme::StatusHidden)).is_ok());
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::StatusHidden)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::StatusSortingBlurUp => {
-                assert!(self.app.active(&Id::Theme(IdTheme::LogWindow)).is_ok());
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::LogWindow)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::StatusHiddenBlurDown => {
-                assert!(self.app.active(&Id::Theme(IdTheme::StatusSync)).is_ok());
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::StatusSync)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::StatusHiddenBlurUp => {
-                assert!(self.app.active(&Id::Theme(IdTheme::StatusSorting)).is_ok());
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::StatusSorting)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::StatusSyncBlurDown => {
-                assert!(self.app.active(&Id::Theme(IdTheme::AuthProtocol)).is_ok());
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::AuthProtocol)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::StatusSyncBlurUp => {
-                assert!(self.app.active(&Id::Theme(IdTheme::StatusHidden)).is_ok());
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::StatusHidden)) {
+                    error!("Failed to activate component: {err}");
+                }
             }
             ThemeMsg::ColorChanged(id, color) => {
                 self.action_save_color(id, color);
