@@ -12,7 +12,7 @@ use super::{Context, Id, IdCommon, IdTheme, SetupActivity, Theme, ViewLayout, co
 impl SetupActivity {
     // -- view
 
-    /// Initialize thene view
+    /// Initialize theme view
     pub(super) fn init_theme(&mut self) {
         // Init view (and mount commons)
         self.new_app(ViewLayout::Theme);
