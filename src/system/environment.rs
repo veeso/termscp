@@ -4,20 +4,21 @@
 
 // Ext
 use std::path::{Path, PathBuf};
+use std::sync::LazyLock;
+
+#[cfg(not(test))]
+static CONF_DIR: LazyLock<Option<PathBuf>> = LazyLock::new(dirs::config_dir);
+#[cfg(test)]
+static CONF_DIR: LazyLock<Option<PathBuf>> = LazyLock::new(|| Some(std::env::temp_dir()));
+
+#[cfg(not(test))]
+static CACHE_DIR: LazyLock<Option<PathBuf>> = LazyLock::new(dirs::cache_dir);
+#[cfg(test)]
+static CACHE_DIR: LazyLock<Option<PathBuf>> = LazyLock::new(|| Some(std::env::temp_dir()));
 
 /// Get termscp config directory path and initialize it.
 /// Returns None if it's not possible to initialize it
 pub fn init_config_dir() -> Result<Option<PathBuf>, String> {
-    // Get file
-    #[cfg(not(test))]
-    lazy_static! {
-        static ref CONF_DIR: Option<PathBuf> = dirs::config_dir();
-    }
-    #[cfg(test)]
-    lazy_static! {
-        static ref CONF_DIR: Option<PathBuf> = Some(std::env::temp_dir());
-    }
-
     if let Some(dir) = CONF_DIR.as_deref() {
         init_dir(dir).map(Option::Some)
     } else {
@@ -28,16 +29,6 @@ pub fn init_config_dir() -> Result<Option<PathBuf>, String> {
 /// Get termscp cache directory path and initialize it.
 /// Returns None if it's not possible to initialize it
 pub fn init_cache_dir() -> Result<Option<PathBuf>, String> {
-    // Get file
-    #[cfg(not(test))]
-    lazy_static! {
-        static ref CACHE_DIR: Option<PathBuf> = dirs::cache_dir();
-    }
-    #[cfg(test)]
-    lazy_static! {
-        static ref CACHE_DIR: Option<PathBuf> = Some(std::env::temp_dir());
-    }
-
     if let Some(dir) = CACHE_DIR.as_deref() {
         init_dir(dir).map(Option::Some)
     } else {

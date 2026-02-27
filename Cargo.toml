@@ -48,7 +48,6 @@ keyring = { version = "^3", features = [
   "vendored",
 ] }
 lazy-regex = "^3"
-lazy_static = "^1"
 log = "^0.4"
 magic-crypt = "4"
 notify = "8"
