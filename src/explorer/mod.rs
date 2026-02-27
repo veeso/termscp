@@ -245,7 +245,8 @@ impl FileExplorer {
 
     /// Sort explorer files by their name. All names are converted to lowercase
     fn sort_files_by_name(&mut self) {
-        self.files.sort_by_key(|x: &File| x.name().to_lowercase());
+        self.files
+            .sort_by_cached_key(|x: &File| x.name().to_lowercase());
     }
 
     /// Sort files by mtime; the newest comes first
