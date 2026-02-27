@@ -23,7 +23,7 @@ impl ThemeProvider {
     pub fn new(theme_path: &Path) -> Result<Self, SerializerError> {
         let default_theme: Theme = Theme::default();
         info!(
-            "Setting up theme provider with thene path {} ",
+            "Setting up theme provider with theme path {}",
             theme_path.display(),
         );
         // Create provider
@@ -42,7 +42,7 @@ impl ThemeProvider {
         } else {
             // otherwise Load configuration from file
             if let Err(err) = provider.load() {
-                error!("Couldn't read thene file: {}", err);
+                error!("Couldn't read theme file: {}", err);
                 return Err(err);
             }
             debug!("Read theme file");
