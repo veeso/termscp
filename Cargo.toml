@@ -117,6 +117,18 @@ keyring = []
 smb = ["dep:remotefs-smb"]
 smb-vendored = ["remotefs-smb/vendored"]
 
+[lints.rust]
+trivial_numeric_casts = "warn"
+unsafe_op_in_unsafe_fn = "warn"
+unused_lifetimes = "warn"
+
+[lints.clippy]
+complexity = { level = "warn", priority = -1 }
+correctness = { level = "warn", priority = -1 }
+perf = { level = "warn", priority = -1 }
+style = { level = "warn", priority = -1 }
+suspicious = { level = "warn", priority = -1 }
+
 [profile.dev]
 incremental = true
 
