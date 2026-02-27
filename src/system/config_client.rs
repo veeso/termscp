@@ -309,7 +309,7 @@ impl ConfigClient {
             None => None,
             Some(key_path) => {
                 // Get host and username
-                let (host, username): (String, String) = Self::get_ssh_tokens(mkey);
+                let (host, username) = Self::get_ssh_tokens(mkey)?;
                 // Return key
                 Some((host, username, PathBuf::from(key_path)))
             }
@@ -389,12 +389,18 @@ impl ConfigClient {
     }
 
     /// Get ssh tokens starting from ssh host key
-    /// Panics if key has invalid syntax
-    /// Returns: (host, username)
-    fn get_ssh_tokens(host_key: &str) -> (String, String) {
+    /// Returns: (host, username) or None if key has invalid syntax
+    fn get_ssh_tokens(host_key: &str) -> Option<(String, String)> {
         let tokens: Vec<&str> = host_key.split('@').collect();
-        assert!(tokens.len() >= 2);
-        (String::from(tokens[1]), String::from(tokens[0]))
+        if tokens.len() >= 2 {
+            Some((String::from(tokens[1]), String::from(tokens[0])))
+        } else {
+            error!(
+                "Invalid SSH host key format: '{}' (expected 'username@host')",
+                host_key
+            );
+            None
+        }
     }
 
     /// Make serializer error from `std::io::Error`
@@ -711,8 +717,14 @@ mod tests {
         );
         assert_eq!(
             ConfigClient::get_ssh_tokens("pi@192.168.1.31"),
-            (String::from("192.168.1.31"), String::from("pi"))
+            Some((String::from("192.168.1.31"), String::from("pi")))
         );
+    }
+
+    #[test]
+    fn test_system_config_get_ssh_tokens_invalid() {
+        assert!(ConfigClient::get_ssh_tokens("invalid").is_none());
+        assert!(ConfigClient::get_ssh_tokens("").is_none());
     }
 
     #[test]
