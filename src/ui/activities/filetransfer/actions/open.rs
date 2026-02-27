@@ -1,57 +1,50 @@
 //! ## FileTransferActivity
 //!
-//! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
+//! `filetransfer_activity` is the module which implements the Filetransfer activity, which is the main activity afterall
 
 // locals
 // ext
 use std::path::{Path, PathBuf};
 
-use super::{File, FileTransferActivity, LogLevel, SelectedFile, TransferPayload};
+use super::{File, FileTransferActivity, LogLevel, TransferPayload};
 
 impl FileTransferActivity {
-    /// Open local file
-    pub(crate) fn action_open_local(&mut self) {
-        let entries: Vec<File> = match self.get_local_selected_entries() {
-            SelectedFile::One(entry) => vec![entry],
-            SelectedFile::Many(entries) => entries.into_iter().map(|(f, _)| f).collect(),
-            SelectedFile::None => vec![],
-        };
-        entries
-            .iter()
-            .for_each(|x| self.action_open_local_file(x, None));
+    /// Open selected file(s) with default application
+    pub(crate) fn action_open(&mut self) {
+        let entries = self.get_selected_entries().get_files();
+        entries.iter().for_each(|x| self.open_file(x, None));
 
-        // clear selection
-        self.host_bridge_mut().clear_queue();
-        self.reload_host_bridge_filelist();
+        // clear queue
+        self.browser.explorer_mut().clear_queue();
+        self.reload_browser_file_list();
     }
 
-    /// Open local file
-    pub(crate) fn action_open_remote(&mut self) {
-        let entries: Vec<File> = match self.get_remote_selected_entries() {
-            SelectedFile::One(entry) => vec![entry],
-            SelectedFile::Many(entries) => entries.into_iter().map(|(f, _)| f).collect(),
-            SelectedFile::None => vec![],
-        };
-        entries
-            .iter()
-            .for_each(|x| self.action_open_remote_file(x, None));
+    /// Open selected file(s) with provided application
+    pub(crate) fn action_open_with(&mut self, with: &str) {
+        let entries = self.get_selected_entries().get_files();
+        entries.iter().for_each(|x| self.open_file(x, Some(with)));
 
-        // clear selection
-        self.remote_mut().clear_queue();
-        self.reload_remote_filelist();
+        // clear queue
+        self.browser.explorer_mut().clear_queue();
+        self.reload_browser_file_list();
     }
 
-    /// Perform open lopcal file
-    pub(crate) fn action_open_local_file(&mut self, entry: &File, open_with: Option<&str>) {
-        if self.host_bridge.is_localhost() {
+    /// Open a file, dispatching based on whether the active pane is localhost.
+    pub(crate) fn open_file(&mut self, entry: &File, open_with: Option<&str>) {
+        if self.browser.fs_pane().fs.is_localhost() {
+            // Direct open from local path
             self.open_path_with(entry.path(), open_with);
-        } else {
+        } else if self.is_local_tab() {
+            // Non-localhost host bridge: download via HostBridge API
             self.open_bridged_file(entry, open_with);
+        } else {
+            // Remote: download via filetransfer_recv
+            self.action_open_remote_file(entry, open_with);
         }
     }
 
     /// Open remote file. The file is first downloaded to a temporary directory on localhost
-    pub(crate) fn action_open_remote_file(&mut self, entry: &File, open_with: Option<&str>) {
+    fn action_open_remote_file(&mut self, entry: &File, open_with: Option<&str>) {
         // Download file
         let tmpfile: String =
             match self.get_cache_tmp_name(&entry.name(), entry.extension().as_deref()) {
@@ -90,39 +83,6 @@ impl FileTransferActivity {
         }
     }
 
-    /// Open selected file with provided application
-    pub(crate) fn action_local_open_with(&mut self, with: &str) {
-        let entries: Vec<File> = match self.get_local_selected_entries() {
-            SelectedFile::One(entry) => vec![entry],
-            SelectedFile::Many(entries) => entries.into_iter().map(|(f, _)| f).collect(),
-            SelectedFile::None => vec![],
-        };
-        // Open all entries
-        entries
-            .iter()
-            .for_each(|x| self.action_open_local_file(x, Some(with)));
-
-        // clear selection
-        self.host_bridge_mut().clear_queue();
-    }
-
-    /// Open selected file with provided application
-    pub(crate) fn action_remote_open_with(&mut self, with: &str) {
-        let entries: Vec<File> = match self.get_remote_selected_entries() {
-            SelectedFile::One(entry) => vec![entry],
-            SelectedFile::Many(entries) => entries.into_iter().map(|(f, _)| f).collect(),
-            SelectedFile::None => vec![],
-        };
-        // Open all entries
-        entries
-            .iter()
-            .for_each(|x| self.action_open_remote_file(x, Some(with)));
-
-        // clear selection
-        self.remote_mut().clear_queue();
-        self.reload_remote_filelist();
-    }
-
     fn open_bridged_file(&mut self, entry: &File, open_with: Option<&str>) {
         // Download file
         let tmpfile: String =
@@ -144,7 +104,7 @@ impl FileTransferActivity {
         let tmpfile = cache.join(tmpfile);
 
         // open from host bridge
-        let mut reader = match self.host_bridge.open_file(entry.path()) {
+        let mut reader = match self.browser.local_pane_mut().fs.open_file(entry.path()) {
             Ok(reader) => reader,
             Err(err) => {
                 self.log(

@@ -1,12 +1,13 @@
 //! ## FileTransferActivity
 //!
-//! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
+//! `filetransfer_activity` is the module which implements the Filetransfer activity, which is the main activity afterall
 
 use std::path::Path;
 
 use nucleo::Utf32String;
 use remotefs::File;
 
+use super::pane::Pane;
 use crate::explorer::builder::FileExplorerBuilder;
 use crate::explorer::{FileExplorer, FileSorting};
 use crate::system::config_client::ConfigClient;
@@ -31,19 +32,19 @@ pub enum FoundExplorerTab {
 
 /// Browser contains the browser options
 pub struct Browser {
-    host_bridge: FileExplorer, // Local File explorer state
-    remote: FileExplorer,      // Remote File explorer state
-    found: Option<Found>,      // File explorer for find result
-    tab: FileExplorerTab,      // Current selected tab
+    local: Pane,
+    remote: Pane,
+    found: Option<Found>, // File explorer for find result
+    tab: FileExplorerTab, // Current selected tab
     pub sync_browsing: bool,
 }
 
 impl Browser {
     /// Build a new `Browser` struct
-    pub fn new(cli: &ConfigClient) -> Self {
+    pub fn new(local: Pane, remote: Pane) -> Self {
         Self {
-            host_bridge: Self::build_local_explorer(cli),
-            remote: Self::build_remote_explorer(cli),
+            local,
+            remote,
             found: None,
             tab: FileExplorerTab::HostBridge,
             sync_browsing: false,
@@ -52,8 +53,8 @@ impl Browser {
 
     pub fn explorer(&self) -> &FileExplorer {
         match self.tab {
-            FileExplorerTab::HostBridge => &self.host_bridge,
-            FileExplorerTab::Remote => &self.remote,
+            FileExplorerTab::HostBridge => &self.local.explorer,
+            FileExplorerTab::Remote => &self.remote.explorer,
             FileExplorerTab::FindHostBridge | FileExplorerTab::FindRemote => {
                 self.found.as_ref().map(|x| &x.explorer).unwrap()
             }
@@ -62,15 +63,15 @@ impl Browser {
 
     pub fn other_explorer_no_found(&self) -> &FileExplorer {
         match self.tab {
-            FileExplorerTab::HostBridge | FileExplorerTab::FindHostBridge => &self.remote,
-            FileExplorerTab::Remote | FileExplorerTab::FindRemote => &self.host_bridge,
+            FileExplorerTab::HostBridge | FileExplorerTab::FindHostBridge => &self.remote.explorer,
+            FileExplorerTab::Remote | FileExplorerTab::FindRemote => &self.local.explorer,
         }
     }
 
     pub fn explorer_mut(&mut self) -> &mut FileExplorer {
         match self.tab {
-            FileExplorerTab::HostBridge => &mut self.host_bridge,
-            FileExplorerTab::Remote => &mut self.remote,
+            FileExplorerTab::HostBridge => &mut self.local.explorer,
+            FileExplorerTab::Remote => &mut self.remote.explorer,
             FileExplorerTab::FindHostBridge | FileExplorerTab::FindRemote => {
                 self.found.as_mut().map(|x| &mut x.explorer).unwrap()
             }
@@ -78,19 +79,19 @@ impl Browser {
     }
 
     pub fn host_bridge(&self) -> &FileExplorer {
-        &self.host_bridge
+        &self.local.explorer
     }
 
     pub fn host_bridge_mut(&mut self) -> &mut FileExplorer {
-        &mut self.host_bridge
+        &mut self.local.explorer
     }
 
     pub fn remote(&self) -> &FileExplorer {
-        &self.remote
+        &self.remote.explorer
     }
 
     pub fn remote_mut(&mut self) -> &mut FileExplorer {
-        &mut self.remote
+        &mut self.remote.explorer
     }
 
     pub fn found(&self) -> Option<&FileExplorer> {
@@ -151,21 +152,69 @@ impl Browser {
     /// Toggle terminal for the current tab
     pub fn toggle_terminal(&mut self, terminal: bool) {
         if self.tab == FileExplorerTab::HostBridge {
-            self.host_bridge.toggle_terminal(terminal);
+            self.local.explorer.toggle_terminal(terminal);
         } else if self.tab == FileExplorerTab::Remote {
-            self.remote.toggle_terminal(terminal);
+            self.remote.explorer.toggle_terminal(terminal);
         }
     }
 
     /// Check if terminal is open for the host bridge tab
     pub fn is_terminal_open_host_bridge(&self) -> bool {
-        self.tab == FileExplorerTab::HostBridge && self.host_bridge.terminal_open()
+        self.tab == FileExplorerTab::HostBridge && self.local.explorer.terminal_open()
     }
 
     /// Check if terminal is open for the remote tab
     pub fn is_terminal_open_remote(&self) -> bool {
-        self.tab == FileExplorerTab::Remote && self.remote.terminal_open()
+        self.tab == FileExplorerTab::Remote && self.remote.explorer.terminal_open()
     }
+
+    // -- Pane accessors --
+
+    /// The pane whose filesystem is targeted by the current tab.
+    pub fn fs_pane(&self) -> &Pane {
+        match self.tab {
+            FileExplorerTab::HostBridge | FileExplorerTab::FindHostBridge => &self.local,
+            FileExplorerTab::Remote | FileExplorerTab::FindRemote => &self.remote,
+        }
+    }
+
+    /// The pane whose filesystem is targeted by the current tab (mutable).
+    pub fn fs_pane_mut(&mut self) -> &mut Pane {
+        match self.tab {
+            FileExplorerTab::HostBridge | FileExplorerTab::FindHostBridge => &mut self.local,
+            FileExplorerTab::Remote | FileExplorerTab::FindRemote => &mut self.remote,
+        }
+    }
+
+    /// The opposite pane (transfer destination).
+    pub fn opposite_pane(&self) -> &Pane {
+        match self.tab {
+            FileExplorerTab::HostBridge | FileExplorerTab::FindHostBridge => &self.remote,
+            FileExplorerTab::Remote | FileExplorerTab::FindRemote => &self.local,
+        }
+    }
+
+    /// Direct access to local pane
+    pub fn local_pane(&self) -> &Pane {
+        &self.local
+    }
+
+    /// Direct access to local pane (mutable)
+    pub fn local_pane_mut(&mut self) -> &mut Pane {
+        &mut self.local
+    }
+
+    /// Direct access to remote pane
+    pub fn remote_pane(&self) -> &Pane {
+        &self.remote
+    }
+
+    /// Direct access to remote pane (mutable)
+    pub fn remote_pane_mut(&mut self) -> &mut Pane {
+        &mut self.remote
+    }
+
+    // -- Explorer builders (static helpers) --
 
     /// Build a file explorer with local host setup
     pub fn build_local_explorer(cli: &ConfigClient) -> FileExplorer {

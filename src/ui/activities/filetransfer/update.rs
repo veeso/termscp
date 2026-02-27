@@ -1,6 +1,6 @@
 //! ## FileTransferActivity
 //!
-//! `filetransfer_activiy` is the module which implements the Filetransfer activity, which is the main activity afterall
+//! `filetransfer_activity` is the module which implements the Filetransfer activity, which is the main activity afterall
 
 // locals
 // externals
@@ -12,6 +12,7 @@ use super::actions::walkdir::WalkdirError;
 use super::browser::{FileExplorerTab, FoundExplorerTab};
 use super::{
     ExitReason, FileTransferActivity, Id, MarkQueue, Msg, TransferMsg, TransferOpts, UiMsg,
+    ui_result,
 };
 
 impl Update<Msg> for FileTransferActivity {
@@ -40,13 +41,12 @@ impl FileTransferActivity {
             TransferMsg::Chmod(mode) => {
                 self.umount_chmod();
                 self.mount_blocking_wait("Applying new file mode…");
-                match self.browser.tab() {
-                    FileExplorerTab::HostBridge | FileExplorerTab::FindHostBridge
-                        if self.host_bridge.is_localhost() && cfg!(windows) => {}
-                    FileExplorerTab::HostBridge => self.action_local_chmod(mode),
-                    FileExplorerTab::FindHostBridge => self.action_find_local_chmod(mode),
-                    FileExplorerTab::Remote => self.action_remote_chmod(mode),
-                    FileExplorerTab::FindRemote => self.action_find_remote_chmod(mode),
+                // Skip chmod on Windows localhost
+                if !(self.is_local_tab()
+                    && self.browser.local_pane().fs.is_localhost()
+                    && cfg!(windows))
+                {
+                    self.action_chmod(mode);
                 }
                 self.umount_wait();
                 self.update_browser_file_list();
@@ -54,11 +54,7 @@ impl FileTransferActivity {
             TransferMsg::CopyFileTo(dest) => {
                 self.umount_copy();
                 self.mount_blocking_wait("Copying file(s)…");
-                match self.browser.tab() {
-                    FileExplorerTab::HostBridge => self.action_local_copy(dest),
-                    FileExplorerTab::Remote => self.action_remote_copy(dest),
-                    _ => panic!("Found tab doesn't support COPY"),
-                }
+                self.action_copy(dest);
                 self.umount_wait();
                 // Reload files
                 self.update_browser_file_list()
@@ -66,11 +62,7 @@ impl FileTransferActivity {
             TransferMsg::CreateSymlink(name) => {
                 self.umount_symlink();
                 self.mount_blocking_wait("Creating symlink…");
-                match self.browser.tab() {
-                    FileExplorerTab::HostBridge => self.action_local_symlink(name),
-                    FileExplorerTab::Remote => self.action_remote_symlink(name),
-                    _ => panic!("Found tab doesn't support SYMLINK"),
-                }
+                self.action_symlink(name);
                 self.umount_wait();
                 // Reload files
                 self.update_browser_file_list()
@@ -79,15 +71,14 @@ impl FileTransferActivity {
                 self.umount_radio_delete();
                 self.mount_blocking_wait("Removing file(s)…");
                 match self.browser.tab() {
-                    FileExplorerTab::HostBridge => self.action_local_delete(),
-                    FileExplorerTab::Remote => self.action_remote_delete(),
+                    FileExplorerTab::HostBridge | FileExplorerTab::Remote => {
+                        self.action_delete();
+                    }
                     FileExplorerTab::FindHostBridge | FileExplorerTab::FindRemote => {
-                        // Get entry
                         self.action_find_delete();
-                        // Delete entries
+                        // Remove deleted entries from the find-result list
                         match self.app.state(&Id::ExplorerFind) {
                             Ok(State::One(StateValue::Usize(idx))) => {
-                                // Reload entries
                                 self.found_mut().unwrap().del_entry(idx);
                             }
                             Ok(State::Vec(values)) => {
@@ -106,31 +97,19 @@ impl FileTransferActivity {
                 }
                 self.umount_wait();
                 // Reload files
-                match self.browser.tab() {
-                    FileExplorerTab::HostBridge => self.update_host_bridge_filelist(),
-                    FileExplorerTab::Remote => self.update_remote_filelist(),
-                    FileExplorerTab::FindHostBridge => self.update_host_bridge_filelist(),
-                    FileExplorerTab::FindRemote => self.update_remote_filelist(),
-                }
+                self.update_browser_file_list();
             }
-            TransferMsg::EnterDirectory if self.browser.tab() == FileExplorerTab::HostBridge => {
-                if let Some(entry) = self.get_local_selected_file() {
-                    self.action_submit_local(entry);
+            TransferMsg::EnterDirectory
+                if self.browser.tab() == FileExplorerTab::HostBridge
+                    || self.browser.tab() == FileExplorerTab::Remote =>
+            {
+                if let Some(entry) = self.get_selected_file() {
+                    self.action_submit(entry);
                     // Update file list if sync
                     if self.browser.sync_browsing && self.browser.found().is_none() {
-                        self.update_remote_filelist();
+                        self.update_browser_file_list_swapped();
                     }
-                    self.update_host_bridge_filelist();
-                }
-            }
-            TransferMsg::EnterDirectory if self.browser.tab() == FileExplorerTab::Remote => {
-                if let Some(entry) = self.get_remote_selected_file() {
-                    self.action_submit_remote(entry);
-                    // Update file list if sync
-                    if self.browser.sync_browsing && self.browser.found().is_none() {
-                        self.update_host_bridge_filelist();
-                    }
-                    self.update_remote_filelist();
+                    self.update_browser_file_list();
                 }
             }
             TransferMsg::EnterDirectory => {
@@ -145,22 +124,13 @@ impl FileTransferActivity {
                 self.update_browser_file_list()
             }
             TransferMsg::ExecuteCmd(cmd) => {
-                // Exec command
-                match self.browser.tab() {
-                    FileExplorerTab::HostBridge => self.action_local_exec(cmd),
-                    FileExplorerTab::Remote => self.action_remote_exec(cmd),
-                    _ => panic!("Found tab doesn't support EXEC"),
-                };
+                self.action_exec_cmd(cmd);
             }
             TransferMsg::GetFileSize => {
                 self.action_get_file_size();
             }
             TransferMsg::GoTo(dir) => {
-                match self.browser.tab() {
-                    FileExplorerTab::HostBridge => self.action_change_local_dir(dir),
-                    FileExplorerTab::Remote => self.action_change_remote_dir(dir),
-                    _ => panic!("Found tab doesn't support GOTO"),
-                }
+                self.action_change_dir(dir);
                 // Umount
                 self.umount_goto();
                 // Reload files if sync
@@ -171,56 +141,24 @@ impl FileTransferActivity {
                 self.update_browser_file_list()
             }
             TransferMsg::GoToParentDirectory => {
-                match self.browser.tab() {
-                    FileExplorerTab::HostBridge => {
-                        self.action_go_to_local_upper_dir();
-                        if self.browser.sync_browsing && self.browser.found().is_none() {
-                            self.update_remote_filelist();
-                        }
-                        // Reload file list component
-                        self.update_host_bridge_filelist()
-                    }
-                    FileExplorerTab::Remote => {
-                        self.action_go_to_remote_upper_dir();
-                        if self.browser.sync_browsing && self.browser.found().is_none() {
-                            self.update_host_bridge_filelist();
-                        }
-                        // Reload file list component
-                        self.update_remote_filelist()
-                    }
-                    _ => {}
+                self.action_go_to_upper_dir();
+                if self.browser.sync_browsing && self.browser.found().is_none() {
+                    self.update_browser_file_list_swapped();
                 }
+                self.update_browser_file_list();
             }
             TransferMsg::GoToPreviousDirectory => {
-                match self.browser.tab() {
-                    FileExplorerTab::HostBridge => {
-                        self.action_go_to_previous_local_dir();
-                        if self.browser.sync_browsing && self.browser.found().is_none() {
-                            self.update_remote_filelist();
-                        }
-                        // Reload file list component
-                        self.update_host_bridge_filelist()
-                    }
-                    FileExplorerTab::Remote => {
-                        self.action_go_to_previous_remote_dir();
-                        if self.browser.sync_browsing && self.browser.found().is_none() {
-                            self.update_host_bridge_filelist();
-                        }
-                        // Reload file list component
-                        self.update_remote_filelist()
-                    }
-                    _ => {}
+                self.action_go_to_previous_dir();
+                if self.browser.sync_browsing && self.browser.found().is_none() {
+                    self.update_browser_file_list_swapped();
                 }
+                self.update_browser_file_list();
             }
             TransferMsg::InitFuzzySearch => {
                 // Mount wait
                 self.mount_walkdir_wait();
                 // Find
-                let res: Result<Vec<File>, WalkdirError> = match self.browser.tab() {
-                    FileExplorerTab::HostBridge => self.action_walkdir_local(),
-                    FileExplorerTab::Remote => self.action_walkdir_remote(),
-                    _ => panic!("Trying to search for files, while already in a find result"),
-                };
+                let res: Result<Vec<File>, WalkdirError> = self.action_walkdir();
                 // Umount wait
                 self.umount_wait();
                 // Match result
@@ -266,36 +204,28 @@ impl FileTransferActivity {
                 }
             }
             TransferMsg::Mkdir(dir) => {
-                match self.browser.tab() {
-                    FileExplorerTab::HostBridge => self.action_local_mkdir(dir),
-                    FileExplorerTab::Remote => self.action_remote_mkdir(dir),
-                    _ => {}
-                }
+                self.action_mkdir(dir);
                 self.umount_mkdir();
                 // Reload files
                 self.update_browser_file_list()
             }
             TransferMsg::NewFile(name) => {
-                match self.browser.tab() {
-                    FileExplorerTab::HostBridge => self.action_local_newfile(name),
-                    FileExplorerTab::Remote => self.action_remote_newfile(name),
-                    _ => {}
-                }
+                self.action_newfile(name);
                 self.umount_newfile();
                 // Reload files
                 self.update_browser_file_list()
             }
             TransferMsg::OpenFile => match self.browser.tab() {
-                FileExplorerTab::HostBridge => self.action_open_local(),
-                FileExplorerTab::Remote => self.action_open_remote(),
+                FileExplorerTab::HostBridge | FileExplorerTab::Remote => self.action_open(),
                 FileExplorerTab::FindHostBridge | FileExplorerTab::FindRemote => {
                     self.action_find_open()
                 }
             },
             TransferMsg::OpenFileWith(prog) => {
                 match self.browser.tab() {
-                    FileExplorerTab::HostBridge => self.action_local_open_with(&prog),
-                    FileExplorerTab::Remote => self.action_remote_open_with(&prog),
+                    FileExplorerTab::HostBridge | FileExplorerTab::Remote => {
+                        self.action_open_with(&prog)
+                    }
                     FileExplorerTab::FindHostBridge | FileExplorerTab::FindRemote => {
                         self.action_find_open_with(&prog)
                     }
@@ -314,11 +244,7 @@ impl FileTransferActivity {
             TransferMsg::RenameFile(dest) => {
                 self.umount_rename();
                 self.mount_blocking_wait("Moving file(s)…");
-                match self.browser.tab() {
-                    FileExplorerTab::HostBridge => self.action_local_rename(dest),
-                    FileExplorerTab::Remote => self.action_remote_rename(dest),
-                    _ => {}
-                }
+                self.action_rename(dest);
                 self.umount_wait();
                 // Reload files
                 self.update_browser_file_list()
@@ -335,10 +261,10 @@ impl FileTransferActivity {
             TransferMsg::SaveFileAs(dest) => {
                 self.umount_saveas();
                 match self.browser.tab() {
-                    FileExplorerTab::HostBridge => self.action_local_saveas(dest),
-                    FileExplorerTab::Remote => self.action_remote_saveas(dest),
+                    FileExplorerTab::HostBridge | FileExplorerTab::Remote => {
+                        self.action_saveas(dest)
+                    }
                     FileExplorerTab::FindHostBridge | FileExplorerTab::FindRemote => {
-                        // Get entry
                         self.action_find_transfer(TransferOpts::default().save_as(Some(dest)));
                     }
                 }
@@ -351,8 +277,9 @@ impl FileTransferActivity {
             TransferMsg::ToggleWatchFor(index) => self.action_toggle_watch_for(index),
             TransferMsg::TransferFile => {
                 match self.browser.tab() {
-                    FileExplorerTab::HostBridge => self.action_local_send(),
-                    FileExplorerTab::Remote => self.action_remote_recv(),
+                    FileExplorerTab::HostBridge | FileExplorerTab::Remote => {
+                        self.action_transfer_file()
+                    }
                     FileExplorerTab::FindHostBridge | FileExplorerTab::FindRemote => {
                         self.action_find_transfer(TransferOpts::default())
                     }
@@ -399,13 +326,13 @@ impl FileTransferActivity {
                 // Set focus
                 match new_tab {
                     FileExplorerTab::HostBridge => {
-                        assert!(self.app.active(&Id::ExplorerHostBridge).is_ok())
+                        ui_result(self.app.active(&Id::ExplorerHostBridge));
                     }
                     FileExplorerTab::Remote => {
-                        assert!(self.app.active(&Id::ExplorerRemote).is_ok())
+                        ui_result(self.app.active(&Id::ExplorerRemote));
                     }
                     FileExplorerTab::FindHostBridge | FileExplorerTab::FindRemote => {
-                        assert!(self.app.active(&Id::ExplorerFind).is_ok())
+                        ui_result(self.app.active(&Id::ExplorerFind));
                     }
                 }
                 self.browser.change_tab(new_tab);
@@ -476,10 +403,10 @@ impl FileTransferActivity {
                 self.update_find_list();
             }
             UiMsg::GoToTransferQueue => {
-                assert!(self.app.active(&Id::TransferQueueHostBridge).is_ok());
+                ui_result(self.app.active(&Id::TransferQueueHostBridge));
             }
             UiMsg::LogBackTabbed => {
-                assert!(self.app.active(&Id::ExplorerHostBridge).is_ok());
+                ui_result(self.app.active(&Id::ExplorerHostBridge));
             }
             UiMsg::MarkFile(index) => {
                 self.action_mark_file(index);
@@ -507,18 +434,16 @@ impl FileTransferActivity {
                 self.umount_quit();
             }
             UiMsg::ShowChmodPopup => {
-                let selected_file = match self.browser.tab() {
-                    #[cfg(posix)]
-                    FileExplorerTab::HostBridge => self.get_local_selected_entries(),
-                    #[cfg(posix)]
-                    FileExplorerTab::FindHostBridge => self.get_found_selected_entries(),
-                    FileExplorerTab::Remote => self.get_remote_selected_entries(),
-                    FileExplorerTab::FindRemote => self.get_found_selected_entries(),
-                    #[cfg(win)]
-                    FileExplorerTab::HostBridge | FileExplorerTab::FindHostBridge => {
-                        SelectedFile::None
-                    }
+                // On Windows localhost, chmod is not supported
+                #[cfg(win)]
+                let selected_file = if self.is_local_tab() {
+                    SelectedFile::None
+                } else {
+                    self.get_selected_entries()
                 };
+                #[cfg(posix)]
+                let selected_file = self.get_selected_entries();
+
                 if let Some(mode) = selected_file.unix_pex() {
                     self.mount_chmod(
                         mode,
@@ -541,18 +466,8 @@ impl FileTransferActivity {
                 self.browser.toggle_terminal(true);
                 self.mount_exec()
             }
-            UiMsg::ShowFileInfoPopup if self.browser.tab() == FileExplorerTab::HostBridge => {
-                if let SelectedFile::One(file) = self.get_local_selected_entries() {
-                    self.mount_file_info(&file);
-                }
-            }
-            UiMsg::ShowFileInfoPopup if self.browser.tab() == FileExplorerTab::Remote => {
-                if let SelectedFile::One(file) = self.get_remote_selected_entries() {
-                    self.mount_file_info(&file);
-                }
-            }
             UiMsg::ShowFileInfoPopup => {
-                if let SelectedFile::One(file) = self.get_found_selected_entries() {
+                if let SelectedFile::One(file) = self.get_selected_entries() {
                     self.mount_file_info(&file);
                 }
             }
@@ -567,12 +482,12 @@ impl FileTransferActivity {
             UiMsg::ShowRenamePopup => self.mount_rename(),
             UiMsg::ShowSaveAsPopup => self.mount_saveas(),
             UiMsg::ShowSymlinkPopup => {
-                if match self.browser.tab() {
-                    FileExplorerTab::HostBridge => self.is_local_selected_one(),
-                    FileExplorerTab::Remote => self.is_remote_selected_one(),
+                // Symlink is not available from find-result tabs
+                let can_symlink = match self.browser.tab() {
+                    FileExplorerTab::HostBridge | FileExplorerTab::Remote => self.is_selected_one(),
                     FileExplorerTab::FindHostBridge | FileExplorerTab::FindRemote => false,
-                } {
-                    // Only if only one entry is selected
+                };
+                if can_symlink {
                     self.mount_symlink();
                 } else {
                     self.mount_error(
@@ -604,25 +519,25 @@ impl FileTransferActivity {
 
             UiMsg::BottomPanelLeft => match self.app.focus() {
                 Some(Id::TransferQueueHostBridge) => {
-                    assert!(self.app.active(&Id::Log).is_ok())
+                    ui_result(self.app.active(&Id::Log));
                 }
                 Some(Id::TransferQueueRemote) => {
-                    assert!(self.app.active(&Id::TransferQueueHostBridge).is_ok())
+                    ui_result(self.app.active(&Id::TransferQueueHostBridge));
                 }
                 Some(Id::Log) => {
-                    assert!(self.app.active(&Id::TransferQueueRemote).is_ok())
+                    ui_result(self.app.active(&Id::TransferQueueRemote));
                 }
                 _ => {}
             },
             UiMsg::BottomPanelRight => match self.app.focus() {
                 Some(Id::TransferQueueHostBridge) => {
-                    assert!(self.app.active(&Id::TransferQueueRemote).is_ok())
+                    ui_result(self.app.active(&Id::TransferQueueRemote));
                 }
                 Some(Id::TransferQueueRemote) => {
-                    assert!(self.app.active(&Id::Log).is_ok())
+                    ui_result(self.app.active(&Id::Log));
                 }
                 Some(Id::Log) => {
-                    assert!(self.app.active(&Id::TransferQueueHostBridge).is_ok())
+                    ui_result(self.app.active(&Id::TransferQueueHostBridge));
                 }
                 _ => {}
             },

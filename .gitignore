@@ -24,3 +24,7 @@ dist/pkgs/arch/*.tar.gz
 
 dist/pkgs/
 dist/build/macos/openssl/
+
+.idea/
+.claude/
+
