@@ -32,8 +32,12 @@ name = "termscp"
 path = "src/main.rs"
 
 [dependencies]
+aes = "0.8"
+aes-gcm = "0.10"
 argh = "^0.1"
+base64 = "0.22"
 bitflags = "^2"
+cbc = { version = "0.1", features = ["alloc"] }
 bytesize = "^2"
 chrono = "^0.4"
 content_inspector = "^0.2"
@@ -49,7 +53,7 @@ keyring = { version = "^3", features = [
 ] }
 lazy-regex = "^3"
 log = "^0.4"
-magic-crypt = "4"
+md-5 = "0.10"
 notify = "8"
 notify-rust = { version = "^4", default-features = false, features = ["d"] }
 nucleo = "0.5"
