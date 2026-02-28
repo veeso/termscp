@@ -211,43 +211,6 @@ impl FileTransferActivity {
         }
     }
 
-    // -- transfer sizes --
-
-    /// Get total size of transfer for the specified side.
-    pub(super) fn get_total_transfer_size(&mut self, entry: &File, local: bool) -> usize {
-        self.mount_blocking_wait("Calculating transfer size…");
-
-        let sz = if entry.is_dir() {
-            let list_result = if local {
-                self.browser.local_pane_mut().fs.list_dir(entry.path())
-            } else {
-                self.browser.remote_pane_mut().fs.list_dir(entry.path())
-            };
-            match list_result {
-                Ok(files) => files
-                    .iter()
-                    .map(|x| self.get_total_transfer_size(x, local))
-                    .sum(),
-                Err(err) => {
-                    self.log(
-                        LogLevel::Error,
-                        format!(
-                            "Could not list directory {}: {}",
-                            entry.path().display(),
-                            err
-                        ),
-                    );
-                    0
-                }
-            }
-        } else {
-            entry.metadata.size as usize
-        };
-
-        self.umount_wait();
-        sz
-    }
-
     // -- file changed --
 
     /// Check whether a file has changed on the specified side, compared to the given metadata.

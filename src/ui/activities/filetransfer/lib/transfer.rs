@@ -9,14 +9,54 @@ use bytesize::ByteSize;
 
 // -- States and progress
 
-/// TransferStates contains the states related to the transfer process
-pub struct TransferStates {
-    aborted: bool,               // Describes whether the transfer process has been aborted
-    pub full: ProgressStates,    // full transfer states
-    pub partial: ProgressStates, // Partial transfer states
+/// Tracks overall transfer progress as an entry counter (e.g. "3/12").
+///
+/// Unlike the byte-based `ProgressStates`, this counts top-level entries
+/// rather than bytes, avoiding the expensive recursive size pre-calculation
+/// that can cause FTP idle-timeout disconnections on large directory trees.
+#[derive(Default)]
+pub struct TransferProgress {
+    completed: usize,
+    total: usize,
 }
 
-/// Progress states describes the states for the progress of a single transfer part
+impl fmt::Display for TransferProgress {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}/{}", self.completed, self.total)
+    }
+}
+
+impl TransferProgress {
+    /// Initialize progress with the total number of entries to transfer.
+    pub fn init(&mut self, total: usize) {
+        self.completed = 0;
+        self.total = total;
+    }
+
+    /// Mark one entry as completed.
+    pub fn increment(&mut self) {
+        self.completed += 1;
+    }
+
+    /// Calculate progress in a range between 0.0 and 1.0.
+    pub fn calc_progress(&self) -> f64 {
+        if self.total == 0 {
+            return 0.0;
+        }
+        let prog = self.completed as f64 / self.total as f64;
+        prog.min(1.0)
+    }
+}
+
+/// Contains the states related to the transfer process.
+pub struct TransferStates {
+    aborted: bool,
+    pub full: TransferProgress,
+    pub partial: ProgressStates,
+    bytes_transferred: usize,
+}
+
+/// Describes the states for the progress of a single file transfer.
 pub struct ProgressStates {
     started: Instant,
     total: usize,
@@ -30,33 +70,40 @@ impl Default for TransferStates {
 }
 
 impl TransferStates {
-    /// Instantiates a new transfer states
+    /// Instantiates a new transfer states.
     pub fn new() -> TransferStates {
         TransferStates {
             aborted: false,
-            full: ProgressStates::default(),
+            full: TransferProgress::default(),
             partial: ProgressStates::default(),
+            bytes_transferred: 0,
         }
     }
 
-    /// Re-intiialize transfer states
+    /// Re-initialize transfer states.
     pub fn reset(&mut self) {
         self.aborted = false;
+        self.bytes_transferred = 0;
     }
 
-    /// Set aborted to true
+    /// Set aborted to true.
     pub fn abort(&mut self) {
         self.aborted = true;
     }
 
-    /// Returns whether transfer has been aborted
+    /// Returns whether transfer has been aborted.
     pub fn aborted(&self) -> bool {
         self.aborted
     }
 
-    /// Returns the size of the entire transfer
+    /// Returns total bytes transferred (used for notification threshold).
     pub fn full_size(&self) -> usize {
-        self.full.total
+        self.bytes_transferred
+    }
+
+    /// Accumulate transferred bytes for notification threshold tracking.
+    pub fn add_bytes(&mut self, delta: usize) {
+        self.bytes_transferred += delta;
     }
 }
 
@@ -227,22 +274,45 @@ mod test {
     }
 
     #[test]
+    fn test_ui_activities_filetransfer_lib_transfer_progress() {
+        let mut progress = TransferProgress::default();
+        assert_eq!(progress.calc_progress(), 0.0);
+        assert_eq!(progress.to_string(), "0/0");
+        // Init with 4 entries
+        progress.init(4);
+        assert_eq!(progress.calc_progress(), 0.0);
+        assert_eq!(progress.to_string(), "0/4");
+        // Increment
+        progress.increment();
+        assert_eq!(progress.calc_progress(), 0.25);
+        assert_eq!(progress.to_string(), "1/4");
+        // Complete all
+        progress.increment();
+        progress.increment();
+        progress.increment();
+        assert_eq!(progress.calc_progress(), 1.0);
+        assert_eq!(progress.to_string(), "4/4");
+    }
+
+    #[test]
     fn test_ui_activities_filetransfer_lib_transfer_states() {
         let mut states: TransferStates = TransferStates::default();
-        assert_eq!(states.aborted, false);
-        assert_eq!(states.full.total, 0);
-        assert_eq!(states.full.written, 0);
-        assert!(states.full.started.elapsed().as_secs() < 5);
+        assert!(!states.aborted());
         assert_eq!(states.partial.total, 0);
         assert_eq!(states.partial.written, 0);
         assert!(states.partial.started.elapsed().as_secs() < 5);
         // Aborted
         states.abort();
-        assert_eq!(states.aborted(), true);
+        assert!(states.aborted());
         states.reset();
-        assert_eq!(states.aborted(), false);
-        states.full.total = 1024;
+        assert!(!states.aborted());
+        // Bytes tracking
+        states.add_bytes(512);
+        states.add_bytes(512);
         assert_eq!(states.full_size(), 1024);
+        // Reset clears bytes
+        states.reset();
+        assert_eq!(states.full_size(), 0);
     }
 
     #[test]
