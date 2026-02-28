@@ -209,12 +209,7 @@ impl FileTransferActivity {
                         if self.transfer.aborted() {
                             break;
                         }
-                        self.filetransfer_send_recurse(
-                            entry,
-                            remote_path.as_path(),
-                            None,
-                            false,
-                        )?;
+                        self.filetransfer_send_recurse(entry, remote_path.as_path(), None, false)?;
                         if track_progress {
                             self.transfer.full.increment();
                         }
