@@ -16,8 +16,6 @@ extern crate bitflags;
 extern crate lazy_regex;
 #[macro_use]
 extern crate log;
-#[macro_use]
-extern crate magic_crypt;
 
 use std::env;
 use std::path::{Path, PathBuf};
