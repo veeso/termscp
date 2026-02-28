@@ -87,9 +87,8 @@ impl FileTransferActivity {
     ) -> Result<(), String> {
         // Reset states
         self.transfer.reset();
-        // Calculate total size of transfer
-        let total_transfer_size: usize = file.metadata.size as usize;
-        self.transfer.full.init(total_transfer_size);
+        // Single file = 1 entry
+        self.transfer.full.init(1);
         // Mount progress bar
         self.mount_progress_bar(format!("Uploading {}…", file.path.display()));
         // Get remote path
@@ -102,54 +101,56 @@ impl FileTransferActivity {
         remote_path.push(remote_file_name);
         // Send
         let result = self.filetransfer_send_one(file, remote_path.as_path(), file_name);
+        if result.is_ok() {
+            self.transfer.full.increment();
+        }
         // Umount progress bar
         self.umount_progress_bar();
         // Return result
         result.map_err(|x| x.to_string())
     }
 
-    /// Send a `TransferPayload` of type `Any`
+    /// Send a `TransferPayload` of type `Any`.
     fn filetransfer_send_any(
         &mut self,
         entry: &File,
         curr_remote_path: &Path,
         dst_name: Option<String>,
     ) -> Result<(), String> {
-        // Reset states
         self.transfer.reset();
-        // Calculate total size of transfer
-        let total_transfer_size: usize = self.get_total_transfer_size(entry, true);
-        self.transfer.full.init(total_transfer_size);
-        // Mount progress bar
+        if !entry.is_dir() {
+            self.transfer.full.init(1);
+        }
         self.mount_progress_bar(format!("Uploading {}…", entry.path().display()));
-        // Send recurse
-        let result = self.filetransfer_send_recurse(entry, curr_remote_path, dst_name);
-        // Umount progress bar
+        let result = self.filetransfer_send_recurse(entry, curr_remote_path, dst_name, true);
         self.umount_progress_bar();
         result
     }
 
-    /// Send transfer queue entries to remote
+    /// Send transfer queue entries to remote.
     fn filetransfer_send_transfer_queue(
         &mut self,
         entries: &[(File, PathBuf)],
     ) -> Result<(), String> {
         // Reset states
         self.transfer.reset();
-        // Calculate total size of transfer
-        let total_transfer_size: usize = entries
-            .iter()
-            .map(|(x, _)| self.get_total_transfer_size(x, true))
-            .sum();
-        self.transfer.full.init(total_transfer_size);
+        // Total = number of queue entries
+        self.transfer.full.init(entries.len());
         // Mount progress bar
         self.mount_progress_bar(format!("Uploading {} entries…", entries.len()));
-        // Send recurse
-        let result = entries
-            .iter()
-            .map(|(x, remote)| self.filetransfer_send_recurse(x, remote, None))
-            .find(|x| x.is_err())
-            .unwrap_or(Ok(()));
+        // Send each entry
+        let mut result = Ok(());
+        for (entry, remote) in entries {
+            if self.transfer.aborted() {
+                break;
+            }
+            let r = self.filetransfer_send_recurse(entry, remote, None, false);
+            if r.is_err() {
+                result = r;
+                break;
+            }
+            self.transfer.full.increment();
+        }
         // Umount progress bar
         self.umount_progress_bar();
         result
@@ -160,6 +161,7 @@ impl FileTransferActivity {
         entry: &File,
         curr_remote_path: &Path,
         dst_name: Option<String>,
+        track_progress: bool,
     ) -> Result<(), String> {
         // Write popup
         let file_name = entry.name();
@@ -200,14 +202,17 @@ impl FileTransferActivity {
             // Get files in dir
             match self.browser.local_pane_mut().fs.list_dir(entry.path()) {
                 Ok(entries) => {
-                    // Iterate over files
+                    if track_progress {
+                        self.transfer.full.init(entries.len());
+                    }
                     for entry in entries.iter() {
-                        // If aborted; break
                         if self.transfer.aborted() {
                             break;
                         }
-                        // Send entry; name is always None after first call
-                        self.filetransfer_send_recurse(entry, remote_path.as_path(), None)?
+                        self.filetransfer_send_recurse(entry, remote_path.as_path(), None, false)?;
+                        if track_progress {
+                            self.transfer.full.increment();
+                        }
                     }
                     Ok(())
                 }
@@ -262,7 +267,12 @@ impl FileTransferActivity {
                     }
                     Err(err.to_string())
                 }
-                Ok(_) => Ok(()),
+                Ok(_) => {
+                    if track_progress {
+                        self.transfer.full.increment();
+                    }
+                    Ok(())
+                }
             }
         };
         // Scan dir on remote
@@ -302,7 +312,7 @@ impl FileTransferActivity {
                     host_bridge.path().display()
                 ),
             );
-            self.transfer.full.update_progress(metadata.size as usize);
+            self.transfer.add_bytes(metadata.size as usize);
             return Ok(());
         }
         // Upload file
@@ -393,7 +403,7 @@ impl FileTransferActivity {
             };
             // Increase progress
             self.transfer.partial.update_progress(delta);
-            self.transfer.full.update_progress(delta);
+            self.transfer.add_bytes(delta);
             // Draw only if a significant progress has been made (performance improvement)
             if last_progress_val < self.transfer.partial.calc_progress() - 0.01 {
                 // Draw
@@ -467,23 +477,19 @@ impl FileTransferActivity {
 
     /// Recv fs entry from remote.
     /// If dst_name is Some, entry will be saved with a different name.
-    /// If entry is a directory, this applies to directory only
+    /// If entry is a directory, this applies to directory only.
     fn filetransfer_recv_any(
         &mut self,
         entry: &File,
         host_path: &Path,
         dst_name: Option<String>,
     ) -> Result<(), String> {
-        // Reset states
         self.transfer.reset();
-        // Calculate total transfer size
-        let total_transfer_size: usize = self.get_total_transfer_size(entry, false);
-        self.transfer.full.init(total_transfer_size);
-        // Mount progress bar
+        if !entry.is_dir() {
+            self.transfer.full.init(1);
+        }
         self.mount_progress_bar(format!("Downloading {}…", entry.path().display()));
-        // Receive
-        let result = self.filetransfer_recv_recurse(entry, host_path, dst_name);
-        // Umount progress bar
+        let result = self.filetransfer_recv_recurse(entry, host_path, dst_name, true);
         self.umount_progress_bar();
         result
     }
@@ -496,40 +502,45 @@ impl FileTransferActivity {
     ) -> Result<(), String> {
         // Reset states
         self.transfer.reset();
-        // Calculate total transfer size
-        let total_transfer_size: usize = entry.metadata.size as usize;
-        self.transfer.full.init(total_transfer_size);
+        // Single file = 1 entry
+        self.transfer.full.init(1);
         // Mount progress bar
         self.mount_progress_bar(format!("Downloading {}…", entry.path.display()));
         // Receive
         let result = self.filetransfer_recv_one(host_bridge_path, entry, entry.name());
+        if result.is_ok() {
+            self.transfer.full.increment();
+        }
         // Umount progress bar
         self.umount_progress_bar();
         // Return result
         result.map_err(|x| x.to_string())
     }
 
-    /// Receive transfer queue from remote
+    /// Receive transfer queue from remote.
     fn filetransfer_recv_transfer_queue(
         &mut self,
         entries: &[(File, PathBuf)],
     ) -> Result<(), String> {
         // Reset states
         self.transfer.reset();
-        // Calculate total size of transfer
-        let total_transfer_size: usize = entries
-            .iter()
-            .map(|(x, _)| self.get_total_transfer_size(x, false))
-            .sum();
-        self.transfer.full.init(total_transfer_size);
+        // Total = number of queue entries
+        self.transfer.full.init(entries.len());
         // Mount progress bar
         self.mount_progress_bar(format!("Downloading {} entries…", entries.len()));
-        // Send recurse
-        let result = entries
-            .iter()
-            .map(|(x, path)| self.filetransfer_recv_recurse(x, path, None))
-            .find(|x| x.is_err())
-            .unwrap_or(Ok(()));
+        // Receive each entry
+        let mut result = Ok(());
+        for (entry, path) in entries {
+            if self.transfer.aborted() {
+                break;
+            }
+            let r = self.filetransfer_recv_recurse(entry, path, None, false);
+            if r.is_err() {
+                result = r;
+                break;
+            }
+            self.transfer.full.increment();
+        }
         // Umount progress bar
         self.umount_progress_bar();
         result
@@ -540,6 +551,7 @@ impl FileTransferActivity {
         entry: &File,
         host_bridge_path: &Path,
         dst_name: Option<String>,
+        track_progress: bool,
     ) -> Result<(), String> {
         // Write popup
         let file_name = entry.name();
@@ -583,19 +595,22 @@ impl FileTransferActivity {
                     // Get files in dir from remote
                     match self.browser.remote_pane_mut().fs.list_dir(entry.path()) {
                         Ok(entries) => {
-                            // Iterate over files
+                            if track_progress {
+                                self.transfer.full.init(entries.len());
+                            }
                             for entry in entries.iter() {
-                                // If transfer has been aborted; break
                                 if self.transfer.aborted() {
                                     break;
                                 }
-                                // Receive entry; name is always None after first call
-                                // Local path becomes host_bridge_dir_path
                                 self.filetransfer_recv_recurse(
                                     entry,
                                     host_bridge_dir_path.as_path(),
                                     None,
-                                )?
+                                    false,
+                                )?;
+                                if track_progress {
+                                    self.transfer.full.increment();
+                                }
                             }
                             Ok(())
                         }
@@ -672,6 +687,9 @@ impl FileTransferActivity {
                 }
                 Err(err.to_string())
             } else {
+                if track_progress {
+                    self.transfer.full.increment();
+                }
                 Ok(())
             }
         };
@@ -704,9 +722,7 @@ impl FileTransferActivity {
                     remote.path().display()
                 ),
             );
-            self.transfer
-                .full
-                .update_progress(remote.metadata().size as usize);
+            self.transfer.add_bytes(remote.metadata().size as usize);
             return Ok(());
         }
 
@@ -786,7 +802,7 @@ impl FileTransferActivity {
             };
             // Set progress
             self.transfer.partial.update_progress(delta);
-            self.transfer.full.update_progress(delta);
+            self.transfer.add_bytes(delta);
             // Draw only if a significant progress has been made (performance improvement)
             if last_progress_val < self.transfer.partial.calc_progress() - 0.01 {
                 // Draw
