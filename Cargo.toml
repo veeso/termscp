@@ -44,7 +44,6 @@ content_inspector = "^0.2"
 dirs = "^6"
 edit = "^0.1"
 filetime = "^0.2"
-hostname = "^0.4"
 keyring = { version = "^3", features = [
   "apple-native",
   "windows-native",
