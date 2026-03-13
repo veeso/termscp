@@ -41,9 +41,7 @@ impl TryFrom<&Args> for RemoteArgs {
             (_, _) => Err("Too many arguments".to_string()),
         }?;
         // parse bookmark first
-        let last_item_index = (args.bookmark.len() + args.positional.len())
-            .checked_sub(1)
-            .unwrap_or_default();
+        let last_item_index = (args.bookmark.len() + args.positional.len()).saturating_sub(1);
 
         let mut hosts = vec![];
 
