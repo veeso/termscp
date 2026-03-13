@@ -49,11 +49,10 @@ impl FileTransferActivity {
         let host_bridge_params = self.context().host_bridge_params().unwrap();
         match host_bridge_params {
             HostBridgeParams::Localhost(_) => {
-                let hostname = match hostname::get() {
+                let hostname = match whoami::hostname() {
                     Ok(h) => h,
                     Err(_) => return String::from("localhost"),
                 };
-                let hostname: String = hostname.as_os_str().to_string_lossy().to_string();
                 let tokens: Vec<&str> = hostname.split('.').collect();
                 String::from(*tokens.first().unwrap_or(&"localhost"))
             }
