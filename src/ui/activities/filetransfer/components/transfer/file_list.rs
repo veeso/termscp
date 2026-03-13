@@ -240,7 +240,7 @@ impl MockComponent for FileList {
         }
 
         State::One(StateValue::Usize(if self.has_dot_dot() {
-            self.states.list_index.checked_sub(1).unwrap_or_default()
+            self.states.list_index.saturating_sub(1)
         } else {
             self.states.list_index
         }))
