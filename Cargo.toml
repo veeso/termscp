@@ -1,16 +1,16 @@
 [package]
-authors = ["Christian Visintin <christian.visintin@veeso.dev>"]
-categories = ["command-line-utilities"]
-description = "termscp is a feature rich terminal file transfer and explorer with support for SCP/SFTP/FTP/Kube/S3/WebDAV"
+name = "termscp"
+version = "1.0.0"
 edition = "2024"
+authors = ["Christian Visintin <christian.visintin@veeso.dev>"]
+description = "termscp is a feature rich terminal file transfer and explorer with support for SCP/SFTP/FTP/Kube/S3/WebDAV"
+license = "MIT"
+repository = "https://github.com/veeso/termscp"
+categories = ["command-line-utilities"]
 homepage = "https://termscp.veeso.dev"
 include = ["src/**/*", "build.rs", "LICENSE", "README.md", "CHANGELOG.md"]
 keywords = ["terminal", "ftp", "scp", "sftp", "tui"]
-license = "MIT"
-name = "termscp"
 readme = "README.md"
-repository = "https://github.com/veeso/termscp"
-version = "1.0.0"
 rust-version = "1.89.0"
 
 [package.metadata.rpm]
@@ -27,93 +27,93 @@ maintainer = "Christian Visintin <christian.visintin@veeso.dev>"
 copyright = "2025, Christian Visintin <christian.visintin@veeso.dev>"
 extended-description-file = "docs/misc/README.deb.txt"
 
-[[bin]]
-name = "termscp"
-path = "src/main.rs"
-
-[dependencies]
-aes = "0.8"
-aes-gcm = "0.10"
-argh = "^0.1"
-base64 = "0.22"
-bitflags = "^2"
-cbc = { version = "0.1", features = ["alloc"] }
-bytesize = "^2"
-chrono = "^0.4"
-content_inspector = "^0.2"
-dirs = "^6"
-edit = "^0.1"
-filetime = "^0.2"
-keyring = { version = "^3", features = [
-  "apple-native",
-  "windows-native",
-  "sync-secret-service",
-  "vendored",
-] }
-lazy-regex = "^3"
-log = "^0.4"
-md-5 = "0.10"
-notify = "8"
-notify-rust = { version = "^4", default-features = false, features = ["d"] }
-nucleo = "0.5"
-open = "5"
-rand = "0.9"
-regex = "^1"
-remotefs = "^0.3"
-remotefs-aws-s3 = "0.4"
-remotefs-kube = "0.4"
-remotefs-smb = { version = "^0.3", optional = true }
-remotefs-ssh = { version = "0.8", default-features = false, features = ["russh"] }
-remotefs-webdav = "^0.2"
-rpassword = "^7"
-self_update = { version = "0.42", default-features = false, features = [
-  "rustls",
-  "archive-tar",
-  "archive-zip",
-  "compression-flate2",
-  "compression-zip-deflate",
-] }
-serde = { version = "^1", features = ["derive"] }
-shellexpand = "3"
-simplelog = "^0.12"
-ssh2-config = "^0.7"
-tempfile = "3"
-thiserror = "2"
-tokio = { version = "1", features = ["rt"] }
-toml = "1"
-tui-realm-stdlib = "3"
-tuirealm = "3"
-tui-term = "0.2"
-unicode-width = "0.2"
-version-compare = "^0.2"
-whoami = "2"
-wildmatch = "2"
-
-[target."cfg(target_family = \"unix\")".dependencies]
-remotefs-ftp = { version = "^0.4", features = [
-  "native-tls-vendored",
-  "native-tls",
-] }
-uzers = "0.12"
-
-[target."cfg(target_family = \"windows\")".dependencies]
-remotefs-ftp = { version = "^0.4", features = ["native-tls"] }
-
-[dev-dependencies]
-pretty_assertions = "^1"
-serial_test = "^3"
-
-[build-dependencies]
-cfg_aliases = "0.2"
-vergen-git2 = { version = "9", features = ["build", "cargo", "rustc", "si"] }
-
 [features]
-default = ["smb", "keyring"]
+default = ["keyring", "smb"]
 github-actions = []
 isolated-tests = []
 keyring = []
 smb = ["dep:remotefs-smb"]
 smb-vendored = ["remotefs-smb/vendored"]
+
+[dependencies]
+aes = "0.8"
+aes-gcm = "0.10"
+argh = "0.1"
+base64 = "0.22"
+bitflags = "2"
+bytesize = "2"
+cbc = { version = "0.1", features = ["alloc"] }
+chrono = "0.4"
+content_inspector = "0.2"
+dirs = "6"
+edit = "0.1"
+filetime = "0.2"
+keyring = { version = "3", features = [
+  "apple-native",
+  "sync-secret-service",
+  "vendored",
+  "windows-native",
+] }
+lazy-regex = "3"
+log = "0.4"
+md-5 = "0.10"
+notify = "8"
+notify-rust = { version = "4", default-features = false, features = ["d"] }
+nucleo = "0.5"
+open = "5"
+rand = "0.9"
+regex = "1"
+remotefs = "0.3"
+remotefs-aws-s3 = "0.4"
+remotefs-kube = "0.4"
+remotefs-smb = { version = "0.3", optional = true }
+remotefs-ssh = { version = "0.8", default-features = false, features = ["russh"] }
+remotefs-webdav = "0.2"
+rpassword = "7"
+self_update = { version = "0.42", default-features = false, features = [
+  "archive-tar",
+  "archive-zip",
+  "compression-flate2",
+  "compression-zip-deflate",
+  "rustls",
+] }
+serde = { version = "1", features = ["derive"] }
+shellexpand = "3"
+simplelog = "0.12"
+ssh2-config = "0.7"
+tempfile = "3"
+thiserror = "2"
+tokio = { version = "1", features = ["rt"] }
+toml = "1"
+tui-realm-stdlib = "3"
+tui-term = "0.2"
+tuirealm = "3"
+unicode-width = "0.2"
+version-compare = "0.2"
+whoami = "2"
+wildmatch = "2"
+
+[target."cfg(target_family = \"unix\")".dependencies]
+remotefs-ftp = { version = "0.4", features = [
+  "native-tls",
+  "native-tls-vendored",
+] }
+uzers = "0.12"
+
+[target."cfg(target_family = \"windows\")".dependencies]
+remotefs-ftp = { version = "0.4", features = ["native-tls"] }
+
+[dev-dependencies]
+pretty_assertions = "1"
+serial_test = "3"
+
+[build-dependencies]
+cfg_aliases = "0.2"
+vergen-git2 = { version = "9", features = ["build", "cargo", "rustc", "si"] }
+
+[[bin]]
+name = "termscp"
+path = "src/main.rs"
 
 [lints.rust]
 trivial_numeric_casts = "warn"
