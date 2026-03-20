@@ -44,6 +44,7 @@ impl FileTransferActivity {
     fn action_exec(&mut self, cmd: String) {
         if cmd.is_empty() {
             self.print_terminal("".to_string());
+            return;
         }
 
         let cmd = match Command::from_str(&cmd) {
