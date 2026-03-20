@@ -234,6 +234,7 @@ mod test {
     fn should_tell_that_version_is_higher() {
         assert!(Update::is_new_version_higher("0.10.0", "0.9.0"));
         assert!(Update::is_new_version_higher("0.20.0", "0.19.1"));
+        assert!(Update::is_new_version_higher("1.0.0", "0.19.1"));
         assert!(!Update::is_new_version_higher("0.9.0", "0.10.0"));
         assert!(!Update::is_new_version_higher("0.9.9", "0.10.1"));
         assert!(!Update::is_new_version_higher("0.10.9", "0.11.0"));
