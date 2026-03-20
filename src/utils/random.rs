@@ -5,7 +5,7 @@
 // Ext
 
 use rand::distr::Alphanumeric;
-use rand::{RngExt as _, rng};
+use rand::{Rng as _, rng};
 
 /// Generate a random alphanumeric string with provided length
 pub fn random_alphanumeric_with_len(len: usize) -> String {
