@@ -43,7 +43,6 @@ www: \"https://termscp.veeso.dev/termscp/\"\n\
 maintainer: \"christian.visintin1997@gmail.com\"\n\
 prefix: \"/usr/local/bin\"\n\
 deps: {\n\
-  libssh: {origin: security/libssh, version: 0.9.5}\n\
 }\n\
 files: {\n\
   /usr/local/bin/termscp: \"$HASH\"\n\
