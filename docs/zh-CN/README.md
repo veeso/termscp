@@ -196,12 +196,10 @@ choco install termscp
 ### 依赖 ❗
 
 - **Linux** 用户:
-  - libssh
   - libdbus-1
   - pkg-config
   - libsmbclient
 - **FreeBSD** 用户:
-  - libssh
   - dbus
   - pkgconf
   - libsmbclient
@@ -270,7 +268,7 @@ termscp 由这些很棒的项目提供支持：
 - [rpassword](https://github.com/conradkleinespel/rpassword)
 - [rust-s3](https://github.com/durch/rust-s3)
 - [self_update](https://github.com/jaemk/self_update)
-- [ssh2-rs](https://github.com/alexcrichton/ssh2-rs)
+- [russh](https://github.com/Eugeny/russh)
 - [suppaftp](https://github.com/veeso/suppaftp)
 - [ratatui](https://github.com/ratatui-org/ratatui)
 - [tui-realm](https://github.com/veeso/tui-realm)

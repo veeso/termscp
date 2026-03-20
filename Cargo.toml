@@ -57,15 +57,16 @@ notify = "8"
 notify-rust = { version = "^4", default-features = false, features = ["d"] }
 nucleo = "0.5"
 open = "5"
-rand = "0.10"
+rand = "0.9"
 regex = "^1"
 remotefs = "^0.3"
 remotefs-aws-s3 = "0.4"
 remotefs-kube = "0.4"
 remotefs-smb = { version = "^0.3", optional = true }
+remotefs-ssh = { version = "0.8", default-features = false, features = ["russh"] }
 remotefs-webdav = "^0.2"
 rpassword = "^7"
-self_update = { version = "^0.42", default-features = false, features = [
+self_update = { version = "0.42", default-features = false, features = [
   "rustls",
   "archive-tar",
   "archive-zip",
@@ -93,15 +94,10 @@ remotefs-ftp = { version = "^0.4", features = [
   "native-tls-vendored",
   "native-tls",
 ] }
-remotefs-ssh = { version = "^0.7", default-features = false, features = [
-  "find",
-  "libssh-vendored",
-] }
 uzers = "0.12"
 
 [target."cfg(target_family = \"windows\")".dependencies]
 remotefs-ftp = { version = "^0.4", features = ["native-tls"] }
-remotefs-ssh = { version = "^0.7" }
 
 [dev-dependencies]
 pretty_assertions = "^1"

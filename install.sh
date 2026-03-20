@@ -299,9 +299,9 @@ install_on_macos() {
 
 install_bsd_cargo_deps() {
     set -e
-    confirm "${YELLOW}libssh, gcc${NO_COLOR} are required to install ${GREEN}termscp${NO_COLOR}; would you like to proceed?"
+    confirm "${YELLOW}gcc${NO_COLOR} is required to install ${GREEN}termscp${NO_COLOR}; would you like to proceed?"
     sudo="$(elevate_priv_ex /usr/local/bin)"
-    $sudo pkg install -y curl wget libssh gcc dbus pkgconf libsmbclient
+    $sudo pkg install -y curl wget gcc dbus pkgconf libsmbclient
     info "Dependencies installed successfully"
 }
 
@@ -327,7 +327,7 @@ install_linux_cargo_deps() {
         exit 1
     fi
     set -e
-    confirm "${YELLOW}libssh, gcc, openssl, pkg-config, libdbus${NO_COLOR} are required to install ${GREEN}termscp${NO_COLOR}. The following command will be used to install the dependencies: '${BOLD}${YELLOW}${deps_cmd}${NO_COLOR}'. Would you like to proceed?"
+    confirm "${YELLOW}gcc, openssl, pkg-config, libdbus${NO_COLOR} are required to install ${GREEN}termscp${NO_COLOR}. The following command will be used to install the dependencies: '${BOLD}${YELLOW}${deps_cmd}${NO_COLOR}'. Would you like to proceed?"
     sudo="$(elevate_priv_ex /usr/local/bin)"
     $sudo $deps_cmd
     info "Dependencies installed successfully"

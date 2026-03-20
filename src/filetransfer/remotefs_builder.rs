@@ -13,10 +13,7 @@ use remotefs_kube::KubeMultiPodFs as KubeFs;
 use remotefs_smb::SmbOptions;
 #[cfg(smb)]
 use remotefs_smb::{SmbCredentials, SmbFs};
-#[cfg(windows)]
-use remotefs_ssh::LibSsh2Session as SshSession;
-#[cfg(unix)]
-use remotefs_ssh::LibSshSession as SshSession;
+use remotefs_ssh::{NoCheckServerKey, RusshSession as SshSession};
 use remotefs_ssh::{ScpFs, SftpFs, SshAgentIdentity, SshConfigParseRule, SshOpts};
 use remotefs_webdav::WebDAVFs;
 
@@ -53,10 +50,10 @@ impl RemoteFsBuilder {
                 Ok(Box::new(Self::kube_client(params)?))
             }
             (FileTransferProtocol::Scp, ProtocolParams::Generic(params)) => {
-                Ok(Box::new(Self::scp_client(params, config_client)))
+                Ok(Box::new(Self::scp_client(params, config_client)?))
             }
             (FileTransferProtocol::Sftp, ProtocolParams::Generic(params)) => {
-                Ok(Box::new(Self::sftp_client(params, config_client)))
+                Ok(Box::new(Self::sftp_client(params, config_client)?))
             }
             #[cfg(smb)]
             (FileTransferProtocol::Smb, ProtocolParams::Smb(params)) => {
@@ -126,13 +123,7 @@ impl RemoteFsBuilder {
 
     /// Build kube client
     fn kube_client(params: KubeProtocolParams) -> Result<KubeFs, String> {
-        let rt = Arc::new(
-            tokio::runtime::Builder::new_current_thread()
-                .worker_threads(1)
-                .enable_all()
-                .build()
-                .map_err(|e| format!("Unable to create tokio runtime: {e}"))?,
-        );
+        let rt = Self::tokio_runtime()?;
         let kube_fs = KubeFs::new(&rt);
         if let Some(config) = params.config() {
             Ok(kube_fs.config(config))
@@ -145,16 +136,20 @@ impl RemoteFsBuilder {
     fn scp_client(
         params: GenericProtocolParams,
         config_client: &ConfigClient,
-    ) -> ScpFs<SshSession> {
-        Self::build_ssh_opts(params, config_client).into()
+    ) -> Result<ScpFs<SshSession<NoCheckServerKey>>, String> {
+        let opts = Self::build_ssh_opts(params, config_client);
+        let rt = Self::tokio_runtime()?;
+        Ok(ScpFs::russh(opts, rt))
     }
 
     /// Build sftp client
     fn sftp_client(
         params: GenericProtocolParams,
         config_client: &ConfigClient,
-    ) -> SftpFs<SshSession> {
-        Self::build_ssh_opts(params, config_client).into()
+    ) -> Result<SftpFs<SshSession<NoCheckServerKey>>, String> {
+        let opts = Self::build_ssh_opts(params, config_client);
+        let rt = Self::tokio_runtime()?;
+        Ok(SftpFs::russh(opts, rt))
     }
 
     #[cfg(smb_unix)]
@@ -261,6 +256,17 @@ impl RemoteFsBuilder {
     /// Make ssh storage from `ConfigClient` if possible, empty otherwise (empty is implicit if degraded)
     fn make_ssh_storage(config_client: &ConfigClient) -> SshKeyStorage {
         SshKeyStorage::from(config_client)
+    }
+
+    /// Create tokio runtime to run async code for remotefs
+    fn tokio_runtime() -> Result<Arc<tokio::runtime::Runtime>, String> {
+        Ok(Arc::new(
+            tokio::runtime::Builder::new_current_thread()
+                .worker_threads(1)
+                .enable_all()
+                .build()
+                .map_err(|e| format!("Unable to create tokio runtime: {e}"))?,
+        ))
     }
 }
 
