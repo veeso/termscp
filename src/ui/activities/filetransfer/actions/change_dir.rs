@@ -10,7 +10,7 @@ use remotefs::File;
 use super::{FileTransferActivity, LogLevel, Msg, PendingActionMsg};
 
 /// Describes destination for sync browsing
-enum SyncBrowsingDestination {
+pub(crate) enum SyncBrowsingDestination {
     Path(String),
     ParentDir,
     PreviousDir,
@@ -63,7 +63,7 @@ impl FileTransferActivity {
 
     /// Synchronize browsing on the target browser.
     /// If destination doesn't exist, then prompt for directory creation.
-    fn synchronize_browsing(&mut self, destination: SyncBrowsingDestination) {
+    pub(crate) fn synchronize_browsing(&mut self, destination: SyncBrowsingDestination) {
         // Get destination path
         let path = match self.resolve_sync_browsing_destination(&destination) {
             Some(p) => p,
