@@ -187,15 +187,15 @@ impl BookmarksClient {
         name: S,
         params: FileTransferParams,
         save_password: bool,
-    ) {
+    ) -> Result<(), SerializerError> {
         let name: String = name.as_ref().to_string();
         if name.is_empty() {
             error!("Bookmark name is empty; ignoring add_bookmark request");
-            return;
+            return Ok(());
         }
         // Make bookmark
         info!("Added bookmark {}", name);
-        let mut host: Bookmark = self.make_bookmark(params);
+        let mut host: Bookmark = self.make_bookmark(params)?;
         // If not save_password, set secrets to `None`
         if !save_password {
             host.password = None;
@@ -205,6 +205,7 @@ impl BookmarksClient {
             }
         }
         self.hosts.bookmarks.insert(name, host);
+        Ok(())
     }
 
     /// Delete entry from bookmarks
@@ -226,9 +227,9 @@ impl BookmarksClient {
     }
 
     /// Add a new recent to bookmarks
-    pub fn add_recent(&mut self, params: FileTransferParams) {
+    pub fn add_recent(&mut self, params: FileTransferParams) -> Result<(), SerializerError> {
         // Make bookmark
-        let mut host: Bookmark = self.make_bookmark(params);
+        let mut host: Bookmark = self.make_bookmark(params)?;
         // Null password for recents
         host.password = None;
         if let Some(s3) = host.s3.as_mut() {
@@ -240,7 +241,7 @@ impl BookmarksClient {
             if *value == host {
                 debug!("Discarding recent since duplicated ({})", key);
                 // Don't save duplicates
-                return;
+                return Ok(());
             }
         }
         // If hosts size is bigger than self.recents_size; pop last
@@ -265,6 +266,7 @@ impl BookmarksClient {
         let name: String = fmt_time(SystemTime::now(), "ISO%Y%m%dT%H%M%S");
         info!("Saved recent host {}", name);
         self.hosts.recents.insert(name, host);
+        Ok(())
     }
 
     /// Delete entry from recents
@@ -329,27 +331,29 @@ impl BookmarksClient {
     }
 
     /// Make bookmark from credentials
-    fn make_bookmark(&self, params: FileTransferParams) -> Bookmark {
+    fn make_bookmark(&self, params: FileTransferParams) -> Result<Bookmark, SerializerError> {
         let mut bookmark: Bookmark = Bookmark::from(params);
         // Encrypt password
         if let Some(pwd) = bookmark.password {
-            bookmark.password = Some(self.encrypt_str(pwd.as_str()));
+            bookmark.password = Some(self.encrypt_str(pwd.as_str())?);
         }
         // Encrypt aws s3 params
         if let Some(s3) = bookmark.s3.as_mut() {
             if let Some(access_key) = s3.access_key.as_mut() {
-                *access_key = self.encrypt_str(access_key.as_str());
+                *access_key = self.encrypt_str(access_key.as_str())?;
             }
             if let Some(secret_access_key) = s3.secret_access_key.as_mut() {
-                *secret_access_key = self.encrypt_str(secret_access_key.as_str());
+                *secret_access_key = self.encrypt_str(secret_access_key.as_str())?;
             }
         }
-        bookmark
+        Ok(bookmark)
     }
 
     /// Encrypt provided string using AES-128. Encrypted buffer is then converted to BASE64
-    fn encrypt_str(&self, txt: &str) -> String {
-        crypto::aes128_b64_crypt(self.key.as_str(), txt)
+    fn encrypt_str(&self, txt: &str) -> Result<String, SerializerError> {
+        crypto::aes128_b64_crypt(self.key.as_str(), txt).map_err(|err| {
+            SerializerError::new_ex(SerializerErrorKind::Serialization, err.to_string())
+        })
     }
 
     /// Decrypt provided string using AES-128
@@ -403,24 +407,32 @@ mod tests {
         let mut client: BookmarksClient =
             BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16, true).unwrap();
         // Add some bookmarks
-        client.add_bookmark(
-            "raspberry",
-            make_generic_ftparams(
-                FileTransferProtocol::Sftp,
-                "192.168.1.31",
-                22,
-                "pi",
-                Some("mypassword"),
-            ),
-            true,
+        assert!(
+            client
+                .add_bookmark(
+                    "raspberry",
+                    make_generic_ftparams(
+                        FileTransferProtocol::Sftp,
+                        "192.168.1.31",
+                        22,
+                        "pi",
+                        Some("mypassword"),
+                    ),
+                    true,
+                )
+                .is_ok()
         );
-        client.add_recent(make_generic_ftparams(
-            FileTransferProtocol::Sftp,
-            "192.168.1.31",
-            22,
-            "pi",
-            Some("mypassword"),
-        ));
+        assert!(
+            client
+                .add_recent(make_generic_ftparams(
+                    FileTransferProtocol::Sftp,
+                    "192.168.1.31",
+                    22,
+                    "pi",
+                    Some("mypassword"),
+                ))
+                .is_ok()
+        );
         let recent_key: String = String::from(client.iter_recents().next().unwrap());
         assert!(client.write_bookmarks().is_ok());
         let key: String = client.key.clone();
@@ -451,7 +463,11 @@ mod tests {
         let mut client: BookmarksClient =
             BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16, true).unwrap();
         // Add s3 bookmark
-        client.add_bookmark("my-bucket", make_s3_ftparams(), true);
+        assert!(
+            client
+                .add_bookmark("my-bucket", make_s3_ftparams(), true)
+                .is_ok()
+        );
         // Verify bookmark
         let bookmark = client.get_bookmark("my-bucket").unwrap();
         assert_eq!(bookmark.protocol, FileTransferProtocol::AwsS3);
@@ -471,7 +487,11 @@ mod tests {
         let mut client: BookmarksClient =
             BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16, true).unwrap();
         // Add s3 bookmark
-        client.add_bookmark("my-bucket", make_s3_ftparams(), false);
+        assert!(
+            client
+                .add_bookmark("my-bucket", make_s3_ftparams(), false)
+                .is_ok()
+        );
         // Verify bookmark
         let bookmark = client.get_bookmark("my-bucket").unwrap();
         assert_eq!(bookmark.protocol, FileTransferProtocol::AwsS3);
@@ -492,7 +512,7 @@ mod tests {
         let mut client: BookmarksClient =
             BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16, true).unwrap();
         // Add s3 bookmark
-        client.add_recent(make_s3_ftparams());
+        assert!(client.add_recent(make_s3_ftparams()).is_ok());
         // Verify bookmark
         let bookmark = client.iter_recents().next().unwrap();
         let bookmark = client.get_recent(bookmark).unwrap();
@@ -515,27 +535,35 @@ mod tests {
         let mut client: BookmarksClient =
             BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16, true).unwrap();
         // Add bookmark
-        client.add_bookmark(
-            "raspberry",
-            make_generic_ftparams(
-                FileTransferProtocol::Sftp,
-                "192.168.1.31",
-                22,
-                "pi",
-                Some("mypassword"),
-            ),
-            true,
+        assert!(
+            client
+                .add_bookmark(
+                    "raspberry",
+                    make_generic_ftparams(
+                        FileTransferProtocol::Sftp,
+                        "192.168.1.31",
+                        22,
+                        "pi",
+                        Some("mypassword"),
+                    ),
+                    true,
+                )
+                .is_ok()
         );
-        client.add_bookmark(
-            "raspberry2",
-            make_generic_ftparams(
-                FileTransferProtocol::Sftp,
-                "192.168.1.31",
-                22,
-                "pi",
-                Some("mypassword2"),
-            ),
-            true,
+        assert!(
+            client
+                .add_bookmark(
+                    "raspberry2",
+                    make_generic_ftparams(
+                        FileTransferProtocol::Sftp,
+                        "192.168.1.31",
+                        22,
+                        "pi",
+                        Some("mypassword2"),
+                    ),
+                    true,
+                )
+                .is_ok()
         );
         // Iter
         assert_eq!(client.iter_bookmarks().count(), 2);
@@ -564,16 +592,20 @@ mod tests {
         let mut client: BookmarksClient =
             BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16, true).unwrap();
         // Add bookmark with empty name should be silently ignored
-        client.add_bookmark(
-            "",
-            make_generic_ftparams(
-                FileTransferProtocol::Sftp,
-                "192.168.1.31",
-                22,
-                "pi",
-                Some("mypassword"),
-            ),
-            true,
+        assert!(
+            client
+                .add_bookmark(
+                    "",
+                    make_generic_ftparams(
+                        FileTransferProtocol::Sftp,
+                        "192.168.1.31",
+                        22,
+                        "pi",
+                        Some("mypassword"),
+                    ),
+                    true,
+                )
+                .is_ok()
         );
         // No bookmark should have been added
         assert_eq!(client.iter_bookmarks().count(), 0);
@@ -587,16 +619,20 @@ mod tests {
         let mut client: BookmarksClient =
             BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16, true).unwrap();
         // Add bookmark
-        client.add_bookmark(
-            "raspberry",
-            make_generic_ftparams(
-                FileTransferProtocol::Sftp,
-                "192.168.1.31",
-                22,
-                "pi",
-                Some("mypassword"),
-            ),
-            false,
+        assert!(
+            client
+                .add_bookmark(
+                    "raspberry",
+                    make_generic_ftparams(
+                        FileTransferProtocol::Sftp,
+                        "192.168.1.31",
+                        22,
+                        "pi",
+                        Some("mypassword"),
+                    ),
+                    false,
+                )
+                .is_ok()
         );
         let bookmark = ftparams_to_tup(client.get_bookmark(&String::from("raspberry")).unwrap());
         assert_eq!(bookmark.0, String::from("192.168.1.31"));
@@ -615,13 +651,17 @@ mod tests {
         let mut client: BookmarksClient =
             BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16, true).unwrap();
         // Add bookmark
-        client.add_recent(make_generic_ftparams(
-            FileTransferProtocol::Sftp,
-            "192.168.1.31",
-            22,
-            "pi",
-            Some("mypassword"),
-        ));
+        assert!(
+            client
+                .add_recent(make_generic_ftparams(
+                    FileTransferProtocol::Sftp,
+                    "192.168.1.31",
+                    22,
+                    "pi",
+                    Some("mypassword"),
+                ))
+                .is_ok()
+        );
         // Iter
         assert_eq!(client.iter_recents().count(), 1);
         let key: String = String::from(client.iter_recents().next().unwrap());
@@ -651,20 +691,28 @@ mod tests {
         let mut client: BookmarksClient =
             BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16, true).unwrap();
         // Add bookmark
-        client.add_recent(make_generic_ftparams(
-            FileTransferProtocol::Sftp,
-            "192.168.1.31",
-            22,
-            "pi",
-            Some("mypassword"),
-        ));
-        client.add_recent(make_generic_ftparams(
-            FileTransferProtocol::Sftp,
-            "192.168.1.31",
-            22,
-            "pi",
-            Some("mypassword"),
-        ));
+        assert!(
+            client
+                .add_recent(make_generic_ftparams(
+                    FileTransferProtocol::Sftp,
+                    "192.168.1.31",
+                    22,
+                    "pi",
+                    Some("mypassword"),
+                ))
+                .is_ok()
+        );
+        assert!(
+            client
+                .add_recent(make_generic_ftparams(
+                    FileTransferProtocol::Sftp,
+                    "192.168.1.31",
+                    22,
+                    "pi",
+                    Some("mypassword"),
+                ))
+                .is_ok()
+        );
         // There should be only one recent
         assert_eq!(client.iter_recents().count(), 1);
     }
@@ -679,31 +727,43 @@ mod tests {
             BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 2, true).unwrap();
         // Add recent, wait 1 second for each one (cause the name depends on time)
         // 1
-        client.add_recent(make_generic_ftparams(
-            FileTransferProtocol::Sftp,
-            "192.168.1.1",
-            22,
-            "pi",
-            Some("mypassword"),
-        ));
+        assert!(
+            client
+                .add_recent(make_generic_ftparams(
+                    FileTransferProtocol::Sftp,
+                    "192.168.1.1",
+                    22,
+                    "pi",
+                    Some("mypassword"),
+                ))
+                .is_ok()
+        );
         sleep(Duration::from_secs(1));
         // 2
-        client.add_recent(make_generic_ftparams(
-            FileTransferProtocol::Sftp,
-            "192.168.1.2",
-            22,
-            "pi",
-            Some("mypassword"),
-        ));
+        assert!(
+            client
+                .add_recent(make_generic_ftparams(
+                    FileTransferProtocol::Sftp,
+                    "192.168.1.2",
+                    22,
+                    "pi",
+                    Some("mypassword"),
+                ))
+                .is_ok()
+        );
         sleep(Duration::from_secs(1));
         // 3
-        client.add_recent(make_generic_ftparams(
-            FileTransferProtocol::Sftp,
-            "192.168.1.3",
-            22,
-            "pi",
-            Some("mypassword"),
-        ));
+        assert!(
+            client
+                .add_recent(make_generic_ftparams(
+                    FileTransferProtocol::Sftp,
+                    "192.168.1.3",
+                    22,
+                    "pi",
+                    Some("mypassword"),
+                ))
+                .is_ok()
+        );
         // Limit is 2
         assert_eq!(client.iter_recents().count(), 2);
         // Check that 192.168.1.1 has been removed
@@ -745,16 +805,20 @@ mod tests {
         let mut client: BookmarksClient =
             BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16, true).unwrap();
         // Add bookmark with empty name should be silently ignored
-        client.add_bookmark(
-            "",
-            make_generic_ftparams(
-                FileTransferProtocol::Sftp,
-                "192.168.1.31",
-                22,
-                "pi",
-                Some("mypassword"),
-            ),
-            true,
+        assert!(
+            client
+                .add_bookmark(
+                    "",
+                    make_generic_ftparams(
+                        FileTransferProtocol::Sftp,
+                        "192.168.1.31",
+                        22,
+                        "pi",
+                        Some("mypassword"),
+                    ),
+                    true,
+                )
+                .is_ok()
         );
         // No bookmark should have been added
         assert_eq!(client.iter_bookmarks().count(), 0);

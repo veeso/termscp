@@ -71,7 +71,10 @@ impl AuthActivity {
         };
 
         if let Some(bookmarks_cli) = self.bookmarks_client_mut() {
-            bookmarks_cli.add_bookmark(name.clone(), params, save_password);
+            if let Err(err) = bookmarks_cli.add_bookmark(name.clone(), params, save_password) {
+                self.mount_error(format!("Could not save bookmark: {err}"));
+                return;
+            }
             // Save bookmarks
             self.write_bookmarks();
             // Remove `name` from bookmarks if exists
@@ -121,7 +124,10 @@ impl AuthActivity {
             }
         };
         if let Some(bookmarks_cli) = self.bookmarks_client_mut() {
-            bookmarks_cli.add_recent(params);
+            if let Err(err) = bookmarks_cli.add_recent(params) {
+                self.mount_error(format!("Could not save recent host: {err}"));
+                return;
+            }
             // Save bookmarks
             self.write_bookmarks();
         }

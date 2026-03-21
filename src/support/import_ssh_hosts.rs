@@ -52,7 +52,9 @@ pub fn import_ssh_hosts(ssh_config: Option<PathBuf>, keyring: bool) -> Result<()
         .flat_map(host_to_params)
         .for_each(|(name, params, identity_file_params)| {
             debug!("Adding bookmark for host: {name} with params: {params:?}");
-            bookmarks_client.add_bookmark(name, params, false);
+            if let Err(err) = bookmarks_client.add_bookmark(name, params, false) {
+                error!("Could not add imported bookmark: {err}");
+            }
 
             // add ssh key if any
             if let Some(identity_file_params) = identity_file_params {
@@ -255,8 +257,7 @@ mod tests {
 
     struct SshTestConfig {
         config: NamedTempFile,
-        #[allow(dead_code)]
-        identity_file: NamedTempFile,
+        _identity_file: NamedTempFile,
     }
 
     fn ssh_test_config() -> SshTestConfig {
@@ -320,7 +321,7 @@ Host test3
 
         SshTestConfig {
             config: file,
-            identity_file,
+            _identity_file: identity_file,
         }
     }
 }

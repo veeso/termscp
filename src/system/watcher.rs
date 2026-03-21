@@ -27,6 +27,8 @@ pub enum FsWatcherError {
     PathNotWatched,
     #[error("unable to watch path, since it's already watched")]
     PathAlreadyWatched,
+    #[error("watcher event channel disconnected")]
+    Disconnected,
     #[error("unknown event: {0}")]
     UnknownEvent(&'static str),
     #[error("worker error: {0}")]
@@ -114,7 +116,7 @@ impl FsWatcher {
         let res = match self.receiver.recv_timeout(Duration::from_millis(1)) {
             Ok(res) => res,
             Err(RecvTimeoutError::Timeout) => return Ok(None),
-            Err(RecvTimeoutError::Disconnected) => panic!("File watcher died"),
+            Err(RecvTimeoutError::Disconnected) => return Err(FsWatcherError::Disconnected),
         };
 
         // convert event to FsChange

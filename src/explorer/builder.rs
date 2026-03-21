@@ -24,7 +24,7 @@ impl FileExplorerBuilder {
 
     /// Take FileExplorer out of builder
     pub fn build(&mut self) -> FileExplorer {
-        self.explorer.take().unwrap()
+        self.explorer.take().unwrap_or_default()
     }
 
     /// Enable HIDDEN_FILES option
