@@ -248,11 +248,8 @@ impl SetupActivity {
             IdTheme::LogWindow => {
                 theme.transfer_log_window = color;
             }
-            IdTheme::ProgBarFull => {
-                theme.transfer_progress_bar_full = color;
-            }
-            IdTheme::ProgBarPartial => {
-                theme.transfer_progress_bar_partial = color;
+            IdTheme::ProgBar => {
+                theme.transfer_progress_bar = color;
             }
             IdTheme::StatusHidden => {
                 theme.transfer_status_hidden = color;
@@ -339,12 +336,9 @@ impl SetupActivity {
         let transfer_log_window = self
             .get_color(&Id::Theme(IdTheme::LogWindow))
             .map_err(|_| Id::Theme(IdTheme::LogWindow))?;
-        let transfer_progress_bar_full = self
-            .get_color(&Id::Theme(IdTheme::ProgBarFull))
-            .map_err(|_| Id::Theme(IdTheme::ProgBarFull))?;
-        let transfer_progress_bar_partial = self
-            .get_color(&Id::Theme(IdTheme::ProgBarPartial))
-            .map_err(|_| Id::Theme(IdTheme::ProgBarPartial))?;
+        let transfer_progress_bar = self
+            .get_color(&Id::Theme(IdTheme::ProgBar))
+            .map_err(|_| Id::Theme(IdTheme::ProgBar))?;
         let transfer_status_hidden = self
             .get_color(&Id::Theme(IdTheme::StatusHidden))
             .map_err(|_| Id::Theme(IdTheme::StatusHidden))?;
@@ -378,8 +372,7 @@ impl SetupActivity {
         theme.transfer_remote_explorer_highlighted = transfer_remote_explorer_highlighted;
         theme.transfer_log_background = transfer_log_background;
         theme.transfer_log_window = transfer_log_window;
-        theme.transfer_progress_bar_full = transfer_progress_bar_full;
-        theme.transfer_progress_bar_partial = transfer_progress_bar_partial;
+        theme.transfer_progress_bar = transfer_progress_bar;
         theme.transfer_status_hidden = transfer_status_hidden;
         theme.transfer_status_sorting = transfer_status_sorting;
         theme.transfer_status_sync_browsing = transfer_status_sync_browsing;

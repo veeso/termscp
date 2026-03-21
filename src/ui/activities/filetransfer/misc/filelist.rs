@@ -178,33 +178,30 @@ impl FileTransferActivity {
         filename: String,
     ) {
         ui_result(self.app.attr(
-            &Id::ProgressBarFull,
+            &Id::TransferProgressBar,
             Attribute::Text,
-            AttrValue::String(self.transfer.full.to_string()),
+            AttrValue::String(self.transfer.progress.to_string()),
         ));
         ui_result(self.app.attr(
-            &Id::ProgressBarFull,
+            &Id::TransferProgressBar,
             Attribute::Value,
             AttrValue::Payload(PropPayload::One(PropValue::F64(
-                self.transfer.full.calc_progress(),
+                self.transfer.progress.calc_progress(),
             ))),
         ));
+        let title = if self.transfer.progress.is_single_file() {
+            filename
+        } else {
+            format!(
+                "{} {}",
+                filename,
+                self.transfer.progress.file_count_display()
+            )
+        };
         ui_result(self.app.attr(
-            &Id::ProgressBarPartial,
-            Attribute::Text,
-            AttrValue::String(self.transfer.partial.to_string()),
-        ));
-        ui_result(self.app.attr(
-            &Id::ProgressBarPartial,
-            Attribute::Value,
-            AttrValue::Payload(PropPayload::One(PropValue::F64(
-                self.transfer.partial.calc_progress(),
-            ))),
-        ));
-        ui_result(self.app.attr(
-            &Id::ProgressBarPartial,
+            &Id::TransferProgressBar,
             Attribute::Title,
-            AttrValue::Title((filename, Alignment::Center)),
+            AttrValue::Title((title, Alignment::Center)),
         ));
     }
 

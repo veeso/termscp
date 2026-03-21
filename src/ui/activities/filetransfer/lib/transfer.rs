@@ -7,60 +7,193 @@ use std::time::Instant;
 
 use bytesize::ByteSize;
 
-// -- States and progress
-
-/// Tracks overall transfer progress as an entry counter (e.g. "3/12").
+/// Tracks overall transfer progress with byte-level estimation.
 ///
-/// Unlike the byte-based `ProgressStates`, this counts top-level entries
-/// rather than bytes, avoiding the expensive recursive size pre-calculation
-/// that can cause FTP idle-timeout disconnections on large directory trees.
-#[derive(Default)]
+/// For single-file transfers, progress is exact (known file size).
+/// For multi-file transfers, uses lazy accumulation: as each file starts,
+/// its size is added to `known_total_bytes`, and the remaining files'
+/// total is estimated from the running average file size.
 pub struct TransferProgress {
-    completed: usize,
-    total: usize,
+    files_completed: usize,
+    files_total: usize,
+    bytes_written: usize,
+    known_total_bytes: usize,
+    nonzero_files_started: usize,
+    files_started: usize,
+    pub(crate) started: Instant,
+}
+
+impl Default for TransferProgress {
+    fn default() -> Self {
+        Self {
+            files_completed: 0,
+            files_total: 0,
+            bytes_written: 0,
+            known_total_bytes: 0,
+            nonzero_files_started: 0,
+            files_started: 0,
+            started: Instant::now(),
+        }
+    }
 }
 
 impl fmt::Display for TransferProgress {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}/{}", self.completed, self.total)
+        let eta = match self.calc_eta() {
+            0 => String::from("--:--"),
+            seconds => format!(
+                "{:0width$}:{:0width$}",
+                seconds / 60,
+                seconds % 60,
+                width = 2
+            ),
+        };
+        if self.is_single_file() {
+            write!(
+                f,
+                "{} / {} — {:.1}% — ETA {} ({}/s)",
+                ByteSize(self.bytes_written as u64),
+                ByteSize(self.known_total_bytes as u64),
+                self.calc_progress() * 100.0,
+                eta,
+                ByteSize(self.calc_bytes_per_second()),
+            )
+        } else {
+            write!(
+                f,
+                "{} transferred — ~{:.1}% — ETA {} ({}/s)",
+                ByteSize(self.bytes_written as u64),
+                self.calc_progress() * 100.0,
+                eta,
+                ByteSize(self.calc_bytes_per_second()),
+            )
+        }
     }
 }
 
 impl TransferProgress {
-    /// Initialize progress with the total number of entries to transfer.
-    pub fn init(&mut self, total: usize) {
-        self.completed = 0;
-        self.total = total;
+    /// Initialize for a new transfer batch.
+    pub fn init(&mut self, total_files: usize) {
+        self.files_completed = 0;
+        self.files_total = total_files;
+        self.bytes_written = 0;
+        self.known_total_bytes = 0;
+        self.nonzero_files_started = 0;
+        self.files_started = 0;
+        self.started = Instant::now();
     }
 
-    /// Mark one entry as completed.
+    /// Update files_total without resetting byte accumulators.
+    /// Used by recursive directory transfers that re-discover file counts.
+    pub fn set_files_total(&mut self, total: usize) {
+        self.files_total = total;
+    }
+
+    /// Register a file that is about to be transferred.
+    pub fn register_file(&mut self, size: usize) {
+        self.files_started += 1;
+        if size > 0 {
+            self.nonzero_files_started += 1;
+            self.known_total_bytes += size;
+        }
+    }
+
+    /// Register a file that was skipped (unchanged).
+    /// Atomically registers, adds bytes, and increments completion.
+    pub fn register_skipped_file(&mut self, size: usize) {
+        self.register_file(size);
+        self.add_bytes(size);
+        self.increment();
+    }
+
+    /// Add transferred bytes.
+    pub fn add_bytes(&mut self, delta: usize) {
+        self.bytes_written += delta;
+    }
+
+    /// Mark one file as completed.
     pub fn increment(&mut self) {
-        self.completed += 1;
+        self.files_completed += 1;
     }
 
-    /// Calculate progress in a range between 0.0 and 1.0.
+    /// Estimate the total transfer size in bytes.
+    pub fn estimated_total(&self) -> usize {
+        if self.files_total <= 1 || self.files_started >= self.files_total {
+            return self.known_total_bytes;
+        }
+        if self.nonzero_files_started == 0 {
+            return self.known_total_bytes;
+        }
+        let avg = self.known_total_bytes / self.nonzero_files_started;
+        let remaining = self.files_total - self.files_started;
+        self.known_total_bytes + avg * remaining
+    }
+
+    /// Calculate progress as 0.0..=1.0.
     pub fn calc_progress(&self) -> f64 {
-        if self.total == 0 {
+        let total = self.estimated_total();
+        if total == 0 {
             return 0.0;
         }
-        let prog = self.completed as f64 / self.total as f64;
-        prog.min(1.0)
+        (self.bytes_written as f64 / total as f64).min(1.0)
+    }
+
+    pub fn is_single_file(&self) -> bool {
+        self.files_total <= 1
+    }
+
+    #[cfg(test)]
+    pub fn bytes_written(&self) -> usize {
+        self.bytes_written
+    }
+
+    #[cfg(test)]
+    pub fn files_completed(&self) -> usize {
+        self.files_completed
+    }
+
+    #[cfg(test)]
+    pub fn files_started(&self) -> usize {
+        self.files_started
+    }
+
+    /// Calculate bytes per second based on elapsed time.
+    pub fn calc_bytes_per_second(&self) -> u64 {
+        let elapsed_secs = self.started.elapsed().as_secs();
+        match elapsed_secs {
+            0 => {
+                if self.bytes_written > 0 && self.bytes_written >= self.estimated_total() {
+                    self.bytes_written as u64
+                } else {
+                    0
+                }
+            }
+            _ => self.bytes_written as u64 / elapsed_secs,
+        }
+    }
+
+    /// Calculate ETA in seconds.
+    pub fn calc_eta(&self) -> u64 {
+        let elapsed_secs = self.started.elapsed().as_secs();
+        let percent = self.calc_progress() * 100.0;
+        match percent as u64 {
+            0 => 0,
+            p => ((elapsed_secs * 100) / p) - elapsed_secs,
+        }
+    }
+
+    /// Format the file count string for multi-file title: "(3/12)"
+    /// Uses `files_started` (not `files_completed`) so the display shows the
+    /// file currently being transferred, not the last one that finished.
+    pub fn file_count_display(&self) -> String {
+        format!("({}/{})", self.files_started, self.files_total)
     }
 }
 
 /// Contains the states related to the transfer process.
 pub struct TransferStates {
     aborted: bool,
-    pub full: TransferProgress,
-    pub partial: ProgressStates,
-    bytes_transferred: usize,
-}
-
-/// Describes the states for the progress of a single file transfer.
-pub struct ProgressStates {
-    started: Instant,
-    total: usize,
-    written: usize,
+    pub progress: TransferProgress,
 }
 
 impl Default for TransferStates {
@@ -70,134 +203,28 @@ impl Default for TransferStates {
 }
 
 impl TransferStates {
-    /// Instantiates a new transfer states.
-    pub fn new() -> TransferStates {
-        TransferStates {
+    pub fn new() -> Self {
+        Self {
             aborted: false,
-            full: TransferProgress::default(),
-            partial: ProgressStates::default(),
-            bytes_transferred: 0,
+            progress: TransferProgress::default(),
         }
     }
 
-    /// Re-initialize transfer states.
     pub fn reset(&mut self) {
         self.aborted = false;
-        self.bytes_transferred = 0;
     }
 
-    /// Set aborted to true.
     pub fn abort(&mut self) {
         self.aborted = true;
     }
 
-    /// Returns whether transfer has been aborted.
     pub fn aborted(&self) -> bool {
         self.aborted
     }
 
-    /// Returns total bytes transferred (used for notification threshold).
+    /// Total bytes transferred (for notification threshold).
     pub fn full_size(&self) -> usize {
-        self.bytes_transferred
-    }
-
-    /// Accumulate transferred bytes for notification threshold tracking.
-    pub fn add_bytes(&mut self, delta: usize) {
-        self.bytes_transferred += delta;
-    }
-}
-
-impl Default for ProgressStates {
-    fn default() -> Self {
-        ProgressStates {
-            started: Instant::now(),
-            written: 0,
-            total: 0,
-        }
-    }
-}
-
-impl fmt::Display for ProgressStates {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let eta: String = match self.calc_eta() {
-            0 => String::from("--:--"),
-            seconds => format!(
-                "{:0width$}:{:0width$}",
-                (seconds / 60),
-                (seconds % 60),
-                width = 2
-            ),
-        };
-        write!(
-            f,
-            "{:.2}% - ETA {} ({}/s)",
-            self.calc_progress_percentage(),
-            eta,
-            ByteSize(self.calc_bytes_per_second())
-        )
-    }
-}
-
-impl ProgressStates {
-    /// Initialize a new Progress State
-    pub fn init(&mut self, sz: usize) {
-        self.started = Instant::now();
-        self.total = sz;
-        self.written = 0;
-    }
-
-    /// Update progress state
-    pub fn update_progress(&mut self, delta: usize) -> f64 {
-        self.written += delta;
-        self.calc_progress_percentage()
-    }
-
-    /// Calculate progress in a range between 0.0 to 1.0
-    pub fn calc_progress(&self) -> f64 {
-        // Prevent dividing by 0
-        if self.total == 0 {
-            return 0.0;
-        }
-        let prog: f64 = (self.written as f64) / (self.total as f64);
-        match prog > 1.0 {
-            true => 1.0,
-            false => prog,
-        }
-    }
-
-    /// Get started
-    pub fn started(&self) -> Instant {
-        self.started
-    }
-
-    /// Calculate the current transfer progress as percentage
-    fn calc_progress_percentage(&self) -> f64 {
-        self.calc_progress() * 100.0
-    }
-
-    /// Generic function to calculate bytes per second using elapsed time since transfer started and the bytes written
-    /// and the total amount of bytes to write
-    pub fn calc_bytes_per_second(&self) -> u64 {
-        // bytes_written : elapsed_secs = x : 1
-        let elapsed_secs: u64 = self.started.elapsed().as_secs();
-        match elapsed_secs {
-            0 => match self.written == self.total {
-                // NOTE: would divide by 0 :D
-                true => self.total as u64, // Download completed in less than 1 second
-                false => 0,                // 0 B/S
-            },
-            _ => self.written as u64 / elapsed_secs,
-        }
-    }
-
-    /// Calculate ETA for current transfer as seconds
-    fn calc_eta(&self) -> u64 {
-        let elapsed_secs: u64 = self.started.elapsed().as_secs();
-        let prog: f64 = self.calc_progress_percentage();
-        match prog as u64 {
-            0 => 0,
-            _ => ((elapsed_secs * 100) / (prog as u64)) - elapsed_secs,
-        }
+        self.progress.bytes_written
     }
 }
 
@@ -220,7 +247,6 @@ impl TransferOpts {
 
 #[cfg(test)]
 mod test {
-
     use std::time::Duration;
 
     use pretty_assertions::assert_eq;
@@ -228,91 +254,160 @@ mod test {
     use super::*;
 
     #[test]
-    fn test_ui_activities_filetransfer_lib_transfer_progress_states() {
-        let mut states: ProgressStates = ProgressStates::default();
-        assert_eq!(states.total, 0);
-        assert_eq!(states.written, 0);
-        assert!(states.started().elapsed().as_secs() < 5);
-        // Init new transfer
-        states.init(1024);
-        assert_eq!(states.total, 1024);
-        assert_eq!(states.written, 0);
-        assert_eq!(states.calc_bytes_per_second(), 0);
-        assert_eq!(states.calc_eta(), 0);
-        assert_eq!(states.calc_progress_percentage(), 0.0);
-        assert_eq!(states.calc_progress(), 0.0);
-        assert_eq!(states.to_string().as_str(), "0.00% - ETA --:-- (0 B/s)");
-        // Wait 4 second (virtually)
-        states.started = states.started.checked_sub(Duration::from_secs(4)).unwrap();
-        // Update state
-        states.update_progress(256);
-        assert_eq!(states.total, 1024);
-        assert_eq!(states.written, 256);
-        assert_eq!(states.calc_bytes_per_second(), 64); // 256 bytes in 4 seconds
-        assert_eq!(states.calc_eta(), 12); // 16 total sub 4
-        assert_eq!(states.calc_progress_percentage(), 25.0);
-        assert_eq!(states.calc_progress(), 0.25);
-        assert_eq!(states.to_string().as_str(), "25.00% - ETA 00:12 (64 B/s)");
-        // 100%
-        states.started = states.started.checked_sub(Duration::from_secs(12)).unwrap();
-        states.update_progress(768);
-        assert_eq!(states.total, 1024);
-        assert_eq!(states.written, 1024);
-        assert_eq!(states.calc_bytes_per_second(), 64); // 256 bytes in 4 seconds
-        assert_eq!(states.calc_eta(), 0); // 16 total sub 4
-        assert_eq!(states.calc_progress_percentage(), 100.0);
-        assert_eq!(states.calc_progress(), 1.0);
-        assert_eq!(states.to_string().as_str(), "100.00% - ETA --:-- (64 B/s)");
-        // Check if terminated at started
-        states.started = Instant::now();
-        assert_eq!(states.calc_bytes_per_second(), 1024);
-        // Divide by zero
-        let states: ProgressStates = ProgressStates::default();
-        assert_eq!(states.total, 0);
-        assert_eq!(states.written, 0);
-        assert_eq!(states.calc_progress(), 0.0);
-    }
-
-    #[test]
-    fn test_ui_activities_filetransfer_lib_transfer_progress() {
+    fn test_transfer_progress_single_file() {
         let mut progress = TransferProgress::default();
         assert_eq!(progress.calc_progress(), 0.0);
-        assert_eq!(progress.to_string(), "0/0");
-        // Init with 4 entries
-        progress.init(4);
+        assert!(progress.is_single_file());
+
+        progress.init(1);
+        assert!(progress.is_single_file());
         assert_eq!(progress.calc_progress(), 0.0);
-        assert_eq!(progress.to_string(), "0/4");
-        // Increment
-        progress.increment();
+
+        progress.register_file(1024);
+        assert_eq!(progress.estimated_total(), 1024);
+        assert_eq!(progress.calc_progress(), 0.0);
+
+        progress.add_bytes(256);
+        assert_eq!(progress.bytes_written(), 256);
         assert_eq!(progress.calc_progress(), 0.25);
-        assert_eq!(progress.to_string(), "1/4");
-        // Complete all
-        progress.increment();
-        progress.increment();
-        progress.increment();
+
+        progress.add_bytes(768);
         assert_eq!(progress.calc_progress(), 1.0);
-        assert_eq!(progress.to_string(), "4/4");
+        progress.increment();
+        assert_eq!(progress.files_completed(), 1);
     }
 
     #[test]
-    fn test_ui_activities_filetransfer_lib_transfer_states() {
-        let mut states: TransferStates = TransferStates::default();
+    fn test_transfer_progress_multi_file() {
+        let mut progress = TransferProgress::default();
+        progress.init(4);
+        assert!(!progress.is_single_file());
+
+        progress.register_file(1000);
+        assert_eq!(progress.estimated_total(), 4000);
+
+        progress.add_bytes(1000);
+        progress.increment();
+        assert!((progress.calc_progress() - 0.25).abs() < 0.001);
+
+        progress.register_file(500);
+        assert_eq!(progress.estimated_total(), 3000);
+
+        progress.add_bytes(500);
+        progress.increment();
+        assert!((progress.calc_progress() - 0.5).abs() < 0.001);
+
+        progress.register_file(500);
+        assert_eq!(progress.estimated_total(), 2666);
+
+        progress.add_bytes(500);
+        progress.increment();
+
+        progress.register_file(2000);
+        assert_eq!(progress.estimated_total(), 4000);
+
+        progress.add_bytes(2000);
+        progress.increment();
+        assert_eq!(progress.calc_progress(), 1.0);
+    }
+
+    #[test]
+    fn test_transfer_progress_skipped_file() {
+        let mut progress = TransferProgress::default();
+        progress.init(3);
+
+        progress.register_file(100);
+        progress.add_bytes(100);
+        progress.increment();
+
+        progress.register_skipped_file(200);
+        assert_eq!(progress.bytes_written(), 300);
+        assert_eq!(progress.files_completed(), 2);
+        assert_eq!(progress.files_started(), 2);
+    }
+
+    #[test]
+    fn test_transfer_progress_zero_size_files() {
+        let mut progress = TransferProgress::default();
+        progress.init(3);
+
+        progress.register_file(0);
+        progress.add_bytes(0);
+        progress.increment();
+
+        progress.register_file(1000);
+        assert_eq!(progress.estimated_total(), 2000);
+    }
+
+    #[test]
+    fn test_transfer_progress_set_files_total() {
+        let mut progress = TransferProgress::default();
+        progress.init(2);
+        progress.register_file(500);
+        progress.add_bytes(500);
+        progress.increment();
+
+        progress.set_files_total(3);
+        assert_eq!(progress.bytes_written(), 500);
+        assert_eq!(progress.files_started(), 1);
+    }
+
+    #[test]
+    fn test_transfer_progress_timing() {
+        let mut progress = TransferProgress::default();
+        progress.init(1);
+        progress.register_file(1024);
+
+        progress.started = progress
+            .started
+            .checked_sub(Duration::from_secs(4))
+            .unwrap();
+        progress.add_bytes(256);
+
+        assert_eq!(progress.calc_bytes_per_second(), 64);
+        assert_eq!(progress.calc_eta(), 12);
+    }
+
+    #[test]
+    fn test_transfer_progress_display_single() {
+        let mut progress = TransferProgress::default();
+        progress.init(1);
+        progress.register_file(1024);
+        progress.started = progress
+            .started
+            .checked_sub(Duration::from_secs(4))
+            .unwrap();
+        progress.add_bytes(256);
+
+        let display = progress.to_string();
+        assert!(display.contains("/ 1.0 KiB"));
+        assert!(!display.contains('~'));
+    }
+
+    #[test]
+    fn test_transfer_progress_display_multi() {
+        let mut progress = TransferProgress::default();
+        progress.init(4);
+        progress.register_file(1024);
+        progress.started = progress
+            .started
+            .checked_sub(Duration::from_secs(4))
+            .unwrap();
+        progress.add_bytes(256);
+
+        let display = progress.to_string();
+        assert!(display.contains("transferred"));
+        assert!(display.contains('~'));
+    }
+
+    #[test]
+    fn test_transfer_states() {
+        let mut states = TransferStates::default();
         assert!(!states.aborted());
-        assert_eq!(states.partial.total, 0);
-        assert_eq!(states.partial.written, 0);
-        assert!(states.partial.started.elapsed().as_secs() < 5);
-        // Aborted
         states.abort();
         assert!(states.aborted());
         states.reset();
         assert!(!states.aborted());
-        // Bytes tracking
-        states.add_bytes(512);
-        states.add_bytes(512);
-        assert_eq!(states.full_size(), 1024);
-        // Reset clears bytes
-        states.reset();
-        assert_eq!(states.full_size(), 0);
     }
 
     #[test]
