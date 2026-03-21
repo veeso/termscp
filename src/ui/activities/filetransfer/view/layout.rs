@@ -175,7 +175,7 @@ impl FileTransferActivity {
                 Id::SaveAsPopup,
                 Id::SymlinkPopup,
                 Id::FileInfoPopup,
-                Id::ProgressBarPartial,
+                Id::TransferProgressBar,
                 Id::DeletePopup,
                 Id::ReplacePopup,
                 Id::DisconnectPopup,
@@ -204,19 +204,11 @@ impl FileTransferActivity {
                         f.render_widget(Clear, popup);
                         self.app.view(popup_id, f, popup);
                     }
-                    // Dual-component progress bar
-                    Id::ProgressBarPartial => {
+                    Id::TransferProgressBar => {
                         let popup =
-                            Popup(Size::Percentage(50), Size::Percentage(20)).draw_in(f.area());
+                            Popup(Size::Percentage(50), Size::Percentage(15)).draw_in(f.area());
                         f.render_widget(Clear, popup);
-                        let popup_chunks = Layout::default()
-                            .direction(Direction::Vertical)
-                            .constraints(
-                                [Constraint::Percentage(50), Constraint::Percentage(50)].as_ref(),
-                            )
-                            .split(popup);
-                        self.app.view(&Id::ProgressBarFull, f, popup_chunks[0]);
-                        self.app.view(&Id::ProgressBarPartial, f, popup_chunks[1]);
+                        self.app.view(&Id::TransferProgressBar, f, popup);
                     }
                     // Wait popup with dynamic line count
                     Id::WaitPopup => {
@@ -368,8 +360,7 @@ impl FileTransferActivity {
             Id::MkdirPopup,
             Id::NewfilePopup,
             Id::OpenWithPopup,
-            Id::ProgressBarFull,
-            Id::ProgressBarPartial,
+            Id::TransferProgressBar,
             Id::ExplorerFind,
             Id::QuitPopup,
             Id::RenamePopup,
