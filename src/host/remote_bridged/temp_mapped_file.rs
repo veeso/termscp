@@ -1,3 +1,8 @@
+//! ## Temp Mapped File
+//!
+//! Provides a temporary local file that mirrors a remote file while keeping a
+//! lazily opened read/write handle.
+
 use std::fs::File;
 use std::io::{self, Read, Write};
 use std::sync::{Arc, Mutex};
@@ -34,6 +39,7 @@ impl Read for TempMappedFile {
 }
 
 impl TempMappedFile {
+    /// Creates an empty temporary file container for a downloaded remote file.
     pub fn new() -> HostResult<Self> {
         NamedTempFile::new()
             .map(|tempfile| TempMappedFile {

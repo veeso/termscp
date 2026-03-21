@@ -23,7 +23,9 @@ pub enum UpdateStatus {
 /// Info related to a github release
 #[derive(Debug)]
 pub struct Release {
+    /// Release version string returned by GitHub.
     pub version: String,
+    /// Release notes body returned by GitHub.
     pub body: String,
 }
 
@@ -48,6 +50,7 @@ impl Update {
         self
     }
 
+    /// Installs the latest available release using the configured update options.
     pub fn upgrade(self) -> Result<UpdateStatus, UpdateError> {
         info!("Updating termscp...");
         GithubUpdater::configure()
