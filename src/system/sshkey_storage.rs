@@ -206,6 +206,43 @@ Host test
         );
     }
 
+    #[test]
+    fn should_make_mapkey_from_username_and_host() {
+        assert_eq!(
+            SshKeyStorage::make_mapkey("example.org", "veeso"),
+            "veeso@example.org"
+        );
+    }
+
+    #[test]
+    fn should_prefer_termscp_key_over_ssh_config() {
+        let rsa_key = test_helpers::create_sample_file_with_content(
+            "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDErJhQxEI0+VvhlXVUyh+vMCm7aXfCA/g633AG8ezD/5EylwchtAr2JCoBWnxn4zV8nI9dMqOgm0jO4IsXpKOjQojv+0VOH7I+cDlBg0tk4hFlvyyS6YviDAfDDln3jYUM+5QNDfQLaZlH2WvcJ3mkDxLVlI9MBX1BAeSmChLxwAvxALp2ncImNQLzDO9eHcig3dtMrEKkzXQowRW5Y7eUzg2+vvVq4H2DOjWwUndvB5sJkhEfTUVE7ID8ZdGJo60kUb/02dZYj+IbkAnMCsqktk0cg/4XFX82hEfRYFeb1arkysFisPU1DOb6QielL/axeTebVplaouYcXY0pFdJt root@8c50fd4c345a",
+        );
+        let ssh_config_file = test_helpers::create_sample_file_with_content(format!(
+            r#"
+Host test
+        HostName 127.0.0.1
+        User test
+        IdentityFile {}
+"#,
+            rsa_key.path().display()
+        ));
+        let tmp_dir: tempfile::TempDir = tempfile::TempDir::new().ok().unwrap();
+        let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
+        let mut client: ConfigClient = ConfigClient::new(cfg_path.as_path(), key_path.as_path())
+            .ok()
+            .unwrap();
+        client.set_ssh_config(Some(ssh_config_file.path().to_string_lossy().to_string()));
+        assert!(client.add_ssh_key("test", "pi", "stored-key").is_ok());
+
+        let storage: SshKeyStorage = SshKeyStorage::from(&client);
+        let resolved = storage.resolve("test", "pi").unwrap();
+
+        assert!(resolved.ends_with("pi@test.key"));
+        assert_ne!(resolved.as_path(), rsa_key.path());
+    }
+
     /// Get paths for configuration and keys directory
     fn get_paths(dir: &Path) -> (PathBuf, PathBuf) {
         let mut k: PathBuf = PathBuf::from(dir);
