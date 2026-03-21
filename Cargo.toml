@@ -77,6 +77,7 @@ self_update = { version = "0.42", default-features = false, features = [
   "compression-zip-deflate",
   "rustls",
 ] }
+semver = "1"
 serde = { version = "1", features = ["derive"] }
 shellexpand = "3"
 simplelog = "0.12"
@@ -89,7 +90,6 @@ tui-realm-stdlib = "3"
 tui-term = "0.2"
 tuirealm = "3"
 unicode-width = "0.2"
-version-compare = "0.2"
 whoami = "2"
 wildmatch = "2"
 
