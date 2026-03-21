@@ -12,14 +12,34 @@ use std::path::{Component, Path, PathBuf};
 /// assert_eq!(absolutize(&Path::new("/home/omar"), &Path::new("/tmp/readme.txt")).as_path(), Path::new("/tmp/readme.txt"));
 /// ```
 pub fn absolutize(wrkdir: &Path, target: &Path) -> PathBuf {
-    match target.is_absolute() {
+    let raw = match target.is_absolute() {
         true => target.to_path_buf(),
         false => {
             let mut p: PathBuf = wrkdir.to_path_buf();
             p.push(target);
             p
         }
+    };
+    normalize(&raw)
+}
+
+/// Normalize a path by resolving `.` and `..` components lexically
+/// (without touching the filesystem).
+fn normalize(path: &Path) -> PathBuf {
+    let mut parts: Vec<Component> = Vec::new();
+    for component in path.components() {
+        match component {
+            Component::ParentDir => {
+                // Pop the last normal component; never pop past root
+                if let Some(Component::Normal(_)) = parts.last() {
+                    parts.pop();
+                }
+            }
+            Component::CurDir => {} // skip `.`
+            other => parts.push(other),
+        }
     }
+    parts.iter().collect()
 }
 
 /// This function will get the difference from path `path` to `base`. Basically will remove `base` from `path`
@@ -97,6 +117,44 @@ mod test {
             absolutize(Path::new("/home/omar"), Path::new("/tmp/readme.txt")).as_path(),
             Path::new("/tmp/readme.txt")
         );
+    }
+
+    #[test]
+    fn absolutize_resolves_parent_dir() {
+        assert_eq!(
+            absolutize(Path::new("/home/omar"), Path::new("..")).as_path(),
+            Path::new("/home")
+        );
+        assert_eq!(
+            absolutize(Path::new("/home/omar"), Path::new("../docs")).as_path(),
+            Path::new("/home/docs")
+        );
+        assert_eq!(
+            absolutize(Path::new("/home"), Path::new("..")).as_path(),
+            Path::new("/")
+        );
+    }
+
+    #[test]
+    fn absolutize_resolves_current_dir() {
+        assert_eq!(
+            absolutize(Path::new("/home/omar"), Path::new(".")).as_path(),
+            Path::new("/home/omar")
+        );
+        assert_eq!(
+            absolutize(Path::new("/home/omar"), Path::new("./docs")).as_path(),
+            Path::new("/home/omar/docs")
+        );
+    }
+
+    #[test]
+    fn normalize_path() {
+        assert_eq!(normalize(Path::new("/a/b/../c")), Path::new("/a/c"));
+        assert_eq!(normalize(Path::new("/a/b/./c")), Path::new("/a/b/c"));
+        assert_eq!(normalize(Path::new("/a/b/c/../..")), Path::new("/a"));
+        assert_eq!(normalize(Path::new("/")), Path::new("/"));
+        // Parent beyond root stays at root
+        assert_eq!(normalize(Path::new("/..")), Path::new("/"));
     }
 
     #[test]
