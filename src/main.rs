@@ -1,3 +1,8 @@
+//! ## termscp
+//!
+//! Binary entry point for argument parsing, logging setup, and activity
+//! manager startup.
+
 mod activity_manager;
 mod cli;
 mod config;
