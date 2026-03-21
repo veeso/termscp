@@ -443,6 +443,34 @@ mod tests {
     }
 
     #[test]
+    fn test_should_deserialize_webdav_bookmark_protocol_alias() {
+        let toml_file: tempfile::NamedTempFile = create_http_alias_toml_bookmarks();
+        toml_file.as_file().sync_all().unwrap();
+        toml_file.as_file().rewind().unwrap();
+
+        let hosts: UserHosts = deserialize(Box::new(toml_file)).unwrap();
+        let host = hosts.bookmarks.get("webdav").unwrap();
+
+        assert_eq!(host.protocol, FileTransferProtocol::WebDAV);
+        assert_eq!(host.address.as_deref(), Some("https://myserver:4445"));
+        assert_eq!(host.username.as_deref(), Some("omar"));
+        assert_eq!(host.password.as_deref(), Some("mypassword"));
+        assert_eq!(
+            host.remote_path.as_deref(),
+            Some(std::path::Path::new("/myshare/dir/subdir"))
+        );
+    }
+
+    #[test]
+    fn test_should_fail_deserialize_bookmark_with_invalid_protocol() {
+        let toml_file: tempfile::NamedTempFile = create_invalid_protocol_toml_bookmarks();
+        toml_file.as_file().sync_all().unwrap();
+        toml_file.as_file().rewind().unwrap();
+
+        assert!(deserialize::<UserHosts>(Box::new(toml_file)).is_err());
+    }
+
+    #[test]
     fn test_config_serializer_bookmarks_serializer_serialize() {
         let mut bookmarks: HashMap<String, Bookmark> = HashMap::with_capacity(2);
         // Push two samples
@@ -688,6 +716,39 @@ mod tests {
 
         [recents]
         ISO20201215T094000Z = { address = "172.16.104.10", protocol = "SCP", username = "root", port = 22 }
+        "#;
+        tmpfile.write_all(file_content.as_bytes()).unwrap();
+        tmpfile
+    }
+
+    fn create_http_alias_toml_bookmarks() -> tempfile::NamedTempFile {
+        let mut tmpfile: tempfile::NamedTempFile = tempfile::NamedTempFile::new().unwrap();
+        let file_content: &str = r#"
+        [bookmarks]
+
+        [bookmarks.webdav]
+        protocol = "HTTPS"
+        address = "https://myserver:4445"
+        username = "omar"
+        password = "mypassword"
+        directory = "/myshare/dir/subdir"
+
+        [recents]
+        "#;
+        tmpfile.write_all(file_content.as_bytes()).unwrap();
+        tmpfile
+    }
+
+    fn create_invalid_protocol_toml_bookmarks() -> tempfile::NamedTempFile {
+        let mut tmpfile: tempfile::NamedTempFile = tempfile::NamedTempFile::new().unwrap();
+        let file_content: &str = r#"
+        [bookmarks]
+
+        [bookmarks.broken]
+        protocol = "GOPHER"
+        address = "gopher://myserver"
+
+        [recents]
         "#;
         tmpfile.write_all(file_content.as_bytes()).unwrap();
         tmpfile
