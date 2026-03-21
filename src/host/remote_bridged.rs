@@ -1,3 +1,8 @@
+//! ## Remote Bridged Host
+//!
+//! Bridges a `RemoteFs` implementation behind the local host interface used by
+//! the file transfer activity.
+
 mod temp_mapped_file;
 
 use std::io::{Read, Write};

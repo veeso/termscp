@@ -1,3 +1,8 @@
+//! ## Localhost Host Bridge
+//!
+//! Implements the host bridge abstraction directly against the local
+//! filesystem.
+
 use std::fs::{self, OpenOptions};
 use std::io::{Read, Write};
 #[cfg(posix)]

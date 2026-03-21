@@ -1,3 +1,8 @@
+//! ## Host Bridge
+//!
+//! Defines the host abstraction used to expose localhost and bridged remote
+//! filesystems through a shared interface.
+
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 
