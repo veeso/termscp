@@ -352,6 +352,8 @@ impl HostBridge for Localhost {
     }
 
     fn exists(&mut self, path: &Path) -> HostResult<bool> {
+        let path: PathBuf = self.to_path(path);
+
         Ok(path.exists())
     }
 
@@ -713,6 +715,22 @@ mod tests {
         assert!(host.create_file(file.path(), &Metadata::default()).is_err());
     }
 
+    #[test]
+    #[cfg(posix)]
+    fn should_resolve_relative_exists_and_stat_from_workdir() {
+        let tmpdir: tempfile::TempDir = tempfile::TempDir::new().unwrap();
+        let dir_path: &Path = tmpdir.path();
+        assert!(make_file_at(dir_path, "nested.txt").is_ok());
+        let mut host: Localhost = Localhost::new(PathBuf::from(dir_path)).ok().unwrap();
+
+        assert!(host.exists(Path::new("nested.txt")).unwrap());
+        assert!(!host.exists(Path::new("missing.txt")).unwrap());
+
+        let entry = host.stat(Path::new("nested.txt")).unwrap();
+        assert_eq!(entry.path(), &dir_path.join("nested.txt"));
+        assert!(entry.is_file());
+    }
+
     #[cfg(posix)]
     #[test]
     fn test_host_localhost_symlinks() {
@@ -1034,6 +1052,26 @@ mod tests {
             host.symlink(Path::new("/tmp/oooo/aaaa"), p.as_path())
                 .is_err()
         );
+    }
+
+    #[cfg(posix)]
+    #[test]
+    fn should_stat_relative_symlink_as_symlink() {
+        let tmpdir: tempfile::TempDir = tempfile::TempDir::new().unwrap();
+        let dir_path: &Path = tmpdir.path();
+        assert!(make_file_at(dir_path, "target.txt").is_ok());
+        let mut host: Localhost = Localhost::new(PathBuf::from(dir_path)).ok().unwrap();
+        let target = dir_path.join("target.txt");
+
+        assert!(
+            host.symlink(Path::new("link.txt"), target.as_path())
+                .is_ok()
+        );
+
+        let entry = host.stat(Path::new("link.txt")).unwrap();
+        assert_eq!(entry.path(), &dir_path.join("link.txt"));
+        assert!(entry.is_symlink());
+        assert_eq!(entry.metadata().symlink.as_ref(), Some(&target));
     }
 
     #[test]
