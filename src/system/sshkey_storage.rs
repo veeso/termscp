@@ -40,7 +40,7 @@ impl SshKeyStorage {
     /// Resolve host via termscp ssh keys storage
     fn resolve_host_in_termscp_storage(&self, host: &str, username: &str) -> Option<&Path> {
         let key: String = Self::make_mapkey(host, username);
-        self.hosts.get(&key).map(|x| x.as_path())
+        self.hosts.get(&key).map(PathBuf::as_path)
     }
 
     /// Resolve host via ssh2 configuration

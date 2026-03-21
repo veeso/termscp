@@ -469,7 +469,7 @@ fn handle_input_ev(
         }
         Event::Keyboard(KeyEvent {
             // NOTE: escaped control sequence
-            code: Key::Char('h') | Key::Char('r') | Key::Char('s'),
+            code: Key::Char('h' | 'r' | 's'),
             modifiers: KeyModifiers::CONTROL,
         }) => Some(Msg::None),
         Event::Keyboard(KeyEvent {

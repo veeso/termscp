@@ -91,7 +91,7 @@ impl FileTransferActivity {
                             .username()
                             .map(|u| format!("{TERM_CYAN}{u}{TERM_RESET}@"))
                     })
-                    .unwrap_or("".to_string());
+                    .unwrap_or_default();
                 let hostname = self.get_hostbridge_hostname();
                 format!(
                     "{username}{TERM_GREEN}{hostname}:{TERM_YELLOW}{}{TERM_RESET}$ ",
@@ -111,7 +111,7 @@ impl FileTransferActivity {
                             .username()
                             .map(|u| format!("{TERM_CYAN}{u}{TERM_RESET}@"))
                     })
-                    .unwrap_or("".to_string());
+                    .unwrap_or_default();
                 let hostname = self.get_remote_hostname();
                 let fmt_path = fmt_path_elide_ex(
                     self.remote().wrkdir.as_path(),

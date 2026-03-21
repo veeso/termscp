@@ -96,22 +96,22 @@ impl MockComponent for TerminalComponent {
 
         let title = self
             .query(Attribute::Title)
-            .map(|value| value.unwrap_string())
+            .map(AttrValue::unwrap_string)
             .unwrap_or_else(|| "Terminal".to_string());
 
         let fg = self
             .query(Attribute::Foreground)
-            .map(|value| value.unwrap_color())
+            .map(AttrValue::unwrap_color)
             .unwrap_or(tuirealm::ratatui::style::Color::Reset);
 
         let bg = self
             .query(Attribute::Background)
-            .map(|value| value.unwrap_color())
+            .map(AttrValue::unwrap_color)
             .unwrap_or(tuirealm::ratatui::style::Color::Reset);
 
         let border_color = self
             .query(Attribute::Borders)
-            .map(|value| value.unwrap_color())
+            .map(AttrValue::unwrap_color)
             .unwrap_or(tuirealm::ratatui::style::Color::Reset);
 
         let terminal = PseudoTerminal::new(self.parser.screen())

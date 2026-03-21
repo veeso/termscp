@@ -87,7 +87,11 @@ impl MockComponent for Log {
         self.props.set(attr, value);
         if matches!(attr, Attribute::Content) {
             self.states.set_list_len(
-                match self.props.get(Attribute::Content).map(|x| x.unwrap_table()) {
+                match self
+                    .props
+                    .get(Attribute::Content)
+                    .map(AttrValue::unwrap_table)
+                {
                     Some(spans) => spans.len(),
                     _ => 0,
                 },

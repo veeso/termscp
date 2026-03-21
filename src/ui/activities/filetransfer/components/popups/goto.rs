@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use tui_realm_stdlib::Input;
 use tuirealm::command::{Cmd, CmdResult, Direction, Position};
 use tuirealm::event::{Key, KeyEvent};
-use tuirealm::props::{Alignment, BorderType, Borders, Color, InputType, Style};
+use tuirealm::props::{Alignment, BorderType, Borders, Color, InputType, PropValue, Style};
 use tuirealm::{
     AttrValue, Attribute, Component, Event, MockComponent, NoUserEvent, State, StateValue,
 };
@@ -92,7 +92,7 @@ impl OwnStates {
         match (&self.search, &self.last_suggestion) {
             (_, Some(s)) => s.clone(),
             (Some(s), _) => s.clone(),
-            _ => "".to_string(),
+            _ => String::new(),
         }
     }
 
@@ -125,14 +125,14 @@ impl OwnStates {
         if !suggestions.is_empty() {
             let suggestion;
             if let Some(last_suggestion) = self.last_suggestion.take() {
-                suggestion = suggestions
+                suggestion = (*suggestions
                     .iter()
                     .skip_while(|f| **f != &last_suggestion)
                     .nth(1)
-                    .unwrap_or_else(|| suggestions.first().unwrap())
-                    .to_string();
+                    .unwrap_or_else(|| suggestions.first().unwrap()))
+                .clone();
             } else {
-                suggestion = suggestions.first().map(|x| x.to_string()).unwrap();
+                suggestion = suggestions.first().map(ToString::to_string).unwrap();
             }
 
             debug!("Suggested: {suggestion}");
@@ -154,7 +154,7 @@ impl OwnStates {
         let p = PathBuf::from(input_as_path);
         let parent = p
             .parent()
-            .map(|p| p.to_path_buf())
+            .map(Path::to_path_buf)
             .unwrap_or_else(|| PathBuf::from("/"));
 
         // if path is `.`, then return None
@@ -209,7 +209,7 @@ impl MockComponent for GotoPopup {
                     .unwrap_payload()
                     .unwrap_vec()
                     .into_iter()
-                    .map(|x| x.unwrap_str())
+                    .map(PropValue::unwrap_str)
                     .collect();
 
                 self.states.set_files(files);
