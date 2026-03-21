@@ -120,7 +120,10 @@ impl FileTransferActivity {
                 self.umount_find();
                 // Finalize find
                 self.finalize_find();
-                // Reload files
+                // Reload files; update opposite pane too when sync browsing
+                if self.browser.sync_browsing {
+                    self.update_browser_file_list_swapped();
+                }
                 self.update_browser_file_list()
             }
             TransferMsg::ExecuteCmd(cmd) => {

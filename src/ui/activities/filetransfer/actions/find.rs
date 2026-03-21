@@ -5,6 +5,7 @@
 // locals
 use std::path::PathBuf;
 
+use super::change_dir::SyncBrowsingDestination;
 use super::{File, FileTransferActivity, LogLevel, SelectedFile, TransferOpts, TransferPayload};
 
 impl FileTransferActivity {
@@ -23,6 +24,14 @@ impl FileTransferActivity {
             };
             // Change directory on the active tab's pane
             self.pane_changedir(path.as_path(), true);
+            // Sync browsing: mirror the directory change on the opposite pane
+            if self.browser.sync_browsing {
+                let dir_name = path
+                    .file_name()
+                    .map(|n| n.to_string_lossy().to_string())
+                    .unwrap_or_default();
+                self.synchronize_browsing(SyncBrowsingDestination::Path(dir_name));
+            }
         }
     }
 
