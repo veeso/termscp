@@ -1,3 +1,8 @@
+//! ## Remote CLI Arguments
+//!
+//! Parses positional and bookmark-based CLI arguments into the normalized remote
+//! connection parameters used by the application.
+
 use std::path::{Path, PathBuf};
 
 use super::Args;
@@ -13,8 +18,11 @@ enum AddrType {
 /// Args for remote connection
 #[derive(Debug)]
 pub struct RemoteArgs {
+    /// Optional host bridge selected for the session.
     pub host_bridge: Remote,
+    /// Target remote selected for the session.
     pub remote: Remote,
+    /// Optional local working directory override.
     pub local_dir: Option<PathBuf>,
 }
 
@@ -109,6 +117,7 @@ pub enum Remote {
 }
 
 impl Remote {
+    /// Returns whether this CLI slot was left unspecified.
     pub fn is_none(&self) -> bool {
         matches!(self, Self::None)
     }
