@@ -839,6 +839,59 @@ mod tests {
         assert!(client.decrypt_str("bidoof").is_err());
     }
 
+    #[test]
+    fn should_return_bookmark_when_password_decryption_fails() {
+        let tmp_dir: tempfile::TempDir = TempDir::new().ok().unwrap();
+        let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
+        let mut client =
+            BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16, true).unwrap();
+        let mut bookmark = Bookmark::from(make_generic_ftparams(
+            FileTransferProtocol::Sftp,
+            "192.168.1.31",
+            22,
+            "pi",
+            Some("mypassword"),
+        ));
+        bookmark.password = Some(String::from("not-valid-base64"));
+        client
+            .hosts
+            .bookmarks
+            .insert(String::from("raspberry"), bookmark);
+
+        let bookmark = ftparams_to_tup(client.get_bookmark("raspberry").unwrap());
+
+        assert_eq!(bookmark.0, String::from("192.168.1.31"));
+        assert_eq!(bookmark.1, 22);
+        assert_eq!(bookmark.2, FileTransferProtocol::Sftp);
+        assert_eq!(bookmark.3, String::from("pi"));
+        assert_eq!(bookmark.4.as_deref(), Some("not-valid-base64"));
+    }
+
+    #[test]
+    fn should_return_s3_bookmark_when_secret_decryption_fails() {
+        let tmp_dir: tempfile::TempDir = TempDir::new().ok().unwrap();
+        let (cfg_path, key_path): (PathBuf, PathBuf) = get_paths(tmp_dir.path());
+        let mut client =
+            BookmarksClient::new(cfg_path.as_path(), key_path.as_path(), 16, true).unwrap();
+        let mut bookmark = Bookmark::from(make_s3_ftparams());
+        let s3 = bookmark.s3.as_mut().unwrap();
+        s3.access_key = Some(String::from("bad-access-key"));
+        s3.secret_access_key = Some(String::from("bad-secret-key"));
+        client
+            .hosts
+            .bookmarks
+            .insert(String::from("my-bucket"), bookmark);
+
+        let bookmark = client.get_bookmark("my-bucket").unwrap();
+        let params = bookmark.params.s3_params().unwrap();
+
+        assert_eq!(bookmark.protocol, FileTransferProtocol::AwsS3);
+        assert_eq!(params.bucket_name.as_str(), "omar");
+        assert_eq!(params.region.as_deref(), Some("eu-west-1"));
+        assert_eq!(params.access_key.as_deref(), Some("bad-access-key"));
+        assert_eq!(params.secret_access_key.as_deref(), Some("bad-secret-key"));
+    }
+
     /// Get paths for configuration and key for bookmarks
     fn get_paths(dir: &Path) -> (PathBuf, PathBuf) {
         let k: PathBuf = PathBuf::from(dir);

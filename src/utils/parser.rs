@@ -383,10 +383,31 @@ mod tests {
     }
 
     #[test]
+    fn test_should_parse_webdav_opt_with_at_in_password() {
+        let result =
+            parse_remote_opt("https://omar:p@ssword@myserver:4445/myshare/dir/subdir").unwrap();
+
+        let params = result.params.webdav_params().unwrap();
+        assert_eq!(params.uri.as_str(), "https://myserver:4445");
+        assert_eq!(params.username.as_str(), "omar");
+        assert_eq!(params.password.as_str(), "p@ssword");
+        assert_eq!(
+            result.remote_path.as_deref().unwrap(),
+            std::path::Path::new("/myshare/dir/subdir")
+        );
+    }
+
+    #[test]
     fn should_reject_malformed_webdav_options() {
         let result = parse_remote_opt("https://omar@myserver:4445/myshare");
 
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn should_reject_webdav_options_with_missing_credentials() {
+        assert!(parse_remote_opt("https://:password@myserver:4445/myshare").is_err());
+        assert!(parse_remote_opt("https://omar:@myserver:4445/myshare").is_err());
     }
 
     #[test]
