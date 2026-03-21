@@ -88,7 +88,7 @@ impl FileTransferActivity {
         // Reset states
         self.transfer.reset();
         // Single file = 1 entry
-        self.transfer.full.init(1);
+        self.transfer.progress.init(1);
         // Mount progress bar
         self.mount_progress_bar(format!("Uploading {}…", file.path.display()));
         // Get remote path
@@ -102,7 +102,7 @@ impl FileTransferActivity {
         // Send
         let result = self.filetransfer_send_one(file, remote_path.as_path(), file_name);
         if result.is_ok() {
-            self.transfer.full.increment();
+            self.transfer.progress.increment();
         }
         // Umount progress bar
         self.umount_progress_bar();
@@ -118,8 +118,9 @@ impl FileTransferActivity {
         dst_name: Option<String>,
     ) -> Result<(), String> {
         self.transfer.reset();
+        self.transfer.progress.init(0);
         if !entry.is_dir() {
-            self.transfer.full.init(1);
+            self.transfer.progress.set_files_total(1);
         }
         self.mount_progress_bar(format!("Uploading {}…", entry.path().display()));
         let result = self.filetransfer_send_recurse(entry, curr_remote_path, dst_name, true);
@@ -135,7 +136,7 @@ impl FileTransferActivity {
         // Reset states
         self.transfer.reset();
         // Total = number of queue entries
-        self.transfer.full.init(entries.len());
+        self.transfer.progress.init(entries.len());
         // Mount progress bar
         self.mount_progress_bar(format!("Uploading {} entries…", entries.len()));
         // Send each entry
@@ -149,7 +150,7 @@ impl FileTransferActivity {
                 result = r;
                 break;
             }
-            self.transfer.full.increment();
+            self.transfer.progress.increment();
         }
         // Umount progress bar
         self.umount_progress_bar();
@@ -203,7 +204,7 @@ impl FileTransferActivity {
             match self.browser.local_pane_mut().fs.list_dir(entry.path()) {
                 Ok(entries) => {
                     if track_progress {
-                        self.transfer.full.init(entries.len());
+                        self.transfer.progress.set_files_total(entries.len());
                     }
                     for entry in entries.iter() {
                         if self.transfer.aborted() {
@@ -211,7 +212,7 @@ impl FileTransferActivity {
                         }
                         self.filetransfer_send_recurse(entry, remote_path.as_path(), None, false)?;
                         if track_progress {
-                            self.transfer.full.increment();
+                            self.transfer.progress.increment();
                         }
                     }
                     Ok(())
@@ -269,7 +270,7 @@ impl FileTransferActivity {
                 }
                 Ok(_) => {
                     if track_progress {
-                        self.transfer.full.increment();
+                        self.transfer.progress.increment();
                     }
                     Ok(())
                 }
@@ -312,7 +313,9 @@ impl FileTransferActivity {
                     host_bridge.path().display()
                 ),
             );
-            self.transfer.add_bytes(metadata.size as usize);
+            self.transfer
+                .progress
+                .register_skipped_file(metadata.size as usize);
             return Ok(());
         }
         // Upload file
@@ -352,7 +355,8 @@ impl FileTransferActivity {
             .map_err(TransferErrorReason::HostError)
             .map(|x| x.metadata().size as usize)?;
         // Init transfer
-        self.transfer.partial.init(file_size);
+        self.transfer.progress.register_file(file_size);
+        let file_started = Instant::now();
 
         // Write remote file
         let mut total_bytes_written: usize = 0;
@@ -402,14 +406,13 @@ impl FileTransferActivity {
                 }
             };
             // Increase progress
-            self.transfer.partial.update_progress(delta);
-            self.transfer.add_bytes(delta);
+            self.transfer.progress.add_bytes(delta);
             // Draw only if a significant progress has been made (performance improvement)
-            if last_progress_val < self.transfer.partial.calc_progress() - 0.01 {
+            if last_progress_val < self.transfer.progress.calc_progress() - 0.01 {
                 // Draw
                 self.update_progress_bar(format!("Uploading \"{file_name}\"…"));
                 self.view();
-                last_progress_val = self.transfer.partial.calc_progress();
+                last_progress_val = self.transfer.progress.calc_progress();
             }
         }
         // Finalize stream
@@ -438,8 +441,8 @@ impl FileTransferActivity {
                 "Saved file \"{}\" to \"{}\" (took {} seconds; at {}/s)",
                 host.path.display(),
                 remote.display(),
-                fmt_millis(self.transfer.partial.started().elapsed()),
-                ByteSize(self.transfer.partial.calc_bytes_per_second()),
+                fmt_millis(file_started.elapsed()),
+                ByteSize(self.transfer.progress.calc_bytes_per_second()),
             ),
         );
         Ok(())
@@ -485,8 +488,9 @@ impl FileTransferActivity {
         dst_name: Option<String>,
     ) -> Result<(), String> {
         self.transfer.reset();
+        self.transfer.progress.init(0);
         if !entry.is_dir() {
-            self.transfer.full.init(1);
+            self.transfer.progress.set_files_total(1);
         }
         self.mount_progress_bar(format!("Downloading {}…", entry.path().display()));
         let result = self.filetransfer_recv_recurse(entry, host_path, dst_name, true);
@@ -503,13 +507,13 @@ impl FileTransferActivity {
         // Reset states
         self.transfer.reset();
         // Single file = 1 entry
-        self.transfer.full.init(1);
+        self.transfer.progress.init(1);
         // Mount progress bar
         self.mount_progress_bar(format!("Downloading {}…", entry.path.display()));
         // Receive
         let result = self.filetransfer_recv_one(host_bridge_path, entry, entry.name());
         if result.is_ok() {
-            self.transfer.full.increment();
+            self.transfer.progress.increment();
         }
         // Umount progress bar
         self.umount_progress_bar();
@@ -525,7 +529,7 @@ impl FileTransferActivity {
         // Reset states
         self.transfer.reset();
         // Total = number of queue entries
-        self.transfer.full.init(entries.len());
+        self.transfer.progress.init(entries.len());
         // Mount progress bar
         self.mount_progress_bar(format!("Downloading {} entries…", entries.len()));
         // Receive each entry
@@ -539,7 +543,7 @@ impl FileTransferActivity {
                 result = r;
                 break;
             }
-            self.transfer.full.increment();
+            self.transfer.progress.increment();
         }
         // Umount progress bar
         self.umount_progress_bar();
@@ -596,7 +600,7 @@ impl FileTransferActivity {
                     match self.browser.remote_pane_mut().fs.list_dir(entry.path()) {
                         Ok(entries) => {
                             if track_progress {
-                                self.transfer.full.init(entries.len());
+                                self.transfer.progress.set_files_total(entries.len());
                             }
                             for entry in entries.iter() {
                                 if self.transfer.aborted() {
@@ -609,7 +613,7 @@ impl FileTransferActivity {
                                     false,
                                 )?;
                                 if track_progress {
-                                    self.transfer.full.increment();
+                                    self.transfer.progress.increment();
                                 }
                             }
                             Ok(())
@@ -688,7 +692,7 @@ impl FileTransferActivity {
                 Err(err.to_string())
             } else {
                 if track_progress {
-                    self.transfer.full.increment();
+                    self.transfer.progress.increment();
                 }
                 Ok(())
             }
@@ -722,7 +726,9 @@ impl FileTransferActivity {
                     remote.path().display()
                 ),
             );
-            self.transfer.add_bytes(remote.metadata().size as usize);
+            self.transfer
+                .progress
+                .register_skipped_file(remote.metadata().size as usize);
             return Ok(());
         }
 
@@ -755,7 +761,10 @@ impl FileTransferActivity {
     ) -> Result<(), TransferErrorReason> {
         let mut total_bytes_written: usize = 0;
         // Init transfer
-        self.transfer.partial.init(remote.metadata.size as usize);
+        self.transfer
+            .progress
+            .register_file(remote.metadata.size as usize);
+        let file_started = Instant::now();
         // Write host_bridge file
         let mut last_progress_val: f64 = 0.0;
         let mut last_input_event_fetch: Option<Instant> = None;
@@ -801,14 +810,13 @@ impl FileTransferActivity {
                 }
             };
             // Set progress
-            self.transfer.partial.update_progress(delta);
-            self.transfer.add_bytes(delta);
+            self.transfer.progress.add_bytes(delta);
             // Draw only if a significant progress has been made (performance improvement)
-            if last_progress_val < self.transfer.partial.calc_progress() - 0.01 {
+            if last_progress_val < self.transfer.progress.calc_progress() - 0.01 {
                 // Draw
                 self.update_progress_bar(format!("Downloading \"{file_name}\""));
                 self.view();
-                last_progress_val = self.transfer.partial.calc_progress();
+                last_progress_val = self.transfer.progress.calc_progress();
             }
         }
         // If download was abrupted, return Error
@@ -847,8 +855,8 @@ impl FileTransferActivity {
                 "Saved file \"{}\" to \"{}\" (took {} seconds; at {}/s)",
                 remote.path.display(),
                 host_bridge.display(),
-                fmt_millis(self.transfer.partial.started().elapsed()),
-                ByteSize(self.transfer.partial.calc_bytes_per_second()),
+                fmt_millis(file_started.elapsed()),
+                ByteSize(self.transfer.progress.calc_bytes_per_second()),
             ),
         );
 
