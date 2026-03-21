@@ -29,9 +29,9 @@ impl FromStr for Command {
                     Err("cd command requires a path".to_string())
                 }
             }
-            Some("exit") | Some("logout") => Ok(Command::Exit),
+            Some("exit" | "logout") => Ok(Command::Exit),
             Some(_) => Ok(Command::Exec(s.to_string())),
-            None => Err("".to_string()),
+            None => Err(String::new()),
         }
     }
 }
@@ -43,7 +43,7 @@ impl FileTransferActivity {
 
     fn action_exec(&mut self, cmd: String) {
         if cmd.is_empty() {
-            self.print_terminal("".to_string());
+            self.print_terminal(String::new());
             return;
         }
 

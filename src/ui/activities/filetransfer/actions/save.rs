@@ -191,8 +191,9 @@ impl FileTransferActivity {
                 Msg::PendingAction(PendingActionMsg::ReplaceSkipAll),
                 Msg::PendingAction(PendingActionMsg::ReplaceOverwriteAll),
             ]),
-            Msg::PendingAction(PendingActionMsg::ReplaceOverwrite)
-                | Msg::PendingAction(PendingActionMsg::ReplaceOverwriteAll)
+            Msg::PendingAction(
+                PendingActionMsg::ReplaceOverwrite | PendingActionMsg::ReplaceOverwriteAll
+            )
         ) {
             trace!("User wants to replace file");
             self.umount_radio_replace();

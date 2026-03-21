@@ -3,7 +3,7 @@
 //! `filetransfer_activity` is the module which implements the Filetransfer activity, which is the main activity afterall
 
 // locals
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use remotefs::File;
 
@@ -163,9 +163,9 @@ impl FileTransferActivity {
             // NOTE: tab and methods are switched on purpose (we resolve from the opposite side)
             SyncBrowsingDestination::ParentDir => {
                 if is_local {
-                    self.remote().wrkdir.parent().map(|x| x.to_path_buf())
+                    self.remote().wrkdir.parent().map(Path::to_path_buf)
                 } else {
-                    self.host_bridge().wrkdir.parent().map(|x| x.to_path_buf())
+                    self.host_bridge().wrkdir.parent().map(Path::to_path_buf)
                 }
             }
             SyncBrowsingDestination::PreviousDir => {

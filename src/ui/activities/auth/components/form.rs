@@ -97,7 +97,7 @@ fn handle_input_ev(
             code: Key::Enter, ..
         }) => Some(Msg::Form(FormMsg::Connect)),
         Event::Keyboard(KeyEvent {
-            code: Key::Char('c') | Key::Char('h') | Key::Char('r') | Key::Char('s'),
+            code: Key::Char('c' | 'h' | 'r' | 's'),
             modifiers: KeyModifiers::CONTROL,
         }) => Some(Msg::None),
         Event::Keyboard(KeyEvent {

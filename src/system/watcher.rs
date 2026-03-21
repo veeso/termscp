@@ -160,7 +160,7 @@ impl FsWatcher {
 
     /// Returns the list of watched paths
     pub fn watched_paths(&self) -> Vec<&Path> {
-        Vec::from_iter(self.paths.keys().map(|x| x.as_path()))
+        Vec::from_iter(self.paths.keys().map(PathBuf::as_path))
     }
 
     /// Unwatch provided path.
