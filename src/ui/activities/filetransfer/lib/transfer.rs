@@ -142,18 +142,17 @@ impl TransferProgress {
         self.files_total <= 1
     }
 
+    #[cfg(test)]
     pub fn bytes_written(&self) -> usize {
         self.bytes_written
     }
 
+    #[cfg(test)]
     pub fn files_completed(&self) -> usize {
         self.files_completed
     }
 
-    pub fn files_total(&self) -> usize {
-        self.files_total
-    }
-
+    #[cfg(test)]
     pub fn files_started(&self) -> usize {
         self.files_started
     }
@@ -381,7 +380,7 @@ mod test {
         progress.add_bytes(256);
 
         let display = progress.to_string();
-        assert!(display.contains("/ 1.0 KB"));
+        assert!(display.contains("/ 1.0 KiB"));
         assert!(!display.contains('~'));
     }
 

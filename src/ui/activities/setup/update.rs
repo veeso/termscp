@@ -467,7 +467,7 @@ impl SetupActivity {
                 }
             }
             ThemeMsg::ExplorerRemoteHgBlurDown => {
-                if let Err(err) = self.app.active(&Id::Theme(IdTheme::ProgBarFull)) {
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::ProgBar)) {
                     error!("Failed to activate component: {err}");
                 }
             }
@@ -476,23 +476,13 @@ impl SetupActivity {
                     error!("Failed to activate component: {err}");
                 }
             }
-            ThemeMsg::ProgBarFullBlurDown => {
-                if let Err(err) = self.app.active(&Id::Theme(IdTheme::ProgBarPartial)) {
-                    error!("Failed to activate component: {err}");
-                }
-            }
-            ThemeMsg::ProgBarFullBlurUp => {
-                if let Err(err) = self.app.active(&Id::Theme(IdTheme::ExplorerRemoteHg)) {
-                    error!("Failed to activate component: {err}");
-                }
-            }
-            ThemeMsg::ProgBarPartialBlurDown => {
+            ThemeMsg::ProgBarBlurDown => {
                 if let Err(err) = self.app.active(&Id::Theme(IdTheme::LogBg)) {
                     error!("Failed to activate component: {err}");
                 }
             }
-            ThemeMsg::ProgBarPartialBlurUp => {
-                if let Err(err) = self.app.active(&Id::Theme(IdTheme::ProgBarFull)) {
+            ThemeMsg::ProgBarBlurUp => {
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::ExplorerRemoteHg)) {
                     error!("Failed to activate component: {err}");
                 }
             }
@@ -502,7 +492,7 @@ impl SetupActivity {
                 }
             }
             ThemeMsg::LogBgBlurUp => {
-                if let Err(err) = self.app.active(&Id::Theme(IdTheme::ProgBarPartial)) {
+                if let Err(err) = self.app.active(&Id::Theme(IdTheme::ProgBar)) {
                     error!("Failed to activate component: {err}");
                 }
             }
