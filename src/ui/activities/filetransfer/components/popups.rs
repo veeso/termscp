@@ -37,7 +37,7 @@ pub use self::keybindings::KeybindingsPopup;
 pub use self::mkdir::{MkdirPopup, SyncBrowsingMkdirPopup};
 pub use self::newfile::NewfilePopup;
 pub use self::open_with::OpenWithPopup;
-pub use self::progress_bar::{ProgressBarFull, ProgressBarPartial};
+pub use self::progress_bar::TransferProgressBar;
 pub use self::quit::QuitPopup;
 pub use self::rename::RenamePopup;
 pub use self::replace::ReplacePopup;
