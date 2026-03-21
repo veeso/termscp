@@ -360,7 +360,7 @@ impl FileTransferActivity {
 
         // Write remote file
         let mut total_bytes_written: usize = 0;
-        let mut last_progress_val: f64 = 0.0;
+        let mut last_redraw: Instant = Instant::now();
         let mut last_input_event_fetch: Option<Instant> = None;
         // While the entire file hasn't been completely written,
         // Or filetransfer has been aborted
@@ -407,12 +407,11 @@ impl FileTransferActivity {
             };
             // Increase progress
             self.transfer.progress.add_bytes(delta);
-            // Draw only if a significant progress has been made (performance improvement)
-            if last_progress_val < self.transfer.progress.calc_progress() - 0.01 {
-                // Draw
+            // Redraw at most every 100ms to keep UI responsive for large files
+            if last_redraw.elapsed().as_millis() >= 100 {
                 self.update_progress_bar(format!("Uploading \"{file_name}\"…"));
                 self.view();
-                last_progress_val = self.transfer.progress.calc_progress();
+                last_redraw = Instant::now();
             }
         }
         // Finalize stream
@@ -766,7 +765,7 @@ impl FileTransferActivity {
             .register_file(remote.metadata.size as usize);
         let file_started = Instant::now();
         // Write host_bridge file
-        let mut last_progress_val: f64 = 0.0;
+        let mut last_redraw: Instant = Instant::now();
         let mut last_input_event_fetch: Option<Instant> = None;
         // While the entire file hasn't been completely read,
         // Or filetransfer has been aborted
@@ -811,12 +810,11 @@ impl FileTransferActivity {
             };
             // Set progress
             self.transfer.progress.add_bytes(delta);
-            // Draw only if a significant progress has been made (performance improvement)
-            if last_progress_val < self.transfer.progress.calc_progress() - 0.01 {
-                // Draw
+            // Redraw at most every 100ms to keep UI responsive for large files
+            if last_redraw.elapsed().as_millis() >= 100 {
                 self.update_progress_bar(format!("Downloading \"{file_name}\""));
                 self.view();
-                last_progress_val = self.transfer.progress.calc_progress();
+                last_redraw = Instant::now();
             }
         }
         // If download was abrupted, return Error
