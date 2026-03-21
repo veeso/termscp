@@ -426,7 +426,7 @@ impl FileTransferActivity {
         &mut self,
         root_name: String,
     ) {
-        let prog_color = self.theme().transfer_progress_bar_full;
+        let prog_color = self.theme().transfer_progress_bar;
         ui_result(self.app.remount(
             Id::TransferProgressBar,
             Box::new(components::TransferProgressBar::new(

@@ -184,8 +184,7 @@ impl SetupActivity {
                 .constraints(
                     [
                         Constraint::Length(1), // Title
-                        Constraint::Length(3), // Full prog bar
-                        Constraint::Length(3), // Partial prog bar
+                        Constraint::Length(3), // prog bar
                         Constraint::Length(3), // log bg
                         Constraint::Length(3), // log window
                         Constraint::Length(3), // status sorting
@@ -202,39 +201,34 @@ impl SetupActivity {
                 transfer_colors_layout_col2[0],
             );
             self.app.view(
-                &Id::Theme(IdTheme::ProgBarFull),
+                &Id::Theme(IdTheme::ProgBar),
                 f,
                 transfer_colors_layout_col2[1],
             );
             self.app.view(
-                &Id::Theme(IdTheme::ProgBarPartial),
+                &Id::Theme(IdTheme::LogBg),
                 f,
                 transfer_colors_layout_col2[2],
             );
             self.app.view(
-                &Id::Theme(IdTheme::LogBg),
+                &Id::Theme(IdTheme::LogWindow),
                 f,
                 transfer_colors_layout_col2[3],
             );
             self.app.view(
-                &Id::Theme(IdTheme::LogWindow),
+                &Id::Theme(IdTheme::StatusSorting),
                 f,
                 transfer_colors_layout_col2[4],
             );
             self.app.view(
-                &Id::Theme(IdTheme::StatusSorting),
+                &Id::Theme(IdTheme::StatusHidden),
                 f,
                 transfer_colors_layout_col2[5],
             );
             self.app.view(
-                &Id::Theme(IdTheme::StatusHidden),
-                f,
-                transfer_colors_layout_col2[6],
-            );
-            self.app.view(
                 &Id::Theme(IdTheme::StatusSync),
                 f,
-                transfer_colors_layout_col2[7],
+                transfer_colors_layout_col2[6],
             );
             // Popups
             self.view_popups(f);
@@ -430,19 +424,8 @@ impl SetupActivity {
             error!("Failed to remount component: {err}");
         }
         if let Err(err) = self.app.remount(
-            Id::Theme(IdTheme::ProgBarFull),
-            Box::new(components::ProgBarFull::new(
-                theme.transfer_progress_bar_full,
-            )),
-            vec![],
-        ) {
-            error!("Failed to remount component: {err}");
-        }
-        if let Err(err) = self.app.remount(
-            Id::Theme(IdTheme::ProgBarPartial),
-            Box::new(components::ProgBarPartial::new(
-                theme.transfer_progress_bar_partial,
-            )),
+            Id::Theme(IdTheme::ProgBar),
+            Box::new(components::ProgBar::new(theme.transfer_progress_bar)),
             vec![],
         ) {
             error!("Failed to remount component: {err}");
