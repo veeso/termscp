@@ -67,8 +67,10 @@ pub fn fmt_path_elide_ex(p: &Path, width: usize, extra_len: usize) -> String {
             // If ancestors_len is bigger than 3, push '…' and parent too
             if ancestors_len > 3 {
                 elided_path.push("…");
-                if let Some(parent) = p.ancestors().nth(1) {
-                    elided_path.push(parent.file_name().unwrap());
+                if let Some(parent) = p.ancestors().nth(1)
+                    && let Some(name) = parent.file_name()
+                {
+                    elided_path.push(name);
                 }
             }
             // Push file_name
