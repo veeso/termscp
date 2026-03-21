@@ -91,6 +91,7 @@ impl FileTransferActivity {
         self.transfer.progress.init(1);
         // Mount progress bar
         self.mount_progress_bar(format!("Uploading {}…", file.path.display()));
+        self.view();
         // Get remote path
         let file_name: String = file.name();
         let mut remote_path: PathBuf = PathBuf::from(curr_remote_path);
@@ -123,6 +124,7 @@ impl FileTransferActivity {
             self.transfer.progress.set_files_total(1);
         }
         self.mount_progress_bar(format!("Uploading {}…", entry.path().display()));
+        self.view();
         let result = self.filetransfer_send_recurse(entry, curr_remote_path, dst_name, true);
         self.umount_progress_bar();
         result
@@ -139,6 +141,7 @@ impl FileTransferActivity {
         self.transfer.progress.init(entries.len());
         // Mount progress bar
         self.mount_progress_bar(format!("Uploading {} entries…", entries.len()));
+        self.view();
         // Send each entry
         let mut result = Ok(());
         for (entry, remote) in entries {
@@ -492,6 +495,7 @@ impl FileTransferActivity {
             self.transfer.progress.set_files_total(1);
         }
         self.mount_progress_bar(format!("Downloading {}…", entry.path().display()));
+        self.view();
         let result = self.filetransfer_recv_recurse(entry, host_path, dst_name, true);
         self.umount_progress_bar();
         result
@@ -509,6 +513,7 @@ impl FileTransferActivity {
         self.transfer.progress.init(1);
         // Mount progress bar
         self.mount_progress_bar(format!("Downloading {}…", entry.path.display()));
+        self.view();
         // Receive
         let result = self.filetransfer_recv_one(host_bridge_path, entry, entry.name());
         if result.is_ok() {
@@ -531,6 +536,7 @@ impl FileTransferActivity {
         self.transfer.progress.init(entries.len());
         // Mount progress bar
         self.mount_progress_bar(format!("Downloading {} entries…", entries.len()));
+        self.view();
         // Receive each entry
         let mut result = Ok(());
         for (entry, path) in entries {
