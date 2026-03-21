@@ -1026,6 +1026,27 @@ mod tests {
         assert_eq!(formatter.fmt(&entry).as_str(), "喵喵喵喵喵喵喵…");
     }
 
+    #[test]
+    fn should_ignore_unknown_formatter_keys() {
+        let entry = File {
+            path: PathBuf::from("/tmp/foo.txt"),
+            metadata: Metadata {
+                accessed: None,
+                created: None,
+                modified: None,
+                file_type: FileType::File,
+                size: 8192,
+                symlink: None,
+                uid: None,
+                gid: None,
+                mode: None,
+            },
+        };
+        let formatter: Formatter = Formatter::new("before {UNKNOWN:12} after {NAME:8}");
+
+        assert_eq!(formatter.fmt(&entry).as_str(), "before  after foo.txt ");
+    }
+
     /// Dummy formatter, just yelds an 'A' at the end of the current string
     fn dummy_fmt(
         _fmt: &Formatter,
