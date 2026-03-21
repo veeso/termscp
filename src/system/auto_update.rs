@@ -132,8 +132,13 @@ impl Update {
 
     /// Check wether new version is higher than new version
     fn is_new_version_higher(new_version: &str, current_version: &str) -> bool {
-        version_compare::compare(new_version, current_version).unwrap_or(version_compare::Cmp::Lt)
-            == version_compare::Cmp::Gt
+        match (
+            semver::Version::parse(new_version),
+            semver::Version::parse(current_version),
+        ) {
+            (Ok(new), Ok(current)) => new > current,
+            _ => false,
+        }
     }
 }
 impl From<Status> for UpdateStatus {
