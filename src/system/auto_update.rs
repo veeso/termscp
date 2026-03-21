@@ -239,6 +239,21 @@ mod test {
     }
 
     #[test]
+    fn should_default_release_body_when_missing() {
+        let release: UpdRelease = UpdRelease {
+            name: String::from("termscp 0.7.0"),
+            version: String::from("0.7.0"),
+            date: String::from("2021-09-12T00:00:00Z"),
+            body: None,
+            assets: vec![],
+        };
+        let release: Release = Release::from(release);
+
+        assert!(release.body.is_empty());
+        assert_eq!(release.version.as_str(), "0.7.0");
+    }
+
+    #[test]
     fn should_tell_that_version_is_higher() {
         assert!(Update::is_new_version_higher("0.10.0", "0.9.0"));
         assert!(Update::is_new_version_higher("0.20.0", "0.19.1"));
@@ -246,6 +261,39 @@ mod test {
         assert!(!Update::is_new_version_higher("0.9.0", "0.10.0"));
         assert!(!Update::is_new_version_higher("0.9.9", "0.10.1"));
         assert!(!Update::is_new_version_higher("0.10.9", "0.11.0"));
+    }
+
+    #[test]
+    fn should_ignore_release_without_semver() {
+        let release = Release {
+            version: String::from("latest"),
+            body: String::from("notes"),
+        };
+
+        assert!(Update::check_version(release).is_none());
+    }
+
+    #[test]
+    fn should_ignore_release_when_version_is_not_newer() {
+        let release = Release {
+            version: cargo_crate_version!().to_string(),
+            body: String::from("notes"),
+        };
+
+        assert!(Update::check_version(release).is_none());
+    }
+
+    #[test]
+    fn should_accept_release_when_version_is_newer() {
+        let release = Release {
+            version: String::from("termscp-999.0.0"),
+            body: String::from("notes"),
+        };
+
+        let release = Update::check_version(release).unwrap();
+
+        assert_eq!(release.version.as_str(), "termscp-999.0.0");
+        assert_eq!(release.body.as_str(), "notes");
     }
 
     #[test]
