@@ -1,13 +1,19 @@
+//! ## Host Bridge Builder
+//!
+//! Builds host bridge implementations from persisted host bridge parameters and
+//! the active configuration client.
+
 use super::{HostBridgeParams, RemoteFsBuilder};
 use crate::host::{HostBridge, Localhost, RemoteBridged};
 use crate::system::config_client::ConfigClient;
 
+/// Builds the host-side filesystem bridge used during file transfer sessions.
 pub struct HostBridgeBuilder;
 
 impl HostBridgeBuilder {
-    /// Build Host Bridge from parms
+    /// Builds a host bridge from serialized parameters.
     ///
-    /// if protocol and parameters are inconsistent, the function will return an error.
+    /// Returns an error when the selected host protocol and parameters are inconsistent.
     pub fn build(
         params: HostBridgeParams,
         config_client: &ConfigClient,
