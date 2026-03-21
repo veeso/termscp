@@ -1,14 +1,28 @@
+//! ## AWS S3 Parameters
+//!
+//! Defines the runtime connection parameters used to build AWS S3 and
+//! S3-compatible remote filesystem clients.
+
 /// Connection parameters for AWS S3 protocol
 #[derive(Debug, Clone)]
 pub struct AwsS3Params {
+    /// Target bucket name.
     pub bucket_name: String,
+    /// Target region.
     pub region: Option<String>,
+    /// Optional custom endpoint URL.
     pub endpoint: Option<String>,
+    /// Optional shared credentials profile.
     pub profile: Option<String>,
+    /// Optional static access key.
     pub access_key: Option<String>,
+    /// Optional static secret access key.
     pub secret_access_key: Option<String>,
+    /// Optional security token for temporary credentials.
     pub security_token: Option<String>,
+    /// Optional session token for temporary credentials.
     pub session_token: Option<String>,
+    /// Whether to force path-style bucket addressing.
     pub new_path_style: bool,
 }
 

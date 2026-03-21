@@ -1,13 +1,24 @@
+//! ## SMB Parameters
+//!
+//! Defines the runtime connection parameters used to build SMB remote
+//! filesystem clients.
+
 /// Connection parameters for SMB protocol
 #[derive(Debug, Clone)]
 pub struct SmbParams {
+    /// Hostname or address of the SMB server.
     pub address: String,
     #[cfg(posix)]
+    /// SMB service port used on POSIX platforms.
     pub port: u16,
+    /// Share name to mount.
     pub share: String,
+    /// Optional username.
     pub username: Option<String>,
+    /// Optional password.
     pub password: Option<String>,
     #[cfg(posix)]
+    /// Optional workgroup used on POSIX platforms.
     pub workgroup: Option<String>,
 }
 
