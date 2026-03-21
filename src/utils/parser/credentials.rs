@@ -1,3 +1,8 @@
+//! ## Parser Credential Helpers
+//!
+//! Shared capture-group helpers used by parser submodules when extracting
+//! credentials and required fields from regex matches.
+
 pub(super) fn optional_capture(groups: &regex::Captures<'_>, index: usize) -> Option<String> {
     groups.get(index).map(|group| group.as_str().to_string())
 }
