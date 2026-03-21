@@ -2,106 +2,56 @@
 //!
 //! `parser` is the module which provides utilities for parsing different kind of stuff
 
-// Locals
-use std::path::PathBuf;
 use std::str::FromStr;
 
-// Ext
 use bytesize::ByteSize;
 use lazy_regex::{Lazy, Regex};
 use tuirealm::ratatui::style::Color;
 use tuirealm::utils::parser as tuirealm_parser;
 
-#[cfg(smb)]
-use crate::filetransfer::params::SmbParams;
-use crate::filetransfer::params::{
-    AwsS3Params, GenericProtocolParams, KubeProtocolParams, ProtocolParams, WebDAVProtocolParams,
-};
-use crate::filetransfer::{FileTransferParams, FileTransferProtocol};
-#[cfg(not(test))] // NOTE: don't use configuration during tests
-use crate::system::config_client::ConfigClient;
-#[cfg(not(test))] // NOTE: don't use configuration during tests
-use crate::system::environment;
+use crate::filetransfer::FileTransferParams;
+#[path = "parser/credentials.rs"]
+mod credentials;
+#[path = "parser/ports.rs"]
+mod ports;
+#[path = "parser/protocol.rs"]
+mod protocol;
+#[path = "parser/remote.rs"]
+mod remote;
 
-// Regex
+/// This regex matches the protocol used as option.
+pub(super) static REMOTE_OPT_PROTOCOL_REGEX: Lazy<Regex> =
+    lazy_regex!(r"(?:([a-z0-9]+)://)?(\\\\)?(?:(.+))");
 
-/**
- * This regex matches the protocol used as option
- * Regex matches:
- * - group 1: Some(protocol) | None
- * - group 2: SMB windows prefix
- * - group 3: Some(other args)
- */
-static REMOTE_OPT_PROTOCOL_REGEX: Lazy<Regex> = lazy_regex!(r"(?:([a-z0-9]+)://)?(\\\\)?(?:(.+))");
-
-/**
- * Regex matches:
- *  - group 1: Some(user) | None
- *  - group 2: Address
- *  - group 3: Some(port) | None
- *  - group 4: Some(path) | None
- */
-static REMOTE_GENERIC_OPT_REGEX: Lazy<Regex> = lazy_regex!(
+/// Regex matches generic remote options.
+pub(super) static REMOTE_GENERIC_OPT_REGEX: Lazy<Regex> = lazy_regex!(
     r"(?:(.+[^@])@)?(?:([^:]+))(?::((?:[0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])(?:[0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])))?(?::([^:]+))?"
 );
 
-/**
- * Regex matches:
- *  - group 1: Username
- *  - group 2: Password
- *  - group 2: Uri
- *  - group 4: Some(path) | None
- */
-static REMOTE_WEBDAV_OPT_REGEX: Lazy<Regex> =
+/// Regex matches WebDAV remote options.
+pub(super) static REMOTE_WEBDAV_OPT_REGEX: Lazy<Regex> =
     lazy_regex!(r"(?:([^:]+):)(?:(.+[^@])@)(?:([^/]+))(?:(.+))?");
 
-/**
- * Regex matches: {namespace}[@{cluster_url}]$/{path}
- *  - group 1: Namespace
- *  - group 3: Some(cluster_url) | None
- *  - group 5: Some(path) | None
- */
-static REMOTE_KUBE_OPT_REGEX: Lazy<Regex> = lazy_regex!(r"(?:([^@]+))(@(?:([^$]+)))?(\$(?:(.+)))?");
+/// Regex matches kube remote options.
+pub(super) static REMOTE_KUBE_OPT_REGEX: Lazy<Regex> =
+    lazy_regex!(r"(?:([^@]+))(@(?:([^$]+)))?(\$(?:(.+)))?");
 
-/**
- * Regex matches:
- * - group 1: Bucket
- * - group 2: Region
- * - group 3: Some(profile) | None
- * - group 4: Some(path) | None
- */
-static REMOTE_S3_OPT_REGEX: Lazy<Regex> =
+/// Regex matches s3 remote options.
+pub(super) static REMOTE_S3_OPT_REGEX: Lazy<Regex> =
     lazy_regex!(r"(?:(.+[^@])@)(?:([^:]+))(?::([a-zA-Z0-9][^:]+))?(?::([^:]+))?");
 
-/**
- * Regex matches:
- * - group 1: username
- * - group 2: address
- * - group 3: port?
- * - group 4: share?
- * - group 5: remote-dir?
- */
+/// Regex matches SMB remote options on Unix platforms.
 #[cfg(smb_unix)]
-static REMOTE_SMB_OPT_REGEX: Lazy<Regex> = lazy_regex!(
+pub(super) static REMOTE_SMB_OPT_REGEX: Lazy<Regex> = lazy_regex!(
     r"(?:(.+[^@])@)?(?:([^/:]+))(?::((?:[0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])(?:[0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])))?(?:/([^/]+))?(?:(/.+))?"
 );
 
-/**
- * Regex matches:
- * - group 1: username?
- * - group 2: address
- * - group 3: share
- * - group 4: remote-dir?
- */
+/// Regex matches SMB remote options on Windows.
 #[cfg(smb_windows)]
-static REMOTE_SMB_OPT_REGEX: Lazy<Regex> =
+pub(super) static REMOTE_SMB_OPT_REGEX: Lazy<Regex> =
     lazy_regex!(r"(?:(.+[^@])@)?(?:([^:\\]+))(?:\\([^\\]+))?(?:(\\.+))?");
 
-/**
- * Regex matches:
- * - group 1: Version
- *   E.g. termscp-0.3.2 => 0.3.2; v0.4.0 => 0.4.0
- */
+/// Regex matches semantic versions.
 static SEMVER_REGEX: Lazy<Regex> = lazy_regex!(r"v?((0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*))");
 
 /**
@@ -110,19 +60,6 @@ static SEMVER_REGEX: Lazy<Regex> = lazy_regex!(r"v?((0|[1-9]\d*)\.(0|[1-9]\d*)\.
  * - group 4: unit (K, M, G, T, P)
  */
 static BYTESIZE_REGEX: Lazy<Regex> = lazy_regex!(r"(:?([0-9])+)( )*(:?[KMGTP])?B$");
-
-fn capture_group_to_string(
-    groups: &regex::Captures<'_>,
-    index: usize,
-    field_name: &str,
-) -> Result<String, String> {
-    groups
-        .get(index)
-        .map(|group| group.as_str().to_string())
-        .ok_or_else(|| format!("Missing {field_name}"))
-}
-
-// -- remote opts
 
 /// Parse remote option string. Returns in case of success a RemoteOptions struct
 /// For ssh if username is not provided, current user will be used.
@@ -156,256 +93,7 @@ fn capture_group_to_string(
 /// \\<address>\<share>[\path]
 ///
 pub fn parse_remote_opt(s: &str) -> Result<FileTransferParams, String> {
-    // Set protocol to default protocol
-    #[cfg(not(test))] // NOTE: don't use configuration during tests
-    let default_protocol: FileTransferProtocol = match environment::init_config_dir() {
-        Ok(p) => match p {
-            Some(p) => {
-                // Create config client
-                let (config_path, ssh_key_path) = environment::get_config_paths(p.as_path());
-                match ConfigClient::new(config_path.as_path(), ssh_key_path.as_path()) {
-                    Ok(cli) => cli.get_default_protocol(),
-                    Err(_) => FileTransferProtocol::Sftp,
-                }
-            }
-            None => FileTransferProtocol::Sftp,
-        },
-        Err(_) => FileTransferProtocol::Sftp,
-    };
-    #[cfg(test)] // NOTE: during test set protocol just to Sftp
-    let default_protocol: FileTransferProtocol = FileTransferProtocol::Sftp;
-    // Get protocol
-    let (protocol, remote): (FileTransferProtocol, String) =
-        parse_remote_opt_protocol(s, default_protocol)?;
-    // Match against regex for protocol type
-    match protocol {
-        FileTransferProtocol::AwsS3 => parse_s3_remote_opt(remote.as_str()),
-        FileTransferProtocol::Kube => parse_kube_remote_opt(remote.as_str()),
-        #[cfg(smb)]
-        FileTransferProtocol::Smb => parse_smb_remote_opts(remote.as_str()),
-        FileTransferProtocol::WebDAV => {
-            // get the differnece between s and remote
-            let prefix = if s.starts_with("https") {
-                "https"
-            } else {
-                "http"
-            };
-
-            parse_webdav_remote_opt(remote.as_str(), prefix)
-        }
-        protocol => parse_generic_remote_opt(remote.as_str(), protocol),
-    }
-}
-
-/// Parse protocol from CLI option. In case of success, return the protocol to be used and the remaining arguments
-fn parse_remote_opt_protocol(
-    s: &str,
-    default: FileTransferProtocol,
-) -> Result<(FileTransferProtocol, String), String> {
-    match REMOTE_OPT_PROTOCOL_REGEX.captures(s) {
-        Some(groups) => {
-            // Parse protocol or use default
-            let protocol = groups.get(1).map(|x| {
-                FileTransferProtocol::from_str(x.as_str())
-                    .map_err(|_| format!("Unknown protocol \"{}\"", x.as_str()))
-            });
-            let protocol = match protocol {
-                Some(Ok(protocol)) => protocol,
-                Some(Err(err)) => return Err(err),
-                #[cfg(smb_windows)]
-                None if groups.get(2).is_some() => FileTransferProtocol::Smb,
-                None => default,
-            };
-            // Return protocol and remaining arguments
-            Ok((
-                protocol,
-                groups
-                    .get(3)
-                    .map(|x| x.as_str().to_string())
-                    .unwrap_or_default(),
-            ))
-        }
-        None => Err("Invalid args".to_string()),
-    }
-}
-
-/// Parse generic remote options
-fn parse_generic_remote_opt(
-    s: &str,
-    protocol: FileTransferProtocol,
-) -> Result<FileTransferParams, String> {
-    match REMOTE_GENERIC_OPT_REGEX.captures(s) {
-        Some(groups) => {
-            // Match user
-            let username = groups.get(1).map(|x| x.as_str().to_string());
-            // Get address
-            let address: String = match groups.get(2) {
-                Some(group) => group.as_str().to_string(),
-                None => return Err(String::from("Missing address")),
-            };
-            // Get port
-            let port: u16 = match groups.get(3) {
-                Some(port) => match port.as_str().parse::<u16>() {
-                    // Try to parse port
-                    Ok(p) => p,
-                    Err(err) => return Err(format!("Bad port \"{}\": {}", port.as_str(), err)),
-                },
-                None => match protocol {
-                    // Set port based on protocol
-                    FileTransferProtocol::Ftp(_) => 21,
-                    FileTransferProtocol::Scp => 22,
-                    FileTransferProtocol::Sftp => 22,
-                    _ => 22, // Doesn't matter
-                },
-            };
-            // Get workdir
-            let remote_path: Option<PathBuf> =
-                groups.get(4).map(|group| PathBuf::from(group.as_str()));
-            let params: ProtocolParams = ProtocolParams::Generic(
-                GenericProtocolParams::default()
-                    .address(address)
-                    .port(port)
-                    .username(username),
-            );
-            Ok(FileTransferParams::new(protocol, params).remote_path(remote_path))
-        }
-        None => Err(String::from("Bad remote host syntax!")),
-    }
-}
-
-fn parse_webdav_remote_opt(s: &str, prefix: &str) -> Result<FileTransferParams, String> {
-    match REMOTE_WEBDAV_OPT_REGEX.captures(s) {
-        Some(groups) => {
-            let username = capture_group_to_string(&groups, 1, "username")?;
-            let password = capture_group_to_string(&groups, 2, "password")?;
-            let uri = capture_group_to_string(&groups, 3, "server URI")?;
-            let remote_path: Option<PathBuf> =
-                groups.get(4).map(|group| PathBuf::from(group.as_str()));
-
-            let params = ProtocolParams::WebDAV(WebDAVProtocolParams {
-                uri: format!("{}://{}", prefix, uri),
-                username,
-                password,
-            });
-            Ok(
-                FileTransferParams::new(FileTransferProtocol::WebDAV, params)
-                    .remote_path(remote_path),
-            )
-        }
-        None => Err(String::from("Bad remote host syntax!")),
-    }
-}
-
-/// Parse remote options for s3 protocol
-fn parse_s3_remote_opt(s: &str) -> Result<FileTransferParams, String> {
-    match REMOTE_S3_OPT_REGEX.captures(s) {
-        Some(groups) => {
-            let bucket: String = groups
-                .get(1)
-                .map(|x| x.as_str().to_string())
-                .unwrap_or_default();
-            let region: String = groups
-                .get(2)
-                .map(|x| x.as_str().to_string())
-                .unwrap_or_default();
-            let profile: Option<String> = groups.get(3).map(|x| x.as_str().to_string());
-            let remote_path: Option<PathBuf> =
-                groups.get(4).map(|group| PathBuf::from(group.as_str()));
-            Ok(FileTransferParams::new(
-                FileTransferProtocol::AwsS3,
-                ProtocolParams::AwsS3(AwsS3Params::new(bucket, Some(region), profile)),
-            )
-            .remote_path(remote_path))
-        }
-        None => Err(String::from("Bad remote host syntax!")),
-    }
-}
-
-fn parse_kube_remote_opt(s: &str) -> Result<FileTransferParams, String> {
-    match REMOTE_KUBE_OPT_REGEX.captures(s) {
-        Some(groups) => {
-            let namespace: Option<String> = groups.get(1).map(|x| x.as_str().to_string());
-            let cluster_url: Option<String> = groups.get(3).map(|x| x.as_str().to_string());
-            let remote_path: Option<PathBuf> =
-                groups.get(5).map(|group| PathBuf::from(group.as_str()));
-            Ok(FileTransferParams::new(
-                FileTransferProtocol::Kube,
-                ProtocolParams::Kube(KubeProtocolParams {
-                    namespace,
-                    cluster_url,
-                    username: None,
-                    client_cert: None,
-                    client_key: None,
-                }),
-            )
-            .remote_path(remote_path))
-        }
-        None => Err(String::from("Bad remote host syntax!")),
-    }
-}
-
-/// Parse remote options for smb protocol
-#[cfg(smb_unix)]
-fn parse_smb_remote_opts(s: &str) -> Result<FileTransferParams, String> {
-    match REMOTE_SMB_OPT_REGEX.captures(s) {
-        Some(groups) => {
-            let username = match groups.get(1) {
-                Some(group) => Some(group.as_str().to_string()),
-                None => whoami::username().ok(),
-            };
-            let address = match groups.get(2) {
-                Some(group) => group.as_str().to_string(),
-                None => return Err(String::from("Missing address")),
-            };
-            let port = match groups.get(3) {
-                Some(port) => match port.as_str().parse::<u16>() {
-                    // Try to parse port
-                    Ok(p) => p,
-                    Err(err) => return Err(format!("Bad port \"{}\": {}", port.as_str(), err)),
-                },
-                None => 445,
-            };
-            let share = match groups.get(4) {
-                Some(group) => group.as_str().to_string(),
-                None => return Err(String::from("Missing address")),
-            };
-            let remote_path: Option<PathBuf> =
-                groups.get(5).map(|group| PathBuf::from(group.as_str()));
-
-            Ok(FileTransferParams::new(
-                FileTransferProtocol::Smb,
-                ProtocolParams::Smb(SmbParams::new(address, share).port(port).username(username)),
-            )
-            .remote_path(remote_path))
-        }
-        None => Err(String::from("Bad remote host syntax!")),
-    }
-}
-
-#[cfg(smb_windows)]
-fn parse_smb_remote_opts(s: &str) -> Result<FileTransferParams, String> {
-    match REMOTE_SMB_OPT_REGEX.captures(s) {
-        Some(groups) => {
-            let username = groups.get(1).map(|x| x.as_str().to_string());
-            let address = match groups.get(2) {
-                Some(group) => group.as_str().to_string(),
-                None => return Err(String::from("Missing address")),
-            };
-            let share = match groups.get(3) {
-                Some(group) => group.as_str().to_string(),
-                None => return Err(String::from("Missing address")),
-            };
-            let remote_path: Option<PathBuf> =
-                groups.get(4).map(|group| PathBuf::from(group.as_str()));
-
-            Ok(FileTransferParams::new(
-                FileTransferProtocol::Smb,
-                ProtocolParams::Smb(SmbParams::new(address, share).username(username)),
-            )
-            .remote_path(remote_path))
-        }
-        None => Err(String::from("Bad remote host syntax!")),
-    }
+    remote::parse_remote_opt(s)
 }
 
 /// Parse semver string
@@ -500,10 +188,12 @@ pub fn parse_bytesize<S: AsRef<str>>(bytes: S) -> Option<ByteSize> {
 
 #[cfg(test)]
 mod tests {
+    use std::path::PathBuf;
 
     use pretty_assertions::assert_eq;
 
     use super::*;
+    use crate::filetransfer::FileTransferProtocol;
 
     #[test]
     fn test_utils_parse_remote_opt() {
