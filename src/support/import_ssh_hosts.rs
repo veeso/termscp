@@ -1,3 +1,8 @@
+//! ## Import SSH Hosts
+//!
+//! Imports OpenSSH host entries into termscp bookmarks and optionally registers
+//! referenced private keys in the configured SSH key storage.
+
 use std::fs::File;
 use std::io::BufReader;
 use std::path::PathBuf;

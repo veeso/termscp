@@ -1,5 +1,11 @@
+//! ## SSH Utilities
+//!
+//! Provides small helpers for loading SSH configuration files used by bookmarks
+//! and setup flows.
+
 use ssh2_config::{ParseRule, SshConfig};
 
+/// Parses an OpenSSH-style config file into an `ssh2_config::SshConfig`.
 pub fn parse_ssh2_config(path: &str) -> Result<SshConfig, String> {
     use std::fs::File;
     use std::io::BufReader;
