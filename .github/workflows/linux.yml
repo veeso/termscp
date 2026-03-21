@@ -24,6 +24,12 @@ jobs:
         run: sudo apt update && sudo apt install -y libdbus-1-dev libsmbclient-dev
       - uses: dtolnay/rust-toolchain@stable
         with:
+          toolchain: nightly
+          components: rustfmt, clippy
+      - name: Format
+        run: cargo +nightly fmt --all -- --check
+      - uses: dtolnay/rust-toolchain@stable
+        with:
           toolchain: stable
           components: rustfmt, clippy
       - name: Run tests
@@ -31,7 +37,5 @@ jobs:
         with:
           command: test
           args: --no-default-features --features github-actions --no-fail-fast
-      - name: Format
-        run: cargo fmt --all -- --check
       - name: Clippy
         run: cargo clippy -- -Dwarnings
