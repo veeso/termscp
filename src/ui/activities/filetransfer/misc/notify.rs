@@ -37,8 +37,8 @@ impl FileTransferActivity {
     fn transfer_completed_msg(&self, payload: &TransferPayload) -> String {
         let transfer_stats = format!(
             "took {} seconds; at {}/s",
-            fmt_millis(self.transfer.partial.started().elapsed()),
-            ByteSize(self.transfer.partial.calc_bytes_per_second()),
+            fmt_millis(self.transfer.progress.started.elapsed()),
+            ByteSize(self.transfer.progress.calc_bytes_per_second()),
         );
         match payload {
             TransferPayload::File(file) => {
