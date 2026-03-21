@@ -127,7 +127,7 @@ impl ChmodPopup {
         let values: Vec<usize> = state
             .unwrap_vec()
             .into_iter()
-            .map(|x| x.unwrap_usize())
+            .map(StateValue::unwrap_usize)
             .collect();
 
         UnixPexClass::new(
@@ -161,7 +161,7 @@ impl MockComponent for ChmodPopup {
 
     fn perform(&mut self, cmd: Cmd) -> CmdResult {
         match cmd {
-            Cmd::Move(Direction::Left) | Cmd::Move(Direction::Right) => {
+            Cmd::Move(Direction::Left | Direction::Right) => {
                 self.get_active_checkbox().perform(cmd)
             }
             Cmd::Move(Direction::Up) => {

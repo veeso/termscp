@@ -457,7 +457,7 @@ impl FileTransferActivity {
                             SelectedFile::One(file) => {
                                 format!("changing mode for {}…", file.name())
                             }
-                            SelectedFile::None => "".to_string(),
+                            SelectedFile::None => String::new(),
                         },
                     );
                 }

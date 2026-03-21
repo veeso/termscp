@@ -136,7 +136,7 @@ impl FileList {
     fn has_dot_dot(&self) -> bool {
         self.props
             .get(Attribute::Custom(PROP_DOT_DOT))
-            .map(|x| x.unwrap_flag())
+            .map(AttrValue::unwrap_flag)
             .unwrap_or(false)
     }
 }
@@ -169,7 +169,7 @@ impl MockComponent for FileList {
         let list_items: Vec<ListItem> = match self
             .props
             .get(Attribute::Content)
-            .map(|x| x.unwrap_table())
+            .map(AttrValue::unwrap_table)
         {
             Some(table) => init_table_iter
                 .iter()
@@ -195,7 +195,7 @@ impl MockComponent for FileList {
         let highlighted_color = self
             .props
             .get(Attribute::HighlightedColor)
-            .map(|x| x.unwrap_color());
+            .map(AttrValue::unwrap_color);
         let modifiers = match focus {
             true => TextModifiers::REVERSED,
             false => TextModifiers::empty(),
@@ -220,7 +220,11 @@ impl MockComponent for FileList {
         self.props.set(attr, value);
         if matches!(attr, Attribute::Content) {
             self.states.init_list_states(
-                match self.props.get(Attribute::Content).map(|x| x.unwrap_table()) {
+                match self
+                    .props
+                    .get(Attribute::Content)
+                    .map(AttrValue::unwrap_table)
+                {
                     Some(line) => line.len(),
                     _ => 0,
                 },
