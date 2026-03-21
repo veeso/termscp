@@ -1,3 +1,8 @@
+//! ## Parser Remote Helpers
+//!
+//! Implements protocol-specific parsing for remote connection strings while
+//! keeping the public parser API stable.
+
 use std::path::PathBuf;
 
 #[cfg(smb)]
