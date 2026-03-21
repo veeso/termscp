@@ -30,7 +30,7 @@ impl FromStr for Command {
                 }
             }
             Some("exit") | Some("logout") => Ok(Command::Exit),
-            Some(cmd) => Ok(Command::Exec(cmd.to_string())),
+            Some(_) => Ok(Command::Exec(s.to_string())),
             None => Err("".to_string()),
         }
     }
