@@ -111,6 +111,17 @@ static SEMVER_REGEX: Lazy<Regex> = lazy_regex!(r"v?((0|[1-9]\d*)\.(0|[1-9]\d*)\.
  */
 static BYTESIZE_REGEX: Lazy<Regex> = lazy_regex!(r"(:?([0-9])+)( )*(:?[KMGTP])?B$");
 
+fn capture_group_to_string(
+    groups: &regex::Captures<'_>,
+    index: usize,
+    field_name: &str,
+) -> Result<String, String> {
+    groups
+        .get(index)
+        .map(|group| group.as_str().to_string())
+        .ok_or_else(|| format!("Missing {field_name}"))
+}
+
 // -- remote opts
 
 /// Parse remote option string. Returns in case of success a RemoteOptions struct
@@ -265,9 +276,9 @@ fn parse_generic_remote_opt(
 fn parse_webdav_remote_opt(s: &str, prefix: &str) -> Result<FileTransferParams, String> {
     match REMOTE_WEBDAV_OPT_REGEX.captures(s) {
         Some(groups) => {
-            let username = groups.get(1).map(|x| x.as_str().to_string()).unwrap();
-            let password = groups.get(2).map(|x| x.as_str().to_string()).unwrap();
-            let uri = groups.get(3).map(|x| x.as_str().to_string()).unwrap();
+            let username = capture_group_to_string(&groups, 1, "username")?;
+            let password = capture_group_to_string(&groups, 2, "password")?;
+            let uri = capture_group_to_string(&groups, 3, "server URI")?;
             let remote_path: Option<PathBuf> =
                 groups.get(4).map(|group| PathBuf::from(group.as_str()));
 
@@ -474,7 +485,7 @@ pub fn parse_bytesize<S: AsRef<str>>(bytes: S) -> Option<ByteSize> {
                 .map(|x| x.as_str().parse::<u64>().unwrap_or(0))?;
             let unit = groups.get(4).map(|x| x.as_str().to_string());
             let unit = format!("{}B", unit.unwrap_or_default());
-            let unit = ByteUnit::from_str(unit.as_str()).unwrap();
+            let unit = ByteUnit::from_str(unit.as_str()).ok()?;
             Some(match unit {
                 ByteUnit::Byte => ByteSize::b(amount),
                 ByteUnit::Gigabyte => ByteSize::gib(amount),
@@ -682,6 +693,13 @@ mod tests {
     }
 
     #[test]
+    fn should_reject_malformed_webdav_options() {
+        let result = parse_remote_opt("https://omar@myserver:4445/myshare");
+
+        assert!(result.is_err());
+    }
+
+    #[test]
     fn parse_aws_s3_opt() {
         // Simple
         let result: FileTransferParams =
@@ -873,6 +891,7 @@ mod tests {
         assert_eq!(parse_bytesize("2 GB").unwrap().as_u64(), 2147483648);
         assert_eq!(parse_bytesize("1 TB").unwrap().as_u64(), 1099511627776);
         assert!(parse_bytesize("1 XB").is_none());
+        assert!(parse_bytesize("10 YB").is_none());
         assert!(parse_bytesize("1 GB aaaaa").is_none());
         assert!(parse_bytesize("1 GBaaaaa").is_none());
         assert!(parse_bytesize("1MBaaaaa").is_none());

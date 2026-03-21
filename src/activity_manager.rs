@@ -94,7 +94,9 @@ impl ActivityManager {
                 // local dir is remote_args.local_dir if set, otherwise current dir
                 let local_dir = remote_args
                     .local_dir
-                    .unwrap_or_else(|| env::current_dir().unwrap());
+                    .map(Ok)
+                    .unwrap_or_else(env::current_dir)
+                    .map_err(|err| format!("Could not resolve current directory: {err}"))?;
                 debug!("host bridge is None, setting local dir to {:?}", local_dir,);
 
                 self.set_host_params(
@@ -143,27 +145,26 @@ impl ActivityManager {
 
         match host {
             HostParams::HostBridge(HostBridgeParams::Localhost(path)) => {
-                self.context
-                    .as_mut()
-                    .unwrap()
+                self.context_mut()?
                     .set_host_bridge_params(HostBridgeParams::Localhost(path));
             }
             HostParams::HostBridge(HostBridgeParams::Remote(_, _)) => {
-                let (protocol, params) = remote_params.unwrap();
-                self.context
-                    .as_mut()
-                    .unwrap()
+                let (protocol, params) = remote_params.ok_or_else(|| {
+                    String::from("Missing remote parameters for host bridge configuration")
+                })?;
+                self.context_mut()?
                     .set_host_bridge_params(HostBridgeParams::Remote(protocol, params));
             }
             HostParams::Remote(_) => {
-                let (protocol, params) = remote_params.unwrap();
+                let (protocol, params) = remote_params
+                    .ok_or_else(|| String::from("Missing remote parameters for remote host"))?;
                 let params = FileTransferParams {
                     local_path: remote_local_path,
                     remote_path: remote_remote_path,
                     protocol,
                     params,
                 };
-                self.context.as_mut().unwrap().set_remote_params(params);
+                self.context_mut()?.set_remote_params(params);
             }
         }
         Ok(())
@@ -185,8 +186,10 @@ impl ActivityManager {
             ) && params.generic_params().is_some()
             {
                 // * if protocol is SCP or SFTP check whether a SSH key is registered for this remote, in case not ask password
-                let storage = SshKeyStorage::from(self.context.as_ref().unwrap().config());
-                let generic_params = params.generic_params().unwrap();
+                let storage = SshKeyStorage::from(self.context_ref()?.config());
+                let generic_params = params.generic_params().ok_or_else(|| {
+                    String::from("Missing generic parameters for SSH password resolution")
+                })?;
                 let username = generic_params
                     .username
                     .clone()
@@ -219,7 +222,7 @@ impl ActivityManager {
 
     /// Prompt user for password to set into params.
     fn prompt_password(&mut self, params: &mut ProtocolParams) -> Result<(), String> {
-        let ctx = self.context.as_mut().unwrap();
+        let ctx = self.context_mut()?;
         let prompt = format!("Password for {}: ", params.host_name());
 
         match tty::read_secret_from_tty(ctx.terminal(), prompt) {
@@ -244,7 +247,7 @@ impl ActivityManager {
         bookmark_name: &str,
         password: Option<&str>,
     ) -> Result<(), String> {
-        if let Some(bookmarks_client) = self.context.as_mut().unwrap().bookmarks_client_mut() {
+        if let Some(bookmarks_client) = self.context_mut()?.bookmarks_client_mut() {
             let params = match bookmarks_client.get_bookmark(bookmark_name) {
                 None => {
                     return Err(format!(
@@ -267,6 +270,18 @@ impl ActivityManager {
                 "Could not resolve bookmark name: bookmarks client not initialized",
             ))
         }
+    }
+
+    fn context_mut(&mut self) -> Result<&mut Context, String> {
+        self.context
+            .as_mut()
+            .ok_or_else(|| String::from("Activity manager context is not initialized"))
+    }
+
+    fn context_ref(&self) -> Result<&Context, String> {
+        self.context
+            .as_ref()
+            .ok_or_else(|| String::from("Activity manager context is not initialized"))
     }
 
     ///

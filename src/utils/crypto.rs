@@ -17,19 +17,19 @@ const GCM_NONCE_LEN: usize = 12;
 
 /// Encrypt a string with AES-128-GCM. The output is `nonce || ciphertext`,
 /// encoded as standard Base64.
-pub fn aes128_b64_crypt(key: &str, input: &str) -> String {
+pub fn aes128_b64_crypt(key: &str, input: &str) -> Result<String, CryptoError> {
     let derived = derive_gcm_key(key);
     let cipher = Aes128Gcm::new(&derived.into());
     let nonce_bytes = Aes128Gcm::generate_nonce(&mut aes_gcm::aead::OsRng);
     let ciphertext = cipher
         .encrypt(&nonce_bytes, input.as_bytes())
-        .expect("AES-GCM encryption must not fail for valid inputs");
+        .map_err(|_| CryptoError::AesGcm)?;
 
     let mut combined = Vec::with_capacity(GCM_NONCE_LEN + ciphertext.len());
     combined.extend_from_slice(&nonce_bytes);
     combined.extend_from_slice(&ciphertext);
 
-    B64.encode(combined)
+    Ok(B64.encode(combined))
 }
 
 /// Decrypt a Base64-encoded string. Tries AES-128-GCM first; on failure falls
@@ -104,7 +104,7 @@ mod tests {
     fn test_encrypt_decrypt_roundtrip() {
         let key = "MYSUPERSECRETKEY";
         let input = "Hello world!";
-        let secret = aes128_b64_crypt(key, input);
+        let secret = aes128_b64_crypt(key, input).unwrap();
         let decrypted = aes128_b64_decrypt(key, &secret).unwrap();
         assert_eq!(decrypted, input);
     }
@@ -123,8 +123,8 @@ mod tests {
     fn test_different_encryptions_produce_different_ciphertexts() {
         let key = "MYSUPERSECRETKEY";
         let input = "Hello world!";
-        let secret1 = aes128_b64_crypt(key, input);
-        let secret2 = aes128_b64_crypt(key, input);
+        let secret1 = aes128_b64_crypt(key, input).unwrap();
+        let secret2 = aes128_b64_crypt(key, input).unwrap();
         // Due to random nonces, ciphertexts must differ
         assert_ne!(secret1, secret2);
         // But both decrypt to the same plaintext
@@ -134,7 +134,7 @@ mod tests {
 
     #[test]
     fn test_wrong_key_fails() {
-        let secret = aes128_b64_crypt("correct-key", "sensitive data");
+        let secret = aes128_b64_crypt("correct-key", "sensitive data").unwrap();
         assert!(aes128_b64_decrypt("wrong-key", &secret).is_err());
     }
 

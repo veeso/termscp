@@ -15,5 +15,4 @@ pub mod tty;
 pub mod ui;
 
 #[cfg(test)]
-#[allow(dead_code)]
 pub mod test_helpers;

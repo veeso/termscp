@@ -108,7 +108,7 @@ impl CallChainBlock {
             None => {
                 self.next_block = Some(Box::new(CallChainBlock::new(
                     func, prefix, fmt_len, fmt_extra,
-                )))
+                )));
             }
             Some(block) => block.push(func, prefix, fmt_len, fmt_extra),
         }
@@ -375,23 +375,20 @@ impl Formatter {
             // Add to cur str, prefix and the key value
             //format!("{cur_str}{prefix}{size:10}", size = size.display().si())
         } else if fsentry.metadata().symlink.is_some() {
-            let size = ByteSize(
-                fsentry
-                    .metadata()
-                    .symlink
-                    .as_ref()
-                    .unwrap()
-                    .to_string_lossy()
-                    .len() as u64,
-            );
-            let mut fmt = size.display().si().to_string();
-            // pad with up to len 10
-            let pad = 10usize.saturating_sub(fmt.len());
-            for _ in 0..pad {
-                fmt.push(' ');
-            }
+            match fsentry.metadata().symlink.as_ref() {
+                Some(symlink) => {
+                    let size = ByteSize(symlink.to_string_lossy().len() as u64);
+                    let mut fmt = size.display().si().to_string();
+                    // pad with up to len 10
+                    let pad = 10usize.saturating_sub(fmt.len());
+                    for _ in 0..pad {
+                        fmt.push(' ');
+                    }
 
-            format!("{cur_str}{prefix}{fmt}")
+                    format!("{cur_str}{prefix}{fmt}")
+                }
+                None => format!("{cur_str}{prefix}          "),
+            }
         } else {
             // Add to cur str, prefix and the key value
             format!("{cur_str}{prefix}          ")
@@ -476,12 +473,14 @@ impl Formatter {
         let mut last_index: usize = 0;
         // Match fmt str against regex
         for regex_match in FMT_KEY_REGEX.captures_iter(fmt_str) {
-            // Get match index (unwrap is safe, since always exists)
-            let index: usize = fmt_str.find(&regex_match[0]).unwrap();
+            let Some(full_match) = regex_match.get(0) else {
+                continue;
+            };
+            let index: usize = full_match.start();
             // Get prefix
             let prefix: String = String::from(&fmt_str[last_index..index]);
             // Increment last index (sum prefix lenght and the length of the key)
-            last_index += prefix.len() + regex_match[0].len();
+            last_index += prefix.len() + full_match.as_str().len();
             // Match attributes
             match FMT_ATTR_REGEX.captures(&regex_match[1]) {
                 Some(regex_match) => {
@@ -516,7 +515,7 @@ impl Formatter {
                     match callchain.as_mut() {
                         None => {
                             callchain =
-                                Some(CallChainBlock::new(callback, prefix, fmt_len, fmt_extra))
+                                Some(CallChainBlock::new(callback, prefix, fmt_len, fmt_extra));
                         }
                         Some(chain_block) => chain_block.push(callback, prefix, fmt_len, fmt_extra),
                     }

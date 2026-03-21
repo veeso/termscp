@@ -16,23 +16,20 @@ pub struct TempMappedFile {
 
 impl Write for TempMappedFile {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        let rc = self.write_hnd()?;
-        let mut ref_mut = rc.lock().unwrap();
-        ref_mut.as_mut().unwrap().write(buf)
+        let mut handle = self.write_hnd()?;
+        handle.write(buf)
     }
 
     fn flush(&mut self) -> std::io::Result<()> {
-        let rc = self.write_hnd()?;
-        let mut ref_mut = rc.lock().unwrap();
-        ref_mut.as_mut().unwrap().flush()
+        let mut handle = self.write_hnd()?;
+        handle.flush()
     }
 }
 
 impl Read for TempMappedFile {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
-        let rc = self.read_hnd()?;
-        let mut ref_mut = rc.lock().unwrap();
-        ref_mut.as_mut().unwrap().read(buf)
+        let mut handle = self.read_hnd()?;
+        handle.read(buf)
     }
 }
 
@@ -57,7 +54,13 @@ impl TempMappedFile {
     /// Must be called
     pub fn sync(&mut self) -> HostResult<()> {
         {
-            let mut lock = self.handle.lock().unwrap();
+            let mut lock = self.lock_handle().map_err(|e| {
+                HostError::new(
+                    HostErrorType::FileNotAccessible,
+                    Some(e),
+                    self.tempfile.path(),
+                )
+            })?;
 
             if let Some(hnd) = lock.take() {
                 hnd.sync_all().map_err(|e| {
@@ -73,28 +76,62 @@ impl TempMappedFile {
         Ok(())
     }
 
-    fn write_hnd(&mut self) -> io::Result<Arc<Mutex<Option<File>>>> {
-        {
-            let mut lock = self.handle.lock().unwrap();
-            if lock.is_none() {
-                let hnd = File::create(self.tempfile.path())?;
-                lock.replace(hnd);
-            }
+    fn write_hnd(&mut self) -> io::Result<FileHandle<'_>> {
+        let mut lock = self.lock_handle()?;
+        if lock.is_none() {
+            let hnd = File::create(self.tempfile.path())?;
+            lock.replace(hnd);
         }
 
-        Ok(self.handle.clone())
+        Ok(FileHandle::new(lock))
     }
 
-    fn read_hnd(&mut self) -> io::Result<Arc<Mutex<Option<File>>>> {
-        {
-            let mut lock = self.handle.lock().unwrap();
-            if lock.is_none() {
-                let hnd = File::open(self.tempfile.path())?;
-                lock.replace(hnd);
-            }
+    fn read_hnd(&mut self) -> io::Result<FileHandle<'_>> {
+        let mut lock = self.lock_handle()?;
+        if lock.is_none() {
+            let hnd = File::open(self.tempfile.path())?;
+            lock.replace(hnd);
         }
 
-        Ok(self.handle.clone())
+        Ok(FileHandle::new(lock))
+    }
+
+    fn lock_handle(&self) -> io::Result<std::sync::MutexGuard<'_, Option<File>>> {
+        self.handle
+            .lock()
+            .map_err(|_| io::Error::other("temporary file handle lock poisoned"))
+    }
+}
+
+struct FileHandle<'a> {
+    guard: std::sync::MutexGuard<'a, Option<File>>,
+}
+
+impl<'a> FileHandle<'a> {
+    fn new(guard: std::sync::MutexGuard<'a, Option<File>>) -> Self {
+        Self { guard }
+    }
+
+    fn file_mut(&mut self) -> io::Result<&mut File> {
+        self.guard
+            .as_mut()
+            .ok_or_else(|| io::Error::other("temporary file handle is not initialized"))
+    }
+}
+
+impl Write for FileHandle<'_> {
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        self.file_mut()?.write(buf)
+    }
+
+    fn flush(&mut self) -> io::Result<()> {
+        self.file_mut()?.flush()
+    }
+}
+
+impl Read for FileHandle<'_> {
+    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+        self.file_mut()?.read(buf)
     }
 }
 

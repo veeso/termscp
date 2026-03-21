@@ -73,10 +73,16 @@ impl TryFrom<&Args> for RemoteArgs {
 
         // set args based on hosts len
         if hosts.len() == 1 {
-            remote_args.remote = hosts.pop().unwrap();
+            remote_args.remote = hosts
+                .pop()
+                .ok_or_else(|| String::from("Missing remote host configuration"))?;
         } else if hosts.len() == 2 {
-            remote_args.host_bridge = hosts.pop().unwrap();
-            remote_args.remote = hosts.pop().unwrap();
+            remote_args.host_bridge = hosts
+                .pop()
+                .ok_or_else(|| String::from("Missing host-bridge configuration"))?;
+            remote_args.remote = hosts
+                .pop()
+                .ok_or_else(|| String::from("Missing remote host configuration"))?;
         }
 
         Ok(remote_args)
