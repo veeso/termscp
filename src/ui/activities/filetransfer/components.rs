@@ -20,9 +20,9 @@ pub use misc::FooterBar;
 pub use popups::{
     ATTR_FILES, ChmodPopup, CopyPopup, DeletePopup, DisconnectPopup, ErrorPopup, FatalPopup,
     FileInfoPopup, FilterPopup, GotoPopup, KeybindingsPopup, MkdirPopup, NewfilePopup,
-    OpenWithPopup, ProgressBarFull, ProgressBarPartial, QuitPopup, RenamePopup, ReplacePopup,
-    SaveAsPopup, SortingPopup, StatusBarLocal, StatusBarRemote, SymlinkPopup,
-    SyncBrowsingMkdirPopup, WaitPopup, WalkdirWaitPopup, WatchedPathsList, WatcherPopup,
+    OpenWithPopup, QuitPopup, RenamePopup, ReplacePopup, SaveAsPopup, SortingPopup, StatusBarLocal,
+    StatusBarRemote, SymlinkPopup, SyncBrowsingMkdirPopup, TransferProgressBar, WaitPopup,
+    WalkdirWaitPopup, WatchedPathsList, WatcherPopup,
 };
 pub use transfer::{ExplorerFind, ExplorerFuzzy, ExplorerLocal, ExplorerRemote};
 
