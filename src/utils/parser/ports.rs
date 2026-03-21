@@ -1,3 +1,8 @@
+//! ## Parser Port Helpers
+//!
+//! Shared helpers for resolving default protocol ports and parsing explicit
+//! port captures from remote connection strings.
+
 use crate::filetransfer::FileTransferProtocol;
 
 pub(super) fn default_port_for_protocol(protocol: FileTransferProtocol) -> u16 {
