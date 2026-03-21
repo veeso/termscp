@@ -61,8 +61,10 @@ pub fn fmt_path_elide_ex(p: &Path, width: usize, extra_len: usize) -> String {
             let mut ancestors = p.ancestors();
             let mut elided_path: PathBuf = PathBuf::new();
             // If ancestors_len's size is bigger than 2, push count - 2
-            if ancestors_len > 2 {
-                elided_path.push(ancestors.nth(ancestors_len - 2).unwrap());
+            if ancestors_len > 2
+                && let Some(ancestor) = ancestors.nth(ancestors_len - 2)
+            {
+                elided_path.push(ancestor);
             }
             // If ancestors_len is bigger than 3, push '…' and parent too
             if ancestors_len > 3 {
