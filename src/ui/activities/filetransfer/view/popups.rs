@@ -426,34 +426,19 @@ impl FileTransferActivity {
         &mut self,
         root_name: String,
     ) {
-        let prog_color_full = self.theme().transfer_progress_bar_full;
-        let prog_color_partial = self.theme().transfer_progress_bar_partial;
+        let prog_color = self.theme().transfer_progress_bar_full;
         ui_result(self.app.remount(
-            Id::ProgressBarFull,
-            Box::new(components::ProgressBarFull::new(
-                0.0,
-                "",
-                &root_name,
-                prog_color_full,
+            Id::TransferProgressBar,
+            Box::new(components::TransferProgressBar::new(
+                0.0, "", &root_name, prog_color,
             )),
             vec![],
         ));
-        ui_result(self.app.remount(
-            Id::ProgressBarPartial,
-            Box::new(components::ProgressBarPartial::new(
-                0.0,
-                "",
-                "Please wait",
-                prog_color_partial,
-            )),
-            vec![],
-        ));
-        ui_result(self.app.active(&Id::ProgressBarPartial));
+        ui_result(self.app.active(&Id::TransferProgressBar));
     }
 
     pub(in crate::ui::activities::filetransfer) fn umount_progress_bar(&mut self) {
-        let _ = self.app.umount(&Id::ProgressBarPartial);
-        let _ = self.app.umount(&Id::ProgressBarFull);
+        let _ = self.app.umount(&Id::TransferProgressBar);
     }
 
     pub(in crate::ui::activities::filetransfer) fn mount_file_sorting(&mut self) {
