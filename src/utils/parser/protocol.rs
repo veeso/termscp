@@ -1,3 +1,8 @@
+//! ## Parser Protocol Helpers
+//!
+//! Detects the protocol prefix for remote connection strings and returns the
+//! remaining address payload.
+
 use std::str::FromStr;
 
 use super::REMOTE_OPT_PROTOCOL_REGEX;
