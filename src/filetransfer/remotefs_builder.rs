@@ -13,8 +13,10 @@ use remotefs_kube::KubeMultiPodFs as KubeFs;
 use remotefs_smb::SmbOptions;
 #[cfg(smb)]
 use remotefs_smb::{SmbCredentials, SmbFs};
-use remotefs_ssh::{NoCheckServerKey, RusshSession as SshSession};
-use remotefs_ssh::{ScpFs, SftpFs, SshAgentIdentity, SshConfigParseRule, SshOpts};
+use remotefs_ssh::{
+    NoCheckServerKey, RusshSession as SshSession, ScpFs, SftpFs, SshAgentIdentity,
+    SshConfigParseRule, SshOpts,
+};
 use remotefs_webdav::WebDAVFs;
 
 #[cfg(not(smb))]
