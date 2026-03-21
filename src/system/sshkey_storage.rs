@@ -13,6 +13,8 @@ use ssh2_config::SshConfig;
 use super::config_client::ConfigClient;
 use crate::utils::ssh as ssh_utils;
 
+/// Resolves SSH identity files from termscp config, SSH config, and standard
+/// OpenSSH default locations.
 #[derive(Default)]
 pub struct SshKeyStorage {
     /// Association between {user}@{host} and RSA key path
