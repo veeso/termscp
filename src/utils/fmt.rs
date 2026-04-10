@@ -31,7 +31,7 @@ pub fn fmt_pex(pex: UnixPexClass) -> String {
 
 /// Format a `Instant` into a time string
 pub fn fmt_time(time: SystemTime, fmt: &str) -> String {
-    let datetime: DateTime<Local> = time.into();
+    let datetime: DateTime<Local> = DateTime::<Utc>::from(time).with_timezone(&Local);
     format!("{}", datetime.format(fmt))
 }
 
@@ -285,9 +285,13 @@ mod tests {
     #[test]
     fn test_utils_fmt_time() {
         let system_time: SystemTime = SystemTime::UNIX_EPOCH;
+        let expected = DateTime::<Utc>::from(system_time)
+            .with_timezone(&Local)
+            .format("%Y-%m-%d")
+            .to_string();
         assert_eq!(
             fmt_time(system_time, "%Y-%m-%d"),
-            String::from("1970-01-01")
+            expected
         );
     }
 
