@@ -3493,7 +3493,9 @@ dependencies = [
 
 [[package]]
 name = "remotefs-ssh"
-version = "0.7.1"
+version = "0.7.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "83368dcb24c53a5a44ceba93960a60213f557dcef1a58a81ec6851eeab3ec764"
 dependencies = [
  "chrono",
  "lazy-regex",
@@ -3502,7 +3504,7 @@ dependencies = [
  "path-slash",
  "remotefs",
  "ssh2",
- "ssh2-config",
+ "ssh2-config 0.7.0",
 ]
 
 [[package]]
@@ -4281,6 +4283,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "ssh2-config"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "52b8139953690127e92a058701bc65c0ea292c08084c6136fa052021373d739c"
+dependencies = [
+ "anyhow",
+ "bitflags 2.10.0",
+ "dirs",
+ "git2",
+ "glob",
+ "log",
+ "thiserror 2.0.17",
+ "wildmatch",
+]
+
+[[package]]
 name = "stable_deref_trait"
 version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4495,7 +4513,7 @@ dependencies = [
  "serial_test",
  "shellexpand",
  "simplelog",
- "ssh2-config",
+ "ssh2-config 0.6.2",
  "tempfile",
  "thiserror 2.0.17",
  "tokio",

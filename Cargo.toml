@@ -122,6 +122,3 @@ incremental = true
 
 [profile.release]
 strip = true
-
-[patch.crates-io]
-remotefs-ssh = { path = "vendor/remotefs-ssh" }

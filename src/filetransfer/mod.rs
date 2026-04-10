@@ -5,6 +5,7 @@
 mod host_bridge_builder;
 pub mod params;
 mod remotefs_builder;
+mod scp_time_fix;
 
 // -- export types
 pub use host_bridge_builder::HostBridgeBuilder;

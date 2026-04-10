@@ -26,6 +26,7 @@ use super::params::{AwsS3Params, GenericProtocolParams};
 use super::params::{AwsS3Params, GenericProtocolParams, SmbParams};
 use super::params::{KubeProtocolParams, WebDAVProtocolParams};
 use super::{FileTransferProtocol, ProtocolParams};
+use super::scp_time_fix::ScpTimeFix;
 use crate::system::config_client::ConfigClient;
 use crate::system::sshkey_storage::SshKeyStorage;
 use crate::utils::ssh as ssh_utils;
@@ -53,7 +54,7 @@ impl RemoteFsBuilder {
                 Ok(Box::new(Self::kube_client(params)))
             }
             (FileTransferProtocol::Scp, ProtocolParams::Generic(params)) => {
-                Ok(Box::new(Self::scp_client(params, config_client)))
+                Ok(Box::new(ScpTimeFix::new(Self::scp_client(params, config_client))))
             }
             (FileTransferProtocol::Sftp, ProtocolParams::Generic(params)) => {
                 Ok(Box::new(Self::sftp_client(params, config_client)))
