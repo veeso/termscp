@@ -3494,8 +3494,6 @@ dependencies = [
 [[package]]
 name = "remotefs-ssh"
 version = "0.7.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5ca8b65fbd60801ac03973a41196b030fb04d1ce1af33d3c58c5bad94d46eb27"
 dependencies = [
  "chrono",
  "lazy-regex",
