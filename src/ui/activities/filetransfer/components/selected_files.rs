@@ -1,14 +1,15 @@
 use std::path::{Path, PathBuf};
 
-use tui_realm_stdlib::List;
+use tui_realm_stdlib::components::List;
 use tuirealm::command::{Cmd, Direction, Position};
-use tuirealm::event::{Key, KeyEvent};
-use tuirealm::props::{Alignment, BorderType, Borders, Color, TextSpan};
-use tuirealm::{Component, Event, MockComponent, NoUserEvent, State, StateValue};
+use tuirealm::component::{AppComponent, Component};
+use tuirealm::event::{Event, Key, KeyEvent, NoUserEvent};
+use tuirealm::props::{BorderType, Borders, Color, HorizontalAlignment, SpanStatic, Style, Title};
+use tuirealm::state::{State, StateValue};
 
 use crate::ui::activities::filetransfer::{MarkQueue, Msg, UiMsg};
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct SelectedFilesList {
     component: List,
     paths: Vec<PathBuf>,
@@ -35,20 +36,20 @@ impl SelectedFilesList {
                 .rewind(true)
                 .scroll(true)
                 .step(4)
-                .highlighted_color(color)
-                .highlighted_str("➤ ")
-                .title(title, Alignment::Left)
+                .highlight_style(Style::default().fg(color))
+                .highlight_str("➤ ")
+                .title(Title::from(title.to_string()).alignment(HorizontalAlignment::Left))
                 .rows(
                     paths
                         .iter()
                         .map(|(src, dest)| {
                             vec![
-                                TextSpan::from(Self::filename(src)),
-                                TextSpan::from(" -> "),
-                                TextSpan::from(Self::filename(dest)),
+                                SpanStatic::from(Self::filename(src)),
+                                SpanStatic::from(" -> "),
+                                SpanStatic::from(Self::filename(dest)),
                             ]
                         })
-                        .collect(),
+                        .collect::<Vec<Vec<SpanStatic>>>(),
                 ),
         }
     }
@@ -61,8 +62,8 @@ impl SelectedFilesList {
     }
 }
 
-impl Component<Msg, NoUserEvent> for SelectedFilesList {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for SelectedFilesList {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         match ev {
             Event::Keyboard(KeyEvent {
                 code: Key::Down, ..
@@ -112,7 +113,7 @@ impl Component<Msg, NoUserEvent> for SelectedFilesList {
                 ..
             }) => {
                 // unmark the selected file
-                let State::One(StateValue::Usize(idx)) = self.state() else {
+                let State::Single(StateValue::Usize(idx)) = self.state() else {
                     return None;
                 };
 

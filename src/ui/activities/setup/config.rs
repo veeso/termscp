@@ -7,6 +7,8 @@
 // Ext
 use std::env;
 
+use tuirealm::terminal::TerminalAdapter;
+
 use super::SetupActivity;
 
 impl SetupActivity {

@@ -2,15 +2,15 @@
 //!
 //! Update impl
 
-use tuirealm::{State, StateValue};
+use tuirealm::state::{State, StateValue};
 
 use super::{
     AuthActivity, AuthFormId, ExitReason, FormMsg, FormTab, HostBridgeProtocol, Id, InputMask, Msg,
-    UiAuthFormMsg, UiMsg, Update,
+    UiAuthFormMsg, UiMsg,
 };
 
-impl Update<Msg> for AuthActivity {
-    fn update(&mut self, msg: Option<Msg>) -> Option<Msg> {
+impl AuthActivity {
+    pub(super) fn update(&mut self, msg: Option<Msg>) -> Option<Msg> {
         self.redraw = true;
         match msg.unwrap_or(Msg::None) {
             Msg::Form(msg) => self.update_form(msg),
@@ -49,7 +49,9 @@ impl AuthActivity {
                 self.exit_reason = Some(super::ExitReason::Connect);
             }
             FormMsg::DeleteBookmark => {
-                if let Ok(State::One(StateValue::Usize(idx))) = self.app.state(&Id::BookmarksList) {
+                if let Ok(State::Single(StateValue::Usize(idx))) =
+                    self.app.state(&Id::BookmarksList)
+                {
                     // Umount dialog
                     self.umount_bookmark_del_dialog();
                     // Delete bookmark
@@ -59,7 +61,8 @@ impl AuthActivity {
                 }
             }
             FormMsg::DeleteRecent => {
-                if let Ok(State::One(StateValue::Usize(idx))) = self.app.state(&Id::RecentsList) {
+                if let Ok(State::Single(StateValue::Usize(idx))) = self.app.state(&Id::RecentsList)
+                {
                     // Umount dialog
                     self.umount_recent_del_dialog();
                     // Delete recent

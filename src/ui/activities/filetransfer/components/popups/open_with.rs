@@ -1,12 +1,13 @@
-use tui_realm_stdlib::Input;
+use tui_realm_stdlib::components::Input;
 use tuirealm::command::{Cmd, Direction, Position};
-use tuirealm::event::{Key, KeyEvent};
-use tuirealm::props::{Alignment, BorderType, Borders, Color, InputType, Style};
-use tuirealm::{Component, Event, MockComponent, NoUserEvent, State, StateValue};
+use tuirealm::component::{AppComponent, Component};
+use tuirealm::event::{Event, Key, KeyEvent, NoUserEvent};
+use tuirealm::props::{BorderType, Borders, Color, HorizontalAlignment, InputType, Style, Title};
+use tuirealm::state::{State, StateValue};
 
 use crate::ui::activities::filetransfer::{Msg, TransferMsg, UiMsg};
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct OpenWithPopup {
     component: Input,
 }
@@ -22,17 +23,20 @@ impl OpenWithPopup {
                 )
                 .foreground(color)
                 .input_type(InputType::Text)
-                .placeholder(
+                .placeholder(tuirealm::props::SpanStatic::styled(
                     "Open file with\u{2026}",
                     Style::default().fg(Color::Rgb(128, 128, 128)),
-                )
-                .title("Type the program to open the file with", Alignment::Center),
+                ))
+                .title(
+                    Title::from("Type the program to open the file with")
+                        .alignment(HorizontalAlignment::Center),
+                ),
         }
     }
 }
 
-impl Component<Msg, NoUserEvent> for OpenWithPopup {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for OpenWithPopup {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         match ev {
             Event::Keyboard(KeyEvent {
                 code: Key::Left, ..
@@ -73,13 +77,13 @@ impl Component<Msg, NoUserEvent> for OpenWithPopup {
                 code: Key::Char(ch),
                 ..
             }) => {
-                self.perform(Cmd::Type(ch));
+                self.perform(Cmd::Type(*ch));
                 Some(Msg::None)
             }
             Event::Keyboard(KeyEvent {
                 code: Key::Enter, ..
             }) => match self.state() {
-                State::One(StateValue::String(i)) => {
+                State::Single(StateValue::String(i)) => {
                     Some(Msg::Transfer(TransferMsg::OpenFileWith(i)))
                 }
                 _ => Some(Msg::None),

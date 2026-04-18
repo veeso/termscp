@@ -14,10 +14,11 @@ mod view;
 // Ext
 use std::time::Duration;
 
-use tuirealm::application::PollStrategy;
+use tuirealm::application::{Application, PollStrategy};
+use tuirealm::event::NoUserEvent;
 use tuirealm::listener::EventListenerCfg;
 use tuirealm::props::Color;
-use tuirealm::{Application, NoUserEvent, Update};
+use tuirealm::terminal::TerminalAdapter;
 
 use super::{Activity, CROSSTERM_MAX_POLL, Context, ExitReason};
 use crate::config::themes::Theme;
@@ -258,9 +259,7 @@ impl SetupActivity {
     pub fn new(ticks: Duration) -> Self {
         Self {
             app: Application::init(
-                EventListenerCfg::default()
-                    .crossterm_input_listener(ticks, CROSSTERM_MAX_POLL)
-                    .poll_timeout(ticks),
+                EventListenerCfg::default().crossterm_input_listener(ticks, CROSSTERM_MAX_POLL),
             ),
             exit_reason: None,
             context: None,
@@ -347,7 +346,10 @@ impl Activity for SetupActivity {
         if self.context.is_none() {
             return;
         }
-        match self.app.tick(PollStrategy::UpTo(3)) {
+        match self
+            .app
+            .tick(PollStrategy::UpTo(3, std::time::Duration::from_millis(10)))
+        {
             Ok(messages) => {
                 if !messages.is_empty() {
                     self.redraw = true;

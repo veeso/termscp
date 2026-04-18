@@ -6,6 +6,7 @@
 // Locals
 // Ext
 use tuirealm::ratatui::layout::{Constraint, Direction, Layout};
+use tuirealm::terminal::TerminalAdapter;
 
 use super::{Context, Id, IdCommon, IdTheme, SetupActivity, Theme, ViewLayout, components};
 

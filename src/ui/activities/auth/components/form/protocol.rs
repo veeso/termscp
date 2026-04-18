@@ -1,11 +1,14 @@
 use tuirealm::command::{Cmd, CmdResult, Direction};
+use tuirealm::component::{AppComponent, Component};
 use tuirealm::event::{Event, Key, KeyEvent, NoUserEvent};
-use tuirealm::props::{Alignment, BorderType, Borders, Color};
-use tuirealm::{Component, MockComponent, State, StateValue};
+use tuirealm::props::{
+    BorderType, Borders, Color, HorizontalAlignment, Style, TextModifiers, Title,
+};
+use tuirealm::state::{State, StateValue};
 
 use super::*;
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct RemoteProtocolRadio {
     component: Radio,
 }
@@ -14,6 +17,11 @@ impl RemoteProtocolRadio {
     pub fn new(default_protocol: FileTransferProtocol, color: Color) -> Self {
         Self {
             component: Radio::default()
+                .highlight_style(
+                    Style::default()
+                        .fg(color)
+                        .add_modifier(TextModifiers::REVERSED),
+                )
                 .borders(
                     Borders::default()
                         .color(color)
@@ -24,9 +32,8 @@ impl RemoteProtocolRadio {
                 } else {
                     vec!["SFTP", "SCP", "FTP", "FTPS", "S3", "Kube", "WebDAV"].into_iter()
                 })
-                .foreground(color)
                 .rewind(true)
-                .title("Protocol", Alignment::Left)
+                .title(Title::from("Protocol").alignment(HorizontalAlignment::Left))
                 .value(Self::protocol_enum_to_opt(default_protocol)),
         }
     }
@@ -58,8 +65,8 @@ impl RemoteProtocolRadio {
     }
 }
 
-impl Component<Msg, NoUserEvent> for RemoteProtocolRadio {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for RemoteProtocolRadio {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         let result = match ev {
             Event::Keyboard(KeyEvent {
                 code: Key::Left, ..
@@ -86,7 +93,7 @@ impl Component<Msg, NoUserEvent> for RemoteProtocolRadio {
         };
 
         match result {
-            CmdResult::Changed(State::One(StateValue::Usize(choice))) => Some(Msg::Form(
+            CmdResult::Changed(State::Single(StateValue::Usize(choice))) => Some(Msg::Form(
                 FormMsg::RemoteProtocolChanged(Self::protocol_opt_to_enum(choice)),
             )),
             _ => Some(Msg::None),
@@ -94,7 +101,7 @@ impl Component<Msg, NoUserEvent> for RemoteProtocolRadio {
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct HostBridgeProtocolRadio {
     component: Radio,
 }
@@ -103,6 +110,11 @@ impl HostBridgeProtocolRadio {
     pub fn new(protocol: HostBridgeProtocol, color: Color) -> Self {
         Self {
             component: Radio::default()
+                .highlight_style(
+                    Style::default()
+                        .fg(color)
+                        .add_modifier(TextModifiers::REVERSED),
+                )
                 .borders(
                     Borders::default()
                         .color(color)
@@ -134,9 +146,8 @@ impl HostBridgeProtocolRadio {
                     ]
                     .into_iter()
                 })
-                .foreground(color)
                 .rewind(true)
-                .title("Host type", Alignment::Left)
+                .title(Title::from("Host type").alignment(HorizontalAlignment::Left))
                 .value(Self::protocol_to_opt(protocol)),
         }
     }
@@ -195,8 +206,8 @@ impl HostBridgeProtocolRadio {
     }
 }
 
-impl Component<Msg, NoUserEvent> for HostBridgeProtocolRadio {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for HostBridgeProtocolRadio {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         let result = match ev {
             Event::Keyboard(KeyEvent {
                 code: Key::Left, ..
@@ -223,7 +234,7 @@ impl Component<Msg, NoUserEvent> for HostBridgeProtocolRadio {
         };
 
         match result {
-            CmdResult::Changed(State::One(StateValue::Usize(choice))) => Some(Msg::Form(
+            CmdResult::Changed(State::Single(StateValue::Usize(choice))) => Some(Msg::Form(
                 FormMsg::HostBridgeProtocolChanged(Self::protocol_opt_to_enum(choice)),
             )),
             _ => Some(Msg::None),

@@ -1,12 +1,15 @@
-use tui_realm_stdlib::List;
+use tui_realm_stdlib::components::List;
 use tuirealm::command::{Cmd, Direction, Position};
-use tuirealm::event::{Key, KeyEvent};
-use tuirealm::props::{Alignment, BorderType, Borders, Color, TableBuilder, TextSpan};
-use tuirealm::{Component, Event, MockComponent, NoUserEvent};
+use tuirealm::component::{AppComponent, Component};
+use tuirealm::event::{Event, Key, KeyEvent, NoUserEvent};
+use tuirealm::props::{
+    BorderType, Borders, Color, HorizontalAlignment, SpanStatic, TableBuilder, Title,
+};
+use tuirealm::ratatui::style::Stylize;
 
 use crate::ui::activities::filetransfer::{Msg, UiMsg};
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct KeybindingsPopup {
     component: List,
 }
@@ -18,148 +21,152 @@ impl KeybindingsPopup {
                 .borders(Borders::default().modifiers(BorderType::Rounded))
                 .scroll(true)
                 .step(8)
-                .highlighted_str("? ")
-                .title("Keybindings", Alignment::Center)
+                .highlight_str("? ")
+                .title(Title::from("Keybindings").alignment(HorizontalAlignment::Center))
                 .rewind(true)
                 .rows(
                     TableBuilder::default()
-                        .add_col(TextSpan::new("<ESC>").bold().fg(key_color))
-                        .add_col(TextSpan::from("             Disconnect"))
+                        .add_col(SpanStatic::raw("<ESC>").bold().fg(key_color))
+                        .add_col(SpanStatic::from("             Disconnect"))
                         .add_row()
-                        .add_col(TextSpan::new("<BACKSPACE>").bold().fg(key_color))
-                        .add_col(TextSpan::from("       Go to previous directory"))
+                        .add_col(SpanStatic::raw("<BACKSPACE>").bold().fg(key_color))
+                        .add_col(SpanStatic::from("       Go to previous directory"))
                         .add_row()
-                        .add_col(TextSpan::new("<TAB|RIGHT|LEFT>").bold().fg(key_color))
-                        .add_col(TextSpan::from("  Change explorer tab"))
+                        .add_col(SpanStatic::raw("<TAB|RIGHT|LEFT>").bold().fg(key_color))
+                        .add_col(SpanStatic::from("  Change explorer tab"))
                         .add_row()
-                        .add_col(TextSpan::new("<UP/DOWN>").bold().fg(key_color))
-                        .add_col(TextSpan::from("         Move up/down in list"))
+                        .add_col(SpanStatic::raw("<UP/DOWN>").bold().fg(key_color))
+                        .add_col(SpanStatic::from("         Move up/down in list"))
                         .add_row()
-                        .add_col(TextSpan::new("<ENTER>").bold().fg(key_color))
-                        .add_col(TextSpan::from("           Enter directory"))
+                        .add_col(SpanStatic::raw("<ENTER>").bold().fg(key_color))
+                        .add_col(SpanStatic::from("           Enter directory"))
                         .add_row()
-                        .add_col(TextSpan::new("<SPACE>").bold().fg(key_color))
-                        .add_col(TextSpan::from("           Upload/Download file"))
+                        .add_col(SpanStatic::raw("<SPACE>").bold().fg(key_color))
+                        .add_col(SpanStatic::from("           Upload/Download file"))
                         .add_row()
-                        .add_col(TextSpan::new("<BACKTAB>").bold().fg(key_color))
-                        .add_col(TextSpan::from(
+                        .add_col(SpanStatic::raw("<BACKTAB>").bold().fg(key_color))
+                        .add_col(SpanStatic::from(
                             "         Switch between explorer and log window",
                         ))
                         .add_row()
-                        .add_col(TextSpan::new("<A>").bold().fg(key_color))
-                        .add_col(TextSpan::from("               Toggle hidden files"))
+                        .add_col(SpanStatic::raw("<A>").bold().fg(key_color))
+                        .add_col(SpanStatic::from("               Toggle hidden files"))
                         .add_row()
-                        .add_col(TextSpan::new("<B>").bold().fg(key_color))
-                        .add_col(TextSpan::from("               Change file sorting mode"))
+                        .add_col(SpanStatic::raw("<B>").bold().fg(key_color))
+                        .add_col(SpanStatic::from("               Change file sorting mode"))
                         .add_row()
-                        .add_col(TextSpan::new("<C|F5>").bold().fg(key_color))
-                        .add_col(TextSpan::from("            Copy"))
+                        .add_col(SpanStatic::raw("<C|F5>").bold().fg(key_color))
+                        .add_col(SpanStatic::from("            Copy"))
                         .add_row()
-                        .add_col(TextSpan::new("<D|F7>").bold().fg(key_color))
-                        .add_col(TextSpan::from("            Make directory"))
+                        .add_col(SpanStatic::raw("<D|F7>").bold().fg(key_color))
+                        .add_col(SpanStatic::from("            Make directory"))
                         .add_row()
-                        .add_col(TextSpan::new("<F>").bold().fg(key_color))
-                        .add_col(TextSpan::from("               Search files"))
+                        .add_col(SpanStatic::raw("<F>").bold().fg(key_color))
+                        .add_col(SpanStatic::from("               Search files"))
                         .add_row()
-                        .add_col(TextSpan::new("<G>").bold().fg(key_color))
-                        .add_col(TextSpan::from("               Go to path"))
+                        .add_col(SpanStatic::raw("<G>").bold().fg(key_color))
+                        .add_col(SpanStatic::from("               Go to path"))
                         .add_row()
-                        .add_col(TextSpan::new("<H|F1>").bold().fg(key_color))
-                        .add_col(TextSpan::from("            Show help"))
+                        .add_col(SpanStatic::raw("<H|F1>").bold().fg(key_color))
+                        .add_col(SpanStatic::from("            Show help"))
                         .add_row()
-                        .add_col(TextSpan::new("<I>").bold().fg(key_color))
-                        .add_col(TextSpan::from(
+                        .add_col(SpanStatic::raw("<I>").bold().fg(key_color))
+                        .add_col(SpanStatic::from(
                             "               Show info about selected file",
                         ))
                         .add_row()
-                        .add_col(TextSpan::new("<K>").bold().fg(key_color))
-                        .add_col(TextSpan::from(
+                        .add_col(SpanStatic::raw("<K>").bold().fg(key_color))
+                        .add_col(SpanStatic::from(
                             "               Create symlink pointing to the current selected entry",
                         ))
                         .add_row()
-                        .add_col(TextSpan::new("<L>").bold().fg(key_color))
-                        .add_col(TextSpan::from("               Reload directory content"))
+                        .add_col(SpanStatic::raw("<L>").bold().fg(key_color))
+                        .add_col(SpanStatic::from("               Reload directory content"))
                         .add_row()
-                        .add_col(TextSpan::new("<M>").bold().fg(key_color))
-                        .add_col(TextSpan::from("               Select file"))
+                        .add_col(SpanStatic::raw("<M>").bold().fg(key_color))
+                        .add_col(SpanStatic::from("               Select file"))
                         .add_row()
-                        .add_col(TextSpan::new("<N>").bold().fg(key_color))
-                        .add_col(TextSpan::from("               Create new file"))
+                        .add_col(SpanStatic::raw("<N>").bold().fg(key_color))
+                        .add_col(SpanStatic::from("               Create new file"))
                         .add_row()
-                        .add_col(TextSpan::new("<O|F4>").bold().fg(key_color))
-                        .add_col(TextSpan::from(
+                        .add_col(SpanStatic::raw("<O|F4>").bold().fg(key_color))
+                        .add_col(SpanStatic::from(
                             "            Open text file with preferred editor",
                         ))
                         .add_row()
-                        .add_col(TextSpan::new("<P>").bold().fg(key_color))
-                        .add_col(TextSpan::from("               Toggle bottom panel"))
+                        .add_col(SpanStatic::raw("<P>").bold().fg(key_color))
+                        .add_col(SpanStatic::from("               Toggle bottom panel"))
                         .add_row()
-                        .add_col(TextSpan::new("<Q|F10>").bold().fg(key_color))
-                        .add_col(TextSpan::from("           Quit termscp"))
+                        .add_col(SpanStatic::raw("<Q|F10>").bold().fg(key_color))
+                        .add_col(SpanStatic::from("           Quit termscp"))
                         .add_row()
-                        .add_col(TextSpan::new("<R|F6>").bold().fg(key_color))
-                        .add_col(TextSpan::from("            Rename file"))
+                        .add_col(SpanStatic::raw("<R|F6>").bold().fg(key_color))
+                        .add_col(SpanStatic::from("            Rename file"))
                         .add_row()
-                        .add_col(TextSpan::new("<S|F2>").bold().fg(key_color))
-                        .add_col(TextSpan::from("            Save file as"))
+                        .add_col(SpanStatic::raw("<S|F2>").bold().fg(key_color))
+                        .add_col(SpanStatic::from("            Save file as"))
                         .add_row()
-                        .add_col(TextSpan::new("<T>").bold().fg(key_color))
-                        .add_col(TextSpan::from("               Watch/unwatch file changes"))
+                        .add_col(SpanStatic::raw("<T>").bold().fg(key_color))
+                        .add_col(SpanStatic::from(
+                            "               Watch/unwatch file changes",
+                        ))
                         .add_row()
-                        .add_col(TextSpan::new("<U>").bold().fg(key_color))
-                        .add_col(TextSpan::from("               Go to parent directory"))
+                        .add_col(SpanStatic::raw("<U>").bold().fg(key_color))
+                        .add_col(SpanStatic::from("               Go to parent directory"))
                         .add_row()
-                        .add_col(TextSpan::new("<V|F3>").bold().fg(key_color))
-                        .add_col(TextSpan::from(
+                        .add_col(SpanStatic::raw("<V|F3>").bold().fg(key_color))
+                        .add_col(SpanStatic::from(
                             "            Open file with default application for file type",
                         ))
                         .add_row()
-                        .add_col(TextSpan::new("<W>").bold().fg(key_color))
-                        .add_col(TextSpan::from(
+                        .add_col(SpanStatic::raw("<W>").bold().fg(key_color))
+                        .add_col(SpanStatic::from(
                             "               Open file with specified application",
                         ))
                         .add_row()
-                        .add_col(TextSpan::new("<X>").bold().fg(key_color))
-                        .add_col(TextSpan::from("               Execute shell command"))
+                        .add_col(SpanStatic::raw("<X>").bold().fg(key_color))
+                        .add_col(SpanStatic::from("               Execute shell command"))
                         .add_row()
-                        .add_col(TextSpan::new("<Y>").bold().fg(key_color))
-                        .add_col(TextSpan::from(
+                        .add_col(SpanStatic::raw("<Y>").bold().fg(key_color))
+                        .add_col(SpanStatic::from(
                             "               Toggle synchronized browsing",
                         ))
                         .add_row()
-                        .add_col(TextSpan::new("<Z>").bold().fg(key_color))
-                        .add_col(TextSpan::from("               Change file permissions"))
+                        .add_col(SpanStatic::raw("<Z>").bold().fg(key_color))
+                        .add_col(SpanStatic::from("               Change file permissions"))
                         .add_row()
-                        .add_col(TextSpan::new("</>").bold().fg(key_color))
-                        .add_col(TextSpan::from("               Filter files"))
+                        .add_col(SpanStatic::raw("</>").bold().fg(key_color))
+                        .add_col(SpanStatic::from("               Filter files"))
                         .add_row()
-                        .add_col(TextSpan::new("<DEL|F8|E>").bold().fg(key_color))
-                        .add_col(TextSpan::from("        Delete selected file"))
+                        .add_col(SpanStatic::raw("<DEL|F8|E>").bold().fg(key_color))
+                        .add_col(SpanStatic::from("        Delete selected file"))
                         .add_row()
-                        .add_col(TextSpan::new("<CTRL+A>").bold().fg(key_color))
-                        .add_col(TextSpan::from("          Select all files"))
+                        .add_col(SpanStatic::raw("<CTRL+A>").bold().fg(key_color))
+                        .add_col(SpanStatic::from("          Select all files"))
                         .add_row()
-                        .add_col(TextSpan::new("<ALT+A>").bold().fg(key_color))
-                        .add_col(TextSpan::from("          Deselect all files"))
+                        .add_col(SpanStatic::raw("<ALT+A>").bold().fg(key_color))
+                        .add_col(SpanStatic::from("          Deselect all files"))
                         .add_row()
-                        .add_col(TextSpan::new("<CTRL+C>").bold().fg(key_color))
-                        .add_col(TextSpan::from("          Interrupt file transfer"))
+                        .add_col(SpanStatic::raw("<CTRL+C>").bold().fg(key_color))
+                        .add_col(SpanStatic::from("          Interrupt file transfer"))
                         .add_row()
-                        .add_col(TextSpan::new("<CTRL+S>").bold().fg(key_color))
-                        .add_col(TextSpan::from(
+                        .add_col(SpanStatic::raw("<CTRL+S>").bold().fg(key_color))
+                        .add_col(SpanStatic::from(
                             "          Get total path size of selected files",
                         ))
                         .add_row()
-                        .add_col(TextSpan::new("<CTRL+T>").bold().fg(key_color))
-                        .add_col(TextSpan::from("          Show watched paths"))
-                        .build(),
+                        .add_col(SpanStatic::raw("<CTRL+T>").bold().fg(key_color))
+                        .add_col(SpanStatic::from("          Show watched paths"))
+                        .build()
+                        .into_iter()
+                        .map(|row| row.into_iter().flat_map(|l| l.spans).collect::<Vec<_>>()),
                 ),
         }
     }
 }
 
-impl Component<Msg, NoUserEvent> for KeybindingsPopup {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for KeybindingsPopup {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         match ev {
             Event::Keyboard(KeyEvent {
                 code: Key::Esc | Key::Enter,

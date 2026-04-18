@@ -1,8 +1,12 @@
-use tui_realm_stdlib::Input;
+use tui_realm_stdlib::components::Input;
 use tuirealm::command::{Cmd, CmdResult};
-use tuirealm::props::{Alignment, AttrValue, Attribute, Borders, Color, Table};
+use tuirealm::component::Component;
+use tuirealm::props::{
+    AttrValue, Attribute, Borders, Color, HorizontalAlignment, QueryResult, Style, Table,
+    TextModifiers, Title,
+};
 use tuirealm::ratatui::layout::{Constraint, Direction, Layout};
-use tuirealm::{MockComponent, State};
+use tuirealm::state::State;
 
 use super::file_list::FileList;
 
@@ -62,21 +66,21 @@ impl FileListWithSearch {
         self
     }
 
-    pub fn title<S: AsRef<str>>(mut self, t: S, a: Alignment) -> Self {
-        self.file_list.attr(
-            Attribute::Title,
-            AttrValue::Title((t.as_ref().to_string(), a)),
-        );
+    pub fn title(mut self, t: Title) -> Self {
+        let align = t.content.alignment.unwrap_or(HorizontalAlignment::Left);
+        self.file_list.attr(Attribute::Title, AttrValue::Title(t));
         self.search.attr(
             Attribute::Title,
-            AttrValue::Title(("Fuzzy search".to_string(), a)),
+            AttrValue::Title(Title::from("Fuzzy search".to_string()).alignment(align)),
         );
         self
     }
 
-    pub fn highlighted_color(mut self, c: Color) -> Self {
-        self.file_list
-            .attr(Attribute::HighlightedColor, AttrValue::Color(c));
+    pub fn highlight_color(mut self, c: Color) -> Self {
+        self.file_list.attr(
+            Attribute::HighlightStyle,
+            AttrValue::Style(Style::default().fg(c).add_modifier(TextModifiers::REVERSED)),
+        );
         self
     }
 
@@ -87,8 +91,12 @@ impl FileListWithSearch {
     }
 }
 
-impl MockComponent for FileListWithSearch {
-    fn view(&mut self, frame: &mut tuirealm::Frame, area: tuirealm::ratatui::layout::Rect) {
+impl Component for FileListWithSearch {
+    fn view(
+        &mut self,
+        frame: &mut tuirealm::ratatui::Frame,
+        area: tuirealm::ratatui::layout::Rect,
+    ) {
         // split the area in two
         let chunks = Layout::default()
             .direction(Direction::Vertical)
@@ -107,7 +115,7 @@ impl MockComponent for FileListWithSearch {
         self.file_list.view(frame, chunks[1]);
     }
 
-    fn query(&self, attr: Attribute) -> Option<AttrValue> {
+    fn query<'a>(&'a self, attr: Attribute) -> Option<QueryResult<'a>> {
         self.file_list.query(attr)
     }
 
@@ -151,7 +159,7 @@ impl MockComponent for FileListWithSearch {
                     AttrValue::Flag(self.states.focus == Focus::List),
                 );
 
-                CmdResult::None
+                CmdResult::NoChange
             }
             cmd if self.states.focus == Focus::Search => self.search.perform(cmd),
             cmd => self.file_list.perform(cmd),

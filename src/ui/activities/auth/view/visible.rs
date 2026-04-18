@@ -1,4 +1,4 @@
-use tuirealm::{Sub, SubClause, SubEventClause};
+use tuirealm::subscription::{EventClause, Sub, SubClause};
 
 use super::*;
 
@@ -435,55 +435,55 @@ impl AuthActivity {
             Box::<components::GlobalListener>::default(),
             vec![
                 Sub::new(
-                    SubEventClause::Keyboard(KeyEvent {
+                    EventClause::Keyboard(KeyEvent {
                         code: Key::Esc,
                         modifiers: KeyModifiers::NONE,
                     }),
                     Self::no_popup_mounted_clause(),
                 ),
                 Sub::new(
-                    SubEventClause::Keyboard(KeyEvent {
+                    EventClause::Keyboard(KeyEvent {
                         code: Key::Function(10),
                         modifiers: KeyModifiers::NONE,
                     }),
                     Self::no_popup_mounted_clause(),
                 ),
                 Sub::new(
-                    SubEventClause::Keyboard(KeyEvent {
+                    EventClause::Keyboard(KeyEvent {
                         code: Key::Char('c'),
                         modifiers: KeyModifiers::CONTROL,
                     }),
                     Self::no_popup_mounted_clause(),
                 ),
                 Sub::new(
-                    SubEventClause::Keyboard(KeyEvent {
+                    EventClause::Keyboard(KeyEvent {
                         code: Key::Char('h'),
                         modifiers: KeyModifiers::CONTROL,
                     }),
                     Self::no_popup_mounted_clause(),
                 ),
                 Sub::new(
-                    SubEventClause::Keyboard(KeyEvent {
+                    EventClause::Keyboard(KeyEvent {
                         code: Key::Function(1),
                         modifiers: KeyModifiers::NONE,
                     }),
                     Self::no_popup_mounted_clause(),
                 ),
                 Sub::new(
-                    SubEventClause::Keyboard(KeyEvent {
+                    EventClause::Keyboard(KeyEvent {
                         code: Key::Char('r'),
                         modifiers: KeyModifiers::CONTROL,
                     }),
                     Self::no_popup_mounted_clause(),
                 ),
                 Sub::new(
-                    SubEventClause::Keyboard(KeyEvent {
+                    EventClause::Keyboard(KeyEvent {
                         code: Key::Char('s'),
                         modifiers: KeyModifiers::CONTROL,
                     }),
                     Self::no_popup_mounted_clause(),
                 ),
-                Sub::new(SubEventClause::WindowResize, SubClause::Always),
+                Sub::new(EventClause::WindowResize, SubClause::Always),
             ],
         ) {
             error!("Failed to mount component: {err}");

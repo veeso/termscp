@@ -5,7 +5,7 @@
 // locals
 // externals
 use remotefs::fs::File;
-use tuirealm::{State, StateValue, Update};
+use tuirealm::state::{State, StateValue};
 
 use super::actions::SelectedFile;
 use super::actions::walkdir::WalkdirError;
@@ -15,8 +15,8 @@ use super::{
     ui_result,
 };
 
-impl Update<Msg> for FileTransferActivity {
-    fn update(&mut self, msg: Option<Msg>) -> Option<Msg> {
+impl FileTransferActivity {
+    pub(super) fn update(&mut self, msg: Option<Msg>) -> Option<Msg> {
         match msg.unwrap_or(Msg::None) {
             Msg::None => None,
             Msg::PendingAction(_) => {
@@ -78,7 +78,7 @@ impl FileTransferActivity {
                         self.action_find_delete();
                         // Remove deleted entries from the find-result list
                         match self.app.state(&Id::ExplorerFind) {
-                            Ok(State::One(StateValue::Usize(idx))) => {
+                            Ok(State::Single(StateValue::Usize(idx))) => {
                                 self.found_mut().unwrap().del_entry(idx);
                             }
                             Ok(State::Vec(values)) => {

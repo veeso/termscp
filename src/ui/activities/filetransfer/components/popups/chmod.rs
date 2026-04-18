@@ -1,10 +1,13 @@
 use remotefs::fs::{UnixPex, UnixPexClass};
-use tui_realm_stdlib::Checkbox;
+use tui_realm_stdlib::components::Checkbox;
 use tuirealm::command::{Cmd, CmdResult, Direction};
-use tuirealm::event::{Key, KeyEvent};
-use tuirealm::props::{Alignment, AttrValue, Attribute, BorderSides, Borders, Color};
+use tuirealm::component::{AppComponent, Component};
+use tuirealm::event::{Event, Key, KeyEvent, NoUserEvent};
+use tuirealm::props::{
+    AttrValue, Attribute, BorderSides, Borders, Color, HorizontalAlignment, Props, Title,
+};
 use tuirealm::ratatui::layout::{Constraint, Direction as LayoutDirection, Layout};
-use tuirealm::{Component, Event, MockComponent, NoUserEvent, Props, State, StateValue};
+use tuirealm::state::{State, StateValue};
 
 use crate::ui::activities::filetransfer::{Msg, TransferMsg, UiMsg};
 
@@ -60,21 +63,21 @@ impl ChmodPopup {
             user: Checkbox::default()
                 .foreground(color)
                 .choices(["Read", "Write", "Execute"])
-                .title("User", Alignment::Left)
+                .title(Title::from("User").alignment(HorizontalAlignment::Left))
                 .borders(Borders::default().sides(BorderSides::NONE))
                 .values(&make_pex_values(pex.user()))
                 .rewind(true),
             group: Checkbox::default()
                 .foreground(color)
                 .choices(["Read", "Write", "Execute"])
-                .title("Group", Alignment::Left)
+                .title(Title::from("Group").alignment(HorizontalAlignment::Left))
                 .borders(Borders::default().sides(BorderSides::NONE))
                 .values(&make_pex_values(pex.group()))
                 .rewind(true),
             others: Checkbox::default()
                 .foreground(color)
                 .choices(["Read", "Write", "Execute"])
-                .title("Others", Alignment::Left)
+                .title(Title::from("Others").alignment(HorizontalAlignment::Left))
                 .borders(Borders::default().sides(BorderSides::NONE))
                 .values(&make_pex_values(pex.others()))
                 .rewind(true),
@@ -146,8 +149,8 @@ impl ChmodPopup {
     }
 }
 
-impl MockComponent for ChmodPopup {
-    fn attr(&mut self, attr: tuirealm::Attribute, value: AttrValue) {
+impl Component for ChmodPopup {
+    fn attr(&mut self, attr: tuirealm::props::Attribute, value: AttrValue) {
         self.props.set(attr, value.clone());
 
         if attr == Attribute::Focus {
@@ -166,28 +169,40 @@ impl MockComponent for ChmodPopup {
             }
             Cmd::Move(Direction::Up) => {
                 self.active_checkbox_up();
-                CmdResult::None
+                CmdResult::NoChange
             }
             Cmd::Move(Direction::Down) => {
                 self.active_checkbox_down();
-                CmdResult::None
+                CmdResult::NoChange
             }
             Cmd::Toggle => self.get_active_checkbox().perform(cmd),
             Cmd::Submit => CmdResult::Submit(self.state()),
-            _ => CmdResult::None,
+            _ => CmdResult::NoChange,
         }
     }
 
-    fn query(&self, attr: tuirealm::Attribute) -> Option<AttrValue> {
-        self.props.get(attr)
+    fn query<'a>(
+        &'a self,
+        attr: tuirealm::props::Attribute,
+    ) -> Option<tuirealm::props::QueryResult<'a>> {
+        self.props.get_for_query(attr)
     }
 
     fn state(&self) -> State {
-        State::One(StateValue::U32(self.get_mode().into()))
+        State::Single(StateValue::U32(self.get_mode().into()))
     }
 
-    fn view(&mut self, frame: &mut tuirealm::Frame, area: tuirealm::ratatui::layout::Rect) {
-        if self.props.get_or(Attribute::Display, AttrValue::Flag(true)) != AttrValue::Flag(true) {
+    fn view(
+        &mut self,
+        frame: &mut tuirealm::ratatui::Frame,
+        area: tuirealm::ratatui::layout::Rect,
+    ) {
+        if !self
+            .props
+            .get(Attribute::Display)
+            .and_then(AttrValue::as_flag)
+            .unwrap_or(true)
+        {
             return;
         }
         let chunks = Layout::default()
@@ -205,10 +220,11 @@ impl MockComponent for ChmodPopup {
 
         let focus = self
             .props
-            .get_or(Attribute::Focus, AttrValue::Flag(false))
-            .unwrap_flag();
+            .get(Attribute::Focus)
+            .and_then(AttrValue::as_flag)
+            .unwrap_or(false);
 
-        let div_title = (self.title.clone(), Alignment::Center);
+        let div_title = Title::from(self.title.clone()).alignment(HorizontalAlignment::Center);
 
         let div = tui_realm_stdlib::utils::get_block(
             Borders::default().color(self.color),
@@ -225,8 +241,8 @@ impl MockComponent for ChmodPopup {
     }
 }
 
-impl Component<Msg, NoUserEvent> for ChmodPopup {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for ChmodPopup {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         match ev {
             Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
                 Some(Msg::Ui(UiMsg::CloseChmodPopup))

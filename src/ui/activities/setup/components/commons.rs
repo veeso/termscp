@@ -2,15 +2,21 @@
 //!
 //! config tab components
 
-use tui_realm_stdlib::{List, Paragraph, Radio, Span};
+use tui_realm_stdlib::components::{List, Paragraph, Radio, Span};
 use tuirealm::command::{Cmd, CmdResult, Direction, Position};
-use tuirealm::event::{Key, KeyEvent, KeyModifiers};
-use tuirealm::props::{Alignment, BorderSides, BorderType, Borders, Color, TableBuilder, TextSpan};
-use tuirealm::{Component, Event, MockComponent, NoUserEvent, State, StateValue};
+use tuirealm::component::{AppComponent, Component};
+use tuirealm::event::{Event, Key, KeyEvent, KeyModifiers, NoUserEvent};
+use tuirealm::props::{
+    BorderSides, BorderType, Borders, Color, HorizontalAlignment, SpanStatic, Style, TableBuilder,
+    TextModifiers, Title,
+};
+use tuirealm::ratatui::style::Stylize;
+use tuirealm::ratatui::text::Text;
+use tuirealm::state::{State, StateValue};
 
 use super::{CommonMsg, Msg, ViewLayout};
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct ErrorPopup {
     component: Paragraph,
 }
@@ -19,21 +25,23 @@ impl ErrorPopup {
     pub fn new<S: AsRef<str>>(text: S) -> Self {
         Self {
             component: Paragraph::default()
-                .alignment(Alignment::Center)
+                .alignment_horizontal(HorizontalAlignment::Center)
                 .borders(
                     Borders::default()
                         .color(Color::Red)
                         .modifiers(BorderType::Rounded),
                 )
                 .foreground(Color::Red)
-                .text([TextSpan::from(text.as_ref())])
-                .wrap(true),
+                .text(Text::from_iter([SpanStatic::from(
+                    text.as_ref().to_string(),
+                )]))
+                .wrap_trim(true),
         }
     }
 }
 
-impl Component<Msg, NoUserEvent> for ErrorPopup {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for ErrorPopup {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         match ev {
             Event::Keyboard(KeyEvent {
                 code: Key::Esc | Key::Enter,
@@ -44,7 +52,7 @@ impl Component<Msg, NoUserEvent> for ErrorPopup {
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct Footer {
     component: Span,
 }
@@ -53,28 +61,28 @@ impl Default for Footer {
     fn default() -> Self {
         Self {
             component: Span::default().spans([
-                TextSpan::new("<F1|CTRL+H>").bold().fg(Color::Cyan),
-                TextSpan::new(" Help "),
-                TextSpan::new("<F4|CTRL+S>").bold().fg(Color::Cyan),
-                TextSpan::new(" Save parameters "),
-                TextSpan::new("<F10|ESC>").bold().fg(Color::Cyan),
-                TextSpan::new(" Exit "),
-                TextSpan::new("<TAB>").bold().fg(Color::Cyan),
-                TextSpan::new(" Change panel "),
-                TextSpan::new("<UP/DOWN>").bold().fg(Color::Cyan),
-                TextSpan::new(" Change field "),
+                SpanStatic::raw("<F1|CTRL+H>").bold().fg(Color::Cyan),
+                SpanStatic::raw(" Help "),
+                SpanStatic::raw("<F4|CTRL+S>").bold().fg(Color::Cyan),
+                SpanStatic::raw(" Save parameters "),
+                SpanStatic::raw("<F10|ESC>").bold().fg(Color::Cyan),
+                SpanStatic::raw(" Exit "),
+                SpanStatic::raw("<TAB>").bold().fg(Color::Cyan),
+                SpanStatic::raw(" Change panel "),
+                SpanStatic::raw("<UP/DOWN>").bold().fg(Color::Cyan),
+                SpanStatic::raw(" Change field "),
             ]),
         }
     }
 }
 
-impl Component<Msg, NoUserEvent> for Footer {
-    fn on(&mut self, _ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for Footer {
+    fn on(&mut self, _ev: &Event<NoUserEvent>) -> Option<Msg> {
         None
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct Header {
     component: Radio,
 }
@@ -83,13 +91,17 @@ impl Header {
     pub fn new(layout: ViewLayout) -> Self {
         Self {
             component: Radio::default()
+                .highlight_style(
+                    Style::default()
+                        .fg(Color::Yellow)
+                        .add_modifier(TextModifiers::REVERSED),
+                )
                 .borders(
                     Borders::default()
                         .color(Color::Yellow)
                         .sides(BorderSides::BOTTOM),
                 )
                 .choices(["Configuration parameters", "SSH Keys", "Theme"])
-                .foreground(Color::Yellow)
                 .value(match layout {
                     ViewLayout::SetupForm => 0,
                     ViewLayout::SshKeys => 1,
@@ -99,13 +111,13 @@ impl Header {
     }
 }
 
-impl Component<Msg, NoUserEvent> for Header {
-    fn on(&mut self, _ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for Header {
+    fn on(&mut self, _ev: &Event<NoUserEvent>) -> Option<Msg> {
         None
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct Keybindings {
     component: List,
 }
@@ -115,45 +127,47 @@ impl Default for Keybindings {
         Self {
             component: List::default()
                 .borders(Borders::default().modifiers(BorderType::Rounded))
-                .title("Keybindings", Alignment::Center)
+                .title(Title::from("Keybindings").alignment(HorizontalAlignment::Center))
                 .scroll(true)
-                .highlighted_str("? ")
+                .highlight_str("? ")
                 .rows(
                     TableBuilder::default()
-                        .add_col(TextSpan::new("<ESC>").bold().fg(Color::Cyan))
-                        .add_col(TextSpan::from("           Exit setup"))
+                        .add_col(SpanStatic::raw("<ESC>").bold().fg(Color::Cyan))
+                        .add_col(SpanStatic::from("           Exit setup"))
                         .add_row()
-                        .add_col(TextSpan::new("<TAB>").bold().fg(Color::Cyan))
-                        .add_col(TextSpan::from("           Change setup page"))
+                        .add_col(SpanStatic::raw("<TAB>").bold().fg(Color::Cyan))
+                        .add_col(SpanStatic::from("           Change setup page"))
                         .add_row()
-                        .add_col(TextSpan::new("<RIGHT/LEFT>").bold().fg(Color::Cyan))
-                        .add_col(TextSpan::from("    Change cursor"))
+                        .add_col(SpanStatic::raw("<RIGHT/LEFT>").bold().fg(Color::Cyan))
+                        .add_col(SpanStatic::from("    Change cursor"))
                         .add_row()
-                        .add_col(TextSpan::new("<UP/DOWN>").bold().fg(Color::Cyan))
-                        .add_col(TextSpan::from("       Change input field"))
+                        .add_col(SpanStatic::raw("<UP/DOWN>").bold().fg(Color::Cyan))
+                        .add_col(SpanStatic::from("       Change input field"))
                         .add_row()
-                        .add_col(TextSpan::new("<ENTER>").bold().fg(Color::Cyan))
-                        .add_col(TextSpan::from("         Select / Dismiss popup"))
+                        .add_col(SpanStatic::raw("<ENTER>").bold().fg(Color::Cyan))
+                        .add_col(SpanStatic::from("         Select / Dismiss popup"))
                         .add_row()
-                        .add_col(TextSpan::new("<DEL|E>").bold().fg(Color::Cyan))
-                        .add_col(TextSpan::from("         Delete SSH key"))
+                        .add_col(SpanStatic::raw("<DEL|E>").bold().fg(Color::Cyan))
+                        .add_col(SpanStatic::from("         Delete SSH key"))
                         .add_row()
-                        .add_col(TextSpan::new("<CTRL+N>").bold().fg(Color::Cyan))
-                        .add_col(TextSpan::from("        New SSH key"))
+                        .add_col(SpanStatic::raw("<CTRL+N>").bold().fg(Color::Cyan))
+                        .add_col(SpanStatic::from("        New SSH key"))
                         .add_row()
-                        .add_col(TextSpan::new("<CTRL+R>").bold().fg(Color::Cyan))
-                        .add_col(TextSpan::from("        Revert changes"))
+                        .add_col(SpanStatic::raw("<CTRL+R>").bold().fg(Color::Cyan))
+                        .add_col(SpanStatic::from("        Revert changes"))
                         .add_row()
-                        .add_col(TextSpan::new("<CTRL+S>").bold().fg(Color::Cyan))
-                        .add_col(TextSpan::from("        Save configuration"))
-                        .build(),
+                        .add_col(SpanStatic::raw("<CTRL+S>").bold().fg(Color::Cyan))
+                        .add_col(SpanStatic::from("        Save configuration"))
+                        .build()
+                        .into_iter()
+                        .map(|row| row.into_iter().flat_map(|l| l.spans).collect::<Vec<_>>()),
                 ),
         }
     }
 }
 
-impl Component<Msg, NoUserEvent> for Keybindings {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for Keybindings {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         match ev {
             Event::Keyboard(KeyEvent {
                 code: Key::Esc | Key::Enter,
@@ -197,7 +211,7 @@ impl Component<Msg, NoUserEvent> for Keybindings {
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct QuitPopup {
     component: Radio,
 }
@@ -206,15 +220,19 @@ impl Default for QuitPopup {
     fn default() -> Self {
         Self {
             component: Radio::default()
+                .highlight_style(
+                    Style::default()
+                        .fg(Color::Red)
+                        .add_modifier(TextModifiers::REVERSED),
+                )
                 .borders(
                     Borders::default()
                         .color(Color::Red)
                         .modifiers(BorderType::Rounded),
                 )
-                .foreground(Color::Red)
                 .title(
-                    "There are unsaved changes! Save changes before leaving?",
-                    Alignment::Center,
+                    Title::from("There are unsaved changes! Save changes before leaving?")
+                        .alignment(HorizontalAlignment::Center),
                 )
                 .rewind(true)
                 .choices(["Save", "Don't save", "Cancel"]),
@@ -222,8 +240,8 @@ impl Default for QuitPopup {
     }
 }
 
-impl Component<Msg, NoUserEvent> for QuitPopup {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for QuitPopup {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         match ev {
             Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
                 Some(Msg::Common(CommonMsg::CloseQuitPopup))
@@ -243,10 +261,10 @@ impl Component<Msg, NoUserEvent> for QuitPopup {
             Event::Keyboard(KeyEvent {
                 code: Key::Enter, ..
             }) => match self.perform(Cmd::Submit) {
-                CmdResult::Submit(State::One(StateValue::Usize(0))) => {
+                CmdResult::Submit(State::Single(StateValue::Usize(0))) => {
                     Some(Msg::Common(CommonMsg::SaveAndQuit))
                 }
-                CmdResult::Submit(State::One(StateValue::Usize(1))) => {
+                CmdResult::Submit(State::Single(StateValue::Usize(1))) => {
                     Some(Msg::Common(CommonMsg::Quit))
                 }
                 _ => Some(Msg::Common(CommonMsg::CloseQuitPopup)),
@@ -256,7 +274,7 @@ impl Component<Msg, NoUserEvent> for QuitPopup {
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct SavePopup {
     component: Radio,
 }
@@ -265,21 +283,25 @@ impl Default for SavePopup {
     fn default() -> Self {
         Self {
             component: Radio::default()
+                .highlight_style(
+                    Style::default()
+                        .fg(Color::Yellow)
+                        .add_modifier(TextModifiers::REVERSED),
+                )
                 .borders(
                     Borders::default()
                         .color(Color::Yellow)
                         .modifiers(BorderType::Rounded),
                 )
-                .foreground(Color::Yellow)
-                .title("Save changes?", Alignment::Center)
+                .title(Title::from("Save changes?").alignment(HorizontalAlignment::Center))
                 .rewind(true)
                 .choices(["Yes", "No"]),
         }
     }
 }
 
-impl Component<Msg, NoUserEvent> for SavePopup {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for SavePopup {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         match ev {
             Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
                 Some(Msg::Common(CommonMsg::CloseSavePopup))
@@ -309,7 +331,7 @@ impl Component<Msg, NoUserEvent> for SavePopup {
             }) => {
                 if matches!(
                     self.perform(Cmd::Submit),
-                    CmdResult::Submit(State::One(StateValue::Usize(0)))
+                    CmdResult::Submit(State::Single(StateValue::Usize(0)))
                 ) {
                     Some(Msg::Common(CommonMsg::SaveConfig))
                 } else {

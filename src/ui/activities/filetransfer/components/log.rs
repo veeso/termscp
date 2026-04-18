@@ -3,10 +3,14 @@
 //! log tab component
 
 use tuirealm::command::{Cmd, CmdResult, Direction, Position};
-use tuirealm::event::{Key, KeyEvent};
-use tuirealm::props::{Alignment, AttrValue, Attribute, Borders, Color, Style, Table};
+use tuirealm::component::{AppComponent, Component};
+use tuirealm::event::{Event, Key, KeyEvent, NoUserEvent};
+use tuirealm::props::{
+    AttrValue, Attribute, Borders, Color, HorizontalAlignment, Props, QueryResult, Style, Table,
+    Title,
+};
 use tuirealm::ratatui::widgets::{List as TuiList, ListDirection, ListItem, ListState};
-use tuirealm::{Component, Event, MockComponent, NoUserEvent, Props, State, StateValue};
+use tuirealm::state::{State, StateValue};
 
 use super::{Msg, UiMsg};
 
@@ -31,38 +35,47 @@ impl Log {
     }
 }
 
-impl MockComponent for Log {
-    fn view(&mut self, frame: &mut tuirealm::Frame, area: tuirealm::ratatui::layout::Rect) {
-        let width: usize = area.width as usize - 4;
+impl Component for Log {
+    fn view(
+        &mut self,
+        frame: &mut tuirealm::ratatui::Frame,
+        area: tuirealm::ratatui::layout::Rect,
+    ) {
+        let _width: usize = area.width as usize - 4;
         let focus = self
             .props
-            .get_or(Attribute::Focus, AttrValue::Flag(false))
-            .unwrap_flag();
+            .get(Attribute::Focus)
+            .and_then(AttrValue::as_flag)
+            .unwrap_or(false);
         let borders = self
             .props
-            .get_or(Attribute::Borders, AttrValue::Borders(Borders::default()))
-            .unwrap_borders();
+            .get(Attribute::Borders)
+            .and_then(AttrValue::as_borders)
+            .unwrap_or_default();
         let bg = self
             .props
-            .get_or(Attribute::Background, AttrValue::Color(Color::Reset))
-            .unwrap_color();
+            .get(Attribute::Background)
+            .and_then(AttrValue::as_color)
+            .unwrap_or(Color::Reset);
         // Make list
         let list_items: Vec<ListItem> = self
             .props
             .get(Attribute::Content)
-            .unwrap()
-            .unwrap_table()
-            .iter()
-            .map(|row| {
-                let row_refs = row.iter().collect::<Vec<_>>();
-                ListItem::new(tui_realm_stdlib::utils::wrap_spans(
-                    row_refs.as_slice(),
-                    width,
-                    &self.props,
-                ))
+            .and_then(AttrValue::as_table)
+            .map(|table| {
+                table
+                    .iter()
+                    .map(|row| {
+                        let spans = row
+                            .iter()
+                            .flat_map(|line| line.spans.iter().cloned())
+                            .collect::<Vec<_>>();
+                        ListItem::new(tuirealm::ratatui::text::Line::from(spans))
+                    })
+                    .collect()
             })
-            .collect();
-        let title = ("Log".to_string(), Alignment::Left);
+            .unwrap_or_default();
+        let title = Title::from("Log".to_string()).alignment(HorizontalAlignment::Left);
         let w = TuiList::new(list_items)
             .block(tui_realm_stdlib::utils::get_block(
                 borders,
@@ -79,29 +92,26 @@ impl MockComponent for Log {
         frame.render_stateful_widget(w, area, &mut state);
     }
 
-    fn query(&self, attr: Attribute) -> Option<AttrValue> {
-        self.props.get(attr)
+    fn query<'a>(&'a self, attr: Attribute) -> Option<QueryResult<'a>> {
+        self.props.get_for_query(attr)
     }
 
     fn attr(&mut self, attr: Attribute, value: AttrValue) {
         self.props.set(attr, value);
         if matches!(attr, Attribute::Content) {
-            self.states.set_list_len(
-                match self
-                    .props
-                    .get(Attribute::Content)
-                    .map(AttrValue::unwrap_table)
-                {
-                    Some(spans) => spans.len(),
-                    _ => 0,
-                },
-            );
+            let len = self
+                .props
+                .get(Attribute::Content)
+                .and_then(AttrValue::as_table)
+                .map(std::vec::Vec::len)
+                .unwrap_or(0);
+            self.states.set_list_len(len);
             self.states.reset_list_index();
         }
     }
 
     fn state(&self) -> State {
-        State::One(StateValue::Usize(self.states.get_list_index()))
+        State::Single(StateValue::Usize(self.states.get_list_index()))
     }
 
     fn perform(&mut self, cmd: Cmd) -> CmdResult {
@@ -112,7 +122,7 @@ impl MockComponent for Log {
                 if prev != self.states.get_list_index() {
                     CmdResult::Changed(self.state())
                 } else {
-                    CmdResult::None
+                    CmdResult::NoChange
                 }
             }
             Cmd::Move(Direction::Up) => {
@@ -121,7 +131,7 @@ impl MockComponent for Log {
                 if prev != self.states.get_list_index() {
                     CmdResult::Changed(self.state())
                 } else {
-                    CmdResult::None
+                    CmdResult::NoChange
                 }
             }
             Cmd::Scroll(Direction::Down) => {
@@ -130,7 +140,7 @@ impl MockComponent for Log {
                 if prev != self.states.get_list_index() {
                     CmdResult::Changed(self.state())
                 } else {
-                    CmdResult::None
+                    CmdResult::NoChange
                 }
             }
             Cmd::Scroll(Direction::Up) => {
@@ -139,7 +149,7 @@ impl MockComponent for Log {
                 if prev != self.states.get_list_index() {
                     CmdResult::Changed(self.state())
                 } else {
-                    CmdResult::None
+                    CmdResult::NoChange
                 }
             }
             Cmd::GoTo(Position::Begin) => {
@@ -148,7 +158,7 @@ impl MockComponent for Log {
                 if prev != self.states.get_list_index() {
                     CmdResult::Changed(self.state())
                 } else {
-                    CmdResult::None
+                    CmdResult::NoChange
                 }
             }
             Cmd::GoTo(Position::End) => {
@@ -157,16 +167,16 @@ impl MockComponent for Log {
                 if prev != self.states.get_list_index() {
                     CmdResult::Changed(self.state())
                 } else {
-                    CmdResult::None
+                    CmdResult::NoChange
                 }
             }
-            _ => CmdResult::None,
+            _ => CmdResult::NoChange,
         }
     }
 }
 
-impl Component<Msg, NoUserEvent> for Log {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for Log {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         match ev {
             Event::Keyboard(KeyEvent { code: Key::Up, .. }) => {
                 self.perform(Cmd::Move(Direction::Down));

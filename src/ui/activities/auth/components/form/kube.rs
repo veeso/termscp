@@ -1,9 +1,9 @@
+use tuirealm::component::{AppComponent, Component};
 use tuirealm::event::NoUserEvent;
-use tuirealm::{Component, MockComponent};
 
 use super::*;
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct InputKubeNamespace {
     component: Input,
     form_tab: FormTab,
@@ -19,8 +19,11 @@ impl InputKubeNamespace {
                         .modifiers(BorderType::Rounded),
                 )
                 .foreground(color)
-                .placeholder("namespace", Style::default().fg(Color::Rgb(128, 128, 128)))
-                .title("Pod namespace (optional)", Alignment::Left)
+                .placeholder(tuirealm::props::SpanStatic::styled(
+                    "namespace",
+                    Style::default().fg(Color::Rgb(128, 128, 128)),
+                ))
+                .title(Title::from("Pod namespace (optional)").alignment(HorizontalAlignment::Left))
                 .input_type(InputType::Text)
                 .value(bucket),
             form_tab,
@@ -28,8 +31,8 @@ impl InputKubeNamespace {
     }
 }
 
-impl Component<Msg, NoUserEvent> for InputKubeNamespace {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for InputKubeNamespace {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         let on_key_down = match self.form_tab {
             FormTab::Remote => Msg::Ui(UiMsg::Remote(UiAuthFormMsg::KubeNamespaceBlurDown)),
             FormTab::HostBridge => Msg::Ui(UiMsg::HostBridge(UiAuthFormMsg::KubeNamespaceBlurDown)),
@@ -44,7 +47,7 @@ impl Component<Msg, NoUserEvent> for InputKubeNamespace {
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct InputKubeClusterUrl {
     component: Input,
     form_tab: FormTab,
@@ -60,11 +63,13 @@ impl InputKubeClusterUrl {
                         .modifiers(BorderType::Rounded),
                 )
                 .foreground(color)
-                .placeholder(
+                .placeholder(tuirealm::props::SpanStatic::styled(
                     "cluster url",
                     Style::default().fg(Color::Rgb(128, 128, 128)),
+                ))
+                .title(
+                    Title::from("Kube cluster url (optional)").alignment(HorizontalAlignment::Left),
                 )
-                .title("Kube cluster url (optional)", Alignment::Left)
                 .input_type(InputType::Text)
                 .value(bucket),
             form_tab,
@@ -72,8 +77,8 @@ impl InputKubeClusterUrl {
     }
 }
 
-impl Component<Msg, NoUserEvent> for InputKubeClusterUrl {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for InputKubeClusterUrl {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         let on_key_down = match self.form_tab {
             FormTab::Remote => Msg::Ui(UiMsg::Remote(UiAuthFormMsg::KubeClusterUrlBlurDown)),
             FormTab::HostBridge => {
@@ -90,7 +95,7 @@ impl Component<Msg, NoUserEvent> for InputKubeClusterUrl {
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct InputKubeUsername {
     component: Input,
     form_tab: FormTab,
@@ -106,8 +111,11 @@ impl InputKubeUsername {
                         .modifiers(BorderType::Rounded),
                 )
                 .foreground(color)
-                .placeholder("username", Style::default().fg(Color::Rgb(128, 128, 128)))
-                .title("Kube username (optional)", Alignment::Left)
+                .placeholder(tuirealm::props::SpanStatic::styled(
+                    "username",
+                    Style::default().fg(Color::Rgb(128, 128, 128)),
+                ))
+                .title(Title::from("Kube username (optional)").alignment(HorizontalAlignment::Left))
                 .input_type(InputType::Text)
                 .value(bucket),
             form_tab,
@@ -115,8 +123,8 @@ impl InputKubeUsername {
     }
 }
 
-impl Component<Msg, NoUserEvent> for InputKubeUsername {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for InputKubeUsername {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         let on_key_down = match self.form_tab {
             FormTab::Remote => Msg::Ui(UiMsg::Remote(UiAuthFormMsg::KubeUsernameBlurDown)),
             FormTab::HostBridge => Msg::Ui(UiMsg::HostBridge(UiAuthFormMsg::KubeUsernameBlurDown)),
@@ -131,7 +139,7 @@ impl Component<Msg, NoUserEvent> for InputKubeUsername {
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct InputKubeClientCert {
     component: Input,
     form_tab: FormTab,
@@ -147,11 +155,14 @@ impl InputKubeClientCert {
                         .modifiers(BorderType::Rounded),
                 )
                 .foreground(color)
-                .placeholder(
+                .placeholder(tuirealm::props::SpanStatic::styled(
                     "/home/user/.kube/client.crt",
                     Style::default().fg(Color::Rgb(128, 128, 128)),
+                ))
+                .title(
+                    Title::from("Kube client cert path (optional)")
+                        .alignment(HorizontalAlignment::Left),
                 )
-                .title("Kube client cert path (optional)", Alignment::Left)
                 .input_type(InputType::Text)
                 .value(bucket),
             form_tab,
@@ -159,8 +170,8 @@ impl InputKubeClientCert {
     }
 }
 
-impl Component<Msg, NoUserEvent> for InputKubeClientCert {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for InputKubeClientCert {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         let on_key_down = match self.form_tab {
             FormTab::Remote => Msg::Ui(UiMsg::Remote(UiAuthFormMsg::KubeClientCertBlurDown)),
             FormTab::HostBridge => {
@@ -177,7 +188,7 @@ impl Component<Msg, NoUserEvent> for InputKubeClientCert {
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct InputKubeClientKey {
     component: Input,
     form_tab: FormTab,
@@ -193,11 +204,14 @@ impl InputKubeClientKey {
                         .modifiers(BorderType::Rounded),
                 )
                 .foreground(color)
-                .placeholder(
+                .placeholder(tuirealm::props::SpanStatic::styled(
                     "/home/user/.kube/client.key",
                     Style::default().fg(Color::Rgb(128, 128, 128)),
+                ))
+                .title(
+                    Title::from("Kube client key path (optional)")
+                        .alignment(HorizontalAlignment::Left),
                 )
-                .title("Kube client key path (optional)", Alignment::Left)
                 .input_type(InputType::Text)
                 .value(bucket),
             form_tab,
@@ -205,8 +219,8 @@ impl InputKubeClientKey {
     }
 }
 
-impl Component<Msg, NoUserEvent> for InputKubeClientKey {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for InputKubeClientKey {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         let on_key_down = match self.form_tab {
             FormTab::Remote => Msg::Ui(UiMsg::Remote(UiAuthFormMsg::KubeClientKeyBlurDown)),
             FormTab::HostBridge => Msg::Ui(UiMsg::HostBridge(UiAuthFormMsg::KubeClientKeyBlurDown)),

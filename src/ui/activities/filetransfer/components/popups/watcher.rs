@@ -1,12 +1,15 @@
-use tui_realm_stdlib::{List, Radio};
+use tui_realm_stdlib::components::{List, Radio};
 use tuirealm::command::{Cmd, CmdResult, Direction, Position};
-use tuirealm::event::{Key, KeyEvent, KeyModifiers};
-use tuirealm::props::{Alignment, BorderType, Borders, Color, TextSpan};
-use tuirealm::{Component, Event, MockComponent, NoUserEvent, State, StateValue};
+use tuirealm::component::{AppComponent, Component};
+use tuirealm::event::{Event, Key, KeyEvent, KeyModifiers, NoUserEvent};
+use tuirealm::props::{
+    BorderType, Borders, Color, HorizontalAlignment, SpanStatic, Style, TextModifiers, Title,
+};
+use tuirealm::state::{State, StateValue};
 
 use crate::ui::activities::filetransfer::{Msg, TransferMsg, UiMsg};
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct WatchedPathsList {
     component: List,
 }
@@ -23,24 +26,24 @@ impl WatchedPathsList {
                 .rewind(true)
                 .scroll(true)
                 .step(4)
-                .highlighted_color(color)
-                .highlighted_str("\u{27a4} ")
+                .highlight_style(Style::default().fg(color))
+                .highlight_str("\u{27a4} ")
                 .title(
-                    "These files are currently synched with the remote host",
-                    Alignment::Center,
+                    Title::from("These files are currently synched with the remote host")
+                        .alignment(HorizontalAlignment::Center),
                 )
                 .rows(
                     paths
                         .iter()
-                        .map(|x| vec![TextSpan::from(x.to_string_lossy().to_string())])
-                        .collect(),
+                        .map(|x| vec![SpanStatic::from(x.to_string_lossy().to_string())])
+                        .collect::<Vec<Vec<SpanStatic>>>(),
                 ),
         }
     }
 }
 
-impl Component<Msg, NoUserEvent> for WatchedPathsList {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for WatchedPathsList {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         match ev {
             Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
                 Some(Msg::Ui(UiMsg::CloseWatchedPathsList))
@@ -82,7 +85,7 @@ impl Component<Msg, NoUserEvent> for WatchedPathsList {
                 code: Key::Enter, ..
             }) => {
                 // get state
-                if let State::One(StateValue::Usize(idx)) = self.component.state() {
+                if let State::Single(StateValue::Usize(idx)) = self.component.state() {
                     Some(Msg::Transfer(TransferMsg::ToggleWatchFor(idx)))
                 } else {
                     Some(Msg::None)
@@ -93,7 +96,7 @@ impl Component<Msg, NoUserEvent> for WatchedPathsList {
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct WatcherPopup {
     component: Radio,
 }
@@ -106,20 +109,24 @@ impl WatcherPopup {
         };
         Self {
             component: Radio::default()
+                .highlight_style(
+                    Style::default()
+                        .fg(color)
+                        .add_modifier(TextModifiers::REVERSED),
+                )
                 .borders(
                     Borders::default()
                         .color(color)
                         .modifiers(BorderType::Rounded),
                 )
-                .foreground(color)
                 .choices(["Yes", "No"])
-                .title(text, Alignment::Center),
+                .title(Title::from(text).alignment(HorizontalAlignment::Center)),
         }
     }
 }
 
-impl Component<Msg, NoUserEvent> for WatcherPopup {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for WatcherPopup {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         match ev {
             Event::Keyboard(KeyEvent {
                 code: Key::Left, ..
@@ -149,7 +156,7 @@ impl Component<Msg, NoUserEvent> for WatcherPopup {
             }) => {
                 if matches!(
                     self.perform(Cmd::Submit),
-                    CmdResult::Submit(State::One(StateValue::Usize(0)))
+                    CmdResult::Submit(State::Single(StateValue::Usize(0)))
                 ) {
                     Some(Msg::Transfer(TransferMsg::ToggleWatch))
                 } else {

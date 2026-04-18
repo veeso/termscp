@@ -1,12 +1,14 @@
 use std::path::{Path, PathBuf};
 
-use tui_realm_stdlib::Input;
+use tui_realm_stdlib::components::Input;
 use tuirealm::command::{Cmd, CmdResult, Direction, Position};
-use tuirealm::event::{Key, KeyEvent};
-use tuirealm::props::{Alignment, BorderType, Borders, Color, InputType, PropValue, Style};
-use tuirealm::{
-    AttrValue, Attribute, Component, Event, MockComponent, NoUserEvent, State, StateValue,
+use tuirealm::component::{AppComponent, Component};
+use tuirealm::event::{Event, Key, KeyEvent, NoUserEvent};
+use tuirealm::props::{
+    AttrValue, Attribute, BorderType, Borders, Color, HorizontalAlignment, InputType, PropValue,
+    Style, Title,
 };
+use tuirealm::state::{State, StateValue};
 
 use crate::ui::activities::filetransfer::{Msg, TransferMsg, UiMsg};
 
@@ -51,14 +53,15 @@ impl From<CmdResult> for Suggestion {
     fn from(value: CmdResult) -> Self {
         match value {
             CmdResult::Batch(v) if v.len() == 1 => {
-                if let CmdResult::Submit(State::One(StateValue::String(s))) = v.first().unwrap() {
+                if let CmdResult::Submit(State::Single(StateValue::String(s))) = v.first().unwrap()
+                {
                     Suggestion::Suggest(s.clone())
                 } else {
                     Suggestion::None
                 }
             }
             CmdResult::Batch(v) if v.len() == 2 => {
-                if let CmdResult::Submit(State::One(StateValue::String(s))) = v.get(1).unwrap() {
+                if let CmdResult::Submit(State::Single(StateValue::String(s))) = v.get(1).unwrap() {
                     Suggestion::Rescan(PathBuf::from(s))
                 } else {
                     Suggestion::None
@@ -72,13 +75,13 @@ impl From<CmdResult> for Suggestion {
 impl From<Suggestion> for CmdResult {
     fn from(value: Suggestion) -> Self {
         match value {
-            Suggestion::None => CmdResult::None,
-            Suggestion::Suggest(s) => {
-                CmdResult::Batch(vec![CmdResult::Submit(State::One(StateValue::String(s)))])
-            }
+            Suggestion::None => CmdResult::NoChange,
+            Suggestion::Suggest(s) => CmdResult::Batch(vec![CmdResult::Submit(State::Single(
+                StateValue::String(s),
+            ))]),
             Suggestion::Rescan(p) => CmdResult::Batch(vec![
-                CmdResult::None,
-                CmdResult::Submit(State::One(StateValue::String(
+                CmdResult::NoChange,
+                CmdResult::Submit(State::Single(StateValue::String(
                     p.to_string_lossy().to_string(),
                 ))),
             ]),
@@ -187,18 +190,25 @@ impl GotoPopup {
                 )
                 .foreground(color)
                 .input_type(InputType::Text)
-                .placeholder(
+                .placeholder(tuirealm::props::SpanStatic::styled(
                     "/foo/bar/buzz",
                     Style::default().fg(Color::Rgb(128, 128, 128)),
-                )
-                .title("Go to… (Press <TAB> for autocompletion)", Alignment::Center),
+                ))
+                .title(
+                    Title::from("Go to… (Press <TAB> for autocompletion)")
+                        .alignment(HorizontalAlignment::Center),
+                ),
             states,
         }
     }
 }
 
-impl MockComponent for GotoPopup {
-    fn view(&mut self, frame: &mut tuirealm::Frame, area: tuirealm::ratatui::prelude::Rect) {
+impl Component for GotoPopup {
+    fn view(
+        &mut self,
+        frame: &mut tuirealm::ratatui::Frame,
+        area: tuirealm::ratatui::prelude::Rect,
+    ) {
         self.input.view(frame, area);
     }
 
@@ -220,12 +230,12 @@ impl MockComponent for GotoPopup {
         }
     }
 
-    fn query(&self, attr: Attribute) -> Option<AttrValue> {
+    fn query<'a>(&'a self, attr: Attribute) -> Option<tuirealm::props::QueryResult<'a>> {
         self.input.query(attr)
     }
 
     fn state(&self) -> State {
-        State::One(StateValue::String(self.states.computed_search()))
+        State::Single(StateValue::String(self.states.computed_search()))
     }
 
     fn perform(&mut self, cmd: Cmd) -> CmdResult {
@@ -236,7 +246,7 @@ impl MockComponent for GotoPopup {
                     .search
                     .as_ref()
                     .cloned()
-                    .unwrap_or_else(|| self.input.state().unwrap_one().unwrap_string());
+                    .unwrap_or_else(|| self.input.state().unwrap_single().unwrap_string());
                 let suggest = self.states.suggest(&input);
                 if let Suggestion::Suggest(suggestion) = suggest.clone() {
                     self.input
@@ -247,7 +257,7 @@ impl MockComponent for GotoPopup {
             }
             cmd => {
                 let res = self.input.perform(cmd);
-                if let CmdResult::Changed(State::One(StateValue::String(new_text))) = &res {
+                if let CmdResult::Changed(State::Single(StateValue::String(new_text))) = &res {
                     self.states.search = Some(new_text.clone());
                 }
                 res
@@ -256,8 +266,8 @@ impl MockComponent for GotoPopup {
     }
 }
 
-impl Component<Msg, NoUserEvent> for GotoPopup {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for GotoPopup {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         match ev {
             Event::Keyboard(KeyEvent {
                 code: Key::Left, ..
@@ -298,7 +308,7 @@ impl Component<Msg, NoUserEvent> for GotoPopup {
                 code: Key::Char(ch),
                 ..
             }) => {
-                self.perform(Cmd::Type(ch));
+                self.perform(Cmd::Type(*ch));
                 Some(Msg::None)
             }
             Event::Keyboard(KeyEvent { code: Key::Tab, .. }) => {
@@ -311,7 +321,7 @@ impl Component<Msg, NoUserEvent> for GotoPopup {
             Event::Keyboard(KeyEvent {
                 code: Key::Enter, ..
             }) => match self.state() {
-                State::One(StateValue::String(i)) => Some(Msg::Transfer(TransferMsg::GoTo(i))),
+                State::Single(StateValue::String(i)) => Some(Msg::Transfer(TransferMsg::GoTo(i))),
                 _ => Some(Msg::None),
             },
             Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
