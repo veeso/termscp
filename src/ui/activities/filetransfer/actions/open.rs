@@ -6,6 +6,8 @@
 // ext
 use std::path::{Path, PathBuf};
 
+use tuirealm::terminal::TerminalAdapter;
+
 use super::{File, FileTransferActivity, LogLevel, TransferPayload};
 
 impl FileTransferActivity {

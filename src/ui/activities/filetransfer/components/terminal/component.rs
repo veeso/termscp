@@ -1,10 +1,11 @@
 use tui_term::vt100::Parser;
 use tui_term::widget::PseudoTerminal;
 use tuirealm::command::{Cmd, CmdResult, Direction, Position};
-use tuirealm::props::{BorderSides, BorderType, Style};
+use tuirealm::component::Component;
+use tuirealm::props::{AttrValue, Attribute, BorderSides, BorderType, Props, QueryResult, Style};
 use tuirealm::ratatui::layout::Rect;
 use tuirealm::ratatui::widgets::Block;
-use tuirealm::{AttrValue, Attribute, MockComponent, Props, State, StateValue};
+use tuirealm::state::{State, StateValue};
 
 use super::Line;
 use super::history::History;
@@ -45,8 +46,7 @@ impl TerminalComponent {
     }
 
     pub fn write_prompt(&mut self) {
-        if let Some(value) = self.query(Attribute::Content) {
-            let prompt = value.unwrap_string();
+        if let Some(AttrValue::String(prompt)) = self.props.get(Attribute::Content).cloned() {
             self.parser.process(prompt.as_bytes());
         }
     }
@@ -83,8 +83,8 @@ impl TerminalComponent {
     }
 }
 
-impl MockComponent for TerminalComponent {
-    fn view(&mut self, frame: &mut tuirealm::Frame, area: Rect) {
+impl Component for TerminalComponent {
+    fn view(&mut self, frame: &mut tuirealm::ratatui::Frame, area: Rect) {
         let width = area.width.saturating_sub(2);
         let height = area.height.saturating_sub(2);
 
@@ -95,23 +95,30 @@ impl MockComponent for TerminalComponent {
         }
 
         let title = self
-            .query(Attribute::Title)
-            .map(AttrValue::unwrap_string)
+            .props
+            .get(Attribute::Title)
+            .and_then(|v| match v {
+                AttrValue::String(s) => Some(s.clone()),
+                _ => None,
+            })
             .unwrap_or_else(|| "Terminal".to_string());
 
         let fg = self
-            .query(Attribute::Foreground)
-            .map(AttrValue::unwrap_color)
+            .props
+            .get(Attribute::Foreground)
+            .and_then(AttrValue::as_color)
             .unwrap_or(tuirealm::ratatui::style::Color::Reset);
 
         let bg = self
-            .query(Attribute::Background)
-            .map(AttrValue::unwrap_color)
+            .props
+            .get(Attribute::Background)
+            .and_then(AttrValue::as_color)
             .unwrap_or(tuirealm::ratatui::style::Color::Reset);
 
         let border_color = self
-            .query(Attribute::Borders)
-            .map(AttrValue::unwrap_color)
+            .props
+            .get(Attribute::Borders)
+            .and_then(AttrValue::as_color)
             .unwrap_or(tuirealm::ratatui::style::Color::Reset);
 
         let terminal = PseudoTerminal::new(self.parser.screen())
@@ -128,13 +135,13 @@ impl MockComponent for TerminalComponent {
         frame.render_widget(terminal, area);
     }
 
-    fn query(&self, attr: tuirealm::Attribute) -> Option<tuirealm::AttrValue> {
-        self.props.get(attr)
+    fn query<'a>(&'a self, attr: Attribute) -> Option<QueryResult<'a>> {
+        self.props.get_for_query(attr)
     }
 
-    fn attr(&mut self, attr: tuirealm::Attribute, value: AttrValue) {
+    fn attr(&mut self, attr: Attribute, value: AttrValue) {
         if attr == Attribute::Text {
-            if let tuirealm::AttrValue::String(s) = value {
+            if let AttrValue::String(s) = value {
                 self.parser.process(b"\r");
                 self.parser.process(s.as_bytes());
                 self.parser.process(b"\r");
@@ -146,14 +153,14 @@ impl MockComponent for TerminalComponent {
     }
 
     fn state(&self) -> State {
-        State::One(StateValue::String(self.line.content().to_string()))
+        State::Single(StateValue::String(self.line.content().to_string()))
     }
 
     fn perform(&mut self, cmd: Cmd) -> CmdResult {
         match cmd {
             Cmd::Type(s) => {
                 if !s.is_ascii() || self.scroll > 0 {
-                    return CmdResult::None; // Ignore non-ASCII characters or if scrolled
+                    return CmdResult::NoChange; // Ignore non-ASCII characters or if scrolled
                 }
                 self.parser.process(&[s as u8]);
                 self.line.push(s);
@@ -161,46 +168,46 @@ impl MockComponent for TerminalComponent {
             }
             Cmd::Move(Direction::Down) => {
                 if self.scroll > 0 {
-                    return CmdResult::None; // Cannot move down if not scrolled
+                    return CmdResult::NoChange; // Cannot move down if not scrolled
                 }
 
                 self.history_next();
 
-                CmdResult::None
+                CmdResult::NoChange
             }
             Cmd::Move(Direction::Left) => {
                 if self.scroll > 0 {
-                    return CmdResult::None; // Cannot move up if not scrolled
+                    return CmdResult::NoChange; // Cannot move up if not scrolled
                 }
 
                 if self.line.left() {
                     self.parser.process(&[27, 91, 68]);
                 }
 
-                CmdResult::None
+                CmdResult::NoChange
             }
             Cmd::Move(Direction::Right) => {
                 if self.scroll > 0 {
-                    return CmdResult::None; // Cannot move up if not scrolled
+                    return CmdResult::NoChange; // Cannot move up if not scrolled
                 }
 
                 if self.line.right() {
                     self.parser.process(&[27, 91, 67]);
                 }
 
-                CmdResult::None
+                CmdResult::NoChange
             }
             Cmd::Move(Direction::Up) => {
                 if self.scroll > 0 {
-                    return CmdResult::None; // Cannot move up if not scrolled
+                    return CmdResult::NoChange; // Cannot move up if not scrolled
                 }
 
                 self.history_prev();
-                CmdResult::None
+                CmdResult::NoChange
             }
             Cmd::Cancel => {
                 if self.scroll > 0 {
-                    return CmdResult::None; // Cannot move to the beginning if scrolled
+                    return CmdResult::NoChange; // Cannot move to the beginning if scrolled
                 }
 
                 if !self.line.is_empty() {
@@ -215,7 +222,7 @@ impl MockComponent for TerminalComponent {
             }
             Cmd::Delete => {
                 if self.scroll > 0 {
-                    return CmdResult::None; // Cannot move to the beginning if scrolled
+                    return CmdResult::NoChange; // Cannot move to the beginning if scrolled
                 }
 
                 if !self.line.is_empty() {
@@ -231,40 +238,40 @@ impl MockComponent for TerminalComponent {
                 self.scroll = self.scroll.saturating_sub(8);
                 self.parser.set_scrollback(self.scroll);
 
-                CmdResult::None
+                CmdResult::NoChange
             }
             Cmd::Scroll(Direction::Up) => {
                 self.parser.set_scrollback(self.scroll.saturating_add(8));
                 let scrollback = self.parser.screen().scrollback();
                 self.scroll = scrollback;
 
-                CmdResult::None
+                CmdResult::NoChange
             }
             Cmd::Toggle => {
                 // insert
                 self.parser.process(&[27, 91, 50, 126]); // Toggle insert mode
-                CmdResult::None
+                CmdResult::NoChange
             }
             Cmd::GoTo(Position::Begin) => {
                 if self.scroll > 0 {
-                    return CmdResult::None; // Cannot move to the beginning if scrolled
+                    return CmdResult::NoChange; // Cannot move to the beginning if scrolled
                 }
 
                 for _ in 0..self.line.begin() {
                     self.parser.process(&[27, 91, 68]); // Move cursor to the left
                 }
 
-                CmdResult::None
+                CmdResult::NoChange
             }
             Cmd::GoTo(Position::End) => {
                 if self.scroll > 0 {
-                    return CmdResult::None; // Cannot move to the beginning if scrolled
+                    return CmdResult::NoChange; // Cannot move to the beginning if scrolled
                 }
 
                 for _ in 0..self.line.end() {
                     self.parser.process(&[27, 91, 67]); // Move cursor to the right
                 }
-                CmdResult::None
+                CmdResult::NoChange
             }
             Cmd::Submit => {
                 self.scroll = 0; // Reset scroll on submit
@@ -281,9 +288,9 @@ impl MockComponent for TerminalComponent {
                     self.history.push(&line);
                 }
 
-                CmdResult::Submit(State::One(StateValue::String(line)))
+                CmdResult::Submit(State::Single(StateValue::String(line)))
             }
-            _ => CmdResult::None,
+            _ => CmdResult::NoChange,
         }
     }
 }

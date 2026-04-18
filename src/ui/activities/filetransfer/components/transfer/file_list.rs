@@ -3,12 +3,14 @@
 //! `FileList` component renders a file list tab
 
 use tuirealm::command::{Cmd, CmdResult, Direction, Position};
+use tuirealm::component::Component;
 use tuirealm::props::{
-    Alignment, AttrValue, Attribute, Borders, Color, Style, Table, TextModifiers, TextSpan,
+    AttrValue, Attribute, Borders, Color, HorizontalAlignment, Props, QueryResult, SpanStatic,
+    Style, Table, TextModifiers, Title,
 };
 use tuirealm::ratatui::text::{Line, Span};
 use tuirealm::ratatui::widgets::{List as TuiList, ListDirection, ListItem, ListState};
-use tuirealm::{MockComponent, Props, State, StateValue};
+use tuirealm::state::{State, StateValue};
 
 pub const FILE_LIST_CMD_SELECT_ALL: &str = "A";
 pub const FILE_LIST_CMD_DESELECT_ALL: &str = "D";
@@ -108,16 +110,16 @@ impl FileList {
         self
     }
 
-    pub fn title<S: AsRef<str>>(mut self, t: S, a: Alignment) -> Self {
-        self.attr(
-            Attribute::Title,
-            AttrValue::Title((t.as_ref().to_string(), a)),
-        );
+    pub fn title(mut self, t: Title) -> Self {
+        self.attr(Attribute::Title, AttrValue::Title(t));
         self
     }
 
-    pub fn highlighted_color(mut self, c: Color) -> Self {
-        self.attr(Attribute::HighlightedColor, AttrValue::Color(c));
+    pub fn highlight_color(mut self, c: Color) -> Self {
+        self.attr(
+            Attribute::HighlightStyle,
+            AttrValue::Style(Style::default().fg(c).add_modifier(TextModifiers::REVERSED)),
+        );
         self
     }
 
@@ -136,40 +138,57 @@ impl FileList {
     fn has_dot_dot(&self) -> bool {
         self.props
             .get(Attribute::Custom(PROP_DOT_DOT))
-            .map(AttrValue::unwrap_flag)
+            .and_then(AttrValue::as_flag)
             .unwrap_or(false)
     }
 }
 
-impl MockComponent for FileList {
-    fn view(&mut self, frame: &mut tuirealm::Frame, area: tuirealm::ratatui::layout::Rect) {
+impl Component for FileList {
+    fn view(
+        &mut self,
+        frame: &mut tuirealm::ratatui::Frame,
+        area: tuirealm::ratatui::layout::Rect,
+    ) {
         let title = self
             .props
-            .get_or(
-                Attribute::Title,
-                AttrValue::Title((String::default(), Alignment::Left)),
-            )
-            .unwrap_title();
+            .get(Attribute::Title)
+            .and_then(AttrValue::as_title)
+            .cloned()
+            .unwrap_or_else(|| Title::from(String::default()).alignment(HorizontalAlignment::Left));
         let borders = self
             .props
-            .get_or(Attribute::Borders, AttrValue::Borders(Borders::default()))
-            .unwrap_borders();
+            .get(Attribute::Borders)
+            .and_then(AttrValue::as_borders)
+            .unwrap_or_default();
         let focus = self
             .props
-            .get_or(Attribute::Focus, AttrValue::Flag(false))
-            .unwrap_flag();
+            .get(Attribute::Focus)
+            .and_then(AttrValue::as_flag)
+            .unwrap_or(false);
         let div = tui_realm_stdlib::utils::get_block(borders, Some(&title), focus, None);
         // Make list entries
         let init_table_iter = if self.has_dot_dot() {
-            vec![vec![TextSpan::from("..")]]
+            vec![vec![tuirealm::props::LineStatic::from(SpanStatic::from(
+                "..",
+            ))]]
         } else {
             vec![]
         };
 
+        let foreground = self
+            .props
+            .get(Attribute::Foreground)
+            .and_then(AttrValue::as_color)
+            .unwrap_or(Color::Reset);
+        let background = self
+            .props
+            .get(Attribute::Background)
+            .and_then(AttrValue::as_color)
+            .unwrap_or(Color::Reset);
         let list_items: Vec<ListItem> = match self
             .props
             .get(Attribute::Content)
-            .map(AttrValue::unwrap_table)
+            .and_then(AttrValue::as_table)
         {
             Some(table) => init_table_iter
                 .iter()
@@ -177,39 +196,44 @@ impl MockComponent for FileList {
                 .map(|row| {
                     let columns: Vec<Span> = row
                         .iter()
-                        .map(|col| {
-                            let (fg, bg, modifiers) =
-                                tui_realm_stdlib::utils::use_or_default_styles(&self.props, col);
-
-                            Span::styled(
-                                col.content.clone(),
-                                Style::default().add_modifier(modifiers).fg(fg).bg(bg),
-                            )
+                        .flat_map(|line| line.spans.iter())
+                        .map(|span| {
+                            let mut style = span.style;
+                            if style.fg.is_none() {
+                                style.fg = Some(foreground);
+                            }
+                            if style.bg.is_none() {
+                                style.bg = Some(background);
+                            }
+                            Span::styled(span.content.clone(), style)
                         })
                         .collect();
                     ListItem::new(Line::from(columns))
                 })
-                .collect(), // Make List item from TextSpan
+                .collect(),
             _ => Vec::new(),
         };
-        let highlighted_color = self
+        let highlight_style = self
             .props
-            .get(Attribute::HighlightedColor)
-            .map(AttrValue::unwrap_color);
-        let modifiers = match focus {
-            true => TextModifiers::REVERSED,
-            false => TextModifiers::empty(),
-        };
+            .get(Attribute::HighlightStyle)
+            .and_then(AttrValue::as_style);
         // Make list
         let mut list = TuiList::new(list_items)
             .block(div)
             .direction(ListDirection::TopToBottom);
-        if let Some(highlighted_color) = highlighted_color {
-            list = list.highlight_style(
-                Style::default()
-                    .fg(highlighted_color)
-                    .add_modifier(modifiers),
-            );
+        if let Some(style) = highlight_style {
+            let applied = if focus {
+                style
+            } else {
+                // On blur keep the highlight color on the foreground but drop the
+                // REVERSED modifier so the selected row just stands out via fg only.
+                let mut s = Style::default();
+                if let Some(fg) = style.fg {
+                    s = s.fg(fg);
+                }
+                s
+            };
+            list = list.highlight_style(applied);
         }
         let mut state: ListState = ListState::default();
         state.select(Some(self.states.list_index));
@@ -219,31 +243,27 @@ impl MockComponent for FileList {
     fn attr(&mut self, attr: Attribute, value: AttrValue) {
         self.props.set(attr, value);
         if matches!(attr, Attribute::Content) {
-            self.states.init_list_states(
-                match self
-                    .props
-                    .get(Attribute::Content)
-                    .map(AttrValue::unwrap_table)
-                {
-                    Some(line) => line.len(),
-                    _ => 0,
-                },
-                self.has_dot_dot(),
-            );
+            let len = self
+                .props
+                .get(Attribute::Content)
+                .and_then(AttrValue::as_table)
+                .map(std::vec::Vec::len)
+                .unwrap_or(0);
+            self.states.init_list_states(len, self.has_dot_dot());
             self.states.fix_list_index();
         }
     }
 
-    fn query(&self, attr: Attribute) -> Option<AttrValue> {
-        self.props.get(attr)
+    fn query<'a>(&'a self, attr: Attribute) -> Option<QueryResult<'a>> {
+        self.props.get_for_query(attr)
     }
 
     fn state(&self) -> State {
         if self.has_dot_dot() && self.states.list_index == 0 {
-            return State::One(StateValue::String("..".to_string()));
+            return State::Single(StateValue::String("..".to_string()));
         }
 
-        State::One(StateValue::Usize(if self.has_dot_dot() {
+        State::Single(StateValue::Usize(if self.has_dot_dot() {
             self.states.list_index.saturating_sub(1)
         } else {
             self.states.list_index
@@ -258,7 +278,7 @@ impl MockComponent for FileList {
                 if prev != self.states.list_index {
                     CmdResult::Changed(self.state())
                 } else {
-                    CmdResult::None
+                    CmdResult::NoChange
                 }
             }
             Cmd::Move(Direction::Up) => {
@@ -267,7 +287,7 @@ impl MockComponent for FileList {
                 if prev != self.states.list_index {
                     CmdResult::Changed(self.state())
                 } else {
-                    CmdResult::None
+                    CmdResult::NoChange
                 }
             }
             Cmd::Scroll(Direction::Down) => {
@@ -276,7 +296,7 @@ impl MockComponent for FileList {
                 if prev != self.states.list_index {
                     CmdResult::Changed(self.state())
                 } else {
-                    CmdResult::None
+                    CmdResult::NoChange
                 }
             }
             Cmd::Scroll(Direction::Up) => {
@@ -285,7 +305,7 @@ impl MockComponent for FileList {
                 if prev != self.states.list_index {
                     CmdResult::Changed(self.state())
                 } else {
-                    CmdResult::None
+                    CmdResult::NoChange
                 }
             }
             Cmd::GoTo(Position::Begin) => {
@@ -294,7 +314,7 @@ impl MockComponent for FileList {
                 if prev != self.states.list_index {
                     CmdResult::Changed(self.state())
                 } else {
-                    CmdResult::None
+                    CmdResult::NoChange
                 }
             }
             Cmd::GoTo(Position::End) => {
@@ -303,12 +323,12 @@ impl MockComponent for FileList {
                 if prev != self.states.list_index {
                     CmdResult::Changed(self.state())
                 } else {
-                    CmdResult::None
+                    CmdResult::NoChange
                 }
             }
             Cmd::Toggle => {
                 if self.states.list_index == 0 && self.has_dot_dot() {
-                    return CmdResult::None;
+                    return CmdResult::NoChange;
                 }
 
                 let index = self.states.real_index();
@@ -317,9 +337,9 @@ impl MockComponent for FileList {
                     .list_index
                     .saturating_add(1)
                     .min(self.states.list_len.saturating_sub(1));
-                CmdResult::Changed(State::One(StateValue::Usize(index)))
+                CmdResult::Changed(State::Single(StateValue::Usize(index)))
             }
-            _ => CmdResult::None,
+            _ => CmdResult::NoChange,
         }
     }
 }

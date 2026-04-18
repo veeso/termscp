@@ -9,6 +9,7 @@ use std::time::SystemTime;
 
 use remotefs::File;
 use remotefs::fs::Metadata;
+use tuirealm::terminal::TerminalAdapter;
 
 use super::super::ui_result;
 use super::{FileTransferActivity, LogLevel, SelectedFile, TransferPayload};

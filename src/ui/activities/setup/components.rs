@@ -16,19 +16,19 @@ pub(super) use config::{
 };
 pub(super) use ssh::{DelSshKeyPopup, SshHost, SshKeys, SshUsername};
 pub(super) use theme::*;
-use tui_realm_stdlib::Phantom;
+use tui_realm_stdlib::components::Phantom;
+use tuirealm::component::{AppComponent, Component};
 use tuirealm::event::{Event, Key, KeyEvent, KeyModifiers, NoUserEvent};
-use tuirealm::{Component, MockComponent};
 
 // -- global listener
 
-#[derive(Default, MockComponent)]
+#[derive(Default, Component)]
 pub struct GlobalListener {
     component: Phantom,
 }
 
-impl Component<Msg, NoUserEvent> for GlobalListener {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for GlobalListener {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         match ev {
             Event::Keyboard(KeyEvent {
                 code: Key::Esc | Key::Function(10),

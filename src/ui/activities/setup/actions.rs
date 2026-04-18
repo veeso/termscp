@@ -7,7 +7,8 @@
 use std::env;
 
 use tuirealm::ratatui::style::Color;
-use tuirealm::{State, StateValue};
+use tuirealm::state::{State, StateValue};
+use tuirealm::terminal::TerminalAdapter;
 
 use super::{Id, IdSsh, IdTheme, SetupActivity, ViewLayout};
 // Ext
@@ -96,7 +97,7 @@ impl SetupActivity {
         // Get key
         // get index
         let idx: Option<usize> = match self.app.state(&Id::Ssh(IdSsh::SshKeys)) {
-            Ok(State::One(StateValue::Usize(idx))) => Some(idx),
+            Ok(State::Single(StateValue::Usize(idx))) => Some(idx),
             _ => None,
         };
         // get ssh key and delete it
@@ -114,11 +115,11 @@ impl SetupActivity {
     pub(super) fn action_new_ssh_key(&mut self) -> Result<(), String> {
         // get parameters
         let host: String = match self.app.state(&Id::Ssh(IdSsh::SshHost)) {
-            Ok(State::One(StateValue::String(host))) => host,
+            Ok(State::Single(StateValue::String(host))) => host,
             _ => String::new(),
         };
         let username: String = match self.app.state(&Id::Ssh(IdSsh::SshUsername)) {
-            Ok(State::One(StateValue::String(user))) => user,
+            Ok(State::Single(StateValue::String(user))) => user,
             _ => String::new(),
         };
         // Prepare text editor
@@ -382,7 +383,7 @@ impl SetupActivity {
     /// Get color from component
     fn get_color(&self, component: &Id) -> Result<Color, ()> {
         match self.app.state(component) {
-            Ok(State::One(StateValue::String(color))) => {
+            Ok(State::Single(StateValue::String(color))) => {
                 match crate::utils::parser::parse_color(color.as_str()) {
                     Some(c) => Ok(c),
                     None => Err(()),

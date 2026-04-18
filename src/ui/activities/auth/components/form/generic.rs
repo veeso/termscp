@@ -1,9 +1,9 @@
+use tuirealm::component::{AppComponent, Component};
 use tuirealm::event::NoUserEvent;
-use tuirealm::{Component, MockComponent};
 
 use super::*;
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct InputAddress {
     component: Input,
     form_tab: FormTab,
@@ -19,8 +19,11 @@ impl InputAddress {
                         .modifiers(BorderType::Rounded),
                 )
                 .foreground(color)
-                .placeholder("127.0.0.1", Style::default().fg(Color::Rgb(128, 128, 128)))
-                .title("Remote host", Alignment::Left)
+                .placeholder(tuirealm::props::SpanStatic::styled(
+                    "127.0.0.1",
+                    Style::default().fg(Color::Rgb(128, 128, 128)),
+                ))
+                .title(Title::from("Remote host").alignment(HorizontalAlignment::Left))
                 .input_type(InputType::Text)
                 .value(host),
             form_tab,
@@ -28,8 +31,8 @@ impl InputAddress {
     }
 }
 
-impl Component<Msg, NoUserEvent> for InputAddress {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for InputAddress {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         let on_key_down = match self.form_tab {
             FormTab::Remote => Msg::Ui(UiMsg::Remote(UiAuthFormMsg::AddressBlurDown)),
             FormTab::HostBridge => Msg::Ui(UiMsg::HostBridge(UiAuthFormMsg::AddressBlurDown)),
@@ -44,7 +47,7 @@ impl Component<Msg, NoUserEvent> for InputAddress {
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct InputPort {
     component: Input,
     form_tab: FormTab,
@@ -60,18 +63,21 @@ impl InputPort {
                         .modifiers(BorderType::Rounded),
                 )
                 .foreground(color)
-                .placeholder("22", Style::default().fg(Color::Rgb(128, 128, 128)))
+                .placeholder(tuirealm::props::SpanStatic::styled(
+                    "22",
+                    Style::default().fg(Color::Rgb(128, 128, 128)),
+                ))
                 .input_type(InputType::UnsignedInteger)
                 .input_len(5)
-                .title("Port number", Alignment::Left)
+                .title(Title::from("Port number").alignment(HorizontalAlignment::Left))
                 .value(port.to_string()),
             form_tab,
         }
     }
 }
 
-impl Component<Msg, NoUserEvent> for InputPort {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for InputPort {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         let on_key_down = match self.form_tab {
             FormTab::Remote => Msg::Ui(UiMsg::Remote(UiAuthFormMsg::PortBlurDown)),
             FormTab::HostBridge => Msg::Ui(UiMsg::HostBridge(UiAuthFormMsg::PortBlurDown)),
@@ -86,7 +92,7 @@ impl Component<Msg, NoUserEvent> for InputPort {
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct InputUsername {
     component: Input,
     form_tab: FormTab,
@@ -102,8 +108,11 @@ impl InputUsername {
                         .modifiers(BorderType::Rounded),
                 )
                 .foreground(color)
-                .placeholder("root", Style::default().fg(Color::Rgb(128, 128, 128)))
-                .title("Username", Alignment::Left)
+                .placeholder(tuirealm::props::SpanStatic::styled(
+                    "root",
+                    Style::default().fg(Color::Rgb(128, 128, 128)),
+                ))
+                .title(Title::from("Username").alignment(HorizontalAlignment::Left))
                 .input_type(InputType::Text)
                 .value(username),
             form_tab,
@@ -111,8 +120,8 @@ impl InputUsername {
     }
 }
 
-impl Component<Msg, NoUserEvent> for InputUsername {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for InputUsername {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         let on_key_down = match self.form_tab {
             FormTab::Remote => Msg::Ui(UiMsg::Remote(UiAuthFormMsg::UsernameBlurDown)),
             FormTab::HostBridge => Msg::Ui(UiMsg::HostBridge(UiAuthFormMsg::UsernameBlurDown)),
@@ -127,7 +136,7 @@ impl Component<Msg, NoUserEvent> for InputUsername {
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct InputPassword {
     component: Input,
     form_tab: FormTab,
@@ -143,7 +152,7 @@ impl InputPassword {
                         .modifiers(BorderType::Rounded),
                 )
                 .foreground(color)
-                .title("Password", Alignment::Left)
+                .title(Title::from("Password").alignment(HorizontalAlignment::Left))
                 .input_type(InputType::Password('*'))
                 .value(password),
             form_tab,
@@ -151,8 +160,8 @@ impl InputPassword {
     }
 }
 
-impl Component<Msg, NoUserEvent> for InputPassword {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for InputPassword {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         let on_key_down = match self.form_tab {
             FormTab::Remote => Msg::Ui(UiMsg::Remote(UiAuthFormMsg::PasswordBlurDown)),
             FormTab::HostBridge => Msg::Ui(UiMsg::HostBridge(UiAuthFormMsg::PasswordBlurDown)),

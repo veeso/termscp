@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 
 use remotefs::File;
 use remotefs::fs::UnixPex;
-use tuirealm::{State, StateValue};
+use tuirealm::state::{State, StateValue};
 
 use super::browser::FileExplorerTab;
 use super::lib::browser::FoundExplorerTab;
@@ -135,7 +135,7 @@ impl FileTransferActivity {
 
     fn get_selected_index(&self, id: &Id) -> SelectedFileIndex {
         match self.app.state(id) {
-            Ok(State::One(StateValue::Usize(idx))) => SelectedFileIndex::One(idx),
+            Ok(State::Single(StateValue::Usize(idx))) => SelectedFileIndex::One(idx),
             _ => SelectedFileIndex::None,
         }
     }

@@ -2,13 +2,15 @@
 //!
 //! ssh components
 
-use tui_realm_stdlib::{Input, List, Radio};
+use tui_realm_stdlib::components::{Input, List, Radio};
 use tuirealm::command::{Cmd, CmdResult, Direction, Position};
-use tuirealm::event::{Key, KeyEvent, KeyModifiers};
+use tuirealm::component::{AppComponent, Component};
+use tuirealm::event::{Event, Key, KeyEvent, KeyModifiers, NoUserEvent};
 use tuirealm::props::{
-    Alignment, BorderSides, BorderType, Borders, Color, InputType, Style, TextSpan,
+    BorderSides, BorderType, Borders, Color, HorizontalAlignment, InputType, SpanStatic, Style,
+    TextModifiers, Title,
 };
-use tuirealm::{Component, Event, MockComponent, NoUserEvent, State, StateValue};
+use tuirealm::state::{State, StateValue};
 
 use super::{Msg, SshMsg};
 
@@ -17,7 +19,7 @@ SshHost,
 SshKeys,
 SshUsername, */
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct DelSshKeyPopup {
     component: Radio,
 }
@@ -26,22 +28,26 @@ impl Default for DelSshKeyPopup {
     fn default() -> Self {
         Self {
             component: Radio::default()
+                .highlight_style(
+                    Style::default()
+                        .fg(Color::Red)
+                        .add_modifier(TextModifiers::REVERSED),
+                )
                 .borders(
                     Borders::default()
                         .color(Color::Red)
                         .modifiers(BorderType::Rounded),
                 )
                 .choices(["Yes", "No"])
-                .foreground(Color::Red)
                 .rewind(true)
-                .title("Delete key?", Alignment::Center)
+                .title(Title::from("Delete key?").alignment(HorizontalAlignment::Center))
                 .value(1),
         }
     }
 }
 
-impl Component<Msg, NoUserEvent> for DelSshKeyPopup {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for DelSshKeyPopup {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         match ev {
             Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
                 Some(Msg::Ssh(SshMsg::CloseDelSshKeyPopup))
@@ -71,7 +77,7 @@ impl Component<Msg, NoUserEvent> for DelSshKeyPopup {
             }) => {
                 if matches!(
                     self.perform(Cmd::Submit),
-                    CmdResult::Submit(State::One(StateValue::Usize(0)))
+                    CmdResult::Submit(State::Single(StateValue::Usize(0)))
                 ) {
                     Some(Msg::Ssh(SshMsg::DeleteSshKey))
                 } else {
@@ -83,7 +89,7 @@ impl Component<Msg, NoUserEvent> for DelSshKeyPopup {
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct SshKeys {
     component: List,
 }
@@ -98,18 +104,22 @@ impl SshKeys {
                         .modifiers(BorderType::Rounded),
                 )
                 .foreground(Color::LightGreen)
-                .highlighted_color(Color::LightGreen)
+                .highlight_style(Style::default().fg(Color::LightGreen))
                 .rewind(true)
-                .rows(keys.iter().map(|x| vec![TextSpan::from(x)]).collect())
+                .rows(
+                    keys.iter()
+                        .map(|x| vec![SpanStatic::from(x.clone())])
+                        .collect::<Vec<Vec<SpanStatic>>>(),
+                )
                 .step(4)
                 .scroll(true)
-                .title("SSH Keys", Alignment::Left),
+                .title(Title::from("SSH Keys").alignment(HorizontalAlignment::Left)),
         }
     }
 }
 
-impl Component<Msg, NoUserEvent> for SshKeys {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for SshKeys {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         match ev {
             Event::Keyboard(KeyEvent {
                 code: Key::Down, ..
@@ -147,7 +157,9 @@ impl Component<Msg, NoUserEvent> for SshKeys {
             Event::Keyboard(KeyEvent {
                 code: Key::Enter, ..
             }) => match self.state() {
-                State::One(StateValue::Usize(choice)) => Some(Msg::Ssh(SshMsg::EditSshKey(choice))),
+                State::Single(StateValue::Usize(choice)) => {
+                    Some(Msg::Ssh(SshMsg::EditSshKey(choice)))
+                }
                 _ => Some(Msg::None),
             },
             Event::Keyboard(KeyEvent {
@@ -163,7 +175,7 @@ impl Component<Msg, NoUserEvent> for SshKeys {
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct SshHost {
     component: Input,
 }
@@ -177,17 +189,17 @@ impl Default for SshHost {
                         .sides(BorderSides::TOP | BorderSides::RIGHT | BorderSides::LEFT),
                 )
                 .input_type(InputType::Text)
-                .placeholder(
+                .placeholder(tuirealm::props::SpanStatic::styled(
                     "192.168.1.2",
                     Style::default().fg(Color::Rgb(128, 128, 128)),
-                )
-                .title("Hostname or address", Alignment::Center),
+                ))
+                .title(Title::from("Hostname or address").alignment(HorizontalAlignment::Center)),
         }
     }
 }
 
-impl Component<Msg, NoUserEvent> for SshHost {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for SshHost {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         match ev {
             Event::Keyboard(KeyEvent {
                 code: Key::Left, ..
@@ -233,7 +245,7 @@ impl Component<Msg, NoUserEvent> for SshHost {
                 code: Key::Char(ch),
                 ..
             }) => {
-                self.perform(Cmd::Type(ch));
+                self.perform(Cmd::Type(*ch));
                 Some(Msg::None)
             }
             Event::Keyboard(KeyEvent {
@@ -250,7 +262,7 @@ impl Component<Msg, NoUserEvent> for SshHost {
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct SshUsername {
     component: Input,
 }
@@ -264,14 +276,17 @@ impl Default for SshUsername {
                         .sides(BorderSides::BOTTOM | BorderSides::RIGHT | BorderSides::LEFT),
                 )
                 .input_type(InputType::Text)
-                .placeholder("root", Style::default().fg(Color::Rgb(128, 128, 128)))
-                .title("Username", Alignment::Center),
+                .placeholder(tuirealm::props::SpanStatic::styled(
+                    "root",
+                    Style::default().fg(Color::Rgb(128, 128, 128)),
+                ))
+                .title(Title::from("Username").alignment(HorizontalAlignment::Center)),
         }
     }
 }
 
-impl Component<Msg, NoUserEvent> for SshUsername {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for SshUsername {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         match ev {
             Event::Keyboard(KeyEvent {
                 code: Key::Left, ..
@@ -312,7 +327,7 @@ impl Component<Msg, NoUserEvent> for SshUsername {
                 code: Key::Char(ch),
                 modifiers: KeyModifiers::NONE | KeyModifiers::SHIFT,
             }) => {
-                self.perform(Cmd::Type(ch));
+                self.perform(Cmd::Type(*ch));
                 Some(Msg::None)
             }
             Event::Keyboard(KeyEvent {

@@ -8,8 +8,9 @@ pub mod ssh_keys;
 pub mod theme;
 
 use tuirealm::event::{Key, KeyEvent, KeyModifiers};
+use tuirealm::ratatui::Frame;
 use tuirealm::ratatui::widgets::Clear;
-use tuirealm::{Frame, Sub, SubClause, SubEventClause};
+use tuirealm::subscription::{EventClause, Sub, SubClause};
 
 use super::*;
 use crate::utils::ui::{Popup, Size};
@@ -172,62 +173,62 @@ impl SetupActivity {
             Box::<components::GlobalListener>::default(),
             vec![
                 Sub::new(
-                    SubEventClause::Keyboard(KeyEvent {
+                    EventClause::Keyboard(KeyEvent {
                         code: Key::Esc,
                         modifiers: KeyModifiers::NONE,
                     }),
                     Self::no_popup_mounted_clause(),
                 ),
                 Sub::new(
-                    SubEventClause::Keyboard(KeyEvent {
+                    EventClause::Keyboard(KeyEvent {
                         code: Key::Function(10),
                         modifiers: KeyModifiers::NONE,
                     }),
                     Self::no_popup_mounted_clause(),
                 ),
                 Sub::new(
-                    SubEventClause::Keyboard(KeyEvent {
+                    EventClause::Keyboard(KeyEvent {
                         code: Key::Tab,
                         modifiers: KeyModifiers::NONE,
                     }),
                     Self::no_popup_mounted_clause(),
                 ),
                 Sub::new(
-                    SubEventClause::Keyboard(KeyEvent {
+                    EventClause::Keyboard(KeyEvent {
                         code: Key::Char('h'),
                         modifiers: KeyModifiers::CONTROL,
                     }),
                     Self::no_popup_mounted_clause(),
                 ),
                 Sub::new(
-                    SubEventClause::Keyboard(KeyEvent {
+                    EventClause::Keyboard(KeyEvent {
                         code: Key::Function(1),
                         modifiers: KeyModifiers::NONE,
                     }),
                     Self::no_popup_mounted_clause(),
                 ),
                 Sub::new(
-                    SubEventClause::Keyboard(KeyEvent {
+                    EventClause::Keyboard(KeyEvent {
                         code: Key::Char('r'),
                         modifiers: KeyModifiers::CONTROL,
                     }),
                     Self::no_popup_mounted_clause(),
                 ),
                 Sub::new(
-                    SubEventClause::Keyboard(KeyEvent {
+                    EventClause::Keyboard(KeyEvent {
                         code: Key::Char('s'),
                         modifiers: KeyModifiers::CONTROL,
                     }),
                     Self::no_popup_mounted_clause(),
                 ),
                 Sub::new(
-                    SubEventClause::Keyboard(KeyEvent {
+                    EventClause::Keyboard(KeyEvent {
                         code: Key::Function(4),
                         modifiers: KeyModifiers::NONE,
                     }),
                     Self::no_popup_mounted_clause(),
                 ),
-                Sub::new(SubEventClause::WindowResize, SubClause::Always),
+                Sub::new(EventClause::WindowResize, SubClause::Always),
             ],
         ) {
             error!("Failed to mount component: {err}");

@@ -1,9 +1,9 @@
+use tuirealm::component::{AppComponent, Component};
 use tuirealm::event::NoUserEvent;
-use tuirealm::{Component, MockComponent};
 
 use super::*;
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct InputWebDAVUri {
     component: Input,
     form_tab: FormTab,
@@ -19,11 +19,11 @@ impl InputWebDAVUri {
                         .modifiers(BorderType::Rounded),
                 )
                 .foreground(color)
-                .placeholder(
+                .placeholder(tuirealm::props::SpanStatic::styled(
                     "http://localhost:8080",
                     Style::default().fg(Color::Rgb(128, 128, 128)),
-                )
-                .title("HTTP url", Alignment::Left)
+                ))
+                .title(Title::from("HTTP url").alignment(HorizontalAlignment::Left))
                 .input_type(InputType::Text)
                 .value(host),
             form_tab,
@@ -31,8 +31,8 @@ impl InputWebDAVUri {
     }
 }
 
-impl Component<Msg, NoUserEvent> for InputWebDAVUri {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for InputWebDAVUri {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         let on_key_down = match self.form_tab {
             FormTab::Remote => Msg::Ui(UiMsg::Remote(UiAuthFormMsg::WebDAVUriBlurDown)),
             FormTab::HostBridge => Msg::Ui(UiMsg::HostBridge(UiAuthFormMsg::WebDAVUriBlurDown)),

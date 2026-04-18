@@ -2,18 +2,22 @@
 //!
 //! auth activity bookmarks components
 
-use tui_realm_stdlib::{Input, List, Radio};
+use tui_realm_stdlib::components::{Input, List, Radio};
 use tuirealm::command::{Cmd, CmdResult, Direction, Position};
-use tuirealm::event::{Key, KeyEvent, KeyModifiers};
-use tuirealm::props::{Alignment, BorderSides, BorderType, Borders, Color, InputType, TextSpan};
-use tuirealm::{Component, Event, MockComponent, NoUserEvent, State, StateValue};
+use tuirealm::component::{AppComponent, Component};
+use tuirealm::event::{Event, Key, KeyEvent, KeyModifiers, NoUserEvent};
+use tuirealm::props::{
+    BorderSides, BorderType, Borders, Color, HorizontalAlignment, InputType, SpanStatic, Style,
+    TextModifiers, Title,
+};
+use tuirealm::state::{State, StateValue};
 
 use super::{FormMsg, Msg, UiMsg};
 use crate::ui::activities::auth::FormTab;
 
 // -- bookmark list
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct BookmarksList {
     component: List,
 }
@@ -23,23 +27,23 @@ impl BookmarksList {
         Self {
             component: List::default()
                 .borders(Borders::default().color(color).modifiers(BorderType::Plain))
-                .highlighted_color(color)
+                .highlight_style(Style::default().fg(color))
                 .rewind(true)
                 .scroll(true)
                 .step(4)
-                .title("Bookmarks", Alignment::Left)
+                .title(Title::from("Bookmarks").alignment(HorizontalAlignment::Left))
                 .rows(
                     bookmarks
                         .iter()
-                        .map(|x| vec![TextSpan::from(x.as_str())])
-                        .collect(),
+                        .map(|x| vec![SpanStatic::from(x.clone())])
+                        .collect::<Vec<Vec<SpanStatic>>>(),
                 ),
         }
     }
 }
 
-impl Component<Msg, NoUserEvent> for BookmarksList {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for BookmarksList {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         match ev {
             Event::Keyboard(KeyEvent {
                 code: Key::Down, ..
@@ -77,7 +81,7 @@ impl Component<Msg, NoUserEvent> for BookmarksList {
             Event::Keyboard(KeyEvent {
                 code: Key::Enter, ..
             }) => match self.state() {
-                State::One(StateValue::Usize(choice)) => {
+                State::Single(StateValue::Usize(choice)) => {
                     Some(Msg::Form(FormMsg::LoadBookmark(choice)))
                 }
                 _ => Some(Msg::None),
@@ -98,7 +102,7 @@ impl Component<Msg, NoUserEvent> for BookmarksList {
 
 // -- recents list
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct RecentsList {
     component: List,
 }
@@ -108,23 +112,23 @@ impl RecentsList {
         Self {
             component: List::default()
                 .borders(Borders::default().color(color).modifiers(BorderType::Plain))
-                .highlighted_color(color)
+                .highlight_style(Style::default().fg(color))
                 .rewind(true)
                 .scroll(true)
                 .step(4)
-                .title("Recent connections", Alignment::Left)
+                .title(Title::from("Recent connections").alignment(HorizontalAlignment::Left))
                 .rows(
                     bookmarks
                         .iter()
-                        .map(|x| vec![TextSpan::from(x.as_str())])
-                        .collect(),
+                        .map(|x| vec![SpanStatic::from(x.clone())])
+                        .collect::<Vec<Vec<SpanStatic>>>(),
                 ),
         }
     }
 }
 
-impl Component<Msg, NoUserEvent> for RecentsList {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for RecentsList {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         match ev {
             Event::Keyboard(KeyEvent {
                 code: Key::Down, ..
@@ -162,7 +166,7 @@ impl Component<Msg, NoUserEvent> for RecentsList {
             Event::Keyboard(KeyEvent {
                 code: Key::Enter, ..
             }) => match self.state() {
-                State::One(StateValue::Usize(choice)) => {
+                State::Single(StateValue::Usize(choice)) => {
                     Some(Msg::Form(FormMsg::LoadRecent(choice)))
                 }
                 _ => Some(Msg::None),
@@ -183,7 +187,7 @@ impl Component<Msg, NoUserEvent> for RecentsList {
 
 // -- delete bookmark
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct DeleteBookmarkPopup {
     component: Radio,
 }
@@ -192,6 +196,11 @@ impl DeleteBookmarkPopup {
     pub fn new(color: Color) -> Self {
         Self {
             component: Radio::default()
+                .highlight_style(
+                    Style::default()
+                        .fg(color)
+                        .add_modifier(TextModifiers::REVERSED),
+                )
                 .borders(
                     Borders::default()
                         .color(color)
@@ -200,14 +209,15 @@ impl DeleteBookmarkPopup {
                 .choices(["Yes", "No"])
                 .value(1)
                 .rewind(true)
-                .foreground(color)
-                .title("Delete selected bookmark?", Alignment::Center),
+                .title(
+                    Title::from("Delete selected bookmark?").alignment(HorizontalAlignment::Center),
+                ),
         }
     }
 }
 
-impl Component<Msg, NoUserEvent> for DeleteBookmarkPopup {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for DeleteBookmarkPopup {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         match ev {
             Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
                 Some(Msg::Ui(UiMsg::CloseDeleteBookmark))
@@ -237,7 +247,7 @@ impl Component<Msg, NoUserEvent> for DeleteBookmarkPopup {
             }) => {
                 if matches!(
                     self.perform(Cmd::Submit),
-                    CmdResult::Submit(State::One(StateValue::Usize(0)))
+                    CmdResult::Submit(State::Single(StateValue::Usize(0)))
                 ) {
                     Some(Msg::Form(FormMsg::DeleteBookmark))
                 } else {
@@ -251,7 +261,7 @@ impl Component<Msg, NoUserEvent> for DeleteBookmarkPopup {
 
 // -- delete recent
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct DeleteRecentPopup {
     component: Radio,
 }
@@ -260,6 +270,11 @@ impl DeleteRecentPopup {
     pub fn new(color: Color) -> Self {
         Self {
             component: Radio::default()
+                .highlight_style(
+                    Style::default()
+                        .fg(color)
+                        .add_modifier(TextModifiers::REVERSED),
+                )
                 .borders(
                     Borders::default()
                         .color(color)
@@ -268,14 +283,16 @@ impl DeleteRecentPopup {
                 .choices(["Yes", "No"])
                 .value(1)
                 .rewind(true)
-                .foreground(color)
-                .title("Delete selected recent host?", Alignment::Center),
+                .title(
+                    Title::from("Delete selected recent host?")
+                        .alignment(HorizontalAlignment::Center),
+                ),
         }
     }
 }
 
-impl Component<Msg, NoUserEvent> for DeleteRecentPopup {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for DeleteRecentPopup {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         match ev {
             Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
                 Some(Msg::Ui(UiMsg::CloseDeleteRecent))
@@ -305,7 +322,7 @@ impl Component<Msg, NoUserEvent> for DeleteRecentPopup {
             }) => {
                 if matches!(
                     self.perform(Cmd::Submit),
-                    CmdResult::Submit(State::One(StateValue::Usize(0)))
+                    CmdResult::Submit(State::Single(StateValue::Usize(0)))
                 ) {
                     Some(Msg::Form(FormMsg::DeleteRecent))
                 } else {
@@ -321,7 +338,7 @@ impl Component<Msg, NoUserEvent> for DeleteRecentPopup {
 
 // -- save password
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct BookmarkSavePassword {
     component: Radio,
     form_tab: FormTab,
@@ -331,6 +348,11 @@ impl BookmarkSavePassword {
     pub fn new(form_tab: FormTab, color: Color) -> Self {
         Self {
             component: Radio::default()
+                .highlight_style(
+                    Style::default()
+                        .fg(color)
+                        .add_modifier(TextModifiers::REVERSED),
+                )
                 .borders(
                     Borders::default()
                         .color(Color::Reset)
@@ -340,15 +362,14 @@ impl BookmarkSavePassword {
                 .choices(["Yes", "No"])
                 .value(0)
                 .rewind(true)
-                .foreground(color)
-                .title("Save secrets?", Alignment::Center),
+                .title(Title::from("Save secrets?").alignment(HorizontalAlignment::Center)),
             form_tab,
         }
     }
 }
 
-impl Component<Msg, NoUserEvent> for BookmarkSavePassword {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for BookmarkSavePassword {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         match ev {
             Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
                 Some(Msg::Ui(UiMsg::CloseSaveBookmark))
@@ -378,7 +399,7 @@ impl Component<Msg, NoUserEvent> for BookmarkSavePassword {
 
 // -- new bookmark name
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct BookmarkName {
     component: Input,
     form_tab: FormTab,
@@ -395,15 +416,15 @@ impl BookmarkName {
                         .modifiers(BorderType::Rounded),
                 )
                 .foreground(color)
-                .title("Bookmark name", Alignment::Left)
+                .title(Title::from("Bookmark name").alignment(HorizontalAlignment::Left))
                 .input_type(InputType::Text),
             form_tab,
         }
     }
 }
 
-impl Component<Msg, NoUserEvent> for BookmarkName {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for BookmarkName {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         match ev {
             Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
                 Some(Msg::Ui(UiMsg::CloseSaveBookmark))
@@ -447,7 +468,7 @@ impl Component<Msg, NoUserEvent> for BookmarkName {
                 code: Key::Char(ch),
                 ..
             }) => {
-                self.perform(Cmd::Type(ch));
+                self.perform(Cmd::Type(*ch));
                 Some(Msg::None)
             }
             Event::Keyboard(KeyEvent {

@@ -1,12 +1,15 @@
-use tui_realm_stdlib::Radio;
+use tui_realm_stdlib::components::Radio;
 use tuirealm::command::{Cmd, CmdResult, Direction};
-use tuirealm::event::{Key, KeyEvent, KeyModifiers};
-use tuirealm::props::{Alignment, BorderType, Borders, Color};
-use tuirealm::{Component, Event, MockComponent, NoUserEvent, State, StateValue};
+use tuirealm::component::{AppComponent, Component};
+use tuirealm::event::{Event, Key, KeyEvent, KeyModifiers, NoUserEvent};
+use tuirealm::props::{
+    BorderType, Borders, Color, HorizontalAlignment, Style, TextModifiers, Title,
+};
+use tuirealm::state::{State, StateValue};
 
 use crate::ui::activities::filetransfer::{Msg, PendingActionMsg};
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct ReplacePopup {
     component: Radio,
 }
@@ -19,20 +22,24 @@ impl ReplacePopup {
         };
         Self {
             component: Radio::default()
+                .highlight_style(
+                    Style::default()
+                        .fg(color)
+                        .add_modifier(TextModifiers::REVERSED),
+                )
                 .borders(
                     Borders::default()
                         .color(color)
                         .modifiers(BorderType::Rounded),
                 )
-                .foreground(color)
                 .choices(["Replace", "Skip", "Replace All", "Skip All", "Cancel"])
-                .title(text, Alignment::Center),
+                .title(Title::from(text).alignment(HorizontalAlignment::Center)),
         }
     }
 }
 
-impl Component<Msg, NoUserEvent> for ReplacePopup {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for ReplacePopup {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         match ev {
             Event::Keyboard(KeyEvent {
                 code: Key::Left, ..
@@ -60,19 +67,19 @@ impl Component<Msg, NoUserEvent> for ReplacePopup {
             Event::Keyboard(KeyEvent {
                 code: Key::Enter, ..
             }) => match self.perform(Cmd::Submit) {
-                CmdResult::Submit(State::One(StateValue::Usize(0))) => {
+                CmdResult::Submit(State::Single(StateValue::Usize(0))) => {
                     Some(Msg::PendingAction(PendingActionMsg::ReplaceOverwrite))
                 }
-                CmdResult::Submit(State::One(StateValue::Usize(1))) => {
+                CmdResult::Submit(State::Single(StateValue::Usize(1))) => {
                     Some(Msg::PendingAction(PendingActionMsg::ReplaceSkip))
                 }
-                CmdResult::Submit(State::One(StateValue::Usize(2))) => {
+                CmdResult::Submit(State::Single(StateValue::Usize(2))) => {
                     Some(Msg::PendingAction(PendingActionMsg::ReplaceOverwriteAll))
                 }
-                CmdResult::Submit(State::One(StateValue::Usize(3))) => {
+                CmdResult::Submit(State::Single(StateValue::Usize(3))) => {
                     Some(Msg::PendingAction(PendingActionMsg::ReplaceSkipAll))
                 }
-                CmdResult::Submit(State::One(StateValue::Usize(4))) => {
+                CmdResult::Submit(State::Single(StateValue::Usize(4))) => {
                     Some(Msg::PendingAction(PendingActionMsg::ReplaceCancel))
                 }
                 _ => Some(Msg::None),

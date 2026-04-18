@@ -13,9 +13,10 @@ mod view;
 // Includes
 use std::time::Duration;
 
-use tuirealm::application::PollStrategy;
+use tuirealm::application::{Application, PollStrategy};
+use tuirealm::event::NoUserEvent;
 use tuirealm::listener::EventListenerCfg;
-use tuirealm::{Application, NoUserEvent, Update};
+use tuirealm::terminal::TerminalAdapter;
 
 use super::{Activity, CROSSTERM_MAX_POLL, Context, ExitReason};
 use crate::config::themes::Theme;
@@ -254,9 +255,7 @@ impl AuthActivity {
     pub fn new(ticks: Duration) -> AuthActivity {
         AuthActivity {
             app: Application::init(
-                EventListenerCfg::default()
-                    .crossterm_input_listener(ticks, CROSSTERM_MAX_POLL)
-                    .poll_timeout(ticks),
+                EventListenerCfg::default().crossterm_input_listener(ticks, CROSSTERM_MAX_POLL),
             ),
             context: None,
             bookmarks_list: Vec::new(),
@@ -369,7 +368,10 @@ impl Activity for AuthActivity {
             return;
         }
         // Tick
-        match self.app.tick(PollStrategy::UpTo(3)) {
+        match self
+            .app
+            .tick(PollStrategy::UpTo(3, std::time::Duration::from_millis(10)))
+        {
             Ok(messages) => {
                 for msg in messages.into_iter() {
                     let mut msg = Some(msg);

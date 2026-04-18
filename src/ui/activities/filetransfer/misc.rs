@@ -3,14 +3,17 @@ mod host;
 mod log;
 mod notify;
 
-use tuirealm::{PollStrategy, Update};
+use tuirealm::application::PollStrategy;
 
 use super::FileTransferActivity;
 
 impl FileTransferActivity {
     /// Call `Application::tick()` and process messages in `Update`
     pub(super) fn tick(&mut self) {
-        match self.app.tick(PollStrategy::UpTo(1)) {
+        match self
+            .app
+            .tick(PollStrategy::UpTo(1, std::time::Duration::from_millis(10)))
+        {
             Ok(messages) => {
                 if !messages.is_empty() {
                     self.redraw = true;

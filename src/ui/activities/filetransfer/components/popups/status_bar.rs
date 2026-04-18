@@ -1,12 +1,14 @@
-use tui_realm_stdlib::Span;
-use tuirealm::props::{Color, TextSpan};
-use tuirealm::{Component, Event, MockComponent, NoUserEvent};
+use tui_realm_stdlib::components::Span;
+use tuirealm::component::{AppComponent, Component};
+use tuirealm::event::{Event, NoUserEvent};
+use tuirealm::props::{Color, SpanStatic};
+use tuirealm::ratatui::style::Stylize;
 
 use crate::explorer::FileSorting;
 use crate::ui::activities::filetransfer::Msg;
 use crate::ui::activities::filetransfer::lib::browser::Browser;
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct StatusBarLocal {
     component: Span,
 }
@@ -17,22 +19,22 @@ impl StatusBarLocal {
         let hidden_files = hidden_files_label(browser.host_bridge().hidden_files_visible());
         Self {
             component: Span::default().spans([
-                TextSpan::new("File sorting: ").fg(sorting_color),
-                TextSpan::new(file_sorting).fg(sorting_color).reversed(),
-                TextSpan::new(" Hidden files: ").fg(hidden_color),
-                TextSpan::new(hidden_files).fg(hidden_color).reversed(),
+                SpanStatic::raw("File sorting: ").fg(sorting_color),
+                SpanStatic::raw(file_sorting).fg(sorting_color).reversed(),
+                SpanStatic::raw(" Hidden files: ").fg(hidden_color),
+                SpanStatic::raw(hidden_files).fg(hidden_color).reversed(),
             ]),
         }
     }
 }
 
-impl Component<Msg, NoUserEvent> for StatusBarLocal {
-    fn on(&mut self, _ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for StatusBarLocal {
+    fn on(&mut self, _ev: &Event<NoUserEvent>) -> Option<Msg> {
         None
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct StatusBarRemote {
     component: Span,
 }
@@ -52,19 +54,19 @@ impl StatusBarRemote {
         };
         Self {
             component: Span::default().spans([
-                TextSpan::new("File sorting: ").fg(sorting_color),
-                TextSpan::new(file_sorting).fg(sorting_color).reversed(),
-                TextSpan::new(" Hidden files: ").fg(hidden_color),
-                TextSpan::new(hidden_files).fg(hidden_color).reversed(),
-                TextSpan::new(" Sync browsing: ").fg(sync_color),
-                TextSpan::new(sync_browsing).fg(sync_color).reversed(),
+                SpanStatic::raw("File sorting: ").fg(sorting_color),
+                SpanStatic::raw(file_sorting).fg(sorting_color).reversed(),
+                SpanStatic::raw(" Hidden files: ").fg(hidden_color),
+                SpanStatic::raw(hidden_files).fg(hidden_color).reversed(),
+                SpanStatic::raw(" Sync browsing: ").fg(sync_color),
+                SpanStatic::raw(sync_browsing).fg(sync_color).reversed(),
             ]),
         }
     }
 }
 
-impl Component<Msg, NoUserEvent> for StatusBarRemote {
-    fn on(&mut self, _ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for StatusBarRemote {
+    fn on(&mut self, _ev: &Event<NoUserEvent>) -> Option<Msg> {
         None
     }
 }

@@ -2,15 +2,17 @@
 //!
 //! auth activity texts
 
-use tui_realm_stdlib::{Label, Span};
-use tuirealm::props::{Color, TextModifiers, TextSpan};
-use tuirealm::{Component, Event, MockComponent, NoUserEvent};
+use tui_realm_stdlib::components::{Label, Span};
+use tuirealm::component::{AppComponent, Component};
+use tuirealm::event::{Event, NoUserEvent};
+use tuirealm::props::{Color, SpanStatic, TextModifiers};
+use tuirealm::ratatui::style::Stylize;
 
 use super::Msg;
 
 // -- Title
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct Title {
     component: Label,
 }
@@ -25,15 +27,15 @@ impl Default for Title {
     }
 }
 
-impl Component<Msg, NoUserEvent> for Title {
-    fn on(&mut self, _ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for Title {
+    fn on(&mut self, _ev: &Event<NoUserEvent>) -> Option<Msg> {
         None
     }
 }
 
 // -- subtitle
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct Subtitle {
     component: Label,
 }
@@ -48,15 +50,15 @@ impl Default for Subtitle {
     }
 }
 
-impl Component<Msg, NoUserEvent> for Subtitle {
-    fn on(&mut self, _ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for Subtitle {
+    fn on(&mut self, _ev: &Event<NoUserEvent>) -> Option<Msg> {
         None
     }
 }
 
 // -- new version disclaimer
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct NewVersionDisclaimer {
     component: Span,
 }
@@ -65,9 +67,9 @@ impl NewVersionDisclaimer {
     pub fn new(new_version: &str, color: Color) -> Self {
         Self {
             component: Span::default().foreground(color).spans([
-                TextSpan::from("termscp "),
-                TextSpan::new(new_version).underlined().bold(),
-                TextSpan::from(
+                SpanStatic::from("termscp "),
+                SpanStatic::raw(new_version.to_string()).underlined().bold(),
+                SpanStatic::from(
                     " is NOW available! Install update and view release notes with <CTRL+R>",
                 ),
             ]),
@@ -75,15 +77,15 @@ impl NewVersionDisclaimer {
     }
 }
 
-impl Component<Msg, NoUserEvent> for NewVersionDisclaimer {
-    fn on(&mut self, _ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for NewVersionDisclaimer {
+    fn on(&mut self, _ev: &Event<NoUserEvent>) -> Option<Msg> {
         None
     }
 }
 
 // -- HelpFooter
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct HelpFooter {
     component: Span,
 }
@@ -92,27 +94,27 @@ impl HelpFooter {
     pub fn new(key_color: Color) -> Self {
         Self {
             component: Span::default().spans([
-                TextSpan::from("<F1|CTRL+H>").bold().fg(key_color),
-                TextSpan::from(" Help "),
-                TextSpan::from("<CTRL+C>").bold().fg(key_color),
-                TextSpan::from(" Enter setup "),
-                TextSpan::from("<UP/DOWN>").bold().fg(key_color),
-                TextSpan::from(" Change field "),
-                TextSpan::from("<TAB>").bold().fg(key_color),
-                TextSpan::from(" Switch tab "),
-                TextSpan::from("<BACKTAB>").bold().fg(key_color),
-                TextSpan::from(" Switch form "),
-                TextSpan::from("<ENTER>").bold().fg(key_color),
-                TextSpan::from(" Submit form "),
-                TextSpan::from("<F10|ESC>").bold().fg(key_color),
-                TextSpan::from(" Quit "),
+                SpanStatic::from("<F1|CTRL+H>").bold().fg(key_color),
+                SpanStatic::from(" Help "),
+                SpanStatic::from("<CTRL+C>").bold().fg(key_color),
+                SpanStatic::from(" Enter setup "),
+                SpanStatic::from("<UP/DOWN>").bold().fg(key_color),
+                SpanStatic::from(" Change field "),
+                SpanStatic::from("<TAB>").bold().fg(key_color),
+                SpanStatic::from(" Switch tab "),
+                SpanStatic::from("<BACKTAB>").bold().fg(key_color),
+                SpanStatic::from(" Switch form "),
+                SpanStatic::from("<ENTER>").bold().fg(key_color),
+                SpanStatic::from(" Submit form "),
+                SpanStatic::from("<F10|ESC>").bold().fg(key_color),
+                SpanStatic::from(" Quit "),
             ]),
         }
     }
 }
 
-impl Component<Msg, NoUserEvent> for HelpFooter {
-    fn on(&mut self, _ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for HelpFooter {
+    fn on(&mut self, _ev: &Event<NoUserEvent>) -> Option<Msg> {
         None
     }
 }

@@ -1,6 +1,8 @@
 use tuirealm::props::{
-    Alignment, AttrValue, Attribute, PropPayload, PropValue, TextModifiers, TextSpan,
+    AttrValue, Attribute, HorizontalAlignment, LineStatic, PropPayload, PropValue, SpanStatic,
+    TextModifiers, Title,
 };
+use tuirealm::terminal::TerminalAdapter;
 
 use super::super::browser::FileExplorerTab;
 use super::super::{FileTransferActivity, Id, ui_result};
@@ -33,17 +35,18 @@ impl FileTransferActivity {
                 hostname.len() + 3
             ) // 3 because of '/…/'
         );
-        let files: Vec<Vec<TextSpan>> = self
+        let files: Vec<Vec<LineStatic>> = self
             .host_bridge()
             .iter_files()
             .map(|x| {
-                let mut span = TextSpan::from(self.host_bridge().fmt_file(x));
+                let mut span = SpanStatic::from(self.host_bridge().fmt_file(x));
                 if self.host_bridge().enqueued().contains_key(x.path()) {
-                    span.modifiers |=
-                        TextModifiers::REVERSED | TextModifiers::UNDERLINED | TextModifiers::ITALIC;
+                    span.style = span.style.add_modifier(
+                        TextModifiers::REVERSED | TextModifiers::UNDERLINED | TextModifiers::ITALIC,
+                    );
                 }
 
-                vec![span]
+                vec![LineStatic::from(span)]
             })
             .collect();
         // Update content and title
@@ -55,7 +58,7 @@ impl FileTransferActivity {
         ui_result(self.app.attr(
             &Id::ExplorerHostBridge,
             Attribute::Title,
-            AttrValue::Title((hostname, Alignment::Left)),
+            AttrValue::Title(Title::from(hostname).alignment(HorizontalAlignment::Left)),
         ));
     }
 
@@ -147,17 +150,18 @@ impl FileTransferActivity {
                 hostname.len() + 3 // 3 because of '/…/'
             )
         );
-        let files: Vec<Vec<TextSpan>> = self
+        let files: Vec<Vec<LineStatic>> = self
             .remote()
             .iter_files()
             .map(|x| {
-                let mut span = TextSpan::from(self.remote().fmt_file(x));
+                let mut span = SpanStatic::from(self.remote().fmt_file(x));
                 if self.remote().enqueued().contains_key(x.path()) {
-                    span.modifiers |=
-                        TextModifiers::REVERSED | TextModifiers::UNDERLINED | TextModifiers::ITALIC;
+                    span.style = span.style.add_modifier(
+                        TextModifiers::REVERSED | TextModifiers::UNDERLINED | TextModifiers::ITALIC,
+                    );
                 }
 
-                vec![span]
+                vec![LineStatic::from(span)]
             })
             .collect();
         // Update content and title
@@ -169,7 +173,7 @@ impl FileTransferActivity {
         ui_result(self.app.attr(
             &Id::ExplorerRemote,
             Attribute::Title,
-            AttrValue::Title((hostname, Alignment::Left)),
+            AttrValue::Title(Title::from(hostname).alignment(HorizontalAlignment::Left)),
         ));
     }
 
@@ -185,7 +189,7 @@ impl FileTransferActivity {
         ui_result(self.app.attr(
             &Id::TransferProgressBar,
             Attribute::Value,
-            AttrValue::Payload(PropPayload::One(PropValue::F64(
+            AttrValue::Payload(PropPayload::Single(PropValue::F64(
                 self.transfer.progress.calc_progress(),
             ))),
         ));
@@ -201,7 +205,7 @@ impl FileTransferActivity {
         ui_result(self.app.attr(
             &Id::TransferProgressBar,
             Attribute::Title,
-            AttrValue::Title((title, Alignment::Center)),
+            AttrValue::Title(Title::from(title).alignment(HorizontalAlignment::Center)),
         ));
     }
 
@@ -231,17 +235,18 @@ impl FileTransferActivity {
     }
 
     pub(in crate::ui::activities::filetransfer) fn update_find_list(&mut self) {
-        let files: Vec<Vec<TextSpan>> = self
+        let files: Vec<Vec<LineStatic>> = self
             .found()
             .unwrap()
             .iter_files()
             .map(|x| {
-                let mut span = TextSpan::from(self.found().unwrap().fmt_file(x));
+                let mut span = SpanStatic::from(self.found().unwrap().fmt_file(x));
                 if self.found().unwrap().enqueued().contains_key(x.path()) {
-                    span.modifiers |=
-                        TextModifiers::REVERSED | TextModifiers::UNDERLINED | TextModifiers::ITALIC;
+                    span.style = span.style.add_modifier(
+                        TextModifiers::REVERSED | TextModifiers::UNDERLINED | TextModifiers::ITALIC,
+                    );
                 }
-                vec![span]
+                vec![LineStatic::from(span)]
             })
             .collect();
         ui_result(self.app.attr(

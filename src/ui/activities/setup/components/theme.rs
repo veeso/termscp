@@ -2,20 +2,22 @@
 //!
 //! theme tab components
 
-use tui_realm_stdlib::{Input, Label};
+use tui_realm_stdlib::components::{Input, Label};
 use tuirealm::command::{Cmd, CmdResult, Direction, Position};
-use tuirealm::event::{Key, KeyEvent, KeyModifiers};
-use tuirealm::props::{Alignment, BorderType, Borders, Color, InputType, Style, TextModifiers};
-use tuirealm::{
-    AttrValue, Attribute, Component, Event, MockComponent, NoUserEvent, State, StateValue,
+use tuirealm::component::{AppComponent, Component};
+use tuirealm::event::{Event, Key, KeyEvent, KeyModifiers, NoUserEvent};
+use tuirealm::props::{
+    AttrValue, Attribute, BorderType, Borders, Color, HorizontalAlignment, InputType, Style,
+    TextModifiers, Title,
 };
+use tuirealm::state::{State, StateValue};
 
 use super::{Msg, ThemeMsg};
 use crate::ui::activities::setup::IdTheme;
 
 // -- components
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct AuthTitle {
     component: Label,
 }
@@ -30,13 +32,13 @@ impl Default for AuthTitle {
     }
 }
 
-impl Component<Msg, NoUserEvent> for AuthTitle {
-    fn on(&mut self, _ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for AuthTitle {
+    fn on(&mut self, _ev: &Event<NoUserEvent>) -> Option<Msg> {
         None
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct MiscTitle {
     component: Label,
 }
@@ -51,13 +53,13 @@ impl Default for MiscTitle {
     }
 }
 
-impl Component<Msg, NoUserEvent> for MiscTitle {
-    fn on(&mut self, _ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for MiscTitle {
+    fn on(&mut self, _ev: &Event<NoUserEvent>) -> Option<Msg> {
         None
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct TransferTitle {
     component: Label,
 }
@@ -72,13 +74,13 @@ impl Default for TransferTitle {
     }
 }
 
-impl Component<Msg, NoUserEvent> for TransferTitle {
-    fn on(&mut self, _ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for TransferTitle {
+    fn on(&mut self, _ev: &Event<NoUserEvent>) -> Option<Msg> {
         None
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct TransferTitle2 {
     component: Label,
 }
@@ -93,13 +95,13 @@ impl Default for TransferTitle2 {
     }
 }
 
-impl Component<Msg, NoUserEvent> for TransferTitle2 {
-    fn on(&mut self, _ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for TransferTitle2 {
+    fn on(&mut self, _ev: &Event<NoUserEvent>) -> Option<Msg> {
         None
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct AuthAddress {
     component: InputColor,
 }
@@ -118,13 +120,13 @@ impl AuthAddress {
     }
 }
 
-impl Component<Msg, NoUserEvent> for AuthAddress {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for AuthAddress {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         self.component.on(ev)
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct AuthBookmarks {
     component: InputColor,
 }
@@ -143,13 +145,13 @@ impl AuthBookmarks {
     }
 }
 
-impl Component<Msg, NoUserEvent> for AuthBookmarks {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for AuthBookmarks {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         self.component.on(ev)
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct AuthPassword {
     component: InputColor,
 }
@@ -168,13 +170,13 @@ impl AuthPassword {
     }
 }
 
-impl Component<Msg, NoUserEvent> for AuthPassword {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for AuthPassword {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         self.component.on(ev)
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct AuthPort {
     component: InputColor,
 }
@@ -193,13 +195,13 @@ impl AuthPort {
     }
 }
 
-impl Component<Msg, NoUserEvent> for AuthPort {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for AuthPort {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         self.component.on(ev)
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct AuthProtocol {
     component: InputColor,
 }
@@ -218,13 +220,13 @@ impl AuthProtocol {
     }
 }
 
-impl Component<Msg, NoUserEvent> for AuthProtocol {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for AuthProtocol {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         self.component.on(ev)
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct AuthRecentHosts {
     component: InputColor,
 }
@@ -243,12 +245,12 @@ impl AuthRecentHosts {
     }
 }
 
-impl Component<Msg, NoUserEvent> for AuthRecentHosts {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for AuthRecentHosts {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         self.component.on(ev)
     }
 }
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct AuthUsername {
     component: InputColor,
 }
@@ -267,13 +269,13 @@ impl AuthUsername {
     }
 }
 
-impl Component<Msg, NoUserEvent> for AuthUsername {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for AuthUsername {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         self.component.on(ev)
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct ExplorerLocalBg {
     component: InputColor,
 }
@@ -292,13 +294,13 @@ impl ExplorerLocalBg {
     }
 }
 
-impl Component<Msg, NoUserEvent> for ExplorerLocalBg {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for ExplorerLocalBg {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         self.component.on(ev)
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct ExplorerLocalFg {
     component: InputColor,
 }
@@ -317,13 +319,13 @@ impl ExplorerLocalFg {
     }
 }
 
-impl Component<Msg, NoUserEvent> for ExplorerLocalFg {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for ExplorerLocalFg {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         self.component.on(ev)
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct ExplorerLocalHg {
     component: InputColor,
 }
@@ -342,13 +344,13 @@ impl ExplorerLocalHg {
     }
 }
 
-impl Component<Msg, NoUserEvent> for ExplorerLocalHg {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for ExplorerLocalHg {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         self.component.on(ev)
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct ExplorerRemoteBg {
     component: InputColor,
 }
@@ -367,13 +369,13 @@ impl ExplorerRemoteBg {
     }
 }
 
-impl Component<Msg, NoUserEvent> for ExplorerRemoteBg {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for ExplorerRemoteBg {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         self.component.on(ev)
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct ExplorerRemoteFg {
     component: InputColor,
 }
@@ -392,13 +394,13 @@ impl ExplorerRemoteFg {
     }
 }
 
-impl Component<Msg, NoUserEvent> for ExplorerRemoteFg {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for ExplorerRemoteFg {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         self.component.on(ev)
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct ExplorerRemoteHg {
     component: InputColor,
 }
@@ -417,13 +419,13 @@ impl ExplorerRemoteHg {
     }
 }
 
-impl Component<Msg, NoUserEvent> for ExplorerRemoteHg {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for ExplorerRemoteHg {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         self.component.on(ev)
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct LogBg {
     component: InputColor,
 }
@@ -442,13 +444,13 @@ impl LogBg {
     }
 }
 
-impl Component<Msg, NoUserEvent> for LogBg {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for LogBg {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         self.component.on(ev)
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct LogWindow {
     component: InputColor,
 }
@@ -467,13 +469,13 @@ impl LogWindow {
     }
 }
 
-impl Component<Msg, NoUserEvent> for LogWindow {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for LogWindow {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         self.component.on(ev)
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct MiscError {
     component: InputColor,
 }
@@ -492,13 +494,13 @@ impl MiscError {
     }
 }
 
-impl Component<Msg, NoUserEvent> for MiscError {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for MiscError {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         self.component.on(ev)
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct MiscInfo {
     component: InputColor,
 }
@@ -517,13 +519,13 @@ impl MiscInfo {
     }
 }
 
-impl Component<Msg, NoUserEvent> for MiscInfo {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for MiscInfo {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         self.component.on(ev)
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct MiscInput {
     component: InputColor,
 }
@@ -542,13 +544,13 @@ impl MiscInput {
     }
 }
 
-impl Component<Msg, NoUserEvent> for MiscInput {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for MiscInput {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         self.component.on(ev)
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct MiscKeys {
     component: InputColor,
 }
@@ -567,13 +569,13 @@ impl MiscKeys {
     }
 }
 
-impl Component<Msg, NoUserEvent> for MiscKeys {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for MiscKeys {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         self.component.on(ev)
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct MiscQuit {
     component: InputColor,
 }
@@ -592,13 +594,13 @@ impl MiscQuit {
     }
 }
 
-impl Component<Msg, NoUserEvent> for MiscQuit {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for MiscQuit {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         self.component.on(ev)
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct MiscSave {
     component: InputColor,
 }
@@ -617,13 +619,13 @@ impl MiscSave {
     }
 }
 
-impl Component<Msg, NoUserEvent> for MiscSave {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for MiscSave {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         self.component.on(ev)
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct MiscWarn {
     component: InputColor,
 }
@@ -642,13 +644,13 @@ impl MiscWarn {
     }
 }
 
-impl Component<Msg, NoUserEvent> for MiscWarn {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for MiscWarn {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         self.component.on(ev)
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct ProgBar {
     component: InputColor,
 }
@@ -667,13 +669,13 @@ impl ProgBar {
     }
 }
 
-impl Component<Msg, NoUserEvent> for ProgBar {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for ProgBar {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         self.component.on(ev)
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct StatusHidden {
     component: InputColor,
 }
@@ -692,13 +694,13 @@ impl StatusHidden {
     }
 }
 
-impl Component<Msg, NoUserEvent> for StatusHidden {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for StatusHidden {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         self.component.on(ev)
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct StatusSorting {
     component: InputColor,
 }
@@ -717,13 +719,13 @@ impl StatusSorting {
     }
 }
 
-impl Component<Msg, NoUserEvent> for StatusSorting {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for StatusSorting {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         self.component.on(ev)
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct StatusSync {
     component: InputColor,
 }
@@ -742,15 +744,15 @@ impl StatusSync {
     }
 }
 
-impl Component<Msg, NoUserEvent> for StatusSync {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for StatusSync {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         self.component.on(ev)
     }
 }
 
 // -- input color
 
-#[derive(MockComponent)]
+#[derive(Component)]
 struct InputColor {
     component: Input,
     id: IdTheme,
@@ -770,8 +772,11 @@ impl InputColor {
                 )
                 .foreground(color)
                 .input_type(InputType::Color)
-                .placeholder("#aa33ee", Style::default().fg(Color::Rgb(128, 128, 128)))
-                .title(name, Alignment::Left)
+                .placeholder(tuirealm::props::SpanStatic::styled(
+                    "#aa33ee",
+                    Style::default().fg(Color::Rgb(128, 128, 128)),
+                ))
+                .title(Title::from(name.to_string()).alignment(HorizontalAlignment::Left))
                 .value(value),
             id,
             on_key_down,
@@ -780,7 +785,7 @@ impl InputColor {
     }
 
     fn update_color(&mut self, result: CmdResult) -> Option<Msg> {
-        if let CmdResult::Changed(State::One(StateValue::String(color))) = result {
+        if let CmdResult::Changed(State::Single(StateValue::String(color))) = result {
             let color = tuirealm::utils::parser::parse_color(&color).unwrap();
             self.attr(Attribute::Foreground, AttrValue::Color(color));
             self.attr(
@@ -807,8 +812,8 @@ impl InputColor {
     }
 }
 
-impl Component<Msg, NoUserEvent> for InputColor {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for InputColor {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         match ev {
             Event::Keyboard(KeyEvent {
                 code: Key::Left, ..
@@ -854,7 +859,7 @@ impl Component<Msg, NoUserEvent> for InputColor {
                 code: Key::Char(ch),
                 ..
             }) => {
-                let result = self.perform(Cmd::Type(ch));
+                let result = self.perform(Cmd::Type(*ch));
                 self.update_color(result)
             }
             Event::Keyboard(KeyEvent {
