@@ -1,47 +1,218 @@
 # Changelog
 
-- [Changelog](#changelog)
-  - [0.19.1](#0191)
-  - [0.19.0](#0190)
-  - [0.18.0](#0180)
-  - [0.17.0](#0170)
-  - [0.16.1](#0161)
-  - [0.16.0](#0160)
-  - [0.15.0](#0150)
-  - [0.14.0](#0140)
-  - [0.13.0](#0130)
-  - [0.12.3](#0123)
-  - [0.12.2](#0122)
-  - [0.12.1](#0121)
-  - [0.12.0](#0120)
-  - [0.11.3](#0113)
-  - [0.11.2](#0112)
-  - [0.11.1](#0111)
-  - [0.11.0](#0110)
-  - [0.10.0](#0100)
-  - [0.9.0](#090)
-  - [0.8.2](#082)
-  - [0.8.1](#081)
-  - [0.8.0](#080)
-  - [0.7.0](#070)
-  - [0.6.1](#061)
-  - [0.6.0](#060)
-  - [0.5.1](#051)
-  - [0.5.0](#050)
-  - [0.4.2](#042)
-  - [0.4.1](#041)
-  - [0.4.0](#040)
-  - [0.3.3](#033)
-  - [0.3.2](#032)
-  - [0.3.1](#031)
-  - [0.3.0](#030)
-  - [0.2.0](#020)
-  - [0.1.3](#013)
-  - [0.1.2](#012)
-  - [0.1.1](#011)
-  - [0.1.0](#010)
-
 ---
+
+## 1.0.0
+
+Released on 2026-04-18
+
+### Added
+
+- rework TransferProgress to track bytes with lazy estimation
+- replace dual progress bar components with single TransferProgressBar
+- simplify progress bar layout to single component
+- update progress bar display for new unified data model
+- update transfer loop to use unified TransferProgress
+- consolidate theme progress bar fields into single transfer_progress_bar
+
+### CI
+
+- Codeberg mirroring
+- run test workflows once
+- check fmt with nightly toolchain
+- add linux and windows aarch64 build targets
+
+### Changed
+
+- FileTransferActivity pane-agnostic dispatch (#386)
+  > Comprehensive design for incremental refactoring of the 13k-line
+  > FileTransferActivity god-struct using a unified Pane abstraction.
+  > Detailed step-by-step plan covering 6 phases: split monoliths,
+  > error handling, Pane struct, action dedup, session split, view reorg.
+  > Extract 26 popup components from the monolithic 1,868-line popups.rs
+  > into 20 individual files under popups/. Each file contains one or two
+  > related components with their own imports. The popups.rs module file
+  > now contains only module declarations and re-exports.
+  > Replace 8 panic!() calls with error!() logging and early returns/fallthrough.
+  > These panics documented invariants (e.g. "this tab can't do X") but would crash
+  > the app if somehow triggered. Error logging is safer and more resilient.
+  > Replace raw FileExplorer fields in Browser with Pane structs that bundle
+  > the explorer and connected state. Move host_bridge_connected and
+  > remote_connected from FileTransferActivity into the panes. Add navigation
+  > API (fs_pane, opposite_pane, is_find_tab) for future unification tasks.
+  > Rename private get_selected_file to get_selected_file_by_id and add three
+  > new unified methods (get_selected_entries, get_selected_file, is_selected_one)
+  > that dispatch based on self.browser.tab(). Old per-tab methods are kept for
+  > now until their callers are migrated in subsequent tasks.
+  > Collapse _local_/_remote_ action method pairs (mkdir, delete, symlink,
+  > chmod, rename, copy) into unified methods that branch internally on
+  > is_local_tab(). This halves the number of action methods and simplifies
+  > the update.rs dispatch logic. Also unifies ShowFileInfoPopup and
+  > ShowChmodPopup dispatching to use get_selected_entries().
+  > Move `host_bridge` and `client` filesystem fields from FileTransferActivity
+  > into the Pane struct, enabling tab-agnostic dispatch via `fs_pane()`/
+  > `fs_pane_mut()`. This eliminates most `is_local_tab()` branching across
+  > 15+ action files.
+  > Key changes:
+  > - Add `fs: Box<dyn HostBridge>` to Pane, remove from FileTransferActivity
+  > - Replace per-side method pairs with unified pane-dispatched methods
+  > - Unify navigation (changedir, reload, scan, file_exists, has_file_changed)
+  > - Replace 147-line popup if/else chain with data-driven priority table
+  > - Replace assert!/panic!/unreachable! with proper error handling
+  > - Fix typo "filetransfer_activiy" across ~29 files
+  > - Add unit tests for Pane
+  >
+  > Net result: -473 lines, single code path for most file operations.
+- replace lazy_static with std::sync::LazyLock
+- migrate from mod.rs to named module files
+- split parser internals into focused modules
+- split auth form components by protocol
+- split auth update handlers by context
+- split auth view helpers by responsibility
+
+### Documentation
+
+- date
+- add core module and API documentation
+- document core host and ssh modules
+- document parser and file transfer params
+- complete remaining core module docs
+- document ssh key storage API
+
+### Fixed
+
+- replace panics reachable from user input with proper error handling
+- replace assert! calls in UI activities with graceful error handling
+- correct typos in BadSytax and theme_provider log messages
+- replace magic-crypt with aes-gcm for bookmark encryption
+  > magic-crypt has known vulnerabilities. Replace it with aes-gcm for new
+  > encryption (authenticated, with random nonces) while keeping a legacy
+  > AES-128-CBC decryption path to transparently handle existing bookmarks.
+- replace recursive byte-counting with entry-based transfer progress (#395)
+  > * fix: replace recursive byte-counting with entry-based transfer progress
+  >
+  > Replace the expensive recursive `get_total_transfer_size` pre-calculation
+  > with a lightweight entry-based counter (`TransferProgress`) for the
+  > overall progress bar. This avoids deep `list_dir` traversals before
+  > transfers begin, which could cause FTP idle-timeout disconnections on
+  > large directory trees.
+  >
+  > The per-file byte-level progress bar (`ProgressStates`) remains
+  > unchanged. Bytes are still tracked via `TransferStates::add_bytes` for
+  > notification threshold logic.
+- return after empty terminal prompt
+- resolve `.` and `..` in terminal `cd` and prevent panic in path elide
+  > `absolutize` now lexically normalizes paths so `cd ..` navigates to the
+  > parent directory instead of appending `..` literally. Also guard against
+  > `file_name()` returning `None` in `fmt_path_elide_ex`, which caused a
+  > panic on paths containing unresolved `..` components.
+- pass full command string to exec, not just the first word
+  > The `Exec` arm of `Command::from_str` only captured the first
+  > whitespace-delimited token, silently dropping all arguments.
+  > Now passes the entire input string so e.g. `ls -la /tmp` works.
+- sync browsing when entering a directory from filtered/fuzzy view
+- stabilize core error handling
+  > Remove production panic and unwrap paths from core modules.
+  >
+  > Propagate bookmark encryption failures, harden file watcher and temp mapped file handling, and clean up dead code in shared utilities.
+- normalize localhost relative path checks
+- use time-based redraw interval instead of progress-delta threshold
+  > The old 1% progress threshold caused the UI to appear frozen on large
+  > files (e.g. 1GB) because many read/write iterations passed between
+  > redraws. Switching to a 100ms time-based interval ensures consistent
+  > UI responsiveness regardless of file size.
+- render progress bar immediately after mounting
+  > Call self.view() right after mount_progress_bar() at all 6 call sites
+  > so the bar is visible on screen before the transfer loop begins.
+- filter self-references and dot entries from remote directory listings
+  > Some non-compliant FTP servers (e.g. LiteSpeed) include a self-reference
+  > to the listed directory in the LIST response, causing the current folder
+  > to appear as a duplicate entry in the explorer.
+
+### Miscellaneous
+- Use apt to install termscp on debian base to prevent broken deps
+- Copilot is so dumb
+- Install with apt if installed
+- WTF CTRL SAVE DOESNT FUCKING WORK
+- funding
+- add centralized lint configuration to Cargo.toml
+- 1.0.0 version into manifests
+- format toml
+- add fmt+clippy convention to CLAUDE.md and apply nightly fmt
+- enable safe clippy pedantic lints
+
+### Performance
+
+- use sort_by_cached_key to avoid repeated lowercase allocations in file sorting
+
+### Testing
+
+- add parser and bookmark regression coverage
+- extend config and explorer regression coverage
+- extend system regression coverage
+
+### Build
+
+- removed `hostname`, use `whoami` instead
+  > whoami provides `hostname` function, so we don't need the hostname dependency, since whoami is also being used for getting the username
+- replaced libssh with russh for remotefs-ssh
+- replace `version-compare` crate with `semver`
+- remotefs-ssh 0.8.1
+- remotefs-ssh 0.8.2
+  > this version removes any usage of sh commands from the sftp backend and only uses pure protocol functions
+- migrate to tui-realm 4.0
+  > Upgrade tuirealm (3.x -> 4.0.0), tui-realm-stdlib (3 -> 4), tui-term
+  > (0.2 -> 0.3). Apply all breaking changes from the 4.0 migration guide
+  > across the termscp UI.
+  >
+  > Key changes:
+  >
+  > - Root-level re-exports removed; imports moved to module-qualified
+  >   paths (`tuirealm::application`, `::component`, `::event`, `::props`,
+  >   `::state`, `::subscription`, `::listener`, `::ratatui`). Same for
+  >   stdlib component types (`tui_realm_stdlib::components::*`).
+  > - `MockComponent` trait renamed to `Component`; old `Component` trait
+  >   renamed to `AppComponent`. `#[derive(MockComponent)]` is now
+  >   `#[derive(Component)]`. `Component::on` now takes `&Event<_>`.
+  > - `TextSpan` replaced with `SpanStatic`/`LineStatic`/`TextStatic`
+  >   (ratatui-based); tuple `(String, Alignment)` titles replaced with
+  >   the new `Title` builder; `Alignment` split into
+  >   `HorizontalAlignment`/`VerticalAlignment`; stdlib components use
+  >   `.alignment_horizontal` instead of `.alignment`.
+  > - `State::One`/`PropPayload::One` -> `Single`. `CmdResult::None`
+  >   -> `NoChange`. `Props::get_or` removed; `Props::get` now returns a
+  >   borrowed `Option<&AttrValue>` (call sites switched to
+  >   `.and_then(AttrValue::as_*)`). `Component::query` returns
+  >   `Option<QueryResult<'a>>`.
+  > - `Attribute::HighlightedColor` -> `HighlightStyle` (a full `Style`).
+  >   `.highlighted_*` helpers renamed to `.highlight_*`.
+  > - `PollStrategy::UpTo(n)` now requires a `Duration`; tick timeout moved
+  >   from `EventListenerCfg::poll_timeout` into `PollStrategy`.
+  > - `TerminalBridge` removed; `Context` now holds
+  >   `CrosstermTerminalAdapter` directly and enables raw mode + alternate
+  >   screen explicitly. The `TerminalAdapter` trait is imported where its
+  >   methods are used.
+  > - `Update` trait removed; activity `update` methods are plain inherent
+  >   functions.
+  > - `ProgressBar` replaced by stdlib `Gauge`. Paragraph `.wrap` renamed
+  >   to `.wrap_trim`; `.text` now takes an `Into<Text>`. Stdlib `List` row
+  >   items are now individual lines (`Vec<Span>` per row) rather than a
+  >   `Table` of spans; custom `FileList`/`Log` convert between the two
+  >   models.
+  > - Radio builders drop `.foreground(color)` so unselected items render
+  >   with the terminal default foreground, and set
+  >   `highlight_style(Style::default().fg(color).add_modifier(REVERSED))`
+  >   so the selected entry is visibly highlighted only with the theme
+  >   color.
+  > - Custom `FileList` keeps the selected row highlighted with the full
+  >   highlight style when focused and falls back to a foreground-only
+  >   style when unfocused.
+  > - Theme loading is now backwards compatible: `Theme` uses a custom
+  >   `Deserialize` through an intermediate `ThemeFile` with optional
+  >   fields, so missing keys, unknown values or legacy aliases
+  >   (`transfer_progress_bar_full`/`_partial`) fall back to defaults on a
+  >   per-field basis instead of failing the whole load.
+- upgrade remotefs-ssh to 0.8.3
 
 ## 0.19.1
 
