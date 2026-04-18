@@ -25,7 +25,7 @@ pub fn absolutize(wrkdir: &Path, target: &Path) -> PathBuf {
 
 /// Normalize a path by resolving `.` and `..` components lexically
 /// (without touching the filesystem).
-fn normalize(path: &Path) -> PathBuf {
+pub fn normalize(path: &Path) -> PathBuf {
     let mut parts: Vec<Component> = Vec::new();
     for component in path.components() {
         match component {

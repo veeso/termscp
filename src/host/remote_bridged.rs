@@ -6,13 +6,14 @@
 mod temp_mapped_file;
 
 use std::io::{Read, Write};
-use std::path::{Path, PathBuf};
+use std::path::{Component, Path, PathBuf};
 
 use remotefs::fs::{Metadata, UnixPex};
 use remotefs::{File, RemoteError, RemoteErrorType, RemoteFs};
 
 use self::temp_mapped_file::TempMappedFile;
 use super::{HostBridge, HostError, HostResult};
+use crate::utils::path::normalize;
 
 struct WriteStreamOp {
     path: PathBuf,
@@ -129,7 +130,8 @@ impl HostBridge for RemoteBridged {
 
     fn list_dir(&mut self, path: &Path) -> HostResult<Vec<File>> {
         debug!("Listing directory {:?}", path);
-        self.remote.list_dir(path).map_err(HostError::from)
+        let entries = self.remote.list_dir(path).map_err(HostError::from)?;
+        Ok(filter_self_refs(path, entries))
     }
 
     fn setstat(&mut self, path: &Path, metadata: &Metadata) -> HostResult<()> {
@@ -212,5 +214,102 @@ impl HostBridge for RemoteBridged {
                 .create_file(&path, &metadata, Box::new(tempfile))?;
         }
         Ok(())
+    }
+}
+
+/// Drop entries that refer to the directory being listed.
+///
+/// Some non-compliant FTP servers (e.g. LiteSpeed) include a self-reference
+/// to the listed directory in the LIST response, which would otherwise appear
+/// as a duplicate entry in the explorer.
+fn filter_self_refs(path: &Path, entries: Vec<File>) -> Vec<File> {
+    let normalized = normalize(path);
+    entries
+        .into_iter()
+        .filter(|entry| {
+            let last = entry.path().components().next_back();
+            let is_dot_ref = matches!(last, Some(Component::CurDir | Component::ParentDir));
+            !is_dot_ref && normalize(entry.path()) != normalized
+        })
+        .collect()
+}
+
+#[cfg(test)]
+mod test {
+    use std::path::PathBuf;
+    use std::time::SystemTime;
+
+    use pretty_assertions::assert_eq;
+    use remotefs::fs::{FileType, Metadata};
+
+    use super::*;
+
+    fn file(path: &str, file_type: FileType) -> File {
+        File {
+            path: PathBuf::from(path),
+            metadata: Metadata {
+                accessed: Some(SystemTime::UNIX_EPOCH),
+                created: Some(SystemTime::UNIX_EPOCH),
+                modified: Some(SystemTime::UNIX_EPOCH),
+                file_type,
+                gid: None,
+                mode: None,
+                size: 0,
+                symlink: None,
+                uid: None,
+            },
+        }
+    }
+
+    #[test]
+    fn filter_self_refs_drops_entry_matching_listed_dir() {
+        let entries = vec![
+            file("/wp-content/wp-content", FileType::Directory),
+            file("/wp-content/index.php", FileType::File),
+        ];
+
+        let filtered = filter_self_refs(Path::new("/wp-content/wp-content"), entries);
+
+        assert_eq!(filtered.len(), 1);
+        assert_eq!(filtered[0].path(), Path::new("/wp-content/index.php"));
+    }
+
+    #[test]
+    fn filter_self_refs_drops_dot_and_dotdot_entries() {
+        let entries = vec![
+            file("/foo/.", FileType::Directory),
+            file("/foo/..", FileType::Directory),
+            file("/foo/bar", FileType::File),
+        ];
+
+        let filtered = filter_self_refs(Path::new("/foo"), entries);
+
+        assert_eq!(filtered.len(), 1);
+        assert_eq!(filtered[0].path(), Path::new("/foo/bar"));
+    }
+
+    #[test]
+    fn filter_self_refs_normalizes_paths() {
+        let entries = vec![
+            file("/foo/./bar", FileType::File),
+            file("/foo/baz/../", FileType::Directory),
+        ];
+
+        let filtered = filter_self_refs(Path::new("/foo"), entries);
+
+        assert_eq!(filtered.len(), 1);
+        assert_eq!(filtered[0].path(), Path::new("/foo/./bar"));
+    }
+
+    #[test]
+    fn filter_self_refs_preserves_unrelated_entries() {
+        let entries = vec![
+            file("/home/user/notes.txt", FileType::File),
+            file("/home/user/photos", FileType::Directory),
+        ];
+
+        let filtered = filter_self_refs(Path::new("/home/user"), entries.clone());
+
+        assert_eq!(filtered.len(), 2);
     }
 }
