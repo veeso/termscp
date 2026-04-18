@@ -26,7 +26,10 @@ use lib::transfer::{TransferOpts, TransferStates};
 use lib::walkdir::WalkdirStates;
 use session::TransferPayload;
 use tempfile::TempDir;
-use tuirealm::{Application, EventListenerCfg, NoUserEvent};
+use tuirealm::application::Application;
+use tuirealm::event::NoUserEvent;
+use tuirealm::listener::EventListenerCfg;
+use tuirealm::terminal::TerminalAdapter;
 
 use super::{Activity, CROSSTERM_MAX_POLL, Context, ExitReason};
 use crate::config::themes::Theme;
@@ -286,9 +289,7 @@ impl FileTransferActivity {
             exit_reason: None,
             context: None,
             app: Application::init(
-                EventListenerCfg::default()
-                    .poll_timeout(ticks)
-                    .crossterm_input_listener(ticks, CROSSTERM_MAX_POLL),
+                EventListenerCfg::default().crossterm_input_listener(ticks, CROSSTERM_MAX_POLL),
             ),
             redraw: true,
             browser: Browser::new(local_pane, remote_pane),

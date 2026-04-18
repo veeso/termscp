@@ -5,6 +5,7 @@
 use tuirealm::props::Color;
 use tuirealm::ratatui::layout::{Constraint, Direction, Layout};
 use tuirealm::ratatui::widgets::Clear;
+use tuirealm::terminal::TerminalAdapter;
 
 use super::{
     AuthActivity, AuthFormId, Context, FileTransferProtocol, FormTab, HostBridgeProtocol, Id,

@@ -8,7 +8,8 @@
 use std::path::PathBuf;
 
 use tuirealm::ratatui::layout::{Constraint, Direction, Layout};
-use tuirealm::{State, StateValue};
+use tuirealm::state::{State, StateValue};
+use tuirealm::terminal::TerminalAdapter;
 
 use super::{
     Context, Id, IdCommon, IdConfig, RADIO_PROTOCOL_KUBE, RADIO_PROTOCOL_WEBDAV, SetupActivity,
@@ -256,13 +257,13 @@ impl SetupActivity {
 
     /// Collect values from input and put them into the configuration
     pub(crate) fn collect_input_values(&mut self) {
-        if let Ok(State::One(StateValue::String(editor))) =
+        if let Ok(State::Single(StateValue::String(editor))) =
             self.app.state(&Id::Config(IdConfig::TextEditor))
         {
             self.config_mut()
                 .set_text_editor(PathBuf::from(editor.as_str()));
         }
-        if let Ok(State::One(StateValue::Usize(protocol))) =
+        if let Ok(State::Single(StateValue::Usize(protocol))) =
             self.app.state(&Id::Config(IdConfig::DefaultProtocol))
         {
             let protocol: FileTransferProtocol = match protocol {
@@ -277,35 +278,35 @@ impl SetupActivity {
             };
             self.config_mut().set_default_protocol(protocol);
         }
-        if let Ok(State::One(StateValue::Usize(opt))) =
+        if let Ok(State::Single(StateValue::Usize(opt))) =
             self.app.state(&Id::Config(IdConfig::HiddenFiles))
         {
             let show: bool = matches!(opt, 0);
             self.config_mut().set_show_hidden_files(show);
         }
-        if let Ok(State::One(StateValue::Usize(opt))) =
+        if let Ok(State::Single(StateValue::Usize(opt))) =
             self.app.state(&Id::Config(IdConfig::CheckUpdates))
         {
             let check: bool = matches!(opt, 0);
             self.config_mut().set_check_for_updates(check);
         }
-        if let Ok(State::One(StateValue::Usize(opt))) =
+        if let Ok(State::Single(StateValue::Usize(opt))) =
             self.app.state(&Id::Config(IdConfig::PromptOnFileReplace))
         {
             let check: bool = matches!(opt, 0);
             self.config_mut().set_prompt_on_file_replace(check);
         }
-        if let Ok(State::One(StateValue::String(fmt))) =
+        if let Ok(State::Single(StateValue::String(fmt))) =
             self.app.state(&Id::Config(IdConfig::LocalFileFmt))
         {
             self.config_mut().set_local_file_fmt(fmt);
         }
-        if let Ok(State::One(StateValue::String(fmt))) =
+        if let Ok(State::Single(StateValue::String(fmt))) =
             self.app.state(&Id::Config(IdConfig::RemoteFileFmt))
         {
             self.config_mut().set_remote_file_fmt(fmt);
         }
-        if let Ok(State::One(StateValue::Usize(opt))) =
+        if let Ok(State::Single(StateValue::Usize(opt))) =
             self.app.state(&Id::Config(IdConfig::GroupDirs))
         {
             let dirs: Option<GroupDirs> = match opt {
@@ -315,18 +316,18 @@ impl SetupActivity {
             };
             self.config_mut().set_group_dirs(dirs);
         }
-        if let Ok(State::One(StateValue::Usize(opt))) =
+        if let Ok(State::Single(StateValue::Usize(opt))) =
             self.app.state(&Id::Config(IdConfig::NotificationsEnabled))
         {
             self.config_mut().set_notifications(opt == 0);
         }
-        if let Ok(State::One(StateValue::U64(bytes))) = self
+        if let Ok(State::Single(StateValue::U64(bytes))) = self
             .app
             .state(&Id::Config(IdConfig::NotificationsThreshold))
         {
             self.config_mut().set_notification_threshold(bytes);
         }
-        if let Ok(State::One(StateValue::String(mut path))) =
+        if let Ok(State::Single(StateValue::String(mut path))) =
             self.app.state(&Id::Config(IdConfig::SshConfig))
         {
             if path.is_empty() {

@@ -1,9 +1,9 @@
+use tuirealm::component::{AppComponent, Component};
 use tuirealm::event::NoUserEvent;
-use tuirealm::{Component, MockComponent};
 
 use super::*;
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct InputRemoteDirectory {
     component: Input,
     form_tab: FormTab,
@@ -19,8 +19,14 @@ impl InputRemoteDirectory {
                         .modifiers(BorderType::Rounded),
                 )
                 .foreground(color)
-                .placeholder("/home/foo", Style::default().fg(Color::Rgb(128, 128, 128)))
-                .title("Default remote working directory", Alignment::Left)
+                .placeholder(tuirealm::props::SpanStatic::styled(
+                    "/home/foo",
+                    Style::default().fg(Color::Rgb(128, 128, 128)),
+                ))
+                .title(
+                    Title::from("Default remote working directory")
+                        .alignment(HorizontalAlignment::Left),
+                )
                 .input_type(InputType::Text)
                 .value(remote_dir),
             form_tab,
@@ -28,8 +34,8 @@ impl InputRemoteDirectory {
     }
 }
 
-impl Component<Msg, NoUserEvent> for InputRemoteDirectory {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for InputRemoteDirectory {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         let on_key_down = match self.form_tab {
             FormTab::Remote => Msg::Ui(UiMsg::Remote(UiAuthFormMsg::RemoteDirectoryBlurDown)),
             FormTab::HostBridge => {
@@ -46,7 +52,7 @@ impl Component<Msg, NoUserEvent> for InputRemoteDirectory {
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct InputLocalDirectory {
     component: Input,
     form_tab: FormTab,
@@ -62,8 +68,14 @@ impl InputLocalDirectory {
                         .modifiers(BorderType::Rounded),
                 )
                 .foreground(color)
-                .placeholder("/home/foo", Style::default().fg(Color::Rgb(128, 128, 128)))
-                .title("Default local working directory", Alignment::Left)
+                .placeholder(tuirealm::props::SpanStatic::styled(
+                    "/home/foo",
+                    Style::default().fg(Color::Rgb(128, 128, 128)),
+                ))
+                .title(
+                    Title::from("Default local working directory")
+                        .alignment(HorizontalAlignment::Left),
+                )
                 .input_type(InputType::Text)
                 .value(local_dir),
             form_tab,
@@ -71,8 +83,8 @@ impl InputLocalDirectory {
     }
 }
 
-impl Component<Msg, NoUserEvent> for InputLocalDirectory {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for InputLocalDirectory {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         let on_key_down = match self.form_tab {
             FormTab::Remote => Msg::Ui(UiMsg::Remote(UiAuthFormMsg::LocalDirectoryBlurDown)),
             FormTab::HostBridge => {

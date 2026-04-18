@@ -1,4 +1,5 @@
-use tuirealm::props::{AttrValue, Attribute, Color, TableBuilder, TextSpan};
+use tuirealm::props::{AttrValue, Attribute, Color, SpanStatic, TableBuilder};
+use tuirealm::ratatui::style::Stylize;
 
 use super::super::{FileTransferActivity, Id, LogLevel, LogRecord, ui_result};
 
@@ -52,28 +53,20 @@ impl FileTransferActivity {
                 LogLevel::Warn => Color::Yellow,
                 LogLevel::Info => Color::Green,
             };
+            let level_label = match record.level {
+                LogLevel::Error => "ERROR",
+                LogLevel::Warn => "WARN",
+                LogLevel::Info => "INFO",
+            };
             table
-                .add_col(TextSpan::from(format!(
+                .add_col(SpanStatic::from(format!(
                     "{}",
                     record.time.format("%Y-%m-%dT%H:%M:%S%Z")
                 )))
-                .add_col(TextSpan::from(" ["))
-                .add_col(
-                    TextSpan::new(
-                        format!(
-                            "{:5}",
-                            match record.level {
-                                LogLevel::Error => "ERROR",
-                                LogLevel::Warn => "WARN",
-                                LogLevel::Info => "INFO",
-                            }
-                        )
-                        .as_str(),
-                    )
-                    .fg(fg),
-                )
-                .add_col(TextSpan::from("]: "))
-                .add_col(TextSpan::from(record.msg.as_str()));
+                .add_col(SpanStatic::from(" ["))
+                .add_col(SpanStatic::raw(format!("{level_label:5}")).fg(fg))
+                .add_col(SpanStatic::from("]: "))
+                .add_col(SpanStatic::from(record.msg.clone()));
         }
         ui_result(self.app.attr(
             &Id::Log,

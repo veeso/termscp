@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 use std::str::FromStr;
 
-use tuirealm::{State, StateValue};
+use tuirealm::state::{State, StateValue};
 
 use super::*;
 use crate::filetransfer::FileTransferParams;
@@ -123,7 +123,7 @@ impl AuthActivity {
             .app
             .state(&Self::form_tab_id(form_tab, AuthFormId::RemoteDirectory))
         {
-            Ok(State::One(StateValue::String(x))) if !x.is_empty() => {
+            Ok(State::Single(StateValue::String(x))) if !x.is_empty() => {
                 Some(PathBuf::from(x.as_str()))
             }
             _ => None,
@@ -138,7 +138,7 @@ impl AuthActivity {
             .app
             .state(&Self::form_tab_id(form_tab, AuthFormId::LocalDirectory))
         {
-            Ok(State::One(StateValue::String(x))) if !x.is_empty() => {
+            Ok(State::Single(StateValue::String(x))) if !x.is_empty() => {
                 Some(PathBuf::from(x.as_str()))
             }
             _ => None,
@@ -150,7 +150,7 @@ impl AuthActivity {
             .app
             .state(&Self::form_tab_id(form_tab, AuthFormId::WebDAVUri))
         {
-            Ok(State::One(StateValue::String(x))) => x,
+            Ok(State::Single(StateValue::String(x))) => x,
             _ => String::new(),
         }
     }
@@ -160,7 +160,7 @@ impl AuthActivity {
             .app
             .state(&Self::form_tab_id(form_tab, AuthFormId::Address))
         {
-            Ok(State::One(StateValue::String(x))) => x,
+            Ok(State::Single(StateValue::String(x))) => x,
             _ => String::new(),
         }
     }
@@ -170,7 +170,9 @@ impl AuthActivity {
             .app
             .state(&Self::form_tab_id(form_tab, AuthFormId::Port))
         {
-            Ok(State::One(StateValue::String(x))) => u16::from_str(x.as_str()).unwrap_or_default(),
+            Ok(State::Single(StateValue::String(x))) => {
+                u16::from_str(x.as_str()).unwrap_or_default()
+            }
             _ => 0,
         }
     }
@@ -183,7 +185,7 @@ impl AuthActivity {
             .app
             .state(&Self::form_tab_id(form_tab, AuthFormId::Username))
         {
-            Ok(State::One(StateValue::String(x))) if !x.is_empty() => Some(x),
+            Ok(State::Single(StateValue::String(x))) if !x.is_empty() => Some(x),
             _ => None,
         }
     }
@@ -196,7 +198,7 @@ impl AuthActivity {
             .app
             .state(&Self::form_tab_id(form_tab, AuthFormId::Password))
         {
-            Ok(State::One(StateValue::String(x))) if !x.is_empty() => Some(x),
+            Ok(State::Single(StateValue::String(x))) if !x.is_empty() => Some(x),
             _ => None,
         }
     }
@@ -206,7 +208,7 @@ impl AuthActivity {
             .app
             .state(&Self::form_tab_id(form_tab, AuthFormId::S3Bucket))
         {
-            Ok(State::One(StateValue::String(x))) => x,
+            Ok(State::Single(StateValue::String(x))) => x,
             _ => String::new(),
         }
     }
@@ -219,7 +221,7 @@ impl AuthActivity {
             .app
             .state(&Self::form_tab_id(form_tab, AuthFormId::S3Region))
         {
-            Ok(State::One(StateValue::String(x))) if !x.is_empty() => Some(x),
+            Ok(State::Single(StateValue::String(x))) if !x.is_empty() => Some(x),
             _ => None,
         }
     }
@@ -232,7 +234,7 @@ impl AuthActivity {
             .app
             .state(&Self::form_tab_id(form_tab, AuthFormId::S3Endpoint))
         {
-            Ok(State::One(StateValue::String(x))) if !x.is_empty() => Some(x),
+            Ok(State::Single(StateValue::String(x))) if !x.is_empty() => Some(x),
             _ => None,
         }
     }
@@ -245,7 +247,7 @@ impl AuthActivity {
             .app
             .state(&Self::form_tab_id(form_tab, AuthFormId::S3Profile))
         {
-            Ok(State::One(StateValue::String(x))) if !x.is_empty() => Some(x),
+            Ok(State::Single(StateValue::String(x))) if !x.is_empty() => Some(x),
             _ => None,
         }
     }
@@ -258,7 +260,7 @@ impl AuthActivity {
             .app
             .state(&Self::form_tab_id(form_tab, AuthFormId::S3AccessKey))
         {
-            Ok(State::One(StateValue::String(x))) if !x.is_empty() => Some(x),
+            Ok(State::Single(StateValue::String(x))) if !x.is_empty() => Some(x),
             _ => None,
         }
     }
@@ -271,7 +273,7 @@ impl AuthActivity {
             .app
             .state(&Self::form_tab_id(form_tab, AuthFormId::S3SecretAccessKey))
         {
-            Ok(State::One(StateValue::String(x))) if !x.is_empty() => Some(x),
+            Ok(State::Single(StateValue::String(x))) if !x.is_empty() => Some(x),
             _ => None,
         }
     }
@@ -284,7 +286,7 @@ impl AuthActivity {
             .app
             .state(&Self::form_tab_id(form_tab, AuthFormId::S3SecurityToken))
         {
-            Ok(State::One(StateValue::String(x))) if !x.is_empty() => Some(x),
+            Ok(State::Single(StateValue::String(x))) if !x.is_empty() => Some(x),
             _ => None,
         }
     }
@@ -297,7 +299,7 @@ impl AuthActivity {
             .app
             .state(&Self::form_tab_id(form_tab, AuthFormId::S3SessionToken))
         {
-            Ok(State::One(StateValue::String(x))) if !x.is_empty() => Some(x),
+            Ok(State::Single(StateValue::String(x))) if !x.is_empty() => Some(x),
             _ => None,
         }
     }
@@ -309,7 +311,7 @@ impl AuthActivity {
         matches!(
             self.app
                 .state(&Self::form_tab_id(form_tab, AuthFormId::S3NewPathStyle)),
-            Ok(State::One(StateValue::Usize(0)))
+            Ok(State::Single(StateValue::Usize(0)))
         )
     }
 
@@ -321,7 +323,7 @@ impl AuthActivity {
             .app
             .state(&Self::form_tab_id(form_tab, AuthFormId::KubeNamespace))
         {
-            Ok(State::One(StateValue::String(x))) if !x.is_empty() => Some(x),
+            Ok(State::Single(StateValue::String(x))) if !x.is_empty() => Some(x),
             _ => None,
         }
     }
@@ -334,7 +336,7 @@ impl AuthActivity {
             .app
             .state(&Self::form_tab_id(form_tab, AuthFormId::KubeClusterUrl))
         {
-            Ok(State::One(StateValue::String(x))) if !x.is_empty() => Some(x),
+            Ok(State::Single(StateValue::String(x))) if !x.is_empty() => Some(x),
             _ => None,
         }
     }
@@ -347,7 +349,7 @@ impl AuthActivity {
             .app
             .state(&Self::form_tab_id(form_tab, AuthFormId::KubeUsername))
         {
-            Ok(State::One(StateValue::String(x))) if !x.is_empty() => Some(x),
+            Ok(State::Single(StateValue::String(x))) if !x.is_empty() => Some(x),
             _ => None,
         }
     }
@@ -360,7 +362,7 @@ impl AuthActivity {
             .app
             .state(&Self::form_tab_id(form_tab, AuthFormId::KubeClientCert))
         {
-            Ok(State::One(StateValue::String(x))) if !x.is_empty() => Some(x),
+            Ok(State::Single(StateValue::String(x))) if !x.is_empty() => Some(x),
             _ => None,
         }
     }
@@ -373,7 +375,7 @@ impl AuthActivity {
             .app
             .state(&Self::form_tab_id(form_tab, AuthFormId::KubeClientKey))
         {
-            Ok(State::One(StateValue::String(x))) if !x.is_empty() => Some(x),
+            Ok(State::Single(StateValue::String(x))) if !x.is_empty() => Some(x),
             _ => None,
         }
     }
@@ -383,7 +385,7 @@ impl AuthActivity {
             .app
             .state(&Self::form_tab_id(form_tab, AuthFormId::SmbShare))
         {
-            Ok(State::One(StateValue::String(x))) => x,
+            Ok(State::Single(StateValue::String(x))) => x,
             _ => String::new(),
         }
     }
@@ -397,19 +399,19 @@ impl AuthActivity {
             .app
             .state(&Self::form_tab_id(form_tab, AuthFormId::SmbWorkgroup))
         {
-            Ok(State::One(StateValue::String(x))) => Some(x),
+            Ok(State::Single(StateValue::String(x))) => Some(x),
             _ => None,
         }
     }
 
     pub(in crate::ui::activities::auth) fn get_new_bookmark(&self) -> (String, bool) {
         let name = match self.app.state(&Id::BookmarkName) {
-            Ok(State::One(StateValue::String(name))) => name,
+            Ok(State::Single(StateValue::String(name))) => name,
             _ => String::default(),
         };
         if matches!(
             self.app.state(&Id::BookmarkSavePassword),
-            Ok(State::One(StateValue::Usize(0)))
+            Ok(State::Single(StateValue::Usize(0)))
         ) {
             (name, true)
         } else {

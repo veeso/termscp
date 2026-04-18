@@ -3,9 +3,11 @@
 //! `filetransfer_activity` is the module which implements the Filetransfer activity, which is the main activity afterall
 
 use tuirealm::event::{Key, KeyEvent, KeyModifiers};
+use tuirealm::props::Attribute;
 use tuirealm::ratatui::layout::{Constraint, Direction, Layout};
 use tuirealm::ratatui::widgets::Clear;
-use tuirealm::{Attribute, Sub, SubClause, SubEventClause};
+use tuirealm::subscription::{EventClause, Sub, SubClause};
+use tuirealm::terminal::TerminalAdapter;
 use unicode_width::UnicodeWidthStr;
 
 use crate::ui::activities::filetransfer::browser::FoundExplorerTab;
@@ -215,7 +217,12 @@ impl FileTransferActivity {
                         let lines = self
                             .app
                             .query(&Id::WaitPopup, Attribute::Text)
-                            .map(|x| x.map(|x| x.unwrap_payload().unwrap_vec().len()))
+                            .map(|x| {
+                                x.map(|x| match x.into_attr() {
+                                    tuirealm::props::AttrValue::Text(t) => t.lines.len(),
+                                    _ => 1,
+                                })
+                            })
                             .unwrap_or_default()
                             .unwrap_or(1) as u16;
                         let popup =
@@ -270,21 +277,19 @@ impl FileTransferActivity {
         // Get current text width
         let text_width = self
             .app
-            .query(&id, tuirealm::Attribute::Text)
+            .query(&id, tuirealm::props::Attribute::Text)
             .ok()
             .flatten()
-            .map(|x| {
-                if x.as_payload().is_none() {
-                    return 0;
-                }
-
-                x.unwrap_payload()
-                    .unwrap_vec()
-                    .into_iter()
-                    .map(|x| x.unwrap_text_span().content)
-                    .collect::<Vec<String>>()
+            .map(|x| match x.into_attr() {
+                tuirealm::props::AttrValue::Text(t) => t
+                    .lines
+                    .iter()
+                    .flat_map(|line| line.spans.iter())
+                    .map(|span| span.content.as_ref())
+                    .collect::<Vec<&str>>()
                     .join("")
-                    .width() as u16
+                    .width() as u16,
+                _ => 0,
             })
             .unwrap_or(0);
         // Calc real width of a row in the popup
@@ -305,41 +310,41 @@ impl FileTransferActivity {
             Box::<components::GlobalListener>::default(),
             vec![
                 Sub::new(
-                    SubEventClause::Keyboard(KeyEvent {
+                    EventClause::Keyboard(KeyEvent {
                         code: Key::Esc,
                         modifiers: KeyModifiers::NONE,
                     }),
                     Self::no_popup_mounted_clause(),
                 ),
                 Sub::new(
-                    SubEventClause::Keyboard(KeyEvent {
+                    EventClause::Keyboard(KeyEvent {
                         code: Key::Char('h'),
                         modifiers: KeyModifiers::NONE,
                     }),
                     Self::no_popup_mounted_clause(),
                 ),
                 Sub::new(
-                    SubEventClause::Keyboard(KeyEvent {
+                    EventClause::Keyboard(KeyEvent {
                         code: Key::Function(1),
                         modifiers: KeyModifiers::NONE,
                     }),
                     Self::no_popup_mounted_clause(),
                 ),
                 Sub::new(
-                    SubEventClause::Keyboard(KeyEvent {
+                    EventClause::Keyboard(KeyEvent {
                         code: Key::Function(10),
                         modifiers: KeyModifiers::NONE,
                     }),
                     Self::no_popup_mounted_clause(),
                 ),
                 Sub::new(
-                    SubEventClause::Keyboard(KeyEvent {
+                    EventClause::Keyboard(KeyEvent {
                         code: Key::Char('q'),
                         modifiers: KeyModifiers::NONE,
                     }),
                     Self::no_popup_mounted_clause(),
                 ),
-                Sub::new(SubEventClause::WindowResize, SubClause::Always),
+                Sub::new(EventClause::WindowResize, SubClause::Always),
             ],
         ));
     }

@@ -3,8 +3,7 @@
 //! `filetransfer_activity` is the module which implements the Filetransfer activity, which is the main activity afterall
 
 use remotefs::fs::{File, UnixPex};
-use tuirealm::props::{PropPayload, PropValue, TextSpan};
-use tuirealm::{AttrValue, Attribute};
+use tuirealm::props::{AttrValue, Attribute, PropPayload, PropValue, SpanStatic};
 
 use crate::explorer::FileSorting;
 use crate::ui::activities::filetransfer::browser::FileExplorerTab;
@@ -93,9 +92,9 @@ impl FileTransferActivity {
         let _ = self.app.attr(
             &Id::WaitPopup,
             Attribute::Text,
-            AttrValue::Payload(PropPayload::Vec(vec![
-                PropValue::TextSpan(TextSpan::from(text)),
-                PropValue::TextSpan(TextSpan::from("Press 'CTRL+C' to abort")),
+            AttrValue::Text(tuirealm::ratatui::text::Text::from_iter([
+                SpanStatic::from(text),
+                SpanStatic::from("Press 'CTRL+C' to abort"),
             ])),
         );
 

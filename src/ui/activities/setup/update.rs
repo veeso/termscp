@@ -5,17 +5,16 @@
 
 // locals
 // ext
-use tuirealm::Update;
 
 use super::{
     CommonMsg, ConfigMsg, Id, IdConfig, IdSsh, IdTheme, Msg, SetupActivity, SshMsg, ThemeMsg,
     ViewLayout,
 };
 
-impl Update<Msg> for SetupActivity {
+impl SetupActivity {
     /// Update auth activity model based on msg
     /// The function exits when returns None
-    fn update(&mut self, msg: Option<Msg>) -> Option<Msg> {
+    pub(super) fn update(&mut self, msg: Option<Msg>) -> Option<Msg> {
         match msg.unwrap_or(Msg::None) {
             Msg::Common(msg) => self.common_update(msg),
             Msg::Config(msg) => self.config_update(msg),

@@ -1,12 +1,15 @@
-use tui_realm_stdlib::Radio;
+use tui_realm_stdlib::components::Radio;
 use tuirealm::command::{Cmd, CmdResult, Direction};
-use tuirealm::event::{Key, KeyEvent, KeyModifiers};
-use tuirealm::props::{Alignment, BorderType, Borders, Color};
-use tuirealm::{Component, Event, MockComponent, NoUserEvent, State, StateValue};
+use tuirealm::component::{AppComponent, Component};
+use tuirealm::event::{Event, Key, KeyEvent, KeyModifiers, NoUserEvent};
+use tuirealm::props::{
+    BorderType, Borders, Color, HorizontalAlignment, Style, TextModifiers, Title,
+};
+use tuirealm::state::{State, StateValue};
 
 use crate::ui::activities::filetransfer::{Msg, UiMsg};
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct QuitPopup {
     component: Radio,
 }
@@ -15,20 +18,27 @@ impl QuitPopup {
     pub fn new(color: Color) -> Self {
         Self {
             component: Radio::default()
+                .highlight_style(
+                    Style::default()
+                        .fg(color)
+                        .add_modifier(TextModifiers::REVERSED),
+                )
                 .borders(
                     Borders::default()
                         .color(color)
                         .modifiers(BorderType::Rounded),
                 )
-                .foreground(color)
                 .choices(["Yes", "No"])
-                .title("Are you sure you want to quit termscp?", Alignment::Center),
+                .title(
+                    Title::from("Are you sure you want to quit termscp?")
+                        .alignment(HorizontalAlignment::Center),
+                ),
         }
     }
 }
 
-impl Component<Msg, NoUserEvent> for QuitPopup {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for QuitPopup {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         match ev {
             Event::Keyboard(KeyEvent {
                 code: Key::Left, ..
@@ -58,7 +68,7 @@ impl Component<Msg, NoUserEvent> for QuitPopup {
             }) => {
                 if matches!(
                     self.perform(Cmd::Submit),
-                    CmdResult::Submit(State::One(StateValue::Usize(0)))
+                    CmdResult::Submit(State::Single(StateValue::Usize(0)))
                 ) {
                     Some(Msg::Ui(UiMsg::Quit))
                 } else {

@@ -1,9 +1,9 @@
+use tuirealm::component::{AppComponent, Component};
 use tuirealm::event::NoUserEvent;
-use tuirealm::{Component, MockComponent};
 
 use super::*;
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct InputSmbShare {
     component: Input,
     form_tab: FormTab,
@@ -19,7 +19,7 @@ impl InputSmbShare {
                         .modifiers(BorderType::Rounded),
                 )
                 .foreground(color)
-                .title("Share", Alignment::Left)
+                .title(Title::from("Share").alignment(HorizontalAlignment::Left))
                 .input_type(InputType::Text)
                 .value(host),
             form_tab,
@@ -27,8 +27,8 @@ impl InputSmbShare {
     }
 }
 
-impl Component<Msg, NoUserEvent> for InputSmbShare {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for InputSmbShare {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         let on_key_down = match self.form_tab {
             FormTab::Remote => Msg::Ui(UiMsg::Remote(UiAuthFormMsg::SmbShareBlurDown)),
             FormTab::HostBridge => Msg::Ui(UiMsg::HostBridge(UiAuthFormMsg::SmbShareBlurDown)),
@@ -44,7 +44,7 @@ impl Component<Msg, NoUserEvent> for InputSmbShare {
 }
 
 #[cfg(posix)]
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct InputSmbWorkgroup {
     component: Input,
     form_tab: FormTab,
@@ -61,7 +61,7 @@ impl InputSmbWorkgroup {
                         .modifiers(BorderType::Rounded),
                 )
                 .foreground(color)
-                .title("Workgroup", Alignment::Left)
+                .title(Title::from("Workgroup").alignment(HorizontalAlignment::Left))
                 .input_type(InputType::Text)
                 .value(host),
             form_tab,
@@ -70,8 +70,8 @@ impl InputSmbWorkgroup {
 }
 
 #[cfg(posix)]
-impl Component<Msg, NoUserEvent> for InputSmbWorkgroup {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for InputSmbWorkgroup {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         let on_key_down = match self.form_tab {
             FormTab::Remote => Msg::Ui(UiMsg::Remote(UiAuthFormMsg::SmbWorkgroupDown)),
             FormTab::HostBridge => Msg::Ui(UiMsg::HostBridge(UiAuthFormMsg::SmbWorkgroupDown)),

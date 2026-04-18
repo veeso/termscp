@@ -3,7 +3,7 @@
 //! this little module exposes the routine to create a pending action on the file transfer activity.
 //! A pending action is an action which blocks the execution of the application in await of a certain `Msg`.
 
-use tuirealm::{PollStrategy, Update};
+use tuirealm::application::PollStrategy;
 
 use super::{FileTransferActivity, Msg};
 
@@ -18,7 +18,10 @@ impl FileTransferActivity {
         self.redraw = true;
         loop {
             // Poll
-            match self.app.tick(PollStrategy::Once) {
+            match self
+                .app
+                .tick(PollStrategy::Once(std::time::Duration::from_millis(10)))
+            {
                 Ok(mut messages) => {
                     if !messages.is_empty() {
                         self.redraw = true;

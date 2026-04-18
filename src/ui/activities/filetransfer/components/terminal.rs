@@ -3,16 +3,16 @@ mod history;
 mod line;
 
 use tuirealm::command::{Cmd, CmdResult, Direction, Position};
-use tuirealm::event::{Key, KeyEvent};
-use tuirealm::props::Color;
-use tuirealm::{AttrValue, Attribute, Component, Event, MockComponent, NoUserEvent};
+use tuirealm::component::{AppComponent, Component};
+use tuirealm::event::{Event, Key, KeyEvent, NoUserEvent};
+use tuirealm::props::{AttrValue, Attribute, Color};
 
 use self::component::TerminalComponent;
 use self::line::Line;
 use super::Msg;
 use crate::ui::activities::filetransfer::{TransferMsg, UiMsg};
 
-#[derive(MockComponent, Default)]
+#[derive(Component, Default)]
 pub struct Terminal {
     component: TerminalComponent,
 }
@@ -45,8 +45,8 @@ impl Terminal {
     }
 }
 
-impl Component<Msg, NoUserEvent> for Terminal {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for Terminal {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         match ev {
             Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
                 Some(Msg::Ui(UiMsg::CloseExecPopup))
@@ -55,7 +55,7 @@ impl Component<Msg, NoUserEvent> for Terminal {
                 code: Key::Enter, ..
             }) => match self.component.perform(Cmd::Submit) {
                 CmdResult::Submit(state) => {
-                    let cmd = state.unwrap_one().unwrap_string();
+                    let cmd = state.unwrap_single().unwrap_string();
                     Some(Msg::Transfer(TransferMsg::ExecuteCmd(cmd)))
                 }
                 _ => None,
@@ -127,7 +127,7 @@ impl Component<Msg, NoUserEvent> for Terminal {
             Event::Keyboard(KeyEvent {
                 code: Key::Char(c), ..
             }) => {
-                self.component.perform(Cmd::Type(c));
+                self.component.perform(Cmd::Type(*c));
                 Some(Msg::None)
             }
             _ => None,

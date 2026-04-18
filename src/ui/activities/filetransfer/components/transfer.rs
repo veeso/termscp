@@ -6,15 +6,16 @@ mod file_list;
 mod file_list_with_search;
 
 use tuirealm::command::{Cmd, CmdResult, Direction, Position};
-use tuirealm::event::{Key, KeyEvent, KeyModifiers};
-use tuirealm::props::{Alignment, Borders, Color, TextSpan};
-use tuirealm::{Component, Event, MockComponent, NoUserEvent, State, StateValue};
+use tuirealm::component::{AppComponent, Component};
+use tuirealm::event::{Event, Key, KeyEvent, KeyModifiers, NoUserEvent};
+use tuirealm::props::{Borders, Color, HorizontalAlignment, SpanStatic, Title};
+use tuirealm::state::{State, StateValue};
 
 use self::file_list::FileList;
 use self::file_list_with_search::FileListWithSearch;
 use super::{Msg, TransferMsg, UiMsg};
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct ExplorerFuzzy {
     component: FileListWithSearch,
 }
@@ -26,13 +27,22 @@ impl ExplorerFuzzy {
                 .background(bg)
                 .borders(Borders::default().color(hg))
                 .foreground(fg)
-                .highlighted_color(hg)
-                .title(title, Alignment::Left)
-                .rows(files.iter().map(|x| vec![TextSpan::from(*x)]).collect()),
+                .highlight_color(hg)
+                .title(Title::from(title.as_ref().to_string()).alignment(HorizontalAlignment::Left))
+                .rows(
+                    files
+                        .iter()
+                        .map(|x| {
+                            vec![tuirealm::props::LineStatic::from(SpanStatic::from(
+                                (*x).to_string(),
+                            ))]
+                        })
+                        .collect(),
+                ),
         }
     }
 
-    fn on_search(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+    fn on_search(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         match ev {
             Event::Keyboard(KeyEvent {
                 code: Key::Left, ..
@@ -79,8 +89,8 @@ impl ExplorerFuzzy {
             Event::Keyboard(KeyEvent {
                 code: Key::Char(ch),
                 ..
-            }) => match self.perform(Cmd::Type(ch)) {
-                CmdResult::Changed(State::One(StateValue::String(search))) => {
+            }) => match self.perform(Cmd::Type(*ch)) {
+                CmdResult::Changed(State::Single(StateValue::String(search))) => {
                     Some(Msg::Ui(UiMsg::FuzzySearch(search)))
                 }
                 _ => Some(Msg::None),
@@ -92,7 +102,7 @@ impl ExplorerFuzzy {
         }
     }
 
-    fn on_file_list(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+    fn on_file_list(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         match ev {
             Event::Keyboard(KeyEvent {
                 code: Key::Down, ..
@@ -145,7 +155,7 @@ impl ExplorerFuzzy {
                 code: Key::Char('m'),
                 modifiers: KeyModifiers::NONE,
             }) => {
-                let CmdResult::Changed(State::One(StateValue::Usize(index))) =
+                let CmdResult::Changed(State::Single(StateValue::Usize(index))) =
                     self.perform(Cmd::Toggle)
                 else {
                     return Some(Msg::None);
@@ -217,8 +227,8 @@ impl ExplorerFuzzy {
     }
 }
 
-impl Component<Msg, NoUserEvent> for ExplorerFuzzy {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for ExplorerFuzzy {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         match self.component.focus() {
             file_list_with_search::Focus::List => self.on_file_list(ev),
             file_list_with_search::Focus::Search => self.on_search(ev),
@@ -226,7 +236,7 @@ impl Component<Msg, NoUserEvent> for ExplorerFuzzy {
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct ExplorerFind {
     component: FileList,
 }
@@ -238,15 +248,24 @@ impl ExplorerFind {
                 .background(bg)
                 .borders(Borders::default().color(hg))
                 .foreground(fg)
-                .highlighted_color(hg)
-                .title(title, Alignment::Left)
-                .rows(files.iter().map(|x| vec![TextSpan::from(*x)]).collect()),
+                .highlight_color(hg)
+                .title(Title::from(title.as_ref().to_string()).alignment(HorizontalAlignment::Left))
+                .rows(
+                    files
+                        .iter()
+                        .map(|x| {
+                            vec![tuirealm::props::LineStatic::from(SpanStatic::from(
+                                (*x).to_string(),
+                            ))]
+                        })
+                        .collect(),
+                ),
         }
     }
 }
 
-impl Component<Msg, NoUserEvent> for ExplorerFind {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for ExplorerFind {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         match ev {
             Event::Keyboard(KeyEvent {
                 code: Key::Down, ..
@@ -299,7 +318,7 @@ impl Component<Msg, NoUserEvent> for ExplorerFind {
                 code: Key::Char('m'),
                 modifiers: KeyModifiers::NONE,
             }) => {
-                let CmdResult::Changed(State::One(StateValue::Usize(index))) =
+                let CmdResult::Changed(State::Single(StateValue::Usize(index))) =
                     self.perform(Cmd::Toggle)
                 else {
                     return Some(Msg::None);
@@ -367,7 +386,7 @@ impl Component<Msg, NoUserEvent> for ExplorerFind {
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct ExplorerLocal {
     component: FileList,
 }
@@ -379,16 +398,25 @@ impl ExplorerLocal {
                 .background(bg)
                 .borders(Borders::default().color(hg))
                 .foreground(fg)
-                .highlighted_color(hg)
-                .title(title, Alignment::Left)
-                .rows(files.iter().map(|x| vec![TextSpan::from(*x)]).collect())
+                .highlight_color(hg)
+                .title(Title::from(title.as_ref().to_string()).alignment(HorizontalAlignment::Left))
+                .rows(
+                    files
+                        .iter()
+                        .map(|x| {
+                            vec![tuirealm::props::LineStatic::from(SpanStatic::from(
+                                (*x).to_string(),
+                            ))]
+                        })
+                        .collect(),
+                )
                 .dot_dot(true),
         }
     }
 }
 
-impl Component<Msg, NoUserEvent> for ExplorerLocal {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for ExplorerLocal {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         match ev {
             Event::Keyboard(KeyEvent {
                 code: Key::Down, ..
@@ -441,7 +469,7 @@ impl Component<Msg, NoUserEvent> for ExplorerLocal {
                 code: Key::Char('m'),
                 modifiers: KeyModifiers::NONE,
             }) => {
-                let CmdResult::Changed(State::One(StateValue::Usize(index))) =
+                let CmdResult::Changed(State::Single(StateValue::Usize(index))) =
                     self.perform(Cmd::Toggle)
                 else {
                     return Some(Msg::None);
@@ -464,7 +492,7 @@ impl Component<Msg, NoUserEvent> for ExplorerLocal {
             Event::Keyboard(KeyEvent {
                 code: Key::Enter, ..
             }) => {
-                if matches!(self.component.state(), State::One(StateValue::String(_))) {
+                if matches!(self.component.state(), State::Single(StateValue::String(_))) {
                     Some(Msg::Transfer(TransferMsg::GoToParentDirectory))
                 } else {
                     Some(Msg::Transfer(TransferMsg::EnterDirectory))
@@ -474,7 +502,7 @@ impl Component<Msg, NoUserEvent> for ExplorerLocal {
                 code: Key::Char(' '),
                 ..
             }) => {
-                if matches!(self.component.state(), State::One(StateValue::String(_))) {
+                if matches!(self.component.state(), State::Single(StateValue::String(_))) {
                     Some(Msg::None)
                 } else {
                     Some(Msg::Transfer(TransferMsg::TransferFile))
@@ -585,7 +613,7 @@ impl Component<Msg, NoUserEvent> for ExplorerLocal {
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct ExplorerRemote {
     component: FileList,
 }
@@ -597,16 +625,25 @@ impl ExplorerRemote {
                 .background(bg)
                 .borders(Borders::default().color(hg))
                 .foreground(fg)
-                .highlighted_color(hg)
-                .title(title, Alignment::Left)
-                .rows(files.iter().map(|x| vec![TextSpan::from(*x)]).collect())
+                .highlight_color(hg)
+                .title(Title::from(title.as_ref().to_string()).alignment(HorizontalAlignment::Left))
+                .rows(
+                    files
+                        .iter()
+                        .map(|x| {
+                            vec![tuirealm::props::LineStatic::from(SpanStatic::from(
+                                (*x).to_string(),
+                            ))]
+                        })
+                        .collect(),
+                )
                 .dot_dot(true),
         }
     }
 }
 
-impl Component<Msg, NoUserEvent> for ExplorerRemote {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for ExplorerRemote {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         match ev {
             Event::Keyboard(KeyEvent {
                 code: Key::Down, ..
@@ -659,7 +696,7 @@ impl Component<Msg, NoUserEvent> for ExplorerRemote {
                 code: Key::Char('m'),
                 modifiers: KeyModifiers::NONE,
             }) => {
-                let CmdResult::Changed(State::One(StateValue::Usize(index))) =
+                let CmdResult::Changed(State::Single(StateValue::Usize(index))) =
                     self.perform(Cmd::Toggle)
                 else {
                     return Some(Msg::None);
@@ -682,7 +719,7 @@ impl Component<Msg, NoUserEvent> for ExplorerRemote {
             Event::Keyboard(KeyEvent {
                 code: Key::Enter, ..
             }) => {
-                if matches!(self.component.state(), State::One(StateValue::String(_))) {
+                if matches!(self.component.state(), State::Single(StateValue::String(_))) {
                     Some(Msg::Transfer(TransferMsg::GoToParentDirectory))
                 } else {
                     Some(Msg::Transfer(TransferMsg::EnterDirectory))
@@ -692,7 +729,7 @@ impl Component<Msg, NoUserEvent> for ExplorerRemote {
                 code: Key::Char(' '),
                 ..
             }) => {
-                if matches!(self.component.state(), State::One(StateValue::String(_))) {
+                if matches!(self.component.state(), State::Single(StateValue::String(_))) {
                     Some(Msg::None)
                 } else {
                     Some(Msg::Transfer(TransferMsg::TransferFile))

@@ -3,7 +3,7 @@
 //! `Context` is the module which provides all the functionalities related to the UI data holder, called Context
 
 // Locals
-use tuirealm::terminal::{CrosstermTerminalAdapter, TerminalBridge};
+use tuirealm::terminal::{CrosstermTerminalAdapter, TerminalAdapter};
 
 use super::store::Store;
 use crate::filetransfer::{FileTransferParams, HostBridgeParams};
@@ -18,7 +18,7 @@ pub struct Context {
     bookmarks_client: Option<BookmarksClient>,
     config_client: ConfigClient,
     pub(crate) store: Store,
-    pub(crate) terminal: TerminalBridge<CrosstermTerminalAdapter>,
+    pub(crate) terminal: CrosstermTerminalAdapter,
     theme_provider: ThemeProvider,
     error: Option<String>,
 }
@@ -31,7 +31,13 @@ impl Context {
         theme_provider: ThemeProvider,
         error: Option<String>,
     ) -> Context {
-        let mut terminal = TerminalBridge::init_crossterm().expect("Could not initialize terminal");
+        let mut terminal = CrosstermTerminalAdapter::new().expect("Could not initialize terminal");
+        terminal
+            .enable_raw_mode()
+            .expect("Could not enable terminal raw mode");
+        terminal
+            .enter_alternate_screen()
+            .expect("Could not enter alternate screen");
         let _ = terminal.disable_mouse_capture();
 
         Context {
@@ -88,7 +94,7 @@ impl Context {
         &mut self.theme_provider
     }
 
-    pub fn terminal(&mut self) -> &mut TerminalBridge<CrosstermTerminalAdapter> {
+    pub fn terminal(&mut self) -> &mut CrosstermTerminalAdapter {
         &mut self.terminal
     }
 

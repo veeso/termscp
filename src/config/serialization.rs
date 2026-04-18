@@ -611,10 +611,12 @@ mod tests {
         toml_file.as_file().sync_all().unwrap();
         toml_file.as_file().rewind().unwrap();
         assert!(deserialize::<Theme>(Box::new(toml_file)).is_ok());
+        // Malformed theme files must still load successfully; unknown or invalid
+        // fields fall back to defaults so user themes remain backwards compatible.
         let toml_file = create_bad_toml_theme();
         toml_file.as_file().sync_all().unwrap();
         toml_file.as_file().rewind().unwrap();
-        assert!(deserialize::<Theme>(Box::new(toml_file)).is_err());
+        assert!(deserialize::<Theme>(Box::new(toml_file)).is_ok());
     }
 
     #[test]

@@ -2,11 +2,13 @@
 //!
 //! auth activity components for file transfer params form
 
-use tui_realm_stdlib::{Input, Radio};
-use tuirealm::Component;
+use tui_realm_stdlib::components::{Input, Radio};
 use tuirealm::command::{Cmd, Direction, Position};
+use tuirealm::component::AppComponent;
 use tuirealm::event::{Event, Key, KeyEvent, KeyModifiers, NoUserEvent};
-use tuirealm::props::{Alignment, BorderType, Borders, Color, InputType, Style};
+use tuirealm::props::{
+    BorderType, Borders, Color, HorizontalAlignment, InputType, Style, TextModifiers, Title,
+};
 
 use super::{FileTransferProtocol, FormMsg, Msg, UiMsg};
 use crate::ui::activities::auth::{
@@ -51,8 +53,8 @@ pub use smb::InputSmbWorkgroup;
 pub use webdav::InputWebDAVUri;
 
 fn handle_input_ev(
-    component: &mut dyn Component<Msg, NoUserEvent>,
-    ev: Event<NoUserEvent>,
+    component: &mut dyn AppComponent<Msg, NoUserEvent>,
+    ev: &Event<NoUserEvent>,
     on_key_down: Msg,
     on_key_up: Msg,
     form_tab: FormTab,
@@ -104,7 +106,7 @@ fn handle_input_ev(
             code: Key::Char(ch),
             ..
         }) => {
-            component.perform(Cmd::Type(ch));
+            component.perform(Cmd::Type(*ch));
             Some(Msg::None)
         }
         Event::Keyboard(KeyEvent {

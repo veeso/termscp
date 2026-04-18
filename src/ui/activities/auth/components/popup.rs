@@ -2,17 +2,23 @@
 //!
 //! auth activity popups
 
-use tui_realm_stdlib::{List, Paragraph, Radio, Textarea};
+use tui_realm_stdlib::components::{List, Paragraph, Radio, Textarea};
 use tuirealm::command::{Cmd, CmdResult, Direction, Position};
-use tuirealm::event::{Key, KeyEvent, KeyModifiers};
-use tuirealm::props::{Alignment, BorderType, Borders, Color, TableBuilder, TextSpan};
-use tuirealm::{Component, Event, MockComponent, NoUserEvent, State, StateValue};
+use tuirealm::component::{AppComponent, Component};
+use tuirealm::event::{Event, Key, KeyEvent, KeyModifiers, NoUserEvent};
+use tuirealm::props::{
+    BorderType, Borders, Color, HorizontalAlignment, SpanStatic, Style, TableBuilder,
+    TextModifiers, Title,
+};
+use tuirealm::ratatui::style::Stylize;
+use tuirealm::ratatui::text::Text;
+use tuirealm::state::{State, StateValue};
 
 use super::{FormMsg, Msg, UiMsg};
 
 // -- error popup
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct ErrorPopup {
     component: Paragraph,
 }
@@ -21,21 +27,23 @@ impl ErrorPopup {
     pub fn new<S: AsRef<str>>(text: S, color: Color) -> Self {
         Self {
             component: Paragraph::default()
-                .alignment(Alignment::Center)
+                .alignment_horizontal(HorizontalAlignment::Center)
                 .borders(
                     Borders::default()
                         .color(color)
                         .modifiers(BorderType::Rounded),
                 )
                 .foreground(color)
-                .text([TextSpan::from(text.as_ref())])
-                .wrap(true),
+                .text(Text::from_iter([SpanStatic::from(
+                    text.as_ref().to_string(),
+                )]))
+                .wrap_trim(true),
         }
     }
 }
 
-impl Component<Msg, NoUserEvent> for ErrorPopup {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for ErrorPopup {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         match ev {
             Event::Keyboard(KeyEvent {
                 code: Key::Esc | Key::Enter,
@@ -48,7 +56,7 @@ impl Component<Msg, NoUserEvent> for ErrorPopup {
 
 // -- info popup
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct InfoPopup {
     component: Paragraph,
 }
@@ -57,21 +65,23 @@ impl InfoPopup {
     pub fn new<S: AsRef<str>>(text: S, color: Color) -> Self {
         Self {
             component: Paragraph::default()
-                .alignment(Alignment::Center)
+                .alignment_horizontal(HorizontalAlignment::Center)
                 .borders(
                     Borders::default()
                         .color(color)
                         .modifiers(BorderType::Rounded),
                 )
                 .foreground(color)
-                .text([TextSpan::from(text.as_ref())])
-                .wrap(true),
+                .text(Text::from_iter([SpanStatic::from(
+                    text.as_ref().to_string(),
+                )]))
+                .wrap_trim(true),
         }
     }
 }
 
-impl Component<Msg, NoUserEvent> for InfoPopup {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for InfoPopup {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         match ev {
             Event::Keyboard(KeyEvent {
                 code: Key::Esc | Key::Enter,
@@ -84,7 +94,7 @@ impl Component<Msg, NoUserEvent> for InfoPopup {
 
 // -- wait popup
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct WaitPopup {
     component: Paragraph,
 }
@@ -93,28 +103,30 @@ impl WaitPopup {
     pub fn new<S: AsRef<str>>(text: S, color: Color) -> Self {
         Self {
             component: Paragraph::default()
-                .alignment(Alignment::Center)
+                .alignment_horizontal(HorizontalAlignment::Center)
                 .borders(
                     Borders::default()
                         .color(color)
                         .modifiers(BorderType::Rounded),
                 )
                 .foreground(color)
-                .text([TextSpan::from(text.as_ref())])
-                .wrap(true),
+                .text(Text::from_iter([SpanStatic::from(
+                    text.as_ref().to_string(),
+                )]))
+                .wrap_trim(true),
         }
     }
 }
 
-impl Component<Msg, NoUserEvent> for WaitPopup {
-    fn on(&mut self, _ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for WaitPopup {
+    fn on(&mut self, _ev: &Event<NoUserEvent>) -> Option<Msg> {
         None
     }
 }
 
 // -- window size error
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct WindowSizeError {
     component: Paragraph,
 }
@@ -123,30 +135,30 @@ impl WindowSizeError {
     pub fn new(color: Color) -> Self {
         Self {
             component: Paragraph::default()
-                .alignment(Alignment::Center)
+                .alignment_horizontal(HorizontalAlignment::Center)
                 .borders(
                     Borders::default()
                         .color(color)
                         .modifiers(BorderType::Rounded),
                 )
                 .foreground(color)
-                .text([TextSpan::from(
+                .text(Text::from_iter([SpanStatic::from(
                     "termscp requires at least 24 lines of height to run",
-                )])
-                .wrap(true),
+                )]))
+                .wrap_trim(true),
         }
     }
 }
 
-impl Component<Msg, NoUserEvent> for WindowSizeError {
-    fn on(&mut self, _ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for WindowSizeError {
+    fn on(&mut self, _ev: &Event<NoUserEvent>) -> Option<Msg> {
         None
     }
 }
 
 // -- quit popup
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct QuitPopup {
     component: Radio,
 }
@@ -155,21 +167,25 @@ impl QuitPopup {
     pub fn new(color: Color) -> Self {
         Self {
             component: Radio::default()
+                .highlight_style(
+                    Style::default()
+                        .fg(color)
+                        .add_modifier(TextModifiers::REVERSED),
+                )
                 .borders(
                     Borders::default()
                         .color(color)
                         .modifiers(BorderType::Rounded),
                 )
-                .foreground(color)
-                .title("Quit termscp?", Alignment::Center)
+                .title(Title::from("Quit termscp?").alignment(HorizontalAlignment::Center))
                 .rewind(true)
                 .choices(["Yes", "No"]),
         }
     }
 }
 
-impl Component<Msg, NoUserEvent> for QuitPopup {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for QuitPopup {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         match ev {
             Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
                 Some(Msg::Ui(UiMsg::CloseQuitPopup))
@@ -199,7 +215,7 @@ impl Component<Msg, NoUserEvent> for QuitPopup {
             }) => {
                 if matches!(
                     self.perform(Cmd::Submit),
-                    CmdResult::Submit(State::One(StateValue::Usize(0)))
+                    CmdResult::Submit(State::Single(StateValue::Usize(0)))
                 ) {
                     Some(Msg::Form(FormMsg::Quit))
                 } else {
@@ -213,7 +229,7 @@ impl Component<Msg, NoUserEvent> for QuitPopup {
 
 // -- install update popup
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct InstallUpdatePopup {
     component: Radio,
 }
@@ -222,21 +238,25 @@ impl InstallUpdatePopup {
     pub fn new(color: Color) -> Self {
         Self {
             component: Radio::default()
+                .highlight_style(
+                    Style::default()
+                        .fg(color)
+                        .add_modifier(TextModifiers::REVERSED),
+                )
                 .borders(
                     Borders::default()
                         .color(color)
                         .modifiers(BorderType::Rounded),
                 )
-                .foreground(color)
-                .title("Install update?", Alignment::Center)
+                .title(Title::from("Install update?").alignment(HorizontalAlignment::Center))
                 .rewind(true)
                 .choices(["Yes", "No"]),
         }
     }
 }
 
-impl Component<Msg, NoUserEvent> for InstallUpdatePopup {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for InstallUpdatePopup {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         match ev {
             Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
                 Some(Msg::Ui(UiMsg::CloseInstallUpdatePopup))
@@ -266,7 +286,7 @@ impl Component<Msg, NoUserEvent> for InstallUpdatePopup {
             }) => {
                 if matches!(
                     self.perform(Cmd::Submit),
-                    CmdResult::Submit(State::One(StateValue::Usize(0)))
+                    CmdResult::Submit(State::Single(StateValue::Usize(0)))
                 ) {
                     Some(Msg::Form(FormMsg::InstallUpdate))
                 } else {
@@ -280,7 +300,7 @@ impl Component<Msg, NoUserEvent> for InstallUpdatePopup {
 
 // -- release notes popup
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct ReleaseNotes {
     component: Textarea,
 }
@@ -295,14 +315,14 @@ impl ReleaseNotes {
                         .modifiers(BorderType::Rounded),
                 )
                 .foreground(color)
-                .title("Release notes", Alignment::Center)
-                .text_rows(notes.lines().map(TextSpan::from)),
+                .title(Title::from("Release notes").alignment(HorizontalAlignment::Center))
+                .text_rows(notes.lines().map(|l| SpanStatic::from(l.to_string()))),
         }
     }
 }
 
-impl Component<Msg, NoUserEvent> for ReleaseNotes {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for ReleaseNotes {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         match ev {
             Event::Keyboard(KeyEvent {
                 code: Key::Esc | Key::Enter,
@@ -348,7 +368,7 @@ impl Component<Msg, NoUserEvent> for ReleaseNotes {
 
 // -- keybindings popup
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct Keybindings {
     component: List,
 }
@@ -362,43 +382,47 @@ impl Keybindings {
                         .color(color)
                         .modifiers(BorderType::Rounded),
                 )
-                .highlighted_str("? ")
-                .title("Keybindings", Alignment::Center)
+                .highlight_str("? ")
+                .title(Title::from("Keybindings").alignment(HorizontalAlignment::Center))
                 .scroll(true)
                 .step(4)
                 .rows(
                     TableBuilder::default()
-                        .add_col(TextSpan::new("<ESC>").bold().fg(color))
-                        .add_col(TextSpan::from("           Quit termscp"))
+                        .add_col(SpanStatic::raw("<ESC>").bold().fg(color))
+                        .add_col(SpanStatic::from("           Quit termscp"))
                         .add_row()
-                        .add_col(TextSpan::new("<TAB>").bold().fg(color))
-                        .add_col(TextSpan::from("           Switch from form and bookmarks"))
+                        .add_col(SpanStatic::raw("<TAB>").bold().fg(color))
+                        .add_col(SpanStatic::from(
+                            "           Switch from form and bookmarks",
+                        ))
                         .add_row()
-                        .add_col(TextSpan::new("<RIGHT/LEFT>").bold().fg(color))
-                        .add_col(TextSpan::from("    Switch bookmark tab"))
+                        .add_col(SpanStatic::raw("<RIGHT/LEFT>").bold().fg(color))
+                        .add_col(SpanStatic::from("    Switch bookmark tab"))
                         .add_row()
-                        .add_col(TextSpan::new("<UP/DOWN>").bold().fg(color))
-                        .add_col(TextSpan::from("       Move up/down in current tab"))
+                        .add_col(SpanStatic::raw("<UP/DOWN>").bold().fg(color))
+                        .add_col(SpanStatic::from("       Move up/down in current tab"))
                         .add_row()
-                        .add_col(TextSpan::new("<ENTER>").bold().fg(color))
-                        .add_col(TextSpan::from("         Connect/Load bookmark"))
+                        .add_col(SpanStatic::raw("<ENTER>").bold().fg(color))
+                        .add_col(SpanStatic::from("         Connect/Load bookmark"))
                         .add_row()
-                        .add_col(TextSpan::new("<DEL|E>").bold().fg(color))
-                        .add_col(TextSpan::from("         Delete selected bookmark"))
+                        .add_col(SpanStatic::raw("<DEL|E>").bold().fg(color))
+                        .add_col(SpanStatic::from("         Delete selected bookmark"))
                         .add_row()
-                        .add_col(TextSpan::new("<CTRL+C>").bold().fg(color))
-                        .add_col(TextSpan::from("        Enter setup"))
+                        .add_col(SpanStatic::raw("<CTRL+C>").bold().fg(color))
+                        .add_col(SpanStatic::from("        Enter setup"))
                         .add_row()
-                        .add_col(TextSpan::new("<CTRL+S>").bold().fg(color))
-                        .add_col(TextSpan::from("        Save bookmark"))
-                        .build(),
+                        .add_col(SpanStatic::raw("<CTRL+S>").bold().fg(color))
+                        .add_col(SpanStatic::from("        Save bookmark"))
+                        .build()
+                        .into_iter()
+                        .map(|row| row.into_iter().flat_map(|l| l.spans).collect::<Vec<_>>()),
                 ),
         }
     }
 }
 
-impl Component<Msg, NoUserEvent> for Keybindings {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for Keybindings {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         match ev {
             Event::Keyboard(KeyEvent {
                 code: Key::Esc | Key::Enter,

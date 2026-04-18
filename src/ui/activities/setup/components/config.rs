@@ -2,11 +2,13 @@
 //!
 //! config tab components
 
-use tui_realm_stdlib::{Input, Radio};
+use tui_realm_stdlib::components::{Input, Radio};
 use tuirealm::command::{Cmd, Direction, Position};
-use tuirealm::event::{Key, KeyEvent, KeyModifiers};
-use tuirealm::props::{Alignment, BorderType, Borders, Color, InputType, Style};
-use tuirealm::{Component, Event, MockComponent, NoUserEvent};
+use tuirealm::component::{AppComponent, Component};
+use tuirealm::event::{Event, Key, KeyEvent, KeyModifiers, NoUserEvent};
+use tuirealm::props::{
+    BorderType, Borders, Color, HorizontalAlignment, InputType, Style, TextModifiers, Title,
+};
 
 use super::{ConfigMsg, Msg};
 use crate::explorer::GroupDirs as GroupDirsEnum;
@@ -19,7 +21,7 @@ use crate::utils::parser::parse_bytesize;
 
 // -- components
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct CheckUpdates {
     component: Radio,
 }
@@ -28,22 +30,26 @@ impl CheckUpdates {
     pub fn new(enabled: bool) -> Self {
         Self {
             component: Radio::default()
+                .highlight_style(
+                    Style::default()
+                        .fg(Color::LightYellow)
+                        .add_modifier(TextModifiers::REVERSED),
+                )
                 .borders(
                     Borders::default()
                         .color(Color::LightYellow)
                         .modifiers(BorderType::Rounded),
                 )
                 .choices(["Yes", "No"])
-                .foreground(Color::LightYellow)
                 .rewind(true)
-                .title("Check for updates?", Alignment::Left)
+                .title(Title::from("Check for updates?").alignment(HorizontalAlignment::Left))
                 .value(usize::from(!enabled)),
         }
     }
 }
 
-impl Component<Msg, NoUserEvent> for CheckUpdates {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for CheckUpdates {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         handle_radio_ev(
             self,
             ev,
@@ -53,7 +59,7 @@ impl Component<Msg, NoUserEvent> for CheckUpdates {
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct DefaultProtocol {
     component: Radio,
 }
@@ -70,7 +76,7 @@ impl DefaultProtocol {
                 .choices(["SFTP", "SCP", "FTP", "FTPS", "Kube", "S3", "SMB", "WebDAV"])
                 .foreground(Color::Cyan)
                 .rewind(true)
-                .title("Default protocol", Alignment::Left)
+                .title(Title::from("Default protocol").alignment(HorizontalAlignment::Left))
                 .value(match protocol {
                     FileTransferProtocol::Sftp => RADIO_PROTOCOL_SFTP,
                     FileTransferProtocol::Scp => RADIO_PROTOCOL_SCP,
@@ -85,8 +91,8 @@ impl DefaultProtocol {
     }
 }
 
-impl Component<Msg, NoUserEvent> for DefaultProtocol {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for DefaultProtocol {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         handle_radio_ev(
             self,
             ev,
@@ -96,7 +102,7 @@ impl Component<Msg, NoUserEvent> for DefaultProtocol {
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct GroupDirs {
     component: Radio,
 }
@@ -105,15 +111,19 @@ impl GroupDirs {
     pub fn new(opt: Option<GroupDirsEnum>) -> Self {
         Self {
             component: Radio::default()
+                .highlight_style(
+                    Style::default()
+                        .fg(Color::LightMagenta)
+                        .add_modifier(TextModifiers::REVERSED),
+                )
                 .borders(
                     Borders::default()
                         .color(Color::LightMagenta)
                         .modifiers(BorderType::Rounded),
                 )
                 .choices(["Display first", "Display last", "No"])
-                .foreground(Color::LightMagenta)
                 .rewind(true)
-                .title("Group directories", Alignment::Left)
+                .title(Title::from("Group directories").alignment(HorizontalAlignment::Left))
                 .value(match opt {
                     Some(GroupDirsEnum::First) => 0,
                     Some(GroupDirsEnum::Last) => 1,
@@ -123,8 +133,8 @@ impl GroupDirs {
     }
 }
 
-impl Component<Msg, NoUserEvent> for GroupDirs {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for GroupDirs {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         handle_radio_ev(
             self,
             ev,
@@ -134,7 +144,7 @@ impl Component<Msg, NoUserEvent> for GroupDirs {
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct HiddenFiles {
     component: Radio,
 }
@@ -151,14 +161,17 @@ impl HiddenFiles {
                 .choices(["Yes", "No"])
                 .foreground(Color::LightRed)
                 .rewind(true)
-                .title("Show hidden files? (by default)", Alignment::Left)
+                .title(
+                    Title::from("Show hidden files? (by default)")
+                        .alignment(HorizontalAlignment::Left),
+                )
                 .value(usize::from(!enabled)),
         }
     }
 }
 
-impl Component<Msg, NoUserEvent> for HiddenFiles {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for HiddenFiles {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         handle_radio_ev(
             self,
             ev,
@@ -168,7 +181,7 @@ impl Component<Msg, NoUserEvent> for HiddenFiles {
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct NotificationsEnabled {
     component: Radio,
 }
@@ -177,22 +190,26 @@ impl NotificationsEnabled {
     pub fn new(enabled: bool) -> Self {
         Self {
             component: Radio::default()
+                .highlight_style(
+                    Style::default()
+                        .fg(Color::LightRed)
+                        .add_modifier(TextModifiers::REVERSED),
+                )
                 .borders(
                     Borders::default()
                         .color(Color::LightRed)
                         .modifiers(BorderType::Rounded),
                 )
                 .choices(["Yes", "No"])
-                .foreground(Color::LightRed)
                 .rewind(true)
-                .title("Enable notifications?", Alignment::Left)
+                .title(Title::from("Enable notifications?").alignment(HorizontalAlignment::Left))
                 .value(usize::from(!enabled)),
         }
     }
 }
 
-impl Component<Msg, NoUserEvent> for NotificationsEnabled {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for NotificationsEnabled {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         handle_radio_ev(
             self,
             ev,
@@ -202,7 +219,7 @@ impl Component<Msg, NoUserEvent> for NotificationsEnabled {
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct PromptOnFileReplace {
     component: Radio,
 }
@@ -219,14 +236,17 @@ impl PromptOnFileReplace {
                 .choices(["Yes", "No"])
                 .foreground(Color::LightBlue)
                 .rewind(true)
-                .title("Prompt when replacing existing files?", Alignment::Left)
+                .title(
+                    Title::from("Prompt when replacing existing files?")
+                        .alignment(HorizontalAlignment::Left),
+                )
                 .value(usize::from(!enabled)),
         }
     }
 }
 
-impl Component<Msg, NoUserEvent> for PromptOnFileReplace {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for PromptOnFileReplace {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         handle_radio_ev(
             self,
             ev,
@@ -236,7 +256,7 @@ impl Component<Msg, NoUserEvent> for PromptOnFileReplace {
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct LocalFileFmt {
     component: Input,
 }
@@ -252,18 +272,21 @@ impl LocalFileFmt {
                 )
                 .foreground(Color::LightGreen)
                 .input_type(InputType::Text)
-                .placeholder(
+                .placeholder(tuirealm::props::SpanStatic::styled(
                     "{NAME:36} {PEX} {SIZE} {MTIME:17:%b %d %Y %H:%M}",
                     Style::default().fg(Color::Rgb(128, 128, 128)),
+                ))
+                .title(
+                    Title::from("File formatter syntax (local)")
+                        .alignment(HorizontalAlignment::Left),
                 )
-                .title("File formatter syntax (local)", Alignment::Left)
                 .value(value),
         }
     }
 }
 
-impl Component<Msg, NoUserEvent> for LocalFileFmt {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for LocalFileFmt {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         handle_input_ev(
             self,
             ev,
@@ -273,7 +296,7 @@ impl Component<Msg, NoUserEvent> for LocalFileFmt {
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct NotificationsThreshold {
     component: Input,
 }
@@ -297,15 +320,21 @@ impl NotificationsThreshold {
                 .foreground(Color::LightYellow)
                 .invalid_style(Style::default().fg(Color::Red))
                 .input_type(InputType::Custom(validate, char_valid))
-                .placeholder("64 MB", Style::default().fg(Color::Rgb(128, 128, 128)))
-                .title("Notifications: minimum transfer size", Alignment::Left)
+                .placeholder(tuirealm::props::SpanStatic::styled(
+                    "64 MB",
+                    Style::default().fg(Color::Rgb(128, 128, 128)),
+                ))
+                .title(
+                    Title::from("Notifications: minimum transfer size")
+                        .alignment(HorizontalAlignment::Left),
+                )
                 .value(value),
         }
     }
 }
 
-impl Component<Msg, NoUserEvent> for NotificationsThreshold {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for NotificationsThreshold {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         handle_input_ev(
             self,
             ev,
@@ -315,7 +344,7 @@ impl Component<Msg, NoUserEvent> for NotificationsThreshold {
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct RemoteFileFmt {
     component: Input,
 }
@@ -331,18 +360,21 @@ impl RemoteFileFmt {
                 )
                 .foreground(Color::Cyan)
                 .input_type(InputType::Text)
-                .placeholder(
+                .placeholder(tuirealm::props::SpanStatic::styled(
                     "{NAME:36} {PEX} {SIZE} {MTIME:17:%b %d %Y %H:%M}",
                     Style::default().fg(Color::Rgb(128, 128, 128)),
+                ))
+                .title(
+                    Title::from("File formatter syntax (remote)")
+                        .alignment(HorizontalAlignment::Left),
                 )
-                .title("File formatter syntax (remote)", Alignment::Left)
                 .value(value),
         }
     }
 }
 
-impl Component<Msg, NoUserEvent> for RemoteFileFmt {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for RemoteFileFmt {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         handle_input_ev(
             self,
             ev,
@@ -352,7 +384,7 @@ impl Component<Msg, NoUserEvent> for RemoteFileFmt {
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct SshConfig {
     component: Input,
 }
@@ -368,18 +400,18 @@ impl SshConfig {
                 )
                 .foreground(Color::LightBlue)
                 .input_type(InputType::Text)
-                .placeholder(
+                .placeholder(tuirealm::props::SpanStatic::styled(
                     "~/.ssh/config",
                     Style::default().fg(Color::Rgb(128, 128, 128)),
-                )
-                .title("SSH configuration path", Alignment::Left)
+                ))
+                .title(Title::from("SSH configuration path").alignment(HorizontalAlignment::Left))
                 .value(value),
         }
     }
 }
 
-impl Component<Msg, NoUserEvent> for SshConfig {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for SshConfig {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         handle_input_ev(
             self,
             ev,
@@ -389,7 +421,7 @@ impl Component<Msg, NoUserEvent> for SshConfig {
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct TextEditor {
     component: Input,
 }
@@ -405,15 +437,18 @@ impl TextEditor {
                 )
                 .foreground(Color::LightGreen)
                 .input_type(InputType::Text)
-                .placeholder("vim", Style::default().fg(Color::Rgb(128, 128, 128)))
-                .title("Text editor", Alignment::Left)
+                .placeholder(tuirealm::props::SpanStatic::styled(
+                    "vim",
+                    Style::default().fg(Color::Rgb(128, 128, 128)),
+                ))
+                .title(Title::from("Text editor").alignment(HorizontalAlignment::Left))
                 .value(value),
         }
     }
 }
 
-impl Component<Msg, NoUserEvent> for TextEditor {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for TextEditor {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         handle_input_ev(
             self,
             ev,
@@ -426,8 +461,8 @@ impl Component<Msg, NoUserEvent> for TextEditor {
 // -- event handler
 
 fn handle_input_ev(
-    component: &mut dyn Component<Msg, NoUserEvent>,
-    ev: Event<NoUserEvent>,
+    component: &mut dyn AppComponent<Msg, NoUserEvent>,
+    ev: &Event<NoUserEvent>,
     on_key_down: Msg,
     on_key_up: Msg,
 ) -> Option<Msg> {
@@ -476,7 +511,7 @@ fn handle_input_ev(
             code: Key::Char(ch),
             ..
         }) => {
-            component.perform(Cmd::Type(ch));
+            component.perform(Cmd::Type(*ch));
             Some(Msg::Config(ConfigMsg::ConfigChanged))
         }
         Event::Keyboard(KeyEvent {
@@ -488,8 +523,8 @@ fn handle_input_ev(
 }
 
 fn handle_radio_ev(
-    component: &mut dyn Component<Msg, NoUserEvent>,
-    ev: Event<NoUserEvent>,
+    component: &mut dyn AppComponent<Msg, NoUserEvent>,
+    ev: &Event<NoUserEvent>,
     on_key_down: Msg,
     on_key_up: Msg,
 ) -> Option<Msg> {

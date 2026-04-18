@@ -7,6 +7,7 @@
 // Ext
 use tuirealm::ratatui::layout::{Constraint, Direction, Layout};
 use tuirealm::ratatui::widgets::Clear;
+use tuirealm::terminal::TerminalAdapter;
 
 use super::{Context, Id, IdCommon, IdSsh, SetupActivity, ViewLayout, components};
 use crate::utils::ui::{Popup, Size};

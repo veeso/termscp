@@ -1,10 +1,10 @@
 use tuirealm::command::{Cmd, Direction};
+use tuirealm::component::{AppComponent, Component};
 use tuirealm::event::{Event, Key, KeyEvent, NoUserEvent};
-use tuirealm::{Component, MockComponent};
 
 use super::*;
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct InputS3Bucket {
     component: Input,
     form_tab: FormTab,
@@ -20,8 +20,11 @@ impl InputS3Bucket {
                         .modifiers(BorderType::Rounded),
                 )
                 .foreground(color)
-                .placeholder("my-bucket", Style::default().fg(Color::Rgb(128, 128, 128)))
-                .title("Bucket name", Alignment::Left)
+                .placeholder(tuirealm::props::SpanStatic::styled(
+                    "my-bucket",
+                    Style::default().fg(Color::Rgb(128, 128, 128)),
+                ))
+                .title(Title::from("Bucket name").alignment(HorizontalAlignment::Left))
                 .input_type(InputType::Text)
                 .value(bucket),
             form_tab,
@@ -29,8 +32,8 @@ impl InputS3Bucket {
     }
 }
 
-impl Component<Msg, NoUserEvent> for InputS3Bucket {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for InputS3Bucket {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         let on_key_down = match self.form_tab {
             FormTab::Remote => Msg::Ui(UiMsg::Remote(UiAuthFormMsg::S3BucketBlurDown)),
             FormTab::HostBridge => Msg::Ui(UiMsg::HostBridge(UiAuthFormMsg::S3BucketBlurDown)),
@@ -45,7 +48,7 @@ impl Component<Msg, NoUserEvent> for InputS3Bucket {
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct InputS3Region {
     component: Input,
     form_tab: FormTab,
@@ -61,8 +64,11 @@ impl InputS3Region {
                         .modifiers(BorderType::Rounded),
                 )
                 .foreground(color)
-                .placeholder("eu-west-1", Style::default().fg(Color::Rgb(128, 128, 128)))
-                .title("Region", Alignment::Left)
+                .placeholder(tuirealm::props::SpanStatic::styled(
+                    "eu-west-1",
+                    Style::default().fg(Color::Rgb(128, 128, 128)),
+                ))
+                .title(Title::from("Region").alignment(HorizontalAlignment::Left))
                 .input_type(InputType::Text)
                 .value(region),
             form_tab,
@@ -70,8 +76,8 @@ impl InputS3Region {
     }
 }
 
-impl Component<Msg, NoUserEvent> for InputS3Region {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for InputS3Region {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         let on_key_down = match self.form_tab {
             FormTab::Remote => Msg::Ui(UiMsg::Remote(UiAuthFormMsg::S3RegionBlurDown)),
             FormTab::HostBridge => Msg::Ui(UiMsg::HostBridge(UiAuthFormMsg::S3RegionBlurDown)),
@@ -86,7 +92,7 @@ impl Component<Msg, NoUserEvent> for InputS3Region {
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct InputS3Endpoint {
     component: Input,
     form_tab: FormTab,
@@ -102,11 +108,11 @@ impl InputS3Endpoint {
                         .modifiers(BorderType::Rounded),
                 )
                 .foreground(color)
-                .placeholder(
+                .placeholder(tuirealm::props::SpanStatic::styled(
                     "http://localhost:9000",
                     Style::default().fg(Color::Rgb(128, 128, 128)),
-                )
-                .title("Endpoint", Alignment::Left)
+                ))
+                .title(Title::from("Endpoint").alignment(HorizontalAlignment::Left))
                 .input_type(InputType::Text)
                 .value(endpoint),
             form_tab,
@@ -114,8 +120,8 @@ impl InputS3Endpoint {
     }
 }
 
-impl Component<Msg, NoUserEvent> for InputS3Endpoint {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for InputS3Endpoint {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         let on_key_down = match self.form_tab {
             FormTab::Remote => Msg::Ui(UiMsg::Remote(UiAuthFormMsg::S3EndpointBlurDown)),
             FormTab::HostBridge => Msg::Ui(UiMsg::HostBridge(UiAuthFormMsg::S3EndpointBlurDown)),
@@ -130,7 +136,7 @@ impl Component<Msg, NoUserEvent> for InputS3Endpoint {
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct RadioS3NewPathStyle {
     component: Radio,
     form_tab: FormTab,
@@ -140,23 +146,27 @@ impl RadioS3NewPathStyle {
     pub fn new(new_path_style: bool, form_tab: FormTab, color: Color) -> Self {
         Self {
             component: Radio::default()
+                .highlight_style(
+                    Style::default()
+                        .fg(color)
+                        .add_modifier(TextModifiers::REVERSED),
+                )
                 .borders(
                     Borders::default()
                         .color(color)
                         .modifiers(BorderType::Rounded),
                 )
                 .choices(["Yes", "No"])
-                .foreground(color)
                 .rewind(true)
-                .title("New path style", Alignment::Left)
+                .title(Title::from("New path style").alignment(HorizontalAlignment::Left))
                 .value(usize::from(!new_path_style)),
             form_tab,
         }
     }
 }
 
-impl Component<Msg, NoUserEvent> for RadioS3NewPathStyle {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for RadioS3NewPathStyle {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         match ev {
             Event::Keyboard(KeyEvent {
                 code: Key::Left, ..
@@ -199,7 +209,7 @@ impl Component<Msg, NoUserEvent> for RadioS3NewPathStyle {
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct InputS3Profile {
     component: Input,
     form_tab: FormTab,
@@ -215,8 +225,11 @@ impl InputS3Profile {
                         .modifiers(BorderType::Rounded),
                 )
                 .foreground(color)
-                .placeholder("default", Style::default().fg(Color::Rgb(128, 128, 128)))
-                .title("Profile", Alignment::Left)
+                .placeholder(tuirealm::props::SpanStatic::styled(
+                    "default",
+                    Style::default().fg(Color::Rgb(128, 128, 128)),
+                ))
+                .title(Title::from("Profile").alignment(HorizontalAlignment::Left))
                 .input_type(InputType::Text)
                 .value(profile),
             form_tab,
@@ -224,8 +237,8 @@ impl InputS3Profile {
     }
 }
 
-impl Component<Msg, NoUserEvent> for InputS3Profile {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for InputS3Profile {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         let on_key_down = match self.form_tab {
             FormTab::Remote => Msg::Ui(UiMsg::Remote(UiAuthFormMsg::S3ProfileBlurDown)),
             FormTab::HostBridge => Msg::Ui(UiMsg::HostBridge(UiAuthFormMsg::S3ProfileBlurDown)),
@@ -240,7 +253,7 @@ impl Component<Msg, NoUserEvent> for InputS3Profile {
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct InputS3AccessKey {
     component: Input,
     form_tab: FormTab,
@@ -256,8 +269,11 @@ impl InputS3AccessKey {
                         .modifiers(BorderType::Rounded),
                 )
                 .foreground(color)
-                .placeholder("AKIA...", Style::default().fg(Color::Rgb(128, 128, 128)))
-                .title("Access key", Alignment::Left)
+                .placeholder(tuirealm::props::SpanStatic::styled(
+                    "AKIA...",
+                    Style::default().fg(Color::Rgb(128, 128, 128)),
+                ))
+                .title(Title::from("Access key").alignment(HorizontalAlignment::Left))
                 .input_type(InputType::Text)
                 .value(access_key),
             form_tab,
@@ -265,8 +281,8 @@ impl InputS3AccessKey {
     }
 }
 
-impl Component<Msg, NoUserEvent> for InputS3AccessKey {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for InputS3AccessKey {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         let on_key_down = match self.form_tab {
             FormTab::Remote => Msg::Ui(UiMsg::Remote(UiAuthFormMsg::S3AccessKeyBlurDown)),
             FormTab::HostBridge => Msg::Ui(UiMsg::HostBridge(UiAuthFormMsg::S3AccessKeyBlurDown)),
@@ -281,7 +297,7 @@ impl Component<Msg, NoUserEvent> for InputS3AccessKey {
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct InputS3SecretAccessKey {
     component: Input,
     form_tab: FormTab,
@@ -297,7 +313,7 @@ impl InputS3SecretAccessKey {
                         .modifiers(BorderType::Rounded),
                 )
                 .foreground(color)
-                .title("Secret access key", Alignment::Left)
+                .title(Title::from("Secret access key").alignment(HorizontalAlignment::Left))
                 .input_type(InputType::Password('*'))
                 .value(secret_access_key),
             form_tab,
@@ -305,8 +321,8 @@ impl InputS3SecretAccessKey {
     }
 }
 
-impl Component<Msg, NoUserEvent> for InputS3SecretAccessKey {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for InputS3SecretAccessKey {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         let on_key_down = match self.form_tab {
             FormTab::Remote => Msg::Ui(UiMsg::Remote(UiAuthFormMsg::S3SecretAccessKeyBlurDown)),
             FormTab::HostBridge => {
@@ -325,7 +341,7 @@ impl Component<Msg, NoUserEvent> for InputS3SecretAccessKey {
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct InputS3SecurityToken {
     component: Input,
     form_tab: FormTab,
@@ -341,7 +357,7 @@ impl InputS3SecurityToken {
                         .modifiers(BorderType::Rounded),
                 )
                 .foreground(color)
-                .title("Security token", Alignment::Left)
+                .title(Title::from("Security token").alignment(HorizontalAlignment::Left))
                 .input_type(InputType::Password('*'))
                 .value(security_token),
             form_tab,
@@ -349,8 +365,8 @@ impl InputS3SecurityToken {
     }
 }
 
-impl Component<Msg, NoUserEvent> for InputS3SecurityToken {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for InputS3SecurityToken {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         let on_key_down = match self.form_tab {
             FormTab::Remote => Msg::Ui(UiMsg::Remote(UiAuthFormMsg::S3SecurityTokenBlurDown)),
             FormTab::HostBridge => {
@@ -367,7 +383,7 @@ impl Component<Msg, NoUserEvent> for InputS3SecurityToken {
     }
 }
 
-#[derive(MockComponent)]
+#[derive(Component)]
 pub struct InputS3SessionToken {
     component: Input,
     form_tab: FormTab,
@@ -383,7 +399,7 @@ impl InputS3SessionToken {
                         .modifiers(BorderType::Rounded),
                 )
                 .foreground(color)
-                .title("Session token", Alignment::Left)
+                .title(Title::from("Session token").alignment(HorizontalAlignment::Left))
                 .input_type(InputType::Password('*'))
                 .value(session_token),
             form_tab,
@@ -391,8 +407,8 @@ impl InputS3SessionToken {
     }
 }
 
-impl Component<Msg, NoUserEvent> for InputS3SessionToken {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Msg> {
+impl AppComponent<Msg, NoUserEvent> for InputS3SessionToken {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         let on_key_down = match self.form_tab {
             FormTab::Remote => Msg::Ui(UiMsg::Remote(UiAuthFormMsg::S3SessionTokenBlurDown)),
             FormTab::HostBridge => {
