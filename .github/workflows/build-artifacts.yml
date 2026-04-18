@@ -28,10 +28,21 @@ jobs:
             target: x86_64-unknown-linux-gnu
             debian_suffix: amd64
 
+          - release_for: Linux-aarch64
+            os: ubuntu-24.04-arm
+            platform: linux
+            target: aarch64-unknown-linux-gnu
+            debian_suffix: arm64
+
           - release_for: Windows-x86_64
             os: windows-latest
             platform: windows
             target: x86_64-pc-windows-msvc
+
+          - release_for: Windows-aarch64
+            os: windows-11-arm
+            platform: windows
+            target: aarch64-pc-windows-msvc
 
     runs-on: ${{ matrix.platform.os }}
     steps:
