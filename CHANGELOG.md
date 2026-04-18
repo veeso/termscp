@@ -216,7 +216,7 @@ Released on 2026-04-18
 
 ## 0.19.1
 
-Released on 2025-12-20
+Released on 2026-04-18
 
 - [Issue 371](https://github.com/veeso/termscp/issues/371): Updated dependencies to allow build on NetBSD
 
