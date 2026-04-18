@@ -3,7 +3,6 @@ body = """
 ## {{ version | trim_start_matches(pat="v") }}
 
 Released on {{ timestamp | date(format="%Y-%m-%d") }}
-{{ "" }}
 {%- if commits | filter(attribute="breaking", value=true) | length > 0 %}
 
 ### ⚠ Breaking Changes
