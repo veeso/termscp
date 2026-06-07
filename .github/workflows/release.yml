@@ -1,0 +1,368 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release, e.g. 1.1.0 (no leading v)"
+        required: true
+        type: string
+      dry_run:
+        description: "Dry run: build & compute everything, push/publish nothing"
+        required: true
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ inputs.version }}
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          token: ${{ secrets.RELEASE_PAT }}
+          persist-credentials: true
+
+      - name: Configure git identity
+        run: |
+          git config user.name "veeso"
+          git config user.email "christian.visintin@veeso.dev"
+
+      - name: Install git-cliff
+        uses: taiki-e/install-action@56545b37b57562edd73171cb6c62cc509db4c34e # v2
+        with:
+          tool: git-cliff
+
+      - name: Bump version
+        env:
+          VERSION: ${{ inputs.version }}
+        run: dist/release/bump_version.sh "$VERSION" "$(date +%F)"
+
+      - name: Generate CHANGELOG
+        env:
+          VERSION: ${{ inputs.version }}
+        run: git-cliff --tag "v$VERSION" -o CHANGELOG.md
+
+      - name: Generate release notes
+        run: git-cliff --latest --strip header -o RELEASE_NOTES.md
+
+      - name: Upload release notes
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: release-notes
+          path: RELEASE_NOTES.md
+          retention-days: 1
+          if-no-files-found: error
+
+      - name: Rebuild site CSS
+        run: npx tailwindcss@3 -i site/input.css -o site/output.css --minify
+
+      - name: Show diff (dry run)
+        if: ${{ inputs.dry_run }}
+        run: git --no-pager diff
+
+      - name: Commit & push version bump
+        if: ${{ !inputs.dry_run }}
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          rm -f RELEASE_NOTES.md
+          git add -A
+          git commit -m "chore: release v$VERSION"
+          git push origin HEAD:main
+
+  build:
+    needs: prepare
+    name: build-${{ matrix.target }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            kind: linux
+            deb_suffix: amd64
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-latest
+            kind: linux
+            deb_suffix: arm64
+          - target: aarch64-apple-darwin
+            os: macos-latest
+            kind: macos
+            features: "--features smb-vendored"
+          - target: x86_64-apple-darwin
+            os: macos-latest
+            kind: macos
+            features: "--no-default-features --features keyring"
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+            kind: windows
+          - target: aarch64-pc-windows-msvc
+            os: windows-11-arm
+            kind: windows
+    runs-on: ${{ matrix.os }}
+    env:
+      VERSION: ${{ needs.prepare.outputs.version }}
+      TARGET: ${{ matrix.target }}
+      FEATURES: ${{ matrix.features }}
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          ref: ${{ inputs.dry_run && github.sha || 'main' }}
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8 # stable
+        with:
+          targets: ${{ matrix.target }}
+
+      # ---- Linux: zigbuild against old glibc (see Task 1) ----
+      - name: Install zig + cargo-zigbuild (Linux)
+        if: matrix.kind == 'linux'
+        run: |
+          pipx install ziglang
+          cargo install --locked cargo-zigbuild cargo-deb
+      - name: Install samba build deps (Linux)
+        if: matrix.kind == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y make build-essential pkg-config libdbus-1-dev \
+            flex bison cpanminus libacl1-dev
+          sudo cpanm Parse::Yapp::Driver
+      - name: Build (Linux)
+        if: matrix.kind == 'linux'
+        run: cargo zigbuild --release --features smb-vendored --target "$TARGET.2.17"
+      - name: Build deb (Linux)
+        if: matrix.kind == 'linux'
+        run: cargo deb --no-build --target "$TARGET" --features smb-vendored
+
+      # ---- macOS ----
+      - name: Install deps (macOS)
+        if: matrix.kind == 'macos'
+        run: |
+          brew update
+          brew install bison cpanminus cups flex gettext gmp gnutls icu4c jansson \
+            libarchive libbsd libunistring libgit2 libtirpc openldap pkg-config zlib
+          for p in bison cups flex gettext gmp gnutls icu4c jansson libarchive \
+            libbsd libgit2 libtirpc libunistring openldap zlib; do brew link --force "$p"; done
+          cpanm Parse::Yapp::Driver
+      - name: Build (macOS)
+        if: matrix.kind == 'macos'
+        run: cargo build --release $FEATURES --target "$TARGET"
+
+      # ---- Windows ----
+      - name: Build (Windows)
+        if: matrix.kind == 'windows'
+        run: cargo build --release --features smb-vendored --target "$env:TARGET"
+
+      # ---- Package posix (tar.gz) ----
+      - name: Package (posix)
+        if: matrix.kind != 'windows'
+        run: |
+          mkdir -p .artifact
+          cp "target/$TARGET/release/termscp" .artifact/termscp
+          tar -czf ".artifact/termscp-v$VERSION-$TARGET.tar.gz" -C .artifact termscp
+          shasum -a 256 ".artifact/termscp-v$VERSION-$TARGET.tar.gz" | awk '{print $1}' > ".artifact/$TARGET.sha256"
+
+      # ---- Package windows (zip) ----
+      - name: Package (windows)
+        if: matrix.kind == 'windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force .artifact | Out-Null
+          Copy-Item "target/$env:TARGET/release/termscp.exe" .artifact/termscp.exe
+          Compress-Archive -Path .artifact/termscp.exe -DestinationPath ".artifact/termscp-v$env:VERSION-$env:TARGET.zip"
+          (Get-FileHash ".artifact/termscp-v$env:VERSION-$env:TARGET.zip" -Algorithm SHA256).Hash.ToLower() | Out-File -NoNewline ".artifact/$env:TARGET.sha256"
+
+      - name: Move deb into artifact dir (Linux)
+        if: matrix.kind == 'linux'
+        run: cp target/"$TARGET"/debian/*.deb .artifact/
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: build-${{ matrix.target }}
+          path: .artifact/*
+          retention-days: 1
+          if-no-files-found: error
+
+  publish-homebrew:
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ needs.prepare.outputs.version }}
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: build-*
+          path: dl
+          merge-multiple: true
+
+      - name: Checkout homebrew tap
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          repository: veeso/homebrew-termscp
+          token: ${{ secrets.RELEASE_PAT }}
+          path: tap
+          persist-credentials: true
+
+      - name: Rewrite formula
+        run: |
+          set -euo pipefail
+          cd "$GITHUB_WORKSPACE"
+          SHA_MAC_ARM=$(cat dl/aarch64-apple-darwin.sha256)
+          SHA_MAC_X64=$(cat dl/x86_64-apple-darwin.sha256)
+          SHA_LIN_ARM=$(cat dl/aarch64-unknown-linux-gnu.sha256)
+          SHA_LIN_X64=$(cat dl/x86_64-unknown-linux-gnu.sha256)
+          BASE="https://github.com/veeso/termscp/releases/latest/download"
+          cat > tap/Formula/termscp.rb <<EOF
+          class Termscp < Formula
+            desc "A feature rich terminal file transfer and explorer with support for SCP/SFTP/FTP/S3/Kube/SMB/WebDAV"
+            homepage "https://termscp.veeso.dev/"
+            license "MIT"
+            version "$VERSION"
+
+            on_macos do
+              depends_on "bison"
+              depends_on "cups"
+              depends_on "flex"
+              depends_on "gettext"
+              depends_on "gmp"
+              depends_on "gnutls"
+              depends_on "icu4c"
+              depends_on "jansson"
+              depends_on "libarchive"
+              depends_on "libbsd"
+              depends_on "libgit2"
+              depends_on "libtirpc"
+              depends_on "libunistring"
+              depends_on "openldap"
+              depends_on "zlib"
+
+              on_arm do
+                url "$BASE/termscp-v$VERSION-aarch64-apple-darwin.tar.gz"
+                sha256 "$SHA_MAC_ARM"
+              end
+              on_intel do
+                url "$BASE/termscp-v$VERSION-x86_64-apple-darwin.tar.gz"
+                sha256 "$SHA_MAC_X64"
+              end
+            end
+
+            on_linux do
+              depends_on "dbus"
+
+              on_arm do
+                url "$BASE/termscp-v$VERSION-aarch64-unknown-linux-gnu.tar.gz"
+                sha256 "$SHA_LIN_ARM"
+              end
+              on_intel do
+                url "$BASE/termscp-v$VERSION-x86_64-unknown-linux-gnu.tar.gz"
+                sha256 "$SHA_LIN_X64"
+              end
+            end
+
+            def install
+              bin.install "termscp"
+            end
+          end
+          EOF
+
+      - name: Show formula (dry run)
+        if: ${{ inputs.dry_run }}
+        run: cat tap/Formula/termscp.rb
+
+      - name: Commit & push formula
+        if: ${{ !inputs.dry_run }}
+        run: |
+          cd tap
+          git config user.name "veeso"
+          git config user.email "christian.visintin@veeso.dev"
+          git add Formula/termscp.rb
+          git commit -m "termscp $VERSION"
+          git push
+
+  release:
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ needs.prepare.outputs.version }}
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          token: ${{ secrets.RELEASE_PAT }}
+          ref: ${{ inputs.dry_run && github.sha || 'main' }}
+          persist-credentials: true
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: build-*
+          path: dl
+          merge-multiple: true
+
+      - name: Download release notes
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: release-notes
+          path: notes
+
+      - name: Patch chocolatey checksums & pack
+        run: |
+          set -euo pipefail
+          SHA_WIN_X64=$(cat dl/x86_64-pc-windows-msvc.sha256)
+          SHA_WIN_ARM=$(cat dl/aarch64-pc-windows-msvc.sha256)
+          PS=dist/chocolatey/tools/chocolateyinstall.ps1
+          # arm checksum is the first $checksum line, x64 the second (matches file order)
+          SHA_WIN_ARM="$SHA_WIN_ARM" SHA_WIN_X64="$SHA_WIN_X64" \
+            perl -0pi -e 'BEGIN{our $n=0} s/(\$checksum\s*=\s*'"'"')[0-9a-f]*('"'"')/ $n++==0 ? "${1}$ENV{SHA_WIN_ARM}${2}" : "${1}$ENV{SHA_WIN_X64}${2}" /ge' "$PS"
+          docker run --rm -v "$PWD/dist/chocolatey:/work" -w /work \
+            chocolatey/choco:latest pack || \
+            (echo "choco pack via docker failed — see Task 6 notes" && exit 1)
+
+      - name: Assemble release assets
+        run: |
+          mkdir -p out
+          cp dl/*.tar.gz dl/*.deb dl/*.zip out/ 2>/dev/null || true
+          cp dist/chocolatey/*.nupkg out/
+
+      - name: Upload assets artifact (dry run)
+        if: ${{ inputs.dry_run }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: release-assets-dryrun
+          path: out/*
+          retention-days: 3
+
+      - name: Create GitHub release
+        if: ${{ !inputs.dry_run }}
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PAT }}
+        run: |
+          gh release create "v$VERSION" out/* \
+            --title "v$VERSION" \
+            --notes-file notes/RELEASE_NOTES.md
+
+  publish-choco:
+    needs: [prepare, release]
+    if: ${{ !inputs.dry_run }}
+    runs-on: windows-latest
+    env:
+      VERSION: ${{ needs.prepare.outputs.version }}
+    steps:
+      - name: Download nupkg from release
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PAT }}
+        run: gh release download "v$env:VERSION" --repo veeso/termscp --pattern "*.nupkg"
+
+      - name: Push to Chocolatey
+        env:
+          CHOCO_API_KEY: ${{ secrets.CHOCO_API_KEY }}
+        run: |
+          choco apikey --key $env:CHOCO_API_KEY --source https://push.chocolatey.org/
+          choco push (Get-ChildItem *.nupkg).Name --source https://push.chocolatey.org/
