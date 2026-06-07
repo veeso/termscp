@@ -1,5 +1,5 @@
 ---
-import { useTranslations, type Locale } from "../i18n/ui";
+import { useTranslations, DOCS_URL, type Locale } from "../i18n/ui";
 interface Props { locale: Locale; }
 const { locale } = Astro.props;
 const t = useTranslations(locale);
@@ -10,6 +10,7 @@ const year = new Date().getFullYear();
     <div class="flex gap-5">
       <a href="https://github.com/veeso/termscp" class="hover:text-text">GitHub</a>
       <a href="https://crates.io/crates/termscp" class="hover:text-text">crates.io</a>
+      <a href={DOCS_URL} class="hover:text-text">{t("nav.manual")}</a>
       <a href="https://ko-fi.com/veeso" class="hover:text-text">{t("footer.support")}</a>
     </div>
     <p>© {year} Christian Visintin · {t("footer.rights")}</p>

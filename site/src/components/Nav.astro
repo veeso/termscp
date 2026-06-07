@@ -1,5 +1,5 @@
 ---
-import { localizePath, useTranslations, type Locale } from "../i18n/ui";
+import { localizePath, useTranslations, DOCS_URL, type Locale } from "../i18n/ui";
 import ThemeToggle from "./ThemeToggle.astro";
 import LangPicker from "./LangPicker.astro";
 
@@ -21,7 +21,7 @@ const p = (sub: string) => localizePath(locale, sub);
     <!-- Desktop -->
     <div class="hidden items-center gap-5 text-sm sm:flex">
       <a href={p("/install")} class="text-overlay hover:text-text">{t("nav.install")}</a>
-      <a href={p("/user-manual")} class="text-overlay hover:text-text">{t("nav.manual")}</a>
+      <a href={DOCS_URL} class="text-overlay hover:text-text">{t("nav.manual")}</a>
       <a href="https://github.com/veeso/termscp" class="text-overlay hover:text-text">{t("nav.github")}</a>
       <LangPicker locale={locale} path={path} />
       <ThemeToggle />
@@ -32,7 +32,7 @@ const p = (sub: string) => localizePath(locale, sub);
       <summary class="cursor-pointer list-none rounded p-2 text-text hover:bg-mantle" aria-label="Menu">☰</summary>
       <div class="absolute right-0 mt-2 flex w-48 flex-col gap-3 rounded-lg border border-line bg-mantle p-4 text-sm shadow-xl">
         <a href={p("/install")} class="text-overlay hover:text-text">{t("nav.install")}</a>
-        <a href={p("/user-manual")} class="text-overlay hover:text-text">{t("nav.manual")}</a>
+        <a href={DOCS_URL} class="text-overlay hover:text-text">{t("nav.manual")}</a>
         <a href="https://github.com/veeso/termscp" class="text-overlay hover:text-text">{t("nav.github")}</a>
         <LangPicker locale={locale} path={path} />
         <ThemeToggle />

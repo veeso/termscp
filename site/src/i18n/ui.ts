@@ -4,6 +4,9 @@ import it from "./it.json";
 import fr from "./fr.json";
 import es from "./es.json";
 
+/** External documentation site (mdbook), deployed separately. */
+export const DOCS_URL = "https://docs.termscp.rs";
+
 export const locales = ["en", "zh-CN", "it", "fr", "es"] as const;
 export type Locale = (typeof locales)[number];
 export const defaultLocale: Locale = "en";
