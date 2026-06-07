@@ -1,32 +1,31 @@
 ---
-// Tiny client island: flips data-theme + persists. Contract: writes "frappe"|"latte".
+// Theme toggle. Contract: localStorage 'theme' = "frappe" | "latte". Safe to render multiple times.
 ---
 <button
-  id="theme-toggle"
   type="button"
+  data-theme-toggle
   aria-label="Toggle theme"
+  aria-pressed="false"
   class="rounded p-2 text-text hover:bg-mantle"
 >
   <span data-icon="frappe">☾</span>
-  <span data-icon="latte" hidden>☀</span>
+  <span data-icon="latte">☀</span>
 </button>
 <script is:inline>
   (() => {
-    const btn = document.getElementById("theme-toggle");
-    const sync = () => {
-      const t = document.documentElement.getAttribute("data-theme");
-      btn.querySelector('[data-icon="frappe"]').hidden = t !== "frappe";
-      btn.querySelector('[data-icon="latte"]').hidden = t !== "latte";
-    };
-    btn.addEventListener("click", () => {
-      const next =
-        document.documentElement.getAttribute("data-theme") === "frappe"
-          ? "latte"
-          : "frappe";
-      document.documentElement.setAttribute("data-theme", next);
-      localStorage.setItem("theme", next);
-      sync();
-    });
-    sync();
+    if (window.__themeToggleInit) return;
+    window.__themeToggleInit = true;
+    const root = document.documentElement;
+    const btns = document.querySelectorAll("[data-theme-toggle]");
+    const setPressed = () => btns.forEach((b) =>
+      b.setAttribute("aria-pressed", String(root.getAttribute("data-theme") === "latte")));
+    btns.forEach((b) =>
+      b.addEventListener("click", () => {
+        const next = root.getAttribute("data-theme") === "frappe" ? "latte" : "frappe";
+        root.setAttribute("data-theme", next);
+        localStorage.setItem("theme", next);
+        setPressed();
+      }));
+    setPressed();
   })();
 </script>

@@ -79,6 +79,11 @@ html {
   color: var(--color-text);
 }
 
+/* Theme toggle icons: shown based on active theme, set before paint by the head bootstrap */
+[data-icon] { display: none; }
+[data-theme="frappe"] [data-icon="frappe"] { display: inline; }
+[data-theme="latte"] [data-icon="latte"] { display: inline; }
+
 .blink {
   display: inline-block;
   width: 0.5rem;
