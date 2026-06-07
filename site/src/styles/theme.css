@@ -1,0 +1,90 @@
+@import "tailwindcss";
+
+/* Self-hosted font */
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/jetbrains-mono-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/jetbrains-mono-700.woff2") format("woff2");
+}
+
+/* Map Catppuccin CSS vars to Tailwind theme tokens */
+@theme {
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --color-base: var(--ctp-base);
+  --color-mantle: var(--ctp-mantle);
+  --color-crust: var(--ctp-crust);
+  --color-text: var(--ctp-text);
+  --color-subtext: var(--ctp-subtext0);
+  --color-overlay: var(--ctp-overlay0);
+  --color-line: var(--ctp-surface0);
+  --color-blue: var(--ctp-blue);
+  --color-mauve: var(--ctp-mauve);
+  --color-green: var(--ctp-green);
+  --color-yellow: var(--ctp-yellow);
+  --color-peach: var(--ctp-peach);
+  --color-red: var(--ctp-red);
+  --color-teal: var(--ctp-teal);
+}
+
+/* Catppuccin Frappé — dark, default */
+:root,
+[data-theme="frappe"] {
+  --ctp-base: #303446;
+  --ctp-mantle: #292c3c;
+  --ctp-crust: #232634;
+  --ctp-text: #c6d0f5;
+  --ctp-subtext0: #a5adce;
+  --ctp-overlay0: #737994;
+  --ctp-surface0: #414559;
+  --ctp-blue: #8caaee;
+  --ctp-mauve: #ca9ee6;
+  --ctp-green: #a6d189;
+  --ctp-yellow: #e5c890;
+  --ctp-peach: #ef9f76;
+  --ctp-red: #e78284;
+  --ctp-teal: #81c8be;
+}
+
+/* Catppuccin Latte — light */
+[data-theme="latte"] {
+  --ctp-base: #eff1f5;
+  --ctp-mantle: #e6e9ef;
+  --ctp-crust: #dce0e8;
+  --ctp-text: #4c4f69;
+  --ctp-subtext0: #6c6f85;
+  --ctp-overlay0: #9ca0b0;
+  --ctp-surface0: #ccd0da;
+  --ctp-blue: #1e66f5;
+  --ctp-mauve: #8839ef;
+  --ctp-green: #40a02b;
+  --ctp-yellow: #df8e1d;
+  --ctp-peach: #fe640b;
+  --ctp-red: #d20f39;
+  --ctp-teal: #179299;
+}
+
+html {
+  scroll-behavior: smooth;
+  font-family: var(--font-mono);
+  background: var(--color-base);
+  color: var(--color-text);
+}
+
+.blink {
+  display: inline-block;
+  width: 0.5rem;
+  height: 1em;
+  background: var(--color-green);
+  vertical-align: -1px;
+  animation: blink 1s steps(1) infinite;
+}
+@keyframes blink { 50% { opacity: 0; } }
