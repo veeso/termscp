@@ -26,6 +26,8 @@ jobs:
         with:
           token: ${{ secrets.RELEASE_PAT }}
           persist-credentials: true
+          fetch-depth: 0
+          fetch-tags: true
 
       - name: Configure git identity
         run: |
@@ -48,7 +50,9 @@ jobs:
         run: git-cliff --tag "v$VERSION" -o CHANGELOG.md
 
       - name: Generate release notes
-        run: git-cliff --latest --strip header -o RELEASE_NOTES.md
+        env:
+          VERSION: ${{ inputs.version }}
+        run: git-cliff --unreleased --tag "v$VERSION" --strip header -o RELEASE_NOTES.md
 
       - name: Upload release notes
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
@@ -87,7 +91,7 @@ jobs:
             kind: linux
             deb_suffix: amd64
           - target: aarch64-unknown-linux-gnu
-            os: ubuntu-latest
+            os: ubuntu-24.04-arm
             kind: linux
             deb_suffix: arm64
           - target: aarch64-apple-darwin
@@ -118,22 +122,42 @@ jobs:
         with:
           targets: ${{ matrix.target }}
 
-      # ---- Linux: zigbuild against old glibc (see Task 1) ----
-      - name: Install zig + cargo-zigbuild (Linux)
-        if: matrix.kind == 'linux'
-        run: |
-          pipx install ziglang
-          cargo install --locked cargo-zigbuild cargo-deb
-      - name: Install samba build deps (Linux)
+      # ---- Linux: native per-arch build (x86_64 on ubuntu-latest, aarch64 on ubuntu-24.04-arm) ----
+      - name: Install dependencies (Linux)
         if: matrix.kind == 'linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y make build-essential pkg-config libdbus-1-dev \
-            flex bison cpanminus libacl1-dev
+          sudo apt-get install -y \
+            make \
+            libgit2-dev \
+            build-essential \
+            pkg-config \
+            libbsd-dev \
+            libcap-dev \
+            libcups2-dev \
+            libgnutls28-dev \
+            libicu-dev \
+            libjansson-dev \
+            libkeyutils-dev \
+            libldap2-dev \
+            zlib1g-dev \
+            libpam0g-dev \
+            libacl1-dev \
+            libarchive-dev \
+            flex \
+            bison \
+            libntirpc-dev \
+            libtracker-sparql-3.0-dev \
+            libglib2.0-dev \
+            libdbus-1-dev \
+            libsasl2-dev \
+            libunistring-dev \
+            cpanminus
           sudo cpanm Parse::Yapp::Driver
+          cargo install cargo-deb
       - name: Build (Linux)
         if: matrix.kind == 'linux'
-        run: cargo zigbuild --release --features smb-vendored --target "$TARGET.2.17"
+        run: cargo build --release --features smb-vendored --target "$TARGET"
       - name: Build deb (Linux)
         if: matrix.kind == 'linux'
         run: cargo deb --no-build --target "$TARGET" --features smb-vendored
@@ -161,30 +185,30 @@ jobs:
       - name: Package (posix)
         if: matrix.kind != 'windows'
         run: |
-          mkdir -p .artifact
-          cp "target/$TARGET/release/termscp" .artifact/termscp
-          tar -czf ".artifact/termscp-v$VERSION-$TARGET.tar.gz" -C .artifact termscp
-          shasum -a 256 ".artifact/termscp-v$VERSION-$TARGET.tar.gz" | awk '{print $1}' > ".artifact/$TARGET.sha256"
+          mkdir -p artifact
+          cp "target/$TARGET/release/termscp" artifact/termscp
+          tar -czf "artifact/termscp-v$VERSION-$TARGET.tar.gz" -C artifact termscp
+          shasum -a 256 "artifact/termscp-v$VERSION-$TARGET.tar.gz" | awk '{print $1}' > "artifact/$TARGET.sha256"
 
       # ---- Package windows (zip) ----
       - name: Package (windows)
         if: matrix.kind == 'windows'
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force .artifact | Out-Null
-          Copy-Item "target/$env:TARGET/release/termscp.exe" .artifact/termscp.exe
-          Compress-Archive -Path .artifact/termscp.exe -DestinationPath ".artifact/termscp-v$env:VERSION-$env:TARGET.zip"
-          (Get-FileHash ".artifact/termscp-v$env:VERSION-$env:TARGET.zip" -Algorithm SHA256).Hash.ToLower() | Out-File -NoNewline ".artifact/$env:TARGET.sha256"
+          New-Item -ItemType Directory -Force artifact | Out-Null
+          Copy-Item "target/$env:TARGET/release/termscp.exe" artifact/termscp.exe
+          Compress-Archive -Path artifact/termscp.exe -DestinationPath "artifact/termscp-v$env:VERSION-$env:TARGET.zip"
+          (Get-FileHash "artifact/termscp-v$env:VERSION-$env:TARGET.zip" -Algorithm SHA256).Hash.ToLower() | Out-File -NoNewline "artifact/$env:TARGET.sha256"
 
       - name: Move deb into artifact dir (Linux)
         if: matrix.kind == 'linux'
-        run: cp target/"$TARGET"/debian/*.deb .artifact/
+        run: cp target/"$TARGET"/debian/*.deb artifact/
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: build-${{ matrix.target }}
-          path: .artifact/*
+          path: artifact/*
           retention-days: 1
           if-no-files-found: error
 
@@ -322,8 +346,7 @@ jobs:
           SHA_WIN_ARM="$SHA_WIN_ARM" SHA_WIN_X64="$SHA_WIN_X64" \
             perl -0pi -e 'BEGIN{our $n=0} s/(\$checksum\s*=\s*'"'"')[0-9a-f]*('"'"')/ $n++==0 ? "${1}$ENV{SHA_WIN_ARM}${2}" : "${1}$ENV{SHA_WIN_X64}${2}" /ge' "$PS"
           docker run --rm -v "$PWD/dist/chocolatey:/work" -w /work \
-            chocolatey/choco:latest pack || \
-            (echo "choco pack via docker failed — see Task 6 notes" && exit 1)
+            chocolatey/choco:latest choco pack --output-directory /work
 
       - name: Assemble release assets
         run: |
