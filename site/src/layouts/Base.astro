@@ -1,6 +1,6 @@
 ---
 import "../styles/theme.css";
-import { defaultLocale, type Locale } from "../i18n/ui";
+import { defaultLocale, locales, type Locale } from "../i18n/ui";
 
 interface Props {
   title: string;
@@ -11,11 +11,10 @@ interface Props {
 }
 
 const { title, description, locale = defaultLocale, path } = Astro.props;
-const site = "https://termscp.rs";
+const site = Astro.site?.href ?? "https://termscp.rs/";
 const localizedPath = locale === defaultLocale ? path : `/${locale}${path}`;
 const canonical = new URL(localizedPath, site).href;
 const ogImage = new URL("/assets/images/og_preview.jpg", site).href;
-const locales: Locale[] = ["en", "zh-CN", "it", "fr", "es"];
 ---
 
 <!doctype html>
@@ -35,6 +34,7 @@ const locales: Locale[] = ["en", "zh-CN", "it", "fr", "es"];
         href={new URL(l === defaultLocale ? path : `/${l}${path}`, site).href}
       />
     ))}
+    <link rel="alternate" hreflang="x-default" href={new URL(path, site).href} />
 
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
@@ -45,6 +45,13 @@ const locales: Locale[] = ["en", "zh-CN", "it", "fr", "es"];
     <meta property="og:image" content={ogImage} />
     <meta property="og:image:width" content="1280" />
     <meta property="og:image:height" content="640" />
+    <meta property="og:image:alt" content="termscp — terminal file transfer and explorer" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
 
     <!-- Favicons -->
     <link rel="icon" type="image/png" sizes="96x96" href="/assets/images/favicon-96x96.png" />
@@ -54,7 +61,7 @@ const locales: Locale[] = ["en", "zh-CN", "it", "fr", "es"];
     <!-- Font preload -->
     <link rel="preload" href="/fonts/jetbrains-mono-400.woff2" as="font" type="font/woff2" crossorigin />
 
-    <!-- No-flash theme bootstrap -->
+    <!-- No-flash theme bootstrap. Contract: localStorage 'theme' is "frappe" | "latte"; the ThemeToggle component writes the same values. -->
     <script is:inline>
       (() => {
         const t = localStorage.getItem("theme") ||
