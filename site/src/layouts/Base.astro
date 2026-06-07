@@ -1,0 +1,72 @@
+---
+import "../styles/theme.css";
+import { defaultLocale, type Locale } from "../i18n/ui";
+
+interface Props {
+  title: string;
+  description: string;
+  locale?: Locale;
+  /** Path WITHOUT locale prefix, e.g. "/install". "/" for home. */
+  path: string;
+}
+
+const { title, description, locale = defaultLocale, path } = Astro.props;
+const site = "https://termscp.rs";
+const localizedPath = locale === defaultLocale ? path : `/${locale}${path}`;
+const canonical = new URL(localizedPath, site).href;
+const ogImage = new URL("/assets/images/og_preview.jpg", site).href;
+const locales: Locale[] = ["en", "zh-CN", "it", "fr", "es"];
+---
+
+<!doctype html>
+<html lang={locale} data-theme="frappe">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+
+    <!-- hreflang alternates -->
+    {locales.map((l) => (
+      <link
+        rel="alternate"
+        hreflang={l}
+        href={new URL(l === defaultLocale ? path : `/${l}${path}`, site).href}
+      />
+    ))}
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="termscp" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1280" />
+    <meta property="og:image:height" content="640" />
+
+    <!-- Favicons -->
+    <link rel="icon" type="image/png" sizes="96x96" href="/assets/images/favicon-96x96.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/images/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/images/favicon-16x16.png" />
+
+    <!-- Font preload -->
+    <link rel="preload" href="/fonts/jetbrains-mono-400.woff2" as="font" type="font/woff2" crossorigin />
+
+    <!-- No-flash theme bootstrap -->
+    <script is:inline>
+      (() => {
+        const t = localStorage.getItem("theme") ||
+          (matchMedia("(prefers-color-scheme: light)").matches ? "latte" : "frappe");
+        document.documentElement.setAttribute("data-theme", t);
+      })();
+    </script>
+
+    <!-- Umami analytics -->
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="ad2d5621-a893-488c-baa6-d39c306374cf"></script>
+  </head>
+  <body class="bg-base text-text font-mono min-h-screen flex flex-col">
+    <slot />
+  </body>
+</html>
