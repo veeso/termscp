@@ -474,7 +474,6 @@ esac
 
 completed "Congratulations! Termscp has successfully been installed on your system!"
 info "If you're a new user, you might be interested in reading the user manual <https://docs.termscp.rs>"
-info "While if you've just updated your termscp version, you can find the changelog at this link <https://github.com/veeso/termscp/blob/main/CHANGELOG.md>"
 info "Remember that if you encounter any issue, you can report them on Github <https://github.com/veeso/termscp/issues/new>"
 info "Feel free to open an issue also if you have an idea which could improve the project"
 info "I hope you'll enjoy using termscp :D"
