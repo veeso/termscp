@@ -14,15 +14,31 @@ export function manUrl(locale) {
   return `https://raw.githubusercontent.com/${REPO}/${MAN_REF}/${path}`;
 }
 
-async function fetchText(url) {
+async function fetchText(url, { retries = 2 } = {}) {
   const headers = process.env.GITHUB_TOKEN
     ? { Authorization: `Bearer ${process.env.GITHUB_TOKEN}` }
     : {};
-  const res = await fetch(url, { headers });
-  if (!res.ok) {
-    throw new Error(`fetch ${url} failed: ${res.status} ${res.statusText}`);
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      // Abort hung requests and surface them as retryable failures.
+      const res = await fetch(url, { headers, signal: AbortSignal.timeout(15000) });
+      if (!res.ok) {
+        throw new Error(`fetch ${url} failed: ${res.status} ${res.statusText}`);
+      }
+      const text = await res.text();
+      if (text.trim().length === 0) {
+        throw new Error(`fetch ${url} returned empty body`);
+      }
+      return text;
+    } catch (err) {
+      if (attempt >= retries) {
+        throw err;
+      }
+      await new Promise((resolve) => {
+        setTimeout(resolve, 500 * (attempt + 1));
+      });
+    }
   }
-  return res.text();
 }
 
 async function main() {
@@ -45,7 +61,9 @@ async function main() {
 }
 
 // Run only when invoked directly (not when imported by tests).
-if (import.meta.url === `file://${process.argv[1]}`) {
+// Compare via fileURLToPath so paths with spaces (percent-encoded in
+// import.meta.url, raw in argv[1]) still match.
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
   main().catch((err) => {
     console.error(err);
     process.exit(1);
