@@ -6,11 +6,11 @@
 
 <p align="center">~ Una transferencia de archivos de terminal rica en funciones ~</p>
 <p align="center">
-  <a href="https://termscp.veeso.dev" target="_blank">Sitio Web</a>
+  <a href="https://termscp.rs" target="_blank">Sitio Web</a>
   ·
-  <a href="https://termscp.veeso.dev/get-started.html" target="_blank">Instalación</a>
+  <a href="https://termscp.rs/install" target="_blank">Instalación</a>
   ·
-  <a href="https://termscp.veeso.dev/user-manual.html" target="_blank">Manual de usuario</a>
+  <a href="https://docs.termscp.rs" target="_blank">Manual de usuario</a>
 </p>
 
 <p align="center">
@@ -177,7 +177,7 @@ Si desea contribuir a este proyecto, no olvide consultar nuestra [guía de contr
 Si tu eres un usuario de Linux, FreeBSD o MacOS, este sencillo script de shell instalará termscp en tu sistema con un solo comando:
 
 ```sh
-curl -sSLf http://get-termscp.veeso.dev | sh
+curl --proto '=https' --tlsv1.2 -sSLf https://termscp.rs/install.sh | sh
 ```
 
 mientras que si eres un usuario de Windows, puedes instalar termscp con [Chocolatey](https://chocolatey.org/):
@@ -186,7 +186,7 @@ mientras que si eres un usuario de Windows, puedes instalar termscp con [Chocola
 choco install termscp
 ```
 
-Para obtener más información u otras plataformas, visite [termscp.veeso.dev](https://termscp.veeso.dev/termscp/get-started.html) para ver todos los métodos de instalación.
+Para obtener más información u otras plataformas, visite [termscp.rs](https://termscp.rs/install) para ver todos los métodos de instalación.
 
 ⚠️ Si estás buscando cómo actualizar termscp, simplemente ejecute termscp desde CLI con:: `(sudo) termscp --update` ⚠️
 
@@ -232,7 +232,7 @@ Puedes hacer una donación con una de estas plataformas:
 
 ## Manual de usuario y documentación 📚
 
-El manual del usuario se puede encontrar en el [sitio web de termscp](https://termscp.veeso.dev/termscp/user-manual.html) o en [Github](man.md).
+El manual del usuario se puede encontrar en el [sitio web de termscp](https://docs.termscp.rs) o en [Github](man.md).
 
 ---
 

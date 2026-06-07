@@ -6,11 +6,11 @@
 
 <p align="center">~ 功能丰富的终端文件传输工具 ~</p>
 <p align="center">
-  <a href="https://termscp.veeso.dev" target="_blank">网站</a>
+  <a href="https://termscp.rs" target="_blank">网站</a>
   ·
-  <a href="https://termscp.veeso.dev/get-started.html" target="_blank">安装</a>
+  <a href="https://termscp.rs/install" target="_blank">安装</a>
   ·
-  <a href="https://termscp.veeso.dev/user-manual.html" target="_blank">用户手册</a>
+  <a href="https://docs.termscp.rs" target="_blank">用户手册</a>
 </p>
 
 <p align="center">
@@ -180,7 +180,7 @@ termscp 是一个功能丰富的终端文件浏览和传输工具，支持 SCP/S
 如果您是 Linux、FreeBSD 或 MacOS 用户，使用以下简单的 shell 脚本通过单行指令在您的系统上安装 termscp：
 
 ```sh
-curl -sSLf http://get-termscp.veeso.dev | sh
+curl --proto '=https' --tlsv1.2 -sSLf https://termscp.rs/install.sh | sh
 ```
 
 如果您是 Windows 用户，则可以使用 [Chocolatey](https://chocolatey.org/) 安装 termscp：
@@ -189,7 +189,7 @@ curl -sSLf http://get-termscp.veeso.dev | sh
 choco install termscp
 ```
 
-如需更多信息或其他的平台支持，请访问 [termscp.veeso.dev](https://termscp.veeso.dev/termscp/get-started.html) 查看所有安装方法。
+如需更多信息或其他的平台支持，请访问 [termscp.rs](https://termscp.rs/install) 查看所有安装方法。
 
 ⚠️ 如果您正在寻找如何更新 termscp 只需从 CLI 运行 termscp ： `(sudo) termscp --update` ⚠️
 
@@ -236,7 +236,7 @@ choco install termscp
 
 ## 用户手册和文档 📚
 
-用户手册可以在[termscp的网站](https://termscp.veeso.dev/termscp/user-manual.html)或者在[Github](man.md)上找到。
+用户手册可以在[termscp的网站](https://docs.termscp.rs)或者在[Github](man.md)上找到。
 
 ---
 
