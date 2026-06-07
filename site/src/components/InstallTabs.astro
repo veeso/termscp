@@ -1,4 +1,6 @@
 ---
+import CopyButton from "./CopyButton.astro";
+
 interface Method { id: string; label: string; cmd: string; }
 interface Props { methods: Method[]; }
 const { methods } = Astro.props;
@@ -14,11 +16,10 @@ const { methods } = Astro.props;
     ))}
   </div>
   {methods.map((m, i) => (
-    <pre
-      class="install-panel m-0 overflow-auto bg-base px-4 py-4 text-sm text-text"
-      data-id={m.id}
-      hidden={i !== 0}
-    ><code>{m.cmd}</code></pre>
+    <div class="install-panel relative" data-id={m.id} hidden={i !== 0}>
+      <pre class="m-0 overflow-auto bg-base px-4 py-4 pr-12 text-sm text-text"><code>{m.cmd}</code></pre>
+      <CopyButton text={m.cmd} class="absolute right-2 top-2" />
+    </div>
   ))}
 </div>
 <script is:inline>
