@@ -2,25 +2,50 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "redirects": [
     { "source": "/index.html", "destination": "/", "permanent": true },
-    { "source": "/get-started.html", "destination": "/install", "permanent": true },
+    {
+      "source": "/get-started.html",
+      "destination": "/install",
+      "permanent": true
+    },
     { "source": "/get-started", "destination": "/install", "permanent": true },
     { "source": "/updates.html", "destination": "/install", "permanent": true },
-    { "source": "/user-manual.html", "destination": "https://docs.termscp.rs", "permanent": true },
-    { "source": "/user-manual", "destination": "https://docs.termscp.rs", "permanent": true },
-    { "source": "/changelog.html", "destination": "https://github.com/veeso/termscp/blob/main/CHANGELOG.md", "permanent": true }
+    {
+      "source": "/user-manual.html",
+      "destination": "https://docs.termscp.rs",
+      "permanent": true
+    },
+    {
+      "source": "/user-manual",
+      "destination": "https://docs.termscp.rs",
+      "permanent": true
+    },
+    {
+      "source": "/changelog.html",
+      "destination": "https://github.com/veeso/termscp/blob/main/CHANGELOG.md",
+      "permanent": true
+    }
   ],
   "headers": [
     {
       "source": "/fonts/(.*)",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
     },
     {
       "source": "/install.sh",
-      "headers": [{ "key": "Content-Type", "value": "text/x-shellscript; charset=utf-8" }]
+      "headers": [
+        { "key": "Content-Type", "value": "text/x-shellscript; charset=utf-8" }
+      ]
     },
     {
       "source": "/install.ps1",
-      "headers": [{ "key": "Content-Type", "value": "text/plain; charset=utf-8" }]
+      "headers": [
+        { "key": "Content-Type", "value": "text/plain; charset=utf-8" }
+      ]
     }
   ]
 }
