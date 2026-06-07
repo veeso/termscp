@@ -1,29 +1,19 @@
 ---
-import { localizePath, useTranslations, DOCS_URL, type Locale } from "../i18n/ui";
 import ThemeToggle from "./ThemeToggle.astro";
-import LangPicker from "./LangPicker.astro";
-
-interface Props {
-  locale: Locale;
-  path: string;
-}
-const { locale, path } = Astro.props;
-const t = useTranslations(locale);
-const p = (sub: string) => localizePath(locale, sub);
+import { DOCS_URL, GITHUB_URL } from "../consts";
 ---
 <header class="sticky top-0 z-50 border-b border-line bg-mantle/90 backdrop-blur">
   <nav class="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-    <a href={p("/")} class="flex items-center gap-2 text-text">
+    <a href="/" class="flex items-center gap-2 text-text">
       <img src="/assets/images/termscp.webp" alt="termscp" class="h-7 w-7" />
       <span class="font-bold">termscp</span>
     </a>
 
     <!-- Desktop -->
     <div class="hidden items-center gap-5 text-sm sm:flex">
-      <a href={p("/install")} class="text-overlay hover:text-text">{t("nav.install")}</a>
-      <a href={DOCS_URL} class="text-overlay hover:text-text">{t("nav.manual")}</a>
-      <a href="https://github.com/veeso/termscp" class="text-overlay hover:text-text">{t("nav.github")}</a>
-      <LangPicker locale={locale} path={path} />
+      <a href="/install" class="text-overlay hover:text-text">Install</a>
+      <a href={DOCS_URL} class="text-overlay hover:text-text">User manual</a>
+      <a href={GITHUB_URL} class="text-overlay hover:text-text">GitHub</a>
       <ThemeToggle />
     </div>
 
@@ -31,10 +21,9 @@ const p = (sub: string) => localizePath(locale, sub);
     <details class="relative sm:hidden">
       <summary class="cursor-pointer list-none rounded p-2 text-text hover:bg-mantle" aria-label="Menu">☰</summary>
       <div class="absolute right-0 mt-2 flex w-48 flex-col gap-3 rounded-lg border border-line bg-mantle p-4 text-sm shadow-xl">
-        <a href={p("/install")} class="text-overlay hover:text-text">{t("nav.install")}</a>
-        <a href={DOCS_URL} class="text-overlay hover:text-text">{t("nav.manual")}</a>
-        <a href="https://github.com/veeso/termscp" class="text-overlay hover:text-text">{t("nav.github")}</a>
-        <LangPicker locale={locale} path={path} />
+        <a href="/install" class="text-overlay hover:text-text">Install</a>
+        <a href={DOCS_URL} class="text-overlay hover:text-text">User manual</a>
+        <a href={GITHUB_URL} class="text-overlay hover:text-text">GitHub</a>
         <ThemeToggle />
       </div>
     </details>
