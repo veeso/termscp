@@ -30,24 +30,25 @@ const remote = [
       <div>
         <div class="border-b border-line bg-mantle px-3 py-1.5 text-xs text-teal">{t("hero.local")}</div>
         {local.map((r) => (
-          <div class={`flex justify-between px-3 py-0.5 text-sm ${r.kind === "dir" ? "text-blue" : "text-text"}`}>
-            <span>{r.name}</span><span class="text-overlay">{r.size}</span>
+          <div class={`flex justify-between gap-2 px-3 py-0.5 text-sm ${r.kind === "dir" ? "text-blue" : "text-text"}`}>
+            <span class="truncate min-w-0">{r.name}</span><span class="text-overlay shrink-0">{r.size}</span>
           </div>
         ))}
       </div>
       <div class="border-l border-line">
         <div class="border-b border-line bg-mantle px-3 py-1.5 text-xs text-mauve">{t("hero.remote")}</div>
         {remote.map((r) => (
-          <div class={`flex justify-between px-3 py-0.5 text-sm ${
-            r.kind === "sel" ? "bg-blue text-crust font-bold" : r.kind === "dir" ? "text-blue" : "text-text"
+          <div class={`flex justify-between gap-2 px-3 py-0.5 text-sm ${
+            r.kind === "sel" ? "bg-blue text-base font-bold" : r.kind === "dir" ? "text-blue" : "text-text"
           }`}>
-            <span>{r.name}</span>
-            <span class={r.kind === "sel" ? "text-crust" : "text-overlay"}>{r.size}</span>
+            <span class="truncate min-w-0">{r.name}</span>
+            <span class={`shrink-0 ${r.kind === "sel" ? "text-base" : "text-overlay"}`}>{r.size}</span>
           </div>
         ))}
       </div>
     </div>
     <div class="flex justify-between border-t border-line bg-crust px-3 py-1.5 text-xs text-overlay">
+      {/* set:html is safe: hero.status is author-controlled i18n content, never user input. Do not interpolate untrusted data here. */}
       <span set:html={t("hero.status").replace(/(↹|↑↓|↵|SPACE)/g, '<span class="text-yellow">$1</span>')}></span>
       <span>4 files · 1.2 GB</span>
     </div>
