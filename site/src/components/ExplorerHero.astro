@@ -1,0 +1,63 @@
+---
+import { localizePath, useTranslations, type Locale } from "../i18n/ui";
+interface Props { locale: Locale; }
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+const p = (sub: string) => localizePath(locale, sub);
+
+const local = [
+  { name: " ..", size: "DIR", kind: "dir" },
+  { name: " Documents/", size: "DIR", kind: "dir" },
+  { name: " backup.tar.gz", size: "1.2 GB", kind: "file" },
+  { name: " id_ed25519", size: "411 B", kind: "file" },
+  { name: " notes.md", size: "8.4 KB", kind: "file" },
+];
+const remote = [
+  { name: " ..", size: "DIR", kind: "dir" },
+  { name: " html/", size: "DIR", kind: "sel" },
+  { name: " .env", size: "220 B", kind: "file" },
+  { name: " docker-compose.yml", size: "1.7 KB", kind: "file" },
+  { name: " logs/", size: "DIR", kind: "dir" },
+];
+---
+<section class="mx-auto max-w-5xl px-4 pt-12">
+  <p class="text-green text-sm tracking-widest uppercase">{t("hero.kicker")}</p>
+  <div class="mt-4 overflow-hidden rounded-lg border border-line bg-mantle shadow-2xl">
+    <div class="border-b border-line bg-crust px-3 py-2 text-xs text-overlay">
+      {t("hero.tabs", { host: "192.168.1.10" })}<span class="blink ml-1"></span>
+    </div>
+    <div class="grid grid-cols-2 bg-base">
+      <div>
+        <div class="border-b border-line bg-mantle px-3 py-1.5 text-xs text-teal">{t("hero.local")}</div>
+        {local.map((r) => (
+          <div class={`flex justify-between px-3 py-0.5 text-sm ${r.kind === "dir" ? "text-blue" : "text-text"}`}>
+            <span>{r.name}</span><span class="text-overlay">{r.size}</span>
+          </div>
+        ))}
+      </div>
+      <div class="border-l border-line">
+        <div class="border-b border-line bg-mantle px-3 py-1.5 text-xs text-mauve">{t("hero.remote")}</div>
+        {remote.map((r) => (
+          <div class={`flex justify-between px-3 py-0.5 text-sm ${
+            r.kind === "sel" ? "bg-blue text-crust font-bold" : r.kind === "dir" ? "text-blue" : "text-text"
+          }`}>
+            <span>{r.name}</span>
+            <span class={r.kind === "sel" ? "text-crust" : "text-overlay"}>{r.size}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+    <div class="flex justify-between border-t border-line bg-crust px-3 py-1.5 text-xs text-overlay">
+      <span set:html={t("hero.status").replace(/(↹|↑↓|↵|SPACE)/g, '<span class="text-yellow">$1</span>')}></span>
+      <span>4 files · 1.2 GB</span>
+    </div>
+    <div class="bg-base px-6 py-6 text-center">
+      <h1 class="text-2xl font-bold text-text">{t("hero.title")}</h1>
+      <p class="mx-auto mt-2 max-w-xl text-subtext">{t("hero.subtitle")}</p>
+      <div class="mt-5 flex flex-wrap justify-center gap-3">
+        <a href={p("/install")} class="rounded-lg bg-green px-5 py-2.5 font-bold text-crust">{t("cta.install")}</a>
+        <a href={p("/user-manual")} class="rounded-lg border border-line px-5 py-2.5 text-text">{t("cta.manual")}</a>
+      </div>
+    </div>
+  </div>
+</section>
