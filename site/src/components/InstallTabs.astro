@@ -1,0 +1,34 @@
+---
+interface Method { id: string; label: string; cmd: string; }
+interface Props { methods: Method[]; }
+const { methods } = Astro.props;
+---
+<div class="rounded-lg border border-line bg-mantle">
+  <div class="flex flex-wrap gap-1 border-b border-line p-2" role="tablist">
+    {methods.map((m, i) => (
+      <button
+        class="install-tab rounded px-3 py-1 text-sm text-overlay data-[active]:bg-base data-[active]:text-green"
+        data-target={m.id}
+        data-active={i === 0 ? "" : undefined}
+      >{m.label}</button>
+    ))}
+  </div>
+  {methods.map((m, i) => (
+    <pre
+      class="install-panel m-0 overflow-auto bg-base px-4 py-4 text-sm text-text"
+      data-id={m.id}
+      hidden={i !== 0}
+    ><code>{m.cmd}</code></pre>
+  ))}
+</div>
+<script is:inline>
+  document.querySelectorAll(".install-tab").forEach((tab) => {
+    tab.addEventListener("click", () => {
+      const id = tab.getAttribute("data-target");
+      document.querySelectorAll(".install-tab").forEach((t) =>
+        t.toggleAttribute("data-active", t === tab));
+      document.querySelectorAll(".install-panel").forEach((p) =>
+        (p.hidden = p.getAttribute("data-id") !== id));
+    });
+  });
+</script>
