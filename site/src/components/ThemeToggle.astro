@@ -1,6 +1,7 @@
 ---
 // Theme toggle. Contract: localStorage 'theme' = "frappe" | "latte". Safe to render multiple times.
 ---
+
 <button
   type="button"
   data-theme-toggle
@@ -17,15 +18,22 @@
     window.__themeToggleInit = true;
     const root = document.documentElement;
     const btns = document.querySelectorAll("[data-theme-toggle]");
-    const setPressed = () => btns.forEach((b) =>
-      b.setAttribute("aria-pressed", String(root.getAttribute("data-theme") === "latte")));
+    const setPressed = () =>
+      btns.forEach((b) =>
+        b.setAttribute(
+          "aria-pressed",
+          String(root.getAttribute("data-theme") === "latte"),
+        ),
+      );
     btns.forEach((b) =>
       b.addEventListener("click", () => {
-        const next = root.getAttribute("data-theme") === "frappe" ? "latte" : "frappe";
+        const next =
+          root.getAttribute("data-theme") === "frappe" ? "latte" : "frappe";
         root.setAttribute("data-theme", next);
         localStorage.setItem("theme", next);
         setPressed();
-      }));
+      }),
+    );
     setPressed();
   })();
 </script>

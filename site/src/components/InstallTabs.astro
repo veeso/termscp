@@ -1,35 +1,52 @@
 ---
 import CopyButton from "./CopyButton.astro";
 
-interface Method { id: string; label: string; cmd: string; }
-interface Props { methods: Method[]; }
+interface Method {
+  id: string;
+  label: string;
+  cmd: string;
+}
+interface Props {
+  methods: Method[];
+}
 const { methods } = Astro.props;
 ---
+
 <div class="rounded-lg border border-line bg-mantle">
   <div class="flex flex-wrap gap-1 border-b border-line p-2" role="tablist">
-    {methods.map((m, i) => (
-      <button
-        class="install-tab rounded px-3 py-1 text-sm text-overlay data-[active]:bg-base data-[active]:text-green"
-        data-target={m.id}
-        data-active={i === 0 ? "" : undefined}
-      >{m.label}</button>
-    ))}
+    {
+      methods.map((m, i) => (
+        <button
+          class="install-tab rounded px-3 py-1 text-sm text-overlay data-[active]:bg-base data-[active]:text-green"
+          data-target={m.id}
+          data-active={i === 0 ? "" : undefined}
+        >
+          {m.label}
+        </button>
+      ))
+    }
   </div>
-  {methods.map((m, i) => (
-    <div class="install-panel relative" data-id={m.id} hidden={i !== 0}>
-      <pre class="m-0 overflow-auto bg-base px-4 py-4 pr-12 text-sm text-text"><code>{m.cmd}</code></pre>
-      <CopyButton text={m.cmd} class="absolute right-2 top-2" />
-    </div>
-  ))}
+  {
+    methods.map((m, i) => (
+      <div class="install-panel relative" data-id={m.id} hidden={i !== 0}>
+        <pre class="m-0 overflow-auto bg-base px-4 py-4 pr-12 text-sm text-text">
+          <code>{m.cmd}</code>
+        </pre>
+        <CopyButton text={m.cmd} class="absolute right-2 top-2" />
+      </div>
+    ))
+  }
 </div>
 <script is:inline>
   document.querySelectorAll(".install-tab").forEach((tab) => {
     tab.addEventListener("click", () => {
       const id = tab.getAttribute("data-target");
-      document.querySelectorAll(".install-tab").forEach((t) =>
-        t.toggleAttribute("data-active", t === tab));
-      document.querySelectorAll(".install-panel").forEach((p) =>
-        (p.hidden = p.getAttribute("data-id") !== id));
+      document
+        .querySelectorAll(".install-tab")
+        .forEach((t) => t.toggleAttribute("data-active", t === tab));
+      document
+        .querySelectorAll(".install-panel")
+        .forEach((p) => (p.hidden = p.getAttribute("data-id") !== id));
     });
   });
 </script>

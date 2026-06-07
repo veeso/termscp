@@ -30,7 +30,10 @@ const ogImage = new URL("/assets/images/og_preview.jpg", site).href;
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
     <meta property="og:image" content={ogImage} />
-    <meta property="og:image:alt" content="termscp — terminal file transfer and explorer" />
+    <meta
+      property="og:image:alt"
+      content="termscp — terminal file transfer and explorer"
+    />
     <meta property="og:image:width" content="1280" />
     <meta property="og:image:height" content="640" />
 
@@ -41,24 +44,51 @@ const ogImage = new URL("/assets/images/og_preview.jpg", site).href;
     <meta name="twitter:image" content={ogImage} />
 
     <!-- Favicons -->
-    <link rel="icon" type="image/png" sizes="96x96" href="/assets/images/favicon-96x96.png" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/assets/images/favicon-32x32.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/assets/images/favicon-16x16.png" />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="96x96"
+      href="/assets/images/favicon-96x96.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      href="/assets/images/favicon-32x32.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="16x16"
+      href="/assets/images/favicon-16x16.png"
+    />
 
     <!-- Font preload -->
-    <link rel="preload" href="/fonts/jetbrains-mono-400.woff2" as="font" type="font/woff2" crossorigin />
+    <link
+      rel="preload"
+      href="/fonts/jetbrains-mono-400.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
 
     <!-- No-flash theme bootstrap. Contract: localStorage 'theme' is "frappe" | "latte"; ThemeToggle writes the same. -->
     <script is:inline>
       (() => {
-        const t = localStorage.getItem("theme") ||
-          (matchMedia("(prefers-color-scheme: light)").matches ? "latte" : "frappe");
+        const t =
+          localStorage.getItem("theme") ||
+          (matchMedia("(prefers-color-scheme: light)").matches
+            ? "latte"
+            : "frappe");
         document.documentElement.setAttribute("data-theme", t);
       })();
     </script>
 
     <!-- Umami analytics -->
-    <script defer src="https://cloud.umami.is/script.js" data-website-id="ad2d5621-a893-488c-baa6-d39c306374cf"></script>
+    <script
+      defer
+      src="https://cloud.umami.is/script.js"
+      data-website-id="ad2d5621-a893-488c-baa6-d39c306374cf"></script>
   </head>
   <body class="bg-base text-text font-mono min-h-screen flex flex-col">
     <slot />

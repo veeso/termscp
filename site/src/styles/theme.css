@@ -80,9 +80,15 @@ html {
 }
 
 /* Theme toggle icons: shown based on active theme, set before paint by the head bootstrap */
-[data-icon] { display: none; }
-[data-theme="frappe"] [data-icon="frappe"] { display: inline; }
-[data-theme="latte"] [data-icon="latte"] { display: inline; }
+[data-icon] {
+  display: none;
+}
+[data-theme="frappe"] [data-icon="frappe"] {
+  display: inline;
+}
+[data-theme="latte"] [data-icon="latte"] {
+  display: inline;
+}
 
 .blink {
   display: inline-block;
@@ -92,4 +98,8 @@ html {
   vertical-align: -1px;
   animation: blink 1s steps(1) infinite;
 }
-@keyframes blink { 50% { opacity: 0; } }
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}

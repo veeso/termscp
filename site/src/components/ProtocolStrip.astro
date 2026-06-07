@@ -1,11 +1,18 @@
 ---
 const protocols = ["SCP", "SFTP", "FTP/S", "S3", "Kube", "SMB", "WebDAV"];
 ---
+
 <section class="mx-auto max-w-5xl px-4 py-12 text-center">
-  <h2 class="text-overlay text-sm uppercase tracking-widest">Speaks every protocol</h2>
+  <h2 class="text-overlay text-sm uppercase tracking-widest">
+    Speaks every protocol
+  </h2>
   <div class="mt-4 flex flex-wrap justify-center gap-2">
-    {protocols.map((proto) => (
-      <span class="rounded-full border border-line px-4 py-1 text-sm text-text">{proto}</span>
-    ))}
+    {
+      protocols.map((proto) => (
+        <span class="rounded-full border border-line px-4 py-1 text-sm text-text">
+          {proto}
+        </span>
+      ))
+    }
   </div>
 </section>

@@ -2,13 +2,20 @@
 import { DOCS_URL, GITHUB_URL, VERSION } from "../consts";
 const year = new Date().getFullYear();
 ---
+
 <footer class="mt-auto border-t border-line bg-mantle">
-  <div class="mx-auto flex max-w-5xl flex-col items-center gap-2 px-4 py-8 text-sm text-overlay">
+  <div
+    class="mx-auto flex max-w-5xl flex-col items-center gap-2 px-4 py-8 text-sm text-overlay"
+  >
     <div class="flex gap-5">
       <a href={GITHUB_URL} class="hover:text-text">GitHub</a>
-      <a href="https://crates.io/crates/termscp" class="hover:text-text">crates.io</a>
+      <a href="https://crates.io/crates/termscp" class="hover:text-text"
+        >crates.io</a
+      >
       <a href={DOCS_URL} class="hover:text-text">User manual</a>
     </div>
-    <p>termscp v{VERSION} · © {year} Christian Visintin · Released under the MIT license.</p>
+    <p>
+      termscp v{VERSION} · © {year} Christian Visintin · Released under the MIT license.
+    </p>
   </div>
 </footer>
