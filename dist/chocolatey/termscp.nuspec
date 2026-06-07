@@ -1,0 +1,58 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+
+<package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+  <metadata>
+    <id>termscp</id>
+    <version>1.0.0</version>
+    <title>termSCP</title>
+    <authors>Christian Visintin</authors>
+    <owners>Christian Visintin</owners>
+    <projectUrl>https://veeso.github.io/termscp/</projectUrl>
+    <copyright>Christian Visintin (C) 2024</copyright>
+    <licenseUrl>https://github.com/veeso/TermSCP/blob/main/LICENSE</licenseUrl>
+    <iconUrl>https://rawcdn.githack.com/veeso/termscp/c3e5663cf45c4d6a7b50c8b15f89683a2e01b829/assets/images/termscp-512.png</iconUrl>
+    <requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <projectSourceUrl>https://github.com/veeso/termscp/tree/main/src</projectSourceUrl>
+    <packageSourceUrl>https://github.com/veeso/termscp</packageSourceUrl>
+    <releaseNotes>https://github.com/veeso/termscp/blob/main/CHANGELOG.md</releaseNotes>
+    <docsUrl>https://docs.rs/termscp</docsUrl>
+    <bugTrackerUrl>https://github.com/veeso/termscp/issues</bugTrackerUrl>
+    <tags>termscp winscp rust rust-lang rust-crate scp ssh-client ssh sftp-client ftp-client ftps utility terminal-app terminal command-line-utility command-line-tool tui-rs winscp sftp</tags>
+    <summary>A feature rich terminal UI file transfer and explorer with support for SCP/SFTP/FTP/Kube/WebDAV/S3</summary>
+    <description>
+## About TermSCP
+
+Termscp is a feature rich terminal file transfer and explorer, with support for SCP/SFTP/FTP/S3. So basically is a terminal utility with an TUI to connect to a remote server to retrieve and upload files and to interact with the local file system. It is **Linux**, **MacOS**, **BSD** and **Windows** compatible and supports SFTP, SCP, FTP and FTPS.
+
+Features:
+
+- 📁  Different communication protocols
+  - SFTP
+  - Kube
+  - WebDAV
+  - SCP
+  - FTP and FTPS
+  - S3
+  - SMB
+- 🖥  Explore and operate on the remote and on the local machine file system with a handy UI
+  - Create, remove, rename, search, view and edit files
+- ⭐  Connect to your favourite hosts through built-in bookmarks and recent connections
+- 📝  View and edit text files with your favourite text editor
+- 💁  SFTP/SCP authentication through SSH keys and username/password
+- 🐧  Compatible with Windows, Linux, BSD and MacOS
+- ✏  Customizable
+  - Themes
+  - Custom file explorer format
+  - Customizable text editor
+  - Customizable file sorting
+- 🔐  Save your password in your operating system key vault
+- 🦀  Rust-powered
+- 🤝  Easy to extend with new file transfers protocols
+- 👀  Developed keeping an eye on performance
+- 🦄  Frequent awesome updates
+    </description>
+  </metadata>
+  <files>
+    <file src="tools\**" target="tools" />
+  </files>
+</package>
