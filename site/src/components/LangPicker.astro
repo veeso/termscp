@@ -1,0 +1,25 @@
+---
+import { locales, defaultLocale, type Locale } from "../i18n/ui";
+
+interface Props {
+  locale: Locale;
+  path: string; // unprefixed path, e.g. "/install" or "/"
+}
+const { locale, path } = Astro.props;
+const labels: Record<Locale, string> = {
+  en: "EN",
+  "zh-CN": "中文",
+  it: "IT",
+  fr: "FR",
+  es: "ES",
+};
+const href = (l: Locale) => (l === defaultLocale ? path : `/${l}${path}`);
+---
+<div class="flex items-center gap-2 text-sm">
+  {locales.map((l) => (
+    <a
+      href={href(l)}
+      class={l === locale ? "text-green" : "text-overlay hover:text-text"}
+    >{labels[l]}</a>
+  ))}
+</div>
