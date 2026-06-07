@@ -173,7 +173,13 @@ curl --proto '=https' --tlsv1.2 -sSLf https://termscp.rs/install.sh | sh
 
 > ❗ MacOs installation requires [Homebrew](https://brew.sh/), otherwise the Rust compiler will be installed
 
-while if you're a Windows user, you can install termscp with [Chocolatey](https://chocolatey.org/):
+if you're a Windows user, you can install termscp from PowerShell with a single command:
+
+```ps
+irm https://termscp.rs/install.ps1 | iex
+```
+
+or, alternatively, with [Chocolatey](https://chocolatey.org/):
 
 ```ps
 choco install termscp

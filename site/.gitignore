@@ -2,3 +2,4 @@ dist/
 .astro/
 node_modules/
 public/install.sh
+public/install.ps1

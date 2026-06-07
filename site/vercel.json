@@ -17,6 +17,10 @@
     {
       "source": "/install.sh",
       "headers": [{ "key": "Content-Type", "value": "text/x-shellscript; charset=utf-8" }]
+    },
+    {
+      "source": "/install.ps1",
+      "headers": [{ "key": "Content-Type", "value": "text/plain; charset=utf-8" }]
     }
   ]
 }

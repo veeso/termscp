@@ -3,9 +3,11 @@ import Base from "../layouts/Base.astro";
 import Nav from "../components/Nav.astro";
 import Footer from "../components/Footer.astro";
 import InstallTabs from "../components/InstallTabs.astro";
+import CopyButton from "../components/CopyButton.astro";
 import { DOCS_URL } from "../consts";
 
 const script = "curl --proto '=https' --tlsv1.2 -sSLf https://termscp.rs/install.sh | sh";
+const psScript = "irm https://termscp.rs/install.ps1 | iex";
 
 const methods = [
   { id: "cargo", label: "Cargo", cmd: "cargo install termscp --locked" },
@@ -28,9 +30,23 @@ const methods = [
       <div class="flex items-center gap-2 border-b border-line px-3 py-2 text-xs text-overlay">
         <span class="text-green">$</span> Linux · macOS · BSD
       </div>
-      <pre class="m-0 overflow-auto bg-base px-4 py-4 text-sm text-text"><code>{script}</code></pre>
+      <div class="relative">
+        <pre class="m-0 overflow-auto bg-base px-4 py-4 pr-12 text-sm text-text"><code>{script}</code></pre>
+        <CopyButton text={script} class="absolute right-2 top-2" />
+      </div>
     </div>
     <p class="mt-2 text-xs text-overlay">Requires <span class="text-text">curl</span>. macOS uses Homebrew if available, otherwise builds from source.</p>
+
+    <div class="mt-6 rounded-lg border border-line bg-mantle p-1">
+      <div class="flex items-center gap-2 border-b border-line px-3 py-2 text-xs text-overlay">
+        <span class="text-green">&gt;</span> Windows (PowerShell)
+      </div>
+      <div class="relative">
+        <pre class="m-0 overflow-auto bg-base px-4 py-4 pr-12 text-sm text-text"><code>{psScript}</code></pre>
+        <CopyButton text={psScript} class="absolute right-2 top-2" />
+      </div>
+    </div>
+    <p class="mt-2 text-xs text-overlay">Downloads the latest release and adds <span class="text-text">termscp</span> to your user PATH.</p>
 
     <h2 class="mt-10 mb-3 text-lg text-text">Package managers</h2>
     <InstallTabs methods={methods} />

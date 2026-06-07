@@ -16,6 +16,9 @@ sedi "s/^version = \"[0-9][0-9A-Za-z.\\-]*\"/version = \"$VERSION\"/m" "$ROOT/Ca
 # install.sh — the literal default assignment only
 sedi "s/^TERMSCP_VERSION=\"[0-9][0-9A-Za-z.\\-]*\"/TERMSCP_VERSION=\"$VERSION\"/m" "$ROOT/install.sh"
 
+# install.ps1 — the default -Version parameter value only
+sedi "s/\\\$Version = \"[0-9][0-9A-Za-z.\\-]*\"/\\\$Version = \"$VERSION\"/" "$ROOT/install.ps1"
+
 # README.md — version + release date
 sedi "s/Current version: [0-9][0-9A-Za-z.\\-]* [0-9]{4}-[0-9]{2}-[0-9]{2}/Current version: $VERSION $DATE/" "$ROOT/README.md"
 
