@@ -25,6 +25,11 @@ export function isLocale(value: string): value is Locale {
   return (locales as readonly string[]).includes(value);
 }
 
+/** Prefix a path with the locale, except for the default locale. */
+export function localizePath(locale: Locale, path: string): string {
+  return locale === defaultLocale ? path : `/${locale}${path}`;
+}
+
 /** Resolve a translator for `locale`, falling back to en, then to the key. */
 export function useTranslations(locale: Locale) {
   const dict = dictionaries[locale] ?? dictionaries[defaultLocale];
