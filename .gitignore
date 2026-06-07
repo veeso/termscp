@@ -28,3 +28,6 @@ dist/build/macos/openssl/
 .idea/
 .claude/
 
+
+# brainstorming visual companion
+.superpowers/
