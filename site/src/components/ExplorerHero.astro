@@ -1,5 +1,5 @@
 ---
-import { localizePath, useTranslations, type Locale } from "../i18n/ui";
+import { localizePath, useTranslations, DOCS_URL, type Locale } from "../i18n/ui";
 interface Props { locale: Locale; }
 const { locale } = Astro.props;
 const t = useTranslations(locale);
@@ -56,7 +56,7 @@ const remote = [
       <p class="mx-auto mt-2 max-w-xl text-subtext">{t("hero.subtitle")}</p>
       <div class="mt-5 flex flex-wrap justify-center gap-3">
         <a href={p("/install")} class="rounded-lg bg-green px-5 py-2.5 font-bold text-crust">{t("cta.install")}</a>
-        <a href={p("/user-manual")} class="rounded-lg border border-line px-5 py-2.5 text-text">{t("cta.manual")}</a>
+        <a href={DOCS_URL} class="rounded-lg border border-line px-5 py-2.5 text-text">{t("cta.manual")}</a>
       </div>
     </div>
   </div>
