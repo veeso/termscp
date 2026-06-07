@@ -2,15 +2,19 @@ name: codeberg-mirror
 on:
   push:
 
+permissions:
+  contents: read
+
 jobs:
   mirror:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           fetch-depth: 0
+          persist-credentials: false
       - name: "Mirror to Codeberg"
-        uses: yesolutions/mirror-action@v0.7.0
+        uses: yesolutions/mirror-action@1708f16cdb28634fd3ba10c5c79abc91f5578a14 # v0.7.0
         with:
           REMOTE: 'ssh://git@codeberg.org/veeso/termscp.git'
           GIT_SSH_PRIVATE_KEY: ${{ secrets.GIT_SSH_PRIVATE_KEY }}
