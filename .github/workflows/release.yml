@@ -62,9 +62,6 @@ jobs:
           retention-days: 1
           if-no-files-found: error
 
-      - name: Rebuild site CSS
-        run: npx tailwindcss@3 -i site/input.css -o site/output.css --minify
-
       - name: Show diff (dry run)
         if: ${{ inputs.dry_run }}
         run: git --no-pager diff
@@ -245,7 +242,7 @@ jobs:
           cat > tap/Formula/termscp.rb <<EOF
           class Termscp < Formula
             desc "A feature rich terminal file transfer and explorer with support for SCP/SFTP/FTP/S3/Kube/SMB/WebDAV"
-            homepage "https://termscp.veeso.dev/"
+            homepage "https://termscp.rs/"
             license "MIT"
             version "$VERSION"
 

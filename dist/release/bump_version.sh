@@ -19,15 +19,8 @@ sedi "s/^TERMSCP_VERSION=\"[0-9][0-9A-Za-z.\\-]*\"/TERMSCP_VERSION=\"$VERSION\"/
 # README.md — version + release date
 sedi "s/Current version: [0-9][0-9A-Za-z.\\-]* [0-9]{4}-[0-9]{2}-[0-9]{2}/Current version: $VERSION $DATE/" "$ROOT/README.md"
 
-# site: home.html + every lang json — "termscp X is NOW out"
-sedi "s/termscp [0-9][0-9A-Za-z.\\-]* is NOW out/termscp $VERSION is NOW out/g" "$ROOT/site/html/home.html"
-for f in "$ROOT"/site/lang/*.json; do
-  sedi "s/termscp [0-9][0-9A-Za-z.\\-]* is NOW out/termscp $VERSION is NOW out/g" "$f"
-done
-
-# site/get-started.html — nupkg + deb download URLs
-sedi "s/termscp\\.[0-9][0-9A-Za-z.\\-]*\\.nupkg/termscp.$VERSION.nupkg/g" "$ROOT/site/html/get-started.html"
-sedi "s/termscp_[0-9][0-9A-Za-z.\\-]*_amd64\\.deb/termscp_${VERSION}_amd64.deb/g" "$ROOT/site/html/get-started.html"
+# site: version constant displayed on the website
+sedi "s/^export const VERSION = \"[0-9][0-9A-Za-z.\\-]*\";/export const VERSION = \"$VERSION\";/m" "$ROOT/site/src/consts.ts"
 
 # chocolatey nuspec
 sedi "s#<version>[0-9][0-9A-Za-z.\\-]*</version>#<version>$VERSION</version>#" "$ROOT/dist/chocolatey/termscp.nuspec"
