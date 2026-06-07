@@ -3,14 +3,10 @@ import Base from "../layouts/Base.astro";
 import Nav from "../components/Nav.astro";
 import Footer from "../components/Footer.astro";
 import InstallTabs from "../components/InstallTabs.astro";
-import { useTranslations, DOCS_URL } from "../i18n/ui";
-
-const locale = "en" as const;
-const t = useTranslations(locale);
+import { DOCS_URL } from "../consts";
 
 const script = "curl --proto '=https' --tlsv1.2 -sSLf https://termscp.rs/install.sh | sh";
 
-// Verified package managers (see repo README). Cargo is universal.
 const methods = [
   { id: "cargo", label: "Cargo", cmd: "cargo install termscp --locked" },
   { id: "arch", label: "Arch Linux", cmd: "pacman -S termscp" },
@@ -21,15 +17,13 @@ const methods = [
 <Base
   title="Install termscp"
   description="Install termscp on Linux, macOS, BSD and Windows — one shell command, or via Cargo, pacman, pkgin and Chocolatey."
-  locale={locale}
   path="/install"
 >
-  <Nav locale={locale} path="/install" />
+  <Nav />
   <main class="mx-auto w-full max-w-3xl flex-1 px-4 py-12">
-    <h1 class="text-2xl font-bold text-text">{t("install.heading")}</h1>
-    <p class="mt-2 text-subtext">{t("install.subtitle")}</p>
+    <h1 class="text-2xl font-bold text-text">Install termscp</h1>
+    <p class="mt-2 text-subtext">Pick your platform. One command and you're in.</p>
 
-    <!-- Primary: install script -->
     <div class="mt-6 rounded-lg border border-line bg-mantle p-1">
       <div class="flex items-center gap-2 border-b border-line px-3 py-2 text-xs text-overlay">
         <span class="text-green">$</span> Linux · macOS · BSD
@@ -38,17 +32,14 @@ const methods = [
     </div>
     <p class="mt-2 text-xs text-overlay">Requires <span class="text-text">curl</span>. macOS uses Homebrew if available, otherwise builds from source.</p>
 
-    <!-- Secondary: package managers -->
     <h2 class="mt-10 mb-3 text-lg text-text">Package managers</h2>
     <InstallTabs methods={methods} />
 
-    <p class="mt-8 text-sm text-overlay">
-      Update anytime with <span class="text-green">termscp --update</span>.
-    </p>
+    <p class="mt-8 text-sm text-overlay">Update anytime with <span class="text-green">termscp --update</span>.</p>
     <p class="mt-2 text-sm text-overlay">
       Linux build deps: <span class="text-text">libdbus-1</span>, <span class="text-text">pkg-config</span>, <span class="text-text">libsmbclient</span>.
       More details in the <a href={DOCS_URL} class="text-blue hover:underline">docs</a>.
     </p>
   </main>
-  <Footer locale={locale} />
+  <Footer />
 </Base>

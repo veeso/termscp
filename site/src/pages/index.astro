@@ -5,30 +5,33 @@ import Footer from "../components/Footer.astro";
 import ExplorerHero from "../components/ExplorerHero.astro";
 import ProtocolStrip from "../components/ProtocolStrip.astro";
 import FeatureCard from "../components/FeatureCard.astro";
-import { useTranslations } from "../i18n/ui";
 
-const locale = "en" as const;
-const t = useTranslations(locale);
-const features = ["handy", "cross", "custom", "bookmarks", "security", "performance"];
+const features = [
+  { title: "Handy UI", body: "Explore and operate on the remote and local file system with a handy UI." },
+  { title: "Cross platform", body: "Runs on Windows, macOS, Linux and BSD." },
+  { title: "Customizable", body: "Customize the explorer, the text editor and default options." },
+  { title: "Bookmarks", body: "Connect to favourite hosts via bookmarks and recent connections." },
+  { title: "Security first", body: "Store passwords in your operating system key vault." },
+  { title: "Eye on performance", body: "Built with an eye on performance to keep CPU usage low." },
+];
 ---
 <Base
   title="termscp — terminal file transfer & explorer for SCP/SFTP/FTP/S3/Kube/SMB/WebDAV"
   description="A feature-rich terminal UI file transfer and explorer with support for SCP/SFTP/FTP/Kube/S3/WebDAV/SMB."
-  locale={locale}
   path="/"
 >
-  <Nav locale={locale} path="/" />
+  <Nav />
   <main class="flex-1">
-    <ExplorerHero locale={locale} />
+    <ExplorerHero />
     <section class="mx-auto max-w-5xl px-4 py-12">
-      <h2 class="mb-6 text-center text-xl text-text">{t("features.heading")}</h2>
+      <h2 class="mb-6 text-center text-xl text-text">Why termscp</h2>
       <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {features.map((f) => (
-          <FeatureCard title={t(`features.${f}.title`)} body={t(`features.${f}.body`)} />
+          <FeatureCard title={f.title} body={f.body} />
         ))}
       </div>
     </section>
-    <ProtocolStrip locale={locale} />
+    <ProtocolStrip />
   </main>
-  <Footer locale={locale} />
+  <Footer />
 </Base>

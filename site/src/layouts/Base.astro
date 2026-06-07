@@ -1,40 +1,27 @@
 ---
 import "../styles/theme.css";
-import { defaultLocale, locales, type Locale } from "../i18n/ui";
 
 interface Props {
   title: string;
   description: string;
-  locale?: Locale;
-  /** Path WITHOUT locale prefix, e.g. "/install". "/" for home. */
+  /** Path for canonical/og, e.g. "/install" or "/". */
   path: string;
 }
 
-const { title, description, locale = defaultLocale, path } = Astro.props;
+const { title, description, path } = Astro.props;
 const site = Astro.site?.href ?? "https://termscp.rs/";
-const localizedPath = locale === defaultLocale ? path : `/${locale}${path}`;
-const canonical = new URL(localizedPath, site).href;
+const canonical = new URL(path, site).href;
 const ogImage = new URL("/assets/images/og_preview.jpg", site).href;
 ---
 
 <!doctype html>
-<html lang={locale} data-theme="frappe">
+<html lang="en" data-theme="frappe">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
-
-    <!-- hreflang alternates -->
-    {locales.map((l) => (
-      <link
-        rel="alternate"
-        hreflang={l}
-        href={new URL(l === defaultLocale ? path : `/${l}${path}`, site).href}
-      />
-    ))}
-    <link rel="alternate" hreflang="x-default" href={new URL(path, site).href} />
 
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
@@ -43,11 +30,11 @@ const ogImage = new URL("/assets/images/og_preview.jpg", site).href;
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
     <meta property="og:image" content={ogImage} />
+    <meta property="og:image:alt" content="termscp — terminal file transfer and explorer" />
     <meta property="og:image:width" content="1280" />
     <meta property="og:image:height" content="640" />
-    <meta property="og:image:alt" content="termscp — terminal file transfer and explorer" />
 
-    <!-- Twitter Card -->
+    <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
@@ -61,7 +48,7 @@ const ogImage = new URL("/assets/images/og_preview.jpg", site).href;
     <!-- Font preload -->
     <link rel="preload" href="/fonts/jetbrains-mono-400.woff2" as="font" type="font/woff2" crossorigin />
 
-    <!-- No-flash theme bootstrap. Contract: localStorage 'theme' is "frappe" | "latte"; the ThemeToggle component writes the same values. -->
+    <!-- No-flash theme bootstrap. Contract: localStorage 'theme' is "frappe" | "latte"; ThemeToggle writes the same. -->
     <script is:inline>
       (() => {
         const t = localStorage.getItem("theme") ||
