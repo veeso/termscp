@@ -1,0 +1,28 @@
+---
+import { defaultLocale, useTranslations, type Locale } from "../i18n/ui";
+import ThemeToggle from "./ThemeToggle.astro";
+import LangPicker from "./LangPicker.astro";
+
+interface Props {
+  locale: Locale;
+  path: string;
+}
+const { locale, path } = Astro.props;
+const t = useTranslations(locale);
+const p = (sub: string) => (locale === defaultLocale ? sub : `/${locale}${sub}`);
+---
+<header class="sticky top-0 z-50 border-b border-line bg-mantle/90 backdrop-blur">
+  <nav class="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
+    <a href={p("/")} class="flex items-center gap-2 text-text">
+      <img src="/assets/images/termscp.webp" alt="termscp" class="h-7 w-7" />
+      <span class="font-bold">termscp</span>
+    </a>
+    <div class="flex items-center gap-5 text-sm">
+      <a href={p("/install")} class="text-overlay hover:text-text">{t("nav.install")}</a>
+      <a href={p("/user-manual")} class="text-overlay hover:text-text">{t("nav.manual")}</a>
+      <a href="https://github.com/veeso/termscp" class="text-overlay hover:text-text">{t("nav.github")}</a>
+      <LangPicker locale={locale} path={path} />
+      <ThemeToggle />
+    </div>
+  </nav>
+</header>
