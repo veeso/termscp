@@ -6,11 +6,11 @@
 
 <p align="center">~ Un file transfer ricco di funzionalità ~</p>
 <p align="center">
-  <a href="https://termscp.veeso.dev" target="_blank">Sito</a>
+  <a href="https://termscp.rs" target="_blank">Sito</a>
   ·
-  <a href="https://termscp.veeso.dev/get-started.html" target="_blank">Installazione</a>
+  <a href="https://termscp.rs/install" target="_blank">Installazione</a>
   ·
-  <a href="https://termscp.veeso.dev/user-manual.html" target="_blank">Manuale utente</a>
+  <a href="https://docs.termscp.rs" target="_blank">Manuale utente</a>
 </p>
 
 <p align="center">
@@ -177,7 +177,7 @@ Se vuoi contribuire al progetto, non dimenticarti di leggere la [contribute guid
 Se sei un utente che utilizza Linux, FreeBSD o MacOS, questo shell script installerà termscp sul tuo sistema con un comando secco:
 
 ```sh
-curl -sSLf http://get-termscp.veeso.dev | sh
+curl --proto '=https' --tlsv1.2 -sSLf https://termscp.rs/install.sh | sh
 ```
 
 mentre se sei un utente Windows, puoi installare termscp con [Chocolatey](https://chocolatey.org/):
@@ -186,7 +186,7 @@ mentre se sei un utente Windows, puoi installare termscp con [Chocolatey](https:
 choco install termscp
 ```
 
-Per ulteriori informazioni sui metodi di installazione su altre piattaforme, visita [termscp.veeso.dev](https://termscp.veeso.dev/termscp/get-started.html).
+Per ulteriori informazioni sui metodi di installazione su altre piattaforme, visita [termscp.rs](https://termscp.rs/install).
 
 ⚠️  Se stavi cercando come aggiornare la tua versione di termscp, puoi semplicemente lanciare termscp con questi argomenti: `(sudo) termscp --update` ⚠️
 
@@ -232,7 +232,7 @@ Puoi fare una donazione tramite una di queste piattaforme:
 
 ## Manuale utente 📚
 
-Il manuale utente lo puoi trovare sul [sito di termscp](https://termscp.veeso.dev/termscp/user-manual.html) o su [Github](man.md).
+Il manuale utente lo puoi trovare sul [sito di termscp](https://docs.termscp.rs) o su [Github](man.md).
 
 ---
 

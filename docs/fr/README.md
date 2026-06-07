@@ -6,11 +6,11 @@
 
 <p align="center">~ Un file transfer de terminal riche en fonctionnalités ~</p>
 <p align="center">
-  <a href="https://termscp.veeso.dev" target="_blank">Site internet</a>
+  <a href="https://termscp.rs" target="_blank">Site internet</a>
   ·
-  <a href="https://termscp.veeso.dev/get-started.html" target="_blank">Installation</a>
+  <a href="https://termscp.rs/install" target="_blank">Installation</a>
   ·
-  <a href="https://termscp.veeso.dev/user-manual.html" target="_blank">Manuel de l'Utilisateur</a>
+  <a href="https://docs.termscp.rs" target="_blank">Manuel de l'Utilisateur</a>
 </p>
 
 <p align="center">
@@ -177,7 +177,7 @@ Si tu veux contribuer à ce projet, n'oublié pas de consulter notre [guide de c
 Si tu es un utilisateur Linux, FreeBSD ou MacOS ce simple shell script installera termscp sur te système en un seule commande:
 
 ```sh
-curl -sSLf http://get-termscp.veeso.dev | sh
+curl --proto '=https' --tlsv1.2 -sSLf https://termscp.rs/install.sh | sh
 ```
 
 tandis que si tu es un utilisateur Windows, tu peux installer termscp avec [Chocolatey](https://chocolatey.org/):
@@ -186,7 +186,7 @@ tandis que si tu es un utilisateur Windows, tu peux installer termscp avec [Choc
 choco install termscp
 ```
 
-Pour plus d'informations sur les autres méthodes d'installation, veuillez visiter [termscp.veeso.dev](https://termscp.veeso.dev/termscp/get-started.html).
+Pour plus d'informations sur les autres méthodes d'installation, veuillez visiter [termscp.rs](https://termscp.rs/install).
 
 ⚠️ Si tu cherche comme de mettre à jour termscp, tu dois exécuter cette commande dans le terminal: `(sudo) termscp --update` ⚠️
 
@@ -232,7 +232,7 @@ Tu peux faire un don avec l'une de ces plateformes:
 
 ## Manuel d'utilisateur et Documentation 📚
 
-Le manuel d'utilisateur peut être trouvé sur le [site de termscp](https://termscp.veeso.dev/termscp/user-manual.html) ou sur [Github](man.md).
+Le manuel d'utilisateur peut être trouvé sur le [site de termscp](https://docs.termscp.rs) ou sur [Github](man.md).
 
 La documentation peut être trouvé sur Rust Docs <https://docs.rs/termscp>
 

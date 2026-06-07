@@ -6,11 +6,11 @@
 
 <p align="center">~ Eine funktionsreiche Terminal-Dateiübertragung ~</p>
 <p align="center">
-  <a href="https://termscp.veeso.dev" target="_blank">Webseite</a>
+  <a href="https://termscp.rs" target="_blank">Webseite</a>
   ·
-  <a href="https://termscp.veeso.dev/get-started.html" target="_blank">Installation</a>
+  <a href="https://termscp.rs/install" target="_blank">Installation</a>
   ·
-  <a href="https://termscp.veeso.dev/user-manual.html" target="_blank">Benutzerhandbuch</a>
+  <a href="https://docs.termscp.rs" target="_blank">Benutzerhandbuch</a>
 </p>
 
 <p align="center">
@@ -177,7 +177,7 @@ Wenn Sie zu diesem Projekt beitragen möchten, vergessen Sie nicht, unseren [Bei
 Wenn Sie ein Linux-, FreeBSD- oder MacOS-Benutzer sind, installiert dieses einfache Shell-Skript termscp mit einem einzigen Befehl auf Ihrem System:
 
 ```sh
-curl -sSLf http://get-termscp.veeso.dev | sh
+curl --proto '=https' --tlsv1.2 -sSLf https://termscp.rs/install.sh | sh
 ```
 
 Wenn Sie ein Windows-Benutzer sind, können Sie termscp mit [Chocolatey](https://chocolatey.org/) installieren:
@@ -186,7 +186,7 @@ Wenn Sie ein Windows-Benutzer sind, können Sie termscp mit [Chocolatey](https:/
 choco install termscp
 ```
 
-Für weitere Informationen oder andere Plattformen besuchen Sie bitte [termscp.veeso.dev](https://termscp.veeso.dev/termscp/get-started.html), um alle Installationsmethoden anzuzeigen.
+Für weitere Informationen oder andere Plattformen besuchen Sie bitte [termscp.rs](https://termscp.rs/install), um alle Installationsmethoden anzuzeigen.
 
 ⚠️ Wenn Sie wissen möchten, wie Sie termscp aktualisieren können, führen Sie einfach termscp über die CLI aus mit: `(sudo) termscp --update` ⚠️
 
@@ -232,7 +232,7 @@ Sie können mit einer dieser Plattformen spenden:
 
 ## User manual 📚
 
-Das Benutzerhandbuch finden Sie auf der [termscp-Website](https://termscp.veeso.dev/termscp/user-manual.html) oder auf [Github](man.md).
+Das Benutzerhandbuch finden Sie auf der [termscp-Website](https://docs.termscp.rs) oder auf [Github](man.md).
 
 ---
 

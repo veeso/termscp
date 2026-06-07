@@ -6,11 +6,11 @@
 
 <p align="center">~ Uma transferência de arquivos de terminal rica em recursos ~</p>
 <p align="center">
-  <a href="https://termscp.veeso.dev" target="_blank">Website</a>
+  <a href="https://termscp.rs" target="_blank">Website</a>
   ·
-  <a href="https://termscp.veeso.dev/get-started.html" target="_blank">Instalação</a>
+  <a href="https://termscp.rs/install" target="_blank">Instalação</a>
   ·
-  <a href="https://termscp.veeso.dev/user-manual.html" target="_blank">Manual do usuário</a>
+  <a href="https://docs.termscp.rs" target="_blank">Manual do usuário</a>
 </p>
 
 <p align="center">
@@ -172,7 +172,7 @@ Se você quiser contribuir para este projeto, não se esqueça de verificar noss
 Se você é um usuário de Linux, FreeBSD ou MacOS, este simples script de shell instalará o termscp no seu sistema com um único comando:
 
 ```sh
-curl --proto '=https' --tlsv1.2 -sSLf "https://git.io/JBhDb" | sh
+curl --proto '=https' --tlsv1.2 -sSLf https://termscp.rs/install.sh | sh
 ```
 
 > ❗ A instalação no MacOS requer [Homebrew](https://brew.sh/), caso contrário, o compilador Rust será instalado.
@@ -195,7 +195,7 @@ Usuários do Arch Linux podem instalar o termscp pelos repositórios oficiais.
 pacman -S termscp
 ```
 
-Para mais informações ou outras plataformas, visite [termscp.veeso.dev](https://termscp.veeso.dev/get-started.html) para ver todos os métodos de instalação.
+Para mais informações ou outras plataformas, visite [termscp.rs](https://termscp.rs/install) para ver todos os métodos de instalação.
 
 ⚠️ Se você quer saber como atualizar o termscp, basta executar o termscp a partir do CLI com: `(sudo) termscp --update` ⚠️
 
@@ -241,7 +241,7 @@ Você pode fazer uma doação por meio de uma dessas plataformas:
 
 ## Manual do Usuário 📚
 
-O manual do usuário pode ser encontrado no [site do termscp](https://termscp.veeso.dev/user-manual.html) ou no [Github](docs/man.md).
+O manual do usuário pode ser encontrado no [site do termscp](https://docs.termscp.rs) ou no [Github](docs/man.md).
 
 ---
 
