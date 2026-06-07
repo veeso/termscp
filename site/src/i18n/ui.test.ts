@@ -26,4 +26,11 @@ describe("i18n", () => {
     const t = useTranslations("en");
     expect(t("hero.tabs", { host: "1.2.3.4" })).toContain("1.2.3.4");
   });
+
+  it("interpolates the full string exactly", () => {
+    const t = useTranslations("en");
+    expect(t("hero.tabs", { host: "10.0.0.1" })).toBe(
+      "termscp — 10.0.0.1 (sftp) connected",
+    );
+  });
 });
