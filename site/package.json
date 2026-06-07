@@ -4,7 +4,9 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
+    "predev": "node scripts/copy-install.mjs",
     "dev": "astro dev",
+    "prebuild": "node scripts/copy-install.mjs",
     "build": "astro build",
     "preview": "astro preview",
     "check": "astro check",

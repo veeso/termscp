@@ -1,3 +1,4 @@
 dist/
 .astro/
 node_modules/
+public/install.sh
