@@ -1,4 +1,5 @@
 #!/usr/bin/env sh
+# shellcheck shell=dash
 
 # Options
 #
@@ -83,10 +84,10 @@ download() {
         return 1
     fi
     $cmd && return 0 || rc=$?
-    
+
     error "Command failed (exit code $rc): ${BLUE}${cmd}${NO_COLOR}"
     warn "If you believe this is a bug, please report immediately an issue to <https://github.com/veeso/termscp/issues/new>"
-    return $rc
+    return "$rc"
 }
 
 test_writeable() {
@@ -125,7 +126,7 @@ elevate_priv_ex() {
     else
         elevate_priv
     fi
-    echo $sudo
+    echo "$sudo"
 }
 
 # Currently supporting:
@@ -195,9 +196,7 @@ install_on_arch_linux() {
     pkg="$1"
     info "Detected ${YELLOW}${pkg}${NO_COLOR} on your system"
     # check if rust is already installed
-    has cargo
-    CARGO=$?
-    if [ $CARGO -ne 0 ]; then
+    if ! has cargo; then
         confirm "${YELLOW}rust${NO_COLOR} is required to install ${GREEN}termscp${NO_COLOR}; would you like to proceed?"
         $pkg -S rust
     fi
@@ -210,7 +209,10 @@ install_with_brew() {
     if has termscp; then
         info "Upgrading ${GREEN}termscp${NO_COLOR}…"
         # The OR is used since someone could have installed via cargo previously
-        brew update && brew upgrade termscp || brew install veeso/termscp/termscp
+        brew update
+        if ! brew upgrade termscp; then
+            brew install veeso/termscp/termscp
+        fi
     else
         info "Installing ${GREEN}termscp${NO_COLOR}…"
         brew install veeso/termscp/termscp
@@ -257,7 +259,7 @@ install_on_debian() {
         $sudo dpkg -i "${archive}"
     fi
 
-    rm -f ${archive}
+    rm -f "${archive}"
 }
 
 install_on_linux() {
@@ -329,18 +331,20 @@ install_linux_cargo_deps() {
     set -e
     confirm "${YELLOW}gcc, openssl, pkg-config, libdbus${NO_COLOR} are required to install ${GREEN}termscp${NO_COLOR}. The following command will be used to install the dependencies: '${BOLD}${YELLOW}${deps_cmd}${NO_COLOR}'. Would you like to proceed?"
     sudo="$(elevate_priv_ex /usr/local/bin)"
+    # shellcheck disable=SC2086 # deps_cmd is a command with args; word-splitting is intended
     $sudo $deps_cmd
     info "Dependencies installed successfully"
 }
 
+# shellcheck source=/dev/null
 install_cargo() {
     if has cargo; then
         return 0
     fi
     cargo_env="$HOME/.cargo/env"
     # Check if cargo is already installed (actually), but not loaded
-    if [ -f $cargo_env ]; then
-        . $cargo_env
+    if [ -f "$cargo_env" ]; then
+        . "$cargo_env"
     fi
     # Check again cargo
     if has cargo; then
@@ -351,11 +355,11 @@ install_cargo() {
         rustup=$(get_tmpfile "sh")
         info "Downloading rustup.sh…"
         download "${rustup}" "https://sh.rustup.rs"
-        chmod +x $rustup
-        $rustup -y
-        rm -f ${archive}
+        chmod +x "$rustup"
+        "$rustup" -y
+        rm -f "${rustup}"
         info "Rust installed with success"
-        . $cargo_env
+        . "$cargo_env"
     fi
 
 }
@@ -403,13 +407,8 @@ if [ -z "${ARCH-}" ]; then
     ARCH="$(detect_arch)"
 fi
 
-if [ -z "${BASE_URL-}" ]; then
-    BASE_URL="https://github.com/starship/starship/releases"
-fi
-
 # parse argv variables
 while [ "$#" -gt 0 ]; do
-    echo $1
     case "$1" in
         
         -V | --verbose)
