@@ -9,11 +9,13 @@
     // visually aligned table never matches. Rendering is unaffected.
     "MD060": false
   },
-  "globs": ["docs/**/*.md"],
+  "globs": ["docs/en-US/**/*.md", "docs/zh-CN/**/*.md"],
   "ignores": [
     // mdBook build output.
     "**/book/**",
     // SUMMARY.md uses multiple level-1 headings as mdBook part titles.
-    "**/SUMMARY.md"
+    "**/SUMMARY.md",
+    // GitHub READMEs (not part of the book) keep centered HTML badges.
+    "**/README.md"
   ]
 }
