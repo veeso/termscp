@@ -221,7 +221,7 @@ impl FileTransferActivity {
                             self.app.view(&Id::TransferProgressBarPartial, f, popup);
                         } else {
                             let popup =
-                                Popup(Size::Percentage(50), Size::Unit(6)).draw_in(f.area());
+                                Popup(Size::Percentage(50), Size::Unit(7)).draw_in(f.area());
                             f.render_widget(Clear, popup);
                             let chunks = Layout::default()
                                 .direction(Direction::Vertical)

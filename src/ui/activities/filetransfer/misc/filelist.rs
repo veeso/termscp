@@ -181,11 +181,16 @@ impl FileTransferActivity {
         &mut self,
         filename: String,
     ) {
-        // Update the partial bar with the current file progress
+        // Update the partial bar with the current file progress. The filename
+        // goes into the gauge *label*, not a block title: in a multi-file
+        // transfer the partial bar omits its top border to join the seam with the
+        // full bar, but any top-positioned title forces a 1-row top inset in
+        // `Block::inner`, which would shrink the partial bar to one inner row
+        // while the full bar keeps two — making the two gauges unequal in height.
         ui_result(self.app.attr(
             &Id::TransferProgressBarPartial,
             Attribute::Text,
-            AttrValue::String(self.transfer.progress.to_string()),
+            AttrValue::String(format!("{filename} — {}", self.transfer.progress)),
         ));
         ui_result(self.app.attr(
             &Id::TransferProgressBarPartial,

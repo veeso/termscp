@@ -440,12 +440,22 @@ impl FileTransferActivity {
                 BorderSides::BOTTOM | BorderSides::LEFT | BorderSides::RIGHT,
             )
         };
+        // The root name titles the panel. For a multi-file transfer the title
+        // lives on the top (full) bar, whose TOP border carries it; the bottom
+        // (partial) bar stays untitled so it isn't pushed down by a top inset and
+        // both gauges keep the same inner height. A single file shows only the
+        // partial bar, so the title goes there instead.
+        let (full_title, partial_title) = if self.is_single_file_transfer() {
+            ("", root_name.as_str())
+        } else {
+            (root_name.as_str(), "")
+        };
         ui_result(self.app.remount(
             Id::TransferProgressBarPartial,
             Box::new(components::TransferProgressBar::new(
                 0.0,
                 "",
-                root_name.as_str(),
+                partial_title,
                 partial_color,
                 partial_sides,
             )),
@@ -454,7 +464,7 @@ impl FileTransferActivity {
         ui_result(self.app.remount(
             Id::TransferProgressBarFull,
             Box::new(components::TransferProgressBar::new(
-                0.0, "", "", full_color, full_sides,
+                0.0, "", full_title, full_color, full_sides,
             )),
             vec![],
         ));

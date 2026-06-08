@@ -21,18 +21,26 @@ impl TransferProgressBar {
         color: Color,
         sides: BorderSides,
     ) -> Self {
-        Self {
-            component: Gauge::default()
-                .borders(
-                    Borders::default()
-                        .modifiers(BorderType::Rounded)
-                        .sides(sides),
-                )
-                .foreground(color)
-                .label(label)
-                .progress(prog)
-                .title(Title::from(title.into()).alignment(HorizontalAlignment::Center)),
+        let mut component = Gauge::default()
+            .borders(
+                Borders::default()
+                    .modifiers(BorderType::Rounded)
+                    .sides(sides),
+            )
+            .foreground(color)
+            .label(label)
+            .progress(prog);
+        // Only set a title when there's actually text. An empty title still
+        // registers as a top-positioned title in the block, which forces a 1-row
+        // top inset even when the TOP border is omitted (see `Block::inner`). On
+        // the bottom bar — whose top edge is dropped to join the seam — that
+        // inset would shrink its inner area to 1 row while the top bar keeps 2,
+        // making the two gauges visibly unequal in height.
+        let title = title.into();
+        if !title.is_empty() {
+            component = component.title(Title::from(title).alignment(HorizontalAlignment::Center));
         }
+        Self { component }
     }
 }
 
