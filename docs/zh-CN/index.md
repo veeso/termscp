@@ -4,7 +4,7 @@
 
 termscp 是一款功能丰富、带有 TUI（终端用户界面）的终端文件传输客户端与浏览器。它让你能够连接到远程服务器以上传和下载文件，同时还能与本地文件系统进行交互。termscp 可运行于 Linux、macOS、FreeBSD、NetBSD 和 Windows。
 
-## Features
+## 功能特性
 
 - 支持多种传输协议：SFTP、SCP、FTP 和 FTPS、Kube、S3、SMB 以及 WebDAV。
 - 双面板浏览器，可同时浏览并操作远程和本地文件系统：创建、删除、重命名、搜索、查看和编辑文件。

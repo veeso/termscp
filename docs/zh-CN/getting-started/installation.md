@@ -2,7 +2,7 @@
 
 termscp 可在多种平台上使用。请在下方选择与你的系统相匹配的安装方式。
 
-## Linux, FreeBSD, and macOS
+## Linux、FreeBSD 与 macOS
 
 下面的 shell 脚本只需一条命令即可在你的系统上安装 termscp：
 
@@ -42,7 +42,7 @@ pkgin install termscp
 pacman -S termscp
 ```
 
-## Requirements
+## 系统要求
 
 运行 termscp 需要以下系统依赖。
 
@@ -55,7 +55,7 @@ pacman -S termscp
   - pkgconf
   - libsmbclient
 
-### Optional requirements
+### 可选依赖
 
 运行 termscp 并不需要这些依赖，但要使用其全部功能则需要它们。
 
@@ -68,7 +68,7 @@ pacman -S termscp
 - WSL 用户，若要通过 `V` 打开文件：
   - [wslu](https://github.com/wslutilities/wslu)
 
-## Updating termscp
+## 更新 termscp
 
 要将 termscp 更新到最新版本，请在命令行中运行：
 

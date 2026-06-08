@@ -96,7 +96,7 @@ s3://<bucket>@<region>[:profile][:/wrkdir]
 s3://buckethead@eu-central-1:default:/assets
 ```
 
-### S3 credentials
+### S3 凭证
 
 要连接到 AWS S3 存储桶，你必须提供凭据。有三种方式可以做到这一点。
 

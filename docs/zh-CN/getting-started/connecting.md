@@ -8,11 +8,11 @@ termscp 可以根据你传入的参数以三种不同的方式启动。
 
 当你提供地址参数或书签名称时，还可以为本地主机提供一个起始工作目录。
 
-## The authentication form
+## 认证表单
 
 当 termscp 在不带地址的情况下启动时，会显示认证表单。填写协议、地址、端口、用户名和密码，然后进行连接。连接成功后，termscp 将打开双面板浏览器。
 
-## Address argument syntax
+## 地址参数语法
 
 通用地址参数采用以下语法：
 
@@ -48,7 +48,7 @@ termscp scp://omar@192.168.1.31:4022:/tmp
 
 有关各协议专属的地址语法（S3、Kube、WebDAV 和 SMB），请参阅[连接参数](connection-parameters.md)。
 
-## How the password is provided
+## 密码的提供方式
 
 当你以参数形式提供地址时，地址本身没有用于填写密码的字段。你可以通过三种方式提供密码：
 
