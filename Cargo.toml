@@ -48,12 +48,7 @@ content_inspector = "0.2"
 dirs = "6"
 edit = "0.1"
 filetime = "0.2"
-keyring = { version = "3", features = [
-  "apple-native",
-  "sync-secret-service",
-  "vendored",
-  "windows-native",
-] }
+keyring-core = "1"
 lazy-regex = "3"
 log = "0.4"
 md-5 = "0.11"
@@ -95,6 +90,12 @@ unicode-width = "0.2"
 whoami = "2"
 wildmatch = "2"
 
+[target."cfg(any(target_os = \"linux\", target_os = \"freebsd\"))".dependencies]
+dbus-secret-service-keyring-store = { version = "1", features = [
+  "crypto-rust",
+  "vendored",
+] }
+
 [target."cfg(target_family = \"unix\")".dependencies]
 remotefs-ftp = { version = "0.4", features = [
   "native-tls",
@@ -104,6 +105,12 @@ uzers = "0.12"
 
 [target."cfg(target_family = \"windows\")".dependencies]
 remotefs-ftp = { version = "0.4", features = ["native-tls"] }
+
+[target."cfg(target_os = \"macos\")".dependencies]
+apple-native-keyring-store = { version = "1", features = ["keychain"] }
+
+[target."cfg(target_os = \"windows\")".dependencies]
+windows-native-keyring-store = "1"
 
 [dev-dependencies]
 pretty_assertions = "1"
