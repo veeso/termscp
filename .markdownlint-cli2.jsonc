@@ -1,0 +1,15 @@
+{
+  // Markdown lint config for the termscp docs site (mdBook).
+  "config": {
+    // Line length is impractical for keyboard/style tables and long prose;
+    // mdBook reflows in the browser, so we don't enforce a hard wrap.
+    "MD013": false
+  },
+  "globs": ["docs/**/*.md"],
+  "ignores": [
+    // mdBook build output.
+    "**/book/**",
+    // SUMMARY.md uses multiple level-1 headings as mdBook part titles.
+    "**/SUMMARY.md"
+  ]
+}
