@@ -26,50 +26,11 @@
 <p align="center">由 <a href="https://veeso.me/" target="_blank">@veeso</a> 开发</p>
 <p align="center">当前版本： 1.0.0 2026-04-18</p>
 
-<p align="center">
-  <a href="https://opensource.org/licenses/MIT"
-    ><img
-      src="https://img.shields.io/badge/License-MIT-teal.svg"
-      alt="License-MIT"
-  /></a>
-  <a href="https://github.com/veeso/termscp/stargazers"
-    ><img
-      src="https://img.shields.io/github/stars/veeso/termscp?style=flat"
-      alt="Repo stars"
-  /></a>
-  <a href="https://crates.io/crates/termscp"
-    ><img
-      src="https://img.shields.io/crates/d/termscp.svg"
-      alt="Downloads counter"
-  /></a>
-  <a href="https://crates.io/crates/termscp"
-    ><img
-      src="https://img.shields.io/crates/v/termscp.svg"
-      alt="Latest version"
-  /></a>
-  <a href="https://ko-fi.com/veeso">
-    <img
-      src="https://img.shields.io/badge/donate-ko--fi-red"
-      alt="Ko-fi"
-  /></a>
-</p>
-<p align="center">
-  <a href="https://github.com/veeso/termscp/actions"
-    ><img
-      src="https://github.com/veeso/termscp/workflows/Linux/badge.svg"
-      alt="Linux CI"
-  /></a>
-  <a href="https://github.com/veeso/termscp/actions"
-    ><img
-      src="https://github.com/veeso/termscp/workflows/MacOS/badge.svg"
-      alt="MacOS CI"
-  /></a>
-  <a href="https://github.com/veeso/termscp/actions"
-    ><img
-      src="https://github.com/veeso/termscp/workflows/Windows/badge.svg"
-      alt="Windows CI"
-  /></a>
-</p>
+[![License-MIT](https://img.shields.io/crates/l/termscp.svg?logo=rust)](https://opensource.org/licenses/MIT)
+[![Repostars](https://img.shields.io/github/stars/veeso/termscp?style=flat&logo=github)](https://github.com/veeso/termscp/stargazers)
+[![Downloadscounter](https://img.shields.io/crates/d/termscp.svg?logo=rust)](https://crates.io/crates/termscp)
+[![Latest version](https://img.shields.io/crates/v/termscp.svg?logo=rust)](https://crates.io/crates/termscp)
+[![CI](https://github.com/veeso/termscp/workflows/CI/badge.svg?logo=github)](https://github.com/veeso/termscp/actions/workflows/ci.yml)
 
 ---
 
