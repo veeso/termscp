@@ -52,12 +52,12 @@ are two quick fixes:
     ```
 
 2. Edit your theme by hand. If you use a custom theme, edit the file and add the
-   missing key. The theme is located at `$CONFIG_DIR/termscp/theme.toml`, where
+   missing key. The theme is located at `$CONFIG_DIR/theme.toml`, where
    `$CONFIG_DIR` is:
 
-    - FreeBSD/Linux: `$HOME/.config/`
-    - macOS: `$HOME/Library/Application Support`
-    - Windows: `%appdata%`
+    - FreeBSD/Linux: `$HOME/.config/termscp`
+    - macOS: `$HOME/.config/termscp`
+    - Windows: `%USERPROFILE%\.termscp`
 
     Missing keys are reported in the CHANGELOG under `BREAKING CHANGES` for the
     version you have just installed.

@@ -108,3 +108,4 @@ Platform-specific dependencies: SSH and FTP crates use different TLS backends on
 
 - Always run `cargo +nightly fmt --all` and `cargo clippy --no-default-features -- -Dwarnings` after modifying Rust code
 - Always put plans to `./.claude/plans/`
+- When changing behavior that is documented under `docs/` (paths, config keys, commands, flags, etc.), update BOTH `docs/en-US/` and `docs/zh-CN/` to keep the translations in sync

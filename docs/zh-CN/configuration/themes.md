@@ -40,11 +40,11 @@ termscp 接受以下颜色格式：
     termscp theme <theme.toml>
     ```
 
-2. 手动编辑你的主题。如果你使用自定义主题，请编辑该文件并添加缺失的键。主题位于 `$CONFIG_DIR/termscp/theme.toml`，其中 `$CONFIG_DIR` 为：
+2. 手动编辑你的主题。如果你使用自定义主题，请编辑该文件并添加缺失的键。主题位于 `$CONFIG_DIR/theme.toml`，其中 `$CONFIG_DIR` 为：
 
-    - FreeBSD/Linux：`$HOME/.config/`
-    - macOS：`$HOME/Library/Application Support`
-    - Windows：`%appdata%`
+    - FreeBSD/Linux：`$HOME/.config/termscp`
+    - macOS：`$HOME/.config/termscp`
+    - Windows：`%USERPROFILE%\.termscp`
 
     缺失的键会在你刚安装的版本的 CHANGELOG 中 `BREAKING CHANGES` 部分列出。
 

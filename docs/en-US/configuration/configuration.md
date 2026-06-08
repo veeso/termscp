@@ -9,8 +9,8 @@ To enter the configuration, press `<CTRL+C>` from the termscp home.
 termscp requires these paths to be accessible:
 
 - `$HOME/.config/termscp/` on Linux/BSD
-- `$HOME/Library/Application Support/termscp` on macOS
-- `FOLDERID_RoamingAppData\termscp\` on Windows
+- `$HOME/.config/termscp/` on macOS
+- `%USERPROFILE%\.termscp\` on Windows
 
 ## Parameters
 

@@ -7,8 +7,8 @@ termscp lets you save your favourite hosts as bookmarks, which can then be loade
 Bookmarks are saved, when possible, in the configuration directory:
 
 - `$HOME/.config/termscp/` on Linux/BSD
-- `$HOME/Library/Application Support/termscp` on macOS
-- `FOLDERID_RoamingAppData\termscp\` on Windows
+- `$HOME/.config/termscp/` on macOS
+- `%USERPROFILE%\.termscp\` on Windows
 
 ## Saving passwords
 
