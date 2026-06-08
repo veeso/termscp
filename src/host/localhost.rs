@@ -17,6 +17,16 @@ use super::{HostBridge, HostResult};
 use crate::host::{HostError, HostErrorType};
 use crate::utils::path;
 
+/// Returns whether `a` and `b` resolve to the same filesystem path.
+/// Falls back to comparing the raw paths when canonicalization fails
+/// (e.g. one of the paths doesn't exist).
+fn same_file(a: &Path, b: &Path) -> bool {
+    match (a.canonicalize(), b.canonicalize()) {
+        (Ok(a), Ok(b)) => a == b,
+        _ => a == b,
+    }
+}
+
 /// Localhost is the entity which holds the information about the current directory and host.
 /// It provides functions to navigate across the local host file system
 pub struct Localhost {
@@ -292,6 +302,16 @@ impl HostBridge for Localhost {
                 }
                 false => dst.clone(),
             };
+            // Refuse to copy a file onto itself; std::fs::copy would otherwise
+            // truncate the source to 0 bytes (#421, e.g. empty destination).
+            if same_file(entry.path(), dst.as_path()) {
+                error!("Refusing to copy file onto itself: {}", dst.display());
+                return Err(HostError::new(
+                    HostErrorType::CouldNotCreateFile,
+                    None,
+                    dst.as_path(),
+                ));
+            }
             // Copy entry path to dst path
             if let Err(err) = std::fs::copy(entry.path(), dst.as_path()) {
                 error!("Failed to copy file: {}", err);
@@ -955,6 +975,32 @@ mod tests {
         assert!(host.copy(&file1_entry, file2_path.as_path()).is_ok());
         // Verify host has two files
         assert_eq!(host.files.len(), 2);
+    }
+
+    #[cfg(posix)]
+    #[test]
+    fn test_host_should_not_truncate_file_when_copying_to_empty_dest() {
+        // Regression test for #421: copying a file with an empty destination
+        // must not empty (truncate to 0KB) the original file.
+        let tmpdir: tempfile::TempDir = tempfile::TempDir::new().unwrap();
+        let mut file1_path: PathBuf = PathBuf::from(tmpdir.path());
+        file1_path.push("foo.txt");
+        let mut file1 = StdFile::create(file1_path.as_path()).ok().unwrap();
+        assert!(file1.write_all(b"Hello world!\n").is_ok());
+        // Create host
+        let mut host: Localhost = Localhost::new(PathBuf::from(tmpdir.path())).ok().unwrap();
+        let file1_entry: File = host.files.get(0).unwrap().clone();
+        assert_eq!(file1_entry.name(), String::from("foo.txt"));
+        // Copy with empty destination -> must fail and leave file untouched
+        assert!(
+            host.copy(&file1_entry, PathBuf::from("").as_path())
+                .is_err()
+        );
+        // Original file must still hold its content
+        assert_eq!(
+            std::fs::read(file1_path.as_path()).unwrap(),
+            b"Hello world!\n"
+        );
     }
 
     #[cfg(posix)]

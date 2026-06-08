@@ -12,6 +12,15 @@ use super::{FileTransferActivity, LogLevel, SelectedFile, TransferPayload};
 impl FileTransferActivity {
     /// Copy the currently selected file(s) via the active tab's pane.
     pub(crate) fn action_copy(&mut self, input: String) {
+        // An empty destination would resolve to the source itself and could
+        // empty the original file (#421); treat it as a cancel.
+        if input.trim().is_empty() {
+            self.log(
+                LogLevel::Warn,
+                "Copy cancelled: no destination was provided".to_string(),
+            );
+            return;
+        }
         match self.get_selected_entries() {
             SelectedFile::One(entry) => {
                 let dest_path = PathBuf::from(input);
