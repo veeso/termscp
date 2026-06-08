@@ -41,6 +41,7 @@ const { methods } = Astro.props;
   document.querySelectorAll(".install-tab").forEach((tab) => {
     tab.addEventListener("click", () => {
       const id = tab.getAttribute("data-target");
+      window.umami?.track("install-tab", { method: id });
       document
         .querySelectorAll(".install-tab")
         .forEach((t) => t.toggleAttribute("data-active", t === tab));

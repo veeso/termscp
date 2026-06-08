@@ -8,11 +8,24 @@ const year = new Date().getFullYear();
     class="mx-auto flex max-w-5xl flex-col items-center gap-2 px-4 py-8 text-sm text-overlay"
   >
     <div class="flex gap-5">
-      <a href={GITHUB_URL} class="hover:text-text">GitHub</a>
-      <a href="https://crates.io/crates/termscp" class="hover:text-text"
-        >crates.io</a
+      <a
+        href={GITHUB_URL}
+        class="hover:text-text"
+        data-umami-event="github"
+        data-umami-event-location="footer">GitHub</a
       >
-      <a href={DOCS_URL} class="hover:text-text">User manual</a>
+      <a
+        href="https://crates.io/crates/termscp"
+        class="hover:text-text"
+        data-umami-event="crates"
+        data-umami-event-location="footer">crates.io</a
+      >
+      <a
+        href={DOCS_URL}
+        class="hover:text-text"
+        data-umami-event="docs"
+        data-umami-event-location="footer">User manual</a
+      >
     </div>
     <p>
       termscp v{VERSION} · © {year} Christian Visintin · Released under the MIT license.

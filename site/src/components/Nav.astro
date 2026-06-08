@@ -14,9 +14,24 @@ import { DOCS_URL, GITHUB_URL } from "../consts";
 
     <!-- Desktop -->
     <div class="hidden items-center gap-5 text-sm sm:flex">
-      <a href="/install" class="text-overlay hover:text-text">Install</a>
-      <a href={DOCS_URL} class="text-overlay hover:text-text">User manual</a>
-      <a href={GITHUB_URL} class="text-overlay hover:text-text">GitHub</a>
+      <a
+        href="/install"
+        class="text-overlay hover:text-text"
+        data-umami-event="cta-install"
+        data-umami-event-location="nav">Install</a
+      >
+      <a
+        href={DOCS_URL}
+        class="text-overlay hover:text-text"
+        data-umami-event="docs"
+        data-umami-event-location="nav">User manual</a
+      >
+      <a
+        href={GITHUB_URL}
+        class="text-overlay hover:text-text"
+        data-umami-event="github"
+        data-umami-event-location="nav">GitHub</a
+      >
       <ThemeToggle />
     </div>
 
@@ -29,9 +44,24 @@ import { DOCS_URL, GITHUB_URL } from "../consts";
       <div
         class="absolute right-0 mt-2 flex w-48 flex-col gap-3 rounded-lg border border-line bg-mantle p-4 text-sm shadow-xl"
       >
-        <a href="/install" class="text-overlay hover:text-text">Install</a>
-        <a href={DOCS_URL} class="text-overlay hover:text-text">User manual</a>
-        <a href={GITHUB_URL} class="text-overlay hover:text-text">GitHub</a>
+        <a
+          href="/install"
+          class="text-overlay hover:text-text"
+          data-umami-event="cta-install"
+          data-umami-event-location="nav-mobile">Install</a
+        >
+        <a
+          href={DOCS_URL}
+          class="text-overlay hover:text-text"
+          data-umami-event="docs"
+          data-umami-event-location="nav-mobile">User manual</a
+        >
+        <a
+          href={GITHUB_URL}
+          class="text-overlay hover:text-text"
+          data-umami-event="github"
+          data-umami-event-location="nav-mobile">GitHub</a
+        >
         <ThemeToggle />
       </div>
     </details>
