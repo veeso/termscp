@@ -3,7 +3,7 @@
 //! `filetransfer_activity` is the module which implements the Filetransfer activity, which is the main activity afterall
 
 use remotefs::fs::{File, UnixPex};
-use tuirealm::props::{AttrValue, Attribute, PropPayload, PropValue, SpanStatic};
+use tuirealm::props::{AttrValue, Attribute, BorderSides, PropPayload, PropValue, SpanStatic};
 
 use crate::explorer::FileSorting;
 use crate::ui::activities::filetransfer::browser::FileExplorerTab;
@@ -111,6 +111,7 @@ impl FileTransferActivity {
 
     pub(in crate::ui::activities::filetransfer) fn umount_wait(&mut self) {
         let _ = self.app.umount(&Id::WaitPopup);
+        self.redraw = true;
     }
 
     /// Mount quit popup
@@ -425,19 +426,53 @@ impl FileTransferActivity {
         &mut self,
         root_name: String,
     ) {
-        let prog_color = self.theme().transfer_progress_bar;
+        let partial_color = self.theme().transfer_progress_bar_partial;
+        let full_color = self.theme().transfer_progress_bar_full;
+        // Pick borders so the two gauges read as one panel. For a multi-file
+        // transfer the full bar (drawn on top) omits its bottom edge and the
+        // partial bar (below) omits its top edge, joining seamlessly. A single
+        // file shows only the partial bar, which therefore keeps all four sides.
+        let (full_sides, partial_sides) = if self.is_single_file_transfer() {
+            (BorderSides::ALL, BorderSides::ALL)
+        } else {
+            (
+                BorderSides::TOP | BorderSides::LEFT | BorderSides::RIGHT,
+                BorderSides::BOTTOM | BorderSides::LEFT | BorderSides::RIGHT,
+            )
+        };
         ui_result(self.app.remount(
-            Id::TransferProgressBar,
+            Id::TransferProgressBarPartial,
             Box::new(components::TransferProgressBar::new(
-                0.0, "", &root_name, prog_color,
+                0.0,
+                "",
+                root_name.as_str(),
+                partial_color,
+                partial_sides,
             )),
             vec![],
         ));
-        ui_result(self.app.active(&Id::TransferProgressBar));
+        ui_result(self.app.remount(
+            Id::TransferProgressBarFull,
+            Box::new(components::TransferProgressBar::new(
+                0.0, "", "", full_color, full_sides,
+            )),
+            vec![],
+        ));
+        // Give focus to the partial bar so Ctrl+C abort is handled
+        ui_result(self.app.active(&Id::TransferProgressBarPartial));
     }
 
     pub(in crate::ui::activities::filetransfer) fn umount_progress_bar(&mut self) {
-        let _ = self.app.umount(&Id::TransferProgressBar);
+        let _ = self.app.umount(&Id::TransferProgressBarPartial);
+        let _ = self.app.umount(&Id::TransferProgressBarFull);
+    }
+
+    /// Returns whether the ongoing transfer involves a single file.
+    ///
+    /// Used to decide whether to render only the partial progress bar (single file)
+    /// or both the partial and full progress bars (multi-file transfers).
+    pub(in crate::ui::activities::filetransfer) fn is_single_file_transfer(&self) -> bool {
+        self.transfer.progress.is_single_file()
     }
 
     pub(in crate::ui::activities::filetransfer) fn mount_file_sorting(&mut self) {

@@ -177,7 +177,8 @@ impl FileTransferActivity {
                 Id::SaveAsPopup,
                 Id::SymlinkPopup,
                 Id::FileInfoPopup,
-                Id::TransferProgressBar,
+                Id::TransferProgressBarPartial,
+                Id::TransferProgressBarFull,
                 Id::DeletePopup,
                 Id::ReplacePopup,
                 Id::DisconnectPopup,
@@ -206,11 +207,29 @@ impl FileTransferActivity {
                         f.render_widget(Clear, popup);
                         self.app.view(popup_id, f, popup);
                     }
-                    Id::TransferProgressBar => {
-                        let popup =
-                            Popup(Size::Percentage(50), Size::Percentage(15)).draw_in(f.area());
-                        f.render_widget(Clear, popup);
-                        self.app.view(&Id::TransferProgressBar, f, popup);
+                    Id::TransferProgressBarPartial | Id::TransferProgressBarFull => {
+                        // Each gauge occupies 3 rows. During the pre-scan phase only the single
+                        // (partial) bar shows (files_total is 0); both bars appear once the file
+                        // count is known, so a multi-file transfer intentionally goes from one bar
+                        // (scan) to two (transfer). For the two-bar case the full bar is drawn on
+                        // top and the partial bar below; their borders are picked in
+                        // `mount_progress_bar` so the seam between them joins into one panel.
+                        if self.is_single_file_transfer() {
+                            let popup =
+                                Popup(Size::Percentage(50), Size::Unit(3)).draw_in(f.area());
+                            f.render_widget(Clear, popup);
+                            self.app.view(&Id::TransferProgressBarPartial, f, popup);
+                        } else {
+                            let popup =
+                                Popup(Size::Percentage(50), Size::Unit(6)).draw_in(f.area());
+                            f.render_widget(Clear, popup);
+                            let chunks = Layout::default()
+                                .direction(Direction::Vertical)
+                                .constraints([Constraint::Length(3), Constraint::Length(3)])
+                                .split(popup);
+                            self.app.view(&Id::TransferProgressBarFull, f, chunks[0]);
+                            self.app.view(&Id::TransferProgressBarPartial, f, chunks[1]);
+                        }
                     }
                     // Wait popup with dynamic line count
                     Id::WaitPopup => {
@@ -365,7 +384,8 @@ impl FileTransferActivity {
             Id::MkdirPopup,
             Id::NewfilePopup,
             Id::OpenWithPopup,
-            Id::TransferProgressBar,
+            Id::TransferProgressBarPartial,
+            Id::TransferProgressBarFull,
             Id::ExplorerFind,
             Id::QuitPopup,
             Id::RenamePopup,

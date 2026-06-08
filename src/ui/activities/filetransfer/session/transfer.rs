@@ -44,6 +44,78 @@ pub(in crate::ui::activities::filetransfer) enum TransferPayload {
     TransferQueue(Vec<(File, PathBuf)>),
 }
 
+/// A single planned transfer action produced by the pre-scan.
+#[derive(Debug, PartialEq, Eq)]
+pub(in crate::ui::activities::filetransfer) enum WorkItem {
+    /// Create a directory at the destination path. No progress weight.
+    /// `src` carries the source `File` so its metadata can be mirrored onto the
+    /// created directory (used by downloads to restore mode/timestamps).
+    Mkdir { src: File, dst: PathBuf },
+    /// Copy one file from `src` to `dst`. Weighted as one file.
+    CopyFile { src: File, dst: PathBuf },
+}
+
+/// Recursively flatten `entries` into an ordered work-queue.
+///
+/// `list_dir` lists the children of a directory `File`. `on_progress` is called
+/// after each item is appended with `(dirs_seen, files_seen)` and returns `false`
+/// to abort the walk early.
+///
+/// Pure over its closures so it can be unit-tested without a real filesystem.
+///
+/// The production scan lives in [`FileTransferActivity::scan_worklist`], which
+/// inlines the same stack-walk to avoid a double `&mut self` borrow; this pure
+/// version exists to validate the flattening algorithm in isolation.
+#[cfg(test)]
+fn flatten_worklist<L, P>(
+    entries: &[(File, PathBuf)],
+    list_dir: &mut L,
+    on_progress: &mut P,
+) -> Result<Vec<WorkItem>, String>
+where
+    L: FnMut(&Path) -> Result<Vec<File>, String>,
+    P: FnMut(usize, usize) -> bool,
+{
+    let mut out: Vec<WorkItem> = Vec::new();
+    let mut dirs = 0usize;
+    let mut files = 0usize;
+    let mut stack: Vec<(File, PathBuf)> = entries.iter().rev().cloned().collect();
+    while let Some((entry, dst)) = stack.pop() {
+        if entry.is_dir() {
+            out.push(WorkItem::Mkdir {
+                src: entry.clone(),
+                dst: dst.clone(),
+            });
+            dirs += 1;
+            if !on_progress(dirs, files) {
+                return Err("aborted".to_string());
+            }
+            let children = list_dir(entry.path())?;
+            for child in children.into_iter().rev() {
+                let mut child_dst = dst.clone();
+                child_dst.push(child.name());
+                stack.push((child, child_dst));
+            }
+        } else {
+            out.push(WorkItem::CopyFile {
+                src: entry.clone(),
+                dst: dst.clone(),
+            });
+            files += 1;
+            if !on_progress(dirs, files) {
+                return Err("aborted".to_string());
+            }
+        }
+    }
+    Ok(out)
+}
+
+/// Returns whether `entries` contains at least one directory, in which case a
+/// pre-scan is required to build the work-queue.
+fn selection_has_dirs(entries: &[(File, PathBuf)]) -> bool {
+    entries.iter().any(|(f, _)| f.is_dir())
+}
+
 impl FileTransferActivity {
     /// Send fs entry to remote.
     /// If dst_name is Some, entry will be saved with a different name.
@@ -100,195 +172,231 @@ impl FileTransferActivity {
             None => PathBuf::from(file_name.as_str()),
         };
         remote_path.push(remote_file_name);
-        // Send
+        // Send (counting is owned by `filetransfer_send_one` / `_with_stream`)
         let result = self.filetransfer_send_one(file, remote_path.as_path(), file_name);
-        if result.is_ok() {
-            self.transfer.progress.increment();
-        }
         // Umount progress bar
         self.umount_progress_bar();
         // Return result
         result.map_err(|x| x.to_string())
     }
 
-    /// Send a `TransferPayload` of type `Any`.
+    /// Send a `TransferPayload` of type `Any` by delegating to the work-queue.
     fn filetransfer_send_any(
         &mut self,
         entry: &File,
         curr_remote_path: &Path,
         dst_name: Option<String>,
     ) -> Result<(), String> {
-        self.transfer.reset();
-        self.transfer.progress.init(0);
-        if !entry.is_dir() {
-            self.transfer.progress.set_files_total(1);
+        let mut dst = PathBuf::from(curr_remote_path);
+        dst.push(dst_name.unwrap_or_else(|| entry.name()));
+        self.filetransfer_send_transfer_queue(&[(entry.clone(), dst)])
+    }
+
+    /// Build the upload work-queue by scanning the local selection.
+    fn build_send_worklist(
+        &mut self,
+        entries: &[(File, PathBuf)],
+    ) -> Result<Vec<WorkItem>, String> {
+        self.scan_worklist(entries, false)
+    }
+
+    /// Build the download work-queue by scanning the remote selection.
+    fn build_recv_worklist(
+        &mut self,
+        entries: &[(File, PathBuf)],
+    ) -> Result<Vec<WorkItem>, String> {
+        self.scan_worklist(entries, true)
+    }
+
+    /// Shared scan walk. `remote_side` selects which pane lists directories
+    /// (remote for downloads, local for uploads).
+    ///
+    /// The walk is abortable via [`crate::ui::activities::filetransfer::lib::TransferStates::aborted`]
+    /// and periodically redraws a "Scanning…" popup to keep the UI responsive.
+    fn scan_worklist(
+        &mut self,
+        entries: &[(File, PathBuf)],
+        remote_side: bool,
+    ) -> Result<Vec<WorkItem>, String> {
+        let mut out: Vec<WorkItem> = Vec::new();
+        let mut dirs = 0usize;
+        let mut files = 0usize;
+        let mut last_redraw = Instant::now();
+        let mut stack: Vec<(File, PathBuf)> = entries.iter().rev().cloned().collect();
+        while let Some((entry, dst)) = stack.pop() {
+            if self.transfer.aborted() {
+                return Err("Scan aborted".to_string());
+            }
+            if entry.is_dir() {
+                out.push(WorkItem::Mkdir {
+                    src: entry.clone(),
+                    dst: dst.clone(),
+                });
+                dirs += 1;
+                let listed = if remote_side {
+                    self.browser.remote_pane_mut().fs.list_dir(entry.path())
+                } else {
+                    self.browser.local_pane_mut().fs.list_dir(entry.path())
+                };
+                match listed {
+                    Ok(children) => {
+                        for child in children.into_iter().rev() {
+                            let mut child_dst = dst.clone();
+                            child_dst.push(child.name());
+                            stack.push((child, child_dst));
+                        }
+                    }
+                    Err(err) => {
+                        self.log_and_alert(
+                            LogLevel::Error,
+                            format!("Could not scan \"{}\": {err}", entry.path().display()),
+                        );
+                        return Err(err.to_string());
+                    }
+                }
+            } else {
+                out.push(WorkItem::CopyFile {
+                    src: entry.clone(),
+                    dst: dst.clone(),
+                });
+                files += 1;
+            }
+            // Redraw at most every 100ms to keep the UI responsive while scanning.
+            if last_redraw.elapsed().as_millis() >= 100 {
+                self.tick();
+                self.update_scan_progress(dirs, files);
+                self.view();
+                last_redraw = Instant::now();
+            }
         }
-        self.mount_progress_bar(format!("Uploading {}…", entry.path().display()));
-        self.view();
-        let result = self.filetransfer_send_recurse(entry, curr_remote_path, dst_name, true);
-        self.umount_progress_bar();
-        result
+        Ok(out)
     }
 
     /// Send transfer queue entries to remote.
+    ///
+    /// When the selection contains directories the tree is scanned first to build
+    /// an ordered work-queue, giving an exact file count up front; otherwise the
+    /// flat file selection is mapped directly without scanning.
     fn filetransfer_send_transfer_queue(
         &mut self,
         entries: &[(File, PathBuf)],
     ) -> Result<(), String> {
         // Reset states
         self.transfer.reset();
-        // Total = number of queue entries
-        self.transfer.progress.init(entries.len());
-        // Mount progress bar
-        self.mount_progress_bar(format!("Uploading {} entries…", entries.len()));
-        self.view();
-        // Send each entry
-        let mut result = Ok(());
-        for (entry, remote) in entries {
-            if self.transfer.aborted() {
-                break;
-            }
-            let r = self.filetransfer_send_recurse(entry, remote, None, false);
-            if r.is_err() {
-                result = r;
-                break;
-            }
-            self.transfer.progress.increment();
-        }
-        // Umount progress bar
-        self.umount_progress_bar();
-        result
-    }
-
-    fn filetransfer_send_recurse(
-        &mut self,
-        entry: &File,
-        curr_remote_path: &Path,
-        dst_name: Option<String>,
-        track_progress: bool,
-    ) -> Result<(), String> {
-        // Write popup
-        let file_name = entry.name();
-        // Get remote path
-        let mut remote_path: PathBuf = PathBuf::from(curr_remote_path);
-        let remote_file_name: PathBuf = match dst_name {
-            Some(s) => PathBuf::from(s.as_str()),
-            None => PathBuf::from(file_name.as_str()),
-        };
-        remote_path.push(remote_file_name);
-        // Match entry
-        let result: Result<(), String> = if entry.is_dir() {
-            // Create directory on remote first
-            match self
-                .browser
-                .remote_pane_mut()
-                .fs
-                .mkdir_ex(remote_path.as_path(), true)
-            {
-                Ok(_) => {
-                    self.log(
-                        LogLevel::Info,
-                        format!("Created directory \"{}\"", remote_path.display()),
-                    );
-                }
+        // Zero the counters so that during the pre-scan `files_total == 0`, making
+        // `is_single_file()` deterministically true. This forces the layout to render
+        // the single (partial) bar during the "Preparing/Scanning" phase, where the
+        // scan text is written. The real `init(total_files)` runs after the scan.
+        self.transfer.progress.init(0);
+        // Build the work-queue: scan the tree only when directories are involved.
+        let worklist = if selection_has_dirs(entries) {
+            self.mount_progress_bar(String::from("Preparing transfer…"));
+            self.view();
+            match self.build_send_worklist(entries) {
+                Ok(worklist) => worklist,
                 Err(err) => {
-                    self.log_and_alert(
-                        LogLevel::Error,
-                        format!(
-                            "Failed to create directory \"{}\": {}",
-                            remote_path.display(),
-                            err
-                        ),
-                    );
-                    return Err(err.to_string());
-                }
-            }
-            // Get files in dir
-            match self.browser.local_pane_mut().fs.list_dir(entry.path()) {
-                Ok(entries) => {
-                    if track_progress {
-                        self.transfer.progress.set_files_total(entries.len());
-                    }
-                    for entry in entries.iter() {
-                        if self.transfer.aborted() {
-                            break;
-                        }
-                        self.filetransfer_send_recurse(entry, remote_path.as_path(), None, false)?;
-                        if track_progress {
-                            self.transfer.progress.increment();
-                        }
-                    }
-                    Ok(())
-                }
-                Err(err) => {
-                    self.log_and_alert(
-                        LogLevel::Error,
-                        format!(
-                            "Could not scan directory \"{}\": {}",
-                            entry.path().display(),
-                            err
-                        ),
-                    );
-                    Err(err.to_string())
+                    self.umount_progress_bar();
+                    return Err(err);
                 }
             }
         } else {
-            match self.filetransfer_send_one(entry, remote_path.as_path(), file_name) {
-                Err(err) => {
-                    // If transfer was abrupted or there was an IO error on remote, remove file
-                    if matches!(
-                        err,
-                        TransferErrorReason::Abrupted | TransferErrorReason::RemoteIoError(_)
-                    ) {
-                        // Stat file on remote and remove it if exists
-                        match self
-                            .browser
-                            .remote_pane_mut()
-                            .fs
-                            .stat(remote_path.as_path())
-                        {
-                            Err(err) => self.log(
+            entries
+                .iter()
+                .map(|(src, dst)| WorkItem::CopyFile {
+                    src: src.clone(),
+                    dst: dst.clone(),
+                })
+                .collect()
+        };
+        // Total = number of files to copy
+        let total_files = worklist
+            .iter()
+            .filter(|item| matches!(item, WorkItem::CopyFile { .. }))
+            .count();
+        self.transfer.progress.init(total_files);
+        // Mount progress bar
+        self.mount_progress_bar(format!("Uploading {total_files} files…"));
+        self.view();
+        // Iterate the work-queue
+        let mut result = Ok(());
+        for item in &worklist {
+            if self.transfer.aborted() {
+                self.log_and_alert(LogLevel::Warn, "Upload aborted!".to_string());
+                break;
+            }
+            match item {
+                WorkItem::Mkdir { src: _, dst } => {
+                    match self
+                        .browser
+                        .remote_pane_mut()
+                        .fs
+                        .mkdir_ex(dst.as_path(), true)
+                    {
+                        Ok(_) => {
+                            self.log(
+                                LogLevel::Info,
+                                format!("Created directory \"{}\"", dst.display()),
+                            );
+                            self.reload_remote_dir();
+                        }
+                        Err(err) => {
+                            self.log_and_alert(
                                 LogLevel::Error,
-                                format!(
-                                    "Could not remove created file {}: {}",
-                                    remote_path.display(),
-                                    err
+                                format!("Failed to create directory \"{}\": {err}", dst.display()),
+                            );
+                            result = Err(err.to_string());
+                            break;
+                        }
+                    }
+                }
+                WorkItem::CopyFile { src, dst } => {
+                    if let Err(err) = self.filetransfer_send_one(src, dst.as_path(), src.name()) {
+                        // If transfer was abrupted or there was an IO error on remote, remove file
+                        if matches!(
+                            err,
+                            TransferErrorReason::Abrupted | TransferErrorReason::RemoteIoError(_)
+                        ) {
+                            // Stat file on remote and remove it if exists
+                            match self.browser.remote_pane_mut().fs.stat(dst.as_path()) {
+                                Err(err) => self.log(
+                                    LogLevel::Error,
+                                    format!(
+                                        "Could not remove created file {}: {}",
+                                        dst.display(),
+                                        err
+                                    ),
                                 ),
-                            ),
-                            Ok(entry) => {
-                                if let Err(err) = self.browser.remote_pane_mut().fs.remove(&entry) {
-                                    self.log(
-                                        LogLevel::Error,
-                                        format!(
-                                            "Could not remove created file {}: {}",
-                                            remote_path.display(),
-                                            err
-                                        ),
-                                    );
+                                Ok(entry) => {
+                                    if let Err(err) =
+                                        self.browser.remote_pane_mut().fs.remove(&entry)
+                                    {
+                                        self.log(
+                                            LogLevel::Error,
+                                            format!(
+                                                "Could not remove created file {}: {}",
+                                                dst.display(),
+                                                err
+                                            ),
+                                        );
+                                    }
                                 }
                             }
                         }
+                        result = Err(err.to_string());
+                        break;
                     }
-                    Err(err.to_string())
-                }
-                Ok(_) => {
-                    if track_progress {
-                        self.transfer.progress.increment();
-                    }
-                    Ok(())
+                    // Counting is owned by `filetransfer_send_one` / `_with_stream`.
+                    self.reload_remote_dir();
+                    // Redraw on the file boundary so the full bar's (N/total) counter
+                    // advances after every completed file, including small files that
+                    // finish within a single in-loop redraw interval.
+                    self.update_progress_bar(format!("Uploaded \"{}\"", src.name()));
+                    self.view();
                 }
             }
-        };
-        // Scan dir on remote
-        self.reload_remote_dir();
-        // If aborted; show popup
-        if self.transfer.aborted() {
-            // Log abort
-            self.log_and_alert(
-                LogLevel::Warn,
-                format!("Upload aborted for \"{}\"!", entry.path().display()),
-            );
         }
+        // Umount progress bar
+        self.umount_progress_bar();
         result
     }
 
@@ -316,9 +424,7 @@ impl FileTransferActivity {
                     host_bridge.path().display()
                 ),
             );
-            self.transfer
-                .progress
-                .register_skipped_file(metadata.size as usize);
+            self.transfer.progress.skip_file();
             return Ok(());
         }
         // Upload file
@@ -358,7 +464,7 @@ impl FileTransferActivity {
             .map_err(TransferErrorReason::HostError)
             .map(|x| x.metadata().size as usize)?;
         // Init transfer
-        self.transfer.progress.register_file(file_size);
+        self.transfer.progress.start_file(file_size);
         let file_started = Instant::now();
 
         // Write remote file
@@ -447,6 +553,8 @@ impl FileTransferActivity {
                 ByteSize(self.transfer.progress.calc_bytes_per_second()),
             ),
         );
+        // Count this file as completed (owns the per-file count for the success path).
+        self.transfer.progress.finish_file();
         Ok(())
     }
 
@@ -489,16 +597,9 @@ impl FileTransferActivity {
         host_path: &Path,
         dst_name: Option<String>,
     ) -> Result<(), String> {
-        self.transfer.reset();
-        self.transfer.progress.init(0);
-        if !entry.is_dir() {
-            self.transfer.progress.set_files_total(1);
-        }
-        self.mount_progress_bar(format!("Downloading {}…", entry.path().display()));
-        self.view();
-        let result = self.filetransfer_recv_recurse(entry, host_path, dst_name, true);
-        self.umount_progress_bar();
-        result
+        let mut dst = PathBuf::from(host_path);
+        dst.push(dst_name.unwrap_or_else(|| entry.name()));
+        self.filetransfer_recv_transfer_queue(&[(entry.clone(), dst)])
     }
 
     /// Receive a single file from remote.
@@ -514,11 +615,8 @@ impl FileTransferActivity {
         // Mount progress bar
         self.mount_progress_bar(format!("Downloading {}…", entry.path.display()));
         self.view();
-        // Receive
+        // Receive (counting is owned by `filetransfer_recv_one` / `_with_stream`)
         let result = self.filetransfer_recv_one(host_bridge_path, entry, entry.name());
-        if result.is_ok() {
-            self.transfer.progress.increment();
-        }
         // Umount progress bar
         self.umount_progress_bar();
         // Return result
@@ -526,192 +624,147 @@ impl FileTransferActivity {
     }
 
     /// Receive transfer queue from remote.
+    ///
+    /// When the selection contains directories the tree is scanned first to build
+    /// an ordered work-queue, giving an exact file count up front; otherwise the
+    /// flat file selection is mapped directly without scanning.
     fn filetransfer_recv_transfer_queue(
         &mut self,
         entries: &[(File, PathBuf)],
     ) -> Result<(), String> {
         // Reset states
         self.transfer.reset();
-        // Total = number of queue entries
-        self.transfer.progress.init(entries.len());
-        // Mount progress bar
-        self.mount_progress_bar(format!("Downloading {} entries…", entries.len()));
-        self.view();
-        // Receive each entry
-        let mut result = Ok(());
-        for (entry, path) in entries {
-            if self.transfer.aborted() {
-                break;
-            }
-            let r = self.filetransfer_recv_recurse(entry, path, None, false);
-            if r.is_err() {
-                result = r;
-                break;
-            }
-            self.transfer.progress.increment();
-        }
-        // Umount progress bar
-        self.umount_progress_bar();
-        result
-    }
-
-    fn filetransfer_recv_recurse(
-        &mut self,
-        entry: &File,
-        host_bridge_path: &Path,
-        dst_name: Option<String>,
-        track_progress: bool,
-    ) -> Result<(), String> {
-        // Write popup
-        let file_name = entry.name();
-        // Match entry
-        let result: Result<(), String> = if entry.is_dir() {
-            // Get dir name
-            let mut host_bridge_dir_path: PathBuf = PathBuf::from(host_bridge_path);
-            match dst_name {
-                Some(name) => host_bridge_dir_path.push(name),
-                None => host_bridge_dir_path.push(entry.name()),
-            }
-            // Create directory on host_bridge
-            match self
-                .browser
-                .local_pane_mut()
-                .fs
-                .mkdir_ex(host_bridge_dir_path.as_path(), true)
-            {
-                Ok(_) => {
-                    // Apply file mode to directory
-                    if let Err(err) = self
-                        .browser
-                        .local_pane_mut()
-                        .fs
-                        .setstat(host_bridge_dir_path.as_path(), entry.metadata())
-                    {
-                        self.log(
-                            LogLevel::Error,
-                            format!(
-                                "Could not set stat to directory {:?} to \"{}\": {}",
-                                entry.metadata(),
-                                host_bridge_dir_path.display(),
-                                err
-                            ),
-                        );
-                    }
-                    self.log(
-                        LogLevel::Info,
-                        format!("Created directory \"{}\"", host_bridge_dir_path.display()),
-                    );
-                    // Get files in dir from remote
-                    match self.browser.remote_pane_mut().fs.list_dir(entry.path()) {
-                        Ok(entries) => {
-                            if track_progress {
-                                self.transfer.progress.set_files_total(entries.len());
-                            }
-                            for entry in entries.iter() {
-                                if self.transfer.aborted() {
-                                    break;
-                                }
-                                self.filetransfer_recv_recurse(
-                                    entry,
-                                    host_bridge_dir_path.as_path(),
-                                    None,
-                                    false,
-                                )?;
-                                if track_progress {
-                                    self.transfer.progress.increment();
-                                }
-                            }
-                            Ok(())
-                        }
-                        Err(err) => {
-                            self.log_and_alert(
-                                LogLevel::Error,
-                                format!(
-                                    "Could not scan directory \"{}\": {}",
-                                    entry.path().display(),
-                                    err
-                                ),
-                            );
-                            Err(err.to_string())
-                        }
-                    }
-                }
+        // Zero the counters so that during the pre-scan `files_total == 0`, making
+        // `is_single_file()` deterministically true. This forces the layout to render
+        // the single (partial) bar during the "Preparing/Scanning" phase, where the
+        // scan text is written. The real `init(total_files)` runs after the scan.
+        self.transfer.progress.init(0);
+        // Build the work-queue: scan the tree only when directories are involved.
+        let worklist = if selection_has_dirs(entries) {
+            self.mount_progress_bar(String::from("Preparing transfer…"));
+            self.view();
+            match self.build_recv_worklist(entries) {
+                Ok(worklist) => worklist,
                 Err(err) => {
-                    self.log(
-                        LogLevel::Error,
-                        format!(
-                            "Failed to create directory \"{}\": {}",
-                            host_bridge_dir_path.display(),
-                            err
-                        ),
-                    );
-                    Err(err.to_string())
+                    self.umount_progress_bar();
+                    return Err(err);
                 }
             }
         } else {
-            // Get host_bridge file
-            let mut host_bridge_file_path: PathBuf = PathBuf::from(host_bridge_path);
-            let host_bridge_file_name: String = match dst_name {
-                Some(n) => n,
-                None => entry.name(),
-            };
-            host_bridge_file_path.push(host_bridge_file_name.as_str());
-            // Download file
-            if let Err(err) =
-                self.filetransfer_recv_one(host_bridge_file_path.as_path(), entry, file_name)
-            {
-                // If transfer was abrupted or there was an IO error on remote, remove file
-                if matches!(
-                    err,
-                    TransferErrorReason::Abrupted | TransferErrorReason::HostIoError(_)
-                ) {
-                    // Stat file
+            entries
+                .iter()
+                .map(|(src, dst)| WorkItem::CopyFile {
+                    src: src.clone(),
+                    dst: dst.clone(),
+                })
+                .collect()
+        };
+        // Total = number of files to copy
+        let total_files = worklist
+            .iter()
+            .filter(|item| matches!(item, WorkItem::CopyFile { .. }))
+            .count();
+        self.transfer.progress.init(total_files);
+        // Mount progress bar
+        self.mount_progress_bar(format!("Downloading {total_files} files…"));
+        self.view();
+        // Iterate the work-queue
+        let mut result = Ok(());
+        for item in &worklist {
+            if self.transfer.aborted() {
+                self.log_and_alert(LogLevel::Warn, "Download aborted!".to_string());
+                break;
+            }
+            match item {
+                WorkItem::Mkdir { src, dst } => {
                     match self
                         .browser
                         .local_pane_mut()
                         .fs
-                        .stat(host_bridge_file_path.as_path())
+                        .mkdir_ex(dst.as_path(), true)
                     {
-                        Err(err) => self.log(
-                            LogLevel::Error,
-                            format!(
-                                "Could not remove created file {}: {}",
-                                host_bridge_file_path.display(),
-                                err
-                            ),
-                        ),
-                        Ok(entry) => {
-                            if let Err(err) = self.browser.local_pane_mut().fs.remove(&entry) {
+                        Ok(_) => {
+                            // Apply remote dir mode/timestamps to the created local dir
+                            if let Err(err) = self
+                                .browser
+                                .local_pane_mut()
+                                .fs
+                                .setstat(dst.as_path(), src.metadata())
+                            {
                                 self.log(
                                     LogLevel::Error,
                                     format!(
-                                        "Could not remove created file {}: {}",
-                                        host_bridge_file_path.display(),
+                                        "Could not set stat to directory {:?} to \"{}\": {}",
+                                        src.metadata(),
+                                        dst.display(),
                                         err
                                     ),
                                 );
                             }
+                            self.log(
+                                LogLevel::Info,
+                                format!("Created directory \"{}\"", dst.display()),
+                            );
+                            self.reload_host_bridge_dir();
+                        }
+                        Err(err) => {
+                            self.log_and_alert(
+                                LogLevel::Error,
+                                format!("Failed to create directory \"{}\": {err}", dst.display()),
+                            );
+                            result = Err(err.to_string());
+                            break;
                         }
                     }
                 }
-                Err(err.to_string())
-            } else {
-                if track_progress {
-                    self.transfer.progress.increment();
+                WorkItem::CopyFile { src, dst } => {
+                    if let Err(err) = self.filetransfer_recv_one(dst.as_path(), src, src.name()) {
+                        // If transfer was abrupted or there was an IO error on host, remove file
+                        if matches!(
+                            err,
+                            TransferErrorReason::Abrupted | TransferErrorReason::HostIoError(_)
+                        ) {
+                            // Stat file and remove it if exists
+                            match self.browser.local_pane_mut().fs.stat(dst.as_path()) {
+                                Err(err) => self.log(
+                                    LogLevel::Error,
+                                    format!(
+                                        "Could not remove created file {}: {}",
+                                        dst.display(),
+                                        err
+                                    ),
+                                ),
+                                Ok(entry) => {
+                                    if let Err(err) =
+                                        self.browser.local_pane_mut().fs.remove(&entry)
+                                    {
+                                        self.log(
+                                            LogLevel::Error,
+                                            format!(
+                                                "Could not remove created file {}: {}",
+                                                dst.display(),
+                                                err
+                                            ),
+                                        );
+                                    }
+                                }
+                            }
+                        }
+                        result = Err(err.to_string());
+                        break;
+                    }
+                    // Counting is owned by `filetransfer_recv_one` / `_with_stream`.
+                    self.reload_host_bridge_dir();
+                    // Redraw on the file boundary so the full bar's (N/total) counter
+                    // advances after every completed file, including small files that
+                    // finish within a single in-loop redraw interval.
+                    self.update_progress_bar(format!("Downloaded \"{}\"", src.name()));
+                    self.view();
                 }
-                Ok(())
             }
-        };
-        // Reload directory on host_bridge
-        self.reload_host_bridge_dir();
-        // if aborted; show alert
-        if self.transfer.aborted() {
-            // Log abort
-            self.log_and_alert(
-                LogLevel::Warn,
-                format!("Download aborted for \"{}\"!", entry.path().display()),
-            );
         }
+        // Umount progress bar
+        self.umount_progress_bar();
         result
     }
 
@@ -731,9 +784,7 @@ impl FileTransferActivity {
                     remote.path().display()
                 ),
             );
-            self.transfer
-                .progress
-                .register_skipped_file(remote.metadata().size as usize);
+            self.transfer.progress.skip_file();
             return Ok(());
         }
 
@@ -768,7 +819,7 @@ impl FileTransferActivity {
         // Init transfer
         self.transfer
             .progress
-            .register_file(remote.metadata.size as usize);
+            .start_file(remote.metadata.size as usize);
         let file_started = Instant::now();
         // Write host_bridge file
         let mut last_redraw: Instant = Instant::now();
@@ -864,6 +915,138 @@ impl FileTransferActivity {
             ),
         );
 
+        // Count this file as completed (owns the per-file count for the success path).
+        self.transfer.progress.finish_file();
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod worklist_test {
+    use std::time::SystemTime;
+
+    use pretty_assertions::assert_eq;
+    use remotefs::fs::{FileType, Metadata, UnixPex};
+
+    use super::*;
+
+    fn make_entry(path: &str, is_dir: bool) -> File {
+        // Use a fixed timestamp so two entries built for the same path compare
+        // equal (`File` derives `PartialEq` over its full metadata, timestamps
+        // included), allowing direct equality assertions against the worklist.
+        let t = SystemTime::UNIX_EPOCH;
+        let metadata = Metadata {
+            accessed: Some(t),
+            created: Some(t),
+            modified: Some(t),
+            file_type: if is_dir {
+                FileType::Directory
+            } else {
+                FileType::File
+            },
+            symlink: None,
+            gid: Some(0),
+            uid: Some(0),
+            mode: Some(UnixPex::from(if is_dir { 0o755 } else { 0o644 })),
+            size: 64,
+        };
+        File {
+            path: PathBuf::from(path),
+            metadata,
+        }
+    }
+
+    #[test]
+    fn should_flatten_nested_tree_in_order() {
+        // Tree: /a -> [f1, /b -> [f2]]
+        let dir_a = make_entry("/src/a", true);
+        let file_f1 = make_entry("/src/a/f1", false);
+        let dir_b = make_entry("/src/a/b", true);
+        let file_f2 = make_entry("/src/a/b/f2", false);
+
+        let entries = vec![(dir_a, PathBuf::from("/dst/a"))];
+
+        let mut list_dir = |path: &Path| -> Result<Vec<File>, String> {
+            match path.to_string_lossy().as_ref() {
+                "/src/a" => Ok(vec![file_f1.clone(), dir_b.clone()]),
+                "/src/a/b" => Ok(vec![file_f2.clone()]),
+                other => Err(format!("unexpected list_dir on {other}")),
+            }
+        };
+        let mut on_progress = |_dirs: usize, _files: usize| true;
+
+        let out = flatten_worklist(&entries, &mut list_dir, &mut on_progress).unwrap();
+
+        assert_eq!(
+            out,
+            vec![
+                WorkItem::Mkdir {
+                    src: make_entry("/src/a", true),
+                    dst: PathBuf::from("/dst/a"),
+                },
+                WorkItem::CopyFile {
+                    src: make_entry("/src/a/f1", false),
+                    dst: PathBuf::from("/dst/a/f1"),
+                },
+                WorkItem::Mkdir {
+                    src: make_entry("/src/a/b", true),
+                    dst: PathBuf::from("/dst/a/b"),
+                },
+                WorkItem::CopyFile {
+                    src: make_entry("/src/a/b/f2", false),
+                    dst: PathBuf::from("/dst/a/b/f2"),
+                },
+            ]
+        );
+        // Exactly two CopyFile items
+        let copy_files = out
+            .iter()
+            .filter(|item| matches!(item, WorkItem::CopyFile { .. }))
+            .count();
+        assert_eq!(copy_files, 2);
+    }
+
+    #[test]
+    fn should_flatten_flat_selection_without_listing_dirs() {
+        let entries = vec![
+            (make_entry("/src/f1", false), PathBuf::from("/dst/f1")),
+            (make_entry("/src/f2", false), PathBuf::from("/dst/f2")),
+        ];
+
+        // `list_dir` must never be called for a flat file selection.
+        let mut list_dir =
+            |_path: &Path| -> Result<Vec<File>, String> { panic!("list_dir must not be called") };
+        let mut on_progress = |_dirs: usize, _files: usize| true;
+
+        let out = flatten_worklist(&entries, &mut list_dir, &mut on_progress).unwrap();
+
+        assert_eq!(
+            out,
+            vec![
+                WorkItem::CopyFile {
+                    src: make_entry("/src/f1", false),
+                    dst: PathBuf::from("/dst/f1"),
+                },
+                WorkItem::CopyFile {
+                    src: make_entry("/src/f2", false),
+                    dst: PathBuf::from("/dst/f2"),
+                },
+            ]
+        );
+        assert!(
+            out.iter()
+                .all(|item| matches!(item, WorkItem::CopyFile { .. }))
+        );
+    }
+
+    #[test]
+    fn should_abort_when_on_progress_returns_false() {
+        let entries = vec![(make_entry("/src/f1", false), PathBuf::from("/dst/f1"))];
+
+        let mut list_dir = |_path: &Path| -> Result<Vec<File>, String> { Ok(vec![]) };
+        let mut on_progress = |_dirs: usize, _files: usize| false;
+
+        let result = flatten_worklist(&entries, &mut list_dir, &mut on_progress);
+        assert!(result.is_err());
     }
 }

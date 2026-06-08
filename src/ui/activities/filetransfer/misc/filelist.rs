@@ -181,31 +181,69 @@ impl FileTransferActivity {
         &mut self,
         filename: String,
     ) {
+        // Update the partial bar with the current file progress
         ui_result(self.app.attr(
-            &Id::TransferProgressBar,
+            &Id::TransferProgressBarPartial,
             Attribute::Text,
             AttrValue::String(self.transfer.progress.to_string()),
         ));
         ui_result(self.app.attr(
-            &Id::TransferProgressBar,
+            &Id::TransferProgressBarPartial,
             Attribute::Value,
             AttrValue::Payload(PropPayload::Single(PropValue::F64(
-                self.transfer.progress.calc_progress(),
+                self.transfer.progress.calc_partial_progress(),
             ))),
         ));
-        let title = if self.transfer.progress.is_single_file() {
-            filename
-        } else {
-            format!(
-                "{} {}",
-                filename,
-                self.transfer.progress.file_count_display()
-            )
-        };
         ui_result(self.app.attr(
-            &Id::TransferProgressBar,
+            &Id::TransferProgressBarPartial,
             Attribute::Title,
-            AttrValue::Title(Title::from(title).alignment(HorizontalAlignment::Center)),
+            AttrValue::Title(Title::from(filename).alignment(HorizontalAlignment::Center)),
+        ));
+        // Update the full bar with the overall progress (only for multi-file transfers)
+        if !self.transfer.progress.is_single_file() {
+            ui_result(self.app.attr(
+                &Id::TransferProgressBarFull,
+                Attribute::Value,
+                AttrValue::Payload(PropPayload::Single(PropValue::F64(
+                    self.transfer.progress.calc_full_progress(),
+                ))),
+            ));
+            ui_result(
+                self.app.attr(
+                    &Id::TransferProgressBarFull,
+                    Attribute::Title,
+                    AttrValue::Title(
+                        Title::from(format!(
+                            "Total {}",
+                            self.transfer.progress.file_count_display()
+                        ))
+                        .alignment(HorizontalAlignment::Center),
+                    ),
+                ),
+            );
+        }
+    }
+
+    /// Update the progress bar to reflect the pre-transfer scan state.
+    ///
+    /// Shows how many directories and files have been discovered so far and keeps
+    /// the progress value at `0.0` since the total is not yet known.
+    pub(in crate::ui::activities::filetransfer) fn update_scan_progress(
+        &mut self,
+        dirs: usize,
+        files: usize,
+    ) {
+        // During the scan only the partial bar is rendered (the progress model
+        // reports `is_single_file()`), so write the scan text there.
+        ui_result(self.app.attr(
+            &Id::TransferProgressBarPartial,
+            Attribute::Text,
+            AttrValue::String(format!("Scanning… {dirs} dirs, {files} files")),
+        ));
+        ui_result(self.app.attr(
+            &Id::TransferProgressBarPartial,
+            Attribute::Value,
+            AttrValue::Payload(PropPayload::Single(PropValue::F64(0.0))),
         ));
     }
 

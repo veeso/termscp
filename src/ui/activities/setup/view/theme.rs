@@ -37,7 +37,7 @@ impl SetupActivity {
                 .constraints(
                     [
                         Constraint::Length(3), // Current tab
-                        Constraint::Min(22),   // Main body
+                        Constraint::Min(23),   // Main body
                         Constraint::Length(1), // Help footer
                     ]
                     .as_ref(),
@@ -185,7 +185,8 @@ impl SetupActivity {
                 .constraints(
                     [
                         Constraint::Length(1), // Title
-                        Constraint::Length(3), // prog bar
+                        Constraint::Length(3), // prog bar full
+                        Constraint::Length(3), // prog bar partial
                         Constraint::Length(3), // log bg
                         Constraint::Length(3), // log window
                         Constraint::Length(3), // status sorting
@@ -202,34 +203,39 @@ impl SetupActivity {
                 transfer_colors_layout_col2[0],
             );
             self.app.view(
-                &Id::Theme(IdTheme::ProgBar),
+                &Id::Theme(IdTheme::ProgBarFull),
                 f,
                 transfer_colors_layout_col2[1],
             );
             self.app.view(
-                &Id::Theme(IdTheme::LogBg),
+                &Id::Theme(IdTheme::ProgBarPartial),
                 f,
                 transfer_colors_layout_col2[2],
             );
             self.app.view(
-                &Id::Theme(IdTheme::LogWindow),
+                &Id::Theme(IdTheme::LogBg),
                 f,
                 transfer_colors_layout_col2[3],
             );
             self.app.view(
-                &Id::Theme(IdTheme::StatusSorting),
+                &Id::Theme(IdTheme::LogWindow),
                 f,
                 transfer_colors_layout_col2[4],
             );
             self.app.view(
-                &Id::Theme(IdTheme::StatusHidden),
+                &Id::Theme(IdTheme::StatusSorting),
                 f,
                 transfer_colors_layout_col2[5],
             );
             self.app.view(
-                &Id::Theme(IdTheme::StatusSync),
+                &Id::Theme(IdTheme::StatusHidden),
                 f,
                 transfer_colors_layout_col2[6],
+            );
+            self.app.view(
+                &Id::Theme(IdTheme::StatusSync),
+                f,
+                transfer_colors_layout_col2[7],
             );
             // Popups
             self.view_popups(f);
@@ -425,8 +431,19 @@ impl SetupActivity {
             error!("Failed to remount component: {err}");
         }
         if let Err(err) = self.app.remount(
-            Id::Theme(IdTheme::ProgBar),
-            Box::new(components::ProgBar::new(theme.transfer_progress_bar)),
+            Id::Theme(IdTheme::ProgBarFull),
+            Box::new(components::ProgBarFull::new(
+                theme.transfer_progress_bar_full,
+            )),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
+        if let Err(err) = self.app.remount(
+            Id::Theme(IdTheme::ProgBarPartial),
+            Box::new(components::ProgBarPartial::new(
+                theme.transfer_progress_bar_partial,
+            )),
             vec![],
         ) {
             error!("Failed to remount component: {err}");
