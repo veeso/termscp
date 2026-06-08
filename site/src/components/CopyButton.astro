@@ -43,6 +43,8 @@ const { text, class: className } = Astro.props;
   </svg>
 </button>
 <script>
+  import { track } from "../analytics";
+
   const RESET_DELAY_MS = 1500;
 
   const handleCopy = async (button: HTMLElement) => {
@@ -52,6 +54,8 @@ const { text, class: className } = Astro.props;
     } catch {
       return;
     }
+
+    track("copy-install-command", { command: text });
 
     const copyIcon = button.querySelector(".copy-icon");
     const checkIcon = button.querySelector(".check-icon");
