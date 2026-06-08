@@ -1,6 +1,6 @@
 [package]
 name = "termscp"
-version = "1.1.0"
+version = "1.1.1"
 edition = "2024"
 authors = ["Christian Visintin <christian.visintin@veeso.dev>"]
 description = "termscp is a feature rich terminal file transfer and explorer with support for SCP/SFTP/FTP/Kube/S3/WebDAV"

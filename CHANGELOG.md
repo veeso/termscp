@@ -1,3 +1,15 @@
+## 1.1.1
+
+Released on 2026-06-08
+
+### Fixed
+
+- **build:** drop vergen-git2 build dependency
+  > vergen-git2 reads git metadata at build time, but the crates.io source
+  > tarball ships no .git, so the published 1.1.0 fails on `cargo install`.
+  > crates.io versions are immutable (no overwrite) and Chocolatey's
+  > moderation queue blocks a fast re-push, so a clean 1.1.1 without vergen
+  > is the only fix.
 ## 1.1.0
 
 Released on 2026-06-08
