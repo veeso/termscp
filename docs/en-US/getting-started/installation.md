@@ -77,7 +77,7 @@ enjoy all of its features.
 To update termscp to the latest version, run it from the command line with:
 
 ```sh
-(sudo) termscp --update
+(sudo) termscp update
 ```
 
 For all platforms and methods, see <https://termscp.rs/install>.

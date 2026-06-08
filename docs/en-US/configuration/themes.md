@@ -22,12 +22,6 @@ one of the themes bundled with termscp in the `themes/` directory of the
 repository. Import a theme by running:
 
 ```sh
-termscp -t <theme_file>
-```
-
-This is also available as:
-
-```sh
 termscp theme <theme_file>
 ```
 
@@ -54,7 +48,7 @@ are two quick fixes:
    patched, so download the updated theme from the repository and re-import it:
 
     ```sh
-    termscp -t <theme.toml>
+    termscp theme <theme.toml>
     ```
 
 2. Edit your theme by hand. If you use a custom theme, edit the file and add the
