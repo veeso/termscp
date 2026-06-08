@@ -4,9 +4,39 @@
 
 // Local
 // Ext
-use keyring::{Entry as Keyring, Error as KeyringError};
+use std::sync::Once;
+
+use keyring_core::{Entry as Keyring, Error as KeyringError};
 
 use super::{KeyStorage, KeyStorageError};
+
+/// Guards the one-time registration of the process-wide default credential store.
+static INIT_STORE: Once = Once::new();
+
+/// Registers the native credential store as `keyring-core`'s process-wide default.
+///
+/// Unlike `keyring` 3.x, which selected the credential store at compile time via
+/// Cargo features, `keyring-core` 4.x requires the application to register a store
+/// at runtime *before* creating any [`Keyring`] entry. We do this lazily and
+/// exactly once, choosing the native store for the current platform. On platforms
+/// with no supported store nothing is registered, so [`Keyring`] operations fail
+/// and the caller transparently falls back to file-based storage.
+fn ensure_default_store() {
+    INIT_STORE.call_once(|| {
+        #[cfg(target_os = "macos")]
+        if let Ok(store) = apple_native_keyring_store::keychain::Store::new() {
+            keyring_core::set_default_store(store);
+        }
+        #[cfg(target_os = "windows")]
+        if let Ok(store) = windows_native_keyring_store::Store::new() {
+            keyring_core::set_default_store(store);
+        }
+        #[cfg(any(target_os = "linux", target_os = "freebsd"))]
+        if let Ok(store) = dbus_secret_service_keyring_store::Store::new() {
+            keyring_core::set_default_store(store);
+        }
+    });
+}
 
 /// provides a `KeyStorage` implementation using the keyring crate
 pub struct KeyringStorage {
@@ -27,6 +57,7 @@ impl KeyStorage for KeyringStorage {
     /// The key might be acccess through an identifier, which identifies
     /// the key in the storage
     fn get_key(&self, storage_id: &str) -> Result<String, KeyStorageError> {
+        ensure_default_store();
         let storage: Keyring = Keyring::new(storage_id, self.username.as_str())?;
         match storage.get_password() {
             Ok(s) => Ok(s),
@@ -46,6 +77,7 @@ impl KeyStorage for KeyringStorage {
 
     /// Set the key into the key storage
     fn set_key(&self, storage_id: &str, key: &str) -> Result<(), KeyStorageError> {
+        ensure_default_store();
         let storage: Keyring = Keyring::new(storage_id, self.username.as_str())?;
         match storage.set_password(key) {
             Ok(_) => Ok(()),
@@ -57,6 +89,7 @@ impl KeyStorage for KeyringStorage {
     ///
     /// Returns whether the key storage is supported on the host system
     fn is_supported(&self) -> bool {
+        ensure_default_store();
         let dummy: String = String::from("dummy-service");
         let storage: Keyring = match Keyring::new(dummy.as_str(), self.username.as_str()) {
             Ok(s) => s,

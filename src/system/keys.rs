@@ -6,7 +6,7 @@
 pub mod filestorage;
 pub mod keyringstorage;
 // ext
-use keyring::Error as KeyringError;
+use keyring_core::Error as KeyringError;
 use thiserror::Error;
 
 /// defines the error type for the `KeyStorage`
