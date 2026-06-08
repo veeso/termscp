@@ -56,7 +56,9 @@ pub struct Theme {
     #[serde(serialize_with = "serialize_color")]
     pub transfer_log_window: Color,
     #[serde(serialize_with = "serialize_color")]
-    pub transfer_progress_bar: Color,
+    pub transfer_progress_bar_full: Color,
+    #[serde(serialize_with = "serialize_color")]
+    pub transfer_progress_bar_partial: Color,
     #[serde(serialize_with = "serialize_color")]
     pub transfer_remote_explorer_background: Color,
     #[serde(serialize_with = "serialize_color")]
@@ -93,7 +95,8 @@ impl Default for Theme {
             transfer_local_explorer_highlighted: Color::Yellow,
             transfer_log_background: Color::Reset,
             transfer_log_window: Color::LightGreen,
-            transfer_progress_bar: Color::Green,
+            transfer_progress_bar_full: Color::Green,
+            transfer_progress_bar_partial: Color::Green,
             transfer_remote_explorer_background: Color::Reset,
             transfer_remote_explorer_foreground: Color::Reset,
             transfer_remote_explorer_highlighted: Color::LightBlue,
@@ -182,11 +185,15 @@ impl ThemeFile {
                 defaults.transfer_log_background,
             ),
             transfer_log_window: pick(self.transfer_log_window, defaults.transfer_log_window),
-            transfer_progress_bar: pick(
-                self.transfer_progress_bar
-                    .or(self.transfer_progress_bar_full)
-                    .or(self.transfer_progress_bar_partial),
-                defaults.transfer_progress_bar,
+            transfer_progress_bar_full: pick(
+                self.transfer_progress_bar_full
+                    .or_else(|| self.transfer_progress_bar.clone()),
+                defaults.transfer_progress_bar_full,
+            ),
+            transfer_progress_bar_partial: pick(
+                self.transfer_progress_bar_partial
+                    .or(self.transfer_progress_bar),
+                defaults.transfer_progress_bar_partial,
             ),
             transfer_remote_explorer_background: pick(
                 self.transfer_remote_explorer_background,
@@ -278,7 +285,8 @@ mod tests {
         assert_eq!(theme.transfer_local_explorer_highlighted, Color::Yellow);
         assert_eq!(theme.transfer_log_background, Color::Reset);
         assert_eq!(theme.transfer_log_window, Color::LightGreen);
-        assert_eq!(theme.transfer_progress_bar, Color::Green);
+        assert_eq!(theme.transfer_progress_bar_full, Color::Green);
+        assert_eq!(theme.transfer_progress_bar_partial, Color::Green);
         assert_eq!(theme.transfer_remote_explorer_background, Color::Reset);
         assert_eq!(theme.transfer_remote_explorer_foreground, Color::Reset);
         assert_eq!(theme.transfer_remote_explorer_highlighted, Color::LightBlue);
@@ -295,11 +303,11 @@ mod tests {
         "#;
         let theme: Theme = toml::from_str(toml).expect("theme should load");
         assert_eq!(theme.auth_protocol, Color::Yellow);
-        assert_eq!(theme.transfer_progress_bar, Color::Green);
+        assert_eq!(theme.transfer_progress_bar_full, Color::Green);
     }
 
     #[test]
-    fn should_ignore_duplicated_legacy_progress_bar_fields() {
+    fn should_distinguish_full_and_partial_progress_bar_fields() {
         let toml = r#"
             auth_protocol = "Yellow"
             transfer_progress_bar_full = "Green"
@@ -307,8 +315,29 @@ mod tests {
         "#;
         let theme: Theme = toml::from_str(toml).expect("theme should load");
         assert_eq!(theme.auth_protocol, Color::Yellow);
-        // `_full` wins because `transfer_progress_bar` and `_full` are checked first.
-        assert_eq!(theme.transfer_progress_bar, Color::Green);
+        assert_eq!(theme.transfer_progress_bar_full, Color::Green);
+        assert_eq!(theme.transfer_progress_bar_partial, Color::Red);
+    }
+
+    #[test]
+    fn should_fall_back_to_single_progress_bar_field() {
+        let toml = r#"transfer_progress_bar = "Red""#;
+        let theme: Theme = toml::from_str(toml).unwrap();
+        assert_eq!(theme.transfer_progress_bar_full, Color::Red);
+        assert_eq!(theme.transfer_progress_bar_partial, Color::Red);
+    }
+
+    #[test]
+    fn should_prefer_explicit_full_over_legacy_progress_bar() {
+        let toml = r#"
+transfer_progress_bar = "Red"
+transfer_progress_bar_full = "Green"
+"#;
+        let theme: Theme = toml::from_str(toml).unwrap();
+        // Explicit full field wins over the legacy single field
+        assert_eq!(theme.transfer_progress_bar_full, Color::Green);
+        // Partial has no explicit value, so it falls back to the legacy field
+        assert_eq!(theme.transfer_progress_bar_partial, Color::Red);
     }
 
     #[test]

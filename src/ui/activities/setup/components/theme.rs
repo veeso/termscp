@@ -651,25 +651,50 @@ impl AppComponent<Msg, NoUserEvent> for MiscWarn {
 }
 
 #[derive(Component)]
-pub struct ProgBar {
+pub struct ProgBarFull {
     component: InputColor,
 }
 
-impl ProgBar {
+impl ProgBarFull {
     pub fn new(color: Color) -> Self {
         Self {
             component: InputColor::new(
-                "Progress bar",
-                IdTheme::ProgBar,
+                "Progress bar (full)",
+                IdTheme::ProgBarFull,
                 color,
-                Msg::Theme(ThemeMsg::ProgBarBlurDown),
-                Msg::Theme(ThemeMsg::ProgBarBlurUp),
+                Msg::Theme(ThemeMsg::ProgBarFullBlurDown),
+                Msg::Theme(ThemeMsg::ProgBarFullBlurUp),
             ),
         }
     }
 }
 
-impl AppComponent<Msg, NoUserEvent> for ProgBar {
+impl AppComponent<Msg, NoUserEvent> for ProgBarFull {
+    fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
+        self.component.on(ev)
+    }
+}
+
+#[derive(Component)]
+pub struct ProgBarPartial {
+    component: InputColor,
+}
+
+impl ProgBarPartial {
+    pub fn new(color: Color) -> Self {
+        Self {
+            component: InputColor::new(
+                "Progress bar (partial)",
+                IdTheme::ProgBarPartial,
+                color,
+                Msg::Theme(ThemeMsg::ProgBarPartialBlurDown),
+                Msg::Theme(ThemeMsg::ProgBarPartialBlurUp),
+            ),
+        }
+    }
+}
+
+impl AppComponent<Msg, NoUserEvent> for ProgBarPartial {
     fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         self.component.on(ev)
     }
