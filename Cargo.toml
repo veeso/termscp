@@ -36,13 +36,13 @@ smb = ["dep:remotefs-smb"]
 smb-vendored = ["remotefs-smb/vendored"]
 
 [dependencies]
-aes = "0.8"
+aes = "0.9"
 aes-gcm = "0.10"
 argh = "0.1"
 base64 = "0.22"
 bitflags = "2"
 bytesize = "2"
-cbc = { version = "0.1", features = ["alloc"] }
+cbc = { version = "0.2", features = ["alloc"] }
 chrono = "0.4"
 content_inspector = "0.2"
 dirs = "6"
@@ -56,12 +56,12 @@ keyring = { version = "3", features = [
 ] }
 lazy-regex = "3"
 log = "0.4"
-md-5 = "0.10"
+md-5 = "0.11"
 notify = "8"
 notify-rust = { version = "4", default-features = false, features = ["d"] }
 nucleo = "0.5"
 open = "5"
-rand = "0.9"
+rand = "0.10"
 regex = "1"
 remotefs = "0.3"
 remotefs-aws-s3 = "0.4"
@@ -111,7 +111,7 @@ serial_test = "3"
 
 [build-dependencies]
 cfg_aliases = "0.2"
-vergen-git2 = { version = "9", features = ["build", "cargo", "rustc", "si"] }
+vergen-git2 = { version = "10", features = ["build", "cargo", "rustc", "si"] }
 
 [[bin]]
 name = "termscp"
