@@ -31,3 +31,4 @@ dist/build/macos/openssl/
 
 # brainstorming visual companion
 .superpowers/
+docs/*/book/

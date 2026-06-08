@@ -1,0 +1,22 @@
+[book]
+title = "termscp"
+description = "A feature rich terminal UI file transfer and explorer with support for SCP/SFTP/FTP/Kube/S3/SMB/WebDAV"
+authors = ["Christian Visintin"]
+language = "en"
+src = "."
+
+[output.html]
+default-theme = "light"
+preferred-dark-theme = "navy"
+git-repository-url = "https://github.com/veeso/termscp"
+edit-url-template = "https://github.com/veeso/termscp/edit/main/docs/en-US/{path}"
+additional-js = ["lang-switcher.js", "mermaid.min.js", "mermaid-init.js"]
+
+[output.html.fold]
+enable = true
+level = 1
+
+[preprocessor]
+
+[preprocessor.mermaid]
+command = "mdbook-mermaid"
