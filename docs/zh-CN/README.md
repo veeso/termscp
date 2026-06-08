@@ -176,7 +176,7 @@ pacman -S termscp
     - *gnome-open*
     - *kde-open*
 - **Linux** 用户：
-  - 密钥环管理器：在[用户手册](https://docs.termscp.rs/zh-CN/configuration/password-security.html#linux-keyring)中阅读更多内容
+  - 密钥环管理器：在[用户手册](https://docs.termscp.rs/zh-CN/configuration/password-security.html#linux-密钥环)中阅读更多内容
 - **WSL** 用户
   - 用 `V` **打开**文件（至少其中之一）
     - [wslu](https://github.com/wslutilities/wslu)
