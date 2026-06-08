@@ -7,8 +7,8 @@ termscp 允许你将常用的主机保存为书签，随后可从主界面快速
 书签会在可能的情况下保存在配置目录中：
 
 - Linux/BSD 上为 `$HOME/.config/termscp/`
-- macOS 上为 `$HOME/Library/Application Support/termscp`
-- Windows 上为 `FOLDERID_RoamingAppData\termscp\`
+- macOS 上为 `$HOME/.config/termscp/`
+- Windows 上为 `%USERPROFILE%\.termscp\`
 
 ## 保存密码
 
