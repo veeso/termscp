@@ -39,8 +39,7 @@ Address syntax can be:
     - `\\\\<server>[:port]\\<share>[\\path]` for SMB (on Windows)
     - `smb://[user@]<server>[:port]</share>[/path]` for SMB (on other systems)
 
-Please, report issues to <https://github.com/veeso/termscp>
-Please, consider supporting the author <https://ko-fi.com/veeso>")]
+Please, report issues to <https://github.com/veeso/termscp>")]
 pub struct Args {
     #[argh(subcommand)]
     pub nested: Option<ArgsSubcommands>,
