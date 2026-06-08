@@ -118,7 +118,6 @@ serial_test = "3"
 
 [build-dependencies]
 cfg_aliases = "0.2"
-vergen-git2 = { version = "10", features = ["build", "cargo", "rustc", "si"] }
 
 [[bin]]
 name = "termscp"

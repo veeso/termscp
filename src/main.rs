@@ -31,18 +31,10 @@ use self::cli::{Args, ArgsSubcommands, RemoteArgs, RunOpts, Task};
 use self::system::logging::{self, LogLevel};
 
 const APP_NAME: &str = env!("CARGO_PKG_NAME");
-const APP_BUILD_DATE: &str = env!("VERGEN_BUILD_TIMESTAMP");
-const APP_GIT_BRANCH: &str = env!("VERGEN_GIT_BRANCH");
-const APP_GIT_HASH: &str = env!("VERGEN_GIT_SHA");
 const TERMSCP_VERSION: &str = env!("CARGO_PKG_VERSION");
 const TERMSCP_AUTHORS: &str = env!("CARGO_PKG_AUTHORS");
 
 type MainResult<T> = std::result::Result<T, Box<dyn std::error::Error>>;
-
-#[inline]
-fn git_hash() -> &'static str {
-    APP_GIT_HASH[0..8].as_ref()
-}
 
 fn main() -> MainResult<()> {
     let args: Args = argh::from_env();
@@ -58,10 +50,7 @@ fn main() -> MainResult<()> {
     if let Err(err) = logging::init(run_opts.log_level) {
         eprintln!("Failed to initialize logging: {err}");
     }
-    info!(
-        "{APP_NAME} v{TERMSCP_VERSION} ({APP_GIT_BRANCH}, {git_hash}, {APP_BUILD_DATE}) - Developed by {TERMSCP_AUTHORS}",
-        git_hash = git_hash()
-    );
+    info!("{APP_NAME} v{TERMSCP_VERSION} - Developed by {TERMSCP_AUTHORS}");
     // Run
     info!("Starting activity manager...");
     run(run_opts)
@@ -142,10 +131,7 @@ fn run(run_opts: RunOpts) -> MainResult<()> {
 }
 
 fn print_version() -> MainResult<()> {
-    println!(
-        "{APP_NAME} v{TERMSCP_VERSION} ({APP_GIT_BRANCH}, {git_hash}, {APP_BUILD_DATE}) - Developed by {TERMSCP_AUTHORS}",
-        git_hash = git_hash()
-    );
+    println!("{APP_NAME} v{TERMSCP_VERSION} - Developed by {TERMSCP_AUTHORS}");
 
     Ok(())
 }
