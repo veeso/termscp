@@ -6,8 +6,8 @@ termscp can start in three different ways depending on the arguments you pass.
   parameters required to connect to the remote host.
 - An address argument: termscp skips the authentication form and connects
   directly to the remote host.
-- A bookmark name with `-b, --address-as-bookmark`: termscp resolves the
-  argument as a saved bookmark and connects.
+- A bookmark name with `-b <bookmark-name>`: termscp resolves the argument as a
+  saved bookmark and connects. Repeat `-b` to open several bookmarks.
 
 When you provide an address argument or a bookmark name, you can also provide a
 start working directory for the local host.
