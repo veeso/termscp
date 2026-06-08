@@ -1,5 +1,5 @@
 use cfg_aliases::cfg_aliases;
-use vergen_git2::{BuildBuilder, CargoBuilder, Emitter, Git2Builder, RustcBuilder, SysinfoBuilder};
+use vergen_git2::{Build, Cargo, Emitter, Git2, Rustc, Sysinfo};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Setup cfg aliases
@@ -15,11 +15,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         smb_windows: { all(windows, feature = "smb") }
     }
 
-    let build = BuildBuilder::all_build()?;
-    let cargo = CargoBuilder::all_cargo()?;
-    let git2 = Git2Builder::all_git()?;
-    let rustc = RustcBuilder::all_rustc()?;
-    let si = SysinfoBuilder::all_sysinfo()?;
+    let build = Build::all_build();
+    let cargo = Cargo::all_cargo();
+    let git2 = Git2::all_git();
+    let rustc = Rustc::all_rustc();
+    let si = Sysinfo::all_sysinfo();
 
     Emitter::default()
         .add_instructions(&build)?

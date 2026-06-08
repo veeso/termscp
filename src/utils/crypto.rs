@@ -5,7 +5,7 @@
 //! and a zero IV) is transparently decrypted via a fallback path.
 
 use aes::cipher::block_padding::Pkcs7;
-use aes::cipher::{BlockDecryptMut, KeyIvInit};
+use aes::cipher::{BlockModeDecrypt, KeyIvInit};
 use aes_gcm::aead::{Aead, AeadCore};
 use aes_gcm::{Aes128Gcm, KeyInit, Nonce};
 use base64::Engine;
@@ -70,7 +70,7 @@ fn decrypt_legacy_cbc(key: &str, secret: &str) -> Result<String, CryptoError> {
     let raw = B64.decode(secret)?;
     let decryptor = CbcDec::new(&key_bytes.into(), &iv.into());
     let plaintext = decryptor
-        .decrypt_padded_vec_mut::<Pkcs7>(&raw)
+        .decrypt_padded_vec::<Pkcs7>(&raw)
         .map_err(|_| CryptoError::InvalidData)?;
     String::from_utf8(plaintext).map_err(|_| CryptoError::InvalidData)
 }
