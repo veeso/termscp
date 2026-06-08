@@ -91,7 +91,7 @@ impl Component for TerminalComponent {
         // update the terminal size if it has changed
         if self.size != (width, height) {
             self.size = (width, height);
-            self.parser.set_size(height, width);
+            self.parser.screen_mut().set_size(height, width);
         }
 
         let title = self
@@ -236,12 +236,14 @@ impl Component for TerminalComponent {
             }
             Cmd::Scroll(Direction::Down) => {
                 self.scroll = self.scroll.saturating_sub(8);
-                self.parser.set_scrollback(self.scroll);
+                self.parser.screen_mut().set_scrollback(self.scroll);
 
                 CmdResult::NoChange
             }
             Cmd::Scroll(Direction::Up) => {
-                self.parser.set_scrollback(self.scroll.saturating_add(8));
+                self.parser
+                    .screen_mut()
+                    .set_scrollback(self.scroll.saturating_add(8));
                 let scrollback = self.parser.screen().scrollback();
                 self.scroll = scrollback;
 
@@ -275,7 +277,7 @@ impl Component for TerminalComponent {
             }
             Cmd::Submit => {
                 self.scroll = 0; // Reset scroll on submit
-                self.parser.set_scrollback(self.scroll);
+                self.parser.screen_mut().set_scrollback(self.scroll);
 
                 if cfg!(target_family = "unix") {
                     self.parser.process(b"\n");
