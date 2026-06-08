@@ -152,7 +152,7 @@ pacman -S termscp
 
 如需更多信息或其他平台支持，请访问 [termscp.rs](https://termscp.rs/install) 查看所有安装方法。
 
-⚠️ 如果您想了解如何更新 termscp，只需从 CLI 运行 termscp： `(sudo) termscp --update` ⚠️
+⚠️ 如果您想了解如何更新 termscp，只需从 CLI 运行 termscp： `(sudo) termscp update` ⚠️
 
 ### 依赖 ❗
 
