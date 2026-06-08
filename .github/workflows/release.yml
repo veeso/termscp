@@ -368,6 +368,62 @@ jobs:
             --title "v$VERSION" \
             --notes-file notes/RELEASE_NOTES.md
 
+  publish-crate:
+    needs: [prepare, release]
+    if: ${{ !inputs.dry_run }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      VERSION: ${{ needs.prepare.outputs.version }}
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8 # stable
+
+      - name: Install dependencies (Linux)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            make \
+            libgit2-dev \
+            build-essential \
+            pkg-config \
+            libbsd-dev \
+            libcap-dev \
+            libcups2-dev \
+            libgnutls28-dev \
+            libicu-dev \
+            libjansson-dev \
+            libkeyutils-dev \
+            libldap2-dev \
+            zlib1g-dev \
+            libpam0g-dev \
+            libacl1-dev \
+            libarchive-dev \
+            flex \
+            bison \
+            libntirpc-dev \
+            libtracker-sparql-3.0-dev \
+            libglib2.0-dev \
+            libdbus-1-dev \
+            libsasl2-dev \
+            libunistring-dev \
+            cpanminus
+          sudo cpanm Parse::Yapp::Driver
+
+      - name: Authenticate to crates.io
+        id: auth
+        uses: rust-lang/crates-io-auth-action@bbd81622f20ce9e2dd9622e3218b975523e45bbe # v1.0.4
+
+      - name: Publish to crates.io
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+        run: cargo publish --features smb-vendored
+
   publish-choco:
     needs: [prepare, release]
     if: ${{ !inputs.dry_run }}
