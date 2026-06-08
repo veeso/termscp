@@ -159,11 +159,18 @@ impl FileExplorer {
             .insert(PathBuf::from(src), PathBuf::from(dst));
     }
 
-    /// Enqueue all files for transfer
+    /// Enqueue all files for transfer.
+    ///
+    /// `dst` is the destination *directory*; each entry is enqueued with its own
+    /// file name appended, so the stored destination is the full target path.
     pub fn enqueue_all(&mut self, dst: &Path) {
         let files: Vec<_> = self.iter_files().map(|f| f.path.clone()).collect();
         for file in files {
-            self.enqueue(&file, dst);
+            let dest = match file.file_name() {
+                Some(name) => dst.join(name),
+                None => dst.to_path_buf(),
+            };
+            self.enqueue(&file, &dest);
         }
     }
 
@@ -657,6 +664,28 @@ mod tests {
         assert_eq!(explorer.enqueued().len(), 1);
         explorer.dequeue(Path::new("docs"));
         assert_eq!(explorer.enqueued().len(), 0);
+    }
+
+    #[test]
+    fn test_should_enqueue_all_with_dest_file_name() {
+        let mut explorer: FileExplorer = FileExplorer::default();
+        explorer.set_files(vec![
+            make_fs_entry("a.txt", false),
+            make_fs_entry("b.txt", false),
+        ]);
+        // Enqueue all into a remote destination directory
+        explorer.enqueue_all(Path::new("/remote/dir"));
+        let queue = explorer.enqueued();
+        assert_eq!(queue.len(), 2);
+        // Destination must be the directory joined with the file name, not the directory alone
+        assert_eq!(
+            queue.get(Path::new("a.txt")).unwrap(),
+            Path::new("/remote/dir/a.txt")
+        );
+        assert_eq!(
+            queue.get(Path::new("b.txt")).unwrap(),
+            Path::new("/remote/dir/b.txt")
+        );
     }
 
     fn make_fs_entry(name: &str, is_dir: bool) -> File {

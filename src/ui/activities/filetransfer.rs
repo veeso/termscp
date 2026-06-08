@@ -355,7 +355,12 @@ impl FileTransferActivity {
             self.browser.explorer_mut().dequeue(&src);
         } else {
             debug!("Marking file {}", src.display());
-            let dest = self.browser.other_explorer_no_found().wrkdir.clone();
+            // Destination is the other pane's working directory joined with the file
+            // name, so the queued entry holds the full target path (not just the dir).
+            let mut dest = self.browser.other_explorer_no_found().wrkdir.clone();
+            if let Some(name) = src.file_name() {
+                dest.push(name);
+            }
             self.browser.explorer_mut().enqueue(&src, &dest);
         }
         self.reload_browser_file_list();
