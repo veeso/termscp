@@ -3,7 +3,11 @@
   "config": {
     // Line length is impractical for keyboard/style tables and long prose;
     // mdBook reflows in the browser, so we don't enforce a hard wrap.
-    "MD013": false
+    "MD013": false,
+    // Table column alignment can't be satisfied for CJK (zh-CN) content:
+    // markdownlint counts code points while CJK glyphs are double-width, so a
+    // visually aligned table never matches. Rendering is unaffected.
+    "MD060": false
   },
   "globs": ["docs/**/*.md"],
   "ignores": [
