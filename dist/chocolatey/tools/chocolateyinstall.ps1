@@ -5,10 +5,10 @@ $toolsDir = "$(Split-Path -parent $MyInvocation.MyCommand.Definition)"
 $is_arm64 = $env:PROCESSOR_ARCHITECTURE -eq 'ARM64' -or $env:PROCESSOR_ARCHITEW6432 -eq 'ARM64'
 
 if ($is_arm64) {
-    $url      = 'https://github.com/veeso/termscp/releases/download/v1.0.0/termscp-v1.0.0-msvc.zip'
+    $url      = 'https://github.com/veeso/termscp/releases/download/v1.1.0/termscp-v1.1.0-msvc.zip'
     $checksum = 'f6ad6c62f1578562f9af4bcee93bd4cc429cb52219c3636359b008db8789587e'
 } else {
-    $url      = 'https://github.com/veeso/termscp/releases/download/v1.0.0/termscp-v1.0.0-x86_64-pc-windows-msvc.zip'
+    $url      = 'https://github.com/veeso/termscp/releases/download/v1.1.0/termscp-v1.1.0-x86_64-pc-windows-msvc.zip'
     $checksum = 'd7796081b6f67b82acfa94557aa6852d12a33daab3cca6490660b20e42752005'
 }
 

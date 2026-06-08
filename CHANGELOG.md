@@ -1,7 +1,184 @@
-# Changelog
+## 1.1.0
 
----
+Released on 2026-06-08
 
+### Added
+
+- **site:** catppuccin theme tokens, tailwind 4, self-hosted font
+- **site:** i18n string resolver with en fallback
+- **site:** build-time man.md fetcher pinned to release ref
+- **site:** base layout with og/hreflang, theme bootstrap, umami
+- **site:** x-default hreflang, twitter card, og:image:alt; dedupe locales/site in base layout
+- **site:** nav, footer, theme toggle, language picker
+- **site:** responsive mobile nav, css-driven theme icons, localizePath helper
+- **site:** landing page with dual-pane explorer hero
+- **site:** install page led by install.sh script, package-manager tabs
+- **site:** robots, sitemap reference, vercel redirects + cache headers
+- **install:** add Windows PowerShell installer and copy buttons on site
+  > Add install.ps1 mirroring install.sh for Windows: arch detection,
+  > release zip download, binary extraction, user PATH update.
+  > 
+  > - copy install.ps1 to site public/ at build time (copy-install.mjs)
+  > - serve /install.ps1 with text/plain Content-Type (vercel.json)
+  > - add PowerShell one-liner to install page and README
+  > - bump install.ps1 default version in bump_version.sh
+  > - add CopyButton component next to every install command line
+- **config:** move config dir to ~/.config/termscp on macOS and %USERPROFILE%\.termscp on Windows
+  > Resolve the config directory through a single per-platform config_dir()
+  > function instead of relying on dirs::config_dir everywhere:
+  > 
+  > - macOS: ~/.config/termscp (was ~/Library/Application Support/termscp)
+  > - Windows: %USERPROFILE%\.termscp (was roaming %APPDATA%\termscp)
+  > - Linux/other: /termscp (unchanged)
+  > 
+  > Existing users are migrated automatically on first run: when the new
+  > directory is absent and the legacy location exists, the whole config
+  > directory is moved to the new path. The cache directory stays at the
+  > platform-native location.
+
+### CI
+
+- automated release workflow
+  > Single workflow_dispatch (version, dry_run) that bumps versions, regenerates
+  > CHANGELOG via git-cliff, rebuilds site CSS, builds all targets, creates the
+  > GitHub release, updates the Homebrew tap and publishes Chocolatey.
+  > 
+  > - dist/release/bump_version.sh: version replacer across all tracked locations (+tests)
+  > - .github/workflows/release.yml: prepare -> build matrix -> homebrew/release -> choco
+  > - retire build-artifacts.yml (merged into release.yml)
+  > - Linux builds via cargo-zigbuild (old glibc) for broad compatibility
+- pin all actions to verified SHAs and clear zizmor findings
+  > Pin every action to a commit SHA whose tag comment matches (verified via gh api),
+  > add least-privilege permissions, set persist-credentials: false, and replace the
+  > archived actions-rs/cargo with a plain cargo test. zizmor clean at default persona.
+- fix release notes generation in release workflow
+  > prepare job failed: git-cliff --latest crashed with 'trim_start_matches on
+  > null' because the checkout was shallow (no tags/history) so no release existed.
+  > 
+  > - checkout prepare with fetch-depth: 0 + fetch-tags so git-cliff sees full
+  >   history and tags (also fixes an otherwise-truncated CHANGELOG)
+  > - generate release notes with --unreleased --tag v$VERSION instead of --latest:
+  >   --latest selected the previous real tag (stale notes); --unreleased --tag
+  >   renders the version being released
+- remove pages workflow, fix release version-bump for astro site
+- **site:** add format/lint/test/build workflow for astro site
+  > Add Site GitHub Actions workflow running prettier format check, astro
+  > check, tests, and build on changes under site/. Wire prettier into the
+  > site package with config, ignore, and scripts, and format existing
+  > sources.
+- add github pages workflow for docs site
+- unify os workflows into one
+- **release:** publish to crates.io via OIDC trusted publishing
+- rename ci workflow
+- **site:** always run site
+- **release:** fetch full git history and tags for build.rs
+  > build.rs uses vergen-git2 (Git2::all_git), which runs `git describe` and
+  > reads commit metadata. The build and publish-crate jobs checked out a
+  > shallow clone without tags, so vergen could not resolve the describe
+  > string and libgit2 may fail on shallow repos. Add fetch-depth: 0 and
+  > fetch-tags: true to both jobs that compile the crate.
+
+### Changed
+
+- **site:** type-safe i18n keys derived from en
+- **site:** drop in-site manual, link to external docs.termscp.rs
+- **site:** english-only, remove i18n machinery
+
+### Documentation
+
+- point READMEs to termscp.rs + install.sh, docs.termscp.rs
+- replace last termscp.veeso.dev refs (install.sh manual/changelog, crate homepage)
+- add shared mdbook assets and favicon.ico
+- add mdbook language switcher script
+- add CNAME for docs.termscp.rs
+- scaffold en-US mdbook
+- add en-US table of contents
+- **en:** write introduction and getting-started pages
+- **en:** write usage pages
+- **en:** write configuration pages
+- **en:** write cli reference and developer pages
+- **en:** fix CLI references (no -t / --update flags; -b is a value option)
+- add markdownlint config for docs site
+- scaffold zh-CN mdbook
+- **zh:** translate introduction and getting-started pages
+- **zh:** translate section headings in getting-started pages
+- **zh:** translate usage pages
+- **zh:** translate configuration pages
+- **zh:** translate cli reference and developer pages
+- disable MD060 table alignment (incompatible with CJK width)
+- drop extra language docs/READMEs, point manual links to docs.termscp.rs
+- **zh:** align README with root README, drop dead language links
+- fix update command (termscp update, not --update) in READMEs
+- **zh:** fix keyring deep-link anchor to translated heading slug
+- **config:** update config dir paths for macOS/Windows in en & zh
+  > Reflect the new config directory locations (~/.config/termscp on macOS,
+  > %USERPROFILE%\.termscp on Windows) across the English and Chinese docs,
+  > and add a CLAUDE.md note to keep both translations in sync.
+
+### Fixed
+
+- **site:** robust man-fetch invocation guard, add timeout+retry
+- **site:** hero selected-row contrast (latte) + mobile row truncation
+- **site:** drop @ts-check on astro config to clear false vite type error
+- **install:** quote vars, fix set -e cargo check and rustup tmpfile cleanup
+  > - silence SC3043 by declaring dash dialect (local is supported)
+  > - quote unquoted vars (SC2086/SC1090)
+  > - fix set -e aborting arch install before cargo check
+  > - fix install_cargo removing unset $archive instead of $rustup
+  > - make brew upgrade fallback a real if-then-else (SC2015)
+  > - drop leftover starship BASE_URL and debug echo $1
+- **progress:** rework transfer progress panel (#424)
+  > Migrate the transfer progress UI to tuirealm 4, where the stdlib
+  > `ProgressBar` widget was dropped, by rebuilding the dual-bar panel on
+  > top of `Gauge`.
+  > 
+  > - Restore the unified two-bar look: the full bar (top) and partial bar
+  >   (bottom) draw joined borders so they read as a single panel; a single
+  >   file shows one fully-bordered bar.
+  > - Redraw on every file boundary in the send/recv queue loops so the
+  >   full bar's (N/total) counter advances even for small files that finish
+  >   within one in-loop redraw interval.
+  > - Track progress with a single `TransferProgress` (exact file count from
+  >   the pre-scan, lazy partial/full computation) and consolidate the theme
+  >   progress-bar fields.
+- **progress:** equalize dual progress bar heights
+  > The bottom (partial) bar carried a block title (the current filename),
+  > which forces a 1-row top inset in ratatui's `Block::inner` even though
+  > its top border is dropped to join the seam with the full bar. That left
+  > the partial bar with one inner row while the full bar kept two, so the
+  > two gauges rendered at unequal heights.
+  > 
+  > - Move the filename from the partial bar's title into its gauge label.
+  > - Skip setting an empty title so no phantom top-positioned title triggers
+  >   the inset.
+  > - Put the panel title on the top (full) bar for multi-file transfers.
+  > - Bump the two-bar popup height to fit the joined panel.
+  > 
+  > Also bump Cargo.lock and adapt the embedded terminal to the new vt100
+  > `screen_mut()` API.
+- **copy:** prevent emptying file when copy destination is empty (#421)
+  > An empty copy destination resolved to the source file's own path, so
+  > std::fs::copy truncated the original file to 0 bytes.
+  > 
+  > - localhost::copy now refuses to copy a file onto itself, returning an
+  >   error instead of truncating it (root cause).
+  > - action_copy treats an empty/whitespace destination as a cancel.
+- **transfer:** enqueue full destination path instead of directory
+  > Queued transfers stored only the destination directory as the target
+  > path. Downstream upload logic treats the queued destination as the full
+  > file path and passes it straight to create_file, so transfers failed
+  > with a Failure error when the remote target resolved to a directory.
+  > 
+  > Append each entry's file name to the destination directory at enqueue
+  > time in both enqueue_file and enqueue_all, matching the single-file
+  > transfer path which already builds the full target path.
+
+### Build
+
+- add chocolatey package, remove legacy dist build scripts
+  > The old manual dist/build/* scripts and dist/{deb,rpm}.sh are superseded by the
+  > automated release workflow. Add the chocolatey package consumed by release.yml.
+- **site:** copy install.sh from repo root at build time (single source)
 ## 1.0.0
 
 Released on 2026-04-18
@@ -61,7 +238,7 @@ Released on 2026-04-18
   > - Replace assert!/panic!/unreachable! with proper error handling
   > - Fix typo "filetransfer_activiy" across ~29 files
   > - Add unit tests for Pane
-  >
+  > 
   > Net result: -473 lines, single code path for most file operations.
 - replace lazy_static with std::sync::LazyLock
 - migrate from mod.rs to named module files
@@ -90,13 +267,13 @@ Released on 2026-04-18
   > AES-128-CBC decryption path to transparently handle existing bookmarks.
 - replace recursive byte-counting with entry-based transfer progress (#395)
   > * fix: replace recursive byte-counting with entry-based transfer progress
-  >
+  > 
   > Replace the expensive recursive `get_total_transfer_size` pre-calculation
   > with a lightweight entry-based counter (`TransferProgress`) for the
   > overall progress bar. This avoids deep `list_dir` traversals before
   > transfers begin, which could cause FTP idle-timeout disconnections on
   > large directory trees.
-  >
+  > 
   > The per-file byte-level progress bar (`ProgressStates`) remains
   > unchanged. Bytes are still tracked via `TransferStates::add_bytes` for
   > notification threshold logic.
@@ -113,7 +290,7 @@ Released on 2026-04-18
 - sync browsing when entering a directory from filtered/fuzzy view
 - stabilize core error handling
   > Remove production panic and unwrap paths from core modules.
-  >
+  > 
   > Propagate bookmark encryption failures, harden file watcher and temp mapped file handling, and clean up dead code in shared utilities.
 - normalize localhost relative path checks
 - use time-based redraw interval instead of progress-delta threshold
@@ -128,18 +305,6 @@ Released on 2026-04-18
   > Some non-compliant FTP servers (e.g. LiteSpeed) include a self-reference
   > to the listed directory in the LIST response, causing the current folder
   > to appear as a duplicate entry in the explorer.
-
-### Miscellaneous
-- Use apt to install termscp on debian base to prevent broken deps
-- Copilot is so dumb
-- Install with apt if installed
-- WTF CTRL SAVE DOESNT FUCKING WORK
-- funding
-- add centralized lint configuration to Cargo.toml
-- 1.0.0 version into manifests
-- format toml
-- add fmt+clippy convention to CLAUDE.md and apply nightly fmt
-- enable safe clippy pedantic lints
 
 ### Performance
 
@@ -164,9 +329,9 @@ Released on 2026-04-18
   > Upgrade tuirealm (3.x -> 4.0.0), tui-realm-stdlib (3 -> 4), tui-term
   > (0.2 -> 0.3). Apply all breaking changes from the 4.0 migration guide
   > across the termscp UI.
-  >
+  > 
   > Key changes:
-  >
+  > 
   > - Root-level re-exports removed; imports moved to module-qualified
   >   paths (`tuirealm::application`, `::component`, `::event`, `::props`,
   >   `::state`, `::subscription`, `::listener`, `::ratatui`). Same for
@@ -214,823 +379,485 @@ Released on 2026-04-18
   >   per-field basis instead of failing the whole load.
 - upgrade remotefs-ssh to 0.8.3
 
+### Style
+
+- linter
 ## 0.19.1
 
-Released on 2026-04-18
+Released on 2025-12-20
 
-- [Issue 371](https://github.com/veeso/termscp/issues/371): Updated dependencies to allow build on NetBSD
+### CI
 
+- windows artifact name
+
+### Fixed
+
+- install.sh deb name
+- install.sh deb name
+- Updated dependencies to allow build on NetBSD
 ## 0.19.0
 
-Released on 11/11/2025
+Released on 2025-11-11
 
-- [Issue 297](https://github.com/veeso/termscp/issues/297): Added `<CTRL+S>` keybinding to get the total size of selected paths.
-- [Issue 331](https://github.com/veeso/termscp/issues/331): Added new `import-ssh-hosts` CLI subcommand to import all the hosts from the ssh config as bookmarks.
-- [Issue 335](https://github.com/veeso/termscp/issues/335): Changed file overwrite behaviour
-  - Now the user can choose for each file whether to overwrite, skip or overwrite all/skip all.
-- [Issue 354](https://github.com/veeso/termscp/issues/354):
-  - Removed error popup message if failed to check for updates.
-  - Prevent long timeouts when checking for updates if the network is down or the DNS is not working.
-- [Issue 356](https://github.com/veeso/termscp/issues/356): Fixed SSH auth issue not trying with the password if any RSA key was found.
-- [Issue 334](https://github.com/veeso/termscp/issues/334): SMB support for MacOS with vendored build of libsmbclient.
-- [Issue 337](https://github.com/veeso/termscp/issues/337): Migrated to libssh.org on Linux and MacOS for better ssh agent support.
-- [Issue 361](https://github.com/veeso/termscp/issues/361): Report a message while calculating total size of files to transfer.
+### Added
 
+- Import bookmarks from ssh config with a CLI command (#364)
+  > * feat: Import bookmarks from ssh config with a CLI command
+  > 
+  > Use import-ssh-hosts to import all the possible hosts by the configured ssh config or the default one on your machine
+- Changed file overwrite behaviour (#366)
+  > Now the user can choose for each file whether to overwrite, skip or overwrite all/skip all.
+- Added `<CTRL+S>` keybinding to get the total size of selected paths. (#367)
+  > * feat: Added `<CTRL+S>` keybinding to get the total size of selected paths.
+- Merge branch '0.19.0'
+
+### CI
+
+- Build artifacts for Windows x86_64 and Ubuntu x86_64 (#368)
+- Debian
+- debian fix
+- deploy site
+
+### Documentation
+
+- User manual and get started links
+- Release date
+
+### Fixed
+
+- typo in file open error message (#349)
+- SMB support for MacOS with vendored build of libsmbclient.
+- Report a message while calculating total size of files to transfer. (#362)
+  > * fix: Report a message while calculating total size of files to transfer.
+  > 
+  > Currently, in case of huge transfers the app may look frozen while calculating the transfer size. We should at least report to the user we are actually doing something.
+- Issues with update checks (#363)
+  > Removed error popup message if failed to check for updates.
+  > Prevent long timeouts when checking for updates if the network is down or the DNS is not working.
+
+### Performance
+
+- Migrated to libssh.org on Linux and MacOS for better ssh agent support.
+
+### Build
+
+- 0.19 deps
+- remotefs-ssh 0.7.1
+  > This version fixes compatibility with hosts which don't use bash/sh as the default shell.
 ## 0.18.0
 
-Released on 11/11/2025
+Released on 2025-06-10
 
-- 🐚 An **Embedded shell for termscp**:
-  - [Issue 340](https://github.com/veeso/termscp/issues/340): Replaced the `Exec` popup with a **fully functional terminal emulator** embedded thanks to [A-Kenji's tui-term](https://github.com/a-kenji/tui-term).
-  - Command History
-  - Support for `cd` and `exit` commands as well.
-  - Exit just closes the terminal emulator.
-- [Issue 345](https://github.com/veeso/termscp/issues/345): Default keys are used from `~/.ssh` directory if no keys are resolved for the host.
+### Added
+
 - **Updated dependencies** and updated the Rust edition to `2024`
+- Replaced the `Exec` popup with a fully functional terminal emulator (#348)
+  > * feat: Replaced the `Exec` popup with a fully functional terminal emulator
+- 0.18
 
+### Fixed
+
+- larger file info popup
+- lock
+
+### Style
+
+- catppuccin themes
 ## 0.17.0
 
-Released on 24/03/2025
+Released on 2025-03-23
 
-- **Queuing transfers**:
-  - the logic of selecting files has been extended!
-  - From now on selecting file will put the files into a **transfer queue**, which is shown on the bottom panel.
-  - When a file is selected the file is added to the queue with a destination path, which is the **current other explorer path at the moment of selection.**
-  - It is possible to navigate to the transfer queue by using `P` and pressing `ENTER` or `DELETE` on a file will remove it from the transfer queue.
-  - Other commands will work as well on the transfer queue, like `COPY`, `MOVE`, `DELETE`, `RENAME`.
-- [issue 308](https://github.com/veeso/termscp/issues/308): added `--wno-keyring` flag to disable keyring
-- [issue 316](https://github.com/veeso/termscp/issues/316): Local directory path is not switching to what's specified in the bookmark. Now the local directory path is correctly set following this hierarchy:
-    1. Local directory path specified for the host bridge
-    2. Local directory path specified in the bookmark
-    3. Working directory
-- [issue 317](https://github.com/veeso/termscp/issues/317): the return value of `--version` should be `0`
-- [issue 319](https://github.com/veeso/termscp/issues/319): fixed a crash when the local directory specified in the auth form does not exist
-- [issue 327](https://github.com/veeso/termscp/issues/327): fixed a panic when trying to go up from local directory on localhost in the auth form
-- [issue 330](https://github.com/veeso/termscp/issues/330): add suppaftp/pavao/kube to allowed logs
-- Dependencies:
-  - `argh` to `0.1.13`
-  - `bytesize` to `2`
-  - `dirs` to `6`
-  - `magic-crypt` to `4`
-  - `notify` to `8`
-  - `ssh2-config` to `0.4`
-  - `remotefs-ssh` to `0.6`
-  - `rust` edition to `2024`
+### Added
 
+- **cli:** added `--wno-keyring` flag to disable keyring
+- 132 queuing transfers (#332)
+  > the logic of selecting files has been extended!
+  > From now on selecting file will put the files into a transfer queue, which is shown on the bottom panel.
+  > When a file is selected the file is added to the queue with a destination path, which is the **current other explorer path at the moment of selection.
+  > It is possible to navigate to the transfer queue by using `P` and pressing `ENTER` on a file will remove it from the transfer queue.Other commands will work as well on the transfer queue, like `COPY`, `MOVE`, `DELETE`, `RENAME`.
+
+### CI
+
+- **build:** build vendored smb and refactor platform deps (#333)
+
+### Documentation
+
+- **CONTRIBUTING:** docs(CONTRIBUTING): mistakes
+- veeso.me instead of veeso.dev
+- version
+
+### Fixed
+
+- unused import isolated tests
+- isolated-tests for localhost
+- clippy error
+- **ui:** fixed input mask on host bridge on local dir up
+  > if you go up on local dir when localhost is selected it panics
+- fixed a crash when the local directory specified in the auth form does not exist
+- the return value of `--version` should be `0`
+- **aws-s3:** updated remotefs-aws-s3 to 0.4.1
+  > should fix #329
+- **log:** add suppaftp/pavao/kube to allowed logs
+- **bookmarks:** Local directory path is not switching to what's specified in the bookmark
+
+### Testing
+
+- **remotefs_builder:** check result, build doesn't panic anymore
+
+### Build
+
+- **deps:** updated dependencies and edition to 2024
+- bump to ssh2-config 0.4 and remotefs 0.6 to have support for Include in config files
+- aws-s3 0.4.2
+- build docker for x86
+- so apparently native-tls vendored tries to build openssl on windows, wtf guys?
 ## 0.16.1
 
-Released on 12/11/2024
+Released on 2024-11-12
 
-- Just fixed this: e45c3d5b4ef64653e5b6cc4f3703e3b67514306d
-  - `fix: gg rust 1.82 for introducing a nice breaking change in config which was not mentioned in changelog`
+### Fixed
 
+- cfg unix forbidden in rust .82
+- gg rust 1.82 for introducing a nice breaking change in config which was not mentioned in changelog
+- 0.16.1
 ## 0.16.0
 
-Released on 14/10/2024
+Released on 2024-10-14
 
-- [**Multi Host support**](https://github.com/veeso/termscp/issues/285):
-  - Now it is possible to work on two different remotes `remote A -> remote B` instead of just `localhost -> remote`
-  - Cli arguments now accept an additional `remote-args` for the left panel.
-  - For more details read this issue <https://github.com/veeso/termscp/issues/285>.
-  - Change between auth forms with `<BACKTAB>`
-  - Bookmarks are automatically loaded into the last auth form.
-- [Issue 289](https://github.com/veeso/termscp/issues/289): Use `uzers` instead of the dead package `users` which has several vulnerabilities
-- [Issue 290](https://github.com/veeso/termscp/issues/290): Password prompt was broken
-- [Issue 298](https://github.com/veeso/termscp/issues/298): tuirealm 2.x
-  - Fixed some performance issues where sometimes the app froze for a couple of seconds, thanks to this <https://github.com/veeso/tui-realm/pull/78>.
-- [Issue 292](https://github.com/veeso/termscp/issues/292): New version alert was not displayed due to a semver regex issue.
-- [Issue 291](https://github.com/veeso/termscp/issues/291): Show `..` directory before all the others in the explorer. If you click on it you'll go the parent directory (same as pressing `<U>`). No, you can't select it for transfers and it's actually been implemented in the worse way possible, because this little change would require a huge refactoring of the explorer component. I promise I will do it one day, but I dunno when.
-- Logging: filter out messages not related to termscp or remotefs
+### Added
 
+- version 0.16
+- Show `..` directory before all the others in the explorer to navigate to the parent dir (#301)
+
+### Fixed
+
+- Use `uzers` instead of the dead package `users` which has several vulnerabilities (#295)
+- vergen (#296)
+- users from lock
+- tuirealm 2.x (#299)
+- issue 292 New version alert was not displayed due to a semver regex issue. (#300)
+- 0.16
+- tiny ui issue
 ## 0.15.0
 
-Released on 03/10/2024
+Released on 2024-10-03
 
-- [Issue 249](https://github.com/veeso/termscp/issues/249): The old *find* command has been replaced with a brand new explorer with support to 🪄 **Fuzzy search** 🪄. The command is still `<F>`.
-- [Issue 283](https://github.com/veeso/termscp/issues/283): **Find command can now be cancelled** by pressing `<CTRL+C>`. While scanning the directory it will also display the current progress.
-- [Issue 268](https://github.com/veeso/termscp/issues/268): 📦 **Pods and container explorer** 🐳 for Kube protocol.
-  - BREAKING ‼️ Kube address argument has changed to `namespace[@<cluster_url>][$<path>]`
-  - Pod and container argumets have been removed; from now on you will connect with the following syntax to the provided namespace: `/pod-name/container-name/path/to/file`
-- [Issue 279](https://github.com/veeso/termscp/issues/279): do not clear screen
-- [Issue 277](https://github.com/veeso/termscp/issues/277): Fix a bug in the configuration page, which caused being stuck if the added SSH key was empty
-- [Issue 272](https://github.com/veeso/termscp/issues/272): `isolated-tests` feature to run tests for releasing on distributions which run in isolated environments
-- [Issue 280](https://github.com/veeso/termscp/issues/280): Autocompletion when pressing `<TAB>` on the `Go to` popup.
+### Added
 
+- init 0.15
+- Pods and container explorer for Kube protocol (#281)
+- it is now possible to cancel find command; show find progress (#284)
+
+### Fixed
+
+- tokio rt builder
+- dbus deveL
+- bump vers
+- keyring test not passing macos
+- notify 6
+- bump vers
+- don't clear screen after terminating termscp
+- issue 277 Fix a bug in the configuration page, which caused being stuck if the added SSH key was empty
+- popup texts
+- `isolated-tests` feature to run tests for releasing on distributions which run in isolated environments (#286)
+  > * fix: `isolated-tests` feature to run tests for releasing on distributions which run in isolated environments
+  > 
+  > * fix: cond
+- set date
+- github ci is stable and reliable (one worker broken each 2 weeks)
+- ci
+- readme
+- include build.rs
 ## 0.14.0
 
-Released on 17/07/2024
+Released on 2024-07-17
 
-- [Issue 226](https://github.com/veeso/termscp/issues/226): Use ssh-agent
-- [Issue 241](https://github.com/veeso/termscp/issues/241): Jump to next entry after select
-- [Issue 242](https://github.com/veeso/termscp/issues/242): Added `Kube` protocol support
-- [Issue 255](https://github.com/veeso/termscp/issues/255): New keybindings `Alt + A` to deselect all files
-- [Issue 256](https://github.com/veeso/termscp/issues/256): Filter files in current folder. You can now filter files by pressing `/`. Both wildmatch and regex are accepted to filter files.
-- [Issue 257](https://github.com/veeso/termscp/issues/257): CLI remote args cannot handle '@' in the username
+### Added
 
+- ALT+A to deselect all files (#263)
+- ssh-agent (#264)
+- issue 256 - filter files (#266)
+- kube protocol support (#267)
+- termscp 0.14
+
+### Documentation
+
+- update Arch Linux instructions (#243)
+
+### Fixed
+
+- install script version
+- correct help text for update subcommand (#259)
+- lint
+- CLI remote args cannot handle '@' in the username (#261)
+- sorted flags in readme
+- Jump to next entry after select (#262)
+- remotefs-ssh 0.3.1
+- german manual
+- removed support for RPM
+- changelog
 ## 0.13.0
 
-Released on 03/03/2024
+Released on 2024-03-02
 
-- Added CLI subcommands
-  - Changed `-t` to `theme`
-  - Changed `-u` to `update`
-  - Changed `-c` to `config`
-- Introduced support for [WebDAV](https://www.rfc-editor.org/rfc/rfc4918)
-  - It is now possible also to connect directly to WebDAV server with the syntax `http(s)://username:password@google.com`
-- Bugfix:
-  - [Issue 232](https://github.com/veeso/termscp/issues/232): AWS S3 wasn't working anymore due to rust-s3 outdate
-- Dependencies:
-  - Added `remotefs-webdav 0.1.1`
+### Added
 
-## 0.12.3
+- WebDAV support (#235)
+- termscp 0.13.0
 
-Released on 06/10/2023
+### Fixed
 
-- Dropped ratatui support, reverted to tui-realm 1.8
-
+- AWS S3 wasn't working anymore due to rust-s3 outdate
+- test
+- debian script
+- debian script
+- lint???
 ## 0.12.2
 
-Released on 01/10/2023
+Released on 2023-10-01
 
-- [Issue 205](https://github.com/veeso/termscp/issues/205): Allow windows build without SMB support
-- [Issue 215](https://github.com/veeso/termscp/issues/215): termscp not respecting port in SSH config. The port specified for the host in the SSH configuration wasn't evaluated.
-- [Issue 213](https://github.com/veeso/termscp/issues/215): termscp panicks if the terminal window is too small
+### Added
 
+- tui-realm 1.9
+
+### Fixed
+
+- fmt
+- panic if the terminal screen is too small
 ## 0.12.1
 
-Released on 06/07/2023
+Released on 2023-07-06
 
-- [Issue 169](https://github.com/veeso/termscp/issues/169): Local working directory can now be specified in connection form and be saved into bookmarks.
-- [Issue 188](https://github.com/veeso/termscp/issues/188): The breadcrumbs path is not fallbacked after a failed enter into the directory
+### Added
 
-- SMB support is now a feature (you can build rust without default features to disable smb).
-- If SSH connection timeout is 0, the connection won't timeout.
+- smb is now an optional feature (#200)
+- build artifacts workflow (#202)
 
+### Fix
+
+- Some URL typos on 'install.sh' and 'README.md'. (#197)
+
+### Fixed
+
+- install workflow
+- sh compliant macos.sh build script
+- readme site links
+- better main runner
+- deps
+- don't run CI on site/.md change
+- rustup target
+- don't update path breadcrumb if enter/scan dir failed (#203)
 ## 0.12.0
 
-Released on 16/05/2023
+Released on 2023-05-16
 
-- **Change file permissions**: you can now change file permissions easily with the permissions popup pressing `Z` in the explorer.
-  - [Issue 172](https://github.com/veeso/termscp/issues/172)
-- **SMB protocol**: Support for SMB protocol has been added thanks to the [remotefs-smb](https://github.com/veeso/remotefs-rs-smb) library and the [pavao](https://github.com/veeso/pavao) project. You may notice that the interface is quiet different between Windows and Linux/MacOs/BSD due to the fact that SMB is natively supported on Windows systems.
-  - [Issue 182](https://github.com/veeso/termscp/issues/182)
-- [Issue 153](https://github.com/veeso/termscp/issues/153): show a loading message when loading directory's content
-- [Issue 176](https://github.com/veeso/termscp/issues/176): debug log is now written to CACHE_DIR
-- [Issue 173](https://github.com/veeso/termscp/issues/173): allow unknown fields in ssh2 configuration file
-- [Issue 175](https://github.com/veeso/termscp/issues/175): don't prompt for password if a ssh key is set for that host
-- Fixed an issue that didn't use the `User` specified in ssh2-config
+### Added
 
+- allow unknown fields in ssh2 configuration file (#181)
+
+### Fixed
+
+- #153 show a loading message when loading directory's content (#180)
+- specify ssh2 config params
+- release date
+- build
+- pavao 0.2.2
+- pavao 0.2.3
+- macos script
+- release date
 ## 0.11.3
 
-Released on 19/04/2023
+Released on 2023-04-19
 
-- [Issue 166](https://github.com/veeso/termscp/issues/166): fixed SCP relative paths on Windows
+### Added
 
+- site improvements
+
+### Fixed
+
+- relative paths windows (#167)
 ## 0.11.2
 
-Released on 18/04/2023
+Released on 2023-04-18
 
-- [Issue 154](https://github.com/veeso/termscp/issues/154): fixed SCP relative paths on Windows
+### Added
 
-## 0.11.1
-
-Released on 07/03/2022
-
-- [Issue 150](https://github.com/veeso/termscp/issues/150)
-  - fixed config directory not being created
-  - before setting default ssh config path; check wheter it actually exists
-- Security:
-  - removed `remove_dir_all` crate with `tempfile 3.4`
-- Dependencies:
-  - Bump `ssh2-config` to `0.1.6`
-
-## 0.11.0
-
-Released on 20/02/2023
-
-> 🦥 The lazy update
-
-- **Transfers optimized**:
-  - If local/remote file have the same "last modification time" (`mtime`), the file is not transferred
-  - When the file is exchanged, all times attributes are set (if supported by the protocol)
-- **Default ssh config path**:
-  - SSH configuration path is now `~/.ssh/config` by default
-- Added ARM64 Linux builds
-- **Bugfix**:
-  - Fixed [Issue 126](https://github.com/veeso/termscp/issues/126)
-  - Fixed [Issue 141](https://github.com/veeso/termscp/issues/141)
-- Dependencies:
-  - Bump `remotefs-ssh` to `0.1.3`
-  - Bump `self_update` to `0.35`
-  - Bump `ssh2-config` to `0.1.4`
-  - Bump `toml` to `0.7`
-
-## 0.10.0
-
-Released on 15/10/2022
-
-> ⭐ 500 stars update ⭐
-> Thank you for supporting termscp and make it reaching 500 stars on Github
-
-- **Changed keybindings for BACKTAB**: backtab will now change the explorer tab
-  - To active the LOG PANEL, use `P`
-- **Yes/No dialogs** are now answerable by pressing `Y` or `N` on your keyboard ([Issue 121](https://github.com/veeso/termscp/issues/121))
-- **Use ssh2 config IdentityFile** as fallback for key based authentication
-- **Bugfix**
-  - Fixed [Issue 122](https://github.com/veeso/termscp/issues/122)
-  - Fixed version comparison when going above 0.9
-- Dependencies:
-  - Bump `argh` to `0.1.9`
-  - Bump `chrono` to `0.4.22`
-  - Bump `keyring` to `1.2.0`
-  - Bump `notify-rust` to `4.5.10`
-  - Bump `open` to `3.0.3`
-  - Bump `rpassword` to `7.0.0`
-  - Changed `regex` to `lazy-regex 2.3.0`
-  - Bump `remotefs-ftp` to `0.1.2`
-  - Bump `remotefs-ssh` to `0.1.2`
-  - Bump `self_update` to `0.32`
-  - Bump `ssh2-config` to `0.1.3`
-  - Bump `tuirealm` to `1.8.0`
-  - Bump `tui-realm-stdlib` to `1.1.7`
-  - Bump `unicode-width` to `0.1.10`
-  - Added `version-compare 0.1.0`
-  - Bump `whoami` to `1.2.3`
-  - Bump `wildmatch` to `2.1.1`
-  - Removed libssl dependency
-
-## 0.9.0
-
-Released on 18/06/2022
-
-> 🏖️ Tenerife Update 🍹
-
-- **Bookmark name as hostname for CLI arguments**
-  - It is now possible to provide the name of the bookmark you want to connect to, instead of the address in command line arguments
-  
-    To do so it is enough to run termscp as follows:
-
-    ```sh
-    termscp -b <bookmark-name>
-    ```
-
-    If the password is stored in the bookmark, it will be used, otherwise you will be prompted to type the password in.
-- **Remote directory path in authentication form and in bookmarks parameters**:
-  - It is now possible to configure the directory path you want to enter when you connect to the remote host from the authentication form
-  - This parameter can be stored into bookmarks as you already do with the other parameters
-  - You can find this field scrolling down in the authentication form
-- **File system watcher**:
-  - It is now possible to synchronize changes from a local path to the remote host
-  - Press `<T>` to start synchronizing changes from the selected directory/file to the remote directory
-    - The changes will be automatically applied to the remote host with a maximum delay of 5 seconds
-    - These changes are (if possible) applied: file removed, file changed, file renamed
-  - Press `<CTRL+T>` to show all the currently synchronized files
-- **Enhancements**:
-  - Improved s3 auth form scrolling
-- **Bugfix**:
-  - Fixed SSH key list showing `{hostname} at {username}` instead of `{username} at {hostname}`
-- Dependencies:
-  - Updated `edit` to `0.1.4`
-  - Updated `log` to `0.4.17`
-  - Updated `magic-crypt` to `3.1.10`
-  - Updated `open` to `2.1.3`
-  - Updated `regex` to `1.5.6`
-  - Updated `rpassword` to `6.0.1`
-  - Updated `self_update` to `0.30.0`
-  - Updated `simplelog` to `0.12.0`
-  - Updated `toml` to `0.5.9`
-  - Updated `tui-realm` to `1.6.0`
-
-## 0.8.2
-
-Released on 26/04/2022
-
-- **Enhancements**
-  - Write exitcode to log when termscp terminates
-- Bugfix:
-  - [Issue 104](https://github.com/veeso/termscp/issues/104): Fixed termscp panics when displaying long non-ascii filenames
-
+- dependencies up-to-date
+- site 0.11.2
 ## 0.8.1
 
-Released on 22/03/2022
+Released on 2022-03-22
 
-- **Added support for S3 compatible backends**
-  - Changed `AWS S3` to `S3` in ui
-  - Added new `endpoint` and `new-path-style` to s3 connection parameters
-- Bugfix:
-  - [Issue 92](https://github.com/veeso/termscp/issues/92): updated ssh2-config to 0.1.3, which solves this issue.
-  - [Issue 99](https://github.com/veeso/termscp/issues/99): Fixed AltGr characters not allowed in auth form
-- Dependencies:
-  - Updated `keyring` to `1.1.2`
-  - Updated `notify-rust` to `4.5.6`
-  - Updated `open` to `2.0.3`
-  - Updated `rand` to `0.8.5`
-  - Updated `regex` to `1.5.5`
-  - Updated `remotefs-rs-aws-s3` to `0.2.0`
-  - Updated `tui-realm` to `1.5.0`
-  - Updated `tui-realm-stdlib` to `1.1.6`
+### Fixed
 
+- footer listed "Delete" shortcut as "Make Dir"
 ## 0.8.0
 
-Released on 06/01/2022
+Released on 2022-01-06
 
-> ❄️ Winter update 2022 ⛄
+### Arch
 
-- **Enhancements**:
-  - **Synchronized browsing**:
-    - From now on, if synchronized browsing is *enabled* and you try to enter a directory that doesn't exist on the other host, you will be asked whether you'd like to create the directory.
-  - **Find** feature:
-    - A "wait popup" will now be displayed while searching files
-    - If find command doesn't return any result show an info dialog and not an empty explorer
-    - It is now possible to keep navigating on the other explorer while "found tab" is open
-      - ❗ It is not possible though to have the "found tab" on both explorers (otherwise you wouldn't be able to tell whether you're transferring files)
-    - Files found from search are now displayed with their relative path from working directory
-  - **Ui**:
-    - Transfer abortion is now more responsive
-    - Selected files will now be rendered with **Reversed, underlined and italic** text modifiers instead of being prepended with `*`.
-    - Error popup message height is now calculated based on the content it must display.
-    - **Midnight commander keys**
-      - `<F1>`: Show help
-      - `<F2>`: Save file as (actually I invented this)
-      - `<F3>`: View file
-      - `<F4>`: Open file (with text editor)
-      - `<F5>`: Copy file
-      - `<F6>`: Rename file
-      - `<F7>`: Make directory
-      - `<F8>`: Remove file
-      - `<F10>`: Quit
-    - Added footer with most used key bindings
-    - ❗ `<TAB>` will now switch explorer tab (will do what `<LEFT>` and `<RIGHT>` currently do)
-    - ❗ Use `<BACKTAB>` to switch between explorer tab and log tab. ❗ Backtab is `<SHIFT + TAB>`
-  - **Tui-realm migration**:
-    - migrated application to tui-realm 1.x
-    - Improved application performance
-  - Changed the buffer size to **65535** (was 65536) for transfer I/O
-- **Aws s3 connection parameters extension** 🦊:
-  - Added `Access Key` to Aws-s3 connection parameters
-  - Added `Security Access Key` to Aws-s3 connection parameters
-  - Added `Security token` to Aws-s3 connection parameters
-  - Added `Session token` to Aws-s3 connection parameters
-- **SSH Config**
-  - Added `ssh config` parameter in configuration
-  - It is now possible to specify the ssh configuration file to use
-  - The supported parameters are described at <https://github.com/veeso/ssh2-config>.
-  - If the field is left empty, **no file will be loaded**.
-  - **By default, no file will be used**.
-- **Symlink command**:
-  - You can now create symlinks, pressing `<K>` key on the file explorer.
-- **Less verbose logging**:
-  - By default the log level is now set to `INFO`
-  - It is now possible to enable the `TRACE` level with the `-D` CLI option.
-- Dependencies:
-  - Added `unicode-width 0.1.8`
-  - Updated `argh` to `0.1.7`
-  - Updated `keyring` to `1.0.0`
-  - Updated `magic-crypt` to `3.1.9`
-  - Updated `open` to `2.0.2`
-  - Updated `notify-rust` to `4.5.5`
-  - Updated `self_update` to `0.28.0`
-  - Updated `simplelog` to `0.11.1`
-  - Updated `tempfile` to `3.2.0`
-  - Updated `tui-realm` to `1.4.2`
-  - Updated `tui-realm-stdlib` to `1.1.5`
-  - Updated `whoami` to `1.2.1`
-  - Updated `wildmatch` to `2.1.0`
-  - Removed `rust-s3`, `ssh2`, `suppaftp`; replaced by `remotefs 0.2.0`, `remotefs-aws-s3 0.1.0`, `remotefs-ftp 0.1.0` and `remotefs-ssh 0.1.0`
-  - Removed `crossterm` (since bridged by tui-realm)
-  - Removed `textwrap` (unused)
-
+- install rust only if not found on local system
 ## 0.7.0
 
-Released on 12/10/2021
+Released on 2021-10-12
 
-> 🍁 Autumn update 2021 🍇
+### Option
 
-- **Aws S3** 🪣
-  - Added support for the aws-s3 protocol.
-  - Operate on your bucket directly from the file explorer.
-  - You can also save your buckets as bookmarks.
-  - Aws s3 reads credentials directly from your credentials file at `$HOME/.aws/credentials` or from environment. Read more in the user manual.
-- **Auto update** ⬇️
-  - Possibility to update termscp directly via GUI or CLI.
-  - Install update via CLI running `(sudo) termscp --update`.
-  - Install update via GUI from auth form: when the "new version message" is displayed press `<CTRL+R>`, then enter `YES` in the radio input asking whether to install the update.
-- **Notifications** 📫
-  - termscp will now send Desktop notifications in these cases
-    - on transfer completed (minimum transfer size can be specified in configuration; default 512MB)
-    - on transfer error (same as above)
-    - on update available
-  - Added "notifications enabled" in configuration (Default enabled)
-  - Added "Notifications: minimum transfer size": if transfer size is greater or equal than the specified value, notifications for transfer will be displayed.
-- **Prompt user when about to replace existing file on a file transfer** ❓
-  - Whenever a file transfer is about to replace an existing file on local/remote host, you will be prompted if you're sure you really want to replace that file.
-  - You may want to disable this option. You can go to configuration and set "Prompt when replacing existing files?" to "NO"
-- **❗ BREAKING CHANGES ❗**:
-  - Added a new key in themes: `misc_info_dialog`: if your theme won't load, just reload it. If you're using a customised theme, you can add to it the missing key via a text editor. Just edit the `theme.toml` in your `$CONFIG_DIR/termscp/theme.toml` and add `misc_info_dialog` (Read more in manual at Themes).
-- Enhancements:
-  - Reuse mounts in UI, in order to reduce executable size
-  - File list can now be "rewinded", which means that moving with arrows will now allow you to go from top to bottom of the list pressing `<UP>` and viceversa pressing `<DOWN>`.
-- Bugfix:
-  - Fixed [Issue 70](https://github.com/veeso/termscp/issues/70): Unable to type characters with `CTRL+ALT` (e.g. italian layout `CTRL+ALT+ò` => `@`) due to a crossterm issue. Fixed with tui-realm-stdlib `0.6.3`.
-- Dependencies:
-  - Added `notify_rust 4.5.3`
-  - Added `rust-s3 0.27-rc4`
-  - Added `self_update 0.27.0`
-  - Updated `argh` to `0.1.6`
-  - Updated `dirs` to `4.0.0`
-  - Updated `tui-realm-stdlib` to `0.6.3`
-  - Removed `ureq`
-
+- prompt user when about to replace an existing file caused by a file transfer
 ## 0.6.1
 
-Released on 31/08/2021
+Released on 2021-08-30
 
-- Enhancements:
-  - Now that tui-rs supports title alignment, UI has been improved
-  - Added new `Directory already exists` variant for file transfer errors
-- Bugfix:
-  - Fixed [Issue 58](https://github.com/veeso/termscp/issues/58):When uploading a directory, create directory only if it doesn't exist
-  - Fixed [Issue 59](https://github.com/veeso/termscp/issues/59): When copying files with tricky copy, the upper progress bar shows no text
-- Dependencies:
-  - Updated `bitflags` to `1.3.2`
-  - Updated `bytesize` to `1.1.0`
-  - Updated `crossterm` to `0.20`
-  - Updated `open` to `2.0.1`
-  - Added `tui-realm-stdlib 0.6.0`
-  - Replaced `ftp4` with `suppaftp 4.1.2`
-  - Updated `tui-realm` to `0.6.0`
+### Fixed
 
-## 0.6.0
-
-Released on 23/07/2021
-
-> 🍹 Summer update 2021 🍨
-
-- **Open any file** in explorer:
-  - Open file with default program for file type with `<V>`
-  - Open file with a specific program with `<W>`
-- **Themes**:
-  - You can now set colors for 26 elements in the application
-  - Colors can be any RGB, also **CSS colors** syntax is supported (e.g. `aquamarine`)
-  - Configure theme from settings or import from CLI using the `-t <theme file>` argument
-  - You can find several themes in the `themes/` directory
-- **Keyring support for Linux**
-  - From now on keyring will be available for Linux only
-  - Read the manual to find out if your system supports the keyring and how you can enable it
-  - libdbus is now a dependency
-  - added `with-keyring` feature
-  - **❗ BREAKING CHANGE ❗**: if you start using keyring on Linux, all the saved password will be lost
-- **In-app release notes**
-  - Possibility to see the release note of the new available release whenever a new version is available
-  - Just press `<CTRL+R>` when a new version is available from the auth activity to read the release notes
-- **Installation script**:
-  - From now on, in case cargo is used to install termscp, all the cargo dependencies will be installed
-- **Start termscp from configuration**: Start termscp with `-c` or `--config` to start termscp from configuration page
-- Enhancements:
-  - Show a "wait" message when deleting, copying and moving files and when executing commands
-  - Replaced all `...` with `…` in texts
-  - Check if remote host is valid in authentication form
-  - Check if port number is valid in authentication form
-  - From now on, if you try to leave setup without making any change, you won't be prompted whether to save configuration or not
-- Bugfix:
-  - Fixed broken input cursor when typing UTF8 characters (tui-realm 0.3.2)
-  - Fixed save bookmark dialog: you could switch out from dialog with `<TAB>`
-  - Fixed transfer interruption: it was not possible to abort a transfer if the size of the file was less than 65k
-  - Changed `Remote address` to `Remote host` in authentication form
-- Dependencies:
-  - Added `argh 0.1.5`
-  - Added `open 1.7.0`
-  - Removed `getopts`
-  - Updated `rand` to `0.8.4`
-  - Updated `textwrap` to `0.14.2`
-  - Updated `tui-realm` to `0.4.3`
-
+- When copying files with tricky copy, the upper progress bar shows no text
 ## 0.5.1
 
-Released on 21/06/2021
+Released on 2021-06-21
 
-- Enhancements:
-  - **CI now uses containers to test file transfers (SSH/FTP)**
-    - Improved coverage
-    - Found many bugs which has now been fixed
-    - Build in CI won't fail due to test servers not responding
-    - We're now able to test all the functionalities of the file transfers
-  - **Status bar improvements**
-    - "Show hidden files" in status bar
-    - Status bar has now been splitted into two, one for each explorer tab
-  - **Error message if terminal window is too small**
-    - If the terminal window has less than 24 lines, then an error message is displayed in the auth activity
-    - Changed auth layout to absolute sizes
-- Bugfix:
-  - Fixed UI not showing connection errors
-  - Fixed termscp on Windows dying whenever opening a file with text editor
-  - Fixed broken input cursor when typing UTF8 characters (tui-realm 0.3.2)
-  - Fixed [Issue 44](https://github.com/veeso/termscp/issues/44): Could not move files to other paths in FTP
-  - Fixed [Issue 43](https://github.com/veeso/termscp/issues/43): Could not remove non-empty directories in FTP
-  - Fixed [Issue 39](https://github.com/veeso/termscp/issues/39): Help panels as `ScrollTable` to allow displaying entire content on small screens
-  - Fixed [Issue 38](https://github.com/veeso/termscp/issues/38): Transfer size was wrong when transferring "selected" files (with mark)
-  - Fixed [Issue 37](https://github.com/veeso/termscp/issues/37): progress bar not visible when editing remote files
-- Dependencies:
-  - Updated `textwrap` to `0.14.0`
-  - Updated `tui-realm` to `0.4.2`
+### Fix
 
+- target_family unix means also macos and linux; use BSD target_os
 ## 0.5.0
 
-Released on 23/05/2021
+Released on 2021-05-23
 
-> 🌸 Spring Update 2021 🌷
+### Coverage
 
-- **Synchronized browsing**:
-  - Added the possibility to enabled the synchronized brower navigation
-    - when you enter a directory, the same directory will be entered on the other tab
-    - Enable sync browser with `<Y>`
-    - Read more on manual: [Synchronized browsing](docs/man.md#Synchronized-browsing-)
-- **Remote and Local hosts file formatter**:
-  - Added the possibility to set different formatters for local and remote hosts
-- **Work on multiple files**:
-  - Added the possibility to work on **multiple files simultaneously**
-  - Select a file with `<M>`, the file when selected will have a `*` prepended to its name
-  - Select all files in the current directory with `<CTRL+A>`
-  - Read more on manual: [Work on multiple files](docs/man.md#Work-on-multiple-files-)
-- **Logging**:
-  - termscp now writes a log file, useful to debug and to contribute to fix issues.
-  - Read more on [manual](docs/man.md)
-- **File transfer changes**
-  - *SFTP*
-    - Added **COPY** command to SFTP (Please note that Copy command is not supported by SFTP natively, so here it just uses the `cp` shell command as it does in SCP).
-  - *FTP*
-    - Added support for file copy (achieved through *tricky-copy*: the file is first downloaded, then uploaded with a different file name)
-- **Double progress bar**:
-  - From now one two progress bar will be displayed:
-    - the first, on top, displays the full transfer state (e.g. when downloading a directory of 10 files, the progress of the entire transfer)
-    - the second, on bottom, displays the transfer of the individual file being written (as happened for the old versions)
-    - changed the progress bar colour from `LightGreen` to `Green`
-- Enhancements
-  - Added a status bar in the file explorer showing whether the sync browser is enabled and which file sorting mode is selected
-  - Removed the goold old figlet title
-  - Protocol input as first field in UI
-  - Port is now updated to standard for selected protocol
-    - when you change the protocol in the authentication form and the current port is standard (`< 1024`), the port will be automatically changed to default value for the selected protocol (e.g. current port: `123`, protocol changed to `FTP`, port becomes `21`)
-- Bugfix:
-  - Fixed wrong text wrap in log box
-  - Fixed empty bookmark name causing termscp to crash
-  - Fixed error message not being shown after an upload failure
-  - Fixed default protocol not being loaded from config
-  - [Issue 23](https://github.com/veeso/termscp/issues/23): Remove created file if transfer failed or was abrupted
-- Dependencies:
-  - Added `tui-realm 0.3.0`
-  - Removed `tui` (as direct dependency)
-  - Updated `regex` to `1.5.4`
+- githubActions
+- githubActions
 
-## 0.4.2
+### Grcov
 
-Released on 13/04/2021
-
-- Enhancements:
-  - Use highlight symbol for logbox of `tui-rs` instead of adding a `Span`
-- Bugfix:
-  - removed `eprintln!` in ftp transfer causing UI to break in Windows
-
+- exclude activities
 ## 0.4.1
 
-Released on 07/04/2021
+Released on 2021-04-06
 
-- Enhancements:
-  - SCP file transfer:
-    - Added possibility to stat directories.
-- Bugfix:
-  - [Issue 18](https://github.com/veeso/termscp/issues/18): Set file transfer type to `Binary` for FTP
-  - [Issue 17](https://github.com/veeso/termscp/issues/17)
-    - SCP: fixed symlink not properly detected
-    - FTP: added symlink support for Linux targets
-  - [Issue 10](https://github.com/veeso/termscp/issues/10): Fixed port not being loaded from bookmarks into gui
-  - [Issue 9](https://github.com/veeso/termscp/issues/9): Fixed issues related to paths on remote when using Windows
-- Dependencies:
-  - Added `path-slash 0.1.4` (Windows only)
-  - Added `thiserror 1.0.24`
-  - Updated `edit` to `0.1.3`
-  - Updated `magic-crypt` to `3.1.7`
-  - Updated `rand` to `0.8.3`
-  - Updated `regex` to `1.4.5`
-  - Updated `textwrap` to `0.13.4`
-  - Updated `ureq` to `2.1.0`
-  - Updated `whoami` to `1.1.1`
-  - Updated `wildmatch` to `2.0.0`
+### FTP
 
+- transfer type set to binary
+- added support for symlinks for Linux servers
+
+### Readme
+
+- one-liner for Homebrew
+  > The one-liner command
+  > 
+  >   brew install veeso/termscp/termscp
+  > 
+  > is equivalent to the two commands
+  > 
+  >   brew tap veeso/termscp
+  >   brew install termscp
+
+### SCP
+
+- fixed symlink not properly detected
 ## 0.4.0
 
-Released on 27/03/2021
+Released on 2021-03-27
 
-> The UI refactoring update
+### Clippy
 
-- **New explorer features**:
-  - **Execute** a command pressing `X`. This feature is supported on both local and remote hosts (only SFTP/SCP protocols support this feature).
-  - **Find**: search for files pressing `F` using wild matches.
-- Enhancements:
-  - Input fields will now support **"input keys"** (such as moving cursor, DEL, END, HOME, ...)
-  - Improved performance regarding configuration I/O (config client is now shared in the activity context)
-  - Fetch latest version from Github once; cache previous value in the Context Storage.
-- Bugfix:
-  - Prevent resetting explorer index on remote tab after performing certain actions (list dir, exec, ...)
-  - SCP file transfer: prevent infinite loops while performing `stat` on symbolic links pointing to themselves (e.g. `mylink -> mylink`)
-  - Fixed a bug causing termscp to crash if removing a bookmark
-  - Fixed file format cursor position in the GUI
-  - Fixed a bug causing termscp to show two equal bookmarks when overwriting one.
-  - Fixed system tests which deleted the termscp configuration when launched
-- **LICENSE**: changed license to MIT
-- Dependencies:
-  - Removed `unicode-width`
-  - Added `wildmatch 1.0.13`
-- For developers:
-  - Activity refactoring
-    - Developed an internal library used to create components, components are then nested inside a View
-    - The new engine works through properties and states, then returns Messages. I was inspired by both React and Elm.
+- don't allow warnings
 
+### Codecov
+
+- ignore activities, context, input but not layout/
+
+### PropsBuilder
+
+- use from trait
+
+### View
+
+- return String instead of id
 ## 0.3.3
 
-Released on 28/02/2021
+Released on 2021-02-28
 
-- **Format key attributes**:
-  - Added `EXTRA` and `LENGTH` parameters to format keys.
-  - Now keys are provided with this syntax `{KEY_NAME[:LEN[:EXTRA]}`
-- **Check for updates**:
-  - termscp will now check for updates on startup and will show in the main page if there is a new version available
-  - This feature may be disabled from setup (Check for updates => No)
-- Enhancements:
-  - Default choice for deleting file set to "NO" (way too easy to delete files by mistake)
-  - Added CLI options to set starting workind directory on both local and remote hosts
-  - Parse remote host now uses a Regex to gather parts (increased stability).
-  - Now bookmarks and recents are sorted in the UI (bookmarks are sorted by name; recents are sorted by connection datetime)
-  - Improved stability
+### Git
 
+- check for new updates (utils)
 ## 0.3.2
 
-Released on 24/01/2021
+Released on 2021-01-24
 
-- **Explorer Formatter**:
-  - Added possibility to customize the format when listing files in the explorers (Read more on README)
-  - Added `file_fmt` key to configuration (if missing, default will be used).
-  - Added the text input to the Settings view to set the value for `file_fmt`.
-- Bugfix:
-  - Solved file index in explorer files at start of termscp, in case the first entry is an hidden file
-  - SCP File transfer: when listing directory entries, check if a symlink points to a directory or to a file
-- Dependencies:
-  - updated `crossterm` to `0.19.0`
-  - updated `rand` to `0.8.2`
-  - updated `rpassword` to `5.0.1`
-  - updated `serde` to `1.0.121`
-  - updated `tui` to `0.14.0`
-  - updated `whoami` to `1.1.0`
+### Testing
 
-## 0.3.1
-
-Released on 18/01/2021
-
-- **Keyring to store secrets**
-  - On both MacOS and Windows, the secret used to encrypt passwords in bookmarks it is now store in the OS secret vault. This provides much more security to store the password
-- Enhancements:
-  - Added connection timeout to 30 seconds to SFTP/SCP clients and improved name lookup system.
-- Bugfix:
-  - Solved index in explorer files list which was no more kept after 0.3.0
-  - SCP file transfer: fixed possible wrong file size when sending file, due to a possible incoherent size between the file explorer and the actual file size.
-- Breaking changes: on **MacOS / Windows systems only**, the password you saved for bookmarks won't be working anymore if you have support for the keyring crate. Because of the migration to keyring, the previously used secret hasn't been migrated to the storage, instead a new secret will be used. To solve this, just save the bookmark again with the password.
-
+- don't run on windows
 ## 0.3.0
 
- Released on 10/01/2021
+Released on 2021-01-10
 
-> The SSH Key Storage Update
+### AuthActivity
 
-- **SSH Key Storage**
-  - Added the possibility to store SSH private keys to access to remote hosts; this feature is supported in both SFTP and SCP.
-  - SSH Keys can be manipulated through the new **Setup Interface**
-- **Setup Interface**
-  - Added a new area in the interface, where is possible to customize termscp. Access to this interface is achieved pressing `<CTRL+C>` from the home page (`AuthActivity`).
-- **Configuration**:
-  - Added configuration; configuration is stored at
-    - Linux: `/home/alice/.config/termscp/config.toml`
-    - MacOS: `/Users/Alice/Library/Application Support/termscp/config.toml`
-    - Windows: `C:\Users\Alice\AppData\Roaming\termscp\config.toml`
-  - Added Text editor to configuration
-  - Added Default File transfer protocol to configuration
-  - Added "Show hidden files" to configuration
-  - Added "Group directories" to configuration
-  - Added SSH keys to configuration; SSH keys will be stored at
-    - Linux: `/home/alice/.config/termscp/.ssh/`
-    - MacOS: `/Users/Alice/Library/Application Support/termscp/.ssh/`
-    - Windows: `C:\Users\Alice\AppData\Roaming\termscp\.ssh\`
-- Enhancements:
-  - Replaced `sha256` sum with last modification time check, to verify if a file has been changed in the text editor
-  - **FTP**
-    - Added `LIST` command parser for Windows server (DOS-like syntax)
-  - Default protocol changed to default protocol in configuration when providing address as CLI argument
-  - Explorers:
-    - Hidden files are now not shown by default; use `A` to show hidden files.
-    - Append `/` to directories name.
-- Keybindings:
-  - `A`: Toggle hidden files
-  - `B`: Sort files by (name, size, creation time, modify time)
-  - `N`: New file
-- Bugfix:
-  - SCP client didn't show file types for files
-  - FTP client didn't show file types for files
-  - FTP file transfer not working properly with `STOR` and `RETR`.
-  - Fixed `0 B/S` transfer rate displayed after completing download in less than 1 second
-- Dependencies:
-  - added `bitflags 1.2.1`
-  - removed `data-encoding`
-  - updated `ftp` to `4.0.2`
-  - updated `rand` to `0.8.0`
-  - removed `ring`
-  - updated `textwrap` to `0.13.1`
-  - updated `toml` to `0.5.8`
-  - updated `whoami` to `1.0.1`
+- enter setup with <CTRL+C>
 
+### ConfigClient
+
+- return key path, not content
+
+### Docs
+
+- private keys with passwords
+
+### Explorers
+
+- append '/' to directories name
+
+### FileTransferActivity
+
+- load ConfigClient; set text editor to configuration's value
+- :Explorer refactoring; toggle hidden files with <A>
+- sort files with <B>
+
+### FsEntry
+
+- :get_name() returns &str
+- :is_hidden() method
+
+### SetupActivity
+
+- <CTRL+E> as <DEL>
 ## 0.2.0
 
-Released on 21/12/2020
+Released on 2020-12-21
 
-> The Bookmarks Update
+### FsEntry
 
-- **Bookmarks**
-  - Bookmarks and recent connections are now displayed in the home page
-  - Bookmarks are saved at
-    - Linux: `/home/alice/.config/termscp/bookmarks.toml`
-    - MacOS: `/Users/Alice/Library/Application Support/termscp/bookmarks.toml`
-    - Windows: `C:\Users\Alice\AppData\Roaming\termscp\bookmarks.toml`
-- **Text Editor**
-  - Added text editor feature to explorer view
-  - Added `o` to keybindings to open a text file
-- Keybindings:
-  - `C`: Copy file/directory
-  - `O`: Open text file in editor
-- Enhancements:
-  - User interface
-    - Collpased borders to make everything more *aesthetic*
-    - Rounded input field boards
-    - File explorer:
-      - Log how long it took to upload/download a file and the transfer speed
-      - Display in progress bar the transfer speed (bytes/seconds)
-- Bugfix:
-  - File mode of file on remote is now reported on local file after being downloaded (unix, linux, macos only)
-  - Scp: when username was not provided, it didn't fallback to current username
-  - Explorer: fixed UID format in Windows
+- :is_file
 
-## 0.1.3
+### Scp
 
-Released on 14/12/2020
-
-- Enhancements:
-  - File transfer:
-    - Read buffer is now 65536 bytes long
-  - File explorer:
-    - Fixed color mismatch in local explorer
-    - Explorer tabs have now 70% of layout height, while logging area is 30%
-    - Highlight selected entry in tabs, only when the tab is active
-  - Auth page:
-    - align popup text to center
-- Keybindings:
-  - `L`: Refresh directory content
-- Bugfix:
-  - Fixed memory vulnerability in Windows version
-
+- when username was not provided, it didn't fallback to current username
 ## 0.1.2
 
-Released on 13/12/2020
+Released on 2020-12-13
 
-- General performance and code improvements
-- Improved symlinks management
-- Possibility to abort file transfers
-- Enhancements:
-  - File explorer:
-    - When file index is at the end of the list, moving down will set the current index to the first element and viceversa.
-    - Selected file has now colourful background, instead of foreground, for a better readability.
-- Keybindings:
-  - `E`: Delete file (Same as `DEL`); added because some keyboards don't have `DEL` (hey, that's my MacBook Air's keyboard!)
-  - `Ctrl+C`: Abort transfer process
+### FsEntry
 
-## 0.1.1
-
-Released on 10/12/2020
-
-- enhancements:
-  - password prompt: ask before performing terminal clear
-  - file explorer:
-    - file names are now sorted ignoring capital letters
-    - file names longer than 23, are now cut to 20 and followed by `...`
-    - paths which exceed tab size in explorer are elided with the following formato `ANCESTOR[1]/.../PARENT/DIRNAME`
-- keybindings:
-  - `I`: show info about selected file or directory
-  - Removed `CTRL`; just use keys now.
-- bugfix:
-  - prevent panic in set_progress, for progress values `> 100.0 or < 0.0`
-  - Fixed FTP get, which didn't finalize the reader
-- dependencies:
-  - updated `textwrap` to `0.13.0`
-  - updated `ftp4` to `4.0.1`
-
+- :*::symlink is now a Option<Box<FsEntry>>; this improved symlinks, which gave errors some times
 ## 0.1.0
 
-Released on 06/12/2020
+Released on 2020-12-06
 
-- First release
+### FileTransferActivity
+
+- ftp is now allowed
+
+### Host
+
+- :mkdir and Host::remove
+- mkdir support for absolute path
+
+### Scp
+
+- use oneshot channels instead of ptys (more stable; more reliable and overall works)
+
+### Std
+
+- :fmt::Display for HostError
+- :fmt::Display for HostError
