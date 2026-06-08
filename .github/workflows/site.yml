@@ -2,14 +2,9 @@ name: Site
 
 on:
   pull_request:
-    paths:
-      - "site/**"
-      - ".github/workflows/site.yml"
+    branches: [main]
   push:
-    branches: [ main ]
-    paths:
-      - "site/**"
-      - ".github/workflows/site.yml"
+    branches: [main]
 
 permissions:
   contents: read
