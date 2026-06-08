@@ -24,7 +24,6 @@
 </p>
 
 <p align="center">由 <a href="https://veeso.me/" target="_blank">@veeso</a> 开发</p>
-<p align="center">当前版本： 1.0.0 2026-04-18</p>
 
 [![License-MIT](https://img.shields.io/crates/l/termscp.svg?logo=rust)](https://opensource.org/licenses/MIT)
 [![Repostars](https://img.shields.io/github/stars/veeso/termscp?style=flat&logo=github)](https://github.com/veeso/termscp/stargazers)
