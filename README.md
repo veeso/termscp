@@ -14,53 +14,6 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/veeso/termscp"
-    ><img
-      height="20"
-      src="/assets/images/flags/gb.png"
-      alt="English"
-  /></a>
-  &nbsp;
-  <a
-    href="/docs/pt-BR/README.md"
-    ><img
-      height="20"
-      src="/assets/images/flags/br.png"
-      alt="Brazilian Portuguese"
-  /></a>
-  &nbsp;
-  <a
-    href="/docs/de/README.md"
-    ><img
-      height="20"
-      src="/assets/images/flags/de.png"
-      alt="Deutsch"
-  /></a>
-  &nbsp;
-  <a
-    href="/docs/es/README.md"
-    ><img
-      height="20"
-      src="/assets/images/flags/es.png"
-      alt="Español"
-  /></a>
-  &nbsp;
-  <a
-    href="/docs/fr/README.md"
-    ><img
-      height="20"
-      src="/assets/images/flags/fr.png"
-      alt="Français"
-  /></a>
-  &nbsp;
-  <a
-    href="/docs/it/README.md"
-    ><img
-      height="20"
-      src="/assets/images/flags/it.png"
-      alt="Italiano"
-  /></a>
-  &nbsp;
   <a
     href="/docs/zh-CN/README.md"
     ><img
@@ -223,7 +176,7 @@ These requirements are not forced required to run termscp, but to enjoy all of i
     - *gnome-open*
     - *kde-open*
 - **Linux** users:
-  - A keyring manager: read more in the [User manual](docs/man.md#linux-keyring)
+  - A keyring manager: read more in the [User manual](https://docs.termscp.rs/en-US/configuration/password-security.html#linux-keyring)
 - **WSL** users
   - To **open** files via `V` (at least one of these)
     - [wslu](https://github.com/wslutilities/wslu)
@@ -243,7 +196,7 @@ You can make a donation with one of these platforms:
 
 ## User manual 📚
 
-The user manual can be found on the [termscp's website](https://docs.termscp.rs) or on [Github](docs/man.md).
+The user manual can be found on [termscp's documentation website](https://docs.termscp.rs).
 
 ---
 
