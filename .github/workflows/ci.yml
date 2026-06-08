@@ -2,11 +2,12 @@ name: CI
 
 on:
   pull_request:
+    branches: [main]
     paths-ignore:
       - "*.md"
       - "./site/**/*"
   push:
-    branches: [ main ]
+    branches: [main]
     paths-ignore:
       - "*.md"
       - "./site/**/*"
@@ -19,7 +20,7 @@ permissions:
 
 jobs:
   build:
-    name: Build (${{ matrix.os }})
+    name: build-(${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
