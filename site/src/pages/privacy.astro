@@ -1,0 +1,187 @@
+---
+import Base from "../layouts/Base.astro";
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+
+const EMAIL = "info@veeso.dev";
+---
+
+<Base
+  title="Privacy Policy — termscp"
+  description="How termscp.rs handles your data: cookieless, privacy-first analytics with Umami, EU-hosted, and no tracking cookies."
+  path="/privacy"
+>
+  <Nav />
+  <main class="mx-auto w-full max-w-[760px] flex-1 px-6 py-16">
+    <p class="font-mono text-xs uppercase tracking-[0.12em] text-overlay">
+      termscp
+    </p>
+    <h1 class="mt-3 text-3xl font-bold tracking-tight text-text">
+      Privacy Policy
+    </h1>
+    <p class="mt-3 font-mono text-sm text-overlay">
+      Last updated: 19 June 2026
+    </p>
+
+    <div
+      class="mt-10 flex flex-col gap-8 text-base leading-relaxed text-subtext"
+    >
+      <section>
+        <h2 class="mb-2 text-xl font-bold text-text">Overview</h2>
+        <p>
+          This website is the project page for termscp, an open-source terminal
+          file transfer client released under the MIT license. We keep data
+          collection to an absolute minimum: no tracking cookies, no advertising
+          networks, and we never sell or share personal data. We do, however,
+          process a limited amount of data that is technically unavoidable when
+          you visit any website — such as your IP address and server logs
+          handled by our hosting provider — together with anonymous, aggregated
+          usage analytics. This policy explains what we process, why, on what
+          legal basis, and the rights you have under the EU General Data
+          Protection Regulation (GDPR) and Italian data protection law (D.Lgs.
+          196/2003 as amended by D.Lgs. 101/2018).
+        </p>
+      </section>
+
+      <section>
+        <h2 class="mb-2 text-xl font-bold text-text">
+          Data controller &amp; contact
+        </h2>
+        <p>
+          The data controller is <strong class="text-text"
+            >veeso.dev di Christian Visintin</strong
+          >, VAT no. IT03104140300, Via Antonio Marangoni 33, 33100 Udine (UD),
+          Italy. For any privacy-related question or to exercise your rights,
+          you can reach out at{" "}
+          <a
+            href={`mailto:${EMAIL}`}
+            class="font-medium text-blue underline-offset-2 hover:underline"
+            >{EMAIL}</a
+          >.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="mb-2 text-xl font-bold text-text">Cookies</h2>
+        <p>
+          We do not use any cookies to track user behaviour on this website. No
+          consent banner is shown because there is nothing to consent to: no
+          profiling cookies, no third-party advertising cookies. Our analytics
+          provider is cookieless (see below), so no consent is required under
+          the Italian Garante's guidelines on cookies and tracking tools.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="mb-2 text-xl font-bold text-text">
+          Hosting &amp; server logs
+        </h2>
+        <p>
+          This website is hosted by Vercel Inc. (340 S Lemon Ave #4133, Walnut,
+          CA 91789, USA), which acts as a data processor on our behalf. As with
+          any web server, Vercel automatically processes technical data needed
+          to deliver the site and keep it secure: your IP address, browser
+          user-agent, requested URLs, referrer, and timestamps, recorded in
+          server logs.
+        </p>
+        <p class="mt-3">
+          <strong class="text-text">Legal basis:</strong> our legitimate interest
+          (Art. 6(1)(f) GDPR) in operating the website, ensuring its security, and
+          preventing abuse. These logs are kept only for as long as necessary for
+          those purposes (typically up to 30 days) and are not used to profile you
+          or build advertising audiences.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="mb-2 text-xl font-bold text-text">Analytics with Umami</h2>
+        <p>
+          We use Umami to collect anonymous usage data so we can understand how
+          visitors use the website and improve its design and functionality. We
+          use the EU-hosted Umami Cloud service (<span class="font-mono"
+            >cloud.umami.is</span
+          >), where analytics data is stored on servers located in the European
+          Union (Germany). The service is operated by Umami Software, Inc.
+        </p>
+        <p class="mt-3">
+          Umami is cookieless and privacy-focused: it does not set cookies and
+          does not store your IP address or any data that can directly identify
+          you. It derives only aggregated, anonymous metrics (such as country,
+          browser, and page views). We also track a small number of anonymous
+          interaction events — for example clicks on the GitHub, crates.io, and
+          documentation links — to measure interest in the project; none of
+          these events contain personal data.
+        </p>
+        <p class="mt-3">
+          <strong class="text-text">Legal basis:</strong> our legitimate interest
+          (Art. 6(1)(f) GDPR) in measuring and improving the website. Because the
+          data is anonymous and no cookies or device identifiers are used, no consent
+          is required.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="mb-2 text-xl font-bold text-text">
+          International data transfers
+        </h2>
+        <p>
+          Our analytics data is stored within the European Union. Some of our
+          providers are US-based companies (Vercel Inc. and Umami Software,
+          Inc.), so limited technical data may be processed outside the European
+          Economic Area. Where this happens, transfers are protected by
+          appropriate safeguards under Chapter V GDPR — namely the EU–US Data
+          Privacy Framework and/or the European Commission's Standard
+          Contractual Clauses, together with the relevant data processing
+          agreements.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="mb-2 text-xl font-bold text-text">Your rights</h2>
+        <p>
+          Under the GDPR you have the right to access your personal data, and to
+          request its rectification, erasure, or restriction, as well as the
+          right to object to processing and the right to data portability. Note
+          that the analytics data we hold is anonymous and cannot be linked back
+          to you, so for that data we may be unable to identify you in order to
+          act on a request.
+        </p>
+        <p class="mt-3">
+          To exercise any right, contact us at{" "}
+          <a
+            href={`mailto:${EMAIL}`}
+            class="font-medium text-blue underline-offset-2 hover:underline"
+            >{EMAIL}</a
+          >. You also have the right to lodge a complaint with the Italian
+          supervisory authority, the{" "}
+          <a
+            href="https://www.garanteprivacy.it"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="font-medium text-blue underline-offset-2 hover:underline"
+            >Garante per la protezione dei dati personali</a
+          >, or with the data protection authority of your country of residence.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="mb-2 text-xl font-bold text-text">External links</h2>
+        <p>
+          This website links to external services such as GitHub and crates.io.
+          Once you leave this site, the privacy policy of the destination
+          service applies. We are not responsible for the content or privacy
+          practices of external websites.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="mb-2 text-xl font-bold text-text">Changes to this policy</h2>
+        <p>
+          We may update this privacy policy from time to time. Any changes will
+          be published on this page with an updated "Last updated" date.
+        </p>
+      </section>
+    </div>
+  </main>
+  <Footer />
+</Base>
