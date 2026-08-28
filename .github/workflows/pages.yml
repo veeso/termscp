@@ -12,9 +12,6 @@ on:
 permissions:
   contents: read
 
-env:
-  CARGO_BUILD_JOBS: 8
-
 concurrency:
   group: pages
   cancel-in-progress: false

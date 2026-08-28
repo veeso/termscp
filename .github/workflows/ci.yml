@@ -13,7 +13,6 @@ on:
       - "site/**"
 
 env:
-  CARGO_BUILD_JOBS: 8
   CARGO_TERM_COLOR: always
 
 permissions:
