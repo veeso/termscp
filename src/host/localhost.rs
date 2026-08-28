@@ -602,11 +602,11 @@ mod tests {
     use pretty_assertions::assert_eq;
 
     use super::*;
-    #[cfg(posix)]
-    use crate::utils::test_helpers::make_fsentry;
     use crate::utils::test_helpers::create_sample_file;
     #[cfg(posix)]
     use crate::utils::test_helpers::make_file_at;
+    #[cfg(posix)]
+    use crate::utils::test_helpers::make_fsentry;
 
     #[test]
     fn test_host_error_new() {
