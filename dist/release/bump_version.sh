@@ -4,6 +4,10 @@
 set -euo pipefail
 
 VERSION="${1:?usage: bump_version.sh <version> [date] [root]}"
+if [[ ! "$VERSION" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+    echo "invalid release version: $VERSION (expected MAJOR.MINOR.PATCH)" >&2
+    exit 2
+fi
 DATE="${2:-$(date +%F)}"
 ROOT="${3:-$(git rev-parse --show-toplevel)}"
 

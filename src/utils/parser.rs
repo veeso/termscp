@@ -68,7 +68,7 @@ static BYTESIZE_REGEX: Lazy<Regex> = lazy_regex!(r"(:?([0-9])+)( )*(:?[KMGTP])?B
 ///     SFTP => 22
 ///     FTP => 21
 /// The option string has the following syntax
-/// [protocol://][username@]{address}[:port][:path]
+/// `[protocol://][username@]{address}[:port][:path]`
 /// The only argument which is mandatory is address
 /// NOTE: possible strings
 /// - 172.26.104.1
@@ -80,17 +80,17 @@ static BYTESIZE_REGEX: Lazy<Regex> = lazy_regex!(r"(:?([0-9])+)( )*(:?[KMGTP])?B
 ///
 /// For s3:
 ///
-/// s3://<bucket-name>@<region>[:profile][:/wrkdir]
+/// `s3://<bucket-name>@<region>[:profile][:/wrkdir]`
 ///
 /// For SMB:
 ///
 /// on UNIX derived (macos, linux, ...)
 ///
-/// smb://[username@]<address>[:port]/<share>[/path]
+/// `smb://[username@]<address>[:port]/<share>[/path]`
 ///
 /// on Windows
 ///
-/// \\<address>\<share>[\path]
+/// `\\<address>\<share>[\path]`
 ///
 pub fn parse_remote_opt(s: &str) -> Result<FileTransferParams, String> {
     remote::parse_remote_opt(s)

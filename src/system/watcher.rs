@@ -294,7 +294,7 @@ mod test {
         );
         // unwatch
         assert!(watcher.unwatch(tempdir.path()).is_ok());
-        assert!(watcher.paths.get(tempdir.path()).is_none());
+        assert!(!watcher.paths.contains_key(tempdir.path()));
         // close tempdir
         assert!(tempdir.close().is_ok());
     }
@@ -315,7 +315,7 @@ mod test {
             watcher.unwatch(subdir.as_path()).unwrap().as_path(),
             Path::new(tempdir.path())
         );
-        assert!(watcher.paths.get(tempdir.path()).is_none());
+        assert!(!watcher.paths.contains_key(tempdir.path()));
         // close tempdir
         assert!(tempdir.close().is_ok());
     }

@@ -1,0 +1,39 @@
+{
+  "$schema": "https://dprint.dev/schemas/v0.json",
+  "indentWidth": 2,
+  "lineWidth": 80,
+  "newLineKind": "lf",
+  "markdown": {
+    "textWrap": "maintain"
+  },
+  "toml": {},
+  "yaml": {},
+  "exec": {
+    "cwd": "${configDir}",
+    "commands": [
+      {
+        "command": "rustup run nightly rustfmt --edition 2024",
+        "exts": ["rs"],
+        "cacheKeyFiles": ["rustfmt.toml", "rust-toolchain.toml"]
+      }
+    ]
+  },
+  "excludes": [
+    "**/target",
+    "**/node_modules",
+    "**/*-lock.json",
+    "Cargo.lock",
+    "docs/book",
+    "docs/zh-CN/cli/cli.md",
+    "docs/zh-CN/configuration/explorer-format.md",
+    "docs/zh-CN/configuration/themes.md",
+    "docs/zh-CN/usage/keyboard-shortcuts.md",
+    "**/tests/fixtures"
+  ],
+  "plugins": [
+    "https://plugins.dprint.dev/markdown-0.22.1.wasm@4906fbb038977732aae0e216e4b0b957e2722f8d79282660ccb36d27dd051f17",
+    "https://plugins.dprint.dev/toml-0.7.0.wasm@0126c8112691542d30b52a639076ecc83e07bace877638cee7c6915fd36b8629",
+    "https://plugins.dprint.dev/g-plane/pretty_yaml-v0.6.0.wasm@40a2fdda7040317eb1b23520f3a00769a5571eedb049c4ca9175c1b9eeba01ae",
+    "https://plugins.dprint.dev/dprint/exec-0.6.2.json@df98f54ffd3092b8a841aedd6d098a2651f16d0a796a40535774f1a8b4b9d463"
+  ]
+}

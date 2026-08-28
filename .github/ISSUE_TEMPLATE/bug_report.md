@@ -4,7 +4,6 @@ about: Create a report of the bug you've encountered
 title: "[BUG] - ISSUE_TITLE"
 labels: bug
 assignees: veeso
-
 ---
 
 ## Description

@@ -68,7 +68,8 @@ impl Update {
     }
 
     /// Returns whether a new version of termscp is available
-    /// In case of success returns Ok(Option<Release>), where the Option is Some(new_version);
+    /// In case of success returns `Ok(Option<Release>)`, where the option is
+    /// `Some(new_version)`;
     /// otherwise if no version is available, return None
     /// In case of error returns Error with the error description
     pub fn is_new_version_available() -> Result<Option<Release>, UpdateError> {

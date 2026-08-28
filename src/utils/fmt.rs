@@ -43,13 +43,15 @@ pub fn fmt_millis(duration: Duration) -> String {
 }
 
 /// Elide a path if longer than width
-/// In this case, the path is formatted to {ANCESTOR[0]}/…/{PARENT[0]}/{BASENAME}
+/// In this case, the path is formatted to
+/// `{ANCESTOR[0]}/…/{PARENT[0]}/{BASENAME}`.
 pub fn fmt_path_elide(p: &Path, width: usize) -> String {
     fmt_path_elide_ex(p, width, 0)
 }
 
 /// Elide a path if longer than width
-/// In this case, the path is formatted to {ANCESTOR[0]}/…/{PARENT[0]}/{BASENAME}
+/// In this case, the path is formatted to
+/// `{ANCESTOR[0]}/…/{PARENT[0]}/{BASENAME}`.
 /// This function allows to specify an extra length to consider to elide path
 pub fn fmt_path_elide_ex(p: &Path, width: usize, extra_len: usize) -> String {
     let fmt_path: String = format!("{}", p.display());

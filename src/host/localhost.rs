@@ -769,7 +769,7 @@ mod tests {
         let host: Localhost = Localhost::new(PathBuf::from(tmpdir.path())).ok().unwrap();
         let files: Vec<File> = host.files.clone();
         // Verify files
-        let file_0: &File = files.get(0).unwrap();
+        let file_0: &File = files.first().unwrap();
         if file_0.name() == *"foo.txt" {
             assert!(file_0.metadata.symlink.is_none());
         } else {
@@ -827,7 +827,7 @@ mod tests {
         let files: Vec<File> = host.files.clone();
         assert_eq!(files.len(), 1); // There should be 1 file now
         // Remove file
-        assert!(host.remove(files.get(0).unwrap()).is_ok());
+        assert!(host.remove(files.first().unwrap()).is_ok());
         // There should be 0 files now
         let files: Vec<File> = host.files.clone();
         assert_eq!(files.len(), 0); // There should be 0 files now
@@ -836,7 +836,7 @@ mod tests {
         // Delete directory
         let files: Vec<File> = host.files.clone();
         assert_eq!(files.len(), 1); // There should be 1 file now
-        assert!(host.remove(files.get(0).unwrap()).is_ok());
+        assert!(host.remove(files.first().unwrap()).is_ok());
         // Remove unexisting directory
         assert!(
             host.remove(&make_fsentry(PathBuf::from("/a/b/c/d"), true))
@@ -859,22 +859,22 @@ mod tests {
         let mut host: Localhost = Localhost::new(PathBuf::from(tmpdir.path())).ok().unwrap();
         let files: Vec<File> = host.files.clone();
         assert_eq!(files.len(), 1); // There should be 1 file now
-        assert_eq!(files.get(0).unwrap().name(), "foo.txt");
+        assert_eq!(files.first().unwrap().name(), "foo.txt");
         // Rename file
         let dst_path: PathBuf =
             PathBuf::from(format!("{}/bar.txt", tmpdir.path().display()).as_str());
         assert!(
-            host.rename(files.get(0).unwrap(), dst_path.as_path())
+            host.rename(files.first().unwrap(), dst_path.as_path())
                 .is_ok()
         );
         // There should be still 1 file now, but named bar.txt
         let files: Vec<File> = host.files.clone();
         assert_eq!(files.len(), 1); // There should be 0 files now
-        assert_eq!(files.get(0).unwrap().name(), "bar.txt");
+        assert_eq!(files.first().unwrap().name(), "bar.txt");
         // Fail
         let bad_path: PathBuf = PathBuf::from("/asdailsjoidoewojdijow/ashdiuahu");
         assert!(
-            host.rename(files.get(0).unwrap(), bad_path.as_path())
+            host.rename(files.first().unwrap(), bad_path.as_path())
                 .is_err()
         );
     }
@@ -939,7 +939,7 @@ mod tests {
         file2_path.push("bar.txt");
         // Create host
         let mut host: Localhost = Localhost::new(PathBuf::from(tmpdir.path())).ok().unwrap();
-        let file1_entry: File = host.files.get(0).unwrap().clone();
+        let file1_entry: File = host.files.first().unwrap().clone();
         assert_eq!(file1_entry.name(), String::from("foo.txt"));
         // Copy
         assert!(host.copy(&file1_entry, file2_path.as_path()).is_ok());
@@ -969,7 +969,7 @@ mod tests {
         let file2_path: PathBuf = PathBuf::from("bar.txt");
         // Create host
         let mut host: Localhost = Localhost::new(PathBuf::from(tmpdir.path())).ok().unwrap();
-        let file1_entry: File = host.files.get(0).unwrap().clone();
+        let file1_entry: File = host.files.first().unwrap().clone();
         assert_eq!(file1_entry.name(), String::from("foo.txt"));
         // Copy
         assert!(host.copy(&file1_entry, file2_path.as_path()).is_ok());
@@ -989,7 +989,7 @@ mod tests {
         assert!(file1.write_all(b"Hello world!\n").is_ok());
         // Create host
         let mut host: Localhost = Localhost::new(PathBuf::from(tmpdir.path())).ok().unwrap();
-        let file1_entry: File = host.files.get(0).unwrap().clone();
+        let file1_entry: File = host.files.first().unwrap().clone();
         assert_eq!(file1_entry.name(), String::from("foo.txt"));
         // Copy with empty destination -> must fail and leave file untouched
         assert!(
@@ -1022,7 +1022,7 @@ mod tests {
         dir_dest.push("test_dest_dir/");
         // Create host
         let mut host: Localhost = Localhost::new(PathBuf::from(tmpdir.path())).ok().unwrap();
-        let dir_src_entry: File = host.files.get(0).unwrap().clone();
+        let dir_src_entry: File = host.files.first().unwrap().clone();
         assert_eq!(dir_src_entry.name(), String::from("test_dir"));
         // Copy
         assert!(host.copy(&dir_src_entry, dir_dest.as_path()).is_ok());
@@ -1052,7 +1052,7 @@ mod tests {
         let dir_dest: PathBuf = PathBuf::from("test_dest_dir/");
         // Create host
         let mut host: Localhost = Localhost::new(PathBuf::from(tmpdir.path())).ok().unwrap();
-        let dir_src_entry: File = host.files.get(0).unwrap().clone();
+        let dir_src_entry: File = host.files.first().unwrap().clone();
         assert_eq!(dir_src_entry.name(), String::from("test_dir"));
         // Copy
         assert!(host.copy(&dir_src_entry, dir_dest.as_path()).is_ok());

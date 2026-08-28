@@ -401,7 +401,7 @@ mod tests {
         assert_eq!(explorer.dirstack.len(), 2);
         assert_eq!(*explorer.dirstack.get(1).unwrap(), PathBuf::from("/dev"));
         assert_eq!(
-            *explorer.dirstack.get(0).unwrap(),
+            *explorer.dirstack.front().unwrap(),
             PathBuf::from("/home/omar")
         );
     }
@@ -425,7 +425,7 @@ mod tests {
         assert!(explorer.get(100).is_none());
         //assert_eq!(explorer.count(), 6);
         // Verify (files are sorted by name)
-        assert_eq!(explorer.files.get(0).unwrap().name(), ".git");
+        assert_eq!(explorer.files.first().unwrap().name(), ".git");
         // Iter files (all)
         assert_eq!(explorer.iter_files_all().count(), 6);
         // Iter files (hidden excluded) (.git, .gitignore are hidden)
@@ -453,7 +453,7 @@ mod tests {
         ]);
         explorer.sort_by(FileSorting::Name);
         // First entry should be "Cargo.lock"
-        assert_eq!(explorer.files.get(0).unwrap().name(), "Cargo.lock");
+        assert_eq!(explorer.files.first().unwrap().name(), "Cargo.lock");
         // Last should be "src"
         assert_eq!(explorer.files.get(8).unwrap().name(), "src");
     }
@@ -469,7 +469,7 @@ mod tests {
         explorer.set_files(vec![entry1, entry2]);
         explorer.sort_by(FileSorting::ModifyTime);
         // First entry should be "CODE_OF_CONDUCT.md"
-        assert_eq!(explorer.files.get(0).unwrap().name(), "CODE_OF_CONDUCT.md");
+        assert_eq!(explorer.files.first().unwrap().name(), "CODE_OF_CONDUCT.md");
         // Last should be "src"
         assert_eq!(explorer.files.get(1).unwrap().name(), "README.md");
     }
@@ -485,7 +485,7 @@ mod tests {
         explorer.set_files(vec![entry1, entry2]);
         explorer.sort_by(FileSorting::CreationTime);
         // First entry should be "CODE_OF_CONDUCT.md"
-        assert_eq!(explorer.files.get(0).unwrap().name(), "CODE_OF_CONDUCT.md");
+        assert_eq!(explorer.files.first().unwrap().name(), "CODE_OF_CONDUCT.md");
         // Last should be "src"
         assert_eq!(explorer.files.get(1).unwrap().name(), "README.md");
     }
@@ -501,7 +501,7 @@ mod tests {
         ]);
         explorer.sort_by(FileSorting::Size);
         // Directory has size 4096
-        assert_eq!(explorer.files.get(0).unwrap().name(), "src");
+        assert_eq!(explorer.files.first().unwrap().name(), "src");
         assert_eq!(explorer.files.get(1).unwrap().name(), "README.md");
         assert_eq!(explorer.files.get(2).unwrap().name(), "CONTRIBUTING.md");
     }
@@ -525,7 +525,7 @@ mod tests {
         explorer.sort_by(FileSorting::Name);
         explorer.group_dirs_by(Some(GroupDirs::First));
         // First entry should be "docs"
-        assert_eq!(explorer.files.get(0).unwrap().name(), "docs");
+        assert_eq!(explorer.files.first().unwrap().name(), "docs");
         assert_eq!(explorer.files.get(1).unwrap().name(), "src");
         // 3rd is file first for alphabetical order
         assert_eq!(explorer.files.get(2).unwrap().name(), "Cargo.lock");
@@ -555,7 +555,7 @@ mod tests {
         assert_eq!(explorer.files.get(8).unwrap().name(), "docs");
         assert_eq!(explorer.files.get(9).unwrap().name(), "src");
         // first is file for alphabetical order
-        assert_eq!(explorer.files.get(0).unwrap().name(), "Cargo.lock");
+        assert_eq!(explorer.files.first().unwrap().name(), "Cargo.lock");
         // Last in files should be "README.md" (last file for alphabetical ordening)
         assert_eq!(explorer.files.get(7).unwrap().name(), "README.md");
     }

@@ -4,7 +4,6 @@ about: Create a report of a security vulnerability
 title: "[SECURITY] - ISSUE_TITLE"
 labels: security
 assignees: veeso
-
 ---
 
 ## Description

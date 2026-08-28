@@ -1,0 +1,92 @@
+# cargo-deny configuration for termscp.
+#
+# Run locally with `just deny`. The same command runs in CI and enforces
+# advisories, licenses, bans, and dependency sources.
+#
+# Docs: https://embarkstudios.github.io/cargo-deny/
+
+[graph]
+all-features = true
+
+[output]
+feature-depth = 1
+
+[advisories]
+db-urls = ["https://github.com/rustsec/advisory-db"]
+yanked = "deny"
+unmaintained = "all"
+# These are temporary, reachable transitive-risk acceptances owned by the
+# termscp maintainers. Review or remove every exception by 2026-12-31. The
+# upgrade target is a remotefs/self_update release line that accepts each fixed
+# dependency version; until then, connections to untrusted endpoints remain an
+# acknowledged denial-of-service and certificate-validation risk.
+ignore = [
+  # h2 0.3 is retained transitively by the reqwest 0.11/AWS HTTP stack; its
+  # dependency constraints cannot select the fixed h2 0.4 release.
+  { id = "RUSTSEC-2026-0258", reason = "owner: termscp maintainers; review by 2026-12-31; upgrade reqwest/AWS stack to fixed h2" },
+  # number_prefix is retained by self_update through indicatif. It is
+  # unmaintained, but has no reported vulnerability or compatible replacement.
+  { id = "RUSTSEC-2025-0119", reason = "owner: termscp maintainers; review by 2026-12-31; upgrade self_update/indicatif" },
+  # Both affected quick-xml lines are constrained by remotefs-webdav and
+  # self_update to versions older than the fixed 0.41 release.
+  { id = "RUSTSEC-2026-0194", reason = "owner: termscp maintainers; review by 2026-12-31; upgrade remotefs-webdav/self_update to quick-xml >=0.41" },
+  { id = "RUSTSEC-2026-0195", reason = "owner: termscp maintainers; review by 2026-12-31; upgrade remotefs-webdav/self_update to quick-xml >=0.41" },
+  # The SSH stack requires RSA, for which RustSec reports no safe upgrade.
+  { id = "RUSTSEC-2023-0071", reason = "owner: termscp maintainers; review by 2026-12-31; replace RSA dependency when upstream fix exists" },
+  # russh-keys retains an older russh-cryptovec line and cannot select the
+  # fixed 0.60.3 release without an upstream dependency update.
+  { id = "RUSTSEC-2026-0153", reason = "owner: termscp maintainers; review by 2026-12-31; upgrade remotefs-ssh/russh-keys to russh-cryptovec >=0.60.3" },
+  # rustls-pemfile is retained by the WebDAV and Kubernetes clients. Both
+  # versions are unmaintained but have no reported vulnerability.
+  { id = "RUSTSEC-2025-0134", reason = "owner: termscp maintainers; review by 2026-12-31; upgrade WebDAV/Kubernetes clients away from rustls-pemfile" },
+  # The AWS HTTP stack retains rustls 0.21 and rustls-webpki 0.101, which cannot
+  # select the fixed rustls-webpki release.
+  { id = "RUSTSEC-2026-0098", reason = "owner: termscp maintainers; review by 2026-12-31; upgrade AWS HTTP stack to fixed rustls-webpki" },
+  { id = "RUSTSEC-2026-0099", reason = "owner: termscp maintainers; review by 2026-12-31; upgrade AWS HTTP stack to fixed rustls-webpki" },
+  { id = "RUSTSEC-2026-0104", reason = "owner: termscp maintainers; review by 2026-12-31; upgrade AWS HTTP stack to fixed rustls-webpki" },
+]
+
+[licenses]
+allow = [
+  "Apache-2.0",
+  "BSD-1-Clause",
+  "BSD-2-Clause",
+  "BSD-3-Clause",
+  "BSL-1.0",
+  "CC0-1.0",
+  "CDLA-Permissive-2.0",
+  "ISC",
+  "MIT",
+  "MIT-0",
+  "MPL-2.0",
+  "Unicode-3.0",
+  "Unlicense",
+  "Zlib",
+]
+confidence-threshold = 0.8
+exceptions = [
+  # The WebDAV backend currently depends on rustydav, which declares GPL-3.0.
+  # Keep this exception crate-scoped so no other GPL dependency is admitted.
+  { allow = ["GPL-3.0"], crate = "rustydav" },
+]
+
+[licenses.private]
+ignore = false
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+allow-wildcard-paths = true
+highlight = "all"
+workspace-default-features = "allow"
+external-default-features = "allow"
+allow = []
+deny = []
+skip = []
+skip-tree = []
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+allow-git = []

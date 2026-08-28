@@ -207,6 +207,7 @@ mod tests {
         let mut f: File = OpenOptions::new()
             .create(true)
             .write(true)
+            .truncate(true)
             .open(conf_dir.as_path())
             .ok()
             .unwrap();

@@ -1,3 +1,5 @@
+# Changelog
+
 ## 1.1.1
 
 Released on 2026-06-08
@@ -10,6 +12,7 @@ Released on 2026-06-08
   > crates.io versions are immutable (no overwrite) and Chocolatey's
   > moderation queue blocks a fast re-push, so a clean 1.1.1 without vergen
   > is the only fix.
+
 ## 1.1.0
 
 Released on 2026-06-08
@@ -29,7 +32,7 @@ Released on 2026-06-08
 - **install:** add Windows PowerShell installer and copy buttons on site
   > Add install.ps1 mirroring install.sh for Windows: arch detection,
   > release zip download, binary extraction, user PATH update.
-  > 
+  >
   > - copy install.ps1 to site public/ at build time (copy-install.mjs)
   > - serve /install.ps1 with text/plain Content-Type (vercel.json)
   > - add PowerShell one-liner to install page and README
@@ -38,11 +41,11 @@ Released on 2026-06-08
 - **config:** move config dir to ~/.config/termscp on macOS and %USERPROFILE%\.termscp on Windows
   > Resolve the config directory through a single per-platform config_dir()
   > function instead of relying on dirs::config_dir everywhere:
-  > 
+  >
   > - macOS: ~/.config/termscp (was ~/Library/Application Support/termscp)
   > - Windows: %USERPROFILE%\.termscp (was roaming %APPDATA%\termscp)
   > - Linux/other: /termscp (unchanged)
-  > 
+  >
   > Existing users are migrated automatically on first run: when the new
   > directory is absent and the legacy location exists, the whole config
   > directory is moved to the new path. The cache directory stays at the
@@ -54,7 +57,7 @@ Released on 2026-06-08
   > Single workflow_dispatch (version, dry_run) that bumps versions, regenerates
   > CHANGELOG via git-cliff, rebuilds site CSS, builds all targets, creates the
   > GitHub release, updates the Homebrew tap and publishes Chocolatey.
-  > 
+  >
   > - dist/release/bump_version.sh: version replacer across all tracked locations (+tests)
   > - .github/workflows/release.yml: prepare -> build matrix -> homebrew/release -> choco
   > - retire build-artifacts.yml (merged into release.yml)
@@ -66,7 +69,7 @@ Released on 2026-06-08
 - fix release notes generation in release workflow
   > prepare job failed: git-cliff --latest crashed with 'trim_start_matches on
   > null' because the checkout was shallow (no tags/history) so no release existed.
-  > 
+  >
   > - checkout prepare with fetch-depth: 0 + fetch-tags so git-cliff sees full
   >   history and tags (also fixes an otherwise-truncated CHANGELOG)
   > - generate release notes with --unreleased --tag v$VERSION instead of --latest:
@@ -143,7 +146,7 @@ Released on 2026-06-08
   > Migrate the transfer progress UI to tuirealm 4, where the stdlib
   > `ProgressBar` widget was dropped, by rebuilding the dual-bar panel on
   > top of `Gauge`.
-  > 
+  >
   > - Restore the unified two-bar look: the full bar (top) and partial bar
   >   (bottom) draw joined borders so they read as a single panel; a single
   >   file shows one fully-bordered bar.
@@ -159,19 +162,19 @@ Released on 2026-06-08
   > its top border is dropped to join the seam with the full bar. That left
   > the partial bar with one inner row while the full bar kept two, so the
   > two gauges rendered at unequal heights.
-  > 
+  >
   > - Move the filename from the partial bar's title into its gauge label.
   > - Skip setting an empty title so no phantom top-positioned title triggers
   >   the inset.
   > - Put the panel title on the top (full) bar for multi-file transfers.
   > - Bump the two-bar popup height to fit the joined panel.
-  > 
+  >
   > Also bump Cargo.lock and adapt the embedded terminal to the new vt100
   > `screen_mut()` API.
 - **copy:** prevent emptying file when copy destination is empty (#421)
   > An empty copy destination resolved to the source file's own path, so
   > std::fs::copy truncated the original file to 0 bytes.
-  > 
+  >
   > - localhost::copy now refuses to copy a file onto itself, returning an
   >   error instead of truncating it (root cause).
   > - action_copy treats an empty/whitespace destination as a cancel.
@@ -180,7 +183,7 @@ Released on 2026-06-08
   > path. Downstream upload logic treats the queued destination as the full
   > file path and passes it straight to create_file, so transfers failed
   > with a Failure error when the remote target resolved to a directory.
-  > 
+  >
   > Append each entry's file name to the destination directory at enqueue
   > time in both enqueue_file and enqueue_all, matching the single-file
   > transfer path which already builds the full target path.
@@ -191,6 +194,7 @@ Released on 2026-06-08
   > The old manual dist/build/* scripts and dist/{deb,rpm}.sh are superseded by the
   > automated release workflow. Add the chocolatey package consumed by release.yml.
 - **site:** copy install.sh from repo root at build time (single source)
+
 ## 1.0.0
 
 Released on 2026-04-18
@@ -243,6 +247,7 @@ Released on 2026-04-18
   > `fs_pane_mut()`. This eliminates most `is_local_tab()` branching across
   > 15+ action files.
   > Key changes:
+  >
   > - Add `fs: Box<dyn HostBridge>` to Pane, remove from FileTransferActivity
   > - Replace per-side method pairs with unified pane-dispatched methods
   > - Unify navigation (changedir, reload, scan, file_exists, has_file_changed)
@@ -250,7 +255,7 @@ Released on 2026-04-18
   > - Replace assert!/panic!/unreachable! with proper error handling
   > - Fix typo "filetransfer_activiy" across ~29 files
   > - Add unit tests for Pane
-  > 
+  >
   > Net result: -473 lines, single code path for most file operations.
 - replace lazy_static with std::sync::LazyLock
 - migrate from mod.rs to named module files
@@ -278,14 +283,14 @@ Released on 2026-04-18
   > encryption (authenticated, with random nonces) while keeping a legacy
   > AES-128-CBC decryption path to transparently handle existing bookmarks.
 - replace recursive byte-counting with entry-based transfer progress (#395)
-  > * fix: replace recursive byte-counting with entry-based transfer progress
-  > 
+  > - fix: replace recursive byte-counting with entry-based transfer progress
+  >
   > Replace the expensive recursive `get_total_transfer_size` pre-calculation
   > with a lightweight entry-based counter (`TransferProgress`) for the
   > overall progress bar. This avoids deep `list_dir` traversals before
   > transfers begin, which could cause FTP idle-timeout disconnections on
   > large directory trees.
-  > 
+  >
   > The per-file byte-level progress bar (`ProgressStates`) remains
   > unchanged. Bytes are still tracked via `TransferStates::add_bytes` for
   > notification threshold logic.
@@ -302,7 +307,7 @@ Released on 2026-04-18
 - sync browsing when entering a directory from filtered/fuzzy view
 - stabilize core error handling
   > Remove production panic and unwrap paths from core modules.
-  > 
+  >
   > Propagate bookmark encryption failures, harden file watcher and temp mapped file handling, and clean up dead code in shared utilities.
 - normalize localhost relative path checks
 - use time-based redraw interval instead of progress-delta threshold
@@ -341,9 +346,9 @@ Released on 2026-04-18
   > Upgrade tuirealm (3.x -> 4.0.0), tui-realm-stdlib (3 -> 4), tui-term
   > (0.2 -> 0.3). Apply all breaking changes from the 4.0 migration guide
   > across the termscp UI.
-  > 
+  >
   > Key changes:
-  > 
+  >
   > - Root-level re-exports removed; imports moved to module-qualified
   >   paths (`tuirealm::application`, `::component`, `::event`, `::props`,
   >   `::state`, `::subscription`, `::listener`, `::ratatui`). Same for
@@ -394,6 +399,7 @@ Released on 2026-04-18
 ### Style
 
 - linter
+
 ## 0.19.1
 
 Released on 2025-12-20
@@ -407,6 +413,7 @@ Released on 2025-12-20
 - install.sh deb name
 - install.sh deb name
 - Updated dependencies to allow build on NetBSD
+
 ## 0.19.0
 
 Released on 2025-11-11
@@ -414,13 +421,13 @@ Released on 2025-11-11
 ### Added
 
 - Import bookmarks from ssh config with a CLI command (#364)
-  > * feat: Import bookmarks from ssh config with a CLI command
-  > 
+  > - feat: Import bookmarks from ssh config with a CLI command
+  >
   > Use import-ssh-hosts to import all the possible hosts by the configured ssh config or the default one on your machine
 - Changed file overwrite behaviour (#366)
   > Now the user can choose for each file whether to overwrite, skip or overwrite all/skip all.
 - Added `<CTRL+S>` keybinding to get the total size of selected paths. (#367)
-  > * feat: Added `<CTRL+S>` keybinding to get the total size of selected paths.
+  > - feat: Added `<CTRL+S>` keybinding to get the total size of selected paths.
 - Merge branch '0.19.0'
 
 ### CI
@@ -440,8 +447,8 @@ Released on 2025-11-11
 - typo in file open error message (#349)
 - SMB support for MacOS with vendored build of libsmbclient.
 - Report a message while calculating total size of files to transfer. (#362)
-  > * fix: Report a message while calculating total size of files to transfer.
-  > 
+  > - fix: Report a message while calculating total size of files to transfer.
+  >
   > Currently, in case of huge transfers the app may look frozen while calculating the transfer size. We should at least report to the user we are actually doing something.
 - Issues with update checks (#363)
   > Removed error popup message if failed to check for updates.
@@ -456,6 +463,7 @@ Released on 2025-11-11
 - 0.19 deps
 - remotefs-ssh 0.7.1
   > This version fixes compatibility with hosts which don't use bash/sh as the default shell.
+
 ## 0.18.0
 
 Released on 2025-06-10
@@ -464,7 +472,7 @@ Released on 2025-06-10
 
 - **Updated dependencies** and updated the Rust edition to `2024`
 - Replaced the `Exec` popup with a fully functional terminal emulator (#348)
-  > * feat: Replaced the `Exec` popup with a fully functional terminal emulator
+  > - feat: Replaced the `Exec` popup with a fully functional terminal emulator
 - 0.18
 
 ### Fixed
@@ -475,6 +483,7 @@ Released on 2025-06-10
 ### Style
 
 - catppuccin themes
+
 ## 0.17.0
 
 Released on 2025-03-23
@@ -523,6 +532,7 @@ Released on 2025-03-23
 - aws-s3 0.4.2
 - build docker for x86
 - so apparently native-tls vendored tries to build openssl on windows, wtf guys?
+
 ## 0.16.1
 
 Released on 2024-11-12
@@ -532,6 +542,7 @@ Released on 2024-11-12
 - cfg unix forbidden in rust .82
 - gg rust 1.82 for introducing a nice breaking change in config which was not mentioned in changelog
 - 0.16.1
+
 ## 0.16.0
 
 Released on 2024-10-14
@@ -550,6 +561,7 @@ Released on 2024-10-14
 - issue 292 New version alert was not displayed due to a semver regex issue. (#300)
 - 0.16
 - tiny ui issue
+
 ## 0.15.0
 
 Released on 2024-10-03
@@ -572,14 +584,14 @@ Released on 2024-10-03
 - issue 277 Fix a bug in the configuration page, which caused being stuck if the added SSH key was empty
 - popup texts
 - `isolated-tests` feature to run tests for releasing on distributions which run in isolated environments (#286)
-  > * fix: `isolated-tests` feature to run tests for releasing on distributions which run in isolated environments
-  > 
-  > * fix: cond
+  > - fix: `isolated-tests` feature to run tests for releasing on distributions which run in isolated environments
+  > - fix: cond
 - set date
 - github ci is stable and reliable (one worker broken each 2 weeks)
 - ci
 - readme
 - include build.rs
+
 ## 0.14.0
 
 Released on 2024-07-17
@@ -608,6 +620,7 @@ Released on 2024-07-17
 - german manual
 - removed support for RPM
 - changelog
+
 ## 0.13.0
 
 Released on 2024-03-02
@@ -624,6 +637,7 @@ Released on 2024-03-02
 - debian script
 - debian script
 - lint???
+
 ## 0.12.2
 
 Released on 2023-10-01
@@ -636,6 +650,7 @@ Released on 2023-10-01
 
 - fmt
 - panic if the terminal screen is too small
+
 ## 0.12.1
 
 Released on 2023-07-06
@@ -659,6 +674,7 @@ Released on 2023-07-06
 - don't run CI on site/.md change
 - rustup target
 - don't update path breadcrumb if enter/scan dir failed (#203)
+
 ## 0.12.0
 
 Released on 2023-05-16
@@ -677,6 +693,7 @@ Released on 2023-05-16
 - pavao 0.2.3
 - macos script
 - release date
+
 ## 0.11.3
 
 Released on 2023-04-19
@@ -688,6 +705,7 @@ Released on 2023-04-19
 ### Fixed
 
 - relative paths windows (#167)
+
 ## 0.11.2
 
 Released on 2023-04-18
@@ -696,6 +714,7 @@ Released on 2023-04-18
 
 - dependencies up-to-date
 - site 0.11.2
+
 ## 0.8.1
 
 Released on 2022-03-22
@@ -703,6 +722,7 @@ Released on 2022-03-22
 ### Fixed
 
 - footer listed "Delete" shortcut as "Make Dir"
+
 ## 0.8.0
 
 Released on 2022-01-06
@@ -710,6 +730,7 @@ Released on 2022-01-06
 ### Arch
 
 - install rust only if not found on local system
+
 ## 0.7.0
 
 Released on 2021-10-12
@@ -717,6 +738,7 @@ Released on 2021-10-12
 ### Option
 
 - prompt user when about to replace an existing file caused by a file transfer
+
 ## 0.6.1
 
 Released on 2021-08-30
@@ -724,6 +746,7 @@ Released on 2021-08-30
 ### Fixed
 
 - When copying files with tricky copy, the upper progress bar shows no text
+
 ## 0.5.1
 
 Released on 2021-06-21
@@ -731,6 +754,7 @@ Released on 2021-06-21
 ### Fix
 
 - target_family unix means also macos and linux; use BSD target_os
+
 ## 0.5.0
 
 Released on 2021-05-23
@@ -743,6 +767,7 @@ Released on 2021-05-23
 ### Grcov
 
 - exclude activities
+
 ## 0.4.1
 
 Released on 2021-04-06
@@ -756,17 +781,18 @@ Released on 2021-04-06
 
 - one-liner for Homebrew
   > The one-liner command
-  > 
-  >   brew install veeso/termscp/termscp
-  > 
+  >
+  > brew install veeso/termscp/termscp
+  >
   > is equivalent to the two commands
-  > 
-  >   brew tap veeso/termscp
-  >   brew install termscp
+  >
+  > brew tap veeso/termscp
+  > brew install termscp
 
 ### SCP
 
 - fixed symlink not properly detected
+
 ## 0.4.0
 
 Released on 2021-03-27
@@ -786,6 +812,7 @@ Released on 2021-03-27
 ### View
 
 - return String instead of id
+
 ## 0.3.3
 
 Released on 2021-02-28
@@ -793,6 +820,7 @@ Released on 2021-02-28
 ### Git
 
 - check for new updates (utils)
+
 ## 0.3.2
 
 Released on 2021-01-24
@@ -800,6 +828,7 @@ Released on 2021-01-24
 ### Testing
 
 - don't run on windows
+
 ## 0.3.0
 
 Released on 2021-01-10
@@ -834,6 +863,7 @@ Released on 2021-01-10
 ### SetupActivity
 
 - <CTRL+E> as <DEL>
+
 ## 0.2.0
 
 Released on 2020-12-21
@@ -845,6 +875,7 @@ Released on 2020-12-21
 ### Scp
 
 - when username was not provided, it didn't fallback to current username
+
 ## 0.1.2
 
 Released on 2020-12-13
@@ -852,6 +883,7 @@ Released on 2020-12-13
 ### FsEntry
 
 - :*::symlink is now a Option<Box<FsEntry>>; this improved symlinks, which gave errors some times
+
 ## 0.1.0
 
 Released on 2020-12-06

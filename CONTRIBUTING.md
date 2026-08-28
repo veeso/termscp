@@ -150,5 +150,5 @@ You can view the developer guide [here](https://docs.termscp.rs/en-US/developer/
 
 ---
 
-Thank you for any contribution!  
+Thank you for any contribution!\
 Christian Visintin
