@@ -88,13 +88,7 @@ fn parse_args(args: Args) -> Result<RunOpts, String> {
             // Match ticks
             run_opts.ticks = Duration::from_millis(args.ticks);
             // Remote argument
-            match RemoteArgs::try_from(&args) {
-                Err(err) => return Err(err),
-                Ok(remote) => {
-                    // Set params
-                    run_opts.remote = remote;
-                }
-            }
+            run_opts.remote = RemoteArgs::try_from(&args)?;
 
             // set activity based on remote state
             run_opts.task = if run_opts.remote.remote.is_none() {

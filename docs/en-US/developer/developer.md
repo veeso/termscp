@@ -63,8 +63,8 @@ works best from different frameworks:
   more, read <https://github.com/veeso/tui-realm>.
 - **Components**: components are built around tui in order to reuse widgets. This
   is achieved through the `Component` trait, inspired by
-  [React](https://reactjs.org/). Each component has its *Properties* and can have
-  its *States*. Each component must handle input events, accept new properties,
+  [React](https://reactjs.org/). Each component has its _Properties_ and can have
+  its _States_. Each component must handle input events, accept new properties,
   and provide a method to **render** itself. This logic now lives in
   [tui-realm](https://github.com/veeso/tui-realm).
 - **Messages: an Elm-based approach**: input events are handled with an approach

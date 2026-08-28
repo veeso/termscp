@@ -211,7 +211,8 @@ impl FileTransferActivity {
     /// Shared scan walk. `remote_side` selects which pane lists directories
     /// (remote for downloads, local for uploads).
     ///
-    /// The walk is abortable via [`crate::ui::activities::filetransfer::lib::TransferStates::aborted`]
+    /// The walk is abortable via
+    /// [`TransferStates::aborted`](crate::ui::activities::filetransfer::lib::transfer::TransferStates::aborted)
     /// and periodically redraws a "Scanning…" popup to keep the UI responsive.
     fn scan_worklist(
         &mut self,

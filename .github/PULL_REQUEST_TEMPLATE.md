@@ -29,12 +29,12 @@ Please select relevant options.
 - [ ] I formatted the code with `cargo fmt`
 - [ ] I checked my code using `cargo clippy` and reports no warnings
 - [ ] I have added tests that prove my fix is effective or that my feature works
-- [ ] I have introduced no new *C-bindings*
+- [ ] I have introduced no new _C-bindings_
 - [ ] The changes I've made are Windows, MacOS, UNIX, Linux compatible (or I've handled them using `cfg target_os`)
 - [ ] I increased or maintained the code coverage for the project, compared to the previous commit
 
 ## Acceptance tests
 
-wait for a *project maintainer* to fulfill this section...
+wait for a _project maintainer_ to fulfill this section...
 
 - [ ] regression test: ...

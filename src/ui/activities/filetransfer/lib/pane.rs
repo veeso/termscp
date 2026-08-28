@@ -28,8 +28,6 @@ impl Pane {
 
 #[cfg(test)]
 mod tests {
-    use std::path::PathBuf;
-
     use super::*;
     use crate::explorer::builder::FileExplorerBuilder;
     use crate::host::Localhost;
@@ -52,6 +50,6 @@ mod tests {
     fn test_pane_pwd() {
         let mut pane = make_pane();
         let pwd = pane.fs.pwd().unwrap();
-        assert_eq!(pwd, PathBuf::from(std::env::temp_dir()));
+        assert_eq!(pwd, std::env::temp_dir());
     }
 }

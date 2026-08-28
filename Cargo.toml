@@ -1,17 +1,17 @@
 [package]
 name = "termscp"
 version = "1.1.1"
-edition = "2024"
 authors = ["Christian Visintin <christian.visintin@veeso.dev>"]
-description = "termscp is a feature rich terminal file transfer and explorer with support for SCP/SFTP/FTP/Kube/S3/WebDAV"
-license = "MIT"
-repository = "https://github.com/veeso/termscp"
 categories = ["command-line-utilities"]
+edition = "2024"
 homepage = "https://termscp.rs"
 include = ["/src/**/*", "/build.rs", "/LICENSE", "/README.md", "/CHANGELOG.md"]
 keywords = ["terminal", "ftp", "scp", "sftp", "tui"]
+license = "MIT"
 readme = "README.md"
-rust-version = "1.89.0"
+repository = "https://github.com/veeso/termscp"
+rust-version = "1.98.0"
+description = "termscp is a feature rich terminal file transfer and explorer with support for SCP/SFTP/FTP/Kube/S3/WebDAV"
 
 [package.metadata.rpm]
 package = "termscp"
@@ -62,18 +62,10 @@ remotefs = "0.3"
 remotefs-aws-s3 = "0.4"
 remotefs-kube = "0.4"
 remotefs-smb = { version = "0.3", optional = true }
-remotefs-ssh = { version = "0.8", default-features = false, features = [
-  "russh",
-] }
+remotefs-ssh = { version = "0.8", default-features = false, features = ["russh"] }
 remotefs-webdav = "0.2"
 rpassword = "7"
-self_update = { version = "0.42", default-features = false, features = [
-  "archive-tar",
-  "archive-zip",
-  "compression-flate2",
-  "compression-zip-deflate",
-  "rustls",
-] }
+self_update = { version = "0.42", default-features = false, features = ["archive-tar", "archive-zip", "compression-flate2", "compression-zip-deflate", "rustls"] }
 semver = "1"
 serde = { version = "1", features = ["derive"] }
 shellexpand = "3"
@@ -91,16 +83,10 @@ whoami = "2"
 wildmatch = "2"
 
 [target."cfg(any(target_os = \"linux\", target_os = \"freebsd\"))".dependencies]
-dbus-secret-service-keyring-store = { version = "1", features = [
-  "crypto-rust",
-  "vendored",
-] }
+dbus-secret-service-keyring-store = { version = "1", features = ["crypto-rust", "vendored"] }
 
 [target."cfg(target_family = \"unix\")".dependencies]
-remotefs-ftp = { version = "0.4", features = [
-  "native-tls",
-  "native-tls-vendored",
-] }
+remotefs-ftp = { version = "0.4", features = ["native-tls", "native-tls-vendored"] }
 uzers = "0.12"
 
 [target."cfg(target_family = \"windows\")".dependencies]

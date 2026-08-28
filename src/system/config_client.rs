@@ -595,7 +595,7 @@ mod tests {
         client.set_local_file_fmt(String::from("{NAME}"));
         assert_eq!(client.get_local_file_fmt().unwrap(), String::from("{NAME}"));
         // Delete
-        client.set_local_file_fmt(String::from(""));
+        client.set_local_file_fmt(String::new());
         assert_eq!(client.get_local_file_fmt(), None);
     }
 
@@ -613,7 +613,7 @@ mod tests {
             String::from("{NAME}")
         );
         // Delete
-        client.set_remote_file_fmt(String::from(""));
+        client.set_remote_file_fmt(String::new());
         assert_eq!(client.get_remote_file_fmt(), None);
     }
 

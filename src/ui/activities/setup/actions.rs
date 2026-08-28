@@ -15,8 +15,8 @@ use super::{Id, IdSsh, IdTheme, SetupActivity, ViewLayout};
 use crate::config::themes::Theme;
 
 impl SetupActivity {
-    /// On <ESC>, if there are changes in the configuration, the quit dialog must be shown, otherwise
-    /// we can exit  without any problem
+    /// On `ESC`, if there are changes in the configuration, the quit dialog
+    /// must be shown; otherwise, we can exit without any problem.
     pub(super) fn action_on_esc(&mut self) {
         if self.config_changed() {
             self.mount_quit();

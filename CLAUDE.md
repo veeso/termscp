@@ -12,28 +12,31 @@ termscp is a terminal file transfer client with a TUI (Terminal User Interface),
 
 ## Build & Development Commands
 
+Task runner is `just` (modular recipes under `just/*.just`, imported by root `justfile`). Run `just --list` for the full set.
+
 ```bash
 # Build
-cargo build
-cargo build --release
-cargo build --no-default-features              # minimal build without SMB/keyring
+just build_crates                                          # cargo build --workspace
+just build_crates "--release"
+cargo build --no-default-features                           # minimal build without SMB/keyring (no just recipe)
 
 # Test (CI-equivalent)
-cargo test --no-default-features --features github-actions --no-fail-fast
+just test "--no-default-features --features github-actions --no-fail-fast"
 
-# Run a single test
+# Run a single test / a module (use cargo directly, just recipes don't take test names)
 cargo test <test_name> -- --nocapture
-
-# Run tests for a module
 cargo test --lib filetransfer::
 cargo test --lib config::params::tests
 
 # Lint
-cargo clippy -- -Dwarnings
+just clippy "-- -D warnings"
 
-# Format
-cargo fmt --all -- --check      # check only
-cargo fmt --all                 # fix
+# Format (dprint: Markdown, TOML, YAML, and Rust via nightly rustfmt)
+just fmt_check      # check only
+just fmt            # fix
+
+# All code checks at once (fmt_check, clippy -D warnings, doc, deny, install script lint)
+just check_code
 ```
 
 ### System Dependencies (for building)
@@ -66,16 +69,16 @@ main.rs → parse CLI args → ActivityManager::new() → ActivityManager::run()
 
 ### Key Modules
 
-| Module | Path | Purpose |
-|--------|------|---------|
-| **activity_manager** | `src/activity_manager.rs` | Orchestrates activity lifecycle and transitions |
-| **ui/activities** | `src/ui/activities/{auth,filetransfer,setup}/` | Three main screens, each implementing the `Activity` trait |
-| **ui/context** | `src/ui/context.rs` | Shared `Context` struct (terminal, config, bookmarks, theme) |
-| **filetransfer** | `src/filetransfer/` | Protocol enum, `RemoteFsBuilder`, connection parameters |
-| **host** | `src/host/` | `HostBridge` trait — abstracts local (`Localhost`) and remote (`RemoteBridged`) file operations |
-| **explorer** | `src/explorer/` | `FileExplorer` — directory navigation, sorting, filtering, transfer queue |
-| **system** | `src/system/` | `BookmarksClient`, `ConfigClient`, `ThemeProvider`, `SshKeyStorage`, `KeyStorage` trait |
-| **config** | `src/config/` | TOML-based serialization for themes, bookmarks, user params |
+| Module               | Path                                           | Purpose                                                                                         |
+| -------------------- | ---------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| **activity_manager** | `src/activity_manager.rs`                      | Orchestrates activity lifecycle and transitions                                                 |
+| **ui/activities**    | `src/ui/activities/{auth,filetransfer,setup}/` | Three main screens, each implementing the `Activity` trait                                      |
+| **ui/context**       | `src/ui/context.rs`                            | Shared `Context` struct (terminal, config, bookmarks, theme)                                    |
+| **filetransfer**     | `src/filetransfer/`                            | Protocol enum, `RemoteFsBuilder`, connection parameters                                         |
+| **host**             | `src/host/`                                    | `HostBridge` trait — abstracts local (`Localhost`) and remote (`RemoteBridged`) file operations |
+| **explorer**         | `src/explorer/`                                | `FileExplorer` — directory navigation, sorting, filtering, transfer queue                       |
+| **system**           | `src/system/`                                  | `BookmarksClient`, `ConfigClient`, `ThemeProvider`, `SshKeyStorage`, `KeyStorage` trait         |
+| **config**           | `src/config/`                                  | TOML-based serialization for themes, bookmarks, user params                                     |
 
 ### Core Traits
 
@@ -86,6 +89,7 @@ main.rs → parse CLI args → ActivityManager::new() → ActivityManager::run()
 ### Conditional Compilation
 
 The `build.rs` defines cfg aliases via `cfg_aliases`:
+
 - `posix`, `macos`, `linux`, `win` — platform shortcuts
 - `smb`, `smb_unix`, `smb_windows` — feature + platform combinations
 
@@ -106,6 +110,7 @@ Platform-specific dependencies: SSH and FTP crates use different TLS backends on
 
 ## Other conventions
 
-- Always run `cargo +nightly fmt --all` and `cargo clippy --no-default-features -- -Dwarnings` after modifying Rust code
+- Always run `just fmt` and `just clippy "-- -D warnings"` after modifying Rust code
 - Always put plans to `./.claude/plans/`
 - When changing behavior that is documented under `docs/` (paths, config keys, commands, flags, etc.), update BOTH `docs/en-US/` and `docs/zh-CN/` to keep the translations in sync
+- All code must be cross-platform compatible (Windows, macOS, Linux) — avoid POSIX-only APIs, hardcoded path separators, or shell-specific behavior unless gated behind the `posix`/`win` cfg aliases

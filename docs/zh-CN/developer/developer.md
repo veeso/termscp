@@ -30,7 +30,7 @@ termscp 支持以下协议：SFTP、SCP、FTP/FTPS、Kube、S3、SMB 和 WebDAV�
 
 - **顶层的 Activities**：每个“视图”都是一个 Activity，并由 `Activity Manager` 来处理它们。这种方法受 Android 启发。它适用于具有不同视图的 ui，每个视图都有自己的组件和逻辑。Activities 与 `Context` 协作，`Context` 是用于在 activities 之间共享数据的数据持有者。
 - **Activities 显示 Applications**：每个 activity 可以显示不同的 **Applications**。一个 application 包含一个 **View**，它基本上是一个 **components** 列表，每个组件都有其属性。view 是组件的门面，同时也处理焦点，即当前处于活动状态的组件。你不能拥有多个活动组件，因此必须对此进行处理；与此同时，如果当前组件被销毁，焦点必须交还给之前处于活动状态的组件。**Application** 负责处理所有这些工作。要了解更多信息，请阅读 <https://github.com/veeso/tui-realm>。
-- **Components**：components 是围绕 tui 构建的，以便复用控件。这是通过 `Component` trait 实现的，该 trait 受 [React](https://reactjs.org/) 启发。每个组件都有其 *Properties*，并且可以拥有其 *States*。每个组件必须处理输入事件、接受新的属性，并提供一个用于**渲染**自身的方法。这一逻辑现在位于 [tui-realm](https://github.com/veeso/tui-realm) 中。
+- **Components**：components 是围绕 tui 构建的，以便复用控件。这是通过 `Component` trait 实现的，该 trait 受 [React](https://reactjs.org/) 启发。每个组件都有其 _Properties_，并且可以拥有其 _States_。每个组件必须处理输入事件、接受新的属性，并提供一个用于**渲染**自身的方法。这一逻辑现在位于 [tui-realm](https://github.com/veeso/tui-realm) 中。
 - **Messages：基于 Elm 的方法**：输入事件采用受 [Elm](https://elm-lang.org/) 启发的方法来处理。在 Elm 中，你使用三个基本函数来实现 ui：**update**、**view** 和 **init**。termscp 将 Elm update 函数的等价实现编写为一个递归函数内部的大型 match 分支，你可以在每个 activity 的 `update.rs` 文件中找到它。这个 match 分支处理组件为响应传入的输入事件而产生的消息，并促使 activity 改变其状态。
 
 termscp 实现了一个名为 `Activity` 的 trait，它是 Android activity 的一个大幅精简版本。该 trait 提供以下方法：

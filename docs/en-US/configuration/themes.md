@@ -47,20 +47,20 @@ are two quick fixes:
 1. Re-import the official theme. After each release the official themes are
    patched, so download the updated theme from the repository and re-import it:
 
-    ```sh
-    termscp theme <theme.toml>
-    ```
+   ```sh
+   termscp theme <theme.toml>
+   ```
 
 2. Edit your theme by hand. If you use a custom theme, edit the file and add the
    missing key. The theme is located at `$CONFIG_DIR/theme.toml`, where
    `$CONFIG_DIR` is:
 
-    - FreeBSD/Linux: `$HOME/.config/termscp`
-    - macOS: `$HOME/.config/termscp`
-    - Windows: `%USERPROFILE%\.termscp`
+   - FreeBSD/Linux: `$HOME/.config/termscp`
+   - macOS: `$HOME/.config/termscp`
+   - Windows: `%USERPROFILE%\.termscp`
 
-    Missing keys are reported in the CHANGELOG under `BREAKING CHANGES` for the
-    version you have just installed.
+   Missing keys are reported in the CHANGELOG under `BREAKING CHANGES` for the
+   version you have just installed.
 
 ## Styles
 

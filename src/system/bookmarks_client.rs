@@ -767,7 +767,7 @@ mod tests {
         // Limit is 2
         assert_eq!(client.iter_recents().count(), 2);
         // Check that 192.168.1.1 has been removed
-        let key: String = client.iter_recents().next().unwrap().to_string();
+        let key: String = client.iter_recents().next().unwrap().clone();
         assert!(matches!(
             client
                 .hosts
@@ -781,7 +781,7 @@ mod tests {
                 .as_str(),
             "192.168.1.2" | "192.168.1.3"
         ));
-        let key: String = client.iter_recents().nth(1).unwrap().to_string();
+        let key: String = client.iter_recents().nth(1).unwrap().clone();
         assert!(matches!(
             client
                 .hosts
@@ -938,7 +938,7 @@ mod tests {
         let protocol = params.protocol;
         let p = params.params.generic_params().unwrap();
         (
-            p.address.to_string(),
+            p.address.clone(),
             p.port,
             protocol,
             p.username.as_ref().cloned().unwrap_or_default(),

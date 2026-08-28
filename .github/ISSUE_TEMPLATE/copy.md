@@ -4,7 +4,6 @@ about: Report a typo/error in a repository document
 title: "[COPY] - ISSUE_TITLE"
 labels: documentation
 assignees: veeso
-
 ---
 
 ## Report

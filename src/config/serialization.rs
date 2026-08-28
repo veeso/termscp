@@ -200,7 +200,7 @@ mod tests {
                 .unwrap(),
             PathBuf::from("/home/omar/.ssh/beaglebone.key")
         );
-        assert!(cfg.remote.ssh_keys.get(&String::from("1.1.1.1")).is_none());
+        assert!(!cfg.remote.ssh_keys.contains_key("1.1.1.1"));
     }
 
     #[test]
@@ -240,7 +240,7 @@ mod tests {
                 .unwrap(),
             PathBuf::from("/home/omar/.ssh/beaglebone.key")
         );
-        assert!(cfg.remote.ssh_keys.get(&String::from("1.1.1.1")).is_none());
+        assert!(!cfg.remote.ssh_keys.contains_key("1.1.1.1"));
     }
 
     #[test]
