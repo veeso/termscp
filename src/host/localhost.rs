@@ -604,7 +604,9 @@ mod tests {
     use super::*;
     #[cfg(posix)]
     use crate::utils::test_helpers::make_fsentry;
-    use crate::utils::test_helpers::{create_sample_file, make_file_at};
+    use crate::utils::test_helpers::create_sample_file;
+    #[cfg(posix)]
+    use crate::utils::test_helpers::make_file_at;
 
     #[test]
     fn test_host_error_new() {
@@ -632,13 +634,13 @@ mod tests {
     #[test]
     #[cfg(win)]
     fn test_host_localhost_new() {
-        let mut host: Localhost = Localhost::new(PathBuf::from("C:\\users")).ok().unwrap();
+        let host: Localhost = Localhost::new(PathBuf::from("C:\\users")).ok().unwrap();
         assert_eq!(host.wrkdir, PathBuf::from("C:\\users"));
         // Scan dir
         let entries = std::fs::read_dir(PathBuf::from("C:\\users").as_path()).unwrap();
         let mut counter: usize = 0;
         for _ in entries {
-            counter = counter + 1;
+            counter += 1;
         }
         assert_eq!(host.files.len(), counter);
     }
