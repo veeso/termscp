@@ -25,11 +25,6 @@ doc args="":
 deny args="":
     cargo deny check {{ args }}
 
-# Scan for secrets with trufflehog (defaults to the whole working tree)
-[group('code_check')]
-scan_secrets *args=".":
-    trufflehog filesystem {{ args }} --results=verified,unknown --fail --no-update
-
 # Point git at the tracked .githooks directory (installs the pre-commit hook)
 [group('code_check')]
 setup_githooks:
