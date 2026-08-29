@@ -6,8 +6,8 @@
 
 use aes::cipher::block_padding::Pkcs7;
 use aes::cipher::{BlockModeDecrypt, KeyIvInit};
-use aes_gcm::aead::{Aead, AeadCore};
-use aes_gcm::{Aes128Gcm, KeyInit, Nonce};
+use aes_gcm::aead::{Aead, Generate, Nonce};
+use aes_gcm::{Aes128Gcm, KeyInit};
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD as B64;
 use md5::{Digest, Md5};
@@ -20,7 +20,7 @@ const GCM_NONCE_LEN: usize = 12;
 pub fn aes128_b64_crypt(key: &str, input: &str) -> Result<String, CryptoError> {
     let derived = derive_gcm_key(key);
     let cipher = Aes128Gcm::new(&derived.into());
-    let nonce_bytes = Aes128Gcm::generate_nonce(&mut aes_gcm::aead::OsRng);
+    let nonce_bytes = Nonce::<Aes128Gcm>::generate();
     let ciphertext = cipher
         .encrypt(&nonce_bytes, input.as_bytes())
         .map_err(|_| CryptoError::AesGcm)?;
@@ -51,11 +51,11 @@ fn decrypt_gcm(key: &str, secret: &str) -> Result<String, CryptoError> {
         return Err(CryptoError::InvalidData);
     }
     let (nonce_bytes, ciphertext) = raw.split_at(GCM_NONCE_LEN);
-    let nonce = Nonce::from_slice(nonce_bytes);
+    let nonce = Nonce::<Aes128Gcm>::try_from(nonce_bytes).map_err(|_| CryptoError::InvalidData)?;
     let derived = derive_gcm_key(key);
     let cipher = Aes128Gcm::new(&derived.into());
     let plaintext = cipher
-        .decrypt(nonce, ciphertext)
+        .decrypt(&nonce, ciphertext)
         .map_err(|_| CryptoError::AesGcm)?;
     String::from_utf8(plaintext).map_err(|_| CryptoError::InvalidData)
 }

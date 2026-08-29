@@ -10,7 +10,6 @@ keywords = ["terminal", "ftp", "scp", "sftp", "tui"]
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/veeso/termscp"
-rust-version = "1.98.0"
 description = "termscp is a feature rich terminal file transfer and explorer with support for SCP/SFTP/FTP/Kube/S3/WebDAV"
 
 [package.metadata.rpm]
@@ -37,9 +36,9 @@ smb-vendored = ["remotefs-smb/vendored"]
 
 [dependencies]
 aes = "0.9"
-aes-gcm = "0.10"
+aes-gcm = "0.11"
 argh = "0.1"
-base64 = "0.22"
+base64 = "0.23"
 bitflags = "2"
 bytesize = "2"
 cbc = { version = "0.2", features = ["alloc"] }
@@ -100,7 +99,7 @@ windows-native-keyring-store = "1"
 
 [dev-dependencies]
 pretty_assertions = "1"
-serial_test = "3"
+serial_test = "4"
 
 [build-dependencies]
 cfg_aliases = "0.2"
