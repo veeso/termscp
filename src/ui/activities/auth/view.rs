@@ -76,6 +76,7 @@ impl AuthActivity {
         self.mount_webdav_uri(FormTab::HostBridge, "");
 
         let remote_default_protocol = self.context().config().get_default_protocol();
+        self.set_remote_protocol(remote_default_protocol);
         self.mount_remote_protocol(remote_default_protocol);
         self.mount_remote_directory(FormTab::Remote, "");
         self.mount_local_directory(FormTab::Remote, "");

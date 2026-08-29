@@ -313,6 +313,10 @@ impl AuthActivity {
         Self::file_transfer_protocol_input_mask(self.remote_protocol)
     }
 
+    fn set_remote_protocol(&mut self, protocol: FileTransferProtocol) {
+        self.remote_protocol = protocol;
+    }
+
     /// Get current input mask to show
     fn host_bridge_input_mask(&self) -> InputMask {
         match self.host_bridge_protocol {
@@ -422,5 +426,22 @@ impl Activity for AuthActivity {
             error!("Failed to clear screen: {}", err);
         }
         self.context.take()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn should_set_configured_remote_protocol() {
+        let mut activity = AuthActivity::new(Duration::ZERO);
+
+        activity.set_remote_protocol(FileTransferProtocol::GoogleCloudStorage);
+
+        assert_eq!(
+            activity.remote_protocol,
+            FileTransferProtocol::GoogleCloudStorage
+        );
     }
 }
