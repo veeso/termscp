@@ -383,6 +383,56 @@ impl AuthActivity {
         }
     }
 
+    pub(in crate::ui::activities::auth) fn mount_gcs_bucket(
+        &mut self,
+        form_tab: FormTab,
+        bucket: &str,
+    ) {
+        let color = self.theme().auth_address;
+        let id = Self::form_tab_id(form_tab, AuthFormId::GcsBucket);
+        if let Err(err) = self.app.remount(
+            id,
+            Box::new(components::InputGcsBucket::new(bucket, form_tab, color)),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
+    }
+
+    pub(in crate::ui::activities::auth) fn mount_gcs_endpoint(
+        &mut self,
+        form_tab: FormTab,
+        endpoint: &str,
+    ) {
+        let color = self.theme().auth_username;
+        let id = Self::form_tab_id(form_tab, AuthFormId::GcsEndpoint);
+        if let Err(err) = self.app.remount(
+            id,
+            Box::new(components::InputGcsEndpoint::new(endpoint, form_tab, color)),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
+    }
+
+    pub(in crate::ui::activities::auth) fn mount_gcs_service_account_key(
+        &mut self,
+        form_tab: FormTab,
+        path: &str,
+    ) {
+        let color = self.theme().auth_password;
+        let id = Self::form_tab_id(form_tab, AuthFormId::GcsServiceAccountKey);
+        if let Err(err) = self.app.remount(
+            id,
+            Box::new(components::InputGcsServiceAccountKey::new(
+                path, form_tab, color,
+            )),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
+    }
+
     pub(in crate::ui::activities::auth) fn mount_s3_bucket(
         &mut self,
         form_tab: FormTab,

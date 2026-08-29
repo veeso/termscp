@@ -40,6 +40,9 @@ pub(super) static REMOTE_KUBE_OPT_REGEX: Lazy<Regex> =
 pub(super) static REMOTE_S3_OPT_REGEX: Lazy<Regex> =
     lazy_regex!(r"(?:(.+[^@])@)(?:([^:]+))(?::([a-zA-Z0-9][^:]+))?(?::([^:]+))?");
 
+/// Regex matches Google Cloud Storage remote options.
+pub(super) static REMOTE_GCS_OPT_REGEX: Lazy<Regex> = lazy_regex!(r"^([^:]+)(?::(/.*))?$");
+
 /// Regex matches SMB remote options on Unix platforms.
 #[cfg(smb_unix)]
 pub(super) static REMOTE_SMB_OPT_REGEX: Lazy<Regex> = lazy_regex!(
@@ -81,6 +84,10 @@ static BYTESIZE_REGEX: Lazy<Regex> = lazy_regex!(r"(:?([0-9])+)( )*(:?[KMGTP])?B
 /// For s3:
 ///
 /// `s3://<bucket-name>@<region>[:profile][:/wrkdir]`
+///
+/// For Google Cloud Storage:
+///
+/// `gcs://<bucket>[:/working/directory]`
 ///
 /// For SMB:
 ///
@@ -470,6 +477,33 @@ mod tests {
         assert_eq!(result.remote_path, Some(PathBuf::from("/foobar")));
         assert_eq!(params.bucket_name.as_str(), "omar@mybucket");
         assert_eq!(params.region.as_deref().unwrap(), "eu-central-1");
+    }
+
+    #[test]
+    fn should_parse_google_cloud_storage_address() {
+        let result = parse_remote_opt("gcs://my-bucket").unwrap();
+        let params = result.params.gcs_params().unwrap();
+
+        assert_eq!(result.protocol, FileTransferProtocol::GoogleCloudStorage);
+        assert_eq!(result.remote_path, None);
+        assert_eq!(params.bucket_name, "my-bucket");
+        assert_eq!(params.endpoint, "https://storage.googleapis.com");
+        assert_eq!(params.service_account_key, None);
+    }
+
+    #[test]
+    fn should_parse_google_cloud_storage_working_directory() {
+        let result = parse_remote_opt("gcs://my-bucket:/assets/images").unwrap();
+
+        assert_eq!(
+            result.remote_path.as_deref(),
+            Some(std::path::Path::new("/assets/images"))
+        );
+    }
+
+    #[test]
+    fn should_reject_google_cloud_storage_address_without_bucket() {
+        assert!(parse_remote_opt("gcs://:/assets").is_err());
     }
 
     #[test]

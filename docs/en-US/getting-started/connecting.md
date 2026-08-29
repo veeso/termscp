@@ -56,7 +56,7 @@ directory `/tmp`:
 termscp scp://omar@192.168.1.31:4022:/tmp
 ```
 
-For protocol-specific address syntax (S3, Kube, WebDAV, and SMB), see
+For protocol-specific address syntax (S3, GCS, Kube, WebDAV, and SMB), see
 [Connection parameters](connection-parameters.md).
 
 ## How the password is provided

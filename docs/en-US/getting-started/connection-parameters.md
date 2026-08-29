@@ -128,6 +128,37 @@ ways to do this.
 Your credentials are safe: termscp does not manipulate these values directly.
 They are consumed directly by the `s3` crate.
 
+## Google Cloud Storage
+
+termscp supports Google Cloud Storage (GCS) buckets through the Google Cloud
+Storage JSON API.
+
+Authentication-form fields:
+
+- Bucket name (required)
+- Endpoint (defaults to `https://storage.googleapis.com`)
+- Optional service-account JSON path
+
+Leave the service-account JSON path empty to use Application Default
+Credentials (ADC). ADC can obtain credentials from
+`GOOGLE_APPLICATION_CREDENTIALS`, local gcloud ADC credentials, or the Google
+Cloud metadata service when termscp runs on Google Cloud infrastructure.
+
+When a service-account JSON path is supplied, termscp reads that file when it
+connects. Bookmarks store only the path and never copy the service-account JSON
+or its private key.
+
+The dedicated CLI syntax is:
+
+```txt
+gcs://<bucket>[:/working/directory]
+```
+
+CLI connections use ADC and the default endpoint. Use the authentication form
+or a bookmark when you need a custom endpoint or a service-account JSON path.
+The selected ADC identity or service account must have IAM permissions for the
+storage operations you want to perform.
+
 ## SMB
 
 Authentication-form fields:

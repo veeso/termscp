@@ -86,6 +86,7 @@ impl AuthActivity {
                         InputMask::Generic => &Id::Remote(AuthFormId::Password),
                         InputMask::Smb => &Id::Remote(AuthFormId::Password),
                         InputMask::AwsS3 => &Id::Remote(AuthFormId::S3Bucket),
+                        InputMask::Gcs => &Id::Remote(AuthFormId::GcsBucket),
                         InputMask::Kube => &Id::Remote(AuthFormId::KubeNamespace),
                         InputMask::WebDAV => &Id::Remote(AuthFormId::Password),
                     },
@@ -94,6 +95,7 @@ impl AuthActivity {
                         InputMask::Generic => &Id::HostBridge(AuthFormId::Password),
                         InputMask::Smb => &Id::HostBridge(AuthFormId::Password),
                         InputMask::AwsS3 => &Id::HostBridge(AuthFormId::S3Bucket),
+                        InputMask::Gcs => &Id::HostBridge(AuthFormId::GcsBucket),
                         InputMask::Kube => &Id::HostBridge(AuthFormId::KubeNamespace),
                         InputMask::WebDAV => &Id::HostBridge(AuthFormId::Password),
                     },
@@ -112,6 +114,7 @@ impl AuthActivity {
                         InputMask::Generic => &Id::Remote(AuthFormId::Password),
                         InputMask::Smb => &Id::Remote(AuthFormId::Password),
                         InputMask::AwsS3 => &Id::Remote(AuthFormId::S3Bucket),
+                        InputMask::Gcs => &Id::Remote(AuthFormId::GcsBucket),
                         InputMask::Kube => &Id::Remote(AuthFormId::KubeNamespace),
                         InputMask::WebDAV => &Id::Remote(AuthFormId::Password),
                     },
@@ -120,6 +123,7 @@ impl AuthActivity {
                         InputMask::Generic => &Id::HostBridge(AuthFormId::Password),
                         InputMask::Smb => &Id::HostBridge(AuthFormId::Password),
                         InputMask::AwsS3 => &Id::HostBridge(AuthFormId::S3Bucket),
+                        InputMask::Gcs => &Id::HostBridge(AuthFormId::GcsBucket),
                         InputMask::Kube => &Id::HostBridge(AuthFormId::KubeNamespace),
                         InputMask::WebDAV => &Id::HostBridge(AuthFormId::Password),
                     },
@@ -280,6 +284,7 @@ impl AuthActivity {
                     #[cfg(win)]
                     InputMask::Smb => Id::HostBridge(AuthFormId::RemoteDirectory),
                     InputMask::AwsS3 => unreachable!("this shouldn't happen (password on s3)"),
+                    InputMask::Gcs => unreachable!("this shouldn't happen (password on gcs)"),
                     InputMask::Kube => unreachable!("this shouldn't happen (password on kube)"),
                     InputMask::WebDAV => Id::HostBridge(AuthFormId::RemoteDirectory),
                 };
@@ -294,6 +299,7 @@ impl AuthActivity {
                     InputMask::Smb => Id::HostBridge(AuthFormId::SmbShare),
                     InputMask::Localhost
                     | InputMask::AwsS3
+                    | InputMask::Gcs
                     | InputMask::Kube
                     | InputMask::WebDAV => {
                         unreachable!("this shouldn't happen (port on s3/kube/webdav)")
@@ -310,6 +316,7 @@ impl AuthActivity {
                     InputMask::Generic => Id::HostBridge(AuthFormId::Address),
                     InputMask::Smb => Id::HostBridge(AuthFormId::Address),
                     InputMask::AwsS3 => Id::HostBridge(AuthFormId::S3Bucket),
+                    InputMask::Gcs => Id::HostBridge(AuthFormId::GcsBucket),
                     InputMask::Kube => Id::HostBridge(AuthFormId::KubeNamespace),
                     InputMask::WebDAV => Id::HostBridge(AuthFormId::WebDAVUri),
                 };
@@ -331,6 +338,7 @@ impl AuthActivity {
                     InputMask::Smb => Id::HostBridge(AuthFormId::Password),
                     InputMask::Kube => Id::HostBridge(AuthFormId::KubeClientKey),
                     InputMask::AwsS3 => Id::HostBridge(AuthFormId::S3NewPathStyle),
+                    InputMask::Gcs => Id::HostBridge(AuthFormId::GcsServiceAccountKey),
                     InputMask::WebDAV => Id::HostBridge(AuthFormId::Password),
                 };
                 self.activate_component(id);
@@ -388,6 +396,24 @@ impl AuthActivity {
             }
             UiAuthFormMsg::S3NewPathStyleBlurUp => {
                 self.activate_component(Id::HostBridge(AuthFormId::S3SessionToken))
+            }
+            UiAuthFormMsg::GcsBucketBlurDown => {
+                self.activate_component(Id::HostBridge(AuthFormId::GcsEndpoint))
+            }
+            UiAuthFormMsg::GcsBucketBlurUp => {
+                self.activate_component(Id::HostBridge(AuthFormId::Protocol))
+            }
+            UiAuthFormMsg::GcsEndpointBlurDown => {
+                self.activate_component(Id::HostBridge(AuthFormId::GcsServiceAccountKey))
+            }
+            UiAuthFormMsg::GcsEndpointBlurUp => {
+                self.activate_component(Id::HostBridge(AuthFormId::GcsBucket))
+            }
+            UiAuthFormMsg::GcsServiceAccountKeyBlurDown => {
+                self.activate_component(Id::HostBridge(AuthFormId::RemoteDirectory))
+            }
+            UiAuthFormMsg::GcsServiceAccountKeyBlurUp => {
+                self.activate_component(Id::HostBridge(AuthFormId::GcsEndpoint))
             }
             UiAuthFormMsg::KubeClientCertBlurDown => {
                 self.activate_component(Id::HostBridge(AuthFormId::KubeClientKey))
@@ -448,6 +474,7 @@ impl AuthActivity {
                     InputMask::Smb => Id::HostBridge(AuthFormId::SmbShare),
                     InputMask::Kube => unreachable!("this shouldn't happen (username on kube)"),
                     InputMask::AwsS3 => unreachable!("this shouldn't happen (username on s3)"),
+                    InputMask::Gcs => unreachable!("this shouldn't happen (username on gcs)"),
                     InputMask::WebDAV => Id::HostBridge(AuthFormId::WebDAVUri),
                 };
                 self.activate_component(id);
@@ -496,6 +523,7 @@ impl AuthActivity {
                     #[cfg(win)]
                     InputMask::Smb => Id::Remote(AuthFormId::RemoteDirectory),
                     InputMask::AwsS3 => unreachable!("this shouldn't happen (password on s3)"),
+                    InputMask::Gcs => unreachable!("this shouldn't happen (password on gcs)"),
                     InputMask::Kube => unreachable!("this shouldn't happen (password on kube)"),
                     InputMask::WebDAV => Id::Remote(AuthFormId::RemoteDirectory),
                 };
@@ -510,6 +538,7 @@ impl AuthActivity {
                     InputMask::Smb => Id::Remote(AuthFormId::SmbShare),
                     InputMask::Localhost
                     | InputMask::AwsS3
+                    | InputMask::Gcs
                     | InputMask::Kube
                     | InputMask::WebDAV => {
                         unreachable!("this shouldn't happen (port on s3/kube/webdav)")
@@ -526,6 +555,7 @@ impl AuthActivity {
                     InputMask::Generic => Id::Remote(AuthFormId::Address),
                     InputMask::Smb => Id::Remote(AuthFormId::Address),
                     InputMask::AwsS3 => Id::Remote(AuthFormId::S3Bucket),
+                    InputMask::Gcs => Id::Remote(AuthFormId::GcsBucket),
                     InputMask::Kube => Id::Remote(AuthFormId::KubeNamespace),
                     InputMask::WebDAV => Id::Remote(AuthFormId::WebDAVUri),
                 };
@@ -547,6 +577,7 @@ impl AuthActivity {
                     InputMask::Smb => Id::Remote(AuthFormId::Password),
                     InputMask::Kube => Id::Remote(AuthFormId::KubeClientKey),
                     InputMask::AwsS3 => Id::Remote(AuthFormId::S3NewPathStyle),
+                    InputMask::Gcs => Id::Remote(AuthFormId::GcsServiceAccountKey),
                     InputMask::WebDAV => Id::Remote(AuthFormId::Password),
                 };
                 self.activate_component(id);
@@ -604,6 +635,24 @@ impl AuthActivity {
             }
             UiAuthFormMsg::S3NewPathStyleBlurUp => {
                 self.activate_component(Id::Remote(AuthFormId::S3SessionToken))
+            }
+            UiAuthFormMsg::GcsBucketBlurDown => {
+                self.activate_component(Id::Remote(AuthFormId::GcsEndpoint))
+            }
+            UiAuthFormMsg::GcsBucketBlurUp => {
+                self.activate_component(Id::Remote(AuthFormId::Protocol))
+            }
+            UiAuthFormMsg::GcsEndpointBlurDown => {
+                self.activate_component(Id::Remote(AuthFormId::GcsServiceAccountKey))
+            }
+            UiAuthFormMsg::GcsEndpointBlurUp => {
+                self.activate_component(Id::Remote(AuthFormId::GcsBucket))
+            }
+            UiAuthFormMsg::GcsServiceAccountKeyBlurDown => {
+                self.activate_component(Id::Remote(AuthFormId::RemoteDirectory))
+            }
+            UiAuthFormMsg::GcsServiceAccountKeyBlurUp => {
+                self.activate_component(Id::Remote(AuthFormId::GcsEndpoint))
             }
             UiAuthFormMsg::KubeClientCertBlurDown => {
                 self.activate_component(Id::Remote(AuthFormId::KubeClientKey))
@@ -664,6 +713,7 @@ impl AuthActivity {
                     InputMask::Smb => Id::Remote(AuthFormId::SmbShare),
                     InputMask::Kube => unreachable!("this shouldn't happen (username on kube)"),
                     InputMask::AwsS3 => unreachable!("this shouldn't happen (username on s3)"),
+                    InputMask::Gcs => unreachable!("this shouldn't happen (username on gcs)"),
                     InputMask::WebDAV => Id::Remote(AuthFormId::WebDAVUri),
                 };
                 self.activate_component(id);

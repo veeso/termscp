@@ -10,7 +10,8 @@ keywords = ["terminal", "ftp", "scp", "sftp", "tui"]
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/veeso/termscp"
-description = "termscp is a feature rich terminal file transfer and explorer with support for SCP/SFTP/FTP/Kube/S3/WebDAV"
+rust-version = "1.98.0"
+description = "termscp is a feature rich terminal file transfer and explorer with support for SCP/SFTP/FTP/Kube/S3/GCS/SMB/WebDAV"
 
 [package.metadata.rpm]
 package = "termscp"
@@ -59,6 +60,7 @@ rand = "0.10"
 regex = "1"
 remotefs = "0.3"
 remotefs-aws-s3 = "0.4"
+remotefs-gcs = "0.1"
 remotefs-kube = "0.4"
 remotefs-smb = { version = "0.3", optional = true }
 remotefs-ssh = { version = "0.8", default-features = false, features = ["russh"] }
@@ -67,6 +69,7 @@ rpassword = "7"
 self_update = { version = "0.42", default-features = false, features = ["archive-tar", "archive-zip", "compression-flate2", "compression-zip-deflate", "rustls"] }
 semver = "1"
 serde = { version = "1", features = ["derive"] }
+serde_json = "1"
 shellexpand = "3"
 simplelog = "0.12"
 ssh2-config = "0.7"

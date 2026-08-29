@@ -31,9 +31,10 @@ const HOST_BRIDGE_RADIO_PROTOCOL_SCP: usize = 2;
 const HOST_BRIDGE_RADIO_PROTOCOL_FTP: usize = 3;
 const HOST_BRIDGE_RADIO_PROTOCOL_FTPS: usize = 4;
 const HOST_BRIDGE_RADIO_PROTOCOL_S3: usize = 5;
-const HOST_BRIDGE_RADIO_PROTOCOL_KUBE: usize = 6;
-const HOST_BRIDGE_RADIO_PROTOCOL_WEBDAV: usize = 7;
-const HOST_BRIDGE_RADIO_PROTOCOL_SMB: usize = 8; // Keep as last
+const HOST_BRIDGE_RADIO_PROTOCOL_GCS: usize = 6;
+const HOST_BRIDGE_RADIO_PROTOCOL_KUBE: usize = 7;
+const HOST_BRIDGE_RADIO_PROTOCOL_WEBDAV: usize = 8;
+const HOST_BRIDGE_RADIO_PROTOCOL_SMB: usize = 9; // Keep as last
 
 // remote protocol radio
 const REMOTE_RADIO_PROTOCOL_SFTP: usize = 0;
@@ -41,9 +42,10 @@ const REMOTE_RADIO_PROTOCOL_SCP: usize = 1;
 const REMOTE_RADIO_PROTOCOL_FTP: usize = 2;
 const REMOTE_RADIO_PROTOCOL_FTPS: usize = 3;
 const REMOTE_RADIO_PROTOCOL_S3: usize = 4;
-const REMOTE_RADIO_PROTOCOL_KUBE: usize = 5;
-const REMOTE_RADIO_PROTOCOL_WEBDAV: usize = 6;
-const REMOTE_RADIO_PROTOCOL_SMB: usize = 7; // Keep as last
+const REMOTE_RADIO_PROTOCOL_GCS: usize = 5;
+const REMOTE_RADIO_PROTOCOL_KUBE: usize = 6;
+const REMOTE_RADIO_PROTOCOL_WEBDAV: usize = 7;
+const REMOTE_RADIO_PROTOCOL_SMB: usize = 8; // Keep as last
 
 // -- components
 #[derive(Debug, Eq, PartialEq, Clone, Hash)]
@@ -74,6 +76,9 @@ pub enum Id {
 #[derive(Debug, Eq, PartialEq, Clone, Hash)]
 pub enum AuthFormId {
     Address,
+    GcsBucket,
+    GcsEndpoint,
+    GcsServiceAccountKey,
     KubeNamespace,
     KubeClusterUrl,
     KubeUsername,
@@ -153,6 +158,12 @@ pub enum UiAuthFormMsg {
     AddressBlurDown,
     AddressBlurUp,
     ChangeFormTab,
+    GcsBucketBlurDown,
+    GcsBucketBlurUp,
+    GcsEndpointBlurDown,
+    GcsEndpointBlurUp,
+    GcsServiceAccountKeyBlurDown,
+    GcsServiceAccountKeyBlurUp,
     KubeNamespaceBlurDown,
     KubeNamespaceBlurUp,
     KubeClusterUrlBlurDown,
@@ -209,6 +220,7 @@ pub enum UiAuthFormMsg {
 enum InputMask {
     Generic,
     AwsS3,
+    Gcs,
     Kube,
     Localhost,
     Smb,
@@ -315,6 +327,7 @@ impl AuthActivity {
     fn file_transfer_protocol_input_mask(protocol: FileTransferProtocol) -> InputMask {
         match protocol {
             FileTransferProtocol::AwsS3 => InputMask::AwsS3,
+            FileTransferProtocol::GoogleCloudStorage => InputMask::Gcs,
             FileTransferProtocol::Ftp(_)
             | FileTransferProtocol::Scp
             | FileTransferProtocol::Sftp => InputMask::Generic,

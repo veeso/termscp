@@ -3,6 +3,7 @@
 //! file transfer parameters
 
 mod aws_s3;
+mod google_cloud_storage;
 mod kube;
 mod smb;
 mod webdav;
@@ -10,6 +11,7 @@ mod webdav;
 use std::path::{Path, PathBuf};
 
 pub use self::aws_s3::AwsS3Params;
+pub use self::google_cloud_storage::{DEFAULT_GCS_ENDPOINT, GoogleCloudStorageParams};
 pub use self::kube::KubeProtocolParams;
 pub use self::smb::SmbParams;
 pub use self::webdav::WebDAVProtocolParams;
@@ -66,6 +68,7 @@ impl FileTransferParams {
 pub enum ProtocolParams {
     Generic(GenericProtocolParams),
     AwsS3(AwsS3Params),
+    GoogleCloudStorage(GoogleCloudStorageParams),
     Kube(KubeProtocolParams),
     Smb(SmbParams),
     WebDAV(WebDAVProtocolParams),
@@ -76,6 +79,7 @@ impl ProtocolParams {
         match self {
             ProtocolParams::AwsS3(params) => params.password_missing(),
             ProtocolParams::Generic(params) => params.password_missing(),
+            ProtocolParams::GoogleCloudStorage(params) => params.password_missing(),
             ProtocolParams::Kube(params) => params.password_missing(),
             ProtocolParams::Smb(params) => params.password_missing(),
             ProtocolParams::WebDAV(params) => params.password_missing(),
@@ -87,6 +91,7 @@ impl ProtocolParams {
         match self {
             ProtocolParams::AwsS3(params) => params.set_default_secret(secret),
             ProtocolParams::Generic(params) => params.set_default_secret(secret),
+            ProtocolParams::GoogleCloudStorage(params) => params.set_default_secret(secret),
             ProtocolParams::Kube(params) => params.set_default_secret(secret),
             ProtocolParams::Smb(params) => params.set_default_secret(secret),
             ProtocolParams::WebDAV(params) => params.set_default_secret(secret),
@@ -97,6 +102,7 @@ impl ProtocolParams {
         match self {
             ProtocolParams::AwsS3(params) => params.bucket_name.clone(),
             ProtocolParams::Generic(params) => params.address.clone(),
+            ProtocolParams::GoogleCloudStorage(params) => params.bucket_name.clone(),
             ProtocolParams::Kube(params) => params
                 .namespace
                 .as_ref()
@@ -189,6 +195,15 @@ impl ProtocolParams {
     pub fn s3_params(&self) -> Option<&AwsS3Params> {
         match self {
             ProtocolParams::AwsS3(params) => Some(params),
+            _ => None,
+        }
+    }
+
+    #[cfg(test)]
+    /// Retrieve Google Cloud Storage parameters if any.
+    pub fn gcs_params(&self) -> Option<&GoogleCloudStorageParams> {
+        match self {
+            ProtocolParams::GoogleCloudStorage(params) => Some(params),
             _ => None,
         }
     }

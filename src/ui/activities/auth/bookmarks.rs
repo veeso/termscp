@@ -6,8 +6,8 @@
 use super::{AuthActivity, FileTransferParams, FormTab, HostBridgeProtocol};
 use crate::filetransfer::HostBridgeParams;
 use crate::filetransfer::params::{
-    AwsS3Params, GenericProtocolParams, KubeProtocolParams, ProtocolParams, SmbParams,
-    WebDAVProtocolParams,
+    AwsS3Params, DEFAULT_GCS_ENDPOINT, GenericProtocolParams, GoogleCloudStorageParams,
+    KubeProtocolParams, ProtocolParams, SmbParams, WebDAVProtocolParams,
 };
 
 impl AuthActivity {
@@ -201,6 +201,9 @@ impl AuthActivity {
             ProtocolParams::AwsS3(params) => {
                 self.load_bookmark_s3_into_gui(FormTab::HostBridge, params)
             }
+            ProtocolParams::GoogleCloudStorage(params) => {
+                self.load_bookmark_gcs_into_gui(FormTab::HostBridge, params)
+            }
             ProtocolParams::Kube(params) => {
                 self.load_bookmark_kube_into_gui(FormTab::HostBridge, params)
             }
@@ -240,6 +243,9 @@ impl AuthActivity {
             ProtocolParams::AwsS3(params) => {
                 self.load_bookmark_s3_into_gui(FormTab::Remote, params)
             }
+            ProtocolParams::GoogleCloudStorage(params) => {
+                self.load_bookmark_gcs_into_gui(FormTab::Remote, params)
+            }
             ProtocolParams::Kube(params) => {
                 self.load_bookmark_kube_into_gui(FormTab::Remote, params)
             }
@@ -274,6 +280,22 @@ impl AuthActivity {
         self.mount_s3_security_token(form_tab, params.security_token.as_deref().unwrap_or(""));
         self.mount_s3_session_token(form_tab, params.session_token.as_deref().unwrap_or(""));
         self.mount_s3_new_path_style(form_tab, params.new_path_style);
+    }
+
+    fn load_bookmark_gcs_into_gui(&mut self, form_tab: FormTab, params: GoogleCloudStorageParams) {
+        self.mount_gcs_bucket(form_tab, &params.bucket_name);
+        self.mount_gcs_endpoint(
+            form_tab,
+            if params.endpoint.is_empty() {
+                DEFAULT_GCS_ENDPOINT
+            } else {
+                &params.endpoint
+            },
+        );
+        self.mount_gcs_service_account_key(
+            form_tab,
+            params.service_account_key.as_deref().unwrap_or(""),
+        );
     }
 
     fn load_bookmark_kube_into_gui(&mut self, form_tab: FormTab, params: KubeProtocolParams) {

@@ -17,6 +17,7 @@ impl AuthActivity {
             FileTransferProtocol::Sftp | FileTransferProtocol::Scp => 22,
             FileTransferProtocol::Ftp(_) => 21,
             FileTransferProtocol::AwsS3 => 22, // Doesn't matter, since not used
+            FileTransferProtocol::GoogleCloudStorage => 22, // Doesn't matter, since not used
             FileTransferProtocol::Kube => 22,  // Doesn't matter, since not used
             FileTransferProtocol::Smb => 445,
             FileTransferProtocol::WebDAV => 80, // Doesn't matter, since not used
@@ -45,6 +46,9 @@ impl AuthActivity {
             HostBridgeProtocol::Remote(remote) => {
                 let transfer_params = match remote {
                     FileTransferProtocol::AwsS3 => self.collect_s3_host_params(FormTab::HostBridge),
+                    FileTransferProtocol::GoogleCloudStorage => {
+                        self.collect_gcs_host_params(FormTab::HostBridge)
+                    }
                     FileTransferProtocol::Kube => {
                         self.collect_kube_host_params(FormTab::HostBridge)
                     }
@@ -71,6 +75,9 @@ impl AuthActivity {
     pub(super) fn collect_remote_host_params(&self) -> Result<FileTransferParams, &'static str> {
         match self.remote_protocol {
             FileTransferProtocol::AwsS3 => self.collect_s3_host_params(FormTab::Remote),
+            FileTransferProtocol::GoogleCloudStorage => {
+                self.collect_gcs_host_params(FormTab::Remote)
+            }
             FileTransferProtocol::Kube => self.collect_kube_host_params(FormTab::Remote),
             FileTransferProtocol::Smb => self.collect_smb_host_params(FormTab::Remote),
             FileTransferProtocol::Ftp(_)
@@ -131,6 +138,26 @@ impl AuthActivity {
         Ok(FileTransferParams {
             protocol: FileTransferProtocol::AwsS3,
             params: ProtocolParams::AwsS3(params),
+            local_path: self.get_input_local_directory(form_tab),
+            remote_path: self.get_input_remote_directory(form_tab),
+        })
+    }
+
+    /// Get input values from fields or return an error if fields are invalid to work as GCS.
+    pub(super) fn collect_gcs_host_params(
+        &self,
+        form_tab: FormTab,
+    ) -> Result<FileTransferParams, &'static str> {
+        let params = self.get_gcs_params_input(form_tab);
+        if params.bucket_name.is_empty() {
+            return Err("Invalid bucket");
+        }
+        if params.endpoint.is_empty() {
+            return Err("Invalid endpoint");
+        }
+        Ok(FileTransferParams {
+            protocol: FileTransferProtocol::GoogleCloudStorage,
+            params: ProtocolParams::GoogleCloudStorage(params),
             local_path: self.get_input_local_directory(form_tab),
             remote_path: self.get_input_remote_directory(form_tab),
         })

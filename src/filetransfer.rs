@@ -17,6 +17,7 @@ pub use remotefs_builder::RemoteFsBuilder;
 pub enum FileTransferProtocol {
     AwsS3,
     Ftp(bool), // Bool is for secure (true => ftps)
+    GoogleCloudStorage,
     Kube,
     Scp,
     Sftp,
@@ -37,6 +38,7 @@ impl std::fmt::Display for FileTransferProtocol {
                     true => "FTPS",
                     false => "FTP",
                 },
+                FileTransferProtocol::GoogleCloudStorage => "GCS",
                 FileTransferProtocol::Kube => "KUBE",
                 FileTransferProtocol::Scp => "SCP",
                 FileTransferProtocol::Sftp => "SFTP",
@@ -53,6 +55,7 @@ impl std::str::FromStr for FileTransferProtocol {
         match s.to_ascii_uppercase().as_str() {
             "FTP" => Ok(FileTransferProtocol::Ftp(false)),
             "FTPS" => Ok(FileTransferProtocol::Ftp(true)),
+            "GCS" => Ok(FileTransferProtocol::GoogleCloudStorage),
             "KUBE" => Ok(FileTransferProtocol::Kube),
             "S3" => Ok(FileTransferProtocol::AwsS3),
             "SCP" => Ok(FileTransferProtocol::Scp),
@@ -143,6 +146,14 @@ mod tests {
             FileTransferProtocol::from_str("s3").ok().unwrap(),
             FileTransferProtocol::AwsS3
         );
+        assert_eq!(
+            FileTransferProtocol::from_str("GCS").ok().unwrap(),
+            FileTransferProtocol::GoogleCloudStorage
+        );
+        assert_eq!(
+            FileTransferProtocol::from_str("gcs").ok().unwrap(),
+            FileTransferProtocol::GoogleCloudStorage
+        );
         // Error
         assert!(FileTransferProtocol::from_str("dummy").is_err());
         // To String
@@ -161,6 +172,10 @@ mod tests {
         assert_eq!(FileTransferProtocol::Scp.to_string(), String::from("SCP"));
         assert_eq!(FileTransferProtocol::Sftp.to_string(), String::from("SFTP"));
         assert_eq!(FileTransferProtocol::AwsS3.to_string(), String::from("S3"));
+        assert_eq!(
+            FileTransferProtocol::GoogleCloudStorage.to_string(),
+            String::from("GCS")
+        );
         assert_eq!(FileTransferProtocol::Smb.to_string(), String::from("SMB"));
         assert_eq!(
             FileTransferProtocol::WebDAV.to_string(),

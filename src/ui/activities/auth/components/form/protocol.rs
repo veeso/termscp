@@ -28,9 +28,12 @@ impl RemoteProtocolRadio {
                         .modifiers(BorderType::Rounded),
                 )
                 .choices(if cfg!(smb) {
-                    vec!["SFTP", "SCP", "FTP", "FTPS", "S3", "Kube", "WebDAV", "SMB"].into_iter()
+                    vec![
+                        "SFTP", "SCP", "FTP", "FTPS", "S3", "GCS", "Kube", "WebDAV", "SMB",
+                    ]
+                    .into_iter()
                 } else {
-                    vec!["SFTP", "SCP", "FTP", "FTPS", "S3", "Kube", "WebDAV"].into_iter()
+                    vec!["SFTP", "SCP", "FTP", "FTPS", "S3", "GCS", "Kube", "WebDAV"].into_iter()
                 })
                 .rewind(true)
                 .title(Title::from("Protocol").alignment(HorizontalAlignment::Left))
@@ -44,6 +47,7 @@ impl RemoteProtocolRadio {
             REMOTE_RADIO_PROTOCOL_FTP => FileTransferProtocol::Ftp(false),
             REMOTE_RADIO_PROTOCOL_FTPS => FileTransferProtocol::Ftp(true),
             REMOTE_RADIO_PROTOCOL_S3 => FileTransferProtocol::AwsS3,
+            REMOTE_RADIO_PROTOCOL_GCS => FileTransferProtocol::GoogleCloudStorage,
             REMOTE_RADIO_PROTOCOL_SMB => FileTransferProtocol::Smb,
             REMOTE_RADIO_PROTOCOL_KUBE => FileTransferProtocol::Kube,
             REMOTE_RADIO_PROTOCOL_WEBDAV => FileTransferProtocol::WebDAV,
@@ -58,6 +62,7 @@ impl RemoteProtocolRadio {
             FileTransferProtocol::Ftp(false) => REMOTE_RADIO_PROTOCOL_FTP,
             FileTransferProtocol::Ftp(true) => REMOTE_RADIO_PROTOCOL_FTPS,
             FileTransferProtocol::AwsS3 => REMOTE_RADIO_PROTOCOL_S3,
+            FileTransferProtocol::GoogleCloudStorage => REMOTE_RADIO_PROTOCOL_GCS,
             FileTransferProtocol::Kube => REMOTE_RADIO_PROTOCOL_KUBE,
             FileTransferProtocol::Smb => REMOTE_RADIO_PROTOCOL_SMB,
             FileTransferProtocol::WebDAV => REMOTE_RADIO_PROTOCOL_WEBDAV,
@@ -128,6 +133,7 @@ impl HostBridgeProtocolRadio {
                         "FTP",
                         "FTPS",
                         "S3",
+                        "GCS",
                         "Kube",
                         "WebDAV",
                         "SMB",
@@ -141,6 +147,7 @@ impl HostBridgeProtocolRadio {
                         "FTP",
                         "FTPS",
                         "S3",
+                        "GCS",
                         "Kube",
                         "WebDAV",
                     ]
@@ -168,6 +175,9 @@ impl HostBridgeProtocolRadio {
             HostBridgeProtocol::Remote(FileTransferProtocol::AwsS3) => {
                 HOST_BRIDGE_RADIO_PROTOCOL_S3
             }
+            HostBridgeProtocol::Remote(FileTransferProtocol::GoogleCloudStorage) => {
+                HOST_BRIDGE_RADIO_PROTOCOL_GCS
+            }
             HostBridgeProtocol::Remote(FileTransferProtocol::Smb) => HOST_BRIDGE_RADIO_PROTOCOL_SMB,
             HostBridgeProtocol::Remote(FileTransferProtocol::Kube) => {
                 HOST_BRIDGE_RADIO_PROTOCOL_KUBE
@@ -193,6 +203,9 @@ impl HostBridgeProtocolRadio {
             }
             HOST_BRIDGE_RADIO_PROTOCOL_S3 => {
                 HostBridgeProtocol::Remote(FileTransferProtocol::AwsS3)
+            }
+            HOST_BRIDGE_RADIO_PROTOCOL_GCS => {
+                HostBridgeProtocol::Remote(FileTransferProtocol::GoogleCloudStorage)
             }
             HOST_BRIDGE_RADIO_PROTOCOL_SMB => HostBridgeProtocol::Remote(FileTransferProtocol::Smb),
             HOST_BRIDGE_RADIO_PROTOCOL_KUBE => {
