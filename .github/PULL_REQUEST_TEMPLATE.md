@@ -1,40 +1,15 @@
-# ISSUE _NUMBER_ - PULL_REQUEST_TITLE
+# Description
 
-Fixes # (issue)
-
-## Description
-
-Please include a summary of the change and which issue is fixed. Please also include relevant motivation and context. List any dependencies that are required for this change.
-
-List here your changes
-
-- I made this...
-- I made also that...
-
-## Type of change
-
-Please select relevant options.
-
-- [ ] Bug fix (non-breaking change which fixes an issue)
-- [ ] New feature (non-breaking change which adds functionality)
-- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
-- [ ] This change requires a documentation update
+<!--
+Provide a brief description of the changes you made in this pull request. If your changes are related to a specific issue, please mention the issue number (e.g., "Fixes #123").
+-->
 
 ## Checklist
 
-- [ ] My code follows the contribution guidelines of this project
-- [ ] I have performed a self-review of my own code
-- [ ] I have commented my code, particularly in hard-to-understand areas
-- [ ] My changes generate no new warnings
-- [ ] I formatted the code with `cargo fmt`
-- [ ] I checked my code using `cargo clippy` and reports no warnings
-- [ ] I have added tests that prove my fix is effective or that my feature works
-- [ ] I have introduced no new _C-bindings_
-- [ ] The changes I've made are Windows, MacOS, UNIX, Linux compatible (or I've handled them using `cfg target_os`)
-- [ ] I increased or maintained the code coverage for the project, compared to the previous commit
+- [ ] I have read the [AI Policy](https://github.com/veeso/termscp/blob/main/AI_POLICY.md) and the [contributing guidelines](https://github.com/veeso/termscp/blob/main/CONTRIBUTING.md).
 
-## Acceptance tests
+## AI Disclosure
 
-wait for a _project maintainer_ to fulfill this section...
-
-- [ ] regression test: ...
+<!--
+Describe how you used AI tools in this contribution. If you did not use any AI tools, write "N/A".
+-->
