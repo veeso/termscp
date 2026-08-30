@@ -39,11 +39,6 @@ ignore = [
   # rustls-pemfile is retained by the WebDAV and Kubernetes clients. Both
   # versions are unmaintained but have no reported vulnerability.
   { id = "RUSTSEC-2025-0134", reason = "owner: termscp maintainers; review by 2026-12-31; upgrade WebDAV/Kubernetes clients away from rustls-pemfile" },
-  # The AWS HTTP stack retains rustls 0.21 and rustls-webpki 0.101, which cannot
-  # select the fixed rustls-webpki release.
-  { id = "RUSTSEC-2026-0098", reason = "owner: termscp maintainers; review by 2026-12-31; upgrade AWS HTTP stack to fixed rustls-webpki" },
-  { id = "RUSTSEC-2026-0099", reason = "owner: termscp maintainers; review by 2026-12-31; upgrade AWS HTTP stack to fixed rustls-webpki" },
-  { id = "RUSTSEC-2026-0104", reason = "owner: termscp maintainers; review by 2026-12-31; upgrade AWS HTTP stack to fixed rustls-webpki" },
 ]
 
 [licenses]
