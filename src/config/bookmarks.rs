@@ -3,6 +3,7 @@
 //! `bookmarks` is the module which provides data types and de/serializer for bookmarks
 
 mod aws_s3;
+mod gcs;
 mod kube;
 mod smb;
 
@@ -14,11 +15,12 @@ use serde::de::Error as DeError;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 pub use self::aws_s3::S3Params;
+pub use self::gcs::GcsParams;
 pub use self::kube::KubeParams;
 pub use self::smb::SmbParams;
 use crate::filetransfer::params::{
-    AwsS3Params, GenericProtocolParams, KubeProtocolParams, ProtocolParams,
-    SmbParams as TransferSmbParams, WebDAVProtocolParams,
+    AwsS3Params, GenericProtocolParams, GoogleCloudStorageParams, KubeProtocolParams,
+    ProtocolParams, SmbParams as TransferSmbParams, WebDAVProtocolParams,
 };
 use crate::filetransfer::{FileTransferParams, FileTransferProtocol};
 
@@ -55,6 +57,8 @@ pub struct Bookmark {
     pub kube: Option<KubeParams>,
     /// S3 params; optional. When used other fields are empty for sure
     pub s3: Option<S3Params>,
+    /// Google Cloud Storage params; optional. When used other fields are empty for sure
+    pub gcs: Option<GcsParams>,
     /// SMB params; optional. Extra params required for SMB protocol
     pub smb: Option<SmbParams>,
 }
@@ -78,6 +82,7 @@ impl From<FileTransferParams> for Bookmark {
                 local_path,
                 kube: None,
                 s3: None,
+                gcs: None,
                 smb: None,
             },
             ProtocolParams::AwsS3(params) => Self {
@@ -90,6 +95,7 @@ impl From<FileTransferParams> for Bookmark {
                 local_path,
                 kube: None,
                 s3: Some(S3Params::from(params)),
+                gcs: None,
                 smb: None,
             },
             ProtocolParams::Kube(params) => Self {
@@ -102,6 +108,7 @@ impl From<FileTransferParams> for Bookmark {
                 local_path,
                 kube: Some(KubeParams::from(params)),
                 s3: None,
+                gcs: None,
                 smb: None,
             },
             ProtocolParams::Smb(params) => Self {
@@ -118,6 +125,7 @@ impl From<FileTransferParams> for Bookmark {
                 local_path,
                 kube: None,
                 s3: None,
+                gcs: None,
             },
             ProtocolParams::WebDAV(parms) => Self {
                 protocol,
@@ -129,6 +137,20 @@ impl From<FileTransferParams> for Bookmark {
                 local_path,
                 kube: None,
                 s3: None,
+                gcs: None,
+                smb: None,
+            },
+            ProtocolParams::GoogleCloudStorage(params) => Self {
+                protocol,
+                address: None,
+                port: None,
+                username: None,
+                password: None,
+                remote_path,
+                local_path,
+                kube: None,
+                s3: None,
+                gcs: Some(GcsParams::from(params)),
                 smb: None,
             },
         }
@@ -143,6 +165,14 @@ impl From<Bookmark> for FileTransferParams {
                 let params = bookmark.s3.unwrap_or_default();
                 let params = AwsS3Params::from(params);
                 Self::new(FileTransferProtocol::AwsS3, ProtocolParams::AwsS3(params))
+            }
+            FileTransferProtocol::GoogleCloudStorage => {
+                let params = bookmark.gcs.unwrap_or_default();
+                let params = GoogleCloudStorageParams::from(params);
+                Self::new(
+                    FileTransferProtocol::GoogleCloudStorage,
+                    ProtocolParams::GoogleCloudStorage(params),
+                )
             }
             FileTransferProtocol::Ftp(_)
             | FileTransferProtocol::Scp
@@ -224,6 +254,7 @@ mod tests {
     use pretty_assertions::assert_eq;
 
     use super::*;
+    use crate::filetransfer::params::DEFAULT_GCS_ENDPOINT;
 
     #[test]
     fn test_bookmarks_default() {
@@ -244,6 +275,7 @@ mod tests {
             local_path: Some(PathBuf::from("/usr")),
             kube: None,
             s3: None,
+            gcs: None,
             smb: None,
         };
         let recent: Bookmark = Bookmark {
@@ -256,6 +288,7 @@ mod tests {
             local_path: Some(PathBuf::from("/usr")),
             kube: None,
             s3: None,
+            gcs: None,
             smb: None,
         };
         let mut bookmarks: HashMap<String, Bookmark> = HashMap::with_capacity(1);
@@ -349,6 +382,37 @@ mod tests {
     }
 
     #[test]
+    fn should_convert_gcs_params_to_bookmark_and_back() {
+        let transfer = FileTransferParams::new(
+            FileTransferProtocol::GoogleCloudStorage,
+            ProtocolParams::GoogleCloudStorage(
+                GoogleCloudStorageParams::new("archive-bucket")
+                    .service_account_key(Some("/keys/archive.json")),
+            ),
+        )
+        .remote_path(Some("/backups"));
+
+        let bookmark = Bookmark::from(transfer);
+        let gcs = bookmark.gcs.as_ref().unwrap();
+        assert_eq!(gcs.bucket, "archive-bucket");
+        assert_eq!(gcs.endpoint, DEFAULT_GCS_ENDPOINT);
+        assert_eq!(
+            gcs.service_account_key.as_deref(),
+            Some("/keys/archive.json")
+        );
+        assert_eq!(bookmark.password, None);
+
+        let restored = FileTransferParams::from(bookmark);
+        let params = restored.params.gcs_params().unwrap();
+        assert_eq!(params.bucket_name, "archive-bucket");
+        assert_eq!(params.endpoint, DEFAULT_GCS_ENDPOINT);
+        assert_eq!(
+            params.service_account_key.as_deref(),
+            Some("/keys/archive.json")
+        );
+    }
+
+    #[test]
     fn bookmark_from_kube_ftparams() {
         let params = ProtocolParams::Kube(KubeProtocolParams {
             namespace: Some("default".to_string()),
@@ -388,6 +452,7 @@ mod tests {
             local_path: Some(PathBuf::from("/usr")),
             kube: None,
             s3: None,
+            gcs: None,
             smb: None,
         };
         let params = FileTransferParams::from(bookmark);
@@ -419,6 +484,7 @@ mod tests {
             local_path: Some(PathBuf::from("/usr")),
             kube: None,
             s3: None,
+            gcs: None,
             smb: None,
         };
         let params = FileTransferParams::from(bookmark);
@@ -457,6 +523,7 @@ mod tests {
                 secret_access_key: Some(String::from("pluto")),
                 new_path_style: Some(true),
             }),
+            gcs: None,
             smb: None,
         };
         let params = FileTransferParams::from(bookmark);
@@ -497,6 +564,7 @@ mod tests {
                 client_key: Some(String::from("key")),
             }),
             s3: None,
+            gcs: None,
             smb: None,
         };
         let params = FileTransferParams::from(bookmark);
@@ -533,6 +601,7 @@ mod tests {
             local_path: Some(PathBuf::from("/usr")),
             kube: None,
             s3: None,
+            gcs: None,
             smb: Some(SmbParams {
                 share: "test".to_string(),
                 workgroup: Some("testone".to_string()),
@@ -571,6 +640,7 @@ mod tests {
             local_path: Some(PathBuf::from("/usr")),
             s3: None,
             kube: None,
+            gcs: None,
             smb: Some(SmbParams {
                 share: "test".to_string(),
                 workgroup: None,

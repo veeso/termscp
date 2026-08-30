@@ -35,7 +35,7 @@
 
 ## About termscp 🖥
 
-Termscp is a feature rich terminal file transfer and explorer, with support for SCP/SFTP/FTP/Kube/S3/WebDAV. So basically is a terminal utility with an TUI to connect to a remote server to retrieve and upload files and to interact with the local file system. It is **Linux**, **MacOS**, **FreeBSD**, **NetBSD** and **Windows** compatible.
+Termscp is a feature rich terminal file transfer and explorer, with support for SCP/SFTP/FTP/Kube/S3/Google Cloud Storage (GCS)/WebDAV. So basically is a terminal utility with an TUI to connect to a remote server to retrieve and upload files and to interact with the local file system. It is **Linux**, **MacOS**, **FreeBSD**, **NetBSD** and **Windows** compatible.
 
 ![Explorer](assets/images/explorer.gif)
 
@@ -49,6 +49,7 @@ Termscp is a feature rich terminal file transfer and explorer, with support for 
   - **FTP** and **FTPS**
   - **Kube**
   - **S3**
+  - **Google Cloud Storage (GCS)**
   - **SMB**
   - **WebDAV**
 - 🖥 Explore and operate on the remote and on the local machine file system with a handy UI

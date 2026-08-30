@@ -11,6 +11,7 @@ use super::{
     AuthActivity, AuthFormId, Context, FileTransferProtocol, FormTab, HostBridgeProtocol, Id,
     InputMask, components,
 };
+use crate::filetransfer::params::DEFAULT_GCS_ENDPOINT;
 use crate::utils::ui::{Popup, Size};
 
 #[path = "view/mounting.rs"]
@@ -52,6 +53,9 @@ impl AuthActivity {
         self.mount_port(FormTab::HostBridge, 22);
         self.mount_username(FormTab::HostBridge, "");
         self.mount_password(FormTab::HostBridge, "");
+        self.mount_gcs_bucket(FormTab::HostBridge, "");
+        self.mount_gcs_endpoint(FormTab::HostBridge, DEFAULT_GCS_ENDPOINT);
+        self.mount_gcs_service_account_key(FormTab::HostBridge, "");
         self.mount_s3_bucket(FormTab::HostBridge, "");
         self.mount_s3_profile(FormTab::HostBridge, "");
         self.mount_s3_region(FormTab::HostBridge, "");
@@ -72,6 +76,7 @@ impl AuthActivity {
         self.mount_webdav_uri(FormTab::HostBridge, "");
 
         let remote_default_protocol = self.context().config().get_default_protocol();
+        self.set_remote_protocol(remote_default_protocol);
         self.mount_remote_protocol(remote_default_protocol);
         self.mount_remote_directory(FormTab::Remote, "");
         self.mount_local_directory(FormTab::Remote, "");
@@ -82,6 +87,9 @@ impl AuthActivity {
         );
         self.mount_username(FormTab::Remote, "");
         self.mount_password(FormTab::Remote, "");
+        self.mount_gcs_bucket(FormTab::Remote, "");
+        self.mount_gcs_endpoint(FormTab::Remote, DEFAULT_GCS_ENDPOINT);
+        self.mount_gcs_service_account_key(FormTab::Remote, "");
         self.mount_s3_bucket(FormTab::Remote, "");
         self.mount_s3_profile(FormTab::Remote, "");
         self.mount_s3_region(FormTab::Remote, "");
@@ -264,6 +272,7 @@ impl AuthActivity {
             .split(protocol_and_mask_chunks[1]);
         match self.host_bridge_input_mask() {
             InputMask::AwsS3 => self.render_view_ids(f, input_mask, self.get_host_bridge_s3_view()),
+            InputMask::Gcs => self.render_view_ids(f, input_mask, self.get_host_bridge_gcs_view()),
             InputMask::Generic => {
                 self.render_view_ids(f, input_mask, self.get_host_bridge_generic_params_view())
             }
@@ -311,6 +320,7 @@ impl AuthActivity {
             .split(protocol_and_mask_chunks[1]);
         match self.remote_input_mask() {
             InputMask::AwsS3 => self.render_view_ids(f, input_mask, self.get_remote_s3_view()),
+            InputMask::Gcs => self.render_view_ids(f, input_mask, self.get_remote_gcs_view()),
             InputMask::Generic => {
                 self.render_view_ids(f, input_mask, self.get_remote_generic_params_view())
             }

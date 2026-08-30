@@ -260,7 +260,7 @@ jobs:
           BASE="https://github.com/veeso/termscp/releases/latest/download"
           cat > tap/Formula/termscp.rb <<EOF
           class Termscp < Formula
-            desc "A feature rich terminal file transfer and explorer with support for SCP/SFTP/FTP/S3/Kube/SMB/WebDAV"
+            desc "A feature rich terminal file transfer and explorer with support for SCP/SFTP/FTP/S3/GCS/Kube/SMB/WebDAV"
             homepage "https://termscp.rs/"
             license "MIT"
             version "$VERSION"

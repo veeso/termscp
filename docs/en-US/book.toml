@@ -1,6 +1,6 @@
 [book]
 title = "termscp"
-description = "A feature rich terminal UI file transfer and explorer with support for SCP/SFTP/FTP/Kube/S3/SMB/WebDAV"
+description = "A feature rich terminal UI file transfer and explorer with support for SCP/SFTP/FTP/Kube/S3/GCS/SMB/WebDAV"
 authors = ["Christian Visintin"]
 language = "en"
 src = "."

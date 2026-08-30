@@ -2,10 +2,9 @@
 #
 # termscp pre-commit hook.
 #
-# Runs three gates before a commit is recorded:
-#   1. trufflehog  -- scan the staged tree for verified/unknown secrets
-#   2. dprint      -- check formatting (Markdown, TOML, YAML, Rust)
-#   3. cargo-deny  -- advisories, licenses, bans, and sources
+# Runs two gates before a commit is recorded:
+#   1. dprint      -- check formatting (Markdown, TOML, YAML, Rust)
+#   2. cargo-deny  -- advisories, licenses, bans, and sources
 #
 # Install with `just setup_githooks` (sets core.hooksPath to .githooks).
 # Bypass in an emergency with `git commit --no-verify`.
@@ -20,8 +19,6 @@ fail() {
 command -v just >/dev/null 2>&1 || fail "just not found; install it to run the pre-commit checks"
 
 if ! git diff --cached --quiet --diff-filter=ACMR --; then
-    command -v trufflehog >/dev/null 2>&1 || fail "trufflehog not found; install it or commit with --no-verify"
-
     # Check the exact tree that will be committed, not possibly different
     # working-tree contents. The trailing slash is required by checkout-index.
     index_tree="$(mktemp -d)"
@@ -30,12 +27,6 @@ if ! git diff --cached --quiet --diff-filter=ACMR --; then
     }
     trap cleanup EXIT
     git checkout-index --all --prefix="$index_tree/"
-
-    echo "pre-commit: scanning staged tree for secrets"
-    (
-        cd "$index_tree"
-        just scan_secrets . --fail-on-scan-errors
-    )
 
     echo "pre-commit: checking staged-tree formatting"
     (

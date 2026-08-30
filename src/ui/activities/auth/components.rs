@@ -16,12 +16,12 @@ pub use bookmarks::{
 #[cfg(posix)]
 pub use form::InputSmbWorkgroup;
 pub use form::{
-    HostBridgeProtocolRadio, InputAddress, InputKubeClientCert, InputKubeClientKey,
-    InputKubeClusterUrl, InputKubeNamespace, InputKubeUsername, InputLocalDirectory, InputPassword,
-    InputPort, InputRemoteDirectory, InputS3AccessKey, InputS3Bucket, InputS3Endpoint,
-    InputS3Profile, InputS3Region, InputS3SecretAccessKey, InputS3SecurityToken,
-    InputS3SessionToken, InputSmbShare, InputUsername, InputWebDAVUri, RadioS3NewPathStyle,
-    RemoteProtocolRadio,
+    HostBridgeProtocolRadio, InputAddress, InputGcsBucket, InputGcsEndpoint,
+    InputGcsServiceAccountKey, InputKubeClientCert, InputKubeClientKey, InputKubeClusterUrl,
+    InputKubeNamespace, InputKubeUsername, InputLocalDirectory, InputPassword, InputPort,
+    InputRemoteDirectory, InputS3AccessKey, InputS3Bucket, InputS3Endpoint, InputS3Profile,
+    InputS3Region, InputS3SecretAccessKey, InputS3SecurityToken, InputS3SessionToken,
+    InputSmbShare, InputUsername, InputWebDAVUri, RadioS3NewPathStyle, RemoteProtocolRadio,
 };
 pub use popup::{
     ErrorPopup, InfoPopup, InstallUpdatePopup, Keybindings, QuitPopup, ReleaseNotes, WaitPopup,

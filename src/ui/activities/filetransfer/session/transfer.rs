@@ -32,6 +32,10 @@ enum TransferErrorReason {
     RemoteHostError(HostError),
 }
 
+fn handle_remote_finalize_result(result: Result<(), HostError>) -> Result<(), TransferErrorReason> {
+    result.map_err(TransferErrorReason::RemoteHostError)
+}
+
 /// Represents the entity to send or receive during a transfer.
 /// - File: describes an individual `File` to send
 /// - Any: Can be any kind of `File`, but just one
@@ -525,12 +529,7 @@ impl FileTransferActivity {
             }
         }
         // Finalize stream
-        if let Err(err) = self.browser.remote_pane_mut().fs.finalize_write(writer) {
-            self.log(
-                LogLevel::Warn,
-                format!("Could not finalize remote stream: \"{err}\""),
-            );
-        }
+        handle_remote_finalize_result(self.browser.remote_pane_mut().fs.finalize_write(writer))?;
         // if upload was abrupted, return error
         if self.transfer.aborted() {
             return Err(TransferErrorReason::Abrupted);
@@ -919,6 +918,24 @@ impl FileTransferActivity {
         // Count this file as completed (owns the per-file count for the success path).
         self.transfer.progress.finish_file();
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod finalize_test {
+    use super::*;
+    use crate::host::HostErrorType;
+
+    #[test]
+    fn should_propagate_remote_finalize_error() {
+        let error = HostError::from(HostErrorType::CouldNotCreateFile);
+
+        let result = handle_remote_finalize_result(Err(error));
+
+        assert!(matches!(
+            result,
+            Err(TransferErrorReason::RemoteHostError(_))
+        ));
     }
 }
 

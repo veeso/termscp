@@ -35,7 +35,7 @@
 
 ## 关于 termscp 🖥
 
-termscp 是一个功能丰富的终端文件浏览和传输工具，支持 SCP/SFTP/FTP/Kube/S3/WebDAV。 简而言之，它是一个带有 TUI 的终端工具，可以连接到远程服务器进行文件的检索和上传，并能够与本地文件系统进行交互。 它兼容 **Linux**、**MacOS**、**FreeBSD**、**NetBSD** 和 **Windows** 操作系统。
+termscp 是一个功能丰富的终端文件浏览和传输工具，支持 SCP/SFTP/FTP/Kube/S3/Google Cloud Storage (GCS)/WebDAV。 简而言之，它是一个带有 TUI 的终端工具，可以连接到远程服务器进行文件的检索和上传，并能够与本地文件系统进行交互。 它兼容 **Linux**、**MacOS**、**FreeBSD**、**NetBSD** 和 **Windows** 操作系统。
 
 ![Explorer](assets/images/explorer.gif)
 
@@ -49,6 +49,7 @@ termscp 是一个功能丰富的终端文件浏览和传输工具，支持 SCP/S
   - **FTP** 和 **FTPS**
   - **Kube**
   - **S3**
+  - **Google Cloud Storage (GCS)**
   - **SMB**
   - **WebDAV**
 - 🖥 使用便捷的 UI 在远程和本地文件系统上浏览和操作

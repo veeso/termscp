@@ -11,12 +11,14 @@ use super::credentials::{optional_capture, required_capture};
 use super::ports::{default_port_for_protocol, parse_port};
 use super::protocol::parse_remote_opt_protocol;
 use super::{
-    REMOTE_GENERIC_OPT_REGEX, REMOTE_KUBE_OPT_REGEX, REMOTE_S3_OPT_REGEX, REMOTE_WEBDAV_OPT_REGEX,
+    REMOTE_GCS_OPT_REGEX, REMOTE_GENERIC_OPT_REGEX, REMOTE_KUBE_OPT_REGEX, REMOTE_S3_OPT_REGEX,
+    REMOTE_WEBDAV_OPT_REGEX,
 };
 #[cfg(smb)]
 use crate::filetransfer::params::SmbParams;
 use crate::filetransfer::params::{
-    AwsS3Params, GenericProtocolParams, KubeProtocolParams, ProtocolParams, WebDAVProtocolParams,
+    AwsS3Params, GenericProtocolParams, GoogleCloudStorageParams, KubeProtocolParams,
+    ProtocolParams, WebDAVProtocolParams,
 };
 use crate::filetransfer::{FileTransferParams, FileTransferProtocol};
 #[cfg(not(test))]
@@ -30,6 +32,7 @@ pub(super) fn parse_remote_opt(s: &str) -> Result<FileTransferParams, String> {
 
     match protocol {
         FileTransferProtocol::AwsS3 => parse_s3_remote_opt(remote.as_str()),
+        FileTransferProtocol::GoogleCloudStorage => parse_gcs_remote_opt(remote.as_str()),
         FileTransferProtocol::Kube => parse_kube_remote_opt(remote.as_str()),
         #[cfg(smb)]
         FileTransferProtocol::Smb => parse_smb_remote_opts(remote.as_str()),
@@ -118,6 +121,20 @@ fn parse_s3_remote_opt(s: &str) -> Result<FileTransferParams, String> {
     Ok(FileTransferParams::new(
         FileTransferProtocol::AwsS3,
         ProtocolParams::AwsS3(AwsS3Params::new(bucket, Some(region), profile)),
+    )
+    .remote_path(remote_path))
+}
+
+fn parse_gcs_remote_opt(s: &str) -> Result<FileTransferParams, String> {
+    let groups = REMOTE_GCS_OPT_REGEX
+        .captures(s)
+        .ok_or_else(|| String::from("Bad Google Cloud Storage syntax!"))?;
+    let bucket = required_capture(&groups, 1, "bucket")?;
+    let remote_path = groups.get(2).map(|group| PathBuf::from(group.as_str()));
+
+    Ok(FileTransferParams::new(
+        FileTransferProtocol::GoogleCloudStorage,
+        ProtocolParams::GoogleCloudStorage(GoogleCloudStorageParams::new(bucket)),
     )
     .remote_path(remote_path))
 }

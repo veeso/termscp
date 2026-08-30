@@ -8,6 +8,8 @@ use std::sync::Arc;
 use remotefs::RemoteFs;
 use remotefs_aws_s3::AwsS3Fs;
 use remotefs_ftp::FtpFs;
+use remotefs_gcs::credentials::service_account;
+use remotefs_gcs::{GoogleCloudStorageCredentials, GoogleCloudStorageFs};
 use remotefs_kube::KubeMultiPodFs as KubeFs;
 #[cfg(smb_unix)]
 use remotefs_smb::SmbOptions;
@@ -20,9 +22,9 @@ use remotefs_ssh::{
 use remotefs_webdav::WebDAVFs;
 
 #[cfg(not(smb))]
-use super::params::{AwsS3Params, GenericProtocolParams};
+use super::params::{AwsS3Params, GenericProtocolParams, GoogleCloudStorageParams};
 #[cfg(smb)]
-use super::params::{AwsS3Params, GenericProtocolParams, SmbParams};
+use super::params::{AwsS3Params, GenericProtocolParams, GoogleCloudStorageParams, SmbParams};
 use super::params::{KubeProtocolParams, WebDAVProtocolParams};
 use super::{FileTransferProtocol, ProtocolParams};
 use crate::system::config_client::ConfigClient;
@@ -48,6 +50,10 @@ impl RemoteFsBuilder {
             (FileTransferProtocol::Ftp(secure), ProtocolParams::Generic(params)) => {
                 Ok(Box::new(Self::ftp_client(params, secure)))
             }
+            (
+                FileTransferProtocol::GoogleCloudStorage,
+                ProtocolParams::GoogleCloudStorage(params),
+            ) => Ok(Box::new(Self::gcs_client(params)?)),
             (FileTransferProtocol::Kube, ProtocolParams::Kube(params)) => {
                 Ok(Box::new(Self::kube_client(params)?))
             }
@@ -105,6 +111,36 @@ impl RemoteFsBuilder {
         if let Some(session_token) = params.session_token {
             client = client.session_token(session_token);
         }
+        Ok(client)
+    }
+
+    /// Build a Google Cloud Storage client from parameters.
+    fn gcs_client(params: GoogleCloudStorageParams) -> Result<GoogleCloudStorageFs, String> {
+        let runtime = Self::tokio_runtime()?;
+        let mut client = match params.service_account_key {
+            None => GoogleCloudStorageFs::new(params.bucket_name, &runtime),
+            Some(path) => {
+                let raw = std::fs::read_to_string(&path).map_err(|error| {
+                    format!("Unable to read GCS service-account file '{path}': {error}")
+                })?;
+                let key = serde_json::from_str(&raw).map_err(|error| {
+                    format!("Invalid GCS service-account JSON in '{path}': {error}")
+                })?;
+                let credentials = {
+                    let _guard = runtime.enter();
+                    service_account::Builder::new(key).build()
+                }
+                .map_err(|error| {
+                    format!("Invalid GCS service-account credentials in '{path}': {error}")
+                })?;
+                GoogleCloudStorageFs::with_credentials(
+                    params.bucket_name,
+                    GoogleCloudStorageCredentials::custom(credentials),
+                    &runtime,
+                )
+            }
+        };
+        client = client.endpoint(params.endpoint);
         Ok(client)
     }
 
@@ -296,6 +332,62 @@ mod test {
         assert!(
             RemoteFsBuilder::build(FileTransferProtocol::AwsS3, params, &config_client).is_ok()
         );
+    }
+
+    #[test]
+    fn should_build_gcs_fs_with_application_default_credentials() {
+        let params = ProtocolParams::GoogleCloudStorage(GoogleCloudStorageParams::new("my-bucket"));
+        let config_client = get_config_client();
+
+        assert!(
+            RemoteFsBuilder::build(
+                FileTransferProtocol::GoogleCloudStorage,
+                params,
+                &config_client,
+            )
+            .is_ok()
+        );
+    }
+
+    #[test]
+    fn should_reject_missing_gcs_service_account_file() {
+        let directory = tempfile::TempDir::new().unwrap();
+        let missing = directory.path().join("missing.json");
+        let params = GoogleCloudStorageParams::new("my-bucket")
+            .service_account_key(Some(missing.to_string_lossy().into_owned()));
+
+        assert!(RemoteFsBuilder::gcs_client(params).is_err());
+    }
+
+    #[test]
+    fn should_reject_malformed_gcs_service_account_json() {
+        let file = tempfile::NamedTempFile::new().unwrap();
+        std::fs::write(file.path(), "not-json").unwrap();
+        let params = GoogleCloudStorageParams::new("my-bucket")
+            .service_account_key(Some(file.path().to_string_lossy().into_owned()));
+
+        assert!(RemoteFsBuilder::gcs_client(params).is_err());
+    }
+
+    #[test]
+    fn should_build_gcs_fs_with_service_account_file() {
+        let file = tempfile::NamedTempFile::new().unwrap();
+        std::fs::write(
+            file.path(),
+            r#"{
+                "type": "service_account",
+                "client_email": "termscp@example.iam.gserviceaccount.com",
+                "private_key_id": "test-key",
+                "private_key": "-----BEGIN PRIVATE KEY-----\ninvalid-test-key\n-----END PRIVATE KEY-----\n",
+                "project_id": "termscp-test",
+                "universe_domain": "googleapis.com"
+            }"#,
+        )
+        .unwrap();
+        let params = GoogleCloudStorageParams::new("my-bucket")
+            .service_account_key(Some(file.path().to_string_lossy().into_owned()));
+
+        assert!(RemoteFsBuilder::gcs_client(params).is_ok());
     }
 
     #[test]

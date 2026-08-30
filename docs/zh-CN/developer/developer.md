@@ -2,7 +2,7 @@
 
 欢迎阅读 termscp 的开发者手册。本章不包含 termscp 各模块的文档，相关文档可以在 Rust Docs 上找到：<https://docs.rs/termscp>。本章描述 termscp 的工作原理，以及实现诸如文件传输和用户界面扩展等功能的指南。
 
-termscp 使用 Rust 编写（edition 2024，MSRV 1.89.0）。用户界面使用 [tuirealm](https://github.com/veeso/tui-realm) v3 构建，它运行在 [crossterm](https://github.com/crossterm-rs/crossterm) 之上。
+termscp 使用 Rust 编写（edition 2024，MSRV 1.98.0）。用户界面使用 [tuirealm](https://github.com/veeso/tui-realm) v3 构建，它运行在 [crossterm](https://github.com/crossterm-rs/crossterm) 之上。
 
 ## termscp 的工作原理
 
@@ -20,7 +20,7 @@ termscp 基本上由 3 个核心模块组成：
 - **system**：提供与配置、ssh 密钥存储和书签交互的方式。
 - **utils**：包含几乎整个项目都会使用的工具。
 
-termscp 支持以下协议：SFTP、SCP、FTP/FTPS、Kube、S3、SMB 和 WebDAV。
+termscp 支持以下协议：SFTP、SCP、FTP/FTPS、Kube、S3、GCS、SMB 和 WebDAV。
 
 ## Activities
 

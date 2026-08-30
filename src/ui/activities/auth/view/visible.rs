@@ -159,6 +159,40 @@ impl AuthActivity {
         }
     }
 
+    pub(in crate::ui::activities::auth) fn get_host_bridge_gcs_view(&self) -> [Id; 4] {
+        match self.app.focus() {
+            Some(&Id::HostBridge(AuthFormId::LocalDirectory)) => [
+                Id::HostBridge(AuthFormId::GcsEndpoint),
+                Id::HostBridge(AuthFormId::GcsServiceAccountKey),
+                Id::HostBridge(AuthFormId::RemoteDirectory),
+                Id::HostBridge(AuthFormId::LocalDirectory),
+            ],
+            _ => [
+                Id::HostBridge(AuthFormId::GcsBucket),
+                Id::HostBridge(AuthFormId::GcsEndpoint),
+                Id::HostBridge(AuthFormId::GcsServiceAccountKey),
+                Id::HostBridge(AuthFormId::RemoteDirectory),
+            ],
+        }
+    }
+
+    pub(in crate::ui::activities::auth) fn get_remote_gcs_view(&self) -> [Id; 4] {
+        match self.app.focus() {
+            Some(&Id::Remote(AuthFormId::LocalDirectory)) => [
+                Id::Remote(AuthFormId::GcsEndpoint),
+                Id::Remote(AuthFormId::GcsServiceAccountKey),
+                Id::Remote(AuthFormId::RemoteDirectory),
+                Id::Remote(AuthFormId::LocalDirectory),
+            ],
+            _ => [
+                Id::Remote(AuthFormId::GcsBucket),
+                Id::Remote(AuthFormId::GcsEndpoint),
+                Id::Remote(AuthFormId::GcsServiceAccountKey),
+                Id::Remote(AuthFormId::RemoteDirectory),
+            ],
+        }
+    }
+
     pub(in crate::ui::activities::auth) fn get_host_bridge_kube_view(&self) -> [Id; 4] {
         match self.app.focus() {
             Some(&Id::HostBridge(AuthFormId::KubeClientCert)) => [

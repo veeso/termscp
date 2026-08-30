@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-termscp is a terminal file transfer client with a TUI (Terminal User Interface), supporting SFTP, SCP, FTP/FTPS, Kube, S3, SMB, and WebDAV protocols. It features a dual-pane file explorer (local + remote), bookmarks, system keyring integration, file watching/sync, an embedded terminal, and customizable themes.
+termscp is a terminal file transfer client with a TUI (Terminal User Interface), supporting SFTP, SCP, FTP/FTPS, Kube, S3, GCS, SMB, and WebDAV protocols. It features a dual-pane file explorer (local + remote), bookmarks, system keyring integration, file watching/sync, an embedded terminal, and customizable themes.
 
-- **Language**: Rust (edition 2024, MSRV 1.89.0)
+- **Language**: Rust (edition 2024, MSRV 1.98.0)
 - **UI Framework**: tuirealm v3 (built on crossterm)
 - **File Transfer**: remotefs ecosystem
 
@@ -97,7 +97,7 @@ Platform-specific dependencies: SSH and FTP crates use different TLS backends on
 
 ### File Transfer Protocols
 
-`FileTransferProtocol` enum maps to protocol-specific parameter types (`ProtocolParams` enum) and `RemoteFsBuilder` constructs the appropriate `RemoteFs` client. Each protocol has its own params struct (e.g., `GenericProtocolParams` for SSH-based, `AwsS3Params`, `KubeProtocolParams`, `SmbParams`, `WebDAVProtocolParams`).
+`FileTransferProtocol` enum maps to protocol-specific parameter types (`ProtocolParams` enum) and `RemoteFsBuilder` constructs the appropriate `RemoteFs` client. Each protocol has its own params struct (e.g., `GenericProtocolParams` for SSH-based, `AwsS3Params`, `GoogleCloudStorageParams`, `KubeProtocolParams`, `SmbParams`, `WebDAVProtocolParams`).
 
 ## Code Conventions
 

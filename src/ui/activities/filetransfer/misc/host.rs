@@ -64,6 +64,7 @@ impl FileTransferActivity {
         match params {
             ProtocolParams::Generic(params) => params.address.clone(),
             ProtocolParams::AwsS3(params) => params.bucket_name.clone(),
+            ProtocolParams::GoogleCloudStorage(params) => params.bucket_name.clone(),
             ProtocolParams::Kube(params) => {
                 params.namespace.clone().unwrap_or("default".to_string())
             }
@@ -93,6 +94,11 @@ impl FileTransferActivity {
                 );
                 format!("Connecting to {}…", params.bucket_name)
             }
+            ProtocolParams::GoogleCloudStorage(params) => format!(
+                "Connecting to GCS bucket '{bucket}' at {endpoint}…",
+                bucket = params.bucket_name,
+                endpoint = params.endpoint,
+            ),
             ProtocolParams::Kube(params) => {
                 let namespace = params.namespace.as_deref().unwrap_or("default");
                 info!("Client is not connected to remote; connecting to namespace {namespace}",);

@@ -6,8 +6,8 @@ use tuirealm::state::{State, StateValue};
 use super::*;
 use crate::filetransfer::FileTransferParams;
 use crate::filetransfer::params::{
-    AwsS3Params, GenericProtocolParams, KubeProtocolParams, ProtocolParams, SmbParams,
-    WebDAVProtocolParams,
+    AwsS3Params, GenericProtocolParams, GoogleCloudStorageParams, KubeProtocolParams,
+    ProtocolParams, SmbParams, WebDAVProtocolParams,
 };
 
 impl AuthActivity {
@@ -46,6 +46,15 @@ impl AuthActivity {
             .security_token(security_token)
             .session_token(session_token)
             .new_path_style(new_path_style)
+    }
+
+    pub(in crate::ui::activities::auth) fn get_gcs_params_input(
+        &self,
+        form_tab: FormTab,
+    ) -> GoogleCloudStorageParams {
+        GoogleCloudStorageParams::new(self.get_input_gcs_bucket(form_tab))
+            .endpoint(self.get_input_gcs_endpoint(form_tab))
+            .service_account_key(self.get_input_gcs_service_account_key(form_tab))
     }
 
     pub(in crate::ui::activities::auth) fn get_kube_params_input(
@@ -210,6 +219,45 @@ impl AuthActivity {
         {
             Ok(State::Single(StateValue::String(x))) => x,
             _ => String::new(),
+        }
+    }
+
+    pub(in crate::ui::activities::auth) fn get_input_gcs_bucket(
+        &self,
+        form_tab: FormTab,
+    ) -> String {
+        match self
+            .app
+            .state(&Self::form_tab_id(form_tab, AuthFormId::GcsBucket))
+        {
+            Ok(State::Single(StateValue::String(value))) => value,
+            _ => String::new(),
+        }
+    }
+
+    pub(in crate::ui::activities::auth) fn get_input_gcs_endpoint(
+        &self,
+        form_tab: FormTab,
+    ) -> String {
+        match self
+            .app
+            .state(&Self::form_tab_id(form_tab, AuthFormId::GcsEndpoint))
+        {
+            Ok(State::Single(StateValue::String(value))) => value,
+            _ => String::new(),
+        }
+    }
+
+    pub(in crate::ui::activities::auth) fn get_input_gcs_service_account_key(
+        &self,
+        form_tab: FormTab,
+    ) -> Option<String> {
+        match self.app.state(&Self::form_tab_id(
+            form_tab,
+            AuthFormId::GcsServiceAccountKey,
+        )) {
+            Ok(State::Single(StateValue::String(value))) if !value.is_empty() => Some(value),
+            _ => None,
         }
     }
 
@@ -428,6 +476,7 @@ impl AuthActivity {
     fn input_mask_size(input_mask: InputMask) -> u16 {
         match input_mask {
             InputMask::AwsS3
+            | InputMask::Gcs
             | InputMask::Generic
             | InputMask::Kube
             | InputMask::Smb
@@ -446,6 +495,11 @@ impl AuthActivity {
 
     pub(in crate::ui::activities::auth) fn fmt_recent(b: FileTransferParams) -> String {
         let protocol = b.protocol.to_string().to_lowercase();
+        let remote_path = b
+            .remote_path
+            .as_ref()
+            .map(|path| format!(" {}", path.display()))
+            .unwrap_or_default();
         match b.params {
             ProtocolParams::AwsS3(s3) => {
                 let profile = match s3.profile {
@@ -471,6 +525,15 @@ impl AuthActivity {
                     protocol, username, params.address, params.port
                 )
             }
+            ProtocolParams::GoogleCloudStorage(params) => format!(
+                "{protocol}://{} ({}){remote_path}",
+                params.bucket_name,
+                if params.endpoint.is_empty() {
+                    crate::filetransfer::params::DEFAULT_GCS_ENDPOINT
+                } else {
+                    params.endpoint.as_str()
+                },
+            ),
             ProtocolParams::Kube(params) => {
                 format!(
                     "{}://{}{}",

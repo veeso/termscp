@@ -36,6 +36,7 @@ Address syntax can be:
 
     - `protocol://user@address:port:wrkdir` for protocols such as Sftp, Scp, Ftp
     - `s3://bucket-name@region:profile:/wrkdir` for Aws S3 protocol
+    - `gcs://<bucket>[:/working/directory]` for Google Cloud Storage (ADC)
     - `\\\\<server>[:port]\\<share>[\\path]` for SMB (on Windows)
     - `smb://[user@]<server>[:port]</share>[/path]` for SMB (on other systems)
 

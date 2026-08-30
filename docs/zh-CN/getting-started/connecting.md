@@ -46,7 +46,7 @@ termscp scp://omar@192.168.1.31:4022
 termscp scp://omar@192.168.1.31:4022:/tmp
 ```
 
-有关各协议专属的地址语法（S3、Kube、WebDAV 和 SMB），请参阅[连接参数](connection-parameters.md)。
+有关各协议专属的地址语法（S3、GCS、Kube、WebDAV 和 SMB），请参阅[连接参数](connection-parameters.md)。
 
 ## 密码的提供方式
 

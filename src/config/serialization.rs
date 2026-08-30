@@ -366,7 +366,7 @@ mod tests {
         assert_eq!(host.username.as_deref().unwrap(), "root");
         assert_eq!(host.password, None);
         // Verify bookmarks
-        assert_eq!(hosts.bookmarks.len(), 6);
+        assert_eq!(hosts.bookmarks.len(), 7);
         let host: &Bookmark = hosts.bookmarks.get("raspberrypi2").unwrap();
         assert_eq!(host.address.as_deref().unwrap(), "192.168.1.31");
         assert_eq!(host.port.unwrap(), 22);
@@ -404,6 +404,20 @@ mod tests {
         assert_eq!(s3.access_key.as_deref().unwrap(), "pippo");
         assert_eq!(s3.secret_access_key.as_deref().unwrap(), "pluto");
         assert_eq!(s3.new_path_style.unwrap(), true);
+        // Google Cloud Storage bucket
+        let host: &Bookmark = hosts.bookmarks.get("gcs-bucket").unwrap();
+        assert_eq!(host.address, None);
+        assert_eq!(host.port, None);
+        assert_eq!(host.username, None);
+        assert_eq!(host.password, None);
+        assert_eq!(host.protocol, FileTransferProtocol::GoogleCloudStorage);
+        let gcs = host.gcs.as_ref().unwrap();
+        assert_eq!(gcs.bucket, "archive-bucket");
+        assert_eq!(gcs.endpoint, "https://storage.googleapis.com");
+        assert_eq!(
+            gcs.service_account_key.as_deref(),
+            Some("/keys/archive.json")
+        );
         // Kube pod
         let host: &Bookmark = hosts.bookmarks.get("pod").unwrap();
         assert_eq!(host.address, None);
@@ -462,6 +476,45 @@ mod tests {
     }
 
     #[test]
+    fn should_deserialize_gcs_bookmark_without_service_account_key() {
+        let toml_file = create_gcs_adc_toml_bookmark();
+        toml_file.as_file().sync_all().unwrap();
+        toml_file.as_file().rewind().unwrap();
+
+        let hosts: UserHosts = deserialize(Box::new(toml_file)).unwrap();
+        let host = hosts.bookmarks.get("gcs-adc").unwrap();
+
+        assert_eq!(host.protocol, FileTransferProtocol::GoogleCloudStorage);
+        let gcs = host.gcs.as_ref().unwrap();
+        assert_eq!(gcs.bucket, "adc-bucket");
+        assert_eq!(gcs.endpoint, "https://storage.googleapis.com");
+        assert_eq!(gcs.service_account_key, None);
+    }
+
+    #[test]
+    fn should_serialize_gcs_bookmark_fields() {
+        let toml_file = create_good_toml_bookmarks();
+        toml_file.as_file().sync_all().unwrap();
+        toml_file.as_file().rewind().unwrap();
+        let hosts: UserHosts = deserialize(Box::new(toml_file)).unwrap();
+
+        let output_file = tempfile::NamedTempFile::new().unwrap();
+        let output_path = output_file.path().to_path_buf();
+        serialize(
+            &hosts,
+            Box::new(std::fs::File::create(&output_path).unwrap()),
+        )
+        .unwrap();
+        let output = std::fs::read_to_string(output_path).unwrap();
+
+        assert!(output.contains("protocol = \"GCS\""));
+        assert!(output.contains("bucket = \"archive-bucket\""));
+        assert!(output.contains("endpoint = \"https://storage.googleapis.com\""));
+        assert!(output.contains("service_account_key = \"/keys/archive.json\""));
+        assert!(output.contains("directory = \"/backups\""));
+    }
+
+    #[test]
     fn test_should_fail_deserialize_bookmark_with_invalid_protocol() {
         let toml_file: tempfile::NamedTempFile = create_invalid_protocol_toml_bookmarks();
         toml_file.as_file().sync_all().unwrap();
@@ -486,6 +539,7 @@ mod tests {
                 local_path: None,
                 kube: None,
                 s3: None,
+                gcs: None,
                 smb: None,
             },
         );
@@ -501,6 +555,7 @@ mod tests {
                 local_path: Some(PathBuf::from("/usr")),
                 kube: None,
                 s3: None,
+                gcs: None,
                 smb: None,
             },
         );
@@ -524,6 +579,27 @@ mod tests {
                     new_path_style: None,
                 }),
                 kube: None,
+                gcs: None,
+                smb: None,
+            },
+        );
+        bookmarks.insert(
+            String::from("gcs-bucket"),
+            Bookmark {
+                address: None,
+                port: None,
+                protocol: FileTransferProtocol::GoogleCloudStorage,
+                username: None,
+                password: None,
+                remote_path: Some(PathBuf::from("/backups")),
+                local_path: None,
+                kube: None,
+                s3: None,
+                gcs: Some(crate::config::bookmarks::GcsParams {
+                    bucket: "archive-bucket".to_string(),
+                    endpoint: "https://storage.googleapis.com".to_string(),
+                    service_account_key: Some("/keys/archive.json".to_string()),
+                }),
                 smb: None,
             },
         );
@@ -539,6 +615,7 @@ mod tests {
                 remote_path: None,
                 local_path: None,
                 s3: None,
+                gcs: None,
                 smb: None,
                 kube: Some(KubeParams {
                     namespace: Some("my-namespace".to_string()),
@@ -566,6 +643,7 @@ mod tests {
                 local_path: None,
                 s3: None,
                 kube: None,
+                gcs: None,
                 smb: smb_params,
             },
         );
@@ -582,6 +660,7 @@ mod tests {
                 local_path: Some(PathBuf::from("/usr")),
                 s3: None,
                 kube: None,
+                gcs: None,
                 smb: None,
             },
         );
@@ -656,6 +735,15 @@ mod tests {
         secret_access_key = "pluto"
         new_path_style = true
 
+        [bookmarks.gcs-bucket]
+        protocol = "GCS"
+        directory = "/backups"
+
+        [bookmarks.gcs-bucket.gcs]
+        bucket = "archive-bucket"
+        endpoint = "https://storage.googleapis.com"
+        service_account_key = "/keys/archive.json"
+
         [bookmarks.pod]
         protocol = "KUBE"
         [bookmarks.pod.kube]
@@ -681,6 +769,23 @@ mod tests {
         "#;
         tmpfile.write_all(file_content.as_bytes()).unwrap();
         //write!(tmpfile, "[bookmarks]\nraspberrypi2 = {{ address = \"192.168.1.31\", port = 22, protocol = \"SFTP\", username = \"root\" }}\nmsi-estrem = {{ address = \"192.168.1.30\", port = 22, protocol = \"SFTP\", username = \"cvisintin\" }}\naws-server-prod1 = {{ address = \"51.23.67.12\", port = 21, protocol = \"FTPS\", username = \"aws001\" }}\n\n[recents]\nISO20201215T094000Z = {{ address = \"172.16.104.10\", port = 22, protocol = \"SCP\", username = \"root\" }}\n");
+        tmpfile
+    }
+
+    fn create_gcs_adc_toml_bookmark() -> tempfile::NamedTempFile {
+        let mut tmpfile: tempfile::NamedTempFile = tempfile::NamedTempFile::new().unwrap();
+        let file_content: &str = r#"
+        [bookmarks]
+
+        [bookmarks.gcs-adc]
+        protocol = "GCS"
+
+        [bookmarks.gcs-adc.gcs]
+        bucket = "adc-bucket"
+
+        [recents]
+        "#;
+        tmpfile.write_all(file_content.as_bytes()).unwrap();
         tmpfile
     }
 

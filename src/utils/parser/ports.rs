@@ -9,6 +9,7 @@ pub(super) fn default_port_for_protocol(protocol: FileTransferProtocol) -> u16 {
     match protocol {
         FileTransferProtocol::Ftp(_) => 21,
         FileTransferProtocol::Scp | FileTransferProtocol::Sftp => 22,
+        FileTransferProtocol::GoogleCloudStorage => 22,
         _ => 22,
     }
 }

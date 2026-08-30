@@ -9,7 +9,7 @@ same time. termscp runs on Linux, macOS, FreeBSD, NetBSD, and Windows.
 
 ## Features
 
-- Multiple transfer protocols: SFTP, SCP, FTP and FTPS, Kube, S3, SMB,
+- Multiple transfer protocols: SFTP, SCP, FTP and FTPS, Kube, S3, GCS, SMB,
   and WebDAV.
 - Dual-pane explorer to browse and operate on both the remote and the local
   file system: create, remove, rename, search, view, and edit files.

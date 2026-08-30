@@ -6,7 +6,7 @@ documentation for termscp modules, which can instead be found on Rust Docs at
 guidelines to implement features such as file transfers and additions to the
 user interface.
 
-termscp is written in Rust (edition 2024, MSRV 1.89.0). The user interface is
+termscp is written in Rust (edition 2024, MSRV 1.98.0). The user interface is
 built with [tuirealm](https://github.com/veeso/tui-realm) v3, which runs on top
 of [crossterm](https://github.com/crossterm-rs/crossterm).
 
@@ -37,8 +37,8 @@ In addition to the 3 core modules, others have been added over time:
   storage and the bookmarks.
 - **utils**: contains the utilities used by pretty much all of the project.
 
-termscp supports the following protocols: SFTP, SCP, FTP/FTPS, Kube, S3, SMB and
-WebDAV.
+termscp supports the following protocols: SFTP, SCP, FTP/FTPS, Kube, S3, GCS,
+SMB and WebDAV.
 
 ## Activities
 
