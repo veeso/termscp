@@ -24,19 +24,24 @@ impl AuthActivity {
     fn update_form(&mut self, msg: FormMsg) -> Option<Msg> {
         match msg {
             FormMsg::Connect => {
-                let Ok(remote_params) = self.collect_remote_host_params() else {
-                    // mount error
-                    self.mount_error("Invalid remote params parameters");
-                    return None;
+                let remote_params = match self.collect_remote_host_params() {
+                    Ok(remote_params) => remote_params,
+                    Err(err) => {
+                        // mount error
+                        self.mount_error(format!("Invalid remote host parameters: {err}"));
+                        return None;
+                    }
                 };
-
-                let Ok(host_bridge_params) = self.collect_host_bridge_params() else {
-                    // mount error
-                    self.mount_error("Invalid host bridge params parameters");
-                    return None;
-                };
-
                 debug!("Remote params: {:?}", remote_params);
+
+                let host_bridge_params = match self.collect_host_bridge_params() {
+                    Ok(host_bridge_params) => host_bridge_params,
+                    Err(err) => {
+                        // mount error
+                        self.mount_error(format!("Invalid host bridge parameters: {err}"));
+                        return None;
+                    }
+                };
                 debug!("Host bridge params: {:?}", host_bridge_params);
 
                 self.save_recent();
