@@ -72,7 +72,7 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 shellexpand = "3"
 simplelog = "0.12"
-ssh2-config = "0.7"
+ssh2-config = "0.8"
 tempfile = "3"
 thiserror = "2"
 tokio = { version = "1", features = ["rt"] }

@@ -33,9 +33,6 @@ ignore = [
   { id = "RUSTSEC-2026-0195", reason = "owner: termscp maintainers; review by 2026-12-31; upgrade remotefs-webdav/self_update to quick-xml >=0.41" },
   # The SSH stack requires RSA, for which RustSec reports no safe upgrade.
   { id = "RUSTSEC-2023-0071", reason = "owner: termscp maintainers; review by 2026-12-31; replace RSA dependency when upstream fix exists" },
-  # russh-keys retains an older russh-cryptovec line and cannot select the
-  # fixed 0.60.3 release without an upstream dependency update.
-  { id = "RUSTSEC-2026-0153", reason = "owner: termscp maintainers; review by 2026-12-31; upgrade remotefs-ssh/russh-keys to russh-cryptovec >=0.60.3" },
   # rustls-pemfile is retained by the WebDAV and Kubernetes clients. Both
   # versions are unmaintained but have no reported vulnerability.
   { id = "RUSTSEC-2025-0134", reason = "owner: termscp maintainers; review by 2026-12-31; upgrade WebDAV/Kubernetes clients away from rustls-pemfile" },
