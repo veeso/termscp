@@ -25,12 +25,13 @@ use crate::filetransfer::{FileTransferParams, FileTransferProtocol};
 use crate::system::config_client::ConfigClient;
 #[cfg(not(test))]
 use crate::system::environment;
+use crate::utils::parser::ParsedRemote;
 
-pub(super) fn parse_remote_opt(s: &str) -> Result<FileTransferParams, String> {
+pub(super) fn parse_remote_opt_with_metadata(s: &str) -> Result<ParsedRemote, String> {
     let default_protocol = default_protocol();
     let (protocol, remote) = parse_remote_opt_protocol(s, default_protocol)?;
 
-    match protocol {
+    let file_transfer_params = match protocol {
         FileTransferProtocol::AwsS3 => parse_s3_remote_opt(remote.as_str()),
         FileTransferProtocol::GoogleCloudStorage => parse_gcs_remote_opt(remote.as_str()),
         FileTransferProtocol::Kube => parse_kube_remote_opt(remote.as_str()),
@@ -45,8 +46,13 @@ pub(super) fn parse_remote_opt(s: &str) -> Result<FileTransferParams, String> {
 
             parse_webdav_remote_opt(remote.as_str(), prefix)
         }
-        protocol => parse_generic_remote_opt(remote.as_str(), protocol),
-    }
+        protocol => return parse_generic_remote_opt(remote.as_str(), protocol),
+    }?;
+
+    Ok(ParsedRemote {
+        file_transfer_params,
+        port_explicit: false,
+    })
 }
 
 #[cfg(not(test))]
@@ -71,13 +77,14 @@ fn default_protocol() -> FileTransferProtocol {
 fn parse_generic_remote_opt(
     s: &str,
     protocol: FileTransferProtocol,
-) -> Result<FileTransferParams, String> {
+) -> Result<ParsedRemote, String> {
     let groups = REMOTE_GENERIC_OPT_REGEX
         .captures(s)
         .ok_or_else(|| String::from("Bad remote host syntax!"))?;
 
     let username = optional_capture(&groups, 1);
     let address = required_capture(&groups, 2, "address")?;
+    let port_explicit = groups.get(3).is_some();
     let port = parse_port(groups.get(3), default_port_for_protocol(protocol))?;
     let remote_path = groups.get(4).map(|group| PathBuf::from(group.as_str()));
     let params = ProtocolParams::Generic(
@@ -87,7 +94,10 @@ fn parse_generic_remote_opt(
             .username(username),
     );
 
-    Ok(FileTransferParams::new(protocol, params).remote_path(remote_path))
+    Ok(ParsedRemote {
+        file_transfer_params: FileTransferParams::new(protocol, params).remote_path(remote_path),
+        port_explicit,
+    })
 }
 
 fn parse_webdav_remote_opt(s: &str, prefix: &str) -> Result<FileTransferParams, String> {

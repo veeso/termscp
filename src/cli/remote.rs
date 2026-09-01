@@ -70,8 +70,13 @@ impl TryFrom<&Args> for RemoteArgs {
             }
 
             let remote = match addr_type {
-                AddrType::Address => Self::parse_remote_address(arg)
-                    .map(|x| Remote::Host(HostParams::new(x, password)))?,
+                AddrType::Address => Self::parse_remote_address(arg).map(|parsed| {
+                    Remote::Host(HostParams::new(
+                        parsed.file_transfer_params,
+                        parsed.port_explicit,
+                        password,
+                    ))
+                })?,
                 AddrType::Bookmark => Remote::Bookmark(BookmarkParams::new(arg, password.as_ref())),
             };
 
@@ -99,8 +104,9 @@ impl TryFrom<&Args> for RemoteArgs {
 
 impl RemoteArgs {
     /// Parse remote address
-    fn parse_remote_address(remote: &str) -> Result<FileTransferParams, String> {
-        utils::parser::parse_remote_opt(remote).map_err(|e| format!("Bad address option: {e}"))
+    fn parse_remote_address(remote: &str) -> Result<utils::parser::ParsedRemote, String> {
+        utils::parser::parse_remote_opt_with_metadata(remote)
+            .map_err(|e| format!("Bad address option: {e}"))
     }
 }
 
@@ -137,6 +143,8 @@ pub struct BookmarkParams {
 pub struct HostParams {
     /// file transfer parameters
     pub file_transfer_params: FileTransferParams,
+    /// Whether the address explicitly provided a port.
+    pub port_explicit: bool,
     /// host password specified in arguments
     pub password: Option<String>,
 }
@@ -151,9 +159,14 @@ impl BookmarkParams {
 }
 
 impl HostParams {
-    pub fn new<S: AsRef<str>>(params: FileTransferParams, password: Option<S>) -> Self {
+    pub fn new<S: AsRef<str>>(
+        params: FileTransferParams,
+        port_explicit: bool,
+        password: Option<S>,
+    ) -> Self {
         Self {
             file_transfer_params: params,
+            port_explicit,
             password: password.map(|x| x.as_ref().to_string()),
         }
     }
@@ -177,6 +190,23 @@ mod test {
         assert!(matches!(remote_args.host_bridge, Remote::None));
         assert!(matches!(remote_args.remote, Remote::Host(_)));
         assert_eq!(remote_args.local_dir, None);
+    }
+
+    #[test]
+    fn should_preserve_explicit_port_from_positional_remote() {
+        for (remote, port_explicit) in [("scp://host", false), ("scp://host:22", true)] {
+            let args = Args {
+                positional: vec![remote.to_string()],
+                ..Default::default()
+            };
+
+            let remote_args = RemoteArgs::try_from(&args).unwrap();
+            let Remote::Host(params) = remote_args.remote else {
+                panic!("expected positional remote to be a host");
+            };
+
+            assert_eq!(params.port_explicit, port_explicit, "{remote}");
+        }
     }
 
     #[test]

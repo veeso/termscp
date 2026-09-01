@@ -6,8 +6,10 @@ use tuirealm::state::{State, StateValue};
 
 use super::{
     AuthActivity, AuthFormId, ExitReason, FormMsg, FormTab, HostBridgeProtocol, Id, InputMask, Msg,
-    UiAuthFormMsg, UiMsg,
+    UiAuthFormMsg, UiMsg, should_resolve_ssh_host_params,
 };
+use crate::filetransfer::FileTransferProtocol;
+use crate::utils::ssh::resolve_ssh_host_params;
 
 impl AuthActivity {
     pub(super) fn update(&mut self, msg: Option<Msg>) -> Option<Msg> {
@@ -24,6 +26,8 @@ impl AuthActivity {
     fn update_form(&mut self, msg: FormMsg) -> Option<Msg> {
         match msg {
             FormMsg::Connect => {
+                self.resolve_ssh_host_params_if_needed(FormTab::Remote, false);
+                self.resolve_ssh_host_params_if_needed(FormTab::HostBridge, false);
                 let remote_params = match self.collect_remote_host_params() {
                     Ok(remote_params) => remote_params,
                     Err(err) => {
@@ -142,24 +146,36 @@ impl AuthActivity {
                 self.host_bridge_protocol = protocol;
                 // Update port
                 let port: u16 = self.get_input_port(FormTab::HostBridge);
-                if let HostBridgeProtocol::Remote(remote_protocol) = protocol
-                    && Self::is_port_standard(port)
-                {
-                    self.mount_port(
-                        FormTab::HostBridge,
-                        Self::get_default_port_for_protocol(remote_protocol),
-                    );
+                if let HostBridgeProtocol::Remote(remote_protocol) = protocol {
+                    match remote_protocol {
+                        FileTransferProtocol::Scp | FileTransferProtocol::Sftp => {
+                            self.resolve_ssh_host_params_if_needed(FormTab::HostBridge, true);
+                        }
+                        _ if Self::is_port_standard(port) => {
+                            self.mount_port(
+                                FormTab::HostBridge,
+                                Self::get_default_port_for_protocol(remote_protocol),
+                            );
+                        }
+                        _ => {}
+                    }
                 }
             }
             FormMsg::RemoteProtocolChanged(protocol) => {
                 self.remote_protocol = protocol;
                 // Update port
                 let port: u16 = self.get_input_port(FormTab::Remote);
-                if Self::is_port_standard(port) {
-                    self.mount_port(
-                        FormTab::Remote,
-                        Self::get_default_port_for_protocol(protocol),
-                    );
+                match protocol {
+                    FileTransferProtocol::Scp | FileTransferProtocol::Sftp => {
+                        self.resolve_ssh_host_params_if_needed(FormTab::Remote, true);
+                    }
+                    _ if Self::is_port_standard(port) => {
+                        self.mount_port(
+                            FormTab::Remote,
+                            Self::get_default_port_for_protocol(protocol),
+                        );
+                    }
+                    _ => {}
                 }
             }
             FormMsg::Quit => {
@@ -253,6 +269,7 @@ impl AuthActivity {
     fn update_host_bridge_ui(&mut self, msg: UiAuthFormMsg) {
         match msg {
             UiAuthFormMsg::AddressBlurDown => {
+                self.resolve_ssh_host_params_if_needed(FormTab::HostBridge, false);
                 let id = if cfg!(windows) && self.host_bridge_input_mask() == InputMask::Smb {
                     Id::HostBridge(AuthFormId::SmbShare)
                 } else {
@@ -261,9 +278,11 @@ impl AuthActivity {
                 self.activate_component(id);
             }
             UiAuthFormMsg::AddressBlurUp => {
+                self.resolve_ssh_host_params_if_needed(FormTab::HostBridge, false);
                 self.activate_component(Id::HostBridge(AuthFormId::Protocol));
             }
             UiAuthFormMsg::ChangeFormTab => {
+                self.resolve_ssh_host_params_if_needed(FormTab::HostBridge, false);
                 self.last_form_tab = FormTab::Remote;
                 self.activate_component(Id::Remote(AuthFormId::Protocol));
             }
@@ -278,6 +297,7 @@ impl AuthActivity {
                 self.activate_component(id);
             }
             UiAuthFormMsg::ParamsFormBlur => {
+                self.resolve_ssh_host_params_if_needed(FormTab::HostBridge, false);
                 self.activate_component(Id::BookmarksList);
             }
             UiAuthFormMsg::PasswordBlurDown => {
@@ -496,6 +516,7 @@ impl AuthActivity {
     fn update_remote_ui(&mut self, msg: UiAuthFormMsg) {
         match msg {
             UiAuthFormMsg::AddressBlurDown => {
+                self.resolve_ssh_host_params_if_needed(FormTab::Remote, false);
                 let id = if cfg!(windows) && self.remote_input_mask() == InputMask::Smb {
                     Id::Remote(AuthFormId::SmbShare)
                 } else {
@@ -504,9 +525,11 @@ impl AuthActivity {
                 self.activate_component(id);
             }
             UiAuthFormMsg::AddressBlurUp => {
+                self.resolve_ssh_host_params_if_needed(FormTab::Remote, false);
                 self.activate_component(Id::Remote(AuthFormId::Protocol));
             }
             UiAuthFormMsg::ChangeFormTab => {
+                self.resolve_ssh_host_params_if_needed(FormTab::Remote, false);
                 self.last_form_tab = FormTab::HostBridge;
                 self.activate_component(Id::HostBridge(AuthFormId::Protocol));
             }
@@ -517,6 +540,7 @@ impl AuthActivity {
                 self.activate_component(Id::Remote(AuthFormId::RemoteDirectory));
             }
             UiAuthFormMsg::ParamsFormBlur => {
+                self.resolve_ssh_host_params_if_needed(FormTab::Remote, false);
                 self.activate_component(Id::BookmarksList);
             }
             UiAuthFormMsg::PasswordBlurDown => {
@@ -730,6 +754,35 @@ impl AuthActivity {
                 self.activate_component(Id::Remote(AuthFormId::Protocol))
             }
         }
+    }
+
+    fn resolve_ssh_host_params_if_needed(&mut self, form_tab: FormTab, force: bool) {
+        let protocol = match form_tab {
+            FormTab::HostBridge => match self.host_bridge_protocol {
+                HostBridgeProtocol::Localhost => return,
+                HostBridgeProtocol::Remote(protocol) => protocol,
+            },
+            FormTab::Remote => self.remote_protocol,
+        };
+        let address = self.get_input_addr(form_tab);
+        let should_resolve = should_resolve_ssh_host_params(
+            protocol,
+            self.last_mounted_address(form_tab),
+            address.as_str(),
+            force,
+        );
+        if !should_resolve {
+            return;
+        }
+
+        let params = resolve_ssh_host_params(self.context().ssh_config(), address.as_str());
+        self.mount_port(form_tab, 22);
+        self.mount_username(form_tab, "");
+        self.mount_port(form_tab, params.port);
+        if let Some(username) = params.username {
+            self.mount_username(form_tab, username.as_str());
+        }
+        self.set_last_mounted_address(form_tab, address.as_str());
     }
 
     fn activate_component(&mut self, id: Id) {

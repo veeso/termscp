@@ -36,6 +36,8 @@ pub enum HostErrorType {
     ExecutionFailed,
     #[error("Could not delete file")]
     DeleteFailed,
+    #[error("Invalid SSH configuration: {0}")]
+    InvalidSshConfig(String),
     #[cfg(win)]
     #[error("Not implemented")]
     NotImplemented,

@@ -64,6 +64,15 @@ static SEMVER_REGEX: Lazy<Regex> = lazy_regex!(r"v?((0|[1-9]\d*)\.(0|[1-9]\d*)\.
  */
 static BYTESIZE_REGEX: Lazy<Regex> = lazy_regex!(r"(:?([0-9])+)( )*(:?[KMGTP])?B$");
 
+/// Parsed remote parameters together with CLI syntax metadata.
+#[derive(Debug)]
+pub(crate) struct ParsedRemote {
+    /// Parsed file transfer parameters.
+    pub(crate) file_transfer_params: FileTransferParams,
+    /// Whether the remote address explicitly provided a port.
+    pub(crate) port_explicit: bool,
+}
+
 /// Parse remote option string. Returns in case of success a RemoteOptions struct
 /// For ssh if username is not provided, current user will be used.
 /// In case of error, message is returned
@@ -99,8 +108,20 @@ static BYTESIZE_REGEX: Lazy<Regex> = lazy_regex!(r"(:?([0-9])+)( )*(:?[KMGTP])?B
 ///
 /// `\\<address>\<share>[\path]`
 ///
+#[cfg_attr(
+    not(test),
+    expect(
+        dead_code,
+        reason = "The public parser API is retained while CLI callers need port metadata."
+    )
+)]
 pub fn parse_remote_opt(s: &str) -> Result<FileTransferParams, String> {
-    remote::parse_remote_opt(s)
+    parse_remote_opt_with_metadata(s).map(|parsed| parsed.file_transfer_params)
+}
+
+/// Parse a remote option while retaining metadata needed by CLI precedence rules.
+pub(crate) fn parse_remote_opt_with_metadata(s: &str) -> Result<ParsedRemote, String> {
+    remote::parse_remote_opt_with_metadata(s)
 }
 
 /// Parse semver string
@@ -350,6 +371,20 @@ mod tests {
         );
         assert_eq!(result.protocol, FileTransferProtocol::Sftp);
         assert!(result.remote_path.is_none());
+    }
+
+    #[test]
+    fn parsed_remote_should_track_whether_the_port_was_explicit() {
+        for (remote, port_explicit) in [
+            ("scp://host", false),
+            ("scp://host:/path", false),
+            ("scp://host:22", true),
+            ("scp://host:2222", true),
+        ] {
+            let parsed = remote::parse_remote_opt_with_metadata(remote).unwrap();
+
+            assert_eq!(parsed.port_explicit, port_explicit, "{remote}");
+        }
     }
 
     #[test]

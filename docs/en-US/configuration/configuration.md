@@ -48,3 +48,15 @@ The following parameters can be configured:
   attributes supported by termscp are listed at
   [the ssh2-config exposed attributes](https://github.com/veeso/ssh2-config#exposed-attributes).
   See also [SSH key storage](ssh-keys.md).
+
+## SSH configuration behavior
+
+In either SFTP or SCP authentication pane, after you change and leave the
+`Host` field, termscp keeps the entered alias visible and fills the visible
+`Port` and `Username` fields from the matching SSH configuration entry. If the
+new Host does not match an entry, it resets Port to `22` and Username to empty.
+`HostName` never replaces the alias in the form.
+
+Bookmarks retain their saved Port and User values; the SSH configuration does
+not silently override them. The configured file still provides `HostName` and
+other supported SSH options when termscp connects.
