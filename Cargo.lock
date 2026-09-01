@@ -2900,6 +2900,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "if-addrs"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c0a05c691e1fae256cf7013d99dad472dc52d5543322761f83ec8d47eab40d2b"
+dependencies = [
+ "libc",
+ "windows-sys 0.61.2",
+]
+
+[[package]]
 name = "indexmap"
 version = "1.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4927,18 +4937,20 @@ dependencies = [
 
 [[package]]
 name = "remotefs-ssh"
-version = "0.8.6"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ef96e0424cb24ec8676d37d91e250a32d9221c6fcfa10e7cc0c323420e68d13f"
+checksum = "32db5bde9ec8d2f0154745200dc8fc9e6319ef5befd22860ca94c7321f413888"
 dependencies = [
  "chrono",
+ "if-addrs",
  "lazy-regex",
  "log",
  "path-slash",
  "remotefs",
  "russh",
  "russh-sftp",
- "ssh2-config 0.7.2",
+ "socket2 0.6.5",
+ "ssh2-config",
  "tokio",
 ]
 
@@ -6074,20 +6086,6 @@ dependencies = [
 
 [[package]]
 name = "ssh2-config"
-version = "0.7.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f52f961ebce11d2717ec6e69447d97e62ead57a4bf1016fcf4d707d09e957530"
-dependencies = [
- "bitflags 2.13.1",
- "dirs",
- "glob",
- "log",
- "thiserror 2.0.20",
- "wildmatch",
-]
-
-[[package]]
-name = "ssh2-config"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "16d2108aade44855426db8417ee923f1cfc0c4b38b4bb4bd26d936f0d0f79e0f"
@@ -6317,7 +6315,7 @@ dependencies = [
  "serial_test",
  "shellexpand",
  "simplelog",
- "ssh2-config 0.8.0",
+ "ssh2-config",
  "tempfile",
  "thiserror 2.0.20",
  "tokio",
