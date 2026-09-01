@@ -18,6 +18,18 @@ When termscp starts without an address, it shows the authentication form. Fill
 in the protocol, address, port, username, and password, then connect. termscp
 will open the dual-pane explorer once the connection succeeds.
 
+## SSH configuration precedence
+
+For SFTP and SCP connections, termscp resolves CLI Username and Port values in
+this order: explicit `Username`/`Port`, SSH configuration `User`/`Port`, then
+the current OS user and Port `22`. Username and Port are resolved independently,
+so an explicit value for one does not prevent SSH configuration from supplying
+the other.
+
+For example, `termscp myhost` uses the configured Port and User for `myhost`.
+`termscp alice@myhost:22` uses `alice` and `22`, regardless of the SSH
+configuration.
+
 ## Address argument syntax
 
 The generic address argument has the following syntax:
@@ -30,8 +42,10 @@ This syntax is convenient, and you will probably use it instead of the
 interactive form. Here are some examples.
 
 Connect using the default protocol (defined in your configuration) to
-`192.168.1.31`. If the port is not provided, the default port for the selected
-protocol is used. The username is the current user's name.
+`192.168.1.31`. For SFTP and SCP, an omitted Port or Username is taken from a
+matching SSH configuration entry. If no value is configured, it falls back to
+the protocol default port or the current OS user. Other protocols use their
+default port and the current OS user.
 
 ```sh
 termscp 192.168.1.31

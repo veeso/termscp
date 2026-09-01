@@ -29,7 +29,6 @@ use super::params::{KubeProtocolParams, WebDAVProtocolParams};
 use super::{FileTransferProtocol, ProtocolParams};
 use crate::system::config_client::ConfigClient;
 use crate::system::sshkey_storage::SshKeyStorage;
-use crate::utils::ssh as ssh_utils;
 
 /// Remotefs builder
 pub struct RemoteFsBuilder;
@@ -242,37 +241,9 @@ impl RemoteFsBuilder {
             .key_storage(Box::new(Self::make_ssh_storage(config_client)))
             .ssh_agent_identity(Some(SshAgentIdentity::All))
             .port(params.port);
-        // get ssh config
-        let ssh_config = config_client
-            .get_ssh_config()
-            .and_then(|path| {
-                debug!("reading ssh config at {}", path);
-                ssh_utils::parse_ssh2_config(path).ok()
-            })
-            .map(|config| config.query(&params.address));
-
-        //* override port
-        if let Some(port) = ssh_config.as_ref().and_then(|config| config.port) {
-            opts = opts.port(port);
-        }
-
-        //*  get username. Case 1 provided in params
         if let Some(username) = params.username {
             opts = opts.username(username);
-        } else if let Some(ssh_config) = &ssh_config {
-            debug!("no username was provided, checking whether a user is set for this host");
-            if let Some(username) = &ssh_config.user {
-                debug!("found username from config: {username}");
-                opts = opts.username(username);
-            } else {
-                //* case 3: use system username; can't be None
-                debug!("no username was provided, using current username");
-                if let Ok(username) = whoami::username() {
-                    opts = opts.username(username);
-                }
-            }
         } else if let Ok(username) = whoami::username() {
-            debug!("no username was provided, using current username");
             opts = opts.username(username);
         }
         // For SSH protocols, only set password if explicitly provided and non-empty.

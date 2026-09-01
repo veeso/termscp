@@ -243,6 +243,18 @@ enum FormTab {
 const STORE_KEY_LATEST_VERSION: &str = "AUTH_LATEST_VERSION";
 const STORE_KEY_RELEASE_NOTES: &str = "AUTH_RELEASE_NOTES";
 
+fn should_resolve_ssh_host_params(
+    protocol: FileTransferProtocol,
+    mounted_address: &str,
+    address: &str,
+    force: bool,
+) -> bool {
+    matches!(
+        protocol,
+        FileTransferProtocol::Scp | FileTransferProtocol::Sftp
+    ) && (force || mounted_address != address)
+}
+
 /// AuthActivity is the data holder for the authentication activity
 pub struct AuthActivity {
     app: Application<Id, Msg, NoUserEvent>,
@@ -256,7 +268,11 @@ pub struct AuthActivity {
     redraw: bool,
     /// Host bridge protocol
     host_bridge_protocol: HostBridgeProtocol,
+    /// Last Host address applied to the Host Bridge form.
+    last_host_bridge_address: String,
     last_form_tab: FormTab,
+    /// Last Host address applied to the Remote form.
+    last_remote_address: String,
     /// Remote file transfer protocol
     remote_protocol: FileTransferProtocol,
     context: Option<Context>,
@@ -273,6 +289,8 @@ impl AuthActivity {
             bookmarks_list: Vec::new(),
             exit_reason: None,
             last_form_tab: FormTab::Remote,
+            last_host_bridge_address: String::new(),
+            last_remote_address: String::new(),
             recents_list: Vec::new(),
             redraw: true,
             host_bridge_protocol: HostBridgeProtocol::Localhost,
@@ -315,6 +333,20 @@ impl AuthActivity {
 
     fn set_remote_protocol(&mut self, protocol: FileTransferProtocol) {
         self.remote_protocol = protocol;
+    }
+
+    fn last_mounted_address(&self, form_tab: FormTab) -> &str {
+        match form_tab {
+            FormTab::HostBridge => self.last_host_bridge_address.as_str(),
+            FormTab::Remote => self.last_remote_address.as_str(),
+        }
+    }
+
+    fn set_last_mounted_address(&mut self, form_tab: FormTab, address: &str) {
+        match form_tab {
+            FormTab::HostBridge => self.last_host_bridge_address = address.to_string(),
+            FormTab::Remote => self.last_remote_address = address.to_string(),
+        }
     }
 
     /// Get current input mask to show
@@ -443,5 +475,62 @@ mod tests {
             activity.remote_protocol,
             FileTransferProtocol::GoogleCloudStorage
         );
+    }
+
+    #[test]
+    fn should_resolve_ssh_params_only_after_host_change_or_forced_ssh_transition() {
+        assert!(should_resolve_ssh_host_params(
+            FileTransferProtocol::Sftp,
+            "saved-host",
+            "edited-host",
+            false
+        ));
+        assert!(!should_resolve_ssh_host_params(
+            FileTransferProtocol::Sftp,
+            "saved-host",
+            "saved-host",
+            false
+        ));
+        assert!(should_resolve_ssh_host_params(
+            FileTransferProtocol::Scp,
+            "saved-host",
+            "saved-host",
+            true
+        ));
+        assert!(!should_resolve_ssh_host_params(
+            FileTransferProtocol::Ftp(false),
+            "saved-host",
+            "edited-host",
+            true
+        ));
+    }
+
+    #[test]
+    fn should_track_host_bridge_and_remote_addresses_independently() {
+        let mut activity = AuthActivity::new(Duration::ZERO);
+
+        activity.set_last_mounted_address(FormTab::HostBridge, "bookmark-host");
+        activity.set_last_mounted_address(FormTab::Remote, "recent-host");
+
+        assert_eq!(
+            activity.last_mounted_address(FormTab::HostBridge),
+            "bookmark-host"
+        );
+        assert_eq!(
+            activity.last_mounted_address(FormTab::Remote),
+            "recent-host"
+        );
+        assert!(!should_resolve_ssh_host_params(
+            FileTransferProtocol::Sftp,
+            activity.last_mounted_address(FormTab::Remote),
+            "recent-host",
+            false
+        ));
+        assert!(should_resolve_ssh_host_params(
+            FileTransferProtocol::Sftp,
+            activity.last_mounted_address(FormTab::HostBridge),
+            "edited-host",
+            false
+        ));
     }
 }

@@ -7,12 +7,13 @@ use std::path::PathBuf;
 use std::time::Duration;
 
 use remotefs_ssh::SshKeyStorage as SshKeyStorageTrait;
+use ssh2_config::SshConfig;
 
 use crate::cli::{Remote, RemoteArgs};
 use crate::filetransfer::{
     FileTransferParams, FileTransferProtocol, HostBridgeParams, ProtocolParams,
 };
-use crate::host::HostError;
+use crate::host::{HostError, HostErrorType};
 use crate::system::bookmarks_client::BookmarksClient;
 use crate::system::config_client::ConfigClient;
 use crate::system::environment;
@@ -23,7 +24,7 @@ use crate::ui::activities::filetransfer::FileTransferActivity;
 use crate::ui::activities::setup::SetupActivity;
 use crate::ui::activities::{Activity, ExitReason};
 use crate::ui::context::Context;
-use crate::utils::{fmt, tty};
+use crate::utils::{fmt, ssh as ssh_utils, tty};
 
 /// NextActivity identifies the next identity to run once the current has ended
 pub enum NextActivity {
@@ -67,7 +68,19 @@ impl ActivityManager {
         };
         let error = error_config.or(error_bookmark);
         let theme_provider: ThemeProvider = Self::init_theme_provider();
-        let ctx: Context = Context::new(bookmarks_client, config_client, theme_provider, error);
+        let ssh_config = config_client
+            .get_ssh_config()
+            .map(ssh_utils::parse_ssh2_config)
+            .transpose()
+            .map_err(|err| HostError::from(HostErrorType::InvalidSshConfig(err)))?;
+
+        let ctx: Context = Context::new(
+            bookmarks_client,
+            config_client,
+            theme_provider,
+            ssh_config,
+            error,
+        );
         Ok(ActivityManager {
             context: Some(ctx),
             ticks,
@@ -83,13 +96,20 @@ impl ActivityManager {
                 &params.name,
                 params.password.as_deref(),
             ),
-            Remote::Host(host_params) => self.set_host_params(
-                HostParams::HostBridge(HostBridgeParams::Remote(
-                    host_params.file_transfer_params.protocol,
-                    host_params.file_transfer_params.params,
-                )),
-                host_params.password.as_deref(),
-            ),
+            Remote::Host(host_params) => {
+                let params = apply_ssh_config_to_omitted_cli_parameters(
+                    host_params.file_transfer_params,
+                    host_params.port_explicit,
+                    self.context_ref()?.ssh_config(),
+                );
+                self.set_host_params(
+                    HostParams::HostBridge(HostBridgeParams::Remote(
+                        params.protocol,
+                        params.params,
+                    )),
+                    host_params.password.as_deref(),
+                )
+            }
             Remote::None => {
                 // local dir is remote_args.local_dir if set, otherwise current dir
                 let local_dir = remote_args
@@ -112,7 +132,11 @@ impl ActivityManager {
                 self.resolve_bookmark_name(Host::Remote, &params.name, params.password.as_deref())
             }
             Remote::Host(host_params) => self.set_host_params(
-                HostParams::Remote(host_params.file_transfer_params),
+                HostParams::Remote(apply_ssh_config_to_omitted_cli_parameters(
+                    host_params.file_transfer_params,
+                    host_params.port_explicit,
+                    self.context_ref()?.ssh_config(),
+                )),
                 host_params.password.as_deref(),
             ),
             Remote::None => Ok(()),
@@ -528,5 +552,140 @@ impl ActivityManager {
                 ThemeProvider::degraded()
             }
         }
+    }
+}
+
+/// Applies SSH configuration values only to CLI parameters omitted by the user.
+fn apply_ssh_config_to_omitted_cli_parameters(
+    mut file_transfer_params: FileTransferParams,
+    port_explicit: bool,
+    ssh_config: Option<&SshConfig>,
+) -> FileTransferParams {
+    if !matches!(
+        file_transfer_params.protocol,
+        FileTransferProtocol::Scp | FileTransferProtocol::Sftp,
+    ) {
+        return file_transfer_params;
+    }
+
+    if let ProtocolParams::Generic(params) = &mut file_transfer_params.params {
+        let resolved = ssh_utils::resolve_ssh_host_params(ssh_config, params.address.as_str());
+        if !port_explicit {
+            params.port = resolved.port;
+        }
+        if params.username.is_none() {
+            params.username = resolved.username;
+        }
+    }
+
+    file_transfer_params
+}
+
+#[cfg(test)]
+mod test {
+    use pretty_assertions::assert_eq;
+
+    use super::apply_ssh_config_to_omitted_cli_parameters;
+    use crate::filetransfer::params::GenericProtocolParams;
+    use crate::filetransfer::{FileTransferParams, FileTransferProtocol, ProtocolParams};
+    use crate::utils::ssh::parse_ssh2_config;
+    use crate::utils::test_helpers;
+
+    #[test]
+    fn should_apply_ssh_config_to_omitted_cli_port_and_username() {
+        let config = ssh_config();
+        let params = ssh_params(22, None);
+
+        let resolved = apply_ssh_config_to_omitted_cli_parameters(params, false, Some(&config));
+        let resolved = resolved.params.generic_params().unwrap();
+
+        assert_eq!(resolved.port, 2222);
+        assert_eq!(resolved.username.as_deref(), Some("configured-user"));
+    }
+
+    #[test]
+    fn should_preserve_explicit_cli_port_over_ssh_config() {
+        let config = ssh_config();
+        let params = ssh_params(22, None);
+
+        let resolved = apply_ssh_config_to_omitted_cli_parameters(params, true, Some(&config));
+        let resolved = resolved.params.generic_params().unwrap();
+
+        assert_eq!(resolved.port, 22);
+        assert_eq!(resolved.username.as_deref(), Some("configured-user"));
+    }
+
+    #[test]
+    fn should_preserve_explicit_cli_username_over_ssh_config() {
+        let config = ssh_config();
+        let params = ssh_params(22, Some("cli-user"));
+
+        let resolved = apply_ssh_config_to_omitted_cli_parameters(params, false, Some(&config));
+        let resolved = resolved.params.generic_params().unwrap();
+
+        assert_eq!(resolved.port, 2222);
+        assert_eq!(resolved.username.as_deref(), Some("cli-user"));
+    }
+
+    #[test]
+    fn should_apply_only_omitted_cli_ssh_parameters() {
+        let config = ssh_config();
+        let params = ssh_params(2200, Some("cli-user"));
+
+        let resolved = apply_ssh_config_to_omitted_cli_parameters(params, true, Some(&config));
+        let resolved = resolved.params.generic_params().unwrap();
+
+        assert_eq!(resolved.port, 2200);
+        assert_eq!(resolved.username.as_deref(), Some("cli-user"));
+    }
+
+    #[test]
+    fn should_default_omitted_cli_ssh_port_without_configuration() {
+        let params = ssh_params(22, None);
+
+        let resolved = apply_ssh_config_to_omitted_cli_parameters(params, false, None);
+
+        assert_eq!(resolved.params.generic_params().unwrap().port, 22);
+    }
+
+    #[test]
+    fn should_leave_non_ssh_cli_parameters_unchanged() {
+        let params = FileTransferParams::new(
+            FileTransferProtocol::Ftp(false),
+            ProtocolParams::Generic(
+                GenericProtocolParams::default()
+                    .address("configured-host")
+                    .port(21)
+                    .username(Some("ftp-user")),
+            ),
+        );
+
+        let resolved =
+            apply_ssh_config_to_omitted_cli_parameters(params, false, Some(&ssh_config()));
+        let resolved = resolved.params.generic_params().unwrap();
+
+        assert_eq!(resolved.port, 21);
+        assert_eq!(resolved.username.as_deref(), Some("ftp-user"));
+    }
+
+    fn ssh_params(port: u16, username: Option<&str>) -> FileTransferParams {
+        FileTransferParams::new(
+            FileTransferProtocol::Scp,
+            ProtocolParams::Generic(
+                GenericProtocolParams::default()
+                    .address("configured-host")
+                    .port(port)
+                    .username(username),
+            ),
+        )
+    }
+
+    fn ssh_config() -> ssh2_config::SshConfig {
+        let config_file = test_helpers::create_sample_file_with_content(
+            "Host configured-host\n    Port 2222\n    User configured-user\n",
+        );
+
+        parse_ssh2_config(&config_file.path().to_string_lossy())
+            .expect("test SSH configuration should parse")
     }
 }

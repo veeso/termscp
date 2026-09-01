@@ -25,3 +25,9 @@ termscp 要求以下路径可访问：
 - **启用通知**：如果设置为 `Yes`，则会显示桌面通知。参见 [通知](notifications.md)。
 - **通知：最小传输大小**：如果传输大小大于或等于指定值，则显示传输通知。可接受的格式为 `{UNSIGNED} B/KB/MB/GB/TB/PB`。
 - **SSH 配置路径**：连接到 SCP/SFTP 服务器时使用的 SSH 配置文件。如果留空，则不使用任何文件。你可以指定以 `~` 开头的路径来表示主目录（例如 `~/.ssh/config`）。termscp 支持的属性列于 [ssh2-config 公开的属性](https://github.com/veeso/ssh2-config#exposed-attributes)。另请参见 [SSH 密钥存储](ssh-keys.md)。
+
+## SSH 配置行为
+
+在 SFTP 或 SCP 的任一认证面板中，更改并离开 `Host` 字段后，termscp 会保持输入的别名可见，并使用匹配的 SSH 配置条目填充可见的 `Port` 和 `Username` 字段。如果新的 Host 不匹配任何条目，Port 会重置为 `22`，Username 会重置为空。`HostName` 永远不会替换表单中的别名。
+
+书签会保留其保存的 Port 和 User 值；SSH 配置不会在幕后覆盖它们。连接时，已配置的文件仍会提供 `HostName` 和其他受支持的 SSH 选项。

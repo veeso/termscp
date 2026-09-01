@@ -320,6 +320,7 @@ impl AuthActivity {
         form_tab: FormTab,
         address: &str,
     ) {
+        self.set_last_mounted_address(form_tab, address);
         let addr_color = self.theme().auth_address;
         let id = Self::form_tab_id(form_tab, AuthFormId::Address);
         if let Err(err) = self.app.remount(
