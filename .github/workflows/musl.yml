@@ -61,10 +61,13 @@ jobs:
                 libunistring-dev \
                 linux-headers \
                 openldap-dev \
+                openssl-dev \
+                openssl-libs-static \
                 perl \
                 pkgconf \
                 python3 \
-                zlib-dev
+                zlib-dev \
+                zlib-static
               rustup target add "$TARGET"
               export PKG_CONFIG_ALL_STATIC=1
               export RUSTFLAGS="-C target-feature=+crt-static -C link-arg=-static"
