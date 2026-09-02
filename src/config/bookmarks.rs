@@ -191,25 +191,25 @@ impl From<Bookmark> for FileTransferParams {
             }
             #[cfg(posix)]
             FileTransferProtocol::Smb => {
-                let params = TransferSmbParams::new(
-                    bookmark.address.unwrap_or_default(),
-                    bookmark.smb.clone().map(|x| x.share).unwrap_or_default(),
-                )
-                .port(bookmark.port.unwrap_or(445))
-                .username(bookmark.username)
-                .password(bookmark.password)
-                .workgroup(bookmark.smb.and_then(|x| x.workgroup));
+                let smb = bookmark.smb.unwrap_or_default();
+                let params =
+                    TransferSmbParams::new(bookmark.address.unwrap_or_default(), smb.share)
+                        .port(bookmark.port.unwrap_or(445))
+                        .username(bookmark.username)
+                        .password(bookmark.password)
+                        .workgroup(smb.workgroup)
+                        .dialect(smb.dialect.unwrap_or_default());
 
                 Self::new(bookmark.protocol, ProtocolParams::Smb(params))
             }
             #[cfg(win)]
             FileTransferProtocol::Smb => {
-                let params = TransferSmbParams::new(
-                    bookmark.address.unwrap_or_default(),
-                    bookmark.smb.clone().map(|x| x.share).unwrap_or_default(),
-                )
-                .username(bookmark.username)
-                .password(bookmark.password);
+                let smb = bookmark.smb.unwrap_or_default();
+                let params =
+                    TransferSmbParams::new(bookmark.address.unwrap_or_default(), smb.share)
+                        .username(bookmark.username)
+                        .password(bookmark.password)
+                        .dialect(smb.dialect.unwrap_or_default());
 
                 Self::new(bookmark.protocol, ProtocolParams::Smb(params))
             }
@@ -254,7 +254,7 @@ mod tests {
     use pretty_assertions::assert_eq;
 
     use super::*;
-    use crate::filetransfer::params::DEFAULT_GCS_ENDPOINT;
+    use crate::filetransfer::params::{DEFAULT_GCS_ENDPOINT, SmbDialect};
 
     #[test]
     fn test_bookmarks_default() {
@@ -605,6 +605,7 @@ mod tests {
             smb: Some(SmbParams {
                 share: "test".to_string(),
                 workgroup: Some("testone".to_string()),
+                dialect: Some(SmbDialect::Smb2),
             }),
         };
 
@@ -625,6 +626,7 @@ mod tests {
         assert_eq!(smb_params.password.as_deref().unwrap(), "bar");
         assert_eq!(smb_params.username.as_deref().unwrap(), "foo");
         assert_eq!(smb_params.workgroup.as_deref().unwrap(), "testone");
+        assert_eq!(smb_params.dialect, SmbDialect::Smb2);
     }
 
     #[test]
@@ -644,6 +646,7 @@ mod tests {
             smb: Some(SmbParams {
                 share: "test".to_string(),
                 workgroup: None,
+                dialect: Some(SmbDialect::Smb2),
             }),
         };
 
@@ -660,5 +663,32 @@ mod tests {
         let smb_params = params.params.smb_params().unwrap();
         assert_eq!(smb_params.address.as_str(), "localhost");
         assert_eq!(smb_params.share.as_str(), "test");
+        assert_eq!(smb_params.dialect, SmbDialect::Smb2);
+    }
+
+    #[test]
+    fn should_default_dialect_when_bookmark_has_none() {
+        let bookmark: Bookmark = Bookmark {
+            protocol: FileTransferProtocol::Smb,
+            address: Some("localhost".to_string()),
+            port: Some(445),
+            username: None,
+            password: None,
+            remote_path: None,
+            local_path: None,
+            kube: None,
+            s3: None,
+            gcs: None,
+            smb: Some(SmbParams {
+                share: "test".to_string(),
+                workgroup: None,
+                dialect: None,
+            }),
+        };
+        let params = FileTransferParams::from(bookmark);
+        assert_eq!(
+            params.params.smb_params().unwrap().dialect,
+            SmbDialect::Auto
+        );
     }
 }

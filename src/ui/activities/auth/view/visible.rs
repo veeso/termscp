@@ -289,15 +289,21 @@ impl AuthActivity {
                 Id::HostBridge(AuthFormId::Password),
                 Id::HostBridge(AuthFormId::SmbWorkgroup),
             ],
-            Some(&Id::HostBridge(AuthFormId::RemoteDirectory)) => [
+            Some(&Id::HostBridge(AuthFormId::SmbDialect)) => [
                 Id::HostBridge(AuthFormId::Username),
                 Id::HostBridge(AuthFormId::Password),
                 Id::HostBridge(AuthFormId::SmbWorkgroup),
+                Id::HostBridge(AuthFormId::SmbDialect),
+            ],
+            Some(&Id::HostBridge(AuthFormId::RemoteDirectory)) => [
+                Id::HostBridge(AuthFormId::Password),
+                Id::HostBridge(AuthFormId::SmbWorkgroup),
+                Id::HostBridge(AuthFormId::SmbDialect),
                 Id::HostBridge(AuthFormId::RemoteDirectory),
             ],
             Some(&Id::HostBridge(AuthFormId::LocalDirectory)) => [
-                Id::HostBridge(AuthFormId::Password),
                 Id::HostBridge(AuthFormId::SmbWorkgroup),
+                Id::HostBridge(AuthFormId::SmbDialect),
                 Id::HostBridge(AuthFormId::RemoteDirectory),
                 Id::HostBridge(AuthFormId::LocalDirectory),
             ],
@@ -336,15 +342,21 @@ impl AuthActivity {
                 Id::Remote(AuthFormId::Password),
                 Id::Remote(AuthFormId::SmbWorkgroup),
             ],
-            Some(&Id::Remote(AuthFormId::RemoteDirectory)) => [
+            Some(&Id::Remote(AuthFormId::SmbDialect)) => [
                 Id::Remote(AuthFormId::Username),
                 Id::Remote(AuthFormId::Password),
                 Id::Remote(AuthFormId::SmbWorkgroup),
+                Id::Remote(AuthFormId::SmbDialect),
+            ],
+            Some(&Id::Remote(AuthFormId::RemoteDirectory)) => [
+                Id::Remote(AuthFormId::Password),
+                Id::Remote(AuthFormId::SmbWorkgroup),
+                Id::Remote(AuthFormId::SmbDialect),
                 Id::Remote(AuthFormId::RemoteDirectory),
             ],
             Some(&Id::Remote(AuthFormId::LocalDirectory)) => [
-                Id::Remote(AuthFormId::Password),
                 Id::Remote(AuthFormId::SmbWorkgroup),
+                Id::Remote(AuthFormId::SmbDialect),
                 Id::Remote(AuthFormId::RemoteDirectory),
                 Id::Remote(AuthFormId::LocalDirectory),
             ],

@@ -62,7 +62,7 @@ remotefs = "0.3"
 remotefs-aws-s3 = "0.4"
 remotefs-gcs = "0.1"
 remotefs-kube = "0.4"
-remotefs-smb = { version = "0.3", optional = true }
+remotefs-smb = { version = "0.4", optional = true }
 remotefs-ssh = { version = "0.9", default-features = false, features = ["russh"] }
 remotefs-webdav = "0.2"
 rpassword = "7"

@@ -118,7 +118,8 @@ mod tests {
     use crate::config::bookmarks::{Bookmark, KubeParams, S3Params, SmbParams, UserHosts};
     use crate::config::params::UserConfig;
     use crate::config::themes::Theme;
-    use crate::filetransfer::FileTransferProtocol;
+    use crate::filetransfer::params::SmbDialect;
+    use crate::filetransfer::{FileTransferParams, FileTransferProtocol};
     use crate::utils::test_helpers::create_file_ioers;
 
     #[test]
@@ -445,6 +446,7 @@ mod tests {
         assert_eq!(smb.share.as_str(), "temp");
         #[cfg(posix)]
         assert_eq!(smb.workgroup.as_deref().unwrap(), "test");
+        assert_eq!(smb.dialect, None);
     }
 
     #[test]
@@ -489,6 +491,66 @@ mod tests {
         assert_eq!(gcs.bucket, "adc-bucket");
         assert_eq!(gcs.endpoint, "https://storage.googleapis.com");
         assert_eq!(gcs.service_account_key, None);
+    }
+
+    #[test]
+    fn should_deserialize_legacy_smb_bookmark_without_dialect() {
+        let toml_file = create_good_toml_bookmarks();
+        toml_file.as_file().sync_all().unwrap();
+        toml_file.as_file().rewind().unwrap();
+
+        let hosts: UserHosts = deserialize(Box::new(toml_file)).unwrap();
+        let host = hosts.bookmarks.get("smb").unwrap();
+        let smb = host.smb.as_ref().unwrap();
+        assert_eq!(smb.share.as_str(), "temp");
+        assert_eq!(smb.dialect, None);
+
+        // Legacy bookmarks resolve to secure Auto at runtime.
+        let params = FileTransferParams::from(host.clone());
+        assert_eq!(
+            params.params.smb_params().unwrap().dialect,
+            SmbDialect::Auto
+        );
+    }
+
+    #[test]
+    fn should_deserialize_smb_bookmark_with_dialect() {
+        let toml_file = create_smb_dialect_toml_bookmark();
+        toml_file.as_file().sync_all().unwrap();
+        toml_file.as_file().rewind().unwrap();
+
+        let hosts: UserHosts = deserialize(Box::new(toml_file)).unwrap();
+        let host = hosts.bookmarks.get("smb-dialect").unwrap();
+        let smb = host.smb.as_ref().unwrap();
+        assert_eq!(smb.dialect, Some(SmbDialect::Smb2));
+
+        let params = FileTransferParams::from(host.clone());
+        assert_eq!(
+            params.params.smb_params().unwrap().dialect,
+            SmbDialect::Smb2
+        );
+    }
+
+    #[test]
+    fn should_reserialize_legacy_smb_bookmark_and_reload() {
+        let toml_file = create_good_toml_bookmarks();
+        toml_file.as_file().sync_all().unwrap();
+        toml_file.as_file().rewind().unwrap();
+        let hosts: UserHosts = deserialize(Box::new(toml_file)).unwrap();
+
+        let output_file = tempfile::NamedTempFile::new().unwrap();
+        let output_path = output_file.path().to_path_buf();
+        serialize(
+            &hosts,
+            Box::new(std::fs::File::create(&output_path).unwrap()),
+        )
+        .unwrap();
+
+        let reloaded: UserHosts =
+            deserialize(Box::new(std::fs::File::open(&output_path).unwrap())).unwrap();
+        let smb = reloaded.bookmarks.get("smb").unwrap().smb.as_ref().unwrap();
+        assert_eq!(smb.share.as_str(), "temp");
+        assert_eq!(smb.dialect, None);
     }
 
     #[test]
@@ -630,6 +692,7 @@ mod tests {
         let smb_params: Option<SmbParams> = Some(SmbParams {
             share: "test".to_string(),
             workgroup: None,
+            dialect: None,
         });
         bookmarks.insert(
             String::from("smb"),
@@ -782,6 +845,27 @@ mod tests {
 
         [bookmarks.gcs-adc.gcs]
         bucket = "adc-bucket"
+
+        [recents]
+        "#;
+        tmpfile.write_all(file_content.as_bytes()).unwrap();
+        tmpfile
+    }
+
+    fn create_smb_dialect_toml_bookmark() -> tempfile::NamedTempFile {
+        let mut tmpfile: tempfile::NamedTempFile = tempfile::NamedTempFile::new().unwrap();
+        let file_content: &str = r#"
+        [bookmarks.smb-dialect]
+        protocol = "SMB"
+        address = "localhost"
+        port = 445
+        username = "test"
+        password = "test"
+
+        [bookmarks.smb-dialect.smb]
+        share = "temp"
+        workgroup = "test"
+        dialect = "smb2"
 
         [recents]
         "#;

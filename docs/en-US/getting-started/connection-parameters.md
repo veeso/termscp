@@ -169,8 +169,28 @@ Authentication-form fields:
 - Password
 - Port (other systems only; default `445`)
 - Workgroup (other systems only)
+- SMB version (other systems only; default `Auto`)
 
-On Windows the port and workgroup fields are not used.
+On Windows the port, workgroup and SMB version fields are not used: the
+operating system manages SMB protocol negotiation.
+
+The SMB version field bounds the dialects offered during negotiation:
+
+| Selection | Dialects negotiated     |
+| --------- | ----------------------- |
+| Auto      | SMB 2.0.2 through 3.1.1 |
+| SMB1      | NT1 (CIFS) only         |
+| SMB2      | SMB 2.0.2 through 2.1   |
+| SMB3      | SMB 3.0 through 3.1.1   |
+
+`Auto` never negotiates SMB1. SMB1 is deprecated and insecure: select it only
+for isolated legacy devices that support nothing newer. A warning is shown in
+the form while SMB1 is selected.
+
+Bookmarks store the selection under the `dialect` key of the SMB table
+(`auto`, `smb1`, `smb2` or `smb3`). Bookmarks saved before this option existed
+have no `dialect` key and behave as `Auto`. The address syntax below does not
+carry a version; connections started from the command line use `Auto`.
 
 Windows address syntax:
 

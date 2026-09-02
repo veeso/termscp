@@ -358,7 +358,7 @@ impl AuthActivity {
                     InputMask::Localhost => unreachable!(),
                     InputMask::Generic => Id::HostBridge(AuthFormId::Password),
                     #[cfg(posix)]
-                    InputMask::Smb => Id::HostBridge(AuthFormId::SmbWorkgroup),
+                    InputMask::Smb => Id::HostBridge(AuthFormId::SmbDialect),
                     #[cfg(win)]
                     InputMask::Smb => Id::HostBridge(AuthFormId::Password),
                     InputMask::Kube => Id::HostBridge(AuthFormId::KubeClientKey),
@@ -483,11 +483,19 @@ impl AuthActivity {
             }
             #[cfg(posix)]
             UiAuthFormMsg::SmbWorkgroupDown => {
-                self.activate_component(Id::HostBridge(AuthFormId::RemoteDirectory))
+                self.activate_component(Id::HostBridge(AuthFormId::SmbDialect))
             }
             #[cfg(posix)]
             UiAuthFormMsg::SmbWorkgroupUp => {
                 self.activate_component(Id::HostBridge(AuthFormId::Password))
+            }
+            #[cfg(posix)]
+            UiAuthFormMsg::SmbDialectBlurDown => {
+                self.activate_component(Id::HostBridge(AuthFormId::RemoteDirectory))
+            }
+            #[cfg(posix)]
+            UiAuthFormMsg::SmbDialectBlurUp => {
+                self.activate_component(Id::HostBridge(AuthFormId::SmbWorkgroup))
             }
             UiAuthFormMsg::UsernameBlurDown => {
                 self.activate_component(Id::HostBridge(AuthFormId::Password))
@@ -601,7 +609,7 @@ impl AuthActivity {
                     InputMask::Localhost => unreachable!(),
                     InputMask::Generic => Id::Remote(AuthFormId::Password),
                     #[cfg(posix)]
-                    InputMask::Smb => Id::Remote(AuthFormId::SmbWorkgroup),
+                    InputMask::Smb => Id::Remote(AuthFormId::SmbDialect),
                     #[cfg(win)]
                     InputMask::Smb => Id::Remote(AuthFormId::Password),
                     InputMask::Kube => Id::Remote(AuthFormId::KubeClientKey),
@@ -726,11 +734,19 @@ impl AuthActivity {
             }
             #[cfg(posix)]
             UiAuthFormMsg::SmbWorkgroupDown => {
-                self.activate_component(Id::Remote(AuthFormId::RemoteDirectory))
+                self.activate_component(Id::Remote(AuthFormId::SmbDialect))
             }
             #[cfg(posix)]
             UiAuthFormMsg::SmbWorkgroupUp => {
                 self.activate_component(Id::Remote(AuthFormId::Password))
+            }
+            #[cfg(posix)]
+            UiAuthFormMsg::SmbDialectBlurDown => {
+                self.activate_component(Id::Remote(AuthFormId::RemoteDirectory))
+            }
+            #[cfg(posix)]
+            UiAuthFormMsg::SmbDialectBlurUp => {
+                self.activate_component(Id::Remote(AuthFormId::SmbWorkgroup))
             }
             UiAuthFormMsg::UsernameBlurDown => {
                 self.activate_component(Id::Remote(AuthFormId::Password))
