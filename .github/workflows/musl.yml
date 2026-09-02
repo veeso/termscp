@@ -74,7 +74,7 @@ jobs:
                 -type d -name "pavao-src-4.22.11" -print -quit)
               test -n "$PAVAO_SRC"
               cp -R "$PAVAO_SRC" /tmp/pavao-src
-              perl -0pi -e "s/(configure\\.arg\\(\\\"--without-ad-dc\\\"\\);)/\\\$1\\n        configure.arg(\\\"--without-libunwind\\\");/" \
+              perl -0pi -e "s/configure\\.arg\\(\\\"--without-ad-dc\\\"\\);/configure.arg(\\\"--without-ad-dc\\\");\\n        configure.arg(\\\"--without-libunwind\\\");/" \
                 /tmp/pavao-src/src/lib.rs
               cat >> Cargo.toml <<EOF
 
