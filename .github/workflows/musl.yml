@@ -116,6 +116,7 @@ jobs:
                 /tmp/native/gnutls/lib/pkgconfig/gnutls.pc \
                 > /tmp/native/pkgconfig/gnutls.pc
 
+              cd /work
               PAVAO_SRC=$(find "${CARGO_HOME:-/usr/local/cargo}/registry/src" \
                 -type d -name "pavao-src-4.24.6" -print -quit)
               test -n "$PAVAO_SRC"
