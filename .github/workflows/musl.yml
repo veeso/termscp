@@ -64,6 +64,7 @@ jobs:
                 openssl-dev \
                 openssl-libs-static \
                 perl \
+                perl-parse-yapp \
                 pkgconf \
                 python3 \
                 zlib-dev \
