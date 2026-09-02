@@ -53,7 +53,7 @@ jobs:
                 file \
                 flex \
                 git \
-                gettext-tiny-dev \
+                gettext-static \
                 gnutls-dev \
                 icu-dev \
                 icu-static \
