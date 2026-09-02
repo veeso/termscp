@@ -43,23 +43,36 @@ jobs:
             sh -euxc '
               apk add --no-cache \
                 acl-dev \
+                acl-static \
                 bison \
                 build-base \
                 cups-dev \
+                cyrus-sasl-dev \
+                cyrus-sasl-static \
                 dbus-dev \
                 file \
                 flex \
                 git \
                 gnutls-dev \
                 icu-dev \
+                icu-static \
                 jansson-dev \
+                jansson-static \
                 keyutils-dev \
                 libarchive-dev \
+                libarchive-static \
                 libbsd-dev \
+                libbsd-static \
                 libcap-dev \
+                libcap-static \
+                libgit2-dev \
+                libgit2-static \
                 libtirpc-dev \
+                libtirpc-static \
                 libunistring-dev \
+                libunistring-static \
                 linux-headers \
+                linux-pam-dev \
                 openldap-dev \
                 openssl-dev \
                 openssl-libs-static \
