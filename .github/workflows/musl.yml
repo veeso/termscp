@@ -69,6 +69,19 @@ jobs:
                 zlib-dev \
                 zlib-static
               rustup target add "$TARGET"
+              cargo fetch --locked
+              PAVAO_SRC=$(find "${CARGO_HOME:-/usr/local/cargo}/registry/src" \
+                -type d -name "pavao-src-4.22.11" -print -quit)
+              test -n "$PAVAO_SRC"
+              cp -R "$PAVAO_SRC" /tmp/pavao-src
+              perl -0pi -e "s/(configure\\.arg\\(\\\"--without-ad-dc\\\"\\);)/\\\$1\\n        configure.arg(\\\"--without-libunwind\\\");/" \
+                /tmp/pavao-src/src/lib.rs
+              cat >> Cargo.toml <<EOF
+
+          [patch.crates-io]
+          pavao-src = { path = "/tmp/pavao-src" }
+          EOF
+              cargo update -p pavao-src@4.22.11
               export PKG_CONFIG_ALL_STATIC=1
               export RUSTFLAGS="-C target-feature=+crt-static -C link-arg=-static"
               cargo build --locked --release --target "$TARGET" \
