@@ -54,7 +54,7 @@ pub use s3::{
 };
 pub use smb::InputSmbShare;
 #[cfg(posix)]
-pub use smb::InputSmbWorkgroup;
+pub use smb::{InputSmbWorkgroup, RadioSmbDialect, SmbDialectWarning};
 pub use webdav::InputWebDAVUri;
 
 fn handle_input_ev(

@@ -5,10 +5,14 @@ use tuirealm::state::{State, StateValue};
 
 use super::*;
 use crate::filetransfer::FileTransferParams;
+#[cfg(posix)]
+use crate::filetransfer::params::SmbDialect;
 use crate::filetransfer::params::{
     AwsS3Params, GenericProtocolParams, GoogleCloudStorageParams, KubeProtocolParams,
     ProtocolParams, SmbParams, WebDAVProtocolParams,
 };
+#[cfg(posix)]
+use crate::ui::activities::auth::components::RadioSmbDialect;
 
 impl AuthActivity {
     pub(in crate::ui::activities::auth) fn get_generic_params_input(
@@ -82,6 +86,7 @@ impl AuthActivity {
     ) -> SmbParams {
         let share = self.get_input_smb_share(form_tab);
         let workgroup = self.get_input_smb_workgroup(form_tab);
+        let dialect = self.get_input_smb_dialect(form_tab);
         let address = self.get_input_addr(form_tab);
         let port = self.get_input_port(form_tab);
         let username = self.get_input_username(form_tab);
@@ -92,6 +97,7 @@ impl AuthActivity {
             .username(username)
             .password(password)
             .workgroup(workgroup)
+            .dialect(dialect)
     }
 
     #[cfg(win)]
@@ -452,6 +458,20 @@ impl AuthActivity {
         }
     }
 
+    #[cfg(posix)]
+    pub(in crate::ui::activities::auth) fn get_input_smb_dialect(
+        &self,
+        form_tab: FormTab,
+    ) -> SmbDialect {
+        match self
+            .app
+            .state(&Self::form_tab_id(form_tab, AuthFormId::SmbDialect))
+        {
+            Ok(State::Single(StateValue::Usize(opt))) => RadioSmbDialect::opt_to_dialect(opt),
+            _ => SmbDialect::default(),
+        }
+    }
+
     pub(in crate::ui::activities::auth) fn get_new_bookmark(&self) -> (String, bool) {
         let name = match self.app.state(&Id::BookmarkName) {
             Ok(State::Single(StateValue::String(name))) => name,
@@ -473,8 +493,10 @@ impl AuthActivity {
             + 3
     }
 
-    fn input_mask_size(input_mask: InputMask) -> u16 {
+    pub(in crate::ui::activities::auth) fn input_mask_size(input_mask: InputMask) -> u16 {
         match input_mask {
+            // One extra line for the SMB1 warning above the dialect radio.
+            InputMask::Smb if cfg!(posix) => 13,
             InputMask::AwsS3
             | InputMask::Gcs
             | InputMask::Generic

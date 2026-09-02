@@ -1,4 +1,6 @@
 use super::*;
+#[cfg(posix)]
+use crate::filetransfer::params::SmbDialect;
 use crate::ui::activities::auth::STORE_KEY_RELEASE_NOTES;
 
 impl AuthActivity {
@@ -699,6 +701,36 @@ impl AuthActivity {
             Box::new(components::InputSmbWorkgroup::new(
                 workgroup, form_tab, color,
             )),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
+    }
+
+    #[cfg(posix)]
+    pub(in crate::ui::activities::auth) fn mount_smb_dialect(
+        &mut self,
+        form_tab: FormTab,
+        dialect: SmbDialect,
+    ) {
+        let color = self.theme().auth_protocol;
+        let id = Self::form_tab_id(form_tab, AuthFormId::SmbDialect);
+        if let Err(err) = self.app.remount(
+            id,
+            Box::new(components::RadioSmbDialect::new(dialect, form_tab, color)),
+            vec![],
+        ) {
+            error!("Failed to remount component: {err}");
+        }
+    }
+
+    #[cfg(posix)]
+    pub(in crate::ui::activities::auth) fn mount_smb_dialect_warning(&mut self, form_tab: FormTab) {
+        let color = self.theme().misc_warn_dialog;
+        let id = Self::form_tab_id(form_tab, AuthFormId::SmbDialectWarning);
+        if let Err(err) = self.app.remount(
+            id,
+            Box::new(components::SmbDialectWarning::new(color)),
             vec![],
         ) {
             error!("Failed to remount component: {err}");

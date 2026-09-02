@@ -13,7 +13,7 @@ use std::path::{Path, PathBuf};
 pub use self::aws_s3::AwsS3Params;
 pub use self::google_cloud_storage::{DEFAULT_GCS_ENDPOINT, GoogleCloudStorageParams};
 pub use self::kube::KubeProtocolParams;
-pub use self::smb::SmbParams;
+pub use self::smb::{SmbDialect, SmbParams};
 pub use self::webdav::WebDAVProtocolParams;
 use super::FileTransferProtocol;
 

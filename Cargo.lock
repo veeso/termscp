@@ -2121,9 +2121,9 @@ dependencies = [
 
 [[package]]
 name = "git2"
-version = "0.20.4"
+version = "0.21.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7b88256088d75a56f8ecfa070513a775dd9107f6530ef14919dac831af9cfe2b"
+checksum = "ddddbf932745a6be37109b6112d3ee09696106f848449069d3a57bba937ab82e"
 dependencies = [
  "bitflags 2.13.1",
  "libc",
@@ -3405,7 +3405,6 @@ checksum = "7f7c568b25d7489bc3fb2988ed69ab111d2944d2f5fec3d5c987fe545ea97b50"
 dependencies = [
  "cc",
  "libc",
- "libssh2-sys",
  "libz-sys",
  "openssl-sys",
  "pkg-config",
@@ -3424,20 +3423,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d7955dfc218a8afb29dfeffd540e3a6e96baeb94fe7138228dd7cc6937fbbf96"
 dependencies = [
  "libc",
-]
-
-[[package]]
-name = "libssh2-sys"
-version = "0.3.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c04141a07bb0c0bc461cb657808764de571702a59bc5c726c400ac9a7625e3ab"
-dependencies = [
- "cc",
- "libc",
- "libz-sys",
- "openssl-sys",
- "pkg-config",
- "vcpkg",
 ]
 
 [[package]]
@@ -4135,9 +4120,9 @@ checksum = "1e91099d4268b0e11973f036e885d652fb0b21fedcf69738c627f94db6a44f42"
 
 [[package]]
 name = "pavao"
-version = "0.2.16"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cca8302d5f1b5dc7a8dfb04e5ea7185b43571db5811e084746bf0aeb0d7b18f1"
+checksum = "6bf4bff78f032402eb6b89a72801f8d4b5ef57e79d33139f6e4fb214e823a854"
 dependencies = [
  "cfg_aliases",
  "lazy_static",
@@ -4149,9 +4134,9 @@ dependencies = [
 
 [[package]]
 name = "pavao-src"
-version = "4.22.0-4"
+version = "4.22.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "30b8c63418f1e7dfbb786268ae0927537b87d90b1211216c1ba50ce25d8d9495"
+checksum = "48289686720a0215553faa63f3211f0faa57c698287fb1ac41d3fbd423ed1f12"
 dependencies = [
  "cc",
  "git2",
@@ -4160,9 +4145,9 @@ dependencies = [
 
 [[package]]
 name = "pavao-sys"
-version = "0.2.16"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "07b390d8c7372e94c7e0f7d92e36c98404634c554a52b1cb9ae030b4e7888cde"
+checksum = "8c6a44c550ef244c0a19f0a2201687af1853b0b9d1cfaa989a9312942c676adf"
 dependencies = [
  "cc",
  "libc",
@@ -4923,16 +4908,16 @@ dependencies = [
 
 [[package]]
 name = "remotefs-smb"
-version = "0.3.1"
+version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c077c88aecf906b0267def951277dc4f6fd1f368edb73d333771a24c0b47970a"
+checksum = "c5e5b1fc4afd54e729393b3b44b537583c8e815d0c8e41483799001084e5fe96"
 dependencies = [
  "filetime",
  "libc",
  "log",
  "pavao",
  "remotefs",
- "windows-sys 0.59.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]

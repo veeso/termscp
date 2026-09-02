@@ -11,16 +11,18 @@ use remotefs_ftp::FtpFs;
 use remotefs_gcs::credentials::service_account;
 use remotefs_gcs::{GoogleCloudStorageCredentials, GoogleCloudStorageFs};
 use remotefs_kube::KubeMultiPodFs as KubeFs;
-#[cfg(smb_unix)]
-use remotefs_smb::SmbOptions;
 #[cfg(smb)]
 use remotefs_smb::{SmbCredentials, SmbFs};
+#[cfg(smb_unix)]
+use remotefs_smb::{SmbDialect as RemoteSmbDialect, SmbOptions};
 use remotefs_ssh::{
     NoCheckServerKey, RusshSession as SshSession, ScpFs, SftpFs, SshAgentIdentity,
     SshConfigParseRule, SshOpts,
 };
 use remotefs_webdav::WebDAVFs;
 
+#[cfg(smb_unix)]
+use super::params::SmbDialect;
 #[cfg(not(smb))]
 use super::params::{AwsS3Params, GenericProtocolParams, GoogleCloudStorageParams};
 #[cfg(smb)]
@@ -189,6 +191,17 @@ impl RemoteFsBuilder {
         Ok(SftpFs::russh(opts, rt))
     }
 
+    /// Maps the user-facing SMB family to inclusive remotefs dialect bounds.
+    #[cfg(smb_unix)]
+    fn smb_dialect_bounds(dialect: SmbDialect) -> (RemoteSmbDialect, RemoteSmbDialect) {
+        match dialect {
+            SmbDialect::Auto => (RemoteSmbDialect::Smb202, RemoteSmbDialect::Smb311),
+            SmbDialect::Smb1 => (RemoteSmbDialect::Nt1, RemoteSmbDialect::Nt1),
+            SmbDialect::Smb2 => (RemoteSmbDialect::Smb202, RemoteSmbDialect::Smb210),
+            SmbDialect::Smb3 => (RemoteSmbDialect::Smb300, RemoteSmbDialect::Smb311),
+        }
+    }
+
     #[cfg(smb_unix)]
     fn smb_client(params: SmbParams) -> Result<SmbFs, String> {
         let mut credentials = SmbCredentials::default()
@@ -205,11 +218,14 @@ impl RemoteFsBuilder {
             credentials = credentials.workgroup(workgroup);
         }
 
-        SmbFs::try_new(
+        let (min_dialect, max_dialect) = Self::smb_dialect_bounds(params.dialect);
+        SmbFs::try_new_with_dialect(
             credentials,
             SmbOptions::default()
                 .one_share_per_server(true)
                 .case_sensitive(false),
+            min_dialect,
+            max_dialect,
         )
         .map_err(|e| {
             error!("Invalid params for protocol SMB: {e}");
@@ -228,6 +244,7 @@ impl RemoteFsBuilder {
             credentials = credentials.password(password);
         }
 
+        // Dialect is OS-managed on Windows.
         Ok(SmbFs::new(credentials))
     }
 
@@ -284,6 +301,8 @@ mod test {
 
     use std::path::{Path, PathBuf};
 
+    #[cfg(smb)]
+    use serial_test::serial;
     use tempfile::TempDir;
 
     use super::*;
@@ -417,8 +436,46 @@ mod test {
 
     #[test]
     #[cfg(smb)]
+    #[serial]
     fn should_build_smb_fs() {
         let params = ProtocolParams::Smb(SmbParams::new("localhost", "share"));
+        let config_client = get_config_client();
+        assert!(RemoteFsBuilder::build(FileTransferProtocol::Smb, params, &config_client).is_ok());
+    }
+
+    #[test]
+    #[cfg(smb_unix)]
+    fn should_map_smb_dialect_to_bounds() {
+        use remotefs_smb::SmbDialect as RemoteSmbDialect;
+
+        use crate::filetransfer::params::SmbDialect;
+
+        assert_eq!(
+            RemoteFsBuilder::smb_dialect_bounds(SmbDialect::Auto),
+            (RemoteSmbDialect::Smb202, RemoteSmbDialect::Smb311)
+        );
+        assert_eq!(
+            RemoteFsBuilder::smb_dialect_bounds(SmbDialect::Smb1),
+            (RemoteSmbDialect::Nt1, RemoteSmbDialect::Nt1)
+        );
+        assert_eq!(
+            RemoteFsBuilder::smb_dialect_bounds(SmbDialect::Smb2),
+            (RemoteSmbDialect::Smb202, RemoteSmbDialect::Smb210)
+        );
+        assert_eq!(
+            RemoteFsBuilder::smb_dialect_bounds(SmbDialect::Smb3),
+            (RemoteSmbDialect::Smb300, RemoteSmbDialect::Smb311)
+        );
+    }
+
+    #[test]
+    #[cfg(smb)]
+    #[serial]
+    fn should_build_smb_fs_with_dialect() {
+        use crate::filetransfer::params::SmbDialect;
+
+        let params =
+            ProtocolParams::Smb(SmbParams::new("localhost", "share").dialect(SmbDialect::Smb1));
         let config_client = get_config_client();
         assert!(RemoteFsBuilder::build(FileTransferProtocol::Smb, params, &config_client).is_ok());
     }

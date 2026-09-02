@@ -13,8 +13,6 @@ pub use bookmarks::{
     BookmarkName, BookmarkSavePassword, BookmarksList, DeleteBookmarkPopup, DeleteRecentPopup,
     RecentsList,
 };
-#[cfg(posix)]
-pub use form::InputSmbWorkgroup;
 pub use form::{
     HostBridgeProtocolRadio, InputAddress, InputGcsBucket, InputGcsEndpoint,
     InputGcsServiceAccountKey, InputKubeClientCert, InputKubeClientKey, InputKubeClusterUrl,
@@ -23,6 +21,8 @@ pub use form::{
     InputS3Region, InputS3SecretAccessKey, InputS3SecurityToken, InputS3SessionToken,
     InputSmbShare, InputUsername, InputWebDAVUri, RadioS3NewPathStyle, RemoteProtocolRadio,
 };
+#[cfg(posix)]
+pub use form::{InputSmbWorkgroup, RadioSmbDialect, SmbDialectWarning};
 pub use popup::{
     ErrorPopup, InfoPopup, InstallUpdatePopup, Keybindings, QuitPopup, ReleaseNotes, WaitPopup,
     WindowSizeError,

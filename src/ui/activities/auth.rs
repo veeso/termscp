@@ -101,6 +101,10 @@ pub enum AuthFormId {
     SmbShare,
     #[cfg(posix)]
     SmbWorkgroup,
+    #[cfg(posix)]
+    SmbDialect,
+    #[cfg(posix)]
+    SmbDialectWarning,
     Username,
     WebDAVUri,
 }
@@ -209,6 +213,10 @@ pub enum UiAuthFormMsg {
     SmbWorkgroupDown,
     #[cfg(posix)]
     SmbWorkgroupUp,
+    #[cfg(posix)]
+    SmbDialectBlurDown,
+    #[cfg(posix)]
+    SmbDialectBlurUp,
     UsernameBlurDown,
     UsernameBlurUp,
     WebDAVUriBlurDown,

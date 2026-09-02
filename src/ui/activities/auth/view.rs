@@ -3,7 +3,7 @@
 //! `auth_activity` is the module which implements the authentication activity
 
 use tuirealm::props::Color;
-use tuirealm::ratatui::layout::{Constraint, Direction, Layout};
+use tuirealm::ratatui::layout::{Constraint, Direction, Layout, Rect};
 use tuirealm::ratatui::widgets::Clear;
 use tuirealm::terminal::TerminalAdapter;
 
@@ -12,6 +12,8 @@ use super::{
     InputMask, components,
 };
 use crate::filetransfer::params::DEFAULT_GCS_ENDPOINT;
+#[cfg(posix)]
+use crate::filetransfer::params::SmbDialect;
 use crate::utils::ui::{Popup, Size};
 
 #[path = "view/mounting.rs"]
@@ -73,6 +75,10 @@ impl AuthActivity {
         self.mount_smb_share(FormTab::HostBridge, "");
         #[cfg(posix)]
         self.mount_smb_workgroup(FormTab::HostBridge, "");
+        #[cfg(posix)]
+        self.mount_smb_dialect(FormTab::HostBridge, SmbDialect::default());
+        #[cfg(posix)]
+        self.mount_smb_dialect_warning(FormTab::HostBridge);
         self.mount_webdav_uri(FormTab::HostBridge, "");
 
         let remote_default_protocol = self.context().config().get_default_protocol();
@@ -107,6 +113,10 @@ impl AuthActivity {
         self.mount_smb_share(FormTab::Remote, "");
         #[cfg(posix)]
         self.mount_smb_workgroup(FormTab::Remote, "");
+        #[cfg(posix)]
+        self.mount_smb_dialect(FormTab::Remote, SmbDialect::default());
+        #[cfg(posix)]
+        self.mount_smb_dialect_warning(FormTab::Remote);
         self.mount_webdav_uri(FormTab::Remote, "");
 
         if let Some(version) = self
@@ -247,8 +257,10 @@ impl AuthActivity {
         f: &mut tuirealm::ratatui::Frame<'_>,
         area: tuirealm::ratatui::layout::Rect,
     ) {
+        let input_mask_size = Self::input_mask_size(self.host_bridge_input_mask());
+        let input_mask = self.host_bridge_input_mask();
         let protocol_and_mask_chunks = Layout::default()
-            .constraints([Constraint::Length(3), Constraint::Length(12)].as_ref())
+            .constraints([Constraint::Length(3), Constraint::Length(input_mask_size)].as_ref())
             .direction(Direction::Vertical)
             .split(area);
 
@@ -258,36 +270,25 @@ impl AuthActivity {
             protocol_and_mask_chunks[0],
         );
 
-        let input_mask = Layout::default()
-            .constraints(
-                [
-                    Constraint::Length(3),
-                    Constraint::Length(3),
-                    Constraint::Length(3),
-                    Constraint::Length(3),
-                ]
-                .as_ref(),
-            )
-            .direction(Direction::Vertical)
-            .split(protocol_and_mask_chunks[1]);
-        match self.host_bridge_input_mask() {
-            InputMask::AwsS3 => self.render_view_ids(f, input_mask, self.get_host_bridge_s3_view()),
-            InputMask::Gcs => self.render_view_ids(f, input_mask, self.get_host_bridge_gcs_view()),
-            InputMask::Generic => {
-                self.render_view_ids(f, input_mask, self.get_host_bridge_generic_params_view())
-            }
-            InputMask::Kube => {
-                self.render_view_ids(f, input_mask, self.get_host_bridge_kube_view())
-            }
+        let view_ids = match input_mask {
+            InputMask::AwsS3 => self.get_host_bridge_s3_view(),
+            InputMask::Gcs => self.get_host_bridge_gcs_view(),
+            InputMask::Generic => self.get_host_bridge_generic_params_view(),
+            InputMask::Kube => self.get_host_bridge_kube_view(),
             InputMask::Localhost => {
                 let view_ids = self.get_host_bridge_localhost_view();
-                self.app.view(&view_ids[0], f, input_mask[0]);
+                self.app.view(&view_ids[0], f, protocol_and_mask_chunks[1]);
+                return;
             }
-            InputMask::Smb => self.render_view_ids(f, input_mask, self.get_host_bridge_smb_view()),
-            InputMask::WebDAV => {
-                self.render_view_ids(f, input_mask, self.get_host_bridge_webdav_view())
-            }
-        }
+            InputMask::Smb => self.get_host_bridge_smb_view(),
+            InputMask::WebDAV => self.get_host_bridge_webdav_view(),
+        };
+        self.render_form_rows(
+            f,
+            protocol_and_mask_chunks[1],
+            FormTab::HostBridge,
+            view_ids,
+        );
     }
 
     fn render_remote_input_mask(
@@ -295,8 +296,10 @@ impl AuthActivity {
         f: &mut tuirealm::ratatui::Frame<'_>,
         area: tuirealm::ratatui::layout::Rect,
     ) {
+        let input_mask_size = Self::input_mask_size(self.remote_input_mask());
+        let input_mask = self.remote_input_mask();
         let protocol_and_mask_chunks = Layout::default()
-            .constraints([Constraint::Length(3), Constraint::Length(12)].as_ref())
+            .constraints([Constraint::Length(3), Constraint::Length(input_mask_size)].as_ref())
             .direction(Direction::Vertical)
             .split(area);
 
@@ -306,40 +309,135 @@ impl AuthActivity {
             protocol_and_mask_chunks[0],
         );
 
-        let input_mask = Layout::default()
-            .constraints(
-                [
-                    Constraint::Length(3),
-                    Constraint::Length(3),
-                    Constraint::Length(3),
-                    Constraint::Length(3),
-                ]
-                .as_ref(),
-            )
-            .direction(Direction::Vertical)
-            .split(protocol_and_mask_chunks[1]);
-        match self.remote_input_mask() {
-            InputMask::AwsS3 => self.render_view_ids(f, input_mask, self.get_remote_s3_view()),
-            InputMask::Gcs => self.render_view_ids(f, input_mask, self.get_remote_gcs_view()),
-            InputMask::Generic => {
-                self.render_view_ids(f, input_mask, self.get_remote_generic_params_view())
-            }
-            InputMask::Kube => self.render_view_ids(f, input_mask, self.get_remote_kube_view()),
+        let view_ids = match input_mask {
+            InputMask::AwsS3 => self.get_remote_s3_view(),
+            InputMask::Gcs => self.get_remote_gcs_view(),
+            InputMask::Generic => self.get_remote_generic_params_view(),
+            InputMask::Kube => self.get_remote_kube_view(),
             InputMask::Localhost => unreachable!(),
-            InputMask::Smb => self.render_view_ids(f, input_mask, self.get_remote_smb_view()),
-            InputMask::WebDAV => self.render_view_ids(f, input_mask, self.get_remote_webdav_view()),
-        }
+            InputMask::Smb => self.get_remote_smb_view(),
+            InputMask::WebDAV => self.get_remote_webdav_view(),
+        };
+        self.render_form_rows(f, protocol_and_mask_chunks[1], FormTab::Remote, view_ids);
     }
 
-    fn render_view_ids(
+    /// Splits `area` into four 3-line form rows. When `warning_row` is
+    /// `Some(index)`, a 1-line row is inserted directly above row `index` and
+    /// returned as the second tuple element.
+    fn split_input_mask(area: Rect, warning_row: Option<usize>) -> ([Rect; 4], Option<Rect>) {
+        let mut constraints = Vec::with_capacity(6);
+        for row in 0..4 {
+            if warning_row == Some(row) {
+                constraints.push(Constraint::Length(1));
+            }
+            constraints.push(Constraint::Length(3));
+        }
+        constraints.push(Constraint::Min(0));
+        let chunks = Layout::default()
+            .constraints(constraints)
+            .direction(Direction::Vertical)
+            .split(area);
+
+        let mut rows = [Rect::default(); 4];
+        let mut warning = None;
+        let mut chunk = 0;
+        for (row, slot) in rows.iter_mut().enumerate() {
+            if warning_row == Some(row) {
+                warning = Some(chunks[chunk]);
+                chunk += 1;
+            }
+            *slot = chunks[chunk];
+            chunk += 1;
+        }
+        (rows, warning)
+    }
+
+    /// Returns the visible row index of the SMB dialect radio when the form
+    /// shows SMB and SMB1 is selected; `None` otherwise.
+    #[cfg(posix)]
+    fn smb_dialect_warning_row(&self, form_tab: FormTab, view_ids: &[Id; 4]) -> Option<usize> {
+        let input_mask = match form_tab {
+            FormTab::HostBridge => self.host_bridge_input_mask(),
+            FormTab::Remote => self.remote_input_mask(),
+        };
+        if input_mask != InputMask::Smb || self.get_input_smb_dialect(form_tab) != SmbDialect::Smb1
+        {
+            return None;
+        }
+        let dialect_id = Self::form_tab_id(form_tab, AuthFormId::SmbDialect);
+        view_ids.iter().position(|id| *id == dialect_id)
+    }
+
+    #[cfg(win)]
+    fn smb_dialect_warning_row(&self, _form_tab: FormTab, _view_ids: &[Id; 4]) -> Option<usize> {
+        None
+    }
+
+    fn render_form_rows(
         &mut self,
         f: &mut tuirealm::ratatui::Frame<'_>,
-        input_mask: std::rc::Rc<[tuirealm::ratatui::layout::Rect]>,
+        area: Rect,
+        form_tab: FormTab,
         view_ids: [Id; 4],
     ) {
-        self.app.view(&view_ids[0], f, input_mask[0]);
-        self.app.view(&view_ids[1], f, input_mask[1]);
-        self.app.view(&view_ids[2], f, input_mask[2]);
-        self.app.view(&view_ids[3], f, input_mask[3]);
+        let warning_row = self.smb_dialect_warning_row(form_tab, &view_ids);
+        let (rows, warning) = Self::split_input_mask(area, warning_row);
+        #[cfg(posix)]
+        if let Some(rect) = warning {
+            let id = Self::form_tab_id(form_tab, AuthFormId::SmbDialectWarning);
+            self.app.view(&id, f, rect);
+        }
+        #[cfg(win)]
+        let _ = warning;
+        for (id, rect) in view_ids.iter().zip(rows) {
+            self.app.view(id, f, rect);
+        }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use pretty_assertions::assert_eq;
+    use tuirealm::ratatui::layout::Rect;
+
+    use super::AuthActivity;
+
+    #[test]
+    fn should_split_input_mask_without_warning() {
+        let area = Rect::new(0, 0, 40, 13);
+
+        let (rows, warning) = AuthActivity::split_input_mask(area, None);
+
+        assert_eq!(warning, None);
+        assert_eq!(rows[0], Rect::new(0, 0, 40, 3));
+        assert_eq!(rows[1], Rect::new(0, 3, 40, 3));
+        assert_eq!(rows[2], Rect::new(0, 6, 40, 3));
+        assert_eq!(rows[3], Rect::new(0, 9, 40, 3));
+    }
+
+    #[test]
+    fn should_split_input_mask_with_middle_warning() {
+        let area = Rect::new(0, 0, 40, 13);
+
+        let (rows, warning) = AuthActivity::split_input_mask(area, Some(2));
+
+        assert_eq!(warning, Some(Rect::new(0, 6, 40, 1)));
+        assert_eq!(rows[0], Rect::new(0, 0, 40, 3));
+        assert_eq!(rows[1], Rect::new(0, 3, 40, 3));
+        assert_eq!(rows[2], Rect::new(0, 7, 40, 3));
+        assert_eq!(rows[3], Rect::new(0, 10, 40, 3));
+    }
+
+    #[test]
+    fn should_split_input_mask_with_first_row_warning() {
+        let area = Rect::new(0, 0, 40, 13);
+
+        let (rows, warning) = AuthActivity::split_input_mask(area, Some(0));
+
+        assert_eq!(warning, Some(Rect::new(0, 0, 40, 1)));
+        assert_eq!(rows[0], Rect::new(0, 1, 40, 3));
+        assert_eq!(rows[1], Rect::new(0, 4, 40, 3));
+        assert_eq!(rows[2], Rect::new(0, 7, 40, 3));
+        assert_eq!(rows[3], Rect::new(0, 10, 40, 3));
     }
 }

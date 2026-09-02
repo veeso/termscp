@@ -315,6 +315,8 @@ impl AuthActivity {
         self.mount_smb_share(form_tab, &params.share);
         #[cfg(posix)]
         self.mount_smb_workgroup(form_tab, params.workgroup.as_deref().unwrap_or(""));
+        #[cfg(posix)]
+        self.mount_smb_dialect(form_tab, params.dialect);
     }
 
     fn load_bookmark_webdav_into_gui(&mut self, form_tab: FormTab, params: WebDAVProtocolParams) {
