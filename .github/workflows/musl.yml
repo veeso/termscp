@@ -42,62 +42,94 @@ jobs:
             rust:1.98-alpine3.22 \
             sh -euxc '
               apk add --no-cache \
-                acl-dev \
-                acl-static \
                 bison \
+                binutils \
                 build-base \
-                cups-dev \
-                cyrus-sasl-dev \
-                cyrus-sasl-static \
-                dbus-dev \
                 file \
                 flex \
                 git \
-                gettext-static \
                 gnutls-dev \
-                icu-dev \
-                icu-static \
-                jansson-dev \
-                jansson-static \
-                keyutils-dev \
-                libarchive-dev \
-                libarchive-static \
-                libbsd-dev \
-                libbsd-static \
-                libcap-dev \
-                libcap-static \
                 libgit2-dev \
                 libgit2-static \
-                libtirpc-dev \
-                libtirpc-static \
                 libunistring-dev \
                 libunistring-static \
                 linux-headers \
-                linux-pam-dev \
-                openldap-dev \
                 openssl-dev \
                 openssl-libs-static \
                 perl \
                 perl-parse-yapp \
                 pkgconf \
                 python3 \
+                wget \
+                xz \
                 zlib-dev \
                 zlib-static
               rustup target add "$TARGET"
               cargo fetch --locked
+              NATIVE_CFLAGS="-O2 -fPIC"
+              if [ "$TARGET" = "aarch64-unknown-linux-musl" ]; then
+                NATIVE_CFLAGS="$NATIVE_CFLAGS -mno-outline-atomics"
+              fi
+              export CFLAGS="$NATIVE_CFLAGS"
+
+              mkdir -p /tmp/native
+              wget -q https://ftp.gnu.org/gnu/nettle/nettle-3.10.1.tar.gz \
+                -O /tmp/native/nettle.tar.gz
+              tar -xzf /tmp/native/nettle.tar.gz -C /tmp/native
+              cd /tmp/native/nettle-3.10.1
+              ./configure \
+                --prefix=/tmp/native/nettle \
+                --disable-shared \
+                --enable-static \
+                --disable-documentation \
+                --enable-mini-gmp
+              make -j$(getconf _NPROCESSORS_ONLN)
+              make install
+
+              wget -q https://www.gnupg.org/ftp/gcrypt/gnutls/v3.8/gnutls-3.8.13.tar.xz \
+                -O /tmp/native/gnutls.tar.xz
+              tar -xf /tmp/native/gnutls.tar.xz -C /tmp/native
+              cd /tmp/native/gnutls-3.8.13
+              PKG_CONFIG_PATH=/tmp/native/nettle/lib/pkgconfig \
+                ./configure \
+                  --prefix=/tmp/native/gnutls \
+                  --disable-shared \
+                  --enable-static \
+                  --disable-doc \
+                  --disable-tests \
+                  --disable-nls \
+                  --disable-hardware-acceleration \
+                  --with-nettle-mini \
+                  --with-included-libtasn1 \
+                  --with-included-unistring \
+                  --without-idn \
+                  --without-p11-kit \
+                  --without-zlib
+              make -j$(getconf _NPROCESSORS_ONLN)
+              make install
+
+              mkdir -p /tmp/native/pkgconfig
+              sed \
+                -e "s#^Libs:.*#Libs: -L/tmp/native/gnutls/lib -lgnutls -latomic -L/tmp/native/nettle/lib -lhogweed -lnettle#" \
+                -e "/^Requires.private:/d" \
+                -e "s#^Cflags:.*#Cflags: -I/tmp/native/gnutls/include -I/tmp/native/nettle/include#" \
+                /tmp/native/gnutls/lib/pkgconfig/gnutls.pc \
+                > /tmp/native/pkgconfig/gnutls.pc
+
               PAVAO_SRC=$(find "${CARGO_HOME:-/usr/local/cargo}/registry/src" \
-                -type d -name "pavao-src-4.22.11" -print -quit)
+                -type d -name "pavao-src-4.24.6" -print -quit)
               test -n "$PAVAO_SRC"
               cp -R "$PAVAO_SRC" /tmp/pavao-src
-              perl -0pi -e "s/configure\\.arg\\(\\\"--without-ad-dc\\\"\\);/configure.arg(\\\"--without-ad-dc\\\");\\n        configure.arg(\\\"--without-libunwind\\\");/" \
+              perl -0pi -e "s#(    \\\"lib/replace/replace\\.c\\\",\\n)#\$1    \\\"lib/replace/closefrom.c\\\",\\n    \\\"lib/replace/strptime.c\\\",\\n#" \
                 /tmp/pavao-src/src/lib.rs
               cat >> Cargo.toml <<EOF
 
           [patch.crates-io]
           pavao-src = { path = "/tmp/pavao-src" }
           EOF
-              cargo update -p pavao-src@4.22.11
+              cargo update -p pavao-src@4.24.6
               export PKG_CONFIG_ALL_STATIC=1
+              export PKG_CONFIG_PATH=/tmp/native/pkgconfig:/tmp/native/nettle/lib/pkgconfig:/usr/lib/pkgconfig
               export RUSTFLAGS="-C target-feature=+crt-static -C link-arg=-static"
               cargo build --locked --release --target "$TARGET" \
                 --features smb-vendored
