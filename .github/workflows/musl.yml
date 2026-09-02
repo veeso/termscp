@@ -1,0 +1,88 @@
+name: Linux musl probe
+
+on:
+  push:
+    branches:
+      - "test/440-musl-release"
+    paths:
+      - ".github/workflows/musl.yml"
+      - "Cargo.lock"
+      - "Cargo.toml"
+      - "src/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: build-${{ matrix.target }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-musl
+            runner: ubuntu-24.04
+          - target: aarch64-unknown-linux-musl
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Build and audit static binary
+        env:
+          TARGET: ${{ matrix.target }}
+        run: |
+          docker run --rm \
+            --env TARGET \
+            --volume "$GITHUB_WORKSPACE:/work" \
+            --workdir /work \
+            rust:1.98-alpine3.22 \
+            sh -euxc '
+              apk add --no-cache \
+                acl-dev \
+                bison \
+                build-base \
+                cups-dev \
+                dbus-dev \
+                file \
+                flex \
+                git \
+                gnutls-dev \
+                icu-dev \
+                jansson-dev \
+                keyutils-dev \
+                libarchive-dev \
+                libbsd-dev \
+                libcap-dev \
+                libtirpc-dev \
+                libunistring-dev \
+                linux-headers \
+                openldap-dev \
+                perl \
+                pkgconf \
+                python3 \
+                zlib-dev
+              rustup target add "$TARGET"
+              export PKG_CONFIG_ALL_STATIC=1
+              export RUSTFLAGS="-C target-feature=+crt-static -C link-arg=-static"
+              cargo build --locked --release --target "$TARGET" \
+                --features smb-vendored
+              file "target/$TARGET/release/termscp"
+              readelf -l "target/$TARGET/release/termscp" | \
+                tee /tmp/program-headers.txt
+              readelf -d "target/$TARGET/release/termscp" | \
+                tee /tmp/dynamic-section.txt
+              ! grep -q INTERP /tmp/program-headers.txt
+              ! grep -q NEEDED /tmp/dynamic-section.txt
+            '
+
+      - name: Upload verified binary
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ${{ matrix.target }}
+          path: target/${{ matrix.target }}/release/termscp
+          if-no-files-found: error
+          retention-days: 7
