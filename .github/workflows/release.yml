@@ -47,7 +47,7 @@ jobs:
       - name: Install git-cliff
         uses: taiki-e/install-action@e67fa11c4b9316fa714ddf0abed07a0c3143b95b # v2.87.4
         with:
-          tool: git-cliff
+          tool: git-cliff,dprint
 
       - name: Install just
         uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3 # v4
