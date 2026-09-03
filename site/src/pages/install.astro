@@ -72,9 +72,12 @@ const methods = [
       Update anytime with <span class="text-green">termscp --update</span>.
     </p>
     <p class="mt-2 text-sm text-overlay">
-      Linux build deps: <span class="text-text">libdbus-1</span>, <span
+      Official Linux binaries and .deb packages are statically linked against <span
+        class="text-text">musl</span
+      >: no runtime dependencies, any distribution, any glibc version. Building
+      from source still needs <span class="text-text">libdbus-1</span>, <span
         class="text-text">pkg-config</span
-      >, <span class="text-text">libsmbclient</span>. More details in the <a
+      > and <span class="text-text">libsmbclient</span>. More details in the <a
         href={DOCS_URL}
         class="text-blue hover:underline">docs</a
       >.

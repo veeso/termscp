@@ -21,6 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ inputs.version }}
+      prepared_ref: ${{ steps.prepared-ref.outputs.ref }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -44,7 +45,7 @@ jobs:
           git config user.email "christian.visintin@veeso.dev"
 
       - name: Install git-cliff
-        uses: taiki-e/install-action@37f7c5781271959fb65b6b35224e28652ff2b63d # v2.87.0
+        uses: taiki-e/install-action@e67fa11c4b9316fa714ddf0abed07a0c3143b95b # v2.87.4
         with:
           tool: git-cliff
 
@@ -66,6 +67,9 @@ jobs:
           VERSION: ${{ inputs.version }}
         run: git-cliff --unreleased --tag "v$VERSION" --strip header -o RELEASE_NOTES.md
 
+      - name: Verify Cargo.lock is unchanged
+        run: git diff --exit-code -- Cargo.lock
+
       - name: Upload release notes
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -84,9 +88,21 @@ jobs:
           VERSION: ${{ inputs.version }}
         run: |
           rm -f RELEASE_NOTES.md
-          git add -A
+          git add -A -- . ':!Cargo.lock'
+          git diff --cached --exit-code -- Cargo.lock
           git commit -m "chore: release v$VERSION"
           git push origin HEAD:main
+
+      - name: Export prepared ref
+        id: prepared-ref
+        env:
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          if [ "$DRY_RUN" = "true" ]; then
+            echo "ref=$GITHUB_SHA" >> "$GITHUB_OUTPUT"
+          else
+            echo "ref=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          fi
 
   build:
     needs: prepare
@@ -95,14 +111,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - target: x86_64-unknown-linux-gnu
-            os: ubuntu-latest
+          - target: x86_64-unknown-linux-musl
+            os: ubuntu-24.04
             kind: linux
-            deb_suffix: amd64
-          - target: aarch64-unknown-linux-gnu
+          - target: aarch64-unknown-linux-musl
             os: ubuntu-24.04-arm
             kind: linux
-            deb_suffix: arm64
           - target: aarch64-apple-darwin
             os: macos-latest
             kind: macos
@@ -125,58 +139,44 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ inputs.dry_run && github.sha || 'main' }}
+          ref: ${{ needs.prepare.outputs.prepared_ref }}
           persist-credentials: false
           fetch-depth: 0
           fetch-tags: true
+      - name: Prepare release version
+        shell: bash
+        run: |
+          dist/release/bump_version.sh "$VERSION" "$(date +%F)"
+          cargo update --package termscp --precise "$VERSION"
+          cargo metadata --locked --no-deps --format-version 1 > /dev/null
       - name: Install just
         uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3 # v4
       - name: Install Rust target
-        if: matrix.kind != 'windows'
+        if: matrix.kind == 'macos'
         run: rustup target add "$TARGET"
       - name: Install Rust target
         if: matrix.kind == 'windows'
         run: rustup target add "$env:TARGET"
 
-      # ---- Linux: native per-arch build (x86_64 on ubuntu-latest, aarch64 on ubuntu-24.04-arm) ----
-      - name: Install dependencies (Linux)
+      # ---- Linux: static musl build in a pinned Alpine container ----
+      - name: Install cargo-deb (Linux)
         if: matrix.kind == 'linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            make \
-            libgit2-dev \
-            build-essential \
-            pkg-config \
-            libbsd-dev \
-            libcap-dev \
-            libcups2-dev \
-            libgnutls28-dev \
-            libicu-dev \
-            libjansson-dev \
-            libkeyutils-dev \
-            libldap2-dev \
-            zlib1g-dev \
-            libpam0g-dev \
-            libacl1-dev \
-            libarchive-dev \
-            flex \
-            bison \
-            libntirpc-dev \
-            libtracker-sparql-3.0-dev \
-            libglib2.0-dev \
-            libdbus-1-dev \
-            libsasl2-dev \
-            libunistring-dev \
-            cpanminus
-          sudo cpanm Parse::Yapp::Driver
-          cargo install cargo-deb
+        run: cargo install cargo-deb --locked
       - name: Build (Linux)
         if: matrix.kind == 'linux'
-        run: just build_release "$TARGET" "--features smb-vendored"
+        run: just build_musl "$TARGET"
       - name: Build deb (Linux)
         if: matrix.kind == 'linux'
-        run: just package_deb "$TARGET"
+        run: cargo deb --locked --no-build --target "$TARGET" --features smb-vendored
+      - name: Verify deb declares no runtime dependencies (Linux)
+        if: matrix.kind == 'linux'
+        run: |
+          deb=$(ls target/"$TARGET"/debian/*.deb)
+          depends=$(dpkg-deb -f "$deb" Depends)
+          if [ -n "$depends" ]; then
+            echo "static deb must have no Depends, got: $depends" >&2
+            exit 1
+          fi
 
       # ---- macOS ----
       - name: Install deps (macOS)
@@ -229,7 +229,7 @@ jobs:
           if-no-files-found: error
 
   publish-homebrew:
-    needs: [prepare, build]
+    needs: [prepare, build, release]
     runs-on: ubuntu-latest
     env:
       VERSION: ${{ needs.prepare.outputs.version }}
@@ -255,8 +255,8 @@ jobs:
           cd "$GITHUB_WORKSPACE"
           SHA_MAC_ARM=$(cat dl/aarch64-apple-darwin.sha256)
           SHA_MAC_X64=$(cat dl/x86_64-apple-darwin.sha256)
-          SHA_LIN_ARM=$(cat dl/aarch64-unknown-linux-gnu.sha256)
-          SHA_LIN_X64=$(cat dl/x86_64-unknown-linux-gnu.sha256)
+          SHA_LIN_ARM=$(cat dl/aarch64-unknown-linux-musl.sha256)
+          SHA_LIN_X64=$(cat dl/x86_64-unknown-linux-musl.sha256)
           BASE="https://github.com/veeso/termscp/releases/latest/download"
           cat > tap/Formula/termscp.rb <<EOF
           class Termscp < Formula
@@ -293,14 +293,12 @@ jobs:
             end
 
             on_linux do
-              depends_on "dbus"
-
               on_arm do
-                url "$BASE/termscp-v$VERSION-aarch64-unknown-linux-gnu.tar.gz"
+                url "$BASE/termscp-v$VERSION-aarch64-unknown-linux-musl.tar.gz"
                 sha256 "$SHA_LIN_ARM"
               end
               on_intel do
-                url "$BASE/termscp-v$VERSION-x86_64-unknown-linux-gnu.tar.gz"
+                url "$BASE/termscp-v$VERSION-x86_64-unknown-linux-musl.tar.gz"
                 sha256 "$SHA_LIN_X64"
               end
             end
@@ -336,8 +334,14 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           token: ${{ secrets.RELEASE_PAT }}
-          ref: ${{ inputs.dry_run && github.sha || 'main' }}
+          ref: ${{ needs.prepare.outputs.prepared_ref }}
           persist-credentials: true
+
+      - name: Prepare release version
+        run: |
+          dist/release/bump_version.sh "$VERSION" "$(date +%F)"
+          cargo update --package termscp --precise "$VERSION"
+          cargo metadata --locked --no-deps --format-version 1 > /dev/null
 
       - name: Download build artifacts
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
@@ -399,10 +403,15 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: main
+          ref: ${{ needs.prepare.outputs.prepared_ref }}
           persist-credentials: false
           fetch-depth: 0
           fetch-tags: true
+      - name: Prepare release version
+        run: |
+          dist/release/bump_version.sh "$VERSION" "$(date +%F)"
+          cargo update --package termscp --precise "$VERSION"
+          cargo metadata --locked --no-deps --format-version 1 > /dev/null
       - name: Install just
         uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3 # v4
 

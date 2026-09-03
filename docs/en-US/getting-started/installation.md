@@ -44,9 +44,28 @@ Install termscp from the official repositories:
 pacman -S termscp
 ```
 
+## Official binaries
+
+Official release binaries are published for these targets:
+
+- GNU/Linux:
+  - `x86_64-unknown-linux-musl`
+  - `aarch64-unknown-linux-musl`
+- macOS:
+  - `x86_64-apple-darwin`
+  - `aarch64-apple-darwin`
+- Windows:
+  - `x86_64-pc-windows-msvc`
+  - `aarch64-pc-windows-msvc`
+
+The Linux binaries, and the `.deb` package built from them, are statically
+linked against musl. They have no runtime dependencies: they run on any Linux
+distribution and any glibc version, with no system packages to install.
+
 ## Requirements
 
-The following system dependencies are required to run termscp.
+The official binaries do not require these dependencies. They are needed only
+to build termscp from source, for example with `cargo install termscp`:
 
 - Linux users:
   - libdbus-1

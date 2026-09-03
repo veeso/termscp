@@ -35,7 +35,9 @@ setup_githooks:
 [group('code_check')]
 check_install_scripts:
     sh -n install.sh
-    shellcheck install.sh
+    sh -n dist/release/build_musl.sh
+    sh -n dist/release/build_musl_container.sh
+    shellcheck install.sh dist/release/build_musl.sh dist/release/build_musl_container.sh
     @if command -v pwsh >/dev/null 2>&1; then \
       pwsh -NoProfile -Command '$t = $null; $e = $null; $null = [System.Management.Automation.Language.Parser]::ParseFile("install.ps1", [ref]$t, [ref]$e); if ($e) { $e; exit 1 }'; \
     else \
