@@ -42,9 +42,25 @@ pkgin install termscp
 pacman -S termscp
 ```
 
+## 官方二进制文件
+
+官方发布的二进制文件支持以下目标：
+
+- GNU/Linux：
+  - `x86_64-unknown-linux-musl`
+  - `aarch64-unknown-linux-musl`
+- macOS：
+  - `x86_64-apple-darwin`
+  - `aarch64-apple-darwin`
+- Windows：
+  - `x86_64-pc-windows-msvc`
+  - `aarch64-pc-windows-msvc`
+
+Linux 二进制文件以及由其构建的 `.deb` 包都静态链接了 musl。它们没有任何运行时依赖：可在任意 Linux 发行版、任意 glibc 版本上运行，无需安装任何系统软件包。
+
 ## 系统要求
 
-运行 termscp 需要以下系统依赖。
+官方二进制文件不需要以下依赖。它们仅在从源码构建 termscp 时才需要，例如使用 `cargo install termscp`：
 
 - Linux 用户：
   - libdbus-1

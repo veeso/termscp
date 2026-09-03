@@ -17,6 +17,11 @@ build_crates_release:
 build_release target features="":
   cargo build --locked --release --target {{ target }} {{ features }}
 
+# Build a static musl Linux release binary in a pinned Alpine container
+[group('build')]
+build_musl target:
+  dist/release/build_musl.sh {{ target }}
+
 # Package an already-built Linux release as a Debian package
 [group('build')]
 package_deb target:

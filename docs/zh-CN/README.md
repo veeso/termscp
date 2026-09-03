@@ -117,6 +117,10 @@ pacman -S termscp
 
 ### 依赖 ❗
 
+官方 Linux 二进制文件和 `.deb` 包静态链接了 musl，**没有任何运行时依赖**：可在任意发行版、任意 glibc 版本上运行。
+
+以下依赖仅在从源码构建 termscp 时需要：
+
 - **Linux** 用户：
   - libdbus-1
   - pkg-config

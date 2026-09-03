@@ -117,6 +117,12 @@ For more information or other platforms, please visit [termscp.rs](https://terms
 
 ### Requirements ❗
 
+The official Linux binaries and `.deb` packages are statically linked against
+musl and have **no runtime requirements**: they run on any distribution and
+any glibc version.
+
+These are only required to build termscp from source:
+
 - **Linux** users:
   - libdbus-1
   - pkg-config

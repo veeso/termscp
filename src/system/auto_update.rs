@@ -50,6 +50,20 @@ impl Update {
         self
     }
 
+    /// Maps a build target triple onto the target triple used to name the
+    /// official release assets.
+    ///
+    /// Official Linux binaries are statically linked against musl, so a
+    /// termscp built against glibc (for example via `cargo install`) must
+    /// still download the `-musl` asset.
+    fn map_release_target(target: &str) -> String {
+        if target.contains("-linux-") {
+            target.replace("-gnu", "-musl")
+        } else {
+            target.to_string()
+        }
+    }
+
     /// Installs the latest available release using the configured update options.
     pub fn upgrade(self) -> Result<UpdateStatus, UpdateError> {
         info!("Updating termscp...");
@@ -58,6 +72,7 @@ impl Update {
             .repo_owner("veeso")
             .repo_name("termscp")
             .bin_name("termscp")
+            .target(&Self::map_release_target(self_update::get_target()))
             .current_version(cargo_crate_version!())
             .no_confirm(!self.ask_confirm)
             .show_download_progress(self.progress)
@@ -178,6 +193,38 @@ mod test {
         let upd = upd.ask_confirm(true).show_progress(true);
         assert_eq!(upd.ask_confirm, true);
         assert_eq!(upd.progress, true);
+    }
+
+    #[test]
+    fn should_map_linux_release_target_to_musl() {
+        assert_eq!(
+            Update::map_release_target("x86_64-unknown-linux-gnu"),
+            "x86_64-unknown-linux-musl".to_string()
+        );
+        assert_eq!(
+            Update::map_release_target("aarch64-unknown-linux-gnu"),
+            "aarch64-unknown-linux-musl".to_string()
+        );
+    }
+
+    #[test]
+    fn should_leave_non_gnu_linux_release_target_unchanged() {
+        assert_eq!(
+            Update::map_release_target("x86_64-unknown-linux-musl"),
+            "x86_64-unknown-linux-musl".to_string()
+        );
+    }
+
+    #[test]
+    fn should_leave_other_platform_release_targets_unchanged() {
+        assert_eq!(
+            Update::map_release_target("aarch64-apple-darwin"),
+            "aarch64-apple-darwin".to_string()
+        );
+        assert_eq!(
+            Update::map_release_target("x86_64-pc-windows-msvc"),
+            "x86_64-pc-windows-msvc".to_string()
+        );
     }
 
     #[test]

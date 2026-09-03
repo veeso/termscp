@@ -25,6 +25,7 @@ termscp = { path = "/usr/bin/termscp" }
 [package.metadata.deb]
 maintainer = "Christian Visintin <christian.visintin@veeso.dev>"
 copyright = "2025, Christian Visintin <christian.visintin@veeso.dev>"
+depends = ""
 extended-description-file = "docs/misc/README.deb.txt"
 
 [features]
