@@ -11,10 +11,11 @@ use remotefs_ftp::FtpFs;
 use remotefs_gcs::credentials::service_account;
 use remotefs_gcs::{GoogleCloudStorageCredentials, GoogleCloudStorageFs};
 use remotefs_kube::KubeMultiPodFs as KubeFs;
-#[cfg(smb)]
-use remotefs_smb::{PavaoSmbCredentials as SmbCredentials, PavaoSmbFs as SmbFs};
 #[cfg(smb_unix)]
-use remotefs_smb::{PavaoSmbOptions as SmbOptions, SmbDialect as RemoteSmbDialect};
+use remotefs_smb::{
+    PavaoSmbCredentials as SmbCredentials, PavaoSmbFs as SmbFs, PavaoSmbOptions as SmbOptions,
+    SmbDialect as RemoteSmbDialect,
+};
 #[cfg(smb_windows)]
 use remotefs_smb::{WNetSmbCredentials as SmbCredentials, WNetSmbFs as SmbFs};
 use remotefs_ssh::{
