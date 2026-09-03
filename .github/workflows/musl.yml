@@ -104,6 +104,8 @@ jobs:
                   --with-included-unistring \
                   --without-idn \
                   --without-p11-kit \
+                  --without-brotli \
+                  --without-zstd \
                   --without-zlib
               make -j$(getconf _NPROCESSORS_ONLN)
               make install
