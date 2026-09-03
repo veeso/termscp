@@ -1,5 +1,83 @@
 # Changelog
 
+## 1.2.0
+
+Released on 2026-09-03
+
+### Added
+
+- **site:** add privacy policy page (#435)
+  > Add a GDPR privacy policy covering Vercel hosting/server logs and
+  > EU-hosted Umami analytics, and link it from the footer.
+- **gcs:** add Google Cloud Storage support (#443)
+  > - feat(gcs): add Google Cloud Storage support
+- add support for all ssh2 config parameters.
+  > Achieved by bumping `remotefs-ssh` to `0.9`.
+  >
+  > Added support for these parameters:
+  >
+  > - Compression
+  > - Host key certificates
+  > - CA signature algorithms
+  > - keys to agents
+  > - ProxyJump
+  > - Server alive intervals
+  > - Agent forwarding
+  > - Remote forwarding
+  > - Bind address
+  > - Bind interface
+  > - Connection attempts
+  > - TCP Keepalive
+  > - Accepted public key algos
+  > - Certificate files
+- **ssh:** auto-fill ssh config parameters in auth form
+  > Resolve SSH host parameters in auth forms and CLI connections while preserving explicit user, bookmark, and parsed alias values. Continue forwarding SSH config files for HostName and other SSH options, and document the precedence in English and Chinese.
+- **smb:** add SMB dialect selection and persistence (#445)
+  > Support Auto, SMB1, SMB2, and SMB3 selection on Unix, bound negotiation to the selected dialect family, preserve legacy bookmarks as Auto, and document the new option. Windows keeps operating-system-managed negotiation.
+
+### CI
+
+- migrate project automation to Just (#442)
+  > - ci: migrate project automation to Just
+  >
+  > Centralize build, test, release, dependency, hook, and website commands in Just recipes. Pin workflow tooling, use the repository toolchain, and run the complete validation set in CI.
+  >
+  > - ci: codex being codex
+  > - docs: update CLAUDE.md for just task runner migration
+  >
+  > Reflect the switch to just recipes for build/test/clippy/fmt, note
+  > dprint replacing raw rustfmt, and add a cross-platform code requirement.
+  >
+  > - fix: resolve clippy warnings breaking CI on ubuntu and windows
+  >
+  > Use clone() instead of implicit to_string() on already-owned String
+  > values, gate the windows-only unused make_file_at import behind
+  > cfg(posix), and fix unused mut / manual assign-op in the windows-only
+  > localhost test.
+  >
+  > - fix: fmt
+- **release:** build Linux artifacts as static musl binaries (#447)
+  > Build Linux release artifacts as statically linked musl binaries for x86_64 and aarch64, update packaging and updater handling, and document the reduced runtime requirements.
+  >
+  > Keep release version preparation locked without refreshing dependencies or committing Cargo.lock.
+
+### Fixed
+
+- **publish:** anchor include globs to crate root
+  > Unanchored include patterns (LICENSE, README.md) matched at any depth
+  > via gitignore-glob semantics, pulling 437 site/node_modules files into
+  > the package and breaking cargo publish's dirty check.
+- print actual reason for failed host params collecting
+  > previously, we didn't show any reason for failed collecting of host params in the auth form, but just a generic message
+
+### Build
+
+- **deps:** update aes-gcm to 0.11
+  > Migrate nonce generation and parsing to the aes-gcm 0.11 API while preserving the encrypted payload format.
+- bump remotefs-smb 0.5.0 (#446)
+  > - build: bump remotefs-smb 0.5.0
+  > - fix(smb): windows build
+
 ## 1.1.1
 
 Released on 2026-06-08

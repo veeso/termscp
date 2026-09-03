@@ -42,3 +42,4 @@ changelog version:
     rm -f "$secfile"
     mv "$tmp" CHANGELOG.md
     echo "CHANGELOG.md updated for $tag"
+    just fmt CHANGELOG.md
