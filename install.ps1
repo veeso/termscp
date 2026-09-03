@@ -26,7 +26,7 @@
 #>
 [CmdletBinding()]
 param(
-    [string]$Version = "1.1.1",
+    [string]$Version = "1.2.0",
     [string]$InstallDir = "$env:LOCALAPPDATA\Programs\termscp",
     [Alias("Yes")]
     [switch]$Force
