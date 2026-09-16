@@ -14,10 +14,7 @@ pub fn create_sample_file_entry() -> (File, NamedTempFile) {
     // Write
     let tmpfile = create_sample_file();
     (
-        File {
-            path: tmpfile.path().to_path_buf(),
-            metadata: Metadata::default(),
-        },
+        File::new(tmpfile.path().to_path_buf(), Metadata::default()),
         tmpfile,
     )
 }
@@ -58,14 +55,14 @@ pub fn make_dir_at(dir: &Path, dirname: &str) -> std::io::Result<()> {
 /// Create a File at specified path
 pub fn make_fsentry<P: AsRef<Path>>(path: P, is_dir: bool) -> File {
     let path: PathBuf = path.as_ref().to_path_buf();
-    File {
+    File::new(
         path,
-        metadata: Metadata::default().file_type(if is_dir {
+        Metadata::default().file_type(if is_dir {
             FileType::Directory
         } else {
             FileType::File
         }),
-    }
+    )
 }
 
 /// Open a file with two handlers, the first is to read, the second is to write

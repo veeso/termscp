@@ -3,14 +3,13 @@
 //! Remotefs client builder
 
 use std::path::PathBuf;
-use std::sync::Arc;
 
 use remotefs::RemoteFs;
 use remotefs_aws_s3::AwsS3Fs;
 use remotefs_ftp::FtpFs;
 use remotefs_gcs::credentials::service_account;
 use remotefs_gcs::{GoogleCloudStorageCredentials, GoogleCloudStorageFs};
-use remotefs_kube::KubeMultiPodFs as KubeFs;
+use remotefs_kube::KubeMultiPodFs;
 #[cfg(smb_unix)]
 use remotefs_smb::{
     PavaoSmbCredentials as SmbCredentials, PavaoSmbFs as SmbFs, PavaoSmbOptions as SmbOptions,
@@ -19,8 +18,7 @@ use remotefs_smb::{
 #[cfg(smb_windows)]
 use remotefs_smb::{WNetSmbCredentials as SmbCredentials, WNetSmbFs as SmbFs};
 use remotefs_ssh::{
-    NoCheckServerKey, RusshSession as SshSession, ScpFs, SftpFs, SshAgentIdentity,
-    SshConfigParseRule, SshOpts,
+    NoCheckServerKey, RusshScpFs, RusshSftpFs, SshAgentIdentity, SshConfigParseRule, SshOpts,
 };
 use remotefs_webdav::WebDAVFs;
 
@@ -31,6 +29,7 @@ use super::params::{AwsS3Params, GenericProtocolParams, GoogleCloudStorageParams
 #[cfg(smb)]
 use super::params::{AwsS3Params, GenericProtocolParams, GoogleCloudStorageParams, SmbParams};
 use super::params::{KubeProtocolParams, WebDAVProtocolParams};
+use super::wrapper::RuntimeRemoteFs;
 use super::{FileTransferProtocol, ProtocolParams};
 use crate::system::config_client::ConfigClient;
 use crate::system::sshkey_storage::SshKeyStorage;
@@ -72,7 +71,7 @@ impl RemoteFsBuilder {
                 Ok(Box::new(Self::smb_client(params)?))
             }
             (FileTransferProtocol::WebDAV, ProtocolParams::WebDAV(params)) => {
-                Ok(Box::new(Self::webdav_client(params)))
+                Ok(Box::new(Self::webdav_client(params)?))
             }
             (protocol, params) => {
                 error!("Invalid params for protocol '{:?}'", protocol);
@@ -84,16 +83,11 @@ impl RemoteFsBuilder {
     }
 
     /// Build aws s3 client from parameters
-    fn aws_s3_client(params: AwsS3Params) -> Result<AwsS3Fs, String> {
-        let rt = Arc::new(
-            tokio::runtime::Builder::new_current_thread()
-                .worker_threads(1)
-                .enable_all()
-                .build()
-                .map_err(|e| format!("Unable to create tokio runtime: {e}"))?,
-        );
-        let mut client =
-            AwsS3Fs::new(params.bucket_name, &rt).new_path_style(params.new_path_style);
+    fn aws_s3_client(params: AwsS3Params) -> Result<RuntimeRemoteFs, String> {
+        let runtime = Self::tokio_runtime()?;
+
+        let mut client = AwsS3Fs::new(params.bucket_name).new_path_style(params.new_path_style);
+
         if let Some(region) = params.region {
             client = client.region(region);
         }
@@ -115,14 +109,15 @@ impl RemoteFsBuilder {
         if let Some(session_token) = params.session_token {
             client = client.session_token(session_token);
         }
-        Ok(client)
+        let client = client.into_blocking(runtime.handle().clone());
+        Ok(RuntimeRemoteFs::new(client, runtime))
     }
 
     /// Build a Google Cloud Storage client from parameters.
-    fn gcs_client(params: GoogleCloudStorageParams) -> Result<GoogleCloudStorageFs, String> {
+    fn gcs_client(params: GoogleCloudStorageParams) -> Result<RuntimeRemoteFs, String> {
         let runtime = Self::tokio_runtime()?;
         let mut client = match params.service_account_key {
-            None => GoogleCloudStorageFs::new(params.bucket_name, &runtime),
+            None => GoogleCloudStorageFs::new(params.bucket_name),
             Some(path) => {
                 let raw = std::fs::read_to_string(&path).map_err(|error| {
                     format!("Unable to read GCS service-account file '{path}': {error}")
@@ -140,12 +135,12 @@ impl RemoteFsBuilder {
                 GoogleCloudStorageFs::with_credentials(
                     params.bucket_name,
                     GoogleCloudStorageCredentials::custom(credentials),
-                    &runtime,
                 )
             }
         };
         client = client.endpoint(params.endpoint);
-        Ok(client)
+        let client = client.into_blocking(runtime.handle().clone());
+        Ok(RuntimeRemoteFs::new(client, runtime))
     }
 
     /// Build ftp client from parameters
@@ -164,34 +159,42 @@ impl RemoteFsBuilder {
     }
 
     /// Build kube client
-    fn kube_client(params: KubeProtocolParams) -> Result<KubeFs, String> {
-        let rt = Self::tokio_runtime()?;
-        let kube_fs = KubeFs::new(&rt);
-        if let Some(config) = params.config() {
-            Ok(kube_fs.config(config))
+    fn kube_client(params: KubeProtocolParams) -> Result<RuntimeRemoteFs, String> {
+        let runtime = Self::tokio_runtime()?;
+        let kube_fs = if let Some(config) = params.config() {
+            KubeMultiPodFs::new().config(config)
         } else {
-            Ok(kube_fs)
-        }
+            KubeMultiPodFs::new()
+        };
+
+        let client = kube_fs.into_blocking(runtime.handle().clone());
+        Ok(RuntimeRemoteFs::new(client, runtime))
     }
 
     /// Build scp client
     fn scp_client(
         params: GenericProtocolParams,
         config_client: &ConfigClient,
-    ) -> Result<ScpFs<SshSession<NoCheckServerKey>>, String> {
+    ) -> Result<RuntimeRemoteFs, String> {
         let opts = Self::build_ssh_opts(params, config_client);
-        let rt = Self::tokio_runtime()?;
-        Ok(ScpFs::russh(opts, rt))
+        let runtime = Self::tokio_runtime()?;
+        let client =
+            RusshScpFs::<NoCheckServerKey>::new(opts).into_blocking(runtime.handle().clone());
+
+        Ok(RuntimeRemoteFs::new(client, runtime))
     }
 
     /// Build sftp client
     fn sftp_client(
         params: GenericProtocolParams,
         config_client: &ConfigClient,
-    ) -> Result<SftpFs<SshSession<NoCheckServerKey>>, String> {
+    ) -> Result<RuntimeRemoteFs, String> {
         let opts = Self::build_ssh_opts(params, config_client);
-        let rt = Self::tokio_runtime()?;
-        Ok(SftpFs::russh(opts, rt))
+        let runtime = Self::tokio_runtime()?;
+        let client =
+            RusshSftpFs::<NoCheckServerKey>::new(opts).into_blocking(runtime.handle().clone());
+
+        Ok(RuntimeRemoteFs::new(client, runtime))
     }
 
     /// Maps the user-facing SMB family to inclusive remotefs dialect bounds.
@@ -251,8 +254,16 @@ impl RemoteFsBuilder {
         Ok(SmbFs::new(credentials))
     }
 
-    fn webdav_client(params: WebDAVProtocolParams) -> WebDAVFs {
-        WebDAVFs::new(&params.username, &params.password, &params.uri)
+    fn webdav_client(params: WebDAVProtocolParams) -> Result<RuntimeRemoteFs, String> {
+        let runtime = Self::tokio_runtime()?;
+        let client = WebDAVFs::new(
+            &params.uri,
+            remotefs_webdav::Auth::basic(params.username, params.password),
+        )
+        .map_err(|e| format!("failed to create WebDAV client: {e}"))?;
+
+        let client = client.into_blocking(runtime.handle().clone());
+        Ok(RuntimeRemoteFs::new(client, runtime))
     }
 
     /// Build ssh options from generic protocol params and client configuration
@@ -288,14 +299,12 @@ impl RemoteFsBuilder {
     }
 
     /// Create tokio runtime to run async code for remotefs
-    fn tokio_runtime() -> Result<Arc<tokio::runtime::Runtime>, String> {
-        Ok(Arc::new(
-            tokio::runtime::Builder::new_current_thread()
-                .worker_threads(1)
-                .enable_all()
-                .build()
-                .map_err(|e| format!("Unable to create tokio runtime: {e}"))?,
-        ))
+    fn tokio_runtime() -> Result<tokio::runtime::Runtime, String> {
+        tokio::runtime::Builder::new_multi_thread()
+            .worker_threads(1)
+            .enable_all()
+            .build()
+            .map_err(|e| format!("Unable to create tokio runtime: {e}"))
     }
 }
 

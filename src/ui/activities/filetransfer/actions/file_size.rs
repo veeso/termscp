@@ -2,6 +2,12 @@ use remotefs::File;
 
 use super::{FileTransferActivity, LogLevel};
 
+fn aggregate_sizes(sizes: impl IntoIterator<Item = Option<u64>>) -> Option<u64> {
+    sizes
+        .into_iter()
+        .try_fold(0_u64, |total, size| total.checked_add(size?))
+}
+
 impl FileTransferActivity {
     /// Calculate and display the total size of the selected file(s) via the active tab's pane.
     pub(crate) fn action_get_file_size(&mut self) {
@@ -11,17 +17,23 @@ impl FileTransferActivity {
         let total_size = self.get_files_size(files);
 
         self.umount_wait();
-        self.mount_info(format!(
-            "Total file size: {size}",
-            size = bytesize::ByteSize::b(total_size)
-        ));
+        let message = total_size.map_or_else(
+            || String::from("Total file size: Unknown"),
+            |size| {
+                format!(
+                    "Total file size: {size}",
+                    size = bytesize::ByteSize::b(size)
+                )
+            },
+        );
+        self.mount_info(message);
     }
 
-    fn get_files_size(&mut self, files: Vec<File>) -> u64 {
-        files.into_iter().map(|f| self.get_file_size(f)).sum()
+    fn get_files_size(&mut self, files: Vec<File>) -> Option<u64> {
+        aggregate_sizes(files.into_iter().map(|file| self.get_file_size(file)))
     }
 
-    fn get_file_size(&mut self, file: File) -> u64 {
+    fn get_file_size(&mut self, file: File) -> Option<u64> {
         if let Some(symlink) = &file.metadata().symlink {
             match self.browser.fs_pane_mut().fs.stat(symlink) {
                 Ok(stat) => stat.metadata().size,
@@ -33,12 +45,12 @@ impl FileTransferActivity {
                             path = symlink.display(),
                         ),
                     );
-                    0
+                    None
                 }
             }
         } else if file.is_dir() {
             match self.browser.fs_pane_mut().fs.list_dir(&file.path) {
-                Ok(list) => list.into_iter().map(|f| self.get_file_size(f)).sum(),
+                Ok(list) => self.get_files_size(list),
                 Err(err) => {
                     self.log(
                         LogLevel::Error,
@@ -47,11 +59,22 @@ impl FileTransferActivity {
                             path = file.path.display(),
                         ),
                     );
-                    0
+                    None
                 }
             }
         } else {
             file.metadata().size
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::aggregate_sizes;
+
+    #[test]
+    fn aggregates_only_known_sizes() {
+        assert_eq!(aggregate_sizes([Some(2), Some(3)]), Some(5));
+        assert_eq!(aggregate_sizes([Some(2), None, Some(3)]), None);
     }
 }

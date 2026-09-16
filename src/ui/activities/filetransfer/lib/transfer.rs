@@ -16,7 +16,7 @@ use bytesize::ByteSize;
 pub struct TransferProgress {
     files_total: usize,
     files_completed: usize,
-    cur_file_size: usize,
+    cur_file_size: Option<usize>,
     cur_file_written: usize,
     total_bytes_written: usize,
     pub(crate) started: Instant,
@@ -27,7 +27,7 @@ impl Default for TransferProgress {
         Self {
             files_total: 0,
             files_completed: 0,
-            cur_file_size: 0,
+            cur_file_size: None,
             cur_file_written: 0,
             total_bytes_written: 0,
             started: Instant::now(),
@@ -41,13 +41,15 @@ impl fmt::Display for TransferProgress {
             0 => String::from("--:--"),
             seconds => format!("{:02}:{:02}", seconds / 60, seconds % 60),
         };
+        let total = self.cur_file_size.map_or_else(
+            || String::from("?"),
+            |size| ByteSize(size as u64).to_string(),
+        );
         write!(
             f,
-            "{} / {} — {:.1}% — ETA {} ({}/s)",
+            "{} / {total} — {:.1}% — ETA {eta} ({}/s)",
             ByteSize(self.cur_file_written as u64),
-            ByteSize(self.cur_file_size as u64),
             self.calc_partial_progress() * 100.0,
-            eta,
             ByteSize(self.calc_bytes_per_second()),
         )
     }
@@ -58,15 +60,15 @@ impl TransferProgress {
     pub fn init(&mut self, files_total: usize) {
         self.files_total = files_total;
         self.files_completed = 0;
-        self.cur_file_size = 0;
+        self.cur_file_size = None;
         self.cur_file_written = 0;
         self.total_bytes_written = 0;
         self.started = Instant::now();
     }
 
-    /// Begin a new file with a known size.
-    pub fn start_file(&mut self, size: usize) {
-        self.cur_file_size = size;
+    /// Begin a new file with an optional advertised size.
+    pub fn start_file(&mut self, size: Option<u64>) {
+        self.cur_file_size = size.and_then(|size| usize::try_from(size).ok());
         self.cur_file_written = 0;
     }
 
@@ -83,7 +85,7 @@ impl TransferProgress {
     /// fraction in [`Self::calc_full_progress`].
     pub fn finish_file(&mut self) {
         self.files_completed += 1;
-        self.cur_file_size = 0;
+        self.cur_file_size = None;
         self.cur_file_written = 0;
     }
 
@@ -92,25 +94,26 @@ impl TransferProgress {
         self.files_completed += 1;
     }
 
-    /// Fraction of the current file written (0.0..=1.0). Zero-byte file => 1.0.
+    /// Fraction of the current file written (0.0..=1.0).
     pub fn calc_partial_progress(&self) -> f64 {
-        if self.cur_file_size == 0 {
-            return 1.0;
+        match self.cur_file_size {
+            None => 0.0,
+            Some(0) => 1.0,
+            Some(size) => (self.cur_file_written as f64 / size as f64).min(1.0),
         }
-        (self.cur_file_written as f64 / self.cur_file_size as f64).min(1.0)
     }
 
     /// Overall progress (0.0..=1.0): file-weighted with intra-file interpolation.
     ///
     /// The current file only contributes a fraction while it is genuinely in
-    /// progress (`cur_file_size > 0` and not all files completed). A finished
-    /// file clears `cur_file_size` (see [`Self::finish_file`]) so it is counted
+    /// progress (a known size and not all files completed). A finished file
+    /// clears `cur_file_size` (see [`Self::finish_file`]) so it is counted
     /// exactly once via `files_completed`.
     pub fn calc_full_progress(&self) -> f64 {
         if self.files_total == 0 {
             return 0.0;
         }
-        let cur_fraction = if self.cur_file_size == 0 || self.files_completed >= self.files_total {
+        let cur_fraction = if self.files_completed >= self.files_total {
             0.0
         } else {
             self.calc_partial_progress()
@@ -234,7 +237,7 @@ mod test {
         assert!(progress.is_single_file());
         assert_eq!(progress.calc_full_progress(), 0.0);
 
-        progress.start_file(1024);
+        progress.start_file(Some(1024));
         assert_eq!(progress.calc_partial_progress(), 0.0);
         assert_eq!(progress.calc_full_progress(), 0.0);
 
@@ -258,13 +261,13 @@ mod test {
         assert!(!progress.is_single_file());
 
         // File 1 fully transferred => full ≈ 0.25
-        progress.start_file(1000);
+        progress.start_file(Some(1000));
         progress.add_bytes(1000);
         progress.finish_file();
         assert!((progress.calc_full_progress() - 0.25).abs() < 1e-9);
 
         // File 2 half transferred => partial ≈ 0.5, full ≈ 0.375
-        progress.start_file(1000);
+        progress.start_file(Some(1000));
         progress.add_bytes(500);
         assert!((progress.calc_partial_progress() - 0.5).abs() < 1e-9);
         assert!((progress.calc_full_progress() - 0.375).abs() < 1e-9);
@@ -276,7 +279,7 @@ mod test {
         progress.init(2);
 
         // One file actually transferred.
-        progress.start_file(100);
+        progress.start_file(Some(100));
         progress.add_bytes(100);
         progress.finish_file();
 
@@ -294,15 +297,34 @@ mod test {
         let mut progress = TransferProgress::default();
         progress.init(1);
 
-        progress.start_file(0);
+        progress.start_file(Some(0));
         assert!((progress.calc_partial_progress() - 1.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_transfer_progress_unknown_size() {
+        let mut progress = TransferProgress::default();
+        progress.init(1);
+        progress.start_file(None);
+        progress.add_bytes(256);
+
+        assert_eq!(progress.calc_partial_progress(), 0.0);
+        assert_eq!(progress.calc_full_progress(), 0.0);
+        assert_eq!(progress.calc_eta(), 0);
+        assert_eq!(progress.total_bytes_written(), 256);
+        assert!(progress.to_string().contains("?"));
+        assert!(!progress.to_string().contains("0 B"));
+
+        progress.finish_file();
+        assert_eq!(progress.files_completed(), 1);
+        assert_eq!(progress.calc_full_progress(), 1.0);
     }
 
     #[test]
     fn test_transfer_progress_timing() {
         let mut progress = TransferProgress::default();
         progress.init(1);
-        progress.start_file(1024);
+        progress.start_file(Some(1024));
 
         progress.started = progress
             .started

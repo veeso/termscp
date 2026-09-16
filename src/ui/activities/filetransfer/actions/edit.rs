@@ -3,7 +3,7 @@
 //! `filetransfer_activity` is the module which implements the Filetransfer activity, which is the main activity afterall
 
 use std::fs::OpenOptions;
-use std::io::Read;
+use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 
@@ -107,10 +107,12 @@ impl FileTransferActivity {
             }
         };
 
-        let new_file_size = match std::io::copy(&mut reader, &mut writer) {
-            Err(err) => return Err(format!("Could not write file: {err}")),
-            Ok(size) => size,
-        };
+        if let Err(err) = std::io::copy(&mut reader, &mut writer) {
+            return Err(format!("Could not write file: {err}"));
+        }
+        reader
+            .finish()
+            .map_err(|err| format!("Could not finish file read: {err}"))?;
 
         // edit file
 
@@ -126,10 +128,11 @@ impl FileTransferActivity {
             };
             let mut writer = match self.browser.local_pane_mut().fs.create_file(
                 entry.path(),
-                &Metadata {
-                    size: new_file_size,
-                    ..Default::default()
-                },
+                &Metadata::default().size(
+                    std::fs::metadata(tempfile.as_path())
+                        .map_err(|err| format!("Could not stat edited file: {err}"))?
+                        .len(),
+                ),
             ) {
                 Ok(writer) => writer,
                 Err(err) => {
@@ -140,6 +143,10 @@ impl FileTransferActivity {
             if let Err(err) = std::io::copy(&mut reader, &mut writer) {
                 return Err(format!("Could not write file: {err}"));
             }
+
+            writer
+                .flush()
+                .map_err(|err| format!("Could not write file: {err}"))?;
 
             self.browser
                 .local_pane_mut()

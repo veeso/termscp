@@ -43,11 +43,10 @@ impl FileInfoPopup {
                 .add_col(SpanStatic::from("File type: "))
                 .add_col(SpanStatic::raw(filetype.clone()).fg(Color::LightGreen));
         }
-        let (bsize, size): (ByteSize, u64) = (ByteSize(file.metadata().size), file.metadata().size);
         texts
             .add_row()
             .add_col(SpanStatic::from("Size: "))
-            .add_col(SpanStatic::raw(format!("{bsize} ({size})")).fg(Color::Cyan));
+            .add_col(SpanStatic::raw(format_file_size(file)).fg(Color::Cyan));
         let atime: String = fmt_time(
             file.metadata().accessed.unwrap_or(UNIX_EPOCH),
             "%b %d %Y %H:%M:%S",
@@ -117,6 +116,13 @@ impl FileInfoPopup {
     }
 }
 
+fn format_file_size(file: &File) -> String {
+    match file.metadata().size {
+        Some(size) => format!("{bsize} ({size})", bsize = ByteSize(size), size = size),
+        None => String::from("Unknown"),
+    }
+}
+
 impl AppComponent<Msg, NoUserEvent> for FileInfoPopup {
     fn on(&mut self, ev: &Event<NoUserEvent>) -> Option<Msg> {
         match ev {
@@ -126,5 +132,19 @@ impl AppComponent<Msg, NoUserEvent> for FileInfoPopup {
             }) => Some(Msg::Ui(UiMsg::CloseFileInfoPopup)),
             _ => None,
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use remotefs::fs::Metadata;
+
+    use super::*;
+
+    #[test]
+    fn formats_unknown_file_size_as_unknown() {
+        let file = File::new("/tmp/unknown", Metadata::default());
+
+        assert_eq!(format_file_size(&file), "Unknown");
     }
 }

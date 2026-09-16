@@ -363,8 +363,10 @@ impl Formatter {
     ) -> String {
         if fsentry.is_file() {
             // Get byte size
-            let size: ByteSize = ByteSize(fsentry.metadata().size);
-            let mut fmt = size.display().si().to_string();
+            let mut fmt = fsentry.metadata().size.map_or_else(
+                || String::from("?"),
+                |size| ByteSize(size).display().si().to_string(),
+            );
             // pad with up to len 10
             let pad = 10usize.saturating_sub(fmt.len());
             for _ in 0..pad {
@@ -534,7 +536,6 @@ impl Formatter {
 #[cfg(test)]
 mod tests {
 
-    use std::path::PathBuf;
     use std::time::SystemTime;
 
     use pretty_assertions::assert_eq;
@@ -542,26 +543,61 @@ mod tests {
 
     use super::*;
 
+    #[expect(
+        clippy::too_many_arguments,
+        reason = "The fixture parameters mirror the optional remotefs metadata fields."
+    )]
+    fn fixture(
+        path: &str,
+        file_type: FileType,
+        size: Option<u64>,
+        symlink: Option<&str>,
+        uid: Option<u32>,
+        gid: Option<u32>,
+        mode: Option<UnixPex>,
+        timestamp: Option<SystemTime>,
+    ) -> File {
+        let mut metadata = Metadata::default().file_type(file_type);
+        if let Some(size) = size {
+            metadata = metadata.size(size);
+        }
+        if let Some(symlink) = symlink {
+            metadata = metadata.symlink(symlink);
+        }
+        if let Some(uid) = uid {
+            metadata = metadata.uid(uid);
+        }
+        if let Some(gid) = gid {
+            metadata = metadata.gid(gid);
+        }
+        if let Some(mode) = mode {
+            metadata = metadata.mode(mode);
+        }
+        if let Some(timestamp) = timestamp {
+            metadata = metadata
+                .accessed(timestamp)
+                .created(timestamp)
+                .modified(timestamp);
+        }
+        File::new(path, metadata)
+    }
+
     #[test]
     fn test_fs_explorer_formatter_callchain() {
         // Make a dummy formatter
         let dummy_formatter: Formatter = Formatter::new("");
         // Make a dummy entry
         let t: SystemTime = SystemTime::now();
-        let dummy_entry = File {
-            path: PathBuf::from("/bar.txt"),
-            metadata: Metadata {
-                accessed: Some(t),
-                created: Some(t),
-                modified: Some(t),
-                file_type: FileType::File,
-                size: 8192,
-                symlink: None,
-                uid: Some(0),
-                gid: Some(0),
-                mode: Some(UnixPex::from(0o644)),
-            },
-        };
+        let dummy_entry = fixture(
+            "/bar.txt",
+            FileType::File,
+            Some(8192),
+            None,
+            Some(0),
+            Some(0),
+            Some(UnixPex::from(0o644)),
+            Some(t),
+        );
         let prefix: String = String::from("h");
         let mut callchain: CallChainBlock = CallChainBlock::new(dummy_fmt, prefix, None, None);
         assert!(callchain.next_block.is_none());
@@ -589,20 +625,16 @@ mod tests {
         let formatter: Formatter = Formatter::default();
         // Experiments :D
         let t: SystemTime = SystemTime::now();
-        let entry = File {
-            path: PathBuf::from("/bar.txt"),
-            metadata: Metadata {
-                accessed: Some(t),
-                created: Some(t),
-                modified: Some(t),
-                file_type: FileType::File,
-                size: 8192,
-                symlink: None,
-                uid: Some(0),
-                gid: Some(0),
-                mode: Some(UnixPex::from(0o644)),
-            },
-        };
+        let entry = fixture(
+            "/bar.txt",
+            FileType::File,
+            Some(8192),
+            None,
+            Some(0),
+            Some(0),
+            Some(UnixPex::from(0o644)),
+            Some(t),
+        );
         #[cfg(posix)]
         assert_eq!(
             formatter.fmt(&entry),
@@ -620,20 +652,16 @@ mod tests {
             )
         );
         // Elide name
-        let entry = File {
-            path: PathBuf::from("/piroparoporoperoperupupu.txt"),
-            metadata: Metadata {
-                accessed: Some(t),
-                created: Some(t),
-                modified: Some(t),
-                file_type: FileType::File,
-                size: 8192,
-                symlink: None,
-                uid: Some(0),
-                gid: Some(0),
-                mode: Some(UnixPex::from(0o644)),
-            },
-        };
+        let entry = fixture(
+            "/piroparoporoperoperupupu.txt",
+            FileType::File,
+            Some(8192),
+            None,
+            Some(0),
+            Some(0),
+            Some(UnixPex::from(0o644)),
+            Some(t),
+        );
         #[cfg(posix)]
         assert_eq!(
             formatter.fmt(&entry),
@@ -651,20 +679,16 @@ mod tests {
             )
         );
         // No pex
-        let entry = File {
-            path: PathBuf::from("/bar.txt"),
-            metadata: Metadata {
-                accessed: Some(t),
-                created: Some(t),
-                modified: Some(t),
-                file_type: FileType::File,
-                size: 8192,
-                symlink: None,
-                uid: Some(0),
-                gid: Some(0),
-                mode: None,
-            },
-        };
+        let entry = fixture(
+            "/bar.txt",
+            FileType::File,
+            Some(8192),
+            None,
+            Some(0),
+            Some(0),
+            None,
+            Some(t),
+        );
         #[cfg(posix)]
         assert_eq!(
             formatter.fmt(&entry),
@@ -682,20 +706,16 @@ mod tests {
             )
         );
         // No user
-        let entry = File {
-            path: PathBuf::from("/bar.txt"),
-            metadata: Metadata {
-                accessed: Some(t),
-                created: Some(t),
-                modified: Some(t),
-                file_type: FileType::File,
-                size: 8192,
-                symlink: None,
-                uid: None,
-                gid: Some(0),
-                mode: None,
-            },
-        };
+        let entry = fixture(
+            "/bar.txt",
+            FileType::File,
+            Some(8192),
+            None,
+            None,
+            Some(0),
+            None,
+            Some(t),
+        );
         #[cfg(posix)]
         assert_eq!(
             formatter.fmt(&entry),
@@ -720,20 +740,16 @@ mod tests {
         let formatter: Formatter = Formatter::default();
         // Experiments :D
         let t: SystemTime = SystemTime::now();
-        let entry = File {
-            path: PathBuf::from("/home/cvisintin/projects"),
-            metadata: Metadata {
-                accessed: Some(t),
-                created: Some(t),
-                modified: Some(t),
-                file_type: FileType::Directory,
-                size: 4096,
-                symlink: None,
-                uid: Some(0),
-                gid: Some(0),
-                mode: Some(UnixPex::from(0o755)),
-            },
-        };
+        let entry = fixture(
+            "/home/cvisintin/projects",
+            FileType::Directory,
+            Some(4096),
+            None,
+            Some(0),
+            Some(0),
+            Some(UnixPex::from(0o755)),
+            Some(t),
+        );
         #[cfg(posix)]
         assert_eq!(
             formatter.fmt(&entry),
@@ -751,20 +767,16 @@ mod tests {
             )
         );
         // No pex, no user
-        let entry = File {
-            path: PathBuf::from("/home/cvisintin/projects"),
-            metadata: Metadata {
-                accessed: Some(t),
-                created: Some(t),
-                modified: Some(t),
-                file_type: FileType::Directory,
-                size: 4096,
-                symlink: None,
-                uid: None,
-                gid: Some(0),
-                mode: None,
-            },
-        };
+        let entry = fixture(
+            "/home/cvisintin/projects",
+            FileType::Directory,
+            Some(4096),
+            None,
+            None,
+            Some(0),
+            None,
+            Some(t),
+        );
         #[cfg(posix)]
         assert_eq!(
             formatter.fmt(&entry),
@@ -790,20 +802,16 @@ mod tests {
         );
         // Directory (with symlink)
         let t: SystemTime = SystemTime::now();
-        let entry = File {
-            path: PathBuf::from("/home/cvisintin/projects"),
-            metadata: Metadata {
-                accessed: Some(t),
-                created: Some(t),
-                modified: Some(t),
-                file_type: FileType::Symlink,
-                size: 4096,
-                symlink: Some(PathBuf::from("project.info")),
-                uid: None,
-                gid: None,
-                mode: Some(UnixPex::from(0o755)),
-            },
-        };
+        let entry = fixture(
+            "/home/cvisintin/projects",
+            FileType::Symlink,
+            Some(4096),
+            Some("project.info"),
+            None,
+            None,
+            Some(UnixPex::from(0o755)),
+            Some(t),
+        );
         assert_eq!(
             formatter.fmt(&entry),
             format!(
@@ -814,20 +822,16 @@ mod tests {
             )
         );
         // Directory without symlink
-        let entry = File {
-            path: PathBuf::from("/home/cvisintin/projects"),
-            metadata: Metadata {
-                accessed: Some(t),
-                created: Some(t),
-                modified: Some(t),
-                file_type: FileType::Directory,
-                size: 4096,
-                symlink: None,
-                uid: None,
-                gid: None,
-                mode: Some(UnixPex::from(0o755)),
-            },
-        };
+        let entry = fixture(
+            "/home/cvisintin/projects",
+            FileType::Directory,
+            Some(4096),
+            None,
+            None,
+            None,
+            Some(UnixPex::from(0o755)),
+            Some(t),
+        );
         assert_eq!(
             formatter.fmt(&entry),
             format!(
@@ -838,20 +842,16 @@ mod tests {
             )
         );
         // File with symlink
-        let entry = File {
-            path: PathBuf::from("/bar.txt"),
-            metadata: Metadata {
-                accessed: Some(t),
-                created: Some(t),
-                modified: Some(t),
-                file_type: FileType::Symlink,
-                size: 8192,
-                symlink: Some(PathBuf::from("project.info")),
-                uid: None,
-                gid: None,
-                mode: Some(UnixPex::from(0o644)),
-            },
-        };
+        let entry = fixture(
+            "/bar.txt",
+            FileType::Symlink,
+            Some(8192),
+            Some("project.info"),
+            None,
+            None,
+            Some(UnixPex::from(0o644)),
+            Some(t),
+        );
         assert_eq!(
             formatter.fmt(&entry),
             format!(
@@ -862,20 +862,16 @@ mod tests {
             )
         );
         // File without symlink
-        let entry = File {
-            path: PathBuf::from("/bar.txt"),
-            metadata: Metadata {
-                accessed: Some(t),
-                created: Some(t),
-                modified: Some(t),
-                file_type: FileType::File,
-                size: 8192,
-                symlink: None,
-                uid: None,
-                gid: None,
-                mode: Some(UnixPex::from(0o644)),
-            },
-        };
+        let entry = fixture(
+            "/bar.txt",
+            FileType::File,
+            Some(8192),
+            None,
+            None,
+            None,
+            Some(UnixPex::from(0o644)),
+            Some(t),
+        );
         assert_eq!(
             formatter.fmt(&entry),
             format!(
@@ -891,20 +887,16 @@ mod tests {
     #[cfg(posix)]
     fn should_fmt_path() {
         let t: SystemTime = SystemTime::now();
-        let entry = File {
-            path: PathBuf::from("/tmp/a/b/c/bar.txt"),
-            metadata: Metadata {
-                accessed: Some(t),
-                created: Some(t),
-                modified: Some(t),
-                file_type: FileType::Symlink,
-                size: 8192,
-                symlink: Some(PathBuf::from("project.info")),
-                uid: None,
-                gid: None,
-                mode: Some(UnixPex::from(0o644)),
-            },
-        };
+        let entry = fixture(
+            "/tmp/a/b/c/bar.txt",
+            FileType::Symlink,
+            Some(8192),
+            Some("project.info"),
+            None,
+            None,
+            Some(UnixPex::from(0o644)),
+            Some(t),
+        );
         let formatter: Formatter = Formatter::new("File path: {PATH}");
         assert_eq!(
             formatter.fmt(&entry).as_str(),
@@ -923,20 +915,16 @@ mod tests {
     #[cfg(posix)]
     fn should_fmt_utf8_path() {
         let t: SystemTime = SystemTime::now();
-        let entry = File {
-            path: PathBuf::from("/tmp/a/b/c/россия"),
-            metadata: Metadata {
-                accessed: Some(t),
-                created: Some(t),
-                modified: Some(t),
-                file_type: FileType::Symlink,
-                size: 8192,
-                symlink: Some(PathBuf::from("project.info")),
-                uid: None,
-                gid: None,
-                mode: Some(UnixPex::from(0o644)),
-            },
-        };
+        let entry = fixture(
+            "/tmp/a/b/c/россия",
+            FileType::Symlink,
+            Some(8192),
+            Some("project.info"),
+            None,
+            None,
+            Some(UnixPex::from(0o644)),
+            Some(t),
+        );
         let formatter: Formatter = Formatter::new("File path: {PATH}");
         assert_eq!(
             formatter.fmt(&entry).as_str(),
@@ -948,100 +936,88 @@ mod tests {
 
     #[test]
     fn should_fmt_short_ascii_name() {
-        let entry = File {
-            path: PathBuf::from("/tmp/foo.txt"),
-            metadata: Metadata {
-                accessed: None,
-                created: None,
-                modified: None,
-                file_type: FileType::File,
-                size: 8192,
-                symlink: None,
-                uid: None,
-                gid: None,
-                mode: None,
-            },
-        };
+        let entry = fixture(
+            "/tmp/foo.txt",
+            FileType::File,
+            Some(8192),
+            None,
+            None,
+            None,
+            None,
+            None,
+        );
         let formatter: Formatter = Formatter::new("{NAME:8}");
         assert_eq!(formatter.fmt(&entry).as_str(), "foo.txt ");
     }
 
     #[test]
     fn should_fmt_exceeding_length_ascii_name() {
-        let entry = File {
-            path: PathBuf::from("/tmp/christian-visintin.txt"),
-            metadata: Metadata {
-                accessed: None,
-                created: None,
-                modified: None,
-                file_type: FileType::File,
-                size: 8192,
-                symlink: None,
-                uid: None,
-                gid: None,
-                mode: None,
-            },
-        };
+        let entry = fixture(
+            "/tmp/christian-visintin.txt",
+            FileType::File,
+            Some(8192),
+            None,
+            None,
+            None,
+            None,
+            None,
+        );
         let formatter: Formatter = Formatter::new("{NAME:8}");
         assert_eq!(formatter.fmt(&entry).as_str(), "christi…");
     }
 
     #[test]
     fn should_fmt_short_utf8_name() {
-        let entry = File {
-            path: PathBuf::from("/tmp/россия"),
-            metadata: Metadata {
-                accessed: None,
-                created: None,
-                modified: None,
-                file_type: FileType::File,
-                size: 8192,
-                symlink: None,
-                uid: None,
-                gid: None,
-                mode: None,
-            },
-        };
+        let entry = fixture(
+            "/tmp/россия",
+            FileType::File,
+            Some(8192),
+            None,
+            None,
+            None,
+            None,
+            None,
+        );
         let formatter: Formatter = Formatter::new("{NAME:8}");
         assert_eq!(formatter.fmt(&entry).as_str(), "россия  ");
     }
 
     #[test]
     fn should_fmt_long_utf8_name() {
-        let entry = File {
-            path: PathBuf::from("/tmp/喵喵喵喵喵喵喵喵喵喵喵喵喵喵喵喵喵喵喵喵喵喵"),
-            metadata: Metadata {
-                accessed: None,
-                created: None,
-                modified: None,
-                file_type: FileType::File,
-                size: 8192,
-                symlink: None,
-                uid: None,
-                gid: None,
-                mode: None,
-            },
-        };
+        let entry = fixture(
+            "/tmp/喵喵喵喵喵喵喵喵喵喵喵喵喵喵喵喵喵喵喵喵喵喵",
+            FileType::File,
+            Some(8192),
+            None,
+            None,
+            None,
+            None,
+            None,
+        );
         let formatter: Formatter = Formatter::new("{NAME:8}");
         assert_eq!(formatter.fmt(&entry).as_str(), "喵喵喵喵喵喵喵…");
     }
 
     #[test]
+    fn should_fmt_unknown_file_size() {
+        let entry = File::new("/tmp/unknown", Metadata::default());
+        let formatter = Formatter::new("{SIZE}");
+
+        assert_eq!(formatter.fmt(&entry), "?         ");
+    }
+
+    #[test]
     fn should_ignore_unknown_formatter_keys() {
-        let entry = File {
-            path: PathBuf::from("/tmp/foo.txt"),
-            metadata: Metadata {
-                accessed: None,
-                created: None,
-                modified: None,
-                file_type: FileType::File,
-                size: 8192,
-                symlink: None,
-                uid: None,
-                gid: None,
-                mode: None,
-            },
-        };
+        let entry = fixture(
+            "/tmp/foo.txt",
+            FileType::File,
+            Some(8192),
+            None,
+            None,
+            None,
+            None,
+            None,
+        );
         let formatter: Formatter = Formatter::new("before {UNKNOWN:12} after {NAME:8}");
 
         assert_eq!(formatter.fmt(&entry).as_str(), "before  after foo.txt ");

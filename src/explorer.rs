@@ -565,20 +565,18 @@ mod tests {
         let explorer: FileExplorer = FileExplorer::default();
         // Create fs entry
         let t: SystemTime = SystemTime::now();
-        let entry = File {
-            path: PathBuf::from("/bar.txt"),
-            metadata: Metadata {
-                accessed: Some(t),
-                created: Some(t),
-                modified: Some(t),
-                file_type: FileType::File,
-                size: 8192,
-                symlink: None,
-                uid: Some(0),
-                gid: Some(0),
-                mode: Some(UnixPex::from(0o644)),
-            },
-        };
+        let entry = File::new(
+            "/bar.txt",
+            Metadata::default()
+                .accessed(t)
+                .created(t)
+                .modified(t)
+                .file_type(FileType::File)
+                .uid(0)
+                .gid(0)
+                .mode(UnixPex::from(0o644))
+                .size(8192),
+        );
         #[cfg(posix)]
         assert_eq!(
             explorer.fmt_file(&entry),
@@ -690,47 +688,37 @@ mod tests {
 
     fn make_fs_entry(name: &str, is_dir: bool) -> File {
         let t: SystemTime = SystemTime::now();
-        let metadata = Metadata {
-            accessed: Some(t),
-            created: Some(t),
-            modified: Some(t),
-            file_type: if is_dir {
+        let metadata = Metadata::default()
+            .accessed(t)
+            .created(t)
+            .modified(t)
+            .file_type(if is_dir {
                 FileType::Directory
             } else {
                 FileType::File
-            },
-            symlink: None,
-            gid: Some(0),
-            uid: Some(0),
-            mode: Some(UnixPex::from(if is_dir { 0o755 } else { 0o644 })),
-            size: 64,
-        };
-        File {
-            path: PathBuf::from(name),
-            metadata,
-        }
+            })
+            .gid(0)
+            .uid(0)
+            .mode(UnixPex::from(if is_dir { 0o755 } else { 0o644 }))
+            .size(64);
+        File::new(name, metadata)
     }
 
     fn make_fs_entry_with_size(name: &str, is_dir: bool, size: usize) -> File {
         let t: SystemTime = SystemTime::now();
-        let metadata = Metadata {
-            accessed: Some(t),
-            created: Some(t),
-            modified: Some(t),
-            file_type: if is_dir {
+        let metadata = Metadata::default()
+            .accessed(t)
+            .created(t)
+            .modified(t)
+            .file_type(if is_dir {
                 FileType::Directory
             } else {
                 FileType::File
-            },
-            symlink: None,
-            gid: Some(0),
-            uid: Some(0),
-            mode: Some(UnixPex::from(if is_dir { 0o755 } else { 0o644 })),
-            size: size as u64,
-        };
-        File {
-            path: PathBuf::from(name),
-            metadata,
-        }
+            })
+            .gid(0)
+            .uid(0)
+            .mode(UnixPex::from(if is_dir { 0o755 } else { 0o644 }))
+            .size(size as u64);
+        File::new(name, metadata)
     }
 }
