@@ -5,6 +5,7 @@
 mod host_bridge_builder;
 pub mod params;
 mod remotefs_builder;
+mod wrapper;
 
 // -- export types
 pub use host_bridge_builder::HostBridgeBuilder;

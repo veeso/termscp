@@ -46,7 +46,7 @@ bytesize = "2"
 cbc = { version = "0.2", features = ["alloc"] }
 chrono = "0.4"
 content_inspector = "0.2"
-dirs = "6"
+dirs = "7"
 edit = "0.1"
 filetime = "0.2"
 keyring-core = "1"
@@ -59,13 +59,13 @@ nucleo = "0.5"
 open = "5"
 rand = "0.10"
 regex = "1"
-remotefs = "0.3"
-remotefs-aws-s3 = "0.4"
-remotefs-gcs = "0.1"
-remotefs-kube = "0.4"
-remotefs-smb = { version = "0.5", default-features = false, optional = true, features = ["find", "pavao"] }
-remotefs-ssh = { version = "0.9", default-features = false, features = ["russh"] }
-remotefs-webdav = "0.2"
+remotefs = "1"
+remotefs-aws-s3 = { version = "1", features = ["tokio"] }
+remotefs-gcs = { version = "1", features = ["tokio"] }
+remotefs-kube = { version = "1", features = ["tokio"] }
+remotefs-smb = { version = "1", default-features = false, optional = true, features = ["find", "pavao"] }
+remotefs-ssh = { version = "1", default-features = false, features = ["russh"] }
+remotefs-webdav = { version = "1", features = ["tokio"] }
 rpassword = "7"
 self_update = { version = "0.42", default-features = false, features = ["archive-tar", "archive-zip", "compression-flate2", "compression-zip-deflate", "rustls"] }
 semver = "1"
@@ -76,7 +76,7 @@ simplelog = "0.12"
 ssh2-config = "0.8"
 tempfile = "3"
 thiserror = "2"
-tokio = { version = "1", features = ["rt"] }
+tokio = { version = "1", features = ["rt-multi-thread"] }
 toml = "1"
 tui-realm-stdlib = "4"
 tui-term = "0.3"
@@ -89,11 +89,11 @@ wildmatch = "2"
 dbus-secret-service-keyring-store = { version = "1", features = ["crypto-rust", "vendored"] }
 
 [target."cfg(target_family = \"unix\")".dependencies]
-remotefs-ftp = { version = "0.4", features = ["native-tls", "native-tls-vendored"] }
+remotefs-ftp = { version = "1", features = ["native-tls", "native-tls-vendored"] }
 uzers = "0.12"
 
 [target."cfg(target_family = \"windows\")".dependencies]
-remotefs-ftp = { version = "0.4", features = ["native-tls"] }
+remotefs-ftp = { version = "1", features = ["native-tls"] }
 
 [target."cfg(target_os = \"macos\")".dependencies]
 apple-native-keyring-store = { version = "1", features = ["keychain"] }

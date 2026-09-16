@@ -82,6 +82,19 @@ impl TempMappedFile {
         Ok(())
     }
 
+    /// Returns the number of bytes currently stored in the temporary file.
+    pub fn len(&self) -> HostResult<u64> {
+        std::fs::metadata(self.tempfile.path())
+            .map(|metadata| metadata.len())
+            .map_err(|error| {
+                HostError::new(
+                    HostErrorType::FileNotAccessible,
+                    Some(error),
+                    self.tempfile.path(),
+                )
+            })
+    }
+
     fn write_hnd(&mut self) -> io::Result<FileHandle<'_>> {
         let mut lock = self.lock_handle()?;
         if lock.is_none() {

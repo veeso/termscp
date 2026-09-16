@@ -28,7 +28,7 @@ impl FileTransferActivity {
             .browser
             .fs_pane_mut()
             .fs
-            .create_file(file_path.as_path(), &Metadata::default())
+            .create_file(file_path.as_path(), &Metadata::default().size(0))
         {
             Ok(f) => f,
             Err(err) => {

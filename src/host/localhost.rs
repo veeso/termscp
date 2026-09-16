@@ -4,7 +4,7 @@
 //! filesystem.
 
 use std::fs::{self, OpenOptions};
-use std::io::{Read, Write};
+use std::io::Write;
 #[cfg(posix)]
 use std::os::unix::fs::PermissionsExt as _;
 use std::path::{Path, PathBuf};
@@ -13,7 +13,7 @@ use filetime::FileTime;
 use remotefs::File;
 use remotefs::fs::{FileType, Metadata, UnixPex};
 
-use super::{HostBridge, HostResult};
+use super::{HostBridge, HostReader, HostResult, HostWriter};
 use crate::host::{HostError, HostErrorType};
 use crate::utils::path;
 
@@ -368,7 +368,7 @@ impl HostBridge for Localhost {
             metadata.file_type = FileType::Symlink;
         }
         // Match dir / file
-        Ok(File { path, metadata })
+        Ok(File::new(path, metadata))
     }
 
     fn exists(&mut self, path: &Path) -> HostResult<bool> {
@@ -520,7 +520,7 @@ impl HostBridge for Localhost {
         Err(HostError::from(HostErrorType::NotImplemented))
     }
 
-    fn open_file(&mut self, file: &std::path::Path) -> HostResult<Box<dyn Read + Send>> {
+    fn open_file(&mut self, file: &std::path::Path) -> HostResult<HostReader> {
         let file: PathBuf = self.to_path(file);
         info!("Opening file {} for read", file.display());
         if !self.exists(file.as_path())? {
@@ -537,7 +537,7 @@ impl HostBridge for Localhost {
             .write(false)
             .open(file.as_path())
         {
-            Ok(f) => Ok(Box::new(f)),
+            Ok(f) => Ok(HostReader::io(f)),
             Err(err) => {
                 error!("Could not open file for read: {}", err);
                 Err(HostError::new(
@@ -549,11 +549,7 @@ impl HostBridge for Localhost {
         }
     }
 
-    fn create_file(
-        &mut self,
-        file: &Path,
-        _metadata: &Metadata,
-    ) -> HostResult<Box<dyn Write + Send>> {
+    fn create_file(&mut self, file: &Path, _metadata: &Metadata) -> HostResult<HostWriter> {
         let file: PathBuf = self.to_path(file);
         info!("Opening file {} for write", file.display());
         match OpenOptions::new()
@@ -562,7 +558,7 @@ impl HostBridge for Localhost {
             .truncate(true)
             .open(file.as_path())
         {
-            Ok(f) => Ok(Box::new(f)),
+            Ok(f) => Ok(HostWriter::io(f)),
             Err(err) => {
                 error!("Failed to open file: {}", err);
                 match self.exists(file.as_path())? {
@@ -581,9 +577,11 @@ impl HostBridge for Localhost {
         }
     }
 
-    fn finalize_write(&mut self, _writer: Box<dyn Write + Send>) -> HostResult<()> {
-        // no-op
-        Ok(())
+    fn finalize_write(&mut self, mut writer: HostWriter) -> HostResult<()> {
+        writer.flush().map_err(|error| {
+            HostError::new(HostErrorType::FileNotAccessible, Some(error), Path::new(""))
+        })?;
+        writer.finish()
     }
 }
 

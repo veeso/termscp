@@ -131,6 +131,14 @@ impl FileTransferActivity {
             return;
         }
 
+        if let Err(err) = reader.finish() {
+            self.log(
+                LogLevel::Error,
+                format!("Failed to finish bridged file read: {err}"),
+            );
+            return;
+        }
+
         if tmpfile.exists() {
             self.open_path_with(tmpfile.as_path(), open_with);
         }

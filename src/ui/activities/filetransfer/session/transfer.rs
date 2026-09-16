@@ -10,7 +10,7 @@ use bytesize::ByteSize;
 use remotefs::fs::File;
 use thiserror::Error;
 
-use crate::host::HostError;
+use crate::host::{HostError, HostReader, HostWriter};
 use crate::ui::activities::filetransfer::{FileTransferActivity, LogLevel};
 use crate::utils::fmt::fmt_millis;
 
@@ -457,8 +457,8 @@ impl FileTransferActivity {
         host: &File,
         remote: &Path,
         file_name: String,
-        mut reader: Box<dyn Read + Send>,
-        mut writer: Box<dyn Write + Send>,
+        mut reader: HostReader,
+        mut writer: HostWriter,
     ) -> Result<(), TransferErrorReason> {
         // Write file
         let file_size = self
@@ -467,18 +467,16 @@ impl FileTransferActivity {
             .fs
             .stat(host.path())
             .map_err(TransferErrorReason::HostError)
-            .map(|x| x.metadata().size as usize)?;
+            .map(|x| x.metadata().size)?;
         // Init transfer
         self.transfer.progress.start_file(file_size);
         let file_started = Instant::now();
 
         // Write remote file
-        let mut total_bytes_written: usize = 0;
         let mut last_redraw: Instant = Instant::now();
         let mut last_input_event_fetch: Option<Instant> = None;
-        // While the entire file hasn't been completely written,
-        // Or filetransfer has been aborted
-        while total_bytes_written < file_size && !self.transfer.aborted() {
+        // Read until EOF or until the transfer is aborted.
+        while !self.transfer.aborted() {
             // Handle input events (each 500ms) or if never fetched before
             if last_input_event_fetch.is_none()
                 || last_input_event_fetch
@@ -494,33 +492,17 @@ impl FileTransferActivity {
             }
             // Read till you can
             let mut buffer: [u8; BUFSIZE] = [0; BUFSIZE];
-            let delta: usize = match reader.read(&mut buffer) {
-                Ok(bytes_read) => {
-                    total_bytes_written += bytes_read;
-                    if bytes_read == 0 {
-                        continue;
-                    } else {
-                        let mut delta: usize = 0;
-                        while delta < bytes_read {
-                            // Write bytes
-                            match writer.write(&buffer[delta..bytes_read]) {
-                                Ok(bytes) => {
-                                    delta += bytes;
-                                }
-                                Err(err) => {
-                                    return Err(TransferErrorReason::RemoteIoError(err));
-                                }
-                            }
-                        }
-                        delta
-                    }
-                }
-                Err(err) => {
-                    return Err(TransferErrorReason::HostIoError(err));
-                }
-            };
+            let bytes_read = reader
+                .read(&mut buffer)
+                .map_err(TransferErrorReason::HostIoError)?;
+            if bytes_read == 0 {
+                break;
+            }
+            writer
+                .write_all(&buffer[..bytes_read])
+                .map_err(TransferErrorReason::RemoteIoError)?;
             // Increase progress
-            self.transfer.progress.add_bytes(delta);
+            self.transfer.progress.add_bytes(bytes_read);
             // Redraw at most every 100ms to keep UI responsive for large files
             if last_redraw.elapsed().as_millis() >= 100 {
                 self.update_progress_bar(format!("Uploading \"{file_name}\"…"));
@@ -528,12 +510,14 @@ impl FileTransferActivity {
                 last_redraw = Instant::now();
             }
         }
-        // Finalize stream
-        handle_remote_finalize_result(self.browser.remote_pane_mut().fs.finalize_write(writer))?;
         // if upload was abrupted, return error
         if self.transfer.aborted() {
             return Err(TransferErrorReason::Abrupted);
         }
+        writer.flush().map_err(TransferErrorReason::RemoteIoError)?;
+        reader.finish().map_err(TransferErrorReason::HostError)?;
+        // Finalize stream
+        handle_remote_finalize_result(self.browser.remote_pane_mut().fs.finalize_write(writer))?;
         // set stat
         if let Err(err) = self
             .browser
@@ -812,21 +796,17 @@ impl FileTransferActivity {
         host_bridge: &Path,
         remote: &File,
         file_name: String,
-        mut reader: Box<dyn Read + Send>,
-        mut writer: Box<dyn Write + Send>,
+        mut reader: HostReader,
+        mut writer: HostWriter,
     ) -> Result<(), TransferErrorReason> {
-        let mut total_bytes_written: usize = 0;
         // Init transfer
-        self.transfer
-            .progress
-            .start_file(remote.metadata.size as usize);
+        self.transfer.progress.start_file(remote.metadata.size);
         let file_started = Instant::now();
         // Write host_bridge file
         let mut last_redraw: Instant = Instant::now();
         let mut last_input_event_fetch: Option<Instant> = None;
-        // While the entire file hasn't been completely read,
-        // Or filetransfer has been aborted
-        while total_bytes_written < remote.metadata.size as usize && !self.transfer.aborted() {
+        // Read until EOF or until the transfer is aborted.
+        while !self.transfer.aborted() {
             // Handle input events (each 500 ms) or is None
             if last_input_event_fetch.is_none()
                 || last_input_event_fetch
@@ -842,31 +822,17 @@ impl FileTransferActivity {
             }
             // Read till you can
             let mut buffer: [u8; BUFSIZE] = [0; BUFSIZE];
-            let delta: usize = match reader.read(&mut buffer) {
-                Ok(bytes_read) => {
-                    total_bytes_written += bytes_read;
-                    if bytes_read == 0 {
-                        continue;
-                    } else {
-                        let mut delta: usize = 0;
-                        while delta < bytes_read {
-                            // Write bytes
-                            match writer.write(&buffer[delta..bytes_read]) {
-                                Ok(bytes) => delta += bytes,
-                                Err(err) => {
-                                    return Err(TransferErrorReason::HostIoError(err));
-                                }
-                            }
-                        }
-                        delta
-                    }
-                }
-                Err(err) => {
-                    return Err(TransferErrorReason::RemoteIoError(err));
-                }
-            };
+            let bytes_read = reader
+                .read(&mut buffer)
+                .map_err(TransferErrorReason::RemoteIoError)?;
+            if bytes_read == 0 {
+                break;
+            }
+            writer
+                .write_all(&buffer[..bytes_read])
+                .map_err(TransferErrorReason::HostIoError)?;
             // Set progress
-            self.transfer.progress.add_bytes(delta);
+            self.transfer.progress.add_bytes(bytes_read);
             // Redraw at most every 100ms to keep UI responsive for large files
             if last_redraw.elapsed().as_millis() >= 100 {
                 self.update_progress_bar(format!("Downloading \"{file_name}\""));
@@ -879,6 +845,10 @@ impl FileTransferActivity {
             return Err(TransferErrorReason::Abrupted);
         }
 
+        writer.flush().map_err(TransferErrorReason::HostIoError)?;
+        reader
+            .finish()
+            .map_err(TransferErrorReason::RemoteHostError)?;
         // Finalize write
         self.browser
             .local_pane_mut()
@@ -953,25 +923,20 @@ mod worklist_test {
         // equal (`File` derives `PartialEq` over its full metadata, timestamps
         // included), allowing direct equality assertions against the worklist.
         let t = SystemTime::UNIX_EPOCH;
-        let metadata = Metadata {
-            accessed: Some(t),
-            created: Some(t),
-            modified: Some(t),
-            file_type: if is_dir {
+        let metadata = Metadata::default()
+            .accessed(t)
+            .created(t)
+            .modified(t)
+            .file_type(if is_dir {
                 FileType::Directory
             } else {
                 FileType::File
-            },
-            symlink: None,
-            gid: Some(0),
-            uid: Some(0),
-            mode: Some(UnixPex::from(if is_dir { 0o755 } else { 0o644 })),
-            size: 64,
-        };
-        File {
-            path: PathBuf::from(path),
-            metadata,
-        }
+            })
+            .gid(0)
+            .uid(0)
+            .mode(UnixPex::from(if is_dir { 0o755 } else { 0o644 }))
+            .size(64);
+        File::new(path, metadata)
     }
 
     #[test]
