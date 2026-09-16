@@ -51,7 +51,7 @@ fn resolve_remote_path(wrkdir: &Path, target: &Path) -> HostResult<PathBuf> {
     let resolved = if remotefs::path::ensure_absolute(target).is_ok() {
         target.to_path_buf()
     } else {
-        crate::utils::path::absolutize(wrkdir, target)
+        wrkdir.join(target)
     };
     remotefs::path::ensure_absolute(&resolved).map_err(HostError::from)?;
     Ok(resolved)
