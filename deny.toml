@@ -21,9 +21,6 @@ unmaintained = "all"
 # dependency version; until then, connections to untrusted endpoints remain an
 # acknowledged denial-of-service and certificate-validation risk.
 ignore = [
-  # h2 0.3 is retained transitively by the reqwest 0.11/AWS HTTP stack; its
-  # dependency constraints cannot select the fixed h2 0.4 release.
-  { id = "RUSTSEC-2026-0258", reason = "owner: termscp maintainers; review by 2026-12-31; upgrade reqwest/AWS stack to fixed h2" },
   # number_prefix is retained by self_update through indicatif. It is
   # unmaintained, but has no reported vulnerability or compatible replacement.
   { id = "RUSTSEC-2025-0119", reason = "owner: termscp maintainers; review by 2026-12-31; upgrade self_update/indicatif" },
@@ -33,9 +30,6 @@ ignore = [
   { id = "RUSTSEC-2026-0195", reason = "owner: termscp maintainers; review by 2026-12-31; upgrade remotefs-webdav/self_update to quick-xml >=0.41" },
   # The SSH stack requires RSA, for which RustSec reports no safe upgrade.
   { id = "RUSTSEC-2023-0071", reason = "owner: termscp maintainers; review by 2026-12-31; replace RSA dependency when upstream fix exists" },
-  # rustls-pemfile is retained by the WebDAV and Kubernetes clients. Both
-  # versions are unmaintained but have no reported vulnerability.
-  { id = "RUSTSEC-2025-0134", reason = "owner: termscp maintainers; review by 2026-12-31; upgrade WebDAV/Kubernetes clients away from rustls-pemfile" },
 ]
 
 [licenses]

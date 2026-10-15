@@ -12,7 +12,7 @@ must be in a quote block (e.g., using `>`) and disclosed as such. It must be
 accompanied by human commentary explaining the relevance and implications of
 the context.
 
-If you plan to contribute to termscp using AI tools, you **must** read,
+If you plan to contribute to this project using AI tools, you **must** read,
 understand and follow this policy.
 
 ## Disclosure
@@ -25,6 +25,18 @@ This applies to any AI tool that generated or substantially shaped the content
 you submit — code, prose or commit messages — including agents, chat assistants
 and AI-assisted editors. Mechanical editor autocompletion of a few characters
 does not need to be disclosed; if in doubt, disclose.
+
+## Authorship and responsibility
+
+You are the only author of, and the only party responsible for, everything you
+submit, no matter whether it was written by a human or by an AI tool. An AI
+tool is never an author or a contributor.
+
+Commits, pull requests and any other contribution **must not** contain
+`Co-authored-by` trailers (or equivalent attribution lines, such as
+`Generated-by` or session links) naming an LLM, an agent or any other AI tool.
+Disclose AI use through the pull request template, as described above, and
+nowhere else.
 
 ## Translations
 
@@ -55,6 +67,8 @@ Examples of things that are not allowed:
   without understanding the question or the response.
   In other words, you should not "play telephone" between your AI-generated code,
   the reviewer, and the AI tool.
+- Add a `Co-authored-by` trailer (or similar attribution) naming an LLM or
+  agent to a commit or pull request.
 
 ## Inspiration
 
