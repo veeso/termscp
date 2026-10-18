@@ -10,6 +10,9 @@ use super::{
     TransferPayload,
 };
 
+/// Queued transfers: source file and full target path.
+type QueuedTransfers = Vec<(File, PathBuf)>;
+
 enum GetFileToReplaceResult {
     Replace(Vec<(File, PathBuf)>),
     Cancel,
@@ -285,10 +288,17 @@ impl FileTransferActivity {
         }
     }
 
-    pub(crate) fn file_to_check_many(e: &File, wrkdir: &Path) -> PathBuf {
-        let mut p = wrkdir.to_path_buf();
-        p.push(e.name());
-        p
+    /// Split queued transfers between those whose target already exists and those that don't.
+    ///
+    /// Each queued `PathBuf` is already the full target path (the one the transfer engine
+    /// writes to), so `exists` is called with it as-is; the file name must not be appended again.
+    fn partition_by_existence(
+        files: QueuedTransfers,
+        mut exists: impl FnMut(&Path) -> bool,
+    ) -> (QueuedTransfers, QueuedTransfers) {
+        files
+            .into_iter()
+            .partition(|(_, dest_path)| exists(dest_path.as_path()))
     }
 
     /// Get the files to transfer with overwrites.
@@ -304,13 +314,10 @@ impl FileTransferActivity {
         }
 
         // unzip between existing and non-existing files
-        let (existing_files, new_files): (Vec<_>, Vec<_>) =
-            files.into_iter().partition(|(x, dest_path)| {
-                let p = Self::file_to_check_many(x, dest_path);
-                match file_exists {
-                    CheckFileExists::Remote => self.file_exists(p.as_path(), false),
-                    CheckFileExists::HostBridge => self.file_exists(p.as_path(), true),
-                }
+        let (existing_files, new_files) =
+            Self::partition_by_existence(files, |p| match file_exists {
+                CheckFileExists::Remote => self.file_exists(p, false),
+                CheckFileExists::HostBridge => self.file_exists(p, true),
             });
 
         // filter only files to replace
@@ -325,5 +332,34 @@ impl FileTransferActivity {
         TransferFilesWithOverwritesResult::FilesToTransfer(
             existing_files.into_iter().chain(new_files).collect(),
         )
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use pretty_assertions::assert_eq;
+
+    use super::*;
+    use crate::utils::test_helpers::make_fsentry;
+
+    #[test]
+    fn should_check_queued_destination_path_as_is() {
+        // Queued destinations are already full target paths (`<wrkdir>/<name>`).
+        let existing = (
+            make_fsentry("/src/a.txt", false),
+            PathBuf::from("/dest/a.txt"),
+        );
+        let missing = (
+            make_fsentry("/src/b.txt", false),
+            PathBuf::from("/dest/b.txt"),
+        );
+
+        let (found, new) = FileTransferActivity::partition_by_existence(
+            vec![existing.clone(), missing.clone()],
+            |p| p == Path::new("/dest/a.txt"),
+        );
+
+        assert_eq!(found, vec![existing]);
+        assert_eq!(new, vec![missing]);
     }
 }
