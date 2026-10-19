@@ -166,6 +166,7 @@ impl From<VersionStatus> for UpdateStatus {
     fn from(s: VersionStatus) -> Self {
         match s {
             VersionStatus::Updated(v) => Self::UpdateInstalled(v),
+            // VersionStatus is non_exhaustive, so unknown variants are reported as up to date
             _ => Self::AlreadyUptodate,
         }
     }
