@@ -1,5 +1,58 @@
 # Changelog
 
+## 1.2.1
+
+Released on 2026-10-19
+
+### Changed
+
+- **transfer:** check queued targets against the host bridge
+  > Drop the one-off QueuedTransfers alias and the closure parameter: the
+  > partition now queries the pane's HostBridge directly, and the test runs it
+  > against a real local directory so re-appending the file name fails it.
+
+### Documentation
+
+- **claude:** drop --lib from test commands
+  > The crate has no library target, so cargo test --lib fails.
+
+### Fixed
+
+- **transfer:** check queued destination for existing files
+  > Queued transfers store the full target path, but the overwrite check
+  > appended the file name again and looked at `dest/name/name`. An existing
+  > `dest/name` was treated as new, so the "replace file?" prompt was skipped
+  > and the file was truncated.
+  >
+  > Check the queued path as-is, the same path the transfer writes to.
+- **transfer:** use queued target as-is for copy and rename
+  > Marked entries are queued with their full target path, but copy and rename appended the file name again and targeted <dest>/<name>/<name>. Both now go through a shared apply_to_queue helper that passes the queued target unchanged, then clears the queue and reloads the list.
+- **transfer:** refresh queue panels after copy or rename of marked files
+  > Clearing the queue after a multiple-file copy or rename only reset the list, so the transfer queue panels kept listing processed entries. apply_to_queue now uses the activity clear_queue, which also refreshes both panels. The helper is private to the actions module.
+- **transfer:** use the typed folder for marked copy, rename and save as (#456)
+  > With several files marked, copy, rename and save as sent each file to the folder stored in the transfer queue (the other panel folder at mark time) and ignored the folder typed in the prompt. Each marked file is now placed in the typed folder under its own name, as before the transfer queue change. Plain transfers without a typed name still use the queued folders.
+- **bookmarks:** fall back to file key storage when keyring write fails
+  > On some Linux systems the Secret Service keyring can be read but not written (no default collection, or a locked collection with no prompt). The keyring probe only reads, so termscp picked the keyring and then failed to store the bookmarks encryption key, aborting bookmarks initialization. When the keyring has no key and cannot store a new one, the key is now kept in the same file storage used by --wno-keyring. An existing file key is reused so saved passwords stay readable.
+- **auth:** size error popup to fit the full message
+  > The error popup was fixed at a single text row, so long errors such as the bookmarks initialization failure were cut off and the actual cause was never visible. The popup height now follows the wrapped message, capped to the terminal height.
+
+### Build
+
+- **remotefs:** migrate to version 1 (#449)
+  > - build(remotefs): migrate to version 1
+  > - fix(remote): preserve POSIX paths on Windows
+- **deps:** bump self_update to 1 and refresh inout
+  > self_update 0.42 pulled zip 2.x, flagged by RUSTSEC-2026-0367, 0368 and
+  > 0369; inout 0.2.3 was yanked. Both failed cargo deny.
+- **deps:** enable self_update progress bar
+  > Without the progress-bar feature self_update compiles the download bar out, so termscp update showed no progress.
+- bump toolchain to 1.99.1
+
+### Style
+
+- **auto-update:** explain fallback for unknown version status
+  > VersionStatus is non_exhaustive, so the wildcard arm cannot be removed. Document that unknown variants are reported as up to date.
+
 ## 1.2.0
 
 Released on 2026-09-03
