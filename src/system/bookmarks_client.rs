@@ -17,6 +17,12 @@ use crate::utils::crypto;
 use crate::utils::fmt::fmt_time;
 use crate::utils::random::random_alphanumeric_with_len;
 
+/// Id of the bookmarks key in file storage
+#[cfg(not(test))]
+const FILE_KEY_ID: &str = "bookmarks";
+#[cfg(test)] // NOTE: when running test, add -test
+const FILE_KEY_ID: &str = "bookmarks-test";
+
 /// BookmarksClient provides a layer between the host system and the bookmarks module
 pub struct BookmarksClient {
     hosts: UserHosts,
@@ -39,37 +45,15 @@ impl BookmarksClient {
         let default_hosts: UserHosts = UserHosts::default();
         debug!("Setting up bookmarks client...");
         // Get key storage
-        let (key_storage, service_id) = Self::keyring(storage_path, keyring);
+        let (key_storage, service_id, fallback) = Self::keyring(storage_path, keyring);
         // Load key
-        let key: String = match key_storage.get_key(service_id) {
-            Ok(k) => {
-                debug!("Key loaded with success");
-                k
-            }
-            Err(e) => match e {
-                KeyStorageError::NoSuchKey => {
-                    // If no such key, generate key and set it into the storage
-                    let key: String = Self::generate_key();
-                    debug!("Key doesn't exist yet or could not be loaded; generated a new key");
-                    if let Err(e) = key_storage.set_key(service_id, key.as_str()) {
-                        error!("Failed to set new key into storage: {}", e);
-                        return Err(SerializerError::new_ex(
-                            SerializerErrorKind::Io,
-                            format!("Could not write key to storage: {e}"),
-                        ));
-                    }
-                    // Return key
-                    key
-                }
-                _ => {
-                    error!("Failed to get key from storage: {}", e);
-                    return Err(SerializerError::new_ex(
-                        SerializerErrorKind::Io,
-                        format!("Could not get key from storage: {e}"),
-                    ));
-                }
-            },
-        };
+        let key: String = Self::resolve_key(
+            key_storage.as_ref(),
+            service_id,
+            fallback
+                .as_ref()
+                .map(|(storage, id)| (storage as &dyn KeyStorage, *id)),
+        )?;
         let mut client: BookmarksClient = BookmarksClient {
             hosts: default_hosts,
             bookmarks_file: PathBuf::from(bookmarks_file),
@@ -95,8 +79,81 @@ impl BookmarksClient {
         Ok(client)
     }
 
-    /// Get the key storage
-    fn keyring(storage_path: &Path, keyring: bool) -> (Box<dyn KeyStorage>, &'static str) {
+    /// Resolve the key used to encrypt bookmarks.
+    ///
+    /// The key is read from `storage`. If it has none, the key kept in `fallback` is reused.
+    /// Otherwise a new key is generated and stored in `storage`, or in `fallback` when
+    /// `storage` cannot be written.
+    fn resolve_key(
+        storage: &dyn KeyStorage,
+        service_id: &str,
+        fallback: Option<(&dyn KeyStorage, &str)>,
+    ) -> Result<String, SerializerError> {
+        match storage.get_key(service_id) {
+            Ok(key) => {
+                debug!("Key loaded with success");
+                Ok(key)
+            }
+            Err(KeyStorageError::NoSuchKey) => {
+                if let Some((fallback_storage, fallback_id)) = fallback {
+                    match fallback_storage.get_key(fallback_id) {
+                        Ok(key) => {
+                            info!("Key not found in storage; reusing the key from file storage");
+                            return Ok(key);
+                        }
+                        Err(KeyStorageError::NoSuchKey) => {}
+                        // Generating a new key here would replace the existing file key
+                        Err(e) => {
+                            error!("Failed to get key from file storage: {}", e);
+                            return Err(SerializerError::new_ex(
+                                SerializerErrorKind::Io,
+                                format!("Could not get key from storage: {e}"),
+                            ));
+                        }
+                    }
+                }
+                // If no such key, generate key and set it into the storage
+                let key: String = Self::generate_key();
+                debug!("Key doesn't exist yet or could not be loaded; generated a new key");
+                let mut write_err = match storage.set_key(service_id, key.as_str()) {
+                    Ok(()) => return Ok(key),
+                    Err(e) => e,
+                };
+                if let Some((fallback_storage, fallback_id)) = fallback {
+                    warn!(
+                        "Failed to set new key into storage: {write_err}; falling back to file storage"
+                    );
+                    match fallback_storage.set_key(fallback_id, key.as_str()) {
+                        Ok(()) => return Ok(key),
+                        Err(e) => write_err = e,
+                    }
+                }
+                error!("Failed to set new key into storage: {}", write_err);
+                Err(SerializerError::new_ex(
+                    SerializerErrorKind::Io,
+                    format!("Could not write key to storage: {write_err}"),
+                ))
+            }
+            Err(e) => {
+                error!("Failed to get key from storage: {}", e);
+                Err(SerializerError::new_ex(
+                    SerializerErrorKind::Io,
+                    format!("Could not get key from storage: {e}"),
+                ))
+            }
+        }
+    }
+
+    /// Get the key storage, the id of the key in it, and the file storage to fall back to
+    /// when the keyring cannot store a new key
+    fn keyring(
+        storage_path: &Path,
+        keyring: bool,
+    ) -> (
+        Box<dyn KeyStorage>,
+        &'static str,
+        Option<(FileStorage, &'static str)>,
+    ) {
         if keyring && cfg!(feature = "keyring") {
             debug!("Setting up KeyStorage");
             let username = whoami::username().unwrap_or_default();
@@ -109,20 +166,17 @@ impl BookmarksClient {
             match storage.is_supported() {
                 true => {
                     debug!("Using KeyringStorage");
-                    (Box::new(storage), app_name)
+                    let fallback = FileStorage::new(storage_path);
+                    (Box::new(storage), app_name, Some((fallback, FILE_KEY_ID)))
                 }
                 false => {
                     warn!("KeyringStorage is not supported; using FileStorage");
-                    (Box::new(FileStorage::new(storage_path)), "bookmarks")
+                    (Box::new(FileStorage::new(storage_path)), FILE_KEY_ID, None)
                 }
             }
         } else {
-            #[cfg(not(test))]
-            let app_name: &str = "bookmarks";
-            #[cfg(test)] // NOTE: when running test, add -test
-            let app_name: &str = "bookmarks-test";
             debug!("Using FileStorage");
-            (Box::new(FileStorage::new(storage_path)), app_name)
+            (Box::new(FileStorage::new(storage_path)), FILE_KEY_ID, None)
         }
     }
 
@@ -1008,5 +1062,157 @@ mod tests {
             p.username.as_ref().cloned().unwrap_or_default(),
             p.password.as_ref().cloned(),
         )
+    }
+}
+
+#[cfg(test)]
+mod key_resolution_tests {
+
+    use std::cell::{Cell, RefCell};
+
+    use pretty_assertions::assert_eq;
+    use tempfile::TempDir;
+
+    use super::*;
+
+    /// In-memory key storage with switchable failures.
+    #[derive(Default)]
+    struct MockStorage {
+        key: RefCell<Option<String>>,
+        fail_get: bool,
+        fail_set: bool,
+        set_calls: Cell<usize>,
+    }
+
+    impl KeyStorage for MockStorage {
+        fn get_key(&self, _storage_id: &str) -> Result<String, KeyStorageError> {
+            if self.fail_get {
+                return Err(KeyStorageError::ProviderError);
+            }
+            self.key.borrow().clone().ok_or(KeyStorageError::NoSuchKey)
+        }
+
+        fn set_key(&self, _storage_id: &str, key: &str) -> Result<(), KeyStorageError> {
+            self.set_calls.set(self.set_calls.get() + 1);
+            if self.fail_set {
+                return Err(KeyStorageError::ProviderError);
+            }
+            *self.key.borrow_mut() = Some(key.to_string());
+            Ok(())
+        }
+
+        fn is_supported(&self) -> bool {
+            true
+        }
+    }
+
+    #[test]
+    fn test_resolve_key_should_return_existing_primary_key() {
+        let primary = MockStorage {
+            key: RefCell::new(Some("primary-key".to_string())),
+            ..Default::default()
+        };
+        let fallback = MockStorage {
+            key: RefCell::new(Some("file-key".to_string())),
+            ..Default::default()
+        };
+        let key = BookmarksClient::resolve_key(&primary, "svc", Some((&fallback, "file"))).unwrap();
+        assert_eq!(key, "primary-key");
+        assert_eq!(fallback.set_calls.get(), 0);
+    }
+
+    #[test]
+    fn test_resolve_key_should_store_new_key_in_primary() {
+        let primary = MockStorage::default();
+        let fallback = MockStorage::default();
+        let key = BookmarksClient::resolve_key(&primary, "svc", Some((&fallback, "file"))).unwrap();
+        assert_eq!(key.len(), 256);
+        assert_eq!(primary.key.borrow().as_deref(), Some(key.as_str()));
+        assert_eq!(fallback.set_calls.get(), 0);
+    }
+
+    /// Regression test for #344: keyring readable but not writable.
+    #[test]
+    fn test_resolve_key_should_fall_back_to_file_when_primary_write_fails() {
+        let tmp_dir = TempDir::new().unwrap();
+        let primary = MockStorage {
+            fail_set: true,
+            ..Default::default()
+        };
+        let fallback = FileStorage::new(tmp_dir.path());
+        let key =
+            BookmarksClient::resolve_key(&primary, "svc", Some((&fallback, "bookmarks-test")))
+                .unwrap();
+        assert_eq!(key.len(), 256);
+        assert_eq!(fallback.get_key("bookmarks-test").unwrap(), key);
+    }
+
+    #[test]
+    fn test_resolve_key_should_reuse_fallback_key_when_primary_has_none() {
+        let primary = MockStorage::default();
+        let fallback = MockStorage {
+            key: RefCell::new(Some("file-key".to_string())),
+            ..Default::default()
+        };
+        let key = BookmarksClient::resolve_key(&primary, "svc", Some((&fallback, "file"))).unwrap();
+        assert_eq!(key, "file-key");
+        assert_eq!(primary.set_calls.get(), 0);
+    }
+
+    #[test]
+    fn test_resolve_key_should_fail_when_write_fails_without_fallback() {
+        let primary = MockStorage {
+            fail_set: true,
+            ..Default::default()
+        };
+        let err = BookmarksClient::resolve_key(&primary, "svc", None).unwrap_err();
+        assert!(err.to_string().contains("Could not write key to storage"));
+    }
+
+    #[test]
+    fn test_resolve_key_should_fail_when_fallback_write_fails_too() {
+        let primary = MockStorage {
+            fail_set: true,
+            ..Default::default()
+        };
+        let fallback = MockStorage {
+            fail_set: true,
+            ..Default::default()
+        };
+        let err =
+            BookmarksClient::resolve_key(&primary, "svc", Some((&fallback, "file"))).unwrap_err();
+        assert!(err.to_string().contains("Could not write key to storage"));
+        assert_eq!(fallback.set_calls.get(), 1);
+    }
+
+    #[test]
+    fn test_resolve_key_should_fail_on_primary_read_error_without_fallback() {
+        let primary = MockStorage {
+            fail_get: true,
+            ..Default::default()
+        };
+        let fallback = MockStorage {
+            key: RefCell::new(Some("file-key".to_string())),
+            ..Default::default()
+        };
+        let err =
+            BookmarksClient::resolve_key(&primary, "svc", Some((&fallback, "file"))).unwrap_err();
+        assert!(err.to_string().contains("Could not get key from storage"));
+        assert_eq!(primary.set_calls.get(), 0);
+        assert_eq!(fallback.set_calls.get(), 0);
+    }
+
+    #[test]
+    fn test_resolve_key_should_fail_on_fallback_read_error_instead_of_replacing_key() {
+        let primary = MockStorage::default();
+        let fallback = MockStorage {
+            fail_get: true,
+            ..Default::default()
+        };
+        let err =
+            BookmarksClient::resolve_key(&primary, "svc", Some((&fallback, "file"))).unwrap_err();
+        assert!(err.to_string().contains("Could not get key from storage"));
+        assert_eq!(primary.set_calls.get(), 0);
+        assert_eq!(fallback.set_calls.get(), 0);
     }
 }
