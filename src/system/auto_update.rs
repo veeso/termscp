@@ -7,7 +7,7 @@ use std::net::ToSocketAddrs as _;
 use self_update::backends::github::Update as GithubUpdater;
 pub use self_update::errors::Error as UpdateError;
 use self_update::update::Release as UpdRelease;
-use self_update::{Status, cargo_crate_version};
+use self_update::{VersionStatus, cargo_crate_version};
 
 use crate::utils::parser::parse_semver;
 
@@ -72,7 +72,7 @@ impl Update {
             .repo_owner("veeso")
             .repo_name("termscp")
             .bin_name("termscp")
-            .target(&Self::map_release_target(self_update::get_target()))
+            .target(Self::map_release_target(self_update::get_target()))
             .current_version(cargo_crate_version!())
             .no_confirm(!self.ask_confirm)
             .show_download_progress(self.progress)
@@ -102,9 +102,13 @@ impl Update {
             .show_download_progress(false)
             .show_output(false)
             .build()?
-            .get_latest_release()
+            .get_latest_release()?
+            .into_vec()
+            .into_iter()
+            .next()
             .map(Release::from)
             .map(Self::check_version)
+            .ok_or_else(UpdateError::no_release_found)
     }
 
     /// Check if api.github.com is reachable
@@ -117,15 +121,13 @@ impl Update {
             .and_then(|mut i| i.next())
         else {
             error!("Could not resolve api.github.com");
-            return Err(UpdateError::Network(
-                "Could not resolve api.github.com".into(),
-            ));
+            return Err(UpdateError::transport("Could not resolve api.github.com"));
         };
 
         // just try to open a connection to api.github.com with a timeout of 5 seconds with tcp
         std::net::TcpStream::connect_timeout(&socket_addr, std::time::Duration::from_secs(5))
             .map(|_| ())
-            .map_err(|e| UpdateError::Network(format!("Could not reach api.github.com: {e}")))
+            .map_err(|e| UpdateError::transport(format!("Could not reach api.github.com: {e}")))
     }
 
     /// In case received version is newer than current one, version as Some is returned; otherwise None
@@ -160,11 +162,11 @@ impl Update {
         }
     }
 }
-impl From<Status> for UpdateStatus {
-    fn from(s: Status) -> Self {
+impl From<VersionStatus> for UpdateStatus {
+    fn from(s: VersionStatus) -> Self {
         match s {
-            Status::UpToDate(_) => Self::AlreadyUptodate,
-            Status::Updated(v) => Self::UpdateInstalled(v),
+            VersionStatus::Updated(v) => Self::UpdateInstalled(v),
+            _ => Self::AlreadyUptodate,
         }
     }
 }
@@ -172,8 +174,8 @@ impl From<Status> for UpdateStatus {
 impl From<UpdRelease> for Release {
     fn from(r: UpdRelease) -> Self {
         Self {
-            version: r.version,
-            body: r.body.unwrap_or_default(),
+            version: r.version().to_string(),
+            body: r.body().unwrap_or_default().to_string(),
         }
     }
 }
@@ -263,24 +265,24 @@ mod test {
     #[test]
     fn update_status() {
         assert_eq!(
-            UpdateStatus::from(Status::Updated(String::from("0.6.0"))),
+            UpdateStatus::from(VersionStatus::Updated(String::from("0.6.0"))),
             UpdateStatus::UpdateInstalled(String::from("0.6.0"))
         );
         assert_eq!(
-            UpdateStatus::from(Status::UpToDate(String::from("0.6.0"))),
+            UpdateStatus::from(VersionStatus::UpToDate(String::from("0.6.0"))),
             UpdateStatus::AlreadyUptodate
         );
     }
 
     #[test]
     fn release() {
-        let release: UpdRelease = UpdRelease {
-            name: String::from("termscp 0.7.0"),
-            version: String::from("0.7.0"),
-            date: String::from("2021-09-12T00:00:00Z"),
-            body: Some(String::from("fixed everything")),
-            assets: vec![],
-        };
+        let release: UpdRelease = UpdRelease::builder()
+            .name("termscp 0.7.0")
+            .version("0.7.0")
+            .date("2021-09-12T00:00:00Z")
+            .body("fixed everything")
+            .build()
+            .unwrap();
         let release: Release = Release::from(release);
         assert_eq!(release.body.as_str(), "fixed everything");
         assert_eq!(release.version.as_str(), "0.7.0");
@@ -288,13 +290,12 @@ mod test {
 
     #[test]
     fn should_default_release_body_when_missing() {
-        let release: UpdRelease = UpdRelease {
-            name: String::from("termscp 0.7.0"),
-            version: String::from("0.7.0"),
-            date: String::from("2021-09-12T00:00:00Z"),
-            body: None,
-            assets: vec![],
-        };
+        let release: UpdRelease = UpdRelease::builder()
+            .name("termscp 0.7.0")
+            .version("0.7.0")
+            .date("2021-09-12T00:00:00Z")
+            .build()
+            .unwrap();
         let release: Release = Release::from(release);
 
         assert!(release.body.is_empty());
