@@ -27,7 +27,7 @@ impl FileTransferActivity {
                 self.copy_file(entry, dest_path.as_path());
             }
             SelectedFile::Many(entries) => {
-                self.apply_to_queue(entries, Self::copy_file);
+                self.apply_to_queue(entries, Path::new(&input), Self::copy_file);
             }
             SelectedFile::None => {}
         }

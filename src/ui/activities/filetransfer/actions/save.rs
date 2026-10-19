@@ -7,7 +7,7 @@ use std::path::PathBuf;
 
 use super::{
     File, FileTransferActivity, LogLevel, Msg, PendingActionMsg, SelectedFile, TransferOpts,
-    TransferPayload,
+    TransferPayload, retarget_queue,
 };
 use crate::host::HostBridge;
 
@@ -86,11 +86,11 @@ impl FileTransferActivity {
                 }
             }
             SelectedFile::Many(entries) => {
-                // In case of selection: save multiple files in wrkdir/input
-                let mut dest_path: PathBuf = wrkdir;
-                if let Some(save_as) = opts.save_as {
-                    dest_path.push(save_as);
-                }
+                // With a typed name, every marked file goes into that folder under its own name
+                let entries = match opts.save_as {
+                    Some(save_as) => retarget_queue(entries, &wrkdir.join(save_as)),
+                    None => entries,
+                };
                 // Iter files
                 let TransferFilesWithOverwritesResult::FilesToTransfer(entries) =
                     self.get_files_to_transfer_with_overwrites(entries, CheckFileExists::Remote)
@@ -100,7 +100,7 @@ impl FileTransferActivity {
                 };
                 if let Err(err) = self.filetransfer_send(
                     TransferPayload::TransferQueue(entries),
-                    dest_path.as_path(),
+                    wrkdir.as_path(),
                     None,
                 ) {
                     {
@@ -145,11 +145,11 @@ impl FileTransferActivity {
                 }
             }
             SelectedFile::Many(entries) => {
-                // In case of selection: save multiple files in wrkdir/input
-                let mut dest_path: PathBuf = wrkdir;
-                if let Some(save_as) = opts.save_as {
-                    dest_path.push(save_as);
-                }
+                // With a typed name, every marked file goes into that folder under its own name
+                let entries = match opts.save_as {
+                    Some(save_as) => retarget_queue(entries, &wrkdir.join(save_as)),
+                    None => entries,
+                };
                 let TransferFilesWithOverwritesResult::FilesToTransfer(entries) = self
                     .get_files_to_transfer_with_overwrites(entries, CheckFileExists::HostBridge)
                 else {
@@ -159,7 +159,7 @@ impl FileTransferActivity {
 
                 if let Err(err) = self.filetransfer_recv(
                     TransferPayload::TransferQueue(entries),
-                    dest_path.as_path(),
+                    wrkdir.as_path(),
                     None,
                 ) {
                     {
