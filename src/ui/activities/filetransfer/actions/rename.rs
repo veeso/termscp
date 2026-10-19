@@ -16,7 +16,9 @@ impl FileTransferActivity {
                 self.rename_file(&entry, dest_path.as_path());
             }
             SelectedFile::Many(entries) => {
-                self.apply_to_queue(entries, |this, entry, dest| this.rename_file(&entry, dest));
+                self.apply_to_queue(entries, Path::new(&input), |this, entry, dest| {
+                    this.rename_file(&entry, dest)
+                });
             }
             SelectedFile::None => {}
         }

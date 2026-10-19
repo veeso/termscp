@@ -86,17 +86,21 @@ impl From<Option<&File>> for SelectedFile {
     }
 }
 
-/// Calls `op` with each queued entry and its target, leaving the target unchanged.
+/// Points each entry at `dest_dir/<name>`.
 ///
-/// Queued targets are already full paths (`<dest>/<name>`, see `FileExplorer::enqueue_all`),
-/// so the file name must not be appended again.
-fn for_each_queued_target<F>(entries: Vec<(File, PathBuf)>, mut op: F)
-where
-    F: FnMut(File, &Path),
-{
+/// Queued targets point to the folder shown when the files were marked. With a typed
+/// destination folder each entry goes to `dest_dir` under its own name instead.
+pub(crate) fn retarget_queue(
+    entries: Vec<(File, PathBuf)>,
+    dest_dir: &Path,
+) -> Vec<(File, PathBuf)> {
     entries
         .into_iter()
-        .for_each(|(entry, target)| op(entry, &target));
+        .map(|(entry, _)| {
+            let target = dest_dir.join(entry.name());
+            (entry, target)
+        })
+        .collect()
 }
 
 impl FileTransferActivity {
@@ -144,12 +148,19 @@ impl FileTransferActivity {
         matches!(self.get_selected_entries(), SelectedFile::One(_))
     }
 
-    /// Runs `op` on each queued entry, then clears the queue and refreshes both panels.
-    pub(crate) fn apply_to_queue<F>(&mut self, entries: Vec<(File, PathBuf)>, mut op: F)
-    where
+    /// Moves each queued entry into `dest_dir` under its own name and runs `op` on it,
+    /// then clears the queue and refreshes both panels.
+    pub(crate) fn apply_to_queue<F>(
+        &mut self,
+        entries: Vec<(File, PathBuf)>,
+        dest_dir: &Path,
+        mut op: F,
+    ) where
         F: FnMut(&mut Self, File, &Path),
     {
-        for_each_queued_target(entries, |entry, target| op(self, entry, target));
+        for (entry, target) in retarget_queue(entries, dest_dir) {
+            op(self, entry, &target);
+        }
         self.clear_queue();
     }
 
@@ -232,16 +243,40 @@ impl FileTransferActivity {
 
 #[cfg(test)]
 mod test {
+    use pretty_assertions::assert_eq;
     use tempfile::TempDir;
 
     use super::*;
     use crate::host::{HostBridge, Localhost};
-    use crate::utils::test_helpers::{make_dir_at, make_file_at};
+    use crate::utils::test_helpers::{make_dir_at, make_file_at, make_fsentry};
 
     #[test]
-    fn should_run_queued_op_on_queued_target_as_is() {
+    fn should_retarget_queued_entries_to_dest_dir() {
+        let file = make_fsentry("/src/a.txt", false);
+        let dir = make_fsentry("/src/dir", true);
+        // queued targets point to the folder shown when the files were marked
+        let queued = Path::new("/queued");
+        let entries = vec![
+            (file.clone(), queued.join("a.txt")),
+            (dir.clone(), queued.join("dir")),
+        ];
+
+        for dest_dir in [PathBuf::from("backup"), Path::new("/").join("typed")] {
+            assert_eq!(
+                retarget_queue(entries.clone(), &dest_dir),
+                vec![
+                    (file.clone(), dest_dir.join("a.txt")),
+                    (dir.clone(), dest_dir.join("dir")),
+                ]
+            );
+        }
+    }
+
+    #[test]
+    fn should_copy_queued_entries_into_dest_dir() {
         let src = TempDir::new().unwrap();
-        let dest = TempDir::new().unwrap();
+        let queued = TempDir::new().unwrap();
+        let typed = TempDir::new().unwrap();
         make_file_at(src.path(), "a.txt").unwrap();
         make_dir_at(src.path(), "dir").unwrap();
         make_file_at(&src.path().join("dir"), "b.txt").unwrap();
@@ -249,15 +284,19 @@ mod test {
         let file = fs.stat(&src.path().join("a.txt")).unwrap();
         let dir = fs.stat(&src.path().join("dir")).unwrap();
 
-        // queued targets are full paths (`<dest>/<name>`), as built by the transfer queue
+        // queued targets are full paths in the folder shown when the files were marked
         let entries = vec![
-            (file, dest.path().join("a.txt")),
-            (dir, dest.path().join("dir")),
+            (file, queued.path().join("a.txt")),
+            (dir, queued.path().join("dir")),
         ];
-        for_each_queued_target(entries, |entry, target| fs.copy(&entry, target).unwrap());
+        for (entry, target) in retarget_queue(entries, typed.path()) {
+            fs.copy(&entry, &target).unwrap();
+        }
 
-        assert!(dest.path().join("a.txt").is_file());
-        assert!(dest.path().join("dir").join("b.txt").is_file());
-        assert!(!dest.path().join("dir").join("dir").exists());
+        assert!(typed.path().join("a.txt").is_file());
+        assert!(typed.path().join("dir").join("b.txt").is_file());
+        assert!(!typed.path().join("dir").join("dir").exists());
+        assert!(!queued.path().join("a.txt").exists());
+        assert!(!queued.path().join("dir").exists());
     }
 }

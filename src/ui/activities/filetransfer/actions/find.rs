@@ -6,7 +6,10 @@
 use std::path::PathBuf;
 
 use super::change_dir::SyncBrowsingDestination;
-use super::{File, FileTransferActivity, LogLevel, SelectedFile, TransferOpts, TransferPayload};
+use super::{
+    File, FileTransferActivity, LogLevel, SelectedFile, TransferOpts, TransferPayload,
+    retarget_queue,
+};
 
 impl FileTransferActivity {
     pub(crate) fn action_find_changedir(&mut self) {
@@ -84,11 +87,11 @@ impl FileTransferActivity {
                 }
             }
             SelectedFile::Many(entries) => {
-                // In case of selection: save multiple files in wrkdir/input
-                let mut dest_path: PathBuf = wrkdir;
-                if let Some(save_as) = opts.save_as {
-                    dest_path.push(save_as);
-                }
+                // With a typed name, every marked file goes into that folder under its own name
+                let entries = match opts.save_as {
+                    Some(save_as) => retarget_queue(entries, &wrkdir.join(save_as)),
+                    None => entries,
+                };
                 // Iter files
                 if self.is_local_tab() {
                     let super::save::TransferFilesWithOverwritesResult::FilesToTransfer(entries) =
@@ -102,7 +105,7 @@ impl FileTransferActivity {
                     };
                     if let Err(err) = self.filetransfer_send(
                         TransferPayload::TransferQueue(entries),
-                        dest_path.as_path(),
+                        wrkdir.as_path(),
                         None,
                     ) {
                         self.log_and_alert(
@@ -122,7 +125,7 @@ impl FileTransferActivity {
                     };
                     if let Err(err) = self.filetransfer_recv(
                         TransferPayload::TransferQueue(entries),
-                        dest_path.as_path(),
+                        wrkdir.as_path(),
                         None,
                     ) {
                         self.log_and_alert(
