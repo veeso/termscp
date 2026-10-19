@@ -25,8 +25,8 @@ just test "--no-default-features --features github-actions --no-fail-fast"
 
 # Run a single test / a module (use cargo directly, just recipes don't take test names)
 cargo test <test_name> -- --nocapture
-cargo test --lib filetransfer::
-cargo test --lib config::params::tests
+cargo test filetransfer::
+cargo test config::params::tests
 
 # Lint
 just clippy "-- -D warnings"
