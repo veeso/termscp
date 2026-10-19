@@ -10,7 +10,7 @@ keywords = ["terminal", "ftp", "scp", "sftp", "tui"]
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/veeso/termscp"
-rust-version = "1.98.0"
+rust-version = "1.99.1"
 description = "termscp is a feature rich terminal file transfer and explorer with support for SCP/SFTP/FTP/Kube/S3/GCS/SMB/WebDAV"
 
 [package.metadata.rpm]

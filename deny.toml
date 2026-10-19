@@ -21,13 +21,6 @@ unmaintained = "all"
 # dependency version; until then, connections to untrusted endpoints remain an
 # acknowledged denial-of-service and certificate-validation risk.
 ignore = [
-  # number_prefix is retained by self_update through indicatif. It is
-  # unmaintained, but has no reported vulnerability or compatible replacement.
-  { id = "RUSTSEC-2025-0119", reason = "owner: termscp maintainers; review by 2026-12-31; upgrade self_update/indicatif" },
-  # Both affected quick-xml lines are constrained by remotefs-webdav and
-  # self_update to versions older than the fixed 0.41 release.
-  { id = "RUSTSEC-2026-0194", reason = "owner: termscp maintainers; review by 2026-12-31; upgrade remotefs-webdav/self_update to quick-xml >=0.41" },
-  { id = "RUSTSEC-2026-0195", reason = "owner: termscp maintainers; review by 2026-12-31; upgrade remotefs-webdav/self_update to quick-xml >=0.41" },
   # The SSH stack requires RSA, for which RustSec reports no safe upgrade.
   { id = "RUSTSEC-2023-0071", reason = "owner: termscp maintainers; review by 2026-12-31; replace RSA dependency when upstream fix exists" },
 ]
