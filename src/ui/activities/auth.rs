@@ -272,6 +272,8 @@ pub struct AuthActivity {
     recents_list: Vec<String>,
     /// Exit reason
     exit_reason: Option<ExitReason>,
+    /// Text of the error popup, empty when no error popup is mounted
+    error_popup_text: String,
     /// Should redraw ui
     redraw: bool,
     /// Host bridge protocol
@@ -295,6 +297,7 @@ impl AuthActivity {
             ),
             context: None,
             bookmarks_list: Vec::new(),
+            error_popup_text: String::new(),
             exit_reason: None,
             last_form_tab: FormTab::Remote,
             last_host_bridge_address: String::new(),
