@@ -90,7 +90,7 @@ impl From<Option<&File>> for SelectedFile {
 ///
 /// Queued targets are already full paths (`<dest>/<name>`, see `FileExplorer::enqueue_all`),
 /// so the file name must not be appended again.
-pub(crate) fn for_each_queued_target<F>(entries: Vec<(File, PathBuf)>, mut op: F)
+fn for_each_queued_target<F>(entries: Vec<(File, PathBuf)>, mut op: F)
 where
     F: FnMut(File, &Path),
 {
@@ -144,14 +144,13 @@ impl FileTransferActivity {
         matches!(self.get_selected_entries(), SelectedFile::One(_))
     }
 
-    /// Runs `op` on each queued entry, then clears the queue and reloads the file list.
+    /// Runs `op` on each queued entry, then clears the queue and refreshes both panels.
     pub(crate) fn apply_to_queue<F>(&mut self, entries: Vec<(File, PathBuf)>, mut op: F)
     where
         F: FnMut(&mut Self, File, &Path),
     {
         for_each_queued_target(entries, |entry, target| op(self, entry, target));
-        self.browser.explorer_mut().clear_queue();
-        self.reload_browser_file_list();
+        self.clear_queue();
     }
 
     // -- private
