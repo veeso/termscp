@@ -3,15 +3,13 @@
 //! `filetransfer_activity` is the module which implements the Filetransfer activity, which is the main activity afterall
 
 // locals
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use super::{
     File, FileTransferActivity, LogLevel, Msg, PendingActionMsg, SelectedFile, TransferOpts,
     TransferPayload,
 };
-
-/// Queued transfers: source file and full target path.
-type QueuedTransfers = Vec<(File, PathBuf)>;
+use crate::host::HostBridge;
 
 enum GetFileToReplaceResult {
     Replace(Vec<(File, PathBuf)>),
@@ -288,19 +286,6 @@ impl FileTransferActivity {
         }
     }
 
-    /// Split queued transfers between those whose target already exists and those that don't.
-    ///
-    /// Each queued `PathBuf` is already the full target path (the one the transfer engine
-    /// writes to), so `exists` is called with it as-is; the file name must not be appended again.
-    fn partition_by_existence(
-        files: QueuedTransfers,
-        mut exists: impl FnMut(&Path) -> bool,
-    ) -> (QueuedTransfers, QueuedTransfers) {
-        files
-            .into_iter()
-            .partition(|(_, dest_path)| exists(dest_path.as_path()))
-    }
-
     /// Get the files to transfer with overwrites.
     ///
     /// Existing and unexisting files are splitted, and only existing files are prompted for replacement.
@@ -314,11 +299,11 @@ impl FileTransferActivity {
         }
 
         // unzip between existing and non-existing files
-        let (existing_files, new_files) =
-            Self::partition_by_existence(files, |p| match file_exists {
-                CheckFileExists::Remote => self.file_exists(p, false),
-                CheckFileExists::HostBridge => self.file_exists(p, true),
-            });
+        let fs = match file_exists {
+            CheckFileExists::Remote => self.browser.remote_pane_mut().fs.as_mut(),
+            CheckFileExists::HostBridge => self.browser.local_pane_mut().fs.as_mut(),
+        };
+        let (existing_files, new_files) = partition_by_existence(fs, files);
 
         // filter only files to replace
         let existing_files = match self.get_files_to_replace(existing_files) {
@@ -335,31 +320,50 @@ impl FileTransferActivity {
     }
 }
 
+/// Splits queued transfers into those whose target already exists on `fs` and those that don't.
+///
+/// Each queued `PathBuf` is already the full target path the transfer writes to,
+/// so it is checked as-is, without appending the file name again.
+#[expect(
+    clippy::type_complexity,
+    reason = "a one-off alias for the queue entries would add nothing"
+)]
+fn partition_by_existence(
+    fs: &mut dyn HostBridge,
+    files: Vec<(File, PathBuf)>,
+) -> (Vec<(File, PathBuf)>, Vec<(File, PathBuf)>) {
+    files
+        .into_iter()
+        .partition(|(_, dest_path)| fs.exists(dest_path).unwrap_or_default())
+}
+
 #[cfg(test)]
 mod test {
     use pretty_assertions::assert_eq;
+    use tempfile::TempDir;
 
     use super::*;
-    use crate::utils::test_helpers::make_fsentry;
+    use crate::host::Localhost;
+    use crate::utils::test_helpers::{make_dir_at, make_file_at, make_fsentry};
 
     #[test]
-    fn should_check_queued_destination_path_as_is() {
-        // Queued destinations are already full target paths (`<wrkdir>/<name>`).
-        let existing = (
-            make_fsentry("/src/a.txt", false),
-            PathBuf::from("/dest/a.txt"),
-        );
-        let missing = (
-            make_fsentry("/src/b.txt", false),
-            PathBuf::from("/dest/b.txt"),
+    fn should_partition_queued_transfers_by_target_existence() {
+        let dest = TempDir::new().unwrap();
+        make_file_at(dest.path(), "a.txt").unwrap();
+        make_dir_at(dest.path(), "dir").unwrap();
+        let mut fs = Localhost::new(dest.path().to_path_buf()).unwrap();
+
+        // queued targets are full paths (`<dest>/<name>`), as built by the transfer queue
+        let existing_file = (make_fsentry("/src/a.txt", false), dest.path().join("a.txt"));
+        let existing_dir = (make_fsentry("/src/dir", true), dest.path().join("dir"));
+        let missing = (make_fsentry("/src/b.txt", false), dest.path().join("b.txt"));
+
+        let (existing, new) = partition_by_existence(
+            &mut fs,
+            vec![existing_file.clone(), existing_dir.clone(), missing.clone()],
         );
 
-        let (found, new) = FileTransferActivity::partition_by_existence(
-            vec![existing.clone(), missing.clone()],
-            |p| p == Path::new("/dest/a.txt"),
-        );
-
-        assert_eq!(found, vec![existing]);
+        assert_eq!(existing, vec![existing_file, existing_dir]);
         assert_eq!(new, vec![missing]);
     }
 }
