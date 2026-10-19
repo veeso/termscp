@@ -41,6 +41,8 @@ impl AuthActivity {
     }
 
     pub(in crate::ui::activities::auth) fn mount_error<S: AsRef<str>>(&mut self, text: S) {
+        let text = super::normalize_error_text(text.as_ref());
+        self.error_popup_text = text.clone();
         let err_color = self.theme().misc_error_dialog;
         if let Err(err) = self.app.remount(
             Id::ErrorPopup,
@@ -55,6 +57,7 @@ impl AuthActivity {
     }
 
     pub(in crate::ui::activities::auth) fn umount_error(&mut self) {
+        self.error_popup_text.clear();
         let _ = self.app.umount(&Id::ErrorPopup);
     }
 

@@ -6,6 +6,7 @@ use tuirealm::props::Color;
 use tuirealm::ratatui::layout::{Constraint, Direction, Layout, Rect};
 use tuirealm::ratatui::widgets::Clear;
 use tuirealm::terminal::TerminalAdapter;
+use unicode_width::UnicodeWidthStr;
 
 use super::{
     AuthActivity, AuthFormId, Context, FileTransferProtocol, FormTab, HostBridgeProtocol, Id,
@@ -201,6 +202,12 @@ impl AuthActivity {
     fn render_popup(&mut self, f: &mut tuirealm::ratatui::Frame<'_>) {
         if self.app.mounted(&Id::ErrorPopup) {
             let popup = Popup(Size::Percentage(50), Size::Unit(3)).draw_in(f.area());
+            let height = error_popup_height(
+                &self.error_popup_text,
+                popup.width.saturating_sub(2),
+                f.area().height,
+            );
+            let popup = Popup(Size::Percentage(50), Size::Unit(height)).draw_in(f.area());
             f.render_widget(Clear, popup);
             self.app.view(&Id::ErrorPopup, f, popup);
         } else if self.app.mounted(&Id::InfoPopup) {
@@ -395,12 +402,59 @@ impl AuthActivity {
     }
 }
 
+/// Collapses every run of whitespace, line breaks included, into a single space.
+///
+/// The popup renders its text as one span, which drops line breaks and glues the
+/// fragments together. Normalizing the text first keeps the rendered text and the
+/// height estimate in step.
+fn normalize_error_text(text: &str) -> String {
+    text.split_whitespace().collect::<Vec<_>>().join(" ")
+}
+
+/// Returns the height of the error popup needed to show `text` in full.
+///
+/// `inner_width` is the width available for text, without borders. Text is wrapped on word
+/// boundaries like the popup paragraph does. The result includes the top and bottom border
+/// and never exceeds `max_height`.
+fn error_popup_height(text: &str, inner_width: u16, max_height: u16) -> u16 {
+    const MIN_HEIGHT: u16 = 3;
+    if inner_width == 0 {
+        return MIN_HEIGHT.min(max_height);
+    }
+    let width = usize::from(inner_width);
+    // Number of text lines, the first one included
+    let mut lines: usize = 1;
+    // Width used on the current line, zero while the line is empty
+    let mut used: usize = 0;
+    for word in text.split_whitespace() {
+        let word_width = UnicodeWidthStr::width(word);
+        if word_width > width {
+            // A word wider than the line takes lines of its own
+            if used > 0 {
+                lines += 1;
+            }
+            lines += word_width.div_ceil(width) - 1;
+            // The next word starts on a new line
+            used = width;
+        } else if used == 0 {
+            used = word_width;
+        } else if used + 1 + word_width <= width {
+            used += 1 + word_width;
+        } else {
+            lines += 1;
+            used = word_width;
+        }
+    }
+    let height = u16::try_from(lines.saturating_add(2)).unwrap_or(u16::MAX);
+    height.min(max_height)
+}
+
 #[cfg(test)]
 mod test {
     use pretty_assertions::assert_eq;
     use tuirealm::ratatui::layout::Rect;
 
-    use super::AuthActivity;
+    use super::{AuthActivity, error_popup_height, normalize_error_text};
 
     #[test]
     fn should_split_input_mask_without_warning() {
@@ -439,5 +493,51 @@ mod test {
         assert_eq!(rows[1], Rect::new(0, 4, 40, 3));
         assert_eq!(rows[2], Rect::new(0, 7, 40, 3));
         assert_eq!(rows[3], Rect::new(0, 10, 40, 3));
+    }
+
+    #[test]
+    fn test_error_popup_height_should_fit_short_text_in_one_line() {
+        assert_eq!(error_popup_height("bad port", 40, 30), 3);
+        assert_eq!(error_popup_height("", 40, 30), 3);
+    }
+
+    #[test]
+    fn test_error_popup_height_should_wrap_on_word_boundaries() {
+        // "aaaa bbbb" is 9 wide: fits in 9, wraps in 8.
+        assert_eq!(error_popup_height("aaaa bbbb", 9, 30), 3);
+        assert_eq!(error_popup_height("aaaa bbbb", 8, 30), 4);
+        assert_eq!(error_popup_height("aaaa bbbb cccc", 4, 30), 5);
+    }
+
+    #[test]
+    fn test_error_popup_height_should_break_words_longer_than_width() {
+        // 25 wide word in 10 columns takes 3 lines.
+        assert_eq!(error_popup_height(&"x".repeat(25), 10, 30), 5);
+    }
+
+    #[test]
+    fn test_error_popup_height_should_clamp_to_max_height() {
+        assert_eq!(error_popup_height(&"word ".repeat(200), 10, 12), 12);
+    }
+
+    #[test]
+    fn test_error_popup_height_should_handle_zero_width() {
+        assert_eq!(error_popup_height("anything", 0, 30), 3);
+        assert_eq!(error_popup_height("anything", 0, 2), 2);
+    }
+
+    /// Regression test for #344: the bookmarks error did not fit in one row.
+    #[test]
+    fn test_error_popup_height_should_grow_for_bookmarks_error() {
+        let text = "Could not initialize bookmarks (at \"/home/user/.config/termscp/bookmarks.toml\", \"/home/user/.config/termscp\"): IO error (Could not write key to storage: Provider service error)";
+        assert!(error_popup_height(text, 48, 30) > 3);
+    }
+
+    #[test]
+    fn test_normalize_error_text_should_collapse_whitespace_and_newlines() {
+        assert_eq!(
+            normalize_error_text("unclosed\ninline  table\n\texpected `}`"),
+            "unclosed inline table expected `}`"
+        );
     }
 }
