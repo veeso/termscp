@@ -27,14 +27,7 @@ impl FileTransferActivity {
                 self.copy_file(entry, dest_path.as_path());
             }
             SelectedFile::Many(entries) => {
-                for (entry, mut dest_path) in entries.into_iter() {
-                    dest_path.push(entry.name());
-                    self.copy_file(entry, dest_path.as_path());
-                }
-
-                // clear selection and reload
-                self.browser.explorer_mut().clear_queue();
-                self.reload_browser_file_list();
+                self.apply_to_queue(entries, Self::copy_file);
             }
             SelectedFile::None => {}
         }

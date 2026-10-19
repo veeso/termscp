@@ -86,6 +86,19 @@ impl From<Option<&File>> for SelectedFile {
     }
 }
 
+/// Calls `op` with each queued entry and its target, leaving the target unchanged.
+///
+/// Queued targets are already full paths (`<dest>/<name>`, see `FileExplorer::enqueue_all`),
+/// so the file name must not be appended again.
+pub(crate) fn for_each_queued_target<F>(entries: Vec<(File, PathBuf)>, mut op: F)
+where
+    F: FnMut(File, &Path),
+{
+    entries
+        .into_iter()
+        .for_each(|(entry, target)| op(entry, &target));
+}
+
 impl FileTransferActivity {
     /// Get local file entry
     pub(crate) fn get_local_selected_entries(&mut self) -> SelectedFile {
@@ -129,6 +142,16 @@ impl FileTransferActivity {
     /// Returns whether only one entry is selected on the current tab.
     pub(crate) fn is_selected_one(&mut self) -> bool {
         matches!(self.get_selected_entries(), SelectedFile::One(_))
+    }
+
+    /// Runs `op` on each queued entry, then clears the queue and reloads the file list.
+    pub(crate) fn apply_to_queue<F>(&mut self, entries: Vec<(File, PathBuf)>, mut op: F)
+    where
+        F: FnMut(&mut Self, File, &Path),
+    {
+        for_each_queued_target(entries, |entry, target| op(self, entry, target));
+        self.browser.explorer_mut().clear_queue();
+        self.reload_browser_file_list();
     }
 
     // -- private
@@ -205,5 +228,37 @@ impl FileTransferActivity {
             SelectedFileIndex::One(idx) => browser.get(idx).cloned(),
             SelectedFileIndex::None => None,
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use tempfile::TempDir;
+
+    use super::*;
+    use crate::host::{HostBridge, Localhost};
+    use crate::utils::test_helpers::{make_dir_at, make_file_at};
+
+    #[test]
+    fn should_run_queued_op_on_queued_target_as_is() {
+        let src = TempDir::new().unwrap();
+        let dest = TempDir::new().unwrap();
+        make_file_at(src.path(), "a.txt").unwrap();
+        make_dir_at(src.path(), "dir").unwrap();
+        make_file_at(&src.path().join("dir"), "b.txt").unwrap();
+        let mut fs = Localhost::new(src.path().to_path_buf()).unwrap();
+        let file = fs.stat(&src.path().join("a.txt")).unwrap();
+        let dir = fs.stat(&src.path().join("dir")).unwrap();
+
+        // queued targets are full paths (`<dest>/<name>`), as built by the transfer queue
+        let entries = vec![
+            (file, dest.path().join("a.txt")),
+            (dir, dest.path().join("dir")),
+        ];
+        for_each_queued_target(entries, |entry, target| fs.copy(&entry, target).unwrap());
+
+        assert!(dest.path().join("a.txt").is_file());
+        assert!(dest.path().join("dir").join("b.txt").is_file());
+        assert!(!dest.path().join("dir").join("dir").exists());
     }
 }
