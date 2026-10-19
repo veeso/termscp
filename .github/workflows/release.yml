@@ -55,7 +55,10 @@ jobs:
       - name: Bump version
         env:
           VERSION: ${{ inputs.version }}
-        run: dist/release/bump_version.sh "$VERSION" "$(date +%F)"
+        run: |
+          dist/release/bump_version.sh "$VERSION" "$(date +%F)"
+          cargo update --package termscp --precise "$VERSION"
+          cargo metadata --locked --no-deps --format-version 1 > /dev/null
 
       - name: Generate CHANGELOG
         env:
@@ -67,8 +70,9 @@ jobs:
           VERSION: ${{ inputs.version }}
         run: git-cliff --unreleased --tag "v$VERSION" --strip header -o RELEASE_NOTES.md
 
-      - name: Verify Cargo.lock is unchanged
-        run: git diff --exit-code -- Cargo.lock
+      - name: Verify Cargo.lock only changes the termscp version
+        run: |
+          test "$(git diff --numstat -- Cargo.lock | cut -f1,2)" = "$(printf '1\t1')"
 
       - name: Upload release notes
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -88,8 +92,7 @@ jobs:
           VERSION: ${{ inputs.version }}
         run: |
           rm -f RELEASE_NOTES.md
-          git add -A -- . ':!Cargo.lock'
-          git diff --cached --exit-code -- Cargo.lock
+          git add -A
           git commit -m "chore: release v$VERSION"
           git push origin HEAD:main
 
