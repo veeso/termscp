@@ -6148,7 +6148,7 @@ dependencies = [
 
 [[package]]
 name = "termscp"
-version = "1.2.0"
+version = "1.2.1"
 dependencies = [
  "aes 0.9.3",
  "aes-gcm",
