@@ -436,6 +436,23 @@ impl HostBridge for Localhost {
         let argv: &[&str] = &args[1..];
         info!("Executing command: {} {:?}", cmd, argv);
         match std::process::Command::new(cmd).args(argv).output() {
+            // posix_spawn reports a failed execve as exit status 127 when the
+            // libc does not pass errno back to the parent. glibc usually does,
+            // through a CLONE_VM|CLONE_VFORK channel. qemu-user, OpenBSD and
+            // HPPA return a successful spawn and status 127 instead. See
+            // posix_spawn(3) and POSIX.1. Any other exit status still returns
+            // stdout, including a command that ran and failed.
+            Ok(output) if output.status.code() == Some(127) => {
+                error!("Failed to run command: exit status 127");
+                Err(HostError::new(
+                    HostErrorType::ExecutionFailed,
+                    Some(std::io::Error::new(
+                        std::io::ErrorKind::NotFound,
+                        "command not found",
+                    )),
+                    self.wrkdir.as_path(),
+                ))
+            }
             Ok(output) => match std::str::from_utf8(&output.stdout) {
                 Ok(s) => {
                     info!("Command output: {}", s);
