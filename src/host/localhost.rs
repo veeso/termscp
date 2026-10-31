@@ -436,12 +436,7 @@ impl HostBridge for Localhost {
         let argv: &[&str] = &args[1..];
         info!("Executing command: {} {:?}", cmd, argv);
         match std::process::Command::new(cmd).args(argv).output() {
-            // posix_spawn reports a failed execve as exit status 127 when the
-            // libc does not pass errno back to the parent. glibc usually does,
-            // through a CLONE_VM|CLONE_VFORK channel. qemu-user, OpenBSD and
-            // HPPA return a successful spawn and status 127 instead. See
-            // posix_spawn(3) and POSIX.1. Any other exit status still returns
-            // stdout, including a command that ran and failed.
+            // Some platforms (e.g. qemu-user, OpenBSD) report a failed execve as a successful spawn exiting with 127
             Ok(output) if output.status.code() == Some(127) => {
                 error!("Failed to run command: exit status 127");
                 Err(HostError::new(
@@ -1095,6 +1090,28 @@ mod tests {
         let mut host: Localhost = Localhost::new(PathBuf::from(tmpdir.path())).ok().unwrap();
         // Execute empty command should return error
         assert!(host.exec("").is_err());
+    }
+
+    #[cfg(posix)]
+    #[test]
+    fn should_fail_exec_when_command_exits_with_127() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let tmpdir: tempfile::TempDir = tempfile::TempDir::new().unwrap();
+        let script = tmpdir.path().join("exit127.sh");
+        std::fs::write(&script, "#!/bin/sh\nexit 127\n").unwrap();
+        std::fs::set_permissions(&script, std::fs::Permissions::from_mode(0o755)).unwrap();
+        let mut host: Localhost = Localhost::new(PathBuf::from(tmpdir.path())).ok().unwrap();
+        let err = host.exec(script.to_str().unwrap()).unwrap_err();
+        assert!(matches!(err.error, HostErrorType::ExecutionFailed));
+    }
+
+    #[cfg(posix)]
+    #[test]
+    fn should_return_output_when_command_exits_with_non_127_failure() {
+        let tmpdir: tempfile::TempDir = tempfile::TempDir::new().unwrap();
+        let mut host: Localhost = Localhost::new(PathBuf::from(tmpdir.path())).ok().unwrap();
+        assert!(host.exec("false").is_ok());
     }
 
     #[cfg(posix)]
