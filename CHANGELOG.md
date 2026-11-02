@@ -1,5 +1,28 @@
 # Changelog
 
+## 1.2.2
+
+Released on 2026-11-02
+
+### CI
+
+- **release:** update `Cargo.lock` and commit it after bumping version
+  > this is required, because otherwise `cargo publish` will later fail
+
+### Fixed
+
+- **host:** treat posix_spawn exit 127 as a failed exec
+
+### Testing
+
+- **host:** cover exit status 127 handling in Localhost::exec
+  > Also shorten the explanatory comment to a single line.
+
+### Build
+
+- **deps:** bump remotefs-ssh to 1.1.1 (#463)
+  > Fixes remote entry names on Windows including the parent folder with a backslash separator.
+
 ## 1.2.1
 
 Released on 2026-10-19

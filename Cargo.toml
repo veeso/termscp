@@ -1,6 +1,6 @@
 [package]
 name = "termscp"
-version = "1.2.1"
+version = "1.2.2"
 authors = ["Christian Visintin <christian.visintin@veeso.dev>"]
 categories = ["command-line-utilities"]
 edition = "2024"
